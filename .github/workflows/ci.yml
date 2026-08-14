@@ -1,0 +1,246 @@
+name: CI
+
+# Owns the trigger for every workflow it calls, so the caches are warm before
+# anything reads them. The called workflows have no trigger of their own;
+# giving one back would run them again outside this ordering, and only the
+# bootstrap jobs may write a cache.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+permissions: {}
+
+jobs:
+  detect-changes:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/bootstrap-detect-changes.yml
+
+  go-mod-cache:
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-cache.yml
+    with:
+      cache: mod
+
+  go-build-cache:
+    needs: go-mod-cache
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-cache.yml
+    with:
+      cache: build
+
+  go-remote-cache:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/bootstrap-go-remote-cache.yml
+
+  # Jobs that diff against the base branch install from that tree too, so a
+  # pull request changing the lock file needs both entries. Empty is this ref.
+  yarn-cache:
+    needs: detect-changes
+    strategy:
+      matrix:
+        ref: ${{ (github.event_name == 'pull_request' && needs.detect-changes.outputs.frontend-dependencies == 'true') && fromJSON(format('["", "{0}"]', github.base_ref)) || fromJSON('[""]') }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/bootstrap-yarn-cache.yml
+    with:
+      ref: ${{ matrix.ref }}
+
+  go-lint:
+    needs: [detect-changes, go-mod-cache]
+    if: needs.detect-changes.outputs.backend == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/go-lint.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
+
+  govulncheck:
+    needs: [detect-changes, go-build-cache]
+    if: needs.detect-changes.outputs.backend == 'true'
+    permissions:
+      contents: read
+      id-token: write
+      security-events: write
+    uses: ./.github/workflows/govulncheck.yml
+
+  feature-toggles:
+    needs: [detect-changes, go-build-cache]
+    if: ${{ !cancelled() && needs.go-build-cache.result != 'failure' && github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/feature-toggles-ci.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
+      docs: ${{ needs.detect-changes.outputs.docs }}
+
+  backend-code-checks:
+    needs: [detect-changes, go-build-cache]
+    if: needs.detect-changes.outputs.docs != 'true' || needs.detect-changes.outputs.backend == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/backend-code-checks.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
+
+  swagger-gen:
+    needs: [detect-changes, go-build-cache]
+    if: ${{ !cancelled() && needs.go-build-cache.result != 'failure' }}
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/swagger-gen.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
+
+  go-workspace-check:
+    needs: [detect-changes, go-build-cache]
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pr-go-workspace-check.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
+
+  backend-unit-tests:
+    needs: [detect-changes, go-build-cache, go-remote-cache]
+    if: needs.detect-changes.outputs.backend == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/backend-unit-tests.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
+
+  integration-tests:
+    needs: [detect-changes, go-build-cache, go-remote-cache]
+    if: needs.detect-changes.outputs.backend == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pr-test-integration.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
+
+  integration-tests-pgvector:
+    needs: [detect-changes, go-build-cache]
+    if: needs.detect-changes.outputs.backend == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pr-test-integration-pgvector.yml
+
+  k8s-codegen-check:
+    needs: [detect-changes, go-build-cache]
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.backend == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pr-k8s-codegen-check.yml
+
+  build-go-matrix:
+    needs: [detect-changes, go-build-cache]
+    if: needs.detect-changes.outputs.backend == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/build-go-matrix.yml
+
+  e2e-tests:
+    needs: [detect-changes, go-build-cache, yarn-cache]
+    if: ${{ !cancelled() && needs.go-build-cache.result != 'failure' && needs.yarn-cache.result != 'failure' }}
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pr-e2e-tests.yml
+    with:
+      e2e: ${{ needs.detect-changes.outputs.e2e }}
+
+  frontend-unit-tests:
+    needs: [detect-changes, go-build-cache, yarn-cache]
+    if: ${{ !cancelled() && needs.go-build-cache.result != 'failure' && needs.yarn-cache.result != 'failure' }}
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pr-frontend-unit-tests.yml
+    with:
+      frontend: ${{ needs.detect-changes.outputs.frontend }}
+      devenv: ${{ needs.detect-changes.outputs.devenv }}
+
+  lint-build-docs:
+    needs: [detect-changes, yarn-cache]
+    if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/lint-build-docs.yml
+    with:
+      docs: ${{ needs.detect-changes.outputs.docs }}
+
+  storybook-a11y:
+    needs: [detect-changes, yarn-cache]
+    if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' }}
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/storybook-a11y.yml
+    with:
+      frontend: ${{ needs.detect-changes.outputs.frontend }}
+
+  schema-v2-e2e:
+    needs: [detect-changes, go-build-cache, yarn-cache]
+    if: ${{ !cancelled() && needs.go-build-cache.result != 'failure' && needs.yarn-cache.result != 'failure' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/run-schema-v2-e2e.yml
+
+  frontend-lint:
+    needs: [detect-changes, yarn-cache]
+    if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' }}
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/frontend-lint.yml
+    with:
+      frontend: ${{ needs.detect-changes.outputs.frontend }}
+      docs: ${{ needs.detect-changes.outputs.docs }}
+      frontend-packages: ${{ needs.detect-changes.outputs.frontend-packages }}
+      frontend-dependencies: ${{ needs.detect-changes.outputs.frontend-dependencies }}
+
+  frontend-test-coverage:
+    needs: [detect-changes, yarn-cache]
+    if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' && github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    uses: ./.github/workflows/check-frontend-test-coverage.yml
+    with:
+      frontend: ${{ needs.detect-changes.outputs.frontend }}
+
+  breaking-changes-levitate:
+    needs: [detect-changes, yarn-cache]
+    if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' && github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    uses: ./.github/workflows/detect-breaking-changes-levitate.yml
+    with:
+      frontend-packages: ${{ needs.detect-changes.outputs.frontend-packages }}

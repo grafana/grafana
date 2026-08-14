@@ -3,33 +3,7 @@
 name: Build Go (matrix)
 
 on:
-  pull_request:
-    paths:
-      - '**/go.mod'
-      - '**/go.sum'
-      - '**/go.work'
-      - '**/go.work.sum'
-      - '**.go'
-      - 'pkg/**'
-      - 'apps/**'
-      - Makefile
-      - packaging/**
-      - scripts/build-rpm.sh
-      - scripts/build-deb.sh
-      - scripts/build-targz.sh
-      - scripts/verify-pkg-stig.sh
-      - .github/actions/setup-go/**
-      - .github/actions/setup-fpm/**
-      - .github/actions/setup-enterprise/**
-      - .github/workflows/build-go-matrix.yml
-  push:
-    branches:
-      - main
-      - release-*.*.*
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  workflow_call:
 
 permissions: {}
 

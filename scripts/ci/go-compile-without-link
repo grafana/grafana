@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Passed to `go test -toolexec` to fill the build cache without paying for the
+# link step. Every tool runs as usual except the linker, which is handed a
+# dummy file so `go test` believes it produced a binary.
+
+set -euo pipefail
+
+if [[ "${2:-}" == "-V=full" ]]; then
+  exec "$@"
+fi
+
+case "$(basename "${1}")" in
+link)
+  touch "${3}"
+  ;;
+*)
+  exec "$@"
+  ;;
+esac

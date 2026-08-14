@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   update-grafana:
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64
     permissions:
       contents: write
       pull-requests: write
@@ -30,8 +30,6 @@ jobs:
 
       - name: Setup Go
         uses: ./.github/actions/setup-go
-        with:
-          cache-build: 'false'
 
       - name: Extract current commit hash of alerting module
         id: current-commit

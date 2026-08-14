@@ -1,16 +1,7 @@
 name: Run dashboard schema v2 e2e
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - '**'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  workflow_call:
 
 jobs:
   dashboard-schema-v2-e2e:

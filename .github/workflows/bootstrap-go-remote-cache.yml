@@ -1,0 +1,26 @@
+name: Bootstrap Go Remote Cache
+
+# Downloads the go-cache-plugin release asset into the tooling cache. Jobs that
+# use the remote cache restore it from there instead of each fetching the same
+# asset and being throttled. The entry is keyed on the plugin version alone, so
+# it is normally already present and this job only has to confirm it.
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  go-remote-cache:
+    name: Warm Go remote cache tooling
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-go-remote-cache
+        with:
+          download-only: 'true'
+          cache-write: 'true'

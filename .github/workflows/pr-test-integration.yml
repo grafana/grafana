@@ -1,33 +1,12 @@
 name: Integration Tests
 
 on:
-  push:
-    branches:
-      - main
-      - release-*.*.*
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-    paths:
-      - Makefile
-      - '**/go.mod'
-      - '**/go.sum'
-      - '**/go.work'
-      - '**/go.work.sum'
-      - '**.go'
-      - pkg/**
-      - apps/**
-      - scripts/ci/backend-tests/**
-      - devenv/**
-      - .github/actions/setup-go/**
-      - .github/actions/setup-enterprise/**
-      - .github/workflows/pr-test-integration.yml
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  workflow_call:
+    inputs:
+      backend:
+        description: Whether backend code changed.
+        required: true
+        type: string
 
 permissions: {}
 
@@ -39,28 +18,7 @@ env:
   TESTCONTAINERS_RYUK_DISABLED: 'true'
 
 jobs:
-  detect-changes:
-    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: Detect whether code changed
-    runs-on: ubuntu-arm64-small
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.backend }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 0
-          filter: blob:none
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/pr-test-integration.yml
 
-  #### OSS
   sqlite:
     # Run this workflow only for PRs from forks
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
@@ -192,8 +150,9 @@ jobs:
           make devenv-down sources=postgres_tests
 
   #### Enterprise
+
   sqlite-enterprise:
-    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+        # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
       matrix:
@@ -224,10 +183,12 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      # Enterprise must be cloned before setup-go so that enterprise
-      # modules are visible when the Go cache key is computed.
+      - name: Set up remote Go cache
+        uses: ./.github/actions/setup-go-remote-cache
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          build-cache: 'false'
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -238,7 +199,7 @@ jobs:
           go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql-enterprise:
-    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+        # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
       matrix:
@@ -274,10 +235,12 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      # Enterprise must be cloned before setup-go so that enterprise
-      # modules are visible when the Go cache key is computed.
+      - name: Set up remote Go cache
+        uses: ./.github/actions/setup-go-remote-cache
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          build-cache: 'false'
       - name: Wait for MySQL
         run: |
           for _ in $(seq 1 60); do
@@ -301,7 +264,7 @@ jobs:
         run: make devenv-down sources=mysql_tests
 
   postgres-enterprise:
-    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+        # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
       matrix:
@@ -339,10 +302,12 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      # Enterprise must be cloned before setup-go so that enterprise
-      # modules are visible when the Go cache key is computed.
+      - name: Set up remote Go cache
+        uses: ./.github/actions/setup-go-remote-cache
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          build-cache: 'false'
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests

@@ -1,31 +1,19 @@
 name: Documentation
 
 on:
-  pull_request:
-    paths:
-      - '*.md'
-      - 'docs/**'
-      - 'packages/**/*.md'
-      - 'latest.json'
-  push:
-    branches:
-      - main
-    paths:
-      - '*.md'
-      - 'docs/**'
-      - 'packages/**/*.md'
-      - 'latest.json'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  workflow_call:
+    inputs:
+      docs:
+        description: Whether documentation changed.
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
   docs:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    if: inputs.docs == 'true' && (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Build & Verify Docs
     runs-on: ubuntu-arm64
 

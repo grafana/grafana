@@ -51,6 +51,13 @@ inputs:
     description: "Enable yarn hardened mode. 'auto' disables it for internal PRs, 'true' always enables it. Fork PRs always use hardened mode regardless."
     required: false
     default: 'auto'
+  cache-write:
+    description: >-
+      Whether this job may save the caches it restored. A GitHub cache entry
+      cannot be rewritten, so only the bootstrap writes and every other job
+      restores what it left.
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -69,24 +76,28 @@ runs:
       env:
         YARN_ENABLE_GLOBAL_CACHE: 'false'
       run: |
-        echo "CACHE_FOLDER=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+        # A cache entry is addressed by its path as well as its key, so every
+        # install shares one folder. Deriving it from the working directory
+        # would give a tree checked out under a sub-directory its own entry.
+        echo "CACHE_FOLDER=${HOME}/.cache/yarn" >> $GITHUB_OUTPUT
         echo "CURRENT_NODE_VERSION="node-$(node --version)"" >> $GITHUB_OUTPUT
         echo "CURRENT_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's,/,-,g')" >> $GITHUB_OUTPUT
         echo "NPM_GLOBAL_CACHE_FOLDER=$(npm config get cache)" >> $GITHUB_OUTPUT
 
     - name: Restore yarn cache
-      uses: actions/cache@v5
+      uses: actions/cache/restore@v5
       id: yarn-download-cache
       with:
         path: ${{ steps.yarn-config.outputs.CACHE_FOLDER }}
         key: yarn-download-cache-${{ inputs.cache-prefix }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
         restore-keys: |
           yarn-download-cache-${{ inputs.cache-prefix }}-
+        fail-on-cache-miss: ${{ inputs.cache-write != 'true' }}
 
     - name: Restore node_modules
       if: inputs.cache-node-modules == 'true'
       id: yarn-nm-cache
-      uses: actions/cache@v5
+      uses: actions/cache/restore@v5
       with:
         path: |
           ${{ inputs.cwd }}/**/node_modules
@@ -96,7 +107,7 @@ runs:
     - name: Restore global npm cache folder
       if: inputs.cache-npm-cache == 'true'
       id: npm-global-cache
-      uses: actions/cache@v5
+      uses: actions/cache/restore@v5
       with:
         path: ${{ steps.yarn-config.outputs.NPM_GLOBAL_CACHE_FOLDER }}
         key: yarn-npm-global-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
@@ -104,7 +115,7 @@ runs:
     - name: Restore yarn install state
       if: inputs.cache-install-state == 'true' && inputs.cache-node-modules == 'true'
       id: yarn-install-state-cache
-      uses: actions/cache@v5
+      uses: actions/cache/restore@v5
       with:
         path: ${{ inputs.cwd }}/.yarn/install-state.gz
         key: yarn-install-state-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ steps.yarn-config.outputs.CURRENT_BRANCH }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
@@ -114,6 +125,7 @@ runs:
       working-directory: ${{ inputs.cwd }}
       run: yarn install --immutable --inline-builds
       env:
+        YARN_CACHE_FOLDER: ${{ steps.yarn-config.outputs.CACHE_FOLDER }}
         # Overrides/align yarnrc.yml options (v3, v4) for a CI context
         YARN_ENABLE_GLOBAL_CACHE: 'false' # Use local cache folder to keep downloaded archives
         YARN_ENABLE_MIRROR: 'false' # Prevent populating global cache for caches misses (local cache only)
@@ -123,3 +135,33 @@ runs:
         # Skip big post-install dependencies
         PUPPETEER_SKIP_DOWNLOAD: true
         CYPRESS_INSTALL_BINARY: 0
+
+    - name: Save yarn cache
+      if: inputs.cache-write == 'true' && steps.yarn-download-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ steps.yarn-config.outputs.CACHE_FOLDER }}
+        key: yarn-download-cache-${{ inputs.cache-prefix }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
+
+    - name: Save node_modules
+      if: inputs.cache-write == 'true' && inputs.cache-node-modules == 'true' && steps.yarn-nm-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: |
+          ${{ inputs.cwd }}/**/node_modules
+          !${{ inputs.cwd }}/**/node_modules/.cache
+        key: yarn-nm-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ steps.yarn-config.outputs.CURRENT_BRANCH }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
+
+    - name: Save global npm cache folder
+      if: inputs.cache-write == 'true' && inputs.cache-npm-cache == 'true' && steps.npm-global-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ steps.yarn-config.outputs.NPM_GLOBAL_CACHE_FOLDER }}
+        key: yarn-npm-global-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
+
+    - name: Save yarn install state
+      if: inputs.cache-write == 'true' && inputs.cache-install-state == 'true' && inputs.cache-node-modules == 'true' && steps.yarn-install-state-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ inputs.cwd }}/.yarn/install-state.gz
+        key: yarn-install-state-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ steps.yarn-config.outputs.CURRENT_BRANCH }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}

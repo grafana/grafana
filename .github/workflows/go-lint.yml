@@ -1,47 +1,20 @@
 name: golangci-lint
 on:
-  push:
-    paths:
-      - pkg/**
-      - .github/workflows/go-lint.yml
-      - go.*
-    branches:
-      - main
-  pull_request:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  workflow_call:
+    inputs:
+      backend:
+        description: Whether backend code changed.
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
-  detect-changes:
-    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: Detect whether code changed
-    runs-on: ubuntu-arm64-small
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.backend }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 0
-          filter: blob:none
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/go-lint.yml
 
   go-fmt:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-arm64
+    if: inputs.backend == 'true'
+    runs-on: ubuntu-x64
     steps:
       - uses: actions/checkout@v5
         with:
@@ -49,7 +22,7 @@ jobs:
       - name: Setup Go
         uses: ./.github/actions/setup-go
         with:
-          cache-build: 'false'
+          cache: 'false'
       - name: Run gofmt
         run: |
           GOFMT="$(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}' | xargs gofmt -s -e -l 2>&1 | grep -v '/pkg/build/' || true)"
@@ -61,8 +34,7 @@ jobs:
           fi
 
   lint-go:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: inputs.backend == 'true'
     runs-on: ubuntu-x64-xlarge
     steps:
       - uses: actions/checkout@v5
@@ -71,7 +43,7 @@ jobs:
       - name: Setup Go
         uses: ./.github/actions/setup-go
         with:
-          cache-build: 'false'
+          build-cache: 'false'
       - name: golangci-lint
         uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
         with:
