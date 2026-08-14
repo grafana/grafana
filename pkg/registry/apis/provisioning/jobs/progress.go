@@ -380,7 +380,11 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 
 	if err != nil {
-		jobStatus.State = provisioning.JobStateError
+		if IsWarning(err) {
+			jobStatus.State = provisioning.JobStateWarning
+		} else {
+			jobStatus.State = provisioning.JobStateError
+		}
 		jobStatus.Message = err.Error()
 	}
 

@@ -163,6 +163,7 @@ function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: Editab
         {options.map((option) => (
           <Card
             noMargin
+            className={styles.card}
             isCompact
             onClick={() => onSelectType(option.value!)}
             key={option.value}
@@ -180,6 +181,13 @@ function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: Editab
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    card: css({
+      background: theme.colors.background.secondary,
+
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+      },
+    }),
     cardDescription: css({
       fontSize: theme.typography.bodySmall.fontSize,
       marginTop: theme.spacing(0),

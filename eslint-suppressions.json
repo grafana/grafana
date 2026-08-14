@@ -1026,11 +1026,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/create-folder/CreateNewFolder.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/import-to-gma/ConfirmConvertModal.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -1230,11 +1225,6 @@
     }
   },
   "public/app/features/alerting/unified/home/Insights.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/hooks/useAlertQueriesStatus.ts": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
     }

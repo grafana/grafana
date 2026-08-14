@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
@@ -27,7 +28,10 @@ var callerSuppliedFields = map[string]string{
 	"EnableNatsNotifier":       "set together with EventSubscriber by the caller",
 	"EnableNatsNotifierShadow": "set together with EventSubscriber by the caller",
 	"EmbeddingDeleter":         "vector backend injected by the caller",
-	"DisableStorageServices":   "derived from which modules the process runs, not from a setting",
+	// Derived from cfg.Target rather than a setting of its own, and false for a
+	// process that runs everything, so the non-zero walk cannot check it.
+	// TestNewKVBackendOptionsDisableStorageServices covers it instead.
+	"DisableStorageServices": "derived from cfg.Target, and false when this process runs the storage server",
 
 	// The lease options are set together, and the holder comes from
 	// sql.ResolveLeaseHolder, which this package cannot import.
@@ -84,6 +88,40 @@ func requirePopulated(t *testing.T, v reflect.Value, path string) {
 			// Anything else is a leaf, and the non-zero check above is all there is to do.
 		}
 	}
+}
+
+func TestNewKVBackendOptionsDisableStorageServices(t *testing.T) {
+	// Garbage collection refuses a zero interval, so a backend that starts it
+	// fails to build. That is what makes "did it start" observable here without
+	// waiting on the loop.
+	buildBackend := func(t *testing.T, target ...string) error {
+		cfg := setting.NewCfg()
+		cfg.Target = target
+		cfg.EnableGarbageCollection = true
+		cfg.GarbageCollectionMaxAge = time.Hour
+
+		opts := NewKVBackendOptions(cfg)
+		opts.KvStore = setupBadgerKV(t)
+		backend, err := NewKVStorageBackend(opts)
+		if err == nil {
+			t.Cleanup(func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+				defer cancel()
+				_ = backend.Stop(ctx)
+			})
+		}
+		return err
+	}
+
+	t.Run("collection starts where the storage server runs", func(t *testing.T) {
+		require.ErrorContains(t, buildBackend(t, "storage-server"), "garbage collection")
+	})
+
+	// Otherwise every replica of a process that only reads collects, and
+	// collection deletes.
+	t.Run("and not where it does not", func(t *testing.T) {
+		require.NoError(t, buildBackend(t, "core"))
+	})
 }
 
 // The walk above only checks for non-zero, so it cannot catch two settings

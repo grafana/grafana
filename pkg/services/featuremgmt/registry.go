@@ -264,10 +264,10 @@ var (
 		{
 			Name:            "provisioning.gitConventions",
 			Description:     "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
+			Expression:      "true", // enabled by default
 			Generate:        Generate{Go: true, React: true},
 		},
 		{
@@ -275,7 +275,7 @@ var (
 			Description: "Author Git Sync commits as the acting Grafana user",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAppPlatformSquad,
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
@@ -1108,14 +1108,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingCentralAlertHistory",
-			Description: "Enables the new central alert history.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true}, // changes navtree from backend
-			Expression:  "false",
 		},
 		{
 			Name:        "pluginProxyPreserveTrailingSlash",
@@ -2331,7 +2323,7 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:         "kubernetesTeamsRedirect",
@@ -2505,13 +2497,24 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "deletedFolderResourceCleanup",
-			Description:  "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true},
+			Name:            "deletedFolderResourceCleanup",
+			Description:     "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
+		},
+		{
+			Name:            "libraryElementFolderUIDRepair",
+			Description:     "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
 		},
 		{
 			Name:        "react19",
@@ -2608,6 +2611,14 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Expression:  "false",
+		},
+		{
+			Name:        "flameGraph.tableNg",
+			Description: "Renders the flame graph's top table using TableNG instead of the legacy Table",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+			Generate:    Generate{React: true},
 			Expression:  "false",
 		},
 		{
@@ -3211,6 +3222,14 @@ var (
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "true", // enabled by default
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "rawPrometheus.tableNg",
+			Description: "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataSourcesPlugins,
+			Generate:    Generate{React: true},
+			Expression:  "false",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
