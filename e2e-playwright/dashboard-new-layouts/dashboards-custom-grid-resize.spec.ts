@@ -106,8 +106,8 @@ async function prepareTestDashboard(
   const dashboardPage = await gotoDashboardPage({});
   await undockMegaMenu(dashboardPage, selectors);
 
-  await sidebar.addOptions.clickNewPanelButton();
-  await sidebar.clickCloseButton();
+  await sidebar.addOptions.addPanel();
+  await sidebar.closePane();
 }
 
 /**
