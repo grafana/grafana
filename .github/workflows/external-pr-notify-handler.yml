@@ -25,7 +25,7 @@ env:
   # community-triage logic version this repo is pinned to (main as of PR #6).
   # Bump deliberately; re-resolve with:
   #   git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 4f7abe69c9c0bc4a4d0befaaef0f1ea04509c29f # trufflehog:ignore
+  TRIAGE_REF: d932eb937eb0b51d23a6d71e0f3026710d0f10c8 # trufflehog:ignore
 
 jobs:
   triage:
