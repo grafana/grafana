@@ -1531,6 +1531,7 @@ func buildDownloadableSnapshot(t *testing.T, ns resource.NamespacedResource, ind
 	bi, err := json.Marshal(buildInfo{
 		BuildTime:    buildTime.Unix(),
 		BuildVersion: meta.BuildVersion,
+		Features:     meta.Features,
 	})
 	require.NoError(t, err)
 	require.NoError(t, idx.SetInternal([]byte(internalBuildInfoKey), bi))
