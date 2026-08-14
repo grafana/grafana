@@ -1080,6 +1080,46 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 	return users
 }
 
+func TestIntegrationBatchDisableUsersExcludesServiceAccounts(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	ss := db.InitTestDB(t)
+	store := ProvideStore(legacysql.NewDatabaseProvider(ss), setting.NewCfg())
+	now := time.Now()
+
+	regularID, err := store.Insert(ctx, &user.User{
+		UID: "batch-disable-user", Email: "batch-disable-user@example.com", Login: "batch-disable-user",
+		Created: now, Updated: now,
+	})
+	require.NoError(t, err)
+	serviceAccountID, err := store.Insert(ctx, &user.User{
+		UID: "batch-disable-service-account", Email: "batch-disable-service-account@example.com", Login: "batch-disable-service-account",
+		IsServiceAccount: true, Created: now, Updated: now,
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, store.BatchDisableUsers(ctx, &user.BatchDisableUsersCommand{
+		UserIDs: []int64{regularID, serviceAccountID}, IsDisabled: true,
+	}))
+
+	type disabledUser struct {
+		ID         int64 `xorm:"id"`
+		IsDisabled bool  `xorm:"is_disabled"`
+	}
+	rows := make([]disabledUser, 0, 2)
+	require.NoError(t, ss.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return sess.Table("user").In("id", []int64{regularID, serviceAccountID}).Cols("id", "is_disabled").Find(&rows)
+	}))
+
+	gotDisabled := make(map[int64]bool, len(rows))
+	for _, row := range rows {
+		gotDisabled[row.ID] = row.IsDisabled
+	}
+	require.True(t, gotDisabled[regularID])
+	require.False(t, gotDisabled[serviceAccountID])
+}
+
 func TestIntegrationMetricsUsage(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

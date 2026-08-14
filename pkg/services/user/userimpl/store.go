@@ -535,14 +535,15 @@ func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisabl
 		}
 
 		user_id_params := strings.Repeat(",?", len(userIds)-1)
-		disableSQL := "UPDATE " + quoteTable(dbHelper, "user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
+		disableSQL := "UPDATE " + quoteTable(dbHelper, "user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")" +
+			" AND is_service_account=" + dbHelper.DB.GetDialect().BooleanStr(false)
 
 		disableParams := []any{disableSQL, cmd.IsDisabled}
 		for _, v := range userIds {
 			disableParams = append(disableParams, v)
 		}
 
-		_, err := sess.Where(ss.notServiceAccountFilter(dbHelper)).Exec(disableParams...)
+		_, err := sess.Exec(disableParams...)
 		return err
 	})
 }

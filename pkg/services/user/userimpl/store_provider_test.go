@@ -105,6 +105,13 @@ func TestStoreUsesProviderTables(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	require.NoError(t, store.Delete(ctx, 7))
 
+	mock.ExpectExec(`(?s)UPDATE .*test_schema.*user.*SET is_disabled=\?.*WHERE Id IN \(\?,\?\).*is_service_account`).
+		WithArgs(true, int64(7), int64(11)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	require.NoError(t, store.BatchDisableUsers(ctx, &user.BatchDisableUsersCommand{
+		UserIDs: []int64{7, 11}, IsDisabled: true,
+	}))
+
 	mock.ExpectQuery(`(?s).*FROM .*test_schema.*user.*LEFT OUTER JOIN .*test_schema.*org_user.*LEFT OUTER JOIN .*test_schema.*org.*WHERE u.id=\?`).
 		WithArgs(int64(42), int64(7)).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow(int64(7)))
@@ -112,7 +119,7 @@ func TestStoreUsesProviderTables(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(7), signedInUser.UserID)
 
-	require.Equal(t, 4, providerCalls)
+	require.Equal(t, 5, providerCalls)
 	require.Contains(t, resolvedTables, "user")
 	require.Contains(t, resolvedTables, "org_user")
 	require.Contains(t, resolvedTables, "org")
