@@ -120,7 +120,8 @@ func TestStoreUsesProviderTables(t *testing.T) {
 	_, err = store.Get(ctx, 42)
 	require.NoError(t, err)
 
-	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM `test_schema`.`org_user` WHERE user_id = ?")).
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."org_user"
+WHERE "user_id" = ?`)).
 		WithArgs(int64(42)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	require.NoError(t, store.DeleteUserFromAll(ctx, 42))
