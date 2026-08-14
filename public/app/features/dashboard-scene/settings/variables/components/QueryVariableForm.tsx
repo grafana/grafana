@@ -163,17 +163,17 @@ export function QueryVariableEditorForm({
           onChange={onRefreshChange}
           refresh={refresh}
         />
-
-        {onStaticOptionsChange && onStaticOptionsOrderChange && (
-          <QueryVariableStaticOptions
-            options={options}
-            staticOptions={staticOptions}
-            staticOptionsOrder={staticOptionsOrder}
-            onStaticOptionsChange={onStaticOptionsChange}
-            onStaticOptionsOrderChange={onStaticOptionsOrderChange}
-          />
-        )}
       </FieldSet>
+
+      {onStaticOptionsChange && onStaticOptionsOrderChange && (
+        <QueryVariableStaticOptions
+          options={options}
+          staticOptions={staticOptions}
+          staticOptionsOrder={staticOptionsOrder}
+          onStaticOptionsChange={onStaticOptionsChange}
+          onStaticOptionsOrderChange={onStaticOptionsOrderChange}
+        />
+      )}
 
       <FieldSet>
         <VariableLegend>
