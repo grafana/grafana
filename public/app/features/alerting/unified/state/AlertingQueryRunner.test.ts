@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
-import { NEVER, type Observable, TimeoutError, from, lastValueFrom, of, throwError } from 'rxjs';
-import { delay, map, take, timeout } from 'rxjs/operators';
+import { NEVER, type Observable, TimeoutError, concat, lastValueFrom, of, throwError } from 'rxjs';
+import { delay, take, timeout } from 'rxjs/operators';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
@@ -264,17 +264,13 @@ describe('AlertingQueryRunner', () => {
   });
 
   describe('run() promise', () => {
-    it('should not resolve before the first value has been pushed', async () => {
+    it('should not resolve while the request is still open after pushing a value', async () => {
       setupDataSources(...Object.values(mockDataSources));
 
-      let emitResponse!: () => void;
-      const responseGate = new Promise<void>((resolve) => {
-        emitResponse = resolve;
-      });
-
+      const response = createFetchResponse<AlertingQueryResponse>({ results: {} });
       const runner = new AlertingQueryRunner(
         mockBackendSrv({
-          fetch: () => from(responseGate).pipe(map(() => createFetchResponse<AlertingQueryResponse>({ results: {} }))),
+          fetch: () => concat(of(response), NEVER),
         })
       );
 
@@ -283,10 +279,24 @@ describe('AlertingQueryRunner', () => {
 
       const run = runner.run([createQuery('A')], 'A').then(() => order.push('resolved'));
       await nextTick();
-      emitResponse();
-      await run;
+      expect(order).toEqual(['pushed']);
 
+      runner.cancel();
+      await run;
       expect(order).toEqual(['pushed', 'resolved']);
+    });
+
+    it('should resolve when the request completes', async () => {
+      setupDataSources(...Object.values(mockDataSources));
+
+      const response = createFetchResponse<AlertingQueryResponse>({ results: {} });
+      const runner = new AlertingQueryRunner(
+        mockBackendSrv({
+          fetch: () => of(response),
+        })
+      );
+
+      await expect(runner.run([createQuery('A')], 'A')).resolves.toBeUndefined();
     });
 
     it('should resolve when there are no queries left to run', async () => {
@@ -322,7 +332,7 @@ describe('AlertingQueryRunner', () => {
       );
 
       const run = runner.run([createQuery('A')], 'A');
-      // let prepareQueries settle so there is a subscription for cancel() to tear down
+      // let prepareQueries settle so cancel() has a subscription to tear down
       await nextTick();
       runner.cancel();
 

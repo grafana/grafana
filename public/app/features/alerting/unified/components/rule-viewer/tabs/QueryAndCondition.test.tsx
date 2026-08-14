@@ -162,7 +162,6 @@ describe('visualizationQueries transformation', () => {
 // ---------------------------------------------------------------------------
 
 describe('loading state', () => {
-  /** Holds every /api/v1/eval response open so assertions can be made while requests are in flight. */
   function blockEvalRequests() {
     let resolveEval!: () => void;
     const evalPending = new Promise<void>((resolve) => {
@@ -209,7 +208,7 @@ describe('loading state', () => {
   it('keeps the loading bar visible while query preparation is pending', async () => {
     const { evalRequests } = blockEvalRequests();
 
-    // AlertingQueryRunner.prepareQueries awaits dataSourceSrv.get before it can issue the request
+    // prepareQueries awaits dataSourceSrv.get before it can issue the request
     let resolveDataSource!: (dataSource: DataSourceApi) => void;
     const dataSourcePending = new Promise<DataSourceApi>((resolve) => {
       resolveDataSource = resolve;
@@ -236,8 +235,6 @@ describe('loading state', () => {
     expect(screen.getByTestId('eval-loading-bar')).toBeInTheDocument();
   });
 
-  // Deriving the loading state from a run being *started* is not enough: withLoadingIndicator
-  // delays the runner's first LoadingState.Loading by 200ms and drops it on a faster response.
   it('keeps the loading bar visible while the eval request is in flight', async () => {
     const { evalRequests, resolveEval } = blockEvalRequests();
 

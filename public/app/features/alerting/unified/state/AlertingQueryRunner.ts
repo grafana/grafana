@@ -51,11 +51,6 @@ export class AlertingQueryRunner {
     return this.subject.asObservable();
   }
 
-  /**
-   * Resolves on the first pushed result rather than on subscribe, because `withLoadingIndicator`
-   * delays the `LoadingState.Loading` value by 200ms and drops it when the response arrives first.
-   * Resolving on subscribe would leave callers unable to tell that a request is still in flight.
-   */
   async run(queries: AlertQuery[], condition: string): Promise<void> {
     const queriesToRun = await this.prepareQueries(queries);
 
@@ -71,7 +66,6 @@ export class AlertingQueryRunner {
 
     return new Promise<void>((resolve) => {
       this.subscription = runRequest(this.backendSrv, queriesToRun, ruleCondition)
-        // also covers error and cancellation, so the promise can never hang
         .pipe(finalize(resolve))
         .subscribe({
           next: (dataPerQuery) => {
@@ -89,7 +83,6 @@ export class AlertingQueryRunner {
 
             this.lastResult = nextResult;
             this.subject.next(this.lastResult);
-            resolve();
           },
 
           error: (error: Error) => {
