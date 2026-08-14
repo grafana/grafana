@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { getFocusStyles } from '../../internal';
+import { getFocusStyles } from '../../themes/mixins';
 import { stylesFactory } from '../../themes/stylesFactory';
 
 export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {

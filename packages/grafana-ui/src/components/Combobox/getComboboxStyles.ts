@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { getFocusStyles } from '../../internal';
+import { getFocusStyles } from '../../themes/mixins';
 
 // We need a px font size to accurately measure the width of items.
 // This should be in sync with the body font size in the theme.
