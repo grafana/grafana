@@ -1725,6 +1725,10 @@ Maximum requests accepted per short interval of time for Grafana backend log ing
 
 Enables the bot filter for the Grafana Faro JavaScript agent integration. Default is `false`. When enabled, it will filter out requests from known bots and crawlers.
 
+#### `track_resources`
+
+Enables tracking of all resource timings for the Grafana Faro JavaScript agent. Default is `false`. When disabled, only `fetch` and `xhr` resource timings are tracked.
+
 <hr>
 
 ### `[quota]`

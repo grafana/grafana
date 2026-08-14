@@ -85,6 +85,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     userIdentifier: 'abc123',
     ignoreUrls: [],
     botFilterEnabled: false,
+    trackResources: false,
   };
 
   it('will set up FetchTransport if customEndpoint is provided', () => {
@@ -171,6 +172,12 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
         expect.any(TracingInstrumentation),
       ])
     );
+  });
+
+  it('passes trackResources through to Faro', () => {
+    new GrafanaJavascriptAgentBackend({ ...options, trackResources: true });
+
+    expect(initializeFaroMock.mock.calls[0][0].trackResources).toBe(true);
   });
 
   it('should use a beforeSend handler', () => {

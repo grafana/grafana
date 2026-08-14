@@ -166,6 +166,7 @@ export class GrafanaBootConfig {
     tracingInstrumentalizationEnabled: false,
     internalLoggerLevel: 0,
     botFilterEnabled: false,
+    trackResources: false,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;

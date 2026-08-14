@@ -14,6 +14,7 @@ type GrafanaJavascriptAgent struct {
 	CSPInstrumentalizationEnabled         bool   `json:"cspInstrumentalizationEnabled"`
 	TracingInstrumentalizationEnabled     bool   `json:"tracingInstrumentalizationEnabled"`
 	BotFilterEnabled                      bool   `json:"botFilterEnabled"`
+	TrackResources                        bool   `json:"trackResources"`
 }
 
 func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
@@ -32,5 +33,6 @@ func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
 		CSPInstrumentalizationEnabled:         raw.Key("instrumentations_csp_enabled").MustBool(true),
 		TracingInstrumentalizationEnabled:     raw.Key("instrumentations_tracing_enabled").MustBool(true),
 		BotFilterEnabled:                      raw.Key("bot_filter_enabled").MustBool(false),
+		TrackResources:                        raw.Key("track_resources").MustBool(false),
 	}
 }
