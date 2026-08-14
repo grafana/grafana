@@ -3,7 +3,6 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { RspackManifestPlugin } from 'rspack-manifest-plugin';
 import { describe, expect, it } from 'vitest';
-import { WebpackAssetsManifest } from 'webpack-assets-manifest';
 
 import FeatureFlaggedSRIPlugin from './FeatureFlaggedSriPlugin.ts';
 import { assetsManifestOptions, type ManifestAssets, type ManifestEntrypoints } from './assetsManifest.ts';
@@ -13,7 +12,8 @@ const OUTPUT_PATH = '/dist';
 const PUBLIC_PATH = 'public/build/';
 const MANIFEST_NAME = 'assets-manifest.json';
 
-// Mirrors the entries, filenames and asset paths of the real build.
+// Mirrors webpack.common.ts: multiple entries including a CSS-only theme pair, boot opting
+// out of the runtime chunk, content-hashed filenames and assets emitted to a subdirectory.
 function createConfig(plugins: RspackPluginInstance[]): Configuration {
   return {
     context: path.join(import.meta.dirname, '__fixtures__', 'assets-manifest'),
@@ -25,14 +25,16 @@ function createConfig(plugins: RspackPluginInstance[]): Configuration {
     },
     mode: 'production',
     devtool: false,
-    // The repo's .browserslistrc has no section for NODE_ENV=test, so rspack would resolve an
-    // empty browserslist and throw.
+    // Explicit target so the compilation doesn't depend on the repo's .browserslistrc, which
+    // has no section matching NODE_ENV=test and no defaults — rspack would resolve an empty
+    // browserslist and throw.
     target: ['web', 'es2022'],
     optimization: { minimize: false, runtimeChunk: 'single' },
     experiments: { css: true },
     module: {
       rules: [
         { test: /\.css$/, type: 'css' },
+        // The case that makes webpack-assets-manifest throw under rspack.
         { test: /\.png$/, type: 'asset/resource' },
       ],
     },
@@ -122,7 +124,11 @@ describe('assets manifest', () => {
     }
   });
 
-  // Both SRI plugins rewrite chunk bytes after they are hashed, so run each order.
+  // SubresourceIntegrityPlugin injects an sriHashes map into the entry chunk and
+  // FeatureFlaggedSRIPlugin rewrites the load_script runtime module afterwards, both changing
+  // the bytes these digests cover. Registration order is asserted in both directions so a
+  // future move to a JS-side SRI implementation fails here rather than shipping a manifest
+  // whose digests no longer match the served files.
   describe.each([
     ['SRI registered first', () => [sriPlugin(), new FeatureFlaggedSRIPlugin(), manifestPlugin()]],
     ['SRI registered last', () => [manifestPlugin(), new FeatureFlaggedSRIPlugin(), sriPlugin()]],
@@ -130,7 +136,7 @@ describe('assets manifest', () => {
     it('hashes the bytes that are actually emitted', async () => {
       const { assets, entries } = await build(buildPlugins());
 
-      // Confirm the rewrites happened, otherwise the assertions below prove nothing.
+      // Guards the guard: without the injection and rewrite there is nothing to be wrong about.
       const runtime = Object.entries(entries).find(([key]) => key === 'runtime.js')?.[1];
       const runtimeSource = assets[runtime!.src.replace(PUBLIC_PATH, '')];
       expect(runtimeSource).toContain('__grafanaAssetSriChecksEnabled');

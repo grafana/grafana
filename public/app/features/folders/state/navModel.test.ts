@@ -117,7 +117,7 @@ describe('buildNavModel', () => {
       const variablesTab = navModel.children?.find((child) => child.id === getVariablesTabID(mockFolder.uid));
 
       expect(variablesTab).toBeDefined();
-      expect(variablesTab?.icon).toBe('brackets-curly');
+      expect(variablesTab?.icon).toBe('gf-variable');
       expect(variablesTab?.url).toBe(`${mockFolder.url}/variables`);
     });
 
