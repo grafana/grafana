@@ -341,6 +341,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/utils"
+	_ "github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/auth/authimpl"
 	_ "github.com/grafana/grafana/pkg/services/auth/authtest"

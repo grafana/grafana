@@ -61,7 +61,9 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 // Process will start a job
 func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	if !r.enabled {
-		return fmt.Errorf("export functionality is disabled by configuration")
+		// A disabled feature is an expected configuration state, not a failure:
+		// complete the job in a warning state so it is not logged or alerted as an error.
+		return jobs.AsWarning(errors.New("export functionality is disabled by configuration"))
 	}
 
 	options := job.Spec.Push

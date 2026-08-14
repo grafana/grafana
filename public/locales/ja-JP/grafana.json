@@ -3593,6 +3593,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "時間間隔",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "時間間隔を選択..."
     },
     "time-intervals-table": {
@@ -5618,10 +5619,13 @@
       "add-conditional-rule": "{{ruleDescription}}ルールを追加",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "パネルを複製",
       "edit-query-result-rule": "クエリ結果ルールを変更",
       "edit-template-variable-rule": "テンプレート変数ルールを変更",
       "edit-time-range-rule": "時間範囲ルールを変更",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "{{typeName}}を移動",
       "panel-background": "パネルの背景を変更",
       "panel-description": "パネルの説明を変更",
@@ -6256,6 +6260,12 @@
         "title-controls-menu_other": "",
         "title-hidden_other": ""
       },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
+      },
       "links": {
         "add-link": "",
         "new-link": "",
@@ -6800,7 +6810,8 @@
         "change-annotation-enabled-state": "注釈の有効状態を変更",
         "change-annotation-name": "注釈の名前を変更",
         "change-annotation-panel-filter": "注釈パネルのフィルターを変更"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "注釈クエリを削除",
@@ -6876,13 +6887,9 @@
       "placeholder-your-metric-prefix": "メトリックのプレフィックス"
     },
     "control-edit-actions": {
-      "aria-label-delete": "削除",
-      "aria-label-edit": "編集",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "ルールの表示/非表示は機能しません",
@@ -7681,6 +7688,10 @@
     "variable-controls": {
       "add-variable": "変数を追加"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
+    },
     "variable-editable-element": {
       "delete-confirm": "変数を削除",
       "delete-text": "{{name}}を削除してもよろしいですか？",
@@ -8010,7 +8021,8 @@
       "title-missing-rights": "権限が不足しています"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "データソースを選択"
+      "aria-label-select-a-data-source": "データソースを選択",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "ページが見つかりません：{{page}}"
@@ -10901,6 +10913,12 @@
       "critical-count_other": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12356,6 +12374,10 @@
     "new-folder": {
       "title": "新規フォルダ"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12539,6 +12561,7 @@
       "customise-saving": "",
       "dialog-label": "ナビゲーション",
       "dock": "メニューを固定",
+      "header-title": "",
       "list-label": "移動",
       "open": "メインメニュー",
       "pin-error": "",
@@ -12647,7 +12670,44 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": ""
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_other": "",
+      "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -15884,6 +15944,7 @@
     "name-show-mini-map": "ミニマップを表示"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -15912,6 +15973,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

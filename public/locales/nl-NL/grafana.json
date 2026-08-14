@@ -3619,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Tijdsintervallen",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Selecteer tijdsintervallen..."
     },
     "time-intervals-table": {
@@ -5658,10 +5659,13 @@
       "add-conditional-rule": "Regel {{ruleDescription}} toevoegen",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Paneel dupliceren",
       "edit-query-result-rule": "Regel voor queryresultaat wijzigen",
       "edit-template-variable-rule": "Regel voor sjabloonvariabele wijzigen",
       "edit-time-range-rule": "Regel voor tijdsbereik wijzigen",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "{{typeName}} verplaatsen ",
       "panel-background": "Paneelachtergrond wijzigen",
       "panel-description": "Paneelbeschrijving wijzigen",
@@ -6303,6 +6307,12 @@
         "title-hidden_one": "",
         "title-hidden_other": ""
       },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
+      },
       "links": {
         "add-link": "",
         "new-link": "",
@@ -6854,7 +6864,8 @@
         "change-annotation-enabled-state": "Inschakelstatus van annotatie wijzigen",
         "change-annotation-name": "Annotatienaam wijzigen",
         "change-annotation-panel-filter": "Annotatiepaneelfilter wijzigen"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Annotatiequery verwijderen",
@@ -6930,13 +6941,9 @@
       "placeholder-your-metric-prefix": "Je metrisch voorvoegsel"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Verwijderen",
-      "aria-label-edit": "Bewerken",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Regels tonen/verbergen werkt niet",
@@ -7737,6 +7744,10 @@
     "variable-controls": {
       "add-variable": "Variabele toevoegen"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
+    },
     "variable-editable-element": {
       "delete-confirm": "Variabele verwijderen",
       "delete-text": "Weet je zeker dat je {{name}} wilt verwijderen?",
@@ -8068,7 +8079,8 @@
       "title-missing-rights": "Ontbrekende rechten"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Selecteer een gegevensbron"
+      "aria-label-select-a-data-source": "Selecteer een gegevensbron",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Pagina niet gevonden: {{page}}"
@@ -10975,6 +10987,12 @@
       "high-count_one": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12451,6 +12469,10 @@
     "new-folder": {
       "title": "Nieuwe map"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "Oproepbaar"
     },
@@ -12634,6 +12656,7 @@
       "customise-saving": "",
       "dialog-label": "Navigatie",
       "dock": "Menu koppelen",
+      "header-title": "",
       "list-label": "Navigatie",
       "open": "Hoofdmenu",
       "pin-error": "",
@@ -12745,7 +12768,46 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": ""
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -16012,6 +16074,7 @@
     "name-show-mini-map": "Minikaart weergeven"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16040,6 +16103,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

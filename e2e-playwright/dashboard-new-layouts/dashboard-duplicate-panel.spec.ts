@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { importTestDashboard, saveDashboardAndCloseToast } from './utils';
+import { flows } from './helpers';
 
 test.use({
   featureToggles: {
@@ -15,8 +15,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can duplicate a panel', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
-      await importTestDashboard(page, selectors, 'Paste tab');
+    test('can duplicate a panel', async ({ selectors, page, controls, sidebar, panels }) => {
+      await flows.dashboards.importTestDashboard(page, selectors, 'Paste tab');
       await controls.enterEditMode();
 
       const oldPanelTitle = 'New panel';
@@ -31,7 +31,7 @@ test.describe(
 
       await expect(panels.getPanels(panelTitle)).toHaveCount(2);
 
-      await saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await expect(panels.getPanels(panelTitle)).toHaveCount(2);

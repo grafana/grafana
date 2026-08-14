@@ -15,8 +15,8 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
   let borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
   let borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
   if (visualRefreshEnabled) {
-    borderColor = invalid ? theme.colors.error.main : theme.components.input.borderColor;
-    borderColorHover = invalid ? theme.colors.error.mainEmphasis : theme.components.input.borderHover;
+    borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
+    borderColorHover = invalid ? theme.colors.error.borderEmphasis : theme.components.input.borderHover;
   }
   const background = theme.components.input.background;
   const textColor = theme.components.input.text;

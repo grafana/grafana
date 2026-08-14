@@ -3619,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Intervalos de tempo",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Selecionar intervalos de tempo..."
     },
     "time-intervals-table": {
@@ -5658,10 +5659,13 @@
       "add-conditional-rule": "Adicionar regra {{ruleDescription}}",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Duplicar painel",
       "edit-query-result-rule": "Alterar regra de resultado da consulta",
       "edit-template-variable-rule": "Alterar regra de variável de modelo",
       "edit-time-range-rule": "Alterar regra de intervalo de tempo",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Mover {{typeName}}",
       "panel-background": "Alterar fundo do painel",
       "panel-description": "Alterar descrição do painel",
@@ -6303,6 +6307,12 @@
         "title-hidden_one": "",
         "title-hidden_other": ""
       },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
+      },
       "links": {
         "add-link": "",
         "new-link": "",
@@ -6854,7 +6864,8 @@
         "change-annotation-enabled-state": "Alterar estado de ativação da anotação",
         "change-annotation-name": "Alterar nome da anotação",
         "change-annotation-panel-filter": "Alterar filtro do painel de anotações"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Eliminar consulta de anotação",
@@ -6930,13 +6941,9 @@
       "placeholder-your-metric-prefix": "O seu prefixo métrico"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Eliminar",
-      "aria-label-edit": "Editar",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "As regras de mostrar/ocultar não funcionarão",
@@ -7737,6 +7744,10 @@
     "variable-controls": {
       "add-variable": "Adicionar variável"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
+    },
     "variable-editable-element": {
       "delete-confirm": "Eliminar variável",
       "delete-text": "Tem a certeza de que pretende eliminar: {{name}}?",
@@ -8068,7 +8079,8 @@
       "title-missing-rights": "Direitos em falta"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Selecionar uma origem de dados"
+      "aria-label-select-a-data-source": "Selecionar uma origem de dados",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Página não encontrada: {{page}}"
@@ -10975,6 +10987,12 @@
       "high-count_one": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12451,6 +12469,10 @@
     "new-folder": {
       "title": "Nova pasta"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12634,6 +12656,7 @@
       "customise-saving": "",
       "dialog-label": "Navegação",
       "dock": "Ancorar menu",
+      "header-title": "",
       "list-label": "Navegação",
       "open": "Menu principal",
       "pin-error": "",
@@ -12745,7 +12768,46 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": ""
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -16012,6 +16074,7 @@
     "name-show-mini-map": "Mostrar o minimapa"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16040,6 +16103,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

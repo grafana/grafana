@@ -12,6 +12,7 @@ import (
 	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
@@ -38,7 +39,9 @@ func (tc *snapshotsTestCase) Name() string {
 }
 
 func (tc *snapshotsTestCase) FeatureToggles() []string {
-	return nil
+	// Snapshots are served over the k8s apis (see Setup below), which now denies
+	// requests when this toggle is off.
+	return []string{featuremgmt.FlagSnapshotsKubernetesSnapshots}
 }
 
 func (tc *snapshotsTestCase) RenameTables() []string {

@@ -1297,3 +1297,32 @@ func TestIntegrationEnsureCollection_PartitionKeyConflict(t *testing.T) {
 	_, err = backend.EnsureCollection(ctx, "one.example.com", "clash-things", true)
 	require.NoError(t, err)
 }
+
+// TestIntegrationVectorNullFolder pins that reads tolerate legacy rows whose
+// folder column is NULL (written before the column existed): scanning into a
+// plain string must not error, and NULL comes back as "".
+func TestIntegrationVectorNullFolder(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		{Namespace: "integration-test", Resource: testResource, UID: "null-folder-dash", Title: "T",
+			Subresource: "panel/1", Content: "legacy content", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 1},
+	}))
+	_, err := engine.Exec("UPDATE embeddings SET folder = NULL WHERE uid = 'null-folder-dash'")
+	require.NoError(t, err)
+
+	stored, folder, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "null-folder-dash")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"panel/1": "legacy content"}, stored)
+	assert.Empty(t, folder)
+
+	results, err := backend.Search(ctx, "integration-test", testModel, testResource, makeEmbedding(0.5, 0.5), 10)
+	require.NoError(t, err)
+	require.NotEmpty(t, results)
+	for _, r := range results {
+		if r.UID == "null-folder-dash" {
+			assert.Empty(t, r.Folder)
+		}
+	}
+}
