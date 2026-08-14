@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import React, { type ComponentProps, useCallback, useId, useMemo } from 'react';
+import React, { type ComponentProps, useCallback, useId, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -19,7 +19,7 @@ import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION }
 import { type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
-import { isNewGroup } from './utils';
+import { isNewGroup, isPointerStateChange } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -224,6 +224,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const styles = useStyles2(getComboboxStyles);
 
+  const [showFocusRing, setShowFocusRing] = useState(false);
+
   const onIsOpenChangeHandler = useCallback(
     (changes: { isOpen: boolean; inputValue?: string }) => {
       onIsOpenChangeProp?.(changes.isOpen);
@@ -338,6 +340,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
     },
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
+      setShowFocusRing(!isPointerStateChange(type));
+
       switch (type) {
         case useCombobox.stateChangeTypes.InputChange:
           updateOptions(newInputValue ?? '');
@@ -467,6 +471,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               loading={loading}
               options={filteredOptions}
               highlightedIndex={highlightedIndex}
+              showFocusRing={showFocusRing}
               selectedItems={selectedItem ? [selectedItem] : []}
               scrollRef={scrollRef}
               getItemProps={getItemProps}

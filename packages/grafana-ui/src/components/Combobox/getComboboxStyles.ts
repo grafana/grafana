@@ -2,6 +2,8 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
+import { getFocusStyles } from '../../internal';
+
 // We need a px font size to accurately measure the width of items.
 // This should be in sync with the body font size in the theme.
 export const MENU_ITEM_FONT_SIZE = 14;
@@ -18,6 +20,7 @@ export const MENU_OPTION_HEIGHT_DESCRIPTION =
 export const POPOVER_MAX_HEIGHT = MENU_OPTION_HEIGHT * 8.5;
 
 export const getComboboxStyles = (theme: GrafanaTheme2) => {
+  const menuPadding = theme.spacing(0.5);
   return {
     menuClosed: css({
       display: 'none',
@@ -34,6 +37,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     menuUlContainer: css({
       label: 'combobox-menu-ul-container',
       listStyle: 'none',
+      padding: menuPadding,
     }),
 
     // The wrapper around the group header and option, not the option itself.
@@ -41,7 +45,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     listItem: css({
       label: 'list-item',
       position: 'absolute',
-      width: '100%',
+      width: `calc(100% - ${menuPadding} * 2)`, // account for padding on the menu container
     }),
 
     optionGroupHeader: css({
@@ -121,11 +125,14 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
 
     optionFocused: css({
       label: 'combobox-option-focused',
-      // top: 0,
       background: theme.colors.action.focus,
       '@media (forced-colors: active), (prefers-contrast: more)': {
         border: `1px solid ${theme.colors.primary.border}`,
       },
+    }),
+    optionFocusRing: css({
+      label: 'combobox-option-focus-ring',
+      ...getFocusStyles(theme),
     }),
     optionSelected: css({
       background: theme.colors.action.selected,
