@@ -677,7 +677,9 @@ func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int6
 			if totalDeleted > 0 {
 				message := "garbage collection deleted history"
 				if b.garbageCollection.DryRun {
-					message = "garbage collection dry run"
+					// The count is one batch, not the whole backlog, so the message must not
+					// read like a total.
+					message = "garbage collection dry run, first batch only"
 				}
 				b.log.Info(message,
 					"group", group,
