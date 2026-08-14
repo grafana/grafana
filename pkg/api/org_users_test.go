@@ -81,7 +81,7 @@ func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
 	settings := hs.Cfg
 
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	hs.SQLStore = sqlStore
 	orgService := orgtest.NewOrgServiceFake()
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
