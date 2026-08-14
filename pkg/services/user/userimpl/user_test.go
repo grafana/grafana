@@ -165,6 +165,33 @@ func TestUserService(t *testing.T) {
 	})
 }
 
+func TestCreatePropagatesLoginConflictErrors(t *testing.T) {
+	expectedErr := errors.New("database unavailable")
+	service := LegacyService{
+		store:      &FakeUserStore{ExpectedError: expectedErr},
+		orgService: orgtest.NewOrgServiceFake(),
+		cfg:        setting.NewCfg(),
+		tracer:     tracing.InitializeTracerForTest(),
+	}
+
+	_, err := service.Create(context.Background(), &user.CreateUserCommand{
+		Email: "user@example.com",
+		Login: "user",
+	})
+	require.ErrorIs(t, err, expectedErr)
+}
+
+func TestCreateServiceAccountPropagatesLoginConflictErrors(t *testing.T) {
+	expectedErr := errors.New("database unavailable")
+	service := LegacyService{
+		store:  &FakeUserStore{ExpectedError: expectedErr},
+		tracer: tracing.InitializeTracerForTest(),
+	}
+
+	_, err := service.CreateServiceAccount(context.Background(), &user.CreateUserCommand{Login: "service-account"})
+	require.ErrorIs(t, err, expectedErr)
+}
+
 func TestService_Update(t *testing.T) {
 	setup := func(opts ...func(svc *LegacyService)) *LegacyService {
 		service := &LegacyService{

@@ -3,6 +3,7 @@ package userimpl
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -131,6 +132,9 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 	}
 
 	if err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email); err != nil {
+		if !errors.Is(err, user.ErrUserAlreadyExists) {
+			return nil, err
+		}
 		return nil, user.ErrUserAlreadyExists
 	}
 
@@ -453,6 +457,9 @@ func (s *LegacyService) CreateServiceAccount(ctx context.Context, cmd *user.Crea
 	cmd.Email = cmd.Login
 	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email)
 	if err != nil {
+		if !errors.Is(err, user.ErrUserAlreadyExists) {
+			return nil, err
+		}
 		return nil, serviceaccounts.ErrServiceAccountAlreadyExists.Errorf("service account with login %s already exists", cmd.Login)
 	}
 
