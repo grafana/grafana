@@ -3384,10 +3384,10 @@
     {
       "metadata": {
         "name": "grafana.viewPanelPane",
-        "resourceVersion": "1784896787869",
+        "resourceVersion": "1786705585860",
         "creationTimestamp": "2026-05-14T12:19:55Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-07-24 12:39:47.869351 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-08-14 11:06:25.860376 +0000 UTC"
         }
       },
       "spec": {
@@ -3395,7 +3395,6 @@
         "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "hideFromDocs": true,
         "expression": "true"
       }
     },
