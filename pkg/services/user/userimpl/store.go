@@ -561,7 +561,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		whereParams := make([]any, 0)
 		userTable := dbHelper.Table("user")
 		userAuthTable := dbHelper.Table("user_auth")
-		quotedUserAuthTable := quoteTable(dbHelper, "user_auth")
+		qUserAuth := quoteTable(dbHelper, "user_auth")
 		sess := dbSess.Table(userTable).Alias("u")
 
 		whereConditions = append(whereConditions, "u.is_service_account = ?")
@@ -569,7 +569,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 
 		// Join with only most recent auth module
 		joinCondition := `(
-		SELECT id from ` + quotedUserAuthTable + ` AS user_auth
+		SELECT id from ` + qUserAuth + ` AS user_auth
 			WHERE user_auth.user_id = u.id
 			ORDER BY user_auth.created DESC `
 		joinCondition = "user_auth.id=" + joinCondition + dbHelper.DB.GetDialect().Limit(1) + ")"
