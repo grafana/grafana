@@ -9,15 +9,11 @@ interface CompileResult {
   outputFs: MemFs;
 }
 
-/**
- * Compiles an rspack configuration with an in-memory output filesystem so
- * tests can assert on emitted assets without writing to disk.
- */
+/** Compiles an rspack configuration with an in-memory output filesystem. */
 export async function compile(config: Configuration): Promise<CompileResult> {
   const compiler = rspack(config);
   const outputFs = createFsFromVolume(new Volume());
-  // memfs stat types allow bigint variants that rspack's OutputFileSystem doesn't model,
-  // but the runtime shapes are compatible (webpack-dev-middleware pairs them the same way).
+  // memfs stat types allow bigint variants that rspack's OutputFileSystem doesn't model.
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   compiler.outputFileSystem = outputFs as unknown as OutputFileSystem;
 
@@ -48,11 +44,7 @@ export async function compile(config: Configuration): Promise<CompileResult> {
   return { stats, outputFs };
 }
 
-/**
- * Reads all emitted assets from the in-memory output filesystem, keyed by path relative to
- * the output directory. Recurses so configs that emit into subdirectories (for example
- * `assetModuleFilename: 'static/img/[name][ext]'`) are readable.
- */
+/** Reads all emitted assets, recursively, keyed by path relative to the output directory. */
 export function readAssets(outputFs: MemFs, outputPath: string, prefix = ''): Record<string, string> {
   const assets: Record<string, string> = {};
   for (const entry of outputFs.readdirSync(path.join(outputPath, prefix))) {

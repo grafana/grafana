@@ -10,20 +10,13 @@ import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 
 const require = createRequire(import.meta.url);
 const grafanaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-// getEnvConfig returns the parsed ini values as `unknown` (the ini parser turns
-// `true`/`false` into booleans). rspack's EnvironmentPlugin types its defaults as strings
-// where webpack's accepts anything, but both just JSON.stringify the value, so the
-// non-string values it already receives under webpack stay correct.
+// The ini parser also returns booleans, which EnvironmentPlugin types as strings but
+// JSON.stringifies the same way.
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const envConfig = getEnvConfig(grafanaRoot) as Record<string, string>;
 
 export type Env = Record<string, string | true | undefined>;
 
-// Parity with resolveToEsbuildTarget(browserslist()) in scripts/webpack/rules.ts — swc's
-// env.targets accepts a browserslist query directly.
-// NOTE: the webpack esbuild rule sets `format: undefined` to stop esbuild defaulting to
-// 'iife', which broke monaco/loader once minified. swc has no equivalent option; the risk
-// moves to the prod minifier.
 export const swcRule: RuleSetRule = {
   test: /\.tsx?$/,
   use: {
@@ -31,11 +24,9 @@ export const swcRule: RuleSetRule = {
     options: {
       jsc: {
         parser: { syntax: 'typescript', tsx: true },
-        // `development` defaults to the compiler mode, which would compile JSX through
-        // react/jsx-dev-runtime in dev. esbuild-loader never opts into that, so pinning
-        // it off keeps both bundlers on the same runtime. It also keeps the output
-        // machine-independent: jsxDEV embeds the absolute source path of every call
-        // site, so the dev bundle would hash differently per checkout directory.
+        // `development` defaults to the compiler mode. Leaving it on routes JSX through
+        // jsxDEV, which embeds the absolute source path of every call site and makes the
+        // bundle hash differently per checkout directory.
         transform: { react: { runtime: 'automatic', development: false } },
       },
       env: { targets: browserslist().join(', ') },
@@ -44,8 +35,6 @@ export const swcRule: RuleSetRule = {
   type: 'javascript/auto',
 };
 
-// Port of sassRule in scripts/webpack/rules.ts with CssExtractRspackPlugin.loader in
-// place of MiniCssExtractPlugin.loader.
 export const sassRule: RuleSetRule = {
   test: /\.(sa|sc|c)ss$/,
   use: [
@@ -89,13 +78,10 @@ export const sassRule: RuleSetRule = {
 export default (env: Env = {}): Configuration => ({
   target: 'web',
 
-  // Rspack does not parse AMD `define` branches unless this is set; webpack does by
-  // default. Without it the UMD wrappers in node_modules (json-logic-js, papaparse,
-  // file-saver, …) keep their runtime `define.amd` check, and in the browser that check
-  // passes because systemjs/dist/extras/amd installs a global `define` for plugin
-  // loading. Those modules then register as AMD, export nothing, and Grafana crashes at
-  // boot. The build stays green either way — count `define.amd` guards in the output to
-  // verify (1 with this set).
+  // Rspack only parses AMD `define` branches when this is set. Without it, UMD wrappers in
+  // node_modules keep their runtime `define.amd` check, which passes because systemjs
+  // installs a global `define`. Those modules register as AMD, export nothing, and Grafana
+  // crashes at boot with a green build.
   amd: {},
 
   entry: {
@@ -113,11 +99,8 @@ export default (env: Env = {}): Configuration => ({
   },
   output: {
     // `path` and `publicPath` deliberately disagree. Each bundler owns its own output
-    // directory, so `clean: true` here cannot wipe the webpack build, but both serve
-    // under the same URL. Everything that resolves a URL at runtime — the public path
-    // derivation in public/app/index.ts, the CDN path in public/views/index.html, chunk
-    // and worker loading — is written against `public/build/`, so keeping the URL fixed
-    // means the rspack bundle needs no frontend changes of its own.
+    // directory so `clean: true` cannot wipe the webpack build, but everything that
+    // resolves a URL at runtime is written against `public/build/`.
     clean: true,
     path: path.resolve(import.meta.dirname, '../../public/build-rspack'),
     filename: (pathData) => {
@@ -165,9 +148,8 @@ export default (env: Env = {}): Configuration => ({
   },
   ignoreWarnings: [
     /export .* was not found in/,
-    // The webpack config matches this one with the `{ module, message }` object form.
-    // Rspack's warning message carries extra formatting, so an anchored message regex
-    // never matches — hence the function form.
+    // Function form because rspack's warning message carries extra formatting, which an
+    // anchored message regex never matches.
     (warning) =>
       warning.message.includes('Critical dependency: the request of a dependency is an expression') &&
       warning.module != null &&
@@ -193,10 +175,8 @@ export default (env: Env = {}): Configuration => ({
   module: {
     parser: {
       javascript: {
-        // webpack reports missing ESM exports as warnings (swallowed by
-        // ignoreWarnings[0] above); rspack raises them as hard errors
-        // (ESModulesLinkingError, 19 of them from @opentelemetry/exporter-collector).
-        // Downgraded globally to keep parity with the webpack build.
+        // Rspack raises missing ESM exports as hard errors. Downgraded so ignoreWarnings
+        // above can swallow them, as it does under webpack.
         exportsPresence: 'warn',
       },
     },

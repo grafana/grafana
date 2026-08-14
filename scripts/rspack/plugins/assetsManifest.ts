@@ -16,10 +16,7 @@ export interface ManifestAssets {
   [fileName: string]: ManifestAssetEntry;
 }
 
-/**
- * Generate an assets manifest in the shape that webassets.go expects.
- * Only contains files for the entrypoints.
- */
+/** Generates an entrypoint-only assets manifest in the shape that webassets.go expects. */
 export function generateAssetsManifest(
   _seed: unknown,
   files: FileDescriptor[],

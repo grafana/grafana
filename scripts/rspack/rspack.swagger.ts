@@ -8,40 +8,22 @@ import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
 import { assetsManifestOptions } from './plugins/assetsManifest.ts';
 import { swcRule, sassRule, type Env } from './rspack.common.ts';
 
-// Port of scripts/webpack/webpack.swagger.ts. Like that config this stands alone rather than
-// extending rspack.common.ts — the swagger page is a separate entry with its own resolve
-// roots and no plugin/theme machinery.
-//
-// Output goes to public/build-swagger-rspack while publicPath stays public/build-swagger/,
-// the same split rspack.prod.ts uses for the app: a separate directory on disk, one shared
-// URL space. pkg/api/swagger.go hardcodes "build-swagger" and does not take part in the
-// feature-flagged directory selection, so writing to it directly would mean the rspack build
-// silently overwrites what the backend is still serving. Holding the public path is what
-// keeps public/swagger/index.tsx correct without editing it — its derivation of
-// __grafana_public_path__ only breaks if the URL segment changes, and it does not.
-// Teaching the backend to pick the swagger directory the way it picks the app one is a
-// follow-up on #129729; until that lands nothing serves this directory, the intended safe
-// state.
 export default (env: Env = {}): Configuration => {
   const config: Configuration = {
     name: 'swagger',
     mode: env.develop ? 'development' : 'production',
 
-    // NOTE: no `cache: { type: 'filesystem' }` counterpart to webpack.swagger.ts, matching
-    // the call made in rspack.dev.ts and rspack.prod.ts.
     devtool: env.develop ? 'eval-source-map' : 'source-map',
 
-    // Mirrors rspack.common.ts: rspack leaves the runtime `define.amd` check in UMD wrappers
-    // in place unless this is set, where webpack resolves the branch at build time.
+    // See rspack.common.ts: without this, UMD wrappers register as AMD and export nothing.
     amd: {},
 
     entry: {
       app: './public/swagger/index.tsx',
     },
     ignoreWarnings: [
-      // The webpack config matches this with the `{ module, message }` object form. Rspack's
-      // warning message carries extra formatting, so an anchored message regex never
-      // matches — hence the function form, as in rspack.common.ts.
+      // Function form because rspack's warning message carries extra formatting, which an
+      // anchored message regex never matches.
       (warning) =>
         warning.message.includes('Critical dependency: the request of a dependency is an expression') &&
         warning.module != null &&
@@ -50,8 +32,7 @@ export default (env: Env = {}): Configuration => {
     module: {
       parser: {
         javascript: {
-          // Same downgrade as rspack.common.ts: rspack raises missing ESM exports as hard
-          // errors where webpack reports warnings.
+          // Rspack raises missing ESM exports as hard errors. See rspack.common.ts.
           exportsPresence: 'warn',
         },
       },

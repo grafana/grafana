@@ -59,18 +59,12 @@ export default (env: Env = {}) => {
       pathinfo: false,
     },
 
-    // Mirrors the dev optimization block in scripts/webpack/webpack.dev.ts.
-    // `removeAvailableModules` is omitted — rspack has no such option, it always skips
-    // modules already available in a parent chunk.
     optimization: {
       moduleIds: 'named',
       runtimeChunk: true,
       removeEmptyChunks: false,
       splitChunks: false,
     },
-
-    // NOTE: no `cache: { type: 'filesystem' }` counterpart to webpack.dev.ts. Rspack's
-    // native cache is enough, and the webpack one costs ~2.6GB per checkout.
 
     plugins: [
       new rspack.DefinePlugin({
@@ -89,8 +83,7 @@ export default (env: Env = {}) => {
   };
 
   if (Number(env.liveReload)) {
-    // webpack-livereload-plugin crashes rspack 2 at apply time ("Cannot read properties
-    // of undefined (reading 'tap')"). The webpack dev config still supports the flag.
+    // webpack-livereload-plugin crashes rspack 2 at apply time.
     console.warn('[rspack.dev] --env liveReload=1 is not supported by the rspack build; ignoring.');
   }
 
@@ -117,9 +110,8 @@ export default (env: Env = {}) => {
         lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
         extensions: ['.ts', '.tsx'],
         configType: 'flat',
-        // eslint-rspack-plugin 5.x dropped `failOnError`. Reporting errors as warnings
-        // is what `failOnError: false` did in eslint-webpack-plugin, so this keeps the
-        // webpack dev behaviour: lint problems are printed, the build still succeeds.
+        // Replaces `failOnError: false`, dropped in eslint-rspack-plugin 5.x: lint problems
+        // are printed and the build still succeeds.
         severity: { error: 'warning' },
       })
     );
