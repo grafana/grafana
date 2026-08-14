@@ -163,6 +163,93 @@ describe('fieldValueColors (golden baseline)', () => {
     ).toMatchSnapshot();
   });
 
+  it('compiles a continuous palette into the requested number of range states', () => {
+    const field = makeColorField(
+      { color: { mode: FieldColorModeId.ContinuousGrYlRd }, unit: 'percent' },
+      [0, 10, 99, 100]
+    );
+    const { index, getOne, getAll } = getEnumConfig(field, theme, {
+      paletteStatesQty: 10,
+      range: { min: 0, max: 100 },
+    });
+
+    expect(index.color).toHaveLength(10);
+    expect(index.color?.[0]).toBe('#73bf69ff');
+    expect(index.color?.[9]).toBe('#f2495cff');
+    expect(index.text).toEqual([
+      '< 10%',
+      '≥ 10%',
+      '≥ 20%',
+      '≥ 30%',
+      '≥ 40%',
+      '≥ 50%',
+      '≥ 60%',
+      '≥ 70%',
+      '≥ 80%',
+      '≥ 90%',
+    ]);
+    expect(getOne(-1)).toBe(0);
+    expect(getOne(101)).toBe(9);
+    expect(getAll(field.values)).toEqual([0, 1, 9, 9]);
+  });
+
+  it.each([
+    ['classic', FieldColorModeId.PaletteClassic],
+    ['classic by name', FieldColorModeId.PaletteClassicByName],
+    ['colorblind', FieldColorModeId.PaletteColorblind],
+    ['categorical next', FieldColorModeId.PaletteCategoricalNext],
+    ['categorical next 2', FieldColorModeId.PaletteCategoricalNext2],
+    ['categorical next 3', FieldColorModeId.PaletteCategoricalNext3],
+  ])('compiles the %s palette into ten range states', (_name, mode) => {
+    const field = makeColorField({ color: { mode, fixedColor: 'blue' } }, [0, 100]);
+    const { index, getAll } = getEnumConfig(field, theme, {
+      paletteStatesQty: 10,
+      range: { min: 0, max: 100 },
+    });
+
+    expect(index.color).toHaveLength(10);
+    expect(getAll(field.values)).toEqual([0, 9]);
+  });
+
+  it('compiles shades into ten distinct range states', () => {
+    const field = makeColorField({ color: { mode: FieldColorModeId.Shades, fixedColor: 'blue' } }, [0, 100]);
+    const { index, getAll } = getEnumConfig(field, theme, {
+      paletteStatesQty: 10,
+      range: { min: 0, max: 100 },
+    });
+
+    expect(index.color).toHaveLength(10);
+    expect(new Set(index.color).size).toBe(10);
+    expect(getAll(field.values)).toEqual([0, 9]);
+  });
+
+  it('keeps mappings and thresholds ahead of palette bucketing', () => {
+    const mappingField = makeColorField(
+      {
+        color: { mode: FieldColorModeId.PaletteClassic },
+        mappings: [{ type: MappingType.ValueToText, options: { '1': { text: 'one', color: 'green' } } }],
+      },
+      [1, 2]
+    );
+    const thresholdField = makeColorField(
+      {
+        color: { mode: FieldColorModeId.Thresholds },
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 50, color: 'red' },
+          ],
+        },
+      },
+      [0, 100]
+    );
+    const options = { paletteStatesQty: 10, range: { min: 0, max: 100 } };
+
+    expect(getEnumConfig(mappingField, theme, options).index.text).toEqual(['one']);
+    expect(getEnumConfig(thresholdField, theme, options).index.text).toEqual(['< 50', '≥ 50']);
+  });
+
   it('RegexToText mapping', () => {
     const config = {
       mappings: [

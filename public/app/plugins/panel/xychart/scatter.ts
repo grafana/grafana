@@ -579,6 +579,14 @@ interface FieldColorValuesWithCache extends FieldColorValues {
 type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
 type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 
+export interface EnumConfigOptions {
+  paletteStatesQty?: number;
+  range?: {
+    min?: number;
+    max?: number;
+  };
+}
+
 function getLabelForRange(from: number | null, to: number | null, formatValue: (value: number) => string = String) {
   let text: string;
 
@@ -613,7 +621,7 @@ function getSpecialValueLabel(match: SpecialValueMatch) {
 }
 
 /** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
-export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues {
+export function getEnumConfig(f: Field, theme: GrafanaTheme2, options?: EnumConfigOptions): FieldColorValues {
   const index: EnumFieldConfig = {
     color: [],
     text: [],
@@ -624,6 +632,7 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
   let getOne: GetOneValue = () => -1;
   const formatValue = (value: number) =>
     formattedValueToString(getValueFormat(f.config.unit ?? '')(value, f.config.decimals ?? undefined));
+  const colorMode = getFieldColorModeForField(f);
 
   let conds = '';
 
@@ -825,8 +834,67 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
         `
       ) as GetAllValues;
     }
+  } else if (
+    options?.paletteStatesQty != null &&
+    (colorMode.isContinuous || colorMode.id.startsWith('palette-') || colorMode.id === FieldColorModeId.Shades)
+  ) {
+    const statesQty = options.paletteStatesQty;
+    const needsFallbackRange = options.range?.min == null || options.range.max == null;
+    const fieldConfig = needsFallbackRange ? getFieldConfigWithMinMax(f) : undefined;
+    const min = options.range?.min ?? fieldConfig?.min ?? 0;
+    const max = options.range?.max ?? fieldConfig?.max ?? 0;
+    const delta = max - min;
+
+    index.color = Array(statesQty);
+    index.text = Array(statesQty);
+    index.icon = Array(statesQty).fill('');
+
+    if (colorMode.isContinuous) {
+      const calc = colorMode.getCalculator(f, theme);
+      for (let i = 0; i < statesQty; i++) {
+        const percent = statesQty === 1 ? 0 : i / (statesQty - 1);
+        index.color[i] = getHex8Color(calc(0, percent), theme);
+      }
+    } else if (colorMode.id === FieldColorModeId.Shades) {
+      const baseColor = theme.visualization.getColorByName(f.config.color?.fixedColor ?? FALLBACK_COLOR);
+      for (let i = 0; i < statesQty; i++) {
+        const percent = statesQty === 1 ? 0 : i / (statesQty - 1);
+        index.color[i] = tinycolor(baseColor)
+          .brighten(35 - percent * 70)
+          .toHex8String();
+      }
+    } else {
+      const palette = colorMode.getColors?.(theme) ?? [FALLBACK_COLOR];
+      for (let i = 0; i < statesQty; i++) {
+        index.color[i] = getHex8Color(palette[i % palette.length], theme);
+      }
+    }
+
+    for (let i = 0; i < statesQty; i++) {
+      const from = min + (delta * i) / statesQty;
+      const to = min + (delta * (i + 1)) / statesQty;
+
+      if (i === 0) {
+        index.text[i] = `< ${formatValue(to)}`;
+      } else {
+        index.text[i] = `≥ ${formatValue(from)}`;
+      }
+    }
+
+    getOne = (value, rangeMin = min, rangeMax = max) => {
+      const range = rangeMax - rangeMin || 1;
+      const numeric = Number(value);
+      return numeric < rangeMin
+        ? 0
+        : numeric > rangeMax
+          ? statesQty - 1
+          : Math.min(statesQty - 1, Math.floor((statesQty * (numeric - rangeMin)) / range));
+    };
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    getAll = (values, rangeMin = min, rangeMax = max) =>
+      valuesToFills(values as number[], index.color!, rangeMin, rangeMax);
   } else if (f.config.color?.mode?.startsWith('continuous')) {
-    let calc = getFieldColorModeForField(f).getCalculator(f, theme);
+    let calc = colorMode.getCalculator(f, theme);
 
     index.color = Array(32);
 

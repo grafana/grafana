@@ -65,6 +65,63 @@ describe('toEnumField', () => {
     expect(result.values).toEqual([0, 0, null, 1, 1, 2, 2]);
   });
 
+  it('converts numeric palette values into ten range states', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [-10, 0, 9, 10, 99, 100, 110, null, NaN],
+          config: {
+            color: { mode: FieldColorModeId.PaletteClassic },
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme, {
+      paletteStatesQty: 10,
+      range: { min: 0, max: 100, delta: 100 },
+    });
+
+    expect(result.config.type?.enum?.text).toEqual([
+      '< 10',
+      '≥ 10',
+      '≥ 20',
+      '≥ 30',
+      '≥ 40',
+      '≥ 50',
+      '≥ 60',
+      '≥ 70',
+      '≥ 80',
+      '≥ 90',
+    ]);
+    expect(result.values).toEqual([0, 0, 0, 1, 9, 9, 9, null, null]);
+  });
+
+  it('maps a constant numeric range to the first palette state', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [5, 5],
+          config: {
+            color: { mode: FieldColorModeId.ContinuousGrYlRd },
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme, {
+      paletteStatesQty: 10,
+      range: { min: 5, max: 5, delta: 0 },
+    });
+
+    expect(result.config.type?.enum?.text).toHaveLength(10);
+    expect(result.values).toEqual([0, 0]);
+  });
+
   it('keeps colored, text-only, and regex mappings as distinct states', () => {
     const field = toDataFrame({
       fields: [
@@ -218,6 +275,64 @@ describe('prepare timeline graph', () => {
     ];
     const info = prepareTimelineFields(frames, true, timeRange, theme);
     expect(info.warn).toEqual('No graphable fields');
+  });
+
+  it('uses the precomputed shared range for palette states across numeric fields', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        {
+          name: 'a',
+          type: FieldType.number,
+          values: [0, 50],
+          config: { color: { mode: FieldColorModeId.PaletteClassic } },
+        },
+        {
+          name: 'b',
+          type: FieldType.number,
+          values: [50, 100],
+          config: { color: { mode: FieldColorModeId.ContinuousGrYlRd } },
+        },
+      ],
+    });
+    const range = { min: 0, max: 100, delta: 100 };
+    frame.fields[1].state = { range };
+    frame.fields[2].state = { range };
+
+    const info = prepareTimelineFields([frame], false, timeRange, theme);
+    const [, fieldA, fieldB] = info.frames![0].fields;
+
+    expect(fieldA.config.type?.enum?.text).toEqual(fieldB.config.type?.enum?.text);
+    expect(fieldA.values).toEqual([0, 5]);
+    expect(fieldB.values).toEqual([5, 9]);
+  });
+
+  it('honors explicit and field-local precomputed ranges for palette states', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+        {
+          name: 'explicit',
+          type: FieldType.number,
+          values: [0, 10, 20],
+          config: { min: 0, max: 20, color: { mode: FieldColorModeId.PaletteClassic } },
+        },
+        {
+          name: 'local',
+          type: FieldType.number,
+          values: [100, 150, 200],
+          config: { fieldMinMax: true, color: { mode: FieldColorModeId.PaletteClassic } },
+        },
+      ],
+    });
+    frame.fields[1].state = { range: { min: 0, max: 20, delta: 20 } };
+    frame.fields[2].state = { range: { min: 100, max: 200, delta: 100 } };
+
+    const info = prepareTimelineFields([frame], false, timeRange, theme);
+    const [, explicitField, localField] = info.frames![0].fields;
+
+    expect(explicitField.values).toEqual([0, 5, 9]);
+    expect(localField.values).toEqual([0, 5, 9]);
   });
 
   it('errors with no frame', () => {
@@ -614,6 +729,7 @@ describe('prepareTimelineLegendItems', () => {
             type: FieldType.string,
             values: ['OK', 'ERROR', 'HUH'],
             config: {
+              color: { mode: FieldColorModeId.ContinuousGrYlRd },
               mappings: [
                 {
                   type: MappingType.ValueToText,
@@ -670,6 +786,43 @@ describe('prepareTimelineLegendItems', () => {
     expect(result?.map(({ label, color }) => ({ label, color }))).toEqual([
       { label: '< 30', color: '#73bf69' },
       { label: '≥ 30', color: '#f2495c' },
+    ]);
+  });
+
+  it.each([
+    FieldColorModeId.ContinuousGrYlRd,
+    FieldColorModeId.PaletteClassic,
+    FieldColorModeId.Shades,
+  ])('shows all range states for a bucketed numeric palette (%s)', (colorMode) => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        {
+          name: 'load',
+          type: FieldType.number,
+          values: [0, 100],
+          config: {
+            color: { mode: colorMode, fixedColor: 'blue' },
+          },
+        },
+      ],
+    });
+    frame.fields[1].state = { range: { min: 0, max: 100, delta: 100 } };
+
+    const info = prepareTimelineFields([frame], true, timeRange, theme);
+    const result = prepareTimelineLegendItems(info.frames, legendOptions, theme);
+
+    expect(result?.map(({ label }) => label)).toEqual([
+      '< 10',
+      '≥ 10',
+      '≥ 20',
+      '≥ 30',
+      '≥ 40',
+      '≥ 50',
+      '≥ 60',
+      '≥ 70',
+      '≥ 80',
+      '≥ 90',
     ]);
   });
 

@@ -11,6 +11,7 @@ import {
   getFieldDisplayName,
   getValueFormat,
   type GrafanaTheme2,
+  type NumericRange,
   ThresholdsMode,
   type TimeRange,
   cacheFieldDisplayNames,
@@ -62,6 +63,7 @@ interface UPlotConfigOptions {
 interface PanelFieldConfig extends HideableFieldConfig {
   fillOpacity?: number;
   lineWidth?: number;
+  showAllEnumStates?: boolean;
 }
 
 export enum TimelineMode {
@@ -73,6 +75,8 @@ const defaultConfig: PanelFieldConfig = {
   lineWidth: 0,
   fillOpacity: 80,
 };
+
+const CONTINUOUS_STATES_QTY = 10;
 
 /** Checks if a mapped value of the specified type exists for the given field */
 export const hasSpecialMappedValue = (field: Field, match: SpecialValueMatch): boolean =>
@@ -99,6 +103,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   const xScaleKey = 'x';
 
   const isDiscrete = (field: Field) => {
+    if (field.type === FieldType.enum) {
+      return true;
+    }
+
     const mode = field.config?.color?.mode;
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
@@ -279,19 +287,26 @@ const stripOpaqueAlpha = (color: string) => (color.length === 9 && color.endsWit
  * value mappings or thresholds (via getEnumConfig); fields without either get one
  * state per distinct raw value, formatted and colored by the field's display processor.
  */
-export function toEnumField(field: Field, theme: GrafanaTheme2): Field {
+export function toEnumField(
+  field: Field,
+  theme: GrafanaTheme2,
+  options?: { paletteStatesQty?: number; range?: NumericRange }
+): Field {
+  const hasMappings = (field.config.mappings?.length ?? 0) > 0;
+  const colorMode = getFieldColorModeForField(field);
+  const bucketNumericPalette =
+    field.type === FieldType.number &&
+    options?.paletteStatesQty != null &&
+    (colorMode.isContinuous || colorMode.id.startsWith('palette-') || colorMode.id === FieldColorModeId.Shades);
   const custom = {
     ...field.config.custom,
     spanNulls: getSpanNulls(field),
+    showAllEnumStates: field.config.custom?.showAllEnumStates || (bucketNumericPalette && !hasMappings),
   };
 
-  const hasMappings = (field.config.mappings?.length ?? 0) > 0;
-  const isContinuous = getFieldColorModeForField(field).isContinuous;
-
-  // already-enum fields pass through untouched, as do continuous color schemes (gradient render
-  // path) without mappings. mappings win over continuous color modes, same as in getEnumConfig,
-  // since continuous-GrYlRd is the panel-wide default that mappings are layered onto.
-  if (field.type === FieldType.enum || (!hasMappings && isContinuous)) {
+  // already-enum fields pass through untouched. Continuous color schemes also pass through when
+  // palette bucketing is not requested. Mappings win over color modes, same as in getEnumConfig.
+  if (field.type === FieldType.enum || (!hasMappings && colorMode.isContinuous && !bucketNumericPalette)) {
     return {
       ...field,
       config: {
@@ -304,7 +319,13 @@ export function toEnumField(field: Field, theme: GrafanaTheme2): Field {
   const noStates: Pick<FieldColorValues, 'index' | 'getAll'> = { index: {}, getAll: () => [] };
 
   // mappings compile to states for all field types, thresholds only for numeric values
-  const { index, getAll } = hasMappings || field.type === FieldType.number ? getEnumConfig(field, theme) : noStates;
+  const { index, getAll } =
+    hasMappings || field.type === FieldType.number
+      ? getEnumConfig(field, theme, {
+          paletteStatesQty: options?.paletteStatesQty,
+          range: options?.range,
+        })
+      : noStates;
   const idxs = getAll(field.values);
 
   const enumConfig: EnumFieldConfig = {
@@ -542,7 +563,10 @@ export function prepareTimelineFields(
         case FieldType.boolean:
         case FieldType.string: {
           // toEnumField always returns a fresh Field object, so replacing its values is safe
-          const enumField = toEnumField(field, theme);
+          const enumField = toEnumField(field, theme, {
+            paletteStatesQty: CONTINUOUS_STATES_QTY,
+            range: field.state?.range,
+          });
 
           if (mergeValues) {
             enumField.values = mergeConsecutiveValues(enumField.values);
@@ -720,7 +744,9 @@ export function prepareTimelineLegendItems(
       // continuous color schemes remain non-enum and contribute no legend items (eventually a color bar)
       const { text = [], color = [] } = field.config.type?.enum ?? {};
       const showAllStates =
-        field.config.color?.mode === FieldColorModeId.Thresholds && (field.config.thresholds?.steps.length ?? 0) > 1;
+        field.config.custom?.showAllEnumStates ||
+        (field.config.color?.mode === FieldColorModeId.Thresholds &&
+          (field.config.thresholds?.steps.length ?? 0) > 1);
       const presentStates = showAllStates ? undefined : new Set(field.values);
 
       for (let i = 0; i < text.length; i++) {
