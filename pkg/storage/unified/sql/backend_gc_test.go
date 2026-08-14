@@ -77,6 +77,42 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.Len(t, historyResp.Items, 0)
 	})
 
+	t.Run("dry run reports candidates without deleting history", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+		t.Cleanup(db.CleanupTestDB)
+
+		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+		dryRunConfig := gcConfig
+		dryRunConfig.DryRun = true
+		storageBackend, sqlDB := newTestBackend(t, dryRunConfig)
+		b := storageBackend.(*backend)
+
+		rv1, err := test.WriteEvent(ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
+		require.NoError(t, err)
+		_, err = test.WriteEvent(ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED, test.WithNamespaceAndRV("namespace", rv1))
+		require.NoError(t, err)
+
+		historyRows := func() int {
+			var n int
+			row := sqlDB.QueryRowContext(ctx, "SELECT COUNT(*) FROM resource_history")
+			require.NoError(t, row.Scan(&n))
+			return n
+		}
+		require.Equal(t, 2, historyRows())
+
+		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		candidates, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), candidates)
+		require.Equal(t, 2, historyRows())
+
+		// The loop must not spin on candidates it never deletes.
+		results := b.runGarbageCollection(ctx, cutoffTimestamp)
+		require.Equal(t, int64(1), results["group/resource"])
+		require.Equal(t, 2, historyRows())
+	})
+
 	t.Run("will only garbage collect eligible resources before cutoff", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 		t.Cleanup(db.CleanupTestDB)

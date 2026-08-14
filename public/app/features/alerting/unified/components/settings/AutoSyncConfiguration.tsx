@@ -8,7 +8,12 @@ import { Alert, Button, Card, ConfirmModal, Field, LinkButton, Select, Stack, To
 import { AutoSyncStatusBadge } from './AutoSyncStatusBadge';
 import { hasConfiguredUid, isOperatorManaged, useAutoSyncConfiguration } from './useAutoSyncConfiguration';
 
-export function AutoSyncConfiguration() {
+interface AutoSyncConfigurationProps {
+  /** Identifier of the staged import occupying the shared `extra_config` slot, if there is one. */
+  stagedConfigIdentifier?: string;
+}
+
+export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfigurationProps) {
   const styles = useStyles2(getStyles);
   const { state, mimirCortexDatasources, selectedUid, setSelectedUid, save, disableSync, isPending, isLoading } =
     useAutoSyncConfiguration();
@@ -29,11 +34,24 @@ export function AutoSyncConfiguration() {
   const showDisableSync = state.kind === 'configured' || state.kind === 'orphan-uid';
   const showSave = state.kind === 'unconfigured' || state.kind === 'orphan-uid';
   const savedUid = hasConfiguredUid(state) ? state.uid : '';
-  const saveDisabled = !selectedUid || selectedUid === savedUid;
-  const saveDisabledTooltip = t(
-    'alerting.settings.auto-sync.save-disabled-no-selection',
-    'Select a Mimir or Cortex Alertmanager datasource to enable saving.'
-  );
+
+  // A sync tick writes its datasource UID into the single extra_config slot without replacing what is
+  // already there, so it fails server-side unless the slot is empty or holds that same UID.
+  const slotBlocksSyncFrom = (uid: string) => Boolean(stagedConfigIdentifier) && stagedConfigIdentifier !== uid;
+
+  const savingWouldBreakSync = slotBlocksSyncFrom(selectedUid);
+  const runningSyncIsBroken = Boolean(savedUid) && slotBlocksSyncFrom(savedUid);
+
+  const saveDisabled = !selectedUid || selectedUid === savedUid || savingWouldBreakSync;
+  const saveDisabledTooltip = savingWouldBreakSync
+    ? t(
+        'alerting.settings.auto-sync.save-disabled-staged-config',
+        'Revert the staged configuration before enabling auto-sync.'
+      )
+    : t(
+        'alerting.settings.auto-sync.save-disabled-no-selection',
+        'Select a Mimir or Cortex Alertmanager datasource to enable saving.'
+      );
 
   const handleDisableConfirm = async () => {
     setShowDisableConfirm(false);
@@ -83,6 +101,9 @@ export function AutoSyncConfiguration() {
               </Trans>
             </Alert>
           )}
+          {(runningSyncIsBroken || (showSave && savingWouldBreakSync)) && (
+            <StagedConflictAlert identifier={stagedConfigIdentifier} isRunningSyncBroken={runningSyncIsBroken} />
+          )}
           <div className={styles.formRow}>
             <Field
               noMargin
@@ -112,6 +133,7 @@ export function AutoSyncConfiguration() {
                   aria-label={t('alerting.settings.auto-sync.picker-label', 'Datasource')}
                   options={options}
                   value={selectedUid || null}
+                  // Stays selectable during a conflict: picking the staged identifier's datasource resolves it.
                   onChange={(option) => option?.value && setSelectedUid(option.value)}
                   disabled={operatorManaged || isLoading}
                   isLoading={isLoading}
@@ -174,6 +196,33 @@ export function AutoSyncConfiguration() {
         onDismiss={() => setShowDisableConfirm(false)}
       />
     </Card>
+  );
+}
+
+interface StagedConflictAlertProps {
+  identifier?: string;
+  /** Sync is enabled and its ticks are already failing, rather than a save being blocked before the fact. */
+  isRunningSyncBroken: boolean;
+}
+
+function StagedConflictAlert({ identifier, isRunningSyncBroken }: StagedConflictAlertProps) {
+  return (
+    <Alert
+      severity={isRunningSyncBroken ? 'error' : 'warning'}
+      title={
+        isRunningSyncBroken
+          ? t('alerting.settings.auto-sync.staged-conflict-active-title', 'Auto-sync is not running')
+          : t(
+              'alerting.settings.auto-sync.staged-conflict-title',
+              'Auto-sync is unavailable while a configuration is staged'
+            )
+      }
+    >
+      <Trans i18nKey="alerting.settings.auto-sync.staged-conflict-body" values={{ identifier }}>
+        Grafana holds one imported configuration at a time, and {'{{identifier}}'} currently occupies that slot. Revert
+        it below to free auto-sync.
+      </Trans>
+    </Alert>
   );
 }
 
