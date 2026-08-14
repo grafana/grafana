@@ -475,6 +475,8 @@ Defaults to `private`.
 
 For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqlite.org/wal.html). The default value is `false` (disabled).
 
+SQLite stores the journal mode in the database file, so a database that was opened with WAL keeps using it. Setting `wal` back to `false` puts the database into `DELETE` journal mode again on the next start.
+
 #### `query_retries`
 
 This setting applies to `sqlite` only and controls the number of times the system retries a query when the database is locked. The default value is `0` (disabled).

@@ -197,6 +197,29 @@ describe('preProcessLogs', () => {
       expect(logListModel.body).not.toBe(entry);
     });
 
+    test('clone can enable JSON prettify independently of the original log', () => {
+      const entry = '{"key": "value"}';
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false,
+          prettifyJSON: false,
+        }
+      );
+      expect(logListModel.body).toBe(entry);
+
+      const pretty = logListModel.clone({ prettifyJSON: true });
+      expect(pretty.body).toBe(`{
+  "key": "value"
+}`);
+
+      const compact = logListModel.clone({ prettifyJSON: false });
+      expect(compact.body).toBe(entry);
+    });
+
     test('Prettifies JSON with duplicate keys', () => {
       const entry = '{"key": "value", "key": "otherValue"}';
       const logListModel = createLogLine(
