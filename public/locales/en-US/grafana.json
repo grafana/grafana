@@ -12786,6 +12786,23 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "Code",
+      "heading": "Heading",
+      "label": "Add block",
+      "paragraph": "Paragraph",
+      "prompt": "Type to start writing — press / for blocks",
+      "visualization": "Visualization",
+      "visualization-placeholder": "Coming soon"
+    },
+    "cell": {
+      "delete": "Delete block",
+      "delete-confirm-text": "This removes the block and its content from the notebook. Are you sure you want to continue?",
+      "delete-confirm-title": "Delete block?",
+      "delete-confirm-yes": "Delete",
+      "drag-handle": "Drag to reorder",
+      "duplicate": "Duplicate block"
+    },
     "errors": {
       "entity": "Notebook",
       "failed-to-load": "Failed to load notebook",
@@ -12823,8 +12840,8 @@
     },
     "view": {
       "copy-link": "Copy link",
-      "edit-mode": "Edit",
-      "editing": "Editing"
+      "mode-edit": "Edit",
+      "mode-view": "View"
     }
   },
   "notifications": {
@@ -14371,6 +14388,12 @@
     "shared": {
       "branch-description": "The branch to use for provisioning",
       "branch-label": "Branch",
+      "commit-author-email-description": "Email used for the commit author.",
+      "commit-author-email-label": "Author email",
+      "commit-author-email-placeholder": "noreply@grafana.com",
+      "commit-author-name-description": "Author all commits as this name instead of the user who made the change.",
+      "commit-author-name-label": "Author name",
+      "commit-author-name-placeholder": "Grafana",
       "commit-signer-email-description": "Must match the signing key identity.",
       "commit-signer-email-label": "Signer email",
       "commit-signer-email-placeholder": "noreply@grafana.com",
