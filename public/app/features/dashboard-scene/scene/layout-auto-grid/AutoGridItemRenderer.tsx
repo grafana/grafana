@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { LazyLoader, sceneGraph, type SceneComponentProps, VizPanelFitContext, type VizPanel } from '@grafana/scenes';
+import { LazyLoader, sceneGraph, type SceneComponentProps, VizPanelFitScope, type VizPanel } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -67,11 +67,6 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       ? undefined
       : { height: rowHeightPx };
 
-  const fitContentValue = useMemo(
-    () => ({ enabled: fitContentOn, minHeight: fitMinHeightPx }),
-    [fitContentOn, fitMinHeightPx]
-  );
-
   const Wrapper = useMemo(
     () =>
       // eslint-disable-next-line react/display-name
@@ -113,9 +108,9 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
           const wrapperContent = (
             <>
-              <VizPanelFitContext.Provider value={fitContentValue}>
+              <VizPanelFitScope enabled={fitContentOn} minHeight={fitMinHeightPx}>
                 <item.Component model={item} />
-              </VizPanelFitContext.Provider>
+              </VizPanelFitScope>
               {conditionalRenderingOverlay}
               {showResizeIntercept && <AutoGridResizeIntercept item={model} />}
             </>
@@ -148,7 +143,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           );
         }
       ),
-    [model, isLazy, key, styles, isEditing, fitContentOn, isMaxHeightBounded, fitContentValue]
+    [model, isLazy, key, styles, isEditing, fitContentOn, isMaxHeightBounded, fitMinHeightPx]
   );
 
   const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
