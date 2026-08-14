@@ -146,7 +146,7 @@ To create a dashboard, follow these steps:
 1. Enter a title and description for the dashboard or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 1. Select a folder, if applicable.
 1. Click **Save**
-1. Click **Back to dashboard**.
+1. Click **Back**.
 1. Click **Exit edit**.
 
 {{< /docs/list >}}
@@ -243,7 +243,7 @@ To edit a dashboard, follow these steps:
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Back to dashboard**, if needed.
+1. Click **Back**, if needed.
 1. Click **Exit edit**
 
 ## Panel layouts

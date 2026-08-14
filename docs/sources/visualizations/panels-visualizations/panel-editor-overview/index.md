@@ -39,8 +39,8 @@ This following sections describe the areas of the Grafana panel editor.
 
 The header section lists the dashboard in which the panel appears and the following controls:
 
-- **Back to dashboard** - Return to the dashboard with changes applied, but not yet saved.
-- **Discard panel changes** - Discard changes you have made to the panel since you last saved the dashboard.
+- **Back** - Return to the dashboard with changes applied, but not yet saved.
+- **Discard** - Discard changes you have made to the panel since you last saved the dashboard.
 - **Save** - Save your changes to the dashboard.
 
 ## Visualization preview
