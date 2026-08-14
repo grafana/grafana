@@ -72,13 +72,75 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
   return { uid, url: notebookViewUrl(uid) };
 }
 
+/**
+ * Someone else wrote to the notebook between the read and the write below. Its own type rather than a
+ * status code the caller has to sniff for: this is the one write failure a user can act on, and the
+ * resourceVersion that produces it is this module's business, not the caller's.
+ */
+export class NotebookConflictError extends Error {}
+
+/**
+ * Read-modify-write of a notebook's spec.
+ *
+ * The whole resource goes back, not just the spec, because that carries its `resourceVersion` — which
+ * is what makes the apiserver reject a notebook someone else edited in between instead of silently
+ * overwriting them. A caller that only sent the spec would win every race by accident.
+ *
+ * The read is deliberately uncached: a spec left over from an earlier fetch would be written straight
+ * back, dropping whatever changed since.
+ */
+export async function updateNotebookSpec(
+  uid: string,
+  update: (spec: NotebookSpec) => NotebookSpec
+): Promise<NotebookSpec> {
+  const read = await dispatch(
+    dashboardAPIv2beta1.endpoints.getNotebook.initiate({ name: uid }, { subscribe: false, forceRefetch: true })
+  );
+
+  if ('error' in read && read.error) {
+    throw new Error(notebookWriteError(read.error, 'Failed to read the notebook.'));
+  }
+
+  const current = read.data;
+  if (!current) {
+    throw new Error('The notebook could not be read, so the change was not applied.');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema spec type at the read seam
+  const next = update(current.spec as unknown as NotebookSpec);
+
+  // Tracked, unlike the create above: this mutation's `invalidatesTags` is what drops the cached GET
+  // for this notebook, so opening it afterwards shows the change rather than the spec read a moment
+  // ago. `createNotebook` can skip that because its caller navigates to a notebook nothing has cached.
+  const result = await dispatch(
+    dashboardAPIv2beta1.endpoints.replaceNotebook.initiate({
+      name: uid,
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema spec type at the write seam
+      notebook: { ...current, spec: next as unknown as Notebook['spec'] },
+    })
+  );
+
+  if ('error' in result && result.error) {
+    if (isConflict(result.error)) {
+      throw new NotebookConflictError(notebookWriteError(result.error, 'The notebook changed while you were editing.'));
+    }
+    throw new Error(notebookWriteError(result.error, 'Failed to save the notebook.'));
+  }
+
+  return next;
+}
+
+function isConflict(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'status' in error && error.status === 409;
+}
+
 /** The apiserver's own message: without it a caller cannot see what is wrong, and will retry the same spec. */
-function notebookWriteError(error: unknown): string {
+function notebookWriteError(error: unknown, fallback = 'Failed to create the notebook.'): string {
   if (typeof error === 'object' && error !== null && 'data' in error) {
     const data: unknown = error.data;
     if (typeof data === 'object' && data !== null && 'message' in data && typeof data.message === 'string') {
       return data.message;
     }
   }
-  return 'Failed to create the notebook.';
+  return fallback;
 }

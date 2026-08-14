@@ -25,7 +25,12 @@ import { notebookViewHref } from '../urls';
 
 import { CreateNotebookForm, type CreateNotebookFormValues } from './CreateNotebookForm';
 import { NotebookPickerList } from './NotebookPickerList';
-import { addPanelErrorMessage, type AddedToNotebook, useAddPanelToNotebook } from './useAddPanelToNotebook';
+import {
+  addPanelErrorMessage,
+  addPanelToExistingNotebook,
+  type AddedToNotebook,
+  createNotebookWithPanel,
+} from './addPanelToNotebook';
 import { getSortOptions, useNotebookPicker } from './useNotebookPicker';
 
 const CREATE_FORM_ID = 'add-panel-create-notebook';
@@ -50,7 +55,6 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const picker = useNotebookPicker();
-  const { addToExisting, createWithPanel } = useAddPanelToNotebook();
 
   const submit = async (add: () => Promise<AddedToNotebook>) => {
     setIsSubmitting(true);
@@ -62,13 +66,9 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
             t('notebooks.add-panel.success', 'Panel added to {{title}}', { title: added.title }),
             '',
             undefined,
-            // No uid means the create response carried no name. The panel is in the notebook either
-            // way, so the toast still reports success — it just has nowhere to link to.
-            added.uid ? (
-              <TextLink href={notebookViewHref(added.uid)}>
-                <Trans i18nKey="notebooks.add-panel.success-link">View notebook</Trans>
-              </TextLink>
-            ) : undefined
+            <TextLink href={notebookViewHref(added.uid)}>
+              <Trans i18nKey="notebooks.add-panel.success-link">View notebook</Trans>
+            </TextLink>
           )
         )
       );
@@ -83,7 +83,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
 
   const onCreate = (values: CreateNotebookFormValues) =>
     submit(() =>
-      createWithPanel(
+      createNotebookWithPanel(
         { title: values.title.trim(), description: values.description.trim(), tags: values.tags },
         buildPanel()
       )
@@ -172,7 +172,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
         </Button>
         {tab === 'existing' ? (
           <Button
-            onClick={() => selectedUid && submit(() => addToExisting(selectedUid, buildPanel()))}
+            onClick={() => selectedUid && submit(() => addPanelToExistingNotebook(selectedUid, buildPanel()))}
             disabled={!selectedUid || isSubmitting}
           >
             <Trans i18nKey="notebooks.add-panel.submit">Add to notebook</Trans>

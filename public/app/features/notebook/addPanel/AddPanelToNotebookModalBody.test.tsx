@@ -5,11 +5,12 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { NotebookConflictError } from '../api/notebookResource';
 import { type NotebookRow } from '../list/useNotebooksList';
 import { defaultPanelKind, type PanelKind } from '../types';
 
 import { AddPanelToNotebookModalBody } from './AddPanelToNotebookModalBody';
-import { useAddPanelToNotebook } from './useAddPanelToNotebook';
+import { addPanelToExistingNotebook, createNotebookWithPanel } from './addPanelToNotebook';
 import { useNotebookPicker } from './useNotebookPicker';
 
 jest.mock('./useNotebookPicker', () => ({
@@ -17,9 +18,10 @@ jest.mock('./useNotebookPicker', () => ({
   useNotebookPicker: jest.fn(),
 }));
 
-jest.mock('./useAddPanelToNotebook', () => ({
-  ...jest.requireActual('./useAddPanelToNotebook'),
-  useAddPanelToNotebook: jest.fn(),
+jest.mock('./addPanelToNotebook', () => ({
+  ...jest.requireActual('./addPanelToNotebook'),
+  addPanelToExistingNotebook: jest.fn(),
+  createNotebookWithPanel: jest.fn(),
 }));
 
 jest.mock('app/core/services/context_srv');
@@ -30,12 +32,10 @@ jest.mock('app/core/copy/appNotification', () => ({
 }));
 
 const mockUseNotebookPicker = jest.mocked(useNotebookPicker);
-const mockUseAddPanelToNotebook = jest.mocked(useAddPanelToNotebook);
+const addToExisting = jest.mocked(addPanelToExistingNotebook);
+const createWithPanel = jest.mocked(createNotebookWithPanel);
 const mockContextSrv = jest.mocked(contextSrv);
 const mockCreateSuccessNotification = jest.mocked(createSuccessNotification);
-
-const addToExisting = jest.fn();
-const createWithPanel = jest.fn();
 
 function row(uid: string, title: string): NotebookRow {
   return {
@@ -102,7 +102,6 @@ describe('AddPanelToNotebookModalBody', () => {
     mockComboboxRect();
     setPicker();
     grant([AccessControlAction.DashboardsWrite, AccessControlAction.DashboardsCreate]);
-    mockUseAddPanelToNotebook.mockReturnValue({ addToExisting, createWithPanel });
     addToExisting.mockResolvedValue({ uid: 'nb1', title: 'Q2 latency regression' });
     createWithPanel.mockResolvedValue({ uid: 'nb3', title: 'New investigation' });
   });
@@ -134,7 +133,7 @@ describe('AddPanelToNotebookModalBody', () => {
     });
 
     it('stays open when the write fails, so the choice is not lost', async () => {
-      addToExisting.mockRejectedValue({ status: 409 });
+      addToExisting.mockRejectedValue(new NotebookConflictError('the object has been modified'));
       const { user, onDismiss } = renderModal();
 
       await user.click(selectNotebook('Q2 latency regression'));
@@ -176,12 +175,8 @@ describe('AddPanelToNotebookModalBody', () => {
     });
 
     // The toast is dispatched to the app notification store rather than rendered in the modal, so
-    // these assert on what the notification was built with.
-    it.each([
-      ['links to the notebook when it has a uid', 'nb3', true],
-      ['still reports success, without a link, when it has none', undefined, false],
-    ])('%s', async (_name, uid, expectsLink) => {
-      createWithPanel.mockResolvedValue({ uid, title: 'New investigation' });
+    // this asserts on what the notification was built with.
+    it('reports success with a link to the new notebook', async () => {
       const { user, onDismiss } = renderModal();
 
       await user.click(screen.getByRole('tab', { name: 'Create new' }));
@@ -189,10 +184,9 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() => expect(onDismiss).toHaveBeenCalled());
-      expect(mockCreateSuccessNotification).toHaveBeenCalled();
       const [title, , , component] = mockCreateSuccessNotification.mock.calls[0];
       expect(title).toContain('New investigation');
-      expect(component === undefined).toBe(!expectsLink);
+      expect(component).toBeDefined();
     });
 
     it('creates the notebook with the panel, description and tags', async () => {
