@@ -72,6 +72,11 @@
       "outputs": ["{workspaceRoot}/public/build-swagger"],
       "cache": true
     },
+    "build:swagger:rspack": {
+      "dependsOn": ["themes-generate"],
+      "outputs": ["{workspaceRoot}/public/build-swagger-rspack"],
+      "cache": true
+    },
     "themes-generate": {
       "inputs": [
         "{workspaceRoot}/scripts/cli/generateSassVariableFiles.ts",
