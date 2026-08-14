@@ -130,6 +130,64 @@ func TestFixFolderMetadataFeatureGate(t *testing.T) {
 	})
 }
 
+func TestExportFeatureGate(t *testing.T) {
+	ctx := context.Background()
+	cfg := newTestRepo("my-repo", "default")
+	disabled := func(context.Context) bool { return false }
+	enabled := func(context.Context) bool { return true }
+
+	t.Run("push rejected when disabled", func(t *testing.T) {
+		c := &jobsConnector{exportEnabled: disabled}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionPush, Push: &provisioning.ExportJobOptions{}}
+
+		err := c.authorizeJob(ctx, nil, cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+		assert.Contains(t, err.Error(), "push jobs require the provisioningExport feature flag")
+	})
+
+	t.Run("migrate rejected when disabled", func(t *testing.T) {
+		c := &jobsConnector{exportEnabled: disabled}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
+
+		err := c.authorizeJob(ctx, nil, cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+		assert.Contains(t, err.Error(), "migrate jobs require the provisioningExport feature flag")
+	})
+
+	t.Run("rejected when exportEnabled is unset", func(t *testing.T) {
+		c := &jobsConnector{}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionPush, Push: &provisioning.ExportJobOptions{}}
+
+		err := c.authorizeJob(ctx, nil, cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+		assert.Contains(t, err.Error(), "provisioningExport feature flag")
+	})
+
+	t.Run("migrate passes the gate when enabled", func(t *testing.T) {
+		c := &jobsConnector{exportEnabled: enabled}
+		// spec.Migrate == nil short-circuits authorizeMigrateJob after the gate,
+		// so this exercises the gate without needing authorization mocks.
+		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate}
+
+		err := c.authorizeJob(ctx, nil, cfg, spec)
+		require.NoError(t, err)
+	})
+
+	t.Run("push passes the gate when enabled", func(t *testing.T) {
+		c := &jobsConnector{exportEnabled: enabled}
+		spec := provisioning.JobSpec{Action: provisioning.JobActionPush, Push: &provisioning.ExportJobOptions{}}
+
+		// Past the gate the push authorizer runs; with a nil repo it fails on the
+		// reader check, which proves the feature gate let the request through.
+		err := c.authorizeJob(ctx, nil, cfg, spec)
+		require.Error(t, err)
+		assert.NotContains(t, err.Error(), "provisioningExport feature flag")
+	})
+}
+
 func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
 	c := &jobsConnector{}
 
