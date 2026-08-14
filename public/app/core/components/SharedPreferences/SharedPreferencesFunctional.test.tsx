@@ -30,9 +30,16 @@ const getPrefsUpdateRequest = async (requests: Request[]) => {
 
 const [_, { dashbdD, dashbdE }] = getFolderFixtures();
 
-const selectComboboxOptionInTest = async (input: HTMLElement, optionOrOptions: string | RegExp) => {
+const selectComboboxOptionInTest = async (
+  input: HTMLElement,
+  optionOrOptions: string | RegExp,
+  filterText?: string
+) => {
   const user = userEvent.setup();
   await user.click(input);
+  if (filterText) {
+    await user.type(input, filterText, { skipClick: true });
+  }
   const option = await screen.findByRole('option', { name: optionOrOptions });
   await user.click(option);
 };
@@ -148,7 +155,11 @@ describe('SharedPreferencesFunctional', () => {
     const capture = captureRequests();
     const { user } = await setup();
 
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /Interface theme/ }), 'Gilded grove');
+    await selectComboboxOptionInTest(
+      await screen.findByRole('combobox', { name: /Interface theme/ }),
+      'Gilded grove',
+      'Gilded'
+    );
 
     await user.click(screen.getByText('Save preferences'));
 

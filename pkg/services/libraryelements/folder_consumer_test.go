@@ -37,7 +37,7 @@ func markRepairComplete(t *testing.T, repair *FolderUIDRepairService) {
 
 func consumerSetup(t *testing.T) (*FolderConsumer, db.DB, *FolderUIDRepairService) {
 	t.Helper()
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	repair := &FolderUIDRepairService{store: store, kv: kvstore.NewFakeKVStore(), log: log.New("test")}
 	svc := &LibraryElementService{SQLStore: store, log: log.New("test")}
 	return ProvideFolderConsumer(svc, repair), store, repair

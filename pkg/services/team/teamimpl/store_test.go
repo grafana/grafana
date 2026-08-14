@@ -38,7 +38,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
 		testUser := &user.SignedInUser{
@@ -177,7 +177,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
+				sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				setup()
 				userId := userIds[1]
 
@@ -228,7 +228,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
+				sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				setup()
 				userID := userIds[0]
 
@@ -381,7 +381,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
+				sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				setup()
 				groupId := team2.ID
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -442,7 +442,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				})
 
 				t.Run("A user should be able to remove the admin permission if there are other admins", func(t *testing.T) {
-					sqlStore = db.InitTestDB(t)
+					sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 					setup()
 
 					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -461,7 +461,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should not return hidden users in team member count", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
+				sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				setup()
 				signedInUser := &user.SignedInUser{
 					Login: "loginuser0",
@@ -502,7 +502,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
+				sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				cfgProvider, err := configprovider.ProvideService(cfg)
 				require.NoError(t, err)
 				quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
@@ -561,7 +561,7 @@ func TestIntegrationSQLStore_DeleteRenderers(t *testing.T) {
 
 	setup := func(t *testing.T) (db.DB, *Service, team.Team) {
 		t.Helper()
-		store, cfg := db.InitTestDBWithCfg(t)
+		store, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 			if _, err := sess.Exec("DROP TABLE IF EXISTS team_delete_renderer_test"); err != nil {
 				return err
@@ -685,7 +685,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		},
 	}
 
-	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
@@ -789,7 +789,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMembers)
 	}
 
-	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
+	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	setup(store, cfg)
 	teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)

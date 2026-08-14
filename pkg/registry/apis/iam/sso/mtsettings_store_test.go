@@ -16,6 +16,8 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // fakeSettings is a stateful in-memory MT-Settings double implementing both the
@@ -233,6 +235,74 @@ func TestMTSettingsStore(t *testing.T) {
 			},
 		},
 		{
+			name: "Get redacts secret-classified keys and leaves others intact",
+			rows: []*settingsvc.Setting{
+				usRow("auth.generic_oauth", "client_id", "abc"),
+				usRow("auth.generic_oauth", "client_secret", "topsecret"),
+			},
+			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
+				o, e := s.Get(nsCtx(), "generic_oauth", &metav1.GetOptions{})
+				return o, false, e
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeSettings) {
+				require.NoError(t, err)
+				require.NotNil(t, sso)
+				assert.Equal(t, setting.RedactedPassword, sso.Spec.Settings.Object["client_secret"])
+				assert.Equal(t, "abc", sso.Spec.Settings.Object["client_id"])
+			},
+		},
+		{
+			name: "Get does not redact an empty secret value",
+			rows: []*settingsvc.Setting{
+				usRow("auth.generic_oauth", "client_secret", ""),
+				usRow("auth.generic_oauth", "client_id", "abc"),
+			},
+			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
+				o, e := s.Get(nsCtx(), "generic_oauth", &metav1.GetOptions{})
+				return o, false, e
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeSettings) {
+				require.NoError(t, err)
+				require.NotNil(t, sso)
+				assert.Equal(t, "", sso.Spec.Settings.Object["client_secret"])
+			},
+		},
+		{
+			name: "Create writes the plaintext secret but redacts it in the response",
+			rows: nil,
+			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
+				o, e := s.Create(nsCtx(), ssoObj("generic_oauth", map[string]any{"client_id": "abc", "client_secret": "topsecret"}), nil, &metav1.CreateOptions{})
+				return o, false, e
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, f *fakeSettings) {
+				require.NoError(t, err)
+				require.NotNil(t, sso)
+				// Written as plaintext so the settings service mutator can encrypt it.
+				assert.Equal(t, "topsecret", f.upserts["client_secret"])
+				// Redacted in the response body.
+				assert.Equal(t, setting.RedactedPassword, sso.Spec.Settings.Object["client_secret"])
+				assert.Equal(t, "abc", sso.Spec.Settings.Object["client_id"])
+			},
+		},
+		{
+			name: "Update writes the plaintext secret but redacts it in the response",
+			rows: []*settingsvc.Setting{
+				usRow("auth.generic_oauth", "client_id", "abc"),
+				usRow("auth.generic_oauth", "client_secret", "old"),
+			},
+			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
+				return s.Update(nsCtx(), "generic_oauth",
+					rest.DefaultUpdatedObjectInfo(ssoObj("generic_oauth", map[string]any{"client_id": "abc", "client_secret": "newsecret"})),
+					nil, nil, false, &metav1.UpdateOptions{})
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, f *fakeSettings) {
+				require.NoError(t, err)
+				require.NotNil(t, sso)
+				assert.Equal(t, "newsecret", f.upserts["client_secret"])
+				assert.Equal(t, setting.RedactedPassword, sso.Spec.Settings.Object["client_secret"])
+			},
+		},
+		{
 			name: "List is not implemented",
 			rows: nil,
 			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
@@ -283,4 +353,16 @@ func TestValueToString(t *testing.T) {
 func TestSectionFor(t *testing.T) {
 	assert.Equal(t, "auth.saml", sectionFor("saml"))
 	assert.Equal(t, "auth.generic_oauth", sectionFor("generic_oauth"))
+}
+
+// TestIsSecretFieldMatchesLegacy pins the local classifier to the legacy one. With
+// secretExceptions empty, the two must agree on every key; this fails if they drift.
+func TestIsSecretFieldMatchesLegacy(t *testing.T) {
+	keys := []string{
+		"client_secret", "private_key", "certificate", "password", "client_key",
+		"client_id", "auth_url", "enabled", "idp_metadata", "name", "scopes",
+	}
+	for _, k := range keys {
+		assert.Equalf(t, ssosettingsimpl.IsSecretField(k), isSecretField(k), "classification drift for %q", k)
+	}
 }

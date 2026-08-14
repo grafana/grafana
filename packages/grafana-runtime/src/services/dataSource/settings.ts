@@ -49,6 +49,7 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
 /**
  * Populate the instance-settings cache from boot data. Intended to be called
  * exactly once at application startup via the `@grafana/runtime/internal` export.
+ * In tests, use {@link setDataSourceInstanceSettings} instead.
  *
  * @internal
  */
@@ -58,6 +59,28 @@ export function initDataSourceInstanceSettings(
 ): void {
   defaultName = defaultDsName;
   populateMaps(settings);
+}
+
+/**
+ * Test helper — the sanctioned way to seed the instance-settings cache in tests.
+ * Fully resets all module state (including runtime and expression data sources),
+ * then populates the cache from a clone of `settings` so test fixtures are never
+ * mutated. When `defaultDatasourceName` is omitted, the entry flagged with
+ * `isDefault: true` becomes the default. Should only be called from tests.
+ *
+ * @internal
+ */
+export function setDataSourceInstanceSettings(
+  settings: Record<string, DataSourceInstanceSettings>,
+  defaultDatasourceName?: string
+): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('setDataSourceInstanceSettings() function can only be called from tests.');
+  }
+
+  _resetForTests();
+  populateMaps(structuredClone(settings));
+  defaultName = defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '';
 }
 
 /**
