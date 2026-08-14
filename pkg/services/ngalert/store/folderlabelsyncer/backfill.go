@@ -6,14 +6,8 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/resource"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
-
-// orgLister enumerates org IDs. Implemented by ngalert's store.DBstore.
-type orgLister interface {
-	FetchOrgIds(ctx context.Context) ([]int64, error)
-}
 
 // Backfill brings every existing folder's label in line with whether it holds rules, in both
 // directions. It exists because the event path only reacts to changes, so folders that already held
@@ -26,8 +20,8 @@ type orgLister interface {
 // Rules moving to unified storage would bypass the rule store entirely, so neither the events nor
 // the query below would see those writes — that is the point at which an informer becomes available
 // and becomes the right mechanism.
-func (s *Service) Backfill(ctx context.Context, sqlStore db.DB, orgs orgLister) error {
-	orgIDs, err := orgs.FetchOrgIds(ctx)
+func (s *Service) Backfill(ctx context.Context) error {
+	orgIDs, err := s.store.FetchOrgIds(ctx)
 	if err != nil {
 		return fmt.Errorf("fetch orgs: %w", err)
 	}
@@ -37,7 +31,7 @@ func (s *Service) Backfill(ctx context.Context, sqlStore db.DB, orgs orgLister) 
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		n, err := s.backfillOrg(ctx, sqlStore, orgID)
+		n, err := s.backfillOrg(ctx, orgID)
 		if err != nil {
 			// One unhealthy org must not abort the pass for the rest.
 			s.log.Error("Failed to backfill folder rules labels", "org_id", orgID, "error", err)
@@ -56,8 +50,8 @@ func (s *Service) Backfill(ctx context.Context, sqlStore db.DB, orgs orgLister) 
 }
 
 // backfillOrg queues the folders whose label disagrees with the database, and returns how many.
-func (s *Service) backfillOrg(ctx context.Context, sqlStore db.DB, orgID int64) (int, error) {
-	withRules, err := foldersWithRules(ctx, sqlStore, orgID)
+func (s *Service) backfillOrg(ctx context.Context, orgID int64) (int, error) {
+	withRules, err := s.store.GetAllFoldersWithRules(ctx, orgID)
 	if err != nil {
 		return 0, fmt.Errorf("list folders with rules: %w", err)
 	}
@@ -89,27 +83,6 @@ func diffFolderKeys(orgID int64, withRules, labeled map[string]struct{}) []model
 		}
 	}
 	return stale
-}
-
-func foldersWithRules(ctx context.Context, sqlStore db.DB, orgID int64) (map[string]struct{}, error) {
-	var uids []string
-	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.SQL(`
-			SELECT DISTINCT namespace_uid
-			FROM alert_rule
-			WHERE org_id = ? AND namespace_uid <> ''
-		`, orgID).Find(&uids)
-	})
-	if err != nil {
-		return nil, err
-	}
-	set := make(map[string]struct{}, len(uids))
-	for _, uid := range uids {
-		if uid != "" {
-			set[uid] = struct{}{}
-		}
-	}
-	return set, nil
 }
 
 func (s *Service) labeledFolders(ctx context.Context, orgID int64) (map[string]struct{}, error) {

@@ -29,15 +29,17 @@ import (
 )
 
 const (
-	// LabelKey marks a folder as holding at least one Grafana-managed alert or recording rule.
+	// HasRulesLabel marks a folder as holding at least one Grafana-managed alert or recording rule.
 	HasRulesLabel = "alerting.grafana.app/has-rules"
 
 	// The slash in the label key is escaped as "~1" to avoid the apiserver reading it as two path segments
 	hasRulesLabelPath = "/metadata/labels/alerting.grafana.app~1has-rules"
 )
 
-type ruleCounter interface {
+type reconcilerStore interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
+	GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error)
+	FetchOrgIds(ctx context.Context) ([]int64, error)
 }
 
 type folderPatcher interface {
@@ -52,7 +54,7 @@ func serviceIdentity(ctx context.Context, orgID int64) (context.Context, identit
 }
 
 type Service struct {
-	rules      ruleCounter
+	store      reconcilerStore
 	clients    resource.ClientGenerator
 	namespacer request.NamespaceMapper
 	log        log.Logger
@@ -65,12 +67,12 @@ type Service struct {
 	folders  folderPatcher
 }
 
-func NewService(cfg *setting.Cfg, b bus.Bus, rules ruleCounter, clients resource.ClientGenerator) *Service {
+func NewService(cfg *setting.Cfg, b bus.Bus, store reconcilerStore, clients resource.ClientGenerator) *Service {
 	s := &Service{
-		rules:      rules,
+		store:      store,
 		clients:    clients,
 		namespacer: request.GetNamespaceMapper(cfg),
-		log:        log.New("ngalert.folderlabel"),
+		log:        log.New("ngalert.folderlabelsyncer"),
 		dirty:      make(map[models.FolderKey]struct{}),
 		wake:       make(chan struct{}, 1),
 	}
@@ -159,7 +161,7 @@ func (s *Service) reconcile(ctx context.Context, key models.FolderKey) error {
 	namespace := s.namespacer(key.OrgID)
 	ctx, user := serviceIdentity(ctx, key.OrgID)
 
-	count, err := s.rules.CountInFolders(ctx, key.OrgID, []string{key.UID}, user)
+	count, err := s.store.CountInFolders(ctx, key.OrgID, []string{key.UID}, user)
 	if err != nil {
 		return fmt.Errorf("count rules in folder: %w", err)
 	}
@@ -204,7 +206,7 @@ func (s *Service) reconcile(ctx context.Context, key models.FolderKey) error {
 	// Re-check the count we just acted on. Two replicas patching the same folder in opposite
 	// directions can otherwise leave the label reflecting the older count; re-queueing on a change
 	// lets the next pass settle it.
-	if after, err := s.rules.CountInFolders(ctx, key.OrgID, []string{key.UID}, user); err == nil && (after > 0) != (count > 0) {
+	if after, err := s.store.CountInFolders(ctx, key.OrgID, []string{key.UID}, user); err == nil && (after > 0) != (count > 0) {
 		s.markDirty([]models.FolderKey{key})
 	}
 

@@ -4172,3 +4172,58 @@ func createManyRules(tb testing.TB, store *DBstore, ruleGen *models.AlertRuleGen
 	}
 	return rules, namespaceUIDs
 }
+
+func TestIntegrationGetAllFoldersWithRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.UnifiedAlertingSettings{BaseInterval: time.Second * 10}
+	ruleStore := createTestStore(sqlStore, nil, &logtest.Fake{}, cfg, &fakeBus{})
+
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(cfg.BaseInterval))
+
+	insertRule := func(t *testing.T, orgID int64, namespaceUID string) {
+		t.Helper()
+		rule := gen.With(gen.WithOrgID(orgID), gen.WithNamespaceUID(namespaceUID)).Generate()
+		_, err := ruleStore.InsertAlertRules(context.Background(), &models.AlertingUserUID,
+			[]models.InsertRule{{AlertRule: rule}})
+		require.NoError(t, err)
+	}
+
+	uids := func(uids ...string) map[string]struct{} {
+		s := make(map[string]struct{}, len(uids))
+		for _, uid := range uids {
+			s[uid] = struct{}{}
+		}
+		return s
+	}
+
+	// Two rules share a folder (must dedupe), one folder is distinct, one rule has no folder at all
+	// (nothing validates NamespaceUID on insert, so this is reachable and must be filtered out), and
+	// org 2 must not leak into org 1's result.
+	insertRule(t, 1, "folder-a")
+	insertRule(t, 1, "folder-a")
+	insertRule(t, 1, "folder-b")
+	insertRule(t, 1, "")
+	insertRule(t, 2, "folder-other")
+
+	t.Run("returns the deduplicated folders holding rules, scoped to the org", func(t *testing.T) {
+		got, err := ruleStore.GetAllFoldersWithRules(context.Background(), 1)
+		require.NoError(t, err)
+		require.Equal(t, uids("folder-a", "folder-b"), got)
+	})
+
+	t.Run("does not see other orgs' folders", func(t *testing.T) {
+		got, err := ruleStore.GetAllFoldersWithRules(context.Background(), 2)
+		require.NoError(t, err)
+		require.Equal(t, uids("folder-other"), got)
+	})
+
+	t.Run("returns empty for an org with no rules", func(t *testing.T) {
+		got, err := ruleStore.GetAllFoldersWithRules(context.Background(), 99)
+		require.NoError(t, err)
+		require.Empty(t, got)
+	})
+}
