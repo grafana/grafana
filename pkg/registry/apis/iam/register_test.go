@@ -3,6 +3,7 @@ package iam
 import (
 	"fmt"
 	"io"
+	"reflect"
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -11,12 +12,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
 	authlib "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -67,9 +71,9 @@ func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 
 // TestCodecPathResourcesRegisterOneVersionPerType guards apimachinery's LegacyCodec version-order
 // fallback: it only lets preferred_api_version reorder the persisted version when a type has no
-// exact-match GVK. It runs InstallSchema for real (all gates on), so any future version reusing an
-// existing struct fails here too. See the dashboard package's test of the same name for the other
-// codec-path group.
+// exact-match GVK. It runs InstallSchema for real (all gates on) and walks every type it registers,
+// so any resource - not just a hardcoded list - fails here if it starts sharing a Go struct across
+// versions. See the dashboard package's test of the same name for the other codec-path group.
 func TestCodecPathResourcesRegisterOneVersionPerType(t *testing.T) {
 	allOn := map[string]memprovider.InMemoryFlag{}
 	for _, flag := range []string{
@@ -87,19 +91,60 @@ func TestCodecPathResourcesRegisterOneVersionPerType(t *testing.T) {
 	b := &IdentityAccessManagementAPIBuilder{ofClient: openfeature.NewDefaultClient()}
 	require.NoError(t, b.InstallSchema(scheme))
 
-	for _, obj := range []runtime.Object{
-		iamv0.TeamResourceInfo.NewFunc(),
-		iamv0.UserResourceInfo.NewFunc(),
-		iamv0.ServiceAccountResourceInfo.NewFunc(),
-		iamv0.RoleInfo.NewFunc(),
-		iamv0.GlobalRoleInfo.NewFunc(),
+	assertNoTypeSpansMultipleGVKs(t, scheme)
+}
+
+// commonMultiVersionTypes are registered once per group-version by convention (metav1.
+// AddToGroupVersion's WatchEvent/options types, and each app's own PartialObjectMetadata(List)
+// registration), plus app-specific types deliberately shared across versions. None of these round-trip
+// through Storage.Create, so they're not the risk assertNoTypeSpansMultipleGVKs guards against. Adding
+// to this list is a conscious, reviewed exception, not a silent pass - any new entry should say why.
+var commonMultiVersionTypes = func() map[reflect.Type]bool {
+	m := map[reflect.Type]bool{}
+	for _, o := range []runtime.Object{
+		&metav1.WatchEvent{}, &metav1.ListOptions{}, &metav1.GetOptions{}, &metav1.DeleteOptions{},
+		&metav1.CreateOptions{}, &metav1.UpdateOptions{}, &metav1.PatchOptions{},
+		&metav1.PartialObjectMetadata{}, &metav1.PartialObjectMetadataList{},
+		// legacyiamv0.AddKnownTypes(scheme, version) is called for both legacyiamv0.VERSION and
+		// runtime.APIVersionInternal (register.go's InstallSchema) "to avoid the error: no kind is
+		// registered for the type" on PATCH/server-side-apply - not a codec-path write; none of these
+		// go through StorageOptsRegister with Scheme == nil.
+		&legacyiamv0.SSOSetting{}, &legacyiamv0.SSOSettingList{}, &legacyiamv0.UserTeamList{},
+		&legacyiamv0.DisplayList{}, &legacyiamv0.TeamMemberList{},
 	} {
-		gvks, _, err := scheme.ObjectKinds(obj)
-		require.NoError(t, err)
+		m[reflect.TypeOf(o).Elem()] = true
+	}
+	return m
+}()
+
+// assertNoTypeSpansMultipleGVKs walks every type a scheme actually knows about (as built by a
+// builder's real InstallSchema) and fails if any resource type is registered at 2+
+// GroupVersionKinds. apimachinery's LegacyCodec order-fallback only fires for such a type - the "true
+// internal/hub Go struct shared across versions" pattern - so this is what would flip
+// preferred_api_version from a discovery-only setting into one that silently picks what gets
+// persisted. It intentionally covers every registered resource, not a hardcoded list, so a brand new
+// resource kind is checked without editing this test.
+func assertNoTypeSpansMultipleGVKs(t *testing.T, scheme *runtime.Scheme) {
+	t.Helper()
+	byType := map[reflect.Type][]schema.GroupVersionKind{}
+	for gvk, typ := range scheme.AllKnownTypes() {
+		if commonMultiVersionTypes[typ] {
+			continue
+		}
+		obj, ok := reflect.New(typ).Interface().(runtime.Object)
+		if !ok {
+			continue
+		}
+		if unversioned, ok := scheme.IsUnversioned(obj); ok && unversioned {
+			continue // e.g. metav1.Status - genuinely version-independent, not a codec-fallback risk
+		}
+		byType[typ] = append(byType[typ], gvk)
+	}
+	for typ, gvks := range byType {
 		require.Lenf(t, gvks, 1,
-			"%T is registered at %v - a Go type shared across group versions activates the LegacyCodec "+
-				"order-fallback, so preferred_api_version would now pick the persisted version for this "+
-				"resource instead of only ordering API discovery", obj, gvks)
+			"%s is registered at %v - a Go type shared across group versions activates the LegacyCodec "+
+				"order-fallback, so preferred_api_version would now silently pick the persisted version "+
+				"for this type instead of only ordering API discovery", typ, gvks)
 	}
 }
 
