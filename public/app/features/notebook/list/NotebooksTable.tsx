@@ -102,9 +102,9 @@ export function NotebooksTable({ notebooks }: Props) {
  * of elements rebuilt whenever a filter changes, which is felt as a delay on the click. Sorting and
  * the row counts still run over the whole set: react-table paginates after sorting.
  *
- * 25 to match the other page-level resource tables (team folders, the provisioning resource tree).
+ * The other page-level tables in Grafana sit between 10 and 30, so this is in step with them.
  */
-export const ROWS_PER_PAGE = 25;
+export const ROWS_PER_PAGE = 20;
 
 /**
  * timestamp is unix millis; zero means the index has no value for it.
