@@ -1,15 +1,7 @@
 import { css } from '@emotion/css';
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import {
-  type DragEvent,
-  type KeyboardEvent,
-  type PointerEvent,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { type DragEvent, useLayoutEffect, useRef, useState } from 'react';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -29,23 +21,11 @@ interface ColumnVisibilitySidePanelProps {
   hiddenColumns: ReadonlySet<string>;
   pinnedColumns: ReadonlySet<string>;
   isOpen: boolean;
-  width: number;
-  maxWidth: number;
-  onOpenChange: (isOpen: boolean) => void;
-  onWidthChange: (width: number) => void;
   onToggleColumn: (displayName: string, visible: boolean) => void;
   onTogglePin: (displayName: string) => void;
   onColumnsReorder: (sourceColumn: string, targetColumn: string) => void;
 }
 
-interface DragState {
-  startX: number;
-  startWidth: number;
-  moved: boolean;
-}
-
-const DRAG_THRESHOLD = 3;
-const KEYBOARD_RESIZE_STEP = 16;
 const COLUMN_REORDER_ANIMATION_MS = 220;
 
 export function ColumnVisibilitySidePanel({
@@ -53,26 +33,16 @@ export function ColumnVisibilitySidePanel({
   hiddenColumns,
   pinnedColumns,
   isOpen,
-  width,
-  maxWidth,
-  onOpenChange,
-  onWidthChange,
   onToggleColumn,
   onTogglePin,
   onColumnsReorder,
 }: ColumnVisibilitySidePanelProps) {
   const styles = useStyles2(getStyles);
-  const panelId = useId();
-  const dragState = useRef<DragState>();
-  const suppressClick = useRef(false);
   const columnRows = useRef(new Map<string, HTMLDivElement>());
   const previousColumnPositions = useRef(new Map<string, number>());
   const [draggedColumn, setDraggedColumn] = useState<string>();
   const [dragOverColumn, setDragOverColumn] = useState<string>();
   const visibleCount = fields.length - hiddenColumns.size;
-  const effectiveMaxWidth = Math.max(COLUMN_VISIBILITY_PANEL_MIN_WIDTH, maxWidth);
-  const clampWidth = (nextWidth: number) =>
-    Math.max(COLUMN_VISIBILITY_PANEL_MIN_WIDTH, Math.min(nextWidth, effectiveMaxWidth));
 
   useLayoutEffect(() => {
     const nextPositions = new Map<string, number>();
@@ -94,86 +64,6 @@ export function ColumnVisibilitySidePanel({
 
     previousColumnPositions.current = nextPositions;
   });
-
-  const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    dragState.current = {
-      startX: event.clientX,
-      startWidth: isOpen ? width : 0,
-      moved: false,
-    };
-  };
-
-  const handlePointerMove = (event: PointerEvent<HTMLButtonElement>) => {
-    const drag = dragState.current;
-    if (!drag) {
-      return;
-    }
-
-    const delta = event.clientX - drag.startX;
-    if (!drag.moved && Math.abs(delta) <= DRAG_THRESHOLD) {
-      return;
-    }
-
-    drag.moved = true;
-    suppressClick.current = true;
-    onOpenChange(true);
-    onWidthChange(clampWidth(drag.startWidth + delta));
-  };
-
-  const finishPointerInteraction = (event: PointerEvent<HTMLButtonElement>) => {
-    if (!dragState.current) {
-      return;
-    }
-
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
-    }
-    dragState.current = undefined;
-  };
-
-  const handleClick = () => {
-    if (suppressClick.current) {
-      suppressClick.current = false;
-      return;
-    }
-    onOpenChange(!isOpen);
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onOpenChange(!isOpen);
-      return;
-    }
-
-    if (event.key === 'Home') {
-      event.preventDefault();
-      onOpenChange(false);
-      return;
-    }
-
-    if (event.key === 'End') {
-      event.preventDefault();
-      onOpenChange(true);
-      onWidthChange(effectiveMaxWidth);
-      return;
-    }
-
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
-      return;
-    }
-
-    event.preventDefault();
-    onOpenChange(true);
-    onWidthChange(
-      clampWidth(
-        (isOpen ? width : COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH) +
-          (event.key === 'ArrowLeft' ? -1 : 1) * KEYBOARD_RESIZE_STEP
-      )
-    );
-  };
 
   const handleColumnDragStart = (event: DragEvent<HTMLButtonElement>, displayName: string) => {
     event.dataTransfer.effectAllowed = 'move';
@@ -214,13 +104,9 @@ export function ColumnVisibilitySidePanel({
   };
 
   return (
-    <aside
-      className={styles.container}
-      style={{ width: isOpen ? width : COLUMN_VISIBILITY_RAIL_WIDTH }}
-      aria-label={t('grafana-ui.table.column-visibility', 'Column visibility')}
-    >
+    <aside className={styles.container} aria-label={t('grafana-ui.table.column-visibility', 'Column visibility')}>
       {isOpen && (
-        <div id={panelId} className={styles.panel}>
+        <div className={styles.panel}>
           <h3 className={styles.heading}>
             <Trans i18nKey="grafana-ui.table.columns">Columns</Trans>
           </h3>
@@ -291,23 +177,6 @@ export function ColumnVisibilitySidePanel({
           </div>
         </div>
       )}
-      <button
-        type="button"
-        className={styles.railHandle}
-        aria-label={t('grafana-ui.table.column-visibility-resizer', 'Column visibility panel')}
-        aria-controls={isOpen ? panelId : undefined}
-        aria-expanded={isOpen}
-        title={t(
-          'grafana-ui.table.column-visibility-resizer-instructions',
-          'Click to open or close. Drag or use arrow keys to resize.'
-        )}
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={finishPointerInteraction}
-        onPointerCancel={finishPointerInteraction}
-      />
     </aside>
   );
 }
@@ -317,7 +186,7 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     label: 'columnVisibilitySidePanel',
     position: 'relative',
     flex: '0 0 auto',
-    minWidth: COLUMN_VISIBILITY_RAIL_WIDTH,
+    width: '100%',
     height: '100%',
     background: theme.colors.background.primary,
   }),
@@ -418,36 +287,6 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     '&:focus-visible': {
       outline: `2px solid ${theme.colors.primary.main}`,
       outlineOffset: -2,
-    },
-  }),
-  railHandle: css({
-    label: 'columnVisibilityRail',
-    position: 'absolute',
-    zIndex: theme.zIndex.tooltip,
-    insetBlockStart: '50%',
-    insetInlineEnd: -6,
-    width: 15,
-    height: 128,
-    transform: 'translateY(-50%)',
-    cursor: 'ew-resize',
-    touchAction: 'none',
-    padding: 0,
-    border: 0,
-    background: 'transparent',
-    outline: 'none',
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      insetBlock: 0,
-      insetInlineStart: 6,
-      width: COLUMN_VISIBILITY_RAIL_WIDTH,
-      background: '#f59e4b',
-    },
-    '&:hover::before, &:focus-visible::before': {
-      filter: 'brightness(1.1)',
-    },
-    '&:focus-visible': {
-      boxShadow: `inset 0 0 0 2px ${theme.colors.primary.main}`,
     },
   }),
 }));

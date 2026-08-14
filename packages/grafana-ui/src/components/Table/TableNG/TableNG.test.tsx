@@ -915,7 +915,7 @@ describe('TableNG', () => {
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Column visibility panel' }));
+      await user.click(screen.getByRole('separator', { name: 'Column visibility panel' }));
       await user.click(screen.getByRole('button', { name: 'Pin Column B' }));
 
       expect(container.querySelectorAll('[role="columnheader"]')[0]).toHaveTextContent('Column B');
@@ -928,7 +928,7 @@ describe('TableNG', () => {
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Column visibility panel' }));
+      await user.click(screen.getByRole('separator', { name: 'Column visibility panel' }));
       expect(screen.getByRole('checkbox', { name: 'Hide Column A' })).toBeChecked();
 
       await user.click(screen.getByRole('button', { name: 'Column menu for Column A' }));
@@ -953,15 +953,15 @@ describe('TableNG', () => {
       const { container } = render(<TableNG enableVirtualization={false} data={data} width={800} height={600} />);
       const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
 
-      expect(grid).toHaveStyle({ gridTemplateColumns: '398.5px 398.5px' });
-      await user.click(screen.getByRole('button', { name: 'Column visibility panel' }));
-      expect(grid).toHaveStyle({ gridTemplateColumns: '280px 280px' });
+      expect(grid).toHaveStyle({ gridTemplateColumns: '398px 398px' });
+      await user.click(screen.getByRole('separator', { name: 'Column visibility panel' }));
+      expect(grid).toHaveStyle({ gridTemplateColumns: '278px 278px' });
     });
 
     it('does not render the column visibility side panel when headers are hidden', () => {
       render(<TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} noHeader />);
 
-      expect(screen.queryByRole('button', { name: 'Column visibility panel' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('separator', { name: 'Column visibility panel' })).not.toBeInTheDocument();
     });
 
     it('requests ephemeral grouping from a column header menu', async () => {
@@ -2549,22 +2549,22 @@ describe('TableNG', () => {
         valueField,
       ]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('198.5px 198.5px');
+      expect(columnTemplate(container)).toBe('198px 198px');
 
       rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('448.5px 448.5px');
+      expect(columnTemplate(container)).toBe('448px 448px');
     });
 
     it('defers width changes until the resize settles when an auto-sized pill column is present', () => {
       const data = frameWithFields([pillField(), valueField]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('198.5px 198.5px');
+      expect(columnTemplate(container)).toBe('198px 198px');
 
       rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('198.5px 198.5px');
+      expect(columnTemplate(container)).toBe('198px 198px');
 
       act(() => jest.advanceTimersByTime(RESIZE_WIDTH_DEBOUNCE_MS));
-      expect(columnTemplate(container)).toBe('448.5px 448.5px');
+      expect(columnTemplate(container)).toBe('448px 448px');
     });
 
     it('defers width changes until the resize settles when an auto-sized column wraps its text', () => {
@@ -2578,13 +2578,13 @@ describe('TableNG', () => {
         valueField,
       ]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('198.5px 198.5px');
+      expect(columnTemplate(container)).toBe('198px 198px');
 
       rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('198.5px 198.5px');
+      expect(columnTemplate(container)).toBe('198px 198px');
 
       act(() => jest.advanceTimersByTime(RESIZE_WIDTH_DEBOUNCE_MS));
-      expect(columnTemplate(container)).toBe('448.5px 448.5px');
+      expect(columnTemplate(container)).toBe('448px 448px');
     });
 
     // Toggling width-sensitivity (here by turning on text wrapping) flips whether the debounce is active.
@@ -2612,10 +2612,10 @@ describe('TableNG', () => {
     it('applies width changes immediately when the pill column has a configured width', () => {
       const data = frameWithFields([pillField({ width: 100 }), valueField]);
       const { container, rerender } = renderAtWidth(data, 400);
-      expect(columnTemplate(container)).toBe('100px 297px');
+      expect(columnTemplate(container)).toBe('100px 296px');
 
       rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('100px 797px');
+      expect(columnTemplate(container)).toBe('100px 796px');
     });
 
     it('defers width changes when only a nested table has a width-sensitive column', () => {

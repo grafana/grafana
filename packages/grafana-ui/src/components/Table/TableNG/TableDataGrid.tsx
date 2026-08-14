@@ -89,7 +89,6 @@ export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSu
   onTooltipClose: () => void;
   inspectCell?: InspectCellProps | null;
   onInspectCellDismiss: () => void;
-  sidePanel?: ReactNode;
   renderGridOverlay?: (gridContainerRef: RefObject<HTMLDivElement | null>) => ReactNode;
 }
 
@@ -127,7 +126,6 @@ export function TableDataGrid({
   onTooltipClose,
   inspectCell,
   onInspectCellDismiss,
-  sidePanel,
   renderGridOverlay,
   ...dataGridOverrides
 }: TableDataGridProps) {
@@ -190,7 +188,6 @@ export function TableDataGrid({
   return (
     <>
       <div className={styles.tableViewport}>
-        {sidePanel}
         <div ref={gridContainerRef} className={styles.gridViewport}>
           <DataGrid<TableRow, TableSummaryRow, string>
             {...dataGridOverrides}

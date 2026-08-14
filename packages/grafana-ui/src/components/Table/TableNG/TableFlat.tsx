@@ -1,12 +1,16 @@
+import { css } from '@emotion/css';
+import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type Field } from '@grafana/data';
+import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { usePanelContext } from '../../PanelChrome';
+import { useSplitter } from '../../Splitter/useSplitter';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
@@ -61,6 +65,8 @@ type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellC
 const EMPTY_EXPANDED_ROWS: Set<string> = new Set();
 const NOOP_STABLE_KEY = () => '';
 const COLUMN_SETTLE_MS = 280;
+const COLUMN_VISIBILITY_SPLITTER_SIZE = 4;
+const SPLITTER_DRAG_THRESHOLD = 3;
 
 export function TableFlat(props: TableNGProps) {
   const {
@@ -92,6 +98,7 @@ export function TableFlat(props: TableNGProps) {
   } = props;
 
   const theme = useTheme2();
+  const splitterStyles = useStyles2(getColumnVisibilitySplitterStyles);
   const panelContext = usePanelContext();
   const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
 
@@ -281,11 +288,33 @@ export function TableFlat(props: TableNGProps) {
     COLUMN_VISIBILITY_PANEL_MIN_WIDTH,
     Math.min(COLUMN_VISIBILITY_PANEL_MAX_WIDTH, width - 100)
   );
-  const columnVisibilityPanelAllocation = hasHeader
-    ? isColumnVisibilityPanelOpen
-      ? Math.min(columnVisibilityPanelWidth, columnVisibilityPanelMaxWidth)
-      : COLUMN_VISIBILITY_RAIL_WIDTH
+  const columnVisibilityPanelSize = isColumnVisibilityPanelOpen
+    ? Math.min(columnVisibilityPanelWidth, columnVisibilityPanelMaxWidth)
     : 0;
+  const columnVisibilityPanelAllocation = hasHeader
+    ? columnVisibilityPanelSize + COLUMN_VISIBILITY_SPLITTER_SIZE
+    : 0;
+  const handlePanelResize = useCallback(
+    (_size: number, firstPanePixels: number) => {
+      if (!isColumnVisibilityPanelOpen) {
+        setIsColumnVisibilityPanelOpen(true);
+      }
+      setColumnVisibilityPanelWidth(
+        Math.max(COLUMN_VISIBILITY_PANEL_MIN_WIDTH, Math.min(firstPanePixels, columnVisibilityPanelMaxWidth))
+      );
+    },
+    [columnVisibilityPanelMaxWidth, isColumnVisibilityPanelOpen]
+  );
+  const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
+    direction: 'row',
+    initialSize: columnVisibilityPanelSize / Math.max(1, width - COLUMN_VISIBILITY_SPLITTER_SIZE),
+    dragPosition: 'middle',
+    handleSize: 'xs',
+    onResizing: handlePanelResize,
+    onSizeChanged: handlePanelResize,
+  });
+  const splitterPointerState = useRef({ startX: 0, moved: false });
+  const splitterHookActive = useRef(false);
   // `width` may already be debounced by RefactoredTableNG. scrollbarWidth never is, so a scrollbar
   // appearing/disappearing re-sizes columns immediately instead of lagging behind that debounce.
   const availableWidth = useMemo(
@@ -461,7 +490,7 @@ export function TableFlat(props: TableNGProps) {
     [cellRootRenderers]
   );
 
-  return (
+  const dataGrid = (
     <TableDataGrid
       role="grid"
       gridRef={gridRef}
@@ -508,23 +537,100 @@ export function TableFlat(props: TableNGProps) {
       onTooltipClose={() => setTooltipState(undefined)}
       inspectCell={inspectCell}
       onInspectCellDismiss={() => setInspectCell(null)}
-      sidePanel={
-        !noHeader ? (
-          <ColumnVisibilitySidePanel
-            fields={pinnedOrderedVisibleFields}
-            hiddenColumns={hiddenColumns}
-            pinnedColumns={pinnedColumnSet}
-            isOpen={isColumnVisibilityPanelOpen}
-            width={columnVisibilityPanelAllocation}
-            maxWidth={columnVisibilityPanelMaxWidth}
-            onOpenChange={setIsColumnVisibilityPanelOpen}
-            onWidthChange={setColumnVisibilityPanelWidth}
-            onToggleColumn={handleToggleColumnVisibility}
-            onTogglePin={handleTogglePin}
-            onColumnsReorder={handleColumnsReorder}
-          />
-        ) : undefined
-      }
     />
   );
+
+  if (!hasHeader) {
+    return dataGrid;
+  }
+
+  return (
+    <div {...containerProps} className={clsx(containerProps.className, splitterStyles.container)}>
+      <div
+        {...primaryProps}
+        style={{
+          ...primaryProps.style,
+          minWidth: isColumnVisibilityPanelOpen ? COLUMN_VISIBILITY_PANEL_MIN_WIDTH : 0,
+          maxWidth: columnVisibilityPanelMaxWidth,
+        }}
+      >
+        <ColumnVisibilitySidePanel
+          fields={pinnedOrderedVisibleFields}
+          hiddenColumns={hiddenColumns}
+          pinnedColumns={pinnedColumnSet}
+          isOpen={isColumnVisibilityPanelOpen}
+          onToggleColumn={handleToggleColumnVisibility}
+          onTogglePin={handleTogglePin}
+          onColumnsReorder={handleColumnsReorder}
+        />
+      </div>
+      {/* useSplitter supplies the separator role, keyboard behavior, and tab stop through splitterProps. */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+      <div
+        {...splitterProps}
+        className={clsx(splitterProps.className, splitterStyles.handle)}
+        aria-label={t('grafana-ui.table.column-visibility-resizer', 'Column visibility panel')}
+        title={t(
+          'grafana-ui.table.column-visibility-resizer-instructions',
+          'Click to open or close. Drag or use arrow keys to resize.'
+        )}
+        onDoubleClick={undefined}
+        onPointerDown={(event) => {
+          splitterPointerState.current = { startX: event.clientX, moved: false };
+          splitterHookActive.current = typeof event.currentTarget.setPointerCapture === 'function';
+          if (splitterHookActive.current) {
+            splitterProps.onPointerDown(event);
+          }
+        }}
+        onPointerMove={(event) => {
+          if (Math.abs(event.clientX - splitterPointerState.current.startX) > SPLITTER_DRAG_THRESHOLD) {
+            splitterPointerState.current.moved = true;
+          }
+          if (splitterHookActive.current) {
+            splitterProps.onPointerMove(event);
+          }
+        }}
+        onPointerUp={(event) => {
+          const shouldTogglePanel = !splitterPointerState.current.moved;
+          if (splitterHookActive.current) {
+            splitterProps.onPointerUp(event);
+            splitterHookActive.current = false;
+          }
+          if (shouldTogglePanel) {
+            setIsColumnVisibilityPanelOpen((open) => !open);
+          }
+        }}
+        onPointerCancel={() => {
+          splitterHookActive.current = false;
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setIsColumnVisibilityPanelOpen((open) => !open);
+            return;
+          }
+          splitterProps.onKeyDown(event);
+        }}
+      />
+      <div {...secondaryProps} style={{ ...secondaryProps.style, minWidth: 0 }}>
+        {dataGrid}
+      </div>
+    </div>
+  );
 }
+
+const getColumnVisibilitySplitterStyles = memoize((theme: GrafanaTheme2) => ({
+  container: css({
+    height: '100%',
+    minWidth: 0,
+    minHeight: 0,
+  }),
+  handle: css({
+    zIndex: theme.zIndex.tooltip,
+    '&::after': {
+      width: `${COLUMN_VISIBILITY_RAIL_WIDTH}px !important`,
+      height: '128px !important',
+      background: '#f59e4b !important',
+    },
+  }),
+}));
