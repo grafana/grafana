@@ -122,9 +122,9 @@ spec:
                   routingTree:
                     type: string
                   type:
-                    enum:
-                    - SimplifiedRouting
-                    - NamedRoutingTree
+                    allOf:
+                    - {}
+                    default: SimplifiedRouting
                     type: string
                 type: object
               panelRef:
