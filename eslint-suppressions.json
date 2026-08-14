@@ -1896,11 +1896,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/dashgrid/SeriesVisibilityConfigFactory.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
