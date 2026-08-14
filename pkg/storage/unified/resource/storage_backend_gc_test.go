@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
@@ -789,4 +790,110 @@ func TestIntegrationGarbageCollectionPartialDeleteConverges(t *testing.T) {
 	err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
 	require.NoError(t, err)
 	require.Equal(t, 0, countHistory(), "GC did not converge after a partial delete")
+}
+
+// TestIntegrationGarbageCollectionLock verifies the best-effort singleton
+// lock that ensures only one storage-api replica runs a GC cycle at a time,
+// built on the same lease primitive used for usage-stats flushing and
+// search snapshot build/cleanup locks.
+func TestIntegrationGarbageCollectionLock(t *testing.T) {
+	gcConfig := GarbageCollectionConfig{
+		Enabled:          true,
+		Interval:         time.Minute,
+		BatchSize:        100,
+		DashboardsMaxAge: 24 * time.Hour,
+	}
+
+	countHistoryEntries := func(t *testing.T, ctx context.Context, b *kvStorageBackend) int {
+		count := 0
+		resp := b.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/namespace/",
+			EndKey:   "group/resource/namespace0",
+		})
+		resp(func(k string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		return count
+	}
+
+	setupBackendWithHistory := func(t *testing.T, configs ...func(*KVBackendOptions)) (*kvStorageBackend, context.Context) {
+		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
+
+		storageBackend := setupTestStorageBackend(t, append([]func(*KVBackendOptions){func(opts *KVBackendOptions) {
+			opts.GarbageCollection = gcConfig
+		}}, configs...)...)
+
+		server, err := NewResourceServer(ResourceServerOptions{
+			Backend: storageBackend,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
+
+		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
+		require.NoError(t, err)
+		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
+			func(o *writeEventOptions) {
+				o.PreviousRV = rv1
+			})
+		require.NoError(t, err)
+		require.Equal(t, 2, countHistoryEntries(t, ctx, storageBackend))
+
+		return storageBackend, ctx
+	}
+
+	withKVLeases := func(opts *KVBackendOptions) {
+		opts.EnableKVLeases = true
+		opts.Holder = "test-holder"
+	}
+
+	t.Run("skips the cycle when another replica holds the lock", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		b, ctx := setupBackendWithHistory(t, withKVLeases)
+
+		// Simulate another replica that is already running a GC cycle.
+		l, err := b.leaseManager.Acquire(ctx, gcLeaseName, lease.WithTTL(gcLeaseTTL))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = b.leaseManager.Release(ctx, l) })
+
+		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		b.runGarbageCollectionWithLock(ctx, cutoffTimestamp)
+
+		// GC must have been skipped: history entries remain untouched.
+		require.Equal(t, 2, countHistoryEntries(t, ctx, b))
+	})
+
+	t.Run("runs and releases the lock when no other replica holds it", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		b, ctx := setupBackendWithHistory(t, withKVLeases)
+
+		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		b.runGarbageCollectionWithLock(ctx, cutoffTimestamp)
+
+		require.Equal(t, 0, countHistoryEntries(t, ctx, b))
+
+		// the lock must be released so a future cycle isn't skipped forever
+		l, err := b.leaseManager.Acquire(ctx, gcLeaseName, lease.WithTTL(gcLeaseTTL))
+		require.NoError(t, err)
+		require.NoError(t, b.leaseManager.Release(ctx, l))
+	})
+
+	t.Run("runs on every replica when leases are disabled", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		b, ctx := setupBackendWithHistory(t)
+		require.Nil(t, b.leaseManager)
+
+		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		b.runGarbageCollectionWithLock(ctx, cutoffTimestamp)
+
+		require.Equal(t, 0, countHistoryEntries(t, ctx, b))
+	})
 }

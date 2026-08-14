@@ -47,6 +47,15 @@ const (
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 	persistDeadline                   = 10 * time.Second
+
+	// gcLeaseName is the lease used to ensure only one storage-api replica
+	// runs a garbage collection cycle at a time. See runGarbageCollectionWithLock.
+	gcLeaseName = "resource-gc"
+
+	// gcLeaseTTL bounds how long a GC cycle can hold the lease. If a cycle
+	// runs longer, the lease expires and another replica may pick it up too;
+	// harmless since deletes are idempotent.
+	gcLeaseTTL = 10 * time.Minute
 )
 
 // IsResourceNameMixedCase reports whether a successful read returned a
@@ -695,12 +704,39 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
+				b.runGarbageCollectionWithLock(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
 			}
 		}
 	}()
 
 	return nil
+}
+
+// runGarbageCollectionWithLock is a best-effort attempt at having only one
+// storage-api replica run a GC cycle at a time, using the same lease
+// primitive as usage-stats flushing and search snapshot build/cleanup.
+// Deletes are idempotent, so a concurrent run by two replicas is safe, just
+// redundant; when leases are disabled, GC simply runs on every replica.
+func (b *kvStorageBackend) runGarbageCollectionWithLock(ctx context.Context, cutoffTimeStamp int64) {
+	if b.leaseManager == nil {
+		b.runGarbageCollection(ctx, cutoffTimeStamp)
+		return
+	}
+
+	l, err := b.leaseManager.Acquire(ctx, gcLeaseName, lease.WithTTL(gcLeaseTTL))
+	if err != nil {
+		if !errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+			b.log.Error("failed to acquire garbage collection lease", "error", err)
+		}
+		return
+	}
+	defer func() {
+		if err := b.leaseManager.Release(context.WithoutCancel(ctx), l); err != nil {
+			b.log.Warn("releasing garbage collection lease failed", "error", err)
+		}
+	}()
+
+	b.runGarbageCollection(ctx, cutoffTimeStamp)
 }
 
 // runGarbageCollection identifies deleted resources that are safe
