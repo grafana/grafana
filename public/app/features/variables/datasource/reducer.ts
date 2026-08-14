@@ -48,11 +48,11 @@ const dataSourceVariableSlice = createSlice({
           continue;
         }
 
-        if (isValid(source, regex)) {
+        if (isValid(source, regex, instanceState.labels)) {
           options.push({ text: source.name, value: source.uid, selected: false });
         }
 
-        if (isDefault(source, regex)) {
+        if (isDefault(source, regex, instanceState.labels)) {
           options.push({
             text: t('variables.data-source-variable-slice.text.default', 'default'),
             value: 'default',
@@ -78,7 +78,26 @@ const dataSourceVariableSlice = createSlice({
   },
 });
 
-function isValid(source: DataSourceInstanceSettings, regex?: RegExp) {
+function matchLabels(sourceLabels?: Record<string, string>, filterLabels?: Record<string, string>): boolean {
+  if (!filterLabels || Object.keys(filterLabels).length === 0) {
+    return true;
+  }
+  if (!sourceLabels) {
+    return false;
+  }
+  for (const [key, value] of Object.entries(filterLabels)) {
+    if (sourceLabels[key] !== value) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isValid(source: DataSourceInstanceSettings, regex?: RegExp, filterLabels?: Record<string, string>) {
+  if (!matchLabels(source.labels, filterLabels)) {
+    return false;
+  }
+
   if (!regex) {
     return true;
   }
@@ -86,8 +105,12 @@ function isValid(source: DataSourceInstanceSettings, regex?: RegExp) {
   return regex.exec(source.name);
 }
 
-function isDefault(source: DataSourceInstanceSettings, regex?: RegExp) {
+function isDefault(source: DataSourceInstanceSettings, regex?: RegExp, filterLabels?: Record<string, string>) {
   if (!source.isDefault) {
+    return false;
+  }
+
+  if (!matchLabels(source.labels, filterLabels)) {
     return false;
   }
 

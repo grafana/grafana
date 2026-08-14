@@ -11,13 +11,19 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { DataSourceVariableForm } from '../components/DataSourceVariableForm';
 import { getOptionDataSourceTypes } from '../utils';
 
+declare module '@grafana/scenes' {
+  interface DataSourceVariableState {
+    labels?: string;
+  }
+}
+
 interface DataSourceVariableEditorProps {
   variable: DataSourceVariable;
   onRunQuery: () => void;
 }
 
 export function DataSourceVariableEditor({ variable, onRunQuery }: DataSourceVariableEditorProps) {
-  const { pluginId, regex, isMulti, allValue, includeAll, allowCustomValue } = variable.useState();
+  const { pluginId, regex, labels = '', isMulti, allValue, includeAll, allowCustomValue } = variable.useState();
 
   const optionTypes = getOptionDataSourceTypes();
 
@@ -31,6 +37,13 @@ export function DataSourceVariableEditor({ variable, onRunQuery }: DataSourceVar
   const onRegExChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({
       regex: event.currentTarget.value,
+    });
+    onRunQuery();
+  };
+
+  const onLabelsChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({
+      labels: event.currentTarget.value,
     });
     onRunQuery();
   };
@@ -57,6 +70,7 @@ export function DataSourceVariableEditor({ variable, onRunQuery }: DataSourceVar
     <DataSourceVariableForm
       query={pluginId}
       regex={regex}
+      labels={labels}
       multi={isMulti || false}
       allValue={allValue}
       includeAll={includeAll || false}
@@ -64,6 +78,7 @@ export function DataSourceVariableEditor({ variable, onRunQuery }: DataSourceVar
       allowCustomValue={allowCustomValue}
       onChange={onChangeType}
       onRegExBlur={onRegExChange}
+      onLabelsBlur={onLabelsChange}
       onMultiChange={onMultiChange}
       onIncludeAllChange={onIncludeAllChange}
       onAllValueChange={onAllValueChange}
