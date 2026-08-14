@@ -5619,6 +5619,7 @@
       "add-conditional-rule": "Tambah aturan {{ruleDescription}}",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Duplikasikan panel",
       "edit-query-result-rule": "Ubah aturan hasil kueri",
       "edit-template-variable-rule": "Ubah aturan variabel templat",
@@ -6809,7 +6810,8 @@
         "change-annotation-enabled-state": "Ubah status anotasi yang diaktifkan",
         "change-annotation-name": "Ubah nama anotasi",
         "change-annotation-panel-filter": "Ubah filter panel anotasi"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Hapus kueri anotasi",
@@ -6885,13 +6887,9 @@
       "placeholder-your-metric-prefix": "Awalan metrik Anda"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Hapus",
-      "aria-label-edit": "Edit",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Tampilkan/sembunyikan aturan tidak akan berfungsi",
@@ -7689,6 +7687,10 @@
     },
     "variable-controls": {
       "add-variable": "Tambah variabel"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Hapus variabel",
@@ -12559,6 +12561,7 @@
       "customise-saving": "",
       "dialog-label": "Navigasi",
       "dock": "Gandeng menu",
+      "header-title": "",
       "list-label": "Navigasi",
       "open": "Menu utama",
       "pin-error": "",
@@ -12666,6 +12669,13 @@
       "title-zoom-out": "Perkecil"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12692,6 +12702,11 @@
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
     }
   },
   "notifications": {
@@ -15929,6 +15944,7 @@
     "name-show-mini-map": "Tampilkan peta mini"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -15957,6 +15973,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {
