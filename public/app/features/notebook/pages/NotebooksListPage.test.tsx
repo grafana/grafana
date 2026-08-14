@@ -4,6 +4,7 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -14,7 +15,7 @@ import {
   type WhereNode,
   useSearchNotebooksQuery,
 } from '../list/notebookSearchApi';
-import { __resetSearchAvailabilityForTests } from '../list/useNotebooksList';
+import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
 
 import { NotebooksListPage } from './NotebooksListPage';
 
@@ -37,6 +38,7 @@ jest.mock('../list/notebookSearchApi', () => ({
 }));
 
 const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksQuery);
+const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
 
 function makeHit(name: string, title: string, tags: string[] = [], createdBy = 'user:abc'): ResultItem {
@@ -58,9 +60,38 @@ function leavesOf(where: WhereNode | undefined): WhereNode[] {
  * Stands in for the endpoint, applying the predicates the page sent. Filtering is server-side
  * now, so a fake that ignored the request body would let a wrong query pass unnoticed.
  */
+/** A notebook as LIST returns it, for the cases that exercise the fallback path. */
+function makeNotebook(name: string, title: string): Notebook {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal fixture standing in for a full k8s resource
+  return {
+    metadata: { name, creationTimestamp: '2026-01-01T00:00:00Z', annotations: { 'grafana.app/createdBy': 'user:abc' } },
+    spec: { title, tags: [] },
+  } as unknown as Notebook;
+}
+
+function setListNotebooks(items: Notebook[], extra: { continueToken?: string } = {}) {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
+  mockUseListNotebookQuery.mockReturnValue({
+    data: { items, metadata: { continue: extra.continueToken } },
+    isLoading: false,
+    error: undefined,
+  } as unknown as ReturnType<typeof useListNotebookQuery>);
+}
+
+/** A page the server filled to the limit, which is what truncation looks like on the wire. */
+function makeFullPage(): ResultItem[] {
+  return Array.from({ length: NOTEBOOKS_PAGE_LIMIT }, (_, i) => makeHit(`nb${i}`, `Notebook ${i}`));
+}
+
 function setNotebooks(
   items: ResultItem[],
-  extra: { isLoading?: boolean; error?: unknown; continueToken?: string; totalHits?: number } = {}
+  extra: {
+    isLoading?: boolean;
+    error?: unknown;
+    continueToken?: string;
+    totalHits?: number;
+    totalHitsRelation?: 'eq' | 'lte';
+  } = {}
 ) {
   mockUseSearchNotebooksQuery.mockImplementation((arg) => {
     if (arg === skipToken || extra.error) {
@@ -91,7 +122,7 @@ function setNotebooks(
         metadata: {
           continue: extra.continueToken,
           totalHits: extra.totalHits ?? matched.length,
-          totalHitsRelation: 'eq',
+          totalHitsRelation: extra.totalHitsRelation ?? 'eq',
         },
       },
       isLoading: extra.isLoading ?? false,
@@ -259,11 +290,41 @@ describe('NotebooksListPage', () => {
 
   it('reports the server-side total when the page holds only part of it', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setNotebooks([makeHit('nb1', 'Checkout error spike')], { continueToken: 'next-page', totalHits: 87 });
+    setNotebooks(makeFullPage(), { continueToken: 'next-page', totalHits: 870 });
 
     render(<NotebooksListPage />);
 
-    expect(await screen.findByText('Showing 1 of 87')).toBeInTheDocument();
+    expect(await screen.findByText(`Showing ${NOTEBOOKS_PAGE_LIMIT} of 870`)).toBeInTheDocument();
+  });
+
+  // On the fallback path the loaded window and the matches within it are different facts, and LIST
+  // reports no total at all — so folding them into "showing 1 of 2" would claim the library holds
+  // two matching notebooks when all that is known is that two were fetched.
+  it('keeps the loaded count and the match count apart when serving from LIST', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([], { error: { status: 404, data: { message: 'not found' }, config: { url: '' } } });
+    setListNotebooks([makeNotebook('nb1', 'Checkout error spike'), makeNotebook('nb2', 'Q2 latency regression')], {
+      continueToken: 'next-page',
+    });
+
+    render(<NotebooksListPage />);
+
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+    // The debounce has to elapse before the client-side filter narrows anything.
+    expect(await screen.findByText('1 notebook')).toBeInTheDocument();
+    expect(screen.getByText('First 2 notebooks loaded')).toBeInTheDocument();
+  });
+
+  // An inexact total is an upper bound, counted before per-item authorization — so the label has to
+  // read as a ceiling. "of 870+" would promise more than exists.
+  it('phrases an inexact total as a ceiling', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks(makeFullPage(), { continueToken: 'next-page', totalHits: 870, totalHitsRelation: 'lte' });
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText(`Showing ${NOTEBOOKS_PAGE_LIMIT} of up to 870`)).toBeInTheDocument();
   });
 
   it('counts only the matches once a filter narrows a truncated list', async () => {

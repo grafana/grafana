@@ -82,6 +82,9 @@ interface UseNotebooksListOptions {
 export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   const [searchQuery, setSearchQuery] = useState('');
   const [createdByMe, setCreatedByMe] = useState(false);
+  // Mirrors the module latch into state, so the branches below have it as a real dependency and a
+  // flip re-renders on its own. A fresh mount starts from what earlier mounts already learned.
+  const [usingFallback, setUsingFallback] = useState(searchUnavailable);
 
   const [debouncedSearch, setDebouncedSearch] = useState('');
   useDebounce(() => setDebouncedSearch(searchQuery), SEARCH_DEBOUNCE_MS, [searchQuery]);
@@ -96,23 +99,27 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     [debouncedSearch, filterByAuthor, currentUserUid]
   );
 
-  const search = useSearchNotebooksQuery(enabled && !searchUnavailable ? searchBody : skipToken);
+  const search = useSearchNotebooksQuery(enabled && !usingFallback ? searchBody : skipToken);
 
   // Latch on the first "no such route" answer, so we stop asking for the rest of the session.
-  if (search.error && isRouteMissing(search.error)) {
+  if (search.error && isRouteMissing(search.error) && !usingFallback) {
     searchUnavailable = true;
+    // Setting state during render is the derived-state pattern: React re-runs this component
+    // before committing, so the fallback request starts in the same commit and nothing paints in
+    // between.
+    setUsingFallback(true);
   }
 
-  const list = useListNotebookQuery(enabled && searchUnavailable ? { limit: NOTEBOOKS_PAGE_LIMIT } : skipToken);
+  const list = useListNotebookQuery(enabled && usingFallback ? { limit: NOTEBOOKS_PAGE_LIMIT } : skipToken);
 
-  const active = searchUnavailable ? list : search;
+  const active = usingFallback ? list : search;
 
   const rows = useMemo(() => {
-    if (searchUnavailable) {
+    if (usingFallback) {
       return (list.data?.items ?? []).map(listRow);
     }
     return (search.data?.items ?? []).map(searchRow);
-  }, [list.data, search.data]);
+  }, [usingFallback, list.data, search.data]);
 
   const authorUids = useMemo(() => uniq(compact(rows.map((row) => row.authorUid))), [rows]);
 
@@ -146,7 +153,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   // On the fallback path the server did no filtering, so it has to happen here. When search
   // is serving, the predicates are already in the request and this is a no-op.
   const filteredRows = useMemo(() => {
-    if (!searchUnavailable) {
+    if (!usingFallback) {
       return namedRows;
     }
     const needle = debouncedSearch.trim().toLowerCase();
@@ -154,26 +161,39 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
       (row) =>
         (!needle || row.title.toLowerCase().includes(needle)) && (!filterByAuthor || row.authorUid === currentUserUid)
     );
-  }, [namedRows, debouncedSearch, filterByAuthor, currentUserUid]);
+  }, [usingFallback, namedRows, debouncedSearch, filterByAuthor, currentUserUid]);
 
   const isFiltered = Boolean(debouncedSearch.trim()) || filterByAuthor;
 
   return {
     rows: filteredRows,
     /**
-     * How many the server holds, filters included. Read with `isTotalExact` — the server falls
-     * back to an upper bound when counting exactly would cost too much.
+     * How many the server holds, filters included, or undefined when it does not say — LIST only
+     * ever reports the page it returned, so the fallback path has no total to offer. Read a number
+     * here with `isTotalExact`: the server falls back to an upper bound when counting exactly
+     * would cost too much.
      */
-    totalCount: searchUnavailable ? namedRows.length : (search.data?.metadata.totalHits ?? 0),
-    isTotalExact: searchUnavailable || search.data?.metadata.totalHitsRelation !== 'lte',
-    /** More matches exist than the page on screen, so what is shown is not the whole set. */
-    isTruncated: searchUnavailable ? Boolean(list.data?.metadata?.continue) : Boolean(search.data?.metadata.continue),
+    totalCount: usingFallback ? undefined : (search.data?.metadata.totalHits ?? 0),
+    isTotalExact: search.data?.metadata.totalHitsRelation !== 'lte',
+    /** How many rows the request brought back, before any client-side filtering. */
+    loadedCount: namedRows.length,
+    /**
+     * More matches exist than the page on screen. Search offers a continue token on a short page
+     * too, whenever its total is inexact, so a cursor alone does not mean there is more — a full
+     * page does. LIST is the other way around: it stops at its own byte limit before reaching the
+     * requested count, so a short page with a token there is real truncation.
+     */
+    isTruncated: usingFallback
+      ? Boolean(list.data?.metadata?.continue)
+      : Boolean(search.data?.metadata.continue) && namedRows.length >= NOTEBOOKS_PAGE_LIMIT,
     /** Distinguishes "no notebooks at all" from "none matched the filters". */
     isFiltered,
     searchQuery,
     setSearchQuery,
     createdByMe,
     setCreatedByMe,
+    /** Without an identity there is no "me", so the filter has nothing to mean. */
+    canFilterByMe: Boolean(currentUserUid),
     isLoading: active.isLoading,
     error: active.error,
   };
@@ -193,6 +213,9 @@ function buildSearchQuery(search: string, authorUid: string | undefined): Notebo
     leaves.push({ text: { value: needle } });
   }
   if (authorUid) {
+    // Only the `user:<uid>` form: that is what the apiserver records on create. Author *names* are
+    // resolved from either form because old resources elsewhere carry the legacy numeric id, but a
+    // notebook cannot have been written that way, so matching on one form is enough here.
     leaves.push({ filter: { field: SearchField.createdBy, operator: 'In', values: [authorUid] } });
   }
 

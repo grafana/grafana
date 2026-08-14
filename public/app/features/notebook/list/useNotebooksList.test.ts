@@ -75,6 +75,11 @@ function setSearch(
   } as unknown as ReturnType<typeof useSearchNotebooksQuery>);
 }
 
+/** A page the server filled to the limit, which is what truncation looks like on the wire. */
+function fullPage(): ResultItem[] {
+  return Array.from({ length: NOTEBOOKS_PAGE_LIMIT }, (_, i) => makeHit({ name: `nb${i}`, title: `Notebook ${i}` }));
+}
+
 /** The route-missing failure that makes the hook fall back to LIST. */
 function setSearchRouteMissing(status = 404) {
   setSearch([], { error: { status, data: { message: 'not found' }, config: { url: '' } } });
@@ -346,13 +351,28 @@ describe('useNotebooksList', () => {
     });
 
     it('reports truncation and the server-side total', () => {
-      setSearch([makeHit({ name: 'nb1', title: 'One' })], { continueToken: 'next-page', totalHits: 87 });
+      setSearch(fullPage(), { continueToken: 'next-page', totalHits: 870 });
 
       const { result } = setupHook();
 
       expect(result.current.isTruncated).toBe(true);
-      expect(result.current.totalCount).toBe(87);
+      expect(result.current.totalCount).toBe(870);
       expect(result.current.isTotalExact).toBe(true);
+    });
+
+    // The endpoint hands back a cursor on a short page too, whenever its total is inexact, so that
+    // matches its scan never reached stay reachable. Reading that as "there is more" would tell the
+    // user their complete list is a window onto something bigger.
+    it('does not call a short page truncated, even when offered a continue token', () => {
+      setSearch([makeHit({ name: 'nb1', title: 'One' })], {
+        continueToken: 'next-page',
+        totalHits: 12,
+        totalHitsRelation: 'lte',
+      });
+
+      const { result } = setupHook();
+
+      expect(result.current.isTruncated).toBe(false);
     });
 
     it('flags an inexact total so it is not printed as a precise number', () => {
@@ -574,16 +594,29 @@ describe('useNotebooksList', () => {
       });
     });
 
-    it('counts the loaded page, having no server-side total to report', async () => {
+    it('reports what it loaded rather than inventing a total LIST never gave', async () => {
       setSearchRouteMissing();
       setList([makeNotebook({ name: 'nb1', title: 'One' }), makeNotebook({ name: 'nb2', title: 'Two' })]);
 
       const { result } = setupHook();
 
       await waitFor(() => {
-        expect(result.current.totalCount).toBe(2);
+        expect(result.current.loadedCount).toBe(2);
       });
-      expect(result.current.isTotalExact).toBe(true);
+      expect(result.current.totalCount).toBeUndefined();
+    });
+
+    // The opposite of the search path: LIST stops at its own byte limit before reaching the
+    // requested count, so here a short page with a cursor is real truncation.
+    it('treats a short LIST page with a continue token as truncated', async () => {
+      setSearchRouteMissing();
+      setList([makeNotebook({ name: 'nb1', title: 'One' })], { continueToken: 'next-page' });
+
+      const { result } = setupHook();
+
+      await waitFor(() => {
+        expect(result.current.isTruncated).toBe(true);
+      });
     });
 
     it('stops asking for the search route once it is known to be missing', async () => {

@@ -30,12 +30,14 @@ export function NotebooksListPage() {
     rows,
     totalCount,
     isTotalExact,
+    loadedCount,
     isTruncated,
     isFiltered,
     searchQuery,
     setSearchQuery,
     createdByMe,
     setCreatedByMe,
+    canFilterByMe,
     isLoading,
     error,
   } = useNotebooksList({ enabled: notebooksEnabled });
@@ -84,9 +86,9 @@ export function NotebooksListPage() {
     </Button>
   ) : undefined;
 
-  // Filtering happens server-side, so a zero count only means the library is empty when nothing
+  // Filtering happens server-side, so an empty page only means the library is empty when nothing
   // is filtered — otherwise it is a no-results state and the CTA would be wrong.
-  const hasNoNotebooks = !isLoading && !error && !isFiltered && totalCount === 0;
+  const hasNoNotebooks = !isLoading && !error && !isFiltered && rows.length === 0;
 
   return (
     // When nothing exists the empty state carries the create button, so drop it from the header.
@@ -134,39 +136,23 @@ export function NotebooksListPage() {
                   {/* An arbitrary-author filter would need the server to enumerate authors, which
                       the index cannot facet on. Filtering to one known identity needs no such
                       list. */}
-                  <Checkbox
-                    id="notebooks-created-by-me"
-                    value={createdByMe}
-                    onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
-                    label={t('notebooks.list.created-by-me', 'Created by me')}
-                  />
-                </Stack>
-                {/* Two numbers, because the page is one bounded window onto the matches: how many
-                    are on screen, and how many the server has. They differ only when truncated. */}
-                <Stack alignItems="center" gap={1}>
-                  {isTruncated ? (
-                    <Text variant="bodySmall" color="secondary">
-                      {/* `shown` rather than `count`, which would have i18next emit plural
-                          variants of a string that does not vary. */}
-                      {isTotalExact
-                        ? t('notebooks.list.count-of-total', 'Showing {{shown}} of {{total}}', {
-                            shown: rows.length,
-                            total: totalCount,
-                          })
-                        : t('notebooks.list.count-of-total-approx', 'Showing {{shown}} of {{total}}+', {
-                            shown: rows.length,
-                            total: totalCount,
-                          })}
-                    </Text>
-                  ) : (
-                    <Text variant="bodySmall" color="secondary">
-                      {t('notebooks.list.count', '', {
-                        count: rows.length,
-                        defaultValue_one: '{{count}} notebook',
-                        defaultValue_other: '{{count}} notebooks',
-                      })}
-                    </Text>
+                  {canFilterByMe && (
+                    <Checkbox
+                      id="notebooks-created-by-me"
+                      value={createdByMe}
+                      onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
+                      label={t('notebooks.list.created-by-me', 'Created by me')}
+                    />
                   )}
+                </Stack>
+                <Stack alignItems="center" gap={1}>
+                  <CountSummary
+                    shown={rows.length}
+                    loadedCount={loadedCount}
+                    totalCount={totalCount}
+                    isTotalExact={isTotalExact}
+                    isTruncated={isTruncated}
+                  />
                 </Stack>
               </Stack>
 
@@ -182,6 +168,70 @@ export function NotebooksListPage() {
         </Stack>
       </Page.Contents>
     </Page>
+  );
+}
+
+interface CountSummaryProps {
+  /** Rows on screen. */
+  shown: number;
+  /** Rows the request returned, before client-side filtering. */
+  loadedCount: number;
+  /** Matches the server counted, or undefined when it reports no total. */
+  totalCount: number | undefined;
+  isTotalExact: boolean;
+  isTruncated: boolean;
+}
+
+/**
+ * Says how much of the library is on screen, phrased by what the serving path can honestly claim.
+ * Nothing here invents a total: when the server does not report one, the size of the window it
+ * returned is all there is to say.
+ */
+function CountSummary({ shown, loadedCount, totalCount, isTotalExact, isTruncated }: CountSummaryProps) {
+  const matches = (
+    <Text variant="bodySmall" color="secondary">
+      {t('notebooks.list.count', '', {
+        count: shown,
+        defaultValue_one: '{{count}} notebook',
+        defaultValue_other: '{{count}} notebooks',
+      })}
+    </Text>
+  );
+
+  if (!isTruncated) {
+    return matches;
+  }
+
+  // No server-side total: two numbers, because how many were loaded and how many of those matched
+  // are different facts, and folding them into one would misreport both.
+  if (totalCount === undefined) {
+    return (
+      <>
+        <Text variant="bodySmall" color="secondary">
+          {t('notebooks.list.count-truncated', '', {
+            count: loadedCount,
+            defaultValue_one: 'First {{count}} notebook loaded',
+            defaultValue_other: 'First {{count}} notebooks loaded',
+          })}
+        </Text>
+        {matches}
+      </>
+    );
+  }
+
+  return (
+    <Text variant="bodySmall" color="secondary">
+      {/* `shown` rather than `count`, which would have i18next emit plural variants of a string
+          that does not vary. */}
+      {isTotalExact
+        ? t('notebooks.list.count-of-total', 'Showing {{shown}} of {{total}}', { shown, total: totalCount })
+        : // An inexact total is an upper bound, and one counted before per-item authorization at
+          // that — so it has to read as a ceiling rather than as "at least this many".
+          t('notebooks.list.count-of-total-approx', 'Showing {{shown}} of up to {{total}}', {
+            shown,
+            total: totalCount,
+          })}
+    </Text>
   );
 }
 
