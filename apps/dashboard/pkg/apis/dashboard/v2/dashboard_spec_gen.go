@@ -2861,7 +2861,6 @@ const (
 	DashboardAutoGridLayoutSpecMaxHeightModeStandard  DashboardAutoGridLayoutSpecMaxHeightMode = "standard"
 	DashboardAutoGridLayoutSpecMaxHeightModeTall      DashboardAutoGridLayoutSpecMaxHeightMode = "tall"
 	DashboardAutoGridLayoutSpecMaxHeightModeCustom    DashboardAutoGridLayoutSpecMaxHeightMode = "custom"
-	DashboardAutoGridLayoutSpecMaxHeightModeScreen    DashboardAutoGridLayoutSpecMaxHeightMode = "screen"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpecMaxHeightMode.

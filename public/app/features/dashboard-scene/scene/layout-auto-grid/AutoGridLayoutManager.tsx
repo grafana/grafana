@@ -62,7 +62,7 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
 
 export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
 export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
-export type AutoGridMaxHeightMode = 'unlimited' | 'short' | 'standard' | 'tall' | 'custom' | 'screen';
+export type AutoGridMaxHeightMode = 'unlimited' | 'short' | 'standard' | 'tall' | 'custom';
 
 const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
@@ -117,6 +117,18 @@ export class AutoGridLayoutManager
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
           autoRows: getAutoRowsTemplate(rowHeight, fillScreen, fitContent),
         }),
+    });
+
+    this.addActivationHandler(() => {
+      // Children changes (add/remove/drag between grids, undo/redo) can change
+      // whether any panel opts into content-fit, so autoRows must be recomputed.
+      this._subs.add(
+        this.state.layout.subscribeToState((newState, prevState) => {
+          if (newState.children !== prevState.children) {
+            this.updateAutoRows();
+          }
+        })
+      );
     });
   }
 
@@ -351,12 +363,13 @@ export class AutoGridLayoutManager
   }
 
   public onFillScreenChanged(fillScreen: boolean) {
-    this.setState({ fillScreen });
+    // Fill screen (stretch to fill) and fit content (size to content) are opposites.
+    this.setState(fillScreen ? { fillScreen, fitContent: false } : { fillScreen });
     this.updateAutoRows();
   }
 
   public onFitContentChanged(fitContent: boolean) {
-    this.setState({ fitContent });
+    this.setState(fitContent ? { fitContent, fillScreen: false } : { fitContent });
     this.updateAutoRows();
   }
 
@@ -393,6 +406,11 @@ export class AutoGridLayoutManager
   /**
    * Content-fit is active when the layout default is on or any panel opts in.
    * When active, row tracks must be able to grow to a panel's content height.
+   *
+   * Deliberately does not check plugin capability: plugins load async and
+   * nothing recomputes autoRows on load. A permissive `max-content` track is
+   * benign — non-fit panels are absolutely positioned and contribute no
+   * in-flow height, so the row stays at its floor.
    */
   public hasFitContent(): boolean {
     if (this.state.fitContent) {
@@ -549,8 +567,7 @@ function getNamedColumWidthInPixels(columnWidth: AutoGridColumnWidth) {
 
 /**
  * Resolves the configured max-height mode to a CSS `max-height` value. The
- * browser enforces the bound, so `screen` maps to `100vh` (re-evaluated on
- * viewport resize natively) and unlimited maps to `none`.
+ * browser enforces the bound; unlimited maps to `none`.
  */
 export function getMaxHeightCssValue(
   mode: AutoGridMaxHeightMode | undefined,
@@ -563,8 +580,6 @@ export function getMaxHeightCssValue(
       return `${getNamedHeightInPixels(mode)}px`;
     case 'custom':
       return customPixels != null ? `${customPixels}px` : 'none';
-    case 'screen':
-      return '100vh';
     case 'unlimited':
     case undefined:
     default:

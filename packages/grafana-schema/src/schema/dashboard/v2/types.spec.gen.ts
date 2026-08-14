@@ -961,7 +961,7 @@ export interface AutoGridLayoutSpec {
 	fitContent?: boolean;
 	minHeightMode?: "short" | "standard" | "tall" | "custom";
 	minHeight?: number;
-	maxHeightMode?: "unlimited" | "short" | "standard" | "tall" | "custom" | "screen";
+	maxHeightMode?: "unlimited" | "short" | "standard" | "tall" | "custom";
 	maxHeight?: number;
 	matchRowHeights?: boolean;
 	items: AutoGridLayoutItemKind[];

@@ -43,7 +43,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   // Content-fit only applies to panels whose plugin supports it. A per-panel
   // override (opt-in/opt-out) wins over the layout default.
   const pluginSupportsFit = body.getPlugin()?.supportsFitContent === true;
-  const fitContentOn = pluginSupportsFit && (itemFitContent ?? layoutFitContent ?? false);
+  const fitContentOn = pluginSupportsFit && (itemFitContent ?? layoutFitContent) === true;
   const matchRowHeightsOn = matchRowHeights !== false;
   const rowHeightPx = getNamedHeightInPixels(rowHeight);
   const fitMinHeightPx = getNamedHeightInPixels(minHeight ?? rowHeight);
@@ -54,8 +54,15 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   // this cell would leave the chrome floating at the top.
   // Non-fit panels stay at the row height; when row heights aren't matched they
   // must pin to it explicitly so a tall fit sibling doesn't stretch them.
+  // The scroll clip is only created when a max height actually bounds the cell —
+  // an unconditional `overflow: auto` would clip the selection/hover outlines
+  // drawn at the chrome's edges (see styles.itemMaxHeightClip for the bounded case).
+  const maxHeightCss = getMaxHeightCssValue(maxHeightMode, maxHeight);
+  const isMaxHeightBounded = maxHeightCss !== 'none';
   const itemStyle: React.CSSProperties | undefined = fitContentOn
-    ? { maxHeight: getMaxHeightCssValue(maxHeightMode, maxHeight), overflow: 'auto' }
+    ? isMaxHeightBounded
+      ? { maxHeight: maxHeightCss, overflow: 'auto' }
+      : undefined
     : matchRowHeightsOn
       ? undefined
       : { height: rowHeightPx };
@@ -121,7 +128,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                 : {})}
               className={cx(
                 isConditionallyHidden && !isEditing && styles.hidden,
-                fitContentOn && styles.itemFitContent
+                fitContentOn && styles.itemFitContent,
+                fitContentOn && isMaxHeightBounded && styles.itemMaxHeightClip
               )}
               style={extraStyle}
             >
@@ -140,7 +148,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           );
         }
       ),
-    [model, isLazy, key, styles, isEditing, fitContentOn, fitContentValue]
+    [model, isLazy, key, styles, isEditing, fitContentOn, isMaxHeightBounded, fitContentValue]
   );
 
   const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
@@ -214,5 +222,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   itemFitContent: css({
     width: '100%',
+  }),
+  // A bounded max height turns the cell into a scroll container, which clips
+  // outlines drawn at the chrome's box edge. Pull them one pixel inward so
+  // selection/hover feedback stays visible.
+  itemMaxHeightClip: css({
+    '& .dashboard-selected-element, & .dashboard-selectable-element:hover': {
+      outlineOffset: '-1px',
+    },
   }),
 });
