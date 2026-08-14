@@ -91,7 +91,14 @@ func (s *SQLPermissionsStore) GetUserPermissions(ctx context.Context, ns types.N
 	var perms []accesscontrol.Permission
 	for res.Next() {
 		var perm accesscontrol.Permission
-		if err := res.Scan(&perm.Kind, &perm.Attribute, &perm.Identifier, &perm.Scope); err != nil {
+		perm.Action = query.Action
+		var err error
+		if query.Action == "" {
+			err = res.Scan(&perm.Action, &perm.Kind, &perm.Attribute, &perm.Identifier, &perm.Scope)
+		} else {
+			err = res.Scan(&perm.Kind, &perm.Attribute, &perm.Identifier, &perm.Scope)
+		}
+		if err != nil {
 			return nil, err
 		}
 		perms = append(perms, perm)

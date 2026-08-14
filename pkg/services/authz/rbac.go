@@ -60,6 +60,8 @@ func ProvideAuthZClient(
 ) (authlib.AccessClient, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	zanzanaNoLegacy := zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient)
 
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
@@ -71,22 +73,25 @@ func ProvideAuthZClient(
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
-		return zanzanaClient, nil
-	}
-
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
 		if err != nil {
 			return nil, err
 		}
+		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
+		if zanzanaNoLegacy {
+			return zanzanaClient, nil
+		}
 		if zanzanaEnabled {
 			return newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
 		}
 		return rbacClient, nil
 	default:
+		userPermissionsEvaluator, ok := acService.(accesscontrol.UserPermissionsEvaluator)
+		if !ok {
+			return nil, errors.New("access control service does not support local user permission evaluation")
+		}
 		sql := legacysql.NewDatabaseProvider(db)
 		rbacSettings := rbac.Settings{
 			CacheTTL: authCfg.cacheTTL,
@@ -113,6 +118,9 @@ func ProvideAuthZClient(
 				store.NewStaticPermissionStore(acService),
 				store.NewSQLPermissionStore(sql, tracer),
 			),
+			userPermissionsEvaluator,
+			nil,
+			nil,
 			log.New("authz-grpc-server"),
 			tracer,
 			reg,
@@ -122,14 +130,18 @@ func ProvideAuthZClient(
 
 		channel := &inprocgrpc.Channel{}
 
-		authInterceptor := grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
+		authenticate := func(ctx context.Context) (context.Context, error) {
 			ctx = authlib.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
-					Namespace: "*",
+					Namespace:   "*",
+					Permissions: []string{userPermissionsDelegatedGrant},
 				},
 			}))
 			return ctx, nil
-		})
+		}
+		authInterceptor := grpcAuth.UnaryServerInterceptor(authenticate)
+		streamAuthInterceptor := grpcAuth.StreamServerInterceptor(authenticate)
+		channel.WithServerStreamInterceptor(streamAuthInterceptor)
 
 		// Chain trace propagation with the auth interceptor.
 		// inprocgrpc.Channel wraps the server context with noValuesContext which
@@ -152,6 +164,10 @@ func ProvideAuthZClient(
 			authzlib.WithTracerClientOption(tracer),
 		)
 
+		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
+		if zanzanaNoLegacy {
+			return zanzanaClient, nil
+		}
 		if zanzanaEnabled {
 			return newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
 		}
@@ -224,7 +240,7 @@ func newShadowClient(engine setting.ZanzanaPrimaryEngine, rbacClient authlib.Acc
 	return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
 }
 
-func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (authlib.AccessClient, error) {
+func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (*authzlib.ClientImpl, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            clientCfg.token,
 		TokenExchangeURL: clientCfg.tokenExchangeURL,
@@ -296,6 +312,8 @@ func RegisterRBACAuthZService(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	cache cache.Cache,
+	actionResolver accesscontrol.ActionResolver,
+	userPermissionsResolver rbac.UserPermissionsResolver,
 	exchangeClient authnlib.TokenExchanger,
 	cfg RBACServerSettings,
 ) {
@@ -328,6 +346,9 @@ func RegisterRBACAuthZService(
 		folderStore,
 		legacy.NewLegacySQLStores(db),
 		store.NewSQLPermissionStore(db, tracer),
+		nil,
+		userPermissionsResolver,
+		actionResolver,
 		log.New("authz-grpc-server"),
 		tracer,
 		reg,
