@@ -83,7 +83,7 @@ export default (env: Env = {}) => {
   };
 
   if (Number(env.liveReload)) {
-    // webpack-livereload-plugin crashes rspack 2 at apply time.
+    // Live reload has no rspack equivalent; the webpack plugin crashes rspack 2 at apply time.
     console.warn('[rspack.dev] --env liveReload=1 is not supported by the rspack build; ignoring.');
   }
 
