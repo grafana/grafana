@@ -9,10 +9,10 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { Modal, Spinner, useStyles2 } from '@grafana/ui';
-import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from './addPanelModal';
+import { buildPanelElementFromDashboard } from './buildPanelElementFromDashboard';
 
 // The panel menu loads with every dashboard, so the picker, its API client and its form are split
 // out of the main bundle for the sessions that never open it.
@@ -35,12 +35,7 @@ export class AddPanelToNotebookScene extends SceneObjectBase<AddPanelToNotebookS
     getDashboardSceneFor(this).closeModal();
   };
 
-  /**
-   * Both optional args stay omitted. A dsReferencesMapping would write back the dashboard's
-   * unresolved default datasource, and the notebook is a different document — it should carry the
-   * datasource the panel actually queried, not inherit whatever default the dashboard had.
-   */
-  public buildPanel = () => vizPanelToSchemaV2(this.state.panelRef.resolve());
+  public buildPanel = () => buildPanelElementFromDashboard(this.state.panelRef.resolve());
 }
 
 function AddPanelToNotebookSceneRenderer({ model }: SceneComponentProps<AddPanelToNotebookScene>) {

@@ -19,7 +19,8 @@ interface Props {
 export function ExploreToNotebookPanel({ exploreId, onClose }: Props) {
   const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
 
-  const buildPanel = () =>
+  // Async only to match the shared modal's contract; Explore has no variables to interpolate.
+  const buildPanel = async () =>
     buildPanelElementFromExplore({
       datasource: exploreItem.datasourceInstance?.getRef(),
       queries: exploreItem.queries,

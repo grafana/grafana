@@ -42,7 +42,7 @@ interface Props {
    * Called on submit rather than on open: on a dashboard the panel can still be edited while the
    * modal is up, and serializing every opened modal would be work nobody asked for.
    */
-  buildPanel: () => PanelElement;
+  buildPanel: () => Promise<PanelElement>;
   onDismiss: () => void;
 }
 
@@ -55,6 +55,11 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const picker = useNotebookPicker();
+
+  // A selection the filters have since hidden is derived away rather than cleared in an effect: the
+  // uid is still in state, so relaxing the filter brings the choice back instead of silently
+  // dropping it. What must not happen is submitting to a notebook the user can no longer see.
+  const selected = picker.rows.some((row) => row.uid === selectedUid) ? selectedUid : undefined;
 
   const submit = async (add: () => Promise<AddedToNotebook>) => {
     setIsSubmitting(true);
@@ -83,9 +88,11 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
 
   const onCreate = (values: CreateNotebookFormValues) =>
     submit(() =>
-      createNotebookWithPanel(
-        { title: values.title.trim(), description: values.description.trim(), tags: values.tags },
-        buildPanel()
+      buildPanel().then((panel) =>
+        createNotebookWithPanel(
+          { title: values.title.trim(), description: values.description.trim(), tags: values.tags },
+          panel
+        )
       )
     );
 
@@ -156,7 +163,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
                 isLoading={picker.isLoading}
                 error={picker.error}
                 isTruncated={picker.isTruncated}
-                selectedUid={selectedUid}
+                selectedUid={selected}
                 onSelect={setSelectedUid}
               />
             </Stack>
@@ -172,8 +179,10 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
         </Button>
         {tab === 'existing' ? (
           <Button
-            onClick={() => selectedUid && submit(() => addPanelToExistingNotebook(selectedUid, buildPanel()))}
-            disabled={!selectedUid || isSubmitting}
+            onClick={() =>
+              selected && submit(() => buildPanel().then((panel) => addPanelToExistingNotebook(selected, panel)))
+            }
+            disabled={!selected || isSubmitting}
           >
             <Trans i18nKey="notebooks.add-panel.submit">Add to notebook</Trans>
           </Button>

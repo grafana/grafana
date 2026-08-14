@@ -91,7 +91,7 @@ function selectNotebook(title: string) {
 }
 
 function renderModal() {
-  const buildPanel = jest.fn(panel);
+  const buildPanel = jest.fn(async () => panel());
   const onDismiss = jest.fn();
   const result = render(<AddPanelToNotebookModalBody buildPanel={buildPanel} onDismiss={onDismiss} />);
   return { ...result, buildPanel, onDismiss };
@@ -142,6 +142,21 @@ describe('AddPanelToNotebookModalBody', () => {
       await waitFor(() => expect(addToExisting).toHaveBeenCalled());
       expect(onDismiss).not.toHaveBeenCalled();
       expect(screen.getByRole('button', { name: 'Add to notebook' })).toBeEnabled();
+    });
+
+    // The uid stays in state so relaxing the filter brings the choice back, but nothing may be
+    // submitted to a notebook that is no longer on screen.
+    it('cannot be submitted once filtering hides the selected notebook', async () => {
+      const { user, rerender } = renderModal();
+
+      await user.click(selectNotebook('Q2 latency regression'));
+      expect(screen.getByRole('button', { name: 'Add to notebook' })).toBeEnabled();
+
+      setPicker({ rows: [row('nb2', 'Checkout error spike')] });
+      rerender(<AddPanelToNotebookModalBody buildPanel={jest.fn()} onDismiss={jest.fn()} />);
+
+      expect(screen.getByRole('button', { name: 'Add to notebook' })).toBeDisabled();
+      expect(addToExisting).not.toHaveBeenCalled();
     });
 
     it('says the list is partial when the server had more pages', () => {
