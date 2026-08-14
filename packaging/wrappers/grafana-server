@@ -1,0 +1,12 @@
+#! /usr/bin/env bash
+
+GRAFANA_HOME="${GRAFANA_HOME:-/usr/share/grafana}"
+EXECUTABLE="$GRAFANA_HOME/bin/grafana"
+
+if [ ! -x "$EXECUTABLE" ]; then
+  echo "$EXECUTABLE not installed or not executable"
+  exit 5
+fi
+
+echo "Deprecation warning: 'grafana-server' is deprecated and will be removed in a future release. Use the 'grafana server' subcommand instead." >&2
+exec "$EXECUTABLE" server "$@"

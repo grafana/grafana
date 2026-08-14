@@ -1,0 +1,56 @@
+export const RULER_NOT_SUPPORTED_MSG = 'ruler not supported';
+
+/** The name used to identify the built-in Grafana rules/alertmanager source */
+export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
+
+export const RULE_LIST_POLL_INTERVAL_MS = 30000;
+
+export const ALERTMANAGER_NAME_QUERY_KEY = 'alertmanager';
+export const ALERTMANAGER_NAME_LOCAL_STORAGE_KEY = 'alerting-alertmanager';
+export const SILENCES_POLL_INTERVAL_MS = 20000;
+export const NOTIFICATIONS_POLL_INTERVAL_MS = 20000;
+export const CONTACT_POINTS_STATE_INTERVAL_MS = 20000;
+
+export const DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP = 100;
+
+export enum Annotation {
+  description = 'description',
+  summary = 'summary',
+  runbookURL = 'runbook_url',
+  alertId = '__alertId__',
+  dashboardUID = '__dashboardUid__',
+  panelID = '__panelId__',
+}
+
+export const annotationLabels: Record<Annotation, string> = {
+  [Annotation.description]: 'Description',
+  [Annotation.summary]: 'Summary',
+  [Annotation.runbookURL]: 'Runbook URL',
+  [Annotation.dashboardUID]: 'Dashboard UID',
+  [Annotation.panelID]: 'Panel ID',
+  [Annotation.alertId]: 'Alert ID',
+};
+
+export const annotationDescriptions: Record<Annotation, string> = {
+  [Annotation.description]: 'Description of what the alert rule does.',
+  [Annotation.summary]: 'Short summary of what happened and why.',
+  [Annotation.runbookURL]: 'Webpage where you keep your runbook for the alert.',
+  [Annotation.dashboardUID]: '',
+  [Annotation.panelID]: '',
+  [Annotation.alertId]: '',
+};
+
+export const defaultAnnotations = [
+  { key: Annotation.summary, value: '' },
+  { key: Annotation.description, value: '' },
+  { key: Annotation.runbookURL, value: '' },
+];
+
+/** Special matcher name used to identify alert rules by UID */
+export const MATCHER_ALERT_RULE_UID = '__alert_rule_uid__';
+
+/** Label added by Grafana to all alert instances with the folder/namespace title */
+export const GRAFANA_FOLDER_LABEL = 'grafana_folder';
+
+/** Minimum evaluation interval step in seconds (used for validation and UI) */
+export const MIN_TIME_RANGE_STEP_S = 10;

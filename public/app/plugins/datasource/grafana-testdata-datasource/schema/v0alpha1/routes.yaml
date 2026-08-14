@@ -1,0 +1,164 @@
+paths:
+  /resources:
+    get:
+      responses:
+        default:
+          content:
+            text/plain:
+              schema:
+                type: string
+    summary: hello world
+  /resources/boom:
+    get:
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+    post:
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+    summary: force a panic
+  /resources/scenarios:
+    get:
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+    summary: hello world
+  /resources/sim/{key}:
+    description: Get list of simulations
+    get:
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+    parameters:
+    - description: simulation key (should include hz)
+      examples:
+        10hz:
+          summary: 10 times a second
+          value: 10hz
+        1hz:
+          summary: Once every second
+          value: 1hz
+      in: path
+      name: key
+      required: true
+      schema:
+        maxLength: 10
+        type: string
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: true
+              type: object
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+  /resources/sims:
+    description: Get list of simulations
+    get:
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+  /resources/stream:
+    get:
+      parameters:
+      - description: number of points that will be returned
+        example: 10
+        in: query
+        name: count
+        schema:
+          format: int64
+          type: integer
+      - description: the start value
+        in: query
+        name: start
+        schema:
+          format: int64
+          type: integer
+      - description: How often the result is flushed (1-100%)
+        example: 100
+        in: query
+        name: flush
+        schema:
+          format: int64
+          type: integer
+      - description: the clock cycle
+        example: 100ms
+        in: query
+        name: speed
+        schema:
+          type: string
+      - description: the response format
+        in: query
+        name: format
+        schema:
+          enum:
+          - json
+          - influx
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+    summary: Get streaming response
+  /resources/test:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: true
+              type: object
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+    summary: Echo any request
+  /resources/test/json:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: true
+              type: object
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+    summary: Echo json request

@@ -1,0 +1,289 @@
+import { css } from '@emotion/css';
+import { useMemo, useRef, useState } from 'react';
+
+import { DashboardCursorSync, type PanelProps, type TimeRange } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { type LegendPlacement, type ScaleDistributionConfig } from '@grafana/schema';
+import {
+  EventBusPlugin,
+  TooltipDisplayMode,
+  TooltipPlugin2,
+  UPlotChart,
+  usePanelContext,
+  useStyles2,
+  useTheme2,
+  VizLayout,
+  XAxisInteractionAreaPlugin,
+} from '@grafana/ui';
+import { type FacetedData, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+
+import { getXAxisConfig } from '../../../core/components/TimeSeries/utils';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { getXAnnotationFrames } from '../timeseries/plugins/utils';
+
+import { HeatmapTooltip } from './HeatmapTooltip';
+import { type HeatmapData, prepareHeatmapData } from './fields';
+import { quantizeScheme } from './palettes';
+import { type Options } from './panelcfg.gen';
+import { calculateYSizeDivisor, prepConfig } from './utils';
+
+interface HeatmapPanelProps extends PanelProps<Options> {}
+
+type HeatmapDataForViz = Required<Pick<HeatmapData, 'heatmap'>> & Omit<HeatmapData, 'warning' | 'heatmap'>;
+
+const shouldRenderViz = (info: HeatmapData): info is HeatmapDataForViz => !(info.warning || !info.heatmap);
+
+export const HeatmapPanel = (props: HeatmapPanelProps) => {
+  const { data, id, timeRange, options, fieldConfig, replaceVariables } = props;
+  const theme = useTheme2();
+
+  const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
+
+  const info = useMemo(() => {
+    try {
+      return prepareHeatmapData({
+        frames: data.series,
+        annotations: data.annotations,
+        options,
+        palette,
+        theme,
+        replaceVariables,
+        timeRange,
+      });
+    } catch (ex) {
+      console.error(ex);
+      return { warning: `${ex}` };
+    }
+  }, [data.series, data.annotations, options, palette, theme, replaceVariables, timeRange]);
+
+  if (!shouldRenderViz(info)) {
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        needsNumberField={true}
+        message={info.warning}
+      />
+    );
+  }
+
+  return <HeatmapPanelViz {...props} info={info} />;
+};
+
+const HeatmapPanelViz = ({
+  data,
+  timeRange,
+  timeZone,
+  width,
+  height,
+  options,
+  eventBus,
+  onChangeTimeRange,
+  replaceVariables,
+  info,
+}: HeatmapPanelProps & { info: HeatmapDataForViz }) => {
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+  const { sync, eventsScope, canAddAnnotations, onSelectRange, canExecuteActions } = usePanelContext();
+  const cursorSync = sync?.() ?? DashboardCursorSync.Off;
+
+  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
+
+  // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
+  const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
+
+  // ugh
+  let timeRangeRef = useRef<TimeRange>(timeRange);
+  timeRangeRef.current = timeRange;
+
+  const facets = useMemo((): FacetedData => {
+    let exemplarsXFacet: number[] | undefined = []; // "Time" field
+    let exemplarsYFacet: Array<number | undefined> = [];
+
+    const meta = readHeatmapRowsCustomMeta(info.heatmap);
+
+    if (info.exemplars?.length) {
+      exemplarsXFacet = info.exemplars?.fields[0].values;
+
+      // render by match on ordinal y label
+      if (meta.yMatchWithLabel) {
+        // ordinal/labeled heatmap-buckets?
+        const hasLabeledY = meta.yOrdinalDisplay != null;
+
+        if (hasLabeledY) {
+          let matchExemplarsBy = info.exemplars?.fields.find((field) => field.name === meta.yMatchWithLabel)!.values;
+          exemplarsYFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label));
+        } else {
+          exemplarsYFacet = info.exemplars?.fields[1].values; // "Value" field
+        }
+      }
+      // render by raw value
+      else {
+        exemplarsYFacet = info.exemplars?.fields[1].values; // "Value" field
+      }
+    }
+
+    return [null, info.heatmap.fields.map((f) => f.values), [exemplarsXFacet, exemplarsYFacet]];
+  }, [info.heatmap, info.exemplars]);
+
+  // ugh
+  const dataRef = useRef(info);
+  dataRef.current = info;
+
+  const annotationsLength = options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined;
+
+  const builder = useMemo(() => {
+    const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
+
+    const activeScaleConfig = options.rowsFrame?.yBucketScale ?? scaleConfig;
+
+    // For log/symlog scales: use 1 for pre-bucketed data with explicit scale, otherwise use split value
+    const hasExplicitScale = options.rowsFrame?.yBucketScale !== undefined;
+    const ySizeDivisor = calculateYSizeDivisor(
+      activeScaleConfig?.type,
+      hasExplicitScale,
+      options.calculation?.yBuckets?.value
+    );
+
+    return prepConfig({
+      dataRef,
+      theme,
+      timeZone,
+      getTimeRange: () => timeRangeRef.current,
+      cellGap: options.cellGap,
+      hideLE: options.filterValues?.le,
+      hideGE: options.filterValues?.ge,
+      exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
+      yAxisConfig: options.yAxis,
+      ySizeDivisor,
+      selectionMode: options.selectionMode,
+      xAxisConfig: getXAxisConfig(annotationsLength),
+      rowsFrame: options.rowsFrame,
+    });
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options, timeZone, data.structureRev, cursorSync, annotationsLength]);
+
+  const renderLegend = () => {
+    if (!options.legend.show || info.heatmapColors == null) {
+      return null;
+    }
+
+    let placement: LegendPlacement = options.legend.placement ?? 'bottom';
+
+    // VizLayout forces bottom placement on narrow screens; mirror that here so
+    // we don't render a full-height vertical scale into a bottom strip
+    if (document.body.clientWidth < theme.breakpoints.values.lg) {
+      placement = 'bottom';
+    }
+
+    const isRight = placement === 'right';
+
+    return (
+      <VizLayout.Legend placement={placement} width={isRight ? options.legend.width : undefined} maxHeight="20%">
+        <div className={isRight ? styles.colorScaleWrapperVertical : styles.colorScaleWrapper}>
+          <ColorScale
+            colorPalette={info.heatmapColors.palette}
+            min={info.heatmapColors.minValue}
+            max={info.heatmapColors.maxValue}
+            display={info.display}
+            orientation={isRight ? 'vertical' : 'horizontal'}
+          />
+        </div>
+      </VizLayout.Legend>
+    );
+  };
+
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+
+  return (
+    <>
+      <VizLayout width={width} height={height} legend={renderLegend()}>
+        {(vizWidth: number, vizHeight: number) => (
+          <UPlotChart key={builder.uid} config={builder} data={facets} width={vizWidth} height={vizHeight}>
+            {cursorSync !== DashboardCursorSync.Off && (
+              <EventBusPlugin config={builder} eventBus={eventBus} frame={info.series ?? info.heatmap} />
+            )}
+            <XAxisInteractionAreaPlugin config={builder} queryZoom={onChangeTimeRange} />
+            {options.tooltip.mode !== TooltipDisplayMode.None && (
+              <TooltipPlugin2
+                config={builder}
+                hoverMode={
+                  options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+                }
+                queryZoom={onChangeTimeRange}
+                onSelectRange={onSelectRange}
+                syncMode={cursorSync}
+                syncScope={eventsScope}
+                render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
+                  if (enableAnnotationCreation && timeRange2 != null) {
+                    setNewAnnotationRange(timeRange2);
+                    dismiss();
+                    return;
+                  }
+
+                  const annotate = () => {
+                    let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                    setNewAnnotationRange({ from: xVal, to: xVal });
+                    dismiss();
+                  };
+
+                  return (
+                    <HeatmapTooltip
+                      mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
+                      dataIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      dataRef={dataRef}
+                      isPinned={isPinned}
+                      showHistogram={options.tooltip.yHistogram}
+                      annotate={enableAnnotationCreation ? annotate : undefined}
+                      maxHeight={options.tooltip.maxHeight}
+                      maxWidth={options.tooltip.maxWidth}
+                      replaceVariables={replaceVariables}
+                      canExecuteActions={userCanExecuteActions}
+                    />
+                  );
+                }}
+                maxWidth={options.tooltip.maxWidth}
+              />
+            )}
+            <AnnotationsPlugin
+              replaceVariables={replaceVariables}
+              options={options.annotations}
+              annotations={data.annotations}
+              config={builder}
+              timeZone={timeZone}
+              newRange={newAnnotationRange}
+              setNewRange={setNewAnnotationRange}
+              canvasRegionRendering={false}
+            />
+            <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
+          </UPlotChart>
+        )}
+      </VizLayout>
+    </>
+  );
+};
+
+const getStyles = () => ({
+  colorScaleWrapper: css({
+    marginLeft: '25px',
+    padding: '10px 0',
+    maxWidth: '300px',
+  }),
+  // vertical analog of the horizontal wrapper above; VizLayout's legend scroll
+  // container is a full-height flex column, so auto margins center the capped
+  // scale vertically while content hugs the left edge (extra configured legend
+  // width becomes empty space to the right of the values)
+  colorScaleWrapperVertical: css({
+    height: '100%',
+    maxHeight: '300px',
+    margin: 'auto 0',
+    padding: '10px 8px',
+  }),
+});

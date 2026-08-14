@@ -1,0 +1,324 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { TestProvider } from 'test/helpers/TestProvider';
+
+import {
+  type DataFrame,
+  FieldType,
+  getDefaultTimeRange,
+  InternalTimeZones,
+  LoadingState,
+  toDataFrame,
+} from '@grafana/data';
+import { setPanelRenderer } from '@grafana/runtime/internal';
+
+import { configureStore } from '../../../store/configureStore';
+import { createEmptyQueryResponse, makeExplorePaneState } from '../state/utils';
+
+import ConnectedTableContainer, { mapStateToProps, TableContainer } from './TableContainer';
+
+const mockRenderedSeries: DataFrame[][] = [];
+const mockRenderedStates: Array<LoadingState | undefined> = [];
+
+setPanelRenderer((props) => {
+  mockRenderedSeries.push(props.data?.series ?? []);
+  mockRenderedStates.push(props.data?.state);
+  return <div>PanelRenderer</div>;
+});
+
+function getPanels(): HTMLElement[] {
+  return screen.getAllByText(/PanelRenderer/);
+}
+
+function getLastRenderedFrame(): DataFrame {
+  return mockRenderedSeries[mockRenderedSeries.length - 1][0];
+}
+
+function getLastRenderedState(): LoadingState | undefined {
+  return mockRenderedStates[mockRenderedStates.length - 1];
+}
+
+function queryLoadingBars(): HTMLElement[] {
+  return screen.queryAllByLabelText('Panel loading bar');
+}
+
+const dataFrame = toDataFrame({
+  name: 'A',
+  fields: [
+    {
+      name: 'time',
+      type: FieldType.time,
+      values: [1609459200000, 1609470000000, 1609462800000, 1609466400000],
+      config: {
+        custom: {
+          filterable: false,
+        },
+      },
+    },
+    {
+      name: 'text',
+      type: FieldType.string,
+      values: ['test_string_1', 'test_string_2', 'test_string_3', 'test_string_4'],
+      config: {
+        custom: {
+          filterable: false,
+        },
+      },
+    },
+  ],
+});
+
+// Tempo appends this frame to every streaming search response, including the final one, so it
+// outlives the query that produced it.
+const tempoStreamingProgressFrame = toDataFrame({
+  refId: 'streaming-progress',
+  name: 'Streaming Progress',
+  fields: [{ name: 'state', type: FieldType.string, values: ['Done'] }],
+});
+
+const defaultProps = {
+  exploreId: 'left',
+  panelLoadingState: undefined,
+  queryStreaming: false,
+  width: 800,
+  onCellFilterAdded: jest.fn(),
+  tableResult: [dataFrame],
+  splitOpenFn: () => {},
+  range: getDefaultTimeRange(),
+  timeZone: InternalTimeZones.utc,
+};
+
+describe('TableContainer', () => {
+  beforeEach(() => {
+    mockRenderedSeries.length = 0;
+    mockRenderedStates.length = 0;
+  });
+
+  describe('With one main frame', () => {
+    it('should render component', () => {
+      render(<TableContainer {...defaultProps} />);
+      const tables = getPanels();
+      expect(tables.length).toBe(1);
+      expect(tables[0]).toBeInTheDocument();
+    });
+
+    it('should render 0 series returned on no items', () => {
+      const emptyFrames: DataFrame[] = [
+        {
+          name: 'TableResultName',
+          fields: [],
+          length: 0,
+        },
+      ];
+      render(<TableContainer {...defaultProps} tableResult={emptyFrames} />);
+      expect(screen.getByText('0 series returned')).toBeInTheDocument();
+    });
+
+    it('should render table title with Prometheus query', () => {
+      const dataFrames = [{ ...dataFrame, name: 'metric{label="value"}' }];
+      const tableProps = { ...defaultProps, tableResult: dataFrames };
+      render(<TableContainer {...tableProps} />);
+      expect(screen.getByText('Table - metric{label="value"}')).toBeInTheDocument();
+    });
+
+    it('preserves datasource hidden fields while applying Explore column limiting', () => {
+      const df = toDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'traceIdHidden',
+            type: FieldType.string,
+            values: ['t1'],
+            config: {
+              custom: {
+                hideFrom: { viz: true },
+              },
+            },
+          },
+
+          {
+            name: 'spanId',
+            type: FieldType.string,
+            values: ['s1'],
+            config: {},
+          },
+        ],
+      });
+
+      render(<TableContainer {...defaultProps} tableResult={[df]} />);
+
+      const rendered = getLastRenderedFrame();
+      expect(rendered.fields[0].config.custom?.hideFrom?.viz).toBe(true);
+      expect(rendered.fields[1].config.custom?.hideFrom?.viz).toBe(false);
+    });
+
+    it('does not mutate the frames from state when limiting columns', () => {
+      const df = toDataFrame({
+        name: 'A',
+        fields: Array.from({ length: 25 }, (_, i) => ({
+          name: `field${i}`,
+          type: FieldType.number,
+          values: [i],
+          config: {},
+        })),
+      });
+      const configsBefore = df.fields.map((field) => field.config);
+
+      render(<TableContainer {...defaultProps} tableResult={[df]} />);
+
+      // limiting is applied to the rendered copy...
+      const rendered = getLastRenderedFrame();
+      expect(rendered.fields[19].config.custom?.hideFrom?.viz).toBe(false);
+      expect(rendered.fields[20].config.custom?.hideFrom?.viz).toBe(true);
+      expect(rendered.fields[24].config.custom?.hideFrom?.viz).toBe(true);
+
+      // ...but the frame from state is untouched, as its field configs can be shared
+      // by reference with other visualizations (e.g. the Explore graph)
+      df.fields.forEach((field, i) => {
+        expect(field.config).toBe(configsBefore[i]);
+        expect(field.config.custom?.hideFrom).toBeUndefined();
+        expect(field.config.custom?.hidden).toBeUndefined();
+      });
+    });
+
+    it('shows all columns after clicking "Show all columns"', async () => {
+      const df = toDataFrame({
+        name: 'A',
+        fields: Array.from({ length: 25 }, (_, i) => ({
+          name: `field${i}`,
+          type: FieldType.number,
+          values: [i],
+          config: {},
+        })),
+      });
+
+      render(<TableContainer {...defaultProps} tableResult={[df]} />);
+      expect(getLastRenderedFrame().fields[24].config.custom?.hideFrom?.viz).toBe(true);
+
+      await userEvent.click(screen.getByText('Show all columns'));
+
+      const rendered = getLastRenderedFrame();
+      rendered.fields.forEach((field) => {
+        expect(field.config.custom?.hideFrom?.viz).toBe(false);
+      });
+    });
+  });
+
+  describe('mapStateToProps', () => {
+    const ownProps = {
+      exploreId: 'left',
+      width: 800,
+      timeZone: InternalTimeZones.utc,
+      splitOpenFn: () => {},
+    };
+
+    function makeState(queryState: LoadingState, tableResult: DataFrame[] | null) {
+      const store = configureStore();
+      const state = store.getState();
+      state.explore.panes = {
+        left: {
+          ...makeExplorePaneState(),
+          tableResult,
+          queryResponse: { ...createEmptyQueryResponse(), state: queryState },
+        },
+      };
+      return state;
+    }
+
+    it('has no panel loading state when the query has settled without any data', () => {
+      expect(mapStateToProps(makeState(LoadingState.Done, null), ownProps).panelLoadingState).toBeUndefined();
+    });
+
+    it('is loading while a query is running and no data has arrived yet', () => {
+      expect(mapStateToProps(makeState(LoadingState.Loading, null), ownProps).panelLoadingState).toBe(
+        LoadingState.Loading
+      );
+    });
+
+    it('is streaming while a query is streaming', () => {
+      expect(mapStateToProps(makeState(LoadingState.Streaming, [dataFrame]), ownProps).panelLoadingState).toBe(
+        LoadingState.Streaming
+      );
+    });
+
+    it('is loading, not streaming, when a stale Tempo streaming-progress frame outlives its query', () => {
+      const state = makeState(LoadingState.Loading, [dataFrame, tempoStreamingProgressFrame]);
+      expect(mapStateToProps(state, ownProps).panelLoadingState).toBe(LoadingState.Loading);
+    });
+  });
+
+  describe('loading indicator', () => {
+    const emptyFrame: DataFrame = { name: 'A', fields: [], length: 0 };
+
+    function setup(queryState: LoadingState, tableResult: DataFrame[] | null) {
+      const store = configureStore();
+      store.getState().explore.panes = {
+        left: {
+          ...makeExplorePaneState(),
+          tableResult,
+          queryResponse: { ...createEmptyQueryResponse(), state: queryState },
+        },
+      };
+
+      render(
+        <TestProvider store={store}>
+          <ConnectedTableContainer
+            exploreId="left"
+            width={800}
+            timeZone={InternalTimeZones.utc}
+            splitOpenFn={() => {}}
+          />
+        </TestProvider>
+      );
+    }
+
+    it('shows no loading indicator once a query has settled with rows', () => {
+      setup(LoadingState.Done, [dataFrame]);
+      expect(queryLoadingBars()).toHaveLength(0);
+      expect(getLastRenderedState()).toBe(LoadingState.Done);
+    });
+
+    it('shows a loading indicator over previous rows while a query is running', () => {
+      setup(LoadingState.Loading, [dataFrame]);
+      expect(queryLoadingBars()).toHaveLength(1);
+      expect(getLastRenderedState()).toBe(LoadingState.Loading);
+    });
+
+    it('shows no loading indicator once a query has settled with zero rows', () => {
+      setup(LoadingState.Done, [emptyFrame]);
+      expect(screen.getByText('0 series returned')).toBeInTheDocument();
+      expect(queryLoadingBars()).toHaveLength(0);
+    });
+
+    it('shows a loading indicator while a query is running and has returned zero rows so far', () => {
+      setup(LoadingState.Loading, [emptyFrame]);
+      expect(queryLoadingBars()).toHaveLength(1);
+    });
+
+    it('shows the streaming indicator rather than a loading bar while a query is streaming', () => {
+      setup(LoadingState.Streaming, [dataFrame]);
+      expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
+      expect(queryLoadingBars()).toHaveLength(0);
+      expect(getLastRenderedState()).toBe(LoadingState.Streaming);
+    });
+
+    it('shows a loading bar when a re-query leaves a stale Tempo streaming-progress frame behind', () => {
+      setup(LoadingState.Loading, [dataFrame, tempoStreamingProgressFrame]);
+      expect(queryLoadingBars()).toHaveLength(2);
+      expect(screen.queryByTestId('panel-streaming')).not.toBeInTheDocument();
+      expect(getLastRenderedState()).toBe(LoadingState.Loading);
+    });
+  });
+
+  describe('With multiple main frames', () => {
+    it('should render multiple tables for multiple frames', () => {
+      const dataFrames = [dataFrame, dataFrame];
+      const multiDefaultProps = { ...defaultProps, tableResult: dataFrames };
+      render(<TableContainer {...multiDefaultProps} />);
+      const tables = getPanels();
+      expect(tables.length).toBe(2);
+      expect(tables[0]).toBeInTheDocument();
+      expect(tables[1]).toBeInTheDocument();
+    });
+  });
+});

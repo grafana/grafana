@@ -1,0 +1,294 @@
+// Libraries
+import { type AnyAction, createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import * as React from 'react';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
+
+import {
+  AppEvents,
+  type AppPlugin,
+  type AppPluginMeta,
+  type NavModel,
+  type NavModelItem,
+  OrgRole,
+  PluginType,
+  PluginContextProvider,
+} from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
+import { config, isFetchError, locationSearchToObject } from '@grafana/runtime';
+import { refetchPluginSettings } from '@grafana/runtime/internal';
+import { getLogger, getPluginSettings } from '@grafana/runtime/unstable';
+import { Alert, ErrorWithStack } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { Page } from 'app/core/components/Page/Page';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
+import { contextSrv } from 'app/core/services/context_srv';
+import { getMessageFromError } from 'app/core/utils/errors';
+
+import {
+  ExtensionRegistriesProvider,
+  useAddedLinksRegistry,
+  useAddedComponentsRegistry,
+  useExposedComponentsRegistry,
+  useAddedFunctionsRegistry,
+} from '../extensions/ExtensionRegistriesContext';
+import { pluginImporter } from '../importer/pluginImporter';
+import { buildPluginSectionNav } from '../utils';
+
+import { PluginErrorBoundary } from './PluginErrorBoundary';
+import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
+import { pluginNavFallbacks } from './pluginNavFallbacks';
+import { RestrictedGrafanaApisProvider } from './restrictedGrafanaApis/RestrictedGrafanaApisProvider';
+
+interface Props {
+  // The ID of the plugin we would like to load and display
+  pluginId?: string;
+  // The root navModelItem for the plugin (root = lives directly under 'home'). In case app does not need a nva model,
+  // for example it's in some way embedded or shown in a sideview this can be undefined.
+  pluginNavSection?: NavModelItem;
+}
+
+interface State {
+  loading: boolean;
+  loadingError: boolean;
+  errorStatus?: number;
+  plugin?: AppPlugin | null;
+  // Used to display a tab navigation (used before the new Top Nav)
+  pluginNav: NavModel | null;
+}
+
+const initialState: State = { loading: true, loadingError: false, pluginNav: null, plugin: null };
+
+function AppRootPage({ pluginId, pluginNavSection }: Props) {
+  const { pluginId: pluginIdParam = '' } = useParams();
+  pluginId = pluginId || pluginIdParam;
+  const addedLinksRegistry = useAddedLinksRegistry();
+  const addedComponentsRegistry = useAddedComponentsRegistry();
+  const exposedComponentsRegistry = useExposedComponentsRegistry();
+  const addedFunctionsRegistry = useAddedFunctionsRegistry();
+  const location = useLocation();
+  const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
+  const currentUrl = config.appSubUrl + location.pathname + location.search;
+  const { plugin, loading, loadingError, errorStatus, pluginNav } = state;
+  const navModel = buildPluginSectionNav(currentUrl, pluginNavSection);
+  const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
+  const context = useMemo(() => buildPluginPageContext(navModel, pluginId), [navModel, pluginId]);
+  const grafanaContext = useGrafana();
+
+  useEffect(() => {
+    loadAppPlugin(pluginId, dispatch);
+  }, [pluginId]);
+
+  const onNavChanged = useCallback(
+    (newPluginNav: NavModel) => dispatch(stateSlice.actions.changeNav(newPluginNav)),
+    []
+  );
+
+  if (!plugin || pluginId !== plugin.meta.id) {
+    // Use current layout while loading to reduce flickering
+    const currentLayout = grafanaContext.chrome.state.getValue().layout;
+    const PluginNavFallback = pluginNavFallbacks[pluginId];
+    const shouldRenderFallback = !loading && loadingError && errorStatus === 404 && PluginNavFallback;
+
+    return (
+      <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
+        {loading && <PageLoader />}
+        {shouldRenderFallback ? <PluginNavFallback /> : !loading && loadingError && <EntityNotFound entity="App" />}
+      </Page>
+    );
+  }
+
+  if (!plugin.root) {
+    return (
+      <Page navModel={navModel ?? getWarningNav('Plugin load error')}>
+        <div>
+          <Trans i18nKey="plugins.app-root-page.no-root-app-page-component-found">
+            No root app page component found
+          </Trans>
+        </div>
+      </Page>
+    );
+  }
+
+  const pluginRoot = plugin.root && (
+    <PluginContextProvider meta={plugin.meta}>
+      <PluginErrorBoundary
+        fallback={({ error, errorInfo }) => (
+          <ErrorWithStack
+            title={t('plugins.app-root-page.error-loading-plugin', 'Plugin failed to load')}
+            error={error}
+            errorInfo={errorInfo}
+          />
+        )}
+      >
+        <RestrictedGrafanaApisProvider pluginId={pluginId}>
+          <ExtensionRegistriesProvider
+            registries={{
+              addedLinksRegistry: addedLinksRegistry.readOnly(),
+              addedComponentsRegistry: addedComponentsRegistry.readOnly(),
+              exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
+              addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
+            }}
+          >
+            <plugin.root
+              meta={plugin.meta}
+              basename={location.pathname}
+              onNavChanged={onNavChanged}
+              query={queryParams}
+              path={location.pathname}
+            />
+          </ExtensionRegistriesProvider>
+        </RestrictedGrafanaApisProvider>
+      </PluginErrorBoundary>
+    </PluginContextProvider>
+  );
+
+  // Because of the fallback at plugin routes, we need to check
+  // if the user has permissions to see the plugin page.
+  const userHasPermissionsToPluginPage = () => {
+    // Check if plugin does not have any configurations or the user is Grafana Admin
+    if (!plugin.meta?.includes) {
+      return true;
+    }
+
+    const pluginInclude = plugin.meta?.includes.find((include) => include.path === location.pathname);
+    // Check if include configuration contains current path
+    if (!pluginInclude) {
+      return true;
+    }
+
+    // Check if action exists and give access if user has the required permission.
+    if (pluginInclude?.action) {
+      return contextSrv.hasPermission(pluginInclude.action);
+    }
+
+    if (contextSrv.isGrafanaAdmin || contextSrv.user.orgRole === OrgRole.Admin) {
+      return true;
+    }
+
+    const pathRole: string = pluginInclude?.role || '';
+    // Check if role exists  and give access to Editor to be able to see Viewer pages
+    if (!pathRole || (contextSrv.isEditor && pathRole === OrgRole.Viewer)) {
+      return true;
+    }
+    return contextSrv.hasRole(pathRole);
+  };
+
+  const AccessDenied = () => {
+    return (
+      <Alert severity="warning" title={t('plugins.app-root-page.access-denied.title-access-denied', 'Access denied')}>
+        <Trans i18nKey="plugins.app-root-page.access-denied.permission">
+          You do not have permission to see this page.
+        </Trans>
+      </Alert>
+    );
+  };
+
+  if (!userHasPermissionsToPluginPage()) {
+    return <AccessDenied />;
+  }
+
+  if (!pluginNav) {
+    return <PluginPageContext.Provider value={context}>{pluginRoot}</PluginPageContext.Provider>;
+  }
+
+  return (
+    <>
+      {navModel ? (
+        <Page
+          data-testid={selectors.components.Plugins.appPage(pluginId)}
+          data-plugin-id={pluginId}
+          navModel={navModel}
+          pageNav={pluginNav?.node}
+        >
+          <Page.Contents isLoading={loading}>{pluginRoot}</Page.Contents>
+        </Page>
+      ) : (
+        <Page data-testid={selectors.components.Plugins.appPage(pluginId)} data-plugin-id={pluginId}>
+          {pluginRoot}
+        </Page>
+      )}
+    </>
+  );
+}
+
+const stateSlice = createSlice({
+  name: 'prom-builder-container',
+  initialState: initialState,
+  reducers: {
+    setState: (state, action: PayloadAction<Partial<State>>) => {
+      Object.assign(state, action.payload);
+    },
+    changeNav: (state, action: PayloadAction<NavModel>) => {
+      let pluginNav = action.payload;
+      // This is to hide the double breadcrumbs the old nav model can cause
+      if (pluginNav && pluginNav.node.children) {
+        pluginNav = {
+          ...pluginNav,
+          node: {
+            ...pluginNav.main,
+            hideFromBreadcrumbs: true,
+          },
+        };
+      }
+      state.pluginNav = pluginNav;
+    },
+  },
+});
+
+async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyAction>) {
+  try {
+    const loadPluginSettings = pluginNavFallbacks[pluginId] ? refetchPluginSettings : getPluginSettings;
+    const app = await loadPluginSettings(pluginId).then((info) => {
+      const error = getAppPluginPageError(info);
+      if (error) {
+        appEvents.emit(AppEvents.alertError, [error]);
+        dispatch(stateSlice.actions.setState({ pluginNav: getWarningNav(error) }));
+        return null;
+      }
+      return pluginImporter.importApp(info);
+    });
+    dispatch(
+      stateSlice.actions.setState({
+        plugin: app,
+        loading: false,
+        loadingError: false,
+        errorStatus: undefined,
+        pluginNav: null,
+      })
+    );
+  } catch (err) {
+    const cause = err instanceof Error && err.cause ? err.cause : err;
+    dispatch(
+      stateSlice.actions.setState({
+        plugin: null,
+        loading: false,
+        loadingError: true,
+        errorStatus: isFetchError(cause) ? cause.status : undefined,
+        pluginNav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
+      })
+    );
+    const error = err instanceof Error ? err : new Error(getMessageFromError(err));
+    getLogger('features.plugins').logError(error);
+    console.error(error);
+  }
+}
+
+function getAppPluginPageError(meta: AppPluginMeta) {
+  if (!meta) {
+    return 'Unknown Plugin';
+  }
+  if (meta.type !== PluginType.app) {
+    return 'Plugin must be an app';
+  }
+  if (!meta.enabled) {
+    return 'Application Not Enabled';
+  }
+  return null;
+}
+
+export default AppRootPage;

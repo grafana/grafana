@@ -1,0 +1,19 @@
+import { type PromAlertingRuleState, type PromRuleType } from 'app/types/unified-alerting-dto';
+
+import type { RuleHealth, RuleSource } from '../../search/rulesSearchParser';
+
+export type AdvancedFilters = {
+  namespace?: string | null;
+  groupName?: string | null;
+  ruleName?: string;
+  ruleType?: PromRuleType | '*';
+  ruleState: PromAlertingRuleState | '*';
+  dataSourceNames: string[];
+  labels: string[];
+  ruleHealth?: RuleHealth | '*';
+  dashboardUid?: string;
+  plugins?: 'show' | 'hide';
+  contactPoint?: string | null;
+  ruleSource?: RuleSource | null;
+  policy?: string | null;
+};

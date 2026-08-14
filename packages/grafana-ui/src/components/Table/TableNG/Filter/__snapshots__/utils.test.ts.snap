@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`operatorSelectableValues returns an entry for each FilterOperator 1`] = `
+[
+  "!=",
+  "<",
+  "<=",
+  "=",
+  ">",
+  ">=",
+  "Contains",
+  "Expression",
+]
+`;

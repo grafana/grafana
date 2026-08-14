@@ -1,0 +1,245 @@
+import { Fragment, useState } from 'react';
+
+import { Trans, t } from '@grafana/i18n';
+import { logError } from '@grafana/runtime';
+import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
+import { NotificationTemplateAction } from '../../hooks/abilities/types';
+import { getAlertTableStyles } from '../../styles/table';
+import { isProvisionedResource } from '../../utils/k8s/utils';
+import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
+import { CollapseToggle } from '../CollapseToggle';
+import { DetailsField } from '../DetailsField';
+import { ProvisioningBadge } from '../Provisioning';
+import {
+  type NotificationTemplate,
+  useDeleteNotificationTemplate,
+  useNotificationTemplateMetadata,
+} from '../contact-points/useNotificationTemplates';
+import { isLegacyTemplate } from '../contact-points/utils';
+import { ActionIcon } from '../rules/ActionIcon';
+
+import { TemplateEditor } from './TemplateEditor';
+
+interface Props {
+  alertManagerName: string;
+  templates: NotificationTemplate[];
+}
+
+export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
+  const appNotification = useAppNotification();
+  const [deleteTemplate] = useDeleteNotificationTemplate({ alertmanager: alertManagerName });
+
+  const tableStyles = useStyles2(getAlertTableStyles);
+
+  const [templateToDelete, setTemplateToDelete] = useState<NotificationTemplate | undefined>();
+
+  const onDeleteTemplate = async () => {
+    if (templateToDelete) {
+      try {
+        await deleteTemplate.execute({ uid: templateToDelete.uid });
+        appNotification.success('Template deleted', `Template ${templateToDelete.title} has been deleted`);
+      } catch (error) {
+        appNotification.error('Error deleting template', `Error deleting template ${templateToDelete.title}`);
+
+        const loggableError = error instanceof Error ? error : new Error(stringifyErrorLike(error));
+        logError(loggableError);
+      }
+    }
+    setTemplateToDelete(undefined);
+  };
+
+  const canCreate = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Create }));
+  // For Update/Delete the relevant check is whether the user can act on at least one non-provisioned
+  // template. We use the context-free ability here (same RBAC, no provisioning check) together with
+  // whether any template is not provisioned, to match what TemplateRow renders per row.
+  const canUpdateAny = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Update }));
+  const canDeleteAny = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Delete }));
+  const hasEditableTemplates = templates.some((t) => !isProvisionedResource(t.provenance));
+  const showActionsColumn =
+    canCreate || (canUpdateAny && hasEditableTemplates) || (canDeleteAny && hasEditableTemplates);
+
+  return (
+    <>
+      <table className={tableStyles.table} data-testid="templates-table">
+        <colgroup>
+          <col className={tableStyles.colExpand} />
+          <col />
+          <col />
+        </colgroup>
+        <thead>
+          <tr>
+            <th />
+            <th>
+              <Trans i18nKey="alerting.templates-table.template-group">Template group</Trans>
+            </th>
+            {showActionsColumn && (
+              <th>
+                <Trans i18nKey="alerting.templates-table.actions">Actions</Trans>
+              </th>
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {!templates.length && (
+            <tr className={tableStyles.evenRow}>
+              <td colSpan={3}>
+                <Trans i18nKey="alerting.templates-table.no-templates-defined">No templates defined.</Trans>
+              </td>
+            </tr>
+          )}
+          {templates.map((notificationTemplate, idx) => (
+            <TemplateRow
+              key={notificationTemplate.uid}
+              notificationTemplate={notificationTemplate}
+              idx={idx}
+              alertManagerName={alertManagerName}
+              onDeleteClick={setTemplateToDelete}
+            />
+          ))}
+        </tbody>
+      </table>
+
+      {!!templateToDelete && (
+        <ConfirmModal
+          isOpen={true}
+          title={t('alerting.templates-table.title-delete-template-group', 'Delete template group')}
+          body={t(
+            'alerting.templates-table.body-delete-template-group',
+            'Are you sure you want to delete template group "{{template}}"?',
+            { template: templateToDelete.title }
+          )}
+          confirmText={t('alerting.templates-table.confirmText-yes-delete', 'Yes, delete')}
+          onConfirm={onDeleteTemplate}
+          onDismiss={() => setTemplateToDelete(undefined)}
+        />
+      )}
+    </>
+  );
+};
+
+interface TemplateRowProps {
+  notificationTemplate: NotificationTemplate;
+  idx: number;
+  alertManagerName: string;
+  onDeleteClick: (template: NotificationTemplate) => void;
+}
+
+function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClick }: TemplateRowProps) {
+  const tableStyles = useStyles2(getAlertTableStyles);
+  const isGrafanaAlertmanager = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
+
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { provenance } = useNotificationTemplateMetadata(notificationTemplate);
+  const isProvisioned = isProvisionedResource(provenance);
+  const canUpdate = isGranted(
+    useNotificationTemplateAbility({ action: NotificationTemplateAction.Update, context: notificationTemplate })
+  );
+  const canCreate = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Create }));
+  const canDelete = isGranted(
+    useNotificationTemplateAbility({ action: NotificationTemplateAction.Delete, context: notificationTemplate })
+  );
+
+  const { uid, title: name, content: template, missing } = notificationTemplate;
+  const misconfiguredBadgeText = t('alerting.templates.misconfigured-badge-text', 'Misconfigured');
+  return (
+    <Fragment key={uid}>
+      <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
+        <td>
+          <CollapseToggle isCollapsed={!isExpanded} onToggle={() => setIsExpanded(!isExpanded)} />
+        </td>
+        <td>
+          {name} {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}{' '}
+          {isLegacyTemplate(notificationTemplate) && (
+            <Badge
+              text={t('alerting.templates.legacy-badge-text', 'Legacy')}
+              color="orange"
+              tooltip={t(
+                'alerting.templates.legacy-badge-tooltip',
+                'This template was imported from a Mimir Alertmanager and uses a legacy format.'
+              )}
+            />
+          )}{' '}
+          {missing && !isGrafanaAlertmanager && (
+            <Tooltip
+              content={
+                <>
+                  <Trans i18nKey="alerting.templates.misconfigured-warning">This template is misconfigured.</Trans>
+                  <br />
+                  <Trans i18nKey="alerting.templates.misconfigured-warning-details">
+                    Templates must be defined in both the{' '}
+                    <CodeText content={t('alerting.template-row.content-templatefiles', 'template_files')} /> and{' '}
+                    <CodeText content={t('alerting.template-row.content-templates', 'templates')} /> sections of your
+                    alertmanager configuration.
+                  </Trans>
+                </>
+              }
+            >
+              <span>
+                <Badge text={misconfiguredBadgeText} color="orange" />
+              </span>
+            </Tooltip>
+          )}
+        </td>
+        <td className={tableStyles.actionsCell}>
+          {isProvisioned && (
+            <ActionIcon
+              to={makeAMLink(`/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`, alertManagerName)}
+              tooltip={t('alerting.template-row.tooltip-view-template', 'view template')}
+              icon="file-alt"
+            />
+          )}
+          {canUpdate && (
+            <ActionIcon
+              to={makeAMLink(`/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`, alertManagerName)}
+              tooltip={t('alerting.template-row.tooltip-edit-template-group', 'Edit template group')}
+              icon="pen"
+            />
+          )}
+          {canCreate && (
+            <ActionIcon
+              to={makeAMLink(
+                `/alerting/notifications/templates/${encodeURIComponent(uid)}/duplicate`,
+                alertManagerName
+              )}
+              tooltip={t('alerting.template-row.tooltip-copy-template-group', 'Copy template group')}
+              icon="copy"
+            />
+          )}
+          {canDelete && (
+            <ActionIcon
+              onClick={() => onDeleteClick(notificationTemplate)}
+              tooltip={t('alerting.template-row.tooltip-delete-template-group', 'Delete template group')}
+              icon="trash-alt"
+            />
+          )}
+        </td>
+      </tr>
+      {isExpanded && (
+        <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
+          <td />
+          <td colSpan={2}>
+            <DetailsField label="" horizontal={true}>
+              <TemplateEditor
+                width={'auto'}
+                height={'auto'}
+                autoHeight={true}
+                value={template}
+                showLineNumbers={false}
+                monacoOptions={{
+                  readOnly: true,
+                  scrollBeyondLastLine: false,
+                }}
+              />
+            </DetailsField>
+          </td>
+        </tr>
+      )}
+    </Fragment>
+  );
+}

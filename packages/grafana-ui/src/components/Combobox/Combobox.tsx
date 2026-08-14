@@ -1,0 +1,481 @@
+import { cx } from '@emotion/css';
+import { useVirtualizer, type Range } from '@tanstack/react-virtual';
+import { useCombobox } from 'downshift';
+import React, { type ComponentProps, useCallback, useId, useMemo } from 'react';
+
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+import { useFieldContext } from '../Forms/FieldContext';
+import { Icon } from '../Icon/Icon';
+import { AutoSizeInput } from '../Input/AutoSizeInput';
+import { Input, type Props as InputProps } from '../Input/Input';
+import { Portal } from '../Portal/Portal';
+
+import { ComboboxList } from './ComboboxList';
+import { SuffixIcon } from './SuffixIcon';
+import { itemToString } from './filter';
+import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
+import { type ComboboxOption } from './types';
+import { useComboboxFloat } from './useComboboxFloat';
+import { useOptions } from './useOptions';
+import { isNewGroup } from './utils';
+
+// TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
+// then the onChange handler emits ComboboxOption with the label as non-undefined.
+
+interface ComboboxStaticProps<T extends string | number>
+  extends Pick<
+    InputProps,
+    'placeholder' | 'autoFocus' | 'id' | 'aria-label' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
+  > {
+  /**
+   * Allows the user to set a value which is not in the list of options.
+   */
+  createCustomValue?: boolean;
+  /**
+   * Custom description text for the "create custom value" option.
+   * Defaults to "Use custom value".
+   */
+  customValueDescription?: string;
+
+  /**
+   * An array of options, or a function that returns a promise resolving to an array of options.
+   * If a function, it will be called when the menu is opened and on keypress with the current search query.
+   */
+  options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
+
+  /**
+   * Current selected value. Most consumers should pass a scalar value (string | number). However, sometimes with Async
+   * it may be better to pass in an Option with a label to display.
+   */
+  value?: T | ComboboxOption<T> | null;
+
+  /**
+   * Defaults to full width of container. Number is a multiple of the spacing unit. 'auto' will size the input to the content.
+   * */
+  width?: number | 'auto';
+
+  ['data-testid']?: string;
+
+  /**
+   * Called when the input loses focus.
+   */
+  onBlur?: () => void;
+
+  /**
+   * Icon to display at the start of the ComboBox input
+   */
+  prefixIcon?: ComponentProps<typeof Icon>['name'];
+
+  /**
+   * Message to display when there are no options found. Defaults to "No options found."
+   */
+  noOptionsMessage?: string;
+
+  /**
+   * When set, the dropdown open state is fully controlled by the parent. Use with {@link onIsOpenChange}
+   * (e.g. open the list after a tab click or other user action). Omit for normal uncontrolled behavior.
+   */
+  isOpen?: boolean;
+
+  /**
+   * Called whenever the menu opens or closes. Use with {@link isOpen} for controlled mode, or alone to
+   * observe open state.
+   */
+  onIsOpenChange?: (isOpen: boolean) => void;
+}
+
+interface ClearableProps<T extends string | number> {
+  /**
+   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
+   */
+  isClearable: true;
+
+  /**
+   * onChange handler is called with the newly selected option.
+   */
+  onChange: (option: ComboboxOption<T> | null) => void;
+}
+
+interface NotClearableProps<T extends string | number> {
+  /**
+   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
+   */
+  isClearable?: false;
+
+  /**
+   * onChange handler is called with the newly selected option.
+   */
+  onChange: (option: ComboboxOption<T>) => void;
+}
+
+export type ComboboxBaseProps<T extends string | number> = (ClearableProps<T> | NotClearableProps<T>) &
+  ComboboxStaticProps<T>;
+
+export type AutoSizeConditionals =
+  | {
+      width: 'auto';
+      /**
+       * Needs to be set when width is 'auto' to prevent the input from shrinking too much
+       */
+      minWidth: number;
+      /**
+       * Recommended to set when width is 'auto' to prevent the input from growing too much.
+       */
+      maxWidth?: number;
+    }
+  | {
+      width?: number;
+      minWidth?: never;
+      maxWidth?: never;
+    };
+
+export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
+
+const noop = () => {};
+
+const VIRTUAL_OVERSCAN_ITEMS = 4;
+
+/**
+ * A performant and accessible combobox component that supports both synchronous and asynchronous options loading. It provides type-ahead filtering, keyboard navigation, and virtual scrolling for handling large datasets efficiently.
+ * Replaces the Select component, and has better performance.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-combobox--docs
+ * @alpha
+ */
+export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
+  const {
+    options: allOptions,
+    onChange,
+    value: valueProp,
+    placeholder: placeholderProp,
+    isClearable, // this should be default false, but TS can't infer the conditional type if you do
+    createCustomValue = false,
+    customValueDescription,
+    id: idProp,
+    width,
+    minWidth,
+    maxWidth,
+    'aria-labelledby': ariaLabelledBy,
+    'aria-label': ariaLabel,
+    'data-testid': dataTestId,
+    autoFocus,
+    onBlur,
+    disabled: disabledProp,
+    invalid: invalidProp,
+    prefixIcon,
+    noOptionsMessage,
+    isOpen: isOpenProp,
+    onIsOpenChange: onIsOpenChangeProp,
+    loading: loadingProp,
+  } = props;
+  const fieldContext = useFieldContext();
+  const id = idProp ?? fieldContext.id;
+  const disabled = disabledProp ?? fieldContext.disabled;
+  const invalid = invalidProp ?? fieldContext.invalid;
+
+  // Value can be an actual scalar Value (string or number), or an Option (value + label), so
+  // get a consistent Value from it
+  const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
+  const baseId = useId().replace(/:/g, '--');
+
+  const {
+    options: filteredOptions,
+    groupStartIndices,
+    updateOptions,
+    asyncLoading,
+    asyncError,
+    resetSearch,
+  } = useOptions(allOptions, createCustomValue, customValueDescription);
+  const isAsync = typeof allOptions === 'function';
+
+  const selectedItemIndex = useMemo(() => {
+    if (isAsync) {
+      return null;
+    }
+
+    if (valueProp === undefined || valueProp === null) {
+      return null;
+    }
+
+    const index = allOptions.findIndex((option) => option.value === value);
+    if (index === -1) {
+      return null;
+    }
+
+    return index;
+  }, [valueProp, allOptions, value, isAsync]);
+
+  const selectedItem = useMemo(() => {
+    if (valueProp === undefined || valueProp === null) {
+      return null;
+    }
+
+    if (selectedItemIndex !== null && !isAsync) {
+      return allOptions[selectedItemIndex];
+    }
+
+    return typeof valueProp === 'object' ? valueProp : { value: valueProp, label: valueProp.toString() };
+  }, [selectedItemIndex, isAsync, valueProp, allOptions]);
+
+  const menuId = `${baseId}-downshift-menu`;
+  const labelId = `${baseId}-downshift-label`;
+
+  const styles = useStyles2(getComboboxStyles);
+
+  const onIsOpenChangeHandler = useCallback(
+    (changes: { isOpen: boolean; inputValue?: string }) => {
+      onIsOpenChangeProp?.(changes.isOpen);
+
+      if (changes.isOpen && (changes.inputValue ?? '') === '') {
+        updateOptions('');
+      }
+
+      if (!changes.isOpen) {
+        resetSearch();
+      }
+    },
+    [onIsOpenChangeProp, updateOptions, resetSearch]
+  );
+
+  // Injects the group header for the first rendered item into the range to render.
+  // Accepts the range that useVirtualizer wants to render, and then returns indexes
+  // to actually render.
+  const rangeExtractor = useCallback(
+    (range: Range) => {
+      const startIndex = Math.max(0, range.startIndex - range.overscan);
+      const endIndex = Math.min(filteredOptions.length - 1, range.endIndex + range.overscan);
+      const rangeToReturn = Array.from({ length: endIndex - startIndex + 1 }, (_, i) => startIndex + i);
+
+      // If the first item doesn't have a group, no need to find a header for it
+      const firstDisplayedOption = filteredOptions[rangeToReturn[0]];
+      if (firstDisplayedOption?.group) {
+        const groupStartIndex = groupStartIndices.get(firstDisplayedOption.group);
+        if (groupStartIndex !== undefined && groupStartIndex < rangeToReturn[0]) {
+          rangeToReturn.unshift(groupStartIndex);
+        }
+      }
+
+      return rangeToReturn;
+    },
+    [filteredOptions, groupStartIndices]
+  );
+
+  const rowVirtualizer = useVirtualizer({
+    count: filteredOptions.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: (index: number) => {
+      const firstGroupItem = isNewGroup(filteredOptions[index], index > 0 ? filteredOptions[index - 1] : undefined);
+      const hasDescription = 'description' in filteredOptions[index];
+      const hasGroup = 'group' in filteredOptions[index];
+
+      let itemHeight = MENU_OPTION_HEIGHT;
+      if (hasDescription) {
+        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
+      }
+      if (firstGroupItem && hasGroup) {
+        itemHeight += MENU_OPTION_HEIGHT;
+      }
+      return itemHeight;
+    },
+    getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
+    overscan: VIRTUAL_OVERSCAN_ITEMS,
+    rangeExtractor,
+  });
+
+  const {
+    isOpen,
+    highlightedIndex,
+
+    getInputProps,
+    getMenuProps,
+    getItemProps,
+
+    selectItem,
+  } = useCombobox({
+    menuId,
+    labelId,
+    inputId: id,
+    items: filteredOptions,
+    itemToString,
+    selectedItem,
+    isItemDisabled: (item) => !!item?.infoOption,
+
+    // Don't change downshift state in the onBlahChange handlers. Instead, use the stateReducer to make changes.
+    // Downshift calls change handlers on the render after so you can get sync/flickering issues if you change its state
+    // in them.
+    // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
+
+    onSelectedItemChange: ({ selectedItem }) => {
+      // `selectedItem` type is `ComboboxOption<T> | null`
+      // It can be null when `selectItem()` is called with null, and we never do that unless `isClearable` is true.
+      // So, when `isClearable` is false, `selectedItem` is always non-null. However, the types don't reflect that,
+      // which is why the conditions are needed.
+      //
+      // this is an else if because TS can't infer the correct onChange types from
+      // (isClearable || selectedItem !== null)
+      if (isClearable) {
+        // onChange argument type allows null
+        onChange(selectedItem);
+      } else if (selectedItem !== null) {
+        // onChange argument type *does not* allow null
+        onChange(selectedItem);
+      }
+    },
+
+    defaultHighlightedIndex: selectedItemIndex ?? 0,
+
+    scrollIntoView: () => {},
+
+    ...(isOpenProp !== undefined ? { isOpen: isOpenProp } : {}),
+
+    onIsOpenChange: onIsOpenChangeHandler,
+
+    onHighlightedIndexChange: ({ highlightedIndex, type }) => {
+      if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
+        rowVirtualizer.scrollToIndex(highlightedIndex);
+      }
+    },
+    onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
+      switch (type) {
+        case useCombobox.stateChangeTypes.InputChange:
+          updateOptions(newInputValue ?? '');
+
+          break;
+        default:
+          break;
+      }
+    },
+    stateReducer(state, actionAndChanges) {
+      let { changes } = actionAndChanges;
+      const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
+      const menuBeingClosed = state.isOpen === true && changes.isOpen === false;
+
+      // Reset the input value when the menu is opened. If the menu is opened due to an input change
+      // then make sure we keep that.
+      // This will trigger onInputValueChange to load async options
+      if (menuBeingOpened && changes.inputValue === state.inputValue) {
+        changes = {
+          ...changes,
+          inputValue: '',
+        };
+      }
+
+      if (menuBeingClosed) {
+        // Flush the selected item to the input when the menu is closed
+        if (changes.selectedItem) {
+          changes = {
+            ...changes,
+            inputValue: itemToString(changes.selectedItem),
+          };
+        } else if (changes.inputValue !== '') {
+          // Otherwise if no selected value, clear any search from the input
+          changes = {
+            ...changes,
+            inputValue: '',
+          };
+        }
+      }
+
+      return changes;
+    },
+  });
+
+  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);
+
+  const isAutoSize = width === 'auto';
+  const InputComponent = isAutoSize ? AutoSizeInput : Input;
+  const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
+
+  const loading = loadingProp || fieldContext.loading || asyncLoading;
+
+  const inputSuffix = (
+    <>
+      {value !== undefined && value === selectedItem?.value && isClearable && (
+        <Icon
+          name="times"
+          className={styles.clear}
+          title={t('combobox.clear.title', 'Clear value')}
+          tabIndex={0}
+          role="button"
+          onClick={() => {
+            selectItem(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              selectItem(null);
+            }
+          }}
+        />
+      )}
+
+      <SuffixIcon isLoading={loading || false} isOpen={isOpen} />
+    </>
+  );
+
+  const { Wrapper, wrapperProps } = isAutoSize
+    ? {
+        Wrapper: 'div',
+        wrapperProps: { className: styles.adaptToParent },
+      }
+    : { Wrapper: React.Fragment };
+
+  const icon = selectedItem?.icon ?? prefixIcon;
+  return (
+    <Wrapper {...wrapperProps}>
+      <InputComponent
+        width={isAutoSize ? undefined : width}
+        {...(isAutoSize ? { minWidth, maxWidth } : {})}
+        autoFocus={autoFocus}
+        prefix={icon && <Icon name={icon} />}
+        disabled={disabled}
+        invalid={invalid}
+        className={styles.input}
+        suffix={inputSuffix}
+        {...getInputProps({
+          ref: inputRef,
+          onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718
+          'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
+          'aria-label': ariaLabel,
+          placeholder,
+          'data-testid': dataTestId,
+          onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
+            // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
+            // so that only the dropdown menu closes, not the parent.
+            if (event.key === 'Escape' && isOpen) {
+              event.stopPropagation();
+            }
+          },
+          onBlur,
+        })}
+      />
+      <Portal>
+        <div
+          className={cx(styles.menu, !isOpen && styles.menuClosed)}
+          style={{
+            ...floatStyles,
+            pointerEvents: 'auto', // Override container's pointer-events: none
+          }}
+          {...getMenuProps({
+            ref: floatingRef,
+            'aria-labelledby': ariaLabelledBy,
+          })}
+        >
+          {isOpen && (
+            <ComboboxList
+              loading={loading}
+              options={filteredOptions}
+              highlightedIndex={highlightedIndex}
+              selectedItems={selectedItem ? [selectedItem] : []}
+              scrollRef={scrollRef}
+              getItemProps={getItemProps}
+              error={asyncError}
+              noOptionsMessage={noOptionsMessage}
+            />
+          )}
+        </div>
+      </Portal>
+    </Wrapper>
+  );
+};

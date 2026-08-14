@@ -1,0 +1,24 @@
+import { combineReducers } from 'redux';
+
+import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
+
+import {
+  deleteAlertManagerConfigAction,
+  fetchGrafanaAnnotationsAction,
+  fetchPromRulesAction,
+  fetchRulerRulesAction,
+  updateAlertManagerConfigAction,
+} from './actions';
+
+const reducer = combineReducers({
+  promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, ({ rulesSourceName }) => rulesSourceName).reducer,
+  rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, ({ rulesSourceName }) => rulesSourceName)
+    .reducer,
+  saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
+  deleteAMConfig: createAsyncSlice('deleteAMConfig', deleteAlertManagerConfigAction).reducer,
+  managedAlertStateHistory: createAsyncSlice('managedAlertStateHistory', fetchGrafanaAnnotationsAction).reducer,
+});
+
+export type UnifiedAlertingState = ReturnType<typeof reducer>;
+
+export default reducer;

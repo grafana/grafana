@@ -1,0 +1,573 @@
+package state
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"math/rand"
+	"testing"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
+	"github.com/grafana/grafana/pkg/util"
+)
+
+func Test_expand(t *testing.T) {
+	ctx := context.Background()
+	logger := log.NewNopLogger()
+
+	// This test asserts that multierror returns a nil error if there are no errors.
+	// If the expand function forgets to use ErrorOrNil() then the error returned will
+	// be non-nil even if no errors have been added to the multierror.
+	t.Run("err is nil if there are no errors", func(t *testing.T) {
+		result, err := expand(ctx, logger, "test", map[string]string{}, template.Data{}, nil, time.Now())
+		require.NoError(t, err)
+		require.Len(t, result, 0)
+	})
+
+	t.Run("original is expanded with template data", func(t *testing.T) {
+		original := map[string]string{"Summary": `Instance {{ $labels.instance }} has been down for more than 5 minutes`}
+		expected := map[string]string{"Summary": "Instance host1 has been down for more than 5 minutes"}
+		data := template.Data{Labels: map[string]string{"instance": "host1"}}
+		results, err := expand(ctx, logger, "test", original, data, nil, time.Now())
+		require.NoError(t, err)
+		require.Equal(t, expected, results)
+	})
+
+	t.Run("original is returned with an error", func(t *testing.T) {
+		original := map[string]string{
+			"Summary": `Instance {{ $labels. }} has been down for more than 5 minutes`,
+		}
+		data := template.Data{Labels: map[string]string{"instance": "host1"}}
+		results, err := expand(ctx, logger, "test", original, data, nil, time.Now())
+		require.NotNil(t, err)
+		require.Equal(t, original, results)
+
+		// err should be an ExpandError that contains the template for the Summary and an error
+		var expandErr template.ExpandError
+		require.True(t, errors.As(err, &expandErr))
+		require.EqualError(t, expandErr, "failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}Instance {{ $labels. }} has been down for more than 5 minutes': error parsing template __alert_test: template: __alert_test:1: unexpected <.> in operand")
+	})
+
+	t.Run("originals are returned with two errors", func(t *testing.T) {
+		original := map[string]string{
+			"Summary":     `Instance {{ $labels. }} has been down for more than 5 minutes`,
+			"Description": "The instance has been down for {{ $value minutes, please check the instance is online",
+		}
+		data := template.Data{Labels: map[string]string{"instance": "host1"}}
+		results, err := expand(ctx, logger, "test", original, data, nil, time.Now())
+		require.NotNil(t, err)
+		require.Equal(t, original, results)
+
+		//nolint:errorlint
+		multierr, is := err.(interface{ Unwrap() []error })
+		require.True(t, is)
+		unwrappedErrors := multierr.Unwrap()
+		require.Equal(t, len(unwrappedErrors), 2)
+
+		errsStr := []string{
+			unwrappedErrors[0].Error(),
+			unwrappedErrors[1].Error(),
+		}
+
+		firstErrStr := "failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}Instance {{ $labels. }} has been down for more than 5 minutes': error parsing template __alert_test: template: __alert_test:1: unexpected <.> in operand"
+		secondErrStr := "failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}The instance has been down for {{ $value minutes, please check the instance is online': error parsing template __alert_test: template: __alert_test:1: function \"minutes\" not defined"
+
+		require.Contains(t, errsStr, firstErrStr)
+		require.Contains(t, errsStr, secondErrStr)
+
+		for _, err := range unwrappedErrors {
+			var expandErr template.ExpandError
+			require.True(t, errors.As(err, &expandErr))
+		}
+	})
+
+	t.Run("expanded and original is returned when there is one error", func(t *testing.T) {
+		original := map[string]string{
+			"Summary":     `Instance {{ $labels.instance }} has been down for more than 5 minutes`,
+			"Description": "The instance has been down for {{ $value minutes, please check the instance is online",
+		}
+		expected := map[string]string{
+			"Summary":     "Instance host1 has been down for more than 5 minutes",
+			"Description": "The instance has been down for {{ $value minutes, please check the instance is online",
+		}
+		data := template.Data{Labels: map[string]string{"instance": "host1"}}
+		results, err := expand(ctx, logger, "test", original, data, nil, time.Now())
+		require.NotNil(t, err)
+		require.Equal(t, expected, results)
+
+		//nolint:errorlint
+		multierr, is := err.(interface{ Unwrap() []error })
+		require.True(t, is)
+		unwrappedErrors := multierr.Unwrap()
+		require.Equal(t, len(unwrappedErrors), 1)
+
+		// assert each error matches the expected error
+		var expandErr template.ExpandError
+		require.True(t, errors.As(err, &expandErr))
+		require.EqualError(t, expandErr, "failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}The instance has been down for {{ $value minutes, please check the instance is online': error parsing template __alert_test: template: __alert_test:1: function \"minutes\" not defined")
+	})
+
+	t.Run("templated label key is not expanded", func(t *testing.T) {
+		templatedKey := `{{ with (index $labels "instance") }}key-{{.}}{{ end }}`
+		original := map[string]string{templatedKey: "{{ $labels.instance }}"}
+		data := template.Data{Labels: map[string]string{"instance": "host1"}}
+
+		results, err := expand(ctx, logger, "test", original, data, nil, time.Now())
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{templatedKey: "host1"}, results)
+	})
+
+	t.Run("empty label key uses fallback key", func(t *testing.T) {
+		original := map[string]string{"": "value"}
+
+		results, err := expand(ctx, logger, "test", original, template.Data{}, nil, time.Now())
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{emptyLabelKeyPrefix: "value"}, results)
+	})
+}
+
+func Test_mergeLabels(t *testing.T) {
+	t.Run("merges two maps", func(t *testing.T) {
+		a := models.GenerateAlertLabels(5, "set1-")
+		b := models.GenerateAlertLabels(5, "set2-")
+
+		result := mergeLabels(a, b)
+		require.Len(t, result, len(a)+len(b))
+		for key, val := range a {
+			require.Equal(t, val, result[key])
+		}
+		for key, val := range b {
+			require.Equal(t, val, result[key])
+		}
+	})
+	t.Run("first set take precedence if conflict", func(t *testing.T) {
+		a := models.GenerateAlertLabels(5, "set1-")
+		b := models.GenerateAlertLabels(5, "set2-")
+		c := b.Copy()
+		for key, val := range a {
+			c[key] = "set2-" + val
+		}
+
+		result := mergeLabels(a, c)
+		require.Len(t, result, len(a)+len(b))
+		for key, val := range a {
+			require.Equal(t, val, result[key])
+		}
+		for key, val := range b {
+			require.Equal(t, val, result[key])
+		}
+	})
+}
+
+func TestCacheMetrics(t *testing.T) {
+	orgID := int64(1)
+
+	t.Run("should return metrics for all states", func(t *testing.T) {
+		states := []*State{
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.Normal,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.Alerting,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.Pending,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.Error,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.NoData,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.Recovering,
+			},
+		}
+		expectedMetrics := `
+			# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+			# TYPE grafana_alerting_alerts gauge
+			grafana_alerting_alerts{state="alerting"} 1
+			grafana_alerting_alerts{state="error"} 1
+			grafana_alerting_alerts{state="nodata"} 1
+			grafana_alerting_alerts{state="normal"} 1
+			grafana_alerting_alerts{state="pending"} 1
+			grafana_alerting_alerts{state="recovering"} 1
+		`
+
+		reg := prometheus.NewPedanticRegistry()
+		cache := newCache()
+		for _, state := range states {
+			cache.set(state)
+		}
+
+		cache.RegisterMetrics(reg)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetrics), "grafana_alerting_alerts")
+		require.NoError(t, err)
+	})
+}
+
+func TestCacheMetricsDebounce(t *testing.T) {
+	t.Run("updates after debounce window", func(t *testing.T) {
+		orgID := int64(1)
+
+		reg := prometheus.NewPedanticRegistry()
+		cache := newCache()
+
+		// Add initial state: 1 alerting
+		cache.set(&State{
+			OrgID:        orgID,
+			AlertRuleUID: "rule1",
+			CacheID:      data.Fingerprint(rand.Int63()),
+			State:        eval.Alerting,
+		})
+
+		cache.RegisterMetrics(reg)
+
+		// First gather should reflect the single alerting instance
+		expectedInitial := `
+				# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+				# TYPE grafana_alerting_alerts gauge
+				grafana_alerting_alerts{state="alerting"} 1
+				grafana_alerting_alerts{state="error"} 0
+				grafana_alerting_alerts{state="nodata"} 0
+				grafana_alerting_alerts{state="normal"} 0
+				grafana_alerting_alerts{state="pending"} 0
+				grafana_alerting_alerts{state="recovering"} 0
+			`
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedInitial), "grafana_alerting_alerts")
+		require.NoError(t, err)
+
+		// Modify cache immediately: add 2 more alerting and 1 error state.
+		// Due to debounce (1s), next gather should still return the initial values.
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Alerting})
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Alerting})
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Error})
+
+		// Immediate gather should still show the initial counts because of debounce.
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedInitial), "grafana_alerting_alerts")
+		require.NoError(t, err)
+
+		// Bypass debounce by setting lastUpdate in the past (>1s) under lock.
+		cache.metrics.mtx.Lock()
+		cache.metrics.lastUpdate = time.Now().Add(-2 * time.Second)
+		cache.metrics.mtx.Unlock()
+
+		expectedAfter := `
+				# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+				# TYPE grafana_alerting_alerts gauge
+				grafana_alerting_alerts{state="alerting"} 3
+				grafana_alerting_alerts{state="error"} 1
+				grafana_alerting_alerts{state="nodata"} 0
+				grafana_alerting_alerts{state="normal"} 0
+				grafana_alerting_alerts{state="pending"} 0
+				grafana_alerting_alerts{state="recovering"} 0
+			`
+
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedAfter), "grafana_alerting_alerts")
+		require.NoError(t, err)
+	})
+
+	t.Run("no update within debounce window", func(t *testing.T) {
+		orgID := int64(1)
+
+		reg := prometheus.NewPedanticRegistry()
+		cache := newCache()
+
+		// Seed with one alerting state
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Alerting})
+
+		cache.RegisterMetrics(reg)
+
+		// Initial gather populates metrics (1 alerting)
+		expectedInitial := `
+				# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+				# TYPE grafana_alerting_alerts gauge
+				grafana_alerting_alerts{state="alerting"} 1
+				grafana_alerting_alerts{state="error"} 0
+				grafana_alerting_alerts{state="nodata"} 0
+				grafana_alerting_alerts{state="normal"} 0
+				grafana_alerting_alerts{state="pending"} 0
+				grafana_alerting_alerts{state="recovering"} 0
+			`
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedInitial), "grafana_alerting_alerts")
+		require.NoError(t, err)
+
+		// Add more states that would change counts if recalculated
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Alerting})
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(rand.Int63()), State: eval.Error})
+
+		// Force debounce window by setting lastUpdate to now, capture it
+		cache.metrics.mtx.Lock()
+		ts := time.Now()
+		cache.metrics.lastUpdate = ts
+		cache.metrics.mtx.Unlock()
+
+		// Gather should NOT update metrics due to debounce; counts should remain initial
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedInitial), "grafana_alerting_alerts")
+		require.NoError(t, err)
+
+		// Confirm lastUpdate did not change (no metrics refresh happened)
+		cache.metrics.mtx.RLock()
+		tsAfter := cache.metrics.lastUpdate
+		cache.metrics.mtx.RUnlock()
+		require.True(t, tsAfter.Equal(ts), "expected lastUpdate to remain unchanged within debounce window")
+	})
+}
+
+func TestCache_GetAlertInstances(t *testing.T) {
+	ruleKey := models.AlertRuleKey{
+		OrgID: 1,
+		UID:   "rule-uid",
+	}
+
+	testCases := []struct {
+		name   string
+		states []*State
+	}{
+		{
+			name:   "returns empty slice when cache is empty",
+			states: nil,
+		},
+		{
+			name:   "returns alert instances",
+			states: []*State{randomState(ruleKey), randomState(ruleKey)},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cache := newCache()
+			for _, state := range tc.states {
+				cache.set(state)
+			}
+
+			instances := cache.GetAlertInstances()
+
+			require.Len(t, instances, len(tc.states))
+
+			expected := make([]models.AlertInstance, 0, len(tc.states))
+			for _, state := range tc.states {
+				key, err := state.GetAlertInstanceKey()
+				require.NoError(t, err)
+				var lastError string
+				if state.Error != nil {
+					lastError = state.Error.Error()
+				}
+				var lastResult models.LastResult
+				if state.LatestResult != nil {
+					lastResult = models.LastResult{
+						Values:    state.LatestResult.Values,
+						Condition: state.LatestResult.Condition,
+					}
+				}
+				expected = append(expected, models.AlertInstance{
+					AlertInstanceKey:   key,
+					Labels:             models.InstanceLabels(state.Labels),
+					Annotations:        state.Annotations,
+					CurrentState:       models.InstanceStateType(state.State.String()),
+					CurrentReason:      state.StateReason,
+					LastEvalTime:       state.LastEvaluationTime,
+					CurrentStateSince:  state.StartsAt,
+					CurrentStateEnd:    state.EndsAt,
+					FiredAt:            state.FiredAt,
+					ResolvedAt:         state.ResolvedAt,
+					LastSentAt:         state.LastSentAt,
+					ResultFingerprint:  state.ResultFingerprint.String(),
+					EvaluationDuration: state.EvaluationDuration,
+					LastError:          lastError,
+					LastResult:         lastResult,
+				})
+			}
+
+			require.ElementsMatch(t, expected, instances)
+		})
+	}
+}
+
+func TestCache_reset(t *testing.T) {
+	orgID := int64(1)
+
+	testCases := []struct {
+		name          string
+		setup         func(c *cache)
+		expectedOrg1  int
+		expectedOrg2  int
+		expectedTotal int
+	}{
+		{
+			name:          "clears empty cache",
+			setup:         func(c *cache) {},
+			expectedOrg1:  0,
+			expectedOrg2:  0,
+			expectedTotal: 0,
+		},
+		{
+			name: "clears single org states",
+			setup: func(c *cache) {
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(2), State: eval.Pending})
+			},
+			expectedOrg1:  0,
+			expectedOrg2:  0,
+			expectedTotal: 0,
+		},
+		{
+			name: "clears multiple org states",
+			setup: func(c *cache) {
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+				c.set(&State{OrgID: orgID, AlertRuleUID: "rule2", CacheID: data.Fingerprint(2), State: eval.Normal})
+				c.set(&State{OrgID: 2, AlertRuleUID: "rule3", CacheID: data.Fingerprint(3), State: eval.Error})
+			},
+			expectedOrg1:  0,
+			expectedOrg2:  0,
+			expectedTotal: 0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cache := newCache()
+			tc.setup(cache)
+
+			cache.reset()
+
+			require.Len(t, cache.getAll(orgID), tc.expectedOrg1)
+			require.Len(t, cache.getAll(2), tc.expectedOrg2)
+			require.Len(t, cache.GetAlertInstances(), tc.expectedTotal)
+		})
+	}
+
+	t.Run("resets metrics state counts and lastUpdate", func(t *testing.T) {
+		cache := newCache()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+		cache.updateMetrics()
+
+		cache.metrics.mtx.RLock()
+		require.NotNil(t, cache.metrics.stateCounts)
+		require.False(t, cache.metrics.lastUpdate.IsZero())
+		cache.metrics.mtx.RUnlock()
+
+		cache.reset()
+
+		cache.metrics.mtx.RLock()
+		require.Nil(t, cache.metrics.stateCounts)
+		require.True(t, cache.metrics.lastUpdate.IsZero())
+		cache.metrics.mtx.RUnlock()
+	})
+
+	t.Run("cache is usable after reset", func(t *testing.T) {
+		cache := newCache()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+
+		cache.reset()
+
+		newState := &State{OrgID: orgID, AlertRuleUID: "rule2", CacheID: data.Fingerprint(2), State: eval.Pending}
+		cache.set(newState)
+
+		states := cache.getAll(orgID)
+		require.Len(t, states, 1)
+		require.Equal(t, newState, states[0])
+	})
+
+	t.Run("metrics can be recalculated after reset", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		cache := newCache()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(1), State: eval.Alerting})
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(2), State: eval.Alerting})
+		cache.RegisterMetrics(reg)
+
+		expectedBefore := `
+			# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+			# TYPE grafana_alerting_alerts gauge
+			grafana_alerting_alerts{state="alerting"} 2
+			grafana_alerting_alerts{state="error"} 0
+			grafana_alerting_alerts{state="nodata"} 0
+			grafana_alerting_alerts{state="normal"} 0
+			grafana_alerting_alerts{state="pending"} 0
+			grafana_alerting_alerts{state="recovering"} 0
+		`
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedBefore), "grafana_alerting_alerts")
+		require.NoError(t, err)
+
+		cache.reset()
+		cache.set(&State{OrgID: orgID, AlertRuleUID: "rule1", CacheID: data.Fingerprint(3), State: eval.Pending})
+
+		expectedAfter := `
+			# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+			# TYPE grafana_alerting_alerts gauge
+			grafana_alerting_alerts{state="alerting"} 0
+			grafana_alerting_alerts{state="error"} 0
+			grafana_alerting_alerts{state="nodata"} 0
+			grafana_alerting_alerts{state="normal"} 0
+			grafana_alerting_alerts{state="pending"} 1
+			grafana_alerting_alerts{state="recovering"} 0
+		`
+		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedAfter), "grafana_alerting_alerts")
+		require.NoError(t, err)
+	})
+}
+
+func randomState(ruleKey models.AlertRuleKey) *State {
+	return &State{
+		OrgID:             ruleKey.OrgID,
+		AlertRuleUID:      ruleKey.UID,
+		CacheID:           data.Fingerprint(rand.Int63()),
+		ResultFingerprint: data.Fingerprint(rand.Int63()),
+		State:             eval.Alerting,
+		StateReason:       util.GenerateShortUID(),
+		LatestResult: &Evaluation{
+			EvaluationTime:  time.Time{},
+			EvaluationState: eval.Error,
+			Values: map[string]float64{
+				"A": rand.Float64(),
+			},
+			Condition: "A",
+		},
+		Error: errors.New(util.GenerateShortUID()),
+		Image: &models.Image{
+			ID:    rand.Int63(),
+			Token: util.GenerateShortUID(),
+		},
+		Annotations: models.GenerateAlertLabels(2, "current-"),
+		Labels:      models.GenerateAlertLabels(2, "current-"),
+		Values: map[string]float64{
+			"A": rand.Float64(),
+		},
+		StartsAt:             randomTimeInPast(),
+		EndsAt:               randomTimeInFuture(),
+		ResolvedAt:           new(randomTimeInPast()),
+		LastSentAt:           new(randomTimeInPast()),
+		LastEvaluationString: util.GenerateShortUID(),
+		LastEvaluationTime:   randomTimeInPast(),
+		EvaluationDuration:   time.Duration(6000),
+	}
+}

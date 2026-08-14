@@ -1,0 +1,172 @@
+import { css, cx } from '@emotion/css';
+import { useEffect, useRef, useState } from 'react';
+
+import { type GrafanaTheme2, type TimeRange, urlUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { type EmbeddedDashboardProps } from '@grafana/runtime';
+import { SceneObjectStateChangedEvent, sceneGraph, sceneUtils } from '@grafana/scenes';
+import { Spinner, Alert, useStyles2 } from '@grafana/ui';
+import { getMessageFromError } from 'app/core/utils/errors';
+import { DashboardRoutes } from 'app/types/dashboard';
+
+import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
+import { type DashboardScene } from '../scene/DashboardScene';
+import { useScenesFlickeringFix } from '../utils/utils';
+
+export function EmbeddedDashboard(props: EmbeddedDashboardProps) {
+  const stateManager = getDashboardScenePageStateManager();
+  const { dashboard, loadError } = stateManager.useState();
+
+  useScenesFlickeringFix();
+
+  useEffect(() => {
+    stateManager.loadDashboard({ uid: props.uid!, route: DashboardRoutes.Embedded });
+    return () => {
+      stateManager.clearState();
+    };
+  }, [stateManager, props.uid]);
+
+  if (loadError) {
+    return (
+      <Alert severity="error" title={t('dashboard.errors.failed-to-load', 'Failed to load dashboard')}>
+        {getMessageFromError(loadError)}
+      </Alert>
+    );
+  }
+
+  if (!dashboard) {
+    return <Spinner />;
+  }
+
+  return <EmbeddedDashboardRenderer model={dashboard} {...props} />;
+}
+
+interface RendererProps extends EmbeddedDashboardProps {
+  model: DashboardScene;
+}
+
+function EmbeddedDashboardRenderer({ model, initialState, onStateChange, timeRange, refreshToken }: RendererProps) {
+  const [isActive, setIsActive] = useState(false);
+  const { controls, body } = model.useState();
+  const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    setIsActive(true);
+
+    if (initialState) {
+      const searchParms = new URLSearchParams(initialState);
+      sceneUtils.syncStateFromSearchParams(model, searchParms);
+    }
+
+    return model.activate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model]);
+
+  useSubscribeToEmbeddedUrlState(onStateChange, model);
+  useControlledTimeRange(timeRange, model, isActive);
+  useControlledRefresh(refreshToken, model, isActive);
+
+  if (!isActive) {
+    return null;
+  }
+
+  return (
+    <div className={cx(styles.canvas, controls && styles.canvasWithControls)}>
+      {controls && (
+        <div className={styles.controlsWrapper}>
+          <controls.Component model={controls} />
+        </div>
+      )}
+      <div className={styles.body}>
+        <body.Component model={body} />
+      </div>
+    </div>
+  );
+}
+
+function useSubscribeToEmbeddedUrlState(onStateChange: ((state: string) => void) | undefined, model: DashboardScene) {
+  useEffect(() => {
+    if (!onStateChange) {
+      return;
+    }
+
+    let lastState = '';
+    const sub = model.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
+      if (evt.payload.changedObject.urlSync) {
+        const state = sceneUtils.getUrlState(model);
+        const stateAsString = urlUtil.renderUrl('', state);
+
+        if (lastState !== stateAsString) {
+          lastState = stateAsString;
+          onStateChange(stateAsString);
+        }
+      }
+    });
+
+    return () => sub.unsubscribe();
+  }, [model, onStateChange]);
+}
+
+function useControlledTimeRange(timeRange: TimeRange | undefined, model: DashboardScene, isActive: boolean) {
+  useEffect(() => {
+    if (!isActive || !timeRange) {
+      return;
+    }
+
+    sceneGraph.getTimeRange(model).onTimeRangeChange(timeRange);
+  }, [timeRange, model, isActive]);
+}
+
+function useControlledRefresh(refreshToken: string | number | undefined, model: DashboardScene, isActive: boolean) {
+  const lastToken = useRef(refreshToken);
+
+  useEffect(() => {
+    if (refreshToken === undefined) {
+      return;
+    }
+
+    const changed = refreshToken !== lastToken.current;
+    lastToken.current = refreshToken;
+
+    if (isActive && changed) {
+      sceneGraph.getTimeRange(model).onRefresh();
+    }
+  }, [refreshToken, model, isActive]);
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    canvas: css({
+      label: 'canvas-content',
+      display: 'grid',
+      gridTemplateAreas: `
+        "panels"`,
+      gridTemplateColumns: `1fr`,
+      gridTemplateRows: '1fr',
+      flexBasis: '100%',
+      flexGrow: 1,
+    }),
+    canvasWithControls: css({
+      gridTemplateAreas: `
+        "controls"
+        "panels"`,
+      gridTemplateRows: 'auto 1fr',
+    }),
+    body: css({
+      label: 'body',
+      flexGrow: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      gridArea: 'panels',
+      marginBottom: theme.spacing(2),
+    }),
+    controlsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 0,
+      gridArea: 'controls',
+      padding: theme.spacing(2, 0, 2, 2),
+    }),
+  };
+}

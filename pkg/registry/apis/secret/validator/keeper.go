@@ -1,0 +1,127 @@
+package validator
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/admission"
+
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+)
+
+type keeperValidator struct {
+	features featuremgmt.FeatureToggles
+}
+
+var _ contracts.KeeperValidator = &keeperValidator{}
+
+func ProvideKeeperValidator(features featuremgmt.FeatureToggles) contracts.KeeperValidator {
+	return &keeperValidator{features: features}
+}
+
+func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secretv1beta1.Keeper, operation admission.Operation) field.ErrorList {
+	errs := make(field.ErrorList, 0)
+
+	// General validations.
+	if err := validation.IsDNS1123Subdomain(keeper.Name); len(err) > 0 {
+		errs = append(
+			errs,
+			field.Invalid(field.NewPath("metadata", "name"), keeper.Name, strings.Join(err, ",")),
+		)
+	}
+	if err := validation.IsDNS1123Subdomain(keeper.Namespace); len(err) > 0 {
+		errs = append(
+			errs,
+			field.Invalid(field.NewPath("metadata", "namespace"), keeper.Name, strings.Join(err, ",")),
+		)
+	}
+
+	// Only validate Create and Update for now.
+	if operation != admission.Create && operation != admission.Update {
+		return errs
+	}
+
+	if keeper.Name == contracts.SystemKeeperName {
+		errs = append(errs, field.Forbidden(field.NewPath("name"), "the keeper name `system` is reserved"))
+	}
+
+	if keeper.Spec.Description == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "description"), "a `description` is required"))
+	}
+
+	// Only one keeper type can be configured. Return early and don't validate the specific keeper fields.
+	if err := validateKeepers(keeper); err != nil {
+		errs = append(errs, err)
+
+		return errs
+	}
+
+	if keeper.Spec.Aws != nil {
+		//nolint
+		if !v.features.IsEnabled(context.Background(), featuremgmt.FlagSecretsManagementAppPlatformAwsKeeper) {
+			errs = append(errs,
+				field.Forbidden(field.NewPath("spec", "aws"),
+					fmt.Sprintf("enable aws keeper feature toggle to create aws keepers: %s", featuremgmt.FlagSecretsManagementAppPlatformAwsKeeper)))
+		} else {
+			errs = append(errs, validateAws(keeper.Spec.Aws)...)
+		}
+	}
+
+	return errs
+}
+
+func validateAws(cfg *secretv1beta1.KeeperAWSConfig) field.ErrorList {
+	errs := make(field.ErrorList, 0)
+
+	if cfg.Region == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "aws", "region"), "region must be present"))
+	}
+
+	switch {
+	case cfg.AssumeRole == nil:
+		errs = append(errs, field.Required(field.NewPath("spec", "aws"), "`assumeRole` must be present"))
+
+	case cfg.AssumeRole != nil:
+		if cfg.AssumeRole.AssumeRoleArn == "" {
+			errs = append(errs, field.Required(field.NewPath("spec", "aws", "assumeRole", "assumeRoleArn"), "arn of the role to assume must be present"))
+		}
+		if cfg.AssumeRole.ExternalID == "" {
+			errs = append(errs, field.Required(field.NewPath("spec", "aws", "assumeRole", "externalID"), "externalID must be present"))
+		}
+	}
+
+	return errs
+}
+
+func validateKeepers(keeper *secretv1beta1.Keeper) *field.Error {
+	availableKeepers := map[string]bool{
+		"aws": keeper.Spec.Aws != nil,
+	}
+
+	configuredKeepers := make([]string, 0)
+
+	for keeperKind, notNil := range availableKeepers {
+		if notNil {
+			configuredKeepers = append(configuredKeepers, keeperKind)
+		}
+	}
+
+	if len(configuredKeepers) == 0 {
+		return field.Required(field.NewPath("spec"), "at least one `keeper` must be present")
+	}
+
+	if len(configuredKeepers) > 1 {
+		return field.Invalid(
+			field.NewPath("spec"),
+			strings.Join(configuredKeepers, " & "),
+			"only one `keeper` can be present at a time but found more",
+		)
+	}
+
+	return nil
+}

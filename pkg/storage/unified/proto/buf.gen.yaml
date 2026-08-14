@@ -1,0 +1,10 @@
+version: v1
+plugins:
+  - plugin: go
+    out: pkg/storage/unified/resourcepb
+    opt: paths=source_relative
+  - plugin: go-grpc
+    out: pkg/storage/unified/resourcepb
+    opt:
+      - paths=source_relative
+      - require_unimplemented_servers=false

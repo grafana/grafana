@@ -1,0 +1,18 @@
+import { type DataQuery, type DataSourceApi, type DataSourceJsonData, type DataSourcePlugin } from '@grafana/data';
+
+import { type RelativeUrl } from '../alerting/unified/utils/url';
+
+export type GenericDataSourcePlugin = DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>>;
+
+export type DataSourceRights = {
+  readOnly: boolean;
+  hasWriteRights: boolean;
+  hasDeleteRights: boolean;
+};
+
+export type DataSourcesRoutes = {
+  New: RelativeUrl;
+  Edit: RelativeUrl;
+  List: RelativeUrl;
+  Dashboards: RelativeUrl;
+};

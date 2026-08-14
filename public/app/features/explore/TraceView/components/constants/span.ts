@@ -1,0 +1,9 @@
+export const KIND = 'kind';
+export const STATUS = 'status';
+export const STATUS_MESSAGE = 'status.message';
+export const LIBRARY_NAME = 'library.name';
+export const LIBRARY_VERSION = 'library.version';
+export const TRACE_STATE = 'trace.state';
+export const ID = 'id';
+export const SPAN_NAME = 'span.name';
+export const SERVICE_NAME = 'service.name';

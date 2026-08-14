@@ -1,0 +1,16 @@
+  pgvector:
+    image: pgvector/pgvector:${pgvector_version}
+    environment:
+      POSTGRES_USER: grafana
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: grafana_vectors
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./docker/blocks/pgvector/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: postgres -c log_connections=on -c log_disconnections=on -c log_destination=stderr
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "grafana_vectors", "-U", "grafana" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10

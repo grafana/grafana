@@ -1,0 +1,7 @@
+datasources:
+  - name: Graphite
+    type: graphite
+    access: proxy
+    url: http://localhost:8080
+delete_datasources:
+  - name: old-graphite3

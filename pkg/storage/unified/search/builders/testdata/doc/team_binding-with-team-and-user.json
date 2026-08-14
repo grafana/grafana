@@ -1,0 +1,18 @@
+{
+    "apiVersion": "iam.grafana.app/v0alpha1",
+    "kind": "TeamBinding",
+    "metadata": {
+        "name": "with-team-and-user",
+        "namespace": "default"
+    },
+    "spec": {
+        "subject": {
+            "name": "user.one"
+        },
+        "teamRef": {
+            "name": "team.one"
+        },
+        "permission": "Viewer",
+        "external": true
+    }
+}

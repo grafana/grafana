@@ -1,0 +1,39 @@
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
+package v0alpha1
+
+// +k8s:openapi-gen=true
+type CheckTypeStep struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	StepID      string `json:"stepID"`
+	Resolution  string `json:"resolution"`
+}
+
+// NewCheckTypeStep creates a new CheckTypeStep object.
+func NewCheckTypeStep() *CheckTypeStep {
+	return &CheckTypeStep{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for CheckTypeStep.
+func (CheckTypeStep) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeStep"
+}
+
+// +k8s:openapi-gen=true
+type CheckTypeSpec struct {
+	Name  string          `json:"name"`
+	Steps []CheckTypeStep `json:"steps"`
+}
+
+// NewCheckTypeSpec creates a new CheckTypeSpec object.
+func NewCheckTypeSpec() *CheckTypeSpec {
+	return &CheckTypeSpec{
+		Steps: []CheckTypeStep{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for CheckTypeSpec.
+func (CheckTypeSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckTypeSpec"
+}

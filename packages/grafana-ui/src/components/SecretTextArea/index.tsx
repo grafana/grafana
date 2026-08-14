@@ -1,0 +1,1 @@
+export { SecretTextArea } from './SecretTextArea';

@@ -1,0 +1,219 @@
+{
+  "title": "Panel tests - All panels",
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "all-panels"
+  ],
+  "datasource": [
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
+  "panels": [
+    {
+      "id": 0,
+      "title": "Annotation list",
+      "type": "annolist",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "News panel",
+      "type": "news",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Bar chart",
+      "type": "barchart",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Stat",
+      "type": "stat",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Gauge",
+      "type": "gauge",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Graph NG",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Bar gauge",
+      "type": "bargauge",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Tabel",
+      "type": "table",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Pie chart",
+      "type": "piechart",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Heatmap",
+      "type": "heatmap",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Logs",
+      "type": "logs",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "",
+      "type": "text",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "",
+      "type": "text",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Histogram",
+      "type": "histogram",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "State timeline",
+      "type": "state-timeline",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Alert list",
+      "type": "alertlist",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Size, color mapped to different fields + share view",
+      "type": "geomap",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Dashboard list",
+      "type": "dashlist",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 0,
+  "linkCount": 2,
+  "timeFrom": "",
+  "timeTo": "",
+  "timezone": ""
+}

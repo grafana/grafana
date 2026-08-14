@@ -1,0 +1,19 @@
+apiVersion: 1
+policies:
+    - orgId: 1
+      receiver: default-receiver
+      group_by:
+        - '...'
+      routes:
+        - object_matchers:
+            - - utf8
+              - =
+              - "\U0001F916\U0001F525✨\U0001F469\U0001F3FD‍\U0001F4BB\U0001F680\U0001F9EA\U0001F9E0\U0001F602\U0001F4A5\U0001FAE0\U0001F1E8\U0001F1E6"
+        - {}
+        - object_matchers:
+            - - path
+              - =~
+              - ^/api/v[0-9]+/\p{L}[\p{L}\p{N}_\-]*$
+            - - special_regex_chars
+              - =
+              - .*+?^()|[]\

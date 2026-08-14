@@ -1,0 +1,78 @@
+import { useEffect, useState } from 'react';
+import { Subscription } from 'rxjs';
+
+import {
+  type EventBus,
+  LegacyGraphHoverEvent,
+  LegacyGraphHoverClearEvent,
+  DataHoverEvent,
+  DataHoverClearEvent,
+  type BusEventBase,
+} from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { CustomScrollbar } from '@grafana/ui';
+import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
+
+interface Props {
+  eventBus: EventBus;
+}
+
+export const CursorView = ({ eventBus }: Props) => {
+  const [event, setEvent] = useState<BusEventBase>();
+
+  useEffect(() => {
+    const subscription = new Subscription();
+
+    subscription.add(
+      eventBus.subscribe(DataHoverEvent, (event) => {
+        setEvent(event);
+      })
+    );
+
+    subscription.add(
+      eventBus.subscribe(DataHoverClearEvent, (event) => {
+        setEvent(event);
+      })
+    );
+
+    subscription.add(
+      eventBus.subscribe(LegacyGraphHoverEvent, (event) => {
+        setEvent(event);
+      })
+    );
+
+    subscription.add(
+      eventBus.subscribe(LegacyGraphHoverClearEvent, (event) => {
+        setEvent(event);
+      })
+    );
+
+    return () => subscription.unsubscribe();
+  }, [eventBus]);
+
+  if (!event) {
+    return (
+      <div>
+        <Trans i18nKey="debug.cursor-view.no-events-yet">No events yet</Trans>
+      </div>
+    );
+  }
+
+  const { type, payload, origin } = event;
+  return (
+    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
+      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+      <h3>event.origin: {(origin as any)?.path}</h3>
+      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+      <span>event.type: {type}</span>
+      {Boolean(payload) && (
+        <>
+          <pre>{JSON.stringify(payload.point, null, '  ')}</pre>
+          {payload.data && (
+            <DataHoverView data={payload.data} rowIndex={payload.rowIndex} columnIndex={payload.columnIndex} />
+          )}
+        </>
+      )}
+    </CustomScrollbar>
+  );
+};

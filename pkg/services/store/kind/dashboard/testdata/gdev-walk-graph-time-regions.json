@@ -1,0 +1,113 @@
+{
+  "name": "Panel Tests - Graph Time Regions",
+  "labels": {
+    "gdev": "",
+    "graph": "",
+    "panel-tests": ""
+  },
+  "fields": {
+    "schemaVersion": "0"
+  },
+  "nested": [
+    {
+      "UID": "graph-time-regions.json#0",
+      "kind": "panel",
+      "name": "Business Hours",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph-time-regions.json#0",
+      "kind": "panel",
+      "name": "Each day of week",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph-time-regions.json#0",
+      "kind": "panel",
+      "name": "Sunday's 20-23",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph-time-regions.json#0",
+      "kind": "panel",
+      "name": "05:00",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    },
+    {
+      "UID": "graph-time-regions.json#0",
+      "kind": "panel",
+      "name": "From 22:00 to 00:30 (crossing midnight)",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "identifier": "timeseries"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "family": "ds"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "identifier": "timeseries"
+    }
+  ]
+}

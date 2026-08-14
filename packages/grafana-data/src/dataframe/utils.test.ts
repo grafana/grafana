@@ -1,0 +1,458 @@
+import { createTheme } from '../themes/createTheme';
+import { type FieldDTO, FieldType } from '../types/dataFrame';
+import { type TimeRange } from '../types/time';
+
+import { createDataFrame, toDataFrame } from './processDataFrame';
+import { anySeriesWithTimeField, addRow, alignTimeRangeCompareData, shouldAlignTimeCompare } from './utils';
+
+describe('anySeriesWithTimeField', () => {
+  const TIME_FIELD: FieldDTO<number> = { name: 'time', type: FieldType.time, values: [100, 200, 300] };
+  const STRING_FIELD: FieldDTO<string> = { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] };
+  const NUMBER_FIELD: FieldDTO<number> = { name: 'value', type: FieldType.number, values: [1, 2, 3] };
+  // A field can be *named* time while being typed as something else; only the type counts.
+  const TIME_NAMED_NUMBER_FIELD: FieldDTO<number> = { name: 'time', type: FieldType.number, values: [1, 2, 3] };
+
+  const frameOf = (...fields: Array<FieldDTO<string | number>>) => toDataFrame({ fields });
+  const withTime = () => frameOf(TIME_FIELD, STRING_FIELD, NUMBER_FIELD);
+  const withoutTime = () => frameOf(STRING_FIELD, NUMBER_FIELD);
+
+  it.each([
+    { desc: 'an empty list of frames', frames: [], expected: false },
+    { desc: 'a single frame with no time field', frames: [withoutTime()], expected: false },
+    { desc: 'a single frame with a time field', frames: [withTime()], expected: true },
+    { desc: 'several frames, none with a time field', frames: [withoutTime(), withoutTime()], expected: false },
+    {
+      desc: 'the time field in the first of several frames',
+      frames: [withTime(), withoutTime(), withoutTime()],
+      expected: true,
+    },
+    {
+      // The loop must keep scanning past frames that have no time field, so put the only time
+      // field last - a check that inspected just the first frame would still pass otherwise.
+      desc: 'the time field only in the last of several frames',
+      frames: [withoutTime(), withoutTime(), withTime()],
+      expected: true,
+    },
+    {
+      desc: 'a frame whose only time-named field is typed as a number',
+      frames: [frameOf(TIME_NAMED_NUMBER_FIELD, STRING_FIELD)],
+      expected: false,
+    },
+  ])('returns $expected for $desc', ({ frames, expected }) => {
+    expect(anySeriesWithTimeField(frames)).toBe(expected);
+  });
+});
+
+describe('addRow', () => {
+  const frame = createDataFrame({
+    fields: [
+      { name: 'name', type: FieldType.string },
+      { name: 'date', type: FieldType.time },
+      { name: 'number', type: FieldType.number },
+    ],
+  });
+  const date = Date.now();
+
+  it('adds row to data frame as object', () => {
+    addRow(frame, { name: 'A', date, number: 1 });
+    expect(frame.fields[0].values[0]).toBe('A');
+    expect(frame.fields[1].values[0]).toBe(date);
+    expect(frame.fields[2].values[0]).toBe(1);
+    expect(frame.length).toBe(1);
+  });
+
+  it('adds row to data frame as array', () => {
+    addRow(frame, ['B', date, 42]);
+    expect(frame.fields[0].values[1]).toBe('B');
+    expect(frame.fields[1].values[1]).toBe(date);
+    expect(frame.fields[2].values[1]).toBe(42);
+    expect(frame.length).toBe(2);
+  });
+});
+
+describe('alignTimeRangeCompareData', () => {
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000; // 86400000ms
+  const ONE_WEEK_MS = 7 * ONE_DAY_MS; // 604800000ms
+
+  it('should align time field values with positive diff (1 day)', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+        { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+      ],
+    });
+
+    const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+    expect(result.fields[0].values).toEqual([ONE_DAY_MS + 1000, ONE_DAY_MS + 2000, ONE_DAY_MS + 3000]);
+    expect(result.fields[1].values).toEqual([10, 20, 30]); // non-time fields unchanged
+  });
+
+  it('should align time field values with negative diff (1 week)', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+        { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+      ],
+    });
+
+    const result = alignTimeRangeCompareData(frame, -ONE_WEEK_MS, createTheme());
+
+    // When diff is negative, function does v - diff, so v - (-ONE_WEEK_MS) = v + ONE_WEEK_MS
+    expect(result.fields[0].values).toEqual([ONE_WEEK_MS + 1000, ONE_WEEK_MS + 2000, ONE_WEEK_MS + 3000]);
+  });
+
+  it('should apply timeCompare config', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+
+    const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+    result.fields.forEach((field) => {
+      expect(field.config.custom?.timeCompare).toEqual({
+        diffMs: ONE_DAY_MS,
+        isTimeShiftQuery: true,
+      });
+    });
+  });
+
+  it('should preserve existing config when merging', () => {
+    const frame = toDataFrame({
+      fields: [
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [10, 20],
+          config: {
+            displayName: 'My Display Name',
+            custom: { existingProperty: 'existingValue' },
+          },
+        },
+      ],
+    });
+
+    const result = alignTimeRangeCompareData(frame, ONE_WEEK_MS, createTheme());
+
+    expect(result.fields[0].config.displayName).toBe('My Display Name');
+    expect(result.fields[0].config.custom?.existingProperty).toBe('existingValue');
+    expect(result.fields[0].config.custom?.timeCompare?.diffMs).toBe(ONE_WEEK_MS);
+  });
+
+  it('should not mutate the input frame, its fields, or their value arrays', () => {
+    // Callers on streaming/split-chunk query paths may not own the frame - e.g. it can be held by a
+    // datasource's response accumulator and re-processed on every chunk. Mutating it in place would
+    // corrupt that shared state, so this must return copies at every level it touches.
+    const timeValues = [1000, 2000, 3000];
+    const numberValues = [10, 20, 30];
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: timeValues },
+        { name: 'value', type: FieldType.number, values: numberValues },
+      ],
+    });
+    const originalFields = frame.fields;
+
+    const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+    expect(result).not.toBe(frame);
+    expect(frame.fields).toBe(originalFields);
+    expect(frame.fields[0].values).toEqual(timeValues);
+    expect(frame.fields[0].config).toEqual({});
+    expect(frame.fields[1].values).toEqual(numberValues);
+    expect(frame.fields[1].config).toEqual({});
+  });
+
+  it('should produce identical output when re-run against the same shared input frame', () => {
+    // Simulates the split-query accumulator pattern: the same frame object gets passed through
+    // repeatedly (e.g. once per streamed chunk). Non-mutating means every pass sees the same,
+    // unmodified input and produces an equivalent, non-accumulating result.
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+
+    const first = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+    const second = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+    expect(second.fields[0].values).toEqual(first.fields[0].values);
+    expect(second.fields[0].config).toEqual(first.fields[0].config);
+    expect(second.fields).toHaveLength(2);
+  });
+
+  // #126189 acceptance criteria — "compare is dashed, current is solid".
+  // The compare frame is the only one passed through alignTimeRangeCompareData; the current-period frame
+  // never gets a lineStyle, so leaving the current frame's config untouched is what keeps it solid.
+  // Assert on the returned frame — alignTimeRangeCompareData is non-mutating (#128796).
+  describe('dashed styling for comparison series (#126189)', () => {
+    const DASH_LINE_STYLE = { fill: 'dash', dash: [1, 5, 4, 5] };
+
+    it.each([FieldType.number, FieldType.boolean, FieldType.enum])(
+      'applies the dashed lineStyle to %s value fields',
+      (fieldType) => {
+        const frame = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000] },
+            { name: 'value', type: fieldType, values: [10, 20] },
+          ],
+        });
+
+        const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+        expect(result.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+      }
+    );
+
+    it('does not add a lineStyle to the time field', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+      expect(result.fields[0].config.custom?.lineStyle).toBeUndefined();
+    });
+
+    it('does not add a lineStyle to string fields', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'label', type: FieldType.string, values: ['a', 'b'] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+      expect(result.fields[1].config.custom?.lineStyle).toBeUndefined();
+      expect(result.fields[2].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+    });
+
+    it('preserves an existing lineStyle-adjacent custom config while adding the dash', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20],
+            config: { custom: { lineWidth: 2 } },
+          },
+        ],
+      });
+
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+      expect(result.fields[1].config.custom?.lineWidth).toBe(2);
+      expect(result.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+    });
+  });
+});
+
+describe('shouldAlignTimeCompare', () => {
+  const TIME_VALUES_A = [1000, 2000, 3000];
+  const TIME_VALUES_B = [5000, 6000, 7000];
+  const ORIGINAL_VALUES = [10, 20, 30];
+  const COMPARE_VALUES = [15, 25, 35];
+
+  const mockTimeRange: TimeRange = {
+    from: { valueOf: () => 4000 },
+    to: { valueOf: () => 8000 },
+    raw: { from: 'now-1h', to: 'now' },
+  } as TimeRange;
+
+  it('should return true when compare first time is before time range', () => {
+    const originalFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_A },
+        { name: 'value', type: FieldType.number, values: ORIGINAL_VALUES },
+      ],
+    });
+
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_A },
+        { name: 'value', type: FieldType.number, values: COMPARE_VALUES },
+      ],
+      meta: {
+        timeCompare: {
+          isTimeShiftQuery: true,
+          diffMs: 86400000,
+        },
+      },
+    });
+
+    const allFrames = [originalFrame, compareFrame];
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(true);
+  });
+
+  it('should return false when compare first time is after time range', () => {
+    const originalFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_A },
+        { name: 'value', type: FieldType.number, values: ORIGINAL_VALUES },
+      ],
+    });
+
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_B },
+        { name: 'value', type: FieldType.number, values: COMPARE_VALUES },
+      ],
+      meta: {
+        timeCompare: {
+          isTimeShiftQuery: true,
+          diffMs: 86400000,
+        },
+      },
+    });
+
+    const allFrames = [originalFrame, compareFrame];
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
+  });
+
+  it('should return false when compare frame refId does not end with -compare', () => {
+    const compareFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_A },
+        { name: 'value', type: FieldType.number, values: ORIGINAL_VALUES },
+      ],
+    });
+
+    const allFrames = [compareFrame];
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
+  });
+
+  it('should return false when original frame is not found', () => {
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_A },
+        { name: 'value', type: FieldType.number, values: ORIGINAL_VALUES },
+      ],
+    });
+
+    const allFrames = [compareFrame]; // No original frame with refId 'A'
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
+  });
+
+  it('should return false when compare frame has no time field', () => {
+    const originalFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_A },
+        { name: 'value', type: FieldType.number, values: ORIGINAL_VALUES },
+      ],
+    });
+
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      fields: [{ name: 'value', type: FieldType.number, values: COMPARE_VALUES }],
+    });
+
+    const allFrames = [originalFrame, compareFrame];
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
+  });
+
+  it('should return false when original frame has no time field', () => {
+    const originalFrame = toDataFrame({
+      refId: 'A',
+      fields: [{ name: 'value', type: FieldType.number, values: ORIGINAL_VALUES }],
+    });
+
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_VALUES_A },
+        { name: 'value', type: FieldType.number, values: COMPARE_VALUES },
+      ],
+    });
+
+    const allFrames = [originalFrame, compareFrame];
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
+  });
+
+  it('should return false when time fields have empty values', () => {
+    const EMPTY_VALUES: number[] = [];
+
+    const originalFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: EMPTY_VALUES },
+        { name: 'value', type: FieldType.number, values: EMPTY_VALUES },
+      ],
+    });
+
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      fields: [
+        { name: 'time', type: FieldType.time, values: EMPTY_VALUES },
+        { name: 'value', type: FieldType.number, values: EMPTY_VALUES },
+      ],
+    });
+
+    const allFrames = [originalFrame, compareFrame];
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
+  });
+
+  it('should handle null values and return true when first non-null time is before range', () => {
+    const TIME_WITH_NULLS = [null, ...TIME_VALUES_A];
+    const ORIGINAL_WITH_NULLS = [null, ...ORIGINAL_VALUES];
+    const COMPARE_WITH_NULLS = [null, ...COMPARE_VALUES];
+
+    const originalFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_WITH_NULLS },
+        { name: 'value', type: FieldType.number, values: ORIGINAL_WITH_NULLS },
+      ],
+    });
+
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      fields: [
+        { name: 'time', type: FieldType.time, values: TIME_WITH_NULLS },
+        { name: 'value', type: FieldType.number, values: COMPARE_WITH_NULLS },
+      ],
+    });
+
+    const allFrames = [originalFrame, compareFrame];
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(true);
+  });
+
+  it('should return false when all time values are null', () => {
+    const ALL_NULL_TIMES = [null, null, null];
+
+    const originalFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: ALL_NULL_TIMES },
+        { name: 'value', type: FieldType.number, values: ORIGINAL_VALUES },
+      ],
+    });
+
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      fields: [
+        { name: 'time', type: FieldType.time, values: ALL_NULL_TIMES },
+        { name: 'value', type: FieldType.number, values: COMPARE_VALUES },
+      ],
+    });
+
+    const allFrames = [originalFrame, compareFrame];
+    expect(shouldAlignTimeCompare(compareFrame, allFrames, mockTimeRange)).toBe(false);
+  });
+});

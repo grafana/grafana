@@ -1,0 +1,281 @@
+package annotation
+
+import (
+	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"math/rand/v2"
+	"os"
+	"sync"
+
+	"github.com/bwmarrin/snowflake"
+	authtypes "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	restclient "k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/grafana/grafana/apps/annotation/pkg/apis"
+	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	annotationapp "github.com/grafana/grafana/apps/annotation/pkg/app"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+var (
+	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
+)
+
+type AppInstaller struct {
+	appsdkapiserver.AppInstaller
+	k8sAdapter    *k8sRESTAdapter
+	cleanupCancel context.CancelFunc
+	cleanupWg     sync.WaitGroup
+	logger        log.Logger
+	tracer        trace.Tracer
+	metrics       *Metrics
+}
+
+// RegisterAppInstaller is the ST wire entry. Folder resolver uses the loopback rest config.
+func RegisterAppInstaller(
+	cfg *setting.Cfg,
+	service annotations.Repository,
+	cleaner annotations.Cleaner,
+	accessClient authtypes.AccessClient,
+	restConfigProvider apiserver.RestConfigProvider,
+	tracer trace.Tracer,
+	reg prometheus.Registerer,
+) (*AppInstaller, error) {
+	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient, NewDashboardFolderResolver(restConfigProvider.GetRestConfig), tracer, reg)
+}
+
+// NewAppInstaller Layers (from bottom to top):
+//  1. annotations.Repository - old Grafana annotation service
+//  2. sqlAdapter - Bridges annotations.Repository → Store interface (apps/annotation/Store), converts ItemDTO ↔ v0alpha1.Annotation
+//  3. instrumentedStore - Tracing/metrics/logging decorator
+//  4. k8sRESTAdapter - Bridges Store → K8s REST interface, handles K8s API conventions
+//
+// folderResolver is required; dashboard-linked annotation authz needs it to walk folder inheritance.
+func NewAppInstaller(
+	cfg Config,
+	service annotations.Repository,
+	cleaner annotations.Cleaner,
+	accessClient authtypes.AccessClient,
+	folderResolver DashboardFolderResolver,
+	tracer trace.Tracer,
+	reg prometheus.Registerer,
+) (*AppInstaller, error) {
+	if folderResolver == nil {
+		return nil, fmt.Errorf("annotation service requires folder resolver")
+	}
+	logger := log.New("annotation.app")
+	metrics := ProvideMetrics(reg)
+	installer := &AppInstaller{
+		logger:  logger,
+		tracer:  tracer,
+		metrics: metrics,
+	}
+
+	ctx := context.Background()
+
+	// Create the appropriate store backend
+	store, err := createStore(ctx, cfg, service, cleaner, metrics)
+	if err != nil {
+		return nil, err
+	}
+
+	if pgStore, ok := store.(*PostgreSQLStore); ok && reg != nil {
+		reg.MustRegister(newPgxPoolCollector(pgStore.pool))
+	}
+
+	instrumentedStore := newInstrumentedStore(store, installer.tracer, installer.metrics, logger)
+
+	// Start background cleanup if the store supports lifecycle management
+	if lifecycleMgr, ok := store.(LifecycleManager); ok {
+		installer.startCleanup(ctx, lifecycleMgr, cfg.RetentionTTL)
+	}
+
+	var sfNode *snowflake.Node
+	if cfg.EnableLegacyID {
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create snowflake node: %w", err)
+		}
+		sfNode = node
+	}
+
+	installer.k8sAdapter = &k8sRESTAdapter{
+		store:          instrumentedStore,
+		accessClient:   accessClient,
+		folderResolver: folderResolver,
+		installer:      installer,
+		snowflakeNode:  sfNode,
+		maxScopeCount:  cfg.MaxScopeCount,
+		retentionTTL:   cfg.RetentionTTL,
+		tracer:         installer.tracer,
+		metrics:        installer.metrics,
+		logger:         logger,
+	}
+	// Create the tags handler
+	tagProvider, ok := store.(TagProvider)
+	if !ok {
+		// We could consider combining the TagProvider with the Store interface to avoid this type assertion?
+		return nil, fmt.Errorf("store does not implement TagProvider, cannot serve tags API")
+	}
+	tagHandler := withAPIStatusErrorResponse(newTagsHandler(tagProvider, accessClient, installer.tracer, installer.metrics, logger))
+
+	// Create the search handler
+	searchHandler := withAPIStatusErrorResponse(newSearchHandler(instrumentedStore, accessClient, folderResolver, installer.tracer, installer.metrics, logger))
+
+	// Create the graphite handler
+	graphiteHandler := withAPIStatusErrorResponse(newGraphiteHandler(installer.k8sAdapter, installer.tracer, installer.metrics, logger))
+
+	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
+
+	appConfig := app.Config{
+		KubeConfig:   restclient.Config{},
+		ManifestData: *apis.LocalManifest().ManifestData,
+		SpecificConfig: &annotationapp.AnnotationConfig{
+			TagHandler:      tagHandler,
+			SearchHandler:   searchHandler,
+			GraphiteHandler: graphiteHandler,
+		},
+	}
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.NewGoTypeAssociator())
+	if err != nil {
+		return nil, err
+	}
+	installer.AppInstaller = i
+
+	return installer, nil
+}
+
+// createStore creates the appropriate store backend based on configuration
+func createStore(ctx context.Context, cfg Config, service annotations.Repository, cleaner annotations.Cleaner, m *Metrics) (Store, error) {
+	switch cfg.StoreBackend {
+	case "memory":
+		return NewMemoryStore(), nil
+	case "grpc":
+		return newGRPCStore(cfg)
+	case "postgres":
+		return newPostgresStore(ctx, cfg, m)
+	case "legacy-sql":
+		// legacy-sql is the default, but we allow explicitly specifying it for clarity
+		fallthrough
+	default:
+		// Wrap old annotations.Repository with sqlAdapter (implements Store interface)
+		return NewSQLAdapter(service, cleaner, cfg.CleanupSettings), nil
+	}
+}
+
+func newGRPCStore(cfg Config) (Store, error) {
+	var dialOpts []grpc.DialOption
+	if cfg.GRPCUseTLS {
+		tlsConfig, err := loadTLSConfig(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load TLS config: %w", err)
+		}
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
+	} else {
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	grpcConn, err := grpc.NewClient(
+		cfg.GRPCAddress,
+		dialOpts...,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to annotation gRPC server at %s: %w",
+			cfg.GRPCAddress, err)
+	}
+	return NewStoreGRPC(grpcConn), nil
+}
+
+func loadTLSConfig(cfg Config) (*tls.Config, error) {
+	tlsConfig := &tls.Config{}
+	if cfg.GRPCTLSCAFile != "" {
+		caCert, err := os.ReadFile(cfg.GRPCTLSCAFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read CA file: %w", err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("failed to append CA certificate")
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	if cfg.GRPCTLSSkipVerify {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	return tlsConfig, nil
+}
+
+func newPostgresStore(ctx context.Context, cfg Config, m *Metrics) (Store, error) {
+	if cfg.PostgresConnectionString == "" {
+		return nil, fmt.Errorf("postgres connection string is required")
+	}
+
+	pgCfg := PostgreSQLStoreConfig{
+		ConnectionString: cfg.PostgresConnectionString,
+		MaxConnections:   cfg.PostgresMaxConnections,
+		MaxIdleConns:     cfg.PostgresMaxIdleConns,
+		ConnMaxLifetime:  cfg.PostgresConnMaxLifetime,
+		TagCacheTTL:      cfg.PostgresTagCacheTTL,
+		TagCacheSize:     cfg.PostgresTagCacheSize,
+	}
+
+	return NewPostgreSQLStore(ctx, pgCfg, m)
+}
+
+// GetLegacyStorage returns the K8s REST storage implementation for the annotation resource.
+// Called by the app platform to get the storage backend.
+func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) apiserverrest.Storage {
+	kind := annotationV0.AnnotationKind()
+	gvr := schema.GroupVersionResource{
+		Group:    kind.Group(),
+		Version:  kind.Version(),
+		Resource: kind.Plural(),
+	}
+
+	if requested.String() != gvr.String() {
+		return nil
+	}
+
+	// Set up table converter for kubectl-style output
+	a.k8sAdapter.tableConverter = utils.NewTableConverter(
+		gvr.GroupResource(),
+		utils.TableColumns{
+			Definition: []metav1.TableColumnDefinition{
+				{Name: "Text", Type: "string", Format: "name"},
+			},
+			Reader: func(obj any) ([]any, error) {
+				m, ok := obj.(*annotationV0.Annotation)
+				if !ok {
+					return nil, fmt.Errorf("expected Annotation")
+				}
+				return []any{
+					m.Spec.Text,
+				}, nil
+			},
+		},
+	)
+
+	return a.k8sAdapter
+}

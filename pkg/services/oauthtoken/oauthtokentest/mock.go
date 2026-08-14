@@ -1,0 +1,38 @@
+package oauthtokentest
+
+import (
+	"context"
+
+	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
+)
+
+type MockOauthTokenService struct {
+	GetCurrentOauthTokenFunc  func(ctx context.Context, usr identity.Requester, sessionToken *auth.UserToken) *oauth2.Token
+	InvalidateOAuthTokensFunc func(ctx context.Context, usr identity.Requester, metadata *oauthtoken.TokenRefreshMetadata) error
+	TryTokenRefreshFunc       func(ctx context.Context, usr identity.Requester, metadata *oauthtoken.TokenRefreshMetadata) (*oauth2.Token, error)
+}
+
+func (m *MockOauthTokenService) GetCurrentOAuthToken(ctx context.Context, usr identity.Requester, sessionToken *auth.UserToken) *oauth2.Token {
+	if m.GetCurrentOauthTokenFunc != nil {
+		return m.GetCurrentOauthTokenFunc(ctx, usr, sessionToken)
+	}
+	return nil
+}
+
+func (m *MockOauthTokenService) InvalidateOAuthTokens(ctx context.Context, usr identity.Requester, metadata *oauthtoken.TokenRefreshMetadata) error {
+	if m.InvalidateOAuthTokensFunc != nil {
+		return m.InvalidateOAuthTokensFunc(ctx, usr, metadata)
+	}
+	return nil
+}
+
+func (m *MockOauthTokenService) TryTokenRefresh(ctx context.Context, usr identity.Requester, metadata *oauthtoken.TokenRefreshMetadata) (*oauth2.Token, error) {
+	if m.TryTokenRefreshFunc != nil {
+		return m.TryTokenRefreshFunc(ctx, usr, metadata)
+	}
+	return nil, nil
+}

@@ -1,0 +1,3582 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TimelineChart (canvas) Changes mode colors numeric series by thresholds 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 543,
+      "x": 49,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 543,
+            "x": 49,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 136,
+            "x": 49,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 1,
+            "x": 592,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff9830",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 136,
+            "x": 185,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2495c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 135,
+            "x": 321,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 136,
+            "x": 456,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 543,
+      "x": 49,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 543,
+            "x": 49,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 543,
+                  "x": 49,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 543,
+            "x": 49,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "500 12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "left",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "< 50",
+      "x": 51,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "50+",
+      "x": 187,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#ffffff",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "80+",
+      "x": 323,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#ffffff",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "80+",
+      "x": 458,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TimelineChart (canvas) Changes mode draws discrete state boxes 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 190,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 1,
+            "x": 592,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff9830",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 324,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2495c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 458,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 536,
+                  "x": 56,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "500 12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "left",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 58,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 192,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Warning",
+      "x": 326,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#ffffff",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Critical",
+      "x": 460,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TimelineChart (canvas) Changes mode draws stacked lanes for multiple series 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 550,
+      "x": 42,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 77,
+            "width": 138,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 77,
+            "width": 137,
+            "x": 180,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 77,
+            "width": 137,
+            "x": 455,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 77,
+            "width": 1,
+            "x": 592,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff9830",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 77,
+            "width": 138,
+            "x": 317,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 550,
+      "x": 42,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 77,
+            "width": 138,
+            "x": 42,
+            "y": 102,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 77,
+            "width": 137,
+            "x": 455,
+            "y": 102,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 77,
+            "width": 1,
+            "x": 592,
+            "y": 102,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2495c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 77,
+            "width": 137,
+            "x": 180,
+            "y": 102,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 77,
+            "width": 138,
+            "x": 317,
+            "y": 102,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 550,
+      "x": 42,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+              {
+                "props": {
+                  "fillRule": "nonzero",
+                  "path": [
+                    {
+                      "props": {},
+                      "type": "beginPath",
+                    },
+                    {
+                      "props": {
+                        "height": 171,
+                        "width": 550,
+                        "x": 42,
+                        "y": 8,
+                      },
+                      "type": "rect",
+                    },
+                  ],
+                },
+                "type": "clip",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "500 12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "left",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 44,
+      "y": 46,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 182,
+      "y": 46,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Warning",
+      "x": 319,
+      "y": 46,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 457,
+      "y": 46,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 550,
+      "x": 42,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+              {
+                "props": {
+                  "fillRule": "nonzero",
+                  "path": [
+                    {
+                      "props": {},
+                      "type": "beginPath",
+                    },
+                    {
+                      "props": {
+                        "height": 171,
+                        "width": 550,
+                        "x": 42,
+                        "y": 8,
+                      },
+                      "type": "rect",
+                    },
+                  ],
+                },
+                "type": "clip",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+              {
+                "props": {
+                  "fillRule": "nonzero",
+                  "path": [
+                    {
+                      "props": {},
+                      "type": "beginPath",
+                    },
+                    {
+                      "props": {
+                        "height": 171,
+                        "width": 550,
+                        "x": 42,
+                        "y": 8,
+                      },
+                      "type": "rect",
+                    },
+                  ],
+                },
+                "type": "clip",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+              {
+                "props": {
+                  "fillRule": "nonzero",
+                  "path": [
+                    {
+                      "props": {},
+                      "type": "beginPath",
+                    },
+                    {
+                      "props": {
+                        "height": 171,
+                        "width": 550,
+                        "x": 42,
+                        "y": 8,
+                      },
+                      "type": "rect",
+                    },
+                    {
+                      "props": {
+                        "fillRule": "nonzero",
+                        "path": [
+                          {
+                            "props": {},
+                            "type": "beginPath",
+                          },
+                          {
+                            "props": {
+                              "height": 171,
+                              "width": 550,
+                              "x": 42,
+                              "y": 8,
+                            },
+                            "type": "rect",
+                          },
+                        ],
+                      },
+                      "type": "clip",
+                    },
+                    {
+                      "props": {
+                        "height": 171,
+                        "width": 550,
+                        "x": 42,
+                        "y": 8,
+                      },
+                      "type": "rect",
+                    },
+                  ],
+                },
+                "type": "clip",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "500 12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "left",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 44,
+      "y": 141,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#ffffff",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Critical",
+      "x": 182,
+      "y": 141,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#ffffff",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Critical",
+      "x": 319,
+      "y": 141,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 457,
+      "y": 141,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TimelineChart (canvas) Changes mode keeps adjacent equal states separate when mergeValues is false 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 190,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 324,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2495c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 458,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 1,
+            "x": 592,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 536,
+                  "x": 56,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "500 12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "left",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 58,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 192,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 326,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#ffffff",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Critical",
+      "x": 460,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TimelineChart (canvas) Changes mode omits value labels when showValue is Never 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 190,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 1,
+            "x": 592,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff9830",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 324,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2495c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 458,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TimelineChart (canvas) Changes mode renders value labels when showValue is Always 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 190,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 1,
+            "x": 592,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff9830",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 324,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2495c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 458,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 536,
+                  "x": 56,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "500 12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "left",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 58,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 192,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Warning",
+      "x": 326,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#ffffff",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Critical",
+      "x": 460,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TimelineChart (canvas) Changes mode right-aligns value labels 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 190,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 1,
+            "x": 592,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff9830",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 324,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2495c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 134,
+            "x": 458,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 536,
+                  "x": 56,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "500 12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "right",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 188,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 322,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Warning",
+      "x": 456,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#ffffff",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Critical",
+      "x": 590,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TimelineChart (canvas) Samples mode draws fixed-width sample bars 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 1,
+            "x": 110,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 1,
+            "x": 217,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 1,
+            "x": 538,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff9830",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 1,
+            "x": 324,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2495c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 1,
+            "x": 431,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 536,
+                  "x": 56,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "500 12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "center",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TimelineChart (canvas) Samples mode honors colWidth for sample bar sizing 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 54,
+            "x": 83,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 54,
+            "x": 190,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 54,
+            "x": 511,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff9830",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 54,
+            "x": 297,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2495c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 171,
+            "width": 54,
+            "x": 404,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 536,
+      "x": 56,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 536,
+                  "x": 56,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 536,
+            "x": 56,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "500 12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "center",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 110,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 217,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Warning",
+      "x": 324,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#ffffff",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Critical",
+      "x": 431,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 538,
+      "y": 94,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;
+
+exports[`TimelineChart (canvas) rowHeight renders thinner lanes with a smaller rowHeight 1`] = `
+[
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 550,
+      "x": 42,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 34,
+            "width": 138,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 34,
+            "width": 137,
+            "x": 180,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 34,
+            "width": 137,
+            "x": 455,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 34,
+            "width": 1,
+            "x": 592,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#ff9830",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 34,
+            "width": 138,
+            "x": 317,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 550,
+      "x": 42,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "#73bf69",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 34,
+            "width": 138,
+            "x": 42,
+            "y": 145,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 34,
+            "width": 137,
+            "x": 455,
+            "y": 145,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 34,
+            "width": 1,
+            "x": 592,
+            "y": 145,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {
+      "value": "#f2495c",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {
+            "height": 34,
+            "width": 137,
+            "x": 180,
+            "y": 145,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "height": 34,
+            "width": 138,
+            "x": 317,
+            "y": 145,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "fill",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 550,
+      "x": 42,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+              {
+                "props": {
+                  "fillRule": "nonzero",
+                  "path": [
+                    {
+                      "props": {},
+                      "type": "beginPath",
+                    },
+                    {
+                      "props": {
+                        "height": 171,
+                        "width": 550,
+                        "x": 42,
+                        "y": 8,
+                      },
+                      "type": "rect",
+                    },
+                  ],
+                },
+                "type": "clip",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "500 12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "left",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 44,
+      "y": 25,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 182,
+      "y": 25,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Warning",
+      "x": 319,
+      "y": 25,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 457,
+      "y": 25,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+  {
+    "props": {},
+    "type": "save",
+  },
+  {
+    "props": {
+      "height": 171,
+      "width": 550,
+      "x": 42,
+      "y": 8,
+    },
+    "type": "rect",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+              {
+                "props": {
+                  "fillRule": "nonzero",
+                  "path": [
+                    {
+                      "props": {},
+                      "type": "beginPath",
+                    },
+                    {
+                      "props": {
+                        "height": 171,
+                        "width": 550,
+                        "x": 42,
+                        "y": 8,
+                      },
+                      "type": "rect",
+                    },
+                  ],
+                },
+                "type": "clip",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+        {
+          "props": {
+            "fillRule": "nonzero",
+            "path": [
+              {
+                "props": {},
+                "type": "beginPath",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+              {
+                "props": {
+                  "fillRule": "nonzero",
+                  "path": [
+                    {
+                      "props": {},
+                      "type": "beginPath",
+                    },
+                    {
+                      "props": {
+                        "height": 171,
+                        "width": 550,
+                        "x": 42,
+                        "y": 8,
+                      },
+                      "type": "rect",
+                    },
+                  ],
+                },
+                "type": "clip",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+              {
+                "props": {
+                  "fillRule": "nonzero",
+                  "path": [
+                    {
+                      "props": {},
+                      "type": "beginPath",
+                    },
+                    {
+                      "props": {
+                        "height": 171,
+                        "width": 550,
+                        "x": 42,
+                        "y": 8,
+                      },
+                      "type": "rect",
+                    },
+                    {
+                      "props": {
+                        "fillRule": "nonzero",
+                        "path": [
+                          {
+                            "props": {},
+                            "type": "beginPath",
+                          },
+                          {
+                            "props": {
+                              "height": 171,
+                              "width": 550,
+                              "x": 42,
+                              "y": 8,
+                            },
+                            "type": "rect",
+                          },
+                        ],
+                      },
+                      "type": "clip",
+                    },
+                    {
+                      "props": {
+                        "height": 171,
+                        "width": 550,
+                        "x": 42,
+                        "y": 8,
+                      },
+                      "type": "rect",
+                    },
+                  ],
+                },
+                "type": "clip",
+              },
+              {
+                "props": {
+                  "height": 171,
+                  "width": 550,
+                  "x": 42,
+                  "y": 8,
+                },
+                "type": "rect",
+              },
+            ],
+          },
+          "type": "clip",
+        },
+        {
+          "props": {
+            "height": 171,
+            "width": 550,
+            "x": 42,
+            "y": 8,
+          },
+          "type": "rect",
+        },
+      ],
+    },
+    "type": "clip",
+  },
+  {
+    "props": {
+      "value": "500 12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "left",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 44,
+      "y": 162,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#ffffff",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Critical",
+      "x": 182,
+      "y": 162,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#ffffff",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "Critical",
+      "x": 319,
+      "y": 162,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "value": "#000000",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "OK",
+      "x": 457,
+      "y": 162,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {},
+    "type": "restore",
+  },
+]
+`;

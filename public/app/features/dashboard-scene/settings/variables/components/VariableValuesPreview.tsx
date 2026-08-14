@@ -1,0 +1,211 @@
+import { css } from '@emotion/css';
+import { type MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { type SceneVariable, type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
+import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
+
+export interface VariableValuesPreviewProps {
+  options: VariableValueOption[];
+  staticOptions: VariableValueOption[];
+  pageSize?: number;
+  hideTitle?: boolean;
+}
+
+export const useGetAllVariableOptions = (
+  variable: SceneVariable
+): { options: VariableValueOption[]; staticOptions: VariableValueOption[] } => {
+  const state = variable.useState();
+  return {
+    options:
+      'getOptionsForSelect' in variable && typeof variable.getOptionsForSelect === 'function'
+        ? variable.getOptionsForSelect(false)
+        : 'options' in state
+          ? (state.options ?? [])
+          : [],
+    staticOptions: 'staticOptions' in state && Array.isArray(state.staticOptions) ? state.staticOptions : [],
+  };
+};
+
+function flattenProperties(properties?: VariableValueOptionProperties, path = ''): Record<string, string> {
+  if (properties === undefined) {
+    return {};
+  }
+
+  const result: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(properties)) {
+    const newPath = path ? `${path}.${key}` : key;
+
+    if (typeof value === 'object' && value !== null) {
+      Object.assign(result, flattenProperties(value, newPath));
+    } else {
+      result[sanitizeKey(newPath)] = value; // see https://github.com/TanStack/table/issues/1671
+    }
+  }
+
+  return result;
+}
+
+export function getPropertiesFromOptions(
+  options: VariableValueOption[],
+  staticOptions: VariableValueOption[] = []
+): string[] {
+  const staticValues = new Set(staticOptions?.map((s) => s.value) ?? []);
+  const queryOption = options.find((o) => o.value !== ALL_VARIABLE_VALUE && !staticValues.has(o.value));
+  const flattened = flattenProperties(queryOption?.properties);
+  const keys = Object.keys(flattened).filter((p) => !['value', 'text'].includes(p));
+  return ['value', 'text', ...keys];
+}
+
+export const useGetPropertiesFromOptions = (
+  options: VariableValueOption[],
+  staticOptions: VariableValueOption[] = []
+) => useMemo(() => getPropertiesFromOptions(options, staticOptions), [options, staticOptions]);
+
+export const VariableValuesPreview = ({ options, staticOptions, pageSize, hideTitle }: VariableValuesPreviewProps) => {
+  const styles = useStyles2(getStyles);
+  const properties = useGetPropertiesFromOptions(options, staticOptions);
+  const hasOptions = options.length > 0;
+  const displayMultiPropsPreview = hasOptions && properties.length > 2;
+
+  return (
+    <div className={styles.previewContainer}>
+      {!hideTitle && (
+        <Text variant="bodySmall" weight="medium">
+          <Trans
+            i18nKey="dashboard-scene.variable-values-preview.preview-of-values"
+            values={{ count: options.length }}
+            tOptions={{
+              defaultValue_one: 'Preview of values ({{count}})',
+              defaultValue_other: 'Preview of values ({{count}})',
+            }}
+          >
+            Preview of values ({'{{count}}'})
+          </Trans>
+        </Text>
+      )}
+      {hasOptions && displayMultiPropsPreview && (
+        <VariableValuesWithPropsPreview options={options} properties={properties} pageSize={pageSize} />
+      )}
+      {hasOptions && !displayMultiPropsPreview && (
+        <VariableValuesWithoutPropsPreview options={options} pageSize={pageSize} />
+      )}
+    </div>
+  );
+};
+
+function VariableValuesWithPropsPreview({
+  options,
+  properties,
+  pageSize,
+}: {
+  options: VariableValueOption[];
+  properties: string[];
+  pageSize?: number;
+}) {
+  const styles = useStyles2(getStyles);
+
+  const { data, columns } = useMemo(() => {
+    const data = options.map(({ label, value, properties }) => ({
+      text: label,
+      value,
+      ...flattenProperties(properties),
+    }));
+
+    return {
+      data,
+      columns: properties.map((id) => ({
+        id,
+        header: unsanitizeKey(id), // see https://github.com/TanStack/table/issues/1671
+        sortType: 'alphanumeric' as const,
+      })),
+    };
+  }, [options, properties]);
+
+  return (
+    <div data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.previewTable}>
+      <InteractiveTable
+        className={styles.table}
+        columns={columns}
+        data={data}
+        getRowId={(r) => JSON.stringify(r)}
+        pageSize={Number(pageSize) > 0 ? Number(pageSize) : 8}
+      />
+    </div>
+  );
+}
+const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
+const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
+
+const DEFAULT_PAGE_SIZE = 20;
+
+function VariableValuesWithoutPropsPreview({
+  options,
+  pageSize,
+}: {
+  options: VariableValueOption[];
+  pageSize?: number;
+}) {
+  const styles = useStyles2(getStyles);
+  const [previewLimit, setPreviewLimit] = useState(Number(pageSize) > 0 ? Number(pageSize) : DEFAULT_PAGE_SIZE);
+  const [previewOptions, setPreviewOptions] = useState<VariableValueOption[]>([]);
+  const showMoreOptions = useCallback(
+    (event: MouseEvent) => {
+      event.preventDefault();
+      setPreviewLimit(previewLimit + DEFAULT_PAGE_SIZE);
+    },
+    [previewLimit, setPreviewLimit]
+  );
+  useEffect(() => setPreviewOptions(options.slice(0, previewLimit)), [previewLimit, options]);
+
+  return (
+    <>
+      <InlineFieldRow>
+        {previewOptions.map((o, index) => (
+          <InlineFieldRow key={`${o.value}-${index}`} className={styles.optionContainer}>
+            <InlineLabel data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption}>
+              <div className={styles.label}>{o.label || String(o.value)}</div>
+            </InlineLabel>
+          </InlineFieldRow>
+        ))}
+      </InlineFieldRow>
+      {options.length > previewLimit && (
+        <InlineFieldRow className={styles.optionContainer}>
+          <Button onClick={showMoreOptions} variant="secondary" size="sm">
+            <Trans i18nKey="dashboard-scene.variable-values-preview.show-more">Show more</Trans>
+          </Button>
+        </InlineFieldRow>
+      )}
+    </>
+  );
+}
+VariableValuesWithoutPropsPreview.displayName = 'VariableValuesWithoutPropsPreview';
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    previewContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    }),
+    optionContainer: css({
+      marginLeft: theme.spacing(0.5),
+      marginBottom: theme.spacing(0.5),
+    }),
+    label: css({
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '50vw',
+    }),
+    table: css({
+      td: css({
+        padding: theme.spacing(0.5, 1),
+      }),
+    }),
+  };
+}

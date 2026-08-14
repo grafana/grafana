@@ -1,0 +1,11 @@
+# # config file version
+apiVersion: 1
+
+# apps:
+#   - type: grafana-example-app
+#     org_name: Main Org.
+#     disabled: true
+#   - type: raintank-worldping-app
+#     org_id: 1
+#     jsonData:
+#       apiKey: "API KEY"

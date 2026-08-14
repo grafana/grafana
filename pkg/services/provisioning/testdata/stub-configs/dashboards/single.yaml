@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+- name: 'test-dashboard'
+  orgId: 1
+  folder: ''
+  type: file
+  allowUiUpdates: true
+  options:
+    path: /tmp/test-dashboards

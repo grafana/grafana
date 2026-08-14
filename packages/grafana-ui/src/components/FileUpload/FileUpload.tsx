@@ -1,0 +1,107 @@
+import { css, cx } from '@emotion/css';
+import { type FormEvent, useCallback, useId, useState } from 'react';
+import * as React from 'react';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
+import { type ComponentSize } from '../../types/size';
+import { trimFileName } from '../../utils/file';
+import { getButtonStyles } from '../Button/Button';
+import { Icon } from '../Icon/Icon';
+
+export interface Props {
+  /** Callback function to handle uploaded file  */
+  onFileUpload: (event: FormEvent<HTMLInputElement>) => void;
+  /** Accepted file extensions */
+  accept?: string;
+  /** Overwrite or add to style */
+  className?: string;
+  /** Button size */
+  size?: ComponentSize;
+  /** Show the file name */
+  showFileName?: boolean;
+}
+
+/**
+ * A button-styled input that triggers file upload popup. Button text and accepted file extensions can be customized via `label` and `accepted` props respectively.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-fileupload--docs
+ */
+export const FileUpload = ({
+  onFileUpload,
+  className,
+  children = 'Upload file',
+  accept = '*',
+  size = 'md',
+  showFileName,
+}: React.PropsWithChildren<Props>) => {
+  const style = useStyles2(getStyles(size));
+  const [fileName, setFileName] = useState('');
+  const id = useId();
+
+  const onChange = useCallback(
+    (event: FormEvent<HTMLInputElement>) => {
+      const file = event.currentTarget?.files?.[0];
+      if (file) {
+        setFileName(file.name ?? '');
+      }
+      onFileUpload(event);
+    },
+    [onFileUpload]
+  );
+
+  return (
+    <>
+      <input
+        type="file"
+        id={id}
+        className={style.fileUpload}
+        onChange={onChange}
+        multiple={false}
+        accept={accept}
+        data-testid={selectors.components.FileUpload.inputField}
+      />
+      <label htmlFor={id} className={cx(style.labelWrapper, className)}>
+        <Icon name="upload" className={style.icon} />
+        {children}
+      </label>
+
+      {showFileName && fileName && (
+        <span
+          aria-label={t('grafana-ui.file-upload.file-name', 'File name')}
+          className={style.fileName}
+          data-testid={selectors.components.FileUpload.fileNameSpan}
+        >
+          {trimFileName(fileName)}
+        </span>
+      )}
+    </>
+  );
+};
+
+const getStyles = (size: ComponentSize) => (theme: GrafanaTheme2) => {
+  const buttonStyles = getButtonStyles({ theme, variant: 'primary', size, iconOnly: false });
+  const focusStyle = getFocusStyles(theme);
+
+  return {
+    fileUpload: css({
+      height: '0.1px',
+      opacity: '0',
+      overflow: 'hidden',
+      position: 'absolute',
+      width: '0.1px',
+      zIndex: -1,
+      '&:focus + label': focusStyle,
+      '&:focus-visible + label': focusStyle,
+    }),
+    labelWrapper: buttonStyles.button,
+    icon: buttonStyles.icon,
+    fileName: css({
+      marginLeft: theme.spacing(0.5),
+    }),
+  };
+};

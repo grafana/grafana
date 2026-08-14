@@ -1,0 +1,2603 @@
+package github
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"github.com/google/go-github/v82/github"
+	mockhub "github.com/migueleliasweb/go-github-mock/src/mock"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/stretchr/testify/require"
+
+	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
+)
+
+func TestGithubClient_GetCommits(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		branch      string
+		path        string
+		since       time.Time
+		until       time.Time
+		wantCommits []Commit
+		wantErr     error
+	}{
+		{
+			name: "get commits successfully",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						commits := []*github.RepositoryCommit{
+							{
+								SHA: new("abc123"),
+								Commit: &github.Commit{
+									Message: new("First commit"),
+									Author: &github.CommitAuthor{
+										Name:  new("Test User"),
+										Email: new("test@example.com"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
+									},
+									Committer: &github.CommitAuthor{
+										Name:  new("Test User"),
+										Email: new("test@example.com"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
+									},
+								},
+								Author: &github.User{
+									Login:     new("test-user"),
+									AvatarURL: new("https://avatar.url"),
+								},
+								Committer: &github.User{
+									Login:     new("test-user"),
+									AvatarURL: new("https://avatar.url"),
+								},
+							},
+							{
+								SHA: new("def456"),
+								Commit: &github.Commit{
+									Message: new("Second commit"),
+									Author: &github.CommitAuthor{
+										Name:  new("Another User"),
+										Email: new("another@example.com"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC)},
+									},
+									Committer: &github.CommitAuthor{
+										Name:  new("Another User"),
+										Email: new("another@example.com"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC)},
+									},
+								},
+								Author: &github.User{
+									Login:     new("another-user"),
+									AvatarURL: new("https://another.avatar.url"),
+								},
+								Committer: &github.User{
+									Login:     new("another-user"),
+									AvatarURL: new("https://another.avatar.url"),
+								},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(commits))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			path:       "test.txt",
+			since:      time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:      time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: []Commit{
+				{
+					Ref:     "abc123",
+					Message: "First commit",
+					Author: &CommitAuthor{
+						Name:      "Test User",
+						Username:  "test-user",
+						AvatarURL: "https://avatar.url",
+					},
+					Committer: &CommitAuthor{
+						Name:      "Test User",
+						Username:  "test-user",
+						AvatarURL: "https://avatar.url",
+					},
+					CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+				},
+				{
+					Ref:     "def456",
+					Message: "Second commit",
+					Author: &CommitAuthor{
+						Name:      "Another User",
+						Username:  "another-user",
+						AvatarURL: "https://another.avatar.url",
+					},
+					Committer: &CommitAuthor{
+						Name:      "Another User",
+						Username:  "another-user",
+						AvatarURL: "https://another.avatar.url",
+					},
+					CreatedAt: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repository not found",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:       "test-owner",
+			repository:  "nonexistent-repo",
+			branch:      "main",
+			path:        "test.txt",
+			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: nil,
+			wantErr:     repo.ErrFileNotFound,
+		},
+		{
+			name: "commits missing author",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						commits := []*github.RepositoryCommit{
+							{
+								SHA: new("abc123"),
+								Commit: &github.Commit{
+									Message: new("First commit"),
+									Author: &github.CommitAuthor{
+										Name:  new("Test User"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
+										Email: new("test@example.com"),
+									},
+									Committer: &github.CommitAuthor{
+										Name:  new("Test User"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
+										Email: new("test@example.com"),
+									},
+								},
+								// Author is nil
+								Committer: &github.User{
+									Login:     new("test-user"),
+									AvatarURL: new("https://avatar.url"),
+								},
+							},
+							{
+								SHA: new("def456"),
+								Commit: &github.Commit{
+									Message: new("Second commit"),
+									// Missing Author in Commit
+									Committer: &github.CommitAuthor{
+										Name:  new("Another User"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC)},
+										Email: new("another@example.com"),
+									},
+								},
+								Author: &github.User{
+									Login:     new("another-user"),
+									AvatarURL: new("https://another.avatar.url"),
+								},
+								Committer: &github.User{
+									Login:     new("another-user"),
+									AvatarURL: new("https://another.avatar.url"),
+								},
+							},
+						}
+						require.NoError(t, json.NewEncoder(w).Encode(commits))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			path:       "test.txt",
+			since:      time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:      time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: []Commit{
+				{
+					Ref:     "abc123",
+					Message: "First commit",
+					Author: &CommitAuthor{
+						Name: "Test User",
+						// Username and AvatarURL are empty because Author is nil in the response
+					},
+					Committer: &CommitAuthor{
+						Name:      "Test User",
+						Username:  "test-user",
+						AvatarURL: "https://avatar.url",
+					},
+					CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+				},
+				{
+					Ref:     "def456",
+					Message: "Second commit",
+					Author:  nil, // Author is nil because Commit.Author is nil in the response
+					Committer: &CommitAuthor{
+						Name:      "Another User",
+						Username:  "another-user",
+						AvatarURL: "https://another.avatar.url",
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "too many commits",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// Return a large number of commits that would exceed the maxCommits limit
+						commits := make([]*github.RepositoryCommit, maxCommits+1)
+						for i := 0; i < maxCommits+1; i++ {
+							commits[i] = &github.RepositoryCommit{
+								SHA: new(fmt.Sprintf("commit%d", i)),
+								Commit: &github.Commit{
+									Message: new(fmt.Sprintf("Commit %d", i)),
+									Author: &github.CommitAuthor{
+										Name:  new("Test User"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
+										Email: new("test@example.com"),
+									},
+								},
+								Author: &github.User{
+									Login:     new("test-user"),
+									AvatarURL: new("https://avatar.url"),
+								},
+							}
+						}
+						require.NoError(t, json.NewEncoder(w).Encode(commits))
+					}),
+				),
+			),
+			owner:       "test-owner",
+			repository:  "test-repo",
+			branch:      "main",
+			path:        "test.txt",
+			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: nil,
+			wantErr:     fmt.Errorf("too many commits to fetch (more than %d)", maxCommits),
+		},
+		{
+			name: "service unavailable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:       "test-owner",
+			repository:  "test-repo",
+			branch:      "main",
+			path:        "test.txt",
+			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: nil,
+			wantErr:     repo.ErrServerUnavailable,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:       "test-owner",
+			repository:  "test-repo",
+			branch:      "main",
+			path:        "test.txt",
+			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: nil,
+			wantErr:     errors.New("GitHub API error (HTTP 500: Internal server error)"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			assert.NoError(t, err)
+
+			// Call the method being tested
+			commits, err := client.Commits(t.Context(), tt.branch, tt.path)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.Equal(t, tt.wantErr, err)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+				assert.Nil(t, commits)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantCommits, commits)
+			}
+		})
+	}
+}
+
+func TestGithubClient_CreateWebhook(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		url         string
+		events      []string
+		secret      string
+		want        repo.WebhookConfig
+		wantErr     error
+	}{
+		{
+			name: "successful webhook creation",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposHooksByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify the request body contains the correct webhook config
+						body, err := io.ReadAll(r.Body)
+						require.NoError(t, err)
+
+						hook := &github.Hook{}
+						require.NoError(t, json.Unmarshal(body, hook))
+
+						assert.Equal(t, "https://example.com/webhook", hook.Config.GetURL())
+						assert.Equal(t, "json", hook.Config.GetContentType())
+						assert.Equal(t, "secret123", hook.Config.GetSecret())
+						assert.Equal(t, []string{"push", "pull_request"}, hook.Events)
+						assert.True(t, hook.GetActive())
+
+						// Return a created hook
+						createdHook := &github.Hook{
+							ID:     new(int64(123)),
+							Events: []string{"push", "pull_request"},
+							Active: new(true),
+							Config: &github.HookConfig{
+								URL:         new("https://example.com/webhook"),
+								ContentType: new("json"),
+								// Secret is not returned by GitHub API
+							},
+						}
+
+						w.WriteHeader(http.StatusCreated)
+						require.NoError(t, json.NewEncoder(w).Encode(createdHook))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			url:        "https://example.com/webhook",
+			events:     []string{"push", "pull_request"},
+			secret:     "secret123",
+			want: &webhookConfig{
+				ID:          123,
+				Events:      []string{"push", "pull_request"},
+				Active:      true,
+				URL:         "https://example.com/webhook",
+				ContentType: "json",
+				Secret:      "secret123",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposHooksByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			url:        "https://example.com/webhook",
+			events:     []string{"push"},
+			secret:     "secret123",
+			want:       nil,
+			wantErr:    repo.ErrServerUnavailable,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposHooksByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			url:        "https://example.com/webhook",
+			events:     []string{"push"},
+			secret:     "secret123",
+			want:       nil,
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
+		},
+		{
+			name: "hook already exists is adopted by URL",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposHooksByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnprocessableEntity)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusUnprocessableEntity},
+							Message:  "Validation Failed",
+							Errors:   []github.Error{{Resource: "Hook", Code: "custom", Message: "Hook already exists on this repository"}},
+						}))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposHooksByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						hooks := []*github.Hook{
+							{ID: github.Ptr(int64(111)), Config: &github.HookConfig{URL: github.Ptr("https://other.example.com/webhook")}},
+							{ID: github.Ptr(int64(456)), Config: &github.HookConfig{URL: github.Ptr("https://example.com/webhook")}},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(hooks))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.PatchReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// The adopted hook must be reset to our secret and events.
+						body, err := io.ReadAll(r.Body)
+						require.NoError(t, err)
+						hook := &github.Hook{}
+						require.NoError(t, json.Unmarshal(body, hook))
+						assert.Equal(t, "secret123", hook.Config.GetSecret())
+						assert.Equal(t, []string{"push", "pull_request"}, hook.Events)
+
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.Hook{
+							ID:     github.Ptr(int64(456)),
+							Events: []string{"push", "pull_request"},
+							Active: github.Ptr(true),
+							Config: &github.HookConfig{URL: github.Ptr("https://example.com/webhook"), ContentType: github.Ptr("json")},
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			url:        "https://example.com/webhook",
+			events:     []string{"push", "pull_request"},
+			secret:     "secret123",
+			want: &webhookConfig{
+				ID:          456,
+				Events:      []string{"push", "pull_request"},
+				Active:      true,
+				URL:         "https://example.com/webhook",
+				ContentType: "json",
+				Secret:      "secret123",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "hook already exists but no url match returns sentinel",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposHooksByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnprocessableEntity)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusUnprocessableEntity},
+							Message:  "Validation Failed",
+							Errors:   []github.Error{{Resource: "Hook", Code: "custom", Message: "Hook already exists on this repository"}},
+						}))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposHooksByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						hooks := []*github.Hook{
+							{ID: github.Ptr(int64(111)), Config: &github.HookConfig{URL: github.Ptr("https://other.example.com/webhook")}},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(hooks))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			url:        "https://example.com/webhook",
+			events:     []string{"push", "pull_request"},
+			secret:     "secret123",
+			want:       nil,
+			wantErr:    ErrWebhookAlreadyExists,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			assert.NoError(t, err)
+
+			// Call the method being tested
+			got, err := client.CreateWebhook(t.Context(), tt.url, tt.events, tt.secret)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			// Check the result
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestGithubClient_GetWebhook(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		webhookID   int64
+		want        repo.WebhookConfig
+		wantErr     error
+	}{
+		{
+			name: "successful webhook retrieval",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						hook := &github.Hook{
+							ID:     new(int64(123)),
+							Events: []string{"push", "pull_request"},
+							Active: new(true),
+							Config: &github.HookConfig{
+								URL:         new("https://example.com/webhook"),
+								ContentType: new("json"),
+								// Secret is not returned by GitHub API
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(hook))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			webhookID:  123,
+			want: &webhookConfig{
+				ID:          123,
+				Events:      []string{"push", "pull_request"},
+				Active:      true,
+				URL:         "https://example.com/webhook",
+				ContentType: "json",
+			},
+			wantErr: nil,
+		},
+
+		{
+			name: "empty content type defaults to json",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						hook := &github.Hook{
+							ID:     new(int64(456)),
+							Events: []string{"push"},
+							Active: new(true),
+							Config: &github.HookConfig{
+								URL:         new("https://example.com/webhook-empty-content"),
+								ContentType: new(""), // Empty content type
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(hook))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			webhookID:  456,
+			want: &webhookConfig{
+				ID:          456,
+				Events:      []string{"push"},
+				Active:      true,
+				URL:         "https://example.com/webhook-empty-content",
+				ContentType: "json", // Should default to "json"
+			},
+			wantErr: nil,
+		},
+		{
+			name: "webhook not found",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			webhookID:  999,
+			want:       nil,
+			wantErr:    repo.ErrFileNotFound,
+		},
+		{
+			name: "service unavailable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service Unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			webhookID:  123,
+			want:       nil,
+			wantErr:    repo.ErrServerUnavailable,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			webhookID:  123,
+			want:       nil,
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			assert.NoError(t, err)
+
+			// Call the method being tested
+			got, err := client.GetWebhook(t.Context(), repo.WebhookID{ID: tt.webhookID})
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			// Check the result
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestGithubClient_DeleteWebhook(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		webhookID   int64
+		wantErr     error
+	}{
+		{
+			name: "successful webhook deletion",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNoContent)
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			webhookID:  123,
+			wantErr:    nil,
+		},
+		{
+			name: "webhook not found",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Not found",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			webhookID:  456,
+			wantErr:    repo.ErrFileNotFound,
+		},
+		{
+			name: "service unavailable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			webhookID:  789,
+			wantErr:    repo.ErrServerUnavailable,
+		},
+		{
+			name: "unauthorized to delete the webhook",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnauthorized)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusUnauthorized,
+							},
+							Message: "401 bad credentials",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			webhookID:  789,
+			wantErr:    repo.ErrUnauthorized,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			webhookID:  101,
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			assert.NoError(t, err)
+
+			// Call the method being tested
+			err = client.DeleteWebhook(t.Context(), repo.WebhookID{ID: tt.webhookID})
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGithubClient_EditWebhook(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		config      *webhookConfig
+		wantErr     error
+	}{
+		{
+			name: "successful webhook edit",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PatchReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify the request body contains the correct webhook config
+						body, err := io.ReadAll(r.Body)
+						require.NoError(t, err)
+
+						hook := &github.Hook{}
+						require.NoError(t, json.Unmarshal(body, hook))
+
+						assert.Equal(t, "https://example.com/webhook-updated", hook.Config.GetURL())
+						assert.Equal(t, "json", hook.Config.GetContentType())
+						assert.Equal(t, "updated-secret", hook.Config.GetSecret())
+						assert.Equal(t, []string{"push", "pull_request", "issues"}, hook.Events)
+						assert.True(t, hook.GetActive())
+
+						// Return the updated hook
+						updatedHook := &github.Hook{
+							ID:     new(int64(123)),
+							Events: []string{"push", "pull_request", "issues"},
+							Active: new(true),
+							Config: &github.HookConfig{
+								URL:         new("https://example.com/webhook-updated"),
+								ContentType: new("json"),
+								// Secret is not returned by GitHub API
+							},
+						}
+
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(updatedHook))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			config: &webhookConfig{
+				ID:          123,
+				Events:      []string{"push", "pull_request", "issues"},
+				Active:      true,
+				URL:         "https://example.com/webhook-updated",
+				ContentType: "json",
+				Secret:      "updated-secret",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "default content type to form",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PatchReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify the request body contains the correct webhook config
+						body, err := io.ReadAll(r.Body)
+						require.NoError(t, err)
+
+						hook := &github.Hook{}
+						require.NoError(t, json.Unmarshal(body, hook))
+
+						// Verify content type was defaulted to "form"
+						assert.Equal(t, "form", hook.Config.GetContentType())
+						assert.Equal(t, "https://example.com/webhook", hook.Config.GetURL())
+						assert.Equal(t, "secret123", hook.Config.GetSecret())
+						assert.Equal(t, []string{"push"}, hook.Events)
+						assert.True(t, hook.GetActive())
+
+						// Return the updated hook
+						updatedHook := &github.Hook{
+							ID:     new(int64(123)),
+							Events: []string{"push"},
+							Active: new(true),
+							Config: &github.HookConfig{
+								URL:         new("https://example.com/webhook"),
+								ContentType: new("form"),
+								// Secret is not returned by GitHub API
+							},
+						}
+
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(updatedHook))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			config: &webhookConfig{
+				ID:          123,
+				Events:      []string{"push"},
+				Active:      true,
+				URL:         "https://example.com/webhook",
+				ContentType: "", // Empty content type should default to "form"
+				Secret:      "secret123",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PatchReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			config: &webhookConfig{
+				ID:          123,
+				Events:      []string{"push"},
+				Active:      true,
+				URL:         "https://example.com/webhook",
+				ContentType: "json",
+				Secret:      "secret123",
+			},
+			wantErr: repo.ErrServerUnavailable,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PatchReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			config: &webhookConfig{
+				ID:          123,
+				Events:      []string{"push"},
+				Active:      true,
+				URL:         "https://example.com/webhook",
+				ContentType: "json",
+				Secret:      "secret123",
+			},
+			wantErr: errors.New("GitHub API error (HTTP 500: Internal server error)"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			assert.NoError(t, err)
+
+			// Call the method being tested
+			err = client.EditWebhook(t.Context(), tt.config)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGithubClient_ListPullRequestFiles(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		number      int
+		wantFiles   []CommitFile
+		wantErr     error
+	}{
+		{
+			name: "successful pull request files listing",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposPullsFilesByOwnerByRepoByPullNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						files := []*github.CommitFile{
+							{
+								Filename:  new("file1.txt"),
+								Additions: new(10),
+								Deletions: new(5),
+								Changes:   new(15),
+								Status:    new("modified"),
+								Patch:     new("@@ -1,5 +1,10 @@"),
+							},
+							{
+								Filename:  new("file2.txt"),
+								Additions: new(20),
+								Deletions: new(0),
+								Changes:   new(20),
+								Status:    new("added"),
+								Patch:     new("@@ -0,0 +1,20 @@"),
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(files))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     123,
+			wantFiles: []CommitFile{
+				&github.CommitFile{
+					Filename:  new("file1.txt"),
+					Additions: new(10),
+					Deletions: new(5),
+					Changes:   new(15),
+					Status:    new("modified"),
+					Patch:     new("@@ -1,5 +1,10 @@"),
+				},
+				&github.CommitFile{
+					Filename:  new("file2.txt"),
+					Additions: new(20),
+					Deletions: new(0),
+					Changes:   new(20),
+					Status:    new("added"),
+					Patch:     new("@@ -0,0 +1,20 @@"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "empty files list",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposPullsFilesByOwnerByRepoByPullNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						files := []*github.CommitFile{}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(files))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     456,
+			wantFiles:  []CommitFile{},
+			wantErr:    nil,
+		},
+		{
+			name: "too many files",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposPullsFilesByOwnerByRepoByPullNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// Create more files than the maxPRFiles limit
+						files := make([]*github.CommitFile, maxPRFiles+1)
+						for i := 0; i < maxPRFiles+1; i++ {
+							files[i] = &github.CommitFile{
+								Filename:  new(fmt.Sprintf("file%d.txt", i+1)),
+								Additions: new(i + 1),
+								Deletions: new(0),
+								Changes:   new(i + 1),
+								Status:    new("added"),
+							}
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(files))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     789,
+			wantFiles:  nil,
+			wantErr:    fmt.Errorf("pull request contains too many files (more than %d)", maxPRFiles),
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposPullsFilesByOwnerByRepoByPullNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     101,
+			wantFiles:  nil,
+			wantErr:    repo.ErrServerUnavailable,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposPullsFilesByOwnerByRepoByPullNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     202,
+			wantFiles:  nil,
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			assert.NoError(t, err)
+
+			// Call the method being tested
+			files, err := client.ListPullRequestFiles(t.Context(), tt.number)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				// Check if it's a wrapped/standard repository error or generic error
+				if errors.Is(err, tt.wantErr) {
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					// For generic errors not in the chain, verify message content
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			// Check the result
+			assert.Equal(t, tt.wantFiles, files)
+		})
+	}
+}
+
+func TestCreatePullRequestComment(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		number      int
+		body        string
+		wantErr     error
+	}{
+		{
+			name: "successful comment creation",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposIssuesCommentsByOwnerByRepoByIssueNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify the request body contains the correct comment
+						body, err := io.ReadAll(r.Body)
+						require.NoError(t, err)
+
+						comment := &github.IssueComment{}
+						require.NoError(t, json.Unmarshal(body, comment))
+						assert.Equal(t, "Test comment", comment.GetBody())
+
+						// Return the created comment
+						createdComment := &github.IssueComment{
+							ID:   new(int64(123)),
+							Body: new("Test comment"),
+						}
+
+						w.WriteHeader(http.StatusCreated)
+						require.NoError(t, json.NewEncoder(w).Encode(createdComment))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     101,
+			body:       "Test comment",
+			wantErr:    nil,
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposIssuesCommentsByOwnerByRepoByIssueNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     101,
+			body:       "Test comment",
+			wantErr:    repo.ErrServerUnavailable,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposIssuesCommentsByOwnerByRepoByIssueNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     101,
+			body:       "Test comment",
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			assert.NoError(t, err)
+
+			// Call the method being tested
+			err = client.CreatePullRequestComment(t.Context(), tt.number, tt.body)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				// Check if it's a wrapped/standard repository error or generic error
+				if errors.Is(err, tt.wantErr) {
+					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
+					// Verify errors.Is() works for error type checking (used by upper layers)
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					// For generic errors not in the chain, verify message content
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestPaginatedList(t *testing.T) {
+	tests := []struct {
+		name      string
+		mockSetup func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions)
+		want      []string
+		wantErr   error
+	}{
+		{
+			name: "single page",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				items := []string{"item1", "item2", "item3"}
+				listFn := func(_ context.Context, _ *github.ListOptions) ([]string, *github.Response, error) {
+					return items, &github.Response{
+						NextPage: 0,
+					}, nil
+				}
+				return listFn, defaultListOptions(100)
+			},
+			want:    []string{"item1", "item2", "item3"},
+			wantErr: nil,
+		},
+		{
+			name: "multiple pages",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				page1 := []string{"item1", "item2"}
+				page2 := []string{"item3", "item4"}
+				page3 := []string{"item5"}
+
+				var callCount int
+				listFn := func(_ context.Context, opts *github.ListOptions) ([]string, *github.Response, error) {
+					callCount++
+					switch callCount {
+					case 1:
+						return page1, &github.Response{
+							NextPage: 2,
+						}, nil
+					case 2:
+						assert.Equal(t, 2, opts.Page)
+						return page2, &github.Response{
+							NextPage: 3,
+						}, nil
+					case 3:
+						assert.Equal(t, 3, opts.Page)
+						return page3, &github.Response{
+							NextPage: 0,
+						}, nil
+					default:
+						return nil, nil, errors.New("unexpected call")
+					}
+				}
+				return listFn, defaultListOptions(100)
+			},
+			want:    []string{"item1", "item2", "item3", "item4", "item5"},
+			wantErr: nil,
+		},
+		{
+			name: "error on first page",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				listFn := func(_ context.Context, _ *github.ListOptions) ([]string, *github.Response, error) {
+					return nil, &github.Response{}, errors.New("API error")
+				}
+				return listFn, defaultListOptions(100)
+			},
+			want:    nil,
+			wantErr: errors.New("API error"),
+		},
+		{
+			name: "service unavailable error",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				listFn := func(_ context.Context, _ *github.ListOptions) ([]string, *github.Response, error) {
+					return nil, &github.Response{}, &github.ErrorResponse{
+						Response: &http.Response{
+							StatusCode: http.StatusServiceUnavailable,
+						},
+					}
+				}
+				return listFn, defaultListOptions(100)
+			},
+			want:    nil,
+			wantErr: repo.ErrServerUnavailable,
+		},
+		{
+			name: "resource not found error",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				listFn := func(_ context.Context, _ *github.ListOptions) ([]string, *github.Response, error) {
+					return nil, &github.Response{}, &github.ErrorResponse{
+						Response: &http.Response{
+							StatusCode: http.StatusNotFound,
+						},
+					}
+				}
+				return listFn, defaultListOptions(100)
+			},
+			want:    nil,
+			wantErr: repo.ErrFileNotFound,
+		},
+		{
+			name: "too many items error",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				listFn := func(_ context.Context, _ *github.ListOptions) ([]string, *github.Response, error) {
+					// Return more items than the max allowed
+					items := make([]string, 10)
+					for i := range items {
+						items[i] = fmt.Sprintf("item%d", i+1)
+					}
+					return items, &github.Response{
+						NextPage: 2,
+					}, nil
+				}
+				return listFn, listOptions{
+					ListOptions: github.ListOptions{
+						Page:    1,
+						PerPage: 100,
+					},
+					MaxItems: 5, // Set max items to less than what we'll return
+				}
+			},
+			want:    nil,
+			wantErr: repo.ErrTooManyItems,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			listFn, opts := tt.mockSetup()
+
+			got, err := paginatedList(t.Context(), listFn, opts)
+
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.Equal(t, tt.wantErr, err)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+				assert.Nil(t, got)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestDefaultListOptions(t *testing.T) {
+	tests := []struct {
+		name     string
+		maxItems int
+		want     listOptions
+	}{
+		{
+			name:     "with zero max items",
+			maxItems: 0,
+			want: listOptions{
+				ListOptions: github.ListOptions{
+					Page:    1,
+					PerPage: 100,
+				},
+				MaxItems: 0,
+			},
+		},
+		{
+			name:     "with positive max items",
+			maxItems: 50,
+			want: listOptions{
+				ListOptions: github.ListOptions{
+					Page:    1,
+					PerPage: 100,
+				},
+				MaxItems: 50,
+			},
+		},
+		{
+			name:     "with large max items",
+			maxItems: 1000,
+			want: listOptions{
+				ListOptions: github.ListOptions{
+					Page:    1,
+					PerPage: 100,
+				},
+				MaxItems: 1000,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := defaultListOptions(tt.maxItems)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestGithubClient_GetRulesets(t *testing.T) {
+	tests := []struct {
+		name         string
+		mockHandler  *http.Client
+		owner        string
+		repository   string
+		branch       string
+		wantRulesets *Rulesets
+		wantErr      error
+	}{
+		{
+			name: "no rules configured",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// No rules apply to this branch (empty array)
+						rules := []interface{}{}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "pull request rule is active and not bypassable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// API returns array of rule objects
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "test-ruleset",
+							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": "never",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "pull request rule with bypass mode always returns no block",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "test-ruleset",
+							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": "always",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "pull request rule with bypass mode exempt returns no block",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "test-ruleset",
+							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": "exempt",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "pull request rule with bypass mode pull_request still blocks direct push",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "test-ruleset",
+							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": "pull_request",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "pull request rule without current_user_can_bypass field still blocks",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":          1,
+							"name":        "test-ruleset",
+							"source":      "test-owner/test-repo",
+							"enforcement": "active",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "multiple PR rules across rulesets where one is not bypassable still blocks",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Organization",
+								"ruleset_source":      "test-owner",
+								"ruleset_id":          2,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Both rulesets are queried. Return "always" for one and
+						// "never" for the other so the overall result blocks.
+						bypass := "always"
+						if strings.HasSuffix(r.URL.Path, "/2") {
+							bypass = "never"
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"name":                    "ruleset",
+							"source":                  "test-owner/test-repo",
+							"enforcement":             "active",
+							"current_user_can_bypass": bypass,
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "GetRuleset returns 403 treats as blocking",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusForbidden},
+							Message:  "Forbidden",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "GetRuleset returns 404 treats as blocking",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusNotFound},
+							Message:  "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "GetRuleset returns 500 treats as blocking",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusInternalServerError},
+							Message:  "Internal Server Error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "PR rule with zero ruleset_id is treated as blocking",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          0,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			wantRulesets: &Rulesets{
+				RequiresPullRequest: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "only non-blocking rules",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// API returns array with non-blocking rules
+						rules := []map[string]interface{}{
+							{
+								"type":                "non_fast_forward",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+							},
+							{
+								"type":                "required_status_checks",
+								"ruleset_source_type": "Repository",
+								"ruleset_source":      "test-owner/test-repo",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "unauthorized error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnauthorized)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusUnauthorized},
+							Message:  "Bad credentials",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      repo.ErrUnauthorized,
+		},
+		{
+			name: "forbidden error is gracefully skipped",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusForbidden},
+							Message:  "Forbidden",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
+			name: "not found error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusNotFound},
+							Message:  "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      repo.ErrFileNotFound,
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.ErrorResponse{
+							Response: &http.Response{StatusCode: http.StatusServiceUnavailable},
+							Message:  "Service Unavailable",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      repo.ErrServerUnavailable,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := t.Context()
+			client := &githubClient{
+				gh:    github.NewClient(tt.mockHandler),
+				owner: tt.owner,
+				repo:  tt.repository,
+			}
+
+			got, err := client.GetRulesets(ctx, tt.branch)
+
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantRulesets, got)
+		})
+	}
+}
+
+func TestGithubClient_GetRulesets_DeduplicatesParentRulesetFetch(t *testing.T) {
+	var rulesetCalls int32
+	mockHandler := mockhub.NewMockedHTTPClient(
+		mockhub.WithRequestMatchHandler(
+			mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				rules := []map[string]interface{}{
+					{
+						"type":                "pull_request",
+						"ruleset_source_type": "Repository",
+						"ruleset_source":      "test-owner/test-repo",
+						"ruleset_id":          1,
+						"parameters":          map[string]interface{}{},
+					},
+					{
+						"type":                "pull_request",
+						"ruleset_source_type": "Repository",
+						"ruleset_source":      "test-owner/test-repo",
+						"ruleset_id":          1,
+						"parameters":          map[string]interface{}{},
+					},
+				}
+				w.WriteHeader(http.StatusOK)
+				require.NoError(t, json.NewEncoder(w).Encode(rules))
+			}),
+		),
+		mockhub.WithRequestMatchHandler(
+			mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				atomic.AddInt32(&rulesetCalls, 1)
+				w.WriteHeader(http.StatusOK)
+				require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+					"id":                      1,
+					"name":                    "test-ruleset",
+					"source":                  "test-owner/test-repo",
+					"enforcement":             "active",
+					"current_user_can_bypass": "always",
+				}))
+			}),
+		),
+	)
+
+	client := &githubClient{gh: github.NewClient(mockHandler), owner: "test-owner", repo: "test-repo"}
+	got, err := client.GetRulesets(t.Context(), "main")
+
+	require.NoError(t, err)
+	assert.Nil(t, got)
+	assert.Equal(t, int32(1), atomic.LoadInt32(&rulesetCalls), "GetRuleset should be called once per unique RulesetID")
+}
+
+func TestGithubClient_GetRepository(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		wantRepo    Repository
+		wantErr     error
+	}{
+		{
+			name: "successful repository retrieval",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						repo := &github.Repository{
+							ID:            new(int64(12345)),
+							Name:          new("test-repo"),
+							DefaultBranch: new("main"),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(repo))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			wantRepo: Repository{
+				ID:            12345,
+				Name:          "test-repo",
+				DefaultBranch: "main",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repository with master as default branch",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						repo := &github.Repository{
+							ID:            new(int64(67890)),
+							Name:          new("legacy-repo"),
+							DefaultBranch: new("master"),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(repo))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "legacy-repo",
+			wantRepo: Repository{
+				ID:            67890,
+				Name:          "legacy-repo",
+				DefaultBranch: "master",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repository with develop as default branch",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						repo := &github.Repository{
+							ID:            new(int64(11111)),
+							Name:          new("dev-repo"),
+							DefaultBranch: new("develop"),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(repo))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "dev-repo",
+			wantRepo: Repository{
+				ID:            11111,
+				Name:          "dev-repo",
+				DefaultBranch: "develop",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repository with empty fields",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// GitHub API returns nil pointers for missing fields
+						repo := &github.Repository{
+							ID:            nil,
+							Name:          nil,
+							DefaultBranch: nil,
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(repo))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "empty-repo",
+			wantRepo: Repository{
+				ID:            0,
+				Name:          "",
+				DefaultBranch: "",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repository not found",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "nonexistent-repo",
+			wantRepo:   Repository{},
+			wantErr:    repo.ErrFileNotFound,
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service Unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			wantRepo:   Repository{},
+			wantErr:    repo.ErrServerUnavailable,
+		},
+		{
+			name: "unauthorized access",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnauthorized)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusUnauthorized,
+							},
+							Message: "Bad credentials",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "private-repo",
+			wantRepo:   Repository{},
+			wantErr:    repo.ErrUnauthorized,
+		},
+		{
+			name: "forbidden access",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusForbidden,
+							},
+							Message: "Forbidden",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "restricted-repo",
+			wantRepo:   Repository{},
+			wantErr:    repo.ErrPermissionDenied,
+		},
+		{
+			name: "rate limit exceeded",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusForbidden,
+							},
+							Message: "API rate limit exceeded",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			wantRepo:   Repository{},
+			wantErr:    repo.ErrPermissionDenied,
+		},
+		{
+			name: "internal server error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal Server Error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			wantRepo:   Repository{},
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal Server Error)"),
+		},
+		{
+			name: "repository with special characters in name",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						repo := &github.Repository{
+							ID:            new(int64(99999)),
+							Name:          new("test-repo-with-dashes_and_underscores"),
+							DefaultBranch: new("main"),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(repo))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo-with-dashes_and_underscores",
+			wantRepo: Repository{
+				ID:            99999,
+				Name:          "test-repo-with-dashes_and_underscores",
+				DefaultBranch: "main",
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client, err := factory.New(t.Context(), tt.owner, tt.repository, "")
+			assert.NoError(t, err)
+
+			// Call the method being tested
+			got, err := client.GetRepository(t.Context())
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				// Verify errors.Is() works for error type checking (used by upper layers)
+				// For generic errors, verify the error message contains expected text
+				if errors.Is(err, tt.wantErr) {
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+				assert.Equal(t, tt.wantRepo, got)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantRepo, got)
+			}
+		})
+	}
+}
+
+func TestGithubClient_MergeBase(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		wantSHA     string
+		wantErr     error
+	}{
+		{
+			name: "successful merge base lookup",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCompareByOwnerByRepoByBasehead,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(github.CommitsComparison{
+							MergeBaseCommit: &github.RepositoryCommit{
+								SHA: new("abc123def456"),
+							},
+						}))
+					}),
+				),
+			),
+			wantSHA: "abc123def456",
+		},
+		{
+			name: "missing merge base commit",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCompareByOwnerByRepoByBasehead,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(github.CommitsComparison{}))
+					}),
+				),
+			),
+			wantErr: errors.New(`no merge base found between "main" and "feature"`),
+		},
+		{
+			name: "not found error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCompareByOwnerByRepoByBasehead,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Not Found",
+						}))
+					}),
+				),
+			),
+			wantErr: repo.ErrFileNotFound,
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCompareByOwnerByRepoByBasehead,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			wantErr: repo.ErrServerUnavailable,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client, err := factory.New(t.Context(), "test-owner", "test-repo", "")
+			require.NoError(t, err)
+
+			sha, err := client.MergeBase(t.Context(), "main", "feature")
+
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.ErrorIs(t, err, tt.wantErr)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+				assert.Empty(t, sha)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSHA, sha)
+			}
+		})
+	}
+}

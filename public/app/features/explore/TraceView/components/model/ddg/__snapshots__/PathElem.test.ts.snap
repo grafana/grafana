@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PathElem legibility creates consumable JSON 1`] = `
+{
+  "memberIdx": 1,
+  "memberOf": {
+    "focalIdx": 2,
+    "members": [
+      {
+        "memberIdx": 0,
+        "operation": "firstOperation",
+        "service": "firstService",
+        "visibilityIdx": 4,
+      },
+      {
+        "memberIdx": 1,
+        "operation": "beforeOperation",
+        "service": "beforeService",
+        "visibilityIdx": 2,
+      },
+      {
+        "memberIdx": 2,
+        "operation": "focalOperation",
+        "service": "focalService",
+        "visibilityIdx": 0,
+      },
+      {
+        "memberIdx": 3,
+        "operation": "afterOperation",
+        "service": "afterService",
+        "visibilityIdx": 1,
+      },
+      {
+        "memberIdx": 4,
+        "operation": "lastOperation",
+        "service": "lastService",
+        "visibilityIdx": 3,
+      },
+    ],
+  },
+  "operation": "beforeOperation",
+  "service": "beforeService",
+  "visibilityIdx": 2,
+}
+`;

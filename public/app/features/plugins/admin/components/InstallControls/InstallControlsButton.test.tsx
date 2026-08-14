@@ -1,0 +1,349 @@
+import { render, screen } from '@testing-library/react';
+import { TestProvider } from 'test/helpers/TestProvider';
+
+import { PluginSignatureStatus } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
+
+import { getPluginsStateMock } from '../../mocks/mockHelpers';
+import { type CatalogPlugin, PluginStatus } from '../../types';
+
+import { InstallControlsButton } from './InstallControlsButton';
+
+const plugin: CatalogPlugin = {
+  description: 'The test plugin',
+  downloads: 5,
+  id: 'test-plugin',
+  info: {
+    logos: { small: '', large: '' },
+    keywords: ['test', 'plugin'],
+  },
+  name: 'Testing Plugin',
+  orgName: 'Test',
+  popularity: 0,
+  signature: PluginSignatureStatus.valid,
+  publishedAt: '2020-09-01',
+  updatedAt: '2021-06-28',
+  hasUpdate: false,
+  isInstalled: false,
+  isCore: false,
+  isDev: false,
+  isEnterprise: false,
+  isDisabled: false,
+  isDeprecated: false,
+  isPublished: true,
+  isPreinstalled: { found: false, withVersion: false },
+  managed: {
+    enabled: false,
+    strategy: undefined,
+  },
+};
+
+describe('InstallControlsButton', () => {
+  it('should not allow install if angular is detected', () => {
+    render(
+      <TestProvider>
+        <InstallControlsButton plugin={{ ...plugin, angularDetected: true }} pluginStatus={PluginStatus.INSTALL} />
+      </TestProvider>
+    );
+    const el = screen.getByRole('button');
+    expect(el).toHaveTextContent(/install/i);
+    expect(el).toBeVisible();
+    expect(el).toBeDisabled();
+  });
+
+  it("should allow to uninstall a plugin even if it's unpublished", () => {
+    render(
+      <TestProvider>
+        <InstallControlsButton plugin={{ ...plugin, isPublished: false }} pluginStatus={PluginStatus.UNINSTALL} />
+      </TestProvider>
+    );
+    const el = screen.getByRole('button');
+    expect(el).toHaveTextContent(/uninstall/i);
+    expect(el).toBeVisible();
+  });
+
+  it('should not render install or upgrade buttons if the plugin is unpublished', () => {
+    render(
+      <TestProvider>
+        <InstallControlsButton plugin={{ ...plugin, isPublished: false }} pluginStatus={PluginStatus.INSTALL} />
+      </TestProvider>
+    );
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  describe('update button on prem', () => {
+    const store = configureStore({
+      plugins: getPluginsStateMock([]),
+    });
+
+    it('should be disabled when is Installing', () => {
+      store.dispatch({ type: 'plugins/install/pending' });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UPDATE} />
+        </TestProvider>
+      );
+      const button = screen.getByText('Updating').closest('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('should be enabled when it is not Installing', () => {
+      store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UPDATE} />
+        </TestProvider>
+      );
+      const button = screen.getByText('Update').closest('button');
+      expect(button).toBeEnabled();
+    });
+  });
+
+  describe('update button on managed instance', () => {
+    const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+
+    beforeAll(() => {
+      config.pluginAdminExternalManageEnabled = true;
+    });
+
+    afterAll(() => {
+      config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+    });
+
+    const store = configureStore({
+      plugins: getPluginsStateMock([]),
+    });
+
+    it('should be disabled when isInstalling=false but isUpdatingFromInstance=true', () => {
+      store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isUpdatingFromInstance: true }}
+            pluginStatus={PluginStatus.UPDATE}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Update').closest('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('should be enabled when isInstalling=false and isUpdatingFromInstance=false', () => {
+      store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isUpdatingFromInstance: false }}
+            pluginStatus={PluginStatus.UPDATE}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Update').closest('button');
+      expect(button).toBeEnabled();
+    });
+  });
+
+  describe('uninstall button on prem', () => {
+    const store = configureStore({
+      plugins: getPluginsStateMock([]),
+    });
+
+    it('should be disabled when is Installing', () => {
+      store.dispatch({ type: 'plugins/uninstall/pending' });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UNINSTALL} />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstalling').closest('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('should be enabled when it is not Installing', () => {
+      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UNINSTALL} />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstall').closest('button');
+      expect(button).toBeEnabled();
+    });
+  });
+
+  describe('uninstall button on managed instance', () => {
+    const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+
+    beforeAll(() => {
+      config.pluginAdminExternalManageEnabled = true;
+    });
+
+    afterAll(() => {
+      config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+    });
+
+    const store = configureStore({
+      plugins: getPluginsStateMock([]),
+    });
+
+    it('should be disabled when isInstalling=false but isUninstallingFromInstance=true', () => {
+      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isUninstallingFromInstance: true }}
+            pluginStatus={PluginStatus.UNINSTALL}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstall').closest('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('should be disabled when isInstalling=false but isUpdatingFromInstance=true', () => {
+      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isUpdatingFromInstance: true }}
+            pluginStatus={PluginStatus.UNINSTALL}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstall').closest('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('should be disabled when isInstalling=false but isFullyInstalled=false', () => {
+      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isFullyInstalled: false }}
+            pluginStatus={PluginStatus.UNINSTALL}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstall').closest('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('should be enabled when isInstalling=false and isUninstallingFromInstance=false', () => {
+      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isUninstallingFromInstance: false, isFullyInstalled: true }}
+            pluginStatus={PluginStatus.UNINSTALL}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstall').closest('button');
+      expect(button).toBeEnabled();
+    });
+  });
+
+  describe('marketplace plugin', () => {
+    it('should render a link to grafana.com installation tab instead of install button when not entitled', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton
+            plugin={{ ...plugin, distributionType: 'marketplace' }}
+            pluginStatus={PluginStatus.INSTALL}
+            entitlement={{ entitled: false, isLoading: false }}
+          />
+        </TestProvider>
+      );
+      const link = screen.getByRole('link');
+      expect(link).toHaveTextContent(/contact us/i);
+      expect(link).toHaveAttribute('href', expect.stringContaining('/plugins/test-plugin?tab=installation'));
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('aria-disabled', 'false');
+    });
+
+    it('should render a disabled contact us link with a spinner when entitlement is loading', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton
+            plugin={{ ...plugin, distributionType: 'marketplace' }}
+            pluginStatus={PluginStatus.INSTALL}
+            entitlement={{ entitled: false, isLoading: true }}
+          />
+        </TestProvider>
+      );
+      const link = screen.getByRole('link');
+      expect(link).toHaveTextContent(/contact us/i);
+      expect(link).toHaveAttribute('aria-disabled', 'true');
+      expect(link.querySelector('svg')).toBeInTheDocument();
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    });
+
+    it('should render the normal install button when the org is entitled', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton
+            plugin={{ ...plugin, distributionType: 'marketplace' }}
+            pluginStatus={PluginStatus.INSTALL}
+            entitlement={{ entitled: true, isLoading: false }}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByRole('button');
+      expect(button).toHaveTextContent(/install/i);
+      expect(button).not.toBeDisabled();
+      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    });
+
+    it('should not render marketplace link when distributionType is not set', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.INSTALL} />
+        </TestProvider>
+      );
+      const button = screen.getByRole('button');
+      expect(button).toHaveTextContent(/install/i);
+      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    });
+
+    it('should not render marketplace link for non-marketplace distribution types', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton
+            plugin={{ ...plugin, distributionType: 'catalog' }}
+            pluginStatus={PluginStatus.INSTALL}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByRole('button');
+      expect(button).toHaveTextContent(/install/i);
+      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('update button', () => {
+    it('should be hidden when plugin is managed', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton
+            plugin={{ ...plugin, managed: { enabled: true } }}
+            pluginStatus={PluginStatus.UPDATE}
+          />
+        </TestProvider>
+      );
+      expect(screen.queryByText('Update')).not.toBeInTheDocument();
+    });
+
+    it('should be hidden when plugin is preinstalled with a specific version', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton
+            plugin={{ ...plugin, isPreinstalled: { found: true, withVersion: true } }}
+            pluginStatus={PluginStatus.UPDATE}
+          />
+        </TestProvider>
+      );
+      expect(screen.queryByText('Update')).not.toBeInTheDocument();
+    });
+  });
+});

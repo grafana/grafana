@@ -1,0 +1,332 @@
+import { type VariableRefresh } from '@grafana/data';
+import { type FetchError } from '@grafana/runtime';
+import {
+  type DeepPartial,
+  EmbeddedScene,
+  type SceneDeactivationHandler,
+  sceneGraph,
+  SceneGridLayout,
+  SceneGridRow,
+  type SceneObject,
+  SceneTimeRange,
+  SceneVariableSet,
+  TestVariable,
+  VizPanel,
+} from '@grafana/scenes';
+import {
+  defaultTimeSettingsSpec,
+  defaultPanelSpec,
+  type Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
+import { type DashboardDTO } from 'app/types/dashboard';
+
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { type AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { DashboardGridItem, type RepeatDirection } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { type DashboardLayoutGrid } from '../scene/types/DashboardLayoutGrid';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
+import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
+
+export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
+  const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
+  const loadSnapshotMock = (spy || jest.fn()).mockResolvedValue(rsp);
+  // disabling type checks since this is a test util
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  setDashboardLoaderSrv({
+    loadDashboard: loadDashboardMock,
+    loadSnapshot: loadSnapshotMock,
+  } as unknown as DashboardLoaderSrv);
+  return loadDashboardMock;
+}
+export function setupLoadDashboardMockReject(rsp: DeepPartial<FetchError>, spy?: jest.Mock) {
+  const loadDashboardMock = (spy || jest.fn()).mockRejectedValue(rsp);
+  // disabling type checks since this is a test util
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  setDashboardLoaderSrv({
+    loadDashboard: loadDashboardMock,
+  } as unknown as DashboardLoaderSrv);
+  return loadDashboardMock;
+}
+
+export function setupLoadDashboardRuntimeErrorMock() {
+  // disabling type checks since this is a test util
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  setDashboardLoaderSrv({
+    loadDashboard: () => {
+      throw new Error('Runtime error');
+    },
+  } as unknown as DashboardLoaderSrv);
+}
+
+export function mockResizeObserver() {
+  window.ResizeObserver = class ResizeObserver {
+    constructor(callback: ResizeObserverCallback) {
+      setTimeout(() => {
+        callback(
+          [
+            // disabling type checks since this is a test util
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            {
+              contentRect: {
+                x: 1,
+                y: 2,
+                width: 500,
+                height: 500,
+                top: 100,
+                bottom: 0,
+                left: 100,
+                right: 0,
+              },
+            } as ResizeObserverEntry,
+          ],
+          this
+        );
+      });
+    }
+    observe() {}
+    disconnect() {}
+    unobserve() {}
+  };
+}
+
+/**
+ * Useful from tests to simulate mounting a full scene. Children are activated before parents to simulate the real order
+ * of React mount order and useEffect ordering.
+ *
+ */
+export function activateFullSceneTree(scene: SceneObject): SceneDeactivationHandler {
+  const deactivationHandlers: SceneDeactivationHandler[] = [];
+
+  // Important that variables are activated before other children
+  if (scene.state.$variables) {
+    deactivationHandlers.push(activateFullSceneTree(scene.state.$variables));
+  }
+
+  scene.forEachChild((child) => {
+    // For query runners which by default use the container width for maxDataPoints calculation we are setting a width.
+    // In real life this is done by the React component when VizPanel is rendered.
+    if ('setContainerWidth' in child) {
+      // @ts-expect-error
+      child.setContainerWidth(500);
+    }
+    deactivationHandlers.push(activateFullSceneTree(child));
+  });
+
+  deactivationHandlers.push(scene.activate());
+
+  return () => {
+    for (const handler of deactivationHandlers) {
+      handler();
+    }
+  };
+}
+
+interface SceneOptions {
+  variableQueryTime: number;
+  maxPerRow?: number;
+  itemHeight?: number;
+  repeatDirection?: RepeatDirection;
+  x?: number;
+  y?: number;
+  numberOfOptions?: number;
+  usePanelRepeater?: boolean;
+  useRowRepeater?: boolean;
+  throwError?: string;
+  variableRefresh?: VariableRefresh;
+}
+
+export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel) {
+  const defaults = { usePanelRepeater: true, ...options };
+
+  const withRepeat = new DashboardGridItem({
+    variableName: 'server',
+    repeatedPanels: [],
+    repeatDirection: options.repeatDirection,
+    maxPerRow: options.maxPerRow,
+    itemHeight: options.itemHeight,
+    body:
+      source ??
+      new VizPanel({
+        title: 'Panel $server',
+        pluginId: 'timeseries',
+        key: 'panel-1',
+      }),
+    x: options.x || 0,
+    y: options.y || 0,
+  });
+
+  const withoutRepeat = new DashboardGridItem({
+    x: 0,
+    y: 0,
+    width: 10,
+    height: 10,
+    body: new VizPanel({
+      title: 'Panel $server',
+      pluginId: 'timeseries',
+      titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    }),
+  });
+
+  const row = new SceneGridRow({
+    $behaviors: defaults.useRowRepeater ? [new RowRepeaterBehavior({ variableName: 'handler' })] : [],
+    children: [defaults.usePanelRepeater ? withRepeat : withoutRepeat],
+  });
+
+  const panelRepeatVariable = new TestVariable({
+    name: 'server',
+    query: 'A.*',
+    value: ALL_VARIABLE_VALUE,
+    text: ALL_VARIABLE_TEXT,
+    isMulti: true,
+    includeAll: true,
+    delayMs: options.variableQueryTime,
+    optionsToReturn: [
+      { label: 'A', value: '1' },
+      { label: 'B', value: '2' },
+      { label: 'C', value: '3' },
+      { label: 'D', value: '4' },
+      { label: 'E', value: '5' },
+    ].slice(0, options.numberOfOptions),
+    throwError: defaults.throwError,
+    refresh: options.variableRefresh,
+  });
+
+  const rowRepeatVariable = new TestVariable({
+    name: 'handler',
+    query: 'A.*',
+    value: ALL_VARIABLE_VALUE,
+    text: ALL_VARIABLE_TEXT,
+    isMulti: true,
+    includeAll: true,
+    delayMs: options.variableQueryTime,
+    optionsToReturn: [
+      { label: 'AA', value: '11' },
+      { label: 'BB', value: '22' },
+      { label: 'CC', value: '33' },
+      { label: 'DD', value: '44' },
+      { label: 'EE', value: '55' },
+    ].slice(0, options.numberOfOptions),
+    throwError: defaults.throwError,
+  });
+
+  const scene = new EmbeddedScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $variables: new SceneVariableSet({
+      variables: [panelRepeatVariable, rowRepeatVariable],
+    }),
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [row],
+      }),
+    }),
+  });
+
+  return { scene, repeater: withRepeat, row, variable: panelRepeatVariable };
+}
+
+export function getTestDashboardSceneFromSaveModel(spec?: Partial<DashboardV2Spec>) {
+  const dashboard = transformSaveModelSchemaV2ToScene({
+    kind: 'DashboardWithAccessInfo',
+    spec: {
+      ...defaultDashboardV2Spec(),
+      title: 'hello',
+      timeSettings: {
+        ...defaultTimeSettingsSpec(),
+        autoRefresh: '10s',
+        from: 'now-1h',
+        to: 'now',
+      },
+      elements: {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            ...defaultPanelSpec(),
+            id: 1,
+            title: 'Panel 1',
+          },
+        },
+      },
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: [
+            {
+              kind: 'GridLayoutItem',
+              spec: {
+                x: 0,
+                y: 0,
+                width: 12,
+                height: 8,
+                element: {
+                  kind: 'ElementReference',
+                  name: 'panel-1',
+                },
+              },
+            },
+          ],
+        },
+      },
+      variables: [
+        {
+          kind: 'CustomVariable',
+          spec: {
+            name: 'app',
+            label: 'Query Variable',
+            description: 'A query variable',
+            skipUrlSync: false,
+            hide: 'dontHide',
+            options: [],
+            multi: false,
+            current: {
+              text: 'app1',
+              value: 'app1',
+            },
+            query: 'app1',
+            allValue: '',
+            includeAll: false,
+            allowCustomValue: true,
+          },
+        },
+      ],
+      ...spec,
+    },
+    apiVersion: 'v1',
+    metadata: {
+      name: 'dashboard-test',
+      resourceVersion: '1',
+      creationTimestamp: '2023-01-01T00:00:00Z',
+    },
+    access: {
+      canEdit: true,
+      canSave: true,
+      canStar: true,
+      canShare: true,
+    },
+  });
+
+  const initialSaveModel = transformSceneToSaveModelSchemaV2(dashboard);
+  dashboard.setInitialSaveModel(initialSaveModel);
+
+  return dashboard;
+}
+
+// returns e.g. data-testid Layout container row Row title
+export function getTestIdForLayout(model: AutoGridLayout | DashboardLayoutGrid) {
+  const parentRowOrTab = sceneGraph.findObject(
+    model,
+    (currentSceneObject) => currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
+  );
+  if (parentRowOrTab instanceof TabItem || parentRowOrTab instanceof RowItem) {
+    return `${getLayoutType(parentRowOrTab)} ${parentRowOrTab.state.title}`;
+  }
+
+  return '';
+}

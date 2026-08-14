@@ -1,0 +1,603 @@
+package backfill
+
+import (
+	"context"
+	"fmt"
+	"iter"
+	"sync"
+	"time"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+)
+
+// fakeListIterator implements resource.ListIterator. It carries a reference
+// to the *full* result slice plus the page boundaries so ContinueToken can
+// honestly distinguish "exhausted page" from "exhausted everything".
+type fakeListIterator struct {
+	full      []listItem
+	pageStart int // inclusive index into full
+	pageEnd   int // exclusive index into full
+	idx       int // 0 = "before first item"; advanced by Next.
+	err       error
+}
+
+func (i *fakeListIterator) Next() bool {
+	if i.idx >= i.pageEnd-i.pageStart {
+		return false
+	}
+	i.idx++
+	return true
+}
+func (i *fakeListIterator) Error() error { return i.err }
+func (i *fakeListIterator) ContinueToken() string {
+	nextAbs := i.pageStart + i.idx
+	if nextAbs >= len(i.full) {
+		return ""
+	}
+	return fmt.Sprintf("tok-%d", nextAbs)
+}
+
+func (i *fakeListIterator) item() listItem         { return i.full[i.pageStart+i.idx-1] }
+func (i *fakeListIterator) ResourceVersion() int64 { return i.item().RV }
+func (i *fakeListIterator) Namespace() string      { return i.item().Namespace }
+func (i *fakeListIterator) Name() string           { return i.item().Name }
+func (i *fakeListIterator) Folder() string         { return i.item().Folder }
+func (i *fakeListIterator) Value() []byte          { return i.item().Value }
+
+// fakeStorage implements just enough of resource.StorageBackend to drive
+// resourceembedder tests. ReadResource looks up by full key; ListIterator yields
+// the configured items in order.
+type fakeStorage struct {
+	resource.UnimplementedStorageBackend
+	mu sync.Mutex
+	// resources[ns/group/resource/name] = (value, rv).
+	resources map[string]storedResource
+	readErr   error
+	notFound  map[string]struct{}
+
+	// Backfill iteration state. listItems is the full result set; the fake
+	// honours req.Limit to simulate pagination + peek-for-more.
+	listItems []listItem
+	listErr   error
+	// listCalls records each ListIterator invocation's NextPageToken so
+	// tests can assert the backfiller actually paginated rather than
+	// pulling everything in a single call.
+	listCalls []string
+}
+
+type listItem struct {
+	Namespace, Name, Folder string
+	Value                   []byte
+	RV                      int64
+}
+
+type storedResource struct {
+	Value []byte
+	RV    int64
+}
+
+func newFakeStorage() *fakeStorage {
+	return &fakeStorage{
+		resources: map[string]storedResource{},
+		notFound:  map[string]struct{}{},
+	}
+}
+
+func storeKey(ns, group, res, name string) string {
+	return ns + "/" + group + "/" + res + "/" + name
+}
+
+func (f *fakeStorage) markNotFound(ns, group, res, name string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.notFound == nil {
+		f.notFound = map[string]struct{}{}
+	}
+	f.notFound[storeKey(ns, group, res, name)] = struct{}{}
+}
+
+func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+	if f.readErr != nil {
+		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: f.readErr.Error()}}
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	k := storeKey(req.Key.Namespace, req.Key.Group, req.Key.Resource, req.Key.Name)
+	if _, nf := f.notFound[k]; nf {
+		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"}}
+	}
+	if r, ok := f.resources[k]; ok {
+		return &resource.BackendReadResponse{
+			Key:             req.Key,
+			Value:           r.Value,
+			ResourceVersion: r.RV,
+		}
+	}
+	// One storage: reads agree with the list feed unless a test overrides
+	// via resources (different RV) or notFound (deleted).
+	for _, it := range f.listItems {
+		if it.Namespace == req.Key.Namespace && it.Name == req.Key.Name && req.Key.Resource == "dashboards" {
+			return &resource.BackendReadResponse{Key: req.Key, Value: it.Value, ResourceVersion: it.RV}
+		}
+	}
+	return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"}}
+}
+
+// Unused methods of StorageBackend — panic so a test that hits them is
+// obviously wrong rather than silently passing.
+func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
+	panic("not implemented")
+}
+
+// ListIterator simulates pagination: req.Limit determines how many items
+// to yield this call. The fake yields up to Limit+1 items so the
+// resourceembedder's "peek for next page" logic exercises correctly.
+// req.NextPageToken is parsed as "tok-<index>" pointing at the next item.
+func (f *fakeStorage) ListIterator(_ context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	f.mu.Lock()
+	f.listCalls = append(f.listCalls, req.NextPageToken)
+	f.mu.Unlock()
+	if f.listErr != nil {
+		return 0, f.listErr
+	}
+	start := 0
+	if req.NextPageToken != "" {
+		var idx int
+		_, err := fmt.Sscanf(req.NextPageToken, "tok-%d", &idx)
+		if err == nil {
+			start = idx
+		}
+	}
+	end := len(f.listItems)
+	if req.Limit > 0 {
+		max := start + int(req.Limit) + 1
+		if max < end {
+			end = max
+		}
+	}
+	iter := &fakeListIterator{full: f.listItems, pageStart: start, pageEnd: end}
+	return 1, cb(iter)
+}
+
+func (f *fakeStorage) ListHistory(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
+	panic("not implemented")
+}
+func (f *fakeStorage) ListModifiedSince(context.Context, resource.NamespacedResource, int64, *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+	panic("not implemented")
+}
+func (f *fakeStorage) WatchWriteEvents(context.Context) (<-chan *resource.WrittenEvent, error) {
+	panic("not implemented")
+}
+func (f *fakeStorage) GetResourceStats(context.Context, resource.NamespacedResource, int) ([]resource.ResourceStats, error) {
+	panic("not implemented")
+}
+
+func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+	panic("not implemented")
+}
+
+// fakeVector records calls and lets tests preload GetSubresourceContent /
+// stored rows. rows simulates the `embeddings` table (ns|model|resource|uid
+// -> subresource -> stored row) so ContentVersion and the
+// UpsertReplaceSubresources replace-semantics (stale rows dropped when not
+// in `desired`) can be exercised honestly instead of just recording calls.
+type fakeVector struct {
+	mu                 sync.Mutex
+	upserts            [][]vector.Vector
+	replaceCalls       []replaceCall
+	deletes            []deleteCall
+	subresourceDeletes []deleteSubsCall
+	rows               map[string]map[string]vector.Vector // ns|model|resource|uid -> subresource -> row
+	upsertErr          error
+
+	// Backfill bookkeeping:
+	jobs              []vector.BackfillJob
+	jobContentVersion map[int64]int // job ID -> content_version; absent = DB DEFAULT 1
+	reopenCalls       []reopenCall
+	checkpoints       []checkpointCall
+	errorMarks        []errorMarkCall
+	completedJobIDs   []int64
+	updateCalls       []updateCall
+	updateErr         error
+	latestRV          int64
+	getContentErr     error
+	markErrErr        error
+	completeErr       error
+
+	// Advisory-lock simulation:
+	lockUnavailable bool
+	lockAttempts    int
+	lockReleases    int
+}
+
+type replaceCall struct {
+	Namespace, Model, Resource, UID string
+	Changed                         []vector.Vector
+	Desired                         []string
+}
+
+type reopenCall struct {
+	Model, Resource string
+	Version         int
+	StoppingRV      int64
+}
+
+type checkpointCall struct {
+	ID          int64
+	LastSeenKey string
+	LastError   string
+}
+
+type errorMarkCall struct {
+	ID        int64
+	LastError string
+}
+
+type deleteCall struct{ Namespace, Model, Resource, UID string }
+type deleteSubsCall struct {
+	Namespace, Model, Resource, UID string
+	Subresources                    []string
+}
+
+type updateCall struct {
+	Namespace, Model, Resource, UID string
+	Version                         int
+}
+
+func newFakeVector() *fakeVector {
+	return &fakeVector{
+		rows: map[string]map[string]vector.Vector{},
+	}
+}
+
+func rowsKey(ns, model, res, uid string) string {
+	return ns + "|" + model + "|" + res + "|" + uid
+}
+
+// seedEmbeddedRows preloads rows for (ns, model, res, uid), one per
+// subresource, all at the given content_version — simulating embeddings
+// left over from an earlier backfill/reconcile run.
+func (f *fakeVector) seedEmbeddedRows(ns, model, res, uid string, version int, subresources ...string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.rows == nil {
+		f.rows = map[string]map[string]vector.Vector{}
+	}
+	rows := make(map[string]vector.Vector, len(subresources))
+	for _, sub := range subresources {
+		rows[sub] = vector.Vector{
+			Namespace: ns, Model: model, Resource: res, UID: uid,
+			Subresource: sub, ContentVersion: version, Title: "seed",
+		}
+	}
+	f.rows[rowsKey(ns, model, res, uid)] = rows
+}
+
+// seedStoredContent preloads a single stored subresource's content (and
+// content_version), simulating a row left over from an earlier embed —
+// used to exercise the content-identity check in GetSubresourceContent.
+func (f *fakeVector) seedStoredContent(ns, model, res, uid, subresource, content string, version int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.rows == nil {
+		f.rows = map[string]map[string]vector.Vector{}
+	}
+	key := rowsKey(ns, model, res, uid)
+	rows := f.rows[key]
+	if rows == nil {
+		rows = map[string]vector.Vector{}
+	}
+	rows[subresource] = vector.Vector{
+		Namespace: ns, Model: model, Resource: res, UID: uid,
+		Subresource: subresource, Content: content, ContentVersion: version, Title: "seed",
+	}
+	f.rows[key] = rows
+}
+
+func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
+}
+
+func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	key := resource
+	if isExternal {
+		key += "_external"
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
+}
+
+func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
+	return nil, nil
+}
+func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, _ []vector.VectorMeta, desired []string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.replaceCalls = append(f.replaceCalls, replaceCall{ns, model, res, uid, changed, desired})
+	if f.upsertErr != nil {
+		return f.upsertErr
+	}
+	f.upserts = append(f.upserts, changed)
+
+	if f.rows == nil {
+		f.rows = map[string]map[string]vector.Vector{}
+	}
+	key := rowsKey(ns, model, res, uid)
+	rows := f.rows[key]
+	if rows == nil {
+		rows = map[string]vector.Vector{}
+	}
+	keep := make(map[string]struct{}, len(desired))
+	for _, s := range desired {
+		keep[s] = struct{}{}
+	}
+	for sub := range rows {
+		if _, ok := keep[sub]; !ok {
+			delete(rows, sub)
+		}
+	}
+	for _, v := range changed {
+		rows[v.Subresource] = v
+	}
+	f.rows[key] = rows
+	return nil
+}
+func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.upsertErr != nil {
+		return f.upsertErr
+	}
+	f.upserts = append(f.upserts, vs)
+	return nil
+}
+func (f *fakeVector) DeleteRows(_ context.Context, namespace, model, res string, sel vector.DeleteSelector) (int64, bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, uid := range sel.UIDs {
+		f.deletes = append(f.deletes, deleteCall{namespace, model, res, uid})
+	}
+	return int64(len(sel.UIDs)), false, nil
+}
+func (f *fakeVector) DeleteSubresources(_ context.Context, namespace, model, res, uid string, subs []string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.subresourceDeletes = append(f.subresourceDeletes, deleteSubsCall{namespace, model, res, uid, subs})
+	return nil
+}
+func (f *fakeVector) DeleteNamespace(_ context.Context, _ string) (int64, error) {
+	return 0, nil
+}
+func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, uid string) (map[string]string, string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.getContentErr != nil {
+		return nil, "", f.getContentErr
+	}
+	rows := f.rows[rowsKey(ns, model, res, uid)]
+	if len(rows) == 0 {
+		return nil, "", nil
+	}
+	out := make(map[string]string, len(rows))
+	var folder string
+	for sub, v := range rows {
+		out[sub] = v.Content
+		folder = v.Folder
+	}
+	return out, folder, nil
+}
+func (f *fakeVector) Exists(_ context.Context, ns, model, res, uid string) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	rows, ok := f.rows[rowsKey(ns, model, res, uid)]
+	return ok && len(rows) > 0, nil
+}
+func (f *fakeVector) ContentVersion(_ context.Context, ns, model, res, uid string) (int, bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	rows, ok := f.rows[rowsKey(ns, model, res, uid)]
+	if !ok || len(rows) == 0 {
+		return 0, false, nil
+	}
+	minVersion := 0
+	first := true
+	for _, v := range rows {
+		if first || v.ContentVersion < minVersion {
+			minVersion = v.ContentVersion
+			first = false
+		}
+	}
+	return minVersion, true, nil
+}
+func (f *fakeVector) UpdateContentVersion(_ context.Context, ns, model, res, uid string, version int) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.updateErr != nil {
+		return f.updateErr
+	}
+	f.updateCalls = append(f.updateCalls, updateCall{ns, model, res, uid, version})
+	for sub, v := range f.rows[rowsKey(ns, model, res, uid)] {
+		v.ContentVersion = version
+		f.rows[rowsKey(ns, model, res, uid)][sub] = v
+	}
+	return nil
+}
+func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.latestRV, nil
+}
+func (f *fakeVector) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {
+	return nil, nil
+}
+func (f *fakeVector) SetLatestRV(context.Context, int64) error { return nil }
+func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {
+	return func() {}, true, nil
+}
+func (f *fakeVector) EnsureResourcePartition(context.Context, string) error { return nil }
+func (f *fakeVector) CreateBackfillJob(_ context.Context, _, _ string, _ int64, _ int) error {
+	return nil
+}
+
+// ReopenStaleBackfillJobs mirrors the real SQL: matches jobs for `model`
+// whose Resource is either `res` or the ”-catch-all, reopens (resets
+// is_complete/cursor/error, bumps stopping_rv) only those still below
+// `version`. Jobs not preloaded with a content version default to 1,
+// matching the DB column's DEFAULT.
+func (f *fakeVector) ReopenStaleBackfillJobs(_ context.Context, model, res string, version int, stoppingRV int64) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.reopenCalls = append(f.reopenCalls, reopenCall{Model: model, Resource: res, Version: version, StoppingRV: stoppingRV})
+	reopened := false
+	for i := range f.jobs {
+		j := &f.jobs[i]
+		if j.Model != model || (j.Resource != res && j.Resource != "") {
+			continue
+		}
+		cv := 1
+		if v, ok := f.jobContentVersion[j.ID]; ok {
+			cv = v
+		}
+		if cv >= version {
+			continue
+		}
+		j.IsComplete = false
+		j.LastSeenKey = ""
+		j.LastError = ""
+		j.StoppingRV = stoppingRV
+		if f.jobContentVersion == nil {
+			f.jobContentVersion = map[int64]int{}
+		}
+		f.jobContentVersion[j.ID] = version
+		reopened = true
+	}
+	return reopened, nil
+}
+
+// ListIncompleteBackfillJobs mirrors the real SQL's `is_complete = FALSE`
+// filter so tests can prove a completed job is invisible until reopened.
+func (f *fakeVector) ListIncompleteBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := make([]vector.BackfillJob, 0, len(f.jobs))
+	for _, j := range f.jobs {
+		if j.Model == model && !j.IsComplete {
+			out = append(out, j)
+		}
+	}
+	return out, nil
+}
+func (f *fakeVector) UpdateBackfillJobCheckpoint(_ context.Context, id int64, key, e string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.updateErr != nil {
+		return f.updateErr
+	}
+	f.checkpoints = append(f.checkpoints, checkpointCall{ID: id, LastSeenKey: key, LastError: e})
+	return nil
+}
+func (f *fakeVector) MarkBackfillJobError(_ context.Context, id int64, e string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.markErrErr != nil {
+		return f.markErrErr
+	}
+	f.errorMarks = append(f.errorMarks, errorMarkCall{ID: id, LastError: e})
+	return nil
+}
+func (f *fakeVector) CompleteBackfillJob(_ context.Context, id int64) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.completeErr != nil {
+		return f.completeErr
+	}
+	f.completedJobIDs = append(f.completedJobIDs, id)
+	return nil
+}
+func (f *fakeVector) TryAcquireBackfillLock(context.Context) (func(), bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.lockAttempts++
+	if f.lockUnavailable {
+		return nil, false, nil
+	}
+	return func() {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		f.lockReleases++
+	}, true, nil
+}
+func (f *fakeVector) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
+	return fn(ctx)
+}
+
+// fakeText is a deterministic embedder: returns one fixed-dim vector per text.
+type fakeText struct {
+	dim   int
+	err   error
+	calls int // number of EmbedText invocations; proves the skip-identical path never reaches the provider
+}
+
+func (f *fakeText) EmbedText(_ context.Context, in embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
+	f.calls++
+	if f.err != nil {
+		return embedder.EmbedTextOutput{}, f.err
+	}
+	out := embedder.EmbedTextOutput{Embeddings: make([]embedder.Embedding, len(in.Texts))}
+	for i := range in.Texts {
+		dense := make([]float32, f.dim)
+		for j := range dense {
+			dense[j] = 0.5
+		}
+		out.Embeddings[i] = embedder.Embedding{Dense: dense}
+	}
+	return out, nil
+}
+
+func newFakeEmbedder(text *fakeText) *embedder.Embedder {
+	return &embedder.Embedder{
+		TextEmbedder: text,
+		Model:        "test-model",
+		VectorType:   embedder.VectorTypeDense,
+		Metric:       embedder.CosineDistance,
+		Dimensions:   uint32(text.dim),
+	}
+}
+
+// fakeDashboardStats implements builders.DashboardStats. Tests pre-load
+// stats via set(); unknown UIDs return the zero map. err short-circuits
+// every call so the best-effort path can be exercised.
+type fakeDashboardStats struct {
+	mu    sync.Mutex
+	stats map[string]map[string]int64
+	err   error
+	calls int
+}
+
+func newFakeDashboardStats() *fakeDashboardStats {
+	return &fakeDashboardStats{stats: map[string]map[string]int64{}}
+}
+
+func (f *fakeDashboardStats) GetStats(context.Context, string) (map[string]map[string]int64, error) {
+	// Backfill never calls GetStats; method exists only to satisfy
+	// builders.DashboardStats.
+	return nil, nil
+}
+
+func (f *fakeDashboardStats) GetDashboardStats(_ context.Context, namespace, uid string) (map[string]int64, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls++
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.stats[namespace+"|"+uid], nil
+}
+
+func (f *fakeDashboardStats) set(namespace, uid string, stats map[string]int64) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.stats[namespace+"|"+uid] = stats
+}

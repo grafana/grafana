@@ -1,0 +1,254 @@
+package remote
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+
+	alertingModels "github.com/grafana/alerting/models"
+	alertingNotify "github.com/grafana/alerting/notify"
+
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+)
+
+type configStore interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
+}
+
+//go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
+type remoteAlertmanager interface {
+	notifier.Alertmanager
+	CompareAndSendConfiguration(context.Context, alertingNotify.NotificationsConfiguration) (bool, error)
+	GetRemoteState(context.Context) (notifier.ExternalState, error)
+	SendState(context.Context) error
+}
+
+type RemoteSecondaryForkedAlertmanager struct {
+	log   log.Logger
+	orgID int64
+	store configStore
+
+	internal notifier.Alertmanager
+	remote   remoteAlertmanager
+
+	lastSync     time.Time
+	syncInterval time.Duration
+
+	shouldFetchRemoteState bool
+}
+
+type RemoteSecondaryConfig struct {
+	Logger log.Logger
+	OrgID  int64
+	Store  configStore
+
+	// SyncInterval determines how often we should attempt to synchronize
+	// the configuration on the remote Alertmanager.
+	SyncInterval time.Duration
+
+	// WithRemoteState is used to fetch and merge the state from the remote Alertmanager before starting the internal one.
+	WithRemoteState bool
+}
+
+func (c *RemoteSecondaryConfig) Validate() error {
+	if c.Logger == nil {
+		return fmt.Errorf("logger cannot be nil")
+	}
+	return nil
+}
+
+// NewRemoteSecondaryFactory returns a function to override the default AM factory in the multi-org Alertmanager.
+func NewRemoteSecondaryFactory(
+	cfg AlertmanagerConfig,
+	store kvstore.KVStore,
+	cfgStore configStore,
+	syncInterval time.Duration,
+	crypto Crypto,
+	m *metrics.RemoteAlertmanager,
+	t tracing.Tracer,
+	withRemoteState bool,
+	features featuremgmt.FeatureToggles,
+) func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+	return func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+		return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+			// Create the remote Alertmanager first so we don't need to unregister internal AM metrics if this fails.
+			cfg.OrgID = orgID
+			l := log.New("ngalert.forked-alertmanager.remote-secondary")
+			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, m, t, features)
+			if err != nil && withRemoteState {
+				// We can't start the internal Alertmanager without the remote state.
+				return nil, fmt.Errorf("failed to create remote Alertmanager, can't start the internal Alertmanager without the remote state: %w", err)
+			}
+
+			// Create the internal Alertmanager.
+			internalAM, err := factoryFn(ctx, orgID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create internal Alertmanager: %w", err)
+			}
+
+			if remoteAM == nil {
+				l.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+				return internalAM, nil
+			}
+
+			// Use both implementations in the forked Alertmanager.
+			rsCfg := RemoteSecondaryConfig{
+				Logger:          l,
+				OrgID:           orgID,
+				Store:           cfgStore,
+				SyncInterval:    syncInterval,
+				WithRemoteState: withRemoteState,
+			}
+			return newRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
+		}
+	}
+}
+
+func newRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal notifier.Alertmanager, remote remoteAlertmanager) (*RemoteSecondaryForkedAlertmanager, error) {
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+	return &RemoteSecondaryForkedAlertmanager{
+		log:                    cfg.Logger,
+		orgID:                  cfg.OrgID,
+		store:                  cfg.Store,
+		internal:               internal,
+		remote:                 remote,
+		syncInterval:           cfg.SyncInterval,
+		shouldFetchRemoteState: cfg.WithRemoteState,
+	}, nil
+}
+
+// ApplyConfig will only log errors for the remote Alertmanager and ensure we delegate the call to the internal Alertmanager.
+// We don't care about errors in the remote Alertmanager in remote secondary mode.
+func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config alertingNotify.NotificationsConfiguration) (bool, error) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	// Figure out if we need to sync the external Alertmanager in another goroutine.
+	go func() {
+		defer wg.Done()
+		// If the Alertmanager has not been marked as "ready" yet, delegate the call to the remote Alertmanager.
+		// This will perform a readiness check and sync the Alertmanagers.
+		if !fam.remote.Ready() {
+			if _, err := fam.remote.ApplyConfig(ctx, config); err != nil {
+				fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
+				return
+			}
+			fam.lastSync = time.Now()
+			return
+		}
+
+		// If the Alertmanager was marked as ready but the sync interval has elapsed, sync the Alertmanagers.
+		if time.Since(fam.lastSync) >= fam.syncInterval {
+			fam.log.Debug("Syncing configuration with the remote Alertmanager", "lastSync", fam.lastSync)
+			if _, err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
+				fam.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
+			} else {
+				fam.lastSync = time.Now()
+			}
+			fam.log.Debug("Finished syncing configuration with the remote Alertmanager")
+		}
+	}()
+
+	if fam.shouldFetchRemoteState {
+		wg.Wait()
+		if !fam.remote.Ready() {
+			return false, fmt.Errorf("remote Alertmanager not ready, can't fetch remote state")
+		}
+		// Pull and merge the remote Alertmanager state.
+		rs, err := fam.remote.GetRemoteState(ctx)
+		if err != nil {
+			return false, fmt.Errorf("failed to fetch remote state: %w", err)
+		}
+
+		// The internal Alertmanager should implement the StateMerger interface.
+		sm := fam.internal.(notifier.StateMerger)
+		if err := sm.MergeState(rs); err != nil {
+			return false, fmt.Errorf("failed to merge remote state: %w", err)
+		}
+		fam.log.Info("Successfully merged remote silences and nflog entries")
+
+		// This operation should only be performed at startup.
+		fam.shouldFetchRemoteState = false
+	}
+
+	// Call ApplyConfig on the internal Alertmanager - we only care about errors for this one.
+	applied, err := fam.internal.ApplyConfig(ctx, config)
+	wg.Wait()
+	return applied, err
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
+	return fam.internal.GetStatus(ctx)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
+	return fam.internal.CreateSilence(ctx, silence)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {
+	return fam.internal.DeleteSilence(ctx, id)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) GetSilence(ctx context.Context, id string) (apimodels.GettableSilence, error) {
+	return fam.internal.GetSilence(ctx, id)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) ListSilences(ctx context.Context, filter []string) (apimodels.GettableSilences, error) {
+	return fam.internal.ListSilences(ctx, filter)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
+	return fam.internal.GetAlerts(ctx, active, silenced, inhibited, filter, receiver)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
+	return fam.internal.GetAlertGroups(ctx, active, silenced, inhibited, filter, receiver)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
+	return fam.internal.PutAlerts(ctx, alerts)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]alertingModels.ReceiverStatus, error) {
+	return fam.internal.GetReceivers(ctx)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {
+	return fam.internal.TestIntegration(ctx, receiverName, integrationConfig, alert)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
+	return fam.internal.TestTemplate(ctx, c)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
+	return fam.internal.SilenceState(ctx)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
+	// Stop the internal Alertmanager.
+	fam.internal.StopAndWait()
+	// Stop our alert senders.
+	fam.remote.StopAndWait()
+
+	// Send config and state to the remote Alertmanager.
+	// Using context.TODO() here as we think we want to allow this operation to finish regardless of time.
+	ctx := context.TODO()
+	if err := fam.remote.SendState(ctx); err != nil {
+		fam.log.Error("Error sending state to the remote Alertmanager while stopping", "err", err)
+	}
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
+	// We only care about the internal Alertmanager being ready.
+	return fam.internal.Ready()
+}

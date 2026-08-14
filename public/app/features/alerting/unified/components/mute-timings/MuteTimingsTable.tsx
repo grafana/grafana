@@ -1,0 +1,180 @@
+import { useMemo } from 'react';
+
+import { Trans, t } from '@grafana/i18n';
+import { Alert, Button, LinkButton, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
+import { MuteTimingActionsButtons } from 'app/features/alerting/unified/components/mute-timings/MuteTimingActionsButtons';
+import {
+  ALL_MUTE_TIMINGS,
+  useExportMuteTimingsDrawer,
+} from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
+import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
+
+import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
+import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
+import { TimeIntervalAction } from '../../hooks/abilities/types';
+import { makeAMLink } from '../../utils/misc';
+import { DynamicTable, type DynamicTableColumnProps } from '../DynamicTable';
+import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
+import { ProvisioningBadge } from '../Provisioning';
+import { Spacer } from '../Spacer';
+
+import { type MuteTiming, useMuteTimings } from './useMuteTimings';
+import { renderTimeIntervals } from './util';
+
+type TableItem = {
+  id: string;
+  data: MuteTiming;
+};
+
+export const TimeIntervalsTable = () => {
+  const { selectedAlertmanager: alertManagerSourceName = '', hasConfigurationAPI } = useAlertmanager();
+  const hideActions = !hasConfigurationAPI;
+  const [ExportAllDrawer, showExportAllDrawer] = useExportMuteTimingsDrawer();
+
+  const { data, isLoading, error } = useMuteTimings({ alertmanager: alertManagerSourceName ?? '' });
+
+  const items = useMemo((): TableItem[] => {
+    const muteTimings = data || [];
+
+    return muteTimings.map((mute) => {
+      return {
+        id: mute.id,
+        data: mute,
+      };
+    });
+  }, [data]);
+
+  const createAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Create });
+  const exportAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Export });
+  const columns = useColumns(alertManagerSourceName, hideActions);
+
+  if (isLoading) {
+    return (
+      <LoadingPlaceholder
+        text={t('alerting.time-intervals-table.text-loading-time-intervals', 'Loading time intervals...')}
+      />
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert severity="error" title={t('alerting.time-intervals.error-loading.title', 'Error loading time intervals')}>
+        <Trans i18nKey="alerting.time-intervals.error-loading.description">
+          Could not load time intervals. Please try again later.
+        </Trans>
+      </Alert>
+    );
+  }
+
+  return (
+    <Stack direction="column" gap={1}>
+      <Stack direction="row" alignItems="center">
+        <Text variant="body" color="secondary">
+          <Trans i18nKey="alerting.time-intervals.description">
+            Enter specific time intervals when not to send notifications or freeze notifications for recurring periods
+            of time.
+          </Trans>
+        </Text>
+        <Spacer />
+        {!hideActions && items.length > 0 && isGranted(createAbility) && (
+          <LinkButton
+            icon="plus"
+            variant="primary"
+            href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+          >
+            <Trans i18nKey="alerting.time-interval.add-time-interval">New time interval</Trans>
+          </LinkButton>
+        )}
+        {isSupported(exportAbility) && (
+          <>
+            <Button
+              icon="download-alt"
+              variant="secondary"
+              disabled={!exportAbility.granted}
+              onClick={() => showExportAllDrawer(ALL_MUTE_TIMINGS)}
+            >
+              <Trans i18nKey="alerting.common.export-all">Export all</Trans>
+            </Button>
+            {ExportAllDrawer}
+          </>
+        )}
+      </Stack>
+      {items.length > 0 ? <DynamicTable items={items} cols={columns} pagination={{ itemsPerPage: 25 }} /> : null}
+      {items.length === 0 && (
+        <>
+          {!hideActions ? (
+            <EmptyAreaWithCTA
+              text={t(
+                'alerting.time-intervals-table.text-havent-created-time-intervals',
+                "You haven't created any time intervals yet"
+              )}
+              buttonLabel="New time interval"
+              buttonIcon="plus"
+              buttonSize="lg"
+              href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+              showButton={createAbility.granted}
+            />
+          ) : (
+            <EmptyAreaWithCTA
+              text={t(
+                'alerting.time-intervals-table.text-no-time-intervals-configured',
+                'No time intervals configured'
+              )}
+              buttonLabel={''}
+              showButton={false}
+            />
+          )}
+        </>
+      )}
+    </Stack>
+  );
+};
+
+function useColumns(alertManagerSourceName: string, hideActions = false) {
+  // Context-free RBAC check — decides whether the actions column is shown at all.
+  // Per-entity checks (provisioning) are applied inside MuteTimingActionsButtons.
+  const editAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Update });
+  const deleteAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Delete });
+  const showActions = !hideActions && (editAbility.granted || deleteAbility.granted);
+
+  return useMemo((): Array<DynamicTableColumnProps<MuteTiming>> => {
+    const columns: Array<DynamicTableColumnProps<MuteTiming>> = [
+      {
+        id: 'name',
+        label: t('alerting.use-columns.columns.label.name', 'Name'),
+        renderCell: function renderName({ data }) {
+          return (
+            <div>
+              {data.name}{' '}
+              {data.provisioned && (
+                <ProvisioningBadge tooltip provenance={data.metadata?.annotations?.[PROVENANCE_ANNOTATION]} />
+              )}
+            </div>
+          );
+        },
+        size: 1,
+      },
+      {
+        id: 'timeRange',
+        label: t('alerting.use-columns.columns.label.time-range', 'Time range'),
+        renderCell: ({ data }) => {
+          return renderTimeIntervals(data);
+        },
+        size: 5,
+      },
+    ];
+    if (showActions) {
+      columns.push({
+        id: 'actions',
+        label: t('alerting.use-columns.label.actions', 'Actions'),
+        alignColumn: 'end',
+        renderCell: ({ data }) => (
+          <MuteTimingActionsButtons muteTiming={data} alertManagerSourceName={alertManagerSourceName} />
+        ),
+        size: 2,
+      });
+    }
+    return columns;
+  }, [showActions, alertManagerSourceName]);
+}

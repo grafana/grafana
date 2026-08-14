@@ -1,0 +1,189 @@
+package folders
+
+import (
+	"context"
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
+
+	claims "github.com/grafana/authlib/types"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/api/apierrors"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
+)
+
+var (
+	_ rest.Scoper               = (*folderStorage)(nil)
+	_ rest.SingularNameProvider = (*folderStorage)(nil)
+	_ rest.Getter               = (*folderStorage)(nil)
+	_ rest.Lister               = (*folderStorage)(nil)
+	_ rest.Storage              = (*folderStorage)(nil)
+	_ rest.Creater              = (*folderStorage)(nil)
+	_ rest.Updater              = (*folderStorage)(nil)
+	_ rest.GracefulDeleter      = (*folderStorage)(nil)
+)
+
+type folderStorage struct {
+	resourceInfo utils.ResourceInfo
+
+	// Wrapped storage
+	store          grafanarest.Storage
+	tableConverter rest.TableConvertor
+
+	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
+	folderPermissionsSvc accesscontrol.FolderPermissionsService
+}
+
+func (s *folderStorage) New() runtime.Object {
+	return s.resourceInfo.NewFunc()
+}
+
+func (s *folderStorage) Destroy() {}
+
+func (s *folderStorage) NamespaceScoped() bool {
+	return true // namespace == org
+}
+
+func (s *folderStorage) GetSingularName() string {
+	return s.resourceInfo.GetSingularName()
+}
+
+func (s *folderStorage) NewList() runtime.Object {
+	return s.resourceInfo.NewListFunc()
+}
+
+func (s *folderStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
+}
+
+func (s *folderStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return s.store.List(ctx, options)
+}
+
+func (s *folderStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return s.store.Get(ctx, name, options)
+}
+
+func (s *folderStorage) Create(ctx context.Context,
+	obj runtime.Object,
+	createValidation rest.ValidateObjectFunc,
+	options *metav1.CreateOptions,
+) (runtime.Object, error) {
+	obj, err := s.store.Create(ctx, obj, createValidation, options)
+	if err != nil {
+		statusErr := apierrors.ToFolderStatusError(err)
+		return nil, &statusErr
+	}
+
+	// Skip permission side effects during dry-run
+	if dryrun.IsDryRun(options.DryRun) {
+		return obj, nil
+	}
+
+	// When cfg.RBAC.PermissionsOnCreation("folder") is not enabled
+	if !s.permissionsOnCreate {
+		return obj, err
+	}
+
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	p, ok := obj.(*folders.Folder)
+	if !ok {
+		return nil, fmt.Errorf("expected folder?")
+	}
+
+	accessor, err := utils.MetaAccessor(p)
+	if err != nil {
+		return nil, err
+	}
+
+	parentUid := accessor.GetFolder()
+
+	// TODO: once the feature flag kubernetesAuthzResourcePermissionApis is removed AND the frontend is calling
+	// /apis directly (to set AnnoKeyGrantPermissions on root level folders), the below should be removed
+	// and we should instead initialize resourcePermissionsSvc in the RegisterAPIService function
+	// and rely on StorageOptions.Permissions.
+	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.Name, parentUid)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+func (s *folderStorage) Update(ctx context.Context,
+	name string,
+	objInfo rest.UpdatedObjectInfo,
+	createValidation rest.ValidateObjectFunc,
+	updateValidation rest.ValidateObjectUpdateFunc,
+	forceAllowCreate bool,
+	options *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
+	return s.store.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+
+// GracefulDeleter
+func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	obj, async, err := s.store.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		return obj, async, err
+	}
+
+	return obj, async, err
+}
+
+func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
+	var permissions []accesscontrol.SetResourcePermissionCommand
+
+	// treat both the legacy empty value and "general" as root so the
+	// editor/viewer default permissions are still granted on new root folders.
+	isNested := !folder.IsRootFolderUID(parentUID)
+	if isNested {
+		// Creator permissions are only set on root-level folders.
+		return nil
+	}
+
+	// Creator permissions always set with the legacy behaviour and set on root level folders for new behaviour
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		userID, err := user.GetInternalID()
+		if err != nil {
+			return err
+		}
+		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
+		})
+	}
+
+	if !isNested {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+		}...)
+	}
+
+	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

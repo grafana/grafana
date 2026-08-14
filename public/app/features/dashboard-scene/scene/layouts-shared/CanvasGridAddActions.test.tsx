@@ -1,0 +1,169 @@
+import { screen, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
+import { setPluginImportUtils } from '@grafana/runtime';
+import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { ElementSelectionContext, type ElementSelectionContextItem } from '@grafana/ui';
+
+import { DashboardInteractions } from '../../utils/interactions';
+import { activateFullSceneTree } from '../../utils/test-utils';
+import { DashboardScene } from '../DashboardScene';
+import { RowItem } from '../layout-rows/RowItem';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { TabItem } from '../layout-tabs/TabItem';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
+
+import { CanvasGridAddActions } from './CanvasGridAddActions';
+
+jest.mock('../../utils/interactions', () => ({
+  DashboardInteractions: {
+    editSessionStarted: jest.fn(),
+    trackAddPanelClick: jest.fn(),
+    trackGroupRowClick: jest.fn(),
+    trackGroupTabClick: jest.fn(),
+    trackPastePanelClick: jest.fn(),
+  },
+}));
+
+// mock getDefaultVizPanel
+jest.mock('../../utils/utils', () => ({
+  ...jest.requireActual('../../utils/utils'),
+  getDefaultVizPanel: () => new VizPanel({ key: 'panel-1', pluginId: 'text' }),
+}));
+
+// mock addNew
+jest.mock('./addNew', () => ({
+  ...jest.requireActual('./addNew'),
+  addNewRowTo: jest.fn(),
+  addNewTabTo: jest.fn(),
+}));
+
+// mock useClipboardState
+jest.mock('./useClipboardState', () => ({
+  ...jest.requireActual('./useClipboardState'),
+  useClipboardState: () => ({
+    hasCopiedPanel: true,
+  }),
+}));
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
+
+function renderWithSelection(ui: React.ReactElement, selected: ElementSelectionContextItem[]) {
+  return render(
+    <ElementSelectionContext.Provider value={{ enabled: true, selected, onSelect: jest.fn(), onClear: jest.fn() }}>
+      {ui}
+    </ElementSelectionContext.Provider>
+  );
+}
+
+function buildTestScene(body?: DashboardScene['state']['body']) {
+  const scene = new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    isEditing: true,
+    body:
+      body ??
+      new TabsLayoutManager({
+        tabs: [
+          new TabItem({
+            title: 'test tab',
+            layout: new RowsLayoutManager({
+              rows: [
+                new RowItem({
+                  title: 'Test Title',
+                  layout: new TabsLayoutManager({
+                    tabs: [new TabItem({ title: 'Subtab' })],
+                  }),
+                }),
+              ],
+            }),
+          }),
+        ],
+      }),
+  });
+  activateFullSceneTree(scene);
+  return scene;
+}
+
+describe('CanvasGridAddActions', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('tracking scene actions', () => {
+    it('should call DashboardInteractions.trackAddPanelClick when clicking on add panel button', async () => {
+      const scene = buildTestScene();
+      const layoutManager = scene.state.body;
+      layoutManager.addPanel = jest.fn();
+      const user = userEvent.setup();
+      render(<CanvasGridAddActions layoutManager={layoutManager} />);
+
+      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.addPanel));
+      expect(DashboardInteractions.trackAddPanelClick).toHaveBeenCalled();
+    });
+
+    it('should call DashboardInteractions.trackGroupRowClick when clicking on group into row button', async () => {
+      const scene = buildTestScene();
+      const layoutManager = scene.state.body;
+      const user = userEvent.setup();
+      render(<CanvasGridAddActions layoutManager={layoutManager} />);
+      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.groupPanels));
+
+      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.addRow));
+      expect(DashboardInteractions.trackGroupRowClick).toHaveBeenCalled();
+    });
+
+    it('should call DashboardInteractions.trackGroupTabClick when clicking on group into tab', async () => {
+      const scene = buildTestScene();
+      const layoutManager = scene.state.body;
+      const user = userEvent.setup();
+      render(<CanvasGridAddActions layoutManager={layoutManager} />);
+
+      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.groupPanels));
+      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.addTab));
+      expect(DashboardInteractions.trackGroupTabClick).toHaveBeenCalled();
+    });
+
+    // Note: Ungroup functionality has been moved to TabsLayoutManagerRenderer and RowsLayoutManagerRenderer
+    // Tests for ungroup tracking should be added to those components' test files
+
+    it('should call DashboardInteractions.trackPastePanel when clicking on the paste panel button', async () => {
+      const scene = buildTestScene();
+      const layoutManager = scene.state.body;
+      layoutManager.pastePanel = jest.fn();
+      const user = userEvent.setup();
+      render(<CanvasGridAddActions layoutManager={layoutManager} />);
+
+      await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.pastePanel));
+      expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalled();
+    });
+  });
+
+  describe('multi-selection', () => {
+    function getControlsContainer() {
+      return screen
+        .getByTestId(selectors.components.CanvasGridAddActions.addPanel)
+        .closest('.dashboard-canvas-controls');
+    }
+
+    it('stays revealable when a single element is selected', () => {
+      const scene = buildTestScene();
+
+      renderWithSelection(<CanvasGridAddActions layoutManager={scene.state.body} />, [{ id: 'a' }]);
+
+      expect(getControlsContainer()).not.toHaveStyle({ visibility: 'hidden' });
+    });
+
+    it('is hidden with css (keeping its layout space) when multiple elements are selected', () => {
+      const scene = buildTestScene();
+
+      renderWithSelection(<CanvasGridAddActions layoutManager={scene.state.body} />, [{ id: 'a' }, { id: 'b' }]);
+
+      expect(getControlsContainer()).toHaveStyle({ visibility: 'hidden' });
+    });
+  });
+});

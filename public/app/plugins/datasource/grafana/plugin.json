@@ -1,0 +1,22 @@
+{
+  "type": "datasource",
+  "name": "-- Grafana --",
+  "id": "grafana",
+  "builtIn": true,
+
+  "info": {
+    "description": "A built-in data source that generates random walk data and can poll the Testdata data source. This helps you test visualizations and run experiments.",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-grafanadb.svg",
+      "large": "img/icn-grafanadb.svg"
+    },
+    "links": [{ "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }]
+  },
+  "backend": true,
+  "annotations": true,
+  "metrics": true
+}

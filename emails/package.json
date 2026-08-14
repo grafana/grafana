@@ -1,0 +1,16 @@
+{
+  "name": "grafana-email-campaign",
+  "version": "1.0.0",
+  "description": "Grafana Email templates based on MJML",
+  "author": "Grafana Labs",
+  "devDependencies": {
+    "grunt": "1.5.3",
+    "grunt-assemble": "0.6.3",
+    "grunt-cli": "^1.4.3",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-watch": "1.1.0",
+    "grunt-text-replace": "0.4.0",
+    "load-grunt-config": "3.0.1",
+    "mjml": "^4.13.0"
+  }
+}

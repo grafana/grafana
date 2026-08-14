@@ -1,0 +1,51 @@
+/* eslint-disable import/no-extraneous-dependencies */
+// This file contains the common parts of the rollup configuration that are shared across multiple packages.
+import nodeResolve from '@rollup/plugin-node-resolve';
+import { dirname, resolve } from 'node:path';
+import esbuild from 'rollup-plugin-esbuild';
+import { nodeExternals } from 'rollup-plugin-node-externals';
+
+// This is the path to the root of the grafana project
+// Prefer PROJECT_CWD env var set by yarn berry
+const projectCwd = process.env.PROJECT_CWD ?? '../../';
+
+export const entryPoint = 'src/index.ts';
+
+// Plugins that are shared across all rollup configurations. Their order can affect build output.
+// Externalising and resolving modules should happen before transformation.
+export const plugins = [
+  nodeExternals({ deps: true, packagePath: './package.json' }),
+  nodeResolve(),
+  esbuild({
+    target: 'es2018',
+    tsconfig: 'tsconfig.build.json',
+  }),
+];
+
+// Generates a rollup configuration for commonjs output.
+export function cjsOutput(pkg, pkgName, overrides = {}) {
+  return {
+    format: 'cjs',
+    sourcemap: true,
+    dir: dirname(pkg.main),
+    entryFileNames: '[name].cjs',
+    preserveModules: true,
+    preserveModulesRoot: resolve(projectCwd, `packages/${pkgName}/src`),
+    esModule: true,
+    interop: 'compat',
+    ...overrides,
+  };
+}
+
+// Generate a rollup configuration for es module output.
+export function esmOutput(pkg, pkgName, overrides = {}) {
+  return {
+    format: 'esm',
+    sourcemap: true,
+    dir: dirname(pkg.module),
+    entryFileNames: '[name].mjs',
+    preserveModules: true,
+    preserveModulesRoot: resolve(projectCwd, `packages/${pkgName}/src`),
+    ...overrides,
+  };
+}

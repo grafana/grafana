@@ -1,0 +1,27 @@
+{
+  "tables": [
+    {
+      "name": "PrimaryResult",
+      "columns": [
+        {
+          "name": "timestamp",
+          "type": "datetime"
+        },
+        {
+          "name": "value",
+          "type": "int"
+        }
+      ],
+      "rows": [
+        [
+          "2019-09-13T01:02:03.456789Z",
+          1
+        ],
+        [
+          "2019-09-13T02:02:03.456789Z",
+          2
+        ]
+      ]
+    }
+  ]
+}

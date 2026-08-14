@@ -1,0 +1,167 @@
+import { css } from '@emotion/css';
+import Skeleton from 'react-loading-skeleton';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { Avatar, Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { getSvgSize } from '@grafana/ui/internal';
+import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
+import { getIconForItem } from 'app/features/search/service/utils';
+
+import { Indent } from '../../../core/components/Indent/Indent';
+import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
+import { useChildrenByParentUIDState } from '../state/hooks';
+import { type DashboardsTreeCellProps } from '../types';
+import { makeRowID } from '../utils/dashboards';
+
+const CHEVRON_SIZE = 'md';
+const ICON_SIZE = 'sm';
+
+type NameCellProps = DashboardsTreeCellProps & {
+  onFolderClick: (uid: string, newOpenState: boolean) => void;
+};
+
+export function NameCell({ row: { original: data }, onFolderClick, treeID }: NameCellProps) {
+  const styles = useStyles2(getStyles);
+  const { item, level, isOpen } = data;
+  const childrenByParentUID = useChildrenByParentUIDState();
+
+  const isLoading = isOpen && !childrenByParentUID[item.uid];
+  const iconName = getIconForItem(data.item, isOpen);
+  const ownerReference = item.kind !== 'ui' ? item.ownerReference : undefined;
+
+  if (item.kind === 'ui') {
+    return (
+      <>
+        <Indent
+          level={level}
+          spacing={{
+            xs: 1,
+            md: 3,
+          }}
+        />
+        <span className={styles.folderButtonSpacer} />
+        {item.uiKind === 'empty-folder' ? (
+          <em className={styles.emptyText}>
+            <Text variant="body" color="secondary" truncate>
+              <Trans i18nKey="browse-dashboards.name-cell.no-items">No items</Trans>
+            </Text>
+          </em>
+        ) : (
+          <Skeleton width={200} />
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Indent
+        level={level}
+        spacing={{
+          xs: 1,
+          md: 3,
+        }}
+      />
+
+      {item.kind === 'folder' ? (
+        <IconButton
+          size={CHEVRON_SIZE}
+          className={styles.chevron}
+          onClick={() => {
+            onFolderClick(item.uid, !isOpen);
+          }}
+          name={isOpen ? 'angle-down' : 'angle-right'}
+          aria-label={
+            isOpen
+              ? t('browse-dashboards.dashboards-tree.collapse-folder-button', 'Collapse folder {{title}}', {
+                  title: item.title,
+                })
+              : t('browse-dashboards.dashboards-tree.expand-folder-button', 'Expand folder {{title}}', {
+                  title: item.title,
+                })
+          }
+        />
+      ) : (
+        <span className={styles.folderButtonSpacer} />
+      )}
+
+      <div className={styles.iconNameContainer}>
+        {isLoading ? <Spinner size={ICON_SIZE} /> : <Icon size={ICON_SIZE} name={iconName} />}
+
+        <Text variant="body" truncate id={treeID && makeRowID(treeID, item)}>
+          {item.url ? (
+            <Link
+              onClick={() => {
+                reportInteraction('grafana_browse_dashboards_page_click_list_item', {
+                  itemKind: item.kind,
+                  parent: item.parentUID ? 'folder' : 'root',
+                  source: 'browseDashboardsPage_BrowseView',
+                  uid: item.uid,
+                });
+              }}
+              href={item.url}
+              className={styles.link}
+            >
+              {item.title}
+            </Link>
+          ) : (
+            item.title
+          )}
+        </Text>
+
+        <FolderRepo folder={item} />
+
+        <DescriptionTooltip description={item.description} />
+
+        {ownerReference && (
+          <div className={styles.ownerReference}>
+            {ownerReference.avatarUrl && <Avatar src={ownerReference.avatarUrl} alt={ownerReference.title} />}
+            <Text truncate color="secondary" variant="bodySmall">
+              {ownerReference.title}
+            </Text>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    chevron: css({
+      marginRight: theme.spacing(1),
+      width: getSvgSize(CHEVRON_SIZE),
+    }),
+    emptyText: css({
+      // needed for text to truncate correctly
+      overflow: 'hidden',
+    }),
+    // Should be the same size as the <IconButton /> so Dashboard name is aligned to Folder name siblings
+    folderButtonSpacer: css({
+      paddingLeft: `calc(${getSvgSize(CHEVRON_SIZE)}px + ${theme.spacing(1)})`,
+    }),
+    iconNameContainer: css({
+      alignItems: 'center',
+      display: 'flex',
+      gap: theme.spacing(1),
+      overflow: 'hidden',
+    }),
+    link: css({
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    }),
+    ownerReference: css({
+      display: 'flex',
+      marginLeft: theme.spacing(1),
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      flex: '0 1 auto',
+    }),
+  };
+};

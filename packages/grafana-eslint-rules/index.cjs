@@ -1,0 +1,26 @@
+const consistentStoryTitles = require('./rules/consistent-story-titles.cjs');
+const defineFeatureEvents = require('./rules/define-feature-events.cjs');
+const noAriaLabelSelectors = require('./rules/no-aria-label-e2e-selectors.cjs');
+const noBorderRadiusLiteral = require('./rules/no-border-radius-literal.cjs');
+const noInvalidCssProperties = require('./rules/no-invalid-css-properties.cjs');
+const noPluginExternalImportPaths = require('./rules/no-plugin-external-import-paths.cjs');
+const noRestrictedImgSrcs = require('./rules/no-restricted-img-srcs.cjs');
+const noRestrictedSyntaxRules = require('./rules/no-restricted-syntax.cjs');
+const noUnreducedMotion = require('./rules/no-unreduced-motion.cjs');
+const themeTokenUsage = require('./rules/theme-token-usage.cjs');
+
+/** @type {import('eslint').Linter.Plugin} */
+module.exports = {
+  rules: {
+    'no-unreduced-motion': noUnreducedMotion,
+    'no-aria-label-selectors': noAriaLabelSelectors,
+    'no-border-radius-literal': noBorderRadiusLiteral,
+    'theme-token-usage': themeTokenUsage,
+    'no-restricted-img-srcs': noRestrictedImgSrcs,
+    'consistent-story-titles': consistentStoryTitles,
+    'no-plugin-external-import-paths': noPluginExternalImportPaths,
+    'no-invalid-css-properties': noInvalidCssProperties,
+    'define-feature-events': defineFeatureEvents,
+    ...noRestrictedSyntaxRules.rules,
+  },
+};

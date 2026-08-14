@@ -1,0 +1,31 @@
+{
+    "title": "v42 Migration Test - Harky Must",
+    "schemaVersion": 41,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Panel with hideFrom.viz = true",
+        "type": "timeseries",
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Field1"
+              },
+              "properties": [
+                {
+                  "id": "custom.hideFrom",
+                  "value": {
+                    "viz": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+  

@@ -1,0 +1,12 @@
+  mqtt:
+    build:
+      context: docker/blocks/mqtt/build
+    ports:
+      - "127.0.0.1:1883:1883" # MQTT
+      - "127.0.0.1:8883:8883" # MQTT over TLS
+      - "127.0.0.1:8083:8083" # MQTT over WS
+      - "127.0.0.1:8443:8443" # MQTT over WSS
+    volumes:
+      - ${PWD}/docker/blocks/mqtt/nanomq.conf:/etc/nanomq.conf
+      - ${PWD}/docker/blocks/mqtt/nanomq_pwd.conf:/etc/nanomq_pwd.conf
+      - ${PWD}/docker/blocks/mqtt/nanomq_acl.conf:/etc/nanomq_acl.conf

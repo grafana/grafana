@@ -1,0 +1,24 @@
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "plugin": "test",
+  "version": "1.0.0",
+  "files": {
+    "executable": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "plugin.json": "f19e18ca5dec690b94f2ff7866372db4bc63f4ff1101ee5d9061b9a6f026f6dd"
+  },
+  "time": 1589270570251,
+  "keyId": "7e4d0c6a708866e7"
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.1
+Comment: https://openpgpjs.org
+
+wqIEARMKAAYFAl66WCoACgkQfk0ManCIZuf8zwIJAWBVDJyzqchZ/DN7ZDCy
+Kyb63CajW/XdgHalPDB0sZ/80ExjCSprkFYPL+hUlTUHIXh+jGkfnYpMoqWA
+Om77bFc2AgkBV8HTsuRw/lXUezKnDuXcgUIvHvEwKWTvtbLgcuMXMDAVAEBj
+isBWmA8xvUfMzgQ9CJUHAaJ6hf1erpE4BuBqtMM=
+=uBIX
+-----END PGP SIGNATURE-----

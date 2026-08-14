@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -e
+
+ERROR_COUNT="0"
+DIRECTIVES="$(grep -r -o  directive public/app/ | wc -l)"
+CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
+LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app | wc -l)"
+BARREL_IMPORTS="$(grep -r -oP '@todo: replace barrel import path' public/app | wc -l)"
+CLASSNAME_PROP="$(grep -r -o -E --include="*.ts*" "\.*.className=\W.*\W.*" public/app | wc -l)"
+EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.*\} from '@emotion/css'" public/app | wc -l)"
+TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
+DEPRECATED_DATA_SOURCE_SRV="$(grep -r -oE --include="*.ts*" --exclude="*.test.*" --exclude="*.spec.*" --exclude-dir={__mocks__,mocks,spec,node_modules,dist,compiled} "get(DataSource|Datasource)Srv\(\)" public/app packages | grep -cvE "packages/grafana-runtime/src/services/|public/app/features/plugins/datasource_srv" || true)"
+SCSS_FILES="$(find public packages -name '*.scss' -not -path '*/node_modules/*' | wc -l)"
+# ignore minimal age gate in this `yarn outdated` call
+OUTDATED_DEPENDENCIES="$(YARN_NPM_MINIMAL_AGE_GATE=0 yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)' || true)"
+TOTAL_OUTDATED_DEPENDENCIES="${OUTDATED_DEPENDENCIES:-0}"
+CIRCULAR_DEPENDENCIES="$(yarn lint:circular 2>&1 >/dev/null | sed -n 's/.*Found \([0-9]*\) circular.*/\1/p')"
+TOTAL_CIRCULAR_DEPENDENCIES="${CIRCULAR_DEPENDENCIES:-0}"
+
+echo -e "Typescript errors: $ERROR_COUNT"
+echo -e "Directives: $DIRECTIVES"
+echo -e "Controllers: $CONTROLLERS"
+echo -e "Legacy forms: $LEGACY_FORMS"
+echo -e "Barrel imports: $BARREL_IMPORTS"
+echo -e "Total outdated dependencies: $TOTAL_OUTDATED_DEPENDENCIES"
+echo -e "ClassName in props: $CLASSNAME_PROP"
+echo -e "@emotion/css imports: $EMOTION_IMPORTS"
+echo -e "Total TS files: $TS_FILES"
+echo -e "Deprecated DataSourceSrv usages: $DEPRECATED_DATA_SOURCE_SRV"
+echo -e "Total SCSS files: $SCSS_FILES"
+echo -e "Total circular dependencies: $TOTAL_CIRCULAR_DEPENDENCIES"
+
+ESLINT_STATS=""
+yarn lint:ts --format ./scripts/cli/eslint-stats-reporter.mjs -o eslint-stats.txt
+while read -r name value
+do
+  ESLINT_STATS+=$'\n  '
+  # We still report these as "betterer" as the dashboards/other scripts will still look for it there
+  ESLINT_STATS+="\"grafana.ci-code.betterer.${name}\": \"${value}\","
+done <<< "$(cat eslint-stats.txt)"
+
+rm eslint-stats.txt
+
+I18N_STATS=""
+while read -r name value
+do
+  I18N_STATS+=$'\n  '
+  I18N_STATS+="\"grafana.ci-code.i18n.${name}\": \"${value}\","
+done <<< "$(yarn i18n:stats)"
+
+# Requires the frontend to have been built (yarn build) so the assets manifests exist.
+# Assigned separately from the herestring below so that set -e catches a failure here.
+BUNDLE_SIZES="$(yarn bundle-size:stats)"
+BUNDLE_SIZE_STATS=""
+while read -r name value
+do
+  BUNDLE_SIZE_STATS+=$'\n  '
+  BUNDLE_SIZE_STATS+="\"grafana.ci-code.bundleSize.${name}\": \"${value}\","
+done <<< "$BUNDLE_SIZES"
+
+THEME_TOKEN_USAGE=""
+while read -r name value
+do
+  THEME_TOKEN_USAGE+=$'\n  '
+  THEME_TOKEN_USAGE+="\"grafana.ci-code.themeUsage.${name}\": \"${value}\","
+done <<< "$(yarn themes:usage | awk '$4 == "@grafana/theme-token-usage" {print $3}' | awk '{!seen[$0]++}END{for (i in seen) print i, seen[i]}')"
+
+echo "Metrics: {
+  $THEME_TOKEN_USAGE
+  $ESLINT_STATS
+  $I18N_STATS
+  $BUNDLE_SIZE_STATS
+  \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
+  \"grafana.ci-code.directives\": \"${DIRECTIVES}\",
+  \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",
+  \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",
+  \"grafana.ci-code.dependencies.outdated\": \"${TOTAL_OUTDATED_DEPENDENCIES}\",
+  \"grafana.ci-code.props.className\": \"${CLASSNAME_PROP}\",
+  \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\",
+  \"grafana.ci-code.tsFiles\": \"${TS_FILES}\",
+  \"grafana.ci-code.deprecatedApis.dataSourceSrv\": \"${DEPRECATED_DATA_SOURCE_SRV}\",
+  \"grafana.ci-code.scssFiles\": \"${SCSS_FILES}\",
+  \"grafana.ci-code.dependencies.circular\": \"${TOTAL_CIRCULAR_DEPENDENCIES}\"
+}"
