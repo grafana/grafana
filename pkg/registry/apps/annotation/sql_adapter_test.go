@@ -259,7 +259,7 @@ func TestSQLAdapter_ListPagination(t *testing.T) {
 }
 
 func TestSQLAdapter_ListWithCreatedByFilter(t *testing.T) {
-	sqlDB := db.InitTestDB(t)
+	sqlDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 2
 
