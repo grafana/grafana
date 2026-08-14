@@ -3230,7 +3230,6 @@ var (
 			Owner:       grafanaDataSourcesPlugins,
 			Generate:    Generate{React: true},
 			Expression:  "false",
-
 		},
 		{
 			Name:         "datasources.queryGateway",
