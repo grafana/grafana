@@ -1084,7 +1084,7 @@ func TestIntegrationBatchDisableUsersExcludesServiceAccounts(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	ss := db.InitTestDB(t)
+	ss := sqlstore.NewTestStore(t)
 	store := ProvideStore(legacysql.NewDatabaseProvider(ss), setting.NewCfg())
 	now := time.Now()
 
