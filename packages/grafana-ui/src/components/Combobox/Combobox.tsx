@@ -15,7 +15,12 @@ import { Portal } from '../Portal/Portal';
 import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
-import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
+import {
+  getComboboxStyles,
+  MENU_OPTION_HEIGHT,
+  MENU_OPTION_HEIGHT_DESCRIPTION,
+  MENU_PADDING,
+} from './getComboboxStyles';
 import { type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
@@ -279,7 +284,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       if (firstGroupItem && hasGroup) {
         itemHeight += MENU_OPTION_HEIGHT;
       }
-      return itemHeight;
+      return itemHeight + 2 * MENU_PADDING;
     },
     getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
