@@ -1,6 +1,6 @@
-import { act, render } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { BehaviorSubject } from 'rxjs';
+import { act, render } from 'test/test-utils';
 
 import { CoreApp, type Scope } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';

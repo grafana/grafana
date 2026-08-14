@@ -2,7 +2,6 @@ package features
 
 import (
 	"context"
-	"net/http"
 
 	"go.opentelemetry.io/otel/baggage"
 
@@ -31,13 +30,8 @@ func EvaluationContextFromBaggage(ctx context.Context) openfeature.EvaluationCon
 	return openfeature.NewEvaluationContext(targetingKey, contextAtributes)
 }
 
-// WithTransactionContextMiddleware is an HTTP middleware that reads OTel baggage
-// from the incoming request and sets it as the OpenFeature transaction context.
-// Register it in each MT service's HTTP middleware chain.
-func WithTransactionContextMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		evalCtx := EvaluationContextFromBaggage(r.Context())
-		ctx := openfeature.MergeTransactionContext(r.Context(), evalCtx)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+// EvaluationContextFromTargetingKey builds an evaluation context with no
+// attributes, using targetingKey as the sole subject identifier.
+func EvaluationContextFromTargetingKey(targetingKey string) openfeature.EvaluationContext {
+	return openfeature.NewEvaluationContext(targetingKey, make(map[string]any))
 }

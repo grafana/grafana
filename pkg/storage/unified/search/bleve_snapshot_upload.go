@@ -170,9 +170,14 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 	}
 
 	meta := IndexMeta{
-		BuildVersion:          bi.BuildVersion,
-		IndexFormat:           indexFormat,
-		ReaderRequirements:    bi.ReaderRequirements,
+		BuildVersion:       bi.BuildVersion,
+		IndexFormat:        indexFormat,
+		Features:           bi.Features,
+		ReaderRequirements: bi.ReaderRequirements,
+		// Describes the index being uploaded, not this binary: an index built before
+		// index features existed records none, and readers must not read that as
+		// "has no features".
+		FeaturesRecorded:      bi.Features != nil,
 		LatestResourceVersion: rv,
 		DocCount:              docCount,
 	}

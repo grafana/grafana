@@ -5659,6 +5659,7 @@
       "add-conditional-rule": "Hinzufügen von {{ruleDescription}}-Regel",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Panel duplizieren",
       "edit-query-result-rule": "Regel für Abfrageergebnis ändern",
       "edit-template-variable-rule": "Regel für Vorlagenvariable ändern",
@@ -6863,7 +6864,8 @@
         "change-annotation-enabled-state": "Aktivierungsstatus der Anmerkung ändern",
         "change-annotation-name": "Anmerkungsnamen ändern",
         "change-annotation-panel-filter": "Filter für das Anmerkungs-Panel ändern"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Anmerkungsabfrage löschen",
@@ -6939,13 +6941,9 @@
       "placeholder-your-metric-prefix": "Ihr Metrik-Präfix"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Löschen",
-      "aria-label-edit": "Bearbeiten",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Regeln zum Ein-/Ausblenden funktionieren nicht",
@@ -7745,6 +7743,10 @@
     },
     "variable-controls": {
       "add-variable": "Variable hinzufügen"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Variable löschen",
@@ -12654,6 +12656,7 @@
       "customise-saving": "",
       "dialog-label": "Navigation",
       "dock": "Menü andocken",
+      "header-title": "",
       "list-label": "Navigation",
       "open": "Hauptmenü",
       "pin-error": "",
@@ -12764,6 +12767,13 @@
       "title-zoom-out": "Verkleinern"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12792,6 +12802,11 @@
       "count_other": "",
       "count-truncated_one": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
     }
   },
   "notifications": {
@@ -16059,6 +16074,7 @@
     "name-show-mini-map": "Minikarte anzeigen"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16087,6 +16103,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

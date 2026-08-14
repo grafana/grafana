@@ -47,9 +47,43 @@ func paths(routes []builder.GroupVersionRoutes) map[string][]string {
 func TestBuild_NothingMountedWhenOffOrUnusable(t *testing.T) {
 	b := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{{Group: "dashboard.grafana.app", Version: "v1"}}}}
 
-	assert.Nil(t, Build(false, nil, fakeClient{}, b, nil), "off")
+	assert.Nil(t, Build(false, false, nil, fakeClient{}, b, nil), "both off")
 	// A server without a unified storage client has nothing to search.
-	assert.Nil(t, Build(true, nil, nil, b, nil), "no client")
+	assert.Nil(t, Build(true, false, nil, nil, b, nil), "no client")
+	assert.Nil(t, Build(false, true, nil, nil, b, nil), "no client, trash on")
+}
+
+// Trash authorizes on a rule that has not been reviewed yet, so turning search on
+// must not expose it.
+func TestBuild_SearchAndTrashAreIndependent(t *testing.T) {
+	newBuilders := func() []builder.APIGroupBuilder {
+		return []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{
+			{Group: "dashboard.grafana.app", Version: "v1"},
+		}}}
+	}
+	const gv = "dashboard.grafana.app/v1"
+
+	t.Run("search only", func(t *testing.T) {
+		got := paths(Build(true, false, nil, fakeClient{}, newBuilders(), nil))
+		assert.Equal(t, []string{"dashboards/search"}, got[gv])
+	})
+
+	t.Run("trash only", func(t *testing.T) {
+		got := paths(Build(false, true, nil, fakeClient{}, newBuilders(), nil))
+		assert.Equal(t, []string{"dashboards/trash"}, got[gv])
+	})
+
+	t.Run("both", func(t *testing.T) {
+		got := paths(Build(true, true, nil, fakeClient{}, newBuilders(), nil))
+		assert.ElementsMatch(t, []string{"dashboards/search", "dashboards/trash"}, got[gv])
+	})
+}
+
+// Trash must not reach a kind that search cannot.
+func TestBuild_TrashRespectsTheAllowlist(t *testing.T) {
+	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: "playlist.grafana.app", Version: "v0alpha1"}}}
+
+	assert.Empty(t, paths(Build(true, true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil)))
 }
 
 func TestBuild_MountsAllowedKinds(t *testing.T) {
@@ -58,7 +92,7 @@ func TestBuild_MountsAllowedKinds(t *testing.T) {
 		{Group: "folder.grafana.app", Version: "v1"},
 	}}
 
-	got := paths(Build(true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
+	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
 
 	assert.Equal(t, []string{"dashboards/search"}, got["dashboard.grafana.app/v1"])
 	assert.Equal(t, []string{"folders/search"}, got["folder.grafana.app/v1"])
@@ -69,7 +103,7 @@ func TestBuild_MountsAllowedKinds(t *testing.T) {
 func TestBuild_SkipsGroupVersionsNotServed(t *testing.T) {
 	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: "dashboard.grafana.app", Version: "v1"}}}
 
-	got := paths(Build(true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
+	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
 
 	assert.Contains(t, got, "dashboard.grafana.app/v1")
 	assert.NotContains(t, got, "dashboard.grafana.app/v2", "v2 is a served version, but not served by this builder")
@@ -84,7 +118,7 @@ func TestBuild_SkipsKindsNotAllowed(t *testing.T) {
 	}
 	b := &fakeBuilder{gvs: notAllowed}
 
-	assert.Empty(t, paths(Build(true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil)))
+	assert.Empty(t, paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil)))
 }
 
 // Every served version of an allowed kind gets the endpoint, so a client can use
@@ -103,12 +137,42 @@ func TestBuild_MountsEveryServedVersion(t *testing.T) {
 	}
 	require.NotEmpty(t, dashboardGVs)
 
-	got := paths(Build(true, nil, fakeClient{},
+	got := paths(Build(true, false, nil, fakeClient{},
 		[]builder.APIGroupBuilder{&fakeBuilder{gvs: dashboardGVs}}, nil))
 
 	assert.Len(t, got, len(dashboardGVs))
 	for _, gv := range dashboardGVs {
-		assert.Equal(t, []string{"dashboards/search"}, got[gv.String()], "missing route for %s", gv)
+		// Contains, not Equal: a version may declare more than one allowed kind
+		// (v2beta1 serves Notebook alongside Dashboard).
+		assert.Contains(t, got[gv.String()], "dashboards/search", "missing route for %s", gv)
+	}
+}
+
+// Notebook is declared only in v2beta1, so its route is mounted there and nowhere
+// else — the endpoint follows the kind's served versions, not the group's.
+func TestBuild_MountsNotebooksOnDeclaringVersionOnly(t *testing.T) {
+	var dashboardGVs []schema.GroupVersion
+	for _, m := range resource.AppManifests() {
+		if m.ManifestData == nil || m.ManifestData.Group != "dashboard.grafana.app" {
+			continue
+		}
+		for _, v := range m.ManifestData.Versions {
+			if v.Served {
+				dashboardGVs = append(dashboardGVs, schema.GroupVersion{Group: m.ManifestData.Group, Version: v.Name})
+			}
+		}
+	}
+	require.NotEmpty(t, dashboardGVs)
+
+	got := paths(Build(true, false, nil, fakeClient{},
+		[]builder.APIGroupBuilder{&fakeBuilder{gvs: dashboardGVs}}, nil))
+
+	for _, gv := range dashboardGVs {
+		if gv.Version == "v2beta1" {
+			assert.Contains(t, got[gv.String()], "notebooks/search", "expected notebooks route on %s", gv)
+			continue
+		}
+		assert.NotContains(t, got[gv.String()], "notebooks/search", "unexpected notebooks route on %s", gv)
 	}
 }
 

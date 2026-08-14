@@ -10,8 +10,8 @@ import { RepeatOptions } from './shared/RepeatOptions';
  * shared repeat and conditional rendering option groups
  */
 export class TabOptions extends PageObject {
-  public conditionalRenderingOptions: ConditionalRenderingOptions;
-  public repeatOptions: RepeatOptions;
+  readonly conditionalRenderingOptions: ConditionalRenderingOptions;
+  readonly repeatOptions: RepeatOptions;
 
   constructor(args: PageObjectArgs) {
     super(args);

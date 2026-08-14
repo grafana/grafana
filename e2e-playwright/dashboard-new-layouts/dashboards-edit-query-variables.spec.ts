@@ -72,7 +72,7 @@ test.describe(
       await expect(previewValues.nth(1)).toHaveText('Custom value two');
 
       // Click the "Apply" button
-      await sidebar.variableOptions.query.clickApplyButton();
+      await sidebar.variableOptions.query.applyChanges();
 
       // Verify that the variable has the static options
       await controls.variables.openDropdown(variable.label);
@@ -147,7 +147,7 @@ test.describe(
       await expect(previewValues.nth(0)).toHaveText('A');
       await expect(previewValues.nth(1)).toHaveText('B');
 
-      await sidebar.variableOptions.query.clickApplyButton();
+      await sidebar.variableOptions.query.applyChanges();
 
       // Verify that the variable has the static options
       await controls.variables.openDropdown(variable.label);

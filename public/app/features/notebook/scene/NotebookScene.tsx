@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import {
   behaviors,
   type CancelActivationHandler,
@@ -18,7 +18,7 @@ import {
   ScopesVariable,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { Text, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
 
 import { canEditNotebooks } from '../permissions';
@@ -152,23 +152,17 @@ function buildNotebookVariables(): SceneVariableSet | undefined {
 }
 
 function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
-  const styles = useStyles2(getStyles);
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
+  // The app header is fixed and its height varies (single vs docked mega menu), so the sticky offset has
+  // to come from the chrome rather than a constant.
+  const headerHeight = useChromeHeaderHeight();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
+  const { body, timePicker, refreshPicker, hideTimeControls, overlay } = model.useState();
 
   return (
-    <>
+    <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
-      {/* The row itself always renders: the edit toggle must not inherit the pickers' visibility.
-          Only the pickers are conditional. */}
       <div className={styles.controls}>
-        {isEditing && (
-          // Pushed to the far left of the row; everything else stays right-aligned.
-          <span className={styles.mode}>
-            <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="notebooks.view.editing">Editing</Trans>
-            </Text>
-          </span>
-        )}
         <NotebookEditToggle notebook={model} />
         {!hideTimeControls && (
           <>
@@ -179,7 +173,7 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
       </div>
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}
-    </>
+    </div>
   );
 }
 
@@ -208,15 +202,30 @@ function NotebookHiddenVariables({ model }: SceneComponentProps<NotebookScene>) 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) => ({
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flexGrow: 1,
+  }),
   controls: css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'flex-end',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
-  }),
-  mode: css({
-    marginRight: 'auto',
+    // A sticky row is transparent by default, so the notebook would scroll visibly through it. These two
+    // tokens are the page's own background (PageLayoutType.Custom, see getDefaultBackgroundForLayout), so
+    // the row reads as chrome rather than as a tinted band — same pairing DashboardControlsChrome uses.
+    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
+    // Only from md up: on a narrow viewport the row is a large share of the screen, so the dashboard lets
+    // it scroll away rather than eat the reading area, and this follows suit.
+    [theme.breakpoints.up('md')]: {
+      position: 'sticky',
+      top: headerHeight,
+      // Above the docked sidebar, or the time picker's popover opens behind it. Same reasoning and same
+      // token the dashboard's controls chrome uses.
+      zIndex: theme.zIndex.sidemenu,
+    },
   }),
 });
