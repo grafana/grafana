@@ -4,13 +4,12 @@ import { ConstantVariable, CustomVariable, QueryVariable, type SceneVariable, Sc
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import {
-  AnnotationEditActions,
-  ControlActionsPopover,
-  LinkEditActions,
-  VariableEditActions,
-} from './ControlActionsPopover';
-import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
+import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer';
+
+import { AnnotationEditActions } from './AnnotationEditActions';
+import { EditActionsPopover } from './EditActionsPopover';
+import { LinkEditActions } from './LinkEditActions';
+import { VariableEditActions } from './VariableEditActions';
 
 jest.mock('app/core/app_events', () => ({
   appEvents: {
@@ -20,13 +19,13 @@ jest.mock('app/core/app_events', () => ({
 }));
 const mockPublishAppEvent = jest.mocked(appEvents.publish);
 
-describe('<ControlActionsPopover />', () => {
+describe('<EditActionsPopover />', () => {
   describe('when isEditable is false', () => {
     test('renders children and does not show floating content on hover', () => {
       render(
-        <ControlActionsPopover isEditable={false} content={<span>popover-actions</span>}>
+        <EditActionsPopover isEditable={false} content={<span>popover-actions</span>}>
           <div data-testid="reference-child">variable control</div>
-        </ControlActionsPopover>
+        </EditActionsPopover>
       );
 
       expect(screen.getByTestId('reference-child')).toHaveTextContent('variable control');
@@ -37,9 +36,9 @@ describe('<ControlActionsPopover />', () => {
   describe('when isEditable is true', () => {
     test('if the user hovers the reference, then floating content is shown in the document', async () => {
       const { user } = render(
-        <ControlActionsPopover isEditable={true} content={<span>popover-actions</span>}>
+        <EditActionsPopover isEditable={true} content={<span>popover-actions</span>}>
           <div data-testid="reference-child">variable control</div>
-        </ControlActionsPopover>
+        </EditActionsPopover>
       );
 
       expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
@@ -52,9 +51,9 @@ describe('<ControlActionsPopover />', () => {
 
     test('if content is null, then no floating panel is mounted when open', async () => {
       const { user } = render(
-        <ControlActionsPopover isEditable={true} content={null}>
+        <EditActionsPopover isEditable={true} content={null}>
           <div data-testid="reference-child">variable control</div>
-        </ControlActionsPopover>
+        </EditActionsPopover>
       );
 
       expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
@@ -67,9 +66,9 @@ describe('<ControlActionsPopover />', () => {
 
     test('pointerdown stops event propagation', async () => {
       const { user } = render(
-        <ControlActionsPopover isEditable={true} content={<button>action</button>}>
+        <EditActionsPopover isEditable={true} content={<button>action</button>}>
           <div data-testid="reference-child">control</div>
-        </ControlActionsPopover>
+        </EditActionsPopover>
       );
 
       await user.hover(screen.getByTestId('reference-child'));
@@ -87,9 +86,9 @@ describe('<ControlActionsPopover />', () => {
   describe('when a popover action opens a modal', () => {
     async function renderAndOpenPopover(content: React.ReactNode) {
       const { user } = render(
-        <ControlActionsPopover isEditable={true} content={content}>
+        <EditActionsPopover isEditable={true} content={content}>
           <div data-testid="reference-child">control</div>
-        </ControlActionsPopover>
+        </EditActionsPopover>
       );
 
       await user.hover(screen.getByTestId('reference-child'));

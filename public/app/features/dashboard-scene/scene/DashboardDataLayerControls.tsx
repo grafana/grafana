@@ -8,11 +8,12 @@ import { useElementSelection, useStyles2 } from '@grafana/ui';
 import { AnnotationQueryEditorModal } from '../settings/annotations/AnnotationQueryEditorModal';
 import { annotationEditActions } from '../settings/annotations/actions';
 
-import { AnnotationEditActions, ControlActionsPopover } from './ControlActionsPopover';
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet, isDashboardDataLayerSet, isDashboardDataLayerSetState } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
 import { DataLayerControl } from './DataLayerControl';
+import { AnnotationEditActions } from './edit-actions-popover/AnnotationEditActions';
+import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
 
 type DashboardDataLayerControlsProps = {
   dashboard: DashboardScene;
@@ -90,11 +91,11 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
       {isQueryEditorOpen && layer instanceof DashboardAnnotationsDataLayer && (
         <AnnotationQueryEditorModal layer={layer} onClose={() => setIsQueryEditorOpen(false)} />
       )}
-      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+      <EditActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
         <div className={styles.container}>
           <DataLayerControl layer={layer} inMenu={inMenu} />
         </div>
-      </ControlActionsPopover>
+      </EditActionsPopover>
     </>
   );
 }
