@@ -1,4 +1,4 @@
-package folderlabel
+package folderlabelsyncer
 
 import (
 	"context"

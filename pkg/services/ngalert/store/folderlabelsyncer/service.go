@@ -1,4 +1,4 @@
-// Package folderlabel maintains a label on folders that contain Grafana-managed alert or recording
+// Package folder_label_reconciler maintains a label on folders that contain Grafana-managed alert or recording
 // rules, so callers can ask the folder API for "folders with rules" directly:
 //
 //	GET /apis/folder.grafana.app/v1/namespaces/{ns}/folders?labelSelector=alerting.grafana.app/has-rules=true
@@ -8,7 +8,7 @@
 // writer, neither of which implements rest.Watcher, so the apiserver never registers the watch verb
 // for them. The legacy rule store is the one point every runtime write path converges on, which is
 // why the bus event is the broadest signal available.
-package folderlabel
+package folderlabelsyncer
 
 import (
 	"context"
