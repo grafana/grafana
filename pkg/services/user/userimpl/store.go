@@ -561,7 +561,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		whereParams := make([]any, 0)
 		userTable := dbHelper.Table("user")
 		userAuthTable := dbHelper.Table("user_auth")
-		quotedUserAuthTable := dbHelper.DB.Quote(userAuthTable)
+		quotedUserAuthTable := quoteTable(dbHelper, "user_auth")
 		sess := dbSess.Table(userTable).Alias("u")
 
 		whereConditions = append(whereConditions, "u.is_service_account = ?")
