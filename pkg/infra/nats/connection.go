@@ -164,10 +164,14 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 			c.metrics.connectionErrors.Inc()
 			return nil, fmt.Errorf("connect nats %s: %w", c.role, res.err)
 		}
-		// connectionStatus is driven solely by the connect/reconnect/disconnect
-		// handlers: with RetryOnFailedConnect the conn returned here may still be
-		// dialing in the background, so setting it to 1 now would report a healthy
-		// connection that is not yet established.
+		if !res.conn.IsConnected() {
+			c.metrics.connectionErrors.Inc()
+			c.log.Warn("nats initial connect did not complete; retrying in the background",
+				"role", c.role,
+				"urls", strings.Join(urls, ","),
+				"status", res.conn.Status(),
+				"err", res.conn.LastError())
+		}
 		return res.conn, nil
 	}
 }

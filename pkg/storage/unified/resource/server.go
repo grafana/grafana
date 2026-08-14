@@ -2103,7 +2103,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
 					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Group, event.Key.Resource).Observe(latencySeconds)
 					}
 				}
 			}
