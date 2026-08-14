@@ -1621,9 +1621,6 @@
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/QueryVariableForm.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "react-hooks/exhaustive-deps": {
       "count": 1
     }
@@ -1641,26 +1638,8 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/editors/AdHocFiltersVariableEditor.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/editors/GroupByVariableEditor.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/editors/QueryVariableEditor/QueryVariableEditor.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/utils.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
