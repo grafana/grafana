@@ -10,9 +10,13 @@ import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { ColumnFreezeDivider } from './components/ColumnFreezeDivider';
-import { ColumnVisibilityPicker } from './components/ColumnVisibilityPicker';
-import { type PinningInteraction, PinningPrototypeControls } from './components/PinningPrototypeControls';
+import {
+  COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH,
+  COLUMN_VISIBILITY_PANEL_MAX_WIDTH,
+  COLUMN_VISIBILITY_PANEL_MIN_WIDTH,
+  COLUMN_VISIBILITY_RAIL_WIDTH,
+  ColumnVisibilitySidePanel,
+} from './components/ColumnVisibilitySidePanel';
 import { TABLE } from './constants';
 import {
   useColumnResize,
@@ -48,7 +52,6 @@ import {
   filterFieldsByHiddenColumns,
   orderFieldsByDisplayNames,
   orderFieldsByPinnedColumns,
-  updatePinnedColumnsAfterReorder,
 } from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
@@ -106,7 +109,8 @@ export function TableFlat(props: TableNGProps) {
   const [columnOrder, setColumnOrder] = useState<string[]>();
   const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(() => new Set());
   const [pinnedColumns, setPinnedColumns] = useState<string[]>();
-  const [pinningInteraction, setPinningInteraction] = useState<PinningInteraction>('both');
+  const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(false);
+  const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
   const [settlingColumnKeys, setSettlingColumnKeys] = useState<ReadonlySet<string>>(() => new Set());
   const settleTimeoutRef = useRef<number>();
 
@@ -209,6 +213,17 @@ export function TableFlat(props: TableNGProps) {
     [handleHideColumn]
   );
 
+  const markColumnsSettling = useCallback((columnKeys: string[]) => {
+    setSettlingColumnKeys(new Set(columnKeys));
+    if (settleTimeoutRef.current) {
+      window.clearTimeout(settleTimeoutRef.current);
+    }
+    settleTimeoutRef.current = window.setTimeout(() => {
+      setSettlingColumnKeys(new Set());
+      settleTimeoutRef.current = undefined;
+    }, COLUMN_SETTLE_MS);
+  }, []);
+
   const handleTogglePin = useCallback(
     (displayName: string) => {
       setPinnedColumns((current) => {
@@ -217,8 +232,9 @@ export function TableFlat(props: TableNGProps) {
           ? effective.filter((column) => column !== displayName)
           : [...effective, displayName];
       });
+      markColumnsSettling([displayName]);
     },
-    [configuredPinnedColumns]
+    [configuredPinnedColumns, markColumnsSettling]
   );
 
   const handleColumnsReorder = useCallback(
@@ -234,27 +250,9 @@ export function TableFlat(props: TableNGProps) {
         return next;
       });
 
-      if (pinningInteraction !== 'menu') {
-        const nextPinnedColumns = updatePinnedColumnsAfterReorder(
-          effectivePinnedColumns,
-          sourceColumnKey,
-          targetColumnKey
-        );
-        if (nextPinnedColumns !== effectivePinnedColumns) {
-          setPinnedColumns(nextPinnedColumns);
-        }
-      }
-
-      setSettlingColumnKeys(new Set([sourceColumnKey, targetColumnKey]));
-      if (settleTimeoutRef.current) {
-        window.clearTimeout(settleTimeoutRef.current);
-      }
-      settleTimeoutRef.current = window.setTimeout(() => {
-        setSettlingColumnKeys(new Set());
-        settleTimeoutRef.current = undefined;
-      }, COLUMN_SETTLE_MS);
+      markColumnsSettling([sourceColumnKey, targetColumnKey]);
     },
-    [effectivePinnedColumns, pinningInteraction, visibleFields]
+    [markColumnsSettling, visibleFields]
   );
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
@@ -279,9 +277,21 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
+  const columnVisibilityPanelMaxWidth = Math.max(
+    COLUMN_VISIBILITY_PANEL_MIN_WIDTH,
+    Math.min(COLUMN_VISIBILITY_PANEL_MAX_WIDTH, width - 100)
+  );
+  const columnVisibilityPanelAllocation = hasHeader
+    ? isColumnVisibilityPanelOpen
+      ? Math.min(columnVisibilityPanelWidth, columnVisibilityPanelMaxWidth)
+      : COLUMN_VISIBILITY_RAIL_WIDTH
+    : 0;
   // `width` may already be debounced by RefactoredTableNG. scrollbarWidth never is, so a scrollbar
   // appearing/disappearing re-sizes columns immediately instead of lagging behind that debounce.
-  const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
+  const availableWidth = useMemo(
+    () => Math.max(1, width - scrollbarWidth - columnVisibilityPanelAllocation),
+    [columnVisibilityPanelAllocation, scrollbarWidth, width]
+  );
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const applyToRowBgFn = useMemo(
@@ -322,17 +332,6 @@ export function TableFlat(props: TableNGProps) {
     frozenColumns,
     widthConfigResetKey
   );
-  const renderedPinnedColumnCount = Math.max(0, Math.min(frozenColumns, numFrozenColsFullyInView));
-  const pinnedWidth = widths.slice(0, renderedPinnedColumnCount).reduce((total, columnWidth) => total + columnWidth, 0);
-  const handlePinnedColumnCountChange = useCallback(
-    (count: number) => {
-      const visiblePinnedColumns = displayedFields.slice(0, count).map(getDisplayName);
-      const hiddenPinnedColumns = effectivePinnedColumns.filter((column) => hiddenColumns.has(column));
-      setPinnedColumns([...visiblePinnedColumns, ...hiddenPinnedColumns]);
-    },
-    [displayedFields, effectivePinnedColumns, hiddenColumns]
-  );
-
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
     fields: displayedFields,
@@ -368,7 +367,7 @@ export function TableFlat(props: TableNGProps) {
   } = usePaginatedRows(sortedRows, {
     enabled: enablePagination,
     width: availableWidth,
-    height: height - (noHeader ? 0 : TABLE.INTERACTION_TOOLBAR_HEIGHT),
+    height,
     footerHeight,
     headerHeight: hasHeader ? headerHeight : 0,
     rowHeight,
@@ -417,7 +416,7 @@ export function TableFlat(props: TableNGProps) {
       timeRange,
       onHideColumn: handleHideColumn,
       onGroupByColumn,
-      onTogglePin: pinningInteraction !== 'divider' ? handleTogglePin : undefined,
+      onTogglePin: handleTogglePin,
       pinnedColumns: pinnedColumnSet,
       settlingColumnKeys,
     }),
@@ -440,7 +439,6 @@ export function TableFlat(props: TableNGProps) {
       handleHideColumn,
       handleTogglePin,
       pinnedColumnSet,
-      pinningInteraction,
       setFilter,
       settlingColumnKeys,
       showTypeIcons,
@@ -510,30 +508,22 @@ export function TableFlat(props: TableNGProps) {
       onTooltipClose={() => setTooltipState(undefined)}
       inspectCell={inspectCell}
       onInspectCellDismiss={() => setInspectCell(null)}
-      toolbar={
+      sidePanel={
         !noHeader ? (
-          <>
-            <PinningPrototypeControls value={pinningInteraction} onChange={setPinningInteraction} />
-            <ColumnVisibilityPicker
-              fields={pinnedOrderedVisibleFields}
-              hiddenColumns={hiddenColumns}
-              onToggleColumn={handleToggleColumnVisibility}
-            />
-          </>
+          <ColumnVisibilitySidePanel
+            fields={pinnedOrderedVisibleFields}
+            hiddenColumns={hiddenColumns}
+            pinnedColumns={pinnedColumnSet}
+            isOpen={isColumnVisibilityPanelOpen}
+            width={columnVisibilityPanelAllocation}
+            maxWidth={columnVisibilityPanelMaxWidth}
+            onOpenChange={setIsColumnVisibilityPanelOpen}
+            onWidthChange={setColumnVisibilityPanelWidth}
+            onToggleColumn={handleToggleColumnVisibility}
+            onTogglePin={handleTogglePin}
+            onColumnsReorder={handleColumnsReorder}
+          />
         ) : undefined
-      }
-      renderGridOverlay={
-        !noHeader && pinningInteraction !== 'menu'
-          ? (gridContainerRef) => (
-              <ColumnFreezeDivider
-                gridRef={gridContainerRef}
-                columnCount={displayedFields.length}
-                pinnedColumnCount={renderedPinnedColumnCount}
-                pinnedWidth={pinnedWidth}
-                onPinnedColumnCountChange={handlePinnedColumnCountChange}
-              />
-            )
-          : undefined
       }
     />
   );

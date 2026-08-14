@@ -520,14 +520,15 @@ function buildColumnsFromFields(
       }
     }
 
+    const isSettling = settlingColumnKeys?.has(displayName);
     result.columns.push({
       field,
       key: displayName,
       name: displayName,
       width,
-      headerCellClass,
+      headerCellClass: clsx(headerCellClass, isSettling && 'table-ng-column-settling'),
       draggable: enableColumnReorder,
-      cellClass: settlingColumnKeys?.has(displayName) ? 'table-ng-column-settling' : undefined,
+      cellClass: isSettling ? 'table-ng-column-settling' : undefined,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (

@@ -60,22 +60,20 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
   const columnDragHighlightColor = theme.colors.primary.transparent;
 
   return {
-    interactionToolbar: css({
-      minHeight: TABLE.INTERACTION_TOOLBAR_HEIGHT,
+    tableViewport: css({
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: theme.spacing(1),
-      paddingInline: theme.spacing(0.5),
-      paddingBlockEnd: theme.spacing(0.5),
+      width: '100%',
+      height: '100%',
+      minWidth: 0,
+      minHeight: 0,
     }),
     gridViewport: css({
       position: 'relative',
+      flex: '1 1 auto',
+      inlineSize: 0,
       blockSize: '100%',
+      minInlineSize: 0,
       minBlockSize: 0,
-    }),
-    gridViewportWithToolbar: css({
-      blockSize: `calc(100% - ${TABLE.INTERACTION_TOOLBAR_HEIGHT}px)`,
     }),
     grid: css({
       '--rdg-background-color': bgColor,
@@ -168,17 +166,18 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
 
       '@keyframes table-ng-column-settle': {
         '0%': {
-          backgroundColor: columnDragHighlightColor,
+          opacity: 0.72,
+          transform: 'translateX(-4px)',
         },
         '100%': {
-          backgroundColor: 'transparent',
+          opacity: 1,
+          transform: 'translateX(0)',
         },
       },
 
       '.table-ng-column-settling': {
-        animation: 'table-ng-column-settle 0.28s ease-out',
-        '@media (prefers-reduced-motion: reduce)': {
-          animation: 'none',
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          animation: 'table-ng-column-settle 0.28s ease-out',
         },
       },
 
@@ -230,7 +229,11 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       '& .rdg-cell': {
         height: '100%',
         alignItems: 'center',
-        transition: 'background-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease',
+      },
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        '& .rdg-cell': {
+          transition: 'background-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease',
+        },
       },
       '& .rdg-cell-draggable': {
         cursor: 'grab',
@@ -246,11 +249,6 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       '& .rdg-cell-drag-over': {
         backgroundColor: columnDragHighlightColor,
         boxShadow: `inset 3px 0 0 0 ${columnDropIndicatorColor}`,
-      },
-      '@media (prefers-reduced-motion: reduce)': {
-        '& .rdg-cell': {
-          transition: 'none',
-        },
       },
     }),
     displayNone: css({ display: 'none' }),

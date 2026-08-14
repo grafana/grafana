@@ -89,7 +89,7 @@ export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSu
   onTooltipClose: () => void;
   inspectCell?: InspectCellProps | null;
   onInspectCellDismiss: () => void;
-  toolbar?: ReactNode;
+  sidePanel?: ReactNode;
   renderGridOverlay?: (gridContainerRef: RefObject<HTMLDivElement | null>) => ReactNode;
 }
 
@@ -127,7 +127,7 @@ export function TableDataGrid({
   onTooltipClose,
   inspectCell,
   onInspectCellDismiss,
-  toolbar,
+  sidePanel,
   renderGridOverlay,
   ...dataGridOverrides
 }: TableDataGridProps) {
@@ -189,57 +189,55 @@ export function TableDataGrid({
 
   return (
     <>
-      {toolbar != null && <div className={styles.interactionToolbar}>{toolbar}</div>}
-      <div
-        ref={gridContainerRef}
-        className={clsx(styles.gridViewport, toolbar != null && styles.gridViewportWithToolbar)}
-      >
-        <DataGrid<TableRow, TableSummaryRow, string>
-          {...dataGridOverrides}
-          {...commonDataGridProps}
-          role={role}
-          ref={gridRef}
-          className={styles.grid}
-          columns={columns}
-          rows={rows}
-          rowKeyGetter={rowKeyGetter}
-          isRowSelectionDisabled={() => initialRowIndex !== undefined}
-          selectedRows={selectedRows}
-          onSelectedRowsChange={setSelectedRows}
-          headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
-          headerRowHeight={headerHeight}
-          onColumnResize={onColumnResize}
-          onCellClick={onCellClick}
-          onCellKeyDown={onCellKeyDown}
-          renderers={{
-            renderRow: renderers.renderRow,
-            renderCell: renderers.renderCell,
-            noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
-          }}
-        />
-        {renderGridOverlay?.(gridContainerRef)}
-      </div>
-
-      {showPagination && (
-        <div className={styles.paginationContainer}>
-          <Pagination
-            className="table-ng-pagination"
-            currentPage={page + 1}
-            numberOfPages={numPages}
-            showSmallVersion={smallPagination}
-            onNavigate={(toPage) => {
-              setPage(toPage - 1);
+      <div className={styles.tableViewport}>
+        {sidePanel}
+        <div ref={gridContainerRef} className={styles.gridViewport}>
+          <DataGrid<TableRow, TableSummaryRow, string>
+            {...dataGridOverrides}
+            {...commonDataGridProps}
+            role={role}
+            ref={gridRef}
+            className={styles.grid}
+            columns={columns}
+            rows={rows}
+            rowKeyGetter={rowKeyGetter}
+            isRowSelectionDisabled={() => initialRowIndex !== undefined}
+            selectedRows={selectedRows}
+            onSelectedRowsChange={setSelectedRows}
+            headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
+            headerRowHeight={headerHeight}
+            onColumnResize={onColumnResize}
+            onCellClick={onCellClick}
+            onCellKeyDown={onCellKeyDown}
+            renderers={{
+              renderRow: renderers.renderRow,
+              renderCell: renderers.renderCell,
+              noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
             }}
           />
-          {!smallPagination && (
-            <div className={styles.paginationSummary}>
-              <Trans i18nKey="grafana-ui.table.pagination-summary">
-                {{ itemsRangeStart }} - {{ displayedEnd }} of {{ numRows }} rows
-              </Trans>
+          {renderGridOverlay?.(gridContainerRef)}
+          {showPagination && (
+            <div className={styles.paginationContainer}>
+              <Pagination
+                className="table-ng-pagination"
+                currentPage={page + 1}
+                numberOfPages={numPages}
+                showSmallVersion={smallPagination}
+                onNavigate={(toPage) => {
+                  setPage(toPage - 1);
+                }}
+              />
+              {!smallPagination && (
+                <div className={styles.paginationSummary}>
+                  <Trans i18nKey="grafana-ui.table.pagination-summary">
+                    {{ itemsRangeStart }} - {{ displayedEnd }} of {{ numRows }} rows
+                  </Trans>
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
+      </div>
 
       {tooltipState && (
         <DataLinksActionsTooltip
