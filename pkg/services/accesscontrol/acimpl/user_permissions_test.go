@@ -34,6 +34,20 @@ func TestServiceGetUserPermissionsDelegatesToAuthZ(t *testing.T) {
 	require.Equal(t, 1, client.calls)
 }
 
+func TestServiceGetUserPermissionsUsesLocalRBACForGlobalOrg(t *testing.T) {
+	service := setupTestEnv(t, false)
+	service.features = featuremgmt.WithFeatures()
+	setAuthZUserPermissionsFlag(t, true)
+	client := &fakeUserPermissionsClient{}
+	service.SetUserPermissionsClient(client)
+	user := &identity.StaticRequester{Type: types.TypeUser, UserID: 1, UserUID: "user-uid", OrgID: accesscontrol.GlobalOrgID}
+
+	_, err := service.GetUserPermissions(t.Context(), user, accesscontrol.Options{ReloadCache: true})
+
+	require.NoError(t, err)
+	require.Zero(t, client.calls)
+}
+
 func setAuthZUserPermissionsFlag(t *testing.T, enabled bool) {
 	t.Helper()
 	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
