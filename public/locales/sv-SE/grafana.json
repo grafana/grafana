@@ -3619,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Tidsintervall",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Välj tidsintervall …"
     },
     "time-intervals-table": {
@@ -5658,10 +5659,13 @@
       "add-conditional-rule": "Lägg till regeln {{ruleDescription}}",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Duplicera panel",
       "edit-query-result-rule": "Ändra regel för frågeresultat",
       "edit-template-variable-rule": "Ändra regel för mallvariabel",
       "edit-time-range-rule": "Ändra regel för tidsintervall",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Flytta {{typeName}}",
       "panel-background": "Ändra panelbakgrund",
       "panel-description": "Ändra panelbeskrivning",
@@ -6303,6 +6307,12 @@
         "title-hidden_one": "",
         "title-hidden_other": ""
       },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
+      },
       "links": {
         "add-link": "",
         "new-link": "",
@@ -6854,7 +6864,8 @@
         "change-annotation-enabled-state": "Ändra aktiveringsstatus för kommentar",
         "change-annotation-name": "Ändra namn på kommentar",
         "change-annotation-panel-filter": "Ändra filter för kommentarspanel"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Radera kommenteringsfråga",
@@ -6930,13 +6941,9 @@
       "placeholder-your-metric-prefix": "Ditt metrikprefix"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Radera",
-      "aria-label-edit": "Redigera",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Visa/dölj regler fungerar inte",
@@ -7737,6 +7744,10 @@
     "variable-controls": {
       "add-variable": "Lägg till variabel"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
+    },
     "variable-editable-element": {
       "delete-confirm": "Radera variabel",
       "delete-text": "Är du säker på att du vill radera: {{name}}?",
@@ -8068,7 +8079,8 @@
       "title-missing-rights": "Saknade rättigheter"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Välj en datakälla"
+      "aria-label-select-a-data-source": "Välj en datakälla",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Sida hittades inte: {{page}}"
@@ -10975,6 +10987,12 @@
       "high-count_one": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12451,6 +12469,10 @@
     "new-folder": {
       "title": "Ny mapp"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "Jour"
     },
@@ -12634,6 +12656,7 @@
       "customise-saving": "",
       "dialog-label": "Navigering",
       "dock": "Docka menyn",
+      "header-title": "",
       "list-label": "Navigering",
       "open": "Huvudmeny",
       "pin-error": "",
@@ -12745,7 +12768,46 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": ""
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -16012,6 +16074,7 @@
     "name-show-mini-map": "Visa minikarta"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16040,6 +16103,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

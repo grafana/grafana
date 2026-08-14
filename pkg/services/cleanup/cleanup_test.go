@@ -61,6 +61,7 @@ func TestDeleteExpiredSnapshots_LegacyMode(t *testing.T) {
 
 		service := &CleanUpService{
 			log:                      log.New("cleanup"),
+			Cfg:                      &setting.Cfg{},
 			Features:                 featuremgmt.WithFeatures(),
 			dashboardSnapshotService: mockSnapService,
 		}
@@ -76,6 +77,7 @@ func TestDeleteExpiredSnapshots_LegacyMode(t *testing.T) {
 
 		service := &CleanUpService{
 			log:                      log.New("cleanup"),
+			Cfg:                      &setting.Cfg{},
 			Features:                 featuremgmt.WithFeatures(),
 			dashboardSnapshotService: mockSnapService,
 		}
@@ -86,6 +88,8 @@ func TestDeleteExpiredSnapshots_LegacyMode(t *testing.T) {
 }
 
 func TestDeleteExpiredSnapshots_KubernetesMode(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
+
 	t.Run("deletes expired snapshots across multiple orgs", func(t *testing.T) {
 		// Create expired snapshots - one per org
 		expiredTime := time.Now().Add(-time.Hour).UnixMilli()
@@ -143,7 +147,6 @@ func TestDeleteExpiredSnapshots_KubernetesMode(t *testing.T) {
 		service := &CleanUpService{
 			log:                  log.New("cleanup"),
 			Cfg:                  &setting.Cfg{},
-			Features:             featuremgmt.WithFeatures(featuremgmt.FlagKubernetesSnapshots),
 			clientConfigProvider: apiserver.WithoutRestConfig,
 		}
 
@@ -220,9 +223,8 @@ func createK8sCleanupService(t *testing.T, mockDynClient *mockDynamicClient) *Cl
 	}, nil)
 
 	return &CleanUpService{
-		log:      log.New("cleanup"),
-		Cfg:      &setting.Cfg{},
-		Features: featuremgmt.WithFeatures(featuremgmt.FlagKubernetesSnapshots),
+		log: log.New("cleanup"),
+		Cfg: &setting.Cfg{},
 		clientConfigProvider: apiserver.RestConfigProviderFunc(func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{}, nil
 		}),

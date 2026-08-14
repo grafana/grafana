@@ -41,7 +41,9 @@ func (w *MigrationWorker) IsSupported(ctx context.Context, job provisioning.Job)
 
 func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	if !w.enabled {
-		return errors.New("migrate functionality is disabled by configuration")
+		// A disabled feature is an expected configuration state, not a failure:
+		// complete the job in a warning state so it is not logged or alerted as an error.
+		return jobs.AsWarning(errors.New("migrate functionality is disabled by configuration"))
 	}
 
 	options := job.Spec.Migrate

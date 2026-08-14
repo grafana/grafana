@@ -35,9 +35,9 @@ export class RepeatOptions extends PageObject {
 
   /** Selects an option in the "Repeat by variable" dropdown, expanding the options group first if collapsed */
   private async selectOption(optionLabel: string) {
-    const toggle = this.getByGrafanaSelector(this.selectors.components.OptionsGroup.toggle(this.groupId), {
-      root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container),
-    });
+    const toggle = this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByTestId(
+      this.selectors.components.OptionsGroup.toggle(this.groupId)
+    );
 
     // the toggle collapses an already-open group (expanded state persists in local storage), so only click when collapsed
     if ((await toggle.getAttribute('aria-expanded')) !== 'true') {

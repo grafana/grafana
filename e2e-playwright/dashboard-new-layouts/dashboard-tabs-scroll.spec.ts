@@ -1,8 +1,8 @@
 import { type Page } from '@playwright/test';
 
 import { expect, test } from './fixtures';
+import { flows } from './helpers';
 import { type Canvas, type Sidebar, type Tabs } from './page-objects';
-import { saveDashboardAndCloseToast } from './utils';
 
 test.use({
   featureToggles: {
@@ -18,7 +18,7 @@ test.use({
 const EXTRA_TABS_TO_APPEND = 10;
 
 async function buildOverflowTabs(sidebar: Sidebar, canvas: Canvas, tabs: Tabs) {
-  await sidebar.addOptions.clickAddTabButton();
+  await sidebar.addOptions.addTab();
 
   for (let i = 0; i < EXTRA_TABS_TO_APPEND; i++) {
     await canvas.addTab();
@@ -132,7 +132,7 @@ test.describe(
       await gotoDashboardPage({});
       await buildOverflowTabs(sidebar, canvas, tabs);
 
-      await saveDashboardAndCloseToast(page, controls, `test dashboard scroll ${Date.now()}`);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls, `test dashboard scroll ${Date.now()}`);
       await page.reload();
       await expect(page.getByRole('button', { name: 'Scroll tabs left' })).toBeVisible();
     });
