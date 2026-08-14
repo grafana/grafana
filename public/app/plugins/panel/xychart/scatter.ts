@@ -727,6 +727,7 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
     };
 
     conds += '-1';
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const getOneFactory = new Function(
       'regexState',
       `
@@ -736,6 +737,7 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
         };
       `
     ) as (regexState: (regexIdx: number, value: string | null | undefined) => number) => GetOneValue;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const getAllFactory = new Function(
       'regexState',
       `
@@ -792,6 +794,7 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
       const minExpr = hasExplicitRange ? String(fieldMin) : `min ?? ${fieldMin}`;
       const maxExpr = hasExplicitRange ? String(fieldMax) : `max ?? ${fieldMax}`;
 
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       getOne = new Function(
         'v',
         'min',
@@ -804,6 +807,7 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
           return ${percentConds};
         `
       ) as GetOneValue;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       getAll = new Function(
         'values',
         'min',
