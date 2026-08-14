@@ -319,6 +319,12 @@ type SearchBackend interface {
 	// GetOpenIndexes returns the list of indexes that are currently open.
 	GetOpenIndexes() []NamespacedResource
 
+	// RemoveExpiredTrash deletes trash documents for objects that garbage
+	// collection has already removed from storage. The backend decides what is
+	// expired, because it holds the retention window. Errors are the backend's to
+	// log: a caller can only let the next pass try again.
+	RemoveExpiredTrash(ctx context.Context)
+
 	// Stop closes indexes and stops backend background tasks.
 	Stop()
 }
@@ -1424,6 +1430,8 @@ func (s *searchServer) init(ctx context.Context) error {
 	s.bgTaskWg.Add(1)
 	go s.runPeriodicScanForIndexesToRebuild(subctx)
 
+	s.bgTaskWg.Go(func() { s.runPeriodicTrashCleanup(subctx) })
+
 	s.startRateBucketSweeper(subctx)
 
 	end := time.Now().Unix()
@@ -1477,6 +1485,23 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 				s.log.Error("failed to get import times", "error", err)
 			}
 			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
+		}
+	}
+}
+
+// Reads already hide expired trash, so this only reclaims space and can run
+// rarely. It gets its own goroutine because draining a large backlog would
+// otherwise hold up the rebuild scan.
+func (s *searchServer) runPeriodicTrashCleanup(ctx context.Context) {
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.search.RemoveExpiredTrash(ctx)
 		}
 	}
 }
