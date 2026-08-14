@@ -8,11 +8,12 @@ import { MarkdownCell } from './MarkdownCell';
 
 export interface CellTypeRegistryItem extends RegistryItem {
   // id matches CellContentKind['kind'] ('Markdown' | 'Code'); each renderer narrows
-  // the content by that kind. `isEditing` and `onChange` are offered to every cell type; a renderer
-  // that has nothing to change yet simply does not accept them.
+  // the content by that kind. `isEditing`, `autoFocus` and `onChange` are offered to every cell type;
+  // a renderer with nothing to change or nothing to focus simply does not accept them.
   render: ComponentType<{
     content: CellContentKind;
     isEditing: boolean;
+    autoFocus?: boolean;
     onChange: (content: CellContentKind) => void;
   }>;
 }

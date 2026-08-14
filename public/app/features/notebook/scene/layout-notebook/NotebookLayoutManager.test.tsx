@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, userEvent, within } from 'test/test-utils';
+import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
@@ -6,28 +6,51 @@ import { type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 // CodeMirror does not run in jsdom; a textarea carries readOnly into the DOM so the edit-mode
-// propagation is observable end to end.
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
-  CodeMirrorEditor: ({
-    value,
-    readOnly,
-    onChange,
-    'aria-label': ariaLabel,
-  }: {
-    value: string;
-    readOnly?: boolean;
-    onChange?: (value: string) => void;
-    'aria-label'?: string;
-  }) => (
-    <textarea
-      aria-label={ariaLabel}
-      defaultValue={value}
-      readOnly={readOnly}
-      onChange={(event) => onChange?.(event.currentTarget.value)}
-    />
-  ),
-}));
+// propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
+// does — a new `extensions` identity is what rebuilds CodeMirror's view plugins — which makes the
+// manager -> frame -> renderer -> cell wiring observable here.
+jest.mock('@grafana/ui/unstable', () => {
+  // Required inside the factory, which jest hoists above the imports.
+  const { useEffect, useRef } = require('react');
+
+  return {
+    ...jest.requireActual('@grafana/ui/unstable'),
+    CodeMirrorEditor: ({
+      value,
+      readOnly,
+      extensions,
+      onChange,
+      'aria-label': ariaLabel,
+    }: {
+      value: string;
+      readOnly?: boolean;
+      extensions?: unknown[];
+      onChange?: (value: string) => void;
+      'aria-label'?: string;
+    }) => {
+      const ref = useRef(null);
+
+      useEffect(() => {
+        if (!extensions?.length) {
+          return;
+        }
+
+        const frame = requestAnimationFrame(() => ref.current?.focus());
+        return () => cancelAnimationFrame(frame);
+      }, [extensions]);
+
+      return (
+        <textarea
+          ref={ref}
+          aria-label={ariaLabel}
+          defaultValue={value}
+          readOnly={readOnly}
+          onChange={(event) => onChange?.(event.currentTarget.value)}
+        />
+      );
+    },
+  };
+});
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
@@ -331,6 +354,136 @@ describe('NotebookLayoutManager', () => {
       manager.duplicateCell(buildNarrativeCells(['stranger'])[0]);
 
       expect(cellNames(manager)).toEqual(['a']);
+    });
+  });
+
+  describe('addCell', () => {
+    const PROMPT = /type to start writing/i;
+
+    async function pickCode(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement) {
+      await user.click(trigger);
+      await user.click(screen.getByRole('menuitem', { name: 'Code' }));
+    }
+
+    // A divider belongs to the cell above it, so the one inside cell 'a' inserts between 'a' and 'b'.
+    // The leading divider comes first in the DOM, so index 1 is cell 'a' s own divider.
+    it('inserts an empty code cell where the divider offered it', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await pickCode(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
+
+      expect(cellNames(manager)).toEqual(['a', 'code-1', 'b']);
+      expect(manager.state.cells[1].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
+      // Inserted because a person asked for it, not because the assistant proposed it.
+      expect(manager.state.cells[1].state.source).toBe('user');
+    });
+
+    it('inserts above the first cell from the leading divider', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await pickCode(user, screen.getAllByRole('button', { name: 'Add block' })[0]);
+
+      expect(cellNames(manager)).toEqual(['code-1', 'a', 'b']);
+    });
+
+    it('appends from the end-of-document prompt', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+
+      expect(cellNames(manager)).toEqual(['a', 'b', 'code-1']);
+    });
+
+    // The prompt is the only affordance an empty notebook has, so this is the sole path to a first cell.
+    it('gives an empty notebook its first cell', async () => {
+      const { manager, user } = renderManager(buildManager([], true));
+
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+
+      expect(cellNames(manager)).toEqual(['code-1']);
+    });
+
+    // serialize() writes elementName as the key into the notebook's `elements` map, so a repeat would
+    // collapse the two cells into one element on the next round-trip.
+    it('gives every inserted cell an unused element name', () => {
+      const manager = buildManager(buildNarrativeCells(['code-1']));
+
+      manager.addCell('code', 1);
+      manager.addCell('code', 2);
+
+      expect(cellNames(manager)).toEqual(['code-1', 'code-2', 'code-3']);
+    });
+
+    // The cell arrives editable rather than needing a second interaction to become so — the notebook is
+    // already in edit mode, which is the only way to reach the menu at all.
+    it('renders the new cell as an editable code editor', async () => {
+      const { user } = renderManager(buildManager([], true));
+
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+
+      expect(await screen.findByRole('textbox', { name: 'Code' })).not.toHaveAttribute('readonly');
+      expect(screen.getByRole('combobox', { name: 'Code language' })).toBeInTheDocument();
+    });
+
+    // The reader asked for a block, so the caret belongs in it rather than one click away. It is also
+    // a race the cell has to win: the block menu hands focus back to the button that opened it as it
+    // closes.
+    it('hands the caret to the new cell', async () => {
+      const { user } = renderManager(buildManager([], true));
+
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+
+      await waitFor(() => expect(screen.getByRole('textbox', { name: 'Code' })).toHaveFocus());
+    });
+
+    // Only the newest one: every earlier cell keeps its content but gives up the caret, so a second
+    // insertion does not leave two editors fighting over it.
+    it('moves the caret on to the next cell it inserts', async () => {
+      const { user } = renderManager(buildManager([], true));
+
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+
+      await waitFor(() => {
+        const editors = screen.getAllByRole('textbox', { name: 'Code' });
+        expect(editors).toHaveLength(2);
+        expect(editors[0]).not.toHaveFocus();
+        expect(editors[1]).toHaveFocus();
+      });
+    });
+
+    // Cells the reader did not just insert are left alone, however they arrived.
+    it('leaves the caret alone in a code cell the reader did not insert', async () => {
+      const cells = [
+        new NotebookCellItem({
+          elementName: 'existing',
+          source: 'assistant',
+          content: { kind: 'Code', spec: { code: 'select 1', language: 'sql' } },
+        }),
+      ];
+      renderManager(buildManager(cells, true));
+
+      // The cell asks for the caret a frame late, so this has to outlast that window to mean anything.
+      await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+      expect(screen.getByRole('textbox', { name: 'Code' })).not.toHaveFocus();
+    });
+
+    // Only code is buildable so far. The rest of the menu stays inert rather than inserting a cell with
+    // no content kind behind it, which the renderer would draw as a blank gap.
+    it('leaves the block types it cannot build yet alone', () => {
+      const manager = buildManager(buildNarrativeCells(['a']));
+
+      expect(manager.addCell('heading', 1)).toBeUndefined();
+      expect(manager.addCell('paragraph', 1)).toBeUndefined();
+      expect(manager.addCell('visualization', 1)).toBeUndefined();
+      expect(cellNames(manager)).toEqual(['a']);
+    });
+
+    // What the renderer hands the caret to, so it has to be the cell that landed in the list.
+    it('returns the inserted cell', () => {
+      const manager = buildManager(buildNarrativeCells(['a']));
+
+      expect(manager.addCell('code', 0)).toBe(manager.state.cells[0]);
     });
   });
 

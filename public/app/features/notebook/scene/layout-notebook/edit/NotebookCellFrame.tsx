@@ -39,10 +39,15 @@ interface Props {
    */
   index: number;
   isEditing?: boolean;
+  /**
+   * Set on the cell the reader just inserted. The layout owns it rather than the cell: only one cell
+   * takes the caret, and which one is a fact about the list, not about any cell in it.
+   */
+  autoFocus?: boolean;
   /** True while any cell in the notebook is being dragged, not only this one. */
   isDragActive?: boolean;
   dropIndicator?: NotebookCellDropIndicator;
-  /** Forwarded to the divider; still unwired in production. See NotebookAddBlockDivider. */
+  /** Forwarded to this cell's divider, already offset to `index + 1`. See NotebookAddBlockDivider. */
   onAdd?: (type: NotebookBlockType, index: number) => void;
   /**
    * Supplied by the layout, which owns the cells list. Optional so the frame stays renderable on its
@@ -68,6 +73,7 @@ export function NotebookCellFrame({
   cell,
   index,
   isEditing,
+  autoFocus,
   isDragActive,
   dropIndicator,
   onAdd,
@@ -112,7 +118,12 @@ export function NotebookCellFrame({
             />
           )}
 
-          <NotebookCellRenderer cell={cell} isEditing={Boolean(isEditing)} onContentChange={onContentChange} />
+          <NotebookCellRenderer
+            cell={cell}
+            isEditing={Boolean(isEditing)}
+            autoFocus={autoFocus}
+            onContentChange={onContentChange}
+          />
 
           {/* index + 1: this divider inserts *after* the cell it belongs to. */}
           {isEditing && (
