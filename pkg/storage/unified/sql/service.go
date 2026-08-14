@@ -413,7 +413,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	// its initial poll completes before the index is built.
 	if registry := searchOptions.SearchFields; registry != nil {
 		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
-			watcher, err := resource.NewManifestWatcher(*mwCfg, func(live []appsdk.Manifest) {
+			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, func(live []appsdk.Manifest) {
 				if err := resource.ApplyManifests(registry, resource.AppManifests(), live); err != nil {
 					s.log.Error("manifest reload failed, keeping current search fields", "error", err)
 					return
