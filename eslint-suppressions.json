@@ -2687,9 +2687,6 @@
     }
   },
   "public/app/features/variables/query/actions.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 3
     }
