@@ -37,7 +37,7 @@ func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 	state, found, err := unstructured.NestedString(status, "state")
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, "error", state, "job should have error state")
+	require.Equal(t, "warning", state, "a disabled feature is a configuration state, not a failure")
 
 	message, found, err := unstructured.NestedString(status, "message")
 	require.NoError(t, err)
@@ -73,7 +73,7 @@ func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 	state, found, err := unstructured.NestedString(status, "state")
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, "error", state, "job should have error state")
+	require.Equal(t, "warning", state, "a disabled feature is a configuration state, not a failure")
 
 	message, found, err := unstructured.NestedString(status, "message")
 	require.NoError(t, err)
