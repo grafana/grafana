@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -123,16 +122,20 @@ func TestBackfill(t *testing.T) {
 		// Every org sees the same rule-holding folder and no labels, so each queues one key. The
 		// folder client fails only the first call, so org 1 errors and org 2 must still be processed.
 		store := &fakeReconcilerStore{orgs: []int64{1, 2}, folderUIDs: set("folder-a")}
-		folders := &failFirstListClient{}
+		folders := &fakeFolderClient{
+			failNamespaces: map[string]struct{}{
+				"org-1": {},
+			},
+		}
 		s := newTestService(store, folders)
 
-		require.NoError(t, s.Backfill(context.Background()))
+		require.NoError(t, s.Backfill(context.Background(), map[int64]struct{}{}))
 		require.Equal(t, []models.FolderKey{{OrgID: 2, UID: "folder-a"}}, s.take())
 	})
 
 	t.Run("surfaces org enumeration failure", func(t *testing.T) {
 		s := newTestService(&fakeReconcilerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
-		require.ErrorContains(t, s.Backfill(context.Background()), "fetch orgs")
+		require.ErrorContains(t, s.Backfill(context.Background(), map[int64]struct{}{}), "fetch orgs")
 	})
 
 	t.Run("stops when the context is cancelled", func(t *testing.T) {
@@ -142,22 +145,17 @@ func TestBackfill(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		require.ErrorIs(t, s.Backfill(ctx), context.Canceled)
+		require.ErrorIs(t, s.Backfill(ctx, map[int64]struct{}{}), context.Canceled)
 		require.Empty(t, s.take())
 	})
-}
 
-// failFirstListClient fails the first ListAll and succeeds afterwards, to exercise per-org error
-// tolerance in Backfill.
-type failFirstListClient struct {
-	fakeFolderClient
-	calls int
-}
+	t.Run("skips disabled orgs", func(t *testing.T) {
+		store := &fakeReconcilerStore{orgs: []int64{1, 2, 3}, folderUIDs: set("folder-a")}
+		s := newTestService(store, &fakeFolderClient{})
 
-func (f *failFirstListClient) ListAll(ctx context.Context, ns string, opts resource.ListOptions) (*folderv1.FolderList, error) {
-	f.calls++
-	if f.calls == 1 {
-		return nil, errors.New("boom")
-	}
-	return f.fakeFolderClient.ListAll(ctx, ns, opts)
+		require.NoError(t, s.Backfill(context.Background(), map[int64]struct{}{
+			3: {},
+		}))
+		require.Equal(t, []models.FolderKey{{OrgID: 1, UID: "folder-a"}, {OrgID: 2, UID: "folder-a"}}, s.take())
+	})
 }

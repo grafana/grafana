@@ -64,6 +64,8 @@ type fakeFolderClient struct {
 	folders map[string]*folderv1.Folder
 	getErr  error
 
+	failNamespaces map[string]struct{}
+
 	patchErr error
 	patches  []resource.PatchRequest
 
@@ -74,6 +76,9 @@ type fakeFolderClient struct {
 }
 
 func (f *fakeFolderClient) Get(_ context.Context, id resource.Identifier) (*folderv1.Folder, error) {
+	if _, ok := f.failNamespaces[id.Namespace]; ok {
+		return nil, errors.New("failure")
+	}
 	if f.getErr != nil {
 		return nil, f.getErr
 	}
@@ -84,7 +89,10 @@ func (f *fakeFolderClient) Get(_ context.Context, id resource.Identifier) (*fold
 	return folder, nil
 }
 
-func (f *fakeFolderClient) Patch(_ context.Context, _ resource.Identifier, req resource.PatchRequest, _ resource.PatchOptions) (*folderv1.Folder, error) {
+func (f *fakeFolderClient) Patch(_ context.Context, id resource.Identifier, req resource.PatchRequest, _ resource.PatchOptions) (*folderv1.Folder, error) {
+	if _, ok := f.failNamespaces[id.Namespace]; ok {
+		return nil, errors.New("failure")
+	}
 	if f.patchErr != nil {
 		return nil, f.patchErr
 	}
@@ -92,9 +100,14 @@ func (f *fakeFolderClient) Patch(_ context.Context, _ resource.Identifier, req r
 	return nil, nil
 }
 
-func (f *fakeFolderClient) ListAll(_ context.Context, _ string, opts resource.ListOptions) (*folderv1.FolderList, error) {
+func (f *fakeFolderClient) ListAll(_ context.Context, ns string, opts resource.ListOptions) (*folderv1.FolderList, error) {
 	f.listCalls++
 	f.lastFilter = opts.LabelFilters
+
+	if _, ok := f.failNamespaces[ns]; ok {
+		return nil, errors.New("failure")
+	}
+
 	if f.listErr != nil {
 		return nil, f.listErr
 	}

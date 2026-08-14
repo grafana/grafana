@@ -20,7 +20,7 @@ import (
 // Rules moving to unified storage would bypass the rule store entirely, so neither the events nor
 // the query below would see those writes — that is the point at which an informer becomes available
 // and becomes the right mechanism.
-func (s *Service) Backfill(ctx context.Context) error {
+func (s *Service) Backfill(ctx context.Context, disabledOrgs map[int64]struct{}) error {
 	orgIDs, err := s.store.FetchOrgIds(ctx)
 	if err != nil {
 		return fmt.Errorf("fetch orgs: %w", err)
@@ -31,6 +31,11 @@ func (s *Service) Backfill(ctx context.Context) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
+
+		if _, ok := disabledOrgs[orgID]; ok {
+			continue
+		}
+
 		n, err := s.backfillOrg(ctx, orgID)
 		if err != nil {
 			// One unhealthy org must not abort the pass for the rest.
