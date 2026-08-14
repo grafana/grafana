@@ -10,7 +10,7 @@ import {
   DuplicateActionButton,
   getStyles,
   SettingsActionButton,
-  useControlActionsPopover,
+  useEditActionsPopover,
 } from './EditActionsPopover';
 
 export function VariableEditActions({
@@ -27,7 +27,7 @@ export function VariableEditActions({
   onClickDelete: () => void;
 }) {
   const styles = useStyles2(getStyles);
-  const { closePopover } = useControlActionsPopover();
+  const { closePopover } = useEditActionsPopover();
   const hasQueryEditor = variable instanceof QueryVariable || variable instanceof CustomVariable;
 
   const onClickEditQueryInternal = useCallback(() => {

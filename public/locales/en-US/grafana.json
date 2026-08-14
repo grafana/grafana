@@ -6959,6 +6959,7 @@
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "control-edit-actions": {
+      "copy-clipboard-tooltip": "Copy to clipboard",
       "delete-tooltip": "Delete",
       "duplicate-tooltip": "Duplicate",
       "settings": "Settings"
@@ -7386,6 +7387,9 @@
       "confirmText-delete-all": "Delete all",
       "delete-all-transformations": "Delete all transformations",
       "title-delete-all-transformations": "Delete all transformations?"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": "Edit visualization"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",

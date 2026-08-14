@@ -10,6 +10,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { useSoloPanelContext, renderMatchingSoloPanels } from '../../solo/SoloPanelContext';
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
+import { PanelEditWrapper } from '../edit-actions-popover/PanelEditActions';
 import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
@@ -83,16 +84,20 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
               className={cx(isConditionallyHidden && !isEditing && styles.hidden)}
             >
               {isDragged && <div className={styles.draggedPlaceholder} />}
-              {
-                // The lazy loader causes issues when used with conditional rendering
-                isLazy && (!isConditionallyHidden || !renderHidden) ? (
-                  <LazyLoader key={item.state.key!} mode="query" className={wrapperClass}>
-                    {wrapperContent}
-                  </LazyLoader>
-                ) : (
-                  <div className={wrapperClass}>{wrapperContent}</div>
-                )
-              }
+              <PanelEditWrapper panel={item}>
+                <div className={wrapperClass}>
+                  {
+                    // The lazy loader causes issues when used with conditional rendering
+                    isLazy && (!isConditionallyHidden || !renderHidden) ? (
+                      <LazyLoader key={item.state.key!} mode="query" className={styles.fill}>
+                        {wrapperContent}
+                      </LazyLoader>
+                    ) : (
+                      wrapperContent
+                    )
+                  }
+                </div>
+              </PanelEditWrapper>
             </div>
           );
         }
@@ -145,6 +150,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({ width: '100%', height: '100%', position: 'relative' }),
+  fill: css({ width: '100%', height: '100%' }),
   draggedWrapper: css({
     position: 'absolute',
     zIndex: 1000,
