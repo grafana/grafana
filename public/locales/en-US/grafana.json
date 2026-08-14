@@ -11752,6 +11752,7 @@
       "no-details": "No fields to display.",
       "open-assistant": "Explain log line in Assistant",
       "pin-line": "Pin log",
+      "prettify": "Prettify",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
