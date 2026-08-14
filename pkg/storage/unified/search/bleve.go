@@ -2664,6 +2664,13 @@ func (b *bleveBackend) RemoveExpiredTrash(ctx context.Context) {
 // Trash with no deletion time never matches and stays: a missing field is not
 // evidence that storage collected the object. A rebuild clears those, because it
 // lists the trash storage currently holds.
+//
+// Deletion is by document id, which an object keeps across delete and recreate.
+// If an object is recreated between the search and the delete, the new document
+// is removed and comes back on the next rebuild. Left as is: the window is a few
+// milliseconds on trash that has already sat there for the whole retention
+// period, and closing it would mean holding a write lock that index updates on
+// the query path would then wait for.
 func (b *bleveIndex) removeExpiredTrash(ctx context.Context, now time.Time) (int, error) {
 	threshold, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, now)
 	if !ok {
