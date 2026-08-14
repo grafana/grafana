@@ -604,7 +604,7 @@ func findFreshSnapshot(
 	logger log.Logger,
 	isFresh func(*IndexMeta) bool,
 ) (ulid.ULID, *IndexMeta, error) {
-	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, nil, func() ([]ulid.ULID, error) {
+	keys, err := retryMetadataRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, nil, func() ([]ulid.ULID, error) {
 		return store.ListIndexKeys(ctx, ns)
 	})
 	if err != nil {
