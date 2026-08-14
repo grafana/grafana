@@ -20,14 +20,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
-type fakeRuleCounter struct {
+type fakeReconcilerStore struct {
 	// counts is consulted per folder UID; missing means zero.
 	counts map[string]int64
 	err    error
 	calls  int
+
+	// folderUIDs is what GetAllFoldersWithRules returns, i.e. the folders holding rules.
+	folderUIDs    map[string]struct{}
+	folderUIDsErr error
+
+	orgs    []int64
+	orgsErr error
 }
 
-func (f *fakeRuleCounter) CountInFolders(_ context.Context, _ int64, folderUIDs []string, _ identity.Requester) (int64, error) {
+func (f *fakeReconcilerStore) CountInFolders(_ context.Context, _ int64, folderUIDs []string, _ identity.Requester) (int64, error) {
 	f.calls++
 	if f.err != nil {
 		return 0, f.err
@@ -37,6 +44,20 @@ func (f *fakeRuleCounter) CountInFolders(_ context.Context, _ int64, folderUIDs 
 		total += f.counts[uid]
 	}
 	return total, nil
+}
+
+func (f *fakeReconcilerStore) GetAllFoldersWithRules(_ context.Context, _ int64) (map[string]struct{}, error) {
+	if f.folderUIDsErr != nil {
+		return nil, f.folderUIDsErr
+	}
+	return f.folderUIDs, nil
+}
+
+func (f *fakeReconcilerStore) FetchOrgIds(_ context.Context) ([]int64, error) {
+	if f.orgsErr != nil {
+		return nil, f.orgsErr
+	}
+	return f.orgs, nil
 }
 
 type fakeFolderClient struct {
@@ -86,9 +107,9 @@ func (f *fakeFolderClient) ListAll(_ context.Context, _ string, opts resource.Li
 
 // newTestService builds a Service with the folder client already injected, bypassing the lazy
 // generator that needs a live apiserver.
-func newTestService(rules ruleCounter, folders folderPatcher) *Service {
+func newTestService(store reconcilerStore, folders folderPatcher) *Service {
 	return &Service{
-		rules:      rules,
+		store:      store,
 		namespacer: func(int64) string { return "default" },
 		log:        log.NewNopLogger(),
 		dirty:      make(map[models.FolderKey]struct{}),
@@ -103,7 +124,7 @@ func folderWithLabels(name string, labels map[string]string) *folderv1.Folder {
 
 func TestMarkDirty(t *testing.T) {
 	t.Run("deduplicates keys and skips invalid ones", func(t *testing.T) {
-		s := newTestService(&fakeRuleCounter{}, &fakeFolderClient{})
+		s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
 
 		s.markDirty([]models.FolderKey{
 			{OrgID: 1, UID: "a"},
@@ -122,7 +143,7 @@ func TestMarkDirty(t *testing.T) {
 	t.Run("does not block when no worker is draining", func(t *testing.T) {
 		// The wake channel holds one token and signal() is a non-blocking send. markDirty runs on the
 		// goroutine that wrote the rules, so a blocking send here would stall rule writes.
-		s := newTestService(&fakeRuleCounter{}, &fakeFolderClient{})
+		s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
 
 		done := make(chan struct{})
 		go func() {
@@ -140,7 +161,7 @@ func TestMarkDirty(t *testing.T) {
 	})
 
 	t.Run("take empties the set", func(t *testing.T) {
-		s := newTestService(&fakeRuleCounter{}, &fakeFolderClient{})
+		s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "a"}})
 
 		require.Len(t, s.take(), 1)
@@ -150,7 +171,7 @@ func TestMarkDirty(t *testing.T) {
 
 func TestHandleRuleChange(t *testing.T) {
 	t.Run("ignores events with no folder keys", func(t *testing.T) {
-		s := newTestService(&fakeRuleCounter{}, &fakeFolderClient{})
+		s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
 
 		require.NoError(t, s.handleRuleChange(context.Background(), &store.RuleChangeEvent{
 			RuleKeys: []models.AlertRuleKey{{OrgID: 1, UID: "rule"}},
@@ -159,7 +180,7 @@ func TestHandleRuleChange(t *testing.T) {
 	})
 
 	t.Run("queues the event's folder keys", func(t *testing.T) {
-		s := newTestService(&fakeRuleCounter{}, &fakeFolderClient{})
+		s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
 
 		require.NoError(t, s.handleRuleChange(context.Background(), &store.RuleChangeEvent{
 			FolderKeys: []models.FolderKey{{OrgID: 1, UID: "a"}, {OrgID: 1, UID: "b"}},
@@ -175,7 +196,7 @@ func TestReconcile(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
 			"folder-1": folderWithLabels("folder-1", map[string]string{"unrelated": "keep"}),
 		}}
-		s := newTestService(&fakeRuleCounter{counts: map[string]int64{"folder-1": 1}}, folders)
+		s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 
 		require.NoError(t, s.reconcile(context.Background(), key))
 
@@ -192,7 +213,7 @@ func TestReconcile(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
 			"folder-1": folderWithLabels("folder-1", nil),
 		}}
-		s := newTestService(&fakeRuleCounter{counts: map[string]int64{"folder-1": 2}}, folders)
+		s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 2}}, folders)
 
 		require.NoError(t, s.reconcile(context.Background(), key))
 
@@ -208,7 +229,7 @@ func TestReconcile(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
 			"folder-1": folderWithLabels("folder-1", map[string]string{HasRulesLabel: "true"}),
 		}}
-		s := newTestService(&fakeRuleCounter{}, folders)
+		s := newTestService(&fakeReconcilerStore{}, folders)
 
 		require.NoError(t, s.reconcile(context.Background(), key))
 
@@ -233,7 +254,7 @@ func TestReconcile(t *testing.T) {
 				folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
 					"folder-1": folderWithLabels("folder-1", tc.labels),
 				}}
-				s := newTestService(&fakeRuleCounter{counts: map[string]int64{"folder-1": tc.count}}, folders)
+				s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": tc.count}}, folders)
 
 				require.NoError(t, s.reconcile(context.Background(), key))
 				require.Empty(t, folders.patches, "expected no patch when state already matches")
@@ -243,7 +264,7 @@ func TestReconcile(t *testing.T) {
 
 	t.Run("is a no-op when the folder is already deleted", func(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{}}
-		s := newTestService(&fakeRuleCounter{counts: map[string]int64{"folder-1": 1}}, folders)
+		s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 
 		require.NoError(t, s.reconcile(context.Background(), key))
 		require.Empty(t, folders.patches)
@@ -251,13 +272,13 @@ func TestReconcile(t *testing.T) {
 
 	t.Run("propagates errors", func(t *testing.T) {
 		t.Run("counting rules", func(t *testing.T) {
-			s := newTestService(&fakeRuleCounter{err: errors.New("boom")}, &fakeFolderClient{})
+			s := newTestService(&fakeReconcilerStore{err: errors.New("boom")}, &fakeFolderClient{})
 			require.ErrorContains(t, s.reconcile(context.Background(), key), "count rules in folder")
 		})
 
 		t.Run("getting the folder", func(t *testing.T) {
 			folders := &fakeFolderClient{getErr: errors.New("boom")}
-			s := newTestService(&fakeRuleCounter{counts: map[string]int64{"folder-1": 1}}, folders)
+			s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 			require.ErrorContains(t, s.reconcile(context.Background(), key), "get folder")
 		})
 
@@ -266,7 +287,7 @@ func TestReconcile(t *testing.T) {
 				folders:  map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
 				patchErr: errors.New("boom"),
 			}
-			s := newTestService(&fakeRuleCounter{counts: map[string]int64{"folder-1": 1}}, folders)
+			s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 			require.ErrorContains(t, s.reconcile(context.Background(), key), "patch folder label")
 		})
 	})
@@ -286,7 +307,7 @@ func TestDrain(t *testing.T) {
 			folders:  map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
 			patchErr: errors.New("boom"),
 		}
-		s := newTestService(&fakeRuleCounter{counts: map[string]int64{"folder-1": 1}}, folders)
+		s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
 		s.drain(context.Background())
@@ -299,7 +320,7 @@ func TestDrain(t *testing.T) {
 		folders := &fakeFolderClient{
 			folders: map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
 		}
-		s := newTestService(&fakeRuleCounter{counts: map[string]int64{"folder-1": 1}}, folders)
+		s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
 		s.drain(context.Background())
@@ -311,7 +332,7 @@ func TestDrain(t *testing.T) {
 		folders := &fakeFolderClient{
 			folders: map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
 		}
-		rules := &fakeRuleCounter{counts: map[string]int64{"folder-1": 1}}
+		rules := &fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}
 		s := newTestService(rules, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
@@ -324,7 +345,7 @@ func TestDrain(t *testing.T) {
 }
 
 func TestRunStopsOnContextCancellation(t *testing.T) {
-	s := newTestService(&fakeRuleCounter{}, &fakeFolderClient{})
+	s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
