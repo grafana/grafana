@@ -284,11 +284,13 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       if (firstGroupItem && hasGroup) {
         itemHeight += MENU_OPTION_HEIGHT;
       }
-      return itemHeight + 2 * MENU_PADDING;
+      return itemHeight;
     },
     getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
     rangeExtractor,
+    paddingStart: MENU_PADDING,
+    paddingEnd: MENU_PADDING,
   });
 
   const {
