@@ -123,10 +123,6 @@ const (
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
 
-	// FlagKubernetesSnapshots
-	// Routes snapshot requests from /api to the /apis endpoint
-	FlagKubernetesSnapshots = "kubernetesSnapshots"
-
 	// FlagExternalSnapshotsK8SAPIPush
 	// When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
 	FlagExternalSnapshotsK8SAPIPush = "externalSnapshotsK8SAPIPush"
@@ -134,6 +130,10 @@ const (
 	// FlagExternalSnapshotsSupportLegacyAPI
 	// On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
 	FlagExternalSnapshotsSupportLegacyAPI = "externalSnapshotsSupportLegacyAPI"
+
+	// FlagSnapshotsKubernetesSnapshots
+	// Routes snapshot requests from /api to the /apis endpoint
+	FlagSnapshotsKubernetesSnapshots = "snapshots.kubernetesSnapshots"
 
 	// FlagLibraryelementsKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
@@ -367,10 +367,6 @@ const (
 	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
 	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
 
-	// FlagAlertingCentralAlertHistory
-	// Enables the new central alert history.
-	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
-
 	// FlagPluginProxyPreserveTrailingSlash
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
@@ -550,9 +546,9 @@ const (
 	// Enables the logs builder mode for the Azure Monitor data source
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
 
-	// FlagAzureMonitorBatchAPI
+	// FlagDatasourcesAzureMonitorBatchAPI
 	// Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
-	FlagAzureMonitorBatchAPI = "azureMonitorBatchAPI"
+	FlagDatasourcesAzureMonitorBatchAPI = "datasources.azureMonitorBatchAPI"
 
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
@@ -794,6 +790,10 @@ const (
 	// Redirects the requests of the user service to the app platform APIs
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
 
+	// FlagKubernetesUsersRedirectNoFallback
+	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
+	FlagKubernetesUsersRedirectNoFallback = "kubernetesUsersRedirectNoFallback"
+
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
 	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
@@ -823,8 +823,12 @@ const (
 	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
 
 	// FlagDeletedFolderResourceCleanup
-	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server
+	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair
 	FlagDeletedFolderResourceCleanup = "deletedFolderResourceCleanup"
+
+	// FlagLibraryElementFolderUIDRepair
+	// Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup
+	FlagLibraryElementFolderUIDRepair = "libraryElementFolderUIDRepair"
 
 	// FlagReact19
 	// Whether to use the new React 19 runtime
@@ -990,6 +994,10 @@ const (
 	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
 	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"
 
+	// FlagGrafanaPluginPathNesting
+	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
+	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
+
 	// FlagGrafanaRspackBuild
 	// Switches the backend to load frontend assets built with rspack instead of webpack
 	FlagGrafanaRspackBuild = "grafana.rspackBuild"
@@ -997,4 +1005,8 @@ const (
 	// FlagPluginsForceTls13
 	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client
 	FlagPluginsForceTls13 = "pluginsForceTls13"
+
+	// FlagDatasourcesQueryGateway
+	// Data source query gateway
+	FlagDatasourcesQueryGateway = "datasources.queryGateway"
 )

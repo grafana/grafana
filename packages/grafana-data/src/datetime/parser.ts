@@ -62,14 +62,6 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
     return parsed || dateTime();
   }
 
-  // Epoch millisecond strings (e.g. "1704067200000" from URL params like ?from=1704067200000)
-  // must not be parsed through the date format — moment("1704067200000", "YYYY-MM-DD HH:mm:ss")
-  // produces an invalid DateTime whose valueOf() === NaN, which propagates to $__from/$__to
-  // scoped variables and causes literal "NaN" to appear in SQL queries (issue #119445).
-  if (/^\d+$/.test(value)) {
-    return parseOthers(parseInt(value, 10), options);
-  }
-
   let timeZone = getTimeZone(options);
   let format = options?.format ?? systemDateFormats.fullDate;
   if (value.endsWith('Z')) {
@@ -80,6 +72,21 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
     timeZone = 'utc';
   }
 
+  const parsed = parseWithFormat(value, format, timeZone);
+
+  // An all-digit string that the format could not parse is an epoch millisecond value, e.g.
+  // "1704067200000" from a URL param like ?from=1704067200000 checked against the default
+  // "YYYY-MM-DD HH:mm:ss". Without this fallback moment returns an invalid DateTime whose
+  // valueOf() is NaN, which reaches $__from/$__to and emits a literal "NaN" in SQL (#119445).
+  // Formats that legitimately parse digits (X, x, YYYYMMDD) parse above and are left alone.
+  if (!parsed.isValid() && /^\d+$/.test(value)) {
+    return parseOthers(parseInt(value, 10), options);
+  }
+
+  return parsed;
+};
+
+const parseWithFormat = (value: string, format: string, timeZone: string): DateTime => {
   const zone = moment.tz.zone(timeZone);
   if (zone) {
     return dateTimeForTimeZone(zone.name, value, format);

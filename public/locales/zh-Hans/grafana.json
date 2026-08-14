@@ -3593,6 +3593,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "时间间隔",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "选择时间间隔..."
     },
     "time-intervals-table": {
@@ -5618,10 +5619,13 @@
       "add-conditional-rule": "添加 {{ruleDescription}} 规则",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "复制面板",
       "edit-query-result-rule": "更改查询结果规则",
       "edit-template-variable-rule": "更改模板变量规则",
       "edit-time-range-rule": "更改时间范围规则",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "移动{{typeName}}",
       "panel-background": "更改面板背景",
       "panel-description": "更改面板描述",
@@ -6256,6 +6260,12 @@
         "title-controls-menu_other": "",
         "title-hidden_other": ""
       },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
+      },
       "links": {
         "add-link": "",
         "new-link": "",
@@ -6800,7 +6810,8 @@
         "change-annotation-enabled-state": "更改注释启用状态",
         "change-annotation-name": "更改注释名称",
         "change-annotation-panel-filter": "更改注释面板筛选条件"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "删除注释查询",
@@ -6876,13 +6887,9 @@
       "placeholder-your-metric-prefix": "您的指标前缀"
     },
     "control-edit-actions": {
-      "aria-label-delete": "删除",
-      "aria-label-edit": "编辑",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "显示/隐藏规则将不起作用",
@@ -7681,6 +7688,10 @@
     "variable-controls": {
       "add-variable": "添加变量"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
+    },
     "variable-editable-element": {
       "delete-confirm": "删除变量",
       "delete-text": "您确定要删除{{name}}吗？",
@@ -8010,7 +8021,8 @@
       "title-missing-rights": "缺少权限"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "选取数据源"
+      "aria-label-select-a-data-source": "选取数据源",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "找不到页面：{{page}}"
@@ -10901,6 +10913,12 @@
       "critical-count_other": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12356,6 +12374,10 @@
     "new-folder": {
       "title": "新建文件夹"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12539,6 +12561,7 @@
       "customise-saving": "",
       "dialog-label": "导航",
       "dock": "停靠菜单",
+      "header-title": "",
       "list-label": "导航",
       "open": "主菜单",
       "pin-error": "",
@@ -12647,7 +12670,44 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": ""
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_other": "",
+      "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -15884,6 +15944,7 @@
     "name-show-mini-map": "显示小地图"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -15912,6 +15973,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

@@ -262,7 +262,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
-	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(true)
+	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(false)
 	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
 	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
 	cfg.GarbageCollectionBatchWait = section.Key("garbage_collection_batch_wait").MustDuration(1 * time.Second)
@@ -427,6 +427,17 @@ func (cfg *Cfg) shouldProxySearchRemotely() bool {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	return apiserverCfg.Key("search_server_address").MustString("") != "" &&
 		!slices.Contains(cfg.Target, "search-server")
+}
+
+// StorageServicesEnabled reports whether this process should run the unified
+// storage background jobs that write, such as garbage collection and event
+// pruning. Only the process that runs the storage server may run them,
+// otherwise every replica would delete data on its own. A process with no
+// module targets, or with the "all" target, does everything itself.
+func (cfg *Cfg) StorageServicesEnabled() bool {
+	return len(cfg.Target) == 0 ||
+		slices.Contains(cfg.Target, "all") ||
+		slices.Contains(cfg.Target, "storage-server")
 }
 
 // ShouldRunMigrations reports whether data migrations to unified storage should run.
