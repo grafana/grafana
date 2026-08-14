@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -29,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	apivalidation "github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -1391,6 +1393,97 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 }
 
 func TestRoutePostNameRulesConfig(t *testing.T) {
+	t.Run("should allow deleting a valid rule before a legacy empty-label-key rule", func(t *testing.T) {
+		orgID := rand.Int63()
+		ruleStore := fakes.NewRuleStore(t)
+		alertFolder := randFolder()
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], alertFolder)
+
+		svc := createService(ruleStore, nil)
+		groupName := "legacy-empty-label-key"
+		limits := apivalidation.RuleLimits{BaseInterval: svc.cfg.BaseInterval}
+
+		validNode := validRule()
+		validNode.GrafanaManagedAlert.Data[0].Model = json.RawMessage(`{}`)
+		legacyNode := validRule()
+		legacyNode.GrafanaManagedAlert.Data[0].Model = json.RawMessage(`{}`)
+		group := apimodels.PostableRuleGroupConfig{
+			Name:     groupName,
+			Interval: prommodel.Duration(svc.cfg.BaseInterval),
+			Rules:    []apimodels.PostableExtendedRuleNode{validNode, legacyNode},
+		}
+		validatedRules, err := apivalidation.ValidateRuleGroup(&group, orgID, alertFolder.UID, limits)
+		require.NoError(t, err)
+		validRuleModel := &validatedRules[0].AlertRule
+		legacyRule := &validatedRules[1].AlertRule
+		legacyNode.Labels = map[string]string{"": "legacy"}
+		legacyRule.Labels = legacyNode.Labels
+
+		ruleStore.PutRule(context.Background(), validRuleModel, legacyRule)
+		permissions := createPermissionsForRules([]*models.AlertRule{validRuleModel, legacyRule}, orgID)
+		permissions[orgID][ac.ActionAlertingRuleDelete] = []string{folder.ScopeFoldersProvider.GetResourceScopeUID(alertFolder.UID)}
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		group.Rules = []apimodels.PostableExtendedRuleNode{legacyNode}
+		response := svc.RoutePostNameRulesConfig(requestCtx, group, alertFolder.UID)
+
+		require.Equalf(t, http.StatusAccepted, response.Status(), "unexpected response: %s", response.Body())
+		updatedCommands := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			updates, ok := cmd.([]models.UpdateRule)
+			return updates, ok
+		})
+		require.Len(t, updatedCommands, 1)
+		updatedRules := updatedCommands[0].([]models.UpdateRule)
+		require.Len(t, updatedRules, 1)
+		require.Equal(t, legacyRule.UID, updatedRules[0].New.UID)
+		require.Equal(t, 1, updatedRules[0].New.RuleGroupIndex)
+	})
+
+	t.Run("should allow updating a valid rule when an unchanged sibling has a legacy empty label key", func(t *testing.T) {
+		orgID := rand.Int63()
+		ruleStore := fakes.NewRuleStore(t)
+		alertFolder := randFolder()
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], alertFolder)
+
+		svc := createService(ruleStore, nil)
+		groupName := "legacy-empty-label-key"
+		limits := apivalidation.RuleLimits{BaseInterval: svc.cfg.BaseInterval}
+
+		legacyNode := validRule()
+		legacyNode.GrafanaManagedAlert.Data[0].Model = json.RawMessage(`{}`)
+		validNode := validRule()
+		validNode.GrafanaManagedAlert.Data[0].Model = json.RawMessage(`{}`)
+		group := apimodels.PostableRuleGroupConfig{
+			Name:     groupName,
+			Interval: prommodel.Duration(svc.cfg.BaseInterval),
+			Rules:    []apimodels.PostableExtendedRuleNode{legacyNode, validNode},
+		}
+		validatedRules, err := apivalidation.ValidateRuleGroup(&group, orgID, alertFolder.UID, limits)
+		require.NoError(t, err)
+		legacyRule := &validatedRules[0].AlertRule
+		validRuleModel := &validatedRules[1].AlertRule
+		legacyNode.Labels = map[string]string{"": "legacy"}
+		legacyRule.Labels = legacyNode.Labels
+		validNode.GrafanaManagedAlert.Title += " updated"
+
+		ruleStore.PutRule(context.Background(), legacyRule, validRuleModel)
+		requestCtx := createRequestContextWithPerms(orgID, createPermissionsForRules([]*models.AlertRule{legacyRule, validRuleModel}, orgID), nil)
+
+		group.Rules = []apimodels.PostableExtendedRuleNode{legacyNode, validNode}
+		response := svc.RoutePostNameRulesConfig(requestCtx, group, alertFolder.UID)
+
+		require.Equalf(t, http.StatusAccepted, response.Status(), "unexpected response: %s", response.Body())
+		updatedCommands := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			updates, ok := cmd.([]models.UpdateRule)
+			return updates, ok
+		})
+		require.Len(t, updatedCommands, 1)
+		updatedRules := updatedCommands[0].([]models.UpdateRule)
+		require.True(t, slices.ContainsFunc(updatedRules, func(update models.UpdateRule) bool {
+			return update.New.UID == validRuleModel.UID
+		}))
+	})
+
 	t.Run("should reject creation when folder is managed by ManagerKindRepo", func(t *testing.T) {
 		orgID := rand.Int63()
 		ruleStore := fakes.NewRuleStore(t)
@@ -1415,4 +1508,71 @@ func TestRoutePostNameRulesConfig(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, response.Status())
 		require.Contains(t, string(response.Body()), "cannot store rules in folder managed by Git Sync")
 	})
+}
+
+func TestValidateRuleLabelKeys(t *testing.T) {
+	invalidNewRule := &models.AlertRule{Title: "invalid new rule", UID: "new-rule-uid", Labels: map[string]string{"": "invalid"}}
+	invalidUpdatedRule := &models.AlertRule{Title: "invalid updated rule", UID: "updated-rule-uid", Labels: map[string]string{"": "invalid"}}
+
+	tests := []struct {
+		name      string
+		delta     *store.GroupDelta
+		ruleTitle string
+		ruleUID   string
+	}{
+		{
+			name:      "rejects a new rule with an empty label key",
+			delta:     &store.GroupDelta{New: []*models.AlertRule{invalidNewRule}},
+			ruleTitle: invalidNewRule.Title,
+			ruleUID:   invalidNewRule.UID,
+		},
+		{
+			name: "rejects an updated rule with an empty label key after a title change",
+			delta: &store.GroupDelta{Update: []store.RuleDelta{{
+				New:  invalidUpdatedRule,
+				Diff: cmputil.DiffReport{{Path: "Title"}},
+			}}},
+			ruleTitle: invalidUpdatedRule.Title,
+			ruleUID:   invalidUpdatedRule.UID,
+		},
+		{
+			name: "rejects an updated rule with an empty label key after a query change",
+			delta: &store.GroupDelta{Update: []store.RuleDelta{{
+				New:  invalidUpdatedRule,
+				Diff: cmputil.DiffReport{{Path: "Data"}},
+			}}},
+			ruleTitle: invalidUpdatedRule.Title,
+			ruleUID:   invalidUpdatedRule.UID,
+		},
+		{
+			name: "rejects an updated rule with an empty label key after a label change",
+			delta: &store.GroupDelta{Update: []store.RuleDelta{{
+				New:  invalidUpdatedRule,
+				Diff: cmputil.DiffReport{{Path: "Labels"}},
+			}}},
+			ruleTitle: invalidUpdatedRule.Title,
+			ruleUID:   invalidUpdatedRule.UID,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateRuleLabelKeys(tt.delta)
+			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+			require.ErrorContains(t, err, "label key cannot be empty")
+			require.ErrorContains(t, err, tt.ruleTitle)
+			require.ErrorContains(t, err, tt.ruleUID)
+		})
+	}
+
+	for _, path := range ignoreFieldsForValidate {
+		t.Run("allows an updated legacy rule when only "+path+" changes", func(t *testing.T) {
+			delta := &store.GroupDelta{Update: []store.RuleDelta{{
+				New:  invalidUpdatedRule,
+				Diff: cmputil.DiffReport{{Path: path}},
+			}}}
+
+			require.NoError(t, validateRuleLabelKeys(delta))
+		})
+	}
 }

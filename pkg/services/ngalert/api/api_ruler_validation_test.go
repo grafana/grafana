@@ -1147,13 +1147,12 @@ func TestValidateRuleNodeReservedLabels(t *testing.T) {
 	}
 }
 
-func TestValidateRuleNodeEmptyLabelKey(t *testing.T) {
+func TestValidateRuleNodeDefersEmptyLabelKeyValidation(t *testing.T) {
 	cfg := config(t)
 	limits := makeLimits(cfg)
 
 	r := validRule()
 	r.Labels = map[string]string{"": "true"}
 	_, err := ValidateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int64N(10)+1), rand.Int64(), randFolder().UID, limits)
-	require.Error(t, err)
-	require.ErrorContains(t, err, "label key cannot be empty")
+	require.NoError(t, err)
 }

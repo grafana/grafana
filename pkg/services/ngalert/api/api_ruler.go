@@ -525,6 +525,10 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			return err
 		}
 
+		if err := validateRuleLabelKeys(groupChanges); err != nil {
+			return err
+		}
+
 		if err := validateQueries(tranCtx, groupChanges, srv.conditionValidator, c.SignedInUser); err != nil {
 			return err
 		}
@@ -765,6 +769,23 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 			if err != nil {
 				return fmt.Errorf("%w '%s' (UID: %s): %s", ngmodels.ErrAlertRuleFailedValidation, upd.New.Title, upd.New.UID, err.Error())
 			}
+		}
+	}
+	return nil
+}
+
+func validateRuleLabelKeys(groupChanges *store.GroupDelta) error {
+	for _, rule := range groupChanges.New {
+		if err := apivalidation.ValidateRuleLabelKeys(rule.Labels); err != nil {
+			return fmt.Errorf("%w '%s' (UID: %s): %s", ngmodels.ErrAlertRuleFailedValidation, rule.Title, rule.UID, err.Error())
+		}
+	}
+	for _, update := range groupChanges.Update {
+		if !shouldValidate(update) {
+			continue
+		}
+		if err := apivalidation.ValidateRuleLabelKeys(update.New.Labels); err != nil {
+			return fmt.Errorf("%w '%s' (UID: %s): %s", ngmodels.ErrAlertRuleFailedValidation, update.New.Title, update.New.UID, err.Error())
 		}
 	}
 	return nil
