@@ -41,6 +41,11 @@ type sqlStore struct {
 	cfg    *setting.Cfg
 }
 
+// quoteTable resolves a table name and quotes it for use in raw SQL.
+func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
+	return dbHelper.DB.Quote(dbHelper.Table(name))
+}
+
 func ProvideStore(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg) sqlStore {
 	return sqlStore{
 		sql:    sql,
@@ -81,7 +86,7 @@ func (ss *sqlStore) Delete(ctx context.Context, userID int64) error {
 	}
 
 	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("user")) + " WHERE id = ?"
+		var rawSQL = "DELETE FROM " + quoteTable(dbHelper, "user") + " WHERE id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err
 	})
@@ -157,7 +162,7 @@ func (ss *sqlStore) ListByIdOrUID(ctx context.Context, uids []string, ids []int6
 
 func (ss *sqlStore) notServiceAccountFilter(dbHelper *legacysql.LegacyDatabaseHelper) string {
 	return fmt.Sprintf("%s.is_service_account = %s",
-		dbHelper.DB.Quote(dbHelper.Table("user")),
+		quoteTable(dbHelper, "user"),
 		dbHelper.DB.GetDialect().BooleanStr(false))
 }
 
@@ -376,9 +381,9 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 		org_user.role         as org_role,
 		org.id                as org_id,
 		u.is_service_account  as is_service_account
-		FROM ` + dbHelper.DB.Quote(dbHelper.Table("user")) + ` AS u
-		LEFT OUTER JOIN ` + dbHelper.DB.Quote(dbHelper.Table("org_user")) + ` AS org_user ON org_user.org_id = ` + orgID + ` AND org_user.user_id = u.id
-		LEFT OUTER JOIN ` + dbHelper.DB.Quote(dbHelper.Table("org")) + ` AS org ON org.id = org_user.org_id `
+		FROM ` + quoteTable(dbHelper, "user") + ` AS u
+		LEFT OUTER JOIN ` + quoteTable(dbHelper, "org_user") + ` AS org_user ON org_user.org_id = ` + orgID + ` AND org_user.user_id = u.id
+		LEFT OUTER JOIN ` + quoteTable(dbHelper, "org") + ` AS org ON org.id = org_user.org_id `
 
 		sess := dbSess.Table(dbHelper.Table("user"))
 		sess = sess.Context(ctx)
@@ -462,7 +467,7 @@ func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
 	}
 
 	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
-		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s WHERE is_service_account=%s", dbHelper.DB.Quote(dbHelper.Table("user")), dbHelper.DB.GetDialect().BooleanStr(false))
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s WHERE is_service_account=%s", quoteTable(dbHelper, "user"), dbHelper.DB.GetDialect().BooleanStr(false))
 		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
 			return err
 		}
@@ -482,8 +487,8 @@ func (ss *sqlStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, 
 		SELECT sub.user_accounts_with_no_role
 		FROM (
 		  SELECT COUNT(*) AS user_accounts_with_no_role
-		  FROM ` + dbHelper.DB.Quote(dbHelper.Table("org_user")) + ` AS ou
-		  LEFT JOIN ` + dbHelper.DB.Quote(dbHelper.Table("user")) + ` AS u ON u.id = ou.user_id
+		  FROM ` + quoteTable(dbHelper, "org_user") + ` AS ou
+		  LEFT JOIN ` + quoteTable(dbHelper, "user") + ` AS u ON u.id = ou.user_id
 		  WHERE ou.role = ?
 		  AND u.is_service_account = ` + dbHelper.DB.GetDialect().BooleanStr(false) + `
 		  AND u.is_disabled = ` + dbHelper.DB.GetDialect().BooleanStr(false) + `
@@ -530,7 +535,7 @@ func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisabl
 		}
 
 		user_id_params := strings.Repeat(",?", len(userIds)-1)
-		disableSQL := "UPDATE " + dbHelper.DB.Quote(dbHelper.Table("user")) + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
+		disableSQL := "UPDATE " + quoteTable(dbHelper, "user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
 
 		disableParams := []any{disableSQL, cmd.IsDisabled}
 		for _, v := range userIds {
