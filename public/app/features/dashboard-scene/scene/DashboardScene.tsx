@@ -63,6 +63,8 @@ import {
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
+import { edit } from '../actions/utils/edit';
+import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -84,7 +86,6 @@ import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
-import { dashboardEditActions } from '../sidebar/shared';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -109,7 +110,6 @@ import {
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
-import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -273,7 +273,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    const destroyMutationClient = createMutationClient(this);
+    const destroyMutationClient = createMutationClient(this, 'dashboard');
 
     return () => {
       destroyMutationClient();
@@ -1175,7 +1175,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (skipUndo) {
       perform();
     } else {
-      dashboardEditActions.edit({
+      edit({
         description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
         source: this,
         perform,

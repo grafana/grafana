@@ -7068,15 +7068,15 @@ __metadata:
   linkType: hard
 
 "@rc-component/slider@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "@rc-component/slider@npm:1.0.1"
+  version: 1.1.1
+  resolution: "@rc-component/slider@npm:1.1.1"
   dependencies:
     "@rc-component/util": "npm:^1.3.0"
     clsx: "npm:^2.1.1"
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/23ee6d696e7e60fa0d707ef0d58aba7892e4e3630b0f466b4ffda374210be0cd2e63fff034fcfcf11f72c03d4a4e980560ab5be3807f441cf8e20280793ba33e
+  checksum: 10/68794cadcdb86d690399aa17703f65e16d1bb28e34bc638ed51847980d0c2cad07cfb553e33495ae649582a81b7693c8278be797a5a7a4f6f5d8eeddb3728bf9
   languageName: node
   linkType: hard
 
@@ -8214,6 +8214,13 @@ __metadata:
     "@swc/helpers":
       optional: true
   checksum: 10/84526df889fa2813cfa7dfbed71b713c47c2010b1f55da26db698a87ea11f3f433a931ec29616ff300cb63d0ea27cbe7d2b40df64abf45f9b1a484b59c94ca1a
+  languageName: node
+  linkType: hard
+
+"@rspack/lite-tapable@npm:^1.0.1":
+  version: 1.1.5
+  resolution: "@rspack/lite-tapable@npm:1.1.5"
+  checksum: 10/e74775fd2d9355175168cde752467bb9906bb5deb850f11e65535effa7d775230fa2f9583587a36b360ba0bea45e841d785858f61ea31d2c2bf36fe9ab6c27b1
   languageName: node
   linkType: hard
 
@@ -19820,6 +19827,7 @@ __metadata:
     regenerator-runtime: "npm:0.14.1"
     reselect: "npm:5.1.1"
     rimraf: "npm:6.0.1"
+    rspack-manifest-plugin: "npm:5.2.2"
     rxjs: "npm:7.8.2"
     sass: "npm:1.89.2"
     sass-loader: "npm:16.0.5"
@@ -28697,7 +28705,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@npm:^6.0.0":
+"react-calendar@npm:6.0.1":
   version: 6.0.1
   resolution: "react-calendar@npm:6.0.1"
   dependencies:
@@ -28713,6 +28721,25 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10/c0beb9bc4d600641881b4989525e384ca74d04de879956f087aad1ae84fa6a3c7de52bc79e9f39a3c284a5cc6c3f917885d5760593c0b0aafdcc315a631faac3
+  languageName: node
+  linkType: hard
+
+"react-calendar@patch:react-calendar@npm%3A6.0.1#~/.yarn/patches/react-calendar-npm-6.0.1-22fe91a41c.patch":
+  version: 6.0.1
+  resolution: "react-calendar@patch:react-calendar@npm%3A6.0.1#~/.yarn/patches/react-calendar-npm-6.0.1-22fe91a41c.patch::version=6.0.1&hash=738a30"
+  dependencies:
+    "@wojtekmaj/date-utils": "npm:^2.0.2"
+    clsx: "npm:^2.0.0"
+    get-user-locale: "npm:^3.0.0"
+    warning: "npm:^4.0.0"
+  peerDependencies:
+    "@types/react": ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10/02772e7725c6a6abeebe3214f46fc2355ab574e498f08054c0135c7f49207b52c34afa8cffd5a347c6a61f0a040b343380605380a1eccdeecf43c48ab5e9709f
   languageName: node
   linkType: hard
 
@@ -30412,6 +30439,20 @@ __metadata:
   version: 1.3.2
   resolution: "rslog@npm:1.3.2"
   checksum: 10/69f575564ac93be5e3a7f3b7dd086e93fcca96e25dbb2fbd19ff0db9d0f2ace50b782b06b03c6b3f351252e45a80df85caf0e1ecdcca694c41f937efd67ac6bd
+  languageName: node
+  linkType: hard
+
+"rspack-manifest-plugin@npm:5.2.2":
+  version: 5.2.2
+  resolution: "rspack-manifest-plugin@npm:5.2.2"
+  dependencies:
+    "@rspack/lite-tapable": "npm:^1.0.1"
+  peerDependencies:
+    "@rspack/core": ^1.0.0 || ^2.0.0
+  peerDependenciesMeta:
+    "@rspack/core":
+      optional: true
+  checksum: 10/1acae737b83bcb16d4d9fa07a2b8542c97844bc7328ebdca4db76d3d010f507eeb9ba05f639dc01961234fedbe99dc49d7c128533b415be13a75b91e21101410
   languageName: node
   linkType: hard
 

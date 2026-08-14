@@ -14,7 +14,9 @@ import {
   defaultV2PanelKind,
   type CellContentKind as GeneratedCellContentKind,
   type CellKind as GeneratedCellKind,
+  type CodeCellContentKind as GeneratedCodeCellContentKind,
   type LibraryPanelKind as GeneratedLibraryPanelKind,
+  type MarkdownCellContentKind as GeneratedMarkdownCellContentKind,
   type NotebookElement as GeneratedNotebookElement,
   type NotebookLayoutItemKind as GeneratedNotebookLayoutItemKind,
   type NotebookLayoutKind as GeneratedNotebookLayoutKind,
@@ -36,6 +38,8 @@ export type PanelElement = PanelKind | LibraryPanelKind;
 // Shared with the dashboard spec, or notebook-only. Either way the generated name is already right.
 export type CellContentKind = GeneratedCellContentKind;
 export type CellKind = GeneratedCellKind;
+export type CodeCellContentKind = GeneratedCodeCellContentKind;
+export type MarkdownCellContentKind = GeneratedMarkdownCellContentKind;
 export type NotebookElement = GeneratedNotebookElement;
 export type NotebookLayoutItemKind = GeneratedNotebookLayoutItemKind;
 export type NotebookLayoutKind = GeneratedNotebookLayoutKind;

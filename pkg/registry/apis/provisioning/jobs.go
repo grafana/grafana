@@ -37,6 +37,7 @@ type jobsConnector struct {
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
 	perfTestingEnabled    func(ctx context.Context) bool
+	exportEnabled         bool
 }
 
 func NewJobsConnector(
@@ -48,6 +49,7 @@ func NewJobsConnector(
 	clients resources.ClientFactory,
 	folderMetadataEnabled bool,
 	perfTestingEnabled func(ctx context.Context) bool,
+	exportEnabled bool,
 ) *jobsConnector {
 	return &jobsConnector{
 		repoGetter:            repoGetter,
@@ -58,6 +60,7 @@ func NewJobsConnector(
 		clients:               clients,
 		folderMetadataEnabled: folderMetadataEnabled,
 		perfTestingEnabled:    perfTestingEnabled,
+		exportEnabled:         exportEnabled,
 	}
 }
 
@@ -310,6 +313,15 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	}
 	if spec.Action == provisioning.JobActionTest && (c.perfTestingEnabled == nil || !c.perfTestingEnabled(ctx)) {
 		return apierrors.NewBadRequest("test jobs require the provisioning.performance feature flag")
+	}
+	// Reject export (push) and migrate jobs up front when the feature is disabled,
+	// so the API user gets a clear error at creation time instead of a job that is
+	// created only to complete as a no-op.
+	if spec.Action == provisioning.JobActionPush && !c.exportEnabled {
+		return apierrors.NewBadRequest("push jobs require the provisioningExport feature flag")
+	}
+	if spec.Action == provisioning.JobActionMigrate && !c.exportEnabled {
+		return apierrors.NewBadRequest("migrate jobs require the provisioningExport feature flag")
 	}
 
 	switch spec.Action {
