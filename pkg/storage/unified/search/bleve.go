@@ -184,6 +184,8 @@ type SnapshotOptions struct {
 	MinDocCount int64
 
 	// MaxIndexAge is the maximum age of a remote snapshot that can be downloaded.
+	// Cleanup deletes by this value too, so snapshots cannot be kept for longer than
+	// instances will accept them. Raise it to cover a version compatibility window.
 	// Older snapshots are skipped (hard filter). Zero means "no age limit":
 	// snapshots are accepted regardless of age, and cleanup does not delete
 	// snapshots based on age (cleanup's per-version-group eviction of
