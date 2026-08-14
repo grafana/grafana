@@ -4177,7 +4177,7 @@ func TestIntegrationGetAllFoldersWithRules(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.UnifiedAlertingSettings{BaseInterval: time.Second * 10}
 	ruleStore := createTestStore(sqlStore, nil, &logtest.Fake{}, cfg, &fakeBus{})
 
