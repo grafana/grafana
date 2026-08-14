@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -39,7 +40,7 @@ func TestUserService(t *testing.T) {
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
 		tracer:       tracing.InitializeTracerForTest(),
-		db:           db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		sql:          legacysql.NewDatabaseProvider(db.InitTestDB(t)), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	}
 	userService.cfg = setting.NewCfg()
 
@@ -572,10 +573,9 @@ func TestIntegrationCreateUser(t *testing.T) {
 	cfg := setting.NewCfg()
 	ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	userStore := &sqlStore{
-		db:      ss,
-		dialect: ss.GetDialect(),
-		logger:  log.NewNopLogger(),
-		cfg:     cfg,
+		sql:    legacysql.NewDatabaseProvider(ss),
+		logger: log.NewNopLogger(),
+		cfg:    cfg,
 	}
 
 	t.Run("SkipOrgSetup=true: InsertOrgUser is not called, DefaultOrgRole is ignored", func(t *testing.T) {
@@ -592,7 +592,7 @@ func TestIntegrationCreateUser(t *testing.T) {
 			teamService:  &teamtest.FakeService{},
 			tracer:       tracing.InitializeTracerForTest(),
 			cfg:          setting.NewCfg(),
-			db:           ss,
+			sql:          legacysql.NewDatabaseProvider(ss),
 		}
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
 			Email:          "skip@example.com",
@@ -622,7 +622,7 @@ func TestIntegrationCreateUser(t *testing.T) {
 			teamService:  &teamtest.FakeService{},
 			tracer:       tracing.InitializeTracerForTest(),
 			cfg:          cfg,
-			db:           ss,
+			sql:          legacysql.NewDatabaseProvider(ss),
 		}
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
 			Email: "fallback@example.com",
@@ -644,7 +644,7 @@ func TestIntegrationCreateUser(t *testing.T) {
 			teamService:  &teamtest.FakeService{},
 			tracer:       tracing.InitializeTracerForTest(),
 			cfg:          setting.NewCfg(),
-			db:           ss,
+			sql:          legacysql.NewDatabaseProvider(ss),
 		}
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
 			Email: "email",

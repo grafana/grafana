@@ -848,7 +848,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	require.NoError(t, err)
 
 	userSvc, err := userimpl.ProvideService(
-		sql, orgSvc, cfg, teamSvc, nil, tracer,
+		legacysql.NewDatabaseProvider(sql), orgSvc, cfg, teamSvc, nil, tracer,
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)

@@ -43,9 +43,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(ss), cfgProvider)
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(ss), cfg, quotaService)
 	require.NoError(t, err)
-	userStore := ProvideStore(ss, setting.NewCfg())
+	userStore := ProvideStore(legacysql.NewDatabaseProvider(ss), setting.NewCfg())
 	usrSvc, err := ProvideService(
-		ss, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(ss), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
@@ -459,7 +459,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
 		ss = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
-		userStore := ProvideStore(ss, cfg)
+		userStore := ProvideStore(legacysql.NewDatabaseProvider(ss), cfg)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
@@ -561,7 +561,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(ss), cfg, quotaService)
 		require.NoError(t, err)
 		usrSvc, err := ProvideService(
-			ss, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(ss), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -977,7 +977,7 @@ func TestIntegrationUserUpdate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ss, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	userStore := ProvideStore(ss, cfg)
+	userStore := ProvideStore(legacysql.NewDatabaseProvider(ss), cfg)
 	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 	users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
@@ -1084,7 +1084,7 @@ func TestIntegrationMetricsUsage(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ss, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	userStore := ProvideStore(ss, setting.NewCfg())
+	userStore := ProvideStore(legacysql.NewDatabaseProvider(ss), setting.NewCfg())
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(ss), cfgProvider)
@@ -1140,7 +1140,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(store), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
