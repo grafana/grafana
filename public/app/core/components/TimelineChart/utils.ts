@@ -317,6 +317,8 @@ export function toEnumField(field: Field, theme: GrafanaTheme2): Field {
 
   if (enumConfig.text!.length > 0) {
     // states from mappings or thresholds
+    const display = field.type === FieldType.number ? undefined : (field.display ?? getDisplayProcessor({ field, theme }));
+    const unmatchedStates = new Map<unknown, number>();
     let otherIdx = -1;
 
     for (let i = 0; i < values.length; i++) {
@@ -330,6 +332,19 @@ export function toEnumField(field: Field, theme: GrafanaTheme2): Field {
         values[i] = hasMappings && idxs[i] !== -1 ? idxs[i] : null;
       } else if (idxs[i] !== -1) {
         values[i] = idxs[i];
+      } else if (display) {
+        let idx = unmatchedStates.get(raw);
+
+        if (idx == null) {
+          const disp = display(raw);
+          idx = enumConfig.text!.length;
+          unmatchedStates.set(raw, idx);
+          enumConfig.text!.push(formattedValueToString(disp));
+          enumConfig.color!.push(disp.color ?? FALLBACK_COLOR);
+          enumConfig.icon!.push('');
+        }
+
+        values[i] = idx;
       } else {
         // collapse all unmapped values into a single fallback state
         if (otherIdx === -1) {

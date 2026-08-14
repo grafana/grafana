@@ -96,9 +96,64 @@ describe('toEnumField', () => {
 
     const result = toEnumField(field, theme);
 
-    expect(result.config.type?.enum?.text).toEqual(['Healthy', 'Idle', 'Error 42', 'Other']);
+    expect(result.config.type?.enum?.text).toEqual(['Healthy', 'Idle', 'Error 42', 'UNKNOWN']);
     expect(result.values).toEqual([0, 1, 2, 3]);
     expect(result.config.mappings).toBeUndefined();
+  });
+
+  it('keeps unmatched string values as discrete states', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'state',
+          type: FieldType.string,
+          values: ['OK', 'UNKNOWN', 'UNKNOWN', 'PENDING'],
+          config: {
+            mappings: [
+              {
+                type: MappingType.ValueToText,
+                options: {
+                  OK: { text: 'Healthy', color: 'green' },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme);
+
+    expect(result.config.type?.enum?.text).toEqual(['Healthy', 'UNKNOWN', 'PENDING']);
+    expect(result.values).toEqual([0, 1, 1, 2]);
+  });
+
+  it('collapses unmatched numeric values into Other', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [5, null, 20],
+          config: {
+            mappings: [
+              {
+                type: MappingType.SpecialValue,
+                options: {
+                  match: SpecialValueMatch.Null,
+                  result: { text: 'No data', color: 'red' },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme);
+
+    expect(result.config.type?.enum?.text).toEqual(['No data', 'Other']);
+    expect(result.values).toEqual([1, 0, 1]);
   });
 
   it('matches boolean ValueToText keys', () => {
@@ -549,7 +604,7 @@ describe('prepareTimelineLegendItems', () => {
 
   const legendOptions = { displayMode: LegendDisplayMode.List } as VizLegendOptions;
 
-  it('builds items from value mappings, collapsing unmapped values into Other', () => {
+  it('builds items from mapped and unmatched string values', () => {
     const frames = [
       toDataFrame({
         fields: [
@@ -581,7 +636,7 @@ describe('prepareTimelineLegendItems', () => {
     expect(result?.map(({ label, color }) => ({ label, color }))).toEqual([
       { label: 'OK', color: '#73bf69' },
       { label: 'ERROR', color: '#f2495c' },
-      { label: 'Other', color: '#808080' },
+      { label: 'HUH', color: '#808080' },
     ]);
   });
 
