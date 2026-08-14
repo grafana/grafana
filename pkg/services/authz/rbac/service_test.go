@@ -1714,6 +1714,38 @@ func TestService_Check(t *testing.T) {
 			expected: false,
 		},
 		{
+			// Coarse by design: a list request carries no name, so holding the
+			// action on any single datasource authorizes the call. Narrowing the
+			// results to the readable subset is the datasource service's job, not
+			// this check's.
+			name: "should allow datasources list when user can read at least one datasource",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "list",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny datasources list when user holds no read permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "list",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:write", Scope: "datasources:uid:ds1"},
+			},
+			expected: false,
+		},
+		{
 			name: "should allow datasources query subresource with datasources:query scoped to uid",
 			req: &authzv1.CheckRequest{
 				Namespace:   "org-12",
