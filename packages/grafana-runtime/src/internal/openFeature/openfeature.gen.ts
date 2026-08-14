@@ -29,8 +29,6 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
-  /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
-  AzureMonitorBatchAPI: "azureMonitorBatchAPI",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -39,6 +37,8 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
+  /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
+  DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
   /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
@@ -51,6 +51,8 @@ export const FlagKeys = {
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the feedback button in the dashboard edit sidebar */
   FeedbackButton: "feedbackButton",
+  /** Renders the flame graph's top table using TableNG instead of the legacy Table */
+  FlameGraphTableNg: "flameGraph.tableNg",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
@@ -113,6 +115,8 @@ export const FlagKeys = {
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
+  /** Enables team APIs in the app platform */
+  KubernetesTeamsApi: "kubernetesTeamsApi",
   /** Enables the logs tableNG panel to replace existing tableRT */
   LogsTablePanelNG: "logsTablePanelNG",
   /** Use stream shards to split queries into smaller subqueries */
@@ -145,10 +149,14 @@ export const FlagKeys = {
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
+  /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
+  RawPrometheusTableNg: "rawPrometheus.tableNg",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
+  /** Routes snapshot requests from /api to the /apis endpoint */
+  SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
   /** Enables CodeMirror editor for SQL Expressions */
@@ -161,8 +169,12 @@ export const FlagKeys = {
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Sizes TableNG auto-width columns to fit their content instead of distributing evenly */
   TableAutoColumnWidths: "table.autoColumnWidths",
+  /** Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT) */
+  TableInspectDataTableNG: "table.inspectDataTableNG",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
+  /** Enables the new features in text panel */
+  TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -256,17 +268,6 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
 };
 
 /**
- * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
- *
- * **Details:**
- * - flag key: `azureMonitorBatchAPI`
- * - default value: `false`
- */
-export const useFlagAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("azureMonitorBatchAPI", false, options).value;
-};
-
-/**
  * Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
  *
  * **Details:**
@@ -308,6 +309,17 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
  */
 export const useFlagDatasourcesApiserverUseNewAPIsForDatasourceResources = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.apiserver.useNewAPIsForDatasourceResources", false, options).value;
+};
+
+/**
+ * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+ *
+ * **Details:**
+ * - flag key: `datasources.azureMonitorBatchAPI`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.azureMonitorBatchAPI", false, options).value;
 };
 
 /**
@@ -374,6 +386,17 @@ export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagFeedbackButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("feedbackButton", true, options).value;
+};
+
+/**
+ * Renders the flame graph's top table using TableNG instead of the legacy Table
+ *
+ * **Details:**
+ * - flag key: `flameGraph.tableNg`
+ * - default value: `false`
+ */
+export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("flameGraph.tableNg", false, options).value;
 };
 
 /**
@@ -718,6 +741,17 @@ export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Enables team APIs in the app platform
+ *
+ * **Details:**
+ * - flag key: `kubernetesTeamsApi`
+ * - default value: `false`
+ */
+export const useFlagKubernetesTeamsApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("kubernetesTeamsApi", false, options).value;
+};
+
+/**
  * Enables the logs tableNG panel to replace existing tableRT
  *
  * **Details:**
@@ -821,10 +855,10 @@ export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions)
  *
  * **Details:**
  * - flag key: `provisioning.gitConventions`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.gitConventions", false, options).value;
+  return useFlag("provisioning.gitConventions", true, options).value;
 };
 
 /**
@@ -843,10 +877,10 @@ export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions)
  *
  * **Details:**
  * - flag key: `provisioning.userAttribution`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.userAttribution", false, options).value;
+  return useFlag("provisioning.userAttribution", true, options).value;
 };
 
 /**
@@ -894,6 +928,17 @@ export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Renders the raw Prometheus query results table using TableNG instead of the legacy Table
+ *
+ * **Details:**
+ * - flag key: `rawPrometheus.tableNg`
+ * - default value: `false`
+ */
+export const useFlagRawPrometheusTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("rawPrometheus.tableNg", false, options).value;
+};
+
+/**
  * Enables recently viewed dashboards section in the browsing dashboard page
  *
  * **Details:**
@@ -913,6 +958,17 @@ export const useFlagRecentlyViewedDashboards = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reporting.anyPageReporting", false, options).value;
+};
+
+/**
+ * Routes snapshot requests from /api to the /apis endpoint
+ *
+ * **Details:**
+ * - flag key: `snapshots.kubernetesSnapshots`
+ * - default value: `false`
+ */
+export const useFlagSnapshotsKubernetesSnapshots = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("snapshots.kubernetesSnapshots", false, options).value;
 };
 
 /**
@@ -982,6 +1038,17 @@ export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOption
 };
 
 /**
+ * Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)
+ *
+ * **Details:**
+ * - flag key: `table.inspectDataTableNG`
+ * - default value: `false`
+ */
+export const useFlagTableInspectDataTableNG = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.inspectDataTableNG", false, options).value;
+};
+
+/**
  * Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height
  *
  * **Details:**
@@ -990,6 +1057,17 @@ export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOption
  */
 export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.paginationPageSize", false, options).value;
+};
+
+/**
+ * Enables the new features in text panel
+ *
+ * **Details:**
+ * - flag key: `text.newFeatures`
+ * - default value: `false`
+ */
+export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("text.newFeatures", false, options).value;
 };
 
 /**

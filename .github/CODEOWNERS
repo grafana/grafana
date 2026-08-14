@@ -111,6 +111,8 @@
 /apps/logsdrilldown/ @grafana/observability-logs
 /apps/annotation/ @grafana/grafana-backend-services-squad
 /apps/dashvalidator/ @grafana/sharing-squad
+/apps/dashboard/kinds/notebook.cue @grafana/sharing-squad
+/apps/dashboard/kinds/v2beta1/notebook_spec.cue @grafana/sharing-squad
 /pkg/api/ @grafana/grafana-backend-services-squad
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/appplugin @grafana/grafana-catalog
@@ -713,6 +715,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/logsnew @grafana/observability-logs
 /packages/grafana-schema/src/**/news @grafana/dataviz-squad
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
+/packages/grafana-schema/src/**/notebook @grafana/sharing-squad
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
 /packages/grafana-schema/src/**/stat @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
@@ -1022,6 +1025,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/grafana-frontend-platform
 /public/app/features/plugins/admin/ @grafana/grafana-catalog
+/public/app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/ @grafana/dashboards-squad
 /public/app/features/plugins/datasource_srv* @grafana/grafana-catalog
 /public/app/features/profile/ @grafana/grafana-frontend-platform
 /public/app/features/runtime/ @ryantxu
@@ -1173,8 +1177,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad
-/public/app/features/dashboard-scene/scene/layout-notebook/ @grafana/sharing-squad
-/public/app/features/dashboard-scene/serialization/layoutSerializers/NotebookLayout* @grafana/sharing-squad
 /public/app/features/dashboard-scene/sharing/ @grafana/sharing-squad
 /public/app/features/dashboard/components/ShareModal/ @grafana/sharing-squad
 /public/app/features/dashboard/dashgrid/DashboardLibrary/ @grafana/sharing-squad
@@ -1289,6 +1291,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/change-detection @grafana/grafana-backend-services-squad
 /.github/actions/setup-fpm @grafana/grafana-backend-services-squad
 /.github/actions/setup-node @grafana/grafana-frontend-platform
+/.github/actions/setup-playwright/action.yml @grafana/grafana-frontend-platform
 /.github/actions/yarn-install/action.yml @grafana/grafana-frontend-platform
 /.github/workflows/actionlint-format.txt @grafana/grafana-backend-services-squad
 /.github/workflows/actionlint.yml @grafana/grafana-backend-services-squad
@@ -1354,6 +1357,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-verify.yml @grafana/grafana-frontend-platform
 /.github/workflows/deploy-storybook.yml @grafana/grafana-frontend-platform
 /.github/workflows/deploy-storybook-preview.yml @grafana/grafana-frontend-platform
+/.github/workflows/deploy-frontend-preview.yml @grafana/grafana-frontend-platform
+/.github/actions/frontend-preview-check @grafana/grafana-frontend-platform
 /.github/workflows/scripts/publish-frontend-metrics.mts @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
@@ -1368,6 +1373,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/release-verify-packages.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/cleanup-branches.yml @grafana/grafana-backend-services-squad
 /.github/workflows/publish-artifact.yml @grafana/grafana-backend-services-squad
+/.github/workflows/proto-breaking-changes.yml @grafana/grafana-backend-services-squad
 /.github/actions/changelog @zserge
 /.github/workflows/check-frontend-test-coverage.yml @grafana/dataviz-squad
 /.github/workflows/report-frontend-coverage-to-bench.yaml @grafana/dataviz-squad

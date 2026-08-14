@@ -6,10 +6,10 @@ import { t, Trans } from '@grafana/i18n';
 import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema/dist/esm/index.gen';
 import { Box, Button } from '@grafana/ui';
 
+import { edit } from '../../actions/utils/edit';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddLinkPane, openEditLinkPane } from '../../settings/links/LinkAddEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
-import { dashboardEditActions } from '../shared';
 
 import { DraggableList } from './DraggableList';
 
@@ -58,7 +58,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
 
       const newPlacement = DROPPABLE_TO_PLACEMENT[destination.droppableId];
 
-      dashboardEditActions.edit({
+      edit({
         source: dashboard,
         description: t('dashboard.sidebar.links.reorder-description', 'Reorder links list'),
         perform: () => {

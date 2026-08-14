@@ -5739,6 +5739,7 @@
       "add-conditional-rule": "Přidat pravidlo {{ruleDescription}}",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Duplikovat panel",
       "edit-query-result-rule": "Změnit pravidlo výsledku dotazu",
       "edit-template-variable-rule": "Změnit pravidlo proměnné šablony",
@@ -6971,7 +6972,8 @@
         "change-annotation-enabled-state": "Změnit stav povolení vysvětlivky",
         "change-annotation-name": "Změnit název vysvětlivky",
         "change-annotation-panel-filter": "Změnit filtr panelu vysvětlivek"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Odstranit dotaz na vysvětlivky",
@@ -7047,13 +7049,9 @@
       "placeholder-your-metric-prefix": "Předpona metriky"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Odstranit",
-      "aria-label-edit": "Upravit",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Pravidla pro zobrazení/skrytí nebudou fungovat",
@@ -7857,6 +7855,10 @@
     },
     "variable-controls": {
       "add-variable": "Přidat proměnnou"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Odstranit proměnnou",
@@ -12844,6 +12846,7 @@
       "customise-saving": "",
       "dialog-label": "Navigace",
       "dock": "Připojit nabídku",
+      "header-title": "",
       "list-label": "Navigace",
       "open": "Hlavní nabídka",
       "pin-error": "",
@@ -12960,6 +12963,13 @@
       "title-zoom-out": "Oddálit"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12992,6 +13002,11 @@
       "count-truncated_few": "",
       "count-truncated_many": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
     }
   },
   "notifications": {
@@ -16319,6 +16334,7 @@
     "name-show-mini-map": "Zobrazit mini mapu"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16347,6 +16363,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

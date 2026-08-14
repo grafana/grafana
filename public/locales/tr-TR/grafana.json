@@ -5659,6 +5659,7 @@
       "add-conditional-rule": "{{ruleDescription}} kuralı ekle",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Paneli çoğalt",
       "edit-query-result-rule": "Sorgu sonucu kuralını değiştir",
       "edit-template-variable-rule": "Şablon değişkeni kuralını değiştir",
@@ -6863,7 +6864,8 @@
         "change-annotation-enabled-state": "Ek açıklamanın etkinleştirilme durumunu değiştir",
         "change-annotation-name": "Ek açıklama adını değiştir",
         "change-annotation-panel-filter": "Ek açıklama paneli filtresini değiştir"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Ek açıklama sorgusunu sil",
@@ -6939,13 +6941,9 @@
       "placeholder-your-metric-prefix": "Metrik ön ekiniz"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Sil",
-      "aria-label-edit": "Düzenle",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Göster/gizle kuralları çalışmayacaktır",
@@ -7745,6 +7743,10 @@
     },
     "variable-controls": {
       "add-variable": "Değişken ekle"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Değişkeni sil",
@@ -12654,6 +12656,7 @@
       "customise-saving": "",
       "dialog-label": "Gezinme",
       "dock": "Menüyü sabitle",
+      "header-title": "",
       "list-label": "Gezinme",
       "open": "Ana menü",
       "pin-error": "",
@@ -12764,6 +12767,13 @@
       "title-zoom-out": "Uzaklaştır"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12792,6 +12802,11 @@
       "count_other": "",
       "count-truncated_one": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
     }
   },
   "notifications": {
@@ -16059,6 +16074,7 @@
     "name-show-mini-map": "Mini haritayı göster"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16087,6 +16103,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

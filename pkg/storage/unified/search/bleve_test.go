@@ -877,7 +877,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 
@@ -897,7 +897,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
 			Query:   "grafana",
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 		_, ok := searchReq.Sort[0].(*blevesearch.SortScore)
@@ -916,7 +916,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: 10},
 			},
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, errResult)
 		require.Contains(t, searchReq.Facets, "tagValues")
 		assert.Equal(t, resource.SEARCH_FIELD_TAGS, searchReq.Facets["tagValues"].Field)
@@ -929,7 +929,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {Field: "labels.region", Limit: 10},
 			},
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, searchReq)
 		require.NotNil(t, errResult)
 		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
@@ -945,7 +945,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 					"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: -1},
 				},
-			}, nil, postRankAuthz)
+			}, nil, postRankAuthz, nil)
 			require.Nil(t, searchReq)
 			require.NotNil(t, errResult)
 			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
@@ -2777,7 +2777,7 @@ func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T
 // so leaving match-all there and testing the marker as a Filter would read every
 // document in the index to find the few deleted ones.
 func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
-	scoped, ok := scopeQuery(bleve.NewMatchAllQuery(), true).(*query.BooleanQuery)
+	scoped, ok := scopeQuery(bleve.NewMatchAllQuery(), true, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Must),
@@ -2788,13 +2788,13 @@ func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
 	// A real query drives iteration itself, so the marker moves to Filter where it
 	// does not score.
 	textQuery := bleve.NewMatchQuery("hello")
-	scoped, ok = scopeQuery(textQuery, true).(*query.BooleanQuery)
+	scoped, ok = scopeQuery(textQuery, true, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Filter))
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
 
 	// Live searches only exclude the marker; provisioning is irrelevant to them.
-	scoped, ok = scopeQuery(bleve.NewMatchAllQuery(), false).(*query.BooleanQuery)
+	scoped, ok = scopeQuery(bleve.NewMatchAllQuery(), false, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.MustNot))
 	assert.Nil(t, scoped.Filter)
@@ -2885,10 +2885,10 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 	assert.Equal(t, map[string]float64{
 		id("live-1"): unscoped[id("live-1")],
 		id("live-2"): unscoped[id("live-2")],
-	}, scores(scopeQuery(textQuery, false)))
+	}, scores(scopeQuery(textQuery, false, 0)))
 
 	assert.Equal(t, map[string]float64{
 		id("trashed-1"): unscoped[id("trashed-1")],
 		id("trashed-2"): unscoped[id("trashed-2")],
-	}, scores(scopeQuery(textQuery, true)))
+	}, scores(scopeQuery(textQuery, true, 0)))
 }

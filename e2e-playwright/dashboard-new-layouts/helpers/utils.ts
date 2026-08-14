@@ -5,9 +5,19 @@ import { type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafa
 import type { Panels, Rows, Tabs } from '../page-objects';
 
 /**
- * Coordinate-based drag: hover the source, press, move in steps, release.
- * Playwright's locator.dragTo() does not trigger the dnd library (pangea) used by
- * tabs/rows, which requires intermediate mousemove events.
+ * Pixel- and timing-sensitive mechanics that must stay out of page objects:
+ * coordinate-based drag-and-drop and `boundingBox()` geometry.
+ *
+ * A util IS a mouse/geometry sequence that several specs share (move panel/tab/row,
+ * read a box for a later drag). Specs may still keep one-off `toPass()` retries
+ * and short mouse sequences inline.
+ *
+ * A util is NOT:
+ * - a user-intent click/fill/select — that belongs to a page object;
+ * - multi-step setup or navigation — that belongs in `flows.ts`;
+ * - a reusable `expect` bundle — that belongs in `assertions.ts`.
+ *
+ * Add a new util only when a second spec needs the same mechanics.
  */
 export async function dragTo(
   page: Page,
@@ -18,6 +28,8 @@ export async function dragTo(
   options?: { steps?: number }
 ) {
   await test.step(`Drag ${sourceName} to (${toX}, ${toY})`, async () => {
+    // Playwright's locator.dragTo() does not trigger the dnd library (pangea)
+    // used by tabs/rows, which requires intermediate mousemove events.
     await source.hover();
     await page.mouse.down();
     await page.mouse.move(toX, toY, { steps: options?.steps ?? 5 });
