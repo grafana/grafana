@@ -52,10 +52,10 @@ const (
 	// runs a garbage collection cycle at a time. See runGarbageCollectionWithLock.
 	gcLeaseName = "resource-gc"
 
-	// gcLeaseTTL bounds how long a GC cycle can hold the lease. If a cycle
-	// runs longer, the lease expires and another replica may pick it up too;
-	// harmless since deletes are idempotent.
-	gcLeaseTTL = 10 * time.Minute
+	// gcLeaseTTL is short because the lease auto-renews for as long as the GC
+	// cycle runs; it only bounds how quickly the lock is reclaimed if a
+	// replica crashes mid-cycle.
+	gcLeaseTTL = time.Minute
 )
 
 // IsResourceNameMixedCase reports whether a successful read returned a
@@ -713,17 +713,15 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 }
 
 // runGarbageCollectionWithLock is a best-effort attempt at having only one
-// storage-api replica run a GC cycle at a time, using the same lease
-// primitive as usage-stats flushing and search snapshot build/cleanup.
-// Deletes are idempotent, so a concurrent run by two replicas is safe, just
-// redundant; when leases are disabled, GC simply runs on every replica.
+// storage-api replica run a GC cycle at a time; deletes are idempotent, so a
+// concurrent run by two replicas is safe, just redundant.
 func (b *kvStorageBackend) runGarbageCollectionWithLock(ctx context.Context, cutoffTimeStamp int64) {
 	if b.leaseManager == nil {
 		b.runGarbageCollection(ctx, cutoffTimeStamp)
 		return
 	}
 
-	l, err := b.leaseManager.Acquire(ctx, gcLeaseName, lease.WithTTL(gcLeaseTTL))
+	l, err := b.leaseManager.Acquire(ctx, gcLeaseName, lease.WithTTL(gcLeaseTTL), lease.WithAutoRenew())
 	if err != nil {
 		if !errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 			b.log.Error("failed to acquire garbage collection lease", "error", err)
