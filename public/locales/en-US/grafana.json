@@ -5432,6 +5432,16 @@
     "auto-grid": {
       "description": "Panels resize to fit and form uniform grids",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "Default",
+            "description": "Override the layout default for this panel. \"Default\" follows the layout setting.",
+            "off": "Off",
+            "on": "On",
+            "title": "Auto fit"
+          },
+          "title": "Auto fit"
+        },
         "repeat": {
           "title": "Repeat options",
           "variable": {
@@ -5449,15 +5459,31 @@
         "custom-min-width": {
           "clear": "Clear"
         },
+        "fit-content": "Auto fit",
         "height-fill": "Fill screen",
+        "match-row-heights": "Match row heights",
         "max-columns": "Max columns",
-        "min-height": "Row height",
-        "min-height-custom": "Custom row height",
+        "max-height": "Max height",
+        "max-height-clear": "Back to unlimited",
+        "max-height-clear-label": "Clear",
+        "max-height-custom": "Custom",
+        "max-height-custom-label": "Custom max height",
+        "max-height-error": "A number between 50 and 10000 is required",
+        "max-height-short": "Short",
+        "max-height-standard": "Standard",
+        "max-height-tall": "Tall",
+        "max-height-unlimited": "Unlimited",
+        "min-height": "Min height",
+        "min-height-custom": "Custom min height",
+        "min-height-custom-clear": "Back to standard min height",
         "min-height-error": "A number between 50 and 2000 is required",
         "min-width": "Min column width",
         "min-width-custom": "Custom min width",
         "min-width-custom-clear": "Back to standard min column width",
-        "min-width-error": "A number between 50 and 2000 is required"
+        "min-width-error": "A number between 50 and 2000 is required",
+        "row-height": "Row height",
+        "row-height-custom": "Custom row height",
+        "row-height-custom-clear": "Back to standard row height"
       },
       "resize-intercept": {
         "edit": "Edit auto layout",
@@ -5690,6 +5716,7 @@
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
       "panel-edit": "Panel changes",
+      "panel-fit-content": "Panel auto fit content",
       "panel-max-repeats-per-row": "Max repeats per row",
       "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",

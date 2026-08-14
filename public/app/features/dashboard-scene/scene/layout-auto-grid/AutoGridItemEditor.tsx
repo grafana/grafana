@@ -18,12 +18,12 @@ export function getOptions(model: AutoGridItem): OptionsPaneCategoryDescriptor[]
   if (model.state.body.getPlugin()?.supportsFitContent === true) {
     categories.push(
       new OptionsPaneCategoryDescriptor({
-        title: t('dashboard.auto-grid.item-options.fit-content.title', 'Auto fit content'),
+        title: t('dashboard.auto-grid.item-options.fit-content.title', 'Auto fit'),
         id: 'fit-content-options',
         isOpenDefault: false,
       }).addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.auto-grid.item-options.fit-content.override.title', 'Auto fit content'),
+          title: t('dashboard.auto-grid.item-options.fit-content.override.title', 'Auto fit'),
           id: 'auto-grid-fit-content-override',
           description: t(
             'dashboard.auto-grid.item-options.fit-content.override.description',
