@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	searchV0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -117,6 +118,46 @@ func TestIntegrationNotebooksSearchAPI(t *testing.T) {
 		assert.Contains(t, fields.Object, "title")
 		assert.NotContains(t, fields.Object, "createdBy", "createdBy was not requested")
 		assert.NotContains(t, fields.Object, "created", "created was not requested")
+	})
+
+	// The notebooks list page renders created and updated straight out of these fields, so they
+	// have to be populated, not merely projectable. updated went unindexed for every kind until
+	// the document builder was fixed, and nothing about the request shape would reveal that.
+	//
+	// Only an update produces an updated timestamp — the apiserver clears it on create — so this
+	// writes one first rather than asserting against a create-only notebook.
+	t.Run("returns usable created and updated timestamps", func(t *testing.T) {
+		const name = "nbsearch-disk"
+		current, err := admin.Resource.Get(ctx, name, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NoError(t, unstructured.SetNestedStringSlice(current.Object, []string{"reviewed"}, "spec", "tags"))
+		_, err = admin.Resource.Update(ctx, current, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		results, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Text: &searchV0.TextPredicate{Value: "saturation"},
+			},
+			Fields: []string{"title", "created", "updated"},
+			Limit:  10,
+		})
+		require.Equal(t, http.StatusOK, code)
+
+		var fields *common.Unstructured
+		for _, item := range results.Items {
+			if item.Resource.Name == name {
+				fields = item.Fields
+			}
+		}
+		require.NotNil(t, fields, "the updated notebook should be among the hits")
+		// Unix millis, so a float64 once it has been through JSON.
+		created, ok := fields.Object["created"].(float64)
+		require.True(t, ok, "created should be a number, got %T", fields.Object["created"])
+		assert.Positive(t, created, "created should be indexed")
+
+		updated, ok := fields.Object["updated"].(float64)
+		require.True(t, ok, "updated should be a number, got %T", fields.Object["updated"])
+		assert.GreaterOrEqual(t, updated, created, "updated should be indexed, and not predate creation")
 	})
 
 	t.Run("filters by createdBy", func(t *testing.T) {

@@ -58,7 +58,7 @@ export function NotebooksTable({ notebooks }: Props) {
       {
         id: 'created',
         header: t('notebooks.list.table.created', 'Created'),
-        sortType: 'string',
+        sortType: 'number',
         disableGrow: true,
         width: 120,
         cell: ({ row: { original } }) => <RelativeTime timestamp={original.created} />,
@@ -66,7 +66,7 @@ export function NotebooksTable({ notebooks }: Props) {
       {
         id: 'updated',
         header: t('notebooks.list.table.updated', 'Updated'),
-        sortType: 'string',
+        sortType: 'number',
         disableGrow: true,
         width: 120,
         cell: ({ row: { original } }) => <RelativeTime timestamp={original.updated} />,
@@ -92,7 +92,8 @@ export function NotebooksTable({ notebooks }: Props) {
   );
 }
 
-function RelativeTime({ timestamp }: { timestamp: string }) {
+/** timestamp is unix millis; zero means the index has no value for it. */
+function RelativeTime({ timestamp }: { timestamp: number }) {
   const styles = useStyles2(getStyles);
 
   if (!timestamp) {

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
-import { Alert, Box, Button, Combobox, EmptyState, FilterInput, Stack, Text } from '@grafana/ui';
+import { Alert, Box, Button, Checkbox, EmptyState, FilterInput, Stack, Text } from '@grafana/ui';
 import { useCreateNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
 import { extractErrorMessage, handleError } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
@@ -19,8 +19,6 @@ import { useNotebooksList } from '../list/useNotebooksList';
 import { defaultSpec as defaultNotebookSpec } from '../types';
 import { notebookViewUrl } from '../urls';
 
-const ALL_AUTHORS = '';
-
 export function NotebooksListPage() {
   // The route is registered unconditionally (getAppRoutes is not a React component), so the
   // feature flag is enforced here. When it is off this is not a real route, so render not-found.
@@ -31,12 +29,13 @@ export function NotebooksListPage() {
   const {
     rows,
     totalCount,
+    isTotalExact,
     isTruncated,
-    authorOptions,
+    isFiltered,
     searchQuery,
     setSearchQuery,
-    authorFilter,
-    setAuthorFilter,
+    createdByMe,
+    setCreatedByMe,
     isLoading,
     error,
   } = useNotebooksList({ enabled: notebooksEnabled });
@@ -85,7 +84,9 @@ export function NotebooksListPage() {
     </Button>
   ) : undefined;
 
-  const hasNoNotebooks = !isLoading && !error && totalCount === 0;
+  // Filtering happens server-side, so a zero count only means the library is empty when nothing
+  // is filtered — otherwise it is a no-results state and the CTA would be wrong.
+  const hasNoNotebooks = !isLoading && !error && !isFiltered && totalCount === 0;
 
   return (
     // When nothing exists the empty state carries the create button, so drop it from the header.
@@ -122,7 +123,7 @@ export function NotebooksListPage() {
               <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
                 <Stack alignItems="center" gap={1} wrap="wrap">
                   {/* Without an explicit width FilterInput fills the row and pushes the author
-                      filter onto the next line. */}
+                      checkbox onto the next line. */}
                   <FilterInput
                     width={40}
                     value={searchQuery}
@@ -130,39 +131,42 @@ export function NotebooksListPage() {
                     escapeRegex={false}
                     placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
                   />
-                  <Combobox
-                    id="notebooks-author-filter"
-                    minWidth={22}
-                    width="auto"
-                    value={authorFilter}
-                    options={[
-                      { value: ALL_AUTHORS, label: t('notebooks.list.all-authors', 'All authors') },
-                      ...authorOptions,
-                    ]}
-                    onChange={(option) => setAuthorFilter(option?.value ?? ALL_AUTHORS)}
-                    aria-label={t('notebooks.list.author-filter', 'Filter by author')}
+                  {/* An arbitrary-author filter would need the server to enumerate authors, which
+                      the index cannot facet on. Filtering to one known identity needs no such
+                      list. */}
+                  <Checkbox
+                    id="notebooks-created-by-me"
+                    value={createdByMe}
+                    onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
+                    label={t('notebooks.list.created-by-me', 'Created by me')}
                   />
                 </Stack>
-                {/* Two separate numbers: how many match the filters, and — when the server had
-                    more — how many were loaded at all. Filtering runs over the loaded page, so
-                    folding them into one count would misreport both. */}
+                {/* Two numbers, because the page is one bounded window onto the matches: how many
+                    are on screen, and how many the server has. They differ only when truncated. */}
                 <Stack alignItems="center" gap={1}>
-                  {isTruncated && (
+                  {isTruncated ? (
                     <Text variant="bodySmall" color="secondary">
-                      {t('notebooks.list.count-truncated', '', {
-                        count: totalCount,
-                        defaultValue_one: 'First {{count}} notebook loaded',
-                        defaultValue_other: 'First {{count}} notebooks loaded',
+                      {/* `shown` rather than `count`, which would have i18next emit plural
+                          variants of a string that does not vary. */}
+                      {isTotalExact
+                        ? t('notebooks.list.count-of-total', 'Showing {{shown}} of {{total}}', {
+                            shown: rows.length,
+                            total: totalCount,
+                          })
+                        : t('notebooks.list.count-of-total-approx', 'Showing {{shown}} of {{total}}+', {
+                            shown: rows.length,
+                            total: totalCount,
+                          })}
+                    </Text>
+                  ) : (
+                    <Text variant="bodySmall" color="secondary">
+                      {t('notebooks.list.count', '', {
+                        count: rows.length,
+                        defaultValue_one: '{{count}} notebook',
+                        defaultValue_other: '{{count}} notebooks',
                       })}
                     </Text>
                   )}
-                  <Text variant="bodySmall" color="secondary">
-                    {t('notebooks.list.count', '', {
-                      count: rows.length,
-                      defaultValue_one: '{{count}} notebook',
-                      defaultValue_other: '{{count}} notebooks',
-                    })}
-                  </Text>
                 </Stack>
               </Stack>
 
