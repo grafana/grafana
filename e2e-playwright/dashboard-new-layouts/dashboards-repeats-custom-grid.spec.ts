@@ -97,8 +97,7 @@ test.describe(
         await expect(sidebar.panelOptions.repeatOptions.getMaxPerRowSelect()).toBeHidden();
         await expectRepeatedPanelsStackedVertically(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelsStackedVertically(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
       });
@@ -126,8 +125,7 @@ test.describe(
         await sidebar.panelOptions.repeatOptions.selectMaxPerRow(2);
         await expectRepeatedPanelsWrappedHorizontally(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS, 2);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelsWrappedHorizontally(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS, 2);
       });
