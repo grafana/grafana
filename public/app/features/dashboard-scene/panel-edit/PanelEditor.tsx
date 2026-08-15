@@ -33,7 +33,12 @@ import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
-import { getDashboardSceneFor, getLibraryPanelBehavior, getPanelIdForVizPanel } from '../utils/utils';
+import {
+  findVizPanelByKey,
+  getDashboardSceneFor,
+  getLibraryPanelBehavior,
+  getPanelIdForVizPanel,
+} from '../utils/utils';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { type PanelDataPane } from './PanelDataPane/PanelDataPane';
@@ -135,6 +140,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private commitChanges() {
     if (!this.state.isDirty && !this._changesHaveBeenMade) {
       // Nothing to commit
+      return;
+    }
+
+    const panel = this.state.panelRef.resolve();
+    if (findVizPanelByKey(getDashboardSceneFor(this), panel.state.key) !== panel) {
+      // Our tree was replaced wholesale (APPLY_SPEC and the json/code editors rebuild the scene),
+      // so there is nothing to commit onto: the edit action below would be sourced from a layout
+      // item that never activates again, and the sidebar retries an inactive source forever.
       return;
     }
 

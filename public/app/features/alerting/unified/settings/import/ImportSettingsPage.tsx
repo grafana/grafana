@@ -8,13 +8,17 @@ import { logError } from '../../Analytics';
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import { WithReturnButton } from '../../components/WithReturnButton';
 import { AutoSyncConfiguration } from '../../components/settings/AutoSyncConfiguration';
-import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
+import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { useSettingsPageNav } from '../navigation';
+
+import { StagedConfiguration } from './StagedConfiguration';
+import { getStagedConfigPermissions } from './stagedConfigPermissions';
+import { useStagedConfig } from './useStagedConfig';
 
 const IMPORT_WIZARD_URL = '/alerting/import-to-gma';
 
@@ -46,26 +50,31 @@ function ImportSettingsPage() {
 
 function ImportSettingsContent() {
   const isAutoSyncEnabled = config.featureToggles['alerting.syncExternalAlertmanager'];
+  const { stagedConfig } = useStagedConfig();
 
   return (
     <Stack direction="column" gap={2}>
-      {isAutoSyncEnabled && <AutoSyncConfiguration />}
+      {isAutoSyncEnabled && <AutoSyncConfiguration stagedConfigIdentifier={stagedConfig?.identifier} />}
       <StagedConfigurationSection />
     </Stack>
   );
 }
 
 function StagedConfigurationSection() {
-  const { data, isLoading, isError, error, refetch } = useAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
+  const { canRevert } = getStagedConfigPermissions();
+  const { stagedConfig, liveConfig, isLoading, isError, error, refetch } = useStagedConfig();
+  const { datasourceUid: autoSyncUid, isLoading: isLoadingAutoSync } = useIsAutoSyncActive();
+
+  // The syncer addresses its own staged config by the datasource UID, so a matching identifier means this
+  // staged config is auto-sync's output rather than a manual import.
+  const isSyncManaged = Boolean(autoSyncUid) && stagedConfig?.identifier === autoSyncUid;
+  const isLoadingCard = isLoading || isLoadingAutoSync;
 
   useEffect(() => {
     if (isError) {
       logError(new Error(stringifyErrorLike(error)));
     }
   }, [isError, error]);
-
-  // A user can have at most one staged configuration at a time.
-  const stagedConfig = data?.extra_config?.[0];
 
   return (
     <Stack direction="column" gap={1}>
@@ -79,7 +88,7 @@ function StagedConfigurationSection() {
         </Trans>
       </Text>
 
-      {isLoading && (
+      {isLoadingCard && (
         <LoadingPlaceholder text={t('alerting.settings.import.loading', 'Loading imported configurations…')} />
       )}
 
@@ -99,7 +108,7 @@ function StagedConfigurationSection() {
         </Alert>
       )}
 
-      {!isLoading && !isError && !stagedConfig && (
+      {!isLoadingCard && !isError && !stagedConfig && (
         <EmptyState
           variant="call-to-action"
           message={t('alerting.settings.import.empty-title', 'No configuration imported yet')}
@@ -119,8 +128,14 @@ function StagedConfigurationSection() {
         </EmptyState>
       )}
 
-      {/* Populated summary + accordion is added in a follow-up. */}
-      {!isLoading && !isError && stagedConfig && <Text variant="body">{stagedConfig.identifier}</Text>}
+      {!isLoadingCard && !isError && stagedConfig && (
+        <StagedConfiguration
+          stagedConfig={stagedConfig}
+          canRevert={canRevert}
+          isSyncManaged={isSyncManaged}
+          liveConfig={liveConfig}
+        />
+      )}
     </Stack>
   );
 }

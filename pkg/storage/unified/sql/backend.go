@@ -54,11 +54,26 @@ const defaultGarbageCollectionBatchWait = 1 * time.Second
 
 type GarbageCollectionConfig struct {
 	Enabled          bool
+	DryRun           bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
 	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
 	MaxAge           time.Duration // retention period
 	DashboardsMaxAge time.Duration // dashboard retention
+}
+
+// NewGarbageCollectionConfig keeps the mapping from settings in one place, so callers
+// building the SQL backend themselves cannot miss a field.
+func NewGarbageCollectionConfig(cfg *setting.Cfg) GarbageCollectionConfig {
+	return GarbageCollectionConfig{
+		Enabled:          cfg.EnableGarbageCollection,
+		DryRun:           cfg.GarbageCollectionDryRun,
+		Interval:         cfg.GarbageCollectionInterval,
+		BatchSize:        cfg.GarbageCollectionBatchSize,
+		BatchWait:        cfg.GarbageCollectionBatchWait,
+		MaxAge:           cfg.GarbageCollectionMaxAge,
+		DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+	}
 }
 
 func ProvideStorageBackend(
@@ -159,20 +174,13 @@ func NewStorageBackend(
 
 	if !cfg.EnableSQLKVBackend {
 		return NewBackend(BackendOptions{
-			DBProvider:           eDB,
-			Reg:                  reg,
-			IsHA:                 isHA,
-			storageMetrics:       storageMetrics,
-			LastImportTimeMaxAge: cfg.MaxFileIndexAge,
-			GCGate:               gcGate,
-			GarbageCollection: GarbageCollectionConfig{
-				Enabled:          cfg.EnableGarbageCollection,
-				Interval:         cfg.GarbageCollectionInterval,
-				BatchSize:        cfg.GarbageCollectionBatchSize,
-				BatchWait:        cfg.GarbageCollectionBatchWait,
-				MaxAge:           cfg.GarbageCollectionMaxAge,
-				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
-			},
+			DBProvider:              eDB,
+			Reg:                     reg,
+			IsHA:                    isHA,
+			storageMetrics:          storageMetrics,
+			LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
+			GCGate:                  gcGate,
+			GarbageCollection:       NewGarbageCollectionConfig(cfg),
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
 			MigrationChunkedWrites:  cfg.MigrationChunkedWrites,
@@ -201,31 +209,16 @@ func NewStorageBackend(
 		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 	}
 
-	kvBackendOpts := resource.KVBackendOptions{
-		KvStore:              kvStore,
-		Reg:                  reg,
-		UseChannelNotifier:   !isHA,
-		Log:                  log.New("storage-backend"),
-		DBKeepAlive:          eDB,
-		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
-		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
-		TenantDeleterConfig:  resource.NewTenantDeleterConfig(cfg),
-		GCGate:               gcGate,
-		GarbageCollection: resource.GarbageCollectionConfig{
-			Enabled:          cfg.EnableGarbageCollection,
-			DryRun:           cfg.GarbageCollectionDryRun,
-			Interval:         cfg.GarbageCollectionInterval,
-			BatchSize:        cfg.GarbageCollectionBatchSize,
-			BatchWait:        cfg.GarbageCollectionBatchWait,
-			MaxAge:           cfg.GarbageCollectionMaxAge,
-			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
-		},
-		EventRetentionPeriod:    cfg.EventRetentionPeriod,
-		EventPruningInterval:    cfg.EventPruningInterval,
-		SearchLookback:          cfg.SearchLookback,
-		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
-		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
-	}
+	kvBackendOpts := resource.NewKVBackendOptions(cfg)
+	kvBackendOpts.KvStore = kvStore
+	kvBackendOpts.Reg = reg
+	kvBackendOpts.UseChannelNotifier = !isHA
+	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.DBKeepAlive = eDB
+	kvBackendOpts.GCGate = gcGate
+	// The KV backend has one switch for all background write jobs, so the older
+	// pruner-only setting maps onto it.
+	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
 
 	for _, opt := range opts {
 		opt(&kvBackendOpts)
@@ -601,7 +594,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 }
 
 func (b *backend) initGarbageCollection(ctx context.Context) error {
-	b.log.Info("starting garbage collection loop")
+	b.log.Info("starting garbage collection loop", "dry_run", b.garbageCollection.DryRun)
 
 	go func() {
 		// Wait for the migration gate so GC never prunes rows an in-process
@@ -667,6 +660,11 @@ func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int6
 					break
 				}
 				totalDeleted += deleted
+				// A dry run deletes nothing, so the next batch would return the same
+				// candidates forever. Stop after the first batch.
+				if b.garbageCollection.DryRun {
+					break
+				}
 				if deleted < int64(b.garbageCollection.BatchSize) {
 					break
 				}
@@ -677,7 +675,13 @@ func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int6
 				}
 			}
 			if totalDeleted > 0 {
-				b.log.Info("garbage collection deleted history",
+				message := "garbage collection deleted history"
+				if b.garbageCollection.DryRun {
+					// The count is one batch, not the whole backlog, so the message must not
+					// read like a total.
+					message = "garbage collection dry run, first batch only"
+				}
+				b.log.Info(message,
 					"group", group,
 					"resource", resourceName,
 					"rows", totalDeleted,
@@ -721,6 +725,13 @@ func (b *backend) garbageCollectBatch(ctx context.Context, group, resourceName s
 			return nil
 		}
 		span.AddEvent("candidates", trace.WithAttributes(attribute.Int("candidates", len(candidates))))
+		if b.garbageCollection.DryRun {
+			// Report the candidates instead of deleting them. This counts resources, not
+			// history rows, because each candidate can have several rows.
+			rowsAffected = int64(len(candidates))
+			span.AddEvent("dry run", trace.WithAttributes(attribute.Int64("candidates", rowsAffected)))
+			return nil
+		}
 		res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryGCDeleteByNames, &sqlGarbageCollectDeleteByNamesRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Group:       group,

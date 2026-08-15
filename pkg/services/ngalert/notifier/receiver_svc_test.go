@@ -39,7 +39,7 @@ import (
 func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -90,7 +90,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -145,7 +145,7 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	getMethods := []string{"single", "multi"}
@@ -544,21 +544,17 @@ func TestReceiverService_Create(t *testing.T) {
 				),
 			)),
 			expectedStored: &v1.PostableApiReceiver{
-				Receiver: definitions.Receiver{
-					Name: lineIntegration.Name,
-				},
-				PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-						{
-							UID:                   lineIntegration.UID,
-							Name:                  lineIntegration.Name,
-							Type:                  string(lineIntegration.Config.Type()),
-							Version:               string(lineIntegration.Config.Version),
-							DisableResolveMessage: lineIntegration.DisableResolveMessage,
-							Settings:              definitions.RawMessage(`{}`), // Empty settings, not nil.
-							SecureSettings: map[string]string{
-								"token": "c2VjcmV0", // base64 encoded "secret".
-							},
+				Name: lineIntegration.Name,
+				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+					{
+						UID:                   lineIntegration.UID,
+						Name:                  lineIntegration.Name,
+						Type:                  string(lineIntegration.Config.Type()),
+						Version:               string(lineIntegration.Config.Version),
+						DisableResolveMessage: lineIntegration.DisableResolveMessage,
+						Settings:              definitions.RawMessage(`{}`), // Empty settings, not nil.
+						SecureSettings: map[string]string{
+							"token": "c2VjcmV0", // base64 encoded "secret".
 						},
 					},
 				},

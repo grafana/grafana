@@ -677,7 +677,7 @@ spec:
     name: v0alpha1
     routes:
       namespaced:
-        /search:
+        /searchRules:
           post:
             operationId: createSearchRules
             requestBody:
@@ -715,8 +715,7 @@ spec:
                       additionalProperties: false
                       description: |-
                         listMeta is intentionally omitted: #SearchResults carries its
-                        own metadata (continue, totalHits) mirroring the generic
-                        search.grafana.app SearchResults envelope.
+                        own metadata (continue, totalHits).
                       properties:
                         apiVersion:
                           description: 'APIVersion defines the versioned schema of
@@ -879,6 +878,9 @@ spec:
               type: string
             totalHits:
               type: integer
+            totalHitsRelation:
+              $ref: '#/components/schemas/createSearchRulesTotalHitsRelation'
+              description: Always read totalHits together with totalHitsRelation.
           type: object
         createSearchRulesSearchSortField:
           description: |-
@@ -890,6 +892,9 @@ spec:
           description: |-
             #SearchTextLeaf is a free-text search across one or more text-capable
             fields. When fields is omitted, the kind's default text field set is used.
+            A match requires every whitespace-separated term of value to appear in the
+            field, in any order. How very short terms, punctuation, and common words are
+            matched is backend-defined and may change.
           properties:
             fields:
               items:
@@ -917,4 +922,13 @@ spec:
             text:
               $ref: '#/components/schemas/createSearchRulesSearchTextLeaf'
           type: object
+        createSearchRulesTotalHitsRelation:
+          description: |-
+            #TotalHitsRelation says how totalHits relates to the real number of matching
+            rules the caller may see: "eq" when it is exact, "lte" when it is an upper
+            bound because authorisation was applied after the search ranked its results.
+          enum:
+          - eq
+          - lte
+          type: string
     served: true

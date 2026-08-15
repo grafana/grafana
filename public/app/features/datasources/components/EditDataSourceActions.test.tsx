@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from 'test/test-utils';
 
 import { PluginExtensionTypes, type DataSourceInstanceSettings, type IconName } from '@grafana/data';
 import { setPluginLinksHook, config } from '@grafana/runtime';
@@ -18,15 +18,20 @@ jest.mock('../utils', () => ({
 }));
 
 // Mock @grafana/runtime
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    featureToggles: {
-      favoriteDatasources: false,
+jest.mock('@grafana/runtime', () => {
+  const runtime = jest.requireActual('@grafana/runtime');
+  return {
+    ...runtime,
+    config: {
+      ...runtime.config,
+      featureToggles: {
+        ...runtime.config.featureToggles,
+        favoriteDatasources: false,
+      },
     },
-  },
-  useFavoriteDatasources: jest.fn(),
-}));
+    useFavoriteDatasources: jest.fn(),
+  };
+});
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),

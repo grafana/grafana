@@ -58,7 +58,7 @@ export interface ControlsOptions {
    */
   mouseWheelZoom?: boolean;
   /**
-   * Lower right
+   * Show attribution of layer sources that do not require it (lower right)
    */
   showAttribution?: boolean;
   /**

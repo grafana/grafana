@@ -33,22 +33,22 @@ export function useGuides() {
       },
       {
         id: 'infra-monitoring',
-        title: t('home.overview.get-started.cards.infra-monitoring.title', 'Monitor infrastructure'),
+        title: t('home.overview.get-started.cards.infra-monitoring.title', 'Monitor your OS'),
         description: t(
           'home.overview.get-started.cards.infra-monitoring.description',
-          'Monitor infra running on Linux, Kubernetes, cloud platforms, and more.'
+          'Collect operating system metrics for Linux, Windows, or macOS hosts.'
         ),
         icon: 'dashboard',
         color: theme.visualization.getColorByName('blue'),
         cta: t('home.overview.get-started.cards.infra-monitoring.cta', 'Start setup'),
-        href: '#',
+        href: '/a/grafana-setupguide-app/getting-started/quickstarts/os',
       },
       {
         id: 'database-monitoring',
         title: t('home.overview.get-started.cards.database-monitoring.title', 'Analyze database performance'),
         description: t(
           'home.overview.get-started.cards.database-monitoring.description',
-          'Query performance, connections, and storage for your data stores.'
+          'Gain insights into MySQL and PostgreSQL query performance and resource consumption.'
         ),
         icon: 'database',
         color: theme.visualization.getColorByName('purple'),
@@ -60,7 +60,7 @@ export function useGuides() {
         title: t('home.overview.get-started.cards.website-monitoring.title', 'Monitor website uptime and performance'),
         description: t(
           'home.overview.get-started.cards.website-monitoring.description',
-          'Test user experience under load and track availability over time.'
+          'Track the availability of your website and its performance from different locations.'
         ),
         icon: 'monitor',
         color: theme.visualization.getColorByName('green'),
