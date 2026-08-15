@@ -28,7 +28,7 @@ func buildTestKindValidator(t *testing.T, version string) validation.SchemaValid
 // Guards the manifest-kind write path: kube-openapi's validator panics on any
 // schema containing a $ref, so newKindSchemaValidator must produce a fully
 // self-contained schema that validates realistic bodies (which always carry
-// metadata by the time the strategy runs).
+// metadata by the time the kindStore strategy validates them).
 func TestKindSchemaValidator(t *testing.T) {
 	validator := buildTestKindValidator(t, "v0alpha1")
 
