@@ -2696,7 +2696,9 @@
       "view-in-explore": "View in Explore"
     },
     "query-options": {
+      "apply-button": "Apply",
       "button-options": "Options",
+      "invalid-interval-error": "Invalid interval format. Examples: 1s, 5m, 1h",
       "label-time-range": "Time Range",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"

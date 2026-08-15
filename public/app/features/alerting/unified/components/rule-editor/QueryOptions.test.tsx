@@ -1,19 +1,23 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { getDefaultRelativeTimeRange } from '@grafana/data';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import type { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { QueryOptions } from './QueryOptions';
 
 describe('QueryOptions', () => {
   const defaultQuery: AlertQuery = {
     refId: 'A',
+    queryType: '',
+    datasourceUid: 'ds-1',
     model: {
       refId: 'A',
     },
   };
 
-  const setup = (overrides?: { maxDataPoints?: number; minInterval?: string }) => {
+  const setup = async (overrides?: { maxDataPoints?: number; minInterval?: string }) => {
+    const user = userEvent.setup();
     const onChangeQueryOptions = jest.fn();
     const queryOptions = {
       maxDataPoints: overrides?.maxDataPoints ?? 100,
@@ -30,80 +34,88 @@ describe('QueryOptions', () => {
     );
 
     const button = screen.getByRole('button', { name: /Options/i });
-    fireEvent.click(button);
+    await user.click(button);
 
     const maxDataPointsInput = screen.getByRole('spinbutton', { name: /Max data points/i });
     const minIntervalInput = screen.getByRole('textbox', { name: /Interval/i });
     const applyButton = screen.getByRole('button', { name: /Apply/i });
 
-    return { onChangeQueryOptions, maxDataPointsInput, minIntervalInput, applyButton };
+    return { user, onChangeQueryOptions, maxDataPointsInput, minIntervalInput, applyButton };
   };
 
-  it('should persist values only when Apply is clicked', () => {
-    const { onChangeQueryOptions, maxDataPointsInput, minIntervalInput, applyButton } = setup();
+  it('should persist values only when Apply is clicked', async () => {
+    const { user, onChangeQueryOptions, maxDataPointsInput, minIntervalInput, applyButton } = await setup();
 
-    fireEvent.change(maxDataPointsInput, { target: { value: '200' } });
-    fireEvent.change(minIntervalInput, { target: { value: '5m' } });
+    await user.clear(maxDataPointsInput);
+    await user.type(maxDataPointsInput, '200');
+    await user.clear(minIntervalInput);
+    await user.type(minIntervalInput, '5m');
     expect(onChangeQueryOptions).not.toHaveBeenCalled();
 
-    fireEvent.click(applyButton);
+    await user.click(applyButton);
 
     expect(onChangeQueryOptions).toHaveBeenCalledTimes(1);
     expect(onChangeQueryOptions).toHaveBeenCalledWith({ maxDataPoints: 200, minInterval: '5m' }, 0);
   });
 
-  it('should discard edits and reset inputs when tooltip is closed without Apply', () => {
-    const { onChangeQueryOptions, maxDataPointsInput } = setup();
+  it('should discard edits and reset inputs when tooltip is closed without Apply', async () => {
+    const { user, onChangeQueryOptions, maxDataPointsInput } = await setup();
 
-    fireEvent.change(maxDataPointsInput, { target: { value: '200' } });
+    await user.clear(maxDataPointsInput);
+    await user.type(maxDataPointsInput, '200');
 
     const closeButton = screen.getByTestId('toggletip-header-close');
-    fireEvent.click(closeButton);
+    await user.click(closeButton);
     expect(onChangeQueryOptions).not.toHaveBeenCalled();
 
     const optionsButton = screen.getByRole('button', { name: /Options/i });
-    fireEvent.click(optionsButton);
+    await user.click(optionsButton);
 
     const applyButton = screen.getByRole('button', { name: /Apply/i });
-    fireEvent.click(applyButton);
+    await user.click(applyButton);
 
     expect(onChangeQueryOptions).toHaveBeenCalledWith({ maxDataPoints: 100, minInterval: '1m' }, 0);
   });
 
-  it('should treat zero maxDataPoints as cleared', () => {
-    const { onChangeQueryOptions, maxDataPointsInput, applyButton } = setup();
+  it('should treat zero maxDataPoints as cleared', async () => {
+    const { user, onChangeQueryOptions, maxDataPointsInput, applyButton } = await setup();
 
-    fireEvent.change(maxDataPointsInput, { target: { value: '0' } });
-    fireEvent.click(applyButton);
+    await user.clear(maxDataPointsInput);
+    await user.type(maxDataPointsInput, '0');
+    await user.click(applyButton);
 
     expect(onChangeQueryOptions).toHaveBeenCalledWith({ maxDataPoints: undefined, minInterval: '1m' }, 0);
   });
 
-  it('should block save and show error for invalid interval', () => {
-    const { onChangeQueryOptions, minIntervalInput, applyButton } = setup();
+  it('should block save and show error for invalid interval', async () => {
+    const { user, onChangeQueryOptions, minIntervalInput, applyButton } = await setup();
 
-    fireEvent.change(minIntervalInput, { target: { value: 'abc' } });
-    fireEvent.click(applyButton);
+    await user.clear(minIntervalInput);
+    await user.type(minIntervalInput, 'abc');
+    await user.click(applyButton);
 
     expect(onChangeQueryOptions).not.toHaveBeenCalled();
     expect(screen.getByText(/Invalid interval format/i)).toBeInTheDocument();
   });
 
-  it('should clear interval error when user edits the field', () => {
-    const { onChangeQueryOptions, minIntervalInput, applyButton } = setup();
+  it('should clear interval error when user edits the field', async () => {
+    const { user, onChangeQueryOptions, minIntervalInput, applyButton } = await setup();
 
-    fireEvent.change(minIntervalInput, { target: { value: 'abc' } });
-    fireEvent.click(applyButton);
+    await user.clear(minIntervalInput);
+    await user.type(minIntervalInput, 'abc');
+    await user.click(applyButton);
     expect(screen.getByText(/Invalid interval format/i)).toBeInTheDocument();
 
-    fireEvent.change(minIntervalInput, { target: { value: '5m' } });
+    await user.clear(minIntervalInput);
+    await user.type(minIntervalInput, '5m');
     expect(screen.queryByText(/Invalid interval format/i)).not.toBeInTheDocument();
 
-    fireEvent.click(applyButton);
+    await user.click(applyButton);
     expect(onChangeQueryOptions).toHaveBeenCalledWith({ maxDataPoints: 100, minInterval: '5m' }, 0);
   });
 
-  it('should sync local state when external props change', () => {
+  it('should sync local state when external props change', async () => {
+    const user = userEvent.setup();
     const onChangeQueryOptions = jest.fn();
 
     const { rerender } = render(
@@ -116,10 +128,11 @@ describe('QueryOptions', () => {
     );
 
     const button = screen.getByRole('button', { name: /Options/i });
-    fireEvent.click(button);
+    await user.click(button);
 
     const maxDataPointsInput = screen.getByRole('spinbutton', { name: /Max data points/i });
-    fireEvent.change(maxDataPointsInput, { target: { value: '999' } });
+    await user.clear(maxDataPointsInput);
+    await user.type(maxDataPointsInput, '999');
     expect(maxDataPointsInput).toHaveValue(999);
 
     rerender(
@@ -134,7 +147,8 @@ describe('QueryOptions', () => {
     expect(maxDataPointsInput).toHaveValue(500);
   });
 
-  it('should persist interval edit after time range change', () => {
+  it('should persist interval edit after time range change', async () => {
+    const user = userEvent.setup();
     const onChangeQueryOptions = jest.fn();
     const onChangeTimeRange = jest.fn();
     const initialTimeRange = getDefaultRelativeTimeRange();
@@ -150,10 +164,11 @@ describe('QueryOptions', () => {
     );
 
     const button = screen.getByRole('button', { name: /Options/i });
-    fireEvent.click(button);
+    await user.click(button);
 
     const minIntervalInput = screen.getByRole('textbox', { name: /Interval/i });
-    fireEvent.change(minIntervalInput, { target: { value: '10s' } });
+    await user.clear(minIntervalInput);
+    await user.type(minIntervalInput, '10s');
 
     const newTimeRange = { from: 3600, to: 0 };
     rerender(
@@ -167,7 +182,7 @@ describe('QueryOptions', () => {
     );
 
     const applyButton = screen.getByRole('button', { name: /Apply/i });
-    fireEvent.click(applyButton);
+    await user.click(applyButton);
 
     expect(onChangeQueryOptions).toHaveBeenCalledWith({ maxDataPoints: 100, minInterval: '10s' }, 0);
   });
