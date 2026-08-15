@@ -16,9 +16,11 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/dynamic"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -50,13 +52,43 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
 		uidScope := ScopeLibraryPanelsProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 		entities.Post("/", authorize(ac.EvalPermission(ActionLibraryPanelsCreate)), routing.Wrap(l.createHandler))
-		entities.Delete("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsDelete, uidScope)), routing.Wrap(l.deleteHandler))
+		entities.Delete("/:uid", l.authorizeLibraryPanelUID(ac.EvalPermission(ActionLibraryPanelsDelete, uidScope)), routing.Wrap(l.deleteHandler))
 		entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))
 		entities.Get("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getHandler))
-		entities.Get("/:uid/connections/", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
+		entities.Get("/:uid/connections/", l.authorizeLibraryPanelUID(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
 		entities.Get("/name/:name", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getByNameHandler))
-		entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler))
+		entities.Patch("/:uid", l.authorizeLibraryPanelUID(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler))
 	})
+}
+
+// authorizeLibraryPanelUID makes the legacy UID-scoped RBAC middleware work for
+// panels that exist only in the k8s store. The scope resolver normally discovers
+// a panel's folder from legacy SQL, which is unavailable in standalone/unified
+// storage. Fetch the k8s metadata with the service identity and seed the request
+// cache before evaluating the same legacy permission.
+func (l *LibraryElementService) authorizeLibraryPanelUID(evaluator ac.Evaluator) web.Handler {
+	authorize := ac.Middleware(l.AccessControl)(evaluator).(func(*contextmodel.ReqContext))
+	return func(c *contextmodel.ReqContext) {
+		if useKubernetesLibraryPanels(c.Req.Context()) {
+			uid := web.Params(c.Req)[":uid"]
+			client, ok := l.k8sHandler.getClient(c)
+			if !ok {
+				return
+			}
+			serviceCtx, _ := identity.WithServiceIdentity(c.Req.Context(), c.OrgID)
+			panel, err := client.Get(serviceCtx, uid, v1.GetOptions{})
+			if err != nil {
+				l.k8sHandler.writeError(c, err)
+				return
+			}
+			folderUID := panel.GetAnnotations()[utils.AnnoKeyFolder]
+			c.Req = c.Req.WithContext(withPanelFolders(c.Req.Context(), []model.LibraryElementDTO{{
+				UID:       uid,
+				FolderUID: folderUID,
+			}}))
+		}
+		authorize(c)
+	}
 }
 
 // useKubernetesLibraryPanels reports whether legacy /api/library-elements requests
@@ -405,8 +437,22 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 // 500: internalServerError
 func (l *LibraryElementService) getByNameHandler(c *contextmodel.ReqContext) response.Response {
 	if useKubernetesLibraryPanels(c.Req.Context()) {
-		l.k8sHandler.getByNameK8sLibraryElement(c)
-		return nil // already handled in the k8s handler
+		elements, ok := l.k8sHandler.getByNameK8sLibraryElements(c)
+		if !ok {
+			return nil // error response already written by the k8s handler
+		}
+		if len(elements) == 0 {
+			c.JsonApiErr(http.StatusNotFound, model.ErrLibraryElementNotFound.Error(), nil)
+			return nil
+		}
+
+		filteredElements, err := l.filterLibraryPanelsByPermission(c, elements)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, err.Error(), err)
+			return nil
+		}
+		c.JSON(http.StatusOK, model.LibraryElementArrayResponse{Result: filteredElements})
+		return nil
 	}
 
 	elements, err := l.getLibraryElementsByName(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":name"])
@@ -717,6 +763,10 @@ func (lk8s *libraryElementsK8sHandler) createK8sLibraryElement(c *contextmodel.R
 	if uid == "" {
 		uid = util.GenerateShortUID()
 	}
+	if err := validateK8sLibraryPanelUID(uid); err != nil {
+		c.JsonApiErr(http.StatusBadRequest, err.Error(), err)
+		return
+	}
 	folderUID := ac.GeneralFolderUID
 	switch {
 	case cmd.FolderUID != nil:
@@ -848,6 +898,22 @@ func (lk8s *libraryElementsK8sHandler) deleteK8sLibraryElement(c *contextmodel.R
 		id = meta.GetDeprecatedInternalID() // nolint:staticcheck
 	}
 
+	// Keep the legacy /api contract: a library element cannot be deleted while a
+	// dashboard still references it. Unified storage does not enforce this
+	// relationship itself, so the compatibility handler must check it before the
+	// k8s delete. Use a service identity to include dashboards the caller cannot
+	// view, matching DeleteLibraryElement's behavior.
+	serviceCtx, _ := identity.WithServiceIdentity(c.Req.Context(), c.OrgID)
+	connectedDashboards, err := lk8s.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, uid, c.OrgID)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "Failed to delete library element", err)
+		return
+	}
+	if len(connectedDashboards) > 0 {
+		c.JsonApiErr(http.StatusForbidden, model.ErrLibraryElementHasConnections.Error(), model.ErrLibraryElementHasConnections)
+		return
+	}
+
 	if err := client.Delete(c.Req.Context(), uid, v1.DeleteOptions{}); err != nil {
 		lk8s.writeError(c, err)
 		return
@@ -883,7 +949,7 @@ func (lk8s *libraryElementsK8sHandler) getAllK8sLibraryElements(c *contextmodel.
 	if !ok {
 		return
 	}
-	items, ok := lk8s.listAllK8sLibraryPanels(c, client)
+	items, ok := lk8s.listAllK8sLibraryPanels(c, c.Req.Context(), client)
 	if !ok {
 		return
 	}
@@ -891,27 +957,13 @@ func (lk8s *libraryElementsK8sHandler) getAllK8sLibraryElements(c *contextmodel.
 	filtered := lk8s.filterK8sLibraryPanels(c, items, query, folderUIDFilter)
 
 	sortAsc := query.SortDirection != sort.SortAlphaDesc.Name
-	gosort.SliceStable(filtered, func(i, j int) bool {
-		iName, _, _ := unstructured.NestedString(filtered[i].Object, "spec", "title")
-		jName, _, _ := unstructured.NestedString(filtered[j].Object, "spec", "title")
-		if sortAsc {
-			return iName < jName
-		}
-		return iName > jName
-	})
+	sortK8sLibraryPanelsByTitle(filtered, sortAsc)
 
 	totalCount := int64(len(filtered))
-	start := query.PerPage * (query.Page - 1)
-	if start > len(filtered) {
-		start = len(filtered)
-	}
-	end := start + query.PerPage
-	if end > len(filtered) {
-		end = len(filtered)
-	}
+	pageItems := paginateK8sLibraryPanels(filtered, query.PerPage, query.Page)
 
-	elements := make([]model.LibraryElementDTO, 0, end-start)
-	for _, item := range filtered[start:end] {
+	elements := make([]model.LibraryElementDTO, 0, len(pageItems))
+	for _, item := range pageItems {
 		dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, item)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
@@ -926,6 +978,34 @@ func (lk8s *libraryElementsK8sHandler) getAllK8sLibraryElements(c *contextmodel.
 		Page:       query.Page,
 		PerPage:    query.PerPage,
 	}})
+}
+
+func paginateK8sLibraryPanels(items []unstructured.Unstructured, perPage, page int) []unstructured.Unstructured {
+	start := len(items)
+	pageIndex := page - 1
+	// Division checks the multiplication before it happens, avoiding an integer
+	// overflow for extreme but valid query parameters.
+	if pageIndex <= len(items)/perPage {
+		start = perPage * pageIndex
+	}
+	end := len(items)
+	if perPage < len(items)-start {
+		end = start + perPage
+	}
+	return items[start:end]
+}
+
+func sortK8sLibraryPanelsByTitle(items []unstructured.Unstructured, sortAsc bool) {
+	gosort.SliceStable(items, func(i, j int) bool {
+		iName, _, _ := unstructured.NestedString(items[i].Object, "spec", "title")
+		jName, _, _ := unstructured.NestedString(items[j].Object, "spec", "title")
+		iName = strings.ToLower(iName)
+		jName = strings.ToLower(jName)
+		if sortAsc {
+			return iName < jName
+		}
+		return iName > jName
+	})
 }
 
 // filterK8sLibraryPanels applies the legacy search query semantics to the listed
@@ -1024,15 +1104,21 @@ func matchesSearchString(item unstructured.Unstructured, searchString string, fo
 	return folderTitle != "" && strings.Contains(strings.ToLower(folderTitle), searchString)
 }
 
-func (lk8s *libraryElementsK8sHandler) getByNameK8sLibraryElement(c *contextmodel.ReqContext) {
+func (lk8s *libraryElementsK8sHandler) getByNameK8sLibraryElements(c *contextmodel.ReqContext) ([]model.LibraryElementDTO, bool) {
 	name := web.Params(c.Req)[":name"]
 	client, ok := lk8s.getClient(c)
 	if !ok {
-		return
+		return nil, false
 	}
-	items, ok := lk8s.listAllK8sLibraryPanels(c, client)
+	// List with service identity so we can distinguish a name that does not exist
+	// from one whose matching panels are hidden by per-panel authorization. The
+	// legacy endpoint returns 404 only for the former and 200 with an empty array
+	// for the latter; filterLibraryPanelsByPermission applies the caller's access
+	// after this function returns.
+	serviceCtx, _ := identity.WithServiceIdentity(c.Req.Context(), c.OrgID)
+	items, ok := lk8s.listAllK8sLibraryPanels(c, serviceCtx, client)
 	if !ok {
-		return
+		return nil, false
 	}
 
 	elements := make([]model.LibraryElementDTO, 0)
@@ -1044,15 +1130,11 @@ func (lk8s *libraryElementsK8sHandler) getByNameK8sLibraryElement(c *contextmode
 		dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, item)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
-			return
+			return nil, false
 		}
 		elements = append(elements, *dto)
 	}
-	if len(elements) == 0 {
-		c.JsonApiErr(http.StatusNotFound, model.ErrLibraryElementNotFound.Error(), nil)
-		return
-	}
-	c.JSON(http.StatusOK, model.LibraryElementArrayResponse{Result: elements})
+	return elements, true
 }
 
 // resolveFolderFilter converts the legacy folder filter query parameters into a list
@@ -1102,11 +1184,11 @@ func (lk8s *libraryElementsK8sHandler) resolveFolderFilter(c *contextmodel.ReqCo
 // listAllK8sLibraryPanels pages through the k8s list endpoint until all library
 // panels for the org have been collected. On failure the error response has already
 // been written and ok is false.
-func (lk8s *libraryElementsK8sHandler) listAllK8sLibraryPanels(c *contextmodel.ReqContext, client dynamic.ResourceInterface) ([]unstructured.Unstructured, bool) {
+func (lk8s *libraryElementsK8sHandler) listAllK8sLibraryPanels(c *contextmodel.ReqContext, ctx context.Context, client dynamic.ResourceInterface) ([]unstructured.Unstructured, bool) {
 	items := make([]unstructured.Unstructured, 0)
 	opts := v1.ListOptions{Limit: 500}
 	for {
-		out, err := client.List(c.Req.Context(), opts)
+		out, err := client.List(ctx, opts)
 		if err != nil {
 			lk8s.writeError(c, err)
 			return nil, false
@@ -1117,6 +1199,21 @@ func (lk8s *libraryElementsK8sHandler) listAllK8sLibraryPanels(c *contextmodel.R
 			return items, true
 		}
 	}
+}
+
+func validateK8sLibraryPanelUID(uid string) error {
+	if !util.IsValidShortUID(uid) {
+		return model.ErrLibraryElementInvalidUID
+	}
+	if util.IsShortUIDTooLong(uid) {
+		return model.ErrLibraryElementUIDTooLong
+	}
+	// App Platform resources use the UID as metadata.name, which is stricter than
+	// the legacy UID alphabet (notably uppercase letters and underscores).
+	if len(k8svalidation.IsDNS1123Subdomain(uid)) > 0 {
+		return model.ErrLibraryElementInvalidUID
+	}
+	return nil
 }
 
 // legacyLibraryPanelToUnstructured builds the k8s representation of a library panel
@@ -1247,19 +1344,27 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 
 	createdBy := meta.GetCreatedBy()
 	updatedBy := createdBy // the old /api returns the same user for updated if it was never updated
-	userMeta := []string{createdBy}
+	userMeta := make([]string, 0, 2)
+	if createdBy != "" {
+		userMeta = append(userMeta, createdBy)
+	}
 	if timestamp, err := meta.GetUpdatedTimestamp(); err == nil && timestamp != nil {
 		dto.Meta.Updated = *timestamp
 		updatedBy = meta.GetUpdatedBy()
-		userMeta = append(userMeta, updatedBy)
+		if updatedBy != "" {
+			userMeta = append(userMeta, updatedBy)
+		}
 	} else {
 		// if never updated, the old /api returns the same timestamp for updated as for created
 		dto.Meta.Updated = dto.Meta.Created
 	}
 
-	users, err := apiserverclient.GetUsersFromMeta(c.Req.Context(), lk8s.userService, userMeta)
-	if err != nil {
-		return nil, err
+	users := make(map[string]*user.User, len(userMeta))
+	if len(userMeta) > 0 {
+		users, err = apiserverclient.GetUsersFromMeta(c.Req.Context(), lk8s.userService, userMeta)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if user := users[createdBy]; user != nil {
 		dto.Meta.CreatedBy = model.LibraryElementDTOMetaUser{
@@ -1319,6 +1424,8 @@ func (lk8s *libraryElementsK8sHandler) writeError(c *contextmodel.ReqContext, er
 		message := statusError.Status().Message
 		// keep the legacy /api contract for errors the k8s apiserver expresses differently
 		switch {
+		case k8serrors.IsNotFound(err) && (c.Req.Method == http.MethodPost || isK8sFolderNotFound(statusError)):
+			message = dashboards.ErrFolderNotFound.Error()
 		case k8serrors.IsNotFound(err):
 			message = model.ErrLibraryElementNotFound.Error()
 		case k8serrors.IsAlreadyExists(err):
@@ -1336,4 +1443,14 @@ func (lk8s *libraryElementsK8sHandler) writeError(c *contextmodel.ReqContext, er
 		return
 	}
 	errhttp.Write(c.Req.Context(), err, c.Resp)
+}
+
+func isK8sFolderNotFound(err *k8serrors.StatusError) bool {
+	status := err.Status()
+	if status.Details != nil && (status.Details.Group == folderV1.GROUP || status.Details.Kind == folderV1.RESOURCE) {
+		return true
+	}
+	// Aggregation layers may replace or omit StatusDetails while retaining the
+	// upstream resource-qualified message.
+	return strings.Contains(status.Message, folderV1.RESOURCEGROUP)
 }

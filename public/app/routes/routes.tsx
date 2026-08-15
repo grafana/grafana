@@ -14,6 +14,7 @@ import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
+import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -57,11 +58,22 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/notebook/:uid/:slug?',
+      path: `${NOTEBOOKS_BASE_URL}/:uid/:slug?`,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage')
+      ),
+    },
+    {
+      // Notebooks reuse dashboard RBAC actions, so dashboards:read is what gates both notebook
+      // routes. The feature flag is enforced inside the pages instead, since getAppRoutes cannot
+      // use hooks.
+      path: NOTEBOOKS_BASE_URL,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebooksListPage" */ '../features/notebook/pages/NotebooksListPage')
       ),
     },
     {
@@ -368,6 +380,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.LDAPStatusRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
       ),
@@ -381,6 +394,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/settings',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')
       ),
@@ -391,36 +405,42 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgUsersRead, AccessControlAction.UsersRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage')
       ),
     },
     {
       path: '/admin/users/create',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.UsersCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')
       ),
     },
     {
       path: '/admin/users/edit/:id',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.UsersRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
       ),
     },
     {
       path: '/admin/orgs',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminListOrgsPage" */ 'app/features/admin/AdminListOrgsPage')
       ),
     },
     {
       path: '/admin/orgs/edit/:id',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')
       ),
     },
     {
       path: '/admin/stats',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionServerStatsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),

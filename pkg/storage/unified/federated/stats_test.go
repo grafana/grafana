@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationDirectSQLStats(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, _ := db.InitTestDBWithCfg(t)
+	db, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	ctx := context.Background()
 
 	tempUser := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{}}

@@ -55,7 +55,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	externalGroupReconciler    legacy.ExternalGroupReconciler
 	teamBindingLegacyStore     *teambinding.LegacyBindingStore
 	ssoLegacyStore             *sso.LegacyStore
-	ssoUseMTSettings           bool
 	roleApiInstaller           RoleApiInstaller
 	globalRoleApiInstaller     GlobalRoleApiInstaller
 	teamLBACApiInstaller       TeamLBACApiInstaller
@@ -113,6 +112,10 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service
+	// ssoSettingsClient backs the SSOSetting kind's MTSettingsStore (reads +
+	// writes to setting.grafana.app). Built in RegisterAPIService when the
+	// kind's storage mode engages MT-Settings.
+	ssoSettingsClient settingsvc.Service
 
 	// ofClient evaluates the feature flags gating the IAM APIs. The default
 	// client resolves the globally-registered provider at evaluation time.

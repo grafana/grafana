@@ -475,6 +475,8 @@ Defaults to `private`.
 
 For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqlite.org/wal.html). The default value is `false` (disabled).
 
+SQLite stores the journal mode in the database file, so a database that was opened with WAL keeps using it. Setting `wal` back to `false` puts the database into `DELETE` journal mode again on the next start.
+
 #### `query_retries`
 
 This setting applies to `sqlite` only and controls the number of times the system retries a query when the database is locked. The default value is `0` (disabled).
@@ -2849,13 +2851,21 @@ For more information, refer to the [Configure Grafana Live HA setup](../set-up-g
 
 **Experimental**
 
-Address string of selected the high availability (HA) Live engine. For Redis, it's a `host:port` string. Example:
+Address of the selected high availability (HA) Live engine. For Redis, it's a `host:port` string or a `redis://` or `rediss://` connection URL. Example:
 
 ```ini
 [live]
 ha_engine = redis
 ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
 ha_engine_password: $__file{/your/redis/password/secret/mount}
+```
+
+Use the `rediss://` scheme to connect to Redis over TLS. Connection URLs can also carry credentials and a database number; a password set in the URL (even an explicitly empty one) takes precedence, and `ha_engine_password` applies when the URL sets no password. Example:
+
+```ini
+[live]
+ha_engine = redis
+ha_engine_address = rediss://redis.example.com:6380
 ```
 
 <hr>

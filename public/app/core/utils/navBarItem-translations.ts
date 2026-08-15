@@ -63,6 +63,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.explore.title', 'Explore');
     case 'drilldown':
       return t('nav.drilldown.title', 'Drilldown');
+    case 'notebooks':
+      return t('nav.notebooks.title', 'Notebooks');
     case 'alerting':
       return t('nav.alerting.title', 'Alerting');
     case 'plugin-page-grafana-oncall-app':
@@ -214,6 +216,11 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data');
     case 'dashboards/browse':
       return t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data');
+    case 'notebooks':
+      return t(
+        'nav.notebooks.subtitle',
+        'Investigation notebooks created from workspaces, dashboards, alerts, and incidents.'
+      );
     case 'manage-folder':
       return t('nav.manage-folder.subtitle', 'Manage folder dashboards and permissions');
     case 'dashboards/playlists':
@@ -235,7 +242,7 @@ export function getNavSubTitle(navId: string | undefined) {
         'Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.'
       );
     case 'saved-queries':
-      return t('nav.saved-queries.subtitle', 'Reusable queries you can use across panels and Explore');
+      return t('nav.saved-queries.subtitle', 'Reusable queries across Grafana');
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');
     case 'alerting-upgrade':

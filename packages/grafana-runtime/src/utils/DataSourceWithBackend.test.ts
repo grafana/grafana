@@ -6,6 +6,7 @@ import {
   type DataQueryResponseData,
   type DataSourceInstanceSettings,
   type DataSourceJsonData,
+  type DataSourcePluginMeta,
   type DataSourceRef,
   createDataFrame,
   type AdHocVariableFilter,
@@ -616,6 +617,28 @@ describe('DataSourceWithBackend', () => {
       expect(mock.calls[0][0].url).toEqual('/api/datasources/uid/abc/health');
     });
 
+    test('uses meta.id over type in the new URL when meta is present', () => {
+      mockGetBooleanValue.mockReturnValueOnce(true);
+      const { mock, ds } = createMockDatasource({ meta: { id: 'canonical-id' } as DataSourcePluginMeta });
+      ds.callHealthCheck();
+
+      expect(mock.calls.length).toBe(1);
+      expect(mock.calls[0][0].url).toEqual(
+        '/apis/canonical-id.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/health'
+      );
+    });
+
+    test('falls back to type in the new URL when meta is not present', () => {
+      mockGetBooleanValue.mockReturnValueOnce(true);
+      const { mock, ds } = createMockDatasource({ meta: undefined });
+      ds.callHealthCheck();
+
+      expect(mock.calls.length).toBe(1);
+      expect(mock.calls[0][0].url).toEqual(
+        '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/health'
+      );
+    });
+
     test('parses legacy API OK response (status, message, details)', async () => {
       const response: HealthCheckResult = {
         status: HealthStatus.OK,
@@ -851,6 +874,23 @@ describe('DataSourceWithBackend', () => {
       const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
+
+    test('prefers meta.id over type when meta is present', () => {
+      mockGetBooleanValue.mockReturnValue(true);
+      const { ds } = createMockDatasource({ meta: { id: 'canonical-id' } as DataSourcePluginMeta });
+      const url = ds.buildResourcesDatasourceUrl('api/v1/labels');
+      expect(url).toBe(
+        '/apis/canonical-id.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+      );
+    });
+
+    test('falls back to type when meta is not present', () => {
+      mockGetBooleanValue.mockReturnValue(true);
+      const url = createMockDatasource({ meta: undefined }).ds.buildResourcesDatasourceUrl('api/v1/labels');
+      expect(url).toBe(
+        '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+      );
+    });
   });
 
   describe('queryServiceDecision', () => {
@@ -923,13 +963,14 @@ describe('DataSourceWithBackend', () => {
   });
 });
 
-function createMockDatasource() {
+function createMockDatasource(settingsOverrides: Partial<DataSourceInstanceSettings<DataSourceJsonData>> = {}) {
   const settings = {
     name: 'test',
     id: 1234,
     uid: 'abc',
     type: 'dummy',
     jsonData: {},
+    ...settingsOverrides,
   } as DataSourceInstanceSettings<DataSourceJsonData>;
 
   mockDatasourceRequest.mockReset();

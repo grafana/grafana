@@ -33,9 +33,11 @@ module.exports = createNoRestrictedSyntax(
       'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
   },
   {
+    /* eslint-disable @grafana/no-gf-form -- logic that implements the rule itself */
     name: 'no-gf-form',
     selector: 'Literal[value=/gf-form/], TemplateElement[value.cooked=/gf-form/]',
     message: 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.',
+    /* eslint-enable @grafana/no-gf-form */
   },
   {
     name: 'no-config-apps',
@@ -71,5 +73,14 @@ module.exports = createNoRestrictedSyntax(
     ].join(', '),
     message:
       "Zod imports must use exactly `import * as z from 'zod'` or `import type * as z from 'zod'`. Imports from zod subpaths are not allowed.",
+  },
+  {
+    name: 'no-get-data-source-srv',
+    selector: [
+      'ImportDeclaration[source.value="@grafana/runtime"] > ImportSpecifier[imported.name="getDataSourceSrv"]',
+      'Program:has(ImportDeclaration[source.value="@grafana/runtime"] > ImportDefaultSpecifier, ImportDeclaration[source.value="@grafana/runtime"] > ImportNamespaceSpecifier) MemberExpression[property.name="getDataSourceSrv"]',
+    ].join(', '),
+    message:
+      'getDataSourceSrv is being phased out in Grafana core. Use the async data source APIs from @grafana/runtime/unstable instead (getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList). See the migration guide https://github.com/grafana/grafana/issues/125083.',
   }
 );

@@ -129,11 +129,11 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 
 		externalOrgs, err := s.extractOrgs(claims)
 		if err != nil {
-			s.log.Warn("Failed to extract orgs", "err", err)
+			s.log.FromContext(ctx).Warn("Failed to extract orgs", "err", err)
 			return nil, err
 		}
 
-		id.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, role)
+		id.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, externalOrgs, role)
 		if s.cfg.JWTAuth.RoleAttributeStrict && len(id.OrgRoles) == 0 {
 			return nil, errJWTInvalidRole.Errorf("could not evaluate any valid roles using IdP provided data")
 		}

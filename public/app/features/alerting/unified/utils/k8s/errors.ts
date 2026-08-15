@@ -8,6 +8,7 @@ import { getErrorCode } from '../misc';
 export const ERROR_NEWER_CONFIGURATION = 'alerting.notifications.conflict' as const;
 export const ERROR_ROUTES_MATCHER_CONFLICT = 'alerting.notifications.routes.conflictingMatchers' as const;
 export const ERROR_TIME_INTERVAL_IN_USE = 'alerting.notifications.time-intervals.used' as const;
+export const ERROR_TIME_INTERVAL_NAME_EXISTS = 'alerting.notifications.time-intervals.nameExists' as const;
 
 export type ApiMachineryErrorResponse = FetchError<ApiMachineryError>;
 
@@ -17,7 +18,8 @@ export type KnownErrorCodes = typeof ERROR_NEWER_CONFIGURATION;
 type KnownMachineryErrorCodes =
   | KnownErrorCodes
   | typeof ERROR_ROUTES_MATCHER_CONFLICT
-  | typeof ERROR_TIME_INTERVAL_IN_USE;
+  | typeof ERROR_TIME_INTERVAL_IN_USE
+  | typeof ERROR_TIME_INTERVAL_NAME_EXISTS;
 
 /**
  * This function gives us the opportunity to translate or transform error codes that are returned from the Kubernetes APIs
@@ -46,6 +48,10 @@ export function getErrorMessageFromApiMachineryErrorResponse(error: ApiMachinery
     [ERROR_TIME_INTERVAL_IN_USE]: t(
       'alerting.errors.time-interval-in-use',
       'This time interval cannot be deleted because it is still used by one or more notification policies or alert rules.'
+    ),
+    [ERROR_TIME_INTERVAL_NAME_EXISTS]: t(
+      'alerting.errors.time-interval-name-exists',
+      'Time interval with this name already exists. Use a different name or update existing one.'
     ),
     [ERROR_ROUTES_MATCHER_CONFLICT]: t(
       'alerting.policies.update-errors.routes.conflictingMatchers',

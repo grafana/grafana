@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -305,7 +306,7 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 			actionSets := NewActionSetService()
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
-				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets,
+				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets, //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			)
 			require.NoError(t, err)
 
@@ -559,7 +560,7 @@ func TestService_K8sActionFormat(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sql := db.InitTestDB(t)
+			sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			cfg := setting.NewCfg()
 			license := licensingtest.NewFakeLicensing()
 			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
@@ -695,7 +696,7 @@ func TestService_APIGroupRequiredWhenRedirectEnabled(t *testing.T) {
 				enableRedirectFlags(t)
 			}
 
-			sql := db.InitTestDB(t)
+			sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			cfg := setting.NewCfg()
 			license := licensingtest.NewFakeLicensing()
 			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
@@ -836,14 +837,14 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt.FeatureToggles) (*Service, user.Service, team.Service, *setting.Cfg) {
 	t.Helper()
 
-	sql := db.InitTestDB(t)
+	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	tracer := tracing.InitializeTracerForTest()
 
-	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer, nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracer, nil)
 	require.NoError(t, err)
 
-	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	userSvc, err := userimpl.ProvideService(
