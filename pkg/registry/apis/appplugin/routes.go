@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
@@ -28,10 +29,10 @@ func (b *AppPluginAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIR
 				Handler: func(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("Content-Type", "application/json")
 					_ = json.NewEncoder(w).Encode(map[string]any{
-						"cluster": path,
-						"method":  r.Method,
-						"path":    r.URL.Path,
-						"query":   r.URL.RawQuery,
+						"note":   "TODO... call the plugin (cluster scope)",
+						"method": r.Method,
+						"path":   r.URL.Path,
+						"query":  r.URL.RawQuery,
 					})
 				},
 			})
@@ -45,10 +46,11 @@ func (b *AppPluginAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIR
 				Handler: func(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("Content-Type", "application/json")
 					_ = json.NewEncoder(w).Encode(map[string]any{
-						"namespaced": path,
-						"method":     r.Method,
-						"path":       r.URL.Path,
-						"query":      r.URL.RawQuery,
+						"note":      "TODO... call the plugin (namespaced)",
+						"namespace": request.NamespaceValue(r.Context()),
+						"method":    r.Method,
+						"path":      r.URL.Path,
+						"query":     r.URL.RawQuery,
 					})
 				},
 			})

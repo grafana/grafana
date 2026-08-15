@@ -284,10 +284,6 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		return spec.MustCreateRef(name)
 	}, b.manifest)
 
-	// Kind storage options can not change between versions; loop order is
-	// preferred version first, so the preferred version's definition wins.
-	registeredKindOpts := map[schema.GroupResource]bool{}
-
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
 		storage[settingsRI.StoragePath()] = settingsStorage
@@ -317,71 +313,16 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 				}
 
 				for _, kind := range v.Kinds {
-					gr := schema.GroupResource{Group: gv.Group, Resource: strings.ToLower(kind.Plural)}
-					gvk := gr.WithVersion(gv.Version).GroupVersion().WithKind(kind.Kind)
-					listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
-					clusterScoped := kind.Scope == "Cluster"
-
-					if !registeredKindOpts[gr] {
-						registeredKindOpts[gr] = true
-						// nil defaults to folder-scoped, matching the SDK contract;
-						// folders are namespaced, so cluster kinds opt out
-						folder := (kind.FolderScoped == nil || *kind.FolderScoped) && !clusterScoped
-						opts.StorageOptsRegister(gr, apistore.StorageOptions{
-							EnableFolderSupport:  folder,
-							RequireFolder:        folder,
-							DeprecatedInternalID: apistore.DeprecatedID_None,
-							Scheme:               opts.Scheme,
-						})
-					}
-
-					ri := utils.NewResourceInfo(
-						gv.Group, gv.Version, gr.Resource,
-						kind.Kind, // singular name
-						kind.Kind, // kind
-						func() runtime.Object {
-							u := &unstructured.Unstructured{}
-							u.SetGroupVersionKind(gvk)
-							return u
-						},
-						func() runtime.Object {
-							u := &unstructured.UnstructuredList{}
-							u.SetGroupVersionKind(listGVK)
-							return u
-						},
-						utils.TableColumns{}, // from manifest
-					)
-					if clusterScoped {
-						ri = ri.WithClusterScope()
-					}
-
-					// TODO!!!
-					// We should make a new storage base that accepts the manifest kind directly
-					// I'm keeping it like this for now to minimize changes
-					// We also need (optional) callbacks into the plugin for Admission+Mutation+Validation
-					kindStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, ri, opts.OptsGetter)
+					store, err := newKindStore(gv.WithKind(kind.Kind), kind, &opts, defs)
 					if err != nil {
 						return err
 					}
 
-					// A kind may legally omit its schema; serve it without body
-					// validation or per-kind OpenAPI documentation.
-					if kind.Schema == nil {
-						storage[ri.StoragePath()] = kindStore
-						continue
-					}
+					resource := store.DefaultQualifiedResource.Resource
+					storage[resource] = store
 
-					key := kindOpenAPIName(gvk)
-					obj, found := defs[key]
-					if !found {
-						return fmt.Errorf("missing expected schema key %s", key)
-					}
-
-					withSchemaValidation(kindStore, newKindSchemaValidator(obj.Schema, defs))
-					storage[ri.StoragePath()] = kindStore
-
-					if _, found := obj.Schema.Properties["status"]; found {
-						storage[ri.StoragePath("status")] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, kindStore)
+					if store.hasStatus {
+						storage[resource+"/status"] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, store.Store)
 					}
 				}
 			}
