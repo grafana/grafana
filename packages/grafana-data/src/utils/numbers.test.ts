@@ -33,7 +33,19 @@ describe('guessDecimals', () => {
     // '.' followed by the decimal expansion.
     expect(guessDecimals(1e-7)).toBe(7);
     expect(guessDecimals(1.5e-7)).toBe(8);
-    expect(guessDecimals(5e-324)).toBe(324);
+    expect(guessDecimals(1e-30)).toBe(30);
+    expect(guessDecimals(1e-100)).toBe(100);
+  });
+
+  it('reports no decimals below the 100 fraction digit ceiling', () => {
+    // maximumFractionDigits cannot exceed 100 per spec, so smaller magnitudes
+    // format to '0'. Well below anything a panel plots.
+    expect(guessDecimals(1e-101)).toBe(0);
+  });
+
+  it('does not let locale grouping separators inflate the count', () => {
+    expect(guessDecimals(1234.5)).toBe(1);
+    expect(guessDecimals(1234567.25)).toBe(2);
   });
 
   it('reports no decimals for large values in exponential notation', () => {
