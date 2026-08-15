@@ -51,12 +51,12 @@ const (
 	// gcLeaseName is the lease used to ensure only one storage-api replica
 	// runs a garbage collection cycle at a time. See runGarbageCollectionWithLock.
 	gcLeaseName = "resource-gc"
-
-	// gcLeaseTTL is short because the lease auto-renews for as long as the GC
-	// cycle runs; it only bounds how quickly the lock is reclaimed if a
-	// replica crashes mid-cycle.
-	gcLeaseTTL = time.Minute
 )
+
+// gcLeaseTTL is short because the lease auto-renews for as long as the GC
+// cycle runs; it only bounds how quickly the lock is reclaimed if a replica
+// crashes mid-cycle. A var (not const) so tests can shrink it.
+var gcLeaseTTL = time.Minute
 
 // IsResourceNameMixedCase reports whether a successful read returned a
 // resource whose stored name matches the requested name case-insensitively but
@@ -728,13 +728,28 @@ func (b *kvStorageBackend) runGarbageCollectionWithLock(ctx context.Context, cut
 		}
 		return
 	}
+
+	// Cancel the cycle if the lease is lost mid-run (e.g. renewal failure),
+	// so this replica stops deleting once another replica may have taken over.
+	leaseCtx, cancel := context.WithCancel(ctx)
+	watcherDone := make(chan struct{})
+	go func() {
+		defer close(watcherDone)
+		select {
+		case <-l.Lost():
+			cancel()
+		case <-leaseCtx.Done():
+		}
+	}()
 	defer func() {
+		cancel()
+		<-watcherDone
 		if err := b.leaseManager.Release(context.WithoutCancel(ctx), l); err != nil {
 			b.log.Warn("releasing garbage collection lease failed", "error", err)
 		}
 	}()
 
-	b.runGarbageCollection(ctx, cutoffTimeStamp)
+	b.runGarbageCollection(leaseCtx, cutoffTimeStamp)
 }
 
 // runGarbageCollection identifies deleted resources that are safe
