@@ -220,7 +220,7 @@ export class AutoGridLayoutManager
     clearClipboard();
   }
 
-  public removePanel(panel: VizPanel) {
+  public removePanel(panel: VizPanel, options?: { skipFocus?: boolean }) {
     const gridItem = panel.parent;
     if (!(gridItem instanceof AutoGridItem)) {
       return;
@@ -237,7 +237,9 @@ export class AutoGridLayoutManager
         this.state.layout.setState({
           children: this.state.layout.state.children.filter((child) => child !== gridItem),
         });
-        focusVizPanel(adjacentPanel);
+        if (!options?.skipFocus) {
+          focusVizPanel(adjacentPanel);
+        }
       },
       undo: () => {
         this.state.layout.setState({
