@@ -44,6 +44,14 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
     this.getParentLayout().setCellContent(this, content);
   }
 
+  public onContentEditStart(): void {
+    this.getParentLayout().beginCellContentEdit(this);
+  }
+
+  public onContentEditEnd(): void {
+    this.getParentLayout().endCellContentEdit(this);
+  }
+
   /**
    * Throws rather than returning undefined, matching getLayoutManagerFor: a cell outside a layout is a
    * wiring mistake, and failing quietly here would look like an editor that drops what you type.

@@ -15,6 +15,8 @@ export interface CellTypeRegistryItem extends RegistryItem {
     isEditing: boolean;
     autoFocus?: boolean;
     onChange: (content: CellContentKind) => void;
+    onEditStart?: () => void;
+    onEditEnd?: () => void;
   }>;
 }
 

@@ -5,6 +5,8 @@ import { appEvents } from 'app/core/app_events';
 import { type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { NotebookEditHistory } from '../NotebookEditHistory';
+
 // CodeMirror does not run in jsdom; a textarea carries readOnly into the DOM so the edit-mode
 // propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
 // does — a new `extensions` identity is what rebuilds CodeMirror's view plugins — which makes the
@@ -690,6 +692,116 @@ describe('NotebookLayoutManager', () => {
       manager.setCellContent(cell, edited);
 
       expect(panel.state.content).toBeUndefined();
+    });
+
+    it('commits one undo action for an editor focus session', async () => {
+      const first = codeCell('query');
+      const second = codeCell('query');
+      const manager = new NotebookLayoutManager({
+        cells: [first, second],
+        isEditing: true,
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      });
+      const history = new NotebookEditHistory();
+      manager.setEditHistory(history);
+      const { user } = render(<manager.Component model={manager} />);
+
+      const editor = (await screen.findAllByLabelText('Code'))[0];
+      await user.clear(editor);
+      await user.type(editor, 'select 2');
+
+      expect(history.state.canUndo).toBe(true);
+      expect(history.state.undoLabel).toBe('Edit block');
+
+      await user.tab();
+
+      expect(first.state.content).toEqual(edited);
+      expect(second.state.content).toEqual(edited);
+
+      act(() => history.undo());
+      expect(first.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+      expect(second.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+
+      act(() => history.redo());
+      expect(first.state.content).toEqual(edited);
+      expect(second.state.content).toEqual(edited);
+    });
+
+    it('drops an editor transaction that returns to its starting content', () => {
+      const cell = codeCell('query');
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = new NotebookEditHistory();
+      manager.setEditHistory(history);
+
+      manager.beginCellContentEdit(cell);
+      manager.setCellContent(cell, edited);
+      manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+      manager.endCellContentEdit(cell);
+
+      expect(history.state.canUndo).toBe(false);
+    });
+  });
+
+  describe('edit history', () => {
+    function withHistory(cells: NotebookCellItem[]) {
+      const manager = buildManager(cells);
+      const history = new NotebookEditHistory();
+      manager.setEditHistory(history);
+      return { manager, history };
+    }
+
+    it('undoes and redoes adding a block', () => {
+      const { manager, history } = withHistory(buildNarrativeCells(['a']));
+
+      const added = manager.addCell('code', 1);
+      expect(cellNames(manager)).toEqual(['a', added?.state.elementName]);
+
+      history.undo();
+      expect(cellNames(manager)).toEqual(['a']);
+
+      history.redo();
+      expect(manager.state.cells[1]).toBe(added);
+    });
+
+    it('undoes and redoes a move', () => {
+      const { manager, history } = withHistory(buildNarrativeCells(['a', 'b', 'c']));
+
+      manager.moveCell(0, 2);
+      expect(cellNames(manager)).toEqual(['b', 'c', 'a']);
+
+      history.undo();
+      expect(cellNames(manager)).toEqual(['a', 'b', 'c']);
+
+      history.redo();
+      expect(cellNames(manager)).toEqual(['b', 'c', 'a']);
+    });
+
+    it('restores the same cell after delete', () => {
+      const cells = buildNarrativeCells(['a', 'b']);
+      const { manager, history } = withHistory(cells);
+
+      manager.removeCell(cells[0]);
+      expect(cellNames(manager)).toEqual(['b']);
+
+      history.undo();
+      expect(manager.state.cells[0]).toBe(cells[0]);
+
+      history.redo();
+      expect(cellNames(manager)).toEqual(['b']);
+    });
+
+    it('removes the exact duplicate on undo', () => {
+      const cells = buildNarrativeCells(['a']);
+      const { manager, history } = withHistory(cells);
+
+      manager.duplicateCell(cells[0]);
+      const duplicate = manager.state.cells[1];
+
+      history.undo();
+      expect(manager.state.cells).toEqual(cells);
+
+      history.redo();
+      expect(manager.state.cells[1]).toBe(duplicate);
     });
   });
 

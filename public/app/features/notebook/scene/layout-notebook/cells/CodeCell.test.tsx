@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
 
 import { mockComboboxRect } from '@grafana/test-utils';
 import { type CellContentKind } from 'app/features/notebook/types';
@@ -77,6 +77,27 @@ describe('CodeCell', () => {
     render(<CodeCell content={content} isEditing={true} onChange={jest.fn()} />);
 
     expect(screen.getByLabelText('Code')).not.toHaveAttribute('readonly');
+  });
+
+  it('marks the editor focus session so notebook history can commit it once', () => {
+    const onEditStart = jest.fn();
+    const onEditEnd = jest.fn();
+    render(
+      <CodeCell
+        content={content}
+        isEditing={true}
+        onChange={jest.fn()}
+        onEditStart={onEditStart}
+        onEditEnd={onEditEnd}
+      />
+    );
+
+    const editor = screen.getByLabelText('Code');
+    fireEvent.focus(editor);
+    fireEvent.blur(editor);
+
+    expect(onEditStart).toHaveBeenCalledTimes(1);
+    expect(onEditEnd).toHaveBeenCalledTimes(1);
   });
 
   it('labels the cell with its language while reading, without offering the picker', () => {

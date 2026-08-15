@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropResult } from '@hello-pangea/dnd';
+import { isEqual } from 'lodash';
 import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -26,6 +27,7 @@ import {
   type NotebookLayoutItemKind,
   type NotebookLayoutKind,
 } from '../../types';
+import { type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
@@ -74,6 +76,16 @@ export class NotebookLayoutManager
 
   public readonly descriptor = NotebookLayoutManager.descriptor;
 
+  private editHistory?: NotebookEditHistory;
+  private contentEditStarts = new Map<
+    string,
+    { cell: NotebookCellItem; before: CellContentKind; after: CellContentKind; action?: NotebookEditAction }
+  >();
+
+  public setEditHistory(editHistory: NotebookEditHistory): void {
+    this.editHistory = editHistory;
+  }
+
   // Serialization lives here (not in a standalone helper) so the manager doesn't import the
   // serializer module — that mutual import is what forms a dependency cycle. The serializer
   // still imports this manager to construct it in deserialize, which stays one-directional.
@@ -116,23 +128,94 @@ export class NotebookLayoutManager
    * It lives on the manager because that is what owns `cells`; a cell cannot see its siblings.
    */
   public setCellContent = (target: NotebookCellItem, content: CellContentKind): void => {
+    const previous = target.state.content;
+    if (!previous || isEqual(previous, content)) {
+      return;
+    }
+
+    const activeEdit = this.contentEditStarts.get(target.state.elementName);
+    if (activeEdit) {
+      this.applyCellContent(target.state.elementName, content);
+      activeEdit.after = content;
+      if (!activeEdit.action && this.editHistory) {
+        activeEdit.action = {
+          label: t('notebooks.history.edit-block', 'Edit block'),
+          perform: () => this.applyCellContent(target.state.elementName, activeEdit.after),
+          undo: () => this.applyCellContent(target.state.elementName, activeEdit.before),
+        };
+        this.editHistory.record(activeEdit.action);
+      }
+      return;
+    }
+
+    const before = structuredClone(previous);
+    const after = structuredClone(content);
+    this.executeEdit({
+      label: t('notebooks.history.edit-block', 'Edit block'),
+      perform: () => this.applyCellContent(target.state.elementName, after),
+      undo: () => this.applyCellContent(target.state.elementName, before),
+    });
+  };
+
+  public beginCellContentEdit = (target: NotebookCellItem): void => {
+    if (target.state.content && !this.contentEditStarts.has(target.state.elementName)) {
+      const content = structuredClone(target.state.content);
+      this.contentEditStarts.set(target.state.elementName, {
+        cell: target,
+        before: content,
+        after: content,
+      });
+    }
+  };
+
+  public endCellContentEdit = (target: NotebookCellItem): void => {
+    const edit = this.contentEditStarts.get(target.state.elementName);
+    if (!edit) {
+      return;
+    }
+
+    this.contentEditStarts.delete(target.state.elementName);
+    const current = target.state.content;
+    if (!current || !this.state.cells.includes(edit.cell)) {
+      return;
+    }
+
+    edit.after = current;
+    if (edit.action && isEqual(edit.before, current)) {
+      this.editHistory?.discard(edit.action);
+    }
+  };
+
+  public commitContentEdits(): void {
+    for (const { cell } of [...this.contentEditStarts.values()]) {
+      this.endCellContentEdit(cell);
+    }
+  }
+
+  private applyCellContent(elementName: string, content: CellContentKind): void {
     for (const cell of this.state.cells) {
       // Panel cells carry no content and must not gain any.
-      if (cell.state.content && cell.state.elementName === target.state.elementName) {
+      if (cell.state.content && cell.state.elementName === elementName) {
         cell.setState({ content });
       }
     }
-  };
+  }
 
   /**
    * Reorders a cell, mirroring RowsLayoutManager.moveRow. The cell objects move rather than being
    * rebuilt, so a panel cell keeps its VizPanel and its already-fetched data across the move.
    */
   public moveCell(fromIndex: number, toIndex: number) {
-    const cells = [...this.state.cells];
-    const [removed] = cells.splice(fromIndex, 1);
-    cells.splice(toIndex, 0, removed);
-    this.setState({ cells });
+    const cell = this.state.cells[fromIndex];
+    if (!cell || fromIndex === toIndex || toIndex < 0 || toIndex >= this.state.cells.length) {
+      return;
+    }
+
+    this.executeEdit({
+      label: t('notebooks.history.move-block', 'Move block'),
+      perform: () => this.moveCellTo(cell, toIndex),
+      undo: () => this.moveCellTo(cell, fromIndex),
+    });
   }
 
   /**
@@ -157,9 +240,12 @@ export class NotebookLayoutManager
       content: defaultCodeCellContentKind(),
     });
 
-    const cells = [...this.state.cells];
-    cells.splice(index, 0, cell);
-    this.setState({ cells });
+    const insertionIndex = Math.max(0, Math.min(index, this.state.cells.length));
+    this.executeEdit({
+      label: t('notebooks.history.add-block', 'Add block'),
+      perform: () => this.insertCell(cell, insertionIndex),
+      undo: () => this.removeCellInstance(cell),
+    });
 
     return cell;
   };
@@ -187,17 +273,64 @@ export class NotebookLayoutManager
       ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
     });
 
-    const cells = [...this.state.cells];
-    cells.splice(index + 1, 0, copy);
-    this.setState({ cells });
+    this.executeEdit({
+      label: t('notebooks.history.duplicate-block', 'Duplicate block'),
+      perform: () => this.insertCell(copy, index + 1),
+      undo: () => this.removeCellInstance(copy),
+    });
   }
 
   public removeCell(cell: NotebookCellItem): void {
-    const cells = this.state.cells.filter((candidate) => candidate !== cell);
+    const index = this.state.cells.indexOf(cell);
+    if (index === -1) {
+      return;
+    }
 
+    if (this.contentEditStarts.get(cell.state.elementName)?.cell === cell) {
+      this.endCellContentEdit(cell);
+    }
+    this.executeEdit({
+      label: t('notebooks.history.delete-block', 'Delete block'),
+      perform: () => this.removeCellInstance(cell),
+      undo: () => this.insertCell(cell, index),
+    });
+  }
+
+  private executeEdit(action: NotebookEditAction): void {
+    if (this.editHistory) {
+      this.editHistory.execute(action);
+    } else {
+      action.perform();
+    }
+  }
+
+  private insertCell(cell: NotebookCellItem, index: number): void {
+    if (this.state.cells.includes(cell)) {
+      return;
+    }
+
+    const cells = [...this.state.cells];
+    cells.splice(index, 0, cell);
+    this.setState({ cells });
+  }
+
+  private removeCellInstance(cell: NotebookCellItem): void {
+    const cells = this.state.cells.filter((candidate) => candidate !== cell);
     if (cells.length !== this.state.cells.length) {
       this.setState({ cells });
     }
+  }
+
+  private moveCellTo(cell: NotebookCellItem, toIndex: number): void {
+    const fromIndex = this.state.cells.indexOf(cell);
+    if (fromIndex === -1 || fromIndex === toIndex) {
+      return;
+    }
+
+    const cells = [...this.state.cells];
+    cells.splice(fromIndex, 1);
+    cells.splice(toIndex, 0, cell);
+    this.setState({ cells });
   }
 
   /**

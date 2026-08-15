@@ -1,6 +1,6 @@
 import { ViewPlugin } from '@codemirror/view';
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { type FocusEvent, useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -70,9 +70,11 @@ interface Props {
   /** Set on a cell the reader just inserted, so they can type into it without clicking it first. */
   autoFocus?: boolean;
   onChange: (content: CellContentKind) => void;
+  onEditStart?: () => void;
+  onEditEnd?: () => void;
 }
 
-export function CodeCell({ content, isEditing, autoFocus, onChange }: Props) {
+export function CodeCell({ content, isEditing, autoFocus, onChange, onEditStart, onEditEnd }: Props) {
   const styles = useStyles2(getStyles);
 
   // Counts requests for the caret rather than holding a boolean, so a second request after the reader
@@ -83,6 +85,16 @@ export function CodeCell({ content, isEditing, autoFocus, onChange }: Props) {
   const requestFocus = useCallback(() => setFocusRequests((count) => count + 1), []);
 
   const focusExtension = useMemo(() => (focusRequests > 0 ? buildFocusExtension() : undefined), [focusRequests]);
+  const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
+    if (isEditing && (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget))) {
+      onEditStart?.();
+    }
+  };
+  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (isEditing && (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget))) {
+      onEditEnd?.();
+    }
+  };
 
   if (content.kind !== 'Code') {
     return null;
@@ -129,24 +141,26 @@ export function CodeCell({ content, isEditing, autoFocus, onChange }: Props) {
         )}
       </Stack>
 
-      <Box borderStyle="solid" borderColor="weak" borderRadius="default" padding={1}>
-        <CodeMirrorEditor
-          value={code}
-          language={toCodeMirrorLanguage(language)}
-          // Grows with its content: a notebook is a document, so a cell that scrolls internally
-          // inside a page that already scrolls is worse than a tall cell.
-          height="auto"
-          readOnly={!isEditing}
-          lineWrapping
-          basicSetup={isEditing ? EDIT_SETUP : VIEW_SETUP}
-          extensions={focusExtension}
-          aria-label={t('notebook.cell.code.aria-label-editor', 'Code')}
-          // The editor is a lazily loaded chunk; without this the cell is a blank gap mid-document
-          // until it arrives.
-          loadingFallback={<pre className={styles.loadingFallback}>{code}</pre>}
-          onChange={(value) => changeSpec({ code: value })}
-        />
-      </Box>
+      <div onFocus={handleFocus} onBlur={handleBlur}>
+        <Box borderStyle="solid" borderColor="weak" borderRadius="default" padding={1}>
+          <CodeMirrorEditor
+            value={code}
+            language={toCodeMirrorLanguage(language)}
+            // Grows with its content: a notebook is a document, so a cell that scrolls internally
+            // inside a page that already scrolls is worse than a tall cell.
+            height="auto"
+            readOnly={!isEditing}
+            lineWrapping
+            basicSetup={isEditing ? EDIT_SETUP : VIEW_SETUP}
+            extensions={focusExtension}
+            aria-label={t('notebook.cell.code.aria-label-editor', 'Code')}
+            // The editor is a lazily loaded chunk; without this the cell is a blank gap mid-document
+            // until it arrives.
+            loadingFallback={<pre className={styles.loadingFallback}>{code}</pre>}
+            onChange={(value) => changeSpec({ code: value })}
+          />
+        </Box>
+      </div>
     </Stack>
   );
 }

@@ -152,6 +152,43 @@ describe('NotebookScene', () => {
       expect(scene.state.isEditing).toBe(false);
       expect(scene.state.body.state.isEditing).toBe(false);
     });
+
+    it('commits an active content edit before leaving edit mode', () => {
+      const scene = buildScene(false);
+      const cell = scene.state.body.state.cells[0];
+      scene.onEnterEditMode();
+      scene.state.body.beginCellContentEdit(cell);
+      scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } });
+
+      scene.onExitEditMode();
+      scene.editHistory.undo();
+
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
+
+    it('clears history when the notebook body is replaced', () => {
+      const scene = buildScene(false);
+      activate(scene);
+      scene.state.body.addCell('code', 1);
+      const replacement = new NotebookLayoutManager({ cells: [] });
+
+      scene.setState({ body: replacement });
+
+      expect(scene.editHistory.state.canUndo).toBe(false);
+      replacement.addCell('code', 0);
+      expect(scene.editHistory.state.canUndo).toBe(true);
+    });
+
+    it('attaches history to a body replaced before activation', () => {
+      const scene = buildScene(false);
+      const replacement = new NotebookLayoutManager({ cells: [] });
+      scene.setState({ body: replacement });
+
+      activate(scene);
+      replacement.addCell('code', 0);
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+    });
   });
 
   describe('enrichDataRequest', () => {

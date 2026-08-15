@@ -24,6 +24,8 @@ import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboar
 
 import { canEditNotebooks } from '../permissions';
 
+import { NotebookEditHistory } from './NotebookEditHistory';
+import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 import { NotebookEditToggle } from './NotebookEditToggle';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -50,6 +52,7 @@ export interface NotebookSceneState extends SceneObjectState {
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
   public static Component = NotebookSceneRenderer;
+  public readonly editHistory = new NotebookEditHistory();
 
   // Edit mode is reflected in the url by this handler rather than by the methods below, so the url
   // stays a projection of the state instead of a second copy of it.
@@ -68,7 +71,12 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       ],
     });
 
+    this.state.body.setEditHistory(this.editHistory);
+
     this.addActivationHandler(() => {
+      this.editHistory.clear();
+      this.state.body.setEditHistory(this.editHistory);
+
       // template_srv and TimeSrv resolve variables/time for panel plugins through the global
       // scene context; without this, plugin-side interpolation silently degrades.
       const prevSceneContext = window.__grafanaSceneContext;
@@ -103,6 +111,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         // so the mode also propagates before this scene is activated.
         if (newState.body !== prevState.body || newState.isEditing !== prevState.isEditing) {
           newState.body.editModeChanged?.(Boolean(newState.isEditing));
+        }
+        if (newState.body !== prevState.body) {
+          this.editHistory.clear();
+          newState.body.setEditHistory(this.editHistory);
         }
       });
 
@@ -147,6 +159,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   };
 
   public onExitEditMode = () => {
+    this.state.body.commitContentEdits();
     this.setState({ isEditing: false });
     this.state.body.editModeChanged?.(false);
   };
@@ -185,12 +198,13 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay } = model.useState();
+  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
 
   return (
     <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
       <div className={styles.controls}>
+        <NotebookEditHistoryControls history={model.editHistory} enabled={Boolean(isEditing)} />
         <NotebookEditToggle notebook={model} />
         {!hideTimeControls && (
           <>
