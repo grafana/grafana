@@ -3,14 +3,18 @@ package appplugin
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
@@ -32,8 +36,8 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder         = (*AppPluginAPIBuilder)(nil)
-	_ builder.APIGroupVersionProvider = (*AppPluginAPIBuilder)(nil)
+	_ builder.APIGroupBuilder          = (*AppPluginAPIBuilder)(nil)
+	_ builder.APIGroupVersionsProvider = (*AppPluginAPIBuilder)(nil)
 )
 
 // PluginClient is a subset of the plugins.Client interface with only the
@@ -65,8 +69,8 @@ type AppPluginRunnerOptions struct {
 
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
 type AppPluginAPIBuilder struct {
+	manifest        *app.ManifestData
 	pluginJSON      plugins.JSONData
-	groupVersion    schema.GroupVersion
 	client          PluginClient // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
@@ -94,11 +98,7 @@ func NewAppPluginAPIBuilder(
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
 	return &AppPluginAPIBuilder{
-		pluginJSON: plugin.JSONData,
-		groupVersion: schema.GroupVersion{
-			Group:   plugin.JSONData.ID,
-			Version: apiVersion,
-		},
+		pluginJSON:      plugin.JSONData,
 		client:          client,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
@@ -129,6 +129,8 @@ func RegisterAPIService(
 	}
 	registerProxy := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx))
 
+	loadAppManifest := true // always check for app manifest file (use feature toggle)
+
 	// Find all local plugins
 	pluginInfos, err := pluginspec.LoadPlugins(ctx, pluginSources,
 		func(jsonData plugins.JSONData) bool {
@@ -141,10 +143,10 @@ func RegisterAPIService(
 				return true
 			}
 			return false
-		}, true)
+		}, true, loadAppManifest)
 
 	if err != nil {
-		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
+		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
 	}
 
 	var last *AppPluginAPIBuilder
@@ -170,69 +172,223 @@ func RegisterAPIService(
 		if err != nil {
 			return nil, err
 		}
+
+		// HACK... make it work for pyroscope
+		if plugin.JSONData.ID == "grafana-pyroscope-app" {
+			copy := exampleManifestData
+			plugin.Manifest = &copy
+		}
+
+		// TODO -- update the constructor with the manifest
+		// needed to support MT, but also requires a parallel enterprise PR
+		if plugin.Manifest != nil {
+			// The served API group is always the plugin id -- schema registration
+			// and OpenAPI naming read the group from the manifest, so they would
+			// diverge from the storage+samples if a manifest declared its own group.
+			manifest := *plugin.Manifest
+			manifest.Group = plugin.JSONData.ID
+			b.manifest = &manifest
+		}
+
 		apiRegistrar.RegisterAPI(b)
 		last = b
 	}
 	return last, nil
 }
 
-func (b *AppPluginAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return b.groupVersion
+// GetGroupVersions returns the served versions, preferred version first.
+// The settings kind is registered in every version so it is always reachable.
+func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
+	fallback := []schema.GroupVersion{{
+		Group:   b.pluginJSON.ID,
+		Version: apppluginV0.VERSION,
+	}}
+	if b.manifest == nil || len(b.manifest.Versions) == 0 {
+		return fallback
+	}
+
+	gvs := make([]schema.GroupVersion, 0, len(b.manifest.Versions))
+	for _, v := range b.manifest.Versions {
+		gv := schema.GroupVersion{
+			Group:   b.pluginJSON.ID,
+			Version: v.Name,
+		}
+		if b.manifest.PreferredVersion == v.Name {
+			gvs = slices.Insert(gvs, 0, gv)
+		} else {
+			gvs = append(gvs, gv)
+		}
+	}
+	return gvs
 }
 
 func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	if err := apppluginV0.AddKnownTypes(scheme, b.groupVersion); err != nil {
-		return err
+	gvs := b.GetGroupVersions()
+	for _, gv := range gvs {
+		if err := apppluginV0.AddKnownTypes(scheme, gv); err != nil {
+			return err
+		}
 	}
-	return scheme.SetVersionPriority(b.groupVersion)
+
+	if b.manifest != nil {
+		for _, version := range b.manifest.Versions {
+			gv := schema.GroupVersion{Group: b.manifest.Group, Version: version.Name}
+			for _, r := range version.Kinds {
+				gvk := gv.WithKind(r.Kind)
+				scheme.AddKnownTypeWithName(gvk, &unstructured.Unstructured{})
+				scheme.AddKnownTypeWithName(gvk.GroupVersion().WithKind(gvk.Kind+"List"), &unstructured.UnstructuredList{})
+			}
+		}
+
+		// ??? How do CRDs register conversions.
+		// Given that the type is always the same, how and where to we convert ???
+	}
+
+	return scheme.SetVersionPriority(gvs...)
 }
 
 func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	registerSubresourceMetrics(opts.MetricsRegister)
 
 	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
-		b.groupVersion.Group, b.pluginJSON.ID,
+		b.pluginJSON.ID, b.pluginJSON.ID,
 	)
 
-	if opts.StorageOptsRegister != nil {
-		opts.StorageOptsRegister(settingsRI.GroupResource(), apistore.StorageOptions{
-			EnableFolderSupport: false,
-			Scheme:              opts.Scheme,
-		})
+	if opts.StorageOptsRegister == nil {
+		return fmt.Errorf("apps require storage opts")
 	}
+	opts.StorageOptsRegister(settingsRI.GroupResource(), apistore.StorageOptions{
+		EnableFolderSupport: false,
+		Scheme:              opts.Scheme,
+	})
 
 	b.applyDefaultStorageConfig(opts, settingsRI)
 
-	storage := map[string]rest.Storage{}
-
+	// The settings store is version-independent -- build it once and share the
+	// same instance across every version's storage map, k8s style.
+	var settingsStorage rest.Storage
 	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI, opts.OptsGetter)
 	if err != nil {
 		return err
 	}
-	storage[settingsRI.StoragePath()] = unified
+	settingsStorage = unified
 	if b.opts.LegacyStore != nil && opts.DualWriteBuilder != nil {
-		store, err := opts.DualWriteBuilder(settingsRI.GroupResource(), b.opts.LegacyStore, unified)
+		settingsStorage, err = opts.DualWriteBuilder(settingsRI.GroupResource(), b.opts.LegacyStore, unified)
 		if err != nil {
 			return err
 		}
-		storage[settingsRI.StoragePath()] = store
 	}
+	b.getter = settingsStorage.(rest.Getter)
 
-	storage[settingsRI.StoragePath("health")] = &subHealthREST{
-		client:          b.client,
-		contextProvider: b.getPluginContext,
-	}
-	storage[settingsRI.StoragePath("resources")] = &subResourceREST{
-		pluginID:        b.pluginJSON.ID,
-		client:          b.client,
-		contextProvider: b.getPluginContext,
-	}
-	if len(b.pluginJSON.Routes) > 0 && b.opts.RegisterProxy {
-		storage[settingsRI.StoragePath("proxy")] = newProxy(b)
-	}
+	defs := loadOpenAPIDefinition(func(name string) spec.Ref {
+		return spec.MustCreateRef(name)
+	}, b.manifest)
 
-	b.getter = storage[settingsRI.StoragePath()].(rest.Getter)
-	apiGroupInfo.VersionedResourcesStorageMap[b.groupVersion.Version] = storage
+	// Kind storage options can not change between versions; loop order is
+	// preferred version first, so the preferred version's definition wins.
+	registeredKindOpts := map[schema.GroupResource]bool{}
+
+	for _, gv := range b.GetGroupVersions() {
+		storage := map[string]rest.Storage{}
+		storage[settingsRI.StoragePath()] = settingsStorage
+
+		provider := func(ctx context.Context) (context.Context, backend.PluginContext, error) {
+			return b.getPluginContext(ctx, gv.Version)
+		}
+
+		storage[settingsRI.StoragePath("health")] = &subHealthREST{
+			client:          b.client,
+			contextProvider: provider,
+		}
+		storage[settingsRI.StoragePath("resources")] = &subResourceREST{
+			pluginID:        b.pluginJSON.ID,
+			client:          b.client,
+			contextProvider: provider,
+		}
+		if len(b.pluginJSON.Routes) > 0 && b.opts.RegisterProxy {
+			storage[settingsRI.StoragePath("proxy")] = newProxy(b)
+		}
+
+		// Configure storage for manifest defined kinds
+		if b.manifest != nil {
+			for _, v := range b.manifest.Versions {
+				if v.Name != gv.Version {
+					continue
+				}
+
+				for _, kind := range v.Kinds {
+					gr := schema.GroupResource{Group: gv.Group, Resource: strings.ToLower(kind.Plural)}
+					gvk := gr.WithVersion(gv.Version).GroupVersion().WithKind(kind.Kind)
+					listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
+					clusterScoped := kind.Scope == "Cluster"
+
+					if !registeredKindOpts[gr] {
+						registeredKindOpts[gr] = true
+						// nil defaults to folder-scoped, matching the SDK contract;
+						// folders are namespaced, so cluster kinds opt out
+						folder := (kind.FolderScoped == nil || *kind.FolderScoped) && !clusterScoped
+						opts.StorageOptsRegister(gr, apistore.StorageOptions{
+							EnableFolderSupport:  folder,
+							RequireFolder:        folder,
+							DeprecatedInternalID: apistore.DeprecatedID_None,
+							Scheme:               opts.Scheme,
+						})
+					}
+
+					ri := utils.NewResourceInfo(
+						gv.Group, gv.Version, gr.Resource,
+						kind.Kind, // singular name
+						kind.Kind, // kind
+						func() runtime.Object {
+							u := &unstructured.Unstructured{}
+							u.SetGroupVersionKind(gvk)
+							return u
+						},
+						func() runtime.Object {
+							u := &unstructured.UnstructuredList{}
+							u.SetGroupVersionKind(listGVK)
+							return u
+						},
+						utils.TableColumns{}, // from manifest
+					)
+					if clusterScoped {
+						ri = ri.WithClusterScope()
+					}
+
+					// TODO!!!
+					// We should make a new storage base that accepts the manifest kind directly
+					// I'm keeping it like this for now to minimize changes
+					// We also need (optional) callbacks into the plugin for Admission+Mutation+Validation
+					kindStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, ri, opts.OptsGetter)
+					if err != nil {
+						return err
+					}
+
+					// A kind may legally omit its schema; serve it without body
+					// validation or per-kind OpenAPI documentation.
+					if kind.Schema == nil {
+						storage[ri.StoragePath()] = kindStore
+						continue
+					}
+
+					key := kindOpenAPIName(gvk)
+					obj, found := defs[key]
+					if !found {
+						return fmt.Errorf("missing expected schema key %s", key)
+					}
+
+					withSchemaValidation(kindStore, newKindSchemaValidator(obj.Schema, defs))
+					storage[ri.StoragePath()] = kindStore
+
+					if _, found := obj.Schema.Properties["status"]; found {
+						storage[ri.StoragePath("status")] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, kindStore)
+					}
+				}
+			}
+		}
+
+		apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
+	}
 	return nil
 }
 

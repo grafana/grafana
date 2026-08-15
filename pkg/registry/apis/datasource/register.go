@@ -124,7 +124,7 @@ func RegisterAPIService(
 	pluginInfos, err := pluginspec.LoadPlugins(context.Background(), pluginSources,
 		func(jsonData plugins.JSONData) bool {
 			return jsonData.Type == plugins.TypeDataSource
-		}, flags.LoadOpenAPISpec || flags.LoadQueryTypes)
+		}, flags.LoadOpenAPISpec || flags.LoadQueryTypes, false)
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)

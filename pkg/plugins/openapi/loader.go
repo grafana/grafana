@@ -2,14 +2,24 @@ package openapi
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	appmanifestV1alpha1 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha1"
+	appmanifestV1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 )
+
+// appSDKManifestFile is the statically-named file, read from the root of an app plugin's
+// bundle, that holds the plugin's app-sdk manifest (an AppManifest custom resource).
+const appSDKManifestFile = "app-sdk-manifest.json"
 
 type PluginInfo struct {
 	JSONData plugins.JSONData
@@ -17,9 +27,12 @@ type PluginInfo struct {
 	// apiVersion -> schema (currently only v0alpha1)
 	// This will be nil if no schemas are found, or if withSchemas is false when loading.
 	Schemas map[string]*pluginschema.PluginSchema
+
+	// When an app manifest is defined, we can use that
+	Manifest *app.ManifestData
 }
 
-func LoadPlugins(ctx context.Context, pluginSources sources.Registry, filter func(plugins.JSONData) bool, withSchemas bool) ([]PluginInfo, error) {
+func LoadPlugins(ctx context.Context, pluginSources sources.Registry, filter func(plugins.JSONData) bool, withSchemas bool, withManifest bool) ([]PluginInfo, error) {
 	var pluginInfo []PluginInfo
 
 	// It's possible that the same plugin will be found in different sources.
@@ -38,7 +51,7 @@ func LoadPlugins(ctx context.Context, pluginSources sources.Registry, filter fun
 					backend.Logger.Info("Found duplicate plugin %s when registering API groups.", p.Primary.JSONData.ID)
 					continue
 				}
-				info, err := loadInfo(p.Primary.FS, p.Primary.JSONData, withSchemas)
+				info, err := loadInfo(p.Primary.FS, p.Primary.JSONData, withSchemas, withManifest)
 				if err != nil {
 					return nil, err
 				}
@@ -53,7 +66,7 @@ func LoadPlugins(ctx context.Context, pluginSources sources.Registry, filter fun
 						continue
 					}
 
-					info, err := loadInfo(child.FS, child.JSONData, withSchemas)
+					info, err := loadInfo(child.FS, child.JSONData, withSchemas, withManifest)
 					if err != nil {
 						return nil, err
 					}
@@ -66,10 +79,23 @@ func LoadPlugins(ctx context.Context, pluginSources sources.Registry, filter fun
 	return pluginInfo, nil
 }
 
-func loadInfo(rootfs fs.FS, jsondata plugins.JSONData, withSchemas bool) (PluginInfo, error) {
+func loadInfo(rootfs fs.FS, jsondata plugins.JSONData, withSchemas bool, withManifest bool) (PluginInfo, error) {
 	info := PluginInfo{
 		JSONData: jsondata,
 	}
+
+	if withManifest {
+		m, err := loadManifest(rootfs)
+		if err != nil {
+			// A malformed manifest must not take down every other plugin's API:
+			// this runs during server startup via DI, so serve the plugin
+			// without its manifest kinds instead of failing the whole load.
+			backend.Logger.Error("Skipping invalid app-sdk manifest", "pluginId", jsondata.ID, "error", err)
+		} else {
+			info.Manifest = m
+		}
+	}
+
 	if !withSchemas {
 		return info, nil
 	}
@@ -90,4 +116,53 @@ func loadInfo(rootfs fs.FS, jsondata plugins.JSONData, withSchemas bool) (Plugin
 		}
 	}
 	return info, nil
+}
+
+func loadManifest(rootfs fs.FS) (*app.ManifestData, error) {
+	f, err := rootfs.Open(appSDKManifestFile)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("opening %s: %w", appSDKManifestFile, err)
+	}
+	defer f.Close() //nolint:errcheck
+
+	raw, err := io.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", appSDKManifestFile, err)
+	}
+
+	// The AppManifest CR schema differs between versions (e.g. v1alpha1 kinds
+	// carry "schema" while v1alpha2 carries "schemas", and json decoding would
+	// silently drop the mismatched field), so dispatch on the declared
+	// apiVersion and reject versions we cannot faithfully decode.
+	var meta struct {
+		APIVersion string `json:"apiVersion"`
+	}
+	if err := json.Unmarshal(raw, &meta); err != nil {
+		return nil, fmt.Errorf("decoding AppManifest CR: %w", err)
+	}
+
+	var manifest app.ManifestData
+	switch meta.APIVersion {
+	case "", "apps.grafana.app/v1alpha2":
+		var cr appmanifestV1alpha2.AppManifest
+		if err := json.Unmarshal(raw, &cr); err != nil {
+			return nil, fmt.Errorf("decoding AppManifest CR: %w", err)
+		}
+		manifest, err = cr.Spec.ToManifestData()
+	case "apps.grafana.app/v1alpha1":
+		var cr appmanifestV1alpha1.AppManifest
+		if err := json.Unmarshal(raw, &cr); err != nil {
+			return nil, fmt.Errorf("decoding AppManifest CR: %w", err)
+		}
+		manifest, err = cr.Spec.ToManifestData()
+	default:
+		return nil, fmt.Errorf("unsupported AppManifest apiVersion %q in %s", meta.APIVersion, appSDKManifestFile)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("converting AppManifestSpec to ManifestData: %w", err)
+	}
+	return &manifest, nil
 }
