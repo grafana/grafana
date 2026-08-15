@@ -26,6 +26,7 @@ interface Props {
     skipPasswordChange: Function;
     login: (data: FormModel) => void;
     disableLoginForm: boolean;
+    disableForgotPassword: boolean;
     disableUserSignUp: boolean;
     isOauthEnabled: boolean;
     loginHint: string;
@@ -124,7 +125,7 @@ const LoginCtrl = memo(({ resetCode, children }: Props) => {
     [toGrafana, changeView]
   );
 
-  const { loginHint, passwordHint, disableLoginForm, disableUserSignUp } = config;
+  const { loginHint, passwordHint, disableLoginForm, disableUserSignUp, disableForgotPassword } = config;
 
   return (
     <>
@@ -133,6 +134,7 @@ const LoginCtrl = memo(({ resetCode, children }: Props) => {
         loginHint,
         passwordHint,
         disableLoginForm,
+        disableForgotPassword,
         disableUserSignUp,
         login,
         isLoggingIn,
