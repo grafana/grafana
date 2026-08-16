@@ -276,6 +276,16 @@ export function MinIntervalOption({
 
   const commitMinInterval = (event: ChangeEvent<HTMLInputElement>) => {
     const minInterval = event.target.value;
+
+    if (minInterval !== '') {
+      try {
+        rangeUtil.describeInterval(minInterval);
+      } catch {
+        // not a valid interval yet (e.g. a partially typed value like "0" on the way to "0.5s") - wait for it to become one
+        return;
+      }
+    }
+
     if (minInterval !== value) {
       onChange({
         ...options,

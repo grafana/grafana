@@ -23,4 +23,16 @@ describe('MinIntervalOption', () => {
 
     expect(onChange).toHaveBeenCalledWith({ minInterval: '1m' });
   });
+
+  it('does not commit a not-yet-valid interval while typing (e.g. "0" on the way to "0.5s")', async () => {
+    const onChange = jest.fn();
+    render(<MinIntervalOption options={{}} onChange={onChange} />);
+
+    // typing this out char-by-char passes through "0", which is not a valid
+    // interval on its own and must not be committed upstream
+    await userEvent.type(screen.getByRole('textbox'), '0.5s');
+
+    expect(onChange).not.toHaveBeenCalledWith({ minInterval: '0' });
+    expect(onChange).toHaveBeenCalledWith({ minInterval: '0.5s' });
+  });
 });
