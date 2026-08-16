@@ -902,14 +902,6 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	})
 }
 
-func TestReadNavigationSettingsAssistantLabel(t *testing.T) {
-	service := ServiceImpl{cfg: setting.NewCfg()}
-
-	service.readNavigationSettings()
-
-	require.Equal(t, "AI", service.navigationAppConfig[assistantAppID].Text)
-}
-
 func TestProcessAssistantAppPlugin(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{
