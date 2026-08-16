@@ -61,7 +61,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 
 	secrets := secretsfake.NewMockService(t)
 	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	ssoSettingsSvc := ssosettingsimpl.ProvideService(
 		cfg,
@@ -235,7 +235,7 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 
 			secrets := secretsfake.NewMockService(t)
 			accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-			sqlStore := db.InitTestDB(t)
+			sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 			ssoSettingsSvc := ssosettingsimpl.ProvideService(
 				cfg,

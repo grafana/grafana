@@ -12,8 +12,8 @@ import {
 import { type ConditionalRenderingGroupKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Stack } from '@grafana/ui';
 
+import { edit } from '../../actions/utils/edit';
 import { ConditionalRenderingChangedEvent } from '../../sidebar/events';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { getUserDefinedVariables, useUserDefinedVariables } from '../../utils/variables';
 import { ConditionalRenderingData } from '../conditions/ConditionalRenderingData';
 import { ConditionalRenderingTimeRangeSize } from '../conditions/ConditionalRenderingTimeRangeSize';
@@ -218,7 +218,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
         objectType={objectType}
         value={visibility}
         onChange={(value) => {
-          dashboardEditActions.edit({
+          edit({
             description: t('dashboard.conditional-rendering.conditions.group.visibility.label', '{{type}} visibility', {
               type: getTranslatedObjectType(objectType),
             }),
@@ -232,7 +232,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
         <ConditionalRenderingGroupCondition
           value={condition}
           onChange={(value) => {
-            dashboardEditActions.edit({
+            edit({
               description: t('dashboard.conditional-rendering.conditions.group.condition.label', 'Match rules'),
               source: model,
               perform: () => model.changeCondition(value),
@@ -248,7 +248,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
         onAdd={({ value, label }) => {
           const condition = model.createCondition(value!);
 
-          dashboardEditActions.edit({
+          edit({
             description: t('dashboard.edit-actions.add-conditional-rule', 'Add {{ruleDescription}} rule', {
               ruleDescription: lowerCase(label),
             }),
