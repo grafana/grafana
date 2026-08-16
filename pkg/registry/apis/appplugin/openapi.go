@@ -33,9 +33,15 @@ func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 			// post-processor does not rewrite (list samples, request bodies)
 			// resolve to the reflected unstructured names, which must have a
 			// definition or the spec build fails hard.
-			objectSchema := common.OpenAPIDefinition{Schema: spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}}
-			base[openapiutil.GetCanonicalTypeName(unstructured.Unstructured{})] = objectSchema
-			base[openapiutil.GetCanonicalTypeName(unstructured.UnstructuredList{})] = objectSchema
+			//
+			// The server-side-apply type converter indexes models by the
+			// x-kubernetes-group-version-kind extension, and it only sees the
+			// definitions reachable from each storage's sample object -- for
+			// manifest kinds that is always this unstructured definition, so
+			// every served kind GVK must be stamped here or apply fails with
+			// "no corresponding type for <gvk>".
+			base[openapiutil.GetCanonicalTypeName(unstructured.Unstructured{})] = b.unstructuredOpenAPIDefinition("")
+			base[openapiutil.GetCanonicalTypeName(unstructured.UnstructuredList{})] = b.unstructuredOpenAPIDefinition("List")
 		}
 		return base
 	}
@@ -46,6 +52,31 @@ func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 // unchanged, so it must not contain a slash).
 func kindOpenAPIName(gvk schema.GroupVersionKind) string {
 	return gvk.Group + "." + gvk.Version + "." + gvk.Kind
+}
+
+// unstructuredOpenAPIDefinition builds the generic object definition served
+// for unstructured.Unstructured(List), carrying an x-kubernetes-group-version-kind
+// entry for every served manifest kind so the server-side-apply type converter
+// can resolve those GVKs. kindSuffix is "" for single objects, "List" for lists.
+func (b *AppPluginAPIBuilder) unstructuredOpenAPIDefinition(kindSuffix string) common.OpenAPIDefinition {
+	s := spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
+	gvks := []interface{}{}
+	for _, version := range b.manifest.Versions {
+		if !version.Served {
+			continue
+		}
+		for _, kind := range version.Kinds {
+			gvks = append(gvks, map[string]interface{}{
+				"group":   b.manifest.Group,
+				"version": version.Name,
+				"kind":    kind.Kind + kindSuffix,
+			})
+		}
+	}
+	if len(gvks) > 0 {
+		s.AddExtension("x-kubernetes-group-version-kind", gvks)
+	}
+	return common.OpenAPIDefinition{Schema: s}
 }
 
 // loadOpenAPIDefinition loads the schemas for all kinds

@@ -223,6 +223,7 @@ func (s *kindStore) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	if !ok {
 		return
 	}
+	s.restoreGVK(u)
 	if s.hasStatus {
 		unstructured.RemoveNestedField(u.Object, "status")
 	}
@@ -233,18 +234,32 @@ func (s *kindStore) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 // subresource, updates through the main resource keep the stored status.
 // Unified storage bumps the generation when the remaining fields change.
 func (s *kindStore) PrepareForUpdate(ctx context.Context, obj runtime.Object, old runtime.Object) {
+	u, ok := obj.(*unstructured.Unstructured)
+	if !ok {
+		return
+	}
+	s.restoreGVK(u)
 	if !s.hasStatus {
 		return
 	}
-	u, ok := obj.(*unstructured.Unstructured)
 	oldU, oldOK := old.(*unstructured.Unstructured)
-	if !ok || !oldOK {
+	if !oldOK {
 		return
 	}
 	if status, found, _ := unstructured.NestedFieldNoCopy(oldU.Object, "status"); found {
 		u.Object["status"] = runtime.DeepCopyJSONValue(status)
 	} else {
 		unstructured.RemoveNestedField(u.Object, "status")
+	}
+}
+
+// restoreGVK stamps the store's GVK when the object arrives without one.
+// Server-side apply hands the strategy the hub-version object, whose GVK was
+// cleared by the internal-version conversion; unified storage rejects writes
+// it cannot fully qualify, and this store only ever serves a single kind.
+func (s *kindStore) restoreGVK(u *unstructured.Unstructured) {
+	if u.GroupVersionKind().Empty() {
+		u.SetGroupVersionKind(s.gvk)
 	}
 }
 

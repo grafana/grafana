@@ -231,12 +231,26 @@ func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	if b.manifest != nil {
+		registered := map[schema.GroupVersionKind]bool{}
+		addKind := func(gvk schema.GroupVersionKind) {
+			if registered[gvk] {
+				return
+			}
+			registered[gvk] = true
+			scheme.AddKnownTypeWithName(gvk, &unstructured.Unstructured{})
+			scheme.AddKnownTypeWithName(gvk.GroupVersion().WithKind(gvk.Kind+"List"), &unstructured.UnstructuredList{})
+		}
+
+		// Server-side apply converts objects to the internal ("__internal")
+		// hub version when tracking managed fields, so every kind must be
+		// registered there as well or apply fails with "no kind registered
+		// for the internal version".
+		internalGV := schema.GroupVersion{Group: b.manifest.Group, Version: runtime.APIVersionInternal}
 		for _, version := range b.manifest.Versions {
 			gv := schema.GroupVersion{Group: b.manifest.Group, Version: version.Name}
 			for _, r := range version.Kinds {
-				gvk := gv.WithKind(r.Kind)
-				scheme.AddKnownTypeWithName(gvk, &unstructured.Unstructured{})
-				scheme.AddKnownTypeWithName(gvk.GroupVersion().WithKind(gvk.Kind+"List"), &unstructured.UnstructuredList{})
+				addKind(gv.WithKind(r.Kind))
+				addKind(internalGV.WithKind(r.Kind))
 			}
 		}
 
