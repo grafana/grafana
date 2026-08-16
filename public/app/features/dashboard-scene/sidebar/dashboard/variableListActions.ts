@@ -92,19 +92,7 @@ export function createDragEndHandler(
 }
 
 export function duplicateVariable(variable: SceneVariable) {
-  const set = variable.parent;
-  if (!(set instanceof SceneVariableSet)) {
-    return;
-  }
-
-  dashboardEditActions.addVariable({
-    source: set,
-    addedObject: variable.clone({
-      key: undefined,
-      name: `${variable.state.name}_copy${set.state.variables.length}`,
-    }),
-  });
-  DashboardInteractions.variableActionButtonClicked('duplicate', { type: variable.state.type });
+  dashboardEditActions.duplicateVariable(variable);
 }
 
 export function confirmDeleteVariable(variable: SceneVariable) {
