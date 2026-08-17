@@ -418,6 +418,67 @@ describe('PanelDataTransformer', () => {
     consoleError.mockRestore();
   });
 
+  /**
+   * A library panel is built on a placeholder plugin, then `setPanelFromLibPanel` writes the real
+   * `pluginId` and a fresh data provider in one `setState` and kicks off `changePluginType`. So this
+   * provider activates while the panel still holds a plugin for a *different* id, and the plugin it
+   * is waiting for arrives under `pluginId`'s own value — invisible to a pluginId-change check.
+   */
+  describe('a panel holding a plugin for another pluginId', () => {
+    /** Mirrors the sequence above, leaving the placeholder loaded on the panel. */
+    function buildSwappingPanel(realPluginId: string) {
+      registerPlugin('loading-placeholder');
+
+      const panel = new VizPanel({ pluginId: 'loading-placeholder' });
+      activateFullSceneTree(panel);
+      expect(panel.getPlugin()?.meta.id).toBe('loading-placeholder');
+
+      const transformer = new PanelDataTransformer({
+        $data: new SceneDataNode({
+          data: { state: LoadingState.Done, series: [frameWithLabels()], timeRange: getDefaultTimeRange() },
+        }),
+        transformations: [],
+      });
+
+      panel.setState({ pluginId: realPluginId, $data: transformer });
+
+      return { panel, transformer };
+    }
+
+    it('asks the plugin for the current pluginId, not the one still loaded', async () => {
+      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+
+      const { transformer } = buildSwappingPanel('logs-table');
+
+      // The placeholder registers nothing, so consulting it would pass the frames straight through.
+      await waitFor(() => {
+        expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toContain('level');
+      });
+    });
+
+    it('retries once the real plugin lands, though pluginId never changes', async () => {
+      // Invisible to both synchronous lookups and to the importer, so nothing can resolve it until
+      // the panel itself loads it — the runtime-registered plugin case.
+      importerBlindPlugins.add('runtime-logs');
+      registerPlugin('runtime-logs', (p) => p.setDataTransformations(() => [extractLabels]));
+
+      const { panel, transformer } = buildSwappingPanel('runtime-logs');
+
+      await waitFor(() => {
+        expect(transformer.state.data?.state).toBe(LoadingState.Done);
+      });
+      expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toEqual(['time', 'line', 'labels']);
+
+      // `_pluginLoaded` writes `pluginId: plugin.meta.id` — the value already in state.
+      importerBlindPlugins.delete('runtime-logs');
+      await panel.changePluginType('runtime-logs');
+
+      await waitFor(() => {
+        expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toContain('level');
+      });
+    });
+  });
+
   describe('field overrides', () => {
     it('applies overrides to fields produced by a plugin transformation', async () => {
       registerPlugin('logs-table', (p) => {

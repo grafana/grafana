@@ -53,6 +53,9 @@ export class PanelDataTransformer extends SceneDataTransformer {
    * panel has not loaded yet. An id that no layer resolves passes the frames through untouched
    * and is retried when the panel's plugin lands (see the activation handler): resolution
    * failure must never error the panel's data.
+   *
+   * Whichever layer answers, it must answer for the panel's *current* `pluginId` — see
+   * {@link getLoadedPluginFor}.
    */
   private _runPluginTransformations: CustomTransformOperator = (ctx) => (source) =>
     source.pipe(
@@ -69,7 +72,7 @@ export class PanelDataTransformer extends SceneDataTransformer {
           return of(frames);
         }
 
-        const loaded = panel.getPlugin() ?? syncGetPanelPlugin(panel.state.pluginId);
+        const loaded = getLoadedPluginFor(panel) ?? syncGetPanelPlugin(panel.state.pluginId);
         const plugin$ = loaded
           ? of(loaded)
           : from(importPanelPlugin(panel.state.pluginId)).pipe(catchError(() => of(undefined)));
@@ -114,9 +117,9 @@ export class PanelDataTransformer extends SceneDataTransformer {
     // source-panel path, tests) reach the data chain directly. Only ids no synchronous layer can
     // resolve need this — for the rest the operator already resolves on its first emission, and
     // reprocessing on plugin arrival would just repeat the same transform.
-    if (!panel.getPlugin() && !syncGetPanelPlugin(panel.state.pluginId)) {
+    if (!getLoadedPluginFor(panel) && !syncGetPanelPlugin(panel.state.pluginId)) {
       const pluginLoadSub = panel.subscribeToState(() => {
-        if (panel.getPlugin()) {
+        if (getLoadedPluginFor(panel)) {
           pluginLoadSub.unsubscribe();
           this.reprocessTransformations();
         }
@@ -128,6 +131,23 @@ export class PanelDataTransformer extends SceneDataTransformer {
 
 function pluginTransformationsEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelPluginTransformations, false);
+}
+
+/**
+ * The panel's loaded plugin, but only when it is the plugin for the panel's current `pluginId`. A
+ * panel holds one for a different id while it swaps: a library panel is built on a placeholder
+ * plugin and `setPanelFromLibPanel` writes the real `pluginId` and this provider in a single
+ * `setState`, so the placeholder is still loaded when this object activates.
+ *
+ * Reading it unqualified is wrong twice over — the placeholder answers the supplier call meant for
+ * the real plugin, and it makes the panel look resolved, so the retry below is never armed. That
+ * retry is the only one that can fire on this path: the plugin arrives via `pluginId`'s *own* value,
+ * so the `pluginId`-change subscription above cannot see it.
+ */
+function getLoadedPluginFor(panel: VizPanel): PanelPlugin | undefined {
+  const plugin = panel.getPlugin();
+
+  return plugin?.meta.id === panel.state.pluginId ? plugin : undefined;
 }
 
 /**
