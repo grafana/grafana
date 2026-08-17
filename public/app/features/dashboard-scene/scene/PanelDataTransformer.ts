@@ -22,10 +22,8 @@ import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/impo
  */
 export class PanelDataTransformer extends SceneDataTransformer {
   public constructor(state: SceneDataTransformerState) {
-    // `cloneSceneObject` re-runs this constructor with cloned state, and lodash `cloneDeep` copies
-    // nested functions by reference, so a clone arrives holding the *source* panel's operator,
-    // which is bound to the source panel. Dropping it here is what keeps a duplicated panel on
-    // its own plugin's transformations.
+    // `cloneSceneObject` re-runs this constructor with cloned state, so a clone arrives holding the *source* panel's operator,
+    // which is bound to the source panel. Dropping it here is what keeps a duplicated panel on its own plugin's transformations.
     super({ ...state, systemTransformations: undefined });
 
     if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelPluginTransformations, false)) {
