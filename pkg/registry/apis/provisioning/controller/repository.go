@@ -793,16 +793,6 @@ func (rc *RepositoryController) process(key string) (err error) {
 		return nil
 	}
 
-	// In any case - repo blocked, repo unblocked, or simply spec has changed - we need to
-	// update the observedGeneration to alight with the given metadata.generation.
-	if hasSpecChanged {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/observedGeneration",
-			"value": obj.Generation,
-		})
-	}
-
 	// Set quota information from configuration (only if changed)
 	if hasQuotaChanged {
 		patchOperations = append(patchOperations, map[string]interface{}{
@@ -930,6 +920,11 @@ func (rc *RepositoryController) process(key string) (err error) {
 	}
 	testResults := healthResult.TestResults
 	healthStatus := healthResult.HealthStatus
+	// Captured before the over-quota override below: being over quota doesn't
+	// mean the repository itself is unreachable, so this (not healthStatus.Healthy)
+	// is what gates whether hooks can run — a quota-blocked-but-reachable repo
+	// must not be treated as unreachable for that purpose.
+	reachable := healthStatus.Healthy
 
 	// If over quota, override health to unhealthy.
 	if isOverQuota {
@@ -948,7 +943,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 		patchOperations = append(patchOperations, healthResult.PatchOps...)
 	}
 
-	hookOps, hookFailureStatus, hookErr := rc.processHooks(ctx, repo, obj, healthStatus.Healthy, shouldRotateWebhookSecret)
+	hookOps, hookFailureStatus, hooksSuppressed, hookErr := rc.processHooks(ctx, repo, obj, reachable, shouldRotateWebhookSecret)
 	if len(hookOps) > 0 {
 		patchOperations = append(patchOperations, hookOps...)
 	}
@@ -962,6 +957,20 @@ func (rc *RepositoryController) process(key string) (err error) {
 		} else {
 			err = fmt.Errorf("process hooks: %w", hookErr)
 		}
+	}
+
+	// Only mark this generation observed once hook processing wasn't suppressed
+	// for being unreachable or in cooldown. Queuing this earlier/unconditionally
+	// meant a suppressed or even a not-yet-attempted pass (e.g. an
+	// error before this point) could advance observedGeneration while the
+	// corresponding webhook create/update/delete never ran, permanently losing
+	// the retry once the repository is healthy/out of cooldown again.
+	if hasSpecChanged && !hooksSuppressed {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/observedGeneration",
+			"value": obj.Generation,
+		})
 	}
 
 	// Build ALL condition patches together to avoid one overwriting another.
@@ -1006,8 +1015,12 @@ func (rc *RepositoryController) process(key string) (err error) {
 	return nil
 }
 
-// processHooks handles hook execution with intelligent retry logic.
-func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoHealthy bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, err error) {
+// processHooks handles hook execution with intelligent retry logic. `suppressed`
+// reports whether there was hook work to do (generation changed or webhook
+// missing) that got skipped this pass due to cooldown/repo unreachability, as
+// opposed to there being genuinely nothing to do — the caller uses this to
+// decide whether it's safe to advance observedGeneration.
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoHealthy bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressed bool, err error) {
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
 		repository.GetID(obj.Status.Webhook).IsEmpty()
 
@@ -1018,6 +1031,7 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	// create/update/delete call against it is doomed).
 	if shouldRunHooks && (rc.healthChecker.inHookFailureCooldown(obj) || !repoHealthy) {
 		shouldRunHooks = false
+		suppressed = true
 	}
 
 	if shouldRunHooks {
@@ -1029,7 +1043,7 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 				"path":  "/status/health",
 				"value": status,
 			})
-			return hookOps, &status, err
+			return hookOps, &status, false, err
 		}
 	}
 
@@ -1045,7 +1059,7 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 		}
 	}
 
-	return hookOps, nil, nil
+	return hookOps, nil, suppressed, nil
 }
 
 // Returns errors that are due to user errors
