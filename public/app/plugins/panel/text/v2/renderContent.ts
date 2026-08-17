@@ -7,7 +7,7 @@ import { RenderMode, TextMode } from '../panelcfg.gen';
 import { buildAllRowsContext, buildRows, type CompiledTemplate, compileTemplate } from './handlebars';
 import { transformContent } from './utils';
 
-/** Every row re-interpolates the whole template, which the edit preview redoes on every keystroke. */
+/** Caps the rows either render mode will touch, since the edit preview re-interpolates on every keystroke. */
 export const MAX_RENDERED_ROWS = 1000;
 
 /** What to render, built from either the panel options or the editor's draft. */
@@ -39,7 +39,7 @@ export function interpolateTemplate(template: TextTemplate, replaceVariables: In
     return interpolateEveryRow(template, series, replaceVariables, compiled);
   }
 
-  const templated = compiled ? compiled(buildAllRowsContext(series ?? [])) : content;
+  const templated = compiled ? compiled(buildAllRowsContext(series ?? [], MAX_RENDERED_ROWS)) : content;
 
   return replaceVariables(templated, {}, format);
 }
@@ -60,9 +60,9 @@ function interpolateEveryRow(
       continue;
     }
 
-    const rows = compiled ? buildRows(frame, series) : [];
-
     const rowCount = Math.min(frame.length, MAX_RENDERED_ROWS - blocks.length);
+    const rows = compiled ? buildRows(frame, series, rowCount) : [];
+
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
       // `field` is unused by the ${__data} macro but required by the type, and
       // ${__value}/${__field} fall back to the raw match without it.

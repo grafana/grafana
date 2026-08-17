@@ -185,8 +185,7 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       // Below the fold, so the panel doesn't query until it scrolls into view.
       await panel.scrollIntoViewIfNeeded();
 
-      // One table built from the whole result set: a header the per-row mode
-      // cannot render once, plus a row per user of the panel's csv_content query.
+      // One row per user of the panel's csv_content query.
       await expect(panel.locator('tbody tr')).toHaveCount(5);
       await expect(panel).toContainText('John Smith');
 

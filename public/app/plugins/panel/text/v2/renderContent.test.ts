@@ -137,6 +137,18 @@ describe('interpolateTemplate', () => {
       expect(interpolate('{{#each data}}- {{host}}\n{{/each}}', [hosts], RenderMode.Once)).toBe('- web-1\n- web-2\n');
     });
 
+    it('caps the rows a Once template can iterate, so a huge frame cannot lock up the browser', () => {
+      const big = toDataFrame({
+        fields: [
+          { name: 'n', type: FieldType.number, values: Array.from({ length: MAX_RENDERED_ROWS + 10 }, (_, i) => i) },
+        ],
+      });
+
+      const rows = interpolate('{{#each data}}{{n}},{{/each}}', [big], RenderMode.Once).split(',').filter(Boolean);
+
+      expect(rows).toHaveLength(MAX_RENDERED_ROWS);
+    });
+
     it('exposes every frame for Once', () => {
       expect(interpolate('{{#each frames}}{{name}}:{{data.length}} {{/each}}', [hosts, regions], undefined)).toBe(
         'frameA:2 frameB:1 '

@@ -64,6 +64,12 @@ describe('buildRows', () => {
   it('returns an empty array for a frame with no rows', () => {
     expect(buildRows(empty, [empty])).toEqual([]);
   });
+
+  it('builds at most maxRows rows', () => {
+    expect(buildRows(hosts, [hosts], 1)).toEqual([{ host: 'web-1', cpu: 0.84, fmt: { host: 'web-1', cpu: '0.84' } }]);
+    expect(buildRows(hosts, [hosts], 0)).toEqual([]);
+    expect(buildRows(hosts, [hosts], -1)).toEqual([]);
+  });
 });
 
 describe('buildAllRowsContext', () => {
@@ -79,6 +85,12 @@ describe('buildAllRowsContext', () => {
 
   it('leaves `data` empty when there is nothing to render', () => {
     expect(buildAllRowsContext([])).toEqual({ data: [], frames: [] });
+  });
+
+  it('spends maxRows across the frames rather than per frame', () => {
+    const context = buildAllRowsContext([hosts, hosts], 3);
+
+    expect(context.frames.map((frame) => frame.data.length)).toEqual([2, 1]);
   });
 });
 
@@ -104,7 +116,9 @@ describe('compileTemplate', () => {
     it.each([
       ['and true', '{{#if (and a b)}}y{{/if}}', { a: true, b: true }, 'y'],
       ['and false', '{{#if (and a b)}}y{{/if}}', { a: true, b: false }, ''],
+      ['and reads every argument', '{{#if (and a b c)}}y{{/if}}', { a: true, b: true, c: false }, ''],
       ['or', '{{#if (or a b)}}y{{/if}}', { a: false, b: true }, 'y'],
+      ['or reads every argument', '{{#if (or a b c)}}y{{/if}}', { a: false, b: false, c: true }, 'y'],
       ['not', '{{#if (not a)}}y{{/if}}', { a: false }, 'y'],
       ['eq', '{{#if (eq a "x")}}y{{/if}}', { a: 'x' }, 'y'],
       ['unlessEq', '{{#if (unlessEq a "x")}}y{{/if}}', { a: 'z' }, 'y'],
@@ -118,12 +132,25 @@ describe('compileTemplate', () => {
       ['endsWith', '{{#if (endsWith a "lo")}}y{{/if}}', { a: 'hello' }, 'y'],
       ['match', '{{#if (match a "^web-")}}y{{/if}}', { a: 'web-1' }, 'y'],
       ['split + join', '{{join (split a ",") "|"}}', { a: 'a,b' }, 'a|b'],
+      ['split + join without separators', '{{join (split a)}}', { a: 'a,b' }, 'a,b'],
       ['toFixed', '{{toFixed a 2}}', { a: 1.234 }, '1.23'],
       ['toFixed without digits', '{{toFixed a}}', { a: 1.234 }, '1.234'],
       ['toFixed on a non-number', '{{toFixed a 2}}', { a: 'n/a' }, 'n/a'],
       ['json', '{{{json a}}}', { a: { b: 1 } }, '{\n  "b": 1\n}'],
     ])('%s', (_name, content, context, expected) => {
       expect(render(content, context)).toBe(expected);
+    });
+
+    // Handlebars counts an empty array and 0 as falsy, so `(and data …)` has to as well.
+    it.each([
+      ['an empty array', []],
+      ['zero', 0],
+    ])('agrees with `#if` on %s', (_name, value) => {
+      const inIf = render('{{#if a}}y{{else}}n{{/if}}', { a: value });
+
+      expect(render('{{#if (and a)}}y{{else}}n{{/if}}', { a: value })).toBe(inIf);
+      expect(render('{{#if (or a)}}y{{else}}n{{/if}}', { a: value })).toBe(inIf);
+      expect(render('{{#if (not a)}}y{{else}}n{{/if}}', { a: value })).toBe('y');
     });
 
     it('compares unit fields, and prints them formatted through `fmt`', () => {
@@ -135,6 +162,13 @@ describe('compileTemplate', () => {
 
     it('formats dates', () => {
       expect(render('{{date a "YYYY-MM-DD"}}', { a: '2026-08-11T10:00:00Z' })).toBe('2026-08-11');
+    });
+
+    it('renders now for `date` with no argument, and nothing for a value that is not a date', () => {
+      expect(render('{{date}}')).not.toBe('');
+      expect(render('{{date a}}', { a: null })).toBe('');
+      expect(render('{{date a}}', { a: '' })).toBe('');
+      expect(render('{{date missing}}')).toBe('');
     });
 
     it('reads a dashboard variable as a value and as a list', () => {
