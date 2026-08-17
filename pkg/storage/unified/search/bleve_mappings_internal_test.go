@@ -762,6 +762,13 @@ func TestRequirementQuery_NumericField(t *testing.T) {
 	require.True(t, ok)
 	assert.Len(t, dq.Disjuncts, 2)
 
+	// No JSON number can hold these, and as a bound they would quietly widen or
+	// empty the result instead of failing.
+	for _, value := range []string{"NaN", "+Inf", "-Inf", "Inf", "inf"} {
+		assertBadRequest(t, b, resource.SEARCH_FIELD_PREFIX+"ratio", "gt", value)
+		assertBadRequest(t, b, resource.SEARCH_FIELD_PREFIX+"ratio", "=", value)
+	}
+
 	// A double field takes fractional values, an int64 field does not.
 	ratio := numericRangeOf(t, mustQuery(t, b, resource.SEARCH_FIELD_PREFIX+"ratio", "gt", "0.5"))
 	assert.Equal(t, 0.5, *ratio.Min)

@@ -3508,7 +3508,9 @@ func parseBooleanFilterValue(value string) (bool, bool) {
 func parseNumericFilterValue(nb numberOrBoolField, key, value string) (float64, *resourcepb.ErrorResult) {
 	if nb.fieldType == resource.SearchFieldTypeDouble {
 		f, err := strconv.ParseFloat(value, 64)
-		if err != nil {
+		// ParseFloat also reads NaN and Inf, which no JSON number can hold. As a
+		// bound they would give an empty or unbounded result rather than an error.
+		if err != nil || math.IsNaN(f) || math.IsInf(f, 0) {
 			return 0, resource.NewBadRequestError(fmt.Sprintf("invalid number value for field %s: %q", key, value))
 		}
 		return f, nil
