@@ -1,7 +1,7 @@
 import { valid } from 'semver';
 
 // Serializes the versioned selector tree into a data-only form so it can be served as JSON and
-// consumed without executing code. Function selectors become positional template descriptors that
+// consumed without executing code. Function selectors become named template descriptors that
 // @grafana/plugin-e2e reconstructs into functions locally. See design doc: Plugin E2E Selectors.
 
 // private-use characters, unlikely to appear in any selector, used to locate argument positions
@@ -52,7 +52,7 @@ function serializeFunction(fn: (...args: string[]) => string): TemplateDescripto
   const present = fn(...sentinels);
   let template = present;
   sentinels.forEach((sentinel, index) => {
-    template = template.split(sentinel).join(`{${index}}`);
+    template = template.split(sentinel).join(`{${params[index]}}`);
   });
 
   // detect a conditional single-arg selector: `(x) => x ? withArg : withoutArg`. when called with an
