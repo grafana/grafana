@@ -1100,6 +1100,10 @@
       },
       "unknown": "Unknown"
     },
+    "dma-route-guard": {
+      "data-source-managed-unavailable": "Data source-managed alerting is unavailable",
+      "install-plugin": "<0>Install the Prometheus Alerting plugin</0> to manage it."
+    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluations to start alerting",
       "pending-period": "Pending period",
@@ -1529,6 +1533,7 @@
       "tooltip-group-by": "Group notifications using a different combination of labels. This option can help validate the grouping settings of your notification policies."
     },
     "group-details": {
+      "dma-disabled-description": "This rule group cannot be viewed from Grafana.",
       "ds-features-error": "Error loading data source details",
       "edit": "Edit",
       "export": "Export",
@@ -1542,6 +1547,7 @@
       }
     },
     "group-edit": {
+      "dma-disabled-description": "This rule group cannot be edited from Grafana.",
       "ds-error": "Error loading data source details",
       "form": {
         "delete": "Delete",
@@ -2847,6 +2853,7 @@
       "showing-count-with-state": "Showing {{visibleItemsCount}} {{alertState}} out of {{totalItemsCount}} instances"
     },
     "rule-editor": {
+      "data-source-managed-unavailable-description": "Data source-managed rules cannot be created or edited from Grafana.",
       "get-content": {
         "sorry-allowed-create-rules": "Sorry! You are not allowed to create rules.",
         "sorry-allowed-rules": "Sorry! You are not allowed to edit rules.",
@@ -3086,6 +3093,7 @@
     },
     "rule-viewer": {
       "aria-label-return-to": "Return to previous view",
+      "dma-disabled-description": "This rule cannot be viewed from Grafana.",
       "error-loading": "Something went wrong loading the rule",
       "evaluation-interval": "Every {{interval}}",
       "prometheus-consistency-check": {

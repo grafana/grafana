@@ -14,7 +14,7 @@ export const DMAStatus = {
   NotAvailable: 'not-available',
 } as const;
 
-export type DMAStatusValue = (typeof DMAStatus)[keyof typeof DMAStatus];
+type DMAStatusValue = (typeof DMAStatus)[keyof typeof DMAStatus];
 
 export interface DMAState {
   status: DMAStatusValue;
