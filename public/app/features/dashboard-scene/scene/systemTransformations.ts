@@ -1,5 +1,5 @@
 import { type CustomTransformOperator, type DataTransformerConfig } from '@grafana/data';
-import { type SceneDataTransformer } from '@grafana/scenes';
+import { type SceneDataTransformerState } from '@grafana/scenes';
 import { DataTopic } from '@grafana/schema';
 
 /** Stable identity so consumers that memoize on this — or use it as an effect dep — do not churn. */
@@ -15,11 +15,15 @@ const NONE: Array<DataTransformerConfig | CustomTransformOperator> = [];
  *
  * Entries may be bare operators, configs, or operators scoped to a topic. Only series-topic ones
  * reach a user transformation's input, matching how the pipeline splits topics.
+ *
+ * Takes the state value rather than the provider so callers memoize on something that actually
+ * changes: `PanelDataTransformer` installs on activation and reinstalls when the panel's plugin
+ * changes, so this is not fixed for the lifetime of the object.
  */
 export function getReplayableSystemTransformations(
-  provider: SceneDataTransformer | null | undefined
+  systemTransformations: SceneDataTransformerState['systemTransformations']
 ): Array<DataTransformerConfig | CustomTransformOperator> {
-  const entries = provider?.state.systemTransformations?.prepend;
+  const entries = systemTransformations?.prepend;
 
   if (!entries?.length) {
     return NONE;

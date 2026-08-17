@@ -1,4 +1,4 @@
-import { catchError, from, of, switchMap } from 'rxjs';
+import { of, switchMap } from 'rxjs';
 
 import {
   type CustomTransformOperator,
@@ -26,72 +26,41 @@ export class PanelDataTransformer extends SceneDataTransformer {
     // which is bound to the source panel. Dropping it here is what keeps a duplicated panel on its own plugin's transformations.
     super({ ...state, systemTransformations: undefined });
 
-    // Gating installation keeps the base class's identity-preserving fast path for everyone the
-    // feature is off for. The operator re-reads the flag on every emission, so this check only
-    // decides whether the operator exists — never whether it applies.
-    if (!pluginTransformationsEnabled()) {
-      return;
-    }
-
-    // Installed from the constructor rather than from an activation handler or a behaviour: the
-    // base class transforms whatever the source already holds as soon as it activates, and
-    // `$behaviors` activate after `$data`, so anything later renders a frame of unprepared data on
-    // every re-activation — entering and leaving panel edit, duplicating a panel, repeat rebuilds.
-    this.setState({ systemTransformations: { prepend: [this._runPluginTransformations] } });
-
     this.addActivationHandler(() => this._activationHandler());
   }
 
+  /** The plugin the installed operator belongs to, resolved once rather than per emission. */
+  private _plugin?: PanelPlugin;
+
   /**
-   * Resolves the plugin inside the pipeline rather than at construction time: scenes are
-   * built before `VizPanel` activates and loads its plugin, so there is nothing to ask when
-   * this object is created.
+   * Asks the plugin for its transformations per emission rather than caching the result: the supplier
+   * receives the frames, so its answer can legitimately differ between refreshes.
    *
-   * The panel's own plugin is preferred — scenes resolves it through Grafana's cache AND its
-   * runtime-plugin registry, so ids like the unconfigured panel's are found here despite being
-   * invisible to `importPanelPlugin`. The awaited import remains as a fallback for plugins the
-   * panel has not loaded yet. An id that no layer resolves passes the frames through untouched
-   * and is retried when the panel's plugin lands (see the activation handler): resolution
-   * failure must never error the panel's data.
-   *
-   * Whichever layer answers, it must answer for the panel's *current* `pluginId` — see
-   * {@link getLoadedPluginFor}.
+   * The plugin itself is not re-resolved here. `_syncSystemTransformations` owns that, because the
+   * only way to reach some ids is an async import — an operator cannot await one without making the
+   * whole pipeline asynchronous on every emission.
    */
   private _runPluginTransformations: CustomTransformOperator = (ctx) => (source) =>
     source.pipe(
       switchMap((frames) => {
-        // Re-read rather than reuse the constructor's result: flag values change over a session, so
+        // Re-read rather than reuse the install-time result: flag values change over a session, so
         // caching one would leave the toggle unable to stop a panel it already applies to.
-        if (!pluginTransformationsEnabled()) {
+        if (!pluginTransformationsEnabled() || frames.length === 0) {
           return of(frames);
         }
 
         const panel = getAncestorVizPanel(this);
+        const plugin = this._plugin;
 
-        if (!panel || frames.length === 0) {
+        // Only ever answer for the panel's current plugin. A swap re-syncs through the subscription
+        // below; until the new plugin resolves these frames belong to neither, so pass them through.
+        if (!panel || plugin?.meta.id !== panel.state.pluginId) {
           return of(frames);
         }
 
-        const loaded = getLoadedPluginFor(panel) ?? syncGetPanelPlugin(panel.state.pluginId);
-        const plugin$ = loaded
-          ? of(loaded)
-          : from(importPanelPlugin(panel.state.pluginId)).pipe(catchError(() => of(undefined)));
+        const configs = plugin.getDataTransformations({ series: frames }).filter(appliesToSeriesTopic);
 
-        return plugin$.pipe(
-          switchMap((plugin: PanelPlugin | undefined) => {
-            if (!plugin) {
-              return of(frames);
-            }
-
-            const configs = plugin.getDataTransformations({ series: frames }).filter(appliesToSeriesTopic);
-
-            // Passing the input frames through untouched preserves their identity: the base
-            // class rebuilds the series array either way, but structurally identical frames
-            // keep the panel's structureRev stable, so panels that register no transformations
-            // avoid needless re-configuration.
-            return configs.length ? transformDataFrame(configs, frames, ctx) : of(frames);
-          })
-        );
+        return transformDataFrame(configs, frames, ctx);
       })
     );
 
@@ -102,30 +71,88 @@ export class PanelDataTransformer extends SceneDataTransformer {
       return;
     }
 
-    // The supplier can return different transformations per plugin, and switching visualization
-    // does not produce new data, so nothing else would re-run the pipeline.
+    this._syncSystemTransformations(panel);
+
+    // Two things invalidate the decision above and neither produces new data, so nothing else would
+    // re-run the pipeline: switching visualization (a different plugin, with a different answer), and
+    // the panel finishing a plugin load that had not resolved yet. The second cannot be detected from
+    // `pluginId` — `_pluginLoaded` writes the value already in state — so watch the plugin itself.
+    let loadedPlugin = getLoadedPluginFor(panel);
+
     this._subs.add(
       panel.subscribeToState((newState, prevState) => {
-        if (newState.pluginId !== prevState.pluginId) {
-          this.reprocessTransformations();
+        const nextPlugin = getLoadedPluginFor(panel);
+
+        if (newState.pluginId === prevState.pluginId && nextPlugin === loadedPlugin) {
+          return;
         }
+
+        loadedPlugin = nextPlugin;
+        this._syncSystemTransformations(panel);
       })
     );
+  }
 
-    // Data can be processed before the panel loads its plugin: the panel's own activation loads
-    // the plugin before activating `$data`, but other activators (the dashboard datasource's
-    // source-panel path, tests) reach the data chain directly. Only ids no synchronous layer can
-    // resolve need this — for the rest the operator already resolves on its first emission, and
-    // reprocessing on plugin arrival would just repeat the same transform.
-    if (!getLoadedPluginFor(panel) && !syncGetPanelPlugin(panel.state.pluginId)) {
-      const pluginLoadSub = panel.subscribeToState(() => {
-        if (getLoadedPluginFor(panel)) {
-          pluginLoadSub.unsubscribe();
-          this.reprocessTransformations();
-        }
-      });
-      this._subs.add(pluginLoadSub);
+  /**
+   * Installs the operator only for panels whose plugin actually registers transformations, and
+   * removes it again when one no longer does.
+   *
+   * The alternative — installing unconditionally — is what it replaces, and it costs every panel on
+   * every dashboard: a non-empty `getEffectiveTransformations()` permanently disables the base
+   * class's passthrough, so each emission rebuilds `PanelData` through the full pipeline even when
+   * there is nothing to run.
+   *
+   * Deliberately not done in the constructor: the plugin is reachable only through the panel, and
+   * `this.parent` is not set yet at that point.
+   */
+  private _syncSystemTransformations(panel: VizPanel) {
+    const plugin = getLoadedPluginFor(panel) ?? syncGetPanelPlugin(panel.state.pluginId);
+
+    if (plugin) {
+      this._installSystemTransformations(plugin);
+      return;
     }
+
+    // Nothing resolves this id synchronously, and the panel may never load it: a provider can be
+    // activated on its own, without its panel — conditional rendering and the dashboard datasource's
+    // source-panel path both do. Import it from here, once per resolution attempt, rather than from
+    // the operator: `importPanelPlugin` deletes its promise cache entry on failure, so an operator
+    // that awaited it would re-import and re-reject on every single emission.
+    const { pluginId } = panel.state;
+
+    importPanelPlugin(pluginId)
+      .then((imported) => {
+        // The panel may have been swapped or the provider torn down while the chunk loaded.
+        if (this.isActive && panel.state.pluginId === pluginId) {
+          this._installSystemTransformations(imported);
+        }
+      })
+      // An id nothing can resolve leaves the panel on its untransformed data, which is the same
+      // outcome as a plugin that registers nothing. Never error the panel's data over it.
+      .catch(() => undefined);
+  }
+
+  private _installSystemTransformations(plugin: PanelPlugin) {
+    const shouldInstall = pluginTransformationsEnabled() && plugin.hasDataTransformations();
+    const nextPlugin = shouldInstall ? plugin : undefined;
+    const isInstalled = Boolean(this.state.systemTransformations?.prepend?.length);
+
+    // Idempotent, so re-activating a panel does not re-transform data that is already correct.
+    if (nextPlugin === this._plugin && shouldInstall === isInstalled) {
+      return;
+    }
+
+    this._plugin = nextPlugin;
+
+    // Swapping between two plugins that both register transformations leaves the operator in place,
+    // but its output changes, so the pipeline still has to re-run.
+    if (shouldInstall !== isInstalled) {
+      this.setState({
+        systemTransformations: shouldInstall ? { prepend: [this._runPluginTransformations] } : undefined,
+      });
+    }
+
+    this.reprocessTransformations();
   }
 }
 
@@ -140,9 +167,9 @@ function pluginTransformationsEnabled(): boolean {
  * `setState`, so the placeholder is still loaded when this object activates.
  *
  * Reading it unqualified is wrong twice over — the placeholder answers the supplier call meant for
- * the real plugin, and it makes the panel look resolved, so the retry below is never armed. That
- * retry is the only one that can fire on this path: the plugin arrives via `pluginId`'s *own* value,
- * so the `pluginId`-change subscription above cannot see it.
+ * the real plugin, and it makes the panel look resolved, so `_syncSystemTransformations` settles on
+ * the placeholder's answer and never revisits it. Comparing identity is also what lets the panel
+ * subscription notice the real plugin arriving, since it lands under the `pluginId` already in state.
  */
 function getLoadedPluginFor(panel: VizPanel): PanelPlugin | undefined {
   const plugin = panel.getPlugin();

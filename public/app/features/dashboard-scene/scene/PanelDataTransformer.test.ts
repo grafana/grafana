@@ -13,12 +13,13 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { SceneDataNode, type SceneDataTransformer, VizPanel } from '@grafana/scenes';
+import { SceneDataNode, type SceneDataTransformer, SceneObjectStateChangedEvent, VizPanel } from '@grafana/scenes';
 import { DataTopic } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { PanelDataPaneNext } from '../panel-edit/PanelEditNext/PanelDataPaneNext';
+import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { PanelDataTransformer } from './PanelDataTransformer';
@@ -192,16 +193,99 @@ describe('PanelDataTransformer', () => {
     registerPlugin('plain');
 
     const series = [frameWithLabels()];
-    const { transformer } = buildPipeline({ pluginId: 'plain', series });
+    const { source, transformer } = buildPipeline({ pluginId: 'plain', series });
     activateFullSceneTree(transformer);
 
     await waitFor(() => {
       expect(transformer.state.data?.state).toBe(LoadingState.Done);
     });
-    // Scenes rebuilds the series array whenever a transformer has any entry, so the array itself
-    // is new. What must hold is that the frames pass through untouched, so no extra work lands
-    // downstream in structure comparison or field overrides.
+    // Nothing is installed at all, so the base class keeps its passthrough and the PanelData object
+    // itself is forwarded. Anything less — a rebuilt series array, `annotations` promoted from
+    // undefined to [] — is downstream work for every panel on the dashboard.
+    expect(transformer.state.systemTransformations).toBeUndefined();
+    expect(transformer.state.data === source.state.data).toBe(true);
     expect(transformer.state.data?.series[0] === series[0]).toBe(true);
+  });
+
+  describe('installing the operator', () => {
+    it('leaves it off for a plugin that registers nothing, keeping the base class fast path', async () => {
+      registerPlugin('plain');
+
+      const { transformer } = buildPipeline({ pluginId: 'plain', series: [frameWithLabels()] });
+      activateFullSceneTree(transformer);
+
+      await waitFor(() => {
+        expect(transformer.state.data?.state).toBe(LoadingState.Done);
+      });
+      expect(transformer.getEffectiveTransformations()).toHaveLength(0);
+    });
+
+    it('removes it when the panel switches to a plugin that registers nothing', async () => {
+      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('plain');
+
+      const series = [frameWithLabels()];
+      const { source, transformer, panel } = buildPipeline({ pluginId: 'logs-table', series });
+      activateFullSceneTree(transformer);
+
+      await waitFor(() => {
+        expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toContain('level');
+      });
+
+      panel.setState({ pluginId: 'plain' });
+
+      // Back to the fast path rather than an installed operator that resolves to no configs.
+      await waitFor(() => {
+        expect(transformer.state.systemTransformations).toBeUndefined();
+      });
+      expect(transformer.state.data === source.state.data).toBe(true);
+    });
+
+    it('does not mark the dashboard dirty when it installs', async () => {
+      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+
+      const { transformer, panel } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
+
+      // Installing happens with a parent attached now, so — unlike a write from the constructor —
+      // the event really does bubble to the dashboard's change tracker.
+      const events: SceneObjectStateChangedEvent[] = [];
+      panel.subscribeToEvent(SceneObjectStateChangedEvent, (event) => events.push(event));
+
+      activateFullSceneTree(transformer);
+
+      await waitFor(() => {
+        expect(transformer.state.systemTransformations?.prepend).toHaveLength(1);
+      });
+
+      const installEvent = events.find((event) =>
+        Object.prototype.hasOwnProperty.call(event.payload.partialUpdate ?? {}, 'systemTransformations')
+      );
+
+      expect(installEvent).toBeDefined();
+      expect(DashboardSceneChangeTracker.isUpdatingPersistedState(installEvent!)).toBe(false);
+    });
+
+    it('re-runs when the panel switches between two plugins that both register transformations', async () => {
+      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('reducer', (p) =>
+        p.setDataTransformations(() => [{ id: 'reduce', options: { reducers: ['max'] } }])
+      );
+
+      const { transformer, panel } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
+      activateFullSceneTree(transformer);
+
+      await waitFor(() => {
+        expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toContain('level');
+      });
+
+      panel.setState({ pluginId: 'reducer' });
+
+      // The operator stays installed across this swap, so only a reprocess surfaces the new output.
+      await waitFor(() => {
+        expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toEqual(['Field', 'Max']);
+      });
+      expect(transformer.state.systemTransformations?.prepend).toHaveLength(1);
+    });
   });
 
   it('lets the supplier branch on frame metadata', async () => {

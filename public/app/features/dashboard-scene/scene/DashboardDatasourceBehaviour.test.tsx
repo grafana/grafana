@@ -1044,20 +1044,26 @@ describe('DashboardDatasourceBehaviour', () => {
     jest.spyOn(console, 'error').mockImplementation();
     setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
 
+    // An empty user list, so only the plugin's transformations make the transformer emit. Gating on
+    // `state.transformations.length` subscribes to the query runner instead and misses a reprocess,
+    // which runs no query.
+    const sourceTransformer = new PanelDataTransformer({
+      transformations: [],
+      $data: new SceneQueryRunner({
+        datasource: { uid: 'grafana' },
+        queries: [{ refId: 'A', queryType: 'randomWalk' }],
+      }),
+    });
+    // Installed directly rather than through a registered plugin — this behaviour only cares that
+    // the source has effective transformations at all. Set after construction because the
+    // constructor drops the field, which is what stops a clone inheriting the source panel's.
+    sourceTransformer.setState({ systemTransformations: { prepend: [() => (source) => source] } });
+
     const sourcePanel = new VizPanel({
       title: 'Panel A',
       pluginId: 'table',
       key: 'panel-1',
-      $data: new PanelDataTransformer({
-        // An empty user list, so only the plugin's transformations make the transformer emit.
-        // Gating on `state.transformations.length` here subscribes to the query runner instead
-        // and misses a reprocess, which runs no query.
-        transformations: [],
-        $data: new SceneQueryRunner({
-          datasource: { uid: 'grafana' },
-          queries: [{ refId: 'A', queryType: 'randomWalk' }],
-        }),
-      }),
+      $data: sourceTransformer,
     });
 
     const dashboardDSPanel = new VizPanel({

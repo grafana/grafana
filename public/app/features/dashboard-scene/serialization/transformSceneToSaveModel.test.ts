@@ -1764,7 +1764,10 @@ describe('given a panel plugin that registers transformations', () => {
     });
 
     const dataProvider = panel.state.body.state.$data as SceneDataTransformer;
-    // The plugin's slot really is populated, otherwise this test proves nothing.
+    // Populated directly: `PanelDataTransformer` installs the operator on activation once it has
+    // resolved a plugin, and that mechanism is its own concern. What matters here is that a
+    // populated slot never reaches the save model.
+    dataProvider.setState({ systemTransformations: { prepend: [() => (source) => source] } });
     expect(dataProvider.state.systemTransformations?.prepend).toHaveLength(1);
 
     const result = gridItemToPanel(panel);

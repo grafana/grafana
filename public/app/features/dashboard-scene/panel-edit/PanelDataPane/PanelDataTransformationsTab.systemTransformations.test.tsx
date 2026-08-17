@@ -13,11 +13,12 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneDataNode, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { PanelDataTransformer } from '../../scene/PanelDataTransformer';
+import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { type PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
 
@@ -57,9 +58,14 @@ const extractLabels = {
 const organize: DataTransformerConfig = { id: 'organize', options: {} };
 
 function createModel(pluginId: string) {
-  const transformer = new PanelDataTransformer({ data: rawData, transformations: [organize] });
-  // Parents the transformer, which is how the plugin's transformations resolve their panel.
-  new VizPanel({ pluginId, $data: transformer });
+  // Needs a source to activate against; the tab reads the raw frames from the query runner below.
+  const transformer = new PanelDataTransformer({
+    $data: new SceneDataNode({ data: rawData }),
+    transformations: [organize],
+  });
+  // Activating parents the transformer and is what installs the plugin's transformations — they are
+  // only added once a resolved plugin reports that it registers any.
+  activateFullSceneTree(new VizPanel({ pluginId, $data: transformer }));
 
   return {
     getDataTransformer: () => transformer,
