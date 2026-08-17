@@ -1,6 +1,7 @@
 name: "Go Workspace Check"
 
 on:
+  workflow_dispatch:
   workflow_call:
     inputs:
       backend:
@@ -13,7 +14,7 @@ permissions: {}
 jobs:
 
   check-workspace:
-    if: inputs.backend == 'true'
+    if: github.event_name == 'workflow_dispatch' || inputs.backend == 'true'
     name: Go Workspace Check
     runs-on: ubuntu-x64
 
@@ -58,7 +59,7 @@ jobs:
         fi
 
   check-wire:
-    if: inputs.backend == 'true'
+    if: github.event_name == 'workflow_dispatch' || inputs.backend == 'true'
     name: Check Wire Changes
     runs-on: ubuntu-x64
 

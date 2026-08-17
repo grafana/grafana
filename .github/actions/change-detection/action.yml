@@ -1,22 +1,29 @@
 name: Detect changed files
-description: Detects whether any matching files have changed in the current PR
+description: Detects whether any matching files have changed
 inputs:
   self:
     description: The path to the calling workflow (e.g. .github/workflows/backend-unit-tests.yml). It is regarded as any category.
     required: true
+  detect-push:
+    description: Detect changed files on push events
+    default: 'false'
 outputs:
   self:
     description: Whether the calling workflow has changed in any way
     value: ${{ steps.changed-files.outputs.self_any_modified || 'true' }}
   backend:
-    description: Whether the backend or self have changed in any way
-    value: ${{ steps.changed-files.outputs.backend_any_modified || 'true' }}
+    description: Whether the backend or CI configuration have changed in any way
+    value: ${{ steps.changed-files.outputs.backend_any_modified == 'true' ||
+      steps.changed-files.outputs.ci_any_modified == 'true' ||
+      steps.changed-files.outcome == 'skipped' }}
   backend-src:
     description: Whether the backend or self have changed, excluding test-only changes
     value: ${{ steps.changed-files.outputs.backend_src_any_modified || 'true' }}
   frontend:
-    description: Whether the frontend or self has changed in any way
-    value: ${{ steps.changed-files.outputs.frontend_any_modified || 'true' }}
+    description: Whether the frontend or CI configuration have changed in any way
+    value: ${{ steps.changed-files.outputs.frontend_any_modified == 'true' ||
+      steps.changed-files.outputs.ci_any_modified == 'true' ||
+      steps.changed-files.outcome == 'skipped' }}
   frontend-src:
     description: Whether the frontend or self has changed, excluding test-only changes
     value: ${{ steps.changed-files.outputs.frontend_src_any_modified || 'true' }}
@@ -27,10 +34,11 @@ outputs:
     description: Whether any frontend packages have changed
     value: ${{ steps.changed-files.outputs.frontend_packages_any_modified || 'true' }}
   e2e:
-    description: Whether the e2e tests or self have changed in any way
+    description: Whether the e2e tests, covered code, or CI configuration have changed
     value: ${{ steps.changed-files.outputs.e2e_any_modified == 'true' ||
       steps.changed-files.outputs.backend_any_modified == 'true' ||
-      steps.changed-files.outputs.frontend_any_modified == 'true' }}
+      steps.changed-files.outputs.frontend_any_modified == 'true' ||
+      steps.changed-files.outputs.ci_any_modified == 'true' }}
   e2e-cloud-plugins:
     description: Whether the cloud plugins code or tests have changed in any way
     value: ${{ steps.changed-files.outputs.e2e_cloud_plugins_any_modified || 'true' }}
@@ -38,8 +46,10 @@ outputs:
     description: Whether the dev tooling or self have changed in any way
     value: ${{ steps.changed-files.outputs.dev_tooling_any_modified || 'true' }}
   docs:
-    description: Whether the docs or self have changed in any way
-    value: ${{ steps.changed-files.outputs.docs_any_modified || 'true' }}
+    description: Whether the docs or CI configuration have changed in any way
+    value: ${{ steps.changed-files.outputs.docs_any_modified == 'true' ||
+      steps.changed-files.outputs.ci_any_modified == 'true' ||
+      steps.changed-files.outcome == 'skipped' }}
   dockerfile:
     description: Whether the dockerfile or self have changed in any way
     value: ${{ steps.changed-files.outputs.dockerfile_any_modified || 'true' }}
@@ -53,11 +63,34 @@ outputs:
     description: Whether RPM/DEB packaging scripts or the Makefile changed
     value: ${{ steps.changed-files.outputs.rpm_packaging_any_modified || 'true' }}
   devenv:
-    description: Whether the devenv or self have changed in any way
-    value: ${{ steps.changed-files.outputs.devenv_any_modified || 'true' }}
+    description: Whether the devenv or CI configuration have changed in any way
+    value: ${{ steps.changed-files.outputs.devenv_any_modified == 'true' ||
+      steps.changed-files.outputs.ci_any_modified == 'true' ||
+      steps.changed-files.outcome == 'skipped' }}
   dev-dashboards:
     description: Whether the dev-dashboards jsonnet codegen inputs (devenv/dev-dashboards/** or devenv/jsonnet/**) or self have changed
     value: ${{ steps.changed-files.outputs.dev_dashboards_any_modified || 'true' }}
+  integration:
+    description: Whether files covered by integration tests changed
+    value: ${{ steps.changed-files.outputs.integration_any_modified == 'true' || steps.changed-files.outputs.ci_any_modified == 'true' }}
+  pgvector:
+    description: Whether files covered by pgvector integration tests changed
+    value: ${{ steps.changed-files.outputs.pgvector_any_modified == 'true' || steps.changed-files.outputs.ci_any_modified == 'true' }}
+  k8s-codegen:
+    description: Whether files covered by Kubernetes code generation changed
+    value: ${{ steps.changed-files.outputs.k8s_codegen_any_modified == 'true' || steps.changed-files.outputs.ci_any_modified == 'true' }}
+  build-go:
+    description: Whether files covered by cross-platform Go builds changed
+    value: ${{ steps.changed-files.outputs.build_go_any_modified == 'true' || steps.changed-files.outputs.ci_any_modified == 'true' }}
+  go-lint-push:
+    description: Whether files covered by Go lint push triggers changed
+    value: ${{ steps.changed-files.outputs.go_lint_push_any_modified == 'true' || steps.changed-files.outputs.ci_any_modified == 'true' }}
+  govulncheck:
+    description: Whether files covered by govulncheck changed
+    value: ${{ steps.changed-files.outputs.govulncheck_any_modified == 'true' || steps.changed-files.outputs.ci_any_modified == 'true' }}
+  backend-code-push:
+    description: Whether files covered by backend code check push triggers changed
+    value: ${{ steps.changed-files.outputs.backend_code_push_any_modified == 'true' || steps.changed-files.outputs.ci_any_modified == 'true' }}
 runs:
   using: composite
   steps:
@@ -65,13 +98,97 @@ runs:
     # It must persist credentials to allow the changed-files action to get more history.
     - name: Detect changes
       id: changed-files
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' || inputs.detect-push == 'true'
       uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
       with:
         files_yaml: |
           self:
             - '.github/actions/change-detection/**'
             - '${{ inputs.self }}'
+          ci:
+            - '.github/actions/report-go-cache-sizes/**'
+            - '.github/actions/setup-go-remote-cache/**'
+            - '.github/workflows/backend-code-checks.yml'
+            - '.github/workflows/backend-unit-tests.yml'
+            - '.github/workflows/bootstrap-go-cache.yml'
+            - '.github/workflows/build-go-matrix.yml'
+            - '.github/workflows/ci.yml'
+            - '.github/workflows/feature-toggles-ci.yml'
+            - '.github/workflows/go-lint.yml'
+            - '.github/workflows/govulncheck.yml'
+            - '.github/workflows/pr-e2e-tests.yml'
+            - '.github/workflows/pr-frontend-unit-tests.yml'
+            - '.github/workflows/pr-go-workspace-check.yml'
+            - '.github/workflows/pr-k8s-codegen-check.yml'
+            - '.github/workflows/pr-test-integration-pgvector.yml'
+            - '.github/workflows/pr-test-integration.yml'
+            - '.github/workflows/run-schema-v2-e2e.yml'
+            - '.github/workflows/swagger-gen.yml'
+          integration:
+            - 'Makefile'
+            - '**/go.mod'
+            - '**/go.sum'
+            - '**/go.work'
+            - '**/go.work.sum'
+            - '**.go'
+            - 'pkg/**'
+            - 'apps/**'
+            - 'scripts/ci/backend-tests/**'
+            - 'devenv/**'
+            - '.github/actions/setup-go/**'
+            - '.github/actions/setup-enterprise/**'
+            - '.github/workflows/pr-test-integration.yml'
+          pgvector:
+            - 'Makefile'
+            - '**/go.mod'
+            - '**/go.sum'
+            - '**/go.work'
+            - '**/go.work.sum'
+            - 'pkg/storage/unified/search/vector/**'
+            - 'pkg/storage/unified/search/embed/**'
+            - 'devenv/docker/blocks/pgvector/**'
+            - 'devenv/.env'
+            - '.github/actions/setup-go/**'
+            - '.github/workflows/pr-test-integration-pgvector.yml'
+          k8s_codegen:
+            - 'pkg/apis/**'
+            - 'pkg/apimachinery/apis/**'
+            - 'hack/**'
+            - 'apps/**'
+            - '*.sum'
+            - '.github/workflows/pr-k8s-codegen-check.yml'
+          build_go:
+            - '**/go.mod'
+            - '**/go.sum'
+            - '**/go.work'
+            - '**/go.work.sum'
+            - '**.go'
+            - 'pkg/**'
+            - 'apps/**'
+            - 'Makefile'
+            - 'packaging/**'
+            - 'scripts/build-rpm.sh'
+            - 'scripts/build-deb.sh'
+            - 'scripts/build-targz.sh'
+            - 'scripts/verify-pkg-stig.sh'
+            - '.github/actions/setup-go/**'
+            - '.github/actions/setup-fpm/**'
+            - '.github/actions/setup-enterprise/**'
+            - '.github/workflows/build-go-matrix.yml'
+          go_lint_push:
+            - 'pkg/**'
+            - '.github/workflows/go-lint.yml'
+            - 'go.*'
+          govulncheck:
+            - '**/*.go'
+            - '.github/workflows/govulncheck.yml'
+            - '.citools/src/govulncheck/**'
+            - 'go.*'
+          backend_code_push:
+            - '**'
+            - '!*.md'
+            - '!docs/**'
+            - '!latest.json'
           dockerfile:
             - 'Dockerfile'
             - 'Makefile'
