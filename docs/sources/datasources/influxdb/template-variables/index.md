@@ -48,13 +48,13 @@ To switch a dashboard between InfluxDB instances, use a data source variable. Do
 
 Variable support differs by query editor and mode:
 
-| Editor                 | Variable support                                                                                          |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------- |
-| InfluxQL visual editor | Drop-downs include your template variables alongside values from your database.                            |
-| InfluxQL raw mode      | Full support.                                                                                              |
-| SQL builder mode       | Drop-downs list only tables and columns from your database. Switch to code mode to use variables.          |
-| SQL code mode          | Full support. Press Ctrl+Space to show variable suggestions.                                               |
-| Flux code editor       | Full support.                                                                                              |
+| Editor                 | Variable support                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| InfluxQL visual editor | Drop-downs include your template variables alongside values from your database.                   |
+| InfluxQL raw mode      | Full support.                                                                                     |
+| SQL builder mode       | Drop-downs list only tables and columns from your database. Switch to code mode to use variables. |
+| SQL code mode          | Full support. Press Ctrl+Space to show variable suggestions.                                      |
+| Flux code editor       | Full support.                                                                                     |
 
 ## Create a query variable
 
