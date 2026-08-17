@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 
+import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import {
@@ -20,7 +21,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
 import { partitionSceneObjects } from './helpers';
-import { confirmDeleteVariable, createDragEndHandler, duplicateVariable } from './variableListActions';
+import { confirmDeleteVariable, createDragEndHandler } from './variableListActions';
 
 const ID_VISIBLE_LIST = 'variables-list-visible';
 const ID_CONTROLS_MENU_LIST = 'variables-list-controls-menu';

@@ -24,6 +24,7 @@ import { changeVariableHideValue } from '../../actions/variable/changeVariableHi
 import { changeVariableLabel } from '../../actions/variable/changeVariableLabel';
 import { changeVariableName } from '../../actions/variable/changeVariableName';
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
+import { removeVariable } from '../../actions/variable/removeVariable';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type BulkActionElement } from '../../scene/types/BulkActionElement';
@@ -39,8 +40,7 @@ import {
   restoreUnshadowedPredefinedVariables,
   validateVariableName,
 } from '../../settings/variables/utils';
-import { confirmDeleteVariable, deleteVariable, duplicateVariable } from '../../sidebar/dashboard/variableListActions';
-import { dashboardEditActions } from '../../sidebar/shared';
+import { confirmDeleteVariable } from '../../sidebar/dashboard/variableListActions';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 
@@ -167,7 +167,11 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onDelete() {
-    deleteVariable(this.variable);
+    const set = this.variable.parent;
+    if (!(set instanceof SceneVariableSet)) {
+      return;
+    }
+    removeVariable({ source: set, removedObject: this.variable });
   }
 
   public onChangeName(name: string) {

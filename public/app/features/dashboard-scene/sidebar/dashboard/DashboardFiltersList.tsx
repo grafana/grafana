@@ -5,6 +5,7 @@ import { VariableHide } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 
+import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -13,7 +14,7 @@ import { openAddFilterForm } from '../add-new/AddFilters';
 import { partitionVariablesByDisplay } from './DashboardVariablesList';
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { confirmDeleteVariable, createDragEndHandler, duplicateVariable } from './variableListActions';
+import { confirmDeleteVariable, createDragEndHandler } from './variableListActions';
 
 const ID_FILTERS_VISIBLE_LIST = 'filters-list-visible';
 const ID_FILTERS_CONTROLS_MENU_LIST = 'filters-list-controls-menu';
