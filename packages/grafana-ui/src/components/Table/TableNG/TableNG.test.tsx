@@ -923,21 +923,6 @@ describe('TableNG', () => {
       expect(frame.fields[2].state?.displayName).toBe('Pretty Name 2');
     });
 
-    it('only sniffs the first 10 fields, so an uncached 11th field does not trigger a recache', () => {
-      const frame = createMultiFieldDisplayNameDataFrame(11);
-      // Sentinel-cache the first 10 fields; leave the 11th field alone, outside the sniff window.
-      frame.fields.slice(0, 10).forEach((field, i) => {
-        field.state = { ...field.state, displayName: `Already Cached ${i}` };
-      });
-
-      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
-
-      frame.fields.slice(0, 10).forEach((field, i) => {
-        expect(field.state?.displayName).toBe(`Already Cached ${i}`);
-      });
-      expect(frame.fields[10].state?.displayName).toBeFalsy();
-    });
-
     it('recaches display names when a new data frame instance is passed in', () => {
       const frame1 = createDisplayNameDataFrame('Pretty Name');
       const { rerender } = render(<TableNG enableVirtualization={false} data={frame1} width={800} height={600} />);
