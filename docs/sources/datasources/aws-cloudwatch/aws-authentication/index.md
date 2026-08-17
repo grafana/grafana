@@ -140,6 +140,8 @@ When you use a per-data source external ID with Grafana Assume Role:
 
 - **Generation:** Grafana generates the external ID when you save the data source.
 - **Copy to IAM:** Copy the value from the data source **Settings** tab after save into your IAM role trust policy.
+- **Reload if needed:** If the field still says "Save to generate…" after a successful save, reload the data source settings.
+- **Provisioning and GitOps:** Omit `grafanaExternalId` in YAML or Terraform. After apply, read the minted ID from the UI or API and put it in your IAM trust policy. Delete and recreate (even with the same UID) issues a new ID; update IAM to match.
 - **Delete and recreate:** If you delete and recreate a data source, even with the same UID, Grafana generates a new external ID. Update your IAM trust policy to match.
 {{< /admonition >}}
 
@@ -148,7 +150,7 @@ To use the Grafana Assume Role:
 1. Create a new CloudWatch data source (or update an existing one) and select **Grafana Assume Role** as an authentication provider.
 2. In the AWS Console, create a new IAM role, and under **Trusted entity type**, select **Another AWS account** as the trusted Entity.
 3. Enter the Grafana account id (displayed in the instructions box on the **Settings** tab of the CloudWatch data source configuration) and check the **Require external ID** box.
-4. Enter the external ID specified in the instructions box on the **Settings** tab of the CloudWatch data source configuration in Grafana. This external ID will be unique to your Grafana instance.
+4. Save the CloudWatch data source in Grafana if you haven't already. Copy the external ID from the **Settings** tab into the IAM **External ID** field. For per-data source external IDs, the value appears only after save. For stack-level external IDs, the instructions box on the **Settings** tab shows the stack external ID.
 5. Attach any required permissions you would like Grafana to be able to access on your behalf (for example, CloudWatch Logs and CloudWatch Metrics policies).
 6. Give the role a name and description, and click **Create role**.
 7. Copy the ARN of the role you just created and paste it into the **Assume Role ARN** field on the **Settings** tab of CloudWatch data source configuration in Grafana.
