@@ -13,11 +13,6 @@ export interface Props {
   onConfirm?: () => Promise<boolean>;
 }
 
-export type State = UserPreferencesDTO & {
-  isLoading: boolean;
-  isSubmitting: boolean;
-};
-
 export type PrefsState = UserPreferencesDTO;
 
 const compareStrings = (() => {
