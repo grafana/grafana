@@ -2,16 +2,20 @@ import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
+import { annotationEditActions } from '../settings/annotations/actions';
+import { openAddLinkPane } from '../settings/links/LinkAddEditableElement';
 import { openAddVariablePane } from '../settings/variables/VariableTypeSelectionPane';
 import { openAddFilterForm } from '../sidebar/add-new/AddFilters';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { type DashboardScene } from './DashboardScene';
 
-export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) {
+export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
   const { editview, editPanel, isEditing, viewPanel } = dashboard.useState();
 
@@ -23,6 +27,18 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
   const handleAddFilter = useCallback(() => {
     openAddFilterForm(dashboard, dashboard);
     DashboardInteractions.addFilterButtonClicked({ source: 'variable_controls' });
+  }, [dashboard]);
+
+  const handleAddAnnotationQuery = useCallback(() => {
+    const dataLayers = dashboardSceneGraph.getDataLayers(dashboard);
+    const newAnnotation = dataLayers.createDefaultAnnotationLayer();
+    annotationEditActions.addAnnotation({ source: dataLayers, addedObject: newAnnotation });
+    DashboardInteractions.addAnnotationButtonClicked({ source: 'variable_controls' });
+  }, [dashboard]);
+
+  const handleAddLink = useCallback(() => {
+    openAddLinkPane(dashboard);
+    DashboardInteractions.addLinkButtonClicked({ source: 'variable_controls' });
   }, [dashboard]);
 
   // Hide the button if:
@@ -46,6 +62,12 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
         label={t('dashboard.sidebar.add.filters.label', 'Filter and Group by')}
         onClick={handleAddFilter}
       />
+      <Menu.Item
+        icon="comment-alt"
+        label={t('dashboard.sidebar.add.annotation-query.label', 'Annotation query')}
+        onClick={handleAddAnnotationQuery}
+      />
+      <Menu.Item icon="link" label={t('dashboard.sidebar.add.link.label', 'Link')} onClick={handleAddLink} />
     </Menu>
   );
 
@@ -58,8 +80,9 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
             variant="secondary"
             fill="outline"
             size="md"
-            tooltip={t('dashboard-scene.variable-controls.add-variable', 'Add variable')}
-            aria-label={t('dashboard-scene.variable-controls.add-variable', 'Add variable')}
+            data-testid={selectors.components.ControlsAddButton.triggerButton}
+            tooltip={t('dashboard-scene.dashboard-controls.add', 'Add')}
+            aria-label={t('dashboard-scene.dashboard-controls.add', 'Add')}
           />
         </Dropdown>
       </div>
