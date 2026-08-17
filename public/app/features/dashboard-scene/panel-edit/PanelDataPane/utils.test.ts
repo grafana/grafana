@@ -1,10 +1,12 @@
+import { renderHook, waitFor } from '@testing-library/react';
+
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
-import { hasBackendDatasource } from './utils';
+import { hasBackendDatasource, useHasBackendDatasource } from './utils';
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
@@ -161,5 +163,100 @@ describe('hasBackendDatasource', () => {
 
     const result = await hasBackendDatasource({ datasourceUid: undefined, queries: [{ refId: 'A' }] });
     expect(result).toBe(false);
+  });
+});
+
+describe('useHasBackendDatasource', () => {
+  const mockGetDataSourceInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
+
+  const backendSettings = {
+    uid: 'backend-ds',
+    type: 'prometheus',
+    name: 'Prometheus',
+    meta: { backend: true },
+  } as DataSourceInstanceSettings;
+
+  const frontendSettings = {
+    uid: 'frontend-ds',
+    type: 'grafana',
+    name: 'Grafana',
+    meta: {},
+  } as DataSourceInstanceSettings;
+
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((res) => {
+      resolve = res;
+    });
+    return { promise, resolve };
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns undefined until the datasource lookup resolves', async () => {
+    const pending = deferred<DataSourceInstanceSettings | undefined>();
+    mockGetDataSourceInstanceSettings.mockReturnValue(pending.promise);
+
+    const { result } = renderHook(() => useHasBackendDatasource({ datasourceUid: 'backend-ds' }));
+
+    expect(result.current).toBeUndefined();
+
+    pending.resolve(backendSettings);
+
+    await waitFor(() => {
+      expect(result.current).toBe(true);
+    });
+  });
+
+  it('clears a previous true while a frontend lookup is in flight', async () => {
+    mockGetDataSourceInstanceSettings.mockResolvedValueOnce(backendSettings);
+
+    const { result, rerender } = renderHook(({ datasourceUid }) => useHasBackendDatasource({ datasourceUid }), {
+      initialProps: { datasourceUid: 'backend-ds' },
+    });
+
+    await waitFor(() => {
+      expect(result.current).toBe(true);
+    });
+
+    const pending = deferred<DataSourceInstanceSettings | undefined>();
+    mockGetDataSourceInstanceSettings.mockReturnValue(pending.promise);
+
+    rerender({ datasourceUid: 'frontend-ds' });
+
+    expect(result.current).toBeUndefined();
+
+    pending.resolve(frontendSettings);
+
+    await waitFor(() => {
+      expect(result.current).toBe(false);
+    });
+  });
+
+  it('does not apply a stale backend result after switching to a frontend datasource', async () => {
+    const first = deferred<DataSourceInstanceSettings | undefined>();
+    const second = deferred<DataSourceInstanceSettings | undefined>();
+    mockGetDataSourceInstanceSettings.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+
+    const { result, rerender } = renderHook(({ datasourceUid }) => useHasBackendDatasource({ datasourceUid }), {
+      initialProps: { datasourceUid: 'backend-ds' },
+    });
+
+    expect(result.current).toBeUndefined();
+
+    rerender({ datasourceUid: 'frontend-ds' });
+    expect(result.current).toBeUndefined();
+
+    first.resolve(backendSettings);
+    await Promise.resolve();
+    expect(result.current).toBeUndefined();
+
+    second.resolve(frontendSettings);
+
+    await waitFor(() => {
+      expect(result.current).toBe(false);
+    });
   });
 });

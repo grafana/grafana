@@ -401,13 +401,18 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
 
   // Determine which expressions should be disabled (for frontend-only datasources)
   const disabledExpressions = useMemo(() => {
-    if (!hasBackendDs) {
-      return {
-        [ExpressionQueryType.sql]:
-          'SQL expressions can only evaluate results from backend datasources. This panel only contains frontend datasources.',
-      };
+    if (hasBackendDs === true) {
+      return {};
     }
-    return {};
+
+    // Pending (`undefined`) must not keep SQL enabled after a backend → frontend switch,
+    // and must not claim the panel is frontend-only before the lookup resolves.
+    return {
+      [ExpressionQueryType.sql]:
+        hasBackendDs === false
+          ? 'SQL expressions can only evaluate results from backend datasources. This panel only contains frontend datasources.'
+          : 'SQL expressions can only evaluate results from backend datasources.',
+    };
   }, [hasBackendDs]);
 
   if (!datasource || !dsSettings || !data) {

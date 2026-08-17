@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataSourceInstanceSettings, standardTransformersRegistry } from '@grafana/data';
@@ -96,7 +96,7 @@ describe('EmptyTransformationsMessage', () => {
       expect(screen.getByText('Filter data by values')).toBeInTheDocument();
     });
 
-    it('should not show SQL expression card when sqlExpressions toggle is disabled', () => {
+    it('should not show SQL expression card when sqlExpressions toggle is disabled', async () => {
       config.featureToggles.sqlExpressions = false;
 
       render(
@@ -107,6 +107,10 @@ describe('EmptyTransformationsMessage', () => {
           data={[]}
         />
       );
+
+      await act(async () => {
+        await Promise.resolve();
+      });
 
       expect(screen.queryByText('Transform with SQL')).not.toBeInTheDocument();
       // But should still show transformation cards
@@ -135,16 +139,24 @@ describe('EmptyTransformationsMessage', () => {
       expect(onGoToQueries).toHaveBeenCalledTimes(1);
     });
 
-    it('should not show SQL transformation card when onGoToQueries is not provided', () => {
+    it('should not show SQL transformation card when onGoToQueries is not provided', async () => {
       render(
         <EmptyTransformationsMessage onShowPicker={onShowPicker} onAddTransformation={onAddTransformation} data={[]} />
       );
 
+      await act(async () => {
+        await Promise.resolve();
+      });
+
       expect(screen.queryByText('Transform with SQL')).not.toBeInTheDocument();
     });
 
-    it('should not show transformation cards grid when neither onGoToQueries nor onAddTransformation are provided', () => {
+    it('should not show transformation cards grid when neither onGoToQueries nor onAddTransformation are provided', async () => {
       render(<EmptyTransformationsMessage onShowPicker={onShowPicker} data={[]} />);
+
+      await act(async () => {
+        await Promise.resolve();
+      });
 
       expect(screen.queryByText('Transform with SQL')).not.toBeInTheDocument();
 

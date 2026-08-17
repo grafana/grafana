@@ -49,22 +49,28 @@ export async function hasBackendDatasource({
   return results.some(Boolean);
 }
 
+/**
+ * `undefined` means the lookup has not resolved for the current datasource/queries yet.
+ * Callers must not treat that as frontend-only — the previous result is also discarded
+ * as soon as the inputs change, so a stale `true` cannot linger mid-switch.
+ */
 export function useHasBackendDatasource({
   datasourceUid,
   queries,
 }: {
   datasourceUid: string | undefined;
   queries?: DataQuery[];
-}): boolean {
-  const [result, setResult] = useState(false);
+}): boolean | undefined {
   const queryKey = useMemo(() => JSON.stringify(queries?.map((query) => query.datasource?.uid) ?? []), [queries]);
+  const lookupKey = `${datasourceUid ?? ''}:${queryKey}`;
+  const [resolved, setResolved] = useState<{ key: string; value: boolean }>();
 
   useEffect(() => {
     let cancelled = false;
 
     hasBackendDatasource({ datasourceUid, queries }).then((value) => {
       if (!cancelled) {
-        setResult(value);
+        setResolved({ key: lookupKey, value });
       }
     });
 
@@ -73,7 +79,7 @@ export function useHasBackendDatasource({
     };
     // queryKey covers query datasource identity; queries is read inside the callback
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasourceUid, queryKey]);
+  }, [datasourceUid, queryKey, lookupKey]);
 
-  return result;
+  return resolved?.key === lookupKey ? resolved.value : undefined;
 }
