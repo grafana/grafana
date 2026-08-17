@@ -1009,4 +1009,8 @@ const (
 	// FlagDatasourcesQueryGateway
 	// Data source query gateway
 	FlagDatasourcesQueryGateway = "datasources.queryGateway"
+
+	// FlagAlertingFolderHasRulesLabel
+	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
+	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
 )
