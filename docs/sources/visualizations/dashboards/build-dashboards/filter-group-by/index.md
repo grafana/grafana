@@ -127,9 +127,7 @@ In the override:
 - Select a field name.
 - Enable the **Filterable** switch.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.1.png" max-width="400px" alt="Field override making all fields filterable" >}}
-
-<!-- update screenshot -->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.2.png" max-width="400px" alt="Field override making some fields filterable" >}}
 
 You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
 
