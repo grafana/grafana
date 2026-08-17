@@ -5659,6 +5659,7 @@
       "add-conditional-rule": "Añadir regla {{ruleDescription}}",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Duplicar panel",
       "edit-query-result-rule": "Cambiar regla de resultado de consulta",
       "edit-template-variable-rule": "Cambiar regla de variable de plantilla",
@@ -6863,7 +6864,8 @@
         "change-annotation-enabled-state": "Cambiar estado de habilitación de la anotación",
         "change-annotation-name": "Cambiar nombre de anotación",
         "change-annotation-panel-filter": "Cambiar filtro del panel de anotaciones"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Eliminar consulta de anotación",
@@ -6939,13 +6941,9 @@
       "placeholder-your-metric-prefix": "Tu prefijo métrico"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Eliminar",
-      "aria-label-edit": "Editar",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Las reglas de mostrar/ocultar no funcionarán",
@@ -7745,6 +7743,10 @@
     },
     "variable-controls": {
       "add-variable": "Añadir variable"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Eliminar variable",
@@ -12654,6 +12656,7 @@
       "customise-saving": "",
       "dialog-label": "Navegación",
       "dock": "Anclar el menú",
+      "header-title": "",
       "list-label": "Navegación",
       "open": "Menú principal",
       "pin-error": "",
@@ -12764,6 +12767,13 @@
       "title-zoom-out": "Alejar"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12792,6 +12802,11 @@
       "count_other": "",
       "count-truncated_one": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
     }
   },
   "notifications": {
@@ -16059,6 +16074,7 @@
     "name-show-mini-map": "Mostrar minimapa"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16087,6 +16103,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

@@ -5659,6 +5659,7 @@
       "add-conditional-rule": "{{ruleDescription}} szabály hozzáadása",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Panel duplikálása",
       "edit-query-result-rule": "Lekérdezési eredmény szabályának módosítása",
       "edit-template-variable-rule": "Sablonváltozó szabályának módosítása",
@@ -6863,7 +6864,8 @@
         "change-annotation-enabled-state": "Jegyzetengedélyezési állapot módosítása",
         "change-annotation-name": "Jegyzet nevének módosítása",
         "change-annotation-panel-filter": "Jegyzetpanel szűrőjének módosítása"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Jegyzetlekérdezés törlése",
@@ -6939,13 +6941,9 @@
       "placeholder-your-metric-prefix": "Az Ön metrikaelőtagja"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Törlés",
-      "aria-label-edit": "Szerkesztés",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "A szabályok megjelenítése/elrejtése nem fog működni",
@@ -7745,6 +7743,10 @@
     },
     "variable-controls": {
       "add-variable": "Változó hozzáadása"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Változó törlése",
@@ -12654,6 +12656,7 @@
       "customise-saving": "",
       "dialog-label": "Navigáció",
       "dock": "Menü dokkolása",
+      "header-title": "",
       "list-label": "Navigáció",
       "open": "Főmenü",
       "pin-error": "",
@@ -12764,6 +12767,13 @@
       "title-zoom-out": "Kicsinyítés"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12792,6 +12802,11 @@
       "count_other": "",
       "count-truncated_one": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
     }
   },
   "notifications": {
@@ -16059,6 +16074,7 @@
     "name-show-mini-map": "Minitérkép megjelenítése"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16087,6 +16103,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

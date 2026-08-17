@@ -61,6 +61,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     }
   }, [filterable, displayName, filter, setFilter]);
 
+  if (hideHeader) {
+    return null;
+  }
+
   /* eslint-disable jsx-a11y/no-static-element-interactions */
   return (
     <Stack

@@ -95,7 +95,7 @@ The default link type is **Dashboards**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Back** and **Exit edit**.
 
 {{< /docs/list >}}
 
@@ -138,7 +138,7 @@ To add a URL link to your dashboard, follow these steps:
 
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
 {{< /docs/list >}}
 
@@ -157,7 +157,7 @@ To edit, duplicate, or delete dashboard link, follow these steps:
 
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
 ## Panel links
 
@@ -186,7 +186,7 @@ Click the icon next to the panel title to see available panel links.
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
 ### Update a panel link
 
@@ -202,7 +202,7 @@ Click the icon next to the panel title to see available panel links.
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
 ### Delete a panel link
 
@@ -216,4 +216,4 @@ Click the icon next to the panel title to see available panel links.
 1. Click the **X** icon next to the link you want to delete.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
