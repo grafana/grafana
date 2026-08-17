@@ -48,6 +48,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const styles = useStyles2(getStyles, headerCellWrap, sortable);
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
+  const hideHeader = field.config.custom?.hideHeader ?? false;
 
   // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
@@ -59,6 +60,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       });
     }
   }, [filterable, displayName, filter, setFilter]);
+
+  if (hideHeader) {
+    return null;
+  }
 
   /* eslint-disable jsx-a11y/no-static-element-interactions */
   return (
