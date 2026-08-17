@@ -47,10 +47,7 @@ test.describe(
 
       const panelBoxAfterResize = await getPanelBox(panels, 'New panel');
 
-      const uniqueTitle = `${test.info().title} [${Date.now().toString(36)}-${test.info().workerIndex}]`;
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls, uniqueTitle);
-
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls, { title: test.info().title });
 
       // Poll while panels re-render after reload (±1px for edit/view chrome / scrollbar shifts)
       await expect(async () => {
@@ -109,8 +106,8 @@ async function prepareTestDashboard(
   const dashboardPage = await gotoDashboardPage({});
   await undockMegaMenu(dashboardPage, selectors);
 
-  await sidebar.addOptions.clickNewPanelButton();
-  await sidebar.clickCloseButton();
+  await sidebar.addOptions.addPanel();
+  await sidebar.closePane();
 }
 
 /**

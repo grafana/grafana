@@ -120,6 +120,11 @@ type BleveOptions struct {
 	// DiskCleanupGracePeriod. Only consulted when DiskCleanupInterval > 0.
 	DiskCleanupUnopenedGracePeriod time.Duration
 
+	// IndexDeletedDocuments decides whether indexes this instance creates keep
+	// deleted documents. Read once at creation and recorded there, so a later change
+	// cannot leave trash missing what was deleted while it was off.
+	IndexDeletedDocuments bool
+
 	// PostRankAuthzEnabled enables the post-filter (post-rank) authorization
 	// path. Set from the search_post_rank_authz config option at backend init.
 	// When false, the in-searcher permissionScopedQuery path is used.
@@ -688,7 +693,7 @@ func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath stri
 // newBleveIndex creates a new bleve index with consistent configuration.
 // If path is empty, creates an in-memory index.
 // If path is not empty, creates a file-based index at the specified path.
-func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string, selectableFields []string, searchFieldsHash string) (bleve.Index, error) {
+func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string, selectableFields []string, searchFieldsHash string, keepsDeletedDocuments bool) (bleve.Index, error) {
 	kvstore := bleve.Config.DefaultKVStore
 	if path == "" {
 		// use in-memory kvstore
@@ -700,12 +705,14 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 	}
 
 	bi := buildInfo{
-		BuildTime:          buildTime.Unix(),
-		BuildVersion:       buildVersion,
-		SelectableFields:   selectableFields,
-		SearchFieldsHash:   searchFieldsHash,
-		Features:           resource.CurrentIndexFeatures(),
-		ReaderRequirements: resource.IndexReaderRequirements(),
+		BuildTime:        buildTime.Unix(),
+		BuildVersion:     buildVersion,
+		SelectableFields: selectableFields,
+		SearchFieldsHash: searchFieldsHash,
+		// Decided once so the index behaves the same for its whole life, whatever the
+		// setting does later.
+		Features:           resource.IndexFeaturesForNewIndex(keepsDeletedDocuments),
+		ReaderRequirements: resource.IndexReaderRequirements(keepsDeletedDocuments),
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -1177,7 +1184,7 @@ func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.I
 			return preparedBuildIndex{}, err
 		}
 
-		idx, err := newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields, searchFieldsHash)
+		idx, err := newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields, searchFieldsHash, b.opts.IndexDeletedDocuments)
 		if errors.Is(err, bleve.ErrorIndexPathExists) {
 			b.unregisterInFlightBuildDir(indexDir)
 			continue
@@ -1199,7 +1206,7 @@ func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.I
 }
 
 func (b *bleveBackend) createEmptyMemoryIndex(mapper mapping.IndexMapping, selectableFields []string, searchFieldsHash string, logger log.Logger) (preparedBuildIndex, error) {
-	idx, err := newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion, selectableFields, searchFieldsHash)
+	idx, err := newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion, selectableFields, searchFieldsHash, b.opts.IndexDeletedDocuments)
 	if err != nil {
 		return preparedBuildIndex{}, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 	}
@@ -1698,6 +1705,10 @@ type bleveIndex struct {
 	index bleve.Index
 	// Index features this index was built with, from its build info.
 	features []resource.IndexFeature
+	// Both are needed to tell "trash is off" from "trash is on but this index has
+	// not been rebuilt yet".
+	keepsDeletedDocuments bool
+	wantsDeletedDocuments bool
 
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion atomic.Int64
@@ -1770,20 +1781,22 @@ func (b *bleveBackend) newBleveIndex(
 	}
 
 	bi := &bleveIndex{
-		key:                  key,
-		index:                index,
-		features:             features,
-		indexStorage:         newIndexType,
-		fields:               fields,
-		allFields:            allFields,
-		standard:             standardSearchFields,
-		logger:               logger,
-		updaterFn:            updaterFn,
-		minUpdateInterval:    b.opts.IndexMinUpdateInterval,
-		indexMetrics:         b.indexMetrics,
-		postRankAuthzEnabled: b.opts.PostRankAuthzEnabled,
-		postRankAuthz:        b.opts.PostRankAuthz.effective(),
-		trashRetention:       b.opts.TrashRetention,
+		key:                   key,
+		index:                 index,
+		features:              features,
+		keepsDeletedDocuments: slices.Contains(features, resource.IndexFeatureHoldsDeletedDocuments),
+		wantsDeletedDocuments: b.opts.IndexDeletedDocuments,
+		indexStorage:          newIndexType,
+		fields:                fields,
+		allFields:             allFields,
+		standard:              standardSearchFields,
+		logger:                logger,
+		updaterFn:             updaterFn,
+		minUpdateInterval:     b.opts.IndexMinUpdateInterval,
+		indexMetrics:          b.indexMetrics,
+		postRankAuthzEnabled:  b.opts.PostRankAuthzEnabled,
+		postRankAuthz:         b.opts.PostRankAuthz.effective(),
+		trashRetention:        b.opts.TrashRetention,
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -2490,6 +2503,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	textQuery := b.buildTextQuery(searchrequest, req)
 	expirationThreshold := int64(0)
 	if req.IsDeleted {
+		// An index built before deleted documents were being kept holds none, so trash
+		// would read as empty when it is really unavailable until the index rebuilds.
+		if !b.keepsDeletedDocuments && b.wantsDeletedDocuments {
+			return nil, resource.NewServiceUnavailableError("trash is not available for this resource until its search index has been rebuilt")
+		}
 		if t, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, time.Now()); ok {
 			expirationThreshold = t
 		}
