@@ -95,7 +95,6 @@ func (r *VersionPolicyRegistry) HasMaxAllowed(group string) bool {
 
 // Validate checks the static boot configuration (defaults, ini) and fails fast on a misconfiguration.
 // The live runtime layer is deliberately not checked here (Resolve drops a bad value with a warn).
-// resourceChecker may be nil, in which case every registered preferredVersion is assumed enabled.
 func (r *VersionPolicyRegistry) Validate(resourceChecker ResourceEnabledChecker) error {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -129,12 +128,12 @@ func (r *VersionPolicyRegistry) Validate(resourceChecker ResourceEnabledChecker)
 		if p.MaxAllowedVersion == "" {
 			continue
 		}
-		if resourceChecker != nil && !resourceChecker.ResourceEnabled(schema.GroupVersion{Group: group, Version: p.MaxAllowedVersion}.WithResource("")) {
+		if !resourceChecker.ResourceEnabled(schema.GroupVersion{Group: group, Version: p.MaxAllowedVersion}.WithResource("")) {
 			logger.Warn("maxAllowedVersion is registered but disabled; the cap version itself is unreachable via the API",
 				"group", group, "version", p.MaxAllowedVersion)
 		}
 		advertised := p.PreferredVersion
-		if advertised != "" && resourceChecker != nil && !resourceChecker.ResourceEnabled(schema.GroupVersion{Group: group, Version: advertised}.WithResource("")) {
+		if advertised != "" && !resourceChecker.ResourceEnabled(schema.GroupVersion{Group: group, Version: advertised}.WithResource("")) {
 			logger.Warn("ApplyPreferredForGroup skips the preferred resource version because it is disabled",
 				"group", group, "version", advertised)
 			advertised = ""

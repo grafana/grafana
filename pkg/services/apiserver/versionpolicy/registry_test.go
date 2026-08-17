@@ -16,6 +16,8 @@ func (f fakeResourceEnabled) ResourceEnabled(gvr schema.GroupVersionResource) bo
 	return !f.disabled[gvr]
 }
 
+var allEnabled = fakeResourceEnabled{}
+
 var fooOrder = map[string][]string{"foo.grafana.app": {"v2", "v1", "v1beta1"}}
 
 func newTestRegistry(order map[string][]string, base ...map[string]VersionPolicy) *VersionPolicyRegistry {
@@ -136,7 +138,7 @@ func TestVersionPolicyRegistryValidate(t *testing.T) {
 	t.Run("preferred outranking max is rejected", func(t *testing.T) {
 		r := newTestRegistry(fooOrder, nil,
 			map[string]VersionPolicy{"foo.grafana.app": {PreferredVersion: "v2", MaxAllowedVersion: "v1"}})
-		err := r.Validate(nil)
+		err := r.Validate(allEnabled)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "foo.grafana.app")
 	})
@@ -144,7 +146,7 @@ func TestVersionPolicyRegistryValidate(t *testing.T) {
 	t.Run("preferred at or below max is allowed", func(t *testing.T) {
 		r := newTestRegistry(fooOrder, nil,
 			map[string]VersionPolicy{"foo.grafana.app": {PreferredVersion: "v1beta1", MaxAllowedVersion: "v1"}})
-		assert.NoError(t, r.Validate(nil))
+		assert.NoError(t, r.Validate(allEnabled))
 	})
 
 	// fooOrder's natural (highest-priority) version is v2, so it is what discovery advertises when no
@@ -152,7 +154,7 @@ func TestVersionPolicyRegistryValidate(t *testing.T) {
 	t.Run("cap below the natural preferred with no preferredVersion set is rejected", func(t *testing.T) {
 		r := newTestRegistry(fooOrder, nil,
 			map[string]VersionPolicy{"foo.grafana.app": {MaxAllowedVersion: "v1"}})
-		err := r.Validate(nil)
+		err := r.Validate(allEnabled)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "discovery advertises")
 	})
@@ -160,19 +162,19 @@ func TestVersionPolicyRegistryValidate(t *testing.T) {
 	t.Run("cap at or above the natural preferred with no preferredVersion set is allowed", func(t *testing.T) {
 		r := newTestRegistry(fooOrder, nil,
 			map[string]VersionPolicy{"foo.grafana.app": {MaxAllowedVersion: "v2"}})
-		assert.NoError(t, r.Validate(nil))
+		assert.NoError(t, r.Validate(allEnabled))
 	})
 
 	t.Run("cap below the natural preferred is allowed once preferredVersion is set to the cap", func(t *testing.T) {
 		r := newTestRegistry(fooOrder, nil,
 			map[string]VersionPolicy{"foo.grafana.app": {PreferredVersion: "v1", MaxAllowedVersion: "v1"}})
-		assert.NoError(t, r.Validate(nil))
+		assert.NoError(t, r.Validate(allEnabled))
 	})
 
 	t.Run("an unregistered version in a known group is a hard error, not a silent drop", func(t *testing.T) {
 		r := newTestRegistry(fooOrder, nil,
 			map[string]VersionPolicy{"foo.grafana.app": {MaxAllowedVersion: "vtypo"}})
-		err := r.Validate(nil)
+		err := r.Validate(allEnabled)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "vtypo")
 	})
@@ -180,7 +182,7 @@ func TestVersionPolicyRegistryValidate(t *testing.T) {
 	t.Run("a policy for a group not registered on this instance is skipped, not a boot failure", func(t *testing.T) {
 		r := newTestRegistry(fooOrder, nil,
 			map[string]VersionPolicy{"not-on-this-instance.grafana.app": {PreferredVersion: "v1", MaxAllowedVersion: "v1"}})
-		assert.NoError(t, r.Validate(nil))
+		assert.NoError(t, r.Validate(allEnabled))
 	})
 
 	t.Run("preferred set to the cap but disabled falls back to natural, which outranks the cap", func(t *testing.T) {
@@ -197,8 +199,7 @@ func TestVersionPolicyRegistryValidate(t *testing.T) {
 	t.Run("preferred set to the cap and enabled is allowed", func(t *testing.T) {
 		r := newTestRegistry(fooOrder, nil,
 			map[string]VersionPolicy{"foo.grafana.app": {PreferredVersion: "v1", MaxAllowedVersion: "v1"}})
-		enabled := fakeResourceEnabled{disabled: map[schema.GroupVersionResource]bool{}}
-		assert.NoError(t, r.Validate(enabled))
+		assert.NoError(t, r.Validate(allEnabled))
 	})
 
 	t.Run("maxAllowedVersion registered but disabled only warns, does not fail validation", func(t *testing.T) {
