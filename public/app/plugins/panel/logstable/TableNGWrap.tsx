@@ -131,7 +131,6 @@ export function TableNGWrap({
         getActions={getActions}
         structureRev={data.structureRev}
         transparent={transparent}
-        assumeCachedDisplayNames
       />
     </div>
   );

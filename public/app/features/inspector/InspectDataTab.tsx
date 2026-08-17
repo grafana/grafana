@@ -306,13 +306,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 // so it needs an explicitly-sized wrapper here (unlike the legacy Table).
                 return (
                   <div style={{ width, height }}>
-                    <TableNG
-                      width={width}
-                      height={height}
-                      data={dataFrame}
-                      showTypeIcons={true}
-                      assumeCachedDisplayNames
-                    />
+                    <TableNG width={width} height={height} data={dataFrame} showTypeIcons={true} />
                   </div>
                 );
               }

@@ -81,7 +81,6 @@ export function TablePanel(props: Props) {
       getActions={getActions}
       structureRev={data.structureRev}
       transparent={transparent}
-      assumeCachedDisplayNames
     />
   );
 

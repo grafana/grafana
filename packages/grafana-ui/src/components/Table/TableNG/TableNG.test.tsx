@@ -5,7 +5,6 @@ import { fromLonLat } from 'ol/proj';
 
 import {
   applyFieldOverrides,
-  cacheFieldDisplayNames,
   createTheme,
   type DataFrame,
   type DataLink,
@@ -91,6 +90,24 @@ const createDisplayNameDataFrame = (displayName: string, values = ['A1', 'A2']):
           ...stdField,
         },
       ],
+    })
+  );
+
+// N fields, each with its own configured displayName ('Pretty Name 0', 'Pretty Name 1', ...) and no
+// pre-cached state.displayName — used to test the sniff-based detection of already-cached frames.
+const createMultiFieldDisplayNameDataFrame = (fieldCount: number, values = ['A1', 'A2']): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'MultiFieldDisplayNameData',
+      length: values.length,
+      fields: Array.from({ length: fieldCount }, (_, i) => ({
+        name: `raw_name_${i}`,
+        type: FieldType.string,
+        values,
+        config: { ...stdCellConfig, displayName: `Pretty Name ${i}` },
+        display: displayString,
+        ...stdField,
+      })),
     })
   );
 
@@ -862,7 +879,7 @@ describe('TableNG', () => {
     });
   });
 
-  describe('assumeCachedDisplayNames', () => {
+  describe('display name caching', () => {
     // Table reads only `field.state.displayName` (falling back to the raw field name) — it never
     // computes a display name itself. `applyFieldOverrides` explicitly nulls out any prior
     // `state.displayName`, so we assert on that field directly: the mutation `cacheFieldDisplayNames`
@@ -878,23 +895,47 @@ describe('TableNG', () => {
       expect(frame.fields[0].state?.displayName).toBe('Pretty Name');
     });
 
-    it('skips caching when assumeCachedDisplayNames is set', () => {
-      const frame = createDisplayNameDataFrame('Pretty Name');
-      expect(frame.fields[0].state?.displayName).toBeFalsy();
+    it('skips its own caching pass when every sniffed field already has a cached displayName', () => {
+      const frame = createMultiFieldDisplayNameDataFrame(3);
+      // Set a sentinel distinct from the configured displayName ('Pretty Name N') on every field —
+      // if TableNG's caching pass ran anyway, it would overwrite these with the configured names.
+      frame.fields.forEach((field, i) => {
+        field.state = { ...field.state, displayName: `Already Cached ${i}` };
+      });
 
-      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} assumeCachedDisplayNames />);
+      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
 
-      expect(frame.fields[0].state?.displayName).toBeFalsy();
+      frame.fields.forEach((field, i) => {
+        expect(field.state?.displayName).toBe(`Already Cached ${i}`);
+      });
     });
 
-    it('leaves a displayName the consumer pre-cached untouched when assumeCachedDisplayNames is set', () => {
-      const frame = createDisplayNameDataFrame('Pretty Name');
-      cacheFieldDisplayNames([frame]);
-      expect(frame.fields[0].state?.displayName).toBe('Pretty Name');
+    it('runs its caching pass when the first uncached field is found before the 10-field sniff limit', () => {
+      const frame = createMultiFieldDisplayNameDataFrame(3);
+      // Only the first field looks pre-cached — the sniff should bail on the second, uncached field
+      // and fall back to caching the whole frame, so even the "cached" first field gets recomputed.
+      frame.fields[0].state = { ...frame.fields[0].state, displayName: 'Already Cached' };
 
-      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} assumeCachedDisplayNames />);
+      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
 
-      expect(frame.fields[0].state?.displayName).toBe('Pretty Name');
+      expect(frame.fields[0].state?.displayName).toBe('Pretty Name 0');
+      expect(frame.fields[1].state?.displayName).toBe('Pretty Name 1');
+      expect(frame.fields[2].state?.displayName).toBe('Pretty Name 2');
+    });
+
+    it('only sniffs the first 10 fields, so an uncached 11th field does not trigger a recache', () => {
+      const frame = createMultiFieldDisplayNameDataFrame(11);
+      // Sentinel-cache the first 10 fields; leave the 11th field alone, outside the sniff window.
+      frame.fields.slice(0, 10).forEach((field, i) => {
+        field.state = { ...field.state, displayName: `Already Cached ${i}` };
+      });
+
+      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      frame.fields.slice(0, 10).forEach((field, i) => {
+        expect(field.state?.displayName).toBe(`Already Cached ${i}`);
+      });
+      expect(frame.fields[10].state?.displayName).toBeFalsy();
     });
 
     it('recaches display names when a new data frame instance is passed in', () => {
