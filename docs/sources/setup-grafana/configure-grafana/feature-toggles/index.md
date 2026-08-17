@@ -91,7 +91,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `timeComparison`                  | Enables time comparison option in supported panels                                               |
 | `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                    |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                               |
-| `alertRuleRestore`                | Enables the alert rule restore feature                                                           |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                  |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                                 |
 | `interactiveLearning`             | Enables the interactive learning app                                                             |

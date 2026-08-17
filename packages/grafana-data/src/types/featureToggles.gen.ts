@@ -816,11 +816,6 @@ export interface FeatureToggles {
   */
   newShareReportDrawer?: boolean;
   /**
-  * Enables the alert rule restore feature
-  * @default true
-  */
-  alertRuleRestore?: boolean;
-  /**
   * Enables running Infinity queries in parallel
   * @default false
   */

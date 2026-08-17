@@ -19,7 +19,7 @@ export const shouldUseAlertingListViewV2 = () => {
 };
 
 export const shouldAllowRecoveringDeletedRules = () =>
-  (isAdmin() && config.featureToggles.alertingRuleRecoverDeleted && config.featureToggles.alertRuleRestore) ?? false;
+  (isAdmin() && config.featureToggles.alertingRuleRecoverDeleted) ?? false;
 
 export const shouldAllowPermanentlyDeletingRules = () =>
   (shouldAllowRecoveringDeletedRules() && config.featureToggles.alertingRulePermanentlyDelete) ?? false;

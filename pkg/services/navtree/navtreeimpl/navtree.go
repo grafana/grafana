@@ -555,7 +555,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
+	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
 		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules)
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {

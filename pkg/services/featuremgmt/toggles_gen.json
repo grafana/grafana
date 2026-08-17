@@ -110,7 +110,8 @@
       "metadata": {
         "name": "alertRuleRestore",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-03-05T14:15:26Z"
+        "creationTimestamp": "2025-03-05T14:15:26Z",
+        "deletionTimestamp": "2026-08-13T20:10:44Z"
       },
       "spec": {
         "description": "Enables the alert rule restore feature",
