@@ -501,6 +501,7 @@ export type {
   OAuthSettings,
   AuthSettings,
   GrafanaConfig,
+  GrafanaJavascriptAgentConfig,
   BuildInfo,
   LicenseInfo,
   PreinstalledPlugin,
