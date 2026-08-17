@@ -18,18 +18,33 @@ import (
 func TestProxyUserAgent(t *testing.T) {
 	tests := []struct {
 		name              string
+		incomingUserAgent string
 		namespace         string
 		expectedUserAgent string
 	}{
 		{
-			name:              "sets namespace-scoped user agent",
+			name:              "appends namespace to caller's user agent",
+			incomingUserAgent: "grafana-mt-service",
 			namespace:         "stacks-1234",
-			expectedUserAgent: "features-grafana-app/stacks-1234",
+			expectedUserAgent: "grafana-mt-service ns/stacks-1234",
 		},
 		{
-			name:              "falls back to service name when namespace is empty",
+			name:              "does not duplicate namespace already present in caller's user agent",
+			incomingUserAgent: "grafana ns/stacks-1234",
+			namespace:         "stacks-1234",
+			expectedUserAgent: "grafana ns/stacks-1234",
+		},
+		{
+			name:              "forwards caller's user agent unchanged when namespace is empty",
+			incomingUserAgent: "grafana-mt-service",
 			namespace:         "",
-			expectedUserAgent: "features-grafana-app",
+			expectedUserAgent: "grafana-mt-service",
+		},
+		{
+			name:              "falls back to placeholder when caller sent no user agent",
+			incomingUserAgent: "",
+			namespace:         "stacks-1234",
+			expectedUserAgent: "unknown ns/stacks-1234",
 		},
 	}
 
@@ -51,6 +66,9 @@ func TestProxyUserAgent(t *testing.T) {
 				b := newTestBuilder(t, upstream.URL)
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest(http.MethodPost, "/ofrep/v1/evaluate/flags/myflag", strings.NewReader(`{}`))
+				if tc.incomingUserAgent != "" {
+					r.Header.Set("User-Agent", tc.incomingUserAgent)
+				}
 				b.proxyFlagReq(r.Context(), "myflag", true, tc.namespace, w, r)
 				assert.Equal(t, tc.expectedUserAgent, *receivedUA)
 			})
@@ -64,6 +82,9 @@ func TestProxyUserAgent(t *testing.T) {
 				b := newTestBuilder(t, upstream.URL)
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest(http.MethodPost, "/ofrep/v1/evaluate/flags", strings.NewReader(`{}`))
+				if tc.incomingUserAgent != "" {
+					r.Header.Set("User-Agent", tc.incomingUserAgent)
+				}
 				b.proxyAllFlagReq(r.Context(), true, tc.namespace, w, r)
 				assert.Equal(t, tc.expectedUserAgent, *receivedUA)
 			})

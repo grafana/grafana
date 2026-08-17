@@ -30,6 +30,28 @@ type HTTPClientOptions struct {
 	Middlewares []sdkhttpclient.Middleware
 	// CacheTTL enables response caching with the given TTL. Zero disables caching.
 	CacheTTL time.Duration
+	// UserAgent overrides the default User-Agent header, so downstream
+	// consumers can attribute requests to the calling service instead of
+	// seeing the Go stdlib default.
+	UserAgent string
+}
+
+type userAgentMiddlewareImpl struct {
+	userAgent string
+	next      http.RoundTripper
+}
+
+var _ http.RoundTripper = &userAgentMiddlewareImpl{}
+
+func (m *userAgentMiddlewareImpl) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("User-Agent", m.userAgent)
+	return m.next.RoundTrip(req)
+}
+
+func newUserAgentMiddleware(userAgent string) sdkhttpclient.Middleware {
+	return sdkhttpclient.MiddlewareFunc(func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
+		return &userAgentMiddlewareImpl{userAgent: userAgent, next: next}
+	})
 }
 
 // TokenExchangeConfig holds all authentication configuration for token exchange.
@@ -50,6 +72,9 @@ func CreateHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 	}
 
 	middlewares := opts.Middlewares
+	if opts.UserAgent != "" {
+		middlewares = append([]sdkhttpclient.Middleware{newUserAgentMiddleware(opts.UserAgent)}, middlewares...)
+	}
 	if opts.CacheTTL > 0 {
 		middlewares = append([]sdkhttpclient.Middleware{newCacheMiddleware(opts.CacheTTL)}, middlewares...)
 	}
