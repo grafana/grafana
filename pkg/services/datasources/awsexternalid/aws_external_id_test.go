@@ -12,8 +12,8 @@ func TestBuildGrafanaExternalID(t *testing.T) {
 	assert.True(t, isValidGrafanaExternalID(id, "stack123", "P7DC3E4760"))
 	assert.False(t, isValidGrafanaExternalID(id, "otherstack", "P7DC3E4760"))
 	assert.False(t, isValidGrafanaExternalID(id, "stack123", "OTHERUID"))
-	assert.False(t, isValidGrafanaExternalID("stack123-P7DC3E4760", "stack123", "P7DC3E4760"))             // no nonce
-	assert.False(t, isValidGrafanaExternalID("stack123-P7DC3E4760-abcd", "stack123", "P7DC3E4760"))        // short
+	assert.False(t, isValidGrafanaExternalID("stack123-P7DC3E4760", "stack123", "P7DC3E4760"))                  // no nonce
+	assert.False(t, isValidGrafanaExternalID("stack123-P7DC3E4760-abcd", "stack123", "P7DC3E4760"))             // short
 	assert.False(t, isValidGrafanaExternalID("stack123-P7DC3E4760-gggggggggggggggg", "stack123", "P7DC3E4760")) // non-hex
 
 	id2 := buildGrafanaExternalID("stack123", "P7DC3E4760")

@@ -49,9 +49,7 @@ func BeforeSave(ctx context.Context, uid string, cfg *setting.Cfg, existing, jso
 func buildGrafanaExternalID(stackExternalID, datasourceUID string) string {
 	var b [grafanaExternalIDNonceBytes]byte
 	if _, err := rand.Read(b[:]); err != nil {
-		for i := range b {
-			b[i] = byte(i + 1)
-		}
+		panic("crypto/rand failed: " + err.Error())
 	}
 	return stackExternalID + "-" + datasourceUID + "-" + hex.EncodeToString(b[:])
 }

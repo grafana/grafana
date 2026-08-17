@@ -140,7 +140,7 @@ When you use a per-data source external ID with Grafana Assume Role:
 
 - **Generation:** Grafana generates the external ID when you save the data source.
 - **Copy to IAM:** Copy the value from the data source **Settings** tab after save into your IAM role trust policy.
-- **Reload if needed:** If the field still says "Save to generate…" after a successful save, reload the data source settings.
+- **Reload if needed:** If the field still says "Save the data source to generate an external ID" after a successful save, reload the data source settings.
 - **Provisioning and GitOps:** Omit `grafanaExternalId` in YAML or Terraform. After apply, read the minted ID from the UI or API and put it in your IAM trust policy. Delete and recreate (even with the same UID) issues a new ID; update IAM to match.
 - **Delete and recreate:** If you delete and recreate a data source, even with the same UID, Grafana generates a new external ID. Update your IAM trust policy to match.
 {{< /admonition >}}
