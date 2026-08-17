@@ -88,7 +88,10 @@ export interface PanelDataTransformationsContext {
  * alert states are ignored.
  *
  * Note that option strings are not interpolated: template variables in the returned
- * configs are passed through as-is.
+ * configs are passed through as-is. This holds because the supplier only runs on dashboard
+ * routes, where scenes owns interpolation and `transformDataFrame` skips its own pass. Running
+ * the supplier outside a scene context would interpolate them, so revisit this if its reach
+ * ever widens.
  *
  * Reaches Grafana dashboards only. `PanelRenderer` runs no transformations, so Explore,
  * alerting rule previews and visualization suggestion cards render the untransformed query
