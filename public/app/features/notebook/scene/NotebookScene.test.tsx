@@ -23,6 +23,8 @@ import {
 } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
+
 import { NotebookScene } from './NotebookScene';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -282,6 +284,45 @@ describe('NotebookScene', () => {
       );
 
       expect(context.setEnabled).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe('tags', () => {
+    it('is the single writer, and refreshes the copy the header renders', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTagsChange(['latency', 'slo']));
+
+      // Both, deliberately: the scene's copy is what the save model reads, the layout manager's is
+      // what the document header renders, and the whole point of pushing is that they cannot drift.
+      expect(scene.state.tags).toEqual(['latency', 'slo']);
+      expect(scene.state.body.state.tags).toEqual(['latency', 'slo']);
+    });
+
+    it('reaches the save model, so an export or a future save sees the edit', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTagsChange(['incident']));
+
+      expect(transformNotebookSceneToSaveModel(scene).tags).toEqual(['incident']);
+    });
+
+    // The mirror is pushed from a state subscription rather than from onTagsChange, so a whole-state
+    // swap (what APPLY_NOTEBOOK_SPEC does) reaches the header too.
+    it('survives the body being replaced wholesale', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() =>
+        scene.setState({
+          tags: ['rebuilt'],
+          body: new NotebookLayoutManager({ cells: [] }),
+        })
+      );
+
+      expect(scene.state.body.state.tags).toEqual(['rebuilt']);
     });
   });
 });

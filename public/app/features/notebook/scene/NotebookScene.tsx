@@ -104,6 +104,12 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         if (newState.body !== prevState.body || newState.isEditing !== prevState.isEditing) {
           newState.body.editModeChanged?.(Boolean(newState.isEditing));
         }
+        // `tags` is mirrored for the same reason and kept true the same way: this scene is what the
+        // save model reads, the layout manager is what the header renders. Pushing from here rather
+        // than from onTagsChange means an APPLY_NOTEBOOK_SPEC swap reaches the header too.
+        if (newState.body !== prevState.body || newState.tags !== prevState.tags) {
+          newState.body.setTags?.(newState.tags);
+        }
       });
 
       const destroyMutationClient = createMutationClient(this, 'notebook');
@@ -149,6 +155,14 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   public onExitEditMode = () => {
     this.setState({ isEditing: false });
     this.state.body.editModeChanged?.(false);
+  };
+
+  /**
+   * The scene stays the single writer for tags — it is what transformNotebookSceneToSaveModel reads.
+   * The layout manager's copy is refreshed by the subscription above, so the two cannot drift.
+   */
+  public onTagsChange = (tags: string[]) => {
+    this.setState({ tags });
   };
 
   public showModal(modal: SceneObject) {

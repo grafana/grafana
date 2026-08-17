@@ -5970,6 +5970,8 @@
       "description": "A vertical sequence of panels, text, and code cells",
       "name": "Notebook",
       "pill": "Published Notebook",
+      "tags": "Tags",
+      "tags-placeholder": "Add a tag",
       "time": "Time"
     },
     "on-create-new-row": {

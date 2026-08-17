@@ -21,6 +21,7 @@ import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/uti
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
+import { NotebookScene } from '../NotebookScene';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
@@ -94,6 +95,11 @@ export class NotebookLayoutManager
    */
   public editModeChanged(isEditing: boolean): void {
     this.setState({ isEditing });
+  }
+
+  /** Refreshes the header's copy of the tags. NotebookScene owns them and pushes on every change. */
+  public setTags(tags: string[] | undefined): void {
+    this.setState({ tags });
   }
 
   /**
@@ -200,6 +206,14 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
 
   const timeRange = sceneGraph.getTimeRange(model).useState();
 
+  // Resolved inside the callback, not during render: getAncestor throws when there is no match, and
+  // NotebookLayoutManager is rendered standalone in its own tests. Reaching for the ancestor rather
+  // than threading a prop down follows RowItem -> RowsLayoutManager.
+  const onTagsChange = useCallback(
+    (nextTags: string[]) => sceneGraph.getAncestor(model, NotebookScene).onTagsChange(nextTags),
+    [model]
+  );
+
   // Only the drop position lives in React state; the reorder itself lives on the model. onDragUpdate
   // fires when the drop index changes, not on every pointer move, so this re-renders the list a
   // handful of times per drag.
@@ -230,7 +244,14 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   return (
     <div className={styles.document}>
       <header className={styles.header}>
-        <NotebookDocumentHeader title={title} tags={tags} timeFrom={timeRange.from} timeTo={timeRange.to} />
+        <NotebookDocumentHeader
+          title={title}
+          tags={tags}
+          timeFrom={timeRange.from}
+          timeTo={timeRange.to}
+          isEditing={isEditing}
+          onTagsChange={onTagsChange}
+        />
       </header>
 
       <div className={styles.column}>
