@@ -612,6 +612,8 @@ describe('TextNGEditor handlebars preview', () => {
         series={series}
         replaceVariables={(target) => target}
         onChange={jest.fn()}
+        view="preview"
+        onViewChange={jest.fn()}
       />
     );
 
