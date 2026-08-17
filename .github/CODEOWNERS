@@ -595,7 +595,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/matchPluginId* @grafana/grafana-catalog
 /packages/grafana-data/src/utils/namedColorsPalette* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/nodeGraph.ts @grafana/observability-traces-and-profiling
-/packages/grafana-data/src/utils/numbers.ts @grafana/dataviz-squad
+/packages/grafana-data/src/utils/numbers* @grafana/dataviz-squad
 /packages/grafana-data/src/utils/object.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/OptionsUIBuilders.ts @grafana/dashboards-squad
 /packages/grafana-data/src/utils/Registry* @grafana/grafana-frontend-platform
