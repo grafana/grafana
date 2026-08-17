@@ -60,7 +60,6 @@ declare module "@openfeature/core" {
     | "logsTablePanelNG"
     | "plugins.useMTPluginSettings"
     | "splashScreen"
-    | "grafana.newPreferencesPage"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
