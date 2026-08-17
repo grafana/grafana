@@ -14,9 +14,11 @@ import {
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
+import { addElement } from '../../actions/element/addElement';
+import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -151,13 +153,13 @@ export class RowsLayoutManager
   }
 
   public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
-    const edit = buildGroupEdit(items, target);
+    const groupEdit = buildGroupEdit(items, target);
 
-    if (!edit) {
+    if (!groupEdit) {
       return;
     }
 
-    dashboardEditActions.edit({ ...edit, source: getDashboardSceneFor(this) });
+    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
@@ -185,7 +187,7 @@ export class RowsLayoutManager
       newRow.setState({ title: newTitle });
     }
 
-    dashboardEditActions.addElement({
+    addElement({
       addedObject: newRow,
       source: this,
       perform: () => {
@@ -342,7 +344,7 @@ export class RowsLayoutManager
     let nextVariableSet: SceneVariables | undefined;
     let nextVariables: SceneVariable[] | undefined;
 
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.rows-layout.edit.ungroup-rows', 'Ungroup rows'),
       source: scene,
       perform: () => {
@@ -513,7 +515,7 @@ export class RowsLayoutManager
     if (skipUndo) {
       perform();
     } else {
-      dashboardEditActions.removeElement({
+      removeElement({
         removedObject: row,
         source: this,
         perform,
