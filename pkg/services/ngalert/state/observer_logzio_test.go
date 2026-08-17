@@ -146,4 +146,25 @@ func TestLogzioStateObserver_CompareSnapshotWithCache(t *testing.T) {
 	})
 }
 
+func TestLogzioStateObserver_PanicIsContained(t *testing.T) {
+	t.Run("a panicking observation is recovered and skipped", func(t *testing.T) {
+		// A nil clock makes compareSnapshotWithCache panic on its first Now() call, which is a
+		// convenient stand-in for any future observer bug.
+		o := newLogzioStateObserver(log.New("ngalert.state.observer.test"), nil, newCache())
+
+		require.NotPanics(t, func() {
+			o.onWarmSnapshotLoaded(map[int64]map[string]*ruleStates{})
+		})
+	})
+
+	t.Run("the recover guard swallows any panic", func(t *testing.T) {
+		o := newLogzioStateObserver(log.New("ngalert.state.observer.test"), clock.NewMock(), newCache())
+
+		require.NotPanics(t, func() {
+			defer o.recoverPanic("test-event")
+			panic("boom")
+		})
+	})
+}
+
 // LOGZ.IO GRAFANA CHANGE :: End
