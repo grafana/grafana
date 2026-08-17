@@ -10,8 +10,12 @@ export function getCurrentFrameIndex(frames: DataFrame[], options: { frameIndex?
   return frameIndex > 0 && frameIndex < frames.length ? frameIndex : 0;
 }
 
-export function getInterpolateFormat(codeLanguage?: CodeLanguage): 'json' | 'html' {
-  return codeLanguage === CodeLanguage.Json ? 'json' : 'html';
+export function getInterpolateFormat(mode: TextMode, codeLanguage?: CodeLanguage): 'json' | 'html' | 'raw' {
+  if (mode !== TextMode.Code) {
+    return 'html';
+  }
+
+  return codeLanguage === CodeLanguage.Json ? 'json' : 'raw';
 }
 
 /** Shared by the panel and the edit-time preview so they can't diverge. */
