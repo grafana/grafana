@@ -847,7 +847,7 @@ export interface FeatureToggles {
   azureMonitorLogsBuilderEditor?: boolean;
   /**
   * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
-  * @default false
+  * @default true
   */
   ['datasources.azureMonitorBatchAPI']?: boolean;
   /**
