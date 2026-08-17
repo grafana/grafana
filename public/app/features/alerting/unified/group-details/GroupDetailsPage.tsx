@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { Navigate, useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Dropdown, Icon, LinkButton, Menu, TextLink, withErrorBoundary } from '@grafana/ui';
@@ -12,6 +12,7 @@ import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { type RulesSourceFeatures, featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { DMARouteGuard } from '../components/DMARouteGuard';
 import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 import { useFolder } from '../hooks/useFolder';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
@@ -22,6 +23,7 @@ import { useRulesAccess } from '../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../utils/datasource';
 import { makeFolderLink, stringifyErrorLike } from '../utils/misc';
 import { createListFilterLink, groups } from '../utils/navigation';
+import { prometheusAlertingPlugin } from '../utils/prometheusNavigation';
 import { getRulerGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules';
 import { formatPrometheusDuration } from '../utils/time';
 
@@ -43,7 +45,25 @@ function GroupDetailsPage() {
     return <EntityNotFound entity={t('alerting.entities.group', 'Group')} />;
   }
 
-  return <GroupDetailsPageContent dataSourceUid={dataSourceUid} namespaceId={namespaceId} groupName={groupName} />;
+  const isDataSourceManaged = dataSourceUid !== 'grafana';
+
+  return (
+    <DMARouteGuard
+      isDataSourceManaged={isDataSourceManaged}
+      pluginPage={
+        isDataSourceManaged ? (
+          <Navigate replace to={prometheusAlertingPlugin.viewGroup(dataSourceUid, namespaceId, groupName)} />
+        ) : undefined
+      }
+      unavailableDescription={
+        <Trans i18nKey="alerting.group-details.dma-disabled-description">
+          This rule group cannot be viewed from Grafana.
+        </Trans>
+      }
+    >
+      <GroupDetailsPageContent dataSourceUid={dataSourceUid} namespaceId={namespaceId} groupName={groupName} />
+    </DMARouteGuard>
+  );
 }
 
 interface GroupDetailsPageContentProps {

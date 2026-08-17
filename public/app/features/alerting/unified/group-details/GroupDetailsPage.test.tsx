@@ -5,11 +5,12 @@ import { type Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
-import { setPluginLinksHook } from '@grafana/runtime';
+import { locationService, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleGroupDTO, type GrafanaPromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { RULER_CONFIG_API_PROBE_GROUP, RULER_CONFIG_API_PROBE_NAMESPACE } from '../api/ruler';
+import { DMAStatus, useDMAStatus } from '../hooks/useDMAStatus';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockGrafanaPromAlertingRule, mockRulerGrafanaRule, mockRulerRuleGroup } from '../mocks';
 import {
@@ -23,6 +24,11 @@ import {
 import { alertingFactory } from '../mocks/server/db';
 
 import GroupDetailsPage from './GroupDetailsPage';
+
+jest.mock('../hooks/useDMAStatus', () => ({
+  ...jest.requireActual('../hooks/useDMAStatus'),
+  useDMAStatus: jest.fn(),
+}));
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
@@ -58,9 +64,11 @@ const ui = {
 };
 
 const server = setupMswServer();
+const useDMAStatusMock = jest.mocked(useDMAStatus);
 
 describe('GroupDetailsPage', () => {
   beforeEach(() => {
+    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByGrafana });
     // mock this...
     setPluginLinksHook(() => ({
       links: [],
@@ -323,6 +331,18 @@ describe('GroupDetailsPage', () => {
       expect(ui.editLink.query()).not.toBeInTheDocument();
       expect(ui.exportButton.query()).not.toBeInTheDocument();
     });
+  });
+
+  it('redirects data source-managed groups to the plugin', async () => {
+    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByPlugin });
+
+    renderGroupDetailsPage('prometheus', 'test-prom-namespace', 'test-group-cpu');
+
+    await waitFor(() =>
+      expect(locationService.getLocation().pathname).toBe(
+        '/a/grafana-prometheusalerting-app/groups/prometheus/test-prom-namespace/test-group-cpu'
+      )
+    );
   });
 
   describe('Mimir rules', () => {

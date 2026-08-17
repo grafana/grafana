@@ -1,15 +1,20 @@
-import { useParams } from 'react-router-dom-v5-compat';
+import { type ReactNode } from 'react';
+import { Navigate, useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 
 import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { DMARouteGuard } from '../components/DMARouteGuard';
+import { PluginRuleRedirect } from '../components/PluginRuleRedirect';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { useRulesAccess } from '../utils/accessControlHooks';
+import { prometheusAlertingPlugin } from '../utils/prometheusNavigation';
 import * as ruleId from '../utils/rule-id';
+import { isDataSourceManagedRuleByType, isGrafanaRuleIdentifier } from '../utils/rules';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import { ExistingRuleEditor } from './ExistingRuleEditor';
@@ -19,45 +24,62 @@ export type RuleEditorPathParams = {
   type?: 'recording' | 'alerting' | 'grafana-recording';
 };
 
-export const defaultPageNav: Partial<NavModelItem> = {
+export const defaultPageNav: NavModelItem = {
   id: 'alert-rule-view',
+  text: '',
 };
 
 const RuleEditor = () => {
-  const { identifier } = useRuleEditorPathParams();
+  const { identifier, type } = useRuleEditorPathParams();
   const cloneIdentifier = useIdentifierFromCopy();
   const isManualRestore = useManualRestore();
+  const prefill = useDefaultsFromQuery();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
+  const externalIdentifier = identifier && !isGrafanaRuleIdentifier(identifier) ? identifier : undefined;
+  const externalCloneIdentifier =
+    cloneIdentifier && !isGrafanaRuleIdentifier(cloneIdentifier) ? cloneIdentifier : undefined;
+  const isCreatingDataSourceRule = type === 'recording' || isDataSourceManagedRuleByType(prefill?.type);
+  const isCreatingNewRule = !identifier && !cloneIdentifier;
+  const shouldCreateInPlugin = isCreatingDataSourceRule || (isCreatingNewRule && !canCreateGrafanaRules);
+  const isDataSourceManagedRoute =
+    Boolean(externalIdentifier) || Boolean(externalCloneIdentifier) || isCreatingDataSourceRule;
+  let pluginPage: ReactNode;
+
+  if (externalIdentifier) {
+    pluginPage = <PluginRuleRedirect identifier={externalIdentifier} action="edit" />;
+  } else if (externalCloneIdentifier) {
+    pluginPage = <PluginRuleRedirect identifier={externalCloneIdentifier} action="clone" />;
+  } else if (shouldCreateInPlugin) {
+    pluginPage = (
+      <Navigate replace to={prometheusAlertingPlugin.newRule(type === 'recording' ? 'recording' : 'alerting')} />
+    );
+  }
+
+  let editorPage: ReactNode;
 
   if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
-    return (
+    editorPage = (
       <AlertWarning title={t('alerting.rule-editor.get-content.title-cannot-create-rules', 'Cannot create rules')}>
         <Trans i18nKey="alerting.rule-editor.get-content.sorry-allowed-create-rules">
           Sorry! You are not allowed to create rules.
         </Trans>
       </AlertWarning>
     );
-  }
-
-  if (identifier && !canEditRules(identifier.ruleSourceName)) {
-    return (
+  } else if (identifier && !canEditRules(identifier.ruleSourceName)) {
+    editorPage = (
       <AlertWarning title={t('alerting.rule-editor.get-content.title-cannot-edit-rules', 'Cannot edit rules')}>
         <Trans i18nKey="alerting.rule-editor.get-content.sorry-allowed-rules">
           Sorry! You are not allowed to edit rules.
         </Trans>
       </AlertWarning>
     );
-  }
-
-  if (identifier) {
-    return (
+  } else if (identifier) {
+    editorPage = (
       <ExistingRuleEditor key={JSON.stringify(identifier)} identifier={identifier} isManualRestore={isManualRestore} />
     );
-  }
-
-  if (cloneIdentifier) {
-    return (
+  } else if (cloneIdentifier) {
+    editorPage = (
       <ExistingRuleEditor
         key={JSON.stringify(identifier)}
         identifier={cloneIdentifier}
@@ -65,10 +87,24 @@ const RuleEditor = () => {
         isManualRestore={isManualRestore}
       />
     );
+  } else {
+    editorPage = <NewRuleEditor prefill={prefill} />;
   }
 
-  // for new alerting or recording rules
-  return <NewRuleEditor />;
+  return (
+    <DMARouteGuard
+      isDataSourceManaged={isDataSourceManagedRoute}
+      pluginPage={pluginPage}
+      unavailableDescription={
+        <Trans i18nKey="alerting.rule-editor.data-source-managed-unavailable-description">
+          Data source-managed rules cannot be created or edited from Grafana.
+        </Trans>
+      }
+      pageNav={defaultPageNav}
+    >
+      {editorPage}
+    </DMARouteGuard>
+  );
 };
 
 export const RECORDING_TYPE = ['grafana-recording', 'recording'];
@@ -76,8 +112,7 @@ export const RECORDING_TYPE = ['grafana-recording', 'recording'];
 /**
  * This one is used for creating new rules (both alerting and recording rules)
  */
-function NewRuleEditor() {
-  const prefill = useDefaultsFromQuery();
+function NewRuleEditor({ prefill }: { prefill: ReturnType<typeof useDefaultsFromQuery> }) {
   const isManualRestore = useManualRestore();
   const { type = '', identifier = '' } = useRuleEditorPathParams();
 

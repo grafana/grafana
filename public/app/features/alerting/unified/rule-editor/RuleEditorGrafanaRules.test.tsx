@@ -310,4 +310,13 @@ describe('RuleEditor with alertingDisableDMAinUI feature toggle', () => {
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
     expect(removeExpressionsButtons.length).toBeGreaterThan(0);
   });
+
+  it('offers plugin installation for a data source-managed rule', async () => {
+    renderRuleEditor(undefined, 'recording');
+
+    expect(await screen.findByRole('link', { name: 'Install the Prometheus Alerting plugin' })).toHaveAttribute(
+      'href',
+      '/plugins/grafana-prometheusalerting-app'
+    );
+  });
 });

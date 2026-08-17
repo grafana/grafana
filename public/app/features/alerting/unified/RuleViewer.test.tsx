@@ -1,8 +1,23 @@
-import { render, screen } from 'test/test-utils';
+import { Route, Routes } from 'react-router-dom-v5-compat';
+import { render, screen, waitFor } from 'test/test-utils';
+
+import { locationService } from '@grafana/runtime';
 
 import RuleViewer from './RuleViewer';
+import { DMAStatus, useDMAStatus } from './hooks/useDMAStatus';
+
+jest.mock('./hooks/useDMAStatus', () => ({
+  ...jest.requireActual('./hooks/useDMAStatus'),
+  useDMAStatus: jest.fn(),
+}));
+
+const useDMAStatusMock = jest.mocked(useDMAStatus);
 
 describe('Rule Viewer page', () => {
+  beforeEach(() => {
+    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByGrafana });
+  });
+
   it('should throw an error if rule ID cannot be decoded', () => {
     // Assertions must live in the test body, not in the mock implementation — an expect() that
     // throws inside React's error logging path escapes as an uncaught exception and gets attributed
@@ -20,5 +35,23 @@ describe('Rule Viewer page', () => {
     );
 
     consoleError.mockRestore();
+  });
+
+  it('redirects data source-managed rules to the plugin', async () => {
+    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByPlugin });
+    const identifier = 'pri$Prometheus$namespace$group$rule$hash';
+
+    render(
+      <Routes>
+        <Route path="/alerting/:sourceName/:id/view" element={<RuleViewer />} />
+      </Routes>,
+      { historyOptions: { initialEntries: [`/alerting/Prometheus/${identifier}/view`] } }
+    );
+
+    await waitFor(() =>
+      expect(locationService.getLocation().pathname).toBe(
+        '/a/grafana-prometheusalerting-app/rules/pri%24Prometheus%24namespace%24group%24rule%24hash/view'
+      )
+    );
   });
 });

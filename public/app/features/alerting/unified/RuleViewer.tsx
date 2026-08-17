@@ -2,12 +2,15 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { type RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { DMARouteGuard } from './components/DMARouteGuard';
+import { PluginRuleRedirect } from './components/PluginRuleRedirect';
 import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
 import DetailView, { useActiveTab } from './components/rule-viewer/RuleViewer';
 import { ActiveTab } from './components/rule-viewer/activeTab';
@@ -15,6 +18,7 @@ import { useCombinedRule } from './hooks/useCombinedRule';
 import { getAlertRulesNavId } from './navigation/useAlertRulesNav';
 import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
+import { isGrafanaRuleIdentifier } from './utils/rules';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 const RuleViewer = () => {
@@ -38,6 +42,29 @@ const RuleViewer = () => {
     return parseRuleId(id, true);
   }, [id]);
 
+  const externalIdentifier = !isGrafanaRuleIdentifier(identifier) ? identifier : undefined;
+
+  return (
+    <DMARouteGuard
+      isDataSourceManaged={Boolean(externalIdentifier)}
+      pluginPage={externalIdentifier ? <PluginRuleRedirect identifier={externalIdentifier} action="view" /> : undefined}
+      unavailableDescription={
+        <Trans i18nKey="alerting.rule-viewer.dma-disabled-description">This rule cannot be viewed from Grafana.</Trans>
+      }
+      pageNav={defaultPageNav}
+    >
+      <RuleViewerContent identifier={identifier} limitAlerts={limitAlerts} />
+    </DMARouteGuard>
+  );
+};
+
+function RuleViewerContent({
+  identifier,
+  limitAlerts,
+}: {
+  identifier: RuleIdentifier;
+  limitAlerts: number | undefined;
+}) {
   // we then fetch the rule from the correct API endpoint(s)
   const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier, limitAlerts });
 
@@ -72,7 +99,7 @@ const RuleViewer = () => {
 
   // we should never get to this state
   return null;
-};
+}
 
 export const defaultPageNav: NavModelItem = {
   id: 'alert-rule-view',
