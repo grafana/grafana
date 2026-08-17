@@ -202,6 +202,12 @@ func TestVersionPolicyRegistryValidate(t *testing.T) {
 		assert.NoError(t, r.Validate(allEnabled))
 	})
 
+	t.Run("nil resourceChecker (no enablement info available) assumes everything enabled", func(t *testing.T) {
+		r := newTestRegistry(fooOrder, nil,
+			map[string]VersionPolicy{"foo.grafana.app": {PreferredVersion: "v1", MaxAllowedVersion: "v1"}})
+		assert.NoError(t, r.Validate(nil))
+	})
+
 	t.Run("maxAllowedVersion registered but disabled only warns, does not fail validation", func(t *testing.T) {
 		// fooOrder's natural preferred is v2, so cap=v2 with no preferredVersion set always passes on
 		// its own; disabling v2 exercises only the new warning path, not the preferred fallback.
