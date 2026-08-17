@@ -69,6 +69,8 @@ func TestTemplates(t *testing.T) {
 	}
 	emptyInSearchQuery := searchQuery(true, false)
 	emptyInSearchQuery.Filters = []searchUserFilter{{Kind: "in", Condition: "user_stats.billing_role"}}
+	emptyInCountSearchQuery := searchQuery(true, false)
+	emptyInCountSearchQuery.Filters = []searchUserFilter{{Kind: "in", Condition: "user_stats.billing_role"}}
 
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
@@ -197,6 +199,7 @@ func TestTemplates(t *testing.T) {
 			countSearchUsersTemplate: {
 				{Name: "with_auth_filter", Data: searchQuery(true, true)},
 				{Name: "without_auth_filter", Data: searchQuery(false, false)},
+				{Name: "empty_in", Data: emptyInCountSearchQuery},
 			},
 			updateUserTemplate: {
 				{

@@ -36,7 +36,11 @@ WHERE u.is_service_account = {{ .Arg .IsServiceAccount }}
 {{ end -}}
 {{ range .Filters -}}
 {{ if eq .Kind "in" -}}
-  AND {{ .Condition }} IN ({{ $.ArgList .Values }})
+{{ if .Values -}}
+  AND {{ $.Ident .Condition }} IN ({{ $.ArgList .Values }})
+{{ else -}}
+  AND 0 = 1
+{{ end -}}
 {{ else -}}
   AND {{ range .Parts }}{{ .SQL }}{{ if .HasValue }}{{ $.Arg .Value }}{{ end }}{{ end }}
 {{ end -}}
