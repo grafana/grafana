@@ -115,11 +115,21 @@ func NewSearchOptions(
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
 			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
+			IndexDeletedDocuments:          cfg.IndexDeletedDocuments,
 			PostRankAuthz: PostRankAuthzConfig{
 				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
 				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
 				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
 				FacetSampleSize: cfg.SearchPostRankAuthzFacetSampleSize,
+			},
+			// From the garbage collection settings, so trash and storage cannot
+			// disagree about what is expired.
+			TrashRetention: TrashRetentionConfig{
+				// Dry run counts what it would remove and deletes nothing, so trash
+				// stays restorable and this stays off.
+				Enabled:          cfg.EnableGarbageCollection && !cfg.GarbageCollectionDryRun,
+				MaxAge:           cfg.GarbageCollectionMaxAge,
+				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 			},
 		}, indexMetrics)
 
@@ -139,7 +149,6 @@ func NewSearchOptions(
 			BuildVersion:              buildVersion,
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
-			IndexDeletedDocuments:     cfg.IndexDeletedDocuments,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
 			PostRankAuthzEnabled:      cfg.SearchPostRankAuthz,
 

@@ -38,32 +38,33 @@ describe('NotebookEditToggle', () => {
     return { notebook, ...render(<NotebookEditToggle notebook={notebook} />) };
   }
 
-  it('offers the toggle to a user who can edit', () => {
+  it('offers both modes to a user who can edit', () => {
     setup({ canEdit: true });
 
-    expect(screen.getByRole('switch', { name: 'Edit' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'View' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Edit' })).toBeInTheDocument();
   });
 
-  it('hides the toggle from a user who cannot edit', () => {
+  it('hides the mode switch from a user who cannot edit', () => {
     setup({ canEdit: false });
 
-    expect(screen.queryByRole('switch', { name: 'Edit' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'Edit' })).not.toBeInTheDocument();
   });
 
   it('puts the notebook into edit mode', async () => {
     const { notebook, user } = setup({ canEdit: true });
 
-    await user.click(screen.getByRole('switch', { name: 'Edit' }));
+    await user.click(screen.getByRole('radio', { name: 'Edit' }));
 
     expect(notebook.state.isEditing).toBe(true);
   });
 
   it('takes it back out again', async () => {
     const { notebook, user } = setup({ canEdit: true });
-    // act: the toggle subscribes to the scene, so entering edit mode re-renders it.
+    // act: the switch subscribes to the scene, so entering edit mode re-renders it.
     act(() => notebook.onEnterEditMode());
 
-    await user.click(screen.getByRole('switch', { name: 'Edit' }));
+    await user.click(screen.getByRole('radio', { name: 'View' }));
 
     expect(notebook.state.isEditing).toBe(false);
   });
@@ -73,6 +74,13 @@ describe('NotebookEditToggle', () => {
 
     act(() => notebook.onEnterEditMode());
 
-    expect(screen.getByRole('switch', { name: 'Edit' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Edit' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'View' })).not.toBeChecked();
+  });
+
+  it('starts on view mode', () => {
+    setup({ canEdit: true });
+
+    expect(screen.getByRole('radio', { name: 'View' })).toBeChecked();
   });
 });
