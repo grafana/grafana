@@ -4,15 +4,16 @@ import { useCallback } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { sceneGraph } from '@grafana/scenes';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { annotationEditActions } from '../settings/annotations/actions';
 import { openAddLinkPane } from '../settings/links/LinkAddEditableElement';
 import { openAddVariablePane } from '../settings/variables/VariableTypeSelectionPane';
 import { openAddFilterForm } from '../sidebar/add-new/AddFilters';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 
+import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { type DashboardScene } from './DashboardScene';
 
 export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) {
@@ -30,7 +31,10 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
   }, [dashboard]);
 
   const handleAddAnnotationQuery = useCallback(() => {
-    const dataLayers = dashboardSceneGraph.getDataLayers(dashboard);
+    const dataLayers = sceneGraph.getData(dashboard);
+    if (!(dataLayers instanceof DashboardDataLayerSet)) {
+      return;
+    }
     const newAnnotation = dataLayers.createDefaultAnnotationLayer();
     annotationEditActions.addAnnotation({ source: dataLayers, addedObject: newAnnotation });
     DashboardInteractions.addAnnotationButtonClicked({ source: 'variable_controls' });
