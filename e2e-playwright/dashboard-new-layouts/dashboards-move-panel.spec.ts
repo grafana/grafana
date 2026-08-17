@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { getPanelBox, movePanel } from './utils';
+import { getPanelBox, movePanel } from './helpers';
 
 const PAGE_UNDER_TEST = 'ed155665/annotation-filtering';
 

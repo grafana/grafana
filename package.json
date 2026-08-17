@@ -236,6 +236,7 @@
     "react-select-event": "5.5.1",
     "redux-mock-store": "1.5.5",
     "rimraf": "6.0.1",
+    "rspack-manifest-plugin": "5.2.2",
     "sass": "1.89.2",
     "sass-loader": "16.0.5",
     "smtp-tester": "^2.1.0",
@@ -275,7 +276,7 @@
     "@formatjs/intl-durationformat": "^0.7.0",
     "@grafana/alerting": "workspace:*",
     "@grafana/api-clients": "workspace:*",
-    "@grafana/assistant": "0.1.30",
+    "@grafana/assistant": "0.1.34",
     "@grafana/aws-sdk": "^0.12.0",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
@@ -459,7 +460,8 @@
     "tmp": "0.2.7",
     "yaml@npm:^1.10.0": "1.10.3",
     "tar@npm:7.5.11": "7.5.21",
-    "linkify-it": "5.0.2"
+    "linkify-it": "5.0.2",
+    "react-calendar@npm:^6.0.0": "patch:react-calendar@npm%3A6.0.1#~/.yarn/patches/react-calendar-npm-6.0.1-22fe91a41c.patch"
   },
   "workspaces": {
     "packages": [

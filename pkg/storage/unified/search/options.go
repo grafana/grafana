@@ -121,6 +121,15 @@ func NewSearchOptions(
 				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
 				FacetSampleSize: cfg.SearchPostRankAuthzFacetSampleSize,
 			},
+			// From the garbage collection settings, so trash and storage cannot
+			// disagree about what is expired.
+			TrashRetention: TrashRetentionConfig{
+				// Dry run counts what it would remove and deletes nothing, so trash
+				// stays restorable and this stays off.
+				Enabled:          cfg.EnableGarbageCollection && !cfg.GarbageCollectionDryRun,
+				MaxAge:           cfg.GarbageCollectionMaxAge,
+				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+			},
 		}, indexMetrics)
 
 		if err != nil {
