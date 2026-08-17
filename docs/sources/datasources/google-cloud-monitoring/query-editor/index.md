@@ -229,9 +229,9 @@ Press `Shift+Enter` to run the query.
 
 The following options are available for MQL queries:
 
-| Setting          | Description                                                                                                                                           |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Alias by**     | Control the format of legend keys. Refer to [Set alias patterns for MQL queries](#set-alias-patterns-for-mql-queries) for available patterns.         |
+| Setting          | Description                                                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Alias by**     | Control the format of legend keys. Refer to [Set alias patterns for MQL queries](#set-alias-patterns-for-mql-queries) for available patterns.          |
 | **Graph period** | Enable the toggle to override the default time period. Select a period from the drop-down to control the granularity of the returned time series data. |
 
 ### Set alias patterns for MQL queries
@@ -259,7 +259,7 @@ To understand basic concepts in service monitoring, refer to the [Google Cloud M
 
 Grafana's time series selectors use descriptive names that map to system names that Google uses in the Service Monitoring documentation:
 
-| Selector drop-down value        | Corresponding time series selector |
+| Selector drop-down value       | Corresponding time series selector |
 | ------------------------------ | ---------------------------------- |
 | **SLI Value**                  | `select_slo_health`                |
 | **SLO Compliance**             | `select_slo_compliance`            |
