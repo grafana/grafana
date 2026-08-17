@@ -5292,6 +5292,19 @@
     },
     {
       "metadata": {
+        "name": "provisioning.oauthConnections",
+        "resourceVersion": "1786982687758",
+        "creationTimestamp": "2026-08-17T16:04:47Z"
+      },
+      "spec": {
+        "description": "Enables OAuth app connections for Git Sync provisioning",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioning.performance",
         "resourceVersion": "1784287498952",
         "creationTimestamp": "2026-07-16T08:21:47Z",

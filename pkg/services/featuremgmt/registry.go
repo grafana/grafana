@@ -287,6 +287,14 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
+			Name:        "provisioning.oauthConnections",
+			Description: "Enables OAuth app connections for Git Sync provisioning",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,

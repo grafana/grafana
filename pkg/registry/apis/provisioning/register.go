@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -156,6 +157,7 @@ type APIBuilder struct {
 	registry                      prometheus.Registerer
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
+	oauthConnectionsEnabled       func(context.Context) bool
 	maxFileSize                   int64
 	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
@@ -255,7 +257,7 @@ func NewAPIBuilder(
 		usageStats:                          usageStats,
 		features:                            features,
 		repoFactory:                         repoFactory,
-		connectionFactory:                   connectionFactory,
+		connectionFactory:                   newOAuthFeatureGatedConnectionFactory(connectionFactory, oauthConnectionsEnabled),
 		clients:                             clients,
 		supportedResources:                  supportedResources,
 		parsers:                             parsers,
@@ -275,6 +277,7 @@ func NewAPIBuilder(
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
+		oauthConnectionsEnabled:             oauthConnectionsEnabled,
 		incrementalPolicy:                   incrementalPolicy,
 		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
 		maxFileSize: maxFileSize,
@@ -958,6 +961,10 @@ func performanceEnabled(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningPerformance, false, openfeature.TransactionContext(ctx))
 }
 
+func oauthConnectionsEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningOauthConnections, false, openfeature.TransactionContext(ctx))
+}
+
 // Mutate delegates to the admission handler for resource-specific mutation
 func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
@@ -971,6 +978,13 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 // Validate delegates to the admission handler for resource-specific validation
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	if a.GetOperation() == admission.Create || a.GetOperation() == admission.Update {
+		if connection, ok := a.GetObject().(*provisioning.Connection); ok {
+			if err := b.validateOAuthConnectionsEnabled(ctx, connection); err != nil {
+				return err
+			}
+		}
+	}
 	return b.admissionHandler.Validate(ctx, a, o)
 }
 
@@ -1852,7 +1866,6 @@ func (b *APIBuilder) asConnection(ctx context.Context, obj runtime.Object, old r
 	if !ok {
 		return nil, fmt.Errorf("expected connection object")
 	}
-
 	// Copy previous values if they exist
 	if old != nil {
 		if oldConn, ok := old.(*provisioning.Connection); ok {
@@ -1861,6 +1874,48 @@ func (b *APIBuilder) asConnection(ctx context.Context, obj runtime.Object, old r
 	}
 
 	return b.connectionFactory.Build(ctx, c)
+}
+
+type oauthFeatureGatedConnectionFactory struct {
+	connection.Factory
+	enabled func(context.Context) bool
+}
+
+func newOAuthFeatureGatedConnectionFactory(factory connection.Factory, enabled func(context.Context) bool) connection.Factory {
+	return &oauthFeatureGatedConnectionFactory{Factory: factory, enabled: enabled}
+}
+
+func (f *oauthFeatureGatedConnectionFactory) Build(ctx context.Context, conn *provisioning.Connection) (connection.Connection, error) {
+	if err := validateOAuthConnectionsEnabled(ctx, conn, f.enabled); err != nil {
+		return nil, err
+	}
+	return f.Factory.Build(ctx, conn)
+}
+
+func (f *oauthFeatureGatedConnectionFactory) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	conn, ok := obj.(*provisioning.Connection)
+	if ok {
+		if err := validateOAuthConnectionsEnabled(ctx, conn, f.enabled); err != nil {
+			return field.ErrorList{field.Forbidden(field.NewPath("spec", "oauth"), err.Error())}
+		}
+	}
+	return f.Factory.Validate(ctx, obj)
+}
+
+func (b *APIBuilder) validateOAuthConnectionsEnabled(ctx context.Context, connection *provisioning.Connection) error {
+	return validateOAuthConnectionsEnabled(ctx, connection, b.oauthConnectionsEnabled)
+}
+
+func validateOAuthConnectionsEnabled(ctx context.Context, connection *provisioning.Connection, enabled func(context.Context) bool) error {
+	if connection.Spec.OAuth == nil || enabled == nil || enabled(ctx) {
+		return nil
+	}
+
+	return apierrors.NewForbidden(
+		provisioning.ConnectionResourceInfo.GroupResource(),
+		connection.GetName(),
+		fmt.Errorf("OAuth connections require the %s feature flag", featuremgmt.FlagProvisioningOauthConnections),
+	)
 }
 
 func getJSONResponse(ref string) *spec3.Responses {
