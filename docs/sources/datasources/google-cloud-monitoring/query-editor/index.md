@@ -257,7 +257,7 @@ To understand basic concepts in service monitoring, refer to the [Google Cloud M
 1. Select an [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** drop-down.
 1. Select a [time series selector](https://cloud.google.com/stackdriver/docs/solutions/slo-monitoring/api/timeseries-selectors#ts-selector-list) from the **Selector** drop-down.
 
-Grafana's time series selectors use descriptive names that map to system names that Google uses in the Service Monitoring documentation:
+Time series selectors in Grafana use descriptive names that map to system names that Google uses in the Service Monitoring documentation:
 
 | Selector drop-down value       | Corresponding time series selector |
 | ------------------------------ | ---------------------------------- |
