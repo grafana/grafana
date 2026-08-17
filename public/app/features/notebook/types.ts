@@ -19,7 +19,6 @@ import {
   type NotebookElement as GeneratedNotebookElement,
   type NotebookLayoutItemKind as GeneratedNotebookLayoutItemKind,
   type NotebookLayoutKind as GeneratedNotebookLayoutKind,
-  type PanelQueryKind as GeneratedPanelQueryKind,
   type Spec as GeneratedSpec,
   type V2PanelKind as GeneratedPanelKind,
 } from '@grafana/schema/apis/notebook/v2beta1';
@@ -36,7 +35,6 @@ export type MarkdownCellContentKind = GeneratedMarkdownCellContentKind;
 export type NotebookElement = GeneratedNotebookElement;
 export type NotebookLayoutItemKind = GeneratedNotebookLayoutItemKind;
 export type NotebookLayoutKind = GeneratedNotebookLayoutKind;
-export type PanelQueryKind = GeneratedPanelQueryKind;
 export type Spec = GeneratedSpec;
 
 export const defaultLibraryPanelKind = generatedDefaultLibraryPanelKind;
