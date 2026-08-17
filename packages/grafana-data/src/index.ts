@@ -761,6 +761,8 @@ export {
   TransformationApplicabilityLevels,
   type DataTransformerInfo,
   type CustomTransformOperator,
+  type PanelDataTransformationsContext,
+  type PanelDataTransformationsSupplier,
   type SynchronousDataTransformerInfo,
   type DataTransformerConfig,
   type FrameMatcher,

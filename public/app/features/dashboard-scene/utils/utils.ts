@@ -28,6 +28,7 @@ import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehavi
 import { type DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { PanelDataTransformer } from '../scene/PanelDataTransformer';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
@@ -306,7 +307,7 @@ export function getDefaultVizPanel(): VizPanel {
       hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     $data: datasourceSettings
-      ? new SceneDataTransformer({
+      ? new PanelDataTransformer({
           $data: new SceneQueryRunner({
             queries: [{ refId: 'A' }],
             datasource: getDataSourceRef(datasourceSettings),

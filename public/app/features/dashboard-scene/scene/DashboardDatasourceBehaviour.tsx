@@ -168,7 +168,10 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
       const dataTransformer = sourcePanelQueryRunner.parent;
 
-      if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
+      // Effective, not `state.transformations`: a source panel whose plugin registers
+      // transformations emits from the transformer even with an empty user list, and those
+      // emissions are the only signal for a reprocess that runs no query (see below).
+      if (dataTransformer instanceof SceneDataTransformer && dataTransformer.getEffectiveTransformations().length) {
         // In mixed DS scenario we complete the observable and merge data, so on a variable change
         // the data transformer will emit but there will be no subscription and thus no visual update
         // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and

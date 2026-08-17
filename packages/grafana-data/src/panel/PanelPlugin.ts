@@ -24,6 +24,7 @@ import {
   type VisualizationPresetsSupplier,
   type VisualizationSuggestionsBuilder,
 } from '../types/suggestions';
+import { type PanelDataTransformationsContext, type PanelDataTransformationsSupplier } from '../types/transformations';
 import { type FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
@@ -175,6 +176,7 @@ export class PanelPlugin<
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
   private presetsSupplier?: VisualizationPresetsSupplier<TOptions, TFieldConfigOptions>;
+  private dataTransformationsSupplier?: PanelDataTransformationsSupplier;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -364,6 +366,43 @@ export class PanelPlugin<
   setDataSupport(support: Partial<PanelPluginDataSupport>) {
     this.dataSupport = { ...this.dataSupport, ...support };
     return this;
+  }
+
+  /**
+   * Registers read-only transformations in dashboard panels.
+   *
+   * These transformations run before any user-configured transformation and field overrides.
+   * They are not persisted to the dashboard.
+   *
+   * The supplier receives the query result frames on every data update, so it can return
+   * different transformations for different shapes of data. Empty results pass through
+   * without consulting the supplier.
+   *
+   * @example
+   * ```typescript
+   * export const plugin = new PanelPlugin<Options>(MyPanel)
+   *     .setDataTransformations(({ series }) =>
+   *       series[0]?.meta?.preferredVisualisationType === 'nodeGraph'
+   *         ? [{ id: 'transpose', options: {} }]
+   *         : []
+   *     );
+   * ```
+   *
+   * @alpha
+   **/
+  setDataTransformations(supplier: PanelDataTransformationsSupplier) {
+    this.dataTransformationsSupplier = supplier;
+    return this;
+  }
+
+  /**
+   * Transformations registered via {@link setDataTransformations}, or an empty array when
+   * the plugin registered none.
+   *
+   * @internal
+   */
+  getDataTransformations(ctx: PanelDataTransformationsContext) {
+    return this.dataTransformationsSupplier?.(ctx) ?? [];
   }
 
   /**

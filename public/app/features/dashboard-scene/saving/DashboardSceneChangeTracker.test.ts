@@ -1,9 +1,10 @@
-import { SceneObjectStateChangedEvent } from '@grafana/scenes';
+import { type SceneDataTransformerState, type SceneObject, SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type CorsWorker } from 'app/core/utils/CorsWorker';
 import * as createDetectChangesWorker from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { PanelDataTransformer } from '../scene/PanelDataTransformer';
 
 import { DashboardSceneChangeTracker } from './DashboardSceneChangeTracker';
 
@@ -62,6 +63,44 @@ describe('DashboardSceneChangeTracker', () => {
     expect(postMessage).toHaveBeenCalledWith({
       initial: { title: 'initial dashboard' },
       changed: { title: 'updated dashboard' },
+    });
+  });
+
+  describe('isUpdatingPersistedState', () => {
+    // An earlier test in this file stubs the method being tested here.
+    beforeEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    function stateChangedEvent(changedObject: SceneObject, partialUpdate: Partial<SceneDataTransformerState>) {
+      return new SceneObjectStateChangedEvent({
+        prevState: {},
+        newState: {},
+        partialUpdate,
+        changedObject,
+      });
+    }
+
+    it('treats a transformations change as a change to persisted state', () => {
+      const transformer = new PanelDataTransformer({ transformations: [] });
+
+      expect(
+        DashboardSceneChangeTracker.isUpdatingPersistedState(
+          stateChangedEvent(transformer, { transformations: [{ id: 'reduce', options: {} }] })
+        )
+      ).toBe(true);
+    });
+
+    it('ignores a system transformations change', () => {
+      const transformer = new PanelDataTransformer({ transformations: [] });
+
+      // The plugin's transformations are never persisted, so diffing the whole dashboard for
+      // them would only cost main-thread time.
+      expect(
+        DashboardSceneChangeTracker.isUpdatingPersistedState(
+          stateChangedEvent(transformer, { systemTransformations: { prepend: [] } })
+        )
+      ).toBe(false);
     });
   });
 });

@@ -465,10 +465,12 @@ export function getVizPanelQueries(
       return queries;
     }
 
-    let snapshotData = getPanelDataFrames(dataProvider.state.data);
-    if (dataProvider instanceof SceneDataTransformer) {
-      snapshotData = getPanelDataFrames(dataProvider.state.$data!.state.data);
-    }
+    // For transformations the non-transformed data is snapshoted. A transformer resolves its
+    // source through the scene graph when it has no `$data` of its own, so fall back to the
+    // provider itself rather than asserting `$data` is set.
+    const source =
+      dataProvider instanceof SceneDataTransformer ? (dataProvider.state.$data ?? dataProvider) : dataProvider;
+    const snapshotData = getPanelDataFrames(source.state.data);
 
     const snapshotQuery: DataQueryKind = {
       kind: 'DataQuery',

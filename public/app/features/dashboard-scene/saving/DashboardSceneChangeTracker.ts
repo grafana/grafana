@@ -23,6 +23,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { PanelDataTransformer } from '../scene/PanelDataTransformer';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -70,6 +71,14 @@ export class DashboardSceneChangeTracker {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
         return true;
       }
+    }
+    // A panel plugin's own transformations are never persisted, so they cannot make the
+    // dashboard dirty — and running the whole-dashboard diff for them is pure waste.
+    if (
+      payload.changedObject instanceof PanelDataTransformer &&
+      Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'systemTransformations')
+    ) {
+      return false;
     }
     // SceneDataTransformer includes the transformation configuration
     if (payload.changedObject instanceof SceneDataTransformer) {
