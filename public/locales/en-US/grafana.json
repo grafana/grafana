@@ -12799,6 +12799,12 @@
       "visualization-placeholder": "Coming soon"
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "Code",
+        "aria-label-language": "Code language",
+        "custom-language": "Use this language name",
+        "language-plain-text": "Plain text"
+      },
       "delete": "Delete block",
       "delete-confirm-text": "This removes the block and its content from the notebook. Are you sure you want to continue?",
       "delete-confirm-title": "Delete block?",
@@ -12813,14 +12819,6 @@
     }
   },
   "notebooks": {
-    "cell": {
-      "code": {
-        "aria-label-editor": "Code",
-        "aria-label-language": "Code language",
-        "label": "code",
-        "language-plain-text": "Plain text"
-      }
-    },
     "list": {
       "all-authors": "All authors",
       "author-filter": "Filter by author",
