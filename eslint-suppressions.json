@@ -2852,9 +2852,6 @@
     }
   },
   "public/app/plugins/datasource/cloudwatch/utils/datalinks.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     }
