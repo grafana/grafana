@@ -186,7 +186,7 @@ const LogLineComponent = memo(
       } else {
         setCollapsed(log.collapsed ?? undefined);
       }
-    }, [log.uid, log.collapsed, wrapLogMessage]);
+    }, [log.uniqueKey, log.collapsed, wrapLogMessage]);
 
     const handleMouseOver = useCallback(() => onLogLineHover?.(log), [log, onLogLineHover]);
 
@@ -194,7 +194,7 @@ const LogLineComponent = memo(
       const newState = !collapsed;
       log.setCollapsedState(newState);
       setCollapsed(newState);
-      onOverflow?.(index, log.uid);
+      onOverflow?.(index, log.uniqueKey);
     }, [collapsed, index, log, onOverflow]);
 
     const handleClick = useCallback(

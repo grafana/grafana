@@ -152,10 +152,10 @@ export const InfiniteScroll = ({
         return;
       }
       if (scrollDirection === ScrollDirection.Bottom) {
-        lastLogOfPage.current.push(logs[logs.length - 1].uid);
+        lastLogOfPage.current.push(logs[logs.length - 1].uniqueKey);
       } else {
         scrollToLogLineRef.current = logs[0];
-        lastLogOfPage.current.push(logs[0].uid);
+        lastLogOfPage.current.push(logs[0].uniqueKey);
       }
       // Snapshot the row count so the completion effect can tell whether new rows arrived.
       loadMoreCountRef.current = logs.length;
@@ -349,8 +349,8 @@ function getLogLineVariant(logs: LogListModel[], index: number, lastLogOfPage: s
     return undefined;
   }
   const prevLog = logs[index - 1];
-  for (const uid of lastLogOfPage) {
-    if (prevLog.uid === uid) {
+  for (const uniqueKey of lastLogOfPage) {
+    if (prevLog.uniqueKey === uniqueKey) {
       // First log of an infinite scrolling page
       return 'infinite-scroll';
     }

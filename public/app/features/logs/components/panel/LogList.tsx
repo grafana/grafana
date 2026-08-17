@@ -446,10 +446,12 @@ const LogListComponent = ({
   );
 
   const handleScrollPosition = useCallback(
-    (log?: LogListModel) => {
-      const scrollToUID = log ? log.uid : permalinkedLogId;
+    (targetLog?: LogListModel) => {
+      const scrollToUID = targetLog ? targetLog.uniqueKey : permalinkedLogId;
       if (scrollToUID) {
-        const index = processedLogs.findIndex((log) => log.uid === scrollToUID);
+        const index = processedLogs.findIndex((log) =>
+          targetLog ? log.uniqueKey === scrollToUID : log.uid === scrollToUID
+        );
         if (index >= 0) {
           listRef.current?.scrollToItem(index, 'start');
           return;
@@ -473,7 +475,7 @@ const LogListComponent = ({
 
   const focusLogLine = useCallback(
     (log: LogListModel, align: Align = 'start') => {
-      const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
+      const index = filteredLogs.findIndex((filteredLog) => filteredLog.uniqueKey === log.uniqueKey);
       if (index >= 0) {
         debouncedScrollToItem(index, align);
       }
