@@ -437,15 +437,14 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 }
 
 // GetAllFoldersWithRules returns the deduplicated UIDs of folders that hold at least one alert rule in the
-// org. Rules with no folder are excluded: nothing validates NamespaceUID on insert, so an empty one
-// is reachable and is not a folder.
+// org.
 //
 // Served as a leading-prefix scan of the (org_id, namespace_uid, rule_group) index.
 func (st DBstore) GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var uids []string
 		err := sess.Table(alertRule{}).Distinct("namespace_uid").
-			Where("org_id = ?", orgID).And("namespace_uid <> ''").Find(&uids)
+			Where("org_id = ?", orgID).Find(&uids)
 		if err != nil {
 			return err
 		}
