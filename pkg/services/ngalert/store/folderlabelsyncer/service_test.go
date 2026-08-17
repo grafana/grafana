@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
-type fakeReconcilerStore struct {
+type fakeSyncerStore struct {
 	// counts is consulted per folder UID; missing means zero.
 	counts map[string]int64
 	err    error
@@ -37,7 +37,7 @@ type fakeReconcilerStore struct {
 	orgsErr error
 }
 
-func (f *fakeReconcilerStore) CountInFolders(_ context.Context, _ int64, folderUIDs []string, _ identity.Requester) (int64, error) {
+func (f *fakeSyncerStore) CountInFolders(_ context.Context, _ int64, folderUIDs []string, _ identity.Requester) (int64, error) {
 	f.calls++
 	if f.err != nil {
 		return 0, f.err
@@ -49,14 +49,14 @@ func (f *fakeReconcilerStore) CountInFolders(_ context.Context, _ int64, folderU
 	return total, nil
 }
 
-func (f *fakeReconcilerStore) GetAllFoldersWithRules(_ context.Context, _ int64) (map[string]struct{}, error) {
+func (f *fakeSyncerStore) GetAllFoldersWithRules(_ context.Context, _ int64) (map[string]struct{}, error) {
 	if f.folderUIDsErr != nil {
 		return nil, f.folderUIDsErr
 	}
 	return f.folderUIDs, nil
 }
 
-func (f *fakeReconcilerStore) FetchOrgIds(_ context.Context) ([]int64, error) {
+func (f *fakeSyncerStore) FetchOrgIds(_ context.Context) ([]int64, error) {
 	if f.orgsErr != nil {
 		return nil, f.orgsErr
 	}
@@ -123,7 +123,7 @@ func (f *fakeFolderClient) ListAll(_ context.Context, ns string, opts resource.L
 
 // newTestService builds a Service with the folder client already injected, bypassing the lazy
 // generator that needs a live apiserver.
-func newTestService(store reconcilerStore, folders folderPatcher) *Service {
+func newTestService(store syncerStore, folders folderPatcher) *Service {
 	return &Service{
 		store: store,
 		// One namespace per org, so tests can target a single org's folder calls (see
@@ -142,7 +142,7 @@ func folderWithLabels(name string, labels map[string]string) *folderv1.Folder {
 
 func TestMarkDirty(t *testing.T) {
 	t.Run("deduplicates keys and skips invalid ones", func(t *testing.T) {
-		s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
+		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 
 		s.markDirty([]models.FolderKey{
 			{OrgID: 1, UID: "a"},
@@ -161,7 +161,7 @@ func TestMarkDirty(t *testing.T) {
 	t.Run("does not block when no worker is draining", func(t *testing.T) {
 		// The wake channel holds one token and signal() is a non-blocking send. markDirty runs on the
 		// goroutine that wrote the rules, so a blocking send here would stall rule writes.
-		s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
+		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 
 		done := make(chan struct{})
 		go func() {
@@ -179,7 +179,7 @@ func TestMarkDirty(t *testing.T) {
 	})
 
 	t.Run("take empties the set", func(t *testing.T) {
-		s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
+		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "a"}})
 
 		require.Len(t, s.take(), 1)
@@ -189,7 +189,7 @@ func TestMarkDirty(t *testing.T) {
 
 func TestHandleRuleChange(t *testing.T) {
 	t.Run("ignores events with no folder keys", func(t *testing.T) {
-		s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
+		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 
 		require.NoError(t, s.handleRuleChange(context.Background(), &store.RuleChangeEvent{
 			RuleKeys: []models.AlertRuleKey{{OrgID: 1, UID: "rule"}},
@@ -198,7 +198,7 @@ func TestHandleRuleChange(t *testing.T) {
 	})
 
 	t.Run("queues the event's folder keys", func(t *testing.T) {
-		s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
+		s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 
 		require.NoError(t, s.handleRuleChange(context.Background(), &store.RuleChangeEvent{
 			FolderKeys: []models.FolderKey{{OrgID: 1, UID: "a"}, {OrgID: 1, UID: "b"}},
@@ -207,16 +207,16 @@ func TestHandleRuleChange(t *testing.T) {
 	})
 }
 
-func TestReconcile(t *testing.T) {
+func TestPartialSync(t *testing.T) {
 	key := models.FolderKey{OrgID: 1, UID: "folder-1"}
 
 	t.Run("adds the label when a folder gains rules", func(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
 			"folder-1": folderWithLabels("folder-1", map[string]string{"unrelated": "keep"}),
 		}}
-		s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
+		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 
-		require.NoError(t, s.reconcile(context.Background(), key))
+		require.NoError(t, s.partialSync(context.Background(), key))
 
 		require.Len(t, folders.patches, 1)
 		require.Equal(t, []resource.PatchOperation{{
@@ -231,9 +231,9 @@ func TestReconcile(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
 			"folder-1": folderWithLabels("folder-1", nil),
 		}}
-		s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 2}}, folders)
+		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 2}}, folders)
 
-		require.NoError(t, s.reconcile(context.Background(), key))
+		require.NoError(t, s.partialSync(context.Background(), key))
 
 		require.Len(t, folders.patches, 1)
 		require.Equal(t, []resource.PatchOperation{{
@@ -247,9 +247,9 @@ func TestReconcile(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
 			"folder-1": folderWithLabels("folder-1", map[string]string{HasRulesLabel: "true"}),
 		}}
-		s := newTestService(&fakeReconcilerStore{}, folders)
+		s := newTestService(&fakeSyncerStore{}, folders)
 
-		require.NoError(t, s.reconcile(context.Background(), key))
+		require.NoError(t, s.partialSync(context.Background(), key))
 
 		require.Len(t, folders.patches, 1)
 		require.Equal(t, []resource.PatchOperation{{
@@ -272,9 +272,9 @@ func TestReconcile(t *testing.T) {
 				folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
 					"folder-1": folderWithLabels("folder-1", tc.labels),
 				}}
-				s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": tc.count}}, folders)
+				s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": tc.count}}, folders)
 
-				require.NoError(t, s.reconcile(context.Background(), key))
+				require.NoError(t, s.partialSync(context.Background(), key))
 				require.Empty(t, folders.patches, "expected no patch when state already matches")
 			})
 		}
@@ -282,22 +282,22 @@ func TestReconcile(t *testing.T) {
 
 	t.Run("is a no-op when the folder is already deleted", func(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{}}
-		s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
+		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 
-		require.NoError(t, s.reconcile(context.Background(), key))
+		require.NoError(t, s.partialSync(context.Background(), key))
 		require.Empty(t, folders.patches)
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
 		t.Run("counting rules", func(t *testing.T) {
-			s := newTestService(&fakeReconcilerStore{err: errors.New("boom")}, &fakeFolderClient{})
-			require.ErrorContains(t, s.reconcile(context.Background(), key), "count rules in folder")
+			s := newTestService(&fakeSyncerStore{err: errors.New("boom")}, &fakeFolderClient{})
+			require.ErrorContains(t, s.partialSync(context.Background(), key), "count rules in folder")
 		})
 
 		t.Run("getting the folder", func(t *testing.T) {
 			folders := &fakeFolderClient{getErr: errors.New("boom")}
-			s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
-			require.ErrorContains(t, s.reconcile(context.Background(), key), "get folder")
+			s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
+			require.ErrorContains(t, s.partialSync(context.Background(), key), "get folder")
 		})
 
 		t.Run("patching the folder", func(t *testing.T) {
@@ -305,8 +305,8 @@ func TestReconcile(t *testing.T) {
 				folders:  map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
 				patchErr: errors.New("boom"),
 			}
-			s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
-			require.ErrorContains(t, s.reconcile(context.Background(), key), "patch folder label")
+			s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
+			require.ErrorContains(t, s.partialSync(context.Background(), key), "patch folder label")
 		})
 	})
 }
@@ -320,12 +320,12 @@ func TestHasRulesLabelPathIsEscaped(t *testing.T) {
 }
 
 func TestDrain(t *testing.T) {
-	t.Run("requeues folders that failed to reconcile", func(t *testing.T) {
+	t.Run("requeues folders that failed to sync", func(t *testing.T) {
 		folders := &fakeFolderClient{
 			folders:  map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
 			patchErr: errors.New("boom"),
 		}
-		s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
+		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
 		s.drain(context.Background())
@@ -334,11 +334,11 @@ func TestDrain(t *testing.T) {
 			"a failed folder should stay queued for the next wake-up")
 	})
 
-	t.Run("clears folders that reconciled", func(t *testing.T) {
+	t.Run("clears folders that synced", func(t *testing.T) {
 		folders := &fakeFolderClient{
 			folders: map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
 		}
-		s := newTestService(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, folders)
+		s := newTestService(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
 		s.drain(context.Background())
@@ -350,7 +350,7 @@ func TestDrain(t *testing.T) {
 		folders := &fakeFolderClient{
 			folders: map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
 		}
-		rules := &fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}
+		rules := &fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}
 		s := newTestService(rules, folders)
 		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
@@ -358,158 +358,179 @@ func TestDrain(t *testing.T) {
 		cancel()
 		s.drain(ctx)
 
-		require.Zero(t, rules.calls, "should not have started reconciling")
+		require.Zero(t, rules.calls, "should not have started syncing")
 	})
 }
 
 func TestRunStopsOnContextCancellation(t *testing.T) {
-	s := newTestService(&fakeReconcilerStore{}, &fakeFolderClient{})
+	s := newTestService(&fakeSyncerStore{}, &fakeFolderClient{})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	require.NoError(t, s.Run(ctx))
+	require.NoError(t, s.Run(ctx, nil))
 }
 
 func TestFailureMetrics(t *testing.T) {
 	// A real registry, so the assertions cover the metric names and labels actually exported.
-	newMetered := func(store reconcilerStore, folders folderPatcher) (*Service, prometheus.Gatherer) {
+	newMetered := func(store syncerStore, folders folderPatcher) (*Service, prometheus.Gatherer) {
 		reg := prometheus.NewPedanticRegistry()
 		s := newTestService(store, folders)
 		s.metrics = metrics.NewFolderLabelSyncerMetrics(reg)
 		return s, reg
 	}
 
-	t.Run("reconcile failures are counted by stage", func(t *testing.T) {
+	t.Run("partial sync failures are counted", func(t *testing.T) {
 		for _, tc := range []struct {
 			name   string
-			store  reconcilerStore
+			store  syncerStore
 			folder folderPatcher
-			reason string
 		}{
 			{
 				name:   "counting rules",
-				store:  &fakeReconcilerStore{err: errors.New("boom")},
+				store:  &fakeSyncerStore{err: errors.New("boom")},
 				folder: &fakeFolderClient{},
-				reason: metrics.ReasonCountRules,
 			},
 			{
 				name:   "getting the folder",
-				store:  &fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}},
+				store:  &fakeSyncerStore{counts: map[string]int64{"folder-1": 1}},
 				folder: &fakeFolderClient{getErr: errors.New("boom")},
-				reason: metrics.ReasonGetFolder,
 			},
 			{
 				name:  "patching the folder",
-				store: &fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}},
+				store: &fakeSyncerStore{counts: map[string]int64{"folder-1": 1}},
 				folder: &fakeFolderClient{
 					folders:  map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
 					patchErr: errors.New("boom"),
 				},
-				reason: metrics.ReasonPatchFolder,
 			},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				s, reg := newMetered(tc.store, tc.folder)
+				s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
-				require.Error(t, s.reconcile(context.Background(), models.FolderKey{OrgID: 1, UID: "folder-1"}))
+				s.drain(context.Background())
 
 				require.Equal(t, float64(1), counterValue(t, reg,
-					"grafana_alerting_folder_label_syncer_reconcile_failures_total", tc.reason))
+					"grafana_alerting_folder_label_syncer_failures_total",
+					map[string]string{"sync_type": metrics.SyncTypePartial}))
 			})
 		}
 	})
 
 	t.Run("a deleted folder is not counted as a failure", func(t *testing.T) {
-		// Get returns NotFound for unknown folders, which reconcile treats as a no-op.
-		s, reg := newMetered(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, &fakeFolderClient{})
+		// Get returns NotFound for unknown folders, which partialSync treats as a no-op -- drain sees
+		// no error and counts it as a success below, not a failure.
+		s, reg := newMetered(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, &fakeFolderClient{})
+		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
-		require.NoError(t, s.reconcile(context.Background(), models.FolderKey{OrgID: 1, UID: "folder-1"}))
+		s.drain(context.Background())
+
 		require.Zero(t, counterValue(t, reg,
-			"grafana_alerting_folder_label_syncer_reconcile_failures_total", metrics.ReasonGetFolder))
+			"grafana_alerting_folder_label_syncer_failures_total",
+			map[string]string{"sync_type": metrics.SyncTypePartial}))
 	})
 
-	t.Run("backfill failures are counted by stage", func(t *testing.T) {
-		t.Run("fetching orgs", func(t *testing.T) {
-			s, reg := newMetered(&fakeReconcilerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
+	t.Run("partial sync successes are counted per folder", func(t *testing.T) {
+		folders := &fakeFolderClient{
+			folders: map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
+		}
+		s, reg := newMetered(&fakeSyncerStore{counts: map[string]int64{"folder-1": 1}}, folders)
+		s.markDirty([]models.FolderKey{{OrgID: 1, UID: "folder-1"}})
 
-			require.Error(t, s.Backfill(context.Background(), nil))
-			require.Equal(t, float64(1), counterValue(t, reg,
-				"grafana_alerting_folder_label_syncer_backfill_failures_total", metrics.ReasonFetchOrgs))
+		s.drain(context.Background())
+
+		require.Equal(t, float64(1), counterValue(t, reg,
+			"grafana_alerting_folder_label_syncer_total", map[string]string{"sync_type": metrics.SyncTypePartial}))
+	})
+
+	t.Run("full sync failures are counted", func(t *testing.T) {
+		fullSyncFailures := func(t *testing.T, reg prometheus.Gatherer) float64 {
+			t.Helper()
+			return counterValue(t, reg,
+				"grafana_alerting_folder_label_syncer_failures_total", map[string]string{"sync_type": metrics.SyncTypeFull})
+		}
+
+		t.Run("fetching orgs", func(t *testing.T) {
+			s, reg := newMetered(&fakeSyncerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
+
+			require.Error(t, s.FullSync(context.Background(), nil))
+			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})
 
 		t.Run("listing folders with rules", func(t *testing.T) {
-			store := &fakeReconcilerStore{orgs: []int64{1}, folderUIDsErr: errors.New("boom")}
+			store := &fakeSyncerStore{orgs: []int64{1}, folderUIDsErr: errors.New("boom")}
 			s, reg := newMetered(store, &fakeFolderClient{})
 
-			// Per-org failures are tolerated, so Backfill itself succeeds.
-			require.NoError(t, s.Backfill(context.Background(), nil))
-			require.Equal(t, float64(1), counterValue(t, reg,
-				"grafana_alerting_folder_label_syncer_backfill_failures_total", metrics.ReasonListFoldersWithRule))
+			// Per-org failures are tolerated, so FullSync itself succeeds.
+			require.NoError(t, s.FullSync(context.Background(), nil))
+			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})
 
 		t.Run("listing labeled folders", func(t *testing.T) {
-			store := &fakeReconcilerStore{orgs: []int64{1}}
+			store := &fakeSyncerStore{orgs: []int64{1}}
 			s, reg := newMetered(store, &fakeFolderClient{listErr: errors.New("boom")})
 
-			require.NoError(t, s.Backfill(context.Background(), nil))
-			require.Equal(t, float64(1), counterValue(t, reg,
-				"grafana_alerting_folder_label_syncer_backfill_failures_total", metrics.ReasonListLabeledFolders))
+			require.NoError(t, s.FullSync(context.Background(), nil))
+			require.Equal(t, float64(1), fullSyncFailures(t, reg))
 		})
 	})
 
-	t.Run("backfill successes are counted per org", func(t *testing.T) {
+	t.Run("full sync successes are counted per org", func(t *testing.T) {
+		fullSyncTotal := func(t *testing.T, reg prometheus.Gatherer) float64 {
+			t.Helper()
+			return counterValue(t, reg,
+				"grafana_alerting_folder_label_syncer_total", map[string]string{"sync_type": metrics.SyncTypeFull})
+		}
+
 		t.Run("including orgs with nothing to do", func(t *testing.T) {
 			// Both orgs already agree, so nothing is queued -- but the pass still ran.
-			store := &fakeReconcilerStore{orgs: []int64{1, 2}}
+			store := &fakeSyncerStore{orgs: []int64{1, 2}}
 			s, reg := newMetered(store, &fakeFolderClient{})
 
-			require.NoError(t, s.Backfill(context.Background(), nil))
-			require.Equal(t, float64(2), gaugeOrCounter(t, reg,
-				"grafana_alerting_folder_label_syncer_backfill_successes_total"))
+			require.NoError(t, s.FullSync(context.Background(), nil))
+			require.Equal(t, float64(2), fullSyncTotal(t, reg))
 		})
 
 		t.Run("counting only the orgs that did not fail", func(t *testing.T) {
-			store := &fakeReconcilerStore{orgs: []int64{1, 2}, folderUIDs: set("folder-a")}
+			store := &fakeSyncerStore{orgs: []int64{1, 2}, folderUIDs: set("folder-a")}
 			// org-1's folder calls fail, so only org 2 succeeds.
 			folders := &fakeFolderClient{failNamespaces: map[string]struct{}{"org-1": {}}}
 			s, reg := newMetered(store, folders)
 
-			require.NoError(t, s.Backfill(context.Background(), nil))
-			require.Equal(t, float64(1), gaugeOrCounter(t, reg,
-				"grafana_alerting_folder_label_syncer_backfill_successes_total"))
+			require.NoError(t, s.FullSync(context.Background(), nil))
+			require.Equal(t, float64(1), fullSyncTotal(t, reg))
 			require.Equal(t, float64(1), counterValue(t, reg,
-				"grafana_alerting_folder_label_syncer_backfill_failures_total", metrics.ReasonListLabeledFolders))
+				"grafana_alerting_folder_label_syncer_failures_total",
+				map[string]string{"sync_type": metrics.SyncTypeFull}))
 		})
 
 		t.Run("skipped orgs are counted as neither", func(t *testing.T) {
-			store := &fakeReconcilerStore{orgs: []int64{1, 2}}
+			store := &fakeSyncerStore{orgs: []int64{1, 2}}
 			s, reg := newMetered(store, &fakeFolderClient{})
 
-			require.NoError(t, s.Backfill(context.Background(), map[int64]struct{}{2: {}}))
-			require.Equal(t, float64(1), gaugeOrCounter(t, reg,
-				"grafana_alerting_folder_label_syncer_backfill_successes_total"))
+			require.NoError(t, s.FullSync(context.Background(), map[int64]struct{}{2: {}}))
+			require.Equal(t, float64(1), fullSyncTotal(t, reg))
 		})
 
 		t.Run("not counted when org enumeration fails", func(t *testing.T) {
-			s, reg := newMetered(&fakeReconcilerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
+			s, reg := newMetered(&fakeSyncerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
 
-			require.Error(t, s.Backfill(context.Background(), nil))
-			require.Zero(t, gaugeOrCounter(t, reg,
-				"grafana_alerting_folder_label_syncer_backfill_successes_total"))
+			require.Error(t, s.FullSync(context.Background(), nil))
+			require.Zero(t, fullSyncTotal(t, reg))
 		})
 	})
 
 	t.Run("nil metrics do not panic", func(t *testing.T) {
-		s := newTestService(&fakeReconcilerStore{err: errors.New("boom")}, &fakeFolderClient{})
+		s := newTestService(&fakeSyncerStore{err: errors.New("boom")}, &fakeFolderClient{})
 		require.Nil(t, s.metrics)
 
-		require.Error(t, s.reconcile(context.Background(), models.FolderKey{OrgID: 1, UID: "folder-1"}))
+		require.Error(t, s.partialSync(context.Background(), models.FolderKey{OrgID: 1, UID: "folder-1"}))
 	})
 }
 
-// counterValue returns the value of the named counter carrying reason, or 0 if absent.
-func counterValue(t *testing.T, g prometheus.Gatherer, name, reason string) float64 {
+// counterValue returns the value of the named counter whose labels match all of want, or 0 if absent.
+func counterValue(t *testing.T, g prometheus.Gatherer, name string, want map[string]string) float64 {
 	t.Helper()
 	families, err := g.Gather()
 	require.NoError(t, err)
@@ -518,27 +539,20 @@ func counterValue(t *testing.T, g prometheus.Gatherer, name, reason string) floa
 			continue
 		}
 		for _, m := range f.GetMetric() {
+			got := make(map[string]string, len(m.GetLabel()))
 			for _, l := range m.GetLabel() {
-				if l.GetName() == "reason" && l.GetValue() == reason {
-					return m.GetCounter().GetValue()
+				got[l.GetName()] = l.GetValue()
+			}
+			matches := true
+			for k, v := range want {
+				if got[k] != v {
+					matches = false
+					break
 				}
 			}
-		}
-	}
-	return 0
-}
-
-// gaugeOrCounter returns the value of the named unlabelled metric, or 0 if absent.
-func gaugeOrCounter(t *testing.T, g prometheus.Gatherer, name string) float64 {
-	t.Helper()
-	families, err := g.Gather()
-	require.NoError(t, err)
-	for _, f := range families {
-		if f.GetName() != name {
-			continue
-		}
-		for _, m := range f.GetMetric() {
-			return m.GetCounter().GetValue()
+			if matches {
+				return m.GetCounter().GetValue()
+			}
 		}
 	}
 	return 0

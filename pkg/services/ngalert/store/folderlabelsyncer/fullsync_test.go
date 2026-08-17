@@ -65,17 +65,17 @@ func TestDiffFolderKeys(t *testing.T) {
 	}
 }
 
-func TestBackfillOrg(t *testing.T) {
+func TestFullSyncOrg(t *testing.T) {
 	t.Run("queues only the folders whose label disagrees", func(t *testing.T) {
 		// folder-a holds rules but is unlabelled; folder-c is labelled with none; folder-b agrees.
-		store := &fakeReconcilerStore{folderUIDs: set("folder-a", "folder-b")}
+		store := &fakeSyncerStore{folderUIDs: set("folder-a", "folder-b")}
 		folders := &fakeFolderClient{list: []*folderv1.Folder{
 			folderWithLabels("folder-b", map[string]string{HasRulesLabel: "true"}),
 			folderWithLabels("folder-c", map[string]string{HasRulesLabel: "true"}),
 		}}
 		s := newTestService(store, folders)
 
-		n, err := s.backfillOrg(context.Background(), 1)
+		n, err := s.fullSyncOrg(context.Background(), 1)
 		require.NoError(t, err)
 		require.Equal(t, 2, n)
 		require.ElementsMatch(t, []models.FolderKey{
@@ -85,13 +85,13 @@ func TestBackfillOrg(t *testing.T) {
 	})
 
 	t.Run("queues nothing when the org already agrees", func(t *testing.T) {
-		store := &fakeReconcilerStore{folderUIDs: set("folder-a")}
+		store := &fakeSyncerStore{folderUIDs: set("folder-a")}
 		folders := &fakeFolderClient{list: []*folderv1.Folder{
 			folderWithLabels("folder-a", map[string]string{HasRulesLabel: "true"}),
 		}}
 		s := newTestService(store, folders)
 
-		n, err := s.backfillOrg(context.Background(), 1)
+		n, err := s.fullSyncOrg(context.Background(), 1)
 		require.NoError(t, err)
 		require.Zero(t, n)
 		require.Empty(t, s.take())
@@ -99,29 +99,29 @@ func TestBackfillOrg(t *testing.T) {
 
 	t.Run("selects folders on the has-rules label", func(t *testing.T) {
 		folders := &fakeFolderClient{}
-		s := newTestService(&fakeReconcilerStore{}, folders)
+		s := newTestService(&fakeSyncerStore{}, folders)
 
-		_, err := s.backfillOrg(context.Background(), 1)
+		_, err := s.fullSyncOrg(context.Background(), 1)
 		require.NoError(t, err)
 		require.Equal(t, []string{HasRulesLabel + "=true"}, folders.lastFilter)
 	})
 
 	t.Run("surfaces errors from either side of the diff", func(t *testing.T) {
-		s := newTestService(&fakeReconcilerStore{folderUIDsErr: errors.New("boom")}, &fakeFolderClient{})
-		_, err := s.backfillOrg(context.Background(), 1)
+		s := newTestService(&fakeSyncerStore{folderUIDsErr: errors.New("boom")}, &fakeFolderClient{})
+		_, err := s.fullSyncOrg(context.Background(), 1)
 		require.ErrorContains(t, err, "list folders with rules")
 
-		s = newTestService(&fakeReconcilerStore{}, &fakeFolderClient{listErr: errors.New("boom")})
-		_, err = s.backfillOrg(context.Background(), 1)
+		s = newTestService(&fakeSyncerStore{}, &fakeFolderClient{listErr: errors.New("boom")})
+		_, err = s.fullSyncOrg(context.Background(), 1)
 		require.ErrorContains(t, err, "list labeled folders")
 	})
 }
 
-func TestBackfill(t *testing.T) {
+func TestFullSync(t *testing.T) {
 	t.Run("continues past an org that fails", func(t *testing.T) {
 		// Every org sees the same rule-holding folder and no labels, so each queues one key. The
 		// folder client fails only the first call, so org 1 errors and org 2 must still be processed.
-		store := &fakeReconcilerStore{orgs: []int64{1, 2}, folderUIDs: set("folder-a")}
+		store := &fakeSyncerStore{orgs: []int64{1, 2}, folderUIDs: set("folder-a")}
 		folders := &fakeFolderClient{
 			failNamespaces: map[string]struct{}{
 				"org-1": {},
@@ -129,31 +129,31 @@ func TestBackfill(t *testing.T) {
 		}
 		s := newTestService(store, folders)
 
-		require.NoError(t, s.Backfill(context.Background(), map[int64]struct{}{}))
+		require.NoError(t, s.FullSync(context.Background(), map[int64]struct{}{}))
 		require.Equal(t, []models.FolderKey{{OrgID: 2, UID: "folder-a"}}, s.take())
 	})
 
 	t.Run("surfaces org enumeration failure", func(t *testing.T) {
-		s := newTestService(&fakeReconcilerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
-		require.ErrorContains(t, s.Backfill(context.Background(), map[int64]struct{}{}), "fetch orgs")
+		s := newTestService(&fakeSyncerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
+		require.ErrorContains(t, s.FullSync(context.Background(), map[int64]struct{}{}), "fetch orgs")
 	})
 
 	t.Run("stops when the context is cancelled", func(t *testing.T) {
-		store := &fakeReconcilerStore{orgs: []int64{1, 2}, folderUIDs: set("folder-a")}
+		store := &fakeSyncerStore{orgs: []int64{1, 2}, folderUIDs: set("folder-a")}
 		s := newTestService(store, &fakeFolderClient{})
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		require.ErrorIs(t, s.Backfill(ctx, map[int64]struct{}{}), context.Canceled)
+		require.ErrorIs(t, s.FullSync(ctx, map[int64]struct{}{}), context.Canceled)
 		require.Empty(t, s.take())
 	})
 
 	t.Run("skips disabled orgs", func(t *testing.T) {
-		store := &fakeReconcilerStore{orgs: []int64{1, 2, 3}, folderUIDs: set("folder-a")}
+		store := &fakeSyncerStore{orgs: []int64{1, 2, 3}, folderUIDs: set("folder-a")}
 		s := newTestService(store, &fakeFolderClient{})
 
-		require.NoError(t, s.Backfill(context.Background(), map[int64]struct{}{
+		require.NoError(t, s.FullSync(context.Background(), map[int64]struct{}{
 			3: {},
 		}))
 		require.ElementsMatch(t, []models.FolderKey{{OrgID: 1, UID: "folder-a"}, {OrgID: 2, UID: "folder-a"}}, s.take())

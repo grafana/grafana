@@ -1,19 +1,23 @@
-// Package folder_label_reconciler maintains a label on folders that contain Grafana-managed alert or recording
+// Package folderlabelsyncer maintains a label on folders that contain Grafana-managed alert or recording
 // rules, so callers can ask the folder API for "folders with rules" directly:
 //
 //	GET /apis/folder.grafana.app/v1/namespaces/{ns}/folders?labelSelector=alerting.grafana.app/has-rules=true
 //
-// It is driven by store.RuleChangeEvent on the in-process bus rather than by an informer on the rule
-// kinds. An informer is not an option today: alert rules are served by legacy storage or the dual
-// writer, neither of which implements rest.Watcher, so the apiserver never registers the watch verb
-// for them. The legacy rule store is the one point every runtime write path converges on, which is
-// why the bus event is the broadest signal available.
+// It keeps the label in step two ways: a partial sync, driven by store.RuleChangeEvent on the
+// in-process bus, reacts to a single folder's rules changing; a full sync walks every folder in an
+// org and corrects any that drifted, run once at startup and then on a timer as a backstop.
+//
+// The bus event is the broadest signal available for the partial sync rather than an informer on the
+// rule kinds, because an informer is not an option today: alert rules are served by legacy storage or
+// the dual writer, neither of which implements rest.Watcher, so the apiserver never registers the
+// watch verb for them. The legacy rule store is the one point every runtime write path converges on.
 package folderlabelsyncer
 
 import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,9 +39,15 @@ const (
 
 	// The slash in the label key is escaped as "~1" to avoid the apiserver reading it as two path segments
 	hasRulesLabelPath = "/metadata/labels/alerting.grafana.app~1has-rules"
+
+	// defaultFullSyncInterval is how often Run repeats FullSync in the background, on top of the pass
+	// it makes at startup. It is the backstop for drift a partial sync can't fix itself: a crash
+	// between a folder patch failing and being retried, or a write that reached unified storage and so
+	// never produced a bus event at all.
+	defaultFullSyncInterval = 10 * time.Minute
 )
 
-type reconcilerStore interface {
+type syncerStore interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error)
 	FetchOrgIds(ctx context.Context) ([]int64, error)
@@ -55,7 +65,7 @@ func serviceIdentity(ctx context.Context, orgID int64) (context.Context, identit
 }
 
 type Service struct {
-	store      reconcilerStore
+	store      syncerStore
 	clients    resource.ClientGenerator
 	namespacer request.NamespaceMapper
 	log        log.Logger
@@ -69,7 +79,7 @@ type Service struct {
 	folders  folderPatcher
 }
 
-func NewService(cfg *setting.Cfg, b bus.Bus, store reconcilerStore, clients resource.ClientGenerator, m *metrics.FolderLabelSyncer) *Service {
+func NewService(cfg *setting.Cfg, b bus.Bus, store syncerStore, clients resource.ClientGenerator, m *metrics.FolderLabelSyncer) *Service {
 	s := &Service{
 		store:      store,
 		clients:    clients,
@@ -83,7 +93,7 @@ func NewService(cfg *setting.Cfg, b bus.Bus, store reconcilerStore, clients reso
 	return s
 }
 
-// marks folder keys as needing reconciliation and wakes the worker to process them
+// marks folder keys as needing a partial sync and wakes the worker to process them
 func (s *Service) markDirty(keys []models.FolderKey) {
 	s.mu.Lock()
 	for _, k := range keys {
@@ -111,13 +121,27 @@ func (s *Service) signal() {
 	}
 }
 
-func (s *Service) Run(ctx context.Context) error {
+// Run performs a full sync once at startup, then processes partial syncs as rule changes wake it and
+// repeats the full sync every defaultFullSyncInterval in the background. disabledOrgs is fixed for
+// the process lifetime, so it is read once here rather than on every pass.
+func (s *Service) Run(ctx context.Context, disabledOrgs map[int64]struct{}) error {
+	if err := s.FullSync(ctx, disabledOrgs); err != nil {
+		s.log.Warn("Failed to run startup folder rules label full sync", "error", err)
+	}
+
+	ticker := time.NewTicker(defaultFullSyncInterval)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-s.wake:
 			s.drain(ctx)
+		case <-ticker.C:
+			if err := s.FullSync(ctx, disabledOrgs); err != nil {
+				s.log.Warn("Failed to run periodic folder rules label full sync", "error", err)
+			}
 		}
 	}
 }
@@ -132,18 +156,21 @@ func (s *Service) drain(ctx context.Context) {
 		if ctx.Err() != nil {
 			return
 		}
-		if err := s.reconcile(ctx, key); err != nil {
-			s.log.Warn("Failed to reconcile folder rules label",
+		if err := s.partialSync(ctx, key); err != nil {
+			s.syncFailed(metrics.SyncTypePartial)
+			s.log.Warn("Failed to sync folder rules label",
 				"org_id", key.OrgID, "folder_uid", key.UID, "error", err)
 			s.mu.Lock()
 			// re-queue failures so the next wake cycle retries them
 			s.dirty[key] = struct{}{}
 			s.mu.Unlock()
+		} else {
+			s.syncSucceeded(metrics.SyncTypePartial)
 		}
 		processed++
 	}
 
-	s.log.Info("Reconciled rules labels on folders", "count", processed)
+	s.log.Info("Synced rules labels on folders", "count", processed)
 }
 
 func (s *Service) take() []models.FolderKey {
@@ -160,39 +187,33 @@ func (s *Service) take() []models.FolderKey {
 	return keys
 }
 
-// reconcileFailed and backfillFailed record a failure against its stage. Both tolerate nil metrics so
+// syncFailed and syncSucceeded record an attempt against its sync_type. Both tolerate nil metrics so
 // a Service can be constructed without them.
-func (s *Service) reconcileFailed(reason string) {
+func (s *Service) syncFailed(syncType string) {
 	if s.metrics != nil {
-		s.metrics.ReconcileFailures.WithLabelValues(reason).Inc()
+		s.metrics.Failures.WithLabelValues(syncType).Inc()
 	}
 }
 
-func (s *Service) backfillFailed(reason string) {
+func (s *Service) syncSucceeded(syncType string) {
 	if s.metrics != nil {
-		s.metrics.BackfillFailures.WithLabelValues(reason).Inc()
+		s.metrics.Total.WithLabelValues(syncType).Inc()
 	}
 }
 
-func (s *Service) backfillSucceeded() {
-	if s.metrics != nil {
-		s.metrics.BackfillSuccesses.Inc()
-	}
-}
-
-func (s *Service) reconcile(ctx context.Context, key models.FolderKey) error {
+// partialSync brings a single folder's label in line with whether it currently holds rules. It is the
+// event-driven counterpart to FullSync, reacting to one changed folder instead of walking all of them.
+func (s *Service) partialSync(ctx context.Context, key models.FolderKey) error {
 	namespace := s.namespacer(key.OrgID)
 	ctx, user := serviceIdentity(ctx, key.OrgID)
 
 	count, err := s.store.CountInFolders(ctx, key.OrgID, []string{key.UID}, user)
 	if err != nil {
-		s.reconcileFailed(metrics.ReasonCountRules)
 		return fmt.Errorf("count rules in folder: %w", err)
 	}
 
 	folders, err := s.folderClient()
 	if err != nil {
-		s.reconcileFailed(metrics.ReasonGetFolder)
 		return err
 	}
 
@@ -201,10 +222,9 @@ func (s *Service) reconcile(ctx context.Context, key models.FolderKey) error {
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// The folder is already gone; nothing left to mark. Not counted as a failure: this is the
-			// expected outcome when a folder is deleted between the event and the reconcile.
+			// expected outcome when a folder is deleted between the event and the sync.
 			return nil
 		}
-		s.reconcileFailed(metrics.ReasonGetFolder)
 		return fmt.Errorf("get folder: %w", err)
 	}
 
@@ -224,7 +244,6 @@ func (s *Service) reconcile(ctx context.Context, key models.FolderKey) error {
 		Operations: []resource.PatchOperation{patchOperation},
 	}, resource.PatchOptions{})
 	if err != nil {
-		s.reconcileFailed(metrics.ReasonPatchFolder)
 		return fmt.Errorf("patch folder label: %w", err)
 	}
 
