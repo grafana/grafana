@@ -2,35 +2,15 @@ package state
 
 // LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Logzio state observer
 //
-// Fork convention: upstream files get at most one-line hooks that call an event method on this
-// observer (onSomethingHappened). The observer dispatches each event to one internal method per
-// piece of logzio logic. All logzio state-domain logic lives in this file, so upstream rebases
-// only ever conflict on trivial hook lines.
-//
-// The observer is observation-only by design: it logs, counts and tracks, and never changes any
-// state or behavior. Fork changes that DO alter behavior must stay as explicit, flag-gated
-// LOGZ.IO blocks in the upstream code, where a reviewer can see them.
-//
-// Current logic pieces:
-//
-//  1. Rule activity tracking: remembers when each rule was last evaluated on this pod.
-//  2. State cache compare: validation instrument for removing the per-tick full cache reload
-//     (the "targeted warm" work). The reload exists to repair cache staleness that should never
-//     occur as long as every rule is evaluated by a single pod. On every warm cycle the observer
-//     compares the freshly loaded database snapshot against the in-memory cache, for the rules
-//     this pod actually evaluates, and logs what differs.
-//
-// How to read the compare signal:
-//   - missing_in_cache / newer_in_db / value_mismatch sustained above zero: another writer touches
-//     rules this pod considers its own. The single-writer assumption does not hold. Investigate.
-//   - single-tick blips: expected. Legitimate deletes (stale series cleanup, rule reset or delete)
-//     remove rows between the snapshot read and the compare. State fields are also read without
-//     the per-rule synchronization (like every state API reader), so a torn read can produce a
-//     one-off false positive.
-//   - the compare cannot see a pod that evaluates the same rule for the same tick with identical
-//     results. That case is benign, and is measurable separately from the eval-request logs.
+// Observation-only fork component. Upstream code calls it through one-line hooks (onXHappened)
+// and all logzio state-domain observation lives in this file, so rebases only conflict on the
+// hook lines. It never changes state or behavior, and every hook recovers panics, so a bug here
+// cannot harm evaluation. Current duties: track when each rule was last evaluated on this pod,
+// and compare the warm cycle's database snapshot against the cache for those rules, logging any
+// discrepancy (expected: zero, single-tick blips aside).
 
 import (
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -41,13 +21,11 @@ import (
 )
 
 const (
-	// compareActiveWindow scopes the comparison to rules evaluated on this pod recently. Rules
-	// evaluated elsewhere have no invariant to check: the local copy is naturally one tick behind.
+	// compareActiveWindow scopes the compare to rules recently evaluated on this pod.
 	compareActiveWindow = 15 * time.Minute
 	// compareTimestampEpsilon absorbs timestamp precision loss on the database round trip.
-	// Real cross-pod divergence differs by at least one full evaluation interval.
 	compareTimestampEpsilon = time.Second
-	// compareMaxDetails caps per-cycle detail log lines so a systemic problem cannot flood the log.
+	// compareMaxDetails caps discrepancy detail log lines per cycle.
 	compareMaxDetails = 10
 )
 
@@ -71,16 +49,24 @@ func newLogzioStateObserver(logger log.Logger, clk clock.Clock, c *cache) *logzi
 
 // onRuleEvaluated is called by ProcessEvalResults for every evaluation this pod performs.
 func (o *logzioStateObserver) onRuleEvaluated(key ngModels.AlertRuleKey, evaluatedAt time.Time) {
+	defer o.recoverPanic("onRuleEvaluated")
 	o.updateRuleLastActivity(key, evaluatedAt)
 }
 
-// onWarmSnapshotLoaded is called by Warm with the freshly loaded database snapshot, right before
-// the snapshot replaces the cache.
+// onWarmSnapshotLoaded is called by Warm with the loaded snapshot, right before it replaces the cache.
 func (o *logzioStateObserver) onWarmSnapshotLoaded(snapshot map[int64]map[string]*ruleStates) {
+	defer o.recoverPanic("onWarmSnapshotLoaded")
 	o.compareSnapshotWithCache(snapshot)
 }
 
-// ---- Logic piece 1: rule activity tracking ----
+// recoverPanic keeps observer bugs harmless to the caller: the panic is logged, the observation skipped.
+func (o *logzioStateObserver) recoverPanic(event string) {
+	if r := recover(); r != nil {
+		o.log.Error("Logzio state observer panicked, skipping this observation", "event", event, "panic", r, "stack", string(debug.Stack()))
+	}
+}
+
+// ---- Rule activity tracking ----
 
 // ruleActivityTracker records when each rule was last evaluated on this pod.
 type ruleActivityTracker struct {
@@ -124,7 +110,7 @@ func (t *ruleActivityTracker) prune(cutoff time.Time) {
 	}
 }
 
-// ---- Logic piece 2: state cache compare ----
+// ---- State cache compare ----
 
 type stateCacheCompareSummary struct {
 	activeRules    int
@@ -134,9 +120,7 @@ type stateCacheCompareSummary struct {
 	valueMismatch  int
 }
 
-// compareSnapshotWithCache compares the loaded database snapshot against the current in-memory
-// cache and logs the differences. Scoped to rules recently evaluated on this pod, which also makes
-// the startup warm call a no-op (nothing was evaluated yet). Log-only, no config on purpose.
+// compareSnapshotWithCache logs how the snapshot differs from the cache for locally evaluated rules.
 func (o *logzioStateObserver) compareSnapshotWithCache(snapshot map[int64]map[string]*ruleStates) *stateCacheCompareSummary {
 	cutoff := o.clock.Now().Add(-compareActiveWindow)
 	o.ruleActivity.prune(cutoff)
@@ -159,8 +143,7 @@ func (o *logzioStateObserver) compareSnapshotWithCache(snapshot map[int64]map[st
 
 		snapshotRule := snapshot[key.OrgID][key.UID]
 		if snapshotRule == nil {
-			// The database holds nothing for this rule. Legitimate right after a rule reset or
-			// delete. Not the dangerous direction.
+			// Nothing persisted for this rule: legitimate right after a rule reset or delete.
 			continue
 		}
 		view := o.cache.getRuleStatesView(key.OrgID, key.UID)
