@@ -2,6 +2,9 @@ package awsexternalid
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"strings"
 
 	"github.com/open-feature/go-sdk/openfeature"
 
@@ -9,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+const grafanaExternalIDNonceBytes = 8
 
 const (
 	grafanaAssumeRoleAuthType         = "grafana_assume_role"
@@ -38,20 +43,40 @@ func BeforeSave(ctx context.Context, uid string, cfg *setting.Cfg, existing, jso
 	preserveGrafanaExternalID(uid, stackExternalID, existing, jsonData, allowGenerate)
 }
 
-// buildGrafanaExternalID returns "{stackExternalId}-{dsUID}".
-// The stack prefix keeps IDs unique across Cloud stacks (UIDs alone are only unique per org).
-// The datasource UID binds the ID to this datasource so a copied ID from another DS fails validation.
+// buildGrafanaExternalID returns "{stackExternalId}-{dsUID}-{16 hex}".
+// The nonce makes the ID unique per mint so delete→recreate with the same UID
+// cannot reuse a prior IAM trust binding.
 func buildGrafanaExternalID(stackExternalID, datasourceUID string) string {
-	return stackExternalID + "-" + datasourceUID
+	var b [grafanaExternalIDNonceBytes]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		for i := range b {
+			b[i] = byte(i + 1)
+		}
+	}
+	return stackExternalID + "-" + datasourceUID + "-" + hex.EncodeToString(b[:])
 }
 
-// isValidGrafanaExternalID reports whether id is bound to this stack + datasource UID.
-// Equality is used instead of splitting on "-" because stack IDs and UIDs may contain dashes.
+// isValidGrafanaExternalID reports whether id is bound to this stack + datasource UID
+// with a 16-char lowercase hex nonce. Uses HasPrefix (stack/UID may contain dashes).
 func isValidGrafanaExternalID(id, stackExternalID, datasourceUID string) bool {
 	if id == "" || stackExternalID == "" || datasourceUID == "" {
 		return false
 	}
-	return id == buildGrafanaExternalID(stackExternalID, datasourceUID)
+	prefix := stackExternalID + "-" + datasourceUID + "-"
+	if !strings.HasPrefix(id, prefix) {
+		return false
+	}
+	suffix := id[len(prefix):]
+	if len(suffix) != grafanaExternalIDNonceBytes*2 {
+		return false
+	}
+	for i := 0; i < len(suffix); i++ {
+		c := suffix[i]
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
+			return false
+		}
+	}
+	return true
 }
 
 // isGrafanaAssumeRole reports whether jsonData declares Grafana Assume Role auth, either via
