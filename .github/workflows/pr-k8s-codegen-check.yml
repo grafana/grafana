@@ -1,6 +1,7 @@
 name: "K8s Codegen Check"
 
 on:
+  workflow_dispatch:
   workflow_call:
 
 jobs:

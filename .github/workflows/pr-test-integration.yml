@@ -2,11 +2,6 @@ name: Integration Tests
 
 on:
   workflow_call:
-    inputs:
-      backend:
-        description: Whether backend code changed.
-        required: true
-        type: string
 
 permissions: {}
 
