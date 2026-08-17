@@ -153,18 +153,21 @@ func awsAssumeRolePerDatasourceExternalIDEnabled(ctx context.Context) bool {
 		featuremgmt.FlagAwsAssumeRolePerDatasourceExternalId, false, openfeature.TransactionContext(ctx))
 }
 
-// ensureGrafanaExternalID scrubs invalid client-supplied grafanaExternalId on create.
-// When allowGenerate is true and auth is grafana_assume_role:
-//   - usePerDatasourceExternalId=false → stack mode (do not mint; keep a valid dormant ID if present)
-//   - true or unset → mint when empty (new datasources default to per-DS)
-//
-// Valid client-supplied IDs for this stack+uid are kept.
+// ensureGrafanaExternalID runs on create. Clients cannot declare grafanaExternalId:
+// any client-supplied ID (native or SigV4) is discarded, then a fresh ID is minted
+// when allowGenerate and per-DS Grafana Assume Role mode apply.
 func ensureGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.Json, allowGenerate bool) {
 	if jsonData == nil {
 		return
 	}
 
-	clearInvalidGrafanaExternalID(uid, stackExternalID, jsonData)
+	idKey, _ := externalIDKeys(jsonData)
+	jsonData.Del(idKey)
+	if idKey == grafanaExternalIDJSONKey {
+		jsonData.Del(sigV4GrafanaExternalIDJSONKey)
+	} else {
+		jsonData.Del(grafanaExternalIDJSONKey)
+	}
 
 	if !allowGenerate {
 		return
@@ -173,16 +176,12 @@ func ensureGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.J
 		return
 	}
 
-	idKey, _ := externalIDKeys(jsonData)
 	modeSet, modeOn := usePerDatasourceExternalID(jsonData)
 	if modeSet && !modeOn {
 		return
 	}
 
 	if stackExternalID == "" || uid == "" {
-		return
-	}
-	if jsonData.Get(idKey).MustString() != "" {
 		return
 	}
 

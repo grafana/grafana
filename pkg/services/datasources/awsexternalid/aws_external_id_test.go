@@ -37,7 +37,6 @@ func assertPerDSID(t *testing.T, got, stack, uid string) {
 
 func TestEnsureGrafanaExternalID(t *testing.T) {
 	const uid, stack = "dsUid1", "stackABC"
-	wantID := validID(stack, uid)
 
 	t.Run("mints for new GAR datasources and sets mode true", func(t *testing.T) {
 		jd := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
@@ -46,7 +45,7 @@ func TestEnsureGrafanaExternalID(t *testing.T) {
 		assert.True(t, jd.Get(usePerDatasourceExternalIDJSONKey).MustBool())
 	})
 
-	t.Run("stack mode does not mint but keeps a valid dormant ID", func(t *testing.T) {
+	t.Run("stack mode does not mint and discards client ID on create", func(t *testing.T) {
 		empty := simplejson.NewFromAny(map[string]any{
 			"authType":                        grafanaAssumeRoleAuthType,
 			usePerDatasourceExternalIDJSONKey: false,
@@ -57,20 +56,23 @@ func TestEnsureGrafanaExternalID(t *testing.T) {
 		dormant := simplejson.NewFromAny(map[string]any{
 			"authType":                        grafanaAssumeRoleAuthType,
 			usePerDatasourceExternalIDJSONKey: false,
-			grafanaExternalIDJSONKey:          wantID,
+			grafanaExternalIDJSONKey:          validID(stack, uid),
 		})
 		ensureGrafanaExternalID(uid, stack, dormant, true)
-		assert.Equal(t, wantID, dormant.Get(grafanaExternalIDJSONKey).MustString())
+		assert.Empty(t, dormant.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("keeps a valid client-supplied ID", func(t *testing.T) {
+	t.Run("discards client-supplied ID and mints a new one", func(t *testing.T) {
+		pasted := validID(stack, uid)
 		jd := simplejson.NewFromAny(map[string]any{
 			"authType":                        grafanaAssumeRoleAuthType,
 			usePerDatasourceExternalIDJSONKey: true,
-			grafanaExternalIDJSONKey:          wantID,
+			grafanaExternalIDJSONKey:          pasted,
 		})
 		ensureGrafanaExternalID(uid, stack, jd, true)
-		assert.Equal(t, wantID, jd.Get(grafanaExternalIDJSONKey).MustString())
+		got := jd.Get(grafanaExternalIDJSONKey).MustString()
+		assertPerDSID(t, got, stack, uid)
+		assert.NotEqual(t, pasted, got)
 	})
 
 	t.Run("scrubs stolen IDs even when FT is off or auth is not GAR", func(t *testing.T) {
@@ -99,14 +101,25 @@ func TestEnsureGrafanaExternalID(t *testing.T) {
 		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("does not scrub when stack ID is empty", func(t *testing.T) {
+	t.Run("discards client ID on create even when stack ID is empty", func(t *testing.T) {
 		jd := simplejson.NewFromAny(map[string]any{
 			"authType":               grafanaAssumeRoleAuthType,
-			grafanaExternalIDJSONKey: wantID,
+			grafanaExternalIDJSONKey: validID(stack, uid),
 		})
 		ensureGrafanaExternalID(uid, "", jd, true)
-		assert.Equal(t, wantID, jd.Get(grafanaExternalIDJSONKey).MustString())
-		assert.Empty(t, jd.Get(usePerDatasourceExternalIDJSONKey).Interface())
+		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
+	})
+
+	t.Run("two creates mint different nonces for the same stack and uid", func(t *testing.T) {
+		a := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
+		b := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
+		ensureGrafanaExternalID(uid, stack, a, true)
+		ensureGrafanaExternalID(uid, stack, b, true)
+		idA := a.Get(grafanaExternalIDJSONKey).MustString()
+		idB := b.Get(grafanaExternalIDJSONKey).MustString()
+		assertPerDSID(t, idA, stack, uid)
+		assertPerDSID(t, idB, stack, uid)
+		assert.NotEqual(t, idA, idB)
 	})
 }
 
@@ -272,13 +285,35 @@ func TestEnsureGrafanaExternalID_SigV4(t *testing.T) {
 		assert.Empty(t, jd.Get(usePerDatasourceExternalIDJSONKey).Interface())
 	})
 
-	t.Run("stack mode does not mint sigV4 ID", func(t *testing.T) {
-		jd := simplejson.NewFromAny(map[string]any{
+	t.Run("stack mode does not mint and discards client sigV4 ID on create", func(t *testing.T) {
+		empty := simplejson.NewFromAny(map[string]any{
 			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
 			sigV4UsePerDatasourceExternalIDJSONKey: false,
 		})
+		ensureGrafanaExternalID(uid, stack, empty, true)
+		assert.Empty(t, empty.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+
+		dormant := simplejson.NewFromAny(map[string]any{
+			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
+			sigV4UsePerDatasourceExternalIDJSONKey: false,
+			sigV4GrafanaExternalIDJSONKey:          validID(stack, uid),
+		})
+		ensureGrafanaExternalID(uid, stack, dormant, true)
+		assert.Empty(t, dormant.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+	})
+
+	t.Run("discards client-supplied sigV4 ID and mints a new one", func(t *testing.T) {
+		pasted := validID(stack, uid)
+		jd := simplejson.NewFromAny(map[string]any{
+			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
+			sigV4UsePerDatasourceExternalIDJSONKey: true,
+			sigV4GrafanaExternalIDJSONKey:          pasted,
+		})
 		ensureGrafanaExternalID(uid, stack, jd, true)
-		assert.Empty(t, jd.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		got := jd.Get(sigV4GrafanaExternalIDJSONKey).MustString()
+		assertPerDSID(t, got, stack, uid)
+		assert.NotEqual(t, pasted, got)
+		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
 	t.Run("scrubs stolen sigV4GrafanaExternalId", func(t *testing.T) {
