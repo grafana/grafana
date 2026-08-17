@@ -3,19 +3,22 @@ package libraryelements
 import (
 	"context"
 	"sync"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 // FolderConsumer reports and deletes library elements by folder for the folder reconciler.
 type FolderConsumer struct {
 	svc    *LibraryElementService
 	repair *FolderUIDRepairService
+	log    log.Logger
 
 	// warnOnce keeps the gate from logging on every reconcile tick.
 	warnOnce sync.Once
 }
 
 func ProvideFolderConsumer(svc *LibraryElementService, repair *FolderUIDRepairService) *FolderConsumer {
-	return &FolderConsumer{svc: svc, repair: repair}
+	return &FolderConsumer{svc: svc, repair: repair, log: log.New("libraryelements.folder-consumer")}
 }
 
 func (c *FolderConsumer) Name() string { return "library-elements" }
@@ -39,5 +42,12 @@ func (c *FolderConsumer) FoldersInUse(ctx context.Context, orgID int64) ([]strin
 }
 
 func (c *FolderConsumer) DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error {
-	return c.svc.deleteLibraryElementsInFolderUIDUnchecked(ctx, orgID, folderUID)
+	identifiers, err := c.svc.deleteLibraryElementsInFolderUIDUnchecked(ctx, orgID, folderUID)
+	if err != nil {
+		return err
+	}
+	if len(identifiers) > 0 {
+		c.log.Info("Deleted library elements in deleted folder", "org_id", orgID, "folder_uid", folderUID, "count", len(identifiers), "elements", identifiers)
+	}
+	return nil
 }

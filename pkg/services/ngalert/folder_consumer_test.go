@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -44,7 +45,7 @@ func TestAlertRuleFolderConsumer(t *testing.T) {
 			{OrgID: 1, NamespaceUID: "b", UID: "r3"},
 		},
 	}}
-	c := &AlertRuleFolderConsumer{store: store}
+	c := &AlertRuleFolderConsumer{store: store, log: log.NewNopLogger()}
 
 	uids, err := c.FoldersInUse(context.Background(), 1)
 	require.NoError(t, err)

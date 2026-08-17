@@ -803,38 +803,53 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		}
 		return err
 	}
-	return l.deleteLibraryElementsInFolderUIDUnchecked(c, signedInUser.GetOrgID(), folderUID)
+	_, err := l.deleteLibraryElementsInFolderUIDUnchecked(c, signedInUser.GetOrgID(), folderUID)
+	return err
 }
 
 // deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without
 // checking folder permissions; callers must have already confirmed the folder is gone. Elements
 // still connected to a dashboard are kept and block the delete (as in the permission-checked path).
-func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c context.Context, orgID int64, folderUID string) error {
+// It returns "uid (name)" identifiers of the deleted elements, for callers that want to log them.
+func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c context.Context, orgID int64, folderUID string) ([]string, error) {
 	var elements []struct {
-		UID string `xorm:"uid"`
+		UID  string `xorm:"uid"`
+		Name string `xorm:"name"`
 	}
 	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		return session.SQL("SELECT uid FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, orgID).Find(&elements)
+		return session.SQL("SELECT uid, name FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, orgID).Find(&elements)
 	})
 	if err != nil {
-		return err
+		return nil, err
+	}
+	if len(elements) == 0 {
+		return nil, nil
 	}
 
 	serviceCtx, _ := identity.WithServiceIdentity(c, orgID)
 	for _, elem := range elements {
 		connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, orgID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if len(connectedDashboards) > 0 {
-			return model.ErrFolderHasConnectedLibraryElements
+			return nil, model.ErrFolderHasConnectedLibraryElements
 		}
 	}
 
-	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
+	identifiers := make([]string, 0, len(elements))
+	for _, elem := range elements {
+		identifiers = append(identifiers, fmt.Sprintf("%s (%s)", elem.UID, elem.Name))
+	}
+
+	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		_, err := session.Exec("DELETE FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, orgID)
 		return err
 	})
+	if err != nil {
+		return nil, err
+	}
+	return identifiers, nil
 }
 
 // folderUIDsInUse returns the distinct folder UIDs that contain library elements in the org.
