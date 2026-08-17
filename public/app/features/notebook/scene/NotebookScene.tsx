@@ -19,6 +19,7 @@ import {
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
+import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
 import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
 
 import { canEditNotebooks } from '../permissions';
@@ -78,11 +79,38 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // renders the refresh picker, so activate it here or the spec's autoRefresh interval never
       // starts. Same workaround as DashboardControls.
       let refreshPickerDeactivation: CancelActivationHandler | undefined;
-      if (this.state.hideTimeControls) {
-        refreshPickerDeactivation = this.state.refreshPicker.activate();
-      }
+      const syncRefreshPickerActivation = (state: NotebookSceneState) => {
+        refreshPickerDeactivation?.();
+        refreshPickerDeactivation = state.hideTimeControls ? state.refreshPicker.activate() : undefined;
+      };
+      syncRefreshPickerActivation(this.state);
+
+      // Re-run it whenever the picker itself is replaced: a whole-state swap (APPLY_NOTEBOOK_SPEC
+      // rebuilds the scene from a spec) hands us a new SceneRefreshPicker that nothing has activated,
+      // so a one-shot activation above would leave auto-refresh silently stopped after an edit.
+      const stateSub = this.subscribeToState((newState, prevState) => {
+        if (
+          newState.refreshPicker !== prevState.refreshPicker ||
+          newState.hideTimeControls !== prevState.hideTimeControls
+        ) {
+          syncRefreshPickerActivation(newState);
+        }
+        // Edit mode is held in two places: here, where the header reads it, and on the layout manager,
+        // where the cells do. `setState` MERGES, so a whole-state swap keeps this scene's `isEditing`
+        // while replacing `body` with a rebuilt one that has no edit state, and the header would keep
+        // saying Editing over cells that had gone read-only. Pushing it down on every change to either
+        // makes the swap safe by construction. onEnterEditMode/onExitEditMode still push it themselves,
+        // so the mode also propagates before this scene is activated.
+        if (newState.body !== prevState.body || newState.isEditing !== prevState.isEditing) {
+          newState.body.editModeChanged?.(Boolean(newState.isEditing));
+        }
+      });
+
+      const destroyMutationClient = createMutationClient(this, 'notebook');
 
       return () => {
+        destroyMutationClient();
+        stateSub.unsubscribe();
         refreshPickerDeactivation?.();
         window.__grafanaSceneContext = prevSceneContext;
       };

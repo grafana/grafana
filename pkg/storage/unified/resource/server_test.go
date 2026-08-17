@@ -1766,7 +1766,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// observing them inflates the histogram with the time elapsed since they
 	// were originally written, not the actual reaction time of this watcher.
 	// Only the post-subscription event should be counted.
-	obs, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestResource)
+	obs, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
 	require.NoError(t, err)
 	m := &dto.Metric{}
 	require.NoError(t, obs.(prometheus.Metric).Write(m))

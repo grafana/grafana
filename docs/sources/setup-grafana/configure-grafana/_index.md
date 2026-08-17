@@ -475,6 +475,8 @@ Defaults to `private`.
 
 For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqlite.org/wal.html). The default value is `false` (disabled).
 
+SQLite stores the journal mode in the database file, so a database that was opened with WAL keeps using it. Setting `wal` back to `false` puts the database into `DELETE` journal mode again on the next start.
+
 #### `query_retries`
 
 This setting applies to `sqlite` only and controls the number of times the system retries a query when the database is locked. The default value is `0` (disabled).
@@ -1722,6 +1724,10 @@ Maximum requests accepted per short interval of time for Grafana backend log ing
 #### `bot_filter_enabled`
 
 Enables the bot filter for the Grafana Faro JavaScript agent integration. Default is `false`. When enabled, it will filter out requests from known bots and crawlers.
+
+#### `track_resources`
+
+Controls which resource timings the Grafana Faro JavaScript agent tracks. Leave empty, the default, to track only `fetch` and `xhr` resource timings. Set to `true` to track all resources, including images, stylesheets, and fonts. Set to `false` to track no resource timings at all.
 
 <hr>
 

@@ -260,7 +260,9 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterInvisibleModule(modules.NATS, s.initNATSModule)
 
-	m.RegisterInvisibleModule(modules.UnifiedBackend, s.initUnifiedBackendModule(m.IsModuleEnabled(modules.StorageServer)))
+	// Same decision as resource.NewKVBackendOptions makes for wirings that do not
+	// pass it in, so both agree on which process runs the background write jobs.
+	m.RegisterInvisibleModule(modules.UnifiedBackend, s.initUnifiedBackendModule(s.cfg.StorageServicesEnabled()))
 
 	m.RegisterInvisibleModule(modules.UnifiedVectorBackend, s.initUnifiedVectorBackend(m.IsModuleEnabled(modules.StorageServer)))
 
@@ -354,11 +356,11 @@ func (s *ModuleServer) initNATSModule() (services.Service, error) {
 	).WithName(modules.NATS), nil
 }
 
-func (s *ModuleServer) initUnifiedBackendModule(storageServerEnabled bool) func() (services.Service, error) {
+func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) func() (services.Service, error) {
 	return func() (services.Service, error) {
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
-			disableStorageServices := !storageServerEnabled
+			disableStorageServices := !storageServicesEnabled
 			eDB, err := sql.ProvideResourceDB(s.cfg, nil)
 			if err != nil {
 				return nil, err
