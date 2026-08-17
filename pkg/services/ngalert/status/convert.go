@@ -10,19 +10,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
-func ptr[T any](v T) *T { return &v }
-
 // toAlertRuleStatus builds the k8s AlertRule status from the rule's instance states.
 // state/reason/health/timestamps are all derived from the state manager, so it works
 // on any node that holds the state (in-memory or DB-backed) without the scheduler.
 func toAlertRuleStatus(states []*state.State, paused bool) model.AlertRuleStatus {
 	out := model.AlertRuleStatus{}
-	out.StateReason = ptr(alertReason(states))
+	out.StateReason = new(alertReason(states))
 	if len(states) == 0 {
-		out.Health = ptr(model.AlertRuleAlertRuleHealthNotScheduled)
-		out.State = ptr(model.AlertRuleAlertRuleStateInactive)
+		out.Health = new(model.AlertRuleAlertRuleHealthNotScheduled)
+		out.State = new(model.AlertRuleAlertRuleStateInactive)
 		if paused {
-			out.Health = ptr(model.AlertRuleAlertRuleHealthPaused)
+			out.Health = new(model.AlertRuleAlertRuleHealthPaused)
 		}
 
 		return out
@@ -30,19 +28,19 @@ func toAlertRuleStatus(states []*state.State, paused bool) model.AlertRuleStatus
 
 	rs := state.StatesToRuleStatus(states)
 	out.LastEvaluationTime = &rs.EvaluationTimestamp
-	out.EvaluationDuration = ptr(rs.EvaluationDuration.Seconds())
+	out.EvaluationDuration = new(rs.EvaluationDuration.Seconds())
 	if rs.LastError != nil {
-		out.LastError = ptr(rs.LastError.Error())
+		out.LastError = new(rs.LastError.Error())
 	}
 
 	if paused {
-		out.Health = ptr(model.AlertRuleAlertRuleHealthPaused)
-		out.State = ptr(model.AlertRuleAlertRuleStateInactive)
+		out.Health = new(model.AlertRuleAlertRuleHealthPaused)
+		out.State = new(model.AlertRuleAlertRuleStateInactive)
 		return out
 	}
 
-	out.State = ptr(alertState(apiprometheus.ComputeRuleState(states)))
-	out.Health = ptr(alertHealth(rs.Health))
+	out.State = new(alertState(apiprometheus.ComputeRuleState(states)))
+	out.Health = new(alertHealth(rs.Health))
 
 	return out
 }
@@ -52,13 +50,13 @@ func toAlertRuleStatus(states []*state.State, paused bool) model.AlertRuleStatus
 // source; found is false when the scheduler isn't tracking the rule (not scheduled).
 func toRecordingRuleStatus(rs ngmodels.RuleStatus, found, paused bool) model.RecordingRuleStatus {
 	out := model.RecordingRuleStatus{
-		Health:             ptr(recordingHealth(rs.Health, paused, found)),
-		EvaluationDuration: ptr(rs.EvaluationDuration.Seconds()),
+		Health:             new(recordingHealth(rs.Health, paused, found)),
+		EvaluationDuration: new(rs.EvaluationDuration.Seconds()),
 		LastEvaluationTime: &rs.EvaluationTimestamp,
 	}
 
 	if rs.LastError != nil {
-		out.LastError = ptr(rs.LastError.Error())
+		out.LastError = new(rs.LastError.Error())
 	}
 
 	return out
