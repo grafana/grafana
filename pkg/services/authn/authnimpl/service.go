@@ -415,7 +415,12 @@ func (s *Service) GetClientConfig(ctx context.Context, name string) (authn.SSOCl
 		return nil, false
 	}
 
-	return ssoSettingsAwareClient.GetConfig(ctx), true
+	config := ssoSettingsAwareClient.GetConfig(ctx)
+	if config == nil {
+		return nil, false
+	}
+
+	return config, true
 }
 
 func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {

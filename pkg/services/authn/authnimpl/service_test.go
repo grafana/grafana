@@ -285,6 +285,16 @@ func TestServiceClientLookupsUseCallerContext(t *testing.T) {
 	assert.Same(t, expectedConfig, config)
 }
 
+func TestServiceGetClientConfigReturnsFalseWhenConfigUnavailable(t *testing.T) {
+	client := &authntest.FakeClient{ExpectedName: "auth.client.test"}
+	service := &Service{clients: map[string]authn.Client{client.Name(): client}}
+
+	config, ok := service.GetClientConfig(t.Context(), client.Name())
+
+	assert.False(t, ok)
+	assert.Nil(t, config)
+}
+
 func TestService_OrgID(t *testing.T) {
 	type TestCase struct {
 		desc          string
