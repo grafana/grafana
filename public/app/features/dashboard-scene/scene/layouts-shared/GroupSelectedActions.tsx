@@ -4,9 +4,11 @@ import { Stack } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { groupSelectionInto } from '../../actions/layout/groupSelectionInto';
 import { AddButton } from '../../sidebar/add-new/AddButton';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { type GroupTarget, type GroupingResult, isGroupableLayoutManager } from '../types/DashboardLayoutManager';
 
 const DISABLED: GroupingResult = { enabled: false };
@@ -42,7 +44,11 @@ export function GroupSelectedActions({ items }: Props) {
   const tabGrouping = manager?.canGroupSelectionInto(items, 'tab') ?? DISABLED;
 
   const group = (target: GroupTarget) => {
-    manager?.groupSelectionInto(items, target);
+    if (!manager) {
+      return;
+    }
+
+    groupSelectionInto({ source: getDashboardSceneFor(manager), items, target });
 
     if (target === 'row') {
       DashboardInteractions.trackGroupRowClick();
