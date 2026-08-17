@@ -19,6 +19,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      id-token: write
     steps:
       - name: Checkout repo
         uses: actions/checkout@v6
@@ -34,6 +35,8 @@ jobs:
 
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          remote-cache: 'true'
         if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Build backend

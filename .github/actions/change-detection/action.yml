@@ -133,6 +133,7 @@ runs:
             - '!.github/**'
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/setup-go/**'
+            - '.github/actions/setup-go-remote-cache/**'
             - '.github/actions/report-go-cache-sizes/**'
             - '.github/actions/checkout/**'
             - '**/go.mod'
@@ -151,6 +152,7 @@ runs:
             - '**.cue'
             - 'devenv/docker/blocks/*_tests/**'
             - 'scripts/ci/backend-tests/**'
+            - '.github/workflows/bootstrap-go-cache.yml'
             - 'public/app/plugins/**/plugin.json'
             - '${{ inputs.self }}'
           backend_src:
@@ -161,6 +163,7 @@ runs:
             - '!.github/**'
             - '.github/actions/setup-enterprise/**'
             - '.github/actions/setup-go/**'
+            - '.github/actions/setup-go-remote-cache/**'
             - '.github/actions/report-go-cache-sizes/**'
             - '.github/actions/checkout/**'
             - '**/go.mod'
@@ -179,6 +182,7 @@ runs:
             - '**.cue'
             - 'devenv/docker/blocks/*_tests/**'
             - 'scripts/ci/backend-tests/**'
+            - '.github/workflows/bootstrap-go-cache.yml'
             - '${{ inputs.self }}'
             - '!**_test.go'
           frontend:
