@@ -85,7 +85,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
             ? moveFirstNonEmptyFrameToFront(this.props.data)
             : this.props.data;
         const subscription = transformDataFrame([currentTransform.transformer], input).subscribe((data) => {
-          cacheFieldDisplayNames(data);
           this.setState({ transformedData: data, selectedDataFrame, dataFrameIndex }, () => subscription.unsubscribe());
         });
         return;
@@ -95,7 +94,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
 
     if (transformedData != null) {
-      cacheFieldDisplayNames(transformedData);
       this.setState({ transformedData });
     }
   }
@@ -181,7 +179,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const data = this.state.transformedData;
 
     if (!options.withFieldConfig) {
-      return applyRawFieldOverrides(data);
+      const rawOverriddenData = applyRawFieldOverrides(data);
+      cacheFieldDisplayNames(rawOverriddenData);
+      return rawOverriddenData;
     }
 
     let fieldConfigCleaned = fieldConfig ?? { defaults: {}, overrides: [] };
@@ -192,13 +192,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     // We need to apply field config as it's not done by PanelQueryRunner (even when withFieldConfig is true).
     // It's because transformers create new fields and data frames, and we need to clean field config of any table settings.
-    return applyFieldOverrides({
+    const overriddenData = applyFieldOverrides({
       data,
       theme: config.theme2,
       fieldConfig: fieldConfigCleaned,
       timeZone,
       replaceVariables: (value, scopedVars, format) => getTemplateSrv().replace(value, scopedVars, format),
     });
+    // applyFieldOverrides always clears any previously cached displayName (it can change during the
+    // override process), so caching has to happen here on its output — caching transformedData
+    // beforehand would just get wiped out again.
+    cacheFieldDisplayNames(overriddenData);
+    return overriddenData;
   }
 
   // Because we visualize this data in a table we have to remove any custom table display settings
