@@ -8,7 +8,6 @@ import { groupSelectionInto } from '../../actions/layout/groupSelectionInto';
 import { AddButton } from '../../sidebar/add-new/AddButton';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getDashboardSceneFor } from '../../utils/utils';
 import { type GroupTarget, type GroupingResult, isGroupableLayoutManager } from '../types/DashboardLayoutManager';
 
 const DISABLED: GroupingResult = { enabled: false };
@@ -48,7 +47,7 @@ export function GroupSelectedActions({ items }: Props) {
       return;
     }
 
-    groupSelectionInto({ source: getDashboardSceneFor(manager), items, target });
+    groupSelectionInto({ source: manager.getRoot(), items, target });
 
     if (target === 'row') {
       DashboardInteractions.trackGroupRowClick();

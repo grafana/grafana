@@ -1,5 +1,5 @@
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
