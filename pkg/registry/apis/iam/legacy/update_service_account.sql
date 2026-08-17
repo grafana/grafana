@@ -1,0 +1,9 @@
+UPDATE {{ .Ident .UserTable }}
+SET
+	name = {{ .Arg .Command.Name }},
+	is_disabled = {{ .Arg .Command.IsDisabled }},
+	updated = {{ .Arg .Command.Updated }}
+WHERE uid = {{ .Arg .Command.UID }} AND is_service_account
+{{ if .Command.HasPreviousUpdated }}
+  AND updated = {{ .Arg .Command.PreviousUpdated }}
+{{ end }}

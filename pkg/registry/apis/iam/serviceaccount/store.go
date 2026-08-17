@@ -2,8 +2,11 @@ package serviceaccount
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -79,7 +83,59 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 
 // Update implements rest.Updater.
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+	ctx, span := s.tracer.Start(ctx, "serviceaccount.Update")
+	defer span.End()
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	oldObj, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	newObj, err := objInfo.UpdatedObject(ctx, oldObj)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if updateValidation != nil {
+		if err := updateValidation(ctx, newObj, oldObj); err != nil {
+			return nil, false, err
+		}
+	}
+
+	saObj, ok := newObj.(*iamv0alpha1.ServiceAccount)
+	if !ok {
+		return nil, false, fmt.Errorf("expected ServiceAccount object, got %T", newObj)
+	}
+
+	updateCmd := legacy.UpdateServiceAccountCommand{
+		UID:        name,
+		Name:       saObj.Spec.Title,
+		Role:       string(saObj.Spec.Role),
+		IsDisabled: saObj.Spec.Disabled,
+	}
+	if rv := saObj.GetResourceVersion(); rv != "" {
+		ms, err := strconv.ParseInt(rv, 10, 64)
+		if err != nil {
+			return oldObj, false, apierrors.NewBadRequest(fmt.Sprintf("invalid resourceVersion %q: %v", rv, err))
+		}
+		updateCmd.PreviousUpdated = legacysql.NewDBTime(time.UnixMilli(ms).UTC())
+	}
+
+	result, err := s.store.UpdateServiceAccount(ctx, ns, updateCmd)
+	if err != nil {
+		if errors.Is(err, serviceaccounts.ErrServiceAccountUpdateConflict) {
+			return oldObj, false, apierrors.NewConflict(resource.GroupResource(), name, err)
+		}
+		return nil, false, err
+	}
+
+	iamSA := s.toSAItem(result.ServiceAccount, ns.Value)
+	return &iamSA, false, nil
 }
 
 // Create implements rest.Creater.
@@ -219,7 +275,7 @@ func (s *LegacyStore) toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.
 
 func extractPluginNameFromTitle(title string) string {
 	if strings.HasPrefix(title, serviceaccounts.ExtSvcPrefix) {
-		return strings.TrimLeft(title, serviceaccounts.ExtSvcPrefix)
+		return strings.TrimPrefix(title, serviceaccounts.ExtSvcPrefix)
 	}
 	return ""
 }

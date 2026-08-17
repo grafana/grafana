@@ -7,6 +7,14 @@ import (
 )
 
 func MutateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) error {
+	return mutateDefaults(obj)
+}
+
+func MutateOnUpdate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) error {
+	return mutateDefaults(obj)
+}
+
+func mutateDefaults(obj *iamv0alpha1.ServiceAccount) error {
 	// External service accounts have None org role by default
 	if obj.Spec.Plugin != "" && obj.Spec.Role == "" {
 		obj.Spec.Role = iamv0alpha1.ServiceAccountOrgRoleNone
