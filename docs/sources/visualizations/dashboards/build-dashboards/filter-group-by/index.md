@@ -133,14 +133,14 @@ You can also do this programmatically by returning the data frame with the appro
 
 Cross-filtering is supported for the following visualizations:
 
-| Visualization | Requires Group by |
-| ------------- | ----------------- |
-| Bar chart | no |
-| Histogram | yes |
-| State timeline | yes |
-| Status history | yes |
-| Table | no |
-| Time series | yes |
+| Visualization  | Requires Group by |
+| -------------- | ----------------- |
+| Bar chart      | no                |
+| Histogram      | yes               |
+| State timeline | yes               |
+| Status history | yes               |
+| Table          | no                |
+| Time series    | yes               |
 
 ### Apply cross-filtering
 
