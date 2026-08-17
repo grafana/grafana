@@ -1,148 +1,70 @@
 name: Bootstrap Go Cache
 
-# Makes sure one of the Go caches exists before the workflows that restore it
-# start. The probe is its own job on a small runner so the expensive half only
-# claims a full one on a miss.
-
 on:
   workflow_call:
-    inputs:
-      cache:
-        description: Which cache to warm, 'mod' or 'build'.
-        required: true
-        type: string
 
 permissions: {}
 
 jobs:
-  probe:
-    name: Warm Go ${{ inputs.cache }} cache
-    runs-on: ubuntu-x64-small
-    permissions:
-      contents: read
-    outputs:
-      hit: ${{ steps.probe.outputs.cache-hit }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-          filter: blob:none
-          sparse-checkout: |
-            .github/actions/go-cache-keys/
-            **/*.mod
-            **/*.sum
-          sparse-checkout-cone-mode: false
-
-      - name: Compute Go cache keys
-        id: keys
-        uses: ./.github/actions/go-cache-keys
-
-      - name: Is the cache already populated?
-        id: probe
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ steps.keys.outputs[format('{0}-path', inputs.cache)] }}
-          key: ${{ steps.keys.outputs[format('{0}-key', inputs.cache)] }}
-          lookup-only: true
-
-      - name: Report a miss
-        if: steps.probe.outputs.cache-hit != 'true'
-        env:
-          CACHE: ${{ inputs.cache }}
-          KEY: ${{ steps.keys.outputs[format('{0}-key', inputs.cache)] }}
-        run: echo "::warning title=Go ${CACHE} cache miss::${KEY} is not cached, building it"
-
   populate:
-    name: Populate Go ${{ inputs.cache }} cache
-    needs: probe
-    if: needs.probe.outputs.hit != 'true'
+    name: Populate Go cache
     runs-on: ubuntu-x64
     permissions:
       contents: read
-      id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
           filter: blob:none
 
-      # The enterprise half is an optimisation, so a run that cannot reach the
-      # tree saves the untagged half rather than leaving dependents with none.
       - name: Get GitHub App token
-        if: ${{ inputs.cache == 'build' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         id: get-github-app-token
-        continue-on-error: true
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
           github_app: grafana-ci-bot
 
       - name: Setup Enterprise
-        id: setup-enterprise
         if: steps.get-github-app-token.outcome == 'success'
-        continue-on-error: true
+        id: setup-enterprise
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
 
-      - name: Report a partial entry
-        if: ${{ inputs.cache == 'build' && steps.get-github-app-token.outcome != 'skipped' && steps.setup-enterprise.outcome != 'success' }}
-        run: echo "::warning title=Enterprise build cache skipped::The enterprise tree was unreachable, so the entry holds untagged packages only"
-
       - name: Setup Go
+        id: setup-go
         uses: ./.github/actions/setup-go
         with:
-          build-cache: ${{ inputs.cache == 'build' }}
-          cache-write: ${{ inputs.cache }}
+          cache-write: 'true'
 
-      - name: Use the S3 module proxy
-        id: s3-proxy
-        if: ${{ inputs.cache == 'mod' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
-        continue-on-error: true
-        uses: ./.github/actions/setup-go-remote-cache
-
-      # Leaving the settings pointing at a server that never started would fail
-      # every download, so clear them and use the public proxy.
-      - name: Fall back to the public proxy
-        if: ${{ steps.s3-proxy.outcome == 'failure' }}
-        run: |
-          set -euo pipefail
-          echo "::warning title=S3 module proxy unavailable::Downloading from the public proxy, which does not serve modules this branch has not published"
-          {
-            echo "GOPROXY="
-            echo "GOSUMDB="
-            echo "GOCACHEPROG="
-          } >> "$GITHUB_ENV"
-
-      - name: Download modules
-        if: inputs.cache == 'mod'
-        run: |
-          set -euo pipefail
-          for dir in $(go list -m -f '{{.Dir}}'); do
-            (cd "$dir" && go mod download all)
-          done
-
-      # The jobs that read this cache compile tests, which go build never does,
-      # so the warm-up runs them without running any test. Build tags and
-      # CGO_ENABLED feed the key Go computes per package, so they have to match
-      # what those jobs pass.
-      - name: Compile all packages and their tests
-        if: inputs.cache == 'build'
+      - name: Download modules and compile packages
+        if: steps.setup-go.outputs.cache-hit != 'true'
         env:
-          CGO_ENABLED: '0'
           ENTERPRISE: ${{ steps.setup-enterprise.outcome == 'success' }}
         run: |
           set -euo pipefail
-          TAGSETS=("")
+          readarray -t modules <<< "$(go list -m -f '{{.Dir}}')"
+
+          for module in "${modules[@]}"; do
+            (cd "$module" && go mod download all)
+          done
+          go install github.com/jstemmer/go-junit-report/v2@85bf4716ac1f025f2925510a9f5e9f5bb347c009
+
+          tagsets=("")
           if [ "$ENTERPRISE" = "true" ]; then
-            TAGSETS+=("enterprise")
+            tagsets+=(enterprise)
           fi
-          for tags in "${TAGSETS[@]}"; do
-            PACKAGES="$(
-              for dir in $(go list -m -f '{{.Dir}}'); do
-                (cd "$dir" && go list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./...)
-              done | grep -v '^$'
-            )"
-            echo "::group::Compiling $(echo "$PACKAGES" | wc -l) packages${tags:+ (${tags})}"
-            echo "$PACKAGES" | xargs go test -exec=true -toolexec="${GITHUB_WORKSPACE}/scripts/ci/go-compile-without-link" -vet=off -tags="$tags"
-            echo "::endgroup::"
+
+          for cgo in 0 1; do
+            for tags in "${tagsets[@]}"; do
+              for module in "${modules[@]}"; do
+                package_file="$(mktemp)"
+                (cd "$module" && go list -f '{{.ImportPath}}' ./...) > "$package_file"
+                readarray -t packages < "$package_file"
+                rm "$package_file"
+                if [ "${#packages[@]}" -gt 0 ]; then
+                  CGO_ENABLED="$cgo" go test -run '^$' -vet=off -tags="$tags" "${packages[@]}"
+                fi
+              done
+            done
           done

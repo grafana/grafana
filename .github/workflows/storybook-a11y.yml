@@ -1,22 +1,46 @@
 name: Run Storybook a11y tests
 on:
-  workflow_call:
-    inputs:
-      frontend:
-        description: Whether frontend code changed.
-        required: true
-        type: string
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 permissions: {}
 
 jobs:
+  detect-changes:
+    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    name: Detect whether code changed
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 0
+          filter: blob:none
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/storybook-a11y.yml
 
   test-storybook-a11y:
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
       id-token: write
-    if: inputs.frontend == 'true'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -54,13 +78,14 @@ jobs:
     runs-on: ubuntu-x64-small
     if: always()
     needs:
+      - detect-changes
       - test-storybook-a11y
     steps:
       - name: No frontend changes detected
-        if: inputs.frontend != 'true'
+        if: needs.detect-changes.outputs.changed != 'true'
         run: echo "No frontend changes detected, skipping storybook a11y tests"
       - name: Check test suites
-        if: inputs.frontend == 'true'
+        if: needs.detect-changes.outputs.changed == 'true'
         uses: grafana/grafana/.github/actions/check-jobs@main
         with:
           needs: ${{ toJson(needs) }}

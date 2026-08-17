@@ -1,95 +1,70 @@
 name: Setup Go
-description: Sets up a Go environment with cache-friendly defaults for the Grafana repository.
+description: Sets up Go and restores shared module and build caches.
 
 inputs:
   go-version-file:
-    description: Path to go.mod or go.work file for version detection.
+    description: Path to go.mod or go.work for Go version detection.
     required: false
-    default: 'go.mod'
+    default: go.mod
   cache:
-    description: Whether to restore the module and build caches.
-    required: false
-    default: 'true'
-  build-cache:
-    description: >-
-      Whether this job wants the build cache as well as the module cache.
+    description: Whether to restore Go module and build caches.
     required: false
     default: 'true'
   cache-write:
-    description: >-
-      Which cache this job may save: 'none', 'mod' or 'build'. Only the
-      bootstrap workflows write, and each writes one of them, so no key has
-      more than one writer. A GitHub cache entry cannot be rewritten, so a job
-      that compiles little must not be able to claim a shared key.
+    description: Whether this job may save the cache.
     required: false
-    default: 'none'
+    default: 'false'
+
+outputs:
+  cache-hit:
+    description: Whether cache for current commit was restored.
+    value: ${{ steps.cache.outputs.cache-hit }}
 
 runs:
-  using: "composite"
+  using: composite
   steps:
-    # The toolchain has to be restored before setup-go runs, or setup-go
-    # downloads the pinned version instead of finding it in the tool cache.
-    - name: Compute Go cache keys
+    - name: Compute Go cache key
       id: keys
       if: inputs.cache == 'true'
       uses: ./.github/actions/go-cache-keys
       with:
         go-version-file: ${{ inputs.go-version-file }}
 
-    - name: Restore the Go toolchain
-      if: inputs.cache == 'true' && inputs.cache-write != 'mod'
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ steps.keys.outputs.toolchain-path }}
-        key: ${{ steps.keys.outputs.toolchain-key }}
-        fail-on-cache-miss: true
-
-    - name: Restore and save the Go toolchain
-      if: inputs.cache == 'true' && inputs.cache-write == 'mod'
-      uses: actions/cache@v4
-      with:
-        path: ${{ steps.keys.outputs.toolchain-path }}
-        key: ${{ steps.keys.outputs.toolchain-key }}
-
-    - uses: actions/setup-go@v6.5.0
-      id: go
+    - name: Setup Go
+      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
       with:
         go-version-file: ${{ inputs.go-version-file }}
         cache: false
 
-    - name: Restore module cache
-      if: inputs.cache == 'true' && inputs.cache-write != 'mod'
-      uses: actions/cache/restore@v4
+    - name: Restore Go cache
+      id: cache-restore
+      if: inputs.cache == 'true' && inputs.cache-write != 'true'
+      uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
       with:
-        path: ${{ steps.keys.outputs.mod-path }}
-        key: ${{ steps.keys.outputs.mod-key }}
-        restore-keys: ${{ steps.keys.outputs.mod-restore-key }}
-        fail-on-cache-miss: true
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: ${{ steps.keys.outputs.key }}
+        restore-keys: ${{ steps.keys.outputs.restore-key }}
 
-    - name: Restore and save module cache
-      if: inputs.cache == 'true' && inputs.cache-write == 'mod'
-      uses: actions/cache@v4
+    - name: Restore and save Go cache
+      id: cache-save
+      if: inputs.cache == 'true' && inputs.cache-write == 'true'
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
       with:
-        path: ${{ steps.keys.outputs.mod-path }}
-        key: ${{ steps.keys.outputs.mod-key }}
-        restore-keys: ${{ steps.keys.outputs.mod-restore-key }}
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: ${{ steps.keys.outputs.key }}
+        restore-keys: ${{ steps.keys.outputs.restore-key }}
 
-    - name: Restore build cache
-      if: inputs.cache == 'true' && inputs.build-cache == 'true' && inputs.cache-write != 'build'
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ steps.keys.outputs.build-path }}
-        key: ${{ steps.keys.outputs.build-key }}
-        restore-keys: ${{ steps.keys.outputs.build-restore-key }}
-        fail-on-cache-miss: true
-
-    - name: Restore and save build cache
-      if: inputs.cache == 'true' && inputs.cache-write == 'build'
-      uses: actions/cache@v4
-      with:
-        path: ${{ steps.keys.outputs.build-path }}
-        key: ${{ steps.keys.outputs.build-key }}
-        restore-keys: ${{ steps.keys.outputs.build-restore-key }}
+    - id: cache
+      if: inputs.cache == 'true'
+      shell: bash
+      env:
+        RESTORE_HIT: ${{ steps.cache-restore.outputs.cache-hit }}
+        SAVE_HIT: ${{ steps.cache-save.outputs.cache-hit }}
+      run: echo "cache-hit=${RESTORE_HIT:-$SAVE_HIT}" >> "$GITHUB_OUTPUT"
 
     - name: Report Go cache sizes
       if: inputs.cache == 'true'
