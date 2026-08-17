@@ -26,7 +26,10 @@ export class PanelDataTransformer extends SceneDataTransformer {
     // which is bound to the source panel. Dropping it here is what keeps a duplicated panel on its own plugin's transformations.
     super({ ...state, systemTransformations: undefined });
 
-    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelPluginTransformations, false)) {
+    // Gating installation keeps the base class's identity-preserving fast path for everyone the
+    // feature is off for. The operator re-reads the flag on every emission, so this check only
+    // decides whether the operator exists — never whether it applies.
+    if (!pluginTransformationsEnabled()) {
       return;
     }
 
@@ -54,6 +57,12 @@ export class PanelDataTransformer extends SceneDataTransformer {
   private _runPluginTransformations: CustomTransformOperator = (ctx) => (source) =>
     source.pipe(
       switchMap((frames) => {
+        // Re-read rather than reuse the constructor's result: flag values change over a session, so
+        // caching one would leave the toggle unable to stop a panel it already applies to.
+        if (!pluginTransformationsEnabled()) {
+          return of(frames);
+        }
+
         const panel = getAncestorVizPanel(this);
 
         if (!panel || frames.length === 0) {
@@ -115,6 +124,10 @@ export class PanelDataTransformer extends SceneDataTransformer {
       this._subs.add(pluginLoadSub);
     }
   }
+}
+
+function pluginTransformationsEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelPluginTransformations, false);
 }
 
 /**

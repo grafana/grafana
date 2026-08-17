@@ -168,6 +168,26 @@ describe('PanelDataTransformer', () => {
     expect(transformer.state.data?.series === series).toBe(true);
   });
 
+  it('stops applying plugin transformations when the toggle is turned off mid-session', async () => {
+    registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+
+    const { transformer } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
+    activateFullSceneTree(transformer);
+
+    await waitFor(() => {
+      expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toEqual(['time', 'line', 'labels', 'level']);
+    });
+
+    // The flag is read per emission rather than cached at construction, so turning it off has to
+    // take effect on a panel that is already applying them — without reconstructing the scene.
+    setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: false });
+    transformer.reprocessTransformations();
+
+    await waitFor(() => {
+      expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toEqual(['time', 'line', 'labels']);
+    });
+  });
+
   it('passes data through unchanged when the plugin registers no transformations', async () => {
     registerPlugin('plain');
 
