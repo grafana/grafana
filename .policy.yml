@@ -639,7 +639,6 @@ approval_rules:
           - ^scripts\/ci\/backend-tests\/(?:(?:[^/]*(?:/|$))*)$
           - ^devenv\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.github\/actions\/setup-go\/(?:(?:[^/]*(?:/|$))*)$
-          - ^\.github\/actions\/setup-go-remote-cache\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.github\/actions\/setup-enterprise\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.github\/workflows\/pr-test-integration\.yml$
       file_not_deleted:

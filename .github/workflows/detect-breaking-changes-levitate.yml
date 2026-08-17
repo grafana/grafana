@@ -2,19 +2,23 @@
 ---
 name: Levitate / Detect breaking changes in PR
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions: {}
 
 on:
-  workflow_call:
-    inputs:
-      frontend-packages:
-        description: Whether frontend packages changed.
-        required: true
-        type: string
+  pull_request:
+    paths:
+      - 'packages/**'
+      - '.nvmrc'
+      - '.github/workflows/detect-breaking-changes-levitate.yml'
+    branches:
+      - 'main'
+
 jobs:
   buildPR:
-    if: inputs.frontend-packages == 'true'
     name: Build PR packages artifacts
     runs-on: ubuntu-arm64
     defaults:
@@ -55,7 +59,6 @@ jobs:
           path: './pr/pr_built_packages.zip'
 
   buildBase:
-    if: inputs.frontend-packages == 'true'
     name: Build Base packages artifacts
     runs-on: ubuntu-arm64
     permissions:
@@ -193,7 +196,6 @@ jobs:
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
           github_app: grafana-pr-automation
-          permission_set: pr-automation
 
       - uses: actions/checkout@v5
         with:

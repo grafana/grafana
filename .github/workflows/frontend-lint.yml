@@ -1,35 +1,50 @@
 name: Lint Frontend
 on:
-  workflow_call:
-    inputs:
-      frontend:
-        description: Whether frontend code changed.
-        required: true
-        type: string
-      docs:
-        description: Whether documentation changed.
-        required: true
-        type: string
-      frontend-packages:
-        description: Whether frontend packages changed.
-        required: true
-        type: string
-      frontend-dependencies:
-        description: Whether frontend dependencies changed.
-        required: true
-        type: string
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 permissions: {}
 
 jobs:
+  detect-changes:
+    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    name: Detect whether code changed
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.frontend }}
+      prettier: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.docs == 'true' }}
+      changed-frontend-packages: ${{ steps.detect-changes.outputs.frontend-packages }}
+      changed-frontend-dependencies: ${{ steps.detect-changes.outputs.frontend-dependencies }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 0
+          filter: blob:none
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/frontend-lint.yml
 
   lint-frontend-prettier:
+    needs: detect-changes
     permissions:
       contents: read
       id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `lint-frontend-prettier-enterprise` workflow will run instead
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && (inputs.frontend == 'true' || inputs.docs == 'true')
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.prettier == 'true'
     name: Lint
     runs-on: ubuntu-x64
     steps:
@@ -43,11 +58,12 @@ jobs:
     - run: yarn run prettier:check
     - run: yarn run lint
   lint-frontend-prettier-enterprise:
+    needs: detect-changes
     permissions:
       contents: read
       id-token: write
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && (inputs.frontend == 'true' || inputs.docs == 'true')
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.prettier == 'true'
     name: Lint
     runs-on: ubuntu-x64
     steps:
@@ -70,12 +86,13 @@ jobs:
     - run: yarn run prettier:check
     - run: yarn run lint
   lint-frontend-typecheck:
+    needs: detect-changes
     permissions:
       contents: read
       id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `lint-frontend-typecheck-enterprise` workflow will run instead
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && inputs.frontend == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
     runs-on: ubuntu-x64
     env:
@@ -91,11 +108,12 @@ jobs:
     - run: yarn run typecheck
     - run: yarn run typecheck:smoke
   lint-frontend-typecheck-enterprise:
+    needs: detect-changes
     permissions:
       contents: read
       id-token: write
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && inputs.frontend == 'true'
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
     runs-on: ubuntu-x64
     env:
@@ -150,9 +168,10 @@ jobs:
             exit 1
         fi
   lint-frontend-openapi:
+    needs: detect-changes
     # Run this workflow for OSS only, and only when frontend code or this workflow
     # file has changed (skips unrelated .github/** changes).
-    if: inputs.frontend == 'true'
+    if: needs.detect-changes.outputs.changed == 'true'
     permissions:
       contents: read
       id-token: write
@@ -225,10 +244,11 @@ jobs:
             exit 1
         fi
   lint-frontend-packed-packages:
+    needs: detect-changes
     permissions:
       contents: read
       id-token: write
-    if: github.event_name != 'pull_request' || inputs.frontend-packages == 'true'
+    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.changed-frontend-packages == 'true'
     name: Verify packed frontend packages
     runs-on: ubuntu-x64
     steps:
@@ -247,10 +267,11 @@ jobs:
     - name: Validate packages
       run: ./scripts/validate-npm-packages.sh
   lint-circular-dependencies:
+    needs: detect-changes
     permissions:
       contents: read
       id-token: write
-    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && inputs.frontend == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && needs.detect-changes.outputs.changed == 'true'
     name: Check circular dependencies
     runs-on: ubuntu-x64
     steps:
@@ -317,8 +338,10 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    needs:
+      - detect-changes
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && inputs.frontend == 'true'
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     steps:
     - uses: actions/checkout@v5
       with:
@@ -340,7 +363,9 @@ jobs:
       run: yarn run knip
 
   yarn-install-validation:
-    if: inputs.frontend-dependencies == 'true'
+    needs:
+      - detect-changes
+    if: needs.detect-changes.outputs.changed-frontend-dependencies == 'true'
     runs-on: ubuntu-x64
     name: Validate yarn install
     permissions:

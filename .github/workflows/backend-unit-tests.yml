@@ -76,12 +76,8 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      - name: Set up remote Go cache
-        uses: ./.github/actions/setup-go-remote-cache
       - name: Setup Go
         uses: ./.github/actions/setup-go
-        with:
-          build-cache: 'false'
 
       # Prepare what we need to upload test results
       - run: echo "RESULTS_FILE=$(date --rfc-3339=seconds --utc | sed -s 's/ /-/g')_${SHARD/\//_}.xml" >> "$GITHUB_ENV"
