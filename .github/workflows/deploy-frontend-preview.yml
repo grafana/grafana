@@ -197,6 +197,9 @@ jobs:
           path: public/build
           service_account: github-gf-frontend-preview-dev@grafanalabs-workload-identity.iam.gserviceaccount.com
           parent: false
+          # The action's default ACL is rejected by the bucket's uniform
+          # bucket-level access. Public read comes from an IAM binding instead.
+          predefinedAcl: ""
 
       - name: Upload manifests to switch the preview to this build
         uses: grafana/shared-workflows/actions/push-to-gcs@main
@@ -207,6 +210,7 @@ jobs:
           path: preview-manifest
           service_account: github-gf-frontend-preview-dev@grafanalabs-workload-identity.iam.gserviceaccount.com
           parent: false
+          predefinedAcl: ""
 
       - name: Set preview URL
         id: preview-url
