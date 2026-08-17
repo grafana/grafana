@@ -148,8 +148,8 @@ describe('<DashboardVariablesList />', () => {
       });
 
       test('clicking the delete button triggers confirmation modal', async () => {
-        const { visibleVar1 } = buildTestVariables();
         const publishSpy = jest.spyOn(appEvents, 'publish');
+        const { visibleVar1 } = buildTestVariables();
         const { user, getByText, getByTestId } = renderVariablesList([visibleVar1]);
         const key = visibleVar1.state.key ?? visibleVar1.state.name;
 

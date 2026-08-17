@@ -23,7 +23,7 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 jest.mock('../../settings/annotations/actions', () => ({
-  annotationEditActions: { addAnnotation: jest.fn() },
+  annotationEditActions: { addAnnotation: jest.fn(), duplicateAnnotation: jest.fn() },
 }));
 
 jest.mock('app/core/hooks/useQueryParams', () => ({
@@ -188,7 +188,6 @@ describe('User interactions', () => {
   describe('annotation list interactions', () => {
     test('clicking the edit button selects the annotation in the pane', async () => {
       const { visibleEnabled } = buildTestAnnotations();
-
       const { user, getByText, getByTestId, elements } = await renderAnnotationsList([visibleEnabled]);
       const key = visibleEnabled.state.key ?? visibleEnabled.state.name;
 
@@ -199,9 +198,8 @@ describe('User interactions', () => {
     });
 
     test('clicking the delete button triggers confirmation modal', async () => {
-      const { visibleEnabled } = buildTestAnnotations();
       const publishSpy = jest.spyOn(appEvents, 'publish');
-
+      const { visibleEnabled } = buildTestAnnotations();
       const { user, getByText, getByTestId } = await renderAnnotationsList([visibleEnabled]);
       const key = visibleEnabled.state.key ?? visibleEnabled.state.name;
 
@@ -213,8 +211,7 @@ describe('User interactions', () => {
 
     test('clicking the duplicate button creates a duplicate annotation', async () => {
       const { visibleEnabled } = buildTestAnnotations();
-
-      const { user, getByText, getByTestId, elements } = await renderAnnotationsList([visibleEnabled]);
+      const { user, getByText, getByTestId } = await renderAnnotationsList([visibleEnabled]);
       const key = visibleEnabled.state.key ?? visibleEnabled.state.name;
 
       await user.hover(getByText(visibleEnabled.state.name));
@@ -222,12 +219,7 @@ describe('User interactions', () => {
         getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(key))
       );
 
-      expect(annotationEditActions.addAnnotation).toHaveBeenCalledWith({
-        source: elements.dataLayerSet,
-        addedObject: expect.objectContaining({
-          state: expect.objectContaining({ name: `${visibleEnabled.state.name} - Copy` }),
-        }),
-      });
+      expect(annotationEditActions.duplicateAnnotation).toHaveBeenCalledWith(visibleEnabled);
     });
   });
 

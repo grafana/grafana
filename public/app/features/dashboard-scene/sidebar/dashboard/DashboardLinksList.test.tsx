@@ -119,8 +119,8 @@ describe('<DashboardLinksList />', () => {
         expect(openEditLinkPane).toHaveBeenCalledWith(elements.dashboardScene, 0);
       });
       test('clicking on delete button triggers confirmation modal', async () => {
-        const { visibleLink1 } = buildLinks();
         const publishSpy = jest.spyOn(appEvents, 'publish');
+        const { visibleLink1 } = buildLinks();
         const { user, getByText, getByTestId } = renderLinksList([visibleLink1]);
 
         await user.hover(getByText(visibleLink1.title));

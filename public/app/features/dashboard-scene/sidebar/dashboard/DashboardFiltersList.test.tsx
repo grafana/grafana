@@ -117,8 +117,8 @@ describe('<DashboardFiltersList />', () => {
       });
 
       test('clicking the delete button triggers confirmation modal', async () => {
-        const { visibleFilter1 } = buildTestFilters();
         const publishSpy = jest.spyOn(appEvents, 'publish');
+        const { visibleFilter1 } = buildTestFilters();
         const { user, getByText, getByTestId } = renderFiltersList([visibleFilter1]);
         const key = visibleFilter1.state.key ?? visibleFilter1.state.name;
 
