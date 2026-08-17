@@ -9,6 +9,8 @@ Prefer the smallest change that fixes the reported issue.
 Call out InfluxQL/SQL identifier quirks (dotted names, quoting) when relevant.
 Do not refactor unrelated modules in the same pass.
 After a fix, say how to verify (test, query, or manual check).
+For behavior changes, add/update automated tests (see `.cursor/rules/testing-coverage.mdc`).
+For user-visible UI changes, also attach before/after screenshots or recordings (see `.cursor/rules/visual-verification.mdc`).
 Open a GitHub PR (draft is enough) for the change; do not leave it on a local branch.
 Fill `.github/PULL_REQUEST_TEMPLATE.md` in the PR body.
 Stay in this Grafana tree. Do not switch repos to implement a ticket.

@@ -18,6 +18,21 @@ After restore, remove the `jira-ticket-e2e` skill if it is present. That skill
 is built live in the next session; it must not be waiting in `.cursor/skills`
 when the run starts.
 
+## Repository rules are part of the baseline (preserve them)
+
+The workspace rules that govern how agents work — including
+`.cursor/rules/testing-coverage.mdc`, `.cursor/rules/visual-verification.mdc`,
+`.cursor/rules/new-eng-onboarding.mdc`, and `.github/PULL_REQUEST_TEMPLATE.md` —
+are committed into the `dotted-identifiers/baseline` commit. A hard reset to that
+tag therefore restores them intact; that is the mechanism, so do not try to
+"protect" them with copies or stashes.
+
+Never delete, weaken, or revert these rules while restoring. After the reset,
+confirm they are present and unchanged (see step 6). If a reset ever leaves them
+missing or reverted to an older/weaker version, the baseline tag is stale — stop
+and report it rather than hand-editing the rules; the tag needs to be moved to a
+commit that includes them.
+
 ## Baseline refs
 
 Resolve refs in this order:
@@ -90,11 +105,18 @@ back to To Do is enough for the next In Progress transition to fire again.
    If `git status` then shows a deletion of `jira-ticket-e2e`, leave it
    deleted. Do not `git restore` that path.
 
-5. Confirm the fix ref is still available for the next cycle:
+5. Confirm the fix ref is still available for the next cycle, and confirm the
+   workspace rules survived the reset (they live in the baseline commit):
 
    ```bash
    git rev-parse dotted-identifiers/fix
+   git status --short .cursor/rules .github/PULL_REQUEST_TEMPLATE.md   # expect empty
+   test -f .cursor/rules/testing-coverage.mdc && echo 'rules present'
    ```
+
+   If `git status` shows those paths modified or `testing-coverage.mdc` is
+   missing, the baseline tag is stale — stop and report; do not patch the rules
+   by hand.
 
 6. Move every Jira board item back to To Do (do this; do not only remind
    the user):
@@ -111,14 +133,39 @@ back to To Do is enough for the next In Progress transition to fire again.
    Git restore is complete even if a Jira call fails. Report any keys that
    could not be moved so the user can fix them by hand.
 
-7. List leftover local work and tell the user what to close out:
-   - `git branch --list | grep -v -E 'main|fix/influx-dotted-identifiers'` —
-     list branches created during the run; suggest deleting ones that are done.
-   - `git stash list` — flag stashes that should be dropped or applied.
-   - Remind the user to decline/cancel any stale Cloud Agents from the run
-     and to close leftover draft PRs on the fork/remote if any were opened.
-   - The Cursor Automation and the Jira "Send web request" rule stay in place;
-     do not delete them.
+7. Clear leftover local work and stale pull requests (do this; do not only
+   remind the user). Stale ticket-fix PRs left open across runs are confusing
+   in the next demo, so close them here.
+
+   1. Local branches: delete branches created during the run, keeping only
+      `main` and `fix/influx-dotted-identifiers`:
+
+      ```bash
+      git branch --list | grep -v -E '^\*|(^|\s)(main|fix/influx-dotted-identifiers)$'
+      ```
+
+   2. Stale PRs: list open PRs and close the ones that came from this or a prior
+      restore-eligible run — the per-ticket fix PRs (e.g. `agent/KAN-*`,
+      `sql/*`, `cursor/*` heads for KAN-6..KAN-9) — and delete their remote
+      branches:
+
+      ```bash
+      gh pr list --repo <owner>/<repo> --state open
+      gh pr close <n> --repo <owner>/<repo> --delete-branch \
+        --comment "Demo restore: closing stale ticket PR; ticket is back on the To Do board."
+      ```
+
+      Do **not** close PRs the user is deliberately curating. Unless the invoking
+      chat says otherwise, preserve the KAN-10 and KAN-11 PRs, any already-merged
+      rules/hygiene PR, and any clearly unrelated PR (e.g. provisioning). If a PR
+      is ambiguous, list it and ask before closing rather than closing it.
+
+   3. `git stash list` — flag stashes that should be dropped or applied; drop
+      ones created by the run if the user confirms.
+
+   4. Remind the user to decline/cancel any stale Cloud Agents from the run.
+      The Cursor Automation and the Jira "Send web request" rule stay in place;
+      do not delete them.
 
 8. Start the local Grafana server (do this; do not only remind the user).
    Do **not** stop it as part of this skill — the user will kill it later.
@@ -142,6 +189,8 @@ back to To Do is enough for the next In Progress transition to fire again.
    - working tree state (`git status --short` should be empty except an
      expected deletion of `jira-ticket-e2e` if that skill was in HEAD)
    - confirm `.cursor/skills/jira-ticket-e2e` is absent
+   - confirm the workspace rules are present (`testing-coverage.mdc`,
+     `visual-verification.mdc`) and any stale ticket PRs were closed
    - every Jira key on the board and its status after the reset
    - Grafana URL `http://localhost:3000/` and login `admin` / `admin`
    - how to attach: `tmux attach -t grafana-backend` /
