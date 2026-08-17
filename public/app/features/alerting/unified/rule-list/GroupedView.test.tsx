@@ -57,6 +57,18 @@ describe('RuleList - GroupedView', () => {
     expect(within(mimirSection).getByRole('treeitem', { name: 'test-group-1 10s' })).toBeInTheDocument();
   });
 
+  it.each(['the Prometheus Alerting plugin manages data source-managed rules', 'DMA is disabled in the Grafana UI'])(
+    'should not render data source-managed rule sections when %s',
+    async () => {
+      render(<GroupedView showDataSourceManagedRules={false} />);
+
+      await waitFor(() => {
+        expect(ui.dsSection(/Mimir/).query()).not.toBeInTheDocument();
+      });
+      expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
+    }
+  );
+
   it('should paginate through groups', async () => {
     const { user } = render(<GroupedView />);
 

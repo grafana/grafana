@@ -30,7 +30,11 @@ const SIDEBAR_WIDTH = 250;
  * Persistent filter sidebar for the alert rule list v2.
  * All filters apply immediately on change; rule name applies on blur or Enter.
  */
-export function RulesFilterSidebar() {
+interface RulesFilterSidebarProps {
+  showDataSourceManagedRules?: boolean;
+}
+
+export function RulesFilterSidebar({ showDataSourceManagedRules = true }: RulesFilterSidebarProps) {
   const styles = useStyles2(getStyles);
   const { hasActiveFilters, clearAll, searchQuery, filterState } = useRulesFilter();
 
@@ -44,7 +48,11 @@ export function RulesFilterSidebar() {
         </Stack>
         {/* key remounts the form when the URL changes externally (top bar, clearAll, navigation)
             so defaultValues always reflect the current URL state — no sync effects needed */}
-        <FilterSidebarForm key={searchQuery} filterState={filterState} />
+        <FilterSidebarForm
+          key={searchQuery}
+          filterState={filterState}
+          showDataSourceManagedRules={showDataSourceManagedRules}
+        />
       </Stack>
     </div>
   );
@@ -52,9 +60,10 @@ export function RulesFilterSidebar() {
 
 interface FilterSidebarFormProps {
   filterState: RulesFilter;
+  showDataSourceManagedRules: boolean;
 }
 
-function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
+function FilterSidebarForm({ filterState, showDataSourceManagedRules }: FilterSidebarFormProps) {
   const styles = useStyles2(getStyles);
 
   const { updateFilters } = useRulesFilter();
@@ -101,7 +110,8 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
     }
   }
 
-  const { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder } = useNamespaceAndGroupOptions();
+  const { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder } =
+    useNamespaceAndGroupOptions(showDataSourceManagedRules);
   const { labelOptions } = useLabelOptions();
   const dataSourceOptions = useAlertingDataSourceOptions();
 
@@ -260,69 +270,76 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                       label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
                       value: RuleSource.Grafana,
                     },
-                    {
-                      label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
-                      value: RuleSource.DataSource,
-                    },
+                    ...(showDataSourceManagedRules
+                      ? [
+                          {
+                            label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
+                            value: RuleSource.DataSource,
+                          },
+                        ]
+                      : []),
                   ]}
                 />
               )}
             />
           </SidebarField>
 
-          <SidebarField
-            label={
-              <Stack gap={0.5} alignItems="center">
-                <span>
-                  <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
-                </span>
-                <Tooltip
-                  content={
-                    <div>
-                      <p>
-                        <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
-                          Data sources containing configured alert rules are Mimir or Loki data sources where alert
-                          rules are stored and evaluated in the data source itself.
-                        </Trans>
-                      </p>
-                      <p>
-                        <Trans i18nKey="alerting.rules-filter.manage-alerts">
-                          In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
-                          alert rules in the Grafana UI as well as in the data source where they were configured.
-                        </Trans>
-                      </p>
-                    </div>
-                  }
-                >
-                  <Icon
-                    name="info-circle"
-                    size="sm"
-                    title={t(
-                      'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
-                      'Search by data sources help'
-                    )}
+          {showDataSourceManagedRules && (
+            <SidebarField
+              label={
+                <Stack gap={0.5} alignItems="center">
+                  <span>
+                    <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
+                  </span>
+                  <Tooltip
+                    content={
+                      <div>
+                        <p>
+                          <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
+                            Data sources containing configured alert rules are Mimir or Loki data sources where alert
+                            rules are stored and evaluated in the data source itself.
+                          </Trans>
+                        </p>
+                        <p>
+                          <Trans i18nKey="alerting.rules-filter.manage-alerts">
+                            In these data sources, you can select Manage alerts via Alerting UI to be able to manage
+                            these alert rules in the Grafana UI as well as in the data source where they were
+                            configured.
+                          </Trans>
+                        </p>
+                      </div>
+                    }
+                  >
+                    <Icon
+                      name="info-circle"
+                      size="sm"
+                      title={t(
+                        'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
+                        'Search by data sources help'
+                      )}
+                    />
+                  </Tooltip>
+                </Stack>
+              }
+            >
+              <Controller
+                name="dataSourceNames"
+                control={control}
+                render={({ field }) => (
+                  <MultiCombobox
+                    options={dataSourceOptions}
+                    value={field.value}
+                    onChange={(selections) => {
+                      const dataSourceNames = selections.map((s) => s.value);
+                      field.onChange(dataSourceNames);
+                      applyFormValues({ dataSourceNames });
+                    }}
+                    placeholder={t('alerting.rules-filter.placeholder-data-sources', 'Select data sources')}
                   />
-                </Tooltip>
-              </Stack>
-            }
-          >
-            <Controller
-              name="dataSourceNames"
-              control={control}
-              render={({ field }) => (
-                <MultiCombobox
-                  options={dataSourceOptions}
-                  value={field.value}
-                  onChange={(selections) => {
-                    const dataSourceNames = selections.map((s) => s.value);
-                    field.onChange(dataSourceNames);
-                    applyFormValues({ dataSourceNames });
-                  }}
-                  placeholder={t('alerting.rules-filter.placeholder-data-sources', 'Select data sources')}
-                />
-              )}
-            />
-          </SidebarField>
+                )}
+              />
+            </SidebarField>
+          )}
         </SidebarSection>
 
         <div className={styles.divider} />

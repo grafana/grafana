@@ -33,6 +33,8 @@ function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
   const showImportToGMABanner = useShowImportToGMARulesBanner();
+  const { status: dmaStatus } = useDMAStatus();
+  const showDataSourceManagedRules = dmaStatus === DMAStatus.ManagedByGrafana;
 
   return (
     <Stack direction="column">
@@ -40,12 +42,16 @@ function RuleList() {
       <Stack direction="column" gap={2}>
         <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
         <Stack direction="row" grow={1} minHeight={0}>
-          <RulesFilterSidebar />
+          <RulesFilterSidebar showDataSourceManagedRules={showDataSourceManagedRules} />
           <Box flex={1} minWidth={0} paddingLeft={2}>
             {viewMode === 'list' ? (
-              <FilterView filterState={filterState} />
+              <FilterView filterState={filterState} showDataSourceManagedRules={showDataSourceManagedRules} />
             ) : (
-              <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+              <GroupedView
+                groupFilter={filterState.groupName}
+                namespaceFilter={filterState.namespace}
+                showDataSourceManagedRules={showDataSourceManagedRules}
+              />
             )}
           </Box>
         </Stack>

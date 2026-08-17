@@ -19,11 +19,15 @@ const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 interface GroupedViewProps {
   groupFilter?: string;
   namespaceFilter?: string;
+  showDataSourceManagedRules?: boolean;
 }
 
-export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) {
+export function GroupedView({ groupFilter, namespaceFilter, showDataSourceManagedRules = true }: GroupedViewProps) {
   const hasFilters = Boolean(groupFilter || namespaceFilter);
-  const externalRuleSources = useMemo(() => getExternalRulesSources(), []);
+  const externalRuleSources = useMemo(
+    () => (showDataSourceManagedRules ? getExternalRulesSources() : []),
+    [showDataSourceManagedRules]
+  );
 
   // Use custom hook for centralized state management
   const { updateState, loadingDataSources } = useDataSourceLoadingStates();
