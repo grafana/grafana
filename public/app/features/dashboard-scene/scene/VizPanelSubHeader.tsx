@@ -3,6 +3,7 @@ import { type Unsubscribable } from 'rxjs';
 import {
   type SceneComponentProps,
   type SceneObjectState,
+  SceneDataTransformer,
   SceneObjectBase,
   sceneGraph,
   AdHocFiltersVariable,
@@ -160,7 +161,9 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
   public getQueryRunner() {
     const panel = this.parent;
     const dataObject = panel ? sceneGraph.getData(panel) : undefined;
-    const queryRunner = dataObject?.state.$data;
+    // A panel with queries but no transformations has the query runner as its `$data`, and
+    // `getData` then returns the runner itself — unwrapping unconditionally would lose it.
+    const queryRunner = dataObject instanceof SceneDataTransformer ? dataObject.state.$data : dataObject;
 
     if (!queryRunner || !(queryRunner instanceof SceneQueryRunner)) {
       return null;
