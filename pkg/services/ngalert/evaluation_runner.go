@@ -79,6 +79,7 @@ func (r *evaluationRunner) startEvaluation(ctx context.Context) {
 			r.ng.Log.New("ngalert.status.syncer"),
 			r.ng.Metrics.GetStatusSyncerMetrics(),
 			r.ng.clientGenerator,
+			r.ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		)
 		// Best-effort: swallow the syncer's return so it can never cancel the evaluation
 		// errgroup (and thereby stop the scheduler). It still stops with gCtx on demotion.

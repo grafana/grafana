@@ -47,13 +47,14 @@ type StatusReader interface {
 // Syncer periodically computes rule-level status and writes it to the AlertRule/
 // RecordingRule /status subresource so the app-platform resources expose it.
 type Syncer struct {
-	orgs       OrgStore
-	states     StateReader
-	status     StatusReader // in-memory scheduler; the only source of recording-rule status
-	namespacer request.NamespaceMapper
-	interval   time.Duration
-	log        log.Logger
-	metrics    *ngmetrics.StatusSyncer
+	orgs         OrgStore
+	disabledOrgs map[int64]struct{}
+	states       StateReader
+	status       StatusReader // in-memory scheduler; the only source of recording-rule status
+	namespacer   request.NamespaceMapper
+	interval     time.Duration
+	log          log.Logger
+	metrics      *ngmetrics.StatusSyncer
 
 	// Clients are built lazily on first sync: the ClientGenerator blocks until the
 	// apiserver is ready, so building them in NewSyncer would stall the evaluation
@@ -68,9 +69,10 @@ type Syncer struct {
 	lastHash map[ngmodels.AlertRuleKey]uint64
 }
 
-func NewSyncer(orgs OrgStore, states StateReader, status StatusReader, namespacer request.NamespaceMapper, interval time.Duration, logger log.Logger, metrics *ngmetrics.StatusSyncer, clientGenerator resource.ClientGenerator) *Syncer {
+func NewSyncer(orgs OrgStore, states StateReader, status StatusReader, namespacer request.NamespaceMapper, interval time.Duration, logger log.Logger, metrics *ngmetrics.StatusSyncer, clientGenerator resource.ClientGenerator, disabledOrgs map[int64]struct{}) *Syncer {
 	return &Syncer{
 		orgs:            orgs,
+		disabledOrgs:    disabledOrgs,
 		states:          states,
 		status:          status,
 		namespacer:      namespacer,
@@ -134,6 +136,10 @@ func (s *Syncer) sync(ctx context.Context) error {
 		return fmt.Errorf("fetch org ids: %w", err)
 	}
 	for _, orgID := range orgIDs {
+		// skip disabled orgs
+		if _, ok := s.disabledOrgs[orgID]; ok {
+			continue
+		}
 		s.syncOrg(ctx, orgID)
 	}
 	return nil
