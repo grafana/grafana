@@ -213,11 +213,27 @@ func TestPreserveGrafanaExternalID(t *testing.T) {
 		assert.Empty(t, ordinary.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("keeps a valid client correction when stored ID is invalid", func(t *testing.T) {
-		existing := garExisting(stolen)
+	t.Run("mints instead of adopting client ID when stored ID is invalid", func(t *testing.T) {
+		existing := garExisting("")
+		clientPaste := validID(stack, uid)
 		updated := simplejson.NewFromAny(map[string]any{
-			"authType":               grafanaAssumeRoleAuthType,
-			grafanaExternalIDJSONKey: wantID,
+			"authType":                        grafanaAssumeRoleAuthType,
+			usePerDatasourceExternalIDJSONKey: true,
+			grafanaExternalIDJSONKey:          clientPaste,
+		})
+		preserveGrafanaExternalID(uid, stack, existing, updated, true)
+		got := updated.Get(grafanaExternalIDJSONKey).MustString()
+		assertPerDSID(t, got, stack, uid)
+		assert.NotEqual(t, clientPaste, got)
+	})
+
+	t.Run("does not adopt a different valid client ID when stored ID exists", func(t *testing.T) {
+		existing := garExisting(wantID)
+		other := validID(stack, uid)
+		updated := simplejson.NewFromAny(map[string]any{
+			"authType":                        grafanaAssumeRoleAuthType,
+			usePerDatasourceExternalIDJSONKey: true,
+			grafanaExternalIDJSONKey:          other,
 		})
 		preserveGrafanaExternalID(uid, stack, existing, updated, true)
 		assert.Equal(t, wantID, updated.Get(grafanaExternalIDJSONKey).MustString())

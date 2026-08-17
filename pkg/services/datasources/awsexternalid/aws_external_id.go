@@ -254,8 +254,9 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 		}
 		return
 	}
-	// Invalid/empty stored ID is not re-applied. clearInvalid already removed bad payload
-	// values; a valid client correction is left intact for the mint checks below.
+	// Invalid/empty stored ID is not re-applied. Do not let a client-supplied
+	// value skip minting by looking "already set".
+	updated.Del(idKey)
 
 	if !allowGenerate {
 		return
