@@ -406,6 +406,17 @@ export class PanelPlugin<
   }
 
   /**
+   * Whether the plugin registered transformations at all, without running the supplier. Answers the
+   * data-independent half of the question, which {@link getDataTransformations} cannot: it needs
+   * frames, and a supplier is free to return none for a given set of them.
+   *
+   * @internal
+   */
+  hasDataTransformations() {
+    return this.dataTransformationsSupplier !== undefined;
+  }
+
+  /**
    * Allows specifying which standard field config options panel should use and defining default values
    *
    * @example

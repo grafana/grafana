@@ -66,7 +66,7 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
       isLoading={data?.state === LoadingState.Loading}
       data={data?.series}
       options={options}
-      hasTransformations={hasTransformations(dataProvider)}
+      hasTransformations={hasTransformations(dataProvider, panel)}
       timeZone={timeRange.getTimeZone()}
       panelPluginId={panel.state.pluginId}
       dataName={sceneGraph.interpolate(panel, panel.state.title)}
@@ -77,12 +77,20 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
   );
 }
 
-function hasTransformations(dataProvider: SceneDataProvider) {
-  if (dataProvider instanceof SceneDataTransformer) {
-    return dataProvider.state.transformations.length > 0;
+/**
+ * Whether anything at all transforms this panel's data, so the toggle that switches the tab between
+ * the query result and the rendered frames is worth offering. A panel whose plugin registered
+ * transformations and whose user list is empty still renders frames the query did not return.
+ *
+ * Not `getEffectiveTransformations()`: that carries the plugin-transformation operator for every
+ * panel once the feature is enabled, so it would offer the toggle even where nothing transforms.
+ */
+function hasTransformations(dataProvider: SceneDataProvider, panel: VizPanel) {
+  if (!(dataProvider instanceof SceneDataTransformer)) {
+    return false;
   }
 
-  return false;
+  return dataProvider.state.transformations.length > 0 || (panel.getPlugin()?.hasDataTransformations() ?? false);
 }
 
 function getDataProviderToSubscribeTo(dataProvider: SceneDataProvider, withTransforms: boolean) {
