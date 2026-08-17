@@ -93,10 +93,10 @@
       "link": "palette.blue400"
     },
     "border": {
-      "faint": "palette.ink800",
-      "weak": "palette.ink750",
-      "medium": "palette.ink700",
-      "strong": "palette.ink600"
+      "faint": "palette.ink750",
+      "weak": "palette.ink700",
+      "medium": "palette.ink650",
+      "strong": "palette.ink550"
     },
     "gradients": {
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
