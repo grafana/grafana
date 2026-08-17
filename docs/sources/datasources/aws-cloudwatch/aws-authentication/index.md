@@ -135,6 +135,14 @@ The trust policy names the shared Grafana AWS account as the trusted principal, 
 
 For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
 
+{{< admonition type="note" >}}
+When you use a per-data source external ID with Grafana Assume Role:
+
+- **Generation:** Grafana generates the external ID when you save the data source.
+- **Copy to IAM:** Copy the value from the data source **Settings** tab after save into your IAM role trust policy.
+- **Delete and recreate:** If you delete and recreate a data source, even with the same UID, Grafana generates a new external ID. Update your IAM trust policy to match.
+{{< /admonition >}}
+
 To use the Grafana Assume Role:
 
 1. Create a new CloudWatch data source (or update an existing one) and select **Grafana Assume Role** as an authentication provider.
