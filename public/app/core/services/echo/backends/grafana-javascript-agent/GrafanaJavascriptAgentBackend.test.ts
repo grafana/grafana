@@ -85,7 +85,6 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     userIdentifier: 'abc123',
     ignoreUrls: [],
     botFilterEnabled: false,
-    trackResources: false,
   };
 
   it('will set up FetchTransport if customEndpoint is provided', () => {
@@ -174,10 +173,16 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     );
   });
 
-  it('passes trackResources through to Faro', () => {
-    new GrafanaJavascriptAgentBackend({ ...options, trackResources: true });
+  // Faro treats trackResources as tri-state, so undefined must stay undefined rather
+  // than collapsing to false, which would disable resource timings entirely.
+  it.each([
+    ['unset', undefined],
+    ['true', true],
+    ['false', false],
+  ])('passes trackResources=%s through to Faro unchanged', (_name, trackResources) => {
+    new GrafanaJavascriptAgentBackend({ ...options, trackResources });
 
-    expect(initializeFaroMock.mock.calls[0][0].trackResources).toBe(true);
+    expect(initializeFaroMock.mock.calls[0][0].trackResources).toBe(trackResources);
   });
 
   it('should use a beforeSend handler', () => {

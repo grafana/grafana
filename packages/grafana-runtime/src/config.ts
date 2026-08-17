@@ -8,6 +8,7 @@ import {
   type BuildInfo,
   type DataSourceInstanceSettings,
   type FeatureToggles,
+  type GrafanaJavascriptAgentConfig,
   type GrafanaTheme,
   type GrafanaTheme2,
   type LicenseInfo,
@@ -156,7 +157,7 @@ export class GrafanaBootConfig {
   supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
-  grafanaJavascriptAgent = {
+  grafanaJavascriptAgent: GrafanaJavascriptAgentConfig = {
     enabled: false,
     apiKey: '',
     customEndpoint: '',
@@ -166,7 +167,6 @@ export class GrafanaBootConfig {
     tracingInstrumentalizationEnabled: false,
     internalLoggerLevel: 0,
     botFilterEnabled: false,
-    trackResources: false,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;

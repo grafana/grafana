@@ -1727,7 +1727,7 @@ Enables the bot filter for the Grafana Faro JavaScript agent integration. Defaul
 
 #### `track_resources`
 
-Enables tracking of all resource timings for the Grafana Faro JavaScript agent. Default is `false`. When disabled, only `fetch` and `xhr` resource timings are tracked.
+Controls which resource timings the Grafana Faro JavaScript agent tracks. Leave empty, the default, to track only `fetch` and `xhr` resource timings. Set to `true` to track all resources, including images, stylesheets, and fonts. Set to `false` to track no resource timings at all.
 
 <hr>
 

@@ -18,5 +18,5 @@ export interface GrafanaJavascriptAgentBackendOptions {
   userIdentifier: string;
   ignoreUrls: RegExp[];
   botFilterEnabled: boolean;
-  trackResources: boolean;
+  trackResources?: boolean;
 }
