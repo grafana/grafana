@@ -15,7 +15,7 @@ const mockUsePanelContext = jest.mocked(usePanelContext);
 describe('usePanelScopedVars', () => {
   it('returns scoped vars whose __sceneObject resolves to the panel from context', () => {
     const panel = new VizPanel({ key: 'panel-1' });
-    mockUsePanelContext.mockReturnValue({ panel, transformations: [] });
+    mockUsePanelContext.mockReturnValue({ panel, transformations: [], systemTransformations: [] });
 
     const { result } = renderHook(() => usePanelScopedVars());
 

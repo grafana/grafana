@@ -284,6 +284,7 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultPanelState: PanelState = {
     panel: new VizPanel({ key: 'panel-1' }),
     transformations,
+    systemTransformations: [],
     ...panelState,
   };
 

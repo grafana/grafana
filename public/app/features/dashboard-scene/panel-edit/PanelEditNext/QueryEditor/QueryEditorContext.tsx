@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useContext } from 'react';
 
 import {
+  type CustomTransformOperator,
   type DataQueryError,
   type DataSourceApi,
   type DataSourceInstanceSettings,
@@ -50,6 +51,12 @@ export interface AlertingState {
 export interface PanelState {
   panel: VizPanel;
   transformations: Transformation[];
+  /**
+   * Transformations the panel's plugin requires, which run ahead of `transformations` and are not
+   * editable. Needed by anything that reconstructs what a user transformation receives: they are
+   * deliberately absent from `transformations`, so replaying that list alone starts a stage late.
+   */
+  systemTransformations: Array<DataTransformerConfig | CustomTransformOperator>;
 }
 
 export interface QueryOptionsState {
