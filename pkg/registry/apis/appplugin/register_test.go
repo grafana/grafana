@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -150,10 +149,6 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 	newBuilder := func(pluginID string) *AppPluginAPIBuilder {
 		return &AppPluginAPIBuilder{
 			pluginJSON: plugins.JSONData{ID: pluginID},
-			groupVersion: schema.GroupVersion{
-				Group:   pluginID,
-				Version: apppluginV0.VERSION,
-			},
 		}
 	}
 
