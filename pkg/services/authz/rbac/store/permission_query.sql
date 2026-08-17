@@ -1,4 +1,4 @@
-SELECT {{ if not .Query.Action }} p.action, {{ end }} p.kind, p.attribute, p.identifier, p.scope FROM {{ .Ident .PermissionTable }} as p
+SELECT{{ if not .Query.Action }} p.action,{{ end }} p.kind, p.attribute, p.identifier, p.scope FROM {{ .Ident .PermissionTable }} as p
 INNER JOIN (
   SELECT role_id FROM {{ .Ident .BuiltinRoleTable }} as br WHERE (br.role = {{ .Arg .Query.Role }} AND (br.org_id = {{ .Arg .Query.OrgID }} OR br.org_id = 0))
     {{ if .Query.IsServerAdmin }}
