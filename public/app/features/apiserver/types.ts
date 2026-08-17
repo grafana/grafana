@@ -95,7 +95,12 @@ export const AnnoReloadOnParamsChange = 'grafana.app/reloadOnParamsChange';
 /**
  * JSON annotation listing predefined (global/folder) variables to exclude from injection.
  * Value shape: a JSON array of strings (sentinels and/or exact variable names).
- * Absent or `[]` → inject all. `["*"]` → inject none.
+ * Absent or `["*"]` → inject none (opt-out by default).
+ * `[]` → inject all (explicit opt-in). As-code must set this key to opt in; omitting it does not inject.
+ *
+ * Kept as a denylist (not allowlist) so “all except X” stays `["X"]` / sentinels. An allowlist
+ * would require listing every other name, and new org/folder variables would not appear until
+ * each dashboard’s list was updated.
  */
 export const AnnoKeyIgnorePredefinedVariables = 'grafana.app/ignorePredefinedVariables';
 

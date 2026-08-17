@@ -370,14 +370,13 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		return nil // OK for now
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
-	// Reachability invariant: this case only fires when the apiserver routes
-	// a request to the v2beta1 Variable storage, which is registered in
-	// UpdateAPIGroupInfo behind FlagGlobalDashboardVariables. No other
-	// dashboard.grafana.app version registers a standalone Variable resource,
-	// so without the flag the apiserver has no route and admission never
-	// dispatches here. If Variable is ever added to another version or moved
-	// to a subresource, update both the storage registration and this switch
-	// in lockstep.
+	// Reachability invariant: Variable storage is always registered, but
+	// FlagGrafanaDashboardGlobalVariables is gated per request in GetAuthorizer. When
+	// the feature is disabled the authorizer denies the request (403) before
+	// admission runs, so this case only fires when global dashboard variables
+	// are enabled. If Variable is ever added to another version or moved to a
+	// subresource, update both the storage registration and this switch in
+	// lockstep.
 	case dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create:
@@ -977,27 +976,27 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagGlobalDashboardVariables) {
-		opts.StorageOptsRegister(dashv2beta1.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
-			EnableFolderSupport: true,
-		})
+	// Variable storage is always registered so FlagGrafanaDashboardGlobalVariables can
+	// be evaluated per request (and targeted per tenant) via OpenFeature in the
+	// authorizer, without requiring a restart. See GetAuthorizer.
+	opts.StorageOptsRegister(dashv2beta1.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
+		EnableFolderSupport: true,
+	})
 
-		gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
-			opts.Scheme,
-			dashv2beta1.VariableResourceInfo,
-			opts.OptsGetter,
-			grafanaregistry.SelectableFieldsOptions{
-				GetAttrs: VariableGetAttrs,
-			},
-		)
-		if err != nil {
-			return err
-		}
-
-		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
-		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
+	gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+		opts.Scheme,
+		dashv2beta1.VariableResourceInfo,
+		opts.OptsGetter,
+		grafanaregistry.SelectableFieldsOptions{
+			GetAttrs: VariableGetAttrs,
+		},
+	)
+	if err != nil {
+		return err
 	}
+
+	variableStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+	variableStorage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 
 	// Notebook storage is always registered so FlagDashboardNotebooks can be
 	// evaluated per request (and targeted per tenant) via OpenFeature in the
@@ -1455,9 +1454,11 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
-	// Notebooks defer to the service authorizer when the feature is enabled, so
-	// the notebook authorizer wraps that same instance as its fallback.
+	// Notebooks and variables defer to the service authorizer when their
+	// features are enabled, so each feature authorizer wraps that same
+	// instance as its fallback.
 	notebookAuthorizer := newNotebookAuthorizer(serviceAuthorizer)
+	variableAuthorizer := newVariableAuthorizer(serviceAuthorizer)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -1465,6 +1466,8 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				switch attr.GetResource() {
 				case dashv2beta1.NotebookResourceInfo.GetName():
 					return notebookAuthorizer.Authorize(ctx, attr)
+				case dashv2beta1.VariableResourceInfo.GetName():
+					return variableAuthorizer.Authorize(ctx, attr)
 				case dashv0.SnapshotResourceInfo.GetName():
 					return snapshotAuthorizer.Authorize(ctx, attr)
 				}

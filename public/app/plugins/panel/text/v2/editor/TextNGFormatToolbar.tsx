@@ -7,7 +7,7 @@ import { Stack, ToolbarButton } from '@grafana/ui';
 
 import { TextMode } from '../../panelcfg.gen';
 
-import { insertAtCursor, toggleLinePrefix, toggleSurround } from './editorCommands';
+import { insertAtCursor, toggleLinePrefix, toggleOrderedList, toggleSurround } from './editorCommands';
 
 const TABLE_SNIPPET = '\n| Column | Column |\n| ------ | ------ |\n| Value  | Value  |\n';
 
@@ -101,7 +101,7 @@ function getFormatActions(mode: TextMode): FormatAction[] {
       key: 'numbered-list',
       tooltip: t('textng.editor.tooltip-numbered-list', 'Numbered list'),
       icon: 'list-ol',
-      run: (view) => toggleLinePrefix(view, '1. '),
+      run: (view) => toggleOrderedList(view),
     },
     {
       key: 'checklist',

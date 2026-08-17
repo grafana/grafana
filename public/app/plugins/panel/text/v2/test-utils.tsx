@@ -1,32 +1,41 @@
 import { render } from '@testing-library/react';
 
-import { type CoreApp, dateTime, EventBusSrv, LoadingState } from '@grafana/data';
+import { type CoreApp, type DataFrame, dateTime, EventBusSrv, LoadingState } from '@grafana/data';
+import { setTemplateSrv } from '@grafana/runtime';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { TextMode } from '../panelcfg.gen';
 
 import { type Props, TextNGPanel } from './TextNGPanel';
 
+// Edit mode builds variable suggestions from the template service.
+setTemplateSrv({
+  getVariables: () => [],
+  replace: (target = '') => target,
+  containsTemplate: () => false,
+  updateTimeRange: () => {},
+});
+
+/** Panel data carrying the given frames, for the render-mode cases. */
+export function createData(series: DataFrame[] = [{ fields: [], length: 0 }]): Props['data'] {
+  return {
+    state: LoadingState.Done,
+    series,
+    timeRange: {
+      from: dateTime('2022-01-01T15:55:00Z'),
+      to: dateTime('2022-07-12T15:55:00Z'),
+      raw: {
+        from: 'now-15m',
+        to: 'now',
+      },
+    },
+  };
+}
+
 export function createProps(replaceVariables: Props['replaceVariables'], overrides: Partial<Props> = {}): Props {
   return {
     id: 1,
-    data: {
-      state: LoadingState.Done,
-      series: [
-        {
-          fields: [],
-          length: 0,
-        },
-      ],
-      timeRange: {
-        from: dateTime('2022-01-01T15:55:00Z'),
-        to: dateTime('2022-07-12T15:55:00Z'),
-        raw: {
-          from: 'now-15m',
-          to: 'now',
-        },
-      },
-    },
+    data: createData(),
     timeRange: {
       from: dateTime('2022-07-11T15:55:00Z'),
       to: dateTime('2022-07-12T15:55:00Z'),

@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
@@ -532,4 +533,25 @@ func TestVectorAllowedCollections(t *testing.T) {
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.VectorAllowedInternalCollections)
 		assert.Equal(t, []string{"ext.example.com/my-things"}, cfg.VectorAllowedExternalCollections)
 	})
+}
+
+func TestStorageServicesEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		target []string
+		want   bool
+	}{
+		{target: nil, want: true},
+		{target: []string{"all"}, want: true},
+		{target: []string{"storage-server"}, want: true},
+		{target: []string{"core", "storage-server"}, want: true},
+		{target: []string{"core"}, want: false},
+		{target: []string{"search-server"}, want: false},
+	} {
+		t.Run(strings.Join(tc.target, ","), func(t *testing.T) {
+			cfg := NewCfg()
+			cfg.Target = tc.target
+
+			assert.Equal(t, tc.want, cfg.StorageServicesEnabled())
+		})
+	}
 }

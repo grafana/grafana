@@ -6,7 +6,7 @@ import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
   RoutingTreeSelector,
 } from '@grafana/alerting/unstable';
-import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';

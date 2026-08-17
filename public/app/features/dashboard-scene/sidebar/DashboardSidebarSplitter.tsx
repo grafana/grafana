@@ -284,7 +284,7 @@ function getStyles(theme: GrafanaTheme2) {
       // Clip-bleed: top padding + matching negative margin cancel out visually but extend the
       // clip box under the controls bar, so top-row selection outlines aren't sheared off. The
       // bar paints over the overlap — see DashboardControlsChrome.
-      padding: theme.spacing(1, 1, 2, 2),
+      padding: theme.spacing(1.125, 1, 2, 2),
       marginTop: theme.spacing(-1),
     }),
     scrollContainerNoSidebar: css({

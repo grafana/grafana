@@ -1,17 +1,20 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
-import { CodeLanguage, TextMode } from '../panelcfg.gen';
+import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { type Props, TextNGPanel } from './TextNGPanel';
-import { createProps, renderPanel } from './test-utils';
+import { createData, createProps, renderPanel } from './test-utils';
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
+  // The stubbed editor never runs completions; the source itself is covered by
+  // editor/variableCompletion.test.ts.
+  createVariableCompletionSource: () => () => null,
   CodeMirrorEditor: ({
     value,
     basicSetup,
@@ -235,6 +238,42 @@ describe('TextNGPanel', () => {
       });
     });
 
+    describe('line numbers toggled in the editor footer', () => {
+      const toggleLineNumbers = async (options: Props['options']) => {
+        replaceVariablesMock.mockImplementation((str: string) => str);
+        const onOptionsChange = jest.fn();
+
+        setup(Object.assign({}, defaultProps, { options, onOptionsChange }), CoreApp.PanelEditor);
+        await userEvent.click(await screen.findByRole('switch', { name: 'Line numbers' }));
+
+        return onOptionsChange;
+      };
+
+      it('keeps the existing code options', async () => {
+        const onOptionsChange = await toggleLineNumbers({
+          content: 'SELECT 1',
+          mode: TextMode.Code,
+          code: { language: CodeLanguage.Sql, showLineNumbers: false, showMiniMap: false },
+        });
+
+        expect(onOptionsChange).toHaveBeenCalledWith({
+          content: 'SELECT 1',
+          mode: TextMode.Code,
+          code: { language: CodeLanguage.Sql, showLineNumbers: true, showMiniMap: false },
+        });
+      });
+
+      it('fills in the defaults when no code options are set', async () => {
+        const onOptionsChange = await toggleLineNumbers({ content: 'SELECT 1', mode: TextMode.Code });
+
+        expect(onOptionsChange).toHaveBeenCalledWith({
+          content: 'SELECT 1',
+          mode: TextMode.Code,
+          code: { language: CodeLanguage.Plaintext, showLineNumbers: true, showMiniMap: false },
+        });
+      });
+    });
+
     it('does not render the inline editor in view mode', () => {
       const props = Object.assign({}, defaultProps, {
         options: { content: '# Hello', mode: TextMode.Markdown },
@@ -270,6 +309,45 @@ describe('TextNGPanel', () => {
       );
 
       expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toContain('Edited');
+    });
+  });
+
+  describe('render mode', () => {
+    const series = [
+      toDataFrame({
+        fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+      }),
+    ];
+
+    // Reports the row context it was handed, so these assert the wiring rather
+    // than re-testing macro resolution (covered in renderContent.test.ts).
+    const reportRowContext: InterpolateFunction = (target, scopedVars) => {
+      const context = scopedVars?.__dataContext?.value;
+      return context ? `row-${context.rowIndex}` : target;
+    };
+
+    function setupWithData(renderMode?: RenderMode) {
+      const props = createProps(reportRowContext, {
+        data: createData(series),
+        options: { content: 'no row context', mode: TextMode.Markdown, renderMode },
+      });
+
+      setup(props, CoreApp.Dashboard);
+      return screen.getByTestId('TextNGPanel-converted-content').innerHTML;
+    }
+
+    it('renders the content once per row in every row mode', () => {
+      const html = setupWithData(RenderMode.PerRow);
+
+      expect(html).toContain('row-0');
+      expect(html).toContain('row-1');
+    });
+
+    it.each([
+      ['once mode', RenderMode.Once],
+      ['an unset render mode', undefined],
+    ])('renders once with no row context in %s', (_name, renderMode) => {
+      expect(setupWithData(renderMode)).toContain('no row context');
     });
   });
 });

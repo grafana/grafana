@@ -22,7 +22,6 @@ func newSearchHandler(
 	store Store,
 	accessClient authtypes.AccessClient,
 	folderResolver DashboardFolderResolver,
-	tracer trace.Tracer,
 	metrics *Metrics,
 	logger log.Logger,
 ) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {

@@ -233,7 +233,7 @@ export function UnconfiguredPanelComp(props: PanelProps) {
           <div
             className={cx(styles.buttonList, isCompact && styles.buttonListCompact, !isButtonsVisible && styles.hidden)}
             aria-hidden={!isButtonsVisible}
-            {...(!isButtonsVisible ? { inert: '' } : {})}
+            inert={!isButtonsVisible}
           >
             {buttons.map((button, i) => (
               <div

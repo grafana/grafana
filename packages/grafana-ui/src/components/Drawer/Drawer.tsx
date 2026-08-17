@@ -9,8 +9,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { Button } from '../Button/Button';
 import { getDragStyles } from '../DragHandle/DragHandle';
-import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { getPortalContainer } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -141,8 +141,9 @@ export function Drawer({
           />
           <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
             <div className={styles.actions}>
-              <IconButton
-                name="times"
+              <Button
+                icon="times"
+                size="sm"
                 variant="secondary"
                 onClick={onClose}
                 data-testid={selectors.components.Drawer.General.close}
@@ -165,7 +166,15 @@ export function Drawer({
             )}
             {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
           </div>
-          {!scrollableContent ? content : <ScrollContainer showScrollIndicators>{content}</ScrollContainer>}
+          {!scrollableContent ? (
+            content
+          ) : (
+            <div className={styles.scrollWrapper}>
+              <ScrollContainer borderRadius="lg" showScrollIndicators>
+                {content}
+              </ScrollContainer>
+            </div>
+          )}
         </div>
       </FloatingFocusManager>
     </RcDrawer>
@@ -244,6 +253,8 @@ function useBodyClassWhileOpen() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+
   return {
     container: css({
       display: 'flex',
@@ -263,8 +274,22 @@ const getStyles = (theme: GrafanaTheme2) => {
         boxShadow: theme.shadows.z3,
       },
     }),
+    scrollWrapper: css(
+      {
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        maxHeight: '100%',
+        minHeight: 0,
+        minWidth: 0,
+      },
+      visualRefreshEnabled && {
+        borderBottomLeftRadius: theme.shape.radius.lg,
+        borderBottomRightRadius: theme.shape.radius.lg,
+        overflow: 'hidden',
+      }
+    ),
     drawerContent: css({
-      backgroundColor: theme.colors.background.primary,
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
@@ -274,7 +299,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     drawerMotion: css({
       '&-appear': {
         [theme.transitions.handleMotion('no-preference')]: {
-          transform: 'translateX(100%)',
+          transform: visualRefreshEnabled ? `translateX(calc(100% + ${theme.spacing(1)}))` : 'translateX(100%)',
           transition: 'none',
         },
         [theme.transitions.handleMotion('reduce')]: {
@@ -364,17 +389,27 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 function getWrapperStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg') {
-  return css({
-    bottom: 0,
-    label: `drawer-content-wrapper-${size}`,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: theme.zIndex.modalBackdrop,
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  return css(
+    {
+      backgroundColor: theme.colors.background.primary,
+      bottom: 0,
+      label: `drawer-content-wrapper-${size}`,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      zIndex: theme.zIndex.modalBackdrop,
 
-    [theme.breakpoints.down('md')]: {
-      width: `calc(100% - ${theme.spacing(2)}) !important`,
-      minWidth: '0 !important',
+      [theme.breakpoints.down('md')]: {
+        width: `calc(100% - ${theme.spacing(2)}) !important`,
+        minWidth: '0 !important',
+      },
     },
-  });
+    visualRefreshEnabled && {
+      borderRadius: theme.shape.radius.lg,
+      bottom: theme.spacing(1),
+      right: theme.spacing(1),
+      top: theme.spacing(1),
+    }
+  );
 }

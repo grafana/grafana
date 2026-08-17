@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Load preview assets</title>
+    <style>
+      :root {
+        --bg: #f4f5f5;
+        --surface: #ffffff;
+        --border: rgba(36, 41, 46, 0.12);
+        --text: rgb(36, 41, 46);
+        --text-secondary: rgba(36, 41, 46, 0.75);
+        --code-bg: rgba(36, 41, 46, 0.07);
+        --warning-bg: rgba(245, 95, 62, 0.08);
+        --warning-border: rgba(245, 95, 62, 0.5);
+        --primary: #f55f3e;
+        --primary-hover: #d94e30;
+        --secondary-bg: rgba(36, 41, 46, 0.08);
+        --secondary-hover: rgba(36, 41, 46, 0.15);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111217;
+          --surface: #181b1f;
+          --border: rgba(204, 204, 220, 0.15);
+          --text: rgb(204, 204, 220);
+          --text-secondary: rgba(204, 204, 220, 0.65);
+          --code-bg: rgba(204, 204, 220, 0.07);
+          --warning-bg: rgba(245, 95, 62, 0.1);
+          --warning-border: rgba(245, 95, 62, 0.5);
+          --secondary-bg: rgba(204, 204, 220, 0.1);
+          --secondary-hover: rgba(204, 204, 220, 0.16);
+        }
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+          sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100dvh;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+      }
+
+      main {
+        max-width: 600px;
+        margin: 1rem;
+        padding: 2rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+
+      h1 {
+        font-size: 1.25rem;
+        margin: 0 0 1rem;
+      }
+
+      p {
+        margin: 0 0 0.75rem;
+        color: var(--text-secondary);
+      }
+
+      .url {
+        word-break: break-all;
+        background: var(--code-bg);
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.8125rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .warning {
+        padding: 0.75rem;
+        background: var(--warning-bg);
+        border: 1px solid var(--warning-border);
+        border-radius: 4px;
+        font-size: 0.8125rem;
+      }
+
+      .actions {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      button,
+      .cancel {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-family: inherit;
+        text-decoration: none;
+        line-height: 1.5;
+      }
+
+      button {
+        background: var(--primary);
+        color: #fff;
+      }
+
+      button:hover {
+        background: var(--primary-hover);
+      }
+
+      .cancel {
+        background: var(--secondary-bg);
+        color: var(--text);
+      }
+
+      .cancel:hover {
+        background: var(--secondary-hover);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Load preview assets?</h1>
+      <p>
+        You are about to load the frontend assets from the preview build
+        <strong>{{.Folder}}</strong>:
+      </p>
+      <div class="url">{{.AssetsURL}}</div>
+      <div class="warning">
+        This replaces the Grafana frontend in this browser with unreviewed, unreleased code for
+        {{.Duration}}. Only continue if you trust the pull request these assets were built from.
+        You can undo this at any time by visiting
+        <code>/-/set-preview-assets?clear=1</code>.
+      </div>
+      <form method="GET" action="/-/set-preview-assets">
+        <input type="hidden" name="assets" value="{{.Folder}}" />
+        <input type="hidden" name="confirm" value="{{.CSRFToken}}" />
+        <div class="actions">
+          <button type="submit">Load preview assets</button>
+          <a class="cancel" href="/">Cancel</a>
+        </div>
+      </form>
+    </main>
+  </body>
+</html>
