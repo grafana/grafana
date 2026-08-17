@@ -108,7 +108,7 @@ export class LogListModel implements LogRowModel {
     this.timeLocal = log.timeLocal;
     this.timeUtc = log.timeUtc;
     this.uid = log.uid;
-    // log.uid is not guaranteed unique, which causes troubles with virtualization. For that end, we create a trully unique
+    // log.uid is not guaranteed unique, which causes troubles with virtualization. To that end, we create a truly unique
     // identifier, while leaving the data source identifier unmodified
     this.uniqueKey = `${log.uid}#${index}`;
     this.uniqueLabels = log.uniqueLabels;
