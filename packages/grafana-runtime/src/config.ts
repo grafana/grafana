@@ -164,6 +164,7 @@ export class GrafanaBootConfig {
     performanceInstrumentalizationEnabled: false,
     cspInstrumentalizationEnabled: false,
     tracingInstrumentalizationEnabled: false,
+    interactionEventsInstrumentalizationEnabled: false,
     internalLoggerLevel: 0,
     botFilterEnabled: false,
   };

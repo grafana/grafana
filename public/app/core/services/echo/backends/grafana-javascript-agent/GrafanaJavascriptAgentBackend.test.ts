@@ -80,6 +80,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     performanceInstrumentalizationEnabled: true,
     cspInstrumentalizationEnabled: true,
     tracingInstrumentalizationEnabled: true,
+    interactionEventsInstrumentalizationEnabled: false,
 
     buildInfo: buildInfo,
     userIdentifier: 'abc123',

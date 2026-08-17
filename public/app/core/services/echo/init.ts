@@ -113,6 +113,8 @@ async function initFaroBackend() {
       performanceInstrumentalizationEnabled: config.grafanaJavascriptAgent.performanceInstrumentalizationEnabled,
       cspInstrumentalizationEnabled: config.grafanaJavascriptAgent.cspInstrumentalizationEnabled,
       tracingInstrumentalizationEnabled: config.grafanaJavascriptAgent.tracingInstrumentalizationEnabled,
+      interactionEventsInstrumentalizationEnabled:
+        config.grafanaJavascriptAgent.interactionEventsInstrumentalizationEnabled,
       internalLoggerLevel: config.grafanaJavascriptAgent.internalLoggerLevel,
       botFilterEnabled: config.grafanaJavascriptAgent.botFilterEnabled,
     })
