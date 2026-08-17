@@ -1472,11 +1472,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/pages/DashboardScenePageStateManager.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage.test.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -1944,11 +1939,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/dashgrid/SeriesVisibilityConfigFactory.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2292,11 +2282,6 @@
     }
   },
   "public/app/features/logs/components/panel/LogLineMenu.test.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/manage-dashboards/import/utils/inputs.ts": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
     }
