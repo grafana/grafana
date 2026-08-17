@@ -2602,11 +2602,7 @@ func scopeQuery(q query.Query, deleted bool, expirationThreshold int64) query.Qu
 	// Excluding what is too old, rather than requiring a recent enough deletion,
 	// keeps the markers that carry no deletion time at all.
 	if expirationThreshold > 0 {
-		cutoff := float64(expirationThreshold)
-		inclusive := false
-		expired := bleve.NewNumericRangeInclusiveQuery(nil, &cutoff, nil, &inclusive)
-		expired.SetField(resource.SEARCH_FIELD_DELETION_TIME)
-		scoped.AddMustNot(expired)
+		scoped.AddMustNot(expiredTrashQuery(expirationThreshold))
 	}
 
 	// Bleve drives iteration from the Must clause and uses Filter only to test the
@@ -2624,6 +2620,123 @@ func scopeQuery(q query.Query, deleted bool, expirationThreshold int64) query.Qu
 	scoped.AddMust(q)
 	scoped.AddFilter(marked)
 	return scoped
+}
+
+// expiredTrashQuery matches trash whose deletion time is before threshold, which
+// is the trash garbage collection has already taken or is about to. Both the read
+// paths (which hide it) and the cleanup pass (which removes it) build their query
+// from here, so they cannot disagree about what is expired.
+//
+// A document with no deletion time does not match: bleve has no value to compare,
+// and a missing field must not be read as "expired".
+func expiredTrashQuery(threshold int64) query.Query {
+	cutoff := float64(threshold)
+	inclusive := false
+	expired := bleve.NewNumericRangeInclusiveQuery(nil, &cutoff, nil, &inclusive)
+	expired.SetField(resource.SEARCH_FIELD_DELETION_TIME)
+	return expired
+}
+
+// Bounds the size of a single delete batch. The pass keeps issuing batches until
+// the index has no expired trash left.
+const trashCleanupBatchSize = 1000
+
+// RemoveExpiredTrash deletes trash documents for objects that garbage collection
+// has already removed from storage. Collection emits no events, so without this
+// the documents sit in the index until it is next rebuilt.
+func (b *bleveBackend) RemoveExpiredTrash(ctx context.Context) {
+	// With collection off nothing in storage expires, so this trash is still
+	// restorable and removing it would break a restore that works.
+	if !b.opts.TrashRetention.Enabled {
+		return
+	}
+
+	now := time.Now()
+	for _, key := range b.GetOpenIndexes() {
+		if ctx.Err() != nil {
+			return
+		}
+		// Peek, so this pass does not keep an index this instance no longer owns
+		// from being evicted.
+		idx := b.peekCachedIndex(key)
+		if idx == nil {
+			continue
+		}
+		removed, err := idx.removeExpiredTrash(ctx, now)
+		switch {
+		case errors.Is(err, bleve.ErrorIndexClosed):
+			// The index was evicted while this ran. The next pass picks up whatever
+			// was left, so this is not a failure.
+			b.log.Debug("index closed while removing expired trash documents", "key", key, "removed", removed)
+		case err != nil:
+			b.log.Error("failed to remove expired trash documents from index", "key", key, "removed", removed, "err", err)
+		case removed > 0:
+			b.log.Info("removed expired trash documents from index", "key", key, "removed", removed)
+		}
+	}
+}
+
+// removeExpiredTrash deletes this index's trash documents whose deletion time is
+// outside the retention window, and returns how many it removed.
+//
+// Trash with no deletion time never matches and stays: a missing field is not
+// evidence that storage collected the object. A rebuild clears those, because it
+// lists the trash storage currently holds.
+//
+// Deletion is by document id, which an object keeps across delete and recreate.
+// If an object is recreated between the search and the delete, the new document
+// is removed and comes back on the next rebuild. Left as is: the window is a few
+// milliseconds on trash that has already sat there for the whole retention
+// period, and closing it would mean holding a write lock that index updates on
+// the query path would then wait for.
+func (b *bleveIndex) removeExpiredTrash(ctx context.Context, now time.Time) (int, error) {
+	threshold, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, now)
+	if !ok {
+		return 0, nil
+	}
+
+	// Going through scopeQuery is what keeps this off live documents, and stops
+	// this pass growing its own notion of what trash is. The window goes in as the
+	// query because scopeQuery's own threshold excludes expired trash rather than
+	// selecting it.
+	q := scopeQuery(expiredTrashQuery(threshold), true, 0)
+
+	removed := 0
+	for {
+		if err := ctx.Err(); err != nil {
+			return removed, err
+		}
+
+		found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
+			Query: q,
+			Size:  trashCleanupBatchSize,
+		})
+		if err != nil {
+			return removed, err
+		}
+		if len(found.Hits) == 0 {
+			return removed, nil
+		}
+
+		batch := b.index.NewBatch()
+		for _, hit := range found.Hits {
+			batch.Delete(hit.ID)
+		}
+		if err := b.index.Batch(batch); err != nil {
+			return removed, err
+		}
+		removed += len(found.Hits)
+
+		// Deletions change the index, so they count towards the next snapshot upload
+		// like any other mutation.
+		if err := b.addSnapshotMutationCount(int64(len(found.Hits))); err != nil {
+			return removed, err
+		}
+
+		if len(found.Hits) < trashCleanupBatchSize {
+			return removed, nil
+		}
+	}
 }
 
 // combineFilterAndTextQueries assembles the final bleve query from the filter

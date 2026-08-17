@@ -226,6 +226,8 @@ func (m *mockSearchBackend) SnapshotCountThreshold() int64 {
 	return m.snapshotThreshold
 }
 
+func (m *mockSearchBackend) RemoveExpiredTrash(context.Context) {}
+
 type buildIndexCall struct {
 	key  NamespacedResource
 	size int64
