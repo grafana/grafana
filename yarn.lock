@@ -2358,11 +2358,11 @@ __metadata:
   linkType: hard
 
 "@grafana/aws-sdk@npm:^0.12.0":
-  version: 0.12.0
-  resolution: "@grafana/aws-sdk@npm:0.12.0"
+  version: 0.12.1
+  resolution: "@grafana/aws-sdk@npm:0.12.1"
   peerDependencies:
     "@grafana/plugin-ui": ">=0.14.0"
-  checksum: 10/8589d05e824db1e842996635d91a3163505f7dee59a89ed355c83dc50517c35c89f4d3f73dd2ea7bcf119dee3e83e2e11030d353196581b956a5edda52a6b273
+  checksum: 10/374dc289d2b08d0880e9221e855ac98c038fa650eb59295061c25d9a6dcf0ed7f23f3486cb624a73d498a7aedfa27bea1d41b9c36fb4c6b8bee863de78472e19
   languageName: node
   linkType: hard
 
