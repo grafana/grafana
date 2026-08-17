@@ -52,7 +52,7 @@ export const FeatureControlFlags = () => {
                   setIsAccessible(false);
                 }}
                 destructive
-                icon="times"
+                icon="trash-alt"
                 label={t('feature-control.dismiss.label', 'Remove UI and toolbar button')}
                 component={() => (
                   <Text color="secondary" variant="bodySmall" textAlignment="start">

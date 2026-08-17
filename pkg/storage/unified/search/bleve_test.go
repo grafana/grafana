@@ -1235,7 +1235,7 @@ func TestBuildIndexReuseChecksRequiredFeatures(t *testing.T) {
 func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
 	newIndexWithoutFeatures := func(t *testing.T) bleve.Index {
 		t.Helper()
-		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = idx.Close() })
 		require.NoError(t, setRV(idx, 42))
@@ -1258,13 +1258,35 @@ func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
 	})
 }
 
+// The setting is read once, when the index is created, so later changes cannot
+// leave trash missing whatever was deleted while it was off.
+func TestNewBleveIndexRecordsKeepsDeletedDocuments(t *testing.T) {
+	for _, keep := range []bool{true, false} {
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", keep)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = idx.Close() })
+
+		bi, err := getBuildInfo(idx)
+		require.NoError(t, err)
+		require.Equal(t, keep, slices.Contains(bi.Features, resource.IndexFeatureHoldsDeletedDocuments))
+		require.Equal(t, keep, slices.Contains(bi.resourceBuildInfo().Features, resource.IndexFeatureHoldsDeletedDocuments))
+
+		// Only an index holding deleted documents needs a reader that filters them.
+		if keep {
+			require.Equal(t, []resource.IndexFeature{resource.IndexFeatureHoldsDeletedDocuments}, bi.ReaderRequirements)
+		} else {
+			require.Empty(t, bi.ReaderRequirements)
+		}
+	}
+}
+
 // A local index whose build info cannot be read is discarded: there is no way to
 // tell whether it declares a requirement this binary cannot meet.
 func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
 	newIndexOnDisk := func(t *testing.T, rawBuildInfo []byte) string {
 		t.Helper()
 		resourceDir := t.TempDir()
-		idx, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+		idx, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
 		require.NoError(t, err)
 		require.NoError(t, setRV(idx, 42))
 		if rawBuildInfo != nil {
@@ -1296,7 +1318,7 @@ func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
 // Stands in for an index written by a newer binary.
 func newIndexDeclaringRequirements(t *testing.T, requirements ...resource.IndexFeature) bleve.Index {
 	t.Helper()
-	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = idx.Close() })
 	require.NoError(t, setRV(idx, 42))
@@ -1338,7 +1360,7 @@ func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 
 	buildTime := time.Date(2026, 5, 18, 10, 0, 0, 0, time.UTC)
 	selectableFields := []string{"team"}
-	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "")
+	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "", false)
 	require.NoError(t, err)
 	defer func() { require.NoError(t, source.Close()) }()
 
@@ -1591,7 +1613,7 @@ func TestBuildIndexDoesNotReuseFileIndexWithoutResourceVersion(t *testing.T) {
 	require.NoError(t, err)
 	resourceDir := backend.getResourceDir(ns)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
-	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "")
+	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "", false)
 	require.NoError(t, err)
 	rv, err := getRV(unfinished)
 	require.NoError(t, err)
@@ -2731,7 +2753,7 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
-	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "")
+	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "", false)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = raw.Close() })
 
@@ -2777,7 +2799,7 @@ func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T
 // so leaving match-all there and testing the marker as a Filter would read every
 // document in the index to find the few deleted ones.
 func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
-	scoped, ok := scopeQuery(bleve.NewMatchAllQuery(), true).(*query.BooleanQuery)
+	scoped, ok := scopeQuery(bleve.NewMatchAllQuery(), true, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Must),
@@ -2788,13 +2810,13 @@ func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
 	// A real query drives iteration itself, so the marker moves to Filter where it
 	// does not score.
 	textQuery := bleve.NewMatchQuery("hello")
-	scoped, ok = scopeQuery(textQuery, true).(*query.BooleanQuery)
+	scoped, ok = scopeQuery(textQuery, true, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Filter))
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
 
 	// Live searches only exclude the marker; provisioning is irrelevant to them.
-	scoped, ok = scopeQuery(bleve.NewMatchAllQuery(), false).(*query.BooleanQuery)
+	scoped, ok = scopeQuery(bleve.NewMatchAllQuery(), false, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.MustNot))
 	assert.Nil(t, scoped.Filter)
@@ -2885,10 +2907,10 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 	assert.Equal(t, map[string]float64{
 		id("live-1"): unscoped[id("live-1")],
 		id("live-2"): unscoped[id("live-2")],
-	}, scores(scopeQuery(textQuery, false)))
+	}, scores(scopeQuery(textQuery, false, 0)))
 
 	assert.Equal(t, map[string]float64{
 		id("trashed-1"): unscoped[id("trashed-1")],
 		id("trashed-2"): unscoped[id("trashed-2")],
-	}, scores(scopeQuery(textQuery, true)))
+	}, scores(scopeQuery(textQuery, true, 0)))
 }

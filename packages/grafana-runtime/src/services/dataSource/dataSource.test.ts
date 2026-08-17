@@ -265,6 +265,40 @@ describe('plugin', () => {
         expect(MockClass).toHaveBeenCalledWith(bravo);
       });
 
+      it('loads the configured default datasource when ref is an empty string', async () => {
+        const { bravo } = seedAlphaBravo();
+        const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+        const MockClass = importerReturning(instance);
+
+        const result = await getDataSourceInstance('');
+
+        expect(MockClass).toHaveBeenCalledWith(bravo);
+        expect(result).toBe(instance);
+        expect(logWarning).not.toHaveBeenCalled();
+      });
+
+      it('loads the configured default datasource when ref has an empty uid and no type', async () => {
+        const { bravo } = seedAlphaBravo();
+        const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+        const MockClass = importerReturning(instance);
+
+        const result = await getDataSourceInstance({ uid: '' });
+
+        expect(MockClass).toHaveBeenCalledWith(bravo);
+        expect(result).toBe(instance);
+        expect(logWarning).not.toHaveBeenCalled();
+      });
+
+      it('resolves a ref with an empty uid by its type', async () => {
+        const { bravo } = seedAlphaBravo();
+        const MockClass = importerReturning(Object.create(DataSourceApi.prototype));
+
+        await getDataSourceInstance({ type: 'test-db', uid: '' });
+
+        expect(MockClass).toHaveBeenCalledWith(bravo);
+        expect(logWarning).not.toHaveBeenCalled();
+      });
+
       it('falls back to the configured default for a type-only ref with no match', async () => {
         const { bravo } = seedAlphaBravo();
         const MockClass = importerReturning(Object.create(DataSourceApi.prototype));

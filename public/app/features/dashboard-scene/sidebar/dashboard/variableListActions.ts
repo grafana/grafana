@@ -7,7 +7,7 @@ import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardInteractions } from '../../utils/interactions';
-import { dashboardEditActions } from '../shared';
+import { edit } from '../../actions/utils/edit';
 
 export interface ListIds {
   visible: string;
@@ -68,7 +68,7 @@ export function createDragEndHandler(
     const reordered = [...lists[listIds.visible], ...lists[listIds.controlsMenu], ...lists[listIds.hidden]];
     const draggableSet = new Set(reordered);
 
-    dashboardEditActions.edit({
+    edit({
       source: variableSet,
       description,
       perform: () => {

@@ -19,6 +19,11 @@ import { Alert, Box, Button, Combobox, Field, Input, Stack, TextArea } from '@gr
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { changeVariableDescription } from '../../actions/variable/changeVariableDescription';
+import { changeVariableHideValue } from '../../actions/variable/changeVariableHideValue';
+import { changeVariableLabel } from '../../actions/variable/changeVariableLabel';
+import { changeVariableName } from '../../actions/variable/changeVariableName';
+import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type BulkActionElement } from '../../scene/types/BulkActionElement';
@@ -154,7 +159,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onDuplicate() {
-    dashboardEditActions.duplicateVariable(this.variable);
+    duplicateVariable(this.variable);
   }
 
   public onConfirmDelete() {
@@ -276,7 +281,7 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
               return;
             }
 
-            dashboardEditActions.changeVariableName({
+            changeVariableName({
               source: variable,
               oldValue: oldName.current,
               newValue: name,
@@ -314,7 +319,7 @@ function VariableLabelInput({ variable, id }: VariableInputProps) {
           return;
         }
 
-        dashboardEditActions.changeVariableLabel({
+        changeVariableLabel({
           source: variable,
           oldValue: oldLabel.current,
           newValue: e.currentTarget.value,
@@ -346,7 +351,7 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
           return;
         }
 
-        dashboardEditActions.changeVariableDescription({
+        changeVariableDescription({
           source: variable,
           oldValue: oldDescription.current,
           newValue: e.currentTarget.value,
@@ -362,7 +367,7 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
   const topPlacementLabel = sectionOwner ? getTopPlacementLabel(sectionOwner) : undefined;
 
   const onChange = (option: VariableHide) => {
-    dashboardEditActions.changeVariableHideValue({
+    changeVariableHideValue({
       source: variable,
       oldValue: display,
       newValue: option,
