@@ -116,6 +116,7 @@ func (s *Syncer) Run(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			start := time.Now()
+			s.metrics.SyncTotal.Inc()
 			if err := s.sync(ctx); err != nil {
 				s.log.Error("Rule status sync failed", "error", err)
 				s.metrics.SyncFailures.Inc()

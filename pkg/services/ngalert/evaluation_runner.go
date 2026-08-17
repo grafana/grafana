@@ -7,6 +7,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -76,7 +77,7 @@ func (r *evaluationRunner) startEvaluation(ctx context.Context) {
 			r.ng.schedule,
 			request.GetNamespaceMapper(r.ng.Cfg),
 			r.ng.Cfg.UnifiedAlerting.RuleStatusSyncInterval,
-			r.ng.Log.New("ngalert.status.syncer"),
+			log.New("ngalert.status.syncer"),
 			r.ng.Metrics.GetStatusSyncerMetrics(),
 			r.ng.clientGenerator,
 			r.ng.Cfg.UnifiedAlerting.DisabledOrgs,
