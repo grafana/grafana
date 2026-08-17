@@ -27,7 +27,7 @@ review_date: 2026-08-11
 
 # Google Cloud Monitoring data source
 
-Google Cloud Monitoring (formerly `Stackdriver`) is Google Cloud Platform's native monitoring and observability service that collects metrics, events, and metadata from GCP resources, hosted uptime probes, and application instrumentation. The Google Cloud Monitoring data source in Grafana allows you to query and visualize this data alongside metrics from other systems, creating unified dashboards for comprehensive infrastructure and application monitoring.
+Google Cloud Monitoring is Google Cloud Platform's native monitoring and observability service that collects metrics, events, and metadata from GCP resources, hosted uptime probes, and application instrumentation. The Google Cloud Monitoring data source in Grafana allows you to query and visualize this data alongside metrics from other systems, creating unified dashboards for comprehensive infrastructure and application monitoring.
 
 Grafana ships with the Google Cloud Monitoring data source preinstalled in both Grafana OSS and Grafana Enterprise, so there's nothing for you to install. It's packaged as a standalone plugin that updates independently of Grafana releases. For details, refer to [Plugin updates](#plugin-updates).
 
