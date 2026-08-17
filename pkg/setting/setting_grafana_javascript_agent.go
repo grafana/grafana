@@ -5,15 +5,16 @@ type GrafanaJavascriptAgent struct {
 	EndpointBurst int `json:"-"`
 
 	// Faro config
-	Enabled                               bool   `json:"enabled"`
-	CustomEndpoint                        string `json:"customEndpoint"`
-	ApiKey                                string `json:"apiKey"`
-	InternalLoggerLevel                   int    `json:"internalLoggerLevel"`
-	ConsoleInstrumentalizationEnabled     bool   `json:"consoleInstrumentalizationEnabled"`
-	PerformanceInstrumentalizationEnabled bool   `json:"performanceInstrumentalizationEnabled"`
-	CSPInstrumentalizationEnabled         bool   `json:"cspInstrumentalizationEnabled"`
-	TracingInstrumentalizationEnabled     bool   `json:"tracingInstrumentalizationEnabled"`
-	BotFilterEnabled                      bool   `json:"botFilterEnabled"`
+	Enabled                                     bool   `json:"enabled"`
+	CustomEndpoint                              string `json:"customEndpoint"`
+	ApiKey                                      string `json:"apiKey"`
+	InternalLoggerLevel                         int    `json:"internalLoggerLevel"`
+	ConsoleInstrumentalizationEnabled           bool   `json:"consoleInstrumentalizationEnabled"`
+	PerformanceInstrumentalizationEnabled       bool   `json:"performanceInstrumentalizationEnabled"`
+	CSPInstrumentalizationEnabled               bool   `json:"cspInstrumentalizationEnabled"`
+	TracingInstrumentalizationEnabled           bool   `json:"tracingInstrumentalizationEnabled"`
+	InteractionEventsInstrumentalizationEnabled bool   `json:"interactionEventsInstrumentalizationEnabled"`
+	BotFilterEnabled                            bool   `json:"botFilterEnabled"`
 }
 
 func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
@@ -23,14 +24,15 @@ func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
 		EndpointBurst: raw.Key("log_endpoint_burst_limit").MustInt(15),
 
 		// Faro config
-		Enabled:                               raw.Key("enabled").MustBool(false),
-		CustomEndpoint:                        raw.Key("custom_endpoint").MustString("/log-grafana-javascript-agent"),
-		ApiKey:                                raw.Key("api_key").String(),
-		InternalLoggerLevel:                   raw.Key("internal_logger_level").MustInt(0),
-		ConsoleInstrumentalizationEnabled:     raw.Key("instrumentations_console_enabled").MustBool(true),
-		PerformanceInstrumentalizationEnabled: raw.Key("instrumentations_performance_enabled").MustBool(true),
-		CSPInstrumentalizationEnabled:         raw.Key("instrumentations_csp_enabled").MustBool(true),
-		TracingInstrumentalizationEnabled:     raw.Key("instrumentations_tracing_enabled").MustBool(true),
-		BotFilterEnabled:                      raw.Key("bot_filter_enabled").MustBool(false),
+		Enabled:                                     raw.Key("enabled").MustBool(false),
+		CustomEndpoint:                              raw.Key("custom_endpoint").MustString("/log-grafana-javascript-agent"),
+		ApiKey:                                      raw.Key("api_key").String(),
+		InternalLoggerLevel:                         raw.Key("internal_logger_level").MustInt(0),
+		ConsoleInstrumentalizationEnabled:           raw.Key("instrumentations_console_enabled").MustBool(true),
+		PerformanceInstrumentalizationEnabled:       raw.Key("instrumentations_performance_enabled").MustBool(true),
+		CSPInstrumentalizationEnabled:               raw.Key("instrumentations_csp_enabled").MustBool(true),
+		TracingInstrumentalizationEnabled:           raw.Key("instrumentations_tracing_enabled").MustBool(true),
+		InteractionEventsInstrumentalizationEnabled: raw.Key("instrumentations_interaction_events_enabled").MustBool(false),
+		BotFilterEnabled:                            raw.Key("bot_filter_enabled").MustBool(false),
 	}
 }

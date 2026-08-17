@@ -75,6 +75,20 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 				}
 			}
 		}
+		if len(event.Events) > 0 {
+			for _, eventEntry := range event.Events {
+				var ctx = frontendlogging.CtxVector{}
+				ctx = event.AddMetaToContext(ctx)
+				ctx = append(ctx, "kind", "event", "event_name", eventEntry.Name, "original_timestamp", eventEntry.Timestamp)
+				if eventEntry.Domain != "" {
+					ctx = append(ctx, "event_domain", eventEntry.Domain)
+				}
+				for k, v := range eventEntry.Attributes {
+					ctx = append(ctx, "event_data_"+k, v)
+				}
+				frontendLogger.Info("Event: "+eventEntry.Name, ctx...)
+			}
+		}
 		if len(event.Exceptions) > 0 {
 			for _, exception := range event.Exceptions {
 				var ctx = frontendlogging.CtxVector{}
