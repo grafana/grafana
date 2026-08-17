@@ -345,12 +345,17 @@ export const LogLineContext = memo(
       () =>
         log instanceof LogListModel
           ? log
-          : new LogListModel(log, {
-              escape: false,
-              otelLogsFormattingEnabled,
-              timeZone,
-              wrapLogMessage,
-            }),
+          : // Standalone row, not part of a rendered array, so its uniqueKey's disambiguation index is irrelevant here.
+            new LogListModel(
+              log,
+              {
+                escape: false,
+                otelLogsFormattingEnabled,
+                timeZone,
+                wrapLogMessage,
+              },
+              0
+            ),
       [log, otelLogsFormattingEnabled, timeZone, wrapLogMessage]
     );
 

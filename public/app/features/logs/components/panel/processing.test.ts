@@ -102,7 +102,11 @@ describe('preProcessLogs', () => {
         entry: `35.191.12.195 - accounts.google.com:test@grafana.com [18/Mar/2025:08:58:38 +0000] 200 "POST /grafana/api/ds/query?ds_type=prometheus&requestId=SQR461 HTTP/1.1" 59460 "https://test.example.com/?orgId=1" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36" "95.91.240.90, 34.107.247.24"`,
         logLevel: LogLevel.critical,
       });
-      const logListModel = new LogListModel(logRowModel, { escape: false, timeZone: 'browser ', wrapLogMessage: true });
+      const logListModel = new LogListModel(
+        logRowModel,
+        { escape: false, timeZone: 'browser ', wrapLogMessage: true },
+        0
+      );
       expect(logListModel).toMatchObject(logRowModel);
     });
 
