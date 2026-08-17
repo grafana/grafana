@@ -1,12 +1,19 @@
 import { css } from '@emotion/css';
 import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { throttle } from 'lodash';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '@grafana/data';
+import {
+  type CustomTransformOperator,
+  type DataTransformContext,
+  type DataTransformerConfig,
+  type GrafanaTheme2,
+  type PanelData,
+  transformDataFrame,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import {
   type SceneComponentProps,
   SceneDataTransformer,
@@ -20,6 +27,7 @@ import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui'
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
+import { getReplayableSystemTransformations } from '../../scene/systemTransformations';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
 
@@ -76,10 +84,49 @@ export class PanelDataTransformationsTab
   }
 }
 
+/**
+ * The frames a user transformation is actually given: the query result with the panel plugin's own
+ * transformations applied. Every editor row below reconstructs its own input by replaying the user
+ * transformations over `data.series`, so that base has to already include the plugin's stage —
+ * otherwise each row is configured against a field shape it will never receive.
+ */
+function useSystemTransformedData(
+  sourceData: PanelData | undefined,
+  systemTransformations: Array<DataTransformerConfig | CustomTransformOperator>
+): PanelData | undefined {
+  const sourceSeries = sourceData?.series;
+  const [series, setSeries] = useState(sourceSeries);
+  const hasSystemTransformations = systemTransformations.length > 0;
+
+  useEffect(() => {
+    if (!hasSystemTransformations || !sourceSeries) {
+      return;
+    }
+
+    const ctx: DataTransformContext = { interpolate: (v: string) => getTemplateSrv().replace(v) };
+    const subscription = transformDataFrame(systemTransformations, sourceSeries, ctx).subscribe(setSeries);
+
+    return () => subscription.unsubscribe();
+  }, [hasSystemTransformations, systemTransformations, sourceSeries]);
+
+  // Identity matters here: `data` is an effect dependency of every editor row, so returning a fresh
+  // object each render would re-run all of their replays.
+  return useMemo(() => {
+    if (!sourceData || !hasSystemTransformations || !series) {
+      return sourceData;
+    }
+
+    return { ...sourceData, series };
+  }, [sourceData, hasSystemTransformations, series]);
+}
+
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
   const styles = useStyles2(getStyles);
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
+
+  const systemTransformations = useMemo(() => getReplayableSystemTransformations(model.getDataTransformer()), [model]);
+  const editorData = useSystemTransformedData(sourceData.data, systemTransformations);
 
   // Type guard to ensure transformations are DataTransformerConfig[]
   const transformations = useMemo<DataTransformerConfig[]>(() => {
@@ -124,7 +171,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
     [model, transformations]
   );
 
-  if (!data || !sourceData.data) {
+  if (!data || !editorData) {
     return;
   }
 
@@ -150,7 +197,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           onShowPicker={openDrawer}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
-          data={sourceData.data.series}
+          data={editorData.series}
           datasourceUid={sourceData.datasource?.uid}
           queries={sourceData.queries}
         />
@@ -161,7 +208,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   return (
     <>
-      <TransformationsEditor data={sourceData.data} transformations={transformations} model={model} />
+      <TransformationsEditor data={editorData} transformations={transformations} model={model} />
       <ButtonGroup>
         <Button
           icon="plus"

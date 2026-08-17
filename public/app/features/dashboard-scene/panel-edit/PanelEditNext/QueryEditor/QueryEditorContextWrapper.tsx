@@ -1,22 +1,18 @@
 import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
-import { SceneDataTransformer, type SceneDataTransformerState } from '@grafana/scenes';
-import { DataTopic, type DataQuery } from '@grafana/schema';
+import { SceneDataTransformer } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
+import { getReplayableSystemTransformations } from '../../../scene/systemTransformations';
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 import { getQueryEditorTypeConfig } from '../constants';
 
-import {
-  type PanelState,
-  type PendingSavedQuery,
-  QueryEditorProvider,
-  type SelectionModifiers,
-} from './QueryEditorContext';
+import { type PendingSavedQuery, QueryEditorProvider, type SelectionModifiers } from './QueryEditorContext';
 import { useStackedModeOrchestration } from './StackedEditor/useStackedModeOrchestration';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { usePendingExpression } from './hooks/usePendingExpression';
@@ -30,32 +26,6 @@ import { type CardSelectionOptions, useSelectionState } from './hooks/useSelecti
 import { useTransformations } from './hooks/useTransformations';
 import { type AlertRule, type Transformation } from './types';
 import { getEditorType, getTransformId } from './utils';
-
-/** Stable identity so the panel context memo does not churn for panels with no system transformations. */
-const EMPTY_SYSTEM_TRANSFORMATIONS: PanelState['systemTransformations'] = [];
-
-/**
- * Reduces scenes' prepend to the entries `transformDataFrame` can replay. An entry may be a bare
- * operator, a config, or an operator scoped to a topic; only series-topic ones end up in what a user
- * transformation receives, which is what the editors reconstruct.
- */
-function toReplayableSystemTransformations(
-  prepend: SceneDataTransformerState['systemTransformations'] = {}
-): PanelState['systemTransformations'] {
-  const entries = prepend.prepend;
-
-  if (!entries?.length) {
-    return EMPTY_SYSTEM_TRANSFORMATIONS;
-  }
-
-  return entries.flatMap((entry) => {
-    if (typeof entry === 'function' || !('operator' in entry)) {
-      return entry;
-    }
-
-    return entry.topic === DataTopic.Series ? entry.operator : [];
-  });
-}
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -334,10 +304,7 @@ export function QueryEditorContextWrapper({
 
   // Not subscribed: `systemTransformations` is write-once at construction, and replacing the panel's
   // `$data` yields a new transformer instance, which re-renders this anyway.
-  const systemTransformations = useMemo(
-    () => toReplayableSystemTransformations(dataTransformer?.state.systemTransformations),
-    [dataTransformer]
-  );
+  const systemTransformations = useMemo(() => getReplayableSystemTransformations(dataTransformer), [dataTransformer]);
 
   const panelState = useMemo(() => {
     return {
