@@ -149,9 +149,9 @@ const LogLineComponent = memo(
       const calculatedHeight = typeof height === 'number' ? height : undefined;
       const actualHeight = getLogLineDOMHeight(logLineRef.current, calculatedHeight);
       if (actualHeight) {
-        onOverflow(index, log.uid, actualHeight);
+        onOverflow(index, log.uniqueKey, actualHeight);
       }
-    }, [height, index, intersection?.isIntersecting, log.uid, onOverflow]);
+    }, [height, index, intersection?.isIntersecting, log.uniqueKey, onOverflow]);
 
     useLayoutEffect(() => {
       handleLogLineResize();

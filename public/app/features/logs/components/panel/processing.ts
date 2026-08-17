@@ -52,6 +52,7 @@ export class LogListModel implements LogRowModel {
   timeLocal: string;
   timeUtc: string;
   uid: string;
+  readonly uniqueKey: string;
   uniqueLabels: Labels | undefined;
   uniqueLabelsExpanded = false;
 
@@ -105,6 +106,7 @@ export class LogListModel implements LogRowModel {
     this.timeLocal = log.timeLocal;
     this.timeUtc = log.timeUtc;
     this.uid = log.uid;
+    this.uniqueKey = `${log.uid}#${log.rowIndex}`;
     this.uniqueLabels = log.uniqueLabels;
 
     // LogListModel
