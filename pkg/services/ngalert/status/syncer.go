@@ -212,15 +212,9 @@ func (s *Syncer) syncAlertRule(ctx context.Context, orgID int64, rule *v0alpha1.
 
 	key := ngmodels.AlertRuleKey{OrgID: orgID, UID: rule.Name}
 	states := s.states.GetStatesForRuleUID(ctx, orgID, rule.Name)
-	newStatus := toAlertRuleStatus(states, isPaused(rule.Spec.Paused))
+	newStatus := toAlertRuleStatus(rule.Status, states, isPaused(rule.Spec.Paused))
 
 	s.persist(ctx, key, newStatus, func(ctx context.Context) error {
-		// The syncer owns only state/health. Carry over the fields other operators
-		// own (operatorStates/additionalFields) so this full-object write doesn't
-		// wipe them. Done here, after the change-detection hash, so another
-		// operator's status change alone doesn't trigger a rewrite.
-		newStatus.OperatorStates = rule.Status.OperatorStates
-		newStatus.AdditionalFields = rule.Status.AdditionalFields
 		rule.Status = newStatus
 		_, err := s.alertRuleClient.Update(ctx, rule, resource.UpdateOptions{
 			Subresource: "status",
@@ -235,15 +229,9 @@ func (s *Syncer) syncRecordingRule(ctx context.Context, orgID int64, rule *v0alp
 	key := ngmodels.AlertRuleKey{OrgID: orgID, UID: rule.Name}
 	// Recording rules produce no instance states — the scheduler is the only source.
 	rs, found := s.status.Status(ctx, key)
-	newStatus := toRecordingRuleStatus(rs, found, isPaused(rule.Spec.Paused))
+	newStatus := toRecordingRuleStatus(rule.Status, rs, found, isPaused(rule.Spec.Paused))
 
 	s.persist(ctx, key, newStatus, func(ctx context.Context) error {
-		// The syncer owns only state/health. Carry over the fields other operators
-		// own (operatorStates/additionalFields) so this full-object write doesn't
-		// wipe them. Done here, after the change-detection hash, so another
-		// operator's status change alone doesn't trigger a rewrite.
-		newStatus.OperatorStates = rule.Status.OperatorStates
-		newStatus.AdditionalFields = rule.Status.AdditionalFields
 		rule.Status = newStatus
 		_, err := s.recordingRuleClient.Update(ctx, rule, resource.UpdateOptions{
 			Subresource: "status",

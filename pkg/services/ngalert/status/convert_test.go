@@ -102,7 +102,7 @@ func TestToAlertRuleStatus(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := toAlertRuleStatus(tc.states, tc.paused)
+			got := toAlertRuleStatus(model.AlertRuleStatus{}, tc.states, tc.paused)
 
 			require.Equal(t, tc.wantState, *got.State)
 			require.Equal(t, tc.wantReason, *got.StateReason)
@@ -176,7 +176,7 @@ func TestToRecordingRuleStatus(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := toRecordingRuleStatus(tc.rs, tc.found, tc.paused)
+			got := toRecordingRuleStatus(model.RecordingRuleStatus{}, tc.rs, tc.found, tc.paused)
 			require.Equal(t, tc.wantHealth, *got.Health)
 			if tc.wantError != "" {
 				require.NotNil(t, got.LastError)
@@ -192,4 +192,44 @@ func TestToRecordingRuleStatus(t *testing.T) {
 			require.Equal(t, got, back)
 		})
 	}
+}
+
+func TestToAlertRuleStatus_preservesBaseAndClearsStaleFields(t *testing.T) {
+	staleErr := "boom"
+	base := model.AlertRuleStatus{
+		State:            new(model.AlertRuleAlertRuleStateFiring),
+		Health:           new(model.AlertRuleAlertRuleHealthError),
+		LastError:        &staleErr,
+		OperatorStates:   map[string]model.AlertRulestatusOperatorState{"other-op": {}},
+		AdditionalFields: map[string]any{"foo": "bar"},
+	}
+
+	// No states and no error now: every syncer-owned field must reflect the new
+	// computation, not the stale base value.
+	got := toAlertRuleStatus(base, nil, false)
+
+	require.Equal(t, model.AlertRuleAlertRuleStateInactive, *got.State)
+	require.Equal(t, model.AlertRuleAlertRuleHealthNotScheduled, *got.Health)
+	require.Nil(t, got.LastError, "stale LastError must be cleared")
+
+	// Fields owned by other writers are preserved from base.
+	require.Contains(t, got.OperatorStates, "other-op")
+	require.Equal(t, "bar", got.AdditionalFields["foo"])
+}
+
+func TestToRecordingRuleStatus_preservesBaseAndClearsStaleFields(t *testing.T) {
+	staleErr := "boom"
+	base := model.RecordingRuleStatus{
+		Health:           new(model.RecordingRuleRecordingRuleHealthError),
+		LastError:        &staleErr,
+		OperatorStates:   map[string]model.RecordingRulestatusOperatorState{"other-op": {}},
+		AdditionalFields: map[string]any{"foo": "bar"},
+	}
+
+	got := toRecordingRuleStatus(base, ngmodels.RuleStatus{Health: "ok"}, true, false)
+
+	require.Equal(t, model.RecordingRuleRecordingRuleHealthRecording, *got.Health)
+	require.Nil(t, got.LastError, "stale LastError must be cleared")
+	require.Contains(t, got.OperatorStates, "other-op")
+	require.Equal(t, "bar", got.AdditionalFields["foo"])
 }
