@@ -345,8 +345,7 @@ export const LogLineContext = memo(
       () =>
         log instanceof LogListModel
           ? log
-          : // Standalone row, not part of a rendered array, so its uniqueKey's disambiguation index is irrelevant here.
-            new LogListModel(
+          : new LogListModel(
               log,
               {
                 escape: false,
