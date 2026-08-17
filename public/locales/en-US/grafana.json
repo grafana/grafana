@@ -16148,6 +16148,9 @@
       "view-split": "Split",
       "view-write": "Write"
     },
+    "frame-picker": {
+      "label": "Query"
+    },
     "options": {
       "render-mode": "Render mode"
     },

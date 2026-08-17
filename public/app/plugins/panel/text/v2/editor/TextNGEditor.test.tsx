@@ -7,7 +7,7 @@ import config from 'app/core/config';
 
 import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
 
-import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
+import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange, type ViewMode } from './TextNGEditor';
 import { FOOTER_TEST_ID } from './TextNGEditorFooter';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 
@@ -57,6 +57,8 @@ function ControlledEditor({
   const [mode, setMode] = useState(initialMode);
   const [codeLanguage, setCodeLanguage] = useState(initialLanguage);
   const [showLineNumbers, setShowLineNumbers] = useState(initialShowLineNumbers);
+  // The panel owns this in production; mirror that here so the view radios work.
+  const [view, setView] = useState<ViewMode>(() => (initialValue.trim().length === 0 ? 'write' : 'preview'));
   return (
     <TextNGEditor
       content={value}
@@ -64,6 +66,8 @@ function ControlledEditor({
       showLineNumbers={showLineNumbers}
       codeLanguage={codeLanguage}
       replaceVariables={replaceVariables}
+      view={view}
+      onViewChange={setView}
       onChange={(change) => {
         setValue(change.content);
         if (change.mode !== undefined) {
@@ -325,6 +329,8 @@ describe('TextNGEditor', () => {
           showLineNumbers={false}
           replaceVariables={(value: string) => value}
           onChange={jest.fn()}
+          view="preview"
+          onViewChange={jest.fn()}
         />
       );
 
@@ -335,6 +341,8 @@ describe('TextNGEditor', () => {
           showLineNumbers={false}
           replaceVariables={(value: string) => value}
           onChange={jest.fn()}
+          view="preview"
+          onViewChange={jest.fn()}
         />
       );
 
@@ -549,6 +557,8 @@ describe('TextNGEditor render mode preview', () => {
       series={series}
       replaceVariables={reportRowContext}
       onChange={jest.fn()}
+      view="preview"
+      onViewChange={jest.fn()}
     />
   );
 

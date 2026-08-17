@@ -46,8 +46,7 @@ test.describe(
 
         await expectRepeatedPanelTitlesToBe(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelTitlesToBe(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
       });
@@ -73,8 +72,7 @@ test.describe(
         // verify only 3 panels are present
         await expect(panels.getHeaders()).toHaveCount(3);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
 
@@ -99,8 +97,7 @@ test.describe(
         await expect(sidebar.panelOptions.repeatOptions.getMaxPerRowSelect()).toBeHidden();
         await expectRepeatedPanelsStackedVertically(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelsStackedVertically(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
       });
@@ -128,8 +125,7 @@ test.describe(
         await sidebar.panelOptions.repeatOptions.selectMaxPerRow(2);
         await expectRepeatedPanelsWrappedHorizontally(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS, 2);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelsWrappedHorizontally(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS, 2);
       });
@@ -171,8 +167,7 @@ test.describe(
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
@@ -222,8 +217,7 @@ test.describe(
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
@@ -268,8 +262,7 @@ test.describe(
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectRepeatedPanelTitlesToBe(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
@@ -297,8 +290,7 @@ test.describe(
         let normalPanelBox = await getPanelBox(panels, 'New panel');
         expect(normalPanelBox.y).toBeLessThan(repeatedPanelBox.y);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         repeatedPanelBox = await getPanelBox(panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
         normalPanelBox = await getPanelBox(panels, 'New panel');

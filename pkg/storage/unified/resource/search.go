@@ -140,6 +140,11 @@ const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 // that path reports facet-capable but unstored fields as missing values.
 const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 
+// IndexFeatureHoldsDeletedDocuments means the index keeps deleted documents, so a
+// reader that does not exclude them returns deleted resources as live. Describes
+// what the index holds, not what it maps.
+const IndexFeatureHoldsDeletedDocuments IndexFeature = "holds-deleted-documents"
+
 // TrashIndexFeatures are the features an index needs before a deleted document may
 // be kept in it. Both writers read this one list, so the producer and the
 // BulkIndex backstop cannot disagree about what makes an index usable for trash.
@@ -166,13 +171,8 @@ var knownIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureStoredFacets,
 	IndexFeatureTrashFields,
+	IndexFeatureHoldsDeletedDocuments,
 }
-
-// readerRequiredFeatures name features an instance must understand before using an
-// index that has them. Empty today. A mapping alone is not enough to add one:
-// deleted documents are only kept when a config option says so, so a requirement
-// declared from the mapping would make older instances refuse safe indexes.
-var readerRequiredFeatures = []IndexFeature{}
 
 // requiredIndexFeatures is the subset an index must already have to be used. An
 // index without one of these features is rebuilt before it serves anything, even
@@ -188,6 +188,17 @@ var requiredIndexFeatures = []IndexFeature{}
 // change what an index records.
 func CurrentIndexFeatures() []IndexFeature {
 	return slices.Sorted(slices.Values(currentIndexFeatures))
+}
+
+// IndexFeaturesForNewIndex returns what an index built now records. Whether it
+// keeps deleted documents is decided at creation, so it belongs with the rest
+// rather than in a field of its own.
+func IndexFeaturesForNewIndex(keepsDeletedDocuments bool) []IndexFeature {
+	features := currentIndexFeatures
+	if keepsDeletedDocuments {
+		features = append(slices.Clone(features), IndexFeatureHoldsDeletedDocuments)
+	}
+	return slices.Sorted(slices.Values(features))
 }
 
 // RequiredIndexFeatures returns the features an index must have to be used.
@@ -221,10 +232,14 @@ func MissingFeatures(have, requiredFeatures []IndexFeature) []IndexFeature {
 	return missing
 }
 
-// IndexReaderRequirements returns the requirements an index built by this binary
-// declares.
-func IndexReaderRequirements() []IndexFeature {
-	return slices.Sorted(slices.Values(readerRequiredFeatures))
+// IndexReaderRequirements returns what an index must have its reader understand.
+// Derived from what the index holds, not what it maps: one keeping no deleted
+// documents is safe for any reader, whatever its mapping.
+func IndexReaderRequirements(keepsDeletedDocuments bool) []IndexFeature {
+	if !keepsDeletedDocuments {
+		return nil
+	}
+	return []IndexFeature{IndexFeatureHoldsDeletedDocuments}
 }
 
 // UnknownIndexRequirements returns declared requirements this binary does not
@@ -319,6 +334,12 @@ type SearchBackend interface {
 	// GetOpenIndexes returns the list of indexes that are currently open.
 	GetOpenIndexes() []NamespacedResource
 
+	// RemoveExpiredTrash deletes trash documents for objects that garbage
+	// collection has already removed from storage. The backend decides what is
+	// expired, because it holds the retention window. Errors are the backend's to
+	// log: a caller can only let the next pass try again.
+	RemoveExpiredTrash(ctx context.Context)
+
 	// Stop closes indexes and stops backend background tasks.
 	Stop()
 }
@@ -375,7 +396,6 @@ type searchServer struct {
 
 	injectFailuresPercent     int
 	indexModificationCacheTTL time.Duration
-	indexDeletedDocuments     bool
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
@@ -454,7 +474,6 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
-		indexDeletedDocuments:     opts.IndexDeletedDocuments,
 
 		queryCache:             opts.QueryCache,
 		queryCacheMaxPerTenant: opts.QueryCacheMaxPerTenant,
@@ -1424,6 +1443,8 @@ func (s *searchServer) init(ctx context.Context) error {
 	s.bgTaskWg.Add(1)
 	go s.runPeriodicScanForIndexesToRebuild(subctx)
 
+	s.bgTaskWg.Go(func() { s.runPeriodicTrashCleanup(subctx) })
+
 	s.startRateBucketSweeper(subctx)
 
 	end := time.Now().Unix()
@@ -1477,6 +1498,23 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 				s.log.Error("failed to get import times", "error", err)
 			}
 			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
+		}
+	}
+}
+
+// Reads already hide expired trash, so this only reclaims space and can run
+// rarely. It gets its own goroutine because draining a large backlog would
+// otherwise hold up the rebuild scan.
+func (s *searchServer) runPeriodicTrashCleanup(ctx context.Context) {
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.search.RemoveExpiredTrash(ctx)
 		}
 	}
 }
@@ -2223,13 +2261,16 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 // index. They do not when the feature is switched off, or when the index predates
 // the marker mappings and would serve a marked document as live. Either way the
 // document is removed instead, as it was before trash search existed.
+// keepsDeletedDocuments reads the decision recorded when the index was built, not
+// the current setting, so a change takes effect on the next rebuild. Consulting the
+// setting per write would leave trash missing what was deleted while it was off.
 func (s *searchServer) keepsDeletedDocuments(index ResourceIndex, logger log.Logger) bool {
-	if !s.indexDeletedDocuments {
-		return false
-	}
 	info, err := index.BuildInfo()
 	if err != nil {
 		logger.Warn("cannot read index features, removing deleted documents instead of keeping them", "err", err)
+		return false
+	}
+	if !slices.Contains(info.Features, IndexFeatureHoldsDeletedDocuments) {
 		return false
 	}
 	missing := MissingIndexFeatures(info, TrashIndexFeatures())

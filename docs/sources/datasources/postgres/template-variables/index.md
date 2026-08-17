@@ -16,7 +16,7 @@ labels:
 menuTitle: Template variables
 title: PostgreSQL template variables
 weight: 300
-review_date: 2026-05-04
+review_date: 2026-08-10
 ---
 
 # PostgreSQL template variables
