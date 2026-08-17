@@ -74,13 +74,14 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+const mockUseDatasources = jest.fn(() => mockDSList);
 const pushRecentlyUsedDataSourceMock = jest.fn();
 jest.mock('../../hooks', () => {
   const actual = jest.requireActual('../../hooks');
   return {
     ...actual,
     useRecentlyUsedDataSources: () => [[mockDS2.name], pushRecentlyUsedDataSourceMock],
-    useDatasources: () => mockDSList,
+    useDatasources: () => mockUseDatasources(),
   };
 });
 
@@ -94,6 +95,7 @@ const getInstanceSettingsMock = jest.fn();
 beforeEach(() => {
   getListMock.mockReturnValue(mockDSList);
   getInstanceSettingsMock.mockReturnValue(mockDS1);
+  mockUseDatasources.mockReturnValue(mockDSList);
 });
 
 describe('DataSourcePicker', () => {
@@ -203,6 +205,73 @@ describe('DataSourcePicker', () => {
 
     it('should mark the input as invalid when `invalid` is true', () => {
       render(<DataSourcePicker onChange={jest.fn()} invalid></DataSourcePicker>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('should mark the input as invalid when the current data source is not allowed by picker filters', () => {
+      mockUseDatasources.mockReturnValue([mockDS1]);
+      getInstanceSettingsMock.mockReturnValue(mockDS2);
+      render(<DataSourcePicker onChange={jest.fn()} current={mockDS2} pluginId="prometheus"></DataSourcePicker>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('should not mark the input as invalid when the current data source matches picker filters', () => {
+      mockUseDatasources.mockReturnValue([mockDS1]);
+      getInstanceSettingsMock.mockReturnValue(mockDS1);
+      render(<DataSourcePicker onChange={jest.fn()} current={mockDS1} pluginId="prometheus"></DataSourcePicker>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'aria-invalid',
+        'false'
+      );
+    });
+
+    it('should mark the input as invalid when the current data source cannot be resolved', () => {
+      mockUseDatasources.mockReturnValue([mockDS1]);
+      getInstanceSettingsMock.mockReturnValue(undefined);
+      render(<DataSourcePicker onChange={jest.fn()} current="missing-uid" pluginId="prometheus"></DataSourcePicker>);
+      const input = screen.getByTestId(selectors.components.DataSourcePicker.inputV2);
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+      expect(input).toHaveAttribute('placeholder', 'missing-uid - not found');
+    });
+
+    it('should not mark the input as invalid when the current value is an expression', () => {
+      mockUseDatasources.mockReturnValue([mockDS1]);
+      getInstanceSettingsMock.mockReturnValue(undefined);
+      render(<DataSourcePicker onChange={jest.fn()} current="__expr__" pluginId="prometheus"></DataSourcePicker>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'aria-invalid',
+        'false'
+      );
+    });
+
+    it('should not mark the input as invalid when noDefault is set and nothing is selected', () => {
+      getInstanceSettingsMock.mockReturnValue(undefined);
+      render(<DataSourcePicker onChange={jest.fn()} current={null} noDefault></DataSourcePicker>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'aria-invalid',
+        'false'
+      );
+    });
+
+    it('should keep the input invalid when the parent passes invalid even if the type matches', () => {
+      mockUseDatasources.mockReturnValue([mockDS1]);
+      getInstanceSettingsMock.mockReturnValue(mockDS1);
+      render(
+        <DataSourcePicker onChange={jest.fn()} current={mockDS1} pluginId="prometheus" invalid></DataSourcePicker>
+      );
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('should mark the input as invalid when a custom filter excludes the current data source', () => {
+      mockUseDatasources.mockReturnValue([mockDS1, mockDS2]);
+      getInstanceSettingsMock.mockReturnValue(mockDS2);
+      render(
+        <DataSourcePicker
+          onChange={jest.fn()}
+          current={mockDS2}
+          filter={(ds) => ds.uid === mockDS1.uid}
+        ></DataSourcePicker>
+      );
       expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute('aria-invalid', 'true');
     });
 

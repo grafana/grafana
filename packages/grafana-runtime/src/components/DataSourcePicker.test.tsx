@@ -3,7 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 
-import { DataSourcePicker, type DataSourcePickerProps, setDataSourcePicker } from './DataSourcePicker';
+import {
+  DataSourcePicker,
+  type DataSourcePickerProps,
+  getDataSourcePickerError,
+  setDataSourcePicker,
+} from './DataSourcePicker';
 
 const mockGetInstanceSettings = jest.fn();
 const mockGetList = jest.fn();
@@ -133,6 +138,83 @@ describe('DataSourcePicker', () => {
 
       const input = screen.getByLabelText('Select a data source');
       expect(input).toHaveProperty('disabled', true);
+    });
+  });
+
+  describe('data source type checks', () => {
+    const prometheusDs: DataSourceInstanceSettings = {
+      uid: 'prom-uid',
+      name: 'Prometheus',
+      type: 'prometheus',
+      meta: {
+        id: 'prometheus',
+        name: 'Prometheus',
+        type: 'datasource',
+        info: {
+          logos: { small: 'prom.svg', large: 'prom.svg' },
+          author: { name: 'Grafana Labs' },
+          description: '',
+          links: [],
+          screenshots: [],
+          updated: '',
+          version: '1.0.0',
+        },
+        module: '',
+        baseUrl: '',
+      } as DataSourcePluginMeta,
+      readOnly: false,
+      jsonData: {},
+      access: 'proxy',
+    };
+
+    const tempoDs: DataSourceInstanceSettings = {
+      ...prometheusDs,
+      uid: 'tempo-uid',
+      name: 'Tempo',
+      type: 'tempo',
+      meta: {
+        ...prometheusDs.meta,
+        id: 'tempo',
+        name: 'Tempo',
+      },
+    };
+
+    it('returns an error when the current data source type is not in the filtered list', () => {
+      expect(getDataSourcePickerError('tempo-uid', tempoDs, [prometheusDs])).toBe(
+        'Data source type is not valid for this field: tempo'
+      );
+    });
+
+    it('returns undefined when the current data source type matches the filter', () => {
+      expect(getDataSourcePickerError('prom-uid', prometheusDs, [prometheusDs])).toBeUndefined();
+    });
+
+    it('returns undefined when noDefault is set and nothing is selected', () => {
+      expect(getDataSourcePickerError(null, undefined, [prometheusDs], true)).toBeUndefined();
+    });
+
+    it('returns a not-found error when the current data source cannot be resolved', () => {
+      expect(getDataSourcePickerError('missing-uid', undefined, [prometheusDs])).toBe(
+        'Could not find data source missing-uid'
+      );
+    });
+
+    it('returns undefined for expression datasources even when they are not in the filtered list', () => {
+      expect(getDataSourcePickerError('__expr__', undefined, [prometheusDs])).toBeUndefined();
+    });
+
+    it('recomputes validity on render when the allowed list changes without filter prop changes', () => {
+      mockGetInstanceSettings.mockReturnValue(prometheusDs);
+      mockGetList.mockReturnValue([prometheusDs]);
+      const { rerender } = render(<DataSourcePicker current="prom-uid" pluginId="prometheus" onChange={jest.fn()} />);
+
+      const wrapper = () => screen.getByLabelText('Data source picker select container').querySelector('.ds-picker');
+      const validClass = wrapper()?.className;
+
+      mockGetList.mockReturnValue([]);
+      rerender(<DataSourcePicker current="prom-uid" pluginId="prometheus" onChange={jest.fn()} />);
+
+      expect(wrapper()?.className).not.toBe(validClass);
     });
   });
 

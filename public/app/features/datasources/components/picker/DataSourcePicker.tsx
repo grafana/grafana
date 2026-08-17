@@ -33,7 +33,7 @@ import { useDatasource, useDatasources } from '../../hooks';
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
-import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
+import { dataSourceLabel, isDataSourceCompatibleWithPicker, matchDataSourceWithSearch } from './utils';
 
 export const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
 export const INTERACTION_ITEM = {
@@ -134,6 +134,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     type: props.type,
     variables: props.variables,
   });
+  const isCurrentCompatible = isDataSourceCompatibleWithPicker(currentValue, dataSources, props.filter, current);
   const favoriteDataSources = useFavoriteDatasources();
   const placement = 'bottom-start';
 
@@ -291,8 +292,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           autoComplete="off"
           prefix={currentValue ? prefixIcon : undefined}
           suffix={suffix}
-          invalid={invalid}
-          placeholder={hideTextValue ? '' : dataSourceLabel(currentValue) || placeholder}
+          invalid={invalid || !isCurrentCompatible}
+          placeholder={hideTextValue ? '' : dataSourceLabel(currentValue ?? current) || placeholder}
           onFocus={() => {
             setInputHasFocus(true);
           }}

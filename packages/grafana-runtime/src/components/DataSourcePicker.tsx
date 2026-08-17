@@ -1,5 +1,5 @@
 // Libraries
-import { type ComponentType, memo, useEffect, useState } from 'react';
+import { type ComponentType, memo } from 'react';
 
 // Components
 import {
@@ -14,7 +14,7 @@ import { type ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/u
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
-import { ExpressionDatasourceRef } from './../utils/expressionRef';
+import { ExpressionDatasourceRef, isExpressionReference } from './../utils/expressionRef';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -54,6 +54,29 @@ export interface DataSourcePickerProps {
 type DataSourcePickerComponentType = ComponentType<DataSourcePickerProps>;
 
 let DataSourcePickerComponent: DataSourcePickerComponentType | undefined;
+
+/** @internal */
+export function getDataSourcePickerError(
+  current: DataSourcePickerProps['current'],
+  currentSettings: DataSourceInstanceSettings | undefined,
+  allowed: DataSourceInstanceSettings[],
+  noDefault?: boolean
+): string | undefined {
+  if (!current && noDefault) {
+    return undefined;
+  }
+  // Expressions are valid query datasources but are not returned by getList().
+  if (isExpressionReference(current) || isExpressionReference(currentSettings)) {
+    return undefined;
+  }
+  if (!currentSettings) {
+    return 'Could not find data source ' + current;
+  }
+  if (!allowed.some((ds) => ds.uid === currentSettings.uid)) {
+    return `Data source type is not valid for this field: ${currentSettings.type}`;
+  }
+  return undefined;
+}
 
 /**
  * Used to bootstrap the DataSourcePicker during application start, so the
@@ -115,14 +138,21 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
   isLoading = false,
 }: DataSourcePickerProps) {
   const dataSourceSrv = getDataSourceSrv();
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    const dsSettings = dataSourceSrv.getInstanceSettings(current);
-    if (!dsSettings) {
-      setError('Could not find data source ' + current);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const currentSettings = dataSourceSrv.getInstanceSettings(current);
+  const allowed = dataSourceSrv.getList({
+    alerting,
+    tracing,
+    metrics,
+    logs,
+    dashboard,
+    mixed,
+    variables,
+    annotations,
+    pluginId,
+    filter,
+    type,
+  });
+  const error = getDataSourcePickerError(current, currentSettings, allowed, noDefault);
 
   function handleChange(item: SelectableValue<string>, actionMeta: ActionMeta) {
     if (actionMeta.action === 'clear' && onClear) {
@@ -132,7 +162,6 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
     const dsSettings = dataSourceSrv.getInstanceSettings(item.value);
     if (dsSettings) {
       onChange(dsSettings);
-      setError(undefined);
     }
   }
 
@@ -140,14 +169,13 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
     if (!current && noDefault) {
       return;
     }
-    const ds = dataSourceSrv.getInstanceSettings(current);
-    if (ds) {
+    if (currentSettings) {
       return {
-        label: ds.name,
-        value: ds.uid,
-        imgUrl: ds.meta.info.logos.small,
+        label: currentSettings.name,
+        value: currentSettings.uid,
+        imgUrl: currentSettings.meta.info.logos.small,
         hideText: hideTextValue,
-        meta: ds.meta,
+        meta: currentSettings.meta,
       };
     }
     const uid = getDataSourceUID(current);
@@ -162,18 +190,12 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
     };
   }
 
-  function getDataSourceOptions() {
-    return dataSourceSrv
-      .getList({ alerting, tracing, metrics, logs, dashboard, mixed, variables, annotations, pluginId, filter, type })
-      .map((ds) => ({
-        value: ds.uid,
-        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
-        imgUrl: ds.meta.info.logos.small,
-        meta: ds.meta,
-      }));
-  }
-
-  const options = getDataSourceOptions();
+  const options = allowed.map((ds) => ({
+    value: ds.uid,
+    label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+    imgUrl: ds.meta.info.logos.small,
+    meta: ds.meta,
+  }));
   const value = getCurrentValue();
   const isClearable = typeof onClear === 'function';
 

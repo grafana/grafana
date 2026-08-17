@@ -1,4 +1,5 @@
 import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceRef } from '@grafana/data';
+import { isExpressionReference } from '@grafana/runtime';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import {
   initLastUsedDatasourceKeyForDashboard,
@@ -21,6 +22,30 @@ export function isDataSourceMatch(
     return ds.uid === current;
   }
   return ds.uid === current.uid;
+}
+
+/**
+ * Config/provisioning can set a data source the UI picker would never offer
+ * (e.g. Tempo in a Prometheus-only field). Returns false when `current` is set
+ * but would be filtered out of the picker list, or when `selected` is set but
+ * cannot be resolved to instance settings.
+ */
+export function isDataSourceCompatibleWithPicker(
+  current: DataSourceInstanceSettings | undefined,
+  allowed: DataSourceInstanceSettings[],
+  filter?: (dataSource: DataSourceInstanceSettings) => boolean,
+  selected?: string | DataSourceRef | DataSourceInstanceSettings | null
+): boolean {
+  if (isExpressionReference(selected) || isExpressionReference(current)) {
+    return true;
+  }
+  if (!current) {
+    return selected == null || selected === '';
+  }
+  if (filter && !filter(current)) {
+    return false;
+  }
+  return allowed.some((ds) => ds.uid === current.uid);
 }
 
 export function dataSourceLabel(
