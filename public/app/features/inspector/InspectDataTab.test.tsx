@@ -215,4 +215,14 @@ describe('InspectDataTab', () => {
       expect(screen.getByText(/Download service graph/i)).toBeInTheDocument();
     });
   });
+
+  describe('when useTableNG is true', () => {
+    it('should render the data with TableNG instead of the legacy Table', () => {
+      render(<InspectDataTab {...createProps({ useTableNG: true })} />);
+      expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
+      // react-data-grid (TableNG) uses role="grid", unlike the legacy Table's role="table"
+      expect(screen.getByRole('grid')).toBeInTheDocument();
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    });
+  });
 });

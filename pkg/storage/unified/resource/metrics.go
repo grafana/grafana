@@ -20,13 +20,13 @@ type StorageMetrics struct {
 func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 	return &StorageMetrics{
 		WatchEventLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "storage_server_watch_latency_seconds",
-			Help:                            "Time (in seconds) spent waiting for watch events to be sent",
+			Name:                            "storage_server_watch_event_latency_seconds",
+			Help:                            "Time (in seconds) from resource commit to the watch event being sent to the client",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1, // enable native histograms
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"resource"}),
+		}, []string{"group", "resource"}),
 		PollerLatency: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:                            "storage_server_poller_query_latency_seconds",
 			Help:                            "poller query latency",

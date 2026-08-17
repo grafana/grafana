@@ -2,15 +2,23 @@ package nats
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/dskit/services"
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const publisherName = "nats-publisher"
+
+var connStateErrs = []error{
+	natsclient.ErrReconnectBufExceeded,
+	natsclient.ErrConnectionClosed,
+	natsclient.ErrConnectionDraining,
+}
 
 // Publisher hides nats.go types so callers can mock it.
 type Publisher interface {
@@ -76,9 +84,21 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 	}
 	if err := nc.Publish(subject, data); err != nil {
 		p.metrics.publishErrors.Inc()
+		if isConnStateErr(err) {
+			return fmt.Errorf("publish to %q: nats connection not established (status=%s, last_err=%v): %w", subject, nc.Status(), nc.LastError(), err)
+		}
 		return fmt.Errorf("publish to %q: %w", subject, err)
 	}
 	p.metrics.messagesPublished.Inc()
 	p.log.Debug("published message", "subject", subject, "bytes", len(data))
 	return nil
+}
+
+func isConnStateErr(err error) bool {
+	for _, target := range connStateErrs {
+		if errors.Is(err, target) {
+			return true
+		}
+	}
+	return false
 }

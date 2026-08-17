@@ -170,6 +170,7 @@ export function SelectBase<T, Rest = {}>({
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
   // local state to track when menu is open - used to stop Escape key from propagating to parent overlays when menu is open
   const [open, setOpen] = useState(!!isOpen);
+  const [showFocusRing, setShowFocusRing] = useState(false);
 
   useImperativeHandle(selectRef, () => reactSelectRef.current!, []);
 
@@ -180,6 +181,7 @@ export function SelectBase<T, Rest = {}>({
 
   const handleMenuClose = useCallback(() => {
     setOpen(false);
+    setShowFocusRing(false);
     onCloseMenu?.();
   }, [onCloseMenu]);
 
@@ -190,6 +192,7 @@ export function SelectBase<T, Rest = {}>({
       if (event.key === 'Escape' && open) {
         event.stopPropagation();
       }
+      setShowFocusRing(true);
       onKeyDown?.(event);
     },
     [onKeyDown, open]
@@ -412,6 +415,7 @@ export function SelectBase<T, Rest = {}>({
             selectedCount: Array.isArray(selectedValue) ? selectedValue.length : undefined,
           }
         }
+        showFocusRing={showFocusRing}
         styles={selectStyles}
         className={className}
         autoWidth={width === 'auto'}

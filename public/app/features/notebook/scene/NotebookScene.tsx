@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import {
   behaviors,
   type CancelActivationHandler,
@@ -18,8 +19,13 @@ import {
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
+import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
 import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
 
+import { canEditNotebooks } from '../permissions';
+
+import { NotebookEditToggle } from './NotebookEditToggle';
+import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
 export interface NotebookSceneState extends SceneObjectState {
@@ -35,10 +41,19 @@ export interface NotebookSceneState extends SceneObjectState {
   hideTimeControls?: boolean;
   overlay?: SceneObject;
   $timeRange: SceneTimeRange;
+  /**
+   * Whether the notebook is being edited rather than read. Runtime only — nothing is saved yet, and
+   * the cells gain no real editing UI beyond becoming writable.
+   */
+  isEditing?: boolean;
 }
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
   public static Component = NotebookSceneRenderer;
+
+  // Edit mode is reflected in the url by this handler rather than by the methods below, so the url
+  // stays a projection of the state instead of a second copy of it.
+  protected _urlSync = new NotebookSceneUrlSync(this);
 
   public constructor(state: NotebookSceneState) {
     super({
@@ -64,11 +79,38 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // renders the refresh picker, so activate it here or the spec's autoRefresh interval never
       // starts. Same workaround as DashboardControls.
       let refreshPickerDeactivation: CancelActivationHandler | undefined;
-      if (this.state.hideTimeControls) {
-        refreshPickerDeactivation = this.state.refreshPicker.activate();
-      }
+      const syncRefreshPickerActivation = (state: NotebookSceneState) => {
+        refreshPickerDeactivation?.();
+        refreshPickerDeactivation = state.hideTimeControls ? state.refreshPicker.activate() : undefined;
+      };
+      syncRefreshPickerActivation(this.state);
+
+      // Re-run it whenever the picker itself is replaced: a whole-state swap (APPLY_NOTEBOOK_SPEC
+      // rebuilds the scene from a spec) hands us a new SceneRefreshPicker that nothing has activated,
+      // so a one-shot activation above would leave auto-refresh silently stopped after an edit.
+      const stateSub = this.subscribeToState((newState, prevState) => {
+        if (
+          newState.refreshPicker !== prevState.refreshPicker ||
+          newState.hideTimeControls !== prevState.hideTimeControls
+        ) {
+          syncRefreshPickerActivation(newState);
+        }
+        // Edit mode is held in two places: here, where the header reads it, and on the layout manager,
+        // where the cells do. `setState` MERGES, so a whole-state swap keeps this scene's `isEditing`
+        // while replacing `body` with a rebuilt one that has no edit state, and the header would keep
+        // saying Editing over cells that had gone read-only. Pushing it down on every change to either
+        // makes the swap safe by construction. onEnterEditMode/onExitEditMode still push it themselves,
+        // so the mode also propagates before this scene is activated.
+        if (newState.body !== prevState.body || newState.isEditing !== prevState.isEditing) {
+          newState.body.editModeChanged?.(Boolean(newState.isEditing));
+        }
+      });
+
+      const destroyMutationClient = createMutationClient(this, 'notebook');
 
       return () => {
+        destroyMutationClient();
+        stateSub.unsubscribe();
         refreshPickerDeactivation?.();
         window.__grafanaSceneContext = prevSceneContext;
       };
@@ -89,6 +131,25 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       panelPluginId: panel?.state.pluginId,
     };
   }
+
+  /**
+   * Permission is checked here rather than only where the toggle renders, so no caller — including
+   * a hand-typed `?edit=true` — can force edit mode for a user without `dashboards:write`.
+   */
+  public onEnterEditMode = () => {
+    if (!canEditNotebooks()) {
+      return;
+    }
+
+    this.setState({ isEditing: true });
+    // Same channel DashboardScene uses to tell its layout the mode changed.
+    this.state.body.editModeChanged?.(true);
+  };
+
+  public onExitEditMode = () => {
+    this.setState({ isEditing: false });
+    this.state.body.editModeChanged?.(false);
+  };
 
   public showModal(modal: SceneObject) {
     this.setState({ overlay: modal });
@@ -119,21 +180,28 @@ function buildNotebookVariables(): SceneVariableSet | undefined {
 }
 
 function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
-  const styles = useStyles2(getStyles);
+  // The app header is fixed and its height varies (single vs docked mega menu), so the sticky offset has
+  // to come from the chrome rather than a constant.
+  const headerHeight = useChromeHeaderHeight();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
   const { body, timePicker, refreshPicker, hideTimeControls, overlay } = model.useState();
 
   return (
-    <>
+    <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
-      {!hideTimeControls && (
-        <div className={styles.controls}>
-          <timePicker.Component model={timePicker} />
-          <refreshPicker.Component model={refreshPicker} />
-        </div>
-      )}
+      <div className={styles.controls}>
+        <NotebookEditToggle notebook={model} />
+        {!hideTimeControls && (
+          <>
+            <timePicker.Component model={timePicker} />
+            <refreshPicker.Component model={refreshPicker} />
+          </>
+        )}
+      </div>
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}
-    </>
+    </div>
   );
 }
 
@@ -162,11 +230,30 @@ function NotebookHiddenVariables({ model }: SceneComponentProps<NotebookScene>) 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) => ({
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flexGrow: 1,
+  }),
   controls: css({
     display: 'flex',
+    alignItems: 'center',
     justifyContent: 'flex-end',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
+    // A sticky row is transparent by default, so the notebook would scroll visibly through it. These two
+    // tokens are the page's own background (PageLayoutType.Custom, see getDefaultBackgroundForLayout), so
+    // the row reads as chrome rather than as a tinted band — same pairing DashboardControlsChrome uses.
+    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
+    // Only from md up: on a narrow viewport the row is a large share of the screen, so the dashboard lets
+    // it scroll away rather than eat the reading area, and this follows suit.
+    [theme.breakpoints.up('md')]: {
+      position: 'sticky',
+      top: headerHeight,
+      // Above the docked sidebar, or the time picker's popover opens behind it. Same reasoning and same
+      // token the dashboard's controls chrome uses.
+      zIndex: theme.zIndex.sidemenu,
+    },
   }),
 });
