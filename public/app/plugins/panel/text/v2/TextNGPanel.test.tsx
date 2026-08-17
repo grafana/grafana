@@ -188,6 +188,23 @@ describe('TextNGPanel', () => {
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
 
+  // The format has to follow the mode, not just code.language, which lingers after
+  // switching out of code mode.
+  it.each([
+    [TextMode.Code, CodeLanguage.Yaml, 'raw'],
+    [TextMode.Code, CodeLanguage.Json, 'json'],
+    [TextMode.Markdown, CodeLanguage.Json, 'html'],
+  ] as const)('interpolates %s mode with the %s language using the %s format', (mode, language, format) => {
+    replaceVariablesMock.mockReturnValueOnce('a: 1');
+    setup(
+      Object.assign({}, defaultProps, {
+        options: { content: 'a: ${var}', mode, code: { language, showLineNumbers: false } },
+      })
+    );
+
+    expect(replaceVariablesMock).toHaveBeenCalledWith('a: ${var}', {}, format);
+  });
+
   it('passes showLineNumbers to the code view', async () => {
     const contentTest = '{\n  "a": 1\n}';
     replaceVariablesMock.mockReturnValueOnce(contentTest);
