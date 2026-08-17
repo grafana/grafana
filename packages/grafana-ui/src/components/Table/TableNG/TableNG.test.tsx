@@ -5,6 +5,7 @@ import { fromLonLat } from 'ol/proj';
 
 import {
   applyFieldOverrides,
+  cacheFieldDisplayNames,
   createTheme,
   type DataFrame,
   type DataLink,
@@ -65,6 +66,28 @@ const createBasicDataFrame = (): DataFrame =>
           values: [1, 2, 3],
           config: stdCellConfig,
           display: displayNumber,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+// Field has a raw `name` distinct from its configured `displayName`, and no pre-cached
+// `field.state.displayName` (applyFieldOverrides explicitly nulls it out). This lets tests
+// tell apart "the display name was cached" (header shows displayName) from "it wasn't"
+// (header falls back to the raw name).
+const createDisplayNameDataFrame = (displayName: string, values = ['A1', 'A2']): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'DisplayNameData',
+      length: values.length,
+      fields: [
+        {
+          name: 'raw_name',
+          type: FieldType.string,
+          values,
+          config: { ...stdCellConfig, displayName },
+          display: displayString,
           ...stdField,
         },
       ],
@@ -836,6 +859,105 @@ describe('TableNG', () => {
 
       expect(firstHeaderSpan).toHaveAttribute('title', 'Column A');
       expect(secondHeaderSpan).toHaveAttribute('title', 'Column B');
+    });
+  });
+
+  describe('assumeCachedDisplayNames', () => {
+    // Table reads only `field.state.displayName` (falling back to the raw field name) — it never
+    // computes a display name itself. `applyFieldOverrides` explicitly nulls out any prior
+    // `state.displayName`, so we assert on that field directly: the mutation `cacheFieldDisplayNames`
+    // performs is only picked up by the rendered header on a later re-render (e.g. via resize or
+    // sort), not the initial paint, so checking the DOM here would really be testing incidental
+    // re-render timing rather than the caching behavior itself.
+    it('caches display names on mount by default', () => {
+      const frame = createDisplayNameDataFrame('Pretty Name');
+      expect(frame.fields[0].state?.displayName).toBeFalsy();
+
+      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      expect(frame.fields[0].state?.displayName).toBe('Pretty Name');
+    });
+
+    it('skips caching when assumeCachedDisplayNames is set', () => {
+      const frame = createDisplayNameDataFrame('Pretty Name');
+      expect(frame.fields[0].state?.displayName).toBeFalsy();
+
+      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} assumeCachedDisplayNames />);
+
+      expect(frame.fields[0].state?.displayName).toBeFalsy();
+    });
+
+    it('leaves a displayName the consumer pre-cached untouched when assumeCachedDisplayNames is set', () => {
+      const frame = createDisplayNameDataFrame('Pretty Name');
+      cacheFieldDisplayNames([frame]);
+      expect(frame.fields[0].state?.displayName).toBe('Pretty Name');
+
+      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} assumeCachedDisplayNames />);
+
+      expect(frame.fields[0].state?.displayName).toBe('Pretty Name');
+    });
+
+    it('recaches display names when a new data frame instance is passed in', () => {
+      const frame1 = createDisplayNameDataFrame('Pretty Name');
+      const { rerender } = render(<TableNG enableVirtualization={false} data={frame1} width={800} height={600} />);
+      expect(frame1.fields[0].state?.displayName).toBe('Pretty Name');
+
+      const frame2 = createDisplayNameDataFrame('Different Name');
+      rerender(<TableNG enableVirtualization={false} data={frame2} width={800} height={600} />);
+
+      expect(frame2.fields[0].state?.displayName).toBe('Different Name');
+      // frame1 is untouched by the later render — proves recaching is keyed off the new frame, not a stale one.
+      expect(frame1.fields[0].state?.displayName).toBe('Pretty Name');
+    });
+
+    it('keeps a field literally named "Value" rendering correctly after a sort', async () => {
+      // Regression: getFieldDisplayName() substitutes the *frame's* name for a field named
+      // exactly "Value" (TIME_SERIES_VALUE_FIELD_NAME) once cached — that substitution is
+      // intentional (@grafana/data), but if caching ran in a useEffect (post-commit), the
+      // row-key memo (useRowCompiler, keyed off the raw field name at first render) and the
+      // column-key memo (rebuilt on sort, reading the by-then-cached, substituted name)
+      // disagreed on the key, leaving the Value column blank after any sort. Caching via
+      // useMemo — before either memo's first read — keeps them in sync from the start.
+      const frame = withFieldOverrides(
+        toDataFrame({
+          name: 'SortingValueTest',
+          length: 3,
+          fields: [
+            {
+              name: 'Category',
+              type: FieldType.string,
+              values: ['A', 'B', 'A'],
+              config: stdCellConfig,
+              display: displayString,
+              ...stdField,
+            },
+            {
+              name: 'Value',
+              type: FieldType.number,
+              values: [3, 1, 2],
+              config: stdCellConfig,
+              display: displayNumber,
+              ...stdField,
+            },
+          ],
+        })
+      );
+
+      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      const columnHeaders = container.querySelectorAll('[role="columnheader"]');
+      const valueColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
+      await user.click(valueColumnButton);
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      const valueCells = Array.from(cells)
+        .filter((_, index) => index % 2 === 1)
+        .map((cell) => cell.textContent);
+
+      expect(valueCells).toEqual(['1', '2', '3']);
+      // The header shows the cached (frame-substituted) name — the important thing is that it's
+      // consistent with the cells above, not blank or mismatched.
+      expect(columnHeaders[1].querySelector('button')).toHaveAttribute('title', 'SortingValueTest');
     });
   });
 

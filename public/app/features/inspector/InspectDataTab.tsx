@@ -5,6 +5,7 @@ import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
+  cacheFieldDisplayNames,
   type CoreApp,
   type DataFrame,
   DataTransformerID,
@@ -68,17 +69,12 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
+    let transformedData: DataFrame[] | undefined;
     if (!this.props.data) {
-      this.setState({ transformedData: [] });
-      return;
-    }
-
-    if (this.props.options.withTransforms) {
-      this.setState({ transformedData: this.props.data });
-      return;
-    }
-
-    if (prevProps.data !== this.props.data || prevState.transformId !== this.state.transformId) {
+      transformedData = [];
+    } else if (this.props.options.withTransforms) {
+      transformedData = this.props.data;
+    } else if (prevProps.data !== this.props.data || prevState.transformId !== this.state.transformId) {
       const currentTransform = this.state.transformationOptions.find((item) => item.value === this.state.transformId);
 
       if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
@@ -89,13 +85,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
             ? moveFirstNonEmptyFrameToFront(this.props.data)
             : this.props.data;
         const subscription = transformDataFrame([currentTransform.transformer], input).subscribe((data) => {
+          cacheFieldDisplayNames(data);
           this.setState({ transformedData: data, selectedDataFrame, dataFrameIndex }, () => subscription.unsubscribe());
         });
         return;
       }
 
-      this.setState({ transformedData: this.props.data });
-      return;
+      transformedData = this.props.data;
+    }
+
+    if (transformedData != null) {
+      cacheFieldDisplayNames(transformedData);
+      this.setState({ transformedData });
     }
   }
 
@@ -305,7 +306,13 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 // so it needs an explicitly-sized wrapper here (unlike the legacy Table).
                 return (
                   <div style={{ width, height }}>
-                    <TableNG width={width} height={height} data={dataFrame} showTypeIcons={true} />
+                    <TableNG
+                      width={width}
+                      height={height}
+                      data={dataFrame}
+                      showTypeIcons={true}
+                      assumeCachedDisplayNames
+                    />
                   </div>
                 );
               }

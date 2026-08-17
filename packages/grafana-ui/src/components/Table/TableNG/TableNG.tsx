@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Suspense, useMemo } from 'react';
 
-import { FieldType } from '@grafana/data';
+import { cacheFieldDisplayNames, FieldType } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
@@ -19,7 +19,18 @@ function Safari26Wrapper(props: { children: React.ReactNode }) {
 }
 
 export function TableNG(props: TableNGProps) {
-  const { data, width } = props;
+  const { data, width, assumeCachedDisplayNames } = props;
+
+  // runs during render (before TableFlat/TableNested read field.state), not after commit —
+  // otherwise their own memoized row/column builders capture the pre-cache values and never see
+  // the update, since cacheFieldDisplayNames mutates field.state in place without triggering a
+  // re-render on its own.
+  useMemo(() => {
+    if (assumeCachedDisplayNames) {
+      return;
+    }
+    cacheFieldDisplayNames([data]);
+  }, [data, assumeCachedDisplayNames]);
 
   const nestedDataField = useMemo(() => data.fields.find((f) => f.type === FieldType.nestedFrames), [data.fields]);
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);

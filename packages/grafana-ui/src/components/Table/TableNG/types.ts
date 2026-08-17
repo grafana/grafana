@@ -149,6 +149,8 @@ interface BaseTableProps {
   disableKeyboardEvents?: boolean;
   // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
   contentAwareWidthsEnabled?: boolean;
+  // if true, the Table should assume `cacheFieldDisplayNames` was already called by the consumer of Table.
+  assumeCachedDisplayNames?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
