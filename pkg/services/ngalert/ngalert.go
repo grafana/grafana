@@ -201,7 +201,7 @@ type AlertNG struct {
 	tracer          tracing.Tracer
 	clientGenerator resource.ClientGenerator
 
-	folderLabelReconciler *folderlabelsyncer.Service
+	folderLabelSyncer *folderlabelsyncer.Service
 
 	evaluationCoordinator EvaluationCoordinator
 	schedCfg              schedule.SchedulerCfg
@@ -670,7 +670,7 @@ func (ng *AlertNG) init() error {
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
-		ng.folderLabelReconciler = folderlabelsyncer.NewService(ng.Cfg, ng.bus, ng.store, ng.clientGenerator,
+		ng.folderLabelSyncer = folderlabelsyncer.NewService(ng.Cfg, ng.bus, ng.store, ng.clientGenerator,
 			ng.Metrics.GetFolderLabelSyncerMetrics())
 	}
 
@@ -770,17 +770,9 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	})
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) && ng.folderLabelReconciler != nil {
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) && ng.folderLabelSyncer != nil {
 		children.Go(func() error {
-			return ng.folderLabelReconciler.Run(subCtx)
-		})
-		// Queues work onto the worker above, so it must start after it. Failures are logged and
-		// tolerated: a missed backfill leaves stale labels, it does not break rule evaluation.
-		children.Go(func() error {
-			if err := ng.folderLabelReconciler.Backfill(subCtx, ng.store.Cfg.DisabledOrgs); err != nil {
-				ng.Log.Warn("Failed to backfill folder rules labels", "error", err)
-			}
-			return nil
+			return ng.folderLabelSyncer.Run(subCtx, ng.store.Cfg.DisabledOrgs)
 		})
 	}
 
