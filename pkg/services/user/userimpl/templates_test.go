@@ -67,6 +67,8 @@ func TestTemplates(t *testing.T) {
 		}
 		return query
 	}
+	emptyInSearchQuery := searchQuery(true, false)
+	emptyInSearchQuery.Filters = []searchUserFilter{{Kind: "in", Condition: "user_stats.billing_role"}}
 
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
@@ -190,6 +192,7 @@ func TestTemplates(t *testing.T) {
 			searchUsersTemplate: {
 				{Name: "all_filters", Data: searchQuery(true, true)},
 				{Name: "default", Data: searchQuery(true, false)},
+				{Name: "empty_in", Data: emptyInSearchQuery},
 			},
 			countSearchUsersTemplate: {
 				{Name: "with_auth_filter", Data: searchQuery(true, true)},
@@ -321,8 +324,16 @@ func TestUpdateUserQueryArguments(t *testing.T) {
 	}, query.GetArgs())
 }
 
+func TestSearchUserWhereFilterPreservesSliceValue(t *testing.T) {
+	value := []int{1, 2}
+	filter, err := newSearchUserWhereFilter("user_id = ?", value)
+	require.NoError(t, err)
+	require.Len(t, filter.Parts, 2)
+	require.Equal(t, value, filter.Parts[1].Value)
+}
+
 func TestQueryValidation(t *testing.T) {
 	require.ErrorIs(t, (&signedInUserQuery{}).Validate(), user.ErrNoUniqueID)
 	require.ErrorContains(t, (&batchDisableUsersQuery{}).Validate(), "user IDs must not be empty")
-	require.ErrorContains(t, (&searchUsersQuery{Filters: []searchUserFilter{{Kind: "in"}}}).Validate(), "must not be empty")
+	require.NoError(t, (&searchUsersQuery{Filters: []searchUserFilter{{Kind: "in"}}}).Validate())
 }

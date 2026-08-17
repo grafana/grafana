@@ -29,7 +29,7 @@ AND (
   )
 AND u.is_disabled = TRUE
 AND user_auth.auth_module = 'oauth'
-AND user_stats.billing_role IN ('admin', 'editor')
+AND "user_stats"."billing_role" IN ('admin', 'editor')
 AND is_admin = TRUE
 ORDER BY
 u.login DESC, u.email ASC

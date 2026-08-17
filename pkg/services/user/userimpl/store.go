@@ -367,7 +367,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		now := time.Now().In(dbHelper.DB.GetEngine().DatabaseTZ)
+		now := time.Now().In(dbHelper.DB.GetEngine().DatabaseTZ).Truncate(time.Second)
 		query := updateUserQuery{
 			SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
 			UserTable:        dbHelper.Table("user"),
@@ -711,9 +711,6 @@ func (q searchUsersQuery) Validate() error {
 	for _, filter := range q.Filters {
 		switch filter.Kind {
 		case "in":
-			if len(filter.Values) == 0 {
-				return fmt.Errorf("search filter values must not be empty")
-			}
 		case "where":
 			if len(filter.Parts) == 0 {
 				return fmt.Errorf("search filter condition must not be empty")
@@ -725,16 +722,13 @@ func (q searchUsersQuery) Validate() error {
 	return nil
 }
 
-func searchFilterArgs(params any) []any {
+func searchInFilterArgs(params any) []any {
 	if params == nil {
-		return nil
+		return []any{nil}
 	}
 
 	value := reflect.ValueOf(params)
 	if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {
-		return []any{params}
-	}
-	if value.Type().Elem().Kind() == reflect.Uint8 {
 		return []any{params}
 	}
 
@@ -746,25 +740,24 @@ func searchFilterArgs(params any) []any {
 }
 
 func newSearchUserWhereFilter(condition string, params any) (searchUserFilter, error) {
-	args := searchFilterArgs(params)
 	parts := strings.Split(condition, "?")
-	if params == nil && len(parts) == 2 {
-		args = []any{nil}
-	}
-	if len(parts)-1 != len(args) {
-		return searchUserFilter{}, fmt.Errorf("search filter condition has %d placeholders for %d values", len(parts)-1, len(args))
-	}
-
-	conditionParts := make([]searchUserConditionPart, len(parts))
-	for i, part := range parts {
-		conditionParts[i].SQL = part
-		if i < len(args) {
-			conditionParts[i].Value = args[i]
-			conditionParts[i].HasValue = true
+	if len(parts) == 1 {
+		if params != nil {
+			return searchUserFilter{}, fmt.Errorf("search filter condition has no placeholder for its value")
 		}
+		return searchUserFilter{Kind: "where", Parts: []searchUserConditionPart{{SQL: condition}}}, nil
+	}
+	if len(parts) != 2 {
+		return searchUserFilter{}, fmt.Errorf("search filter condition must have one placeholder")
 	}
 
-	return searchUserFilter{Kind: "where", Parts: conditionParts}, nil
+	return searchUserFilter{
+		Kind: "where",
+		Parts: []searchUserConditionPart{
+			{SQL: parts[0]},
+			{SQL: parts[1], Value: params, HasValue: true},
+		},
+	}, nil
 }
 
 func buildSearchUserFilters(dbHelper *legacysql.LegacyDatabaseHelper, filters []user.Filter) ([]searchUserJoin, []searchUserFilter, error) {
@@ -782,10 +775,7 @@ func buildSearchUserFilters(dbHelper *legacysql.LegacyDatabaseHelper, filters []
 		}
 
 		if in := filter.InCondition(); in != nil {
-			values := searchFilterArgs(in.Params)
-			if len(values) == 0 {
-				return nil, nil, fmt.Errorf("search filter values must not be empty")
-			}
+			values := searchInFilterArgs(in.Params)
 			queryFilters = append(queryFilters, searchUserFilter{
 				Kind:      "in",
 				Condition: in.Condition,

@@ -18,19 +18,7 @@ LEFT JOIN "test_schema"."user_auth" AS user_auth ON user_auth.id = (
   ORDER BY user_auth.created DESC
   LIMIT 1
 )
-INNER JOIN "test_schema"."user_stats" AS "user_stats" ON user_stats.user_id = u.id
 WHERE u.is_service_account = FALSE
-AND u.org_id = 7
-AND u.id IN (11, 12)
-AND (
-    u.email ILIKE '%ops%'
-    OR u.name ILIKE '%ops%'
-    OR u.login ILIKE '%ops%'
-  )
-AND u.is_disabled = TRUE
-AND user_auth.auth_module = 'oauth'
-AND "user_stats"."billing_role" IN ('admin', 'editor')
-AND is_admin = TRUE
+AND 0 = 1
 ORDER BY
-u.login DESC, u.email ASC
-LIMIT 25 OFFSET 50
+u.login ASC, u.email ASC
