@@ -163,6 +163,17 @@ type GitLabRepositoryConfig struct {
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
 	Path string `json:"path,omitempty"`
+
+	// ProjectID is the GitLab project's immutable numeric ID. Resolved and set
+	// automatically whenever URL is set or changed; it survives a project
+	// transfer/move even if the project's path changes. Read-only: it is
+	// always system-derived and never taken from client-supplied input.
+	ProjectID string `json:"projectID,omitempty"`
+
+	// ProjectPath is the project's namespace/path as GitLab reported it at
+	// the time ProjectID was last resolved, used to match incoming webhook
+	// events. Read-only, set alongside ProjectID.
+	ProjectPath string `json:"projectPath,omitempty"`
 }
 
 func (GitLabRepositoryConfig) OpenAPIModelName() string {

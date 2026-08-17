@@ -1960,6 +1960,10 @@ export type GitLabRepositoryConfig = {
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
+  /** ProjectID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input. */
+  projectID?: string;
+  /** ProjectPath is the project's namespace/path as GitLab reported it at the time ProjectID was last resolved, used to match incoming webhook events. Read-only, set alongside ProjectID. */
+  projectPath?: string;
   /** The repository URL (e.g. `https://gitlab.com/example/test`). */
   url?: string;
 };

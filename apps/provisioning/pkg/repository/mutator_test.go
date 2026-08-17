@@ -276,7 +276,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			// Only set up mock if we expect it to be called
 			if tt.obj != nil {
 				if _, ok := tt.obj.(*provisioning.Repository); ok {
-					factory.EXPECT().Mutate(mock.Anything, mock.Anything).Return(tt.factoryErr).Maybe()
+					factory.EXPECT().Mutate(mock.Anything, mock.Anything, mock.Anything).Return(tt.factoryErr).Maybe()
 				}
 			}
 
