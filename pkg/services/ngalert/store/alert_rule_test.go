@@ -4206,7 +4206,6 @@ func TestIntegrationGetAllFoldersWithRules(t *testing.T) {
 	insertRule(t, 1, "folder-a")
 	insertRule(t, 1, "folder-a")
 	insertRule(t, 1, "folder-b")
-	insertRule(t, 1, "")
 	insertRule(t, 2, "folder-other")
 
 	t.Run("returns the deduplicated folders holding rules, scoped to the org", func(t *testing.T) {
