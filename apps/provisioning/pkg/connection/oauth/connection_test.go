@@ -1,4 +1,4 @@
-package oauth_test
+package oauth
 
 import (
 	"encoding/json"
@@ -16,7 +16,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	"github.com/grafana/grafana/apps/provisioning/pkg/connection/oauth"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -100,8 +99,8 @@ func TestConnection_Test(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			provider := newMockProvider(t, "")
-			provider.EXPECT().ListRepositories(mock.Anything, "access").Return(nil, tt.listErr).Maybe()
-			conn := oauth.NewConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{Token: tt.token})
+			provider.EXPECT().ListRepositories(mock.Anything).Return(nil, tt.listErr).Maybe()
+			conn := newConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
 
 			results, err := conn.Test(t.Context())
 			require.NoError(t, err)
@@ -164,7 +163,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conn := oauth.NewConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{Token: tt.token})
+			conn := newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
 
 			value, err := conn.GenerateRepositoryToken(t.Context(), tt.repo)
 			if tt.expectedErr != "" {
@@ -182,10 +181,9 @@ func TestConnection_ListRepositories(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		provider := newMockProvider(t, "")
-		provider.EXPECT().ListRepositories(mock.Anything, "access").Return(repos, nil)
-		conn := oauth.NewConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{
-			Token: marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
-		})
+		provider.EXPECT().ListRepositories(mock.Anything).Return(repos, nil)
+		conn := newConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, "",
+			marshalTestToken(t, &oauth2.Token{AccessToken: "access"}))
 
 		result, err := conn.ListRepositories(t.Context())
 		require.NoError(t, err)
@@ -193,7 +191,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 	})
 
 	t.Run("failure - no token stored", func(t *testing.T) {
-		conn := oauth.NewConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{})
+		conn := newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", "")
 
 		_, err := conn.ListRepositories(t.Context())
 		require.ErrorIs(t, err, connection.ErrAuthentication)
@@ -254,10 +252,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := newTokenServer(t, tt.responseCode, tt.response)
-			conn := oauth.NewConnection(newMockProvider(t, srv.URL), provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{
-				ClientSecret: "client-secret",
-				Token:        tt.token,
-			})
+			conn := newConnection(newMockProvider(t, srv.URL), provisioning.GitLabRepositoryType, testOAuthConfig, "client-secret", tt.token)
 
 			raw, err := conn.GenerateConnectionToken(t.Context())
 			if tt.expectedErr != "" {
@@ -304,9 +299,7 @@ func TestConnection_ExchangeAuthorizationCode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := newTokenServer(t, tt.responseCode, tt.response)
-			conn := oauth.NewConnection(newMockProvider(t, srv.URL), provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{
-				ClientSecret: "client-secret",
-			})
+			conn := newConnection(newMockProvider(t, srv.URL), provisioning.GitLabRepositoryType, testOAuthConfig, "client-secret", "")
 
 			raw, err := conn.ExchangeAuthorizationCode(t.Context(), tt.code, "https://grafana.example/callback")
 			if tt.expectedErr != "" {
@@ -359,7 +352,7 @@ func TestConnection_ValidateToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conn := oauth.NewConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, oauth.ConnectionSecrets{Token: tt.token})
+			conn := newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
 
 			tokenExpiry, err := conn.ValidateToken()
 			if tt.expectedErr != "" {
@@ -374,8 +367,8 @@ func TestConnection_ValidateToken(t *testing.T) {
 
 var testOAuthConfig = provisioning.ConnectionOAuthConfig{ClientID: "client-id"}
 
-func newMockProvider(t *testing.T, tokenURL string) *oauth.MockProvider {
-	provider := oauth.NewMockProvider(t)
+func newMockProvider(t *testing.T, tokenURL string) *MockProvider {
+	provider := NewMockProvider(t)
 	provider.EXPECT().Endpoint().Return(oauth2.Endpoint{TokenURL: tokenURL}).Maybe()
 	return provider
 }

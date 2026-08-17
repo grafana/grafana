@@ -208,6 +208,8 @@ Users with the Grafana Server Admin flag on their account or access to the confi
 default_home_dashboard_path = data/main-dashboard.json
 ```
 
+Replacing `public/dashboards/home.json` on disk is not supported. If you previously customized home that way, move the file and set `default_home_dashboard_path` to its path.
+
 ### Set the home dashboard for your organization
 
 Organization administrators can choose a default home dashboard for their organization.

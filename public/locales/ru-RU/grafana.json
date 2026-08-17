@@ -1176,7 +1176,8 @@
         "with-causes": ""
       },
       "failedWith": "Ошибка {{-config}} со статусом {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "Невозможно удалить временной интервал, так как он используется либо политками уведомления либо правилами оповещения.",
+      "time-interval-name-exists": "Временной интервал с таким именем уже существует. Используйте другое имя или переименуйте существующий интервал."
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3658,6 +3659,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Уникальное имя для временного интервала.",
+      "error-save-time-interval": "Не удалось сохранить временной интервал",
       "text-loading-time-interval": "Загрузка временного интервала",
       "title-no-matching-time-interval-found": "Соответствующий временной интервал не найден"
     },
@@ -3671,6 +3673,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Временные интервалы",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Выбрать временные интервалы..."
     },
     "time-intervals-table": {
@@ -5738,10 +5741,13 @@
       "add-conditional-rule": "Добавить {{ruleDescription}} правило",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Дублировать панель",
       "edit-query-result-rule": "Изменить правило результата запроса",
       "edit-template-variable-rule": "Изменить правило переменной шаблона",
       "edit-time-range-rule": "Изменить правило временного диапазона",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Переместить {{typeName}}",
       "panel-background": "Изменить фон панели",
       "panel-description": "Изменить описание панели",
@@ -6397,6 +6403,12 @@
         "title-hidden_many": "",
         "title-hidden_other": ""
       },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
+      },
       "links": {
         "add-link": "",
         "new-link": "",
@@ -6962,7 +6974,8 @@
         "change-annotation-enabled-state": "Изменить состояние включенной аннотации",
         "change-annotation-name": "Изменить имя аннотации",
         "change-annotation-panel-filter": "Изменить фильтр панели аннотаций"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Удалить запрос аннотаций",
@@ -7038,13 +7051,9 @@
       "placeholder-your-metric-prefix": "Префикс метрик"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Удалить",
-      "aria-label-edit": "Редактировать",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Правила отображения/скрытия не будут действовать",
@@ -7849,6 +7858,10 @@
     "variable-controls": {
       "add-variable": "Добавить переменную"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
+    },
     "variable-editable-element": {
       "delete-confirm": "Удалить переменную",
       "delete-text": "Удалить {{name}}?",
@@ -8184,7 +8197,8 @@
       "title-missing-rights": "Отсутствующие права"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Выбрать источник данных"
+      "aria-label-select-a-data-source": "Выбрать источник данных",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Страница {{page}} не найдена"
@@ -11108,6 +11122,12 @@
       "high-count_many": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12626,6 +12646,10 @@
     "new-folder": {
       "title": "Новая папка"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12809,6 +12833,7 @@
       "customise-saving": "",
       "dialog-label": "Навигация",
       "dock": "Закрепить меню",
+      "header-title": "",
       "list-label": "Навигация",
       "open": "Главное меню",
       "pin-error": "",
@@ -12926,7 +12951,50 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": ""
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_few": "",
+      "count_many": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_few": "",
+      "count-truncated_many": "",
+      "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -16253,6 +16321,7 @@
     "name-show-mini-map": "Показать мини-карту"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16281,6 +16350,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

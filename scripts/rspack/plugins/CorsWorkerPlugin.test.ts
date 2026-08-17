@@ -14,8 +14,8 @@ function createConfig(publicPath: string): Configuration {
     entry: './index.js',
     mode: 'development',
     devtool: false,
-    // Explicit target so the compilation doesn't depend on the repo's .browserslistrc,
-    // which rspack's bundled browserslist database cannot parse.
+    // The repo's .browserslistrc has no section for NODE_ENV=test, so rspack would resolve an
+    // empty browserslist and throw.
     target: ['web', 'es2022'],
     output: {
       path: OUTPUT_PATH,
