@@ -1,6 +1,5 @@
 import { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
-import reactToText from 'react-to-text';
 
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -21,12 +20,7 @@ export const TruncatedText = React.forwardRef<HTMLElement, TruncatedTextProps>((
       new ResizeObserver((entries) => {
         for (const entry of entries) {
           if (entry.target.clientWidth && entry.target.scrollWidth) {
-            if (entry.target.scrollWidth > entry.target.clientWidth) {
-              setIsOverflowing(true);
-            }
-            if (entry.target.scrollWidth <= entry.target.clientWidth) {
-              setIsOverflowing(false);
-            }
+            setIsOverflowing(entry.target.scrollWidth > entry.target.clientWidth);
           }
         }
       }),
@@ -45,7 +39,7 @@ export const TruncatedText = React.forwardRef<HTMLElement, TruncatedTextProps>((
 
   if (isOverflowing) {
     return (
-      <Tooltip ref={internalRef} content={reactToText(children)}>
+      <Tooltip ref={internalRef} content={internalRef.current?.textContent ?? ''}>
         {childElement(undefined)}
       </Tooltip>
     );
