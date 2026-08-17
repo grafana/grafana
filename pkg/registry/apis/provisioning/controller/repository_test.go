@@ -2053,6 +2053,62 @@ func TestRepositoryController_process_UnhealthyRepositorySkipsHooks(t *testing.T
 			"otherwise a later healthy pass has no generation mismatch left to retry the missed hook work")
 }
 
+// TestRepositoryController_process_BranchProtectionFailureStillRunsHooks
+// verifies that a Test() failure unrelated to reachability (e.g. GitHub branch
+// protection blocking direct pushes, reported as a plain 400) does not suppress
+// hooks the way a real connectivity/auth failure (401/403/503) does — the
+// repository and its webhook API are still reachable, so operations like
+// webhook cleanup must still be allowed to run.
+func TestRepositoryController_process_BranchProtectionFailureStillRunsHooks(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> would otherwise run webhookOnCreate
+		},
+	}
+
+	stub := &hookRepoStub{
+		cfg:        repo,
+		hookErrSet: true, hookErr: nil, // webhook creation succeeds
+		testResults: &provisioning.TestResults{
+			Success: false,
+			Code:    http.StatusBadRequest,
+			Errors: []provisioning.ErrorDetails{
+				{Detail: `branch "main" has protection rules that prevent direct pushes`},
+			},
+		},
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
+	assert.Equal(t, int32(1), stub.onCreateCalls.Load(),
+		"a non-reachability Test() failure must not suppress hooks — the repo and webhook API remain reachable")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the Test() failure must still be recorded on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy, "status should still report unhealthy so the user sees the branch protection error")
+
+	_, obsPatched := patcher.findPatchOp("/status/observedGeneration")
+	assert.True(t, obsPatched, "observedGeneration must advance since hooks were not suppressed")
+}
+
 // TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks
 // verifies that being over the namespace quota does not suppress webhook
 // hooks: quota and reachability are different concerns, and processHooks must
