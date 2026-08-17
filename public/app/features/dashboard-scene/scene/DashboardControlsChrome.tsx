@@ -47,7 +47,11 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
         // scrollContainer in DashboardSidebarSplitter), so the bar must paint over that strip on
         // every viewport: opaque background plus its own paint order.
         position: 'relative',
-        zIndex: 1,
+        // The canvas wrapper next to us is also z-index 1 and comes later in DOM order, so it wins the
+        // tie and paints over the time picker and variable overlays, which render inside this wrapper.
+        // Enough to clear it, and low enough to stay under the fixed app top bar that the controls row
+        // scrolls past on narrow viewports.
+        zIndex: 2,
         background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
         [theme.breakpoints.up('md')]: {
           position: 'sticky',

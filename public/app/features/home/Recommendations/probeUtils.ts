@@ -14,11 +14,6 @@ export const PROBE_TTL_MS = 60_000;
 // ponytail: 3s /health cutoff (drilldown's) — suspected too tight for OPS-scale instances; revisit as follow-up.
 const HEALTH_CHECK_TIMEOUT_MS = 3000;
 
-// Spacing between retry attempts: the transient browser-side failures observed on the homepage
-// (connection queuing, gateway blips) can outlast an immediate retry; a short backoff covers
-// them while the region shows its skeleton. 3 attempts total.
-const RETRY_DELAYS_MS = [500, 1500];
-
 // Grafana Cloud's utility datasources — never where product data lives. Prometheus utilities
 // (billing/ML) carry exact unprefixed names; Loki utilities (query logs, alert history) are
 // provisioned with stack-prefixed names (grafanacloud-<slug>-usage-insights) over stable
@@ -30,21 +25,6 @@ const CLOUD_UTILITY_DATASOURCE_NAMES: Record<string, true> = {
 const CLOUD_UTILITY_LOKI_NAME_PATTERN = /^grafanacloud-(.+-)?(usage-insights|alert-state-history)$/;
 function isCloudUtilityDatasourceName(name: string): boolean {
   return Boolean(CLOUD_UTILITY_DATASOURCE_NAMES[name]) || CLOUD_UTILITY_LOKI_NAME_PATTERN.test(name);
-}
-
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (attempt >= RETRY_DELAYS_MS.length) {
-        throw err;
-      }
-      await sleep(RETRY_DELAYS_MS[attempt]);
-    }
-  }
 }
 
 /** Backend-capable datasource instance for `uid`, or null when it cannot serve resource calls. */

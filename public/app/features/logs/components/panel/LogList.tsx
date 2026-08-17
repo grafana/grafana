@@ -327,7 +327,7 @@ const LogListComponent = ({
       wrapLogMessage,
     ]
   );
-  const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns });
+  const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns }, listHeight);
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
@@ -599,7 +599,8 @@ function getStyles(
   theme: GrafanaTheme2,
   dimensions: LogFieldDimension[],
   displayedFields: string[] = [],
-  { unwrappedColumns }: { unwrappedColumns: boolean }
+  { unwrappedColumns }: { unwrappedColumns: boolean },
+  listHeight: number
 ) {
   return {
     logList: css({
@@ -614,6 +615,8 @@ function getStyles(
     logListContainer: css({
       display: 'flex',
       flexDirection: 'row-reverse',
+      // A definite height is required, otherwise the tallest child sets it and the controls never overflow.
+      height: listHeight,
       // Minimum width to prevent rendering issues and a sausage-like logs panel.
       minWidth: theme.spacing(35),
     }),

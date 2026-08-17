@@ -134,7 +134,7 @@ type IndexableDocument struct {
 	// When the resource is managed by an upstream repository
 	Manager *utils.ManagerProperties `json:"manager,omitempty"`
 
-	// indexed only field for faceting manager info
+	// keyword-indexed and stored field for faceting manager info
 	ManagedBy string `json:"managedBy,omitempty"`
 
 	// When the manager knows about file paths
@@ -151,6 +151,22 @@ type IndexableDocument struct {
 	// never returns those, and a deleted document keeps no manager fields to work
 	// it out later. Pointer for the same reason as IsDeleted.
 	IsProvisioned *bool `json:"_provisioned,omitempty"`
+
+	// Fields below are only ever set by buildDeletedDocument, the one place a
+	// deleted document is built. Nothing else enforces that.
+	//
+	// Pointers for the same reason as the markers above: a value would be added to
+	// every live document for nothing to read.
+
+	// Who deleted the object, in the same form as CreatedBy.
+	DeletedBy *string `json:"deleted_by,omitempty"`
+
+	// When the object was deleted (unix millis).
+	DeletionTime *int64 `json:"deletion_time,omitempty"`
+
+	// Resource version of the delete, as a string because it does not survive a
+	// float64 (see TrashSearchFieldDefinitions).
+	DeletedRV *string `json:"deleted_rv,omitempty"`
 }
 
 func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
@@ -238,6 +254,19 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 		CreatedBy: obj.GetCreatedBy(),
 		UpdatedBy: obj.GetUpdatedBy(),
 	}
+	// Tags and description are read here rather than in a per-kind builder, so any
+	// kind declaring them is searchable without needing one. Both are already
+	// declared standard fields and mapped for every kind; only the population was
+	// dashboard-specific. A kind with its own builder may still overwrite them:
+	// dashboards do, from their parsed summary.
+	if spec, err := obj.GetSpec(); err == nil {
+		if specValue, ok := spec.(map[string]any); ok {
+			doc.Tags = specTags(specValue["tags"])
+			if description, ok := specValue["description"].(string); ok {
+				doc.Description = description
+			}
+		}
+	}
 	m, ok := obj.GetManagerProperties()
 	if ok {
 		doc.Manager = &m
@@ -252,7 +281,7 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 		doc.Created = ts.UnixMilli()
 	}
 	tt, err := obj.GetUpdatedTimestamp()
-	if err != nil && tt != nil {
+	if err == nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
 	}
 	for _, owner := range obj.GetOwnerReferences() {
@@ -262,6 +291,28 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 		}
 	}
 	return doc.UpdateCopyFields()
+}
+
+// specTags reads a spec.tags value, which unstructured decoding yields as a
+// []any of strings. Anything else — a missing key, a non-list, a non-string
+// entry — is skipped rather than failing: a malformed tag should not keep the
+// whole resource out of the index. Returns nil when nothing usable is found, so
+// the field stays omitted rather than serializing as an empty list.
+func specTags(raw any) []string {
+	values, ok := raw.([]any)
+	if !ok {
+		return nil
+	}
+	tags := make([]string, 0, len(values))
+	for _, v := range values {
+		if s, ok := v.(string); ok && s != "" {
+			tags = append(tags, s)
+		}
+	}
+	if len(tags) == 0 {
+		return nil
+	}
+	return tags
 }
 
 // StandardDocumentBuilder returns the standard document builder backed by the
@@ -520,6 +571,13 @@ const (
 	// every kind, and so live search callers cannot filter on them themselves.
 	SEARCH_FIELD_IS_DELETED     = "_deleted"
 	SEARCH_FIELD_IS_PROVISIONED = "_provisioned"
+
+	// Fields only a deleted document carries, declared in
+	// TrashSearchFieldDefinitions rather than the standard set for the same reasons
+	// as the markers above.
+	SEARCH_FIELD_DELETED_BY    = "deleted_by"
+	SEARCH_FIELD_DELETION_TIME = "deletion_time"
+	SEARCH_FIELD_DELETED_RV    = "deleted_rv"
 )
 
 var standardSearchFieldsInit sync.Once
@@ -650,6 +708,23 @@ func StandardSearchFields() SearchableDocumentFields {
 				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				IsArray:     true,
 				Description: "Owner references in format {Group}/{Kind}/{Name}",
+			},
+			// Trash columns. A response can only carry a column defined here, so
+			// without these /trash could not return them at all (see hitsToTable).
+			{
+				Name:        SEARCH_FIELD_DELETED_BY,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				Description: "Who deleted the resource (format: user:<uid>)",
+			},
+			{
+				Name:        SEARCH_FIELD_DELETION_TIME,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+				Description: "When the resource was deleted (unix millis)",
+			},
+			{
+				Name:        SEARCH_FIELD_DELETED_RV,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				Description: "Resource version of the delete",
 			},
 		})
 

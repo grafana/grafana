@@ -471,6 +471,7 @@ export function ToolbarActions({ dashboard }: Props) {
             onClick={() => {
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
+            testId={selectors.components.NavToolbar.editDashboard.saveAsCopyButton}
           />
         </Menu>
       );
@@ -494,6 +495,7 @@ export function ToolbarActions({ dashboard }: Props) {
               icon="angle-down"
               variant={isDirty ? 'primary' : 'secondary'}
               size="sm"
+              data-testid={selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton}
             />
           </Dropdown>
         </ButtonGroup>

@@ -14,7 +14,7 @@ import { type FolderDTO } from 'app/types/folders';
 
 import { type FolderActiveTab, useNavModel } from './useNavModel';
 
-const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'globalDashboardVariables';
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 
 setBackendSrv(backendSrv);
 setupMockServer();

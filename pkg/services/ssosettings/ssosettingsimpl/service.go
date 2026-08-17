@@ -765,7 +765,9 @@ func overrideMaps(maps ...map[string]any) map[string]any {
 	return result
 }
 
-// IsSecretField returns true if the SSO settings field provided is a secret
+// IsSecretField returns true if the SSO settings field provided is a secret.
+// A copy of this classification lives in pkg/registry/apis/iam/sso
+// (secretFieldPatterns/redactSecrets). Keep the two in sync until this mechanism is removed.
 func IsSecretField(fieldName string) bool {
 	secretFieldPatterns := []string{"secret", "private", "certificate", "password", "client_key"}
 

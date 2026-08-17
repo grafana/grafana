@@ -30,12 +30,12 @@ func NewBatchEmbedder(e Embedder) *BatchEmbedder {
 // empty Content are dropped (the extractor already filters these, but be
 // defensive in case a future caller doesn't).
 //
-// namespace, resource, and rv are stamped onto every returned Vector;
-// they're not derivable from the Item alone.
+// namespace, resource, rv, and contentVersion (the calling Builder's Version()) are stamped onto every returned Vector.
 func (b *BatchEmbedder) Embed(
 	ctx context.Context,
 	namespace, resource string,
 	rv int64,
+	contentVersion int,
 	items []embed.Item,
 ) ([]vector.Vector, error) {
 	// Filter empties up-front so output indices line up with the embedded
@@ -82,6 +82,7 @@ func (b *BatchEmbedder) Embed(
 			Metadata:        it.Metadata,
 			Embedding:       out.Embeddings[i].Dense,
 			Model:           b.embedder.Model,
+			ContentVersion:  contentVersion,
 		}
 	}
 	return vectors, nil

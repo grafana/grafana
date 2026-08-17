@@ -148,12 +148,18 @@ func trashFieldSet() *fieldSet {
 	def := func(name string, caps ...resource.SearchCapability) resource.SearchFieldDefinition {
 		return resource.SearchFieldDefinition{Name: name, Type: resource.SearchFieldTypeString, Capabilities: caps}
 	}
+	// The two numeric fields are typed from the backend declarations, so both sides
+	// agree a timestamp is a number and it sorts in time order.
+	trash := map[string]resource.SearchFieldDefinition{}
+	for _, d := range resource.TrashSearchFieldDefinitions() {
+		trash[d.Name] = d
+	}
 	return &fieldSet{byName: map[string]resource.SearchFieldDefinition{
 		trashFieldTitle:        def(trashFieldTitle, resource.SearchCapabilityText, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
 		trashFieldFolder:       def(trashFieldFolder, resource.SearchCapabilityFilter, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
-		trashFieldDeletedBy:    def(trashFieldDeletedBy, resource.SearchCapabilityFilter, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
-		trashFieldDeletionTime: def(trashFieldDeletionTime, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
-		trashFieldDeletedRV:    def(trashFieldDeletedRV, resource.SearchCapabilityRetrieve),
+		trashFieldDeletedBy:    trash[trashFieldDeletedBy],
+		trashFieldDeletionTime: trash[trashFieldDeletionTime],
+		trashFieldDeletedRV:    trash[trashFieldDeletedRV],
 	}}
 }
 
@@ -323,14 +329,29 @@ func validateSort(sorts []searchv0.SortField, fs *fieldSet, p *field.Path) field
 		fp := sp.Child("field")
 		capErrs := checkCapability(fs, s.Field, resource.SearchCapabilitySort, fp)
 		errs = append(errs, capErrs...)
-		// v1 sorts scalar string fields only.
+		// Sorting a list of values has no defined meaning, so only scalars are
+		// sortable. Numbers are included because trash orders by a timestamp.
 		if len(capErrs) == 0 {
-			if def := fs.byName[s.Field]; def.Type != resource.SearchFieldTypeString || def.Array {
-				errs = append(errs, field.Invalid(fp, s.Field, "v1 supports sorting on scalar string fields only"))
+			if def := fs.byName[s.Field]; def.Array || !sortableFieldType(def.Type) {
+				errs = append(errs, field.Invalid(fp, s.Field, "v1 supports sorting on scalar string and numeric fields only"))
 			}
 		}
 	}
 	return errs
+}
+
+// sortableFieldType reports whether values of this type have a defined order.
+func sortableFieldType(t resource.SearchFieldType) bool {
+	switch t {
+	case resource.SearchFieldTypeString, resource.SearchFieldTypeInt64, resource.SearchFieldTypeDouble:
+		return true
+	case resource.SearchFieldTypeBoolean, resource.SearchFieldTypeDate, resource.SearchFieldTypeUnknown:
+		// A boolean has nothing useful to order by, and no field declares a date
+		// today, so nothing maps one to sort on.
+		return false
+	default:
+		return false
+	}
 }
 
 func validateReturnFields(fields []string, fs *fieldSet, p *field.Path) field.ErrorList {

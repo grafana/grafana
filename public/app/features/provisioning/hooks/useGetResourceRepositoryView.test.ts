@@ -67,15 +67,27 @@ function setupMocks({
 }
 
 describe('useGetResourceRepositoryView', () => {
-  const originalToggles = config.featureToggles;
+  const originalProvisioningEnabled = config.provisioningEnabled;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    config.featureToggles = { ...originalToggles, provisioning: true };
+    config.provisioningEnabled = true;
   });
 
   afterEach(() => {
-    config.featureToggles = originalToggles;
+    config.provisioningEnabled = originalProvisioningEnabled;
+  });
+
+  describe('provisioning disabled', () => {
+    it('returns Disabled status', () => {
+      config.provisioningEnabled = false;
+      setupMocks();
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Disabled);
+      expect(result.current.isLoading).toBe(false);
+    });
   });
 
   describe('loading states', () => {
@@ -411,6 +423,16 @@ describe('useGetResourceRepositoryView', () => {
       const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
 
       expect(result.current.status).toBe(RepoViewStatus.Error);
+      expect(result.current.isMissingRepo).toBe(true);
+    });
+
+    it('is true when provisioning is disabled (no repository can exist)', () => {
+      config.provisioningEnabled = false;
+      setupMocks();
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Disabled);
       expect(result.current.isMissingRepo).toBe(true);
     });
   });

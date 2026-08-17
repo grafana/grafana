@@ -1,11 +1,11 @@
 import { configureStore, type Middleware, isAnyOf } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
-import { testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { waitFor } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import * as quotasAPI from '@grafana/api-clients/rtkq/quotas/v0alpha1';
-import { setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -107,12 +107,18 @@ describe('browseDashboardsAPI', () => {
     return { store: makeRecorderStore(recorder), updateNamePayloads };
   };
 
-  testWithFeatureToggles({ disable: ['provisioning'] });
+  let originalProvisioningEnabled: boolean;
 
   beforeEach(() => {
+    originalProvisioningEnabled = config.provisioningEnabled;
+    config.provisioningEnabled = false;
     getDashboardAPIMock.mockReset();
     folderAPIVersionResolver.set('v1beta1');
     server.use(http.get('/api/access-control/user/actions', () => HttpResponse.json({})));
+  });
+
+  afterEach(() => {
+    config.provisioningEnabled = originalProvisioningEnabled;
   });
 
   const createMockDashboardAPI = (saveDashboard: jest.Mock) =>
@@ -211,6 +217,7 @@ describe('browseDashboardsAPI', () => {
 
   it('does not check whether a single delete target is provisioned before deleting it', async () => {
     const store = createTestStore();
+    config.provisioningEnabled = true;
 
     const getProvisionedFolderSpy = jest.fn();
     const deleteFolderSpy = jest.fn();
@@ -457,6 +464,7 @@ describe('browseDashboardsAPI', () => {
 
     it('does not delete provisioned folders during bulk delete', async () => {
       const store = createTestStore();
+      config.provisioningEnabled = true;
 
       const deleteSpy = jest.fn();
 
@@ -504,6 +512,7 @@ describe('browseDashboardsAPI', () => {
     });
 
     it('only un-stars folders that were actually deleted when some are provisioned', async () => {
+      config.provisioningEnabled = true;
       const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
 
       const deletedUids: string[] = [];

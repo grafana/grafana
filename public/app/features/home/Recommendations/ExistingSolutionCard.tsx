@@ -8,12 +8,13 @@ import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } fro
 import { ctaClicked } from '../analytics/main';
 
 import { SolutionSparkline } from './SolutionSparkline';
+import { type ExistingSolutionId } from './solutionsMatrix';
 import { type ExistingItem } from './types';
 
 interface ExistingSolutionCardProps {
   existing: ExistingItem[];
   selected: ExistingItem;
-  onSelect: (title: string) => void;
+  onSelect: (id: ExistingSolutionId) => void;
 }
 
 export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingSolutionCardProps) {
@@ -44,9 +45,9 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
                           solution: item.id,
                         });
                       }
-                      onSelect(item.title);
+                      onSelect(item.id);
                     }}
-                    component={item.title === selected.title ? SelectedCheck : undefined}
+                    component={item.id === selected.id ? SelectedCheck : undefined}
                   />
                 ))}
               </Menu.Group>

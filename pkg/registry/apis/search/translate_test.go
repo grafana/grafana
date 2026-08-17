@@ -251,6 +251,15 @@ func TestTranslateSearchQuery_ValidationErrors(t *testing.T) {
 			wantField: "where.filter.field",
 		},
 		{
+			// Trash fields exist in the index but are declared apart from the standard
+			// ones, so live search must not see them.
+			name: "filter on a trash field",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "deleted_by", Operator: "In", Values: []string{"user:alice"}}}
+			},
+			wantField: "where.filter.field",
+		},
+		{
 			name: "filter bad operator",
 			mutate: func(q *searchv0.SearchQuery) {
 				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "folder", Operator: "Equals", Values: []string{"a"}}}
@@ -274,11 +283,6 @@ func TestTranslateSearchQuery_ValidationErrors(t *testing.T) {
 		{
 			name:      "sort on non-sortable field",
 			mutate:    func(q *searchv0.SearchQuery) { q.Sort = []searchv0.SortField{{Field: "panel_type"}} },
-			wantField: "sort[0].field",
-		},
-		{
-			name:      "sort on non-string field",
-			mutate:    func(q *searchv0.SearchQuery) { q.Sort = []searchv0.SortField{{Field: "panel_id"}} },
 			wantField: "sort[0].field",
 		},
 		{
@@ -378,6 +382,30 @@ func TestTranslateTrashQuery_SortByTitleAllowed(t *testing.T) {
 	require.Len(t, req.SortBy, 1)
 	assert.Equal(t, trashFieldTitle, req.SortBy[0].Field)
 	assert.False(t, req.SortBy[0].Desc)
+}
+
+// deletion_time is the order trash comes back in by default, so a caller has to be
+// able to ask for it explicitly too.
+func TestTranslateTrashQuery_SortByDeletionTimeAllowed(t *testing.T) {
+	q := trashQuery(nil)
+	q.Sort = []searchv0.SortField{{Field: trashFieldDeletionTime, Direction: "desc"}}
+	req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+	require.Empty(t, errs)
+	require.Len(t, req.SortBy, 1)
+	assert.Equal(t, trashFieldDeletionTime, req.SortBy[0].Field)
+	assert.True(t, req.SortBy[0].Desc)
+}
+
+// Kinds declare sortable numeric fields (dashboard usage counters, user
+// lastSeenAt), and the index gives them doc values, so sorting on one is valid.
+func TestTranslateSearchQuery_SortByNumericFieldAllowed(t *testing.T) {
+	q := searchQuery(nil)
+	q.Sort = []searchv0.SortField{{Field: "panel_id", Direction: "desc"}}
+	req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+	require.Empty(t, errs)
+	require.Len(t, req.SortBy, 1)
+	assert.Equal(t, "panel_id", req.SortBy[0].Field)
+	assert.True(t, req.SortBy[0].Desc)
 }
 
 func TestTranslateTrashQuery_ExplicitFieldsAddDeletedRV(t *testing.T) {

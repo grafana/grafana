@@ -153,7 +153,7 @@ export const SidebarCard = ({
         <div
           aria-hidden={!multiSelectMode}
           className={cx(styles.checkboxWrapper, multiSelectMode && styles.checkboxWrapperOpen)}
-          {...(!multiSelectMode && { inert: '' })}
+          inert={!multiSelectMode}
         >
           {onToggleMultiSelect && (
             <div className={styles.checkboxClickArea} onMouseDownCapture={handleBulkCheckboxMouseDownCapture}>

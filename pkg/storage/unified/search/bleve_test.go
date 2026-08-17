@@ -877,7 +877,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 
@@ -897,7 +897,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
 			Query:   "grafana",
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 		_, ok := searchReq.Sort[0].(*blevesearch.SortScore)
@@ -916,7 +916,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: 10},
 			},
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, errResult)
 		require.Contains(t, searchReq.Facets, "tagValues")
 		assert.Equal(t, resource.SEARCH_FIELD_TAGS, searchReq.Facets["tagValues"].Field)
@@ -929,10 +929,27 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {Field: "labels.region", Limit: 10},
 			},
-		}, nil, false)
+		}, nil, false, nil)
 		require.Nil(t, searchReq)
 		require.NotNil(t, errResult)
 		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
+	})
+
+	// Both the bleve term trimmer and the post-rank aggregator use the limit as
+	// a slice bound, so a negative one has to be turned away before either runs.
+	t.Run("rejects a negative facet limit", func(t *testing.T) {
+		for _, postRankAuthz := range []bool{false, true} {
+			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{},
+				Limit:   10,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: -1},
+				},
+			}, nil, postRankAuthz, nil)
+			require.Nil(t, searchReq)
+			require.NotNil(t, errResult)
+			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
+		}
 	})
 }
 
@@ -1151,6 +1168,22 @@ func withRequiredIndexFeatures(features ...resource.IndexFeature) setupOption {
 	}
 }
 
+func withPostRankAuthzEnabled() setupOption {
+	return func(options *BleveOptions) {
+		options.PostRankAuthzEnabled = true
+	}
+}
+
+// TestRequiredIndexFeaturesFollowPostRankAuthz covers the gate that keeps the
+// stored facet mapping from rebuilding indexes that serve facets from bleve.
+func TestRequiredIndexFeaturesFollowPostRankAuthz(t *testing.T) {
+	nativeFacets, _ := setupBleveBackend(t)
+	require.NotContains(t, nativeFacets.requiredFeatures, resource.IndexFeatureStoredFacets)
+
+	postRank, _ := setupBleveBackend(t, withPostRankAuthzEnabled())
+	require.Contains(t, postRank.requiredFeatures, resource.IndexFeatureStoredFacets)
+}
+
 // TestBuildIndexReuseChecksRequiredFeatures covers an on-disk index built before
 // a mapping change: a binary requiring an index feature the index lacks rebuilds
 // rather than serve wrong answers, and reuses the index when it requires none.
@@ -1202,7 +1235,7 @@ func TestBuildIndexReuseChecksRequiredFeatures(t *testing.T) {
 func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
 	newIndexWithoutFeatures := func(t *testing.T) bleve.Index {
 		t.Helper()
-		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = idx.Close() })
 		require.NoError(t, setRV(idx, 42))
@@ -1224,13 +1257,110 @@ func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
 		require.ErrorContains(t, err, "missing required index features [alpha]")
 	})
 }
+
+// The setting is read once, when the index is created, so later changes cannot
+// leave trash missing whatever was deleted while it was off.
+func TestNewBleveIndexRecordsKeepsDeletedDocuments(t *testing.T) {
+	for _, keep := range []bool{true, false} {
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", keep)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = idx.Close() })
+
+		bi, err := getBuildInfo(idx)
+		require.NoError(t, err)
+		require.Equal(t, keep, slices.Contains(bi.Features, resource.IndexFeatureHoldsDeletedDocuments))
+		require.Equal(t, keep, slices.Contains(bi.resourceBuildInfo().Features, resource.IndexFeatureHoldsDeletedDocuments))
+
+		// Only an index holding deleted documents needs a reader that filters them.
+		if keep {
+			require.Equal(t, []resource.IndexFeature{resource.IndexFeatureHoldsDeletedDocuments}, bi.ReaderRequirements)
+		} else {
+			require.Empty(t, bi.ReaderRequirements)
+		}
+	}
+}
+
+// A local index whose build info cannot be read is discarded: there is no way to
+// tell whether it declares a requirement this binary cannot meet.
+func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
+	newIndexOnDisk := func(t *testing.T, rawBuildInfo []byte) string {
+		t.Helper()
+		resourceDir := t.TempDir()
+		idx, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
+		require.NoError(t, err)
+		require.NoError(t, setRV(idx, 42))
+		if rawBuildInfo != nil {
+			require.NoError(t, idx.SetInternal([]byte(internalBuildInfoKey), rawBuildInfo))
+		}
+		require.NoError(t, idx.Close())
+		return resourceDir
+	}
+
+	logger := log.New("bleve-test")
+
+	t.Run("reused when build info is readable", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+		idx, _, rv, err := backend.tryReuseFileIndex(newIndexOnDisk(t, nil), time.Time{}, logger)
+		require.NoError(t, err)
+		require.NotNil(t, idx)
+		require.Equal(t, int64(42), rv)
+		require.NoError(t, idx.Close())
+	})
+
+	t.Run("discarded when build info cannot be parsed", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+		idx, _, _, err := backend.tryReuseFileIndex(newIndexOnDisk(t, []byte("{not json")), time.Time{}, logger)
+		require.NoError(t, err)
+		require.Nil(t, idx)
+	})
+}
+
+// Stands in for an index written by a newer binary.
+func newIndexDeclaringRequirements(t *testing.T, requirements ...resource.IndexFeature) bleve.Index {
+	t.Helper()
+	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = idx.Close() })
+	require.NoError(t, setRV(idx, 42))
+
+	bi, err := getBuildInfo(idx)
+	require.NoError(t, err)
+	bi.ReaderRequirements = requirements
+	raw, err := json.Marshal(bi)
+	require.NoError(t, err)
+	require.NoError(t, idx.SetInternal([]byte(internalBuildInfoKey), raw))
+	return idx
+}
+
+// Backstops selection, which can only check snapshots whose manifest carries the
+// requirements.
+func TestValidateDownloadedIndexChecksReaderRequirements(t *testing.T) {
+	backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+
+	t.Run("rejected for a requirement this binary does not know", func(t *testing.T) {
+		_, err := backend.validateDownloadedIndex(newIndexDeclaringRequirements(t, "feature-from-the-future"))
+		require.ErrorContains(t, err, "does not understand [feature-from-the-future]")
+	})
+
+	t.Run("accepted when every requirement is understood", func(t *testing.T) {
+		rv, err := backend.validateDownloadedIndex(newIndexDeclaringRequirements(t, resource.IndexFeatureDeletedMarker))
+		require.NoError(t, err)
+		require.Equal(t, int64(42), rv)
+	})
+
+	t.Run("accepted when none are declared", func(t *testing.T) {
+		rv, err := backend.validateDownloadedIndex(newIndexDeclaringRequirements(t))
+		require.NoError(t, err)
+		require.Equal(t, int64(42), rv)
+	})
+}
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 
 	buildTime := time.Date(2026, 5, 18, 10, 0, 0, 0, time.UTC)
 	selectableFields := []string{"team"}
-	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "")
+	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "", false)
 	require.NoError(t, err)
 	defer func() { require.NoError(t, source.Close()) }()
 
@@ -1483,7 +1613,7 @@ func TestBuildIndexDoesNotReuseFileIndexWithoutResourceVersion(t *testing.T) {
 	require.NoError(t, err)
 	resourceDir := backend.getResourceDir(ns)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
-	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "")
+	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "", false)
 	require.NoError(t, err)
 	rv, err := getRV(unfinished)
 	require.NoError(t, err)
@@ -2616,14 +2746,14 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 	}
 }
 
-// An index built before the marker was mapped drops it silently, which would
+// An index built before these fields were mapped drops them silently, which would
 // leave a deleted document looking live. BulkIndex removes such a document
 // instead, so trash is missing from search rather than leaking into it, until the
 // index is rebuilt.
-func TestBulkIndexRemovesMarkedDocumentsWhenTheMarkerIsNotMapped(t *testing.T) {
+func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
-	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "")
+	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "", false)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = raw.Close() })
 
@@ -2647,7 +2777,16 @@ func TestBulkIndexRemovesMarkedDocumentsWhenTheMarkerIsNotMapped(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, uint64(0), count, "marked document should be removed, not indexed as live")
 
-	// An index that maps the marker keeps the document.
+	// An index mapping the markers but not the trash fields is no better: the
+	// document would be served without a deleter and in arbitrary order. The
+	// producer refuses such an index too, so both writers agree.
+	partial := &bleveIndex{index: raw, features: []resource.IndexFeature{resource.IndexFeatureDeletedMarker}, logger: log.NewNopLogger()}
+	require.NoError(t, partial.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	count, err = raw.DocCount()
+	require.NoError(t, err)
+	assert.Equal(t, uint64(0), count, "a partially mapped index should not keep the document either")
+
+	// An index that maps everything a deleted document needs keeps it.
 	current := &bleveIndex{index: raw, features: resource.CurrentIndexFeatures(), logger: log.NewNopLogger()}
 	require.NoError(t, current.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
 	count, err = raw.DocCount()
@@ -2660,7 +2799,7 @@ func TestBulkIndexRemovesMarkedDocumentsWhenTheMarkerIsNotMapped(t *testing.T) {
 // so leaving match-all there and testing the marker as a Filter would read every
 // document in the index to find the few deleted ones.
 func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
-	scoped, ok := scopeQuery(bleve.NewMatchAllQuery(), true).(*query.BooleanQuery)
+	scoped, ok := scopeQuery(bleve.NewMatchAllQuery(), true, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Must),
@@ -2671,13 +2810,13 @@ func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
 	// A real query drives iteration itself, so the marker moves to Filter where it
 	// does not score.
 	textQuery := bleve.NewMatchQuery("hello")
-	scoped, ok = scopeQuery(textQuery, true).(*query.BooleanQuery)
+	scoped, ok = scopeQuery(textQuery, true, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Filter))
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
 
 	// Live searches only exclude the marker; provisioning is irrelevant to them.
-	scoped, ok = scopeQuery(bleve.NewMatchAllQuery(), false).(*query.BooleanQuery)
+	scoped, ok = scopeQuery(bleve.NewMatchAllQuery(), false, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.MustNot))
 	assert.Nil(t, scoped.Filter)
@@ -2768,10 +2907,10 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 	assert.Equal(t, map[string]float64{
 		id("live-1"): unscoped[id("live-1")],
 		id("live-2"): unscoped[id("live-2")],
-	}, scores(scopeQuery(textQuery, false)))
+	}, scores(scopeQuery(textQuery, false, 0)))
 
 	assert.Equal(t, map[string]float64{
 		id("trashed-1"): unscoped[id("trashed-1")],
 		id("trashed-2"): unscoped[id("trashed-2")],
-	}, scores(scopeQuery(textQuery, true)))
+	}, scores(scopeQuery(textQuery, true, 0)))
 }

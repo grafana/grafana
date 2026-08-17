@@ -6,6 +6,10 @@ on:
       - main
       - release-*.*.*
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
 permissions: {}
 
 jobs:
@@ -159,6 +163,24 @@ jobs:
       uses: ./.github/actions/yarn-install
     - run: yarn run plugin:test:ci
 
+  frontend-rspack-plugin-tests:
+    needs:
+      - detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    runs-on: ubuntu-x64-large
+    name: "Rspack plugin tests"
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - run: yarn run test:rspack
+
   frontend-packages-unit-tests:
     needs:
       - detect-changes
@@ -187,6 +209,7 @@ jobs:
       - frontend-unit-tests
       - frontend-unit-tests-enterprise
       - frontend-decoupled-plugin-tests
+      - frontend-rspack-plugin-tests
       - frontend-packages-unit-tests
     # always() is the best function here.
     # success() || failure() will skip this function if any need is also skipped.

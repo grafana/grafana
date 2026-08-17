@@ -1,5 +1,6 @@
 import { type ExistingItem, type ExistingSolutionProviderResult } from './types';
 import { useKubernetesSolution } from './useKubernetesSolution';
+import { useTelemetrySolutions } from './useTelemetrySolutions';
 
 export interface ExistingSolutionsResult {
   loading: boolean;
@@ -13,13 +14,15 @@ export interface ExistingSolutionsResult {
  */
 export function useExistingSolutions(): ExistingSolutionsResult {
   const kubernetes = useKubernetesSolution();
+  const { metrics, logs, traces } = useTelemetrySolutions();
 
-  const providers: ExistingSolutionProviderResult[] = [kubernetes];
+  // UI order: kubernetes, metrics, logs, traces.
+  const providers: ExistingSolutionProviderResult[] = [kubernetes, metrics, logs, traces];
 
   const solutions = providers.flatMap((provider) => (provider.item ? [provider.item] : []));
-  // A discovered solution renders immediately; the empty state waits for every
-  // provider to settle so a slow probe never yields a premature no-data card.
-  const loading = solutions.length === 0 && providers.some((provider) => provider.loading);
+  // Every provider must settle before anything renders: the default selection is solutions[0],
+  // and a later-settling provider earlier in UI order would swap it after first paint.
+  const loading = providers.some((provider) => provider.loading);
 
   return { loading, solutions };
 }

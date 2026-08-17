@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 
@@ -415,6 +416,62 @@ func TestJobProgressRecorderFolderFailureTracking(t *testing.T) {
 	assert.Contains(t, recorder.failedDeletions, "folder3/file1.json")
 	assert.Contains(t, recorder.failedDeletions, "folder4/subfolder/file2.json")
 	recorder.mu.RUnlock()
+}
+
+// TestUpdateSummary_TotalChanges verifies the recorder sets the action-aware
+// TotalChanges on each summary as successful results are recorded, matching what
+// each single-purpose worker records: push→writes, delete→deletes, move→creates
+// (a rename is recorded as create+delete, so count creates once), else→create+update+delete.
+func TestUpdateSummary_TotalChanges(t *testing.T) {
+	ctx := context.Background()
+	noop := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+
+	tests := []struct {
+		name    string
+		action  provisioning.JobAction
+		actions []repository.FileAction
+		want    int64
+	}{
+		{
+			name:    "push counts writes",
+			action:  provisioning.JobActionPush,
+			actions: []repository.FileAction{repository.FileActionCreated, repository.FileActionCreated},
+			want:    2,
+		},
+		{
+			name:    "delete counts deletes",
+			action:  provisioning.JobActionDelete,
+			actions: []repository.FileAction{repository.FileActionDeleted, repository.FileActionDeleted},
+			want:    2,
+		},
+		{
+			name:    "move counts creates only",
+			action:  provisioning.JobActionMove,
+			actions: []repository.FileAction{repository.FileActionRenamed, repository.FileActionRenamed},
+			want:    2,
+		},
+		{
+			name:    "pull sums create+update+delete",
+			action:  provisioning.JobActionPull,
+			actions: []repository.FileAction{repository.FileActionCreated, repository.FileActionUpdated, repository.FileActionDeleted},
+			want:    3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := newJobProgressRecorder(noop, nil, tt.action).(*jobProgressRecorder)
+			for _, a := range tt.actions {
+				recorder.Record(ctx, NewPathOnlyResult("file.json").
+					WithAction(a).
+					Build())
+			}
+
+			summaries := recorder.summary()
+			require.Len(t, summaries, 1)
+			require.Equal(t, tt.want, summaries[0].TotalChanges)
+		})
+	}
 }
 
 func TestJobProgressRecorderFolderFailureTrackingFromWarning(t *testing.T) {
@@ -1035,6 +1092,41 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 		assert.Empty(t, recorder.resultReasons)
 		recorder.mu.RUnlock()
 	})
+}
+
+func TestJobProgressRecorderCompleteWithWarningError(t *testing.T) {
+	ctx := context.Background()
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+
+	t.Run("warning-wrapped error completes in warning state and keeps its message", func(t *testing.T) {
+		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+		finalStatus := recorder.Complete(ctx, AsWarning(errors.New("migrate functionality is disabled by configuration")))
+
+		assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
+		assert.Equal(t, "migrate functionality is disabled by configuration", finalStatus.Message)
+	})
+
+	t.Run("plain error still completes in error state", func(t *testing.T) {
+		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+		finalStatus := recorder.Complete(ctx, errors.New("boom"))
+
+		assert.Equal(t, provisioning.JobStateError, finalStatus.State)
+		assert.Equal(t, "boom", finalStatus.Message)
+	})
+}
+
+func TestAsWarning(t *testing.T) {
+	assert.Nil(t, AsWarning(nil))
+	assert.False(t, IsWarning(nil))
+	assert.False(t, IsWarning(errors.New("plain")))
+
+	err := AsWarning(errors.New("disabled by configuration"))
+	assert.True(t, IsWarning(err))
+	assert.Equal(t, "disabled by configuration", err.Error())
+	// Preserves the wrapped error for errors.Is/As chains.
+	assert.True(t, IsWarning(fmt.Errorf("wrapped: %w", err)))
 }
 
 func TestJobProgressRecorderTooManyErrorsConcurrency(t *testing.T) {

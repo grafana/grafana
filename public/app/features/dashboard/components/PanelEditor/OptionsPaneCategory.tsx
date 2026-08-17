@@ -62,7 +62,7 @@ export const OptionsPaneCategory = React.memo(
       if ((forceOpen || isOpenFromUrl) && !isExpanded && !disabledText) {
         setIsExpanded(true);
         setTimeout(() => {
-          ref.current?.scrollIntoView();
+          ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 200);
       }
     }, [isExpanded, isOpenFromUrl, forceOpen, disabledText]);
@@ -92,12 +92,12 @@ export const OptionsPaneCategory = React.memo(
       }
 
       const scrollTimeout = window.setTimeout(() => {
-        ref.current?.scrollIntoView();
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 200);
 
       const highlightTimeout = window.setTimeout(() => {
         setIsHighlighted(false);
-      }, 2000);
+      }, 5000);
 
       return () => {
         window.clearTimeout(scrollTimeout);
@@ -276,7 +276,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   boxHighlighted: css({
     [theme.transitions.handleMotion('no-preference')]: {
-      animation: `${categoryHighlight(theme)} 2s ease-out forwards`,
+      animation: `${categoryHighlight(theme)} 5s ease-out forwards`,
     },
     [theme.transitions.handleMotion('reduce')]: {
       backgroundColor: theme.colors.primary.transparent,

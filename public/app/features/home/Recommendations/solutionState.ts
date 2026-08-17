@@ -1,3 +1,5 @@
+import { useAsync } from 'react-use';
+
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
 import { resolveKubernetesDatasource } from './kubernetesData';
@@ -124,4 +126,9 @@ export async function resolveSolutionState(): Promise<SolutionStateResolution> {
 /** Reset the cached resolution (test seam). Does NOT reset kubernetesData's own TTL cache. */
 export function resetSolutionStateResolution(): void {
   solutionStateResolution.reset();
+}
+
+/** Gate inside the callback (Rules of Hooks): a disabled caller never triggers the probes. */
+export function useSolutionState(enabled = true): { value?: SolutionStateResolution; loading: boolean } {
+  return useAsync(async () => (enabled ? resolveSolutionState() : undefined), [enabled]);
 }

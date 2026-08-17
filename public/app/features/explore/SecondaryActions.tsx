@@ -4,15 +4,13 @@ import { useState } from 'react';
 import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { Components, selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useFlagQueryHistoryRecentQueriesUI } from '@grafana/runtime/internal';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueriesType, type OnSelectQueryType } from './QueryLibrary/types';
+import { hasSavedQueryReadPermissions } from './QueryLibrary/utils/identity';
 import { RecentQueriesModal } from './RecentQueries/RecentQueriesModal';
 
 type Props = {
@@ -54,9 +52,7 @@ export function SecondaryActions({
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
   const recentQueriesUI = useFlagQueryHistoryRecentQueriesUI();
   const [recentQueriesOpen, setRecentQueriesOpen] = useState(false);
-  const canReadQueries = config.featureToggles.savedQueriesRBAC
-    ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
-    : contextSrv.isSignedIn;
+  const canReadQueries = hasSavedQueryReadPermissions();
 
   return (
     <div className={styles.containerMargin}>
@@ -126,6 +122,7 @@ export function SecondaryActions({
         variant={queryInspectorButtonActive ? 'active' : 'canvas'}
         aria-label={t('explore.secondary-actions.query-inspector-button-aria-label', 'Query inspector')}
         onClick={onClickQueryInspectorButton}
+        data-testid={Components.QueryTab.queryInspectorButton}
         icon="info-circle"
       >
         <Trans i18nKey="explore.secondary-actions.query-inspector-button">Query inspector</Trans>

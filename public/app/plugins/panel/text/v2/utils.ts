@@ -3,16 +3,14 @@ import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 
 import { CodeLanguage, TextMode } from '../panelcfg.gen';
 
+export const EMPTY_CONTENT = ' ';
+
 export function getInterpolateFormat(codeLanguage?: CodeLanguage): 'json' | 'html' {
   return codeLanguage === CodeLanguage.Json ? 'json' : 'html';
 }
 
 /** Shared by the panel and the edit-time preview so they can't diverge. */
 export function transformContent(mode: TextMode, content: string, disableSanitizeHtml: boolean): string {
-  if (!content) {
-    return ' ';
-  }
-
   switch (mode) {
     case TextMode.Code:
       break;
@@ -28,7 +26,7 @@ export function transformContent(mode: TextMode, content: string, disableSanitiz
       });
   }
 
-  return content;
+  return content || EMPTY_CONTENT;
 }
 
 /** Maps the panel's CodeLanguage option to CodeMirrorEditor's lazy-loaded language names. */

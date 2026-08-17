@@ -3,6 +3,7 @@ import { type DraggableProvided } from '@hello-pangea/dnd';
 
 import { type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, IconButton, Link, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getDragHandleStyles } from './styles';
@@ -35,7 +36,8 @@ export function MegaMenuPinnedItem({
   draggableProvided,
   disabled,
 }: Props) {
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const dragStyles = useStyles2(getDragHandleStyles);
   const { item, ancestors, icon } = line;
   const label = item.text;
@@ -107,7 +109,7 @@ export function MegaMenuPinnedItem({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   entry: css({
     listStyleType: 'none',
   }),
@@ -139,6 +141,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   leafIcon: css({
     flexShrink: 0,
     width: theme.spacing(3),
+    color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
   }),
   // Fixed slot that centres the unpin control, matching the Starred section's control slot width.
   unpinSlot: css({

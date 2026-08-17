@@ -1036,10 +1036,10 @@ A Playwright-driven runner that exercises journeys repeatedly against a local Gr
 
 ```bash
 # Start Grafana (with cujTracking enabled and Faro wired) in another terminal first.
-node --experimental-strip-types scripts/cuj-smoke.ts --runs 200
-node --experimental-strip-types scripts/cuj-smoke.ts --runs 5 --headed
-node --experimental-strip-types scripts/cuj-smoke.ts --runs 50 --scenario discarded
-node --experimental-strip-types scripts/cuj-smoke.ts --runs 100 --journeys search_to_resource
+node scripts/cuj-smoke.ts --runs 200
+node scripts/cuj-smoke.ts --runs 5 --headed
+node scripts/cuj-smoke.ts --runs 50 --scenario discarded
+node scripts/cuj-smoke.ts --runs 100 --journeys search_to_resource
 ```
 
 **Architecture.** Each journey owns its smoke driver, co-located with the wiring file:
@@ -1069,7 +1069,7 @@ public/app/core/journeys/
 
 **Output:** outcome histogram, journey × scenario × outcome breakdown, average duration, list of failures.
 
-**Typecheck:** smoke files use explicit `.ts` import extensions (Node ESM with `--experimental-strip-types` requires them). They live under their own `tsconfig.smoke.json` so the main `yarn typecheck` and dev-server fork-ts-checker stay untouched. Run `yarn typecheck:smoke` to validate them locally. CI runs it as part of the frontend-lint workflow; lefthook runs it pre-commit when any smoke file is staged.
+**Typecheck:** smoke files use explicit `.ts` import extensions (Node ESM type stripping requires them). They live under their own `tsconfig.smoke.json` so the main `yarn typecheck` and dev-server fork-ts-checker stay untouched. Run `yarn typecheck:smoke` to validate them locally. CI runs it as part of the frontend-lint workflow; lefthook runs it pre-commit when any smoke file is staged.
 
 ## Implementation Details
 

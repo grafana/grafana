@@ -78,6 +78,11 @@
       "description-basic-logs": "啟用此功能會導致 Azure Monitor 在查詢為<2>基本記錄</2>設定的表格之儀表板面板上，產生每次查詢成本。",
       "label-enable-basic-logs": "啟用基本記錄"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "附加設定為選擇性設定，可進行設定以便更妥善掌控您的資料來源。這包括安全 Socks 代理伺服器、要求逾時和轉寄的 Cookie。",
       "title-additional-settings": "附加設定"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "指標命名空間"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "正在載入…"
     },
@@ -204,6 +216,10 @@
       "label-by": "作者",
       "label-order-by": "排序依據",
       "tooltip-order-by": "以一或多欄為依據，按遞增或遞減順序將結果排序。"
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "從 Azure Monitor 請求中繼資料時發生錯誤"

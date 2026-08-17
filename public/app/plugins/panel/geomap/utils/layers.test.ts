@@ -4,6 +4,9 @@ jest.mock('ol-mapbox-style', () => ({}));
 jest.mock('geotiff', () => ({}));
 
 import type BaseLayer from 'ol/layer/Base';
+import TileLayer from 'ol/layer/Tile';
+import { type Attribution } from 'ol/source/Source';
+import XYZ from 'ol/source/XYZ';
 
 import {
   type DataFrame,
@@ -148,7 +151,7 @@ describe('initLayer', () => {
       map: {},
       layers: [],
       byName: new Map<string, MapLayerState>(),
-      props: { eventBus: {}, data: {} },
+      props: { eventBus: {}, data: {}, options: { controls: {} } },
     }) as unknown as GeomapPanel;
 
   beforeEach(() => {
@@ -243,6 +246,62 @@ describe('initLayer', () => {
 
     expect(getIfExists).toHaveBeenCalledWith(DEFAULT_BASEMAP_CONFIG.type);
     config.geomapDisableCustomBaseLayer = original;
+  });
+
+  describe('attribution', () => {
+    const makeTileLayer = () =>
+      new TileLayer({ source: new XYZ({ url: 'http://x/{z}/{x}/{y}', attributions: '© Tiles' }) });
+
+    const attributionOf = (layer: TileLayer<XYZ>) => {
+      const attributions = layer.getSource()?.getAttributions();
+      return attributions ? attributions({} as Parameters<Attribution>[0]) : null;
+    };
+
+    const createPanelWithoutAttribution = () => {
+      const panel = createPanel();
+      panel.props.options.controls = { showAttribution: false };
+      return panel;
+    };
+
+    it('shows the attribution of the layer source by default', async () => {
+      const layer = makeTileLayer();
+      getIfExists.mockReturnValue({
+        id: 'xyz',
+        name: 'XYZ',
+        create: jest.fn().mockResolvedValue(makeHandler(layer)),
+      });
+
+      await initLayer(createPanel(), {} as never, { type: 'xyz', name: 'x' }, true);
+
+      expect(attributionOf(layer)).toEqual(['© Tiles']);
+    });
+
+    it('hides the attribution the map control turned off', async () => {
+      const layer = makeTileLayer();
+      getIfExists.mockReturnValue({
+        id: 'xyz',
+        name: 'XYZ',
+        create: jest.fn().mockResolvedValue(makeHandler(layer)),
+      });
+
+      await initLayer(createPanelWithoutAttribution(), {} as never, { type: 'xyz', name: 'x' }, true);
+
+      expect(attributionOf(layer)).toBeNull();
+    });
+
+    it('keeps attribution that the layer license requires', async () => {
+      const layer = makeTileLayer();
+      getIfExists.mockReturnValue({
+        id: 'osm-standard',
+        name: 'OpenStreetMap',
+        requiresAttribution: true,
+        create: jest.fn().mockResolvedValue(makeHandler(layer)),
+      });
+
+      await initLayer(createPanelWithoutAttribution(), {} as never, { type: 'osm-standard', name: 'x' }, true);
+
+      expect(attributionOf(layer)).toEqual(['© Tiles']);
+    });
   });
 });
 

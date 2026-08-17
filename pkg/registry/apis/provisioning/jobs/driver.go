@@ -250,7 +250,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		d.metrics.RecordJob(
 			string(d.currentJob.Spec.Action),
 			string(d.currentJob.Status.State),
-			resourceChangeCount(d.currentJob.Spec.Action, d.currentJob.Status.Summary),
+			sumTotalChanges(d.currentJob.Status.Summary),
 			duration.Seconds(),
 		)
 	}
@@ -270,12 +270,20 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		"warningCount", len(status.Warnings),
 		"message", status.Message,
 	}
-	switch {
-	case err != nil:
-		logger.Error("job failed", append(logFields, "error", err)...)
-	case status.State == provisioning.JobStateError:
-		logger.Error("job completed with errors", logFields...)
-	case status.State == provisioning.JobStateWarning:
+	if err != nil {
+		logFields = append(logFields, "error", err)
+	}
+	// Key the log level off the final job state, not off err: a worker can return
+	// an error that maps to a warning state (e.g. a feature disabled by
+	// configuration), which should not be logged or alerted as a failure.
+	switch status.State {
+	case provisioning.JobStateError:
+		if err != nil {
+			logger.Error("job failed", logFields...)
+		} else {
+			logger.Error("job completed with errors", logFields...)
+		}
+	case provisioning.JobStateWarning:
 		logger.Warn("job completed with warnings", logFields...)
 	default:
 		logger.Info("job complete", logFields...)
@@ -508,27 +516,17 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 	return err
 }
 
-// resourceChangeCount totals the resources a job changed, for the duration histogram
-// bucket. It is action-aware to match each worker's original counting: push counts
-// writes; delete counts deletes; move counts creates only (a rename is recorded as
-// both a create and a delete, so summing would double-count); everything else (pull,
-// migrate, ...) sums create+update+delete.
-func resourceChangeCount(action provisioning.JobAction, summaries []*provisioning.JobResourceSummary) int {
+// sumTotalChanges totals the per-summary TotalChanges for the duration-histogram
+// bucket. Each JobResourceSummary carries an action-aware change count set by the
+// progress recorder as results are recorded (see updateSummary), so the driver only
+// has to add them up.
+func sumTotalChanges(summaries []*provisioning.JobResourceSummary) int {
 	total := 0
 	for _, s := range summaries {
 		if s == nil {
 			continue
 		}
-		switch action {
-		case provisioning.JobActionPush:
-			total += int(s.Write)
-		case provisioning.JobActionDelete:
-			total += int(s.Delete)
-		case provisioning.JobActionMove:
-			total += int(s.Create)
-		default:
-			total += int(s.Create + s.Update + s.Delete)
-		}
+		total += int(s.TotalChanges)
 	}
 	return total
 }
