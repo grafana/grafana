@@ -270,13 +270,13 @@ There are default parameters to constrain the layout, and you can update these t
 If you try to resize a panel in auto grid layout, a dialog box opens with the following options:
 
 - **Edit auto layout**: Adjust the layout configuration.
-- **Switch to custom**: Resize and position panels manually.
+- **Switch to custom layout**: Resize and position panels manually.
 
-To quickly see which layout type is active, hover your cursor over the row or tab you're working in to display a layout type indicator.
+If you're working in a tab, the layout type indicator is automatically displayed. To see which layout type is active for a row, hover your cursor over that row to display the indicator.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-auto-layout-indicators-v13.2.png" max-width="750px" alt="Dashboard showing auto layout indicators" >}}
 
-For repeated panels, this interaction is available on the editable panel for the repeated group.
+For repeated panels, this interaction is available on the last panel in the group.
 
 ### Update panel layout
 
