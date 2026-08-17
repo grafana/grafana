@@ -7,13 +7,18 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// fakeResourceEnabled reports every GVR enabled except those explicitly listed as disabled.
+// fakeResourceEnabled reports every GVR and group enabled except those explicitly listed.
 type fakeResourceEnabled struct {
-	disabled map[schema.GroupVersionResource]bool
+	disabled      map[schema.GroupVersionResource]bool
+	groupDisabled map[string]bool
 }
 
 func (f fakeResourceEnabled) ResourceEnabled(gvr schema.GroupVersionResource) bool {
 	return !f.disabled[gvr]
+}
+
+func (f fakeResourceEnabled) AnyResourceForGroupEnabled(group string) bool {
+	return !f.groupDisabled[group]
 }
 
 var allEnabled = fakeResourceEnabled{}
@@ -194,6 +199,22 @@ func TestVersionPolicyRegistryValidate(t *testing.T) {
 		err := r.Validate(enabled)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "discovery advertises")
+	})
+
+	t.Run("whole group disabled is skipped, even if the natural fallback would outrank the cap", func(t *testing.T) {
+		// Same setup as "preferred set to the cap but disabled" above (which correctly fails), plus every
+		// version of the group disabled. InstallAPIs then skips installing the group entirely, so
+		// discovery advertises nothing for it - there's nothing to compare against the cap, and this
+		// must not fail startup the way the single-version-disabled case does.
+		r := newTestRegistry(fooOrder, nil,
+			map[string]VersionPolicy{"foo.grafana.app": {PreferredVersion: "v1", MaxAllowedVersion: "v1"}})
+		enabled := fakeResourceEnabled{
+			disabled: map[schema.GroupVersionResource]bool{
+				{Group: "foo.grafana.app", Version: "v1"}: true,
+			},
+			groupDisabled: map[string]bool{"foo.grafana.app": true},
+		}
+		assert.NoError(t, r.Validate(enabled))
 	})
 
 	t.Run("preferred set to the cap and enabled is allowed", func(t *testing.T) {

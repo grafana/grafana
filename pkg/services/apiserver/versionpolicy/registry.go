@@ -11,9 +11,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// ResourceEnabledChecker reports whether a GroupVersionResource is enabled.
+// ResourceEnabledChecker reports whether a GroupVersionResource is enabled, and whether any
+// resource in a group is enabled at all. *serverstorage.ResourceConfig satisfies this directly.
 type ResourceEnabledChecker interface {
 	ResourceEnabled(gvr schema.GroupVersionResource) bool
+	AnyResourceForGroupEnabled(group string) bool
 }
 
 type VersionPolicy struct {
@@ -128,6 +130,11 @@ func (r *VersionPolicyRegistry) Validate(resourceChecker ResourceEnabledChecker)
 	// also setting preferredVersion; reject the config at boot rather than serve a self-contradicting API.
 	for group, p := range r.global {
 		if p.MaxAllowedVersion == "" {
+			continue
+		}
+		// InstallAPIs skips installing the group entirely once every version is filtered out as
+		// disabled, so discovery advertises nothing for it - nothing to compare against the cap.
+		if resourceChecker != nil && !resourceChecker.AnyResourceForGroupEnabled(group) {
 			continue
 		}
 		if resourceChecker != nil && !resourceChecker.ResourceEnabled(schema.GroupVersion{Group: group, Version: p.MaxAllowedVersion}.WithResource("")) {
