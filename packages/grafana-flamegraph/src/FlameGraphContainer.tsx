@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import * as React from 'react';
 import { useMeasure, usePrevious } from 'react-use';
 
@@ -24,45 +24,25 @@ import { getAssistantContextFromDataFrame } from './utils';
 
 const ufuzzy = new uFuzzy();
 
-type PossibleRef<T> = ((instance: T) => void) | React.MutableRefObject<T | null> | null | undefined;
-
-// useMeasure's returned ref is a callback ref in real react-use, but some test mocks return a plain ref
-// object instead - support both so we can attach our own ref to the same node.
-function mergeRefs<T>(...refs: Array<PossibleRef<T>>) {
-  return (node: T | null) => {
-    for (const ref of refs) {
-      if (typeof ref !== 'function') {
-        if (ref) {
-          ref.current = node;
-        }
-        continue;
-      }
-      // react-use's useMeasure ref is actually a plain useState setter under the hood, which happily
-      // accepts null - its type declaration is just stricter than its real implementation. Skipping the
-      // null call on unmount is harmless either way: React runs that hook's effect cleanup regardless.
-      if (node) {
-        ref(node);
-      }
-    }
-  };
-}
-
 /**
  * .container is styled height: 100%, which correctly reflects whatever bounded height a real host (e.g. a
  * dashboard panel) gives it. Some hosts (e.g. Explore) don't bound our height at all, in which case
- * height: 100% collapses to ~0. Detect that once, synchronously before paint, and fall back to a fixed
- * height in that case, so descendants relying on percentage heights (like the top table) have something
- * concrete to measure against instead of collapsing too.
+ * height: 100% collapses several layers down, wherever a descendant first tries to resolve a percentage
+ * height against that indefinite ancestor - not necessarily on .container itself, which can still measure
+ * taller than a naive "near zero" check thanks to the header (or, in a split flame-graph/table layout, the
+ * flame graph's own organic height) padding it out. So rather than measuring .container, this is meant to
+ * be attached directly to the thing that actually needs a concrete height - the table wrapper - via a
+ * callback ref, which also naturally re-checks whenever that wrapper (re)mounts, e.g. once real data
+ * replaces an initial `null` render, instead of a one-shot check tied to this component's own mount.
  */
 function useHeightFallback(fallbackHeight: number) {
-  const ref = useRef<HTMLDivElement | null>(null);
   const [needsFallback, setNeedsFallback] = useState(false);
-  useLayoutEffect(() => {
-    if ((ref.current?.getBoundingClientRect().height ?? 0) < 10) {
+  const measureRef = useCallback((node: HTMLDivElement | null) => {
+    if (node && node.getBoundingClientRect().height < 10) {
       setNeedsFallback(true);
     }
   }, []);
-  return { ref, style: needsFallback ? { height: fallbackHeight } : undefined };
+  return { measureRef, style: needsFallback ? { height: fallbackHeight } : undefined };
 }
 
 export type Props = {
@@ -432,19 +412,27 @@ const LegacyContainer = ({
   if (showFlameGraphOnly || selectedView === SelectedView.FlameGraph) {
     body = flameGraph;
   } else if (selectedView === SelectedView.TopTable) {
-    body = <div className={styles.tableContainer}>{table}</div>;
+    body = (
+      <div ref={heightFallback.measureRef} className={styles.tableContainer}>
+        {table}
+      </div>
+    );
   } else if (selectedView === SelectedView.Both) {
     if (vertical) {
       body = (
         <div className={styles.verticalContainer}>
           <div className={styles.verticalGraphContainer}>{flameGraph}</div>
-          <div className={styles.verticalTableContainer}>{table}</div>
+          <div ref={heightFallback.measureRef} className={styles.verticalTableContainer}>
+            {table}
+          </div>
         </div>
       );
     } else {
       body = (
         <div className={styles.horizontalContainer}>
-          <div className={styles.horizontalTableContainer}>{table}</div>
+          <div ref={heightFallback.measureRef} className={styles.horizontalTableContainer}>
+            {table}
+          </div>
           <div className={styles.horizontalGraphContainer}>{flameGraph}</div>
         </div>
       );
@@ -455,7 +443,7 @@ const LegacyContainer = ({
     // We add the theme context to bridge the gap if this is rendered in non grafana environment where the context
     // isn't already provided.
     <ThemeContext.Provider value={theme}>
-      <div ref={mergeRefs(sizeRef, heightFallback.ref)} className={styles.container} style={heightFallback.style}>
+      <div ref={sizeRef} className={styles.container} style={heightFallback.style}>
         {!showFlameGraphOnly && (
           <FlameGraphHeader
             search={search}
@@ -673,7 +661,7 @@ const NewUIContainer = ({
 
   return (
     <ThemeContext.Provider value={theme}>
-      <div ref={mergeRefs(sizeRef, heightFallback.ref)} className={styles.container} style={heightFallback.style}>
+      <div ref={sizeRef} className={styles.container} style={heightFallback.style}>
         {!showFlameGraphOnly && (
           <FlameGraphHeader
             enableNewUI={true}
@@ -711,7 +699,9 @@ const NewUIContainer = ({
           />
         )}
 
-        <div className={styles.body}>{body}</div>
+        <div ref={heightFallback.measureRef} className={styles.body}>
+          {body}
+        </div>
       </div>
     </ThemeContext.Provider>
   );
