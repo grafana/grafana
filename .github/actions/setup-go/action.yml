@@ -1,5 +1,5 @@
 name: Setup Go
-description: Sets up Go and restores shared module and build caches.
+description: Sets up Go with local or S3-backed caches.
 
 inputs:
   go-version-file:
@@ -7,28 +7,62 @@ inputs:
     required: false
     default: go.mod
   cache:
-    description: Whether to restore Go module and build caches.
+    description: Whether to restore Go caches.
     required: false
     default: 'true'
   cache-write:
-    description: Whether this job may save the cache.
+    description: Whether this job may save local caches.
+    required: false
+    default: 'false'
+  remote-cache:
+    description: Whether internal runs use the S3-backed cache.
     required: false
     default: 'false'
 
 outputs:
   cache-hit:
-    description: Whether cache for current commit was restored.
+    description: Whether the local build cache for current commit was restored.
     value: ${{ steps.cache.outputs.cache-hit }}
 
 runs:
   using: composite
   steps:
-    - name: Compute Go cache key
+    - name: Select cache backend
+      id: cache-backend
+      shell: bash
+      env:
+        REMOTE_CACHE: ${{ inputs.remote-cache }}
+        FORK: ${{ github.event.pull_request.head.repo.fork }}
+      run: |
+        remote=false
+        if [ "$REMOTE_CACHE" = "true" ] && [ "$FORK" != "true" ]; then
+          remote=true
+        fi
+        echo "remote=$remote" >> "$GITHUB_OUTPUT"
+
+    - name: Compute Go cache keys
       id: keys
       if: inputs.cache == 'true'
-      uses: ./.github/actions/go-cache-keys
+      shell: bash
+      env:
+        GO_VERSION_FILE: ${{ inputs.go-version-file }}
+        MODULE_HASH: ${{ hashFiles('**/*.mod', '**/*.sum', 'go.work', 'go.work.sum') }}
+      run: |
+        set -euo pipefail
+        version="$(awk '$1 == "go" { print $2; exit }' "$GO_VERSION_FILE")"
+        base="${RUNNER_OS}-${RUNNER_ARCH}-${version}"
+        {
+          echo "mod-key=gomod-shared-${base}-${MODULE_HASH}-${GRAFANA_ENTERPRISE_SHA:-oss}"
+          echo "mod-restore-key=gomod-shared-${base}-"
+          echo "build-key=gobuild-local-${base}-${GITHUB_SHA}"
+          echo "build-restore-key=gobuild-local-${base}-"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Setup remote Go cache
+      if: steps.cache-backend.outputs.remote == 'true'
+      uses: ./.github/actions/setup-go-remote-cache
       with:
-        go-version-file: ${{ inputs.go-version-file }}
+        cache-write: ${{ inputs.cache-write }}
 
     - name: Setup Go
       uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
@@ -36,35 +70,47 @@ runs:
         go-version-file: ${{ inputs.go-version-file }}
         cache: false
 
-    - name: Restore Go cache
-      id: cache-restore
+    - name: Restore module cache
       if: inputs.cache == 'true' && inputs.cache-write != 'true'
       uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
       with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-        key: ${{ steps.keys.outputs.key }}
-        restore-keys: ${{ steps.keys.outputs.restore-key }}
+        path: ~/go/pkg/mod
+        key: ${{ steps.keys.outputs.mod-key }}
+        restore-keys: ${{ steps.keys.outputs.mod-restore-key }}
 
-    - name: Restore and save Go cache
-      id: cache-save
+    - name: Restore and save module cache
       if: inputs.cache == 'true' && inputs.cache-write == 'true'
       uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
       with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-        key: ${{ steps.keys.outputs.key }}
-        restore-keys: ${{ steps.keys.outputs.restore-key }}
+        path: ~/go/pkg/mod
+        key: ${{ steps.keys.outputs.mod-key }}
+        restore-keys: ${{ steps.keys.outputs.mod-restore-key }}
+
+    - name: Restore local build cache
+      id: build-restore
+      if: inputs.cache == 'true' && inputs.cache-write != 'true' && steps.cache-backend.outputs.remote != 'true'
+      uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      with:
+        path: ~/.cache/go-build
+        key: ${{ steps.keys.outputs.build-key }}
+        restore-keys: ${{ steps.keys.outputs.build-restore-key }}
+
+    - name: Restore and save local build cache
+      id: build-save
+      if: inputs.cache == 'true' && inputs.cache-write == 'true' && steps.cache-backend.outputs.remote != 'true'
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      with:
+        path: ~/.cache/go-build
+        key: ${{ steps.keys.outputs.build-key }}
+        restore-keys: ${{ steps.keys.outputs.build-restore-key }}
 
     - id: cache
       if: inputs.cache == 'true'
       shell: bash
       env:
-        RESTORE_HIT: ${{ steps.cache-restore.outputs.cache-hit }}
-        SAVE_HIT: ${{ steps.cache-save.outputs.cache-hit }}
-      run: echo "cache-hit=${RESTORE_HIT:-$SAVE_HIT}" >> "$GITHUB_OUTPUT"
+        RESTORE_HIT: ${{ steps.build-restore.outputs.cache-hit }}
+        SAVE_HIT: ${{ steps.build-save.outputs.cache-hit }}
+      run: echo "cache-hit=${RESTORE_HIT:-${SAVE_HIT:-false}}" >> "$GITHUB_OUTPUT"
 
     - name: Report Go cache sizes
       if: inputs.cache == 'true'

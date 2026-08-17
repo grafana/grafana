@@ -41,6 +41,8 @@ jobs:
           persist-credentials: false
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          remote-cache: 'true'
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -79,6 +81,8 @@ jobs:
         run: make devenv sources=mysql_tests mysql_version=8.0.43
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          remote-cache: 'true'
       - name: Wait for MySQL
         run: |
           for _ in $(seq 1 60); do
@@ -132,6 +136,8 @@ jobs:
           make devenv sources=postgres_tests
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          remote-cache: 'true'
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests
@@ -185,6 +191,8 @@ jobs:
           token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          remote-cache: 'true'
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -233,6 +241,8 @@ jobs:
           token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          remote-cache: 'true'
       - name: Wait for MySQL
         run: |
           for _ in $(seq 1 60); do
@@ -296,6 +306,8 @@ jobs:
           token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          remote-cache: 'true'
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests

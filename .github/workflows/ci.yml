@@ -19,32 +19,54 @@ permissions: {}
 jobs:
   detect-changes:
     if: github.event_name == 'pull_request' || github.repository == 'grafana/grafana'
+    name: Detect changed files
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
-    uses: ./.github/workflows/bootstrap-detect-changes.yml
+    outputs:
+      backend: ${{ steps.detect-changes.outputs.backend }}
+      dev-dashboards: ${{ steps.detect-changes.outputs.dev-dashboards }}
+      frontend: ${{ steps.detect-changes.outputs.frontend }}
+      e2e: ${{ steps.detect-changes.outputs.e2e }}
+      docs: ${{ steps.detect-changes.outputs.docs }}
+      devenv: ${{ steps.detect-changes.outputs.devenv }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 0
+          filter: blob:none
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/ci.yml
 
   go-cache:
     needs: detect-changes
     permissions:
       contents: read
+      id-token: write
     uses: ./.github/workflows/bootstrap-go-cache.yml
 
   go-lint:
     needs: [detect-changes, go-cache]
-    if: needs.detect-changes.outputs.backend == 'true'
+    if: >-
+      needs.detect-changes.outputs.backend == 'true' &&
+      (github.event_name != 'push' || github.ref == 'refs/heads/main')
     permissions:
       contents: read
-      id-token: write
     uses: ./.github/workflows/go-lint.yml
     with:
       backend: ${{ needs.detect-changes.outputs.backend }}
 
   govulncheck:
     needs: [detect-changes, go-cache]
-    if: needs.detect-changes.outputs.backend == 'true'
+    if: >-
+      needs.detect-changes.outputs.backend == 'true' &&
+      (github.event_name != 'push' || github.ref == 'refs/heads/main')
     permissions:
       contents: read
-      id-token: write
       security-events: write
     uses: ./.github/workflows/govulncheck.yml
 
@@ -61,7 +83,9 @@ jobs:
 
   backend-code-checks:
     needs: [detect-changes, go-cache]
-    if: needs.detect-changes.outputs.docs != 'true' || needs.detect-changes.outputs.backend == 'true'
+    if: >-
+      (needs.detect-changes.outputs.docs != 'true' || needs.detect-changes.outputs.backend == 'true') &&
+      (github.event_name != 'push' || github.ref == 'refs/heads/main')
     permissions:
       contents: read
       id-token: write
@@ -123,7 +147,6 @@ jobs:
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.backend == 'true'
     permissions:
       contents: read
-      id-token: write
     uses: ./.github/workflows/pr-k8s-codegen-check.yml
 
   build-go-matrix:
@@ -157,7 +180,10 @@ jobs:
 
   schema-v2-e2e:
     needs: [detect-changes, go-cache]
-    if: ${{ !cancelled() && needs.go-cache.result != 'failure' }}
+    if: >-
+      !cancelled() && needs.go-cache.result != 'failure' &&
+      (github.event_name != 'push' || github.ref == 'refs/heads/main')
     permissions:
       contents: read
+      id-token: write
     uses: ./.github/workflows/run-schema-v2-e2e.yml

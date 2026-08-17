@@ -25,6 +25,7 @@ jobs:
 
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v5
@@ -33,6 +34,8 @@ jobs:
 
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          remote-cache: 'true'
 
       - name: Run feature toggle tests
         run: go test -v -run TestFeatureToggleFiles ./pkg/services/featuremgmt/

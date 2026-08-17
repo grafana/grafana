@@ -1289,6 +1289,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/check-jobs/action.yml @grafana/grafana-frontend-platform
 /.github/actions/setup-enterprise/action.yml @grafana/grafana-operator-experience-squad
 /.github/actions/setup-go/action.yml @grafana/grafana-backend-services-squad
+/.github/actions/setup-go-remote-cache/ @grafana/grafana-backend-services-squad
 /.github/actions/report-go-cache-sizes/ @grafana/grafana-operator-experience-squad
 /.github/actions/build-go @grafana/grafana-operator-experience-squad
 /.github/actions/build-targz @grafana/grafana-operator-experience-squad
@@ -1370,7 +1371,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/go-lint.yml @grafana/grafana-backend-services-squad
 /.github/workflows/govulncheck.yml @grafana/grafana-backend-services-squad
-/.github/workflows/bootstrap-detect-changes.yml @grafana/grafana-backend-services-squad
 /.github/workflows/bootstrap-go-cache.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trufflehog.yml @Proximyst
 /.github/workflows/changelog.yml @zserge

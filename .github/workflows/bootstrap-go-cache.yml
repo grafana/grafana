@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-x64
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -36,6 +37,7 @@ jobs:
         uses: ./.github/actions/setup-go
         with:
           cache-write: 'true'
+          remote-cache: 'true'
 
       - name: Download modules and compile packages
         if: steps.setup-go.outputs.cache-hit != 'true'
@@ -50,6 +52,8 @@ jobs:
           done
           go install github.com/jstemmer/go-junit-report/v2@85bf4716ac1f025f2925510a9f5e9f5bb347c009
 
+          package_file="$(mktemp)"
+          trap 'rm -f "$package_file"' EXIT
           tagsets=("")
           if [ "$ENTERPRISE" = "true" ]; then
             tagsets+=(enterprise)
@@ -57,14 +61,14 @@ jobs:
 
           for cgo in 0 1; do
             for tags in "${tagsets[@]}"; do
+              if [ "$cgo" = 1 ] && [ "$tags" = enterprise ]; then
+                continue
+              fi
+              : > "$package_file"
               for module in "${modules[@]}"; do
-                package_file="$(mktemp)"
-                (cd "$module" && go list -f '{{.ImportPath}}' ./...) > "$package_file"
-                readarray -t packages < "$package_file"
-                rm "$package_file"
-                if [ "${#packages[@]}" -gt 0 ]; then
-                  CGO_ENABLED="$cgo" go test -run '^$' -vet=off -tags="$tags" "${packages[@]}"
-                fi
+                (cd "$module" && CGO_ENABLED="$cgo" go list -tags="$tags" -f '{{.ImportPath}}' ./...) >> "$package_file"
               done
+              readarray -t packages < "$package_file"
+              CGO_ENABLED="$cgo" go test -run '^$' -vet=off -tags="$tags" "${packages[@]}"
             done
           done

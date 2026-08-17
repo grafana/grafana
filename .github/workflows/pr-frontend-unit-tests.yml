@@ -18,6 +18,7 @@ jobs:
   generate-golden-files:
     permissions:
       contents: read
+      id-token: write
     if: inputs.frontend == 'true'
     runs-on: ubuntu-x64-small
     name: Generate golden files
@@ -27,6 +28,8 @@ jobs:
         persist-credentials: false
     - name: Setup Go
       uses: ./.github/actions/setup-go
+      with:
+        remote-cache: 'true'
     - name: Generate golden files
       run: make generate-golden-files
       working-directory: apps/dashboard
