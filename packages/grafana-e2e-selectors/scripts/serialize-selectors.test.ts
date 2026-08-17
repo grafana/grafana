@@ -27,23 +27,23 @@ describe('serializeSelectorGroup', () => {
     });
   });
 
-  it('serializes a one-arg function to a positional template descriptor', () => {
+  it('serializes a one-arg function to a named template descriptor', () => {
     const result = serializeSelectorGroup({
       Group: { one: { [MIN]: (value: string) => `data-testid option ${value}` } },
     });
 
     expect(result).toEqual({
-      Group: { one: { [MIN]: { $template: 'data-testid option {0}', params: ['value'] } } },
+      Group: { one: { [MIN]: { $template: 'data-testid option {value}', params: ['value'] } } },
     });
   });
 
-  it('serializes a two-arg function with positional placeholders', () => {
+  it('serializes a two-arg function with named placeholders', () => {
     const result = serializeSelectorGroup({
       Group: { two: { '13.2.0': (from: string, to: string) => `range ${from} to ${to}` } },
     });
 
     expect(result).toEqual({
-      Group: { two: { '13.2.0': { $template: 'range {0} to {1}', params: ['from', 'to'] } } },
+      Group: { two: { '13.2.0': { $template: 'range {from} to {to}', params: ['from', 'to'] } } },
     });
   });
 
@@ -70,7 +70,7 @@ describe('serializeSelectorGroup', () => {
       Group: {
         cond: {
           '11.1.0': {
-            $template: { whenPresent: 'Options group {0}', whenAbsent: 'Options group' },
+            $template: { whenPresent: 'Options group {title}', whenAbsent: 'Options group' },
             params: ['title'],
           },
         },
@@ -84,7 +84,7 @@ describe('serializeSelectorGroup', () => {
     });
 
     expect(result).toEqual({
-      Outer: { Inner: { deep: { [MIN]: { $template: 'x {0}', params: ['id'] } } } },
+      Outer: { Inner: { deep: { [MIN]: { $template: 'x {id}', params: ['id'] } } } },
     });
   });
 });
