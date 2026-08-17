@@ -1176,7 +1176,8 @@
         "with-causes": ""
       },
       "failedWith": "Ошибка {{-config}} со статусом {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "Невозможно удалить временной интервал, так как он используется либо политками уведомления либо правилами оповещения.",
+      "time-interval-name-exists": "Временной интервал с таким именем уже существует. Используйте другое имя или переименуйте существующий интервал."
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3658,6 +3659,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Уникальное имя для временного интервала.",
+      "error-save-time-interval": "Не удалось сохранить временной интервал",
       "text-loading-time-interval": "Загрузка временного интервала",
       "title-no-matching-time-interval-found": "Соответствующий временной интервал не найден"
     },

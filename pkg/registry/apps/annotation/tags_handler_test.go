@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -84,7 +83,7 @@ func TestIntegrationTagsHandler(t *testing.T) {
 	}
 
 	allowAll := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return true }}
-	handler := newTagsHandler(store, allowAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+	handler := newTagsHandler(store, allowAll, ProvideMetrics(nil), log.NewNopLogger())
 
 	tests := []struct {
 		name             string
@@ -363,7 +362,7 @@ func TestIntegrationTagsHandlerAuthorization(t *testing.T) {
 
 	t.Run("denies callers without organization annotation read", func(t *testing.T) {
 		denyAll := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return false }}
-		handler := newTagsHandler(store, denyAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+		handler := newTagsHandler(store, denyAll, ProvideMetrics(nil), log.NewNopLogger())
 
 		req, writer := newRequest()
 		err := handler(ctx, writer, req)
@@ -382,7 +381,7 @@ func TestIntegrationTagsHandlerAuthorization(t *testing.T) {
 				item.Name == "organization" &&
 				item.Verb == utils.VerbList
 		}}
-		handler := newTagsHandler(store, orgReader, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+		handler := newTagsHandler(store, orgReader, ProvideMetrics(nil), log.NewNopLogger())
 
 		req, writer := newRequest()
 		err := handler(ctx, writer, req)
