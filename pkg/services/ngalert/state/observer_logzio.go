@@ -32,6 +32,7 @@ package state
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -56,6 +57,10 @@ type logzioStateObserver struct {
 	clock        clock.Clock
 	cache        *cache
 	ruleActivity *ruleActivityTracker
+
+	// lastWarmSnapshot is when the last fully loaded snapshot was applied to the cache (unix
+	// nanoseconds, 0 = never). It is the freshness baseline for rules never evaluated on this pod.
+	lastWarmSnapshot atomic.Int64
 }
 
 func newLogzioStateObserver(logger log.Logger, clk clock.Clock, c *cache) *logzioStateObserver {
@@ -78,6 +83,26 @@ func (o *logzioStateObserver) onRuleEvaluated(key ngModels.AlertRuleKey, evaluat
 // the snapshot replaces the cache.
 func (o *logzioStateObserver) onWarmSnapshotLoaded(snapshot map[int64]map[string]*ruleStates) {
 	o.compareSnapshotWithCache(snapshot)
+	o.lastWarmSnapshot.Store(o.clock.Now().UnixNano())
+}
+
+// lastWarmSnapshotAt returns when the last fully loaded snapshot was applied, zero when never.
+func (o *logzioStateObserver) lastWarmSnapshotAt() time.Time {
+	nanos := o.lastWarmSnapshot.Load()
+	if nanos == 0 {
+		return time.Time{}
+	}
+	return time.Unix(0, nanos)
+}
+
+// lastRuleActivity returns when the rule was last evaluated on this pod. Rules never evaluated
+// here fall back to the last applied full-warm snapshot: that is exactly how fresh their cached
+// copy is.
+func (o *logzioStateObserver) lastRuleActivity(key ngModels.AlertRuleKey) time.Time {
+	if at, ok := o.ruleActivity.get(key); ok {
+		return at
+	}
+	return o.lastWarmSnapshotAt()
 }
 
 // ---- Logic piece 1: rule activity tracking ----
@@ -100,6 +125,13 @@ func (t *ruleActivityTracker) touch(key ngModels.AlertRuleKey, evaluatedAt time.
 	t.mtx.Lock()
 	defer t.mtx.Unlock()
 	t.lastEval[key] = evaluatedAt
+}
+
+func (t *ruleActivityTracker) get(key ngModels.AlertRuleKey) (time.Time, bool) {
+	t.mtx.Lock()
+	defer t.mtx.Unlock()
+	at, ok := t.lastEval[key]
+	return at, ok
 }
 
 // entries returns a copy of the tracked activity.

@@ -54,7 +54,10 @@ type Manager struct {
 
 	persister StatePersister
 
-	logzioObserver *logzioStateObserver // LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Logzio state observer
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Logzio state observer + targeted state cache warm
+	logzioObserver *logzioStateObserver
+	TargetedWarm   *LogzioTargetedWarm
+	// LOGZ.IO GRAFANA CHANGE :: End
 }
 
 type ManagerCfg struct {
@@ -72,6 +75,11 @@ type ManagerCfg struct {
 	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
 	ApplyNoDataAndErrorToAllStates bool
 	RulesPerRuleGroupLimit         int64
+
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Warm rule state on demand instead of reloading the whole cache
+	TargetedWarmEnabled       bool
+	TargetedWarmShadowCompare bool
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	Tracer tracing.Tracer
 	Log    log.Logger
@@ -101,6 +109,7 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		tracer:                         cfg.Tracer,
 		logzioObserver:                 newLogzioStateObserver(cfg.Log, cfg.Clock, c), // LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Logzio state observer
 	}
+	m.TargetedWarm = newLogzioTargetedWarm(cfg, m) // LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Targeted state cache warm
 
 	if m.applyNoDataAndErrorToAllStates {
 		m.log.Info("Running in alternative execution of Error/NoData mode")

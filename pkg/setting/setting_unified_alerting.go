@@ -66,6 +66,10 @@ const (
 	stateHistoryDefaultEnabled       = true
 	logzioDefaultAlertsRouterUrl     = ""   // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio notification route
 	logzioDefaultAlertmanagerEnabled = true // LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Gate in-process Alertmanagers on alert_manager_enabled
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Warm rule state on demand instead of reloading the whole cache
+	logzioDefaultTargetedWarmEnabled       = false
+	logzioDefaultTargetedWarmShadowCompare = true
+	// LOGZ.IO GRAFANA CHANGE :: End
 )
 
 type UnifiedAlertingSettings struct {
@@ -94,9 +98,13 @@ type UnifiedAlertingSettings struct {
 	ExecuteAlerts                  bool
 	ScheduledEvalEnabled           bool // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
 	AlertmanagerEnabled            bool // LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Gate the in-process Alertmanagers on alert_manager_enabled
-	DefaultConfiguration           string
-	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
-	DisabledOrgs                   map[int64]struct{}
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Warm rule state on demand instead of reloading the whole cache
+	TargetedWarmEnabled       bool
+	TargetedWarmShadowCompare bool
+	// LOGZ.IO GRAFANA CHANGE :: End
+	DefaultConfiguration string
+	Enabled              *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
+	DisabledOrgs         map[int64]struct{}
 	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
 	// Only for internal use and not user configuration.
 	BaseInterval time.Duration
@@ -319,6 +327,16 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return fmt.Errorf("invalid configuration: [unified_alerting] alert_manager_enabled=false requires scheduled_evaluation_enabled=false, " +
 			"otherwise evaluated alerts have no Alertmanager to notify")
 	}
+	// LOGZ.IO GRAFANA CHANGE :: End
+
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Warm rule state on demand instead of reloading the whole cache.
+	// targeted_warm_enabled: keep the startup warm-up, skip the per-tick full reload, reload a rule's
+	// states right before evaluating it after a gap in local evaluations, and free the states of rules
+	// this pod does not evaluate. targeted_warm_shadow_compare_enabled: while targeted warm is on, keep
+	// loading the full snapshot each tick for the state cache compare only (rollout observation window).
+	// Turn it off afterwards to collect the tick-duration and database win.
+	uaCfg.TargetedWarmEnabled = ua.Key("targeted_warm_enabled").MustBool(logzioDefaultTargetedWarmEnabled)
+	uaCfg.TargetedWarmShadowCompare = ua.Key("targeted_warm_shadow_compare_enabled").MustBool(logzioDefaultTargetedWarmShadowCompare)
 	// LOGZ.IO GRAFANA CHANGE :: End
 
 	uaCfg.LogzioAlertsRouterUrl = ua.Key("logzio_alerts_route_url").MustString(logzioDefaultAlertsRouterUrl) // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio notification route
