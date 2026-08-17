@@ -2713,7 +2713,7 @@
         }
       ]
     },
-    "/search": {
+    "/searchRules": {
       "post": {
         "operationId": "createSearchRules",
         "requestBody": {
@@ -3145,7 +3145,7 @@
         }
       },
       "CreateSearchRulesResponse": {
-        "description": "listMeta is intentionally omitted: #SearchResults carries its\nown metadata (continue, totalHits) mirroring the generic\nsearch.grafana.app SearchResults envelope.",
+        "description": "listMeta is intentionally omitted: #SearchResults carries its\nown metadata (continue, totalHits).",
         "type": "object",
         "required": ["metadata", "items", "apiVersion", "kind"],
         "properties": {
@@ -3309,6 +3309,14 @@
           },
           "totalHits": {
             "type": "integer"
+          },
+          "totalHitsRelation": {
+            "description": "Always read totalHits together with totalHitsRelation.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreateSearchRulesTotalHitsRelation"
+              }
+            ]
           }
         }
       },
@@ -3317,7 +3325,7 @@
         "type": "string"
       },
       "CreateSearchRulesSearchTextLeaf": {
-        "description": "#SearchTextLeaf is a free-text search across one or more text-capable\nfields. When fields is omitted, the kind's default text field set is used.",
+        "description": "#SearchTextLeaf is a free-text search across one or more text-capable\nfields. When fields is omitted, the kind's default text field set is used.\nA match requires every whitespace-separated term of value to appear in the\nfield, in any order. How very short terms, punctuation, and common words are\nmatched is backend-defined and may change.",
         "type": "object",
         "required": ["value"],
         "properties": {
@@ -3349,6 +3357,11 @@
             "$ref": "#/components/schemas/CreateSearchRulesSearchTextLeaf"
           }
         }
+      },
+      "CreateSearchRulesTotalHitsRelation": {
+        "description": "#TotalHitsRelation says how totalHits relates to the real number of matching\nrules the caller may see: \"eq\" when it is exact, \"lte\" when it is an upper\nbound because authorisation was applied after the search ranked its results.",
+        "type": "string",
+        "enum": ["eq", "lte"]
       },
       "RecordingRule": {
         "type": "object",

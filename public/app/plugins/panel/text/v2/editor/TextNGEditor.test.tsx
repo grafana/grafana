@@ -2,17 +2,22 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
+import { type InterpolateFunction, toDataFrame } from '@grafana/data';
 import config from 'app/core/config';
 
-import { CodeLanguage, TextMode } from '../../panelcfg.gen';
+import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
 
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
+import { FOOTER_TEST_ID } from './TextNGEditorFooter';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
+  // The stubbed editor never runs completions; the source itself is covered by
+  // variableCompletion.test.ts.
+  createVariableCompletionSource: () => () => null,
   CodeMirrorEditor: ({
     value,
     onChange,
@@ -36,7 +41,7 @@ jest.mock('@grafana/ui/unstable', () => ({
 function ControlledEditor({
   initialValue,
   mode: initialMode,
-  showLineNumbers = false,
+  showLineNumbers: initialShowLineNumbers = false,
   codeLanguage: initialLanguage,
   replaceVariables = (value: string) => value,
   onChange,
@@ -51,6 +56,7 @@ function ControlledEditor({
   const [value, setValue] = useState(initialValue);
   const [mode, setMode] = useState(initialMode);
   const [codeLanguage, setCodeLanguage] = useState(initialLanguage);
+  const [showLineNumbers, setShowLineNumbers] = useState(initialShowLineNumbers);
   return (
     <TextNGEditor
       content={value}
@@ -65,6 +71,9 @@ function ControlledEditor({
         }
         if (change.codeLanguage !== undefined) {
           setCodeLanguage(change.codeLanguage);
+        }
+        if (change.showLineNumbers !== undefined) {
+          setShowLineNumbers(change.showLineNumbers);
         }
         onChange(change);
       }}
@@ -473,5 +482,101 @@ describe('TextNGEditor', () => {
 
       expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'false');
     });
+  });
+
+  describe('footer', () => {
+    const lineNumbersToggle = () => screen.getByRole('switch', { name: 'Line numbers' });
+
+    it('only shows the footer in Code mode', async () => {
+      setup('# Hello', TextMode.Markdown);
+
+      expect(screen.queryByTestId(FOOTER_TEST_ID)).not.toBeInTheDocument();
+
+      await selectLanguage('JSON');
+      expect(screen.getByTestId(FOOTER_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('keeps the footer in Preview view, where the editor is hidden', () => {
+      setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+
+      expect(screen.getByRole('radio', { name: 'Preview' })).toBeChecked();
+      expect(screen.getByTestId(FOOTER_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('turns line numbers on and applies them to the editor', async () => {
+      const { onChange } = setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      await userEvent.click(lineNumbersToggle());
+
+      expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const a = 1;' });
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'true');
+    });
+
+    it('sends the pending draft with the line numbers change, so typing is not lost', async () => {
+      const { onChange } = setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'const b = 2;' } });
+      await userEvent.click(lineNumbersToggle());
+
+      expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const b = 2;' });
+      expect(screen.getByRole('textbox')).toHaveValue('const b = 2;');
+    });
+  });
+});
+
+describe('TextNGEditor render mode preview', () => {
+  const series = [
+    toDataFrame({
+      fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+    }),
+  ];
+
+  // Reports the row context it was handed, so these assert the preview wiring
+  // rather than re-testing macro resolution (covered in renderContent.test.ts).
+  const reportRowContext: InterpolateFunction = (target, scopedVars) => {
+    const context = scopedVars?.__dataContext?.value;
+    return context ? `row-${context.rowIndex}` : target;
+  };
+
+  const previewFor = (renderMode?: RenderMode) => (
+    <TextNGEditor
+      content="no row context"
+      mode={TextMode.Markdown}
+      showLineNumbers={false}
+      renderMode={renderMode}
+      series={series}
+      replaceVariables={reportRowContext}
+      onChange={jest.fn()}
+    />
+  );
+
+  const previewHtml = () => screen.getByTestId(PREVIEW_TEST_ID).innerHTML;
+
+  it('previews one block per row in every row mode, matching the panel', () => {
+    render(previewFor(RenderMode.PerRow));
+
+    expect(previewHtml()).toContain('row-0');
+    expect(previewHtml()).toContain('row-1');
+  });
+
+  it.each([
+    ['once mode', RenderMode.Once],
+    ['an unset render mode', undefined],
+  ])('previews a single render with no row context in %s', (_name, renderMode) => {
+    render(previewFor(renderMode));
+
+    expect(previewHtml()).toContain('no row context');
+  });
+
+  it('updates the preview when the pane changes the render mode', () => {
+    const { rerender } = render(previewFor(RenderMode.Once));
+    expect(previewHtml()).toContain('no row context');
+
+    rerender(previewFor(RenderMode.PerRow));
+
+    expect(previewHtml()).toContain('row-0');
+    expect(previewHtml()).toContain('row-1');
   });
 });

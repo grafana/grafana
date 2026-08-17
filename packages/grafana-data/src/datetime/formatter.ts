@@ -1,11 +1,11 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
-import moment, { type Moment } from 'moment-timezone';
+import moment, { type Moment, type MomentInput } from 'moment-timezone';
 
 import { type TimeZone } from '../types/time';
 
 import { type DateTimeOptions, getTimeZone } from './common';
 import { systemDateFormats } from './formats';
-import { type DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
+import { type DateTimeInput } from './moment_wrapper';
 
 /**
  * The type describing the options that can be passed to the {@link dateTimeFormat}
@@ -98,17 +98,19 @@ const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => 
 };
 
 const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): Moment => {
-  const date = dateInUtc;
+  // Zoneless inputs are interpreted as UTC before converting to the target zone.
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const inUtc = moment.utc(dateInUtc as MomentInput);
   const zone = moment.tz.zone(timeZone);
 
-  if (zone && zone.name) {
-    return dateTimeAsMoment(toUtc(date)).tz(zone.name);
+  if (zone) {
+    return inUtc.tz(zone.name);
   }
 
   switch (timeZone) {
     case 'utc':
-      return dateTimeAsMoment(toUtc(date));
+      return inUtc;
     default:
-      return dateTimeAsMoment(toUtc(date)).local();
+      return inUtc.local();
   }
 };
