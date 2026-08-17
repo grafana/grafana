@@ -367,10 +367,6 @@ const (
 	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
 	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
 
-	// FlagAlertingCentralAlertHistory
-	// Enables the new central alert history.
-	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
-
 	// FlagPluginProxyPreserveTrailingSlash
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
@@ -794,6 +790,10 @@ const (
 	// Redirects the requests of the user service to the app platform APIs
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
 
+	// FlagKubernetesUsersRedirectNoFallback
+	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
+	FlagKubernetesUsersRedirectNoFallback = "kubernetesUsersRedirectNoFallback"
+
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
 	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
@@ -823,8 +823,12 @@ const (
 	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
 
 	// FlagDeletedFolderResourceCleanup
-	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server
+	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair
 	FlagDeletedFolderResourceCleanup = "deletedFolderResourceCleanup"
+
+	// FlagLibraryElementFolderUIDRepair
+	// Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup
+	FlagLibraryElementFolderUIDRepair = "libraryElementFolderUIDRepair"
 
 	// FlagReact19
 	// Whether to use the new React 19 runtime
@@ -1001,4 +1005,8 @@ const (
 	// FlagPluginsForceTls13
 	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client
 	FlagPluginsForceTls13 = "pluginsForceTls13"
+
+	// FlagDatasourcesQueryGateway
+	// Data source query gateway
+	FlagDatasourcesQueryGateway = "datasources.queryGateway"
 )

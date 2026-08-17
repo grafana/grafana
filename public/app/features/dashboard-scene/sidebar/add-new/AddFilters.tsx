@@ -3,10 +3,10 @@ import { useCallback } from 'react';
 import { t } from '@grafana/i18n';
 import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 
+import { addVariable } from '../../actions/variable/addVariable';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { getNextAvailableId, getVariableNamePrefix, getVariableScene } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
-import { dashboardEditActions } from '../shared';
 
 import { AddButton } from './AddButton';
 
@@ -24,7 +24,7 @@ export function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: S
     name: getNextAvailableId(name, variablesSet.state.variables ?? []),
   });
 
-  dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
+  addVariable({ source: variablesSet, addedObject: newVar });
   dashboard.state.sidebar.selectObject(newVar, { force: true, multi: false });
 }
 

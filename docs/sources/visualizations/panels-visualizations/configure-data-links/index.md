@@ -329,7 +329,7 @@ To add a data link, follow these steps:
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
    {{< /tab-content >}}
    {{< tab-content name="Add actions" >}}
@@ -363,7 +363,7 @@ To add a data link, follow these steps:
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
    {{< /tab-content >}}
    {{< /tabs >}}
 
