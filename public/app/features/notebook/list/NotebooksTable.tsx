@@ -130,7 +130,7 @@ function NotebookRowActions({ notebook }: { notebook: NotebookRow }) {
           // Dropdown injects aria-expanded but not aria-haspopup, so without this the trigger
           // announces as a plain button and gives no hint that it opens a menu.
           aria-haspopup="menu"
-          aria-label={t('notebooks.list.table.more-actions', 'More actions')}
+          // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
           tooltip={t('notebooks.list.table.more-actions', 'More actions')}
         />
       </Dropdown>

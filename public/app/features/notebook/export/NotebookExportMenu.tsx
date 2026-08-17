@@ -1,7 +1,6 @@
-import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Menu } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { type Spec as NotebookSpec } from '../types';
 import { notebookShareUrl } from '../urls';
@@ -23,6 +22,8 @@ interface Props {
 
 /** The export actions, shared by the notebook page toolbar and the list page's row menu. */
 export function NotebookExportMenu({ uid, getSpec }: Props) {
+  const notifyApp = useAppNotification();
+
   // Throws rather than reporting, so each action owns its own outcome: the copy cannot know whether
   // it succeeded until the clipboard write settles, which is after the spec has loaded.
   const loadSpec = async (): Promise<NotebookSpec> => {
@@ -35,17 +36,21 @@ export function NotebookExportMenu({ uid, getSpec }: Props) {
   };
 
   // Without this a failed export would look like a menu item that does nothing at all.
-  const reportFailure = () =>
-    appEvents.emit(AppEvents.alertError, [t('notebooks.export.error', 'Failed to export notebook')]);
+  const reportFailure = () => notifyApp.error(t('notebooks.export.error', 'Failed to export notebook'));
 
   const onCopy = async () => {
     // Deliberately not awaited here. The clipboard write has to be issued inside the click, so the
     // pending markdown is what gets handed to copyToClipboard — see the note there.
     const markdown = loadSpec().then((spec) => notebookToMarkdown(spec, { url: notebookShareUrl(uid) }));
+    // A second handle, so a rejection always has a listener. copyToClipboard hands the pending
+    // promise to ClipboardItem, which never consumes it if the clipboard write rejects first for its
+    // own reason — leaving the original handle to surface as an unhandled rejection in the console.
+    // The error still reaches the catch below, because that awaits copyToClipboard rather than this.
+    markdown.catch(() => {});
 
     try {
       await copyToClipboard(markdown);
-      appEvents.emit(AppEvents.alertSuccess, [t('notebooks.export.copied', 'Notebook copied as Markdown')]);
+      notifyApp.success(t('notebooks.export.copied', 'Notebook copied as Markdown'));
     } catch (error) {
       reportFailure();
     }
@@ -64,6 +69,10 @@ export function NotebookExportMenu({ uid, getSpec }: Props) {
   const onOpenInCursor = async () => {
     try {
       const spec = await loadSpec();
+      // Unconditional, and deliberately not a success message. A deep link into an app that is not
+      // installed is ignored by the browser with no error and no way to detect it, so the honest
+      // report is that the handoff was attempted — otherwise the click does nothing observable at all.
+      notifyApp.info(t('notebooks.export.opening-in-cursor', 'Opening in Cursor'));
       // Serialized without the link: Cursor's deep link handler mis-parses embedded URLs, and
       // leaving it out beats generating it and stripping it back out.
       openCursorPromptDeeplink(notebookToMarkdown(spec, {}));

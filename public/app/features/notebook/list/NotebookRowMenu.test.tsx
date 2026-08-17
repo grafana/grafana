@@ -1,9 +1,8 @@
 import { fireEvent, render, screen, waitFor } from 'test/test-utils';
 
-import { AppEvents } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useLazyGetNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
-import { appEvents } from 'app/core/app_events';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 
 import { downloadMarkdown } from '../export/downloadMarkdown';
 import { defaultSpec as defaultNotebookSpec } from '../types';
@@ -106,19 +105,21 @@ describe('NotebookRowMenu', () => {
       },
     });
 
-    // The failure surfaces as an app notification rather than in this tree, so it is asserted on
-    // the event bus.
-    const emit = jest.spyOn(appEvents, 'emit');
-    const { user } = render(<NotebookRowMenu uid="nb1" />);
+    // The failure surfaces as an app notification rather than in this tree, so the notification list
+    // is rendered alongside and the toast asserted as the user sees it.
+    const { user } = render(
+      <>
+        <AppNotificationList />
+        <NotebookRowMenu uid="nb1" />
+      </>
+    );
 
     await user.hover(screen.getByRole('menuitem', { name: /Export/ }));
     // fireEvent, not user.click: moving the pointer to the submenu item fires mouseLeave on its
     // parent, which closes the submenu before the click lands.
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Download as .md' }));
 
-    await waitFor(() => {
-      expect(emit).toHaveBeenCalledWith(AppEvents.alertError, ['Failed to export notebook']);
-    });
+    expect(await screen.findByText('Failed to export notebook')).toBeInTheDocument();
     expect(mockDownloadMarkdown).not.toHaveBeenCalled();
   });
 });

@@ -33,19 +33,28 @@ function buildUrl(text: string): string {
 /**
  * Binary search for the longest prefix that still fits. Cutting a fixed number of characters would
  * not work: url encoding means one character of markdown can cost several of url.
+ *
+ * Searched over characters rather than the string directly, because `slice` counts UTF-16 code units
+ * and so can cut an emoji in half. Url serialization replaces the orphaned half with U+FFFD instead
+ * of throwing, so the cost is only a mangled character at the cut — but the fix is one Array.from.
  */
 function buildTruncatedUrl(text: string): string {
+  const characters = Array.from(text);
   let low = 0;
-  let high = text.length;
+  let high = characters.length;
 
   while (low < high) {
     const mid = Math.floor((low + high + 1) / 2);
-    if (buildUrl(text.slice(0, mid) + TRUNCATION_NOTICE).length <= MAX_URL_LENGTH) {
+    if (buildUrl(prefix(characters, mid)).length <= MAX_URL_LENGTH) {
       low = mid;
     } else {
       high = mid - 1;
     }
   }
 
-  return buildUrl(text.slice(0, low) + TRUNCATION_NOTICE);
+  return buildUrl(prefix(characters, low));
+}
+
+function prefix(characters: string[], length: number): string {
+  return characters.slice(0, length).join('') + TRUNCATION_NOTICE;
 }

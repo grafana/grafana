@@ -1,9 +1,8 @@
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { AppEvents } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 
 import { defaultSpec as defaultNotebookSpec, type Spec as NotebookSpec } from '../types';
 
@@ -37,11 +36,16 @@ function buildSpec(): NotebookSpec {
   };
 }
 
+// AppNotificationList is rendered alongside so the toasts can be asserted as the user sees them,
+// rather than by spying on the dispatch that produces them.
 function setup(getSpec: () => Promise<NotebookSpec | undefined>) {
   return render(
-    <Menu>
-      <NotebookExportMenu uid="nb1" getSpec={getSpec} />
-    </Menu>
+    <>
+      <AppNotificationList />
+      <Menu>
+        <NotebookExportMenu uid="nb1" getSpec={getSpec} />
+      </Menu>
+    </>
   );
 }
 
@@ -110,7 +114,6 @@ describe('NotebookExportMenu', () => {
   it('reports a failed copy instead of claiming success', async () => {
     // The clipboard write settles after the spec loads, so its outcome is the only thing that says
     // whether anything reached the clipboard. Toasting success without it is a lie the user acts on.
-    const emit = jest.spyOn(appEvents, 'emit');
     const { user } = setup(async () => buildSpec());
 
     // After render: userEvent installs its own clipboard stub during setup, which would replace this.
@@ -119,34 +122,28 @@ describe('NotebookExportMenu', () => {
 
     await user.click(screen.getByRole('menuitem', { name: 'Copy as Markdown' }));
 
-    await waitFor(() => {
-      expect(emit).toHaveBeenCalledWith(AppEvents.alertError, ['Failed to export notebook']);
-    });
-    expect(emit).not.toHaveBeenCalledWith(AppEvents.alertSuccess, expect.anything());
+    expect(await screen.findByText('Failed to export notebook')).toBeInTheDocument();
+    expect(screen.queryByText('Notebook copied as Markdown')).not.toBeInTheDocument();
   });
 
   it('reports a failure instead of doing nothing', async () => {
     // A row-level export fetches, so this is a real path: the notebook may be gone or forbidden.
-    const emit = jest.spyOn(appEvents, 'emit');
     const { user } = setup(async () => {
       throw new Error('403');
     });
 
     await user.click(screen.getByRole('menuitem', { name: 'Copy as Markdown' }));
 
-    await waitFor(() => {
-      expect(emit).toHaveBeenCalledWith(AppEvents.alertError, ['Failed to export notebook']);
-    });
+    expect(await screen.findByText('Failed to export notebook')).toBeInTheDocument();
     expect(mockDownloadMarkdown).not.toHaveBeenCalled();
   });
 
   it('treats a missing notebook as a failure too', async () => {
-    const emit = jest.spyOn(appEvents, 'emit');
     const { user } = setup(async () => undefined);
 
     await user.click(screen.getByRole('menuitem', { name: 'Download as .md' }));
 
-    expect(emit).toHaveBeenCalledWith(AppEvents.alertError, ['Failed to export notebook']);
+    expect(await screen.findByText('Failed to export notebook')).toBeInTheDocument();
     expect(mockDownloadMarkdown).not.toHaveBeenCalled();
   });
 });

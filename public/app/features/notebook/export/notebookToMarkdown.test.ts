@@ -1,4 +1,9 @@
-import { defaultSpec as defaultNotebookSpec, type NotebookElement, type Spec as NotebookSpec } from '../types';
+import {
+  defaultSpec as defaultNotebookSpec,
+  type NotebookElement,
+  type PanelKind,
+  type Spec as NotebookSpec,
+} from '../types';
 
 import { notebookToMarkdown } from './notebookToMarkdown';
 
@@ -35,6 +40,45 @@ function buildSpec(
     ...overrides,
   };
 }
+
+/** A panel carrying one prometheus query, a timeseries viz and no transformations. */
+const panel: PanelKind = {
+  kind: 'Panel',
+  spec: {
+    id: 1,
+    title: 'p95 latency',
+    links: [],
+    data: {
+      kind: 'QueryGroup',
+      spec: {
+        queries: [
+          {
+            kind: 'PanelQuery',
+            spec: {
+              refId: 'A',
+              hidden: false,
+              query: {
+                kind: 'DataQuery',
+                group: 'prometheus',
+                version: 'v0',
+                datasource: { name: 'gdev-prometheus' },
+                spec: { expr: 'up == 0' },
+              },
+            },
+          },
+        ],
+        transformations: [],
+        queryOptions: {},
+      },
+    },
+    vizConfig: {
+      kind: 'VizConfig',
+      group: 'timeseries',
+      version: '',
+      spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+    },
+  },
+};
 
 describe('notebookToMarkdown', () => {
   describe('header', () => {
@@ -157,44 +201,6 @@ describe('notebookToMarkdown', () => {
   });
 
   describe('panels', () => {
-    const panel: NotebookElement = {
-      kind: 'Panel',
-      spec: {
-        id: 1,
-        title: 'p95 latency',
-        links: [],
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries: [
-              {
-                kind: 'PanelQuery',
-                spec: {
-                  refId: 'A',
-                  hidden: false,
-                  query: {
-                    kind: 'DataQuery',
-                    group: 'prometheus',
-                    version: 'v0',
-                    datasource: { name: 'gdev-prometheus' },
-                    spec: { expr: 'up == 0' },
-                  },
-                },
-              },
-            ],
-            transformations: [],
-            queryOptions: {},
-          },
-        },
-        vizConfig: {
-          kind: 'VizConfig',
-          group: 'timeseries',
-          version: '',
-          spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
-        },
-      },
-    };
-
     it('emits the panel title and the queries behind it', () => {
       // A chart has no markdown form, so the queries stand in for it — the part a reader can act on.
       const markdown = notebookToMarkdown(buildSpec({ p: panel }, ['p']), META);
@@ -205,9 +211,20 @@ describe('notebookToMarkdown', () => {
       expect(markdown).toContain('"expr": "up == 0"');
     });
 
+    // Datasource names are user-chosen and optional, so the plugin id is the only thing that says
+    // whether `expr` above is PromQL or LogQL — the field a coding agent most needs.
+    it('names the query language, not just the datasource', () => {
+      expect(notebookToMarkdown(buildSpec({ p: panel }, ['p']), META)).toContain('"type": "prometheus"');
+    });
+
+    // The queries do not say whether this was a graph, a table or a single stat.
+    it('notes the visualization type', () => {
+      expect(notebookToMarkdown(buildSpec({ p: panel }, ['p']), META)).toContain('_timeseries panel_');
+    });
+
     it('records whether a query is hidden', () => {
       // A disabled query would otherwise read as one the panel is actually running.
-      const hidden: NotebookElement = {
+      const hidden: PanelKind = {
         ...panel,
         spec: {
           ...panel.spec,
@@ -224,6 +241,40 @@ describe('notebookToMarkdown', () => {
       };
 
       expect(notebookToMarkdown(buildSpec({ p: hidden }, ['p']), META)).toContain('"hidden": true');
+    });
+
+    // The signal is "this one is disabled"; stating it on every active query is noise in every export.
+    it('stays quiet about queries that are not hidden', () => {
+      expect(notebookToMarkdown(buildSpec({ p: panel }, ['p']), META)).not.toContain('"hidden"');
+    });
+
+    describe('transformations', () => {
+      function withTransformations(transformations: PanelKind['spec']['data']['spec']['transformations']) {
+        const transformed: PanelKind = {
+          ...panel,
+          spec: {
+            ...panel.spec,
+            data: { kind: 'QueryGroup', spec: { ...panel.spec.data.spec, transformations } },
+          },
+        };
+
+        return notebookToMarkdown(buildSpec({ p: transformed }, ['p']), META);
+      }
+
+      // A panel whose displayed value comes out of a transformation exports as queries that do not
+      // produce it. Standing in for the chart is only honest if the gap is stated.
+      it('marks a panel whose output the queries do not describe', () => {
+        const markdown = withTransformations([
+          { kind: 'Transformation', group: 'reduce', spec: { options: {} } },
+          { kind: 'Transformation', group: 'organize', spec: { options: {} } },
+        ]);
+
+        expect(markdown).toContain('<!-- 2 transformation(s) applied; not represented below -->');
+      });
+
+      it('says nothing when there is nothing to warn about', () => {
+        expect(withTransformations([])).not.toContain('transformation(s) applied');
+      });
     });
 
     it('says so when a panel has no queries', () => {
@@ -248,6 +299,56 @@ describe('notebookToMarkdown', () => {
 
       expect(markdown).toContain('### CPU usage');
       expect(markdown).toContain('_Library panel: CPU usage_');
+    });
+  });
+
+  /**
+   * Go marshals a nil slice or map as `null` rather than omitting it — none of these fields carry
+   * `omitempty` — while the generated TS types claim they are always present. It does not reproduce
+   * through the UI, where a notebook comes from defaultNotebookSpec() and round-trips as `[]`; it
+   * reproduces for one made by the Assistant, kubectl or provisioning, and the list row hands a raw
+   * API spec straight in.
+   *
+   * One field at a time, so deleting any single guard fails exactly one of these rather than hiding
+   * behind the others.
+   */
+  describe('null collections from the API', () => {
+    function withNulls(overrides: Record<string, unknown>): NotebookSpec {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- expresses Go's null-for-nil payload against types that claim non-null
+      return { ...buildSpec({ md: markdownElement('Findings') }, ['md']), ...overrides } as NotebookSpec;
+    }
+
+    it('exports a notebook whose tags came back null', () => {
+      const markdown = notebookToMarkdown(withNulls({ tags: null }), META);
+
+      expect(markdown).toContain('# Q2 latency regression');
+      expect(markdown).not.toContain('**Tags:**');
+    });
+
+    it('exports a notebook whose cells came back null', () => {
+      const spec = withNulls({});
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- as above
+      spec.layout.spec.cells = null as unknown as NotebookSpec['layout']['spec']['cells'];
+
+      expect(notebookToMarkdown(spec, META)).toContain('# Q2 latency regression');
+    });
+
+    it('exports a notebook whose elements came back null', () => {
+      // The layout still references a cell, so this also covers dereferencing against no elements.
+      expect(notebookToMarkdown(withNulls({ elements: null }), META)).toContain('# Q2 latency regression');
+    });
+
+    it('exports a panel whose queries came back null', () => {
+      const noQueries: PanelKind = {
+        ...panel,
+        spec: {
+          ...panel.spec,
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- as above
+          data: { kind: 'QueryGroup', spec: { ...panel.spec.data.spec, queries: null as unknown as [] } },
+        },
+      };
+
+      expect(notebookToMarkdown(buildSpec({ p: noQueries }, ['p']), META)).toContain('_Panel with no queries._');
     });
   });
 });

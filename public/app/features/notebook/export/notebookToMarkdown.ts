@@ -2,7 +2,7 @@ import {
   type CellContentKind,
   type NotebookElement,
   type NotebookLayoutItemKind,
-  type PanelQueryKind,
+  type PanelKind,
   type Spec as NotebookSpec,
 } from '../types';
 
@@ -26,11 +26,19 @@ interface NotebookExportMeta {
 export function notebookToMarkdown(spec: NotebookSpec, meta: NotebookExportMeta): string {
   const blocks = [buildHeader(spec, meta)];
 
+  // Every collection here is guarded because Go marshals a nil slice or map as `null`, not as absent
+  // — none of these fields carry `omitempty` — while the generated TS types claim they are always
+  // present. It does not reproduce through the UI, where a notebook is created from
+  // defaultNotebookSpec() and round-trips as `[]`; it reproduces for one made by the Assistant,
+  // kubectl or provisioning, and the list row hands a raw API spec straight in.
+  //
   // `layout.spec.cells` is the ordered list; `elements` is an unordered Record that two layout items
   // may legitimately both point at. Iterating elements would lose the order and drop duplicates, so
   // walk the layout and dereference — the same traversal deserializeNotebookLayout does.
-  for (const item of spec.layout.spec.cells) {
-    const element = spec.elements[item.spec.element.name];
+  const elements = spec.elements ?? {};
+
+  for (const item of spec.layout.spec.cells ?? []) {
+    const element = elements[item.spec.element.name];
     // A layout item referencing a missing element is skipped rather than fatal, matching the
     // deserializer: a partially broken notebook should still export what it has.
     if (!element) {
@@ -52,7 +60,7 @@ function buildHeader(spec: NotebookSpec, meta: NotebookExportMeta): string {
   if (spec.description) {
     lines.push(spec.description, '');
   }
-  if (spec.tags.length > 0) {
+  if (spec.tags?.length) {
     lines.push(`- **Tags:** ${spec.tags.join(', ')}`);
   }
 
@@ -69,7 +77,7 @@ function elementToMarkdown(element: NotebookElement, item: NotebookLayoutItemKin
     case 'Cell':
       return cellContentToMarkdown(element.spec.content);
     case 'Panel':
-      return panelToMarkdown(element.spec.title, element.spec.data.spec.queries);
+      return panelToMarkdown(element.spec);
     case 'LibraryPanel':
       return `### ${element.spec.title}\n\n_Library panel: ${element.spec.libraryPanel.name}_`;
     default:
@@ -93,25 +101,47 @@ function cellContentToMarkdown(content: CellContentKind): string {
 /**
  * A chart cannot be markdown, so the queries behind it are emitted instead — the closest thing to
  * the panel's actual meaning, and the part a reader or a coding agent can act on.
+ *
+ * The viz type comes along because the queries alone do not say whether this was a time series, a
+ * table or a single stat, and a transformation marker because they genuinely do not describe the
+ * chart when one is present. Standing in for the chart is only defensible if the reader is told
+ * where the substitution is incomplete.
  */
-function panelToMarkdown(title: string, queries: PanelQueryKind[]): string {
-  const heading = `### ${title}`;
+function panelToMarkdown(panel: PanelKind['spec']): string {
+  const lines = [`### ${panel.title}`, '', `_${panel.vizConfig.group} panel_`];
 
+  // The queries below are the panel's inputs; a transformation sits between them and what was on
+  // screen, so a value the reader is looking for may not appear in any query here.
+  const transformations = panel.data.spec.transformations ?? [];
+  if (transformations.length > 0) {
+    lines.push('', `<!-- ${transformations.length} transformation(s) applied; not represented below -->`);
+  }
+
+  const queries = panel.data.spec.queries ?? [];
   if (queries.length === 0) {
-    return `${heading}\n\n_Panel with no queries._`;
+    lines.push('', '_Panel with no queries._');
+
+    return lines.join('\n');
   }
 
   const described = queries.map((query) => ({
     refId: query.spec.refId,
-    // A disabled query would otherwise read as one the panel is actually running.
-    hidden: query.spec.hidden,
+    // Only when true. The point is that a disabled query would otherwise read as one the panel is
+    // running; saying so on every active query is noise in every export.
+    ...(query.spec.hidden && { hidden: true }),
     datasource: query.spec.query.datasource?.name,
+    // The plugin id, which is what says whether `expr` below is PromQL, LogQL or something else.
+    // Datasource names are user-chosen and may be absent, so this is the only reliable signal — and
+    // for a document meant to be handed to a coding agent, the most valuable field in the block.
+    type: query.spec.query.group,
     // Nested rather than spread: a datasource's own query model commonly carries its own refId and
     // hidden, which merging would silently overwrite these with.
     query: query.spec.query.spec,
   }));
 
-  return `${heading}\n\n${fence(JSON.stringify(described, null, 2), 'json')}`;
+  lines.push('', fence(JSON.stringify(described, null, 2), 'json'));
+
+  return lines.join('\n');
 }
 
 function fence(body: string, language: string): string {

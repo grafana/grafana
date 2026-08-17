@@ -12819,7 +12819,8 @@
       "download-markdown": "Download as .md",
       "error": "Failed to export notebook",
       "label": "Export",
-      "open-in-cursor": "Open in Cursor"
+      "open-in-cursor": "Open in Cursor",
+      "opening-in-cursor": "Opening in Cursor"
     },
     "list": {
       "all-authors": "All authors",

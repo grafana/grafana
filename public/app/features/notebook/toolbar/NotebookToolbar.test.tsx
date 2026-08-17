@@ -2,18 +2,32 @@ import { createMemoryHistory } from 'history';
 import { render, screen } from 'test/test-utils';
 
 import { HistoryWrapper, config, locationService, setLocationService } from '@grafana/runtime';
-import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
+import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 
 import { NotebookScene } from '../scene/NotebookScene';
+import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
 
 import { NotebookToolbar } from './NotebookToolbar';
 
+/**
+ * Carries a real panel cell, not an empty layout. The export is the first caller of
+ * transformNotebookSceneToSaveModel in production, so a scene with no cells would exercise the menu
+ * without ever exercising the serializer or vizPanelToSchemaV2's constraints behind it.
+ */
 function buildScene() {
   return new NotebookScene({
     title: 'Q2 latency regression',
     uid: 'nb1',
-    body: new NotebookLayoutManager({ cells: [] }),
+    body: new NotebookLayoutManager({
+      cells: [
+        new NotebookCellItem({
+          elementName: 'latency-panel',
+          source: 'user',
+          body: new VizPanel({ key: 'panel-1', title: 'p95 latency', pluginId: 'timeseries' }),
+        }),
+      ],
+    }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     timePicker: new SceneTimePicker({}),
     refreshPicker: new SceneRefreshPicker({}),
@@ -72,6 +86,20 @@ describe('NotebookToolbar', () => {
     await user.click(screen.getByRole('button', { name: 'Copy link' }));
 
     expect(await screen.findByText('Copied')).toBeInTheDocument();
+  });
+
+  // Drives the whole path the PR made live: scene -> transformNotebookSceneToSaveModel ->
+  // vizPanelToSchemaV2 -> markdown. Asserting on the menu alone would pass with the serializer broken.
+  it('copies markdown built from the scene, panel and all', async () => {
+    const { user } = setup();
+
+    await user.click(screen.getByRole('button', { name: /Export/ }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Copy as Markdown' }));
+
+    const markdown = await navigator.clipboard.readText();
+    expect(markdown).toContain('# Q2 latency regression');
+    expect(markdown).toContain('### p95 latency');
+    expect(markdown).toContain('_timeseries panel_');
   });
 
   it('offers the export actions from a dropdown', async () => {

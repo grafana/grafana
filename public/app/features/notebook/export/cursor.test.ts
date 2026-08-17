@@ -36,6 +36,21 @@ describe('buildCursorPromptDeeplink', () => {
   });
 });
 
+// `slice` counts UTF-16 code units, so a cut can land inside a surrogate pair and orphan half of
+// it; url encoding then replaces the orphan with U+FFFD rather than throwing, so the symptom is one
+// mangled character rather than a failure.
+//
+// The exact input matters. A lone surrogate encodes to 9 url characters against 12 for the whole
+// pair, so the search usually settles back onto a pair boundary on its own — it only orphans when
+// the limit falls in that 3-character window. The six-character prefix is what puts it there; with
+// no prefix this passes either way and proves nothing.
+it('does not cut an emoji in half when truncating', () => {
+  const url = buildCursorPromptDeeplink('latenc' + '😀'.repeat(3000));
+
+  const text = new URL(url).searchParams.get('text') ?? '';
+  expect(text).not.toContain('\uFFFD');
+});
+
 describe('openCursorPromptDeeplink', () => {
   it('navigates the given window to the deep link', () => {
     const win = { location: { href: '' } };
