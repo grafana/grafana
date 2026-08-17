@@ -85,7 +85,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 
 ### PDC connectivity errors
 
-**Error messages:** "host unreachable", "EOF", "network unreachable", "connection reset by peer", "dial tcp: lookup ... no such host"
+**Error messages:** `host unreachable`, `EOF`, `network unreachable`, `connection reset by peer`, `dial tcp: lookup ... no such host`
 
 **Symptom:** Prometheus queries fail intermittently or consistently when using Private data source connect (PDC) to reach a Prometheus instance behind a private network. The data source test may pass occasionally but queries fail under load.
 
@@ -103,7 +103,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 
 1. **Check firewall rules.** Ensure the PDC agent's outbound SSH connection to Grafana Cloud isn't being interrupted by firewall rules, NAT gateways, or idle connection timeouts.
 1. **Verify the PDC agent is running and healthy.** Check agent logs for connection errors or restarts. The agent must maintain a persistent connection to Grafana Cloud.
-1. **Check for idle timeout issues.** If the connection drops after periods of inactivity, configure TCP keepalives on the host or add a keepalive setting to the PDC agent configuration.
+1. **Check for idle timeout issues.** If the connection drops after periods of inactivity, configure TCP keepalive on the host or add a `keepalive` setting to the PDC agent configuration.
 
 {{< admonition type="note" >}}
 PDC connectivity issues are almost always caused by networking on the customer side (DNS, firewall rules, routing), not by Grafana Cloud. The data source test passing doesn't guarantee sustained connectivity under load. It only verifies a single query succeeds.
@@ -231,7 +231,7 @@ The following errors occur when there are issues with PromQL syntax or query exe
 
 ### Query syntax error
 
-**Error message:** "parse error: unexpected character" or "bad_data: 1:X: parse error"
+**Error message:** `parse error: unexpected character` or `bad_data: 1:X: parse error`
 
 **Cause:** The PromQL query contains invalid syntax.
 
@@ -276,7 +276,7 @@ The following errors occur when there are issues with PromQL syntax or query exe
 
 ### Too many time series
 
-**Error message:** "exceeded maximum resolution of 11,000 points per timeseries" or "maximum number of series limit exceeded"
+**Error message:** `exceeded maximum resolution of 11,000 points per timeseries` or `maximum number of series limit exceeded`
 
 **Cause:** The query is returning more time series or data points than the configured limits allow.
 

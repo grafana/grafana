@@ -179,7 +179,7 @@ For `$__rate_interval` to produce reliable results, the scrape interval must mat
 
 - **Recording rules with fixed intervals:** If you use `$__rate_interval` in a recording rule query, the interval depends on the evaluation context. For recording rules, use a fixed interval (for example, `[5m]`) rather than `$__rate_interval`.
 
-For troubleshooting `$__rate_interval` issues, refer to [`$__rate_interval` returns no data or incorrect values](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#rate_interval-returns-no-data-or-incorrect-values).
+For troubleshooting `$__rate_interval` issues, refer to [Rate interval returns no data or incorrect values](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#rate_interval-returns-no-data-or-incorrect-values).
 
 For additional background, refer to [$\_\_rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
 
