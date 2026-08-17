@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -23,7 +24,7 @@ func newUploadTestIndex(t *testing.T, be *bleveBackend, key resource.NamespacedR
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
+	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "", false)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = idx.Close() })
 
@@ -40,7 +41,7 @@ func newCachedUploadTestIndex(t *testing.T, be *bleveBackend, key resource.Names
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
+	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "", false)
 	require.NoError(t, err)
 
 	require.NoError(t, idx.Index("dash-1", map[string]string{"title": "Production Overview"}))
@@ -92,6 +93,9 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	// Recorded so selection can skip a snapshot missing a feature this instance
 	// requires, without downloading it first.
 	assert.True(t, uploadedMeta.FeaturesRecorded)
+	// Carried so a reader can tell an empty trash from one that was never indexed.
+	assert.Equal(t, be.opts.IndexDeletedDocuments,
+		slices.Contains(uploadedMeta.Features, resource.IndexFeatureHoldsDeletedDocuments))
 	assert.Equal(t, resource.CurrentIndexFeatures(), uploadedMeta.Features)
 	// The test index holds a single document; DocCount is recorded for
 	// debugging only, but verify it reflects the index contents.
@@ -130,6 +134,7 @@ func TestUploadSnapshot_PreservesOriginalBuildStartTime(t *testing.T) {
 		be.opts.BuildVersion,
 		nil,
 		"",
+		false,
 	)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = index.Close() })

@@ -1,94 +1,32 @@
 /**
  * Dashboard Mutation Client
  *
- * API for programmatic dashboard mutations. Provides
- * a declarative, command-based API where callers describe *what* to
- * change (e.g. ADD_VARIABLE, UPDATE_VARIABLE) and the client handles Scenes
- * internals, payload validation (via Zod schemas), permission checks, and
- * transactional execution with structured error responses.
- *
- * Each mutation goes through:
- * 1. Command lookup (is it a registered command?)
- * 2. Permission check (can the user edit this dashboard?)
- * 3. Payload validation (does the payload match the Zod schema?)
+ * {@link SceneMutationClient} bound to the dashboard command list. This class only answers "which
+ * commands exist on a dashboard"; everything behind the API lives in the dispatcher.
  */
+
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { createNotebookSpecCommand } from 'app/features/notebook/mutation-api/commands/createNotebookSpec';
 
 import type { DashboardScene } from '../scene/DashboardScene';
 
-import { ALL_COMMANDS, validatePayload } from './commands/registry';
-import type { MutationCommand, MutationContext } from './commands/types';
-import type { MutationClient, MutationRequest, MutationResult } from './types';
+import { SceneMutationClient } from './SceneMutationClient';
+import { DASHBOARD_COMMANDS } from './commands/registry';
 
-type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
-
-interface CommandRegistration {
-  handler: MutationHandler;
-  canExecute: (scene: DashboardScene) => { allowed: true } | { allowed: false; error: string };
-  readOnly: boolean;
-}
-
-export class DashboardMutationClient implements MutationClient {
-  private scene: DashboardScene;
-  private commands: Map<string, CommandRegistration> = new Map();
-
+export class DashboardMutationClient extends SceneMutationClient<DashboardScene> {
   constructor(scene: DashboardScene) {
-    this.scene = scene;
-    for (const cmd of ALL_COMMANDS) {
-      this.registerCommand(cmd);
-    }
-  }
+    // CREATE_NOTEBOOK_SPEC reads nothing off the scene and there is no blank notebook to open first, so
+    // it has to be reachable from wherever the user already is. Registered at this seam rather than in
+    // DASHBOARD_COMMANDS so the dashboard registry stays a list of dashboard commands.
+    //
+    // Flag-gated as well as permission-checked because the two answer different questions: the
+    // permission check refuses an execute, while this decides whether the command is in the list a
+    // caller discovers from at all. Without the gate an instance with notebooks off advertises a create
+    // an agent will offer and then always fail on.
+    const notebookCommands = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)
+      ? [createNotebookSpecCommand]
+      : [];
 
-  async execute(mutation: MutationRequest): Promise<MutationResult> {
-    const type = mutation.type.toUpperCase();
-
-    const registration = this.commands.get(type);
-    if (!registration) {
-      return { success: false, error: `Unknown command type: ${type}`, changes: [] };
-    }
-
-    const permissionResult = registration.canExecute(this.scene);
-    if (!permissionResult.allowed) {
-      return { success: false, error: permissionResult.error, changes: [] };
-    }
-
-    const validationResult = validatePayload(type, mutation.payload);
-    if (!validationResult.success) {
-      return { success: false, error: validationResult.error, changes: [] };
-    }
-
-    // Zod may return frozen or shared default objects. Deep-clone write payloads
-    // so downstream code (e.g. getPanelOptionsWithDefaults) can mutate in-place.
-    const payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
-
-    const context: MutationContext = { scene: this.scene };
-
-    try {
-      const result = await registration.handler(payload, context);
-
-      if (result.success && !registration.readOnly) {
-        this.scene.forceRender();
-      }
-
-      return result;
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-        changes: [],
-      };
-    }
-  }
-
-  getAvailableCommands(): string[] {
-    return Array.from(this.commands.keys());
-  }
-
-  private registerCommand(cmd: MutationCommand): void {
-    this.commands.set(cmd.name, {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- safe: client validates with Zod before dispatch
-      handler: cmd.handler as MutationHandler,
-      canExecute: cmd.permission,
-      readOnly: cmd.readOnly ?? false,
-    });
+    super(scene, [...DASHBOARD_COMMANDS, ...notebookCommands]);
   }
 }

@@ -2579,13 +2579,12 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:         "grafana.viewPanelPane",
-			Description:  "Enables the sidebar pane with new toggles and options in panel view mode",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "true",
-			Generate:     Generate{React: true},
+			Name:        "grafana.viewPanelPane",
+			Description: "Enables the sidebar pane with new toggles and options in panel view mode",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:            "datasourcesApiServerEnableHealthEndpointFrontend",
@@ -3222,6 +3221,23 @@ var (
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "true", // enabled by default
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "rawPrometheus.tableNg",
+			Description: "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataSourcesPlugins,
+			Generate:    Generate{React: true},
+			Expression:  "false",
+		},
+		{
+			Name:         "datasources.queryGateway",
+			Description:  "Data source query gateway",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

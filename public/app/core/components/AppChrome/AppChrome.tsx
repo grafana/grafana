@@ -308,9 +308,14 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       height: `calc(100% - ${headerHeight}px)`,
       zIndex: 1,
     }),
-    scopesDashboardsContainerDocked: css({
-      left: MENU_WIDTH,
-    }),
+    scopesDashboardsContainerDocked: css(
+      {
+        left: MENU_WIDTH,
+      },
+      visualRefreshEnabled && {
+        left: `calc(${MENU_WIDTH} + ${theme.spacing(0.5)})`,
+      }
+    ),
     topNav: css({
       display: 'flex',
       position: 'fixed',

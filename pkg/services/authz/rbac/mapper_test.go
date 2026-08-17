@@ -185,6 +185,14 @@ func TestMapperRegistry_Variables(t *testing.T) {
 	action, ok = mapping.Action("delete")
 	require.True(t, ok)
 	assert.Equal(t, "variables:delete", action)
+
+	readActionSets := []string{"folders:view", "folders:edit", "folders:admin"}
+	writeActionSets := []string{"folders:edit", "folders:admin"}
+	assert.ElementsMatch(t, readActionSets, mapping.ActionSets(utils.VerbGet))
+	assert.ElementsMatch(t, readActionSets, mapping.ActionSets(utils.VerbList))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbCreate))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbUpdate))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbDelete))
 }
 
 func TestMapperRegistry_SubresourceLookup(t *testing.T) {

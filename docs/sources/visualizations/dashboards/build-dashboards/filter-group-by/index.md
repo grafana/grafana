@@ -176,7 +176,7 @@ To use filters on data from an unsupported data source, follow these steps:
 1. Configure any other needed options for the panel.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.
 
 Now you can filter the data from the source panel by way of the Dashboard data source.
 Add as many panels as you need.
