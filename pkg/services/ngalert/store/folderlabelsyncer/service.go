@@ -39,12 +39,6 @@ const (
 
 	// The slash in the label key is escaped as "~1" to avoid the apiserver reading it as two path segments
 	hasRulesLabelPath = "/metadata/labels/alerting.grafana.app~1has-rules"
-
-	// defaultFullSyncInterval is how often Run repeats FullSync in the background, on top of the pass
-	// it makes at startup. It is the backstop for drift a partial sync can't fix itself: a crash
-	// between a folder patch failing and being retried, or a write that reached unified storage and so
-	// never produced a bus event at all.
-	defaultFullSyncInterval = 10 * time.Minute
 )
 
 type syncerStore interface {
@@ -65,11 +59,12 @@ func serviceIdentity(ctx context.Context, orgID int64) (context.Context, identit
 }
 
 type Service struct {
-	store      syncerStore
-	clients    resource.ClientGenerator
-	namespacer request.NamespaceMapper
-	log        log.Logger
-	metrics    *metrics.FolderLabelSyncer
+	store            syncerStore
+	clients          resource.ClientGenerator
+	namespacer       request.NamespaceMapper
+	log              log.Logger
+	metrics          *metrics.FolderLabelSyncer
+	fullSyncInterval time.Duration
 
 	mu    sync.Mutex
 	dirty map[models.FolderKey]struct{}
@@ -81,13 +76,14 @@ type Service struct {
 
 func NewService(cfg *setting.Cfg, b bus.Bus, store syncerStore, clients resource.ClientGenerator, m *metrics.FolderLabelSyncer) *Service {
 	s := &Service{
-		store:      store,
-		clients:    clients,
-		namespacer: request.GetNamespaceMapper(cfg),
-		log:        log.New("ngalert.folderlabelsyncer"),
-		metrics:    m,
-		dirty:      make(map[models.FolderKey]struct{}),
-		wake:       make(chan struct{}, 1),
+		store:            store,
+		clients:          clients,
+		namespacer:       request.GetNamespaceMapper(cfg),
+		log:              log.New("ngalert.folderlabelsyncer"),
+		metrics:          m,
+		fullSyncInterval: cfg.UnifiedAlerting.FolderLabelFullSyncInterval,
+		dirty:            make(map[models.FolderKey]struct{}),
+		wake:             make(chan struct{}, 1),
 	}
 	b.AddEventListener(s.handleRuleChange)
 	return s
@@ -122,14 +118,14 @@ func (s *Service) signal() {
 }
 
 // Run performs a full sync once at startup, then processes partial syncs as rule changes wake it and
-// repeats the full sync every defaultFullSyncInterval in the background. disabledOrgs is fixed for
-// the process lifetime, so it is read once here rather than on every pass.
+// repeats the full sync every fullSyncInterval in the background. disabledOrgs is fixed for the
+// process lifetime, so it is read once here rather than on every pass.
 func (s *Service) Run(ctx context.Context, disabledOrgs map[int64]struct{}) error {
 	if err := s.FullSync(ctx, disabledOrgs); err != nil {
 		s.log.Warn("Failed to run startup folder rules label full sync", "error", err)
 	}
 
-	ticker := time.NewTicker(defaultFullSyncInterval)
+	ticker := time.NewTicker(s.fullSyncInterval)
 	defer ticker.Stop()
 
 	for {

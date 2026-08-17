@@ -130,9 +130,12 @@ func newTestService(store syncerStore, folders folderPatcher) *Service {
 		// fakeFolderClient.failNamespaces).
 		namespacer: func(orgID int64) string { return fmt.Sprintf("org-%d", orgID) },
 		log:        log.NewNopLogger(),
-		dirty:      make(map[models.FolderKey]struct{}),
-		wake:       make(chan struct{}, 1),
-		folders:    folders,
+		// Long enough that no test triggers a tick; Run is only exercised for its startup sync and
+		// context-cancellation behavior.
+		fullSyncInterval: time.Hour,
+		dirty:            make(map[models.FolderKey]struct{}),
+		wake:             make(chan struct{}, 1),
+		folders:          folders,
 	}
 }
 
