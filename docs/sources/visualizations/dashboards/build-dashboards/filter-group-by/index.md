@@ -120,12 +120,21 @@ Hover the cursor over any panel using the data source of the filter to show the 
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-panel-groupby-v13.0.png" max-width="550px" alt="Group by control on a panel" >}}
 
-The panel-level **Group by** control only includes keys available in the panel's query. This is in contrast with the dashaboard-level control that includes all available keys for the dashboard.
+The panel-level **Group by** control only includes keys available in the panel's query. This is in contrast with the dashboard-level control that includes all available keys for the dashboard.
 Your selection is applied to all the panels in the dashboard with the same data source.
 
-You can also further filter a time series panel, which allows you to drill down further into your data.
+You can also further filter some panels further, which allows you to drill down further into your data.
 After setting your group by dimension and splitting your data, click on a series in a panel and click **Filter on this value** or **Filter out this value**.
 This filters by the labels found on that series, which are related to the already set group by dimensions.
+
+Panel filtering is supported for the following visualizations:
+
+- Bar chart
+- Histogram
+- State timeline
+- Status history
+- Table
+- Time series
 
 To enable this functionality, you need to add one or more overrides for the panel.
 In the following example, the override:
