@@ -267,6 +267,17 @@ There are default parameters to constrain the layout, and you can update these t
 - **Row height**: Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels.
 - **Fill screen**: Toggle the switch on to have the panel fill the entire height of the screen. If the panel is in a row, the **Fill screen** toggle for the row must also be enabled (refer to [grouping configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/#grouping-configuration-options).
 
+If you try to resize a panel in auto grid layout, a dialog box opens with the following options:
+
+- **Edit auto layout**: Adjust the layout configuration.
+- **Switch to custom layout**: Resize and position panels manually.
+
+If you're working in a tab, the layout type indicator is automatically displayed. To see which layout type is active for a row, hover your cursor over that row to display the indicator.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-auto-layout-indicators-v13.2.png" max-width="750px" alt="Dashboard showing auto layout indicators" >}}
+
+For repeated panels, this interaction is available on the last panel in the group.
+
 ### Update panel layout
 
 To update the panel layout, follow these steps:
