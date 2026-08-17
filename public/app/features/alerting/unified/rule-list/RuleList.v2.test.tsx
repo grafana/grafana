@@ -28,6 +28,26 @@ jest.mock('./GroupedView', () => ({
   GroupedView: () => <div data-testid="grouped-view">Grouped View</div>,
 }));
 
+jest.mock('../hooks/useDMAStatus', () => {
+  const actual = jest.requireActual<{
+    DMAStatus: { ManagedByGrafana: 'managed-by-grafana'; NotAvailable: 'not-available' };
+  }>('../hooks/useDMAStatus');
+
+  return {
+    ...actual,
+    useDMAStatus: jest.fn(() => {
+      const { config } = jest.requireActual<{ config: { featureToggles: Record<string, boolean | undefined> } }>(
+        '@grafana/runtime'
+      );
+      const disabledByFeatureToggle = config.featureToggles.alertingDisableDMAinUI ?? false;
+
+      return {
+        status: disabledByFeatureToggle ? actual.DMAStatus.NotAvailable : actual.DMAStatus.ManagedByGrafana,
+      };
+    }),
+  };
+});
+
 jest.mock('./filter/useSavedSearches', () => ({
   ...jest.requireActual('./filter/useSavedSearches'),
   loadDefaultSavedSearch: jest.fn(),

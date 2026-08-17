@@ -15,6 +15,7 @@ import { useShowImportToGMARulesBanner } from '../components/import-to-gma/useSh
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
+import { DMAStatus, useDMAStatus } from '../hooks/useDMAStatus';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
@@ -57,14 +58,17 @@ export function RuleListActions() {
   const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
+  const { status: dmaStatus } = useDMAStatus();
 
   // Check if there are any data sources with manageAlerts enabled
   const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
-  const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
 
   const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
   const canCreateCloudRules =
-    createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
+    createCloudRuleSupported &&
+    createCloudRuleAllowed &&
+    hasAlertEnabledDataSources &&
+    dmaStatus === DMAStatus.ManagedByGrafana;
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
