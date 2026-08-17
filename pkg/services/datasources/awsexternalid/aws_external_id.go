@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const grafanaExternalIDNonceBytes = 8
+const grafanaExternalIDHexBytes = 8
 
 const (
 	grafanaAssumeRoleAuthType         = "grafana_assume_role"
@@ -44,10 +44,10 @@ func BeforeSave(ctx context.Context, uid string, cfg *setting.Cfg, existing, jso
 }
 
 // buildGrafanaExternalID returns "{stackExternalId}-{dsUID}-{16 hex}".
-// The nonce makes the ID unique per mint so delete→recreate with the same UID
+// The hex suffix makes the ID unique per mint so delete→recreate with the same UID
 // cannot reuse a prior IAM trust binding.
 func buildGrafanaExternalID(stackExternalID, datasourceUID string) string {
-	var b [grafanaExternalIDNonceBytes]byte
+	var b [grafanaExternalIDHexBytes]byte
 	if _, err := rand.Read(b[:]); err != nil {
 		panic("crypto/rand failed: " + err.Error())
 	}
@@ -55,7 +55,7 @@ func buildGrafanaExternalID(stackExternalID, datasourceUID string) string {
 }
 
 // isValidGrafanaExternalID reports whether id is bound to this stack + datasource UID
-// with a 16-char lowercase hex nonce. Uses HasPrefix (stack/UID may contain dashes).
+// with a 16-char lowercase hex suffix. Uses HasPrefix (stack/UID may contain dashes).
 func isValidGrafanaExternalID(id, stackExternalID, datasourceUID string) bool {
 	if id == "" || stackExternalID == "" || datasourceUID == "" {
 		return false
@@ -65,7 +65,7 @@ func isValidGrafanaExternalID(id, stackExternalID, datasourceUID string) bool {
 		return false
 	}
 	suffix := id[len(prefix):]
-	if len(suffix) != grafanaExternalIDNonceBytes*2 {
+	if len(suffix) != grafanaExternalIDHexBytes*2 {
 		return false
 	}
 	for i := 0; i < len(suffix); i++ {
