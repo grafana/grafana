@@ -370,7 +370,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
 
-			store := db.InitTestDB(t)
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
@@ -674,7 +674,7 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
 
-			store := db.InitTestDB(t)
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
@@ -1122,7 +1122,7 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
-			store := db.InitTestDB(t)
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			features := featuremgmt.WithFeatures()
 
 			env := environment{
@@ -1422,7 +1422,7 @@ func TestIntegration_GetCurrentOAuthToken_WithExternalSessions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
-			store := db.InitTestDB(t)
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			features := featuremgmt.WithFeatures(featuremgmt.FlagImprovedExternalSessionHandling)
 
 			env := environment{
