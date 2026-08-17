@@ -122,10 +122,10 @@ func recordingRuleObj(uid string) model.RecordingRule {
 	return r
 }
 
-func newTestSyncer(t *testing.T, gen *fakeGenerator, states *fakeStates, status *fakeStatus) *Syncer {
+func newTestSyncer(t *testing.T, gen *fakeGenerator, orgs OrgStore, states *fakeStates, status *fakeStatus, disabledOrgs map[int64]struct{}) *Syncer {
 	t.Helper()
 	return NewSyncer(
-		&fakeOrgs{orgs: []int64{1}},
+		orgs,
 		states,
 		status,
 		func(int64) string { return "default" },
@@ -133,6 +133,7 @@ func newTestSyncer(t *testing.T, gen *fakeGenerator, states *fakeStates, status 
 		log.NewNopLogger(),
 		ngmetrics.NewStatusSyncerMetrics(nil),
 		gen,
+		disabledOrgs,
 	)
 }
 
@@ -147,7 +148,37 @@ func TestSyncer_sync_writesBothKindsAndDedupes(t *testing.T) {
 	status := &fakeStatus{byUID: map[string]ngmodels.RuleStatus{
 		"rec1": {Health: "ok", EvaluationTimestamp: time.Now()},
 	}}
-	s := newTestSyncer(t, gen, states, status)
+	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1}}, states, status, nil)
+
+	require.NoError(t, s.sync(context.Background()))
+	require.Equal(t, 1, gen.alert.updates)
+	require.Equal(t, 1, gen.recording.updates)
+
+	ar := gen.alert.updated["alert1"].(*model.AlertRule)
+	require.Equal(t, model.AlertRuleAlertRuleStateFiring, *ar.Status.State)
+	rr := gen.recording.updated["rec1"].(*model.RecordingRule)
+	require.Equal(t, model.RecordingRuleRecordingRuleHealthRecording, *rr.Status.Health)
+
+	// A second sync with unchanged status writes nothing new.
+	require.NoError(t, s.sync(context.Background()))
+	require.Equal(t, 1, gen.alert.updates)
+	require.Equal(t, 1, gen.recording.updates)
+}
+
+func TestSyncer_sync_skipsDisabledOrgs(t *testing.T) {
+	gen := &fakeGenerator{
+		alert:     newFakeRuleClient(&model.AlertRuleList{Items: []model.AlertRule{alertRuleObj("alert1")}}),
+		recording: newFakeRuleClient(&model.RecordingRuleList{Items: []model.RecordingRule{recordingRuleObj("rec1")}}),
+	}
+	states := &fakeStates{byUID: map[string][]*state.State{
+		"alert1": {{State: eval.Alerting, LastEvaluationTime: time.Now()}},
+	}}
+	status := &fakeStatus{byUID: map[string]ngmodels.RuleStatus{
+		"rec1": {Health: "ok", EvaluationTimestamp: time.Now()},
+	}}
+	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1, 2}}, states, status, map[int64]struct{}{
+		2: {},
+	})
 
 	require.NoError(t, s.sync(context.Background()))
 	require.Equal(t, 1, gen.alert.updates)
@@ -170,7 +201,7 @@ func TestSyncer_sync_rewritesWhenStatusChanges(t *testing.T) {
 		recording: newFakeRuleClient(&model.RecordingRuleList{}),
 	}
 	states := &fakeStates{byUID: map[string][]*state.State{"alert1": {{State: eval.Normal}}}}
-	s := newTestSyncer(t, gen, states, &fakeStatus{})
+	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1}}, states, &fakeStatus{}, nil)
 
 	require.NoError(t, s.sync(context.Background()))
 	require.Equal(t, 1, gen.alert.updates)
@@ -193,7 +224,7 @@ func TestSyncer_sync_preservesOtherOperatorStatus(t *testing.T) {
 	states := &fakeStates{byUID: map[string][]*state.State{
 		"alert1": {{State: eval.Alerting, LastEvaluationTime: time.Now()}},
 	}}
-	s := newTestSyncer(t, gen, states, &fakeStatus{})
+	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1}}, states, &fakeStatus{}, nil)
 
 	require.NoError(t, s.sync(context.Background()))
 	require.Equal(t, 1, gen.alert.updates)
@@ -209,7 +240,7 @@ func TestSyncer_sync_preservesOtherOperatorStatus(t *testing.T) {
 func TestSyncer_sync_prunesDeletedRules(t *testing.T) {
 	alertClient := newFakeRuleClient(&model.AlertRuleList{Items: []model.AlertRule{alertRuleObj("alert1")}})
 	gen := &fakeGenerator{alert: alertClient, recording: newFakeRuleClient(&model.RecordingRuleList{})}
-	s := newTestSyncer(t, gen, &fakeStates{}, &fakeStatus{})
+	s := newTestSyncer(t, gen, &fakeOrgs{[]int64{1}}, &fakeStates{}, &fakeStatus{}, nil)
 
 	key := ngmodels.AlertRuleKey{OrgID: 1, UID: "alert1"}
 	require.NoError(t, s.sync(context.Background()))
