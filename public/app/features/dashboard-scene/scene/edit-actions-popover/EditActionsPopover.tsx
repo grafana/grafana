@@ -14,27 +14,30 @@ import React, { cloneElement, createContext, useContext, useMemo, useState } fro
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Portal, useStyles2 } from '@grafana/ui';
 
-const EditActionsPopoverContext = createContext<{ closePopover: () => void }>({ closePopover: () => {} });
-
-/**
- * Lets popover content close the popover programmatically, e.g. before opening
- * a modal on top of it. Resolves to a no-op when rendered outside a popover.
- */
-export const useEditActionsPopover = () => useContext(EditActionsPopoverContext);
-
-export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
-
-export function EditActionsPopover({
-  isEditable,
-  content,
-  children,
-  placement = 'top-start',
-}: {
-  isEditable: boolean;
+type EditActionsPopoverProps = {
   content: React.ReactNode;
   children: React.JSX.Element;
   placement?: Placement;
-}) {
+};
+
+export function EditActionsPopover({ isEditable, ...props }: EditActionsPopoverProps & { isEditable: boolean }) {
+  if (!isEditable) {
+    return props.children;
+  }
+
+  return <HoverPopover {...props} />;
+}
+
+export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
+
+const EditActionsPopoverContext = createContext<{ closePopover: () => void }>({ closePopover: () => {} });
+
+/**
+ * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it.
+ */
+export const useEditActionsPopover = () => useContext(EditActionsPopoverContext);
+
+function HoverPopover({ content, children, placement = 'top-start' }: EditActionsPopoverProps) {
   const styles = useStyles2(getPopoverStyles);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -60,10 +63,6 @@ export function EditActionsPopover({
   const { getReferenceProps, getFloatingProps } = useInteractions([hover]);
 
   const popoverContextValue = useMemo(() => ({ closePopover: () => setIsOpen(false) }), []);
-
-  if (!isEditable) {
-    return children;
-  }
 
   return (
     <>

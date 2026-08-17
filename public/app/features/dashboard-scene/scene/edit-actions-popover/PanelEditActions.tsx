@@ -3,7 +3,7 @@ import { useCallback, useMemo, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { type VizPanel } from '@grafana/scenes';
+import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { Button, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { VizPanelEditableElement } from '../../sidebar/VizPanelEditableElement';
@@ -79,21 +79,21 @@ export function PanelEditWrapper({ panel, children }: { panel: VizPanel; childre
   }, [panel]);
 
   const onClickEditVisualization = useCallback(() => {
-    const panelId = getPanelIdForVizPanel(panel);
+    const panelId = getPanelIdForVizPanel(getSourceVizPanel(panel));
     locationService.partial({ editPanel: panelId });
     DashboardInteractions.panelActionClicked('configure', panelId, 'edit_popover');
   }, [panel]);
 
   const onClickCopy = useCallback(() => {
-    new VizPanelEditableElement(panel).onCopy('edit_popover');
+    new VizPanelEditableElement(getSourceVizPanel(panel)).onCopy('edit_popover');
   }, [panel]);
 
   const onClickDuplicate = useCallback(() => {
-    new VizPanelEditableElement(panel).onDuplicate('edit_popover');
+    new VizPanelEditableElement(getSourceVizPanel(panel)).onDuplicate('edit_popover');
   }, [panel]);
 
   const onClickDelete = useCallback(() => {
-    new VizPanelEditableElement(panel).onDelete('edit_popover');
+    new VizPanelEditableElement(getSourceVizPanel(panel)).onDelete('edit_popover');
   }, [panel]);
 
   const editActions = useMemo(
@@ -114,4 +114,9 @@ export function PanelEditWrapper({ panel, children }: { panel: VizPanel; childre
       {children}
     </EditActionsPopover>
   );
+}
+
+function getSourceVizPanel(panel: VizPanel): VizPanel {
+  const sourceKey = panel.state.repeatSourceKey;
+  return sourceKey ? sceneGraph.findByKeyAndType(panel, sourceKey, VizPanel) : panel;
 }
