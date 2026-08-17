@@ -202,6 +202,9 @@ describe('alignTimeRangeCompareData', () => {
       const first = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2, 3]), ONE_DAY_MS, theme);
       const second = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [4, 5, 6]), ONE_DAY_MS, theme);
 
+      // shiftTimeValues will increment time by an offset every time it is ran, so by running
+      // multiple times and having the same value, we know it is reusing the same data rather
+      // than re-calculating.
       expect(first.fields[0].values).toEqual([86401000, 86402000, 86403000]);
       expect(second.fields[0].values).toBe(first.fields[0].values);
     });
