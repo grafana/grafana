@@ -1290,6 +1290,10 @@ describe('given a panel plugin that registers transformations', () => {
       data: { series: [transformedFrame], state: LoadingState.Done, timeRange },
     });
 
+    // Populated directly: `PanelDataTransformer` installs the operator on activation once it has
+    // resolved a plugin, and that mechanism is its own concern. What matters here is that a
+    // populated slot never reaches the save model.
+    dataProvider.setState({ systemTransformations: { prepend: [() => (source) => source] } });
     expect(dataProvider.state.systemTransformations?.prepend).toHaveLength(1);
 
     return new VizPanel({ key: 'panel-1', pluginId: 'timeseries', $data: dataProvider });

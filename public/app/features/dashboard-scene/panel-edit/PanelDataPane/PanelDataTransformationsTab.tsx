@@ -123,9 +123,16 @@ function useSystemTransformedData(
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
   const styles = useStyles2(getStyles);
   const sourceData = model.getQueryRunner().useState();
-  const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
+  const {
+    data,
+    transformations: transformsWrongType,
+    systemTransformations: systemTransformationsState,
+  } = model.getDataTransformer().useState();
 
-  const systemTransformations = useMemo(() => getReplayableSystemTransformations(model.getDataTransformer()), [model]);
+  const systemTransformations = useMemo(
+    () => getReplayableSystemTransformations(systemTransformationsState),
+    [systemTransformationsState]
+  );
   const editorData = useSystemTransformedData(sourceData.data, systemTransformations);
 
   // Type guard to ensure transformations are DataTransformerConfig[]

@@ -52,6 +52,7 @@ export function QueryEditorContextWrapper({
   const pendingSavedQuery = isDrawerOpen ? pendingSavedQueryState : null;
 
   const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
+  const transformerState = dataTransformer?.useState();
   const transformations = useTransformations(dataTransformer);
   const alertingState = useAlertRulesForPanel(dataPane, panel);
 
@@ -302,9 +303,13 @@ export function QueryEditorContextWrapper({
     [queryRunnerState?.queries, queryRunnerState?.data, queryError]
   );
 
-  // Not subscribed: `systemTransformations` is write-once at construction, and replacing the panel's
-  // `$data` yields a new transformer instance, which re-renders this anyway.
-  const systemTransformations = useMemo(() => getReplayableSystemTransformations(dataTransformer), [dataTransformer]);
+  // Read from subscribed state, not the instance: the plugin's transformations are installed on
+  // activation and reinstalled when the panel's plugin changes, so switching visualization while the
+  // editor is open has to reach the rows that replay them.
+  const systemTransformations = useMemo(
+    () => getReplayableSystemTransformations(transformerState?.systemTransformations),
+    [transformerState?.systemTransformations]
+  );
 
   const panelState = useMemo(() => {
     return {
