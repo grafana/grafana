@@ -13,53 +13,53 @@ import (
 // toAlertRuleStatus builds the k8s AlertRule status from the rule's instance states.
 // state/reason/health/timestamps are all derived from the state manager, so it works
 // on any node that holds the state (in-memory or DB-backed) without the scheduler.
-func toAlertRuleStatus(states []*state.State, paused bool) model.AlertRuleStatus {
-	out := model.AlertRuleStatus{}
-	out.StateReason = new(alertReason(states))
-	if len(states) == 0 {
-		out.Health = new(model.AlertRuleAlertRuleHealthNotScheduled)
-		out.State = new(model.AlertRuleAlertRuleStateInactive)
-		if paused {
-			out.Health = new(model.AlertRuleAlertRuleHealthPaused)
-		}
+func toAlertRuleStatus(base model.AlertRuleStatus, states []*state.State, paused bool) model.AlertRuleStatus {
+	base.State = nil
+	base.Health = nil
+	base.StateReason = new(alertReason(states))
+	base.LastEvaluationTime = nil
+	base.EvaluationDuration = nil
+	base.LastError = nil
 
-		return out
+	if len(states) == 0 {
+		base.Health = new(model.AlertRuleAlertRuleHealthNotScheduled)
+		base.State = new(model.AlertRuleAlertRuleStateInactive)
+		if paused {
+			base.Health = new(model.AlertRuleAlertRuleHealthPaused)
+		}
+		return base
 	}
 
 	rs := state.StatesToRuleStatus(states)
-	out.LastEvaluationTime = &rs.EvaluationTimestamp
-	out.EvaluationDuration = new(rs.EvaluationDuration.Seconds())
+	base.LastEvaluationTime = &rs.EvaluationTimestamp
+	base.EvaluationDuration = new(rs.EvaluationDuration.Seconds())
 	if rs.LastError != nil {
-		out.LastError = new(rs.LastError.Error())
+		base.LastError = new(rs.LastError.Error())
 	}
 
 	if paused {
-		out.Health = new(model.AlertRuleAlertRuleHealthPaused)
-		out.State = new(model.AlertRuleAlertRuleStateInactive)
-		return out
+		base.Health = new(model.AlertRuleAlertRuleHealthPaused)
+		base.State = new(model.AlertRuleAlertRuleStateInactive)
+		return base
 	}
 
-	out.State = new(alertState(apiprometheus.ComputeRuleState(states)))
-	out.Health = new(alertHealth(rs.Health))
-
-	return out
+	base.State = new(alertState(apiprometheus.ComputeRuleState(states)))
+	base.Health = new(alertHealth(rs.Health))
+	return base
 }
 
 // toRecordingRuleStatus builds the k8s RecordingRule status from the scheduler's
 // per-rule status. Recording rules produce no instances, so the scheduler is the only
 // source; found is false when the scheduler isn't tracking the rule (not scheduled).
-func toRecordingRuleStatus(rs ngmodels.RuleStatus, found, paused bool) model.RecordingRuleStatus {
-	out := model.RecordingRuleStatus{
-		Health:             new(recordingHealth(rs.Health, paused, found)),
-		EvaluationDuration: new(rs.EvaluationDuration.Seconds()),
-		LastEvaluationTime: &rs.EvaluationTimestamp,
-	}
-
+func toRecordingRuleStatus(base model.RecordingRuleStatus, rs ngmodels.RuleStatus, found, paused bool) model.RecordingRuleStatus {
+	base.Health = new(recordingHealth(rs.Health, paused, found))
+	base.LastEvaluationTime = &rs.EvaluationTimestamp
+	base.EvaluationDuration = new(rs.EvaluationDuration.Seconds())
+	base.LastError = nil
 	if rs.LastError != nil {
-		out.LastError = new(rs.LastError.Error())
+		base.LastError = new(rs.LastError.Error())
 	}
-
-	return out
+	return base
 }
 
 func alertState(s eval.State) model.AlertRuleAlertRuleState {
