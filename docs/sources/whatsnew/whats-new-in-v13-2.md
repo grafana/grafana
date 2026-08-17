@@ -26,6 +26,7 @@ posts:
       - whats-new/2026-07-29-panel-thresholds-interpolation.md
       - whats-new/2026-07-30-new-panel-query-errors-and-notices-ui.md
       - whats-new/2026-08-11-explore-busy-panels-with-the-new-view-panel-sidebar.md
+      - whats-new/2026-08-14-improved-auto-layout-indication-when-editing-dashboards.md
   - title: Data sources
     items:
       - whats-new/2026-07-28-opensearch-added-index-browser-to-datasource-configuration-and-query.md
