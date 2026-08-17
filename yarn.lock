@@ -2180,7 +2180,7 @@ __metadata:
     "@grafana/plugin-configs": "npm:13.3.0-pre"
     "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/runtime": "npm:13.3.0-pre"
-    "@grafana/scenes": "npm:8.13.5"
+    "@grafana/scenes": "npm:8.13.6"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/ui": "npm:13.3.0-pre"
     "@testing-library/dom": "npm:10.4.1"
@@ -2998,13 +2998,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:8.13.5":
-  version: 8.13.5
-  resolution: "@grafana/scenes-react@npm:8.13.5"
+"@grafana/scenes-react@npm:8.13.6":
+  version: 8.13.6
+  resolution: "@grafana/scenes-react@npm:8.13.6"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
-    "@grafana/scenes": "npm:8.13.5"
+    "@grafana/scenes": "npm:8.13.6"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3018,13 +3018,13 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/9f2817a04c26945202611422cbd4058ab8414969e872a7cebcd862d4ccd7bb04798666cc0fac3a7e6df65227057285ede4e21786715f4149aaf73661a1ac2a37
+  checksum: 10/f961131c5e690c1a94c1d973d41632d041ac0b428c2c5c4f881a7b06ae65f4bd7b54e4b063181bb994be88f5b65073fbaffd1a05fca75a125087894d99f42229
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.13.5":
-  version: 8.13.5
-  resolution: "@grafana/scenes@npm:8.13.5"
+"@grafana/scenes@npm:8.13.6":
+  version: 8.13.6
+  resolution: "@grafana/scenes@npm:8.13.6"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
@@ -3049,7 +3049,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/a38b415c498fe7cd7f2f1aa9c91b55df6d89a1cec168bf577af25c2b55643bba69a658406e6c051fbf2a79368b3eb0d0bf97e035d8cbafbeb856afece3e0d34d
+  checksum: 10/ca3187337f42bbfce7a7d49d4cd236187c18a2a98a36abc1a74b0df655fc3574d70272480b2e7b07b0abbe6248df1c6751ee54b46fc7849d83c74925d1b52b5a
   languageName: node
   linkType: hard
 
@@ -19567,8 +19567,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:8.13.5"
-    "@grafana/scenes-react": "npm:8.13.5"
+    "@grafana/scenes": "npm:8.13.6"
+    "@grafana/scenes-react": "npm:8.13.6"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
