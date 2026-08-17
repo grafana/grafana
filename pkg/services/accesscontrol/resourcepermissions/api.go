@@ -664,7 +664,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Bad request data: "+err.Error(), err)
 	}
 
-	if a.shouldUseK8sAPIs(ctx) {
+	if a.service.options.Resource != "teams" && a.shouldUseK8sAPIs(ctx) {
 		err := a.setResourcePermissionsToK8s(c, c.Namespace, resourceID, cmd.Permissions)
 		if err != nil {
 			span.RecordError(err)
