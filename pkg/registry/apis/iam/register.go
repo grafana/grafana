@@ -1113,6 +1113,8 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 			return b.globalRoleApiInstaller.MutateOnCreate(ctx, typedObj)
 		case *iamv0.RoleBinding:
 			return b.roleBindingsApiInstaller.MutateOnCreate(ctx, typedObj)
+		case *iamv0.TeamLBACRule:
+			return b.teamLBACApiInstaller.MutateOnCreate(ctx, typedObj)
 		}
 	case admission.Update:
 		switch typedObj := a.GetObject().(type) {
@@ -1142,6 +1144,12 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 				return fmt.Errorf("old object is not a RoleBinding")
 			}
 			return b.roleBindingsApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
+		case *iamv0.TeamLBACRule:
+			oldObj, ok := a.GetOldObject().(*iamv0.TeamLBACRule)
+			if !ok {
+				return fmt.Errorf("old object is not a TeamLBACRule")
+			}
+			return b.teamLBACApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
 		}
 	case admission.Delete:
 		switch oldObj := a.GetOldObject().(type) {
