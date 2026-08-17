@@ -142,7 +142,7 @@ export class RowItem
   /** Returns an absolute url that scrolls this row into view when the dashboard is opened */
   public getUrl(): string {
     const urlWithRowParam = locationUtil.getUrlForPartial(locationService.getLocation(), {
-      srow: getRowSlugPath(this),
+      drow: getRowSlugPath(this),
     });
 
     return new URL(urlWithRowParam, window.location.origin).toString();

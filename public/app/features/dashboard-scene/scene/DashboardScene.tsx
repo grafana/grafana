@@ -1423,10 +1423,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  public scrollToRow(srow: string) {
-    locationService.partial({ srow: null }, true);
+  public scrollToRow(drow: string) {
+    locationService.partial({ drow: null }, true);
 
-    if (scrollToRow(srow, this.state.body)) {
+    if (scrollToRow(drow, this.state.body)) {
       this._pendingRowScroll = undefined;
       return;
     }
@@ -1435,7 +1435,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // repeat-local slugs only interpolate correctly) once the repeat variable resolves and
     // the repeater runs, which happens after url sync. The repeaters publish
     // NewSceneObjectAddedEvent when done, so keep the slug pending and retry on that event.
-    this._pendingRowScroll = srow;
+    this._pendingRowScroll = drow;
     this._pendingRowScrollSub ??= this.subscribeToEvent(NewSceneObjectAddedEvent, () => {
       if (this._pendingRowScroll && scrollToRow(this._pendingRowScroll, this.state.body)) {
         this._pendingRowScroll = undefined;

@@ -27,7 +27,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView', 'srow'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView', 'drow'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -160,8 +160,8 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       this._scene.setState(update);
     }
 
-    if (typeof values.srow === 'string') {
-      this._scene.scrollToRow(values.srow);
+    if (typeof values.drow === 'string') {
+      this._scene.scrollToRow(values.drow);
     }
   }
 

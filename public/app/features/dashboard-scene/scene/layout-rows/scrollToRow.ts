@@ -40,10 +40,10 @@ export function getRowSlugPath(row: RowItemLike): string {
 }
 
 /** Returns whether a row matching the slug path was found */
-export function scrollToRow(srow: string, layout: DashboardLayoutManager): boolean {
+export function scrollToRow(drow: string, layout: DashboardLayoutManager): boolean {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const row = (sceneGraph.findAllObjects(layout, isRowItem) as RowItemLike[]).find(
-    (row) => getRowSlugPath(row) === srow
+    (row) => getRowSlugPath(row) === drow
   );
 
   if (!row) {

@@ -62,7 +62,7 @@ describe('RowItemRenderer', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Copy link to row' }));
 
-    expect(await navigator.clipboard.readText()).toContain('srow=My-row');
+    expect(await navigator.clipboard.readText()).toContain('drow=My-row');
   });
 
   it('hides the copy link button while editing', () => {
@@ -89,7 +89,7 @@ describe('RowItemRenderer', () => {
     await userEvent.click(copyButtons[1]);
 
     const copiedUrl = new URL(await navigator.clipboard.readText());
-    expect(copiedUrl.searchParams.get('srow')).toBe('Row-2/Row-1');
+    expect(copiedUrl.searchParams.get('drow')).toBe('Row-2/Row-1');
   });
 
   it('encodes slashes in row titles so they do not look like nested paths', async () => {
@@ -100,6 +100,6 @@ describe('RowItemRenderer', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Copy link to row' }));
 
     const copiedUrl = new URL(await navigator.clipboard.readText());
-    expect(copiedUrl.searchParams.get('srow')).toBe('Foo%2FBar');
+    expect(copiedUrl.searchParams.get('drow')).toBe('Foo%2FBar');
   });
 });

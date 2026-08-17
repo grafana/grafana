@@ -50,7 +50,7 @@ describe('DashboardSceneUrlSync', () => {
     it('scrolls the matching row into view', () => {
       const { scene, element } = buildTestSceneWithRow('Traces Instance Stats');
 
-      scene.urlSync?.updateFromUrl({ srow: 'Traces-Instance-Stats' });
+      scene.urlSync?.updateFromUrl({ drow: 'Traces-Instance-Stats' });
 
       expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
       expect(scrollIntoViewSpy.mock.instances[0]).toBe(element);
@@ -59,7 +59,7 @@ describe('DashboardSceneUrlSync', () => {
     it('expands a collapsed row', () => {
       const { scene, row } = buildTestSceneWithRow('Traces Instance Stats', { collapse: true });
 
-      scene.urlSync?.updateFromUrl({ srow: 'Traces-Instance-Stats' });
+      scene.urlSync?.updateFromUrl({ drow: 'Traces-Instance-Stats' });
 
       expect(row.state.collapse).toBe(false);
     });
@@ -67,10 +67,10 @@ describe('DashboardSceneUrlSync', () => {
     it('clears parameter from the url after scrolling so it acts as a one-shot action', () => {
       const { scene } = buildTestSceneWithRow('Traces Instance Stats');
 
-      scene.urlSync?.updateFromUrl({ srow: 'Traces-Instance-Stats' });
+      scene.urlSync?.updateFromUrl({ drow: 'Traces-Instance-Stats' });
 
-      // replace: true so clearing srow does not push a history entry that Back would restore
-      expect(locationPartialSpy).toHaveBeenCalledWith({ srow: null }, true);
+      // replace: true so clearing drow does not push a history entry that Back would restore
+      expect(locationPartialSpy).toHaveBeenCalledWith({ drow: null }, true);
     });
 
     it('expands all collapsed ancestor rows of a nested row', () => {
@@ -91,7 +91,7 @@ describe('DashboardSceneUrlSync', () => {
         body: new RowsLayoutManager({ rows: [outerRow] }),
       });
 
-      scene.urlSync?.updateFromUrl({ srow: 'Outer/Middle/Nested' });
+      scene.urlSync?.updateFromUrl({ drow: 'Outer/Middle/Nested' });
 
       expect(outerRow.state.collapse).toBe(false);
       expect(middleRow.state.collapse).toBe(false);
@@ -112,7 +112,7 @@ describe('DashboardSceneUrlSync', () => {
       });
       tabsLayout.setState({ currentTabSlug: activeTab.getSlug() });
 
-      scene.urlSync?.updateFromUrl({ srow: 'Target-tab/Target-row' });
+      scene.urlSync?.updateFromUrl({ drow: 'Target-tab/Target-row' });
 
       expect(tabsLayout.getCurrentTab()).toBe(targetTab);
     });
@@ -135,11 +135,11 @@ describe('DashboardSceneUrlSync', () => {
       document.body.appendChild(nestedElement);
       nestedRow.containerRef.current = nestedElement;
 
-      scene.urlSync?.updateFromUrl({ srow: 'Row-2/Row-1' });
+      scene.urlSync?.updateFromUrl({ drow: 'Row-2/Row-1' });
       expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
       expect(scrollIntoViewSpy.mock.instances[0]).toBe(nestedElement);
 
-      scene.urlSync?.updateFromUrl({ srow: 'Row-1' });
+      scene.urlSync?.updateFromUrl({ drow: 'Row-1' });
       expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
       expect(scrollIntoViewSpy.mock.instances[1]).toBe(topLevelElement);
     });
@@ -163,11 +163,11 @@ describe('DashboardSceneUrlSync', () => {
       nestedRow.containerRef.current = nestedElement;
 
       // Encoded slash in the title segment must not match nested Foo/Bar path
-      scene.urlSync?.updateFromUrl({ srow: 'Foo%2FBar' });
+      scene.urlSync?.updateFromUrl({ drow: 'Foo%2FBar' });
       expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
       expect(scrollIntoViewSpy.mock.instances[0]).toBe(slashTitleElement);
 
-      scene.urlSync?.updateFromUrl({ srow: 'Foo/Bar' });
+      scene.urlSync?.updateFromUrl({ drow: 'Foo/Bar' });
       expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
       expect(scrollIntoViewSpy.mock.instances[1]).toBe(nestedElement);
     });
@@ -175,10 +175,10 @@ describe('DashboardSceneUrlSync', () => {
     it('clears parameter but does not scroll when no row matches the slug', () => {
       const { scene } = buildTestSceneWithRow('Traces Instance Stats');
 
-      scene.urlSync?.updateFromUrl({ srow: 'Does-Not-Exist' });
+      scene.urlSync?.updateFromUrl({ drow: 'Does-Not-Exist' });
 
       expect(scrollIntoViewSpy).not.toHaveBeenCalled();
-      expect(locationPartialSpy).toHaveBeenCalledWith({ srow: null }, true);
+      expect(locationPartialSpy).toHaveBeenCalledWith({ drow: null }, true);
     });
 
     it('matches a repeated row clone by its own slug, without the source row as a path segment', () => {
@@ -197,7 +197,7 @@ describe('DashboardSceneUrlSync', () => {
       document.body.appendChild(cloneElement);
       cloneRow.containerRef.current = cloneElement;
 
-      scene.urlSync?.updateFromUrl({ srow: 'Web-B' });
+      scene.urlSync?.updateFromUrl({ drow: 'Web-B' });
 
       expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
       expect(scrollIntoViewSpy.mock.instances[0]).toBe(cloneElement);
@@ -212,7 +212,7 @@ describe('DashboardSceneUrlSync', () => {
       });
 
       // On load the repeat variable has not resolved yet, so the clone does not exist
-      scene.urlSync?.updateFromUrl({ srow: 'Web-B' });
+      scene.urlSync?.updateFromUrl({ drow: 'Web-B' });
       expect(scrollIntoViewSpy).not.toHaveBeenCalled();
 
       // Simulate the repeater performing repeats: it creates the clones and publishes
@@ -232,7 +232,7 @@ describe('DashboardSceneUrlSync', () => {
       expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('replaces a pending scroll target when a new srow arrives before the old one matched', () => {
+    it('replaces a pending scroll target when a new drow arrives before the old one matched', () => {
       const sourceRow = new RowItem({ title: 'Web A' });
       const scene = new DashboardScene({
         title: 'hello',
@@ -240,8 +240,8 @@ describe('DashboardSceneUrlSync', () => {
         body: new RowsLayoutManager({ rows: [sourceRow] }),
       });
 
-      scene.urlSync?.updateFromUrl({ srow: 'Web-B' });
-      scene.urlSync?.updateFromUrl({ srow: 'Web-C' });
+      scene.urlSync?.updateFromUrl({ drow: 'Web-B' });
+      scene.urlSync?.updateFromUrl({ drow: 'Web-C' });
 
       const cloneB = new RowItem({ title: 'Web B', repeatSourceKey: sourceRow.state.key });
       const cloneC = new RowItem({ title: 'Web C', repeatSourceKey: sourceRow.state.key });
