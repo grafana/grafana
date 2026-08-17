@@ -3259,6 +3259,7 @@ __metadata:
     react-select: "npm:^5.10.2"
     react-select-event: "npm:^5.1.0"
     react-table: "npm:^7.8.0"
+    react-to-text: "npm:^2.0.1"
     react-transition-group: "npm:^4.4.5"
     react-use: "npm:^17.6.1"
     react-window: "npm:^1.8.11"
@@ -29748,6 +29749,16 @@ __metadata:
   peerDependencies:
     react: ^16.8.3 || ^17.0.0-0 || ^18.0.0
   checksum: 10/0c87db8f8823f8eca7a5521d406fa0c75d79972d47768f0c8347af3fa51f9856eea449186a0e2db2effc54d1d74a4e3477855cdbe9adf836d7dfac3a6ec5cdbf
+  languageName: node
+  linkType: hard
+
+"react-to-text@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "react-to-text@npm:2.0.1"
+  peerDependencies:
+    react: ^18.2.0
+    react-dom: ^18.2.0
+  checksum: 10/8ca6d0c826f1159591df7a15dc56ec9edbda0c8ff629dd22c251b9f9d94bd75ed1c344ad6556391c3583c0d793fdabf6a06a647140e5b9087ff5d768253d03a6
   languageName: node
   linkType: hard
 

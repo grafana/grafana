@@ -1,6 +1,6 @@
 import { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
-import ReactDOMServer from 'react-dom/server';
+import reactToText from 'react-to-text';
 
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -43,17 +43,9 @@ export const TruncatedText = React.forwardRef<HTMLElement, TruncatedTextProps>((
     };
   }, [setIsOverflowing, resizeObserver]);
 
-  const getTooltipText = (children: NonNullable<React.ReactNode>) => {
-    if (typeof children === 'string') {
-      return children;
-    }
-    const html = ReactDOMServer.renderToStaticMarkup(<>{children}</>);
-    return html.replace(/(<([^>]+)>)/gi, '');
-  };
-
   if (isOverflowing) {
     return (
-      <Tooltip ref={internalRef} content={getTooltipText(children)}>
+      <Tooltip ref={internalRef} content={reactToText(children)}>
         {childElement(undefined)}
       </Tooltip>
     );
