@@ -446,12 +446,10 @@ const LogListComponent = ({
   );
 
   const handleScrollPosition = useCallback(
-    (targetLog?: LogListModel) => {
-      const scrollToUID = targetLog ? targetLog.uniqueKey : permalinkedLogId;
+    (log?: LogListModel) => {
+      const scrollToUID = log ? log.uid : permalinkedLogId;
       if (scrollToUID) {
-        const index = processedLogs.findIndex((log) =>
-          targetLog ? log.uniqueKey === scrollToUID : log.uid === scrollToUID
-        );
+        const index = processedLogs.findIndex((log) => log.uid === scrollToUID);
         if (index >= 0) {
           listRef.current?.scrollToItem(index, 'start');
           return;
