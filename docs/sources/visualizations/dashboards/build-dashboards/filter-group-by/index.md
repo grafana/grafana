@@ -116,7 +116,7 @@ You can use a key for both a filter and a group by.
 ## Cross-filtering {#dashboard-drilldown-with-filters}
 
 In some visualizations, you can apply filters directly from the visualization.
-Click on a series in a panel and click **Filter on this value** or **Filter out this value**.
+Click on a series in the panel and then click **Filter on this value** or **Filter out this value**.
 This filters by the labels found on that series:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filters-v13.0.png" max-width="675px" alt="Panel with tooltip open showing options to filter on a value or filter it out" >}}
@@ -144,9 +144,9 @@ Cross-filtering is supported for the following visualizations:
 
 ### Apply cross-filtering
 
-To quickly apply filters, follow these steps:
+To apply cross-filtering, follow these steps:
 
-1. To display the filter icons, hover your cursor over the table cell with the value for which you want to filter. In this example, the cell value is `ConfigMap Updated`, which is in the `alertname` column:
+1. To display the filter icons, hover your cursor over the data point with the value for which you want to filter. In this example, the table cell value is `ConfigMap Updated`, which is in the `alertname` column:
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-v12.2.png" max-width="550px" alt="Table and bar chart with a filter icon displayed on a table cell" >}}
 
@@ -156,7 +156,7 @@ To quickly apply filters, follow these steps:
 
 1. Click the add filter icon.
 
-   The filter pair `alertname = ConfigMap Updated` is added and all panels using the same data source that include the value are filtered by that value:
+   The filter pair `alertname = ConfigMap Updated` is added, and all panels using the same data source that include that value are filtered by it:
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-applied-v12.2.png" max-width="550px" alt="Table and bar chart, filtered" >}}
 
