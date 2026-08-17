@@ -53,6 +53,8 @@ type Manager struct {
 	rulesPerRuleGroupLimit         int64
 
 	persister StatePersister
+
+	logzioObserver *logzioStateObserver // LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Logzio state observer
 }
 
 type ManagerCfg struct {
@@ -97,6 +99,7 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		rulesPerRuleGroupLimit:         cfg.RulesPerRuleGroupLimit,
 		persister:                      statePersister,
 		tracer:                         cfg.Tracer,
+		logzioObserver:                 newLogzioStateObserver(cfg.Log, cfg.Clock, c), // LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Logzio state observer
 	}
 
 	if m.applyNoDataAndErrorToAllStates {
@@ -211,6 +214,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 			statesCount++
 		}
 	}
+	st.logzioObserver.onWarmSnapshotLoaded(states) // LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Logzio state observer
 	st.cache.setAllStates(states)
 	st.log.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
 }
@@ -289,6 +293,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
+	st.logzioObserver.onRuleEvaluated(alertRule.GetKey(), evaluatedAt) // LOGZ.IO GRAFANA CHANGE :: APPZ-3028 Logzio state observer
 	utcTick := evaluatedAt.UTC().Format(time.RFC3339Nano)
 	tracingCtx, span := st.tracer.Start(ctx, "alert rule state calculation", trace.WithAttributes(
 		attribute.String("rule_uid", alertRule.UID),
