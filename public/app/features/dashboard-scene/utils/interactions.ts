@@ -112,7 +112,7 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_link_button_clicked', properties);
   },
 
-  addFilterButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addFilterButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_filter_button_clicked', properties);
   },
 
