@@ -6,14 +6,29 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+// logCtxValue looks up a key in the alternating key/value slice a log.Logger call receives.
+func logCtxValue(t *testing.T, ctx []any, key string) any {
+	t.Helper()
+	for i := 0; i+1 < len(ctx); i += 2 {
+		if ctx[i] == key {
+			return ctx[i+1]
+		}
+	}
+	t.Fatalf("key %q not found in log context %v", key, ctx)
+	return nil
+}
 
 // enableRepairFlag turns the repair toggle on, which is what makes the cleanup gate apply.
 func enableRepairFlag(t *testing.T) {
@@ -91,5 +106,69 @@ func TestIntegration_FolderConsumer_FoldersInUse(t *testing.T) {
 		uids, err := c.FoldersInUse(context.Background(), repairOrgID)
 		require.NoError(t, err)
 		require.Empty(t, uids)
+	})
+}
+
+// deleteConsumerSetup wires a FolderConsumer with the repair already marked complete and an
+// observable logger, ready to exercise DeleteInFolder.
+func deleteConsumerSetup(t *testing.T) (*FolderConsumer, db.DB, *logtest.Fake) {
+	t.Helper()
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	repair := &FolderUIDRepairService{store: store, kv: kvstore.NewFakeKVStore(), log: log.New("test")}
+	markRepairComplete(t, repair)
+
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	dashSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).
+		Return([]*dashboards.DashboardRef{}, nil).Maybe()
+
+	svc := &LibraryElementService{SQLStore: store, log: log.New("test"), dashboardsService: dashSvc}
+	c := ProvideFolderConsumer(svc, repair)
+	fakeLog := &logtest.Fake{}
+	c.log = fakeLog
+	return c, store, fakeLog
+}
+
+func insertLibraryElement(t *testing.T, store db.DB, uid, name, folderUID string) {
+	t.Helper()
+	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.Exec(`INSERT INTO library_element
+			(org_id, folder_id, folder_uid, uid, name, kind, type, description, model, version, created, created_by, updated, updated_by)
+			VALUES (?, 0, ?, ?, ?, 1, 'timeseries', '', '{}', 1, '2024-01-01', 1, '2024-01-01', 1)`,
+			repairOrgID, folderUID, uid, name)
+		return err
+	})
+	require.NoError(t, err)
+}
+
+func TestIntegration_FolderConsumer_DeleteInFolder(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("logs uid and name of deleted elements", func(t *testing.T) {
+		c, store, fakeLog := deleteConsumerSetup(t)
+		insertLibraryElement(t, store, "panel-1", "CPU usage", "f1")
+		insertLibraryElement(t, store, "panel-2", "Memory usage", "f1")
+
+		require.NoError(t, c.DeleteInFolder(context.Background(), repairOrgID, "f1"))
+
+		require.Equal(t, 1, fakeLog.InfoLogs.Calls)
+		require.Equal(t, "Deleted library elements in deleted folder", fakeLog.InfoLogs.Message)
+		require.ElementsMatch(t, []string{"panel-1 (CPU usage)", "panel-2 (Memory usage)"},
+			logCtxValue(t, fakeLog.InfoLogs.Ctx, "elements"))
+		require.Equal(t, 2, logCtxValue(t, fakeLog.InfoLogs.Ctx, "count"))
+		require.Equal(t, "f1", logCtxValue(t, fakeLog.InfoLogs.Ctx, "folder_uid"))
+
+		var remaining []string
+		err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+			return sess.SQL("SELECT uid FROM library_element WHERE folder_uid=?", "f1").Find(&remaining)
+		})
+		require.NoError(t, err)
+		require.Empty(t, remaining)
+	})
+
+	t.Run("does not log when there is nothing to delete", func(t *testing.T) {
+		c, _, fakeLog := deleteConsumerSetup(t)
+
+		require.NoError(t, c.DeleteInFolder(context.Background(), repairOrgID, "empty-folder"))
+		require.Equal(t, 0, fakeLog.InfoLogs.Calls)
 	})
 }
