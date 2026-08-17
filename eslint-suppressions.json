@@ -308,9 +308,6 @@
     }
   },
   "packages/grafana-o11y-ds-frontend/src/TraceToProfiles/TraceToProfilesSettings.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "react-hooks/exhaustive-deps": {
       "count": 1
     }
@@ -1017,11 +1014,6 @@
     }
   },
   "public/app/features/alerting/unified/components/alert-groups/MatcherFilter.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/contact-points/components/ContactPointsFilter.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
     }
@@ -2824,9 +2816,6 @@
     }
   },
   "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/ConfigEditor.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@grafana/require-no-margin": {
       "count": 3
     }
@@ -2837,9 +2826,6 @@
     }
   },
   "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/XrayLinkConfig.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@grafana/no-gf-form": {
       "count": 1
     },
@@ -2863,9 +2849,6 @@
     }
   },
   "public/app/plugins/datasource/cloudwatch/utils/datalinks.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     }

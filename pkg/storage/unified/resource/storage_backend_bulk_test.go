@@ -410,7 +410,7 @@ type legacyHistoryRow struct {
 func setupCompatSqlKVStorageBackend(t *testing.T) (*kvStorageBackend, sqldb.DB) {
 	t.Helper()
 
-	dbstore := infdb.InitTestDB(t)
+	dbstore := infdb.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(context.Background())

@@ -52,6 +52,7 @@ import (
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -1180,8 +1181,13 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 		return nil, err
 	}
 
+	var vp *versionpolicy.VersionPolicyRegistry
+	if g, ok := defaultOptsGetter.(*apistore.RESTOptionsGetter); ok {
+		vp = g.VersionPolicy()
+	}
+
 	client := resource.NewLocalResourceClient(server)
-	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil, nil)
+	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil, vp)
 
 	store, err := grafanaregistry.NewRegistryStoreWithSelectableFields(scheme, resourceInfo, optsGetter, selectableFieldsOpts)
 	return store, err

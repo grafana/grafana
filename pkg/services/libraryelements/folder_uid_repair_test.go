@@ -51,7 +51,7 @@ func (repairFakeOrgs) Search(_ context.Context, _ *org.SearchOrgsQuery) ([]*org.
 
 func repairSetup(t *testing.T, byID map[int64]string) (*FolderUIDRepairService, db.DB) {
 	t.Helper()
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	s := &FolderUIDRepairService{
 		store:   store,
 		folders: &repairFoldersByID{FakeService: foldertest.NewFakeService(), byID: byID},
