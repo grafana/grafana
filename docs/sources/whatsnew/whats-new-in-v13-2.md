@@ -31,6 +31,7 @@ posts:
     items:
       - whats-new/2026-07-28-opensearch-added-index-browser-to-datasource-configuration-and-query.md
       - whats-new/2026-08-03-oracle-easy-connect-plus-support.md
+      - whats-new/2026-08-13-azure-monitor-batch-api.md
   - title: Git Sync
     items:
       - whats-new/2026-08-13-git-sync-support-for-github-enterprise.md
