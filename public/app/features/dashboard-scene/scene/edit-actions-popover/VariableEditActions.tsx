@@ -5,13 +5,8 @@ import { t } from '@grafana/i18n';
 import { CustomVariable, QueryVariable, type SceneVariable } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import {
-  DeleteActionButton,
-  DuplicateActionButton,
-  getStyles,
-  SettingsActionButton,
-  useEditActionsPopover,
-} from './EditActionsPopover';
+import { DeleteActionButton, DuplicateActionButton, getActionStyles, SettingsActionButton } from './EditActions';
+import { useEditActionsPopover } from './EditActionsPopover';
 
 export function VariableEditActions({
   variable,
@@ -26,7 +21,7 @@ export function VariableEditActions({
   onClickDuplicate: () => void;
   onClickDelete: () => void;
 }) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getActionStyles);
   const { closePopover } = useEditActionsPopover();
   const hasQueryEditor = variable instanceof QueryVariable || variable instanceof CustomVariable;
 

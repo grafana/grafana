@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import {
   autoUpdate,
   flip,
@@ -9,13 +9,10 @@ import {
   useHover,
   useInteractions,
 } from '@floating-ui/react';
-import React, { cloneElement, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { cloneElement, createContext, useContext, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Button, IconButton, Portal, Tooltip, useStyles2 } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
-import { ShowConfirmModalEvent } from 'app/types/events';
+import { Portal, useStyles2 } from '@grafana/ui';
 
 const EditActionsPopoverContext = createContext<{ closePopover: () => void }>({ closePopover: () => {} });
 
@@ -24,6 +21,8 @@ const EditActionsPopoverContext = createContext<{ closePopover: () => void }>({ 
  * a modal on top of it. Resolves to a no-op when rendered outside a popover.
  */
 export const useEditActionsPopover = () => useContext(EditActionsPopoverContext);
+
+export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
 
 export function EditActionsPopover({
   isEditable,
@@ -36,7 +35,7 @@ export function EditActionsPopover({
   children: React.JSX.Element;
   placement?: Placement;
 }) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getPopoverStyles);
   const [isOpen, setIsOpen] = useState(false);
 
   const { refs, floatingStyles, context } = useFloating({
@@ -53,7 +52,11 @@ export function EditActionsPopover({
     whileElementsMounted: autoUpdate,
   });
 
-  const hover = useHover(context, { handleClose: safePolygon() });
+  const hover = useHover(context, {
+    handleClose: safePolygon(),
+    // waits until the user’s cursor is at rest over the reference element before opening
+    restMs: WAIT_FOR_MOUSE_REST_DURATION_MS,
+  });
   const { getReferenceProps, getFloatingProps } = useInteractions([hover]);
 
   const popoverContextValue = useMemo(() => ({ closePopover: () => setIsOpen(false) }), []);
@@ -71,7 +74,7 @@ export function EditActionsPopover({
             <EditActionsPopoverContext.Provider value={popoverContextValue}>
               {/* Stops pointerdown from all actions reaching ancestors, e.g. element selection.
               It cannot live on the icon buttons because their wrapping Tooltip overrides their pointerdown handlers */}
-              <div className={styles.hoverActions} onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}>
+              <div className={styles.actions} onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}>
                 {content}
               </div>
             </EditActionsPopoverContext.Provider>
@@ -82,116 +85,23 @@ export function EditActionsPopover({
   );
 }
 
-export function SettingsActionButton({ onClick }: { onClick: () => void }) {
-  const styles = useStyles2(getStyles);
-  return (
-    <Button
-      fill="text"
-      variant="secondary"
-      size="sm"
-      className={cx(styles.action, styles.textAction)}
-      onClick={onClick}
-    >
-      {t('dashboard-scene.control-edit-actions.settings', 'Settings')}
-    </Button>
-  );
-}
-
-const SHOW_COPIED_DURATION_MS = 2000;
-
-export function CopyActionButton({ onClick }: { onClick: () => void }) {
-  const styles = useStyles2(getStyles);
-  const [copied, setCopied] = useState(false);
-  const copyLabel = t('dashboard-scene.control-edit-actions.copy-clipboard-tooltip', 'Copy to clipboard');
-
-  useEffect(() => {
-    if (!copied) {
-      return;
-    }
-    const timeoutId = window.setTimeout(() => setCopied(false), SHOW_COPIED_DURATION_MS);
-    return () => window.clearTimeout(timeoutId);
-  }, [copied]);
-
-  return (
-    <Tooltip
-      content={copied ? t('clipboard-button.inline-toast.success', 'Copied') : copyLabel}
-      show={copied ? true : undefined}
-      placement="top"
-    >
-      <IconButton
-        name="clipboard-alt"
-        variant="secondary"
-        size="md"
-        className={styles.action}
-        aria-label={copyLabel}
-        onClick={() => {
-          onClick();
-          setCopied(true);
-        }}
-      />
-    </Tooltip>
-  );
-}
-
-export function DuplicateActionButton({ onClick }: { onClick: () => void }) {
-  const styles = useStyles2(getStyles);
-  return (
-    <IconButton
-      name="copy"
-      variant="secondary"
-      size="md"
-      className={styles.action}
-      onClick={onClick}
-      tooltip={t('dashboard-scene.control-edit-actions.duplicate-tooltip', 'Duplicate')}
-      tooltipPlacement="top"
-    />
-  );
-}
-
-export function DeleteActionButton({
-  title,
-  text,
-  yesText,
-  onConfirm,
-}: {
-  title: string;
-  text: string;
-  yesText: string;
-  onConfirm: () => void;
-}) {
-  const styles = useStyles2(getStyles);
-  const { closePopover } = useEditActionsPopover();
-
-  const onClickInternal = useCallback(() => {
-    closePopover();
-    appEvents.publish(
-      new ShowConfirmModalEvent({
-        title,
-        text,
-        yesText,
-        onConfirm,
-      })
-    );
-  }, [closePopover, title, text, yesText, onConfirm]);
-
-  return (
-    <IconButton
-      name="trash-alt"
-      variant="destructive"
-      size="md"
-      className={cx(styles.action, styles.deleteAction)}
-      onClick={onClickInternal}
-      tooltip={t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete')}
-      tooltipPlacement="top"
-    />
-  );
-}
-
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getPopoverStyles = (theme: GrafanaTheme2) => ({
   popover: css({
     zIndex: theme.zIndex.portal,
+    [theme.transitions.handleMotion('no-preference')]: {
+      animationName: keyframes({
+        from: { opacity: 0 },
+        to: { opacity: 1 },
+      }),
+      animationDuration: `${theme.transitions.duration.enteringScreen}ms`,
+      animationTimingFunction: theme.transitions.easing.easeOut,
+      animationFillMode: 'forwards',
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      opacity: 1, // skip animation for reduced motion
+    },
   }),
-  hoverActions: css({
+  actions: css({
     display: 'flex',
     justifyContent: 'space-evenly',
     alignItems: 'center',
@@ -203,36 +113,5 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     boxShadow: theme.shadows.z1,
     position: 'relative',
     top: '2px',
-  }),
-  actionsDivider: css({
-    width: 1,
-    alignSelf: 'stretch',
-    backgroundColor: theme.colors.border.medium,
-  }),
-  action: css({
-    margin: 0,
-    color: theme.colors.text.primary,
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      transition: theme.transitions.create(['color'], {
-        duration: theme.transitions.duration.short,
-      }),
-    },
-    '&:hover, &:focus': {
-      color: theme.colors.text.maxContrast,
-      background: 'transparent',
-    },
-    '&:hover:before': {
-      opacity: 0,
-    },
-  }),
-  textAction: css({
-    padding: 0,
-    height: 'auto',
-    fontWeight: theme.typography.fontWeightRegular,
-  }),
-  deleteAction: css({
-    '&:hover': {
-      color: theme.colors.error.text,
-    },
   }),
 });

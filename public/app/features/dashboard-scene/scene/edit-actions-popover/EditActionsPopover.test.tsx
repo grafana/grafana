@@ -1,4 +1,4 @@
-import { act, createEvent, fireEvent, render, screen } from 'test/test-utils';
+import { act, createEvent, fireEvent, render, screen, userEvent } from 'test/test-utils';
 
 import {
   ConstantVariable,
@@ -17,7 +17,8 @@ import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer'
 import { type DashboardScene } from '../DashboardScene';
 
 import { AnnotationEditActions } from './AnnotationEditActions';
-import { EditActionsPopover } from './EditActionsPopover';
+import { SHOW_COPIED_DURATION_MS } from './EditActions';
+import { EditActionsPopover, WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
 import { LinkEditActions } from './LinkEditActions';
 import { PanelEditActions, PanelEditWrapper } from './PanelEditActions';
 import { VariableEditActions } from './VariableEditActions';
@@ -30,14 +31,33 @@ jest.mock('app/core/app_events', () => ({
 }));
 const mockPublishAppEvent = jest.mocked(appEvents.publish);
 
+async function hoverAndRest(element: HTMLElement) {
+  jest.useFakeTimers();
+  try {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    await user.hover(element);
+    act(() => {
+      jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS);
+    });
+  } finally {
+    jest.useRealTimers();
+  }
+}
+
 describe('<EditActionsPopover />', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   describe('when isEditable is false', () => {
-    test('renders children and does not show floating content on hover', () => {
+    test('renders children and does not show floating content on hover', async () => {
       render(
         <EditActionsPopover isEditable={false} content={<span>popover-actions</span>}>
           <div data-testid="reference-child">variable control</div>
         </EditActionsPopover>
       );
+
+      await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(screen.getByTestId('reference-child')).toHaveTextContent('variable control');
       expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
@@ -45,23 +65,62 @@ describe('<EditActionsPopover />', () => {
   });
 
   describe('when isEditable is true', () => {
-    test('if the user hovers the reference, then floating content is shown in the document', async () => {
-      const { user } = render(
-        <EditActionsPopover isEditable={true} content={<span>popover-actions</span>}>
-          <div data-testid="reference-child">variable control</div>
-        </EditActionsPopover>
-      );
+    describe('when the user hovers the reference', () => {
+      test('if the pointer is not at rest, then floating content is not shown', async () => {
+        jest.useFakeTimers();
+        const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+        render(
+          <EditActionsPopover isEditable={true} content={<span>popover-actions</span>}>
+            <div data-testid="reference-child">variable control</div>
+          </EditActionsPopover>
+        );
 
-      expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
+        await user.hover(screen.getByTestId('reference-child'));
 
-      const referenceChild = screen.getByTestId('reference-child');
-      await user.hover(referenceChild);
+        expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
+      });
 
-      expect(screen.getByText('popover-actions')).toBeInTheDocument();
+      test('if the pointer rests, then floating content is shown in the document', async () => {
+        render(
+          <EditActionsPopover isEditable={true} content={<span>popover-actions</span>}>
+            <div data-testid="reference-child">variable control</div>
+          </EditActionsPopover>
+        );
+
+        expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
+
+        await hoverAndRest(screen.getByTestId('reference-child'));
+
+        expect(screen.getByText('popover-actions')).toBeInTheDocument();
+      });
+
+      test('if the user then unhovers, then floating content is hidden', async () => {
+        jest.useFakeTimers();
+        const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+        render(
+          <EditActionsPopover isEditable={true} content={<span>popover-actions</span>}>
+            <div data-testid="reference-child">variable control</div>
+          </EditActionsPopover>
+        );
+
+        const referenceChild = screen.getByTestId('reference-child');
+        await user.hover(referenceChild);
+        act(() => {
+          jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS);
+        });
+
+        expect(screen.getByText('popover-actions')).toBeInTheDocument();
+
+        await act(async () => {
+          await user.unhover(referenceChild);
+        });
+
+        expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
+      });
     });
 
     test('if content is null, then no floating panel is mounted when open', async () => {
-      const { user } = render(
+      render(
         <EditActionsPopover isEditable={true} content={null}>
           <div data-testid="reference-child">variable control</div>
         </EditActionsPopover>
@@ -69,20 +128,19 @@ describe('<EditActionsPopover />', () => {
 
       expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
 
-      const referenceChild = screen.getByTestId('reference-child');
-      await user.hover(referenceChild);
+      await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
     });
 
     test('pointerdown stops event propagation', async () => {
-      const { user } = render(
+      render(
         <EditActionsPopover isEditable={true} content={<button>action</button>}>
           <div data-testid="reference-child">control</div>
         </EditActionsPopover>
       );
 
-      await user.hover(screen.getByTestId('reference-child'));
+      await hoverAndRest(screen.getByTestId('reference-child'));
 
       const actionButton = screen.getByRole('button', { name: 'action' });
       const pointerDownEvent = createEvent.pointerDown(actionButton);
@@ -96,14 +154,12 @@ describe('<EditActionsPopover />', () => {
 
   describe('when a popover action opens a modal', () => {
     async function renderAndOpenPopover(content: React.ReactNode) {
-      const { user } = render(
+      render(
         <EditActionsPopover isEditable={true} content={content}>
           <div data-testid="reference-child">control</div>
         </EditActionsPopover>
       );
-
-      await user.hover(screen.getByTestId('reference-child'));
-      return { user };
+      await hoverAndRest(screen.getByTestId('reference-child'));
     }
 
     test('clicking Edit query closes the popover', async () => {
@@ -522,6 +578,7 @@ describe('<AnnotationEditActions />', () => {
 describe('<PanelEditActions />', () => {
   afterEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
   });
 
   function renderPanelEditActions() {
@@ -625,11 +682,10 @@ describe('<PanelEditActions />', () => {
       expect(screen.getByRole('tooltip')).toHaveTextContent('Copied');
 
       act(() => {
-        jest.advanceTimersByTime(2000);
+        jest.advanceTimersByTime(SHOW_COPIED_DURATION_MS);
       });
 
       expect(screen.queryByText('Copied')).not.toBeInTheDocument();
-      jest.useRealTimers();
     });
 
     test('if the Copied tooltip has disappeared, then hovering shows Copy to clipboard', async () => {
@@ -639,7 +695,7 @@ describe('<PanelEditActions />', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
 
       act(() => {
-        jest.advanceTimersByTime(2000);
+        jest.advanceTimersByTime(SHOW_COPIED_DURATION_MS);
       });
       jest.useRealTimers();
 
@@ -706,7 +762,7 @@ describe('<PanelEditWrapper />', () => {
       },
     } as unknown as DashboardScene);
 
-    const { user } = render(
+    render(
       <ElementSelectionContext.Provider
         value={{ enabled: true, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}
       >
@@ -716,7 +772,7 @@ describe('<PanelEditWrapper />', () => {
       </ElementSelectionContext.Provider>
     );
 
-    await user.hover(screen.getByTestId('reference-child'));
+    await hoverAndRest(screen.getByTestId('reference-child'));
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
     expect(onSelect).toHaveBeenCalledWith({ id: 'panel-1-clone-0' }, { force: true });

@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { DeleteActionButton, DuplicateActionButton, getStyles, SettingsActionButton } from './EditActionsPopover';
+import { DeleteActionButton, DuplicateActionButton, getActionStyles, SettingsActionButton } from './EditActions';
 
 export function LinkEditActions({
   name,
@@ -14,7 +14,7 @@ export function LinkEditActions({
   onClickDuplicate: () => void;
   onClickDelete: () => void;
 }) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getActionStyles);
 
   return (
     <>

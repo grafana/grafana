@@ -14,11 +14,10 @@ import {
   CopyActionButton,
   DeleteActionButton,
   DuplicateActionButton,
-  EditActionsPopover,
-  getStyles,
+  getActionStyles,
   SettingsActionButton,
-  useEditActionsPopover,
-} from './EditActionsPopover';
+} from './EditActions';
+import { EditActionsPopover, useEditActionsPopover } from './EditActionsPopover';
 
 export function PanelEditActions({
   onClickEdit,
@@ -33,7 +32,7 @@ export function PanelEditActions({
   onClickDuplicate: () => void;
   onClickDelete: () => void;
 }) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getActionStyles);
   const { closePopover } = useEditActionsPopover();
 
   const onClickEditVisualizationInternal = useCallback(() => {
