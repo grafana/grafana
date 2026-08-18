@@ -45,6 +45,9 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
+	"github.com/grafana/grafana/pkg/infra/leaderelection/clusterlease"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -974,6 +977,27 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	return b.admissionHandler.Validate(ctx, a, o)
 }
 
+// controllerLeaseName is the ClusterLease the provisioning controllers elect a
+// single leader on when coordination leases are enabled.
+const controllerLeaseName = "provisioning-controller"
+
+// newControllerElector returns the leader elector that gates the repository,
+// connection, and job history/cleanup controllers. When the coordination
+// ClusterLease API is available (its feature toggle is on), it elects a single
+// leader across replicas on a shared ClusterLease; otherwise it falls back to
+// always-leader, preserving the historical behavior of running these controllers
+// on every replica. The job queue driver is deliberately not gated — it distributes
+// work across all replicas via per-job claiming.
+func (b *APIBuilder) newControllerElector(restCfg *clientrest.Config) (leaderelection.Elector, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if b.features == nil || !b.features.IsEnabledGlobally(featuremgmt.FlagCoordinationLeasesApi) {
+		return leaderelection.NewDefaultElector(), nil
+	}
+	return clusterlease.New(restCfg, leaderelection.Config{
+		LeaseName: controllerLeaseName,
+	}, log.New("provisioning-leaderelection"))
+}
+
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
 	// Use version-specific hook name to avoid conflicts when multiple versions are registered
 	hookName := fmt.Sprintf("grafana-provisioning-%s", b.gv.Version)
@@ -1013,6 +1037,17 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if b.onlyApiServer || !b.isPreferredVersion {
 				return nil
 			}
+
+			// The repository, connection, and job history/cleanup controllers run under
+			// a single elected leader (when coordination leases are enabled). Their
+			// start functions — including their informer sources — are collected here and
+			// launched with a leader-scoped context, so non-leaders neither reconcile nor
+			// fill work queues. The job queue driver below is intentionally not gated.
+			elector, err := b.newControllerElector(config)
+			if err != nil {
+				return fmt.Errorf("create provisioning controller elector: %w", err)
+			}
+			var leaderControllers []func(ctx context.Context)
 
 			// Informer resync interval used for health check and reconciliation of
 			// the repository and connection controllers (the jobs informer uses
@@ -1169,11 +1204,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
-			go func() {
-				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("job cleanup controller failed", "error", err)
+			leaderControllers = append(leaderControllers, func(ctx context.Context) {
+				if err := jobCleanupController.Run(ctx); err != nil {
+					logging.FromContext(ctx).Error("job cleanup controller failed", "error", err)
 				}
-			}()
+			})
 
 			webhookSecretRotationInterval := b.webhookSecretRotationInterval
 			if webhookSecretRotationInterval <= 0 {
@@ -1209,17 +1244,16 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return fmt.Errorf("add repository controller event handler: %w", err)
 			}
-			go repoSource.Run(postStartHookCtx.Done())
-
 			// Wait for the cache to sync off the hot path so we don't block
 			// apiserver startup; the controller only starts its workers once
 			// its handler has processed the initial list.
-			go func() {
-				if !cache.WaitForCacheSync(postStartHookCtx.Done(), repoReg.HasSynced) {
+			leaderControllers = append(leaderControllers, func(ctx context.Context) {
+				go repoSource.Run(ctx.Done())
+				if !cache.WaitForCacheSync(ctx.Done(), repoReg.HasSynced) {
 					return
 				}
-				repoController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
-			}()
+				repoController.Run(ctx, repoControllerWorkers, func() {}, func() {})
+			})
 
 			// Create and run connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
@@ -1240,16 +1274,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return fmt.Errorf("add connection controller event handler: %w", err)
 			}
-			go connSource.Run(postStartHookCtx.Done())
-
 			// Same as the repository controller above: wait for cache sync off
 			// the hot path so apiserver startup isn't blocked.
-			go func() {
-				if !cache.WaitForCacheSync(postStartHookCtx.Done(), connReg.HasSynced) {
+			leaderControllers = append(leaderControllers, func(ctx context.Context) {
+				go connSource.Run(ctx.Done())
+				if !cache.WaitForCacheSync(ctx.Done(), connReg.HasSynced) {
 					return
 				}
-				connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
-			}()
+				connController.Run(ctx, repoControllerWorkers, func() {}, func() {})
+			})
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {
@@ -1270,8 +1303,27 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
 					return fmt.Errorf("add history job controller event handler: %w", err)
 				}
-				go historySource.Run(postStartHookCtx.Done())
+				leaderControllers = append(leaderControllers, func(ctx context.Context) {
+					historySource.Run(ctx.Done())
+				})
 			}
+
+			// Run the gated controllers under a single elected leader. elector.Run
+			// blocks until the hook context is cancelled, re-contending after any
+			// leadership loss, so it runs in its own goroutine and the hook returns.
+			// On acquiring leadership each controller starts with a leader-scoped
+			// context that is cancelled when leadership is lost.
+			go func() {
+				runErr := elector.Run(postStartHookCtx.Context, func(leaderCtx context.Context) {
+					for _, start := range leaderControllers {
+						go start(leaderCtx)
+					}
+					<-leaderCtx.Done()
+				})
+				if runErr != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("provisioning controller leader election stopped", "error", runErr)
+				}
+			}()
 
 			return nil
 		},
