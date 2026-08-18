@@ -2,7 +2,7 @@ import { defaults, each, sortBy } from 'lodash';
 
 import { type DataSourceRef, type VariableOption, VariableRefresh } from '@grafana/data';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type Panel } from '@grafana/schema';
 import {
   type Spec as DashboardV2Spec,
