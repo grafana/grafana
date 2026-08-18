@@ -30,6 +30,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
+  import-alertmanager-configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/import-alertmanager-configuration/
 ---
 
 # Import data source-managed rules to Grafana-managed rules
@@ -45,6 +50,14 @@ This guide explains two methods for importing data source-managed rules:
 Importing rules is a safe operation: the original data source–managed rules remain intact in their original location. During import, the rules are converted into Grafana-managed rules while preserving their configuration and behavior.
 
 Choose the method that best fits your workflow. As a best practice, test and validate your import process before migrating all alert rules.
+
+## Import your notification configuration first
+
+Rules only tell you about a problem if the notification reaches someone. Grafana-managed rules route through Grafana's Alertmanager, not through the Alertmanager your data source-managed rules used, so imported rules notify through whatever contact points and notification policies already exist in Grafana.
+
+Consider [importing your Alertmanager configuration](ref:import-alertmanager-configuration) before you import rules. Grafana converts your receivers, routes, templates, and mute timings into Grafana-managed notification resources, so the rules you import next land in the routing you already have.
+
+This matters most if you route rules to a specific contact point: the [`X-Grafana-Alerting-Notification-Settings` header](#x-grafana-alerting-notification-settings) and the wizard's routing options both require the contact point or policy tree to exist in Grafana before the rules are imported.
 
 ## How it works
 
