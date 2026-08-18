@@ -355,10 +355,22 @@ describe('dashboardActions', () => {
       });
     });
 
-    it('does not use hybrid search when the vectorSearch flag is off', async () => {
+    it.each([
+      ['the vectorSearch flag is off', { 'grafana.cmdkHybridSearch': true, 'dashboard.vectorSearch': false }],
+      ['the cmdkHybridSearch flag is off', { 'grafana.cmdkHybridSearch': false, 'dashboard.vectorSearch': true }],
+      ['both flags are off', { 'grafana.cmdkHybridSearch': false, 'dashboard.vectorSearch': false }],
+    ])('does not use hybrid search when %s', async (_name, flags) => {
       mockContextSrv.user.isSignedIn = true;
-      setTestFlags({ 'grafana.cmdkHybridSearch': true, 'grafana.vectorSearch': false });
-      server.use(getHybridSearchHandler([{ name: 'hybrid-dashboard-1', title: 'Hybrid dashboard 1', score: 0.9 }]));
+      setTestFlags(flags);
+      // Spy on the hybrid endpoint so we can assert it's never requested, rather than
+      // relying only on the shape of the returned actions
+      const hybridSearchSpy = jest.fn();
+      server.use(
+        http.get(hybridSearchRoute, () => {
+          hybridSearchSpy();
+          return HttpResponse.json({ hits: [{ name: 'hybrid-dashboard-1', title: 'Hybrid dashboard 1', score: 0.9 }] });
+        })
+      );
 
       const { result } = renderHook(
         () => {
@@ -374,6 +386,7 @@ describe('dashboardActions', () => {
           }),
         ]);
       });
+      expect(hybridSearchSpy).not.toHaveBeenCalled();
     });
   });
 });
