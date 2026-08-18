@@ -131,7 +131,8 @@ type ShiftedTimeValues = {
   // Length plus both endpoints detect in-place mutation of the same array object: query paths that
   // accumulate append to it, and live/streaming ring buffers slide values without changing the length.
   // Checking only the last value would miss a slide whose new point repeats the previous last
-  // timestamp. Timestamps ascend within a frame, so a slide always moves at least one endpoint.
+  // timestamp. A slide that also keeps the first timestamp (duplicate at the start, then another
+  // copy of the last appended) would reuse a stale array; that dual-end case is left as a known gap.
   sourceLength: number;
   sourceFirst: number;
   sourceLast: number;
