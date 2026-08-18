@@ -4,12 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
-	"time"
 
 	"go.opentelemetry.io/otel/trace"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -118,19 +114,9 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 		Role:       string(saObj.Spec.Role),
 		IsDisabled: saObj.Spec.Disabled,
 	}
-	if rv := saObj.GetResourceVersion(); rv != "" {
-		ms, err := strconv.ParseInt(rv, 10, 64)
-		if err != nil {
-			return oldObj, false, apierrors.NewBadRequest(fmt.Sprintf("invalid resourceVersion %q: %v", rv, err))
-		}
-		updateCmd.PreviousUpdated = legacysql.NewDBTime(time.UnixMilli(ms).UTC())
-	}
 
 	result, err := s.store.UpdateServiceAccount(ctx, ns, updateCmd)
 	if err != nil {
-		if errors.Is(err, serviceaccounts.ErrServiceAccountUpdateConflict) {
-			return oldObj, false, apierrors.NewConflict(resource.GroupResource(), name, err)
-		}
 		if errors.Is(err, serviceaccounts.ErrServiceAccountNotFound) {
 			return oldObj, false, resource.NewNotFound(name)
 		}

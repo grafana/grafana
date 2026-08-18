@@ -1,7 +1,6 @@
 package serviceaccounts
 
 import (
-	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -33,7 +32,6 @@ const (
 
 var (
 	ErrServiceAccountNotFound            = errutil.NotFound("serviceaccounts.ErrNotFound", errutil.WithPublicMessage("service account not found"))
-	ErrServiceAccountUpdateConflict      = errors.New("service account update conflict: resource version does not match")
 	ErrServiceAccountInvalidRole         = errutil.BadRequest("serviceaccounts.ErrInvalidRoleSpecified", errutil.WithPublicMessage("invalid role specified"))
 	ErrServiceAccountRolePrivilegeDenied = errutil.Forbidden("serviceaccounts.ErrRoleForbidden", errutil.WithPublicMessage("can not assign a role higher than user's role"))
 	ErrServiceAccountInvalidOrgID        = errutil.BadRequest("serviceaccounts.ErrInvalidOrgId", errutil.WithPublicMessage("invalid org id specified"))

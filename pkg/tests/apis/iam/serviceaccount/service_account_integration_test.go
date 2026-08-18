@@ -238,22 +238,6 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		require.Equal(t, "Updated Service Account 1", fetchedSpec["title"])
 		require.Equal(t, "Editor", fetchedSpec["role"])
 		require.Equal(t, true, fetchedSpec["disabled"])
-
-		stale := created.DeepCopy()
-		require.NoError(t, unstructured.SetNestedField(stale.Object, "Stale Service Account Update", "spec", "title"))
-
-		_, err = saClient.Resource.Update(ctx, stale, metav1.UpdateOptions{})
-		require.Error(t, err)
-		var statusErr *errors.StatusError
-		require.ErrorAs(t, err, &statusErr)
-		require.Equal(t, int32(409), statusErr.ErrStatus.Code)
-
-		fetched, err = saClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
-		require.NoError(t, err)
-		fetchedSpec = fetched.Object["spec"].(map[string]interface{})
-		require.Equal(t, "Updated Service Account 1", fetchedSpec["title"])
-		require.Equal(t, "Editor", fetchedSpec["role"])
-		require.Equal(t, true, fetchedSpec["disabled"])
 	})
 
 	t.Run("should not be able to update service account without a title", func(t *testing.T) {

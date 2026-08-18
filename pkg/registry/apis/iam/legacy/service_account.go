@@ -131,17 +131,12 @@ type CreateServiceAccountResult struct {
 }
 
 type UpdateServiceAccountCommand struct {
-	UID             string
-	Name            string
-	Role            string
-	IsDisabled      bool
-	OrgID           int64
-	Updated         legacysql.DBTime
-	PreviousUpdated legacysql.DBTime
-}
-
-func (c UpdateServiceAccountCommand) HasPreviousUpdated() bool {
-	return !c.PreviousUpdated.IsZero()
+	UID        string
+	Name       string
+	Role       string
+	IsDisabled bool
+	OrgID      int64
+	Updated    legacysql.DBTime
 }
 
 type UpdateServiceAccountResult struct {
@@ -388,7 +383,7 @@ func (s *legacySQLStore) UpdateServiceAccount(ctx context.Context, ns claims.Nam
 			return fmt.Errorf("service account rows affected: %w", err)
 		}
 		if rows == 0 {
-			return serviceaccounts.ErrServiceAccountUpdateConflict
+			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account by uid %q", cmd.UID)
 		}
 
 		orgUserCmd := &UpdateOrgUserCommand{

@@ -16,7 +16,6 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type serviceAccountStoreFake struct {
@@ -76,11 +75,10 @@ func TestLegacyStoreUpdate(t *testing.T) {
 		require.NoError(t, err)
 		require.False(t, created)
 		require.Equal(t, legacy.UpdateServiceAccountCommand{
-			UID:             "sa-uid",
-			Name:            "Updated service account",
-			Role:            string(iamv0alpha1.ServiceAccountOrgRoleEditor),
-			IsDisabled:      true,
-			PreviousUpdated: legacysql.NewDBTime(time.Unix(1, 0).UTC()),
+			UID:        "sa-uid",
+			Name:       "Updated service account",
+			Role:       string(iamv0alpha1.ServiceAccountOrgRoleEditor),
+			IsDisabled: true,
 		}, fake.updated)
 		updated, ok := result.(*iamv0alpha1.ServiceAccount)
 		require.True(t, ok)
@@ -98,30 +96,5 @@ func TestLegacyStoreUpdate(t *testing.T) {
 
 		require.Error(t, err)
 		require.True(t, apierrors.IsNotFound(err))
-	})
-
-	t.Run("rejects an invalid resource version", func(t *testing.T) {
-		fake := &serviceAccountStoreFake{listResult: &legacy.ListServiceAccountResult{Items: []legacy.ServiceAccount{old}}}
-		store := NewLegacyStore(fake, nil, noop.NewTracerProvider().Tracer("test"))
-		obj := newObject()
-		obj.ResourceVersion = "invalid"
-
-		_, _, err := store.Update(ctx, "sa-uid", rest.DefaultUpdatedObjectInfo(obj), nil, nil, false, &metav1.UpdateOptions{})
-
-		require.Error(t, err)
-		require.True(t, apierrors.IsBadRequest(err))
-	})
-
-	t.Run("maps a stale resource version to conflict", func(t *testing.T) {
-		fake := &serviceAccountStoreFake{
-			listResult: &legacy.ListServiceAccountResult{Items: []legacy.ServiceAccount{old}},
-			updateErr:  serviceaccounts.ErrServiceAccountUpdateConflict,
-		}
-		store := NewLegacyStore(fake, nil, noop.NewTracerProvider().Tracer("test"))
-
-		_, _, err := store.Update(ctx, "sa-uid", rest.DefaultUpdatedObjectInfo(newObject()), nil, nil, false, &metav1.UpdateOptions{})
-
-		require.Error(t, err)
-		require.True(t, apierrors.IsConflict(err))
 	})
 }
