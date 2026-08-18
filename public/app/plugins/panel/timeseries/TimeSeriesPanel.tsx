@@ -67,15 +67,17 @@ export const TimeSeriesPanel = ({
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
-  const { frames, compareDiffMs } = useMemo(() => {
+  const { frames, compareDiffMs, comparisonPairingMap } = useMemo(() => {
     let frames = prepareGraphableFields(data.series, theme, timeRange);
     if (frames != null) {
       let compareDiffMs: number[] = [0];
+      let comparisonPairingMap = new Map();
+
       // Held separately from `frames` below: TS won't retain the null-check narrowing of `frames`
       // inside the .map callback once `frames` itself gets reassigned in this scope.
       const originalFrames = frames;
 
-      frames = originalFrames.map((frame: DataFrame) => {
+      frames = originalFrames.map((frame: DataFrame, i) => {
         const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
 
         frame.fields.forEach((field) => {
@@ -83,6 +85,15 @@ export const TimeSeriesPanel = ({
             compareDiffMs.push(diffMs);
           }
         });
+
+        if (frame.meta?.timeCompare?.originalRefId !== undefined) {
+          const compareFrameIdx = frames?.findIndex(
+            (frameComp) => frameComp.refId === frame.meta!.timeCompare!.originalRefId
+          );
+          if (compareFrameIdx !== undefined && compareFrameIdx > -1) {
+            comparisonPairingMap.set(i, compareFrameIdx);
+          }
+        }
 
         if (diffMs !== 0) {
           // Check if the compared frame needs time alignment
@@ -97,7 +108,7 @@ export const TimeSeriesPanel = ({
         return frame;
       });
 
-      return { frames, compareDiffMs };
+      return { frames, compareDiffMs, comparisonPairingMap };
     }
 
     return { frames };
@@ -216,6 +227,7 @@ export const TimeSeriesPanel = ({
                       filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
+                      comparisonPairingMap={comparisonPairingMap}
                       assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );

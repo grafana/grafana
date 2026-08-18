@@ -55,6 +55,7 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
+  comparisonPairingMap?: Map<number, number>;
   /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
   assistantContext?: AssistantTooltipContext;
 }
@@ -77,6 +78,7 @@ export const TimeSeriesTooltip = ({
   compareDiffMs,
   filterByGroupedLabels,
   assistantContext,
+  comparisonPairingMap = new Map(),
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -100,6 +102,24 @@ export const TimeSeriesTooltip = ({
     hideZeros,
     _rest
   );
+
+  if (seriesIdx !== null && seriesIdx !== undefined) {
+    const hoveredFrameIdx = series.fields[seriesIdx].state?.origin?.frameIndex;
+    if (hoveredFrameIdx !== undefined) {
+      // comparisonPairingMap is always compareIdx, origIdx
+      const origIdx = comparisonPairingMap.get(hoveredFrameIdx);
+      if (origIdx !== undefined) {
+        const origFrame = series.fields.find(
+          (field, i) => field.state?.origin?.frameIndex === origIdx && field.state.origin.fieldIndex === 1
+        );
+        console.log('found orig from comp', hoveredFrameIdx, origFrame);
+      } else {
+        const compIdx = [...comparisonPairingMap].find(([_, value]) => value === hoveredFrameIdx)?.[0];
+        const compFrame = series.fields.find((field, i) => field.state?.origin?.frameIndex === compIdx);
+        console.log('found comp from orig', hoveredFrameIdx, compFrame);
+      }
+    }
+  }
 
   let footer: ReactNode;
 
