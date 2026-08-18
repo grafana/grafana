@@ -7,10 +7,10 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     modal: css({
       position: 'fixed',
       zIndex: theme.zIndex.modal,
-      background: theme.colors.background.primary,
+      background: theme.components.modal.background,
       boxShadow: theme.shadows.z3,
       borderRadius: theme.shape.radius.lg,
-      border: `1px solid ${theme.colors.border.weak}`,
+      border: `1px solid ${theme.components.modal.borderColor}`,
       backgroundClip: 'padding-box',
       outline: 'none',
       width: '750px',
@@ -94,7 +94,7 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       },
     }),
     modalButtonRow: css({
-      background: theme.colors.background.primary,
+      background: theme.components.modal.background,
       position: 'sticky',
       bottom: 0,
       paddingTop: theme.spacing(2),

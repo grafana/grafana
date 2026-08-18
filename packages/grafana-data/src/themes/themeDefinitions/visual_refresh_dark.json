@@ -127,6 +127,10 @@
       "background": "palette.ink900",
       "borderColor": "palette.ink700"
     },
+    "modal": {
+      "background": "palette.ink900",
+      "borderColor": "palette.ink700"
+    },
     "overlay": {
       "background": "hsl(from palette.ink700 h s l / 0.6)"
     },

@@ -123,6 +123,14 @@
     "checkbox": {
       "activeBackgroundHover": "palette.orange600"
     },
+    "drawer": {
+      "background": "palette.neutral50",
+      "borderColor": "palette.neutral200"
+    },
+    "modal": {
+      "background": "palette.neutral50",
+      "borderColor": "palette.neutral200"
+    },
     "overlay": {
       "background": "hsl(from palette.neutral300 h s l / 0.5)"
     },

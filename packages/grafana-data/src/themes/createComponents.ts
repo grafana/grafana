@@ -105,6 +105,10 @@ export const ThemeComponentsInputSchema = z
     dropdown: z.object({
       background: z.string().optional(),
     }),
+    modal: z.object({
+      background: z.string().optional(),
+      borderColor: z.string().optional(),
+    }),
     overlay: z.object({
       background: z.string().optional(),
     }),
@@ -223,6 +227,10 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       background: colors.background.primary,
       borderColor: 'transparent',
       padding: 2,
+    },
+    modal: {
+      background: colors.background.primary,
+      borderColor: colors.border.weak,
     },
     overlay: {
       background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.5)' : 'rgba(208, 209, 211, 0.5)',

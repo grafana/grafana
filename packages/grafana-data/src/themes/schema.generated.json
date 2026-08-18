@@ -1115,6 +1115,18 @@
           },
           "additionalProperties": false
         },
+        "modal": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "overlay": {
           "type": "object",
           "properties": {
