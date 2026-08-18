@@ -951,16 +951,6 @@ export interface FeatureToggles {
   */
   kubernetesAuthzServiceAccountResourcePermissions?: boolean;
   /**
-  * Enables recently viewed dashboards section in the browsing dashboard page
-  * @default false
-  */
-  recentlyViewedDashboards?: boolean;
-  /**
-  * A/A test for recently viewed dashboards feature
-  * @default false
-  */
-  experimentRecentlyViewedDashboards?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
