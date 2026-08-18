@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -37,13 +38,18 @@ type AppInstaller struct {
 }
 
 // RegisterAppInstaller builds the coordination app installer.
-func RegisterAppInstaller() (*AppInstaller, error) {
+func RegisterAppInstaller(cfg *setting.Cfg) (*AppInstaller, error) {
 	installer := &AppInstaller{
 		logger: log.New("coordination.api"),
 	}
 	// Run the lease garbage collector on the served app: it watches Leases and
-	// ClusterLeases and deletes those abandoned past the grace period.
-	specificConfig := &coordinationapp.CoordinationConfig{EnableGarbageCollector: true}
+	// ClusterLeases and deletes those abandoned past the grace period. The grace
+	// period is configurable via [coordination] gc_grace_period; zero uses the
+	// app's default (24h).
+	specificConfig := &coordinationapp.CoordinationConfig{
+		EnableGarbageCollector: true,
+		GracePeriod:            cfg.SectionWithEnvOverrides("coordination").Key("gc_grace_period").MustDuration(0),
+	}
 	provider := simple.NewAppProvider(manifestdata.LocalManifest(), specificConfig, coordinationapp.New)
 
 	appConfig := app.Config{

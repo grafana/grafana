@@ -871,7 +871,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	coordinationAppInstaller, err := coordination.RegisterAppInstaller()
+	coordinationAppInstaller, err := coordination.RegisterAppInstaller(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1636,7 +1636,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	coordinationAppInstaller, err := coordination.RegisterAppInstaller()
+	coordinationAppInstaller, err := coordination.RegisterAppInstaller(cfg)
 	if err != nil {
 		return nil, err
 	}
