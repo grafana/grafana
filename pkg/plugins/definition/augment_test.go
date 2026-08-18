@@ -443,9 +443,9 @@ func TestAugmentOpenAPI(t *testing.T) {
 		resources := oas.Paths.Paths[augmentPath+"/instance/resources/{path}"]
 		require.NotNil(t, resources, "app routes are registered under /instance")
 
-		var names []string
-		for _, p := range resources.Parameters {
-			names = append(names, p.Name)
+		names := make([]string, len(resources.Parameters))
+		for i, p := range resources.Parameters {
+			names[i] = p.Name
 		}
 		assert.Equal(t, []string{"namespace"}, names, "apps have a fixed instance name")
 	})
