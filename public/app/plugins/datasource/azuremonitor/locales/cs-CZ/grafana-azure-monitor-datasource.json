@@ -105,7 +105,11 @@
       "load-subscriptions": "Načíst předplatné"
     },
     "dimension-fields": {
-      "aria-label-remove": "Odebrat",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Rozměry",
       "placeholder-field": "Pole",
       "placeholder-operation": "Činnost",

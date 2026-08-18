@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} misslyckades med {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -2661,7 +2662,7 @@
     "provisioning": {
       "badge-tooltip-provenance": "Den här resursen har etablerats via {{provenance}} och kan inte redigeras via användargränssnittet",
       "badge-tooltip-standard": "Denna resurs har etablerats och kan inte redigeras via användargränssnittet",
-      "body-imported": "Denna {{resource}} innehåller integrationer som importerades från en extern Alertmanager och är för närvarande skrivskyddad. Integrationerna kommer att kunna redigeras när migreringsprocessen är klar.",
+      "body-imported": "Denna {{resource}} innehåller integrationer som importerats från en extern Alertmanager och är för närvarande skrivskyddad. Integrationerna blir redigerbara när migreringsprocessen har slutförts.",
       "body-imported-time-interval": "Detta tidsintervall importerades från en extern Alertmanager och är för närvarande skrivskyddat. Tidsintervallet kommer att kunna redigeras när migreringsprocessen är klar.",
       "body-provisioned": "Denna {{resource}} har provisionerats, vilket betyder att den skapades genom konfigurering. Kontakta serveradministratören om du vill uppdatera denna {{resource}}.",
       "title-imported": "Denna {{resource}} importerades och kan inte redigeras via användargränssnittet",
@@ -3282,8 +3283,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3305,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3330,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3625,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Ett unikt namn för tidsintervallet",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Laddar tidsintervall",
       "title-no-matching-time-interval-found": "Inget matchande tidsintervall hittades"
     },
@@ -3669,7 +3689,7 @@
         "back": "",
         "declare-incident": "Deklarera incident",
         "declare-incident-no-permission": "Du saknar behörighet att komma åt incidenten",
-        "instance-details": "Instansdetaljer",
+        "instance-details": "Instansinformation",
         "investigation-checking": "",
         "investigation-lookup-failed": "",
         "investigation-lookup-retry": "",
@@ -7507,7 +7527,7 @@
       "classic-v2-warning": "Denna instrumentpanel använder V2-schemat. Funktioner som flikar och villkorlig rendering kan inte återges i det klassiska formatet och kan gå förlorade.",
       "label": {
         "advanced-options": "Avancerade alternativ",
-        "classic": "Classic",
+        "classic": "Klassisk",
         "json": "JSON",
         "v2-resource": "V2-resurs",
         "yaml": "YAML"
@@ -11734,6 +11754,7 @@
       "no-details": "Fält som ska visas.",
       "open-assistant": "",
       "pin-line": "Fäst logg",
+      "prettify": "",
       "remove-displayed-field": "Ta bort fält",
       "remove-log": "Ta bort logg",
       "scroll-to-logline": "Skrolla till loggrad",
@@ -11890,7 +11911,7 @@
     },
     "name-enable-field-selector": "Aktivera fältväljare",
     "name-enable-infinite-scrolling": "Aktivera oändlig rullning",
-    "name-enable-log-details": "Aktivera loggdetaljer",
+    "name-enable-log-details": "Aktivera logginformation",
     "name-enable-logs-highlighting": "Aktivera loggmarkering",
     "name-font-size": "Teckenstorlek",
     "name-order": "Beställning",
@@ -12447,7 +12468,7 @@
     },
     "machine-learning": {
       "subtitle": "Utforska AI- och maskininlärningsfunktioner",
-      "title": "AI och maskininlärning"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Hantera instrumentpaneler och behörigheter för mappar"
@@ -12768,6 +12789,23 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12805,8 +12843,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14353,6 +14391,12 @@
     "shared": {
       "branch-description": "Grenen som ska användas för provisionering",
       "branch-label": "Gren",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16103,6 +16147,9 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
     },
     "options": {
       "render-mode": ""

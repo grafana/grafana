@@ -9,6 +9,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -578,6 +579,15 @@ const (
 	SEARCH_FIELD_DELETED_BY    = "deleted_by"
 	SEARCH_FIELD_DELETION_TIME = "deletion_time"
 	SEARCH_FIELD_DELETED_RV    = "deleted_rv"
+)
+
+// Range operators for Requirement.Operator, which otherwise carries a k8s
+// selection operator. That set names only gt and lt. Sending these as operator
+// strings is what makes an older search server answer with a bad request rather
+// than drop the bound.
+const (
+	OperatorGreaterThanOrEqual selection.Operator = "gte"
+	OperatorLessThanOrEqual    selection.Operator = "lte"
 )
 
 var standardSearchFieldsInit sync.Once
