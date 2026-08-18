@@ -10,7 +10,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
-
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -416,9 +415,9 @@ func TestAugmentOpenAPI(t *testing.T) {
 		assert.Equal(t, "post_resources_path", resources.Post.OperationId)
 		assert.NotNil(t, resources.Get.Extensions)
 
-		var names []string
-		for _, p := range resources.Parameters {
-			names = append(names, p.Name)
+		names := make([]string, len(resources.Parameters))
+		for i, p := range resources.Parameters {
+			names[i] = p.Name
 		}
 		assert.Equal(t, []string{"namespace", "name"}, names,
 			"datasources keep both path parameters")
