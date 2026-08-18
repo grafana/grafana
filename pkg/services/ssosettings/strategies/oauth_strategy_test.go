@@ -185,6 +185,25 @@ func TestOAuthStrategyUsesCurrentConfig(t *testing.T) {
 	require.Equal(t, "rotated-secret", rotated["client_secret"])
 }
 
+func TestOAuthStrategyPreservesAuthSectionInheritance(t *testing.T) {
+	raw, err := ini.Load([]byte(`
+[auth]
+signout_redirect_url = https://example.com/logout
+
+[auth.generic_oauth]
+enabled = true
+`))
+	require.NoError(t, err)
+
+	cfg := setting.NewCfg()
+	cfg.Raw = raw
+	strategy := NewOAuthStrategy(staticConfigProvider(t, cfg))
+
+	result, err := strategy.GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
+	require.NoError(t, err)
+	require.Equal(t, "https://example.com/logout", result["signout_redirect_url"])
+}
+
 func oauthConfigWithClientSecret(t *testing.T, secret string) *setting.Cfg {
 	t.Helper()
 	raw, err := ini.Load([]byte("[auth.generic_oauth]\nclient_secret = " + secret))

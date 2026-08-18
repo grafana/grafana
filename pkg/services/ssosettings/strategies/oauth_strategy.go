@@ -51,7 +51,8 @@ func (s *OAuthStrategy) GetProviderConfig(ctx context.Context, provider string) 
 func (s *OAuthStrategy) loadAllSettings(ctx context.Context) (map[string]map[string]any, error) {
 	allProviders := slices.Concat(ssosettings.AllOAuthProviders, []string{social.GrafanaNetProviderName})
 
-	sections := make([]string, 0, len(allProviders))
+	sections := make([]string, 1, len(allProviders)+1)
+	sections[0] = "auth"
 	for _, provider := range allProviders {
 		sections = append(sections, "auth."+provider)
 	}
