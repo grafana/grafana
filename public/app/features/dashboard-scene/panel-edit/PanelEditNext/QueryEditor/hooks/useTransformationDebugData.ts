@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import { mergeMap } from 'rxjs';
 
-import { type DataFrame, type DataTransformContext, getFrameMatchers, transformDataFrame } from '@grafana/data';
+import {
+  type CustomTransformOperator,
+  type DataFrame,
+  type DataTransformContext,
+  type DataTransformerConfig,
+  getFrameMatchers,
+  transformDataFrame,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { type Transformation } from '../types';
@@ -9,6 +16,7 @@ import { type Transformation } from '../types';
 interface UseTransformationDebugDataOptions {
   selectedTransformation: Transformation | null;
   transformations: Transformation[];
+  systemTransformations: Array<DataTransformerConfig | CustomTransformOperator>;
   data: DataFrame[];
   isActive: boolean;
 }
@@ -24,11 +32,16 @@ interface TransformationDebugData {
  * Input: Output of all transformations before the current one (with filter applied)
  * Output: Output after applying the current transformation
  *
+ * "Before the current one" includes the panel plugin's own transformations, which run ahead of every
+ * user transformation — replaying only `transformations` would show frames the debugged
+ * transformation never receives.
+ *
  * @returns Empty arrays if not active or transformation not found
  */
 export function useTransformationDebugData({
   selectedTransformation,
   transformations,
+  systemTransformations,
   data,
   isActive,
 }: UseTransformationDebugDataOptions): TransformationDebugData {
@@ -52,7 +65,10 @@ export function useTransformationDebugData({
     const config = selectedTransformation.transformConfig;
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
 
-    const inputTransforms = transformations.slice(0, currentIndex).map((t) => t.transformConfig);
+    const inputTransforms = [
+      ...systemTransformations,
+      ...transformations.slice(0, currentIndex).map((t) => t.transformConfig),
+    ];
     const outputTransforms = [config];
 
     const ctx: DataTransformContext = {
@@ -73,7 +89,7 @@ export function useTransformationDebugData({
       inputSubscription.unsubscribe();
       outputSubscription.unsubscribe();
     };
-  }, [isActive, selectedTransformation, transformations, data]);
+  }, [isActive, selectedTransformation, transformations, systemTransformations, data]);
 
   return { input, output };
 }

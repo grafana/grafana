@@ -7689,6 +7689,11 @@
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
     },
+    "system-transformation-rows": {
+      "badge-system": "System",
+      "custom-transformation-name": "Custom transformation (code defined)",
+      "tooltip-system": "Added automatically by the panel. Read-only."
+    },
     "text-box-variable": {
       "name-default-value": "Default value"
     },

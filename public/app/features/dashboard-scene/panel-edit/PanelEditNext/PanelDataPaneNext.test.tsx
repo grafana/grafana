@@ -11,6 +11,7 @@ import {
   type SceneObjectRef,
   type SceneQueryRunner,
   type VizPanel,
+  isSystemTransformation,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
@@ -480,6 +481,98 @@ describe('PanelDataPaneNext', () => {
 
         dataPane.toggleTransformationDisabled(5);
         expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('system transformations', () => {
+      // Every mutator works on the user-only list, so writing that list straight back would drop the
+      // runtime entries. They also have to stay at the edges, since position is what orders them.
+      beforeEach(() => {
+        mockTransformer.setSystemTransformations({
+          prepend: [() => (source) => source],
+          append: [() => (source) => source],
+        });
+        jest.mocked(mockTransformer.setState).mockClear();
+        jest.spyOn(mockTransformer, 'reprocessTransformations').mockImplementation(() => {});
+      });
+
+      function systemPositions() {
+        return mockTransformer.state.transformations.map((t, index) =>
+          isSystemTransformation(t) ? [index, t.position] : null
+        );
+      }
+
+      /** System entries first and last, with the user's in between. */
+      function expectPreserved(userCount: number) {
+        expect(systemPositions()).toEqual([[0, 'prepend'], ...Array(userCount).fill(null), [userCount + 1, 'append']]);
+      }
+
+      it('preserves them when adding a transformation', () => {
+        dataPane.addTransformation('seriesToColumns');
+
+        expectPreserved(4);
+      });
+
+      it('reports an insert index against the user list, not the whole array', () => {
+        // The prepended entry sits at index 0, so an index taken from the raw array would be off by one
+        // and the editor would select the wrong card.
+        expect(dataPane.addTransformation('seriesToColumns')).toBe(3);
+      });
+
+      it('preserves them when deleting a transformation', () => {
+        dataPane.deleteTransformation(1);
+
+        expectPreserved(2);
+      });
+
+      it('preserves them when reordering transformations', () => {
+        dataPane.reorderTransformations([
+          { id: 'reduce', options: {} },
+          { id: 'organize', options: {} },
+          { id: 'filter', options: {} },
+        ]);
+
+        expectPreserved(3);
+      });
+
+      it('preserves them when toggling a transformation disabled', () => {
+        dataPane.toggleTransformationDisabled(1);
+
+        expectPreserved(3);
+      });
+
+      it('preserves them when bulk deleting transformations', () => {
+        dataPane.bulkDeleteTransformations([0, 2]);
+
+        expectPreserved(1);
+      });
+
+      it('preserves them when bulk toggling transformations disabled', () => {
+        dataPane.bulkToggleTransformationsDisabled([0, 1], true);
+
+        expectPreserved(3);
+      });
+
+      it('preserves them when updating a transformation in place', () => {
+        const existing = mockTransformer.state.transformations.find(
+          (t): t is DataTransformerConfig => 'id' in t && t.id === 'reduce'
+        )!;
+
+        dataPane.updateTransformation(existing, { id: 'reduce', options: { reducers: ['max'] } });
+
+        expectPreserved(3);
+      });
+
+      it('addresses transformations by their index in the user list', () => {
+        // `deleteTransformation(0)` must remove the first *user* transformation, not the prepended
+        // system entry that occupies index 0 of the raw array.
+        dataPane.deleteTransformation(0);
+
+        const remaining = mockTransformer.state.transformations
+          .filter((t): t is DataTransformerConfig => !isSystemTransformation(t) && 'id' in t)
+          .map((t) => t.id);
+
+        expect(remaining).toEqual(['reduce', 'filter']);
       });
     });
   });

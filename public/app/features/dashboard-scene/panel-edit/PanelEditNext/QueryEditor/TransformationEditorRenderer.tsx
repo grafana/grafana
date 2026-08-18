@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 import {
+  type PanelState,
   useActionsContext,
   usePanelContext,
   useQueryEditorUIContext,
@@ -20,6 +21,7 @@ import { type Transformation } from './types';
 interface TransformationEditorPanelProps {
   transformation: Transformation | null;
   transformations: Transformation[];
+  systemTransformations: PanelState['systemTransformations'];
   data?: PanelData;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   showSupplementalDisplays?: boolean;
@@ -28,6 +30,7 @@ interface TransformationEditorPanelProps {
 export function TransformationEditorPanel({
   transformation,
   transformations,
+  systemTransformations,
   data,
   updateTransformation,
   showSupplementalDisplays = false,
@@ -37,6 +40,7 @@ export function TransformationEditorPanel({
   const inputData = useTransformationInputData({
     selectedTransformation: transformation,
     allTransformations: transformations,
+    systemTransformations,
     rawData,
   });
 
@@ -79,13 +83,14 @@ export function TransformationEditorPanel({
 export function TransformationEditorRenderer() {
   const { data } = useQueryRunnerContext();
   const { selectedTransformation } = useQueryEditorUIContext();
-  const { transformations } = usePanelContext();
+  const { transformations, systemTransformations } = usePanelContext();
   const { updateTransformation } = useActionsContext();
 
   return (
     <TransformationEditorPanel
       transformation={selectedTransformation}
       transformations={transformations}
+      systemTransformations={systemTransformations}
       data={data}
       updateTransformation={updateTransformation}
       showSupplementalDisplays

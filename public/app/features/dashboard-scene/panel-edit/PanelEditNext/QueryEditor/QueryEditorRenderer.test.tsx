@@ -144,7 +144,7 @@ describe('QueryEditorRenderer', () => {
         <QueryEditorProvider
           dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
           qrState={{ queries: [queryA, queryB], data: undefined, queryError: undefined }}
-          panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
+          panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [], systemTransformations: [] }}
           alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
           uiState={{
             selectedQuery,
@@ -222,7 +222,7 @@ describe('QueryEditorRenderer', () => {
         <QueryEditorProvider
           dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
           qrState={{ queries: [queryA, queryB], data: undefined, queryError: undefined }}
-          panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
+          panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [], systemTransformations: [] }}
           alertingState={{ alertRules: [], loading: false, isDashboardSaved: true }}
           uiState={{
             selectedQuery,
