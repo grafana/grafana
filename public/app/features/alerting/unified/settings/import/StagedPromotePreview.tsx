@@ -27,18 +27,20 @@ export function StagedPromotePreview({ stats, renamedReceivers, renamedTimeInter
   return (
     <>
       {stats && <MergePreview stats={stats} />}
-      {hasRenames && <RenamedList receivers={renamedReceivers} timeIntervals={renamedTimeIntervals} />}
-      <Box backgroundColor="secondary" padding={2} borderRadius="default">
-        <Stack direction="row" gap={1} alignItems="flex-start">
-          <Icon name="info-circle" />
-          <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="alerting.settings.import.promote.rules-note-body">
-              Alert rules and recording rules are already active as Grafana-managed rules — promote only merges the
-              Alertmanager resources above.
-            </Trans>
-          </Text>
-        </Stack>
-      </Box>
+      <RenamedList receivers={renamedReceivers} timeIntervals={renamedTimeIntervals} />
+      {(stats || hasRenames) && (
+        <Box backgroundColor="secondary" padding={2} borderRadius="default">
+          <Stack direction="row" gap={1} alignItems="flex-start">
+            <Icon name="info-circle" />
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="alerting.settings.import.promote.rules-note-body">
+                Alert rules and recording rules are already active as Grafana-managed rules — promote only merges the
+                Alertmanager resources above.
+              </Trans>
+            </Text>
+          </Stack>
+        </Box>
+      )}
     </>
   );
 }
@@ -119,6 +121,10 @@ function MergeRow({ icon, count, noun }: { icon: IconName; count: number; noun: 
 
 /** The "Renamed to avoid conflicts" section: original (struck through) → renamed. */
 function RenamedList({ receivers, timeIntervals }: { receivers: RenameEntry[]; timeIntervals: RenameEntry[] }) {
+  if (receivers.length === 0 && timeIntervals.length === 0) {
+    return null;
+  }
+
   return (
     <Stack direction="column" gap={1}>
       <Text weight="medium">
