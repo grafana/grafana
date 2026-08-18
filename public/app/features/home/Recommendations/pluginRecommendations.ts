@@ -7,7 +7,7 @@ import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
 import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
-import { createTtlCachedPromise, PROBE_TTL_MS } from '../solutions/probeUtils';
+import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withTimeout } from '../solutions/probeUtils';
 import { TELEMETRY_SETUP_DOCS, type TelemetryType } from '../solutions/telemetrySetup';
 
 import { type RecommendedCardId } from './solutionsMatrix';
@@ -159,9 +159,12 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
 // Share the response because Overview and Recommendations request the same large inventory.
 const installedPlugins = createTtlCachedPromise(
   () =>
-    getBackendSrv().get<LocalPlugin[]>('/api/plugins', accessControlQueryParam({ embedded: 0 }), undefined, {
-      showErrorAlert: false,
-    }),
+    withTimeout(
+      getBackendSrv().get<LocalPlugin[]>('/api/plugins', accessControlQueryParam({ embedded: 0 }), undefined, {
+        showErrorAlert: false,
+      }),
+      PROBE_TIMEOUT_MS
+    ),
   PROBE_TTL_MS
 );
 

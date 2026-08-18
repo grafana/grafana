@@ -16,7 +16,7 @@ export interface OverviewSolutionGroups {
  */
 export async function resolveOverviewCards(solutions: Solution[]): Promise<OverviewCard[]> {
   const cards = await Promise.all(
-    solutions.map(async (solution): Promise<OverviewCard | null> => {
+    solutions.map(async (solution) => {
       const [datasource, needsAttention, offer] = await Promise.all([
         solution.datasource().catch(() => null),
         solution.needsAttention().catch(() => false),
