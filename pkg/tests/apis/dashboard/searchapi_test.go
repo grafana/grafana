@@ -262,7 +262,7 @@ func createFolder(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper,
 
 	var code int
 	res := restClient.Post().AbsPath("api", "folders").
-		Body([]byte(fmt.Sprintf(`{"uid":%q,"title":%q}`, uid, title))).
+		Body(fmt.Appendf(nil, `{"uid":%q,"title":%q}`, uid, title)).
 		SetHeader("Content-type", "application/json").
 		Do(ctx).
 		StatusCode(&code)

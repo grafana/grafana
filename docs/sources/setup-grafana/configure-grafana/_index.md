@@ -894,13 +894,11 @@ This also limits the refresh interval options in Explore.
 
 #### `default_home_dashboard_path`
 
-Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json".
+Path to a custom default home dashboard. If this value is empty, Grafana uses the unified homepage.
+
+Grafana no longer ships a bundled `home.json`. Replacing `public/dashboards/home.json` on disk is not supported. If you previously customized home that way, set this option to the path of your JSON file.
 
 The file may contain either a classic dashboard JSON or a Kubernetes-format dashboard resource exported from the `dashboard.grafana.app` API (with top-level `apiVersion`, `kind`, `metadata` and `spec` fields). The Kubernetes-format is required for `v2` dashboard schemas.
-
-{{< admonition type="note" >}}
-On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
-{{< /admonition >}}
 
 #### `default_preload`
 
@@ -1016,7 +1014,7 @@ The default is `en-US`.
 
 #### `home_page`
 
-Path to a custom home page. Users are only redirected to this if the default home dashboard is used. It should match a frontend route and contain a leading slash.
+Path to a custom home page. Users are only redirected to this when no home dashboard UID is configured. It should match a frontend route and contain a leading slash.
 
 #### `External user management`
 
