@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -238,5 +239,5 @@ func genApiKey() (string, string) {
 }
 
 func encodeBasicAuth(username, password string) string {
-	return "Basic " + base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+	return "Basic " + base64.StdEncoding.EncodeToString((fmt.Appendf(nil, "%s:%s", username, password)))
 }

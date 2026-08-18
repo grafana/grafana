@@ -409,7 +409,7 @@ func addTestDataSource(t *testing.T, ctx context.Context, testEnv *server.TestEn
 // singlePanelBody builds a POST /api/ds/diagnostics body: a MetricRequest plus the client-supplied
 // panel/dashboard JSON the endpoint echoes into the bundle.
 func singlePanelBody(dsUID, scenario string) []byte {
-	return []byte(fmt.Sprintf(`{
+	return (fmt.Appendf(nil, `{
 		"from": "now-1h",
 		"to": "now",
 		"queries": [{"refId":"A","scenarioId":%q,"datasource":{"uid":%q,"type":%q}}],
@@ -421,7 +421,7 @@ func singlePanelBody(dsUID, scenario string) []byte {
 // dashboardBody builds a POST /api/ds/dashboard-diagnostics body with two data panels: one succeeds
 // (random_walk) and one fails per-refID (random_walk_with_error).
 func dashboardBody(dsUID string) []byte {
-	return []byte(fmt.Sprintf(`{
+	return (fmt.Appendf(nil, `{
 		"dashboard": {"title":"Diag Dashboard","uid":"diag-dash-1","panels":[]},
 		"panels": [
 			{

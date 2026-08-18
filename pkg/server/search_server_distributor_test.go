@@ -444,7 +444,7 @@ func generatePlaylistPayload(ns string) *resourcepb.CreateRequest {
 	name := "playlist" + strconv.Itoa(counter)
 	counter += 1
 	return &resourcepb.CreateRequest{
-		Value: []byte(fmt.Sprintf(`{
+		Value: (fmt.Appendf(nil, `{
     		"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {

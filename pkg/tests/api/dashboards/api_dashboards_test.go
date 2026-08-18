@@ -12,9 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -389,7 +390,7 @@ func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 
 	provDashboardsDir := filepath.Join(dir, "conf", "provisioning", "dashboards")
 	provDashboardsCfg := filepath.Join(provDashboardsDir, "dev.yaml")
-	blob := []byte(fmt.Sprintf(`
+	blob := (fmt.Appendf(nil, `
 apiVersion: 1
 
 providers:

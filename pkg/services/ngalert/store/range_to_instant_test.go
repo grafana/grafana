@@ -358,7 +358,7 @@ func prometheusQueryWithoutDS(t *testing.T, refID, datasourceUID string, isInsta
 	return models.AlertQuery{
 		RefID:         refID,
 		DatasourceUID: datasourceUID,
-		Model: []byte(fmt.Sprintf(`{
+		Model: (fmt.Appendf(nil, `{
 					"instant": %t,
 					"range": %t,
 					"editorMode": "code",

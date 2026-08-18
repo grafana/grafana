@@ -12,12 +12,13 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBuildAppInsightsQuery(t *testing.T) {
@@ -105,7 +106,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -122,7 +123,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -257,7 +258,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with no operation ID",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -272,7 +273,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -329,7 +330,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with no types",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -345,7 +346,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -404,7 +405,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with eq filter",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -421,7 +422,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -484,7 +485,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with ne filter",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -501,7 +502,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -564,7 +565,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with multiple filters",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -581,7 +582,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 								"queryType": "Azure Traces",
 								"azureTraces": {
 									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -644,7 +645,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with trace result format",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -659,7 +660,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -716,7 +717,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with trace result format and operation ID",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
@@ -732,7 +733,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
@@ -791,7 +792,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with trace result format and only trace type",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
@@ -808,7 +809,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
@@ -834,7 +835,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with operation ID and correlated workspaces",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
@@ -850,7 +851,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
@@ -913,7 +914,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with multiple resources",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
@@ -928,7 +929,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
@@ -989,7 +990,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with multiple resources and overlapping correlated workspaces",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
@@ -1005,7 +1006,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
@@ -1068,7 +1069,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with multiple resources and non-overlapping correlated workspaces",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-non-overlapping",
@@ -1084,7 +1085,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-non-overlapping",
@@ -1154,7 +1155,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 		{
 			name: "trace query with missing operation ID",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
@@ -1239,7 +1240,7 @@ func TestBuildAppInsightsQuery_EmptyResources(t *testing.T) {
 		{
 			name: "empty resources array should return error",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 					"queryType": "Azure Traces",
 					"azureTraces": {
 						"resources": [],
@@ -1256,7 +1257,7 @@ func TestBuildAppInsightsQuery_EmptyResources(t *testing.T) {
 		{
 			name: "missing resources field should return error",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 					"queryType": "Azure Traces",
 					"azureTraces": {
 						"resultFormat": "%s",
@@ -1272,7 +1273,7 @@ func TestBuildAppInsightsQuery_EmptyResources(t *testing.T) {
 		{
 			name: "trace exemplar with empty correlation resources should return error",
 			queryModel: backend.DataQuery{
-				JSON: []byte(fmt.Sprintf(`{
+				JSON: (fmt.Appendf(nil, `{
 					"queryType": "Azure Traces",
 					"azureTraces": {
 						"resources": ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],

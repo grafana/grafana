@@ -844,7 +844,7 @@ func TestIntegrationRun_SQLiteLargeMigrationRebuildUsesMigrationTransaction(t *t
 							Name:      fmt.Sprintf("large-item-%d", i),
 						},
 						Action: resourcepb.BulkRequest_ADDED,
-						Value: []byte(fmt.Sprintf(`{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"large-item-%d","namespace":"%s"},"spec":{"title":"%s"}}`,
+						Value: (fmt.Appendf(nil, `{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"large-item-%d","namespace":"%s"},"spec":{"title":"%s"}}`,
 							i, opts.Namespace, largeTitle)),
 					})
 					if err != nil {

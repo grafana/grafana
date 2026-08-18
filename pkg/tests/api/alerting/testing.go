@@ -13,11 +13,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -810,7 +811,7 @@ func (a apiClient) CreateDatasource(t *testing.T, dsType string) (result api.Cre
 	if resp.StatusCode != 200 {
 		require.Failf(t, "failed to create data source", "API request to create a datasource failed. Status code: %d, response: %s", resp.StatusCode, string(b))
 	}
-	require.NoError(t, json.Unmarshal([]byte(fmt.Sprintf(`{ "body": %s }`, string(b))), &result))
+	require.NoError(t, json.Unmarshal((fmt.Appendf(nil, `{ "body": %s }`, string(b))), &result))
 	return result
 }
 
