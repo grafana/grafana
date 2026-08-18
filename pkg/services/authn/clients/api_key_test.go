@@ -8,10 +8,9 @@ import (
 	"testing"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiserver/pkg/endpoints/request"
-
-	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/tracing"

@@ -19,7 +19,6 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/expr"
