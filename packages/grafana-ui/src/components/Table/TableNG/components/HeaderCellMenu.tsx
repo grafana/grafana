@@ -14,6 +14,8 @@ import { Menu } from '../../../Menu/Menu';
 interface HeaderCellMenuProps {
   displayName: string;
   filterable: boolean;
+  /** Whether this column currently has an active filter — swaps the menu item's label to reflect it. */
+  hasActiveFilter?: boolean;
   /** Opens the column's filter popup, anchored to the passed element. */
   onOpenFilter: (anchor: HTMLButtonElement | null) => void;
 }
@@ -25,7 +27,7 @@ interface HeaderCellMenuProps {
  * Built on Dropdown + Menu so it matches the dashboard panel menu. The filter popup itself is owned
  * by `HeaderCell`, which also opens it from the persistent filter icon.
  */
-export function HeaderCellMenu({ displayName, filterable, onOpenFilter }: HeaderCellMenuProps) {
+export function HeaderCellMenu({ displayName, filterable, hasActiveFilter, onOpenFilter }: HeaderCellMenuProps) {
   // `Dropdown` overwrites its child's ref with its own floating-ui reference, so we can't hold a ref
   // on the button directly. We reach it through the wrapper instead, so the popup can anchor to it.
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -38,7 +40,11 @@ export function HeaderCellMenu({ displayName, filterable, onOpenFilter }: Header
       <Menu ariaLabel={menuLabel}>
         {filterable && (
           <Menu.Item
-            label={t('grafana-ui.table.column-menu-filter', 'Filter values')}
+            label={
+              hasActiveFilter
+                ? t('grafana-ui.table.column-menu-update-filter', 'Update filter')
+                : t('grafana-ui.table.column-menu-filter', 'Filter values')
+            }
             icon="filter"
             testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem}
             onClick={() => onOpenFilter(wrapperRef.current?.querySelector('button') ?? null)}
@@ -46,7 +52,7 @@ export function HeaderCellMenu({ displayName, filterable, onOpenFilter }: Header
         )}
       </Menu>
     ),
-    [filterable, menuLabel, onOpenFilter]
+    [filterable, hasActiveFilter, menuLabel, onOpenFilter]
   );
 
   return (
