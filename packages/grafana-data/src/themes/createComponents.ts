@@ -221,7 +221,7 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     },
     drawer: {
       background: colors.background.primary,
-      borderColor: colors.border.weak,
+      borderColor: 'transparent',
       padding: 2,
     },
     overlay: {
