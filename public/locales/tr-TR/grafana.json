@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}}, {{status}} durumu ile başarısız oldu: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3282,8 +3283,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3305,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3330,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3625,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Zaman aralığı için benzersiz ad",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Zaman aralığı yükleniyor",
       "title-no-matching-time-interval-found": "Eşleşen zaman aralığı bulunamadı"
     },
@@ -5659,6 +5679,7 @@
       "add-conditional-rule": "{{ruleDescription}} kuralı ekle",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Paneli çoğalt",
       "edit-query-result-rule": "Sorgu sonucu kuralını değiştir",
       "edit-template-variable-rule": "Şablon değişkeni kuralını değiştir",
@@ -6863,7 +6884,8 @@
         "change-annotation-enabled-state": "Ek açıklamanın etkinleştirilme durumunu değiştir",
         "change-annotation-name": "Ek açıklama adını değiştir",
         "change-annotation-panel-filter": "Ek açıklama paneli filtresini değiştir"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Ek açıklama sorgusunu sil",
@@ -6939,13 +6961,9 @@
       "placeholder-your-metric-prefix": "Metrik ön ekiniz"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Sil",
-      "aria-label-edit": "Düzenle",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Göster/gizle kuralları çalışmayacaktır",
@@ -7745,6 +7763,10 @@
     },
     "variable-controls": {
       "add-variable": "Değişken ekle"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Değişkeni sil",
@@ -11732,6 +11754,7 @@
       "no-details": "Görüntülenecek alan yok.",
       "open-assistant": "Asistan'da günlük kaydı satırını açıklayın",
       "pin-line": "Günlüğü sabitle",
+      "prettify": "",
       "remove-displayed-field": "Alanı kaldır",
       "remove-log": "Günlüğü kaldır",
       "scroll-to-logline": "Günlük satırına git",
@@ -12445,7 +12468,7 @@
     },
     "machine-learning": {
       "subtitle": "Yapay zekâ ve makine öğrenimi özelliklerini keşfedin",
-      "title": "Yapay zekâ ve makine öğrenimi"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Klasör panolarını ve izinlerini yönetin"
@@ -12654,6 +12677,7 @@
       "customise-saving": "",
       "dialog-label": "Gezinme",
       "dock": "Menüyü sabitle",
+      "header-title": "",
       "list-label": "Gezinme",
       "open": "Ana menü",
       "pin-error": "",
@@ -12764,6 +12788,30 @@
       "title-zoom-out": "Uzaklaştır"
     }
   },
+  "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12792,6 +12840,11 @@
       "count_other": "",
       "count-truncated_one": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14338,6 +14391,12 @@
     "shared": {
       "branch-description": "Sağlama için kullanılacak dal",
       "branch-label": "Dal",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16059,6 +16118,7 @@
     "name-show-mini-map": "Mini haritayı göster"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16087,6 +16147,19 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

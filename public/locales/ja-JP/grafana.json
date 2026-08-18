@@ -1155,7 +1155,8 @@
         "with-causes": ""
       },
       "failedWith": "{{status}}により{{-config}}が失敗しました：{{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3257,8 +3258,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3275,9 +3280,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3288,6 +3305,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_other": ""
       },
@@ -3580,6 +3599,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "時間間隔の一意の名前",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "時間間隔を読み込み中",
       "title-no-matching-time-interval-found": "一致する時間間隔が見つかりません"
     },
@@ -5619,6 +5639,7 @@
       "add-conditional-rule": "{{ruleDescription}}ルールを追加",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "パネルを複製",
       "edit-query-result-rule": "クエリ結果ルールを変更",
       "edit-template-variable-rule": "テンプレート変数ルールを変更",
@@ -6809,7 +6830,8 @@
         "change-annotation-enabled-state": "注釈の有効状態を変更",
         "change-annotation-name": "注釈の名前を変更",
         "change-annotation-panel-filter": "注釈パネルのフィルターを変更"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "注釈クエリを削除",
@@ -6885,13 +6907,9 @@
       "placeholder-your-metric-prefix": "メトリックのプレフィックス"
     },
     "control-edit-actions": {
-      "aria-label-delete": "削除",
-      "aria-label-edit": "編集",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "ルールの表示/非表示は機能しません",
@@ -7453,7 +7471,7 @@
     "resource-export": {
       "classic-v2-warning": "このダッシュボードはV2スキーマを使用しています。タブや条件付きレンダリングなどの機能は、従来の形式では表現できず、失われる可能性があります。",
       "label": {
-        "advanced-options": "詳細オプション",
+        "advanced-options": "高度なオプション",
         "classic": "クラシック",
         "json": "JSON",
         "v2-resource": "V2リソース",
@@ -7689,6 +7707,10 @@
     },
     "variable-controls": {
       "add-variable": "変数を追加"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "変数を削除",
@@ -11637,6 +11659,7 @@
       "no-details": "表示するフィールドがありません。",
       "open-assistant": "",
       "pin-line": "ログをピン留め",
+      "prettify": "",
       "remove-displayed-field": "フィールドを削除する",
       "remove-log": "ログを削除",
       "scroll-to-logline": "ログ行までスクロール",
@@ -12350,7 +12373,7 @@
     },
     "machine-learning": {
       "subtitle": "AIと機械学習の機能を確認",
-      "title": "AIと機械学習"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "フォルダのダッシュボードと権限を管理する"
@@ -12559,6 +12582,7 @@
       "customise-saving": "",
       "dialog-label": "ナビゲーション",
       "dock": "メニューを固定",
+      "header-title": "",
       "list-label": "移動",
       "open": "メインメニュー",
       "pin-error": "",
@@ -12666,6 +12690,30 @@
       "title-zoom-out": "ズームアウト"
     }
   },
+  "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12692,6 +12740,11 @@
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14220,6 +14273,12 @@
     "shared": {
       "branch-description": "プロビジョニングに使用するブランチ",
       "branch-label": "ブランチ",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -15929,6 +15988,7 @@
     "name-show-mini-map": "ミニマップを表示"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -15957,6 +16017,19 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

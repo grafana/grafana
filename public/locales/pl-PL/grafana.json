@@ -1176,7 +1176,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} – niepowodzenie ze statusem {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3332,8 +3333,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3350,9 +3355,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3363,6 +3380,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_few": "",
@@ -3658,6 +3677,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Unikalna nazwa odstępu czasu",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Ładowanie odstępu czasu",
       "title-no-matching-time-interval-found": "Nie znaleziono pasującego odstępu czasu"
     },
@@ -5739,6 +5759,7 @@
       "add-conditional-rule": "Dodaj regułę {{ruleDescription}}",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Duplikuj panel",
       "edit-query-result-rule": "Zmień regułę wyniku zapytania",
       "edit-template-variable-rule": "Zmień regułę zmiennej szablonu",
@@ -6971,7 +6992,8 @@
         "change-annotation-enabled-state": "Zmień stan włączenia adnotacji",
         "change-annotation-name": "Zmień nazwę adnotacji",
         "change-annotation-panel-filter": "Zmień filtr panelu adnotacji"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Usuń zapytanie dotyczące adnotacji",
@@ -7047,13 +7069,9 @@
       "placeholder-your-metric-prefix": "Prefiks metryki"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Usuń",
-      "aria-label-edit": "Edytuj",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Reguły pokazywania/ukrywania nie będą działać",
@@ -7857,6 +7875,10 @@
     },
     "variable-controls": {
       "add-variable": "Dodaj zmienną"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Usuń zmienną",
@@ -11922,6 +11944,7 @@
       "no-details": "Brak pól do wyświetlenia.",
       "open-assistant": "",
       "pin-line": "Przypnij log",
+      "prettify": "",
       "remove-displayed-field": "Usuń pole",
       "remove-log": "Usuń log",
       "scroll-to-logline": "Przewiń do wiersza logu",
@@ -12635,7 +12658,7 @@
     },
     "machine-learning": {
       "subtitle": "Poznaj funkcje AI i uczenia maszynowego",
-      "title": "AI i uczenie maszynowe"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Zarządzaj pulpitami folderów i uprawnieniami"
@@ -12844,6 +12867,7 @@
       "customise-saving": "",
       "dialog-label": "Nawigacja",
       "dock": "Zadokuj menu",
+      "header-title": "",
       "list-label": "Nawigacja",
       "open": "Menu główne",
       "pin-error": "",
@@ -12960,6 +12984,30 @@
       "title-zoom-out": "Zmniejszenie"
     }
   },
+  "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12992,6 +13040,11 @@
       "count-truncated_few": "",
       "count-truncated_many": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14574,6 +14627,12 @@
     "shared": {
       "branch-description": "Gałąź używana do aprowizacji",
       "branch-label": "Gałąź",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16319,6 +16378,7 @@
     "name-show-mini-map": "Pokaż minimapę"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16347,6 +16407,19 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

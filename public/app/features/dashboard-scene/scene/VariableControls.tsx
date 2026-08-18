@@ -17,10 +17,11 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { duplicateVariable } from '../actions/variable/duplicateVariable';
+import { removeVariable } from '../actions/variable/removeVariable';
 import { SourceIcon } from '../settings/ProvisionedControlsSection';
 import { VariableEditorModal } from '../settings/variables/editors/VariableEditorModal';
 import { isVariableEditable } from '../settings/variables/utils';
-import { dashboardEditActions } from '../sidebar/shared';
 import { getPredefinedOrigin } from '../utils/predefinedVariables';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
@@ -92,12 +93,12 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const onClickDeleteVariable = useCallback(() => {
     const set = variable.parent;
     if (set instanceof SceneVariableSet) {
-      dashboardEditActions.removeVariable({ source: set, removedObject: variable });
+      removeVariable({ source: set, removedObject: variable });
     }
   }, [variable]);
 
   const onClickDuplicateVariable = useCallback(() => {
-    dashboardEditActions.duplicateVariable(variable);
+    duplicateVariable(variable);
   }, [variable]);
 
   const editActions = useMemo(

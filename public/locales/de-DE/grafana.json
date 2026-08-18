@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} fehlgeschlagen mit {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3282,8 +3283,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3305,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3330,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3625,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Ein eindeutiger Name für das Zeitintervall",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Zeitintervall wird geladen",
       "title-no-matching-time-interval-found": "Kein passendes Zeitintervall gefunden"
     },
@@ -5659,6 +5679,7 @@
       "add-conditional-rule": "Hinzufügen von {{ruleDescription}}-Regel",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Panel duplizieren",
       "edit-query-result-rule": "Regel für Abfrageergebnis ändern",
       "edit-template-variable-rule": "Regel für Vorlagenvariable ändern",
@@ -6863,7 +6884,8 @@
         "change-annotation-enabled-state": "Aktivierungsstatus der Anmerkung ändern",
         "change-annotation-name": "Anmerkungsnamen ändern",
         "change-annotation-panel-filter": "Filter für das Anmerkungs-Panel ändern"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Anmerkungsabfrage löschen",
@@ -6939,13 +6961,9 @@
       "placeholder-your-metric-prefix": "Ihr Metrik-Präfix"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Löschen",
-      "aria-label-edit": "Bearbeiten",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Regeln zum Ein-/Ausblenden funktionieren nicht",
@@ -7745,6 +7763,10 @@
     },
     "variable-controls": {
       "add-variable": "Variable hinzufügen"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Variable löschen",
@@ -11732,6 +11754,7 @@
       "no-details": "Keine anzuzeigenden Felder.",
       "open-assistant": "",
       "pin-line": "Log anheften",
+      "prettify": "",
       "remove-displayed-field": "Feld entfernen",
       "remove-log": "Log entfernen",
       "scroll-to-logline": "Zur Logzeile scrollen",
@@ -12445,7 +12468,7 @@
     },
     "machine-learning": {
       "subtitle": "Jetzt KI- und ML-Funktionen ansehen",
-      "title": "KI und ML"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Ordner-Dashboards und Berechtigungen verwalten"
@@ -12654,6 +12677,7 @@
       "customise-saving": "",
       "dialog-label": "Navigation",
       "dock": "Menü andocken",
+      "header-title": "",
       "list-label": "Navigation",
       "open": "Hauptmenü",
       "pin-error": "",
@@ -12764,6 +12788,30 @@
       "title-zoom-out": "Verkleinern"
     }
   },
+  "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12792,6 +12840,11 @@
       "count_other": "",
       "count-truncated_one": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14338,6 +14391,12 @@
     "shared": {
       "branch-description": "Der für die Bereitstellung verwendete Branch",
       "branch-label": "Branch",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16059,6 +16118,7 @@
     "name-show-mini-map": "Minikarte anzeigen"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16087,6 +16147,19 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

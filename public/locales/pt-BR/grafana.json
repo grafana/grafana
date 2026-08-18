@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} apresentou falha com o status {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3282,8 +3283,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3305,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3330,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3625,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Um nome exclusivo para o intervalo de tempo",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Carregando intervalo de tempo",
       "title-no-matching-time-interval-found": "Nenhum intervalo de tempo correspondente encontrado"
     },
@@ -3949,7 +3969,7 @@
     "category-link-behaviour": "Comportamento do link",
     "description-tags": "Corresponder etiquetas de anotação",
     "link-target-options": {
-      "label-dashboard": "Painel de controle",
+      "label-dashboard": "Painel",
       "label-panel": "Painel"
     },
     "name-limit": "Limite",
@@ -5659,6 +5679,7 @@
       "add-conditional-rule": "Adicionar regra {{ruleDescription}}",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Duplicar painel",
       "edit-query-result-rule": "Alterar regra de resultado da consulta",
       "edit-template-variable-rule": "Alterar regra de variável do modelo",
@@ -6863,7 +6884,8 @@
         "change-annotation-enabled-state": "Alterar estado de ativação da anotação",
         "change-annotation-name": "Alterar nome da anotação",
         "change-annotation-panel-filter": "Alterar filtro do painel de anotações"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Excluir consulta de anotação",
@@ -6939,13 +6961,9 @@
       "placeholder-your-metric-prefix": "Seu prefixo de métrica"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Excluir",
-      "aria-label-edit": "Editar",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "As regras de exibição/ocultação não funcionarão",
@@ -7745,6 +7763,10 @@
     },
     "variable-controls": {
       "add-variable": "Adicionar variável"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Excluir variável",
@@ -11732,6 +11754,7 @@
       "no-details": "Sem campos para exibir.",
       "open-assistant": "Acessar explicação da linha de registro no Assistente",
       "pin-line": "Fixar log",
+      "prettify": "",
       "remove-displayed-field": "Remover campo",
       "remove-log": "Remover registro",
       "scroll-to-logline": "Rolar para a linha do registro",
@@ -12445,7 +12468,7 @@
     },
     "machine-learning": {
       "subtitle": "Explorar recursos de IA e aprendizado de máquina",
-      "title": "IA e aprendizado de máquina"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gerencie painéis de controle de pastas e permissões"
@@ -12654,6 +12677,7 @@
       "customise-saving": "",
       "dialog-label": "Navegação",
       "dock": "Menu da dock",
+      "header-title": "",
       "list-label": "Navegação",
       "open": "Menu principal",
       "pin-error": "",
@@ -12764,6 +12788,30 @@
       "title-zoom-out": "Menos zoom"
     }
   },
+  "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12792,6 +12840,11 @@
       "count_other": "",
       "count-truncated_one": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14338,6 +14391,12 @@
     "shared": {
       "branch-description": "A ramificação que será usada para provisionamento",
       "branch-label": "Ramificação",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16059,6 +16118,7 @@
     "name-show-mini-map": "Mostrar minimapa"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16087,6 +16147,19 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

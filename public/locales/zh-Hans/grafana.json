@@ -1155,7 +1155,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} 失败，状态为{{status}}：{{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -2639,10 +2640,10 @@
     "provisioning": {
       "badge-tooltip-provenance": "此资源已通过 {{provenance}} 配置，无法通过用户界面编辑",
       "badge-tooltip-standard": "此资源已配置，无法通过用户界面编辑",
-      "body-imported": "此 {{resource}} 包含从外部 Alertmanager 导入的集成，当前为只读。迁移过程完成后，集成将变为可编辑。",
+      "body-imported": "此{{resource}}包含从外部 Alertmanager 导入的集成，当前为只读。迁移过程完成后，集成将变为可编辑。",
       "body-imported-time-interval": "此时间间隔从外部 Alertmanager 导入，当前为只读。迁移过程完成后，时间间隔将变为可编辑。",
       "body-provisioned": "此 {{resource}} 已预置，这意味着它是由配置创建的。请联系服务器管理员以更新此 {{resource}}。",
-      "title-imported": "此 {{resource}} 已导入，无法通过用户界面编辑",
+      "title-imported": "此{{resource}}已导入，无法通过用户界面编辑",
       "title-imported-time-interval": "此时间间隔已导入，无法通过用户界面编辑",
       "title-provisioned": "此 {{resource}} 无法通过用户界面编辑"
     },
@@ -3257,8 +3258,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3275,9 +3280,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3288,6 +3305,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_other": ""
       },
@@ -3580,6 +3599,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "时间间隔的唯一名称",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "正在加载时间间隔",
       "title-no-matching-time-interval-found": "未找到匹配的时间间隔"
     },
@@ -4471,7 +4491,7 @@
       "non-folder-item": "非文件夹 {{itemKind}} {{itemUID}}",
       "root-title": "数据面板",
       "search-placeholder": "搜索文件夹",
-      "shared-with-me": "与我共享",
+      "shared-with-me": "已与我共享",
       "starred-folders": "",
       "team-folders": "团队文件夹",
       "team-folders-error-title": "",
@@ -5619,6 +5639,7 @@
       "add-conditional-rule": "添加 {{ruleDescription}} 规则",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "复制面板",
       "edit-query-result-rule": "更改查询结果规则",
       "edit-template-variable-rule": "更改模板变量规则",
@@ -6809,7 +6830,8 @@
         "change-annotation-enabled-state": "更改注释启用状态",
         "change-annotation-name": "更改注释名称",
         "change-annotation-panel-filter": "更改注释面板筛选条件"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "删除注释查询",
@@ -6885,13 +6907,9 @@
       "placeholder-your-metric-prefix": "您的指标前缀"
     },
     "control-edit-actions": {
-      "aria-label-delete": "删除",
-      "aria-label-edit": "编辑",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "显示/隐藏规则将不起作用",
@@ -7689,6 +7707,10 @@
     },
     "variable-controls": {
       "add-variable": "添加变量"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "删除变量",
@@ -11637,6 +11659,7 @@
       "no-details": "没有要显示的字段。",
       "open-assistant": "",
       "pin-line": "固定日志",
+      "prettify": "",
       "remove-displayed-field": "移除字段",
       "remove-log": "移除日志",
       "scroll-to-logline": "滚动到日志行",
@@ -12350,7 +12373,7 @@
     },
     "machine-learning": {
       "subtitle": "探索 AI 和机器学习功能",
-      "title": "AI 和机器学习"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "管理文件夹仪表板和权限"
@@ -12559,6 +12582,7 @@
       "customise-saving": "",
       "dialog-label": "导航",
       "dock": "停靠菜单",
+      "header-title": "",
       "list-label": "导航",
       "open": "主菜单",
       "pin-error": "",
@@ -12666,6 +12690,30 @@
       "title-zoom-out": "缩小"
     }
   },
+  "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12692,6 +12740,11 @@
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14220,6 +14273,12 @@
     "shared": {
       "branch-description": "用于预置的分支",
       "branch-label": "分支",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -15929,6 +15988,7 @@
     "name-show-mini-map": "显示小地图"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -15957,6 +16017,19 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

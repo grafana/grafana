@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -389,7 +389,7 @@ func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 
 	provDashboardsDir := filepath.Join(dir, "conf", "provisioning", "dashboards")
 	provDashboardsCfg := filepath.Join(provDashboardsDir, "dev.yaml")
-	blob := []byte(fmt.Sprintf(`
+	blob := fmt.Appendf(nil, `
 apiVersion: 1
 
 providers:
@@ -397,7 +397,7 @@ providers:
   type: file
   allowUiUpdates: false
   options:
-   path: %s`, provDashboardsDir))
+   path: %s`, provDashboardsDir)
 	err := os.WriteFile(provDashboardsCfg, blob, 0644)
 	require.NoError(t, err)
 	input, err := os.ReadFile(filepath.Join("./home.json"))

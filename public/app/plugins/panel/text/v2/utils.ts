@@ -1,10 +1,21 @@
-import { renderTextPanelMarkdown, textUtil } from '@grafana/data';
+import { renderTextPanelMarkdown, textUtil, type DataFrame } from '@grafana/data';
 import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 
 import { CodeLanguage, TextMode } from '../panelcfg.gen';
 
-export function getInterpolateFormat(codeLanguage?: CodeLanguage): 'json' | 'html' {
-  return codeLanguage === CodeLanguage.Json ? 'json' : 'html';
+export const EMPTY_CONTENT = ' ';
+
+export function getCurrentFrameIndex(frames: DataFrame[], options: { frameIndex?: number }) {
+  const frameIndex = options.frameIndex ?? 0;
+  return frameIndex > 0 && frameIndex < frames.length ? frameIndex : 0;
+}
+
+export function getInterpolateFormat(mode: TextMode, codeLanguage?: CodeLanguage): 'json' | 'html' | 'raw' {
+  if (mode !== TextMode.Code) {
+    return 'html';
+  }
+
+  return codeLanguage === CodeLanguage.Json ? 'json' : 'raw';
 }
 
 /** Shared by the panel and the edit-time preview so they can't diverge. */
@@ -24,9 +35,7 @@ export function transformContent(mode: TextMode, content: string, disableSanitiz
       });
   }
 
-  // DangerouslySetHtmlContent throws on falsy html, and markdown renders blank
-  // lines or a lone comment to ''.
-  return content || ' ';
+  return content || EMPTY_CONTENT;
 }
 
 /** Maps the panel's CodeLanguage option to CodeMirrorEditor's lazy-loaded language names. */

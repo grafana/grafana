@@ -1155,7 +1155,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} gagal dengan {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3257,8 +3258,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3275,9 +3280,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3288,6 +3305,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_other": ""
       },
@@ -3580,6 +3599,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Nama unik untuk interval waktu",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Memuat interval waktu",
       "title-no-matching-time-interval-found": "Tidak ditemukan interval waktu yang cocok"
     },
@@ -4570,8 +4590,8 @@
     "text-this-repository-is-read-only": "Jika Anda memiliki akses langsung ke target, salin JSON dan tempel di sana.",
     "trash-state-manager": {
       "label": {
-        "alphabetically-az": "Sesuai abjad (A-Z)",
-        "alphabetically-za": "Sesuai abjad (Z-A)",
+        "alphabetically-az": "Sesuai abjad (A–Z)",
+        "alphabetically-za": "Sesuai abjad (Z–A)",
         "deleted-by-az": "",
         "deleted-by-za": "",
         "deleted-newest": "Dihapus (terbaru lebih dulu)",
@@ -5619,6 +5639,7 @@
       "add-conditional-rule": "Tambah aturan {{ruleDescription}}",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Duplikasikan panel",
       "edit-query-result-rule": "Ubah aturan hasil kueri",
       "edit-template-variable-rule": "Ubah aturan variabel templat",
@@ -6809,7 +6830,8 @@
         "change-annotation-enabled-state": "Ubah status anotasi yang diaktifkan",
         "change-annotation-name": "Ubah nama anotasi",
         "change-annotation-panel-filter": "Ubah filter panel anotasi"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Hapus kueri anotasi",
@@ -6885,13 +6907,9 @@
       "placeholder-your-metric-prefix": "Awalan metrik Anda"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Hapus",
-      "aria-label-edit": "Edit",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Tampilkan/sembunyikan aturan tidak akan berfungsi",
@@ -7689,6 +7707,10 @@
     },
     "variable-controls": {
       "add-variable": "Tambah variabel"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Hapus variabel",
@@ -11637,6 +11659,7 @@
       "no-details": "Tidak ada bidang untuk ditampilkan.",
       "open-assistant": "Jelaskan baris log di Asisten",
       "pin-line": "Sematkan log",
+      "prettify": "",
       "remove-displayed-field": "Hapus bidang",
       "remove-log": "Hapus log",
       "scroll-to-logline": "Gulir ke baris log",
@@ -12350,7 +12373,7 @@
     },
     "machine-learning": {
       "subtitle": "Telusuri fitur AI dan pembelajaran mesin",
-      "title": "AI & pembelajaran mesin"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Kelola dasbor dan izin folder"
@@ -12559,6 +12582,7 @@
       "customise-saving": "",
       "dialog-label": "Navigasi",
       "dock": "Gandeng menu",
+      "header-title": "",
       "list-label": "Navigasi",
       "open": "Menu utama",
       "pin-error": "",
@@ -12666,6 +12690,30 @@
       "title-zoom-out": "Perkecil"
     }
   },
+  "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12692,6 +12740,11 @@
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14220,6 +14273,12 @@
     "shared": {
       "branch-description": "Cabang yang akan digunakan untuk penyediaan",
       "branch-label": "Cabang",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -15929,6 +15988,7 @@
     "name-show-mini-map": "Tampilkan peta mini"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -15957,6 +16017,19 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {
@@ -16937,7 +17010,7 @@
         "as-line": "Sebagai garis",
         "calculate-value": "Hitung nilai",
         "distance": "Jarak",
-        "heading": "Arah",
+        "heading": "Judul",
         "line-builder": "Pembuat garis",
         "prepare-spatial-field": "Siapkan bidang spasial",
         "transform": "Ubah"

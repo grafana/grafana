@@ -59,7 +59,7 @@ import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResou
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { StepImportMethod } from './steps/StepImportMethod';
 import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
-import { type DryRunValidationResult, type PromoteStatsSummary } from './types';
+import { type DryRunValidationResult } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
 import {
   buildRoutingParams,
@@ -282,7 +282,7 @@ function ImportWizardContent() {
       yamlFile: formValues.notificationsYamlFile,
       templateFiles: formValues.notificationsTemplateFiles,
       configIdentifier: formValues.policyTreeName,
-      promote: formValues.importMethod === 'promote',
+      promote: false,
     });
   }, [getValues, runDryRun]);
 
@@ -368,7 +368,7 @@ function ImportWizardContent() {
           yamlFile: values.notificationsYamlFile,
           templateFiles: values.notificationsTemplateFiles,
           configIdentifier: values.policyTreeName,
-          promote: values.importMethod === 'promote',
+          promote: false,
         });
       }
 
@@ -418,10 +418,23 @@ function ImportWizardContent() {
 
       setTimeout(() => {
         setShowConfirmModal(false);
-        notifyApp.success(
-          t('alerting.wizard-import-to-gma.success', 'Successfully imported resources to Grafana Alerting.')
-        );
-        locationService.push(ruleListUrl);
+        // A staged notifications import lands on the Import tab so the user can review the staged
+        // copy and decide to promote or revert it. Everything else keeps the rule-list redirect.
+        if (willImportNotifications) {
+          notifyApp.success(
+            t('alerting.wizard-import-to-gma.staged-success-title', 'Configuration staged'),
+            t(
+              'alerting.wizard-import-to-gma.staged-success-body',
+              'Your imported config is now staged in the Import tab.'
+            )
+          );
+          locationService.push(ALERTING_IMPORT_SETTINGS_URL);
+        } else {
+          notifyApp.success(
+            t('alerting.wizard-import-to-gma.success', 'Successfully imported resources to Grafana Alerting.')
+          );
+          locationService.push(ruleListUrl);
+        }
       }, 1500);
     } catch (err) {
       setImportStatus('error');
@@ -680,53 +693,6 @@ const getValidationIndicatorStyles = (theme: GrafanaTheme2) => ({
   errorIcon: css({ color: theme.colors.error.main }),
 });
 
-/**
- * Summary of how many resources a promote will merge into the live config, shown on the
- * review screen. Lists only the resource types that are actually present in the import.
- */
-export function PromoteMergeSummary({ stats }: { stats: PromoteStatsSummary }) {
-  const items = [
-    stats.receivers > 0 &&
-      t('alerting.import-to-gma.review.merge-receivers', '', {
-        count: stats.receivers,
-        defaultValue_one: '{{count}} contact point',
-        defaultValue_other: '{{count}} contact points',
-      }),
-    stats.templates > 0 &&
-      t('alerting.import-to-gma.review.merge-templates', '', {
-        count: stats.templates,
-        defaultValue_one: '{{count}} template',
-        defaultValue_other: '{{count}} templates',
-      }),
-    stats.timeIntervals > 0 &&
-      t('alerting.import-to-gma.review.merge-time-intervals', '', {
-        count: stats.timeIntervals,
-        defaultValue_one: '{{count}} mute timing',
-        defaultValue_other: '{{count}} mute timings',
-      }),
-    stats.inhibitionRules > 0 &&
-      t('alerting.import-to-gma.review.merge-inhibition-rules', '', {
-        count: stats.inhibitionRules,
-        defaultValue_one: '{{count}} inhibition rule',
-        defaultValue_other: '{{count}} inhibition rules',
-      }),
-    stats.route && t('alerting.import-to-gma.review.merge-route', 'a notification route'),
-  ].filter((item): item is string => Boolean(item));
-
-  if (items.length === 0) {
-    return null;
-  }
-
-  return (
-    <Alert
-      severity="warning"
-      title={t('alerting.import-to-gma.review.merge-summary', 'Will merge into your live config: {{summary}}', {
-        summary: items.join(', '),
-      })}
-    />
-  );
-}
-
 // Review Step Component
 interface ReviewStepProps {
   formData: ImportFormValues;
@@ -884,20 +850,9 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                       <PolicyTreeNameHelp />
                     </Stack>
                   </div>
-                  {formData.importMethod === 'promote' && (
-                    <div className={styles.row}>
-                      <Text color="secondary">{t('alerting.import-to-gma.review.method', 'Method')}</Text>
-                      <Text weight="medium">{t('alerting.import-to-gma.review.method-promote', 'Promote')}</Text>
-                    </div>
-                  )}
                   {dryRunResult && (
                     <Box marginTop={1}>
                       <ValidationStatusIndicator result={dryRunResult} />
-                    </Box>
-                  )}
-                  {formData.importMethod === 'promote' && dryRunResult?.stats && (
-                    <Box marginTop={1}>
-                      <PromoteMergeSummary stats={dryRunResult.stats} />
                     </Box>
                   )}
                 </Stack>

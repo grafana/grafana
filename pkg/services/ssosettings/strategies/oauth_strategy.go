@@ -3,7 +3,9 @@ package strategies
 import (
 	"context"
 	"maps"
+	"slices"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -11,8 +13,7 @@ import (
 )
 
 type OAuthStrategy struct {
-	cfg                *setting.Cfg
-	settingsByProvider map[string]map[string]any
+	cfgProvider configprovider.ConfigProvider
 }
 
 var extraKeysByProvider = map[string]map[string]connectors.ExtraKeyInfo{
@@ -26,48 +27,54 @@ var extraKeysByProvider = map[string]map[string]connectors.ExtraKeyInfo{
 
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
 
-func NewOAuthStrategy(cfg *setting.Cfg) *OAuthStrategy {
-	oauthStrategy := &OAuthStrategy{
-		cfg:                cfg,
-		settingsByProvider: make(map[string]map[string]any),
-	}
-
-	oauthStrategy.loadAllSettings()
-	return oauthStrategy
+func NewOAuthStrategy(cfgProvider configprovider.ConfigProvider) *OAuthStrategy {
+	return &OAuthStrategy{cfgProvider: cfgProvider}
 }
 
 func (s *OAuthStrategy) IsMatch(_ context.Context, provider string) bool {
-	_, ok := s.settingsByProvider[provider]
-	return ok
+	return provider == social.GrafanaNetProviderName || slices.Contains(ssosettings.AllOAuthProviders, provider)
 }
 
-func (s *OAuthStrategy) GetProviderConfig(_ context.Context, provider string) (map[string]any, error) {
-	providerConfig := s.settingsByProvider[provider]
+func (s *OAuthStrategy) GetProviderConfig(ctx context.Context, provider string) (map[string]any, error) {
+	settingsByProvider, err := s.loadAllSettings(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	providerConfig := settingsByProvider[provider]
 	result := make(map[string]any, len(providerConfig))
 	maps.Copy(result, providerConfig)
 	return result, nil
 }
 
-func (s *OAuthStrategy) loadAllSettings() {
-	allProviders := append(ssosettings.AllOAuthProviders, social.GrafanaNetProviderName)
+func (s *OAuthStrategy) loadAllSettings(ctx context.Context) (map[string]map[string]any, error) {
+	cfg, err := s.cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	settingsByProvider := make(map[string]map[string]any)
+	allProviders := slices.Concat(ssosettings.AllOAuthProviders, []string{social.GrafanaNetProviderName})
 	for _, provider := range allProviders {
-		settings := s.loadSettingsForProvider(provider)
+		settings := loadSettingsForProvider(cfg, provider)
 		// This is required to support the legacy settings for the provider (auth.grafananet section)
 		// It will use the settings (and overwrite the current grafana_com settings) from auth.grafananet if
 		// the auth.grafananet section is enabled and the auth.grafana_com section is disabled.
-		if provider == social.GrafanaNetProviderName && s.shouldUseGrafanaNetSettings() && settings["enabled"] == true {
+		if provider == social.GrafanaNetProviderName && shouldUseGrafanaNetSettings(settingsByProvider) && settings["enabled"] == true {
 			provider = social.GrafanaComProviderName
 		}
-		s.settingsByProvider[provider] = settings
+		settingsByProvider[provider] = settings
 	}
+
+	return settingsByProvider, nil
 }
 
-func (s *OAuthStrategy) shouldUseGrafanaNetSettings() bool {
-	return s.settingsByProvider[social.GrafanaComProviderName]["enabled"] == false
+func shouldUseGrafanaNetSettings(settingsByProvider map[string]map[string]any) bool {
+	return settingsByProvider[social.GrafanaComProviderName]["enabled"] == false
 }
 
-func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any {
-	section := s.cfg.Raw.Section("auth." + provider)
+func loadSettingsForProvider(cfg *setting.Cfg, provider string) map[string]any {
+	section := cfg.Raw.Section("auth." + provider)
 
 	result := map[string]any{
 		"client_authentication":         section.Key("client_authentication").Value(),

@@ -124,11 +124,6 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
-  * Enable export functionality for provisioned resources
-  * @default false
-  */
-  provisioningExport?: boolean;
-  /**
   * Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
   * @default true
   */
@@ -539,11 +534,6 @@ export interface FeatureToggles {
   * @default false
   */
   preserveDashboardStateWhenNavigating?: boolean;
-  /**
-  * Enables the new central alert history.
-  * @default false
-  */
-  alertingCentralAlertHistory?: boolean;
   /**
   * Preserve plugin proxy trailing slash.
   * @default false
@@ -1241,6 +1231,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesUsersRedirect?: boolean;
+  /**
+  * Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
+  * @default false
+  */
+  kubernetesUsersRedirectNoFallback?: boolean;
   /**
   * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false

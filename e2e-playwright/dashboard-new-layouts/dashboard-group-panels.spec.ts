@@ -33,8 +33,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         // Verify row and panel titles after reload
         await expect(rows.getTitle('New row')).toBeVisible();
@@ -50,8 +49,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         // Verify Row title is gone
         await expect(rows.getTitle('New row')).toBeHidden();
@@ -90,8 +88,7 @@ test.describe(
         await expect(panels.getPanels('New panel', thirdRow)).toHaveCount(1);
 
         // Save dashboard and reload
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         firstRow = await expectRowToBeVisible('New row', rows);
         await expect(panels.getPanels('New panel', firstRow)).toHaveCount(3);
@@ -108,7 +105,7 @@ test.describe(
 
         // First test individual row deletion
         await rows.select('New row 1');
-        await sidebar.clickDeleteButton({ confirm: true });
+        await sidebar.deleteSelection({ confirm: true });
 
         // Verify 2nd row is deleted
 
@@ -139,8 +136,7 @@ test.describe(
         await expect(thirdRow).toBeHidden();
         await expect(panels.getPanels('New panel')).toHaveCount(4); // All 4 panels should be visible in the single grid
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         // Verify all rows are still gone after reload
         await expect(firstRow).toBeHidden();
@@ -157,7 +153,7 @@ test.describe(
         await expectRowToBeVisible('New row', rows);
 
         // Copy-paste the new row
-        await sidebar.clickCopyButton();
+        await sidebar.copySelection();
         await canvas.pasteRow();
 
         let firstRow = await expectRowToBeVisible('New row', rows);
@@ -168,8 +164,7 @@ test.describe(
         await secondRow.scrollIntoViewIfNeeded();
         await expect(panels.getPanels('New panel', secondRow)).toHaveCount(3);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         firstRow = await expectRowToBeVisible('New row', rows);
         await firstRow.scrollIntoViewIfNeeded();
@@ -188,7 +183,7 @@ test.describe(
         await expectRowToBeVisible('New row', rows);
 
         // Duplicate the new row
-        await sidebar.clickDuplicateButton();
+        await sidebar.duplicateSelection();
 
         let firstRow = await expectRowToBeVisible('New row', rows);
         await firstRow.scrollIntoViewIfNeeded();
@@ -198,8 +193,7 @@ test.describe(
         await secondRow.scrollIntoViewIfNeeded();
         await expect(panels.getPanels('New panel', secondRow)).toHaveCount(3);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         firstRow = await expectRowToBeVisible('New row', rows);
         await firstRow.scrollIntoViewIfNeeded();
@@ -218,7 +212,7 @@ test.describe(
         await expectRowToBeVisible('New row', rows);
 
         // Duplicate the new row
-        await sidebar.clickDuplicateButton();
+        await sidebar.duplicateSelection();
 
         const firstRow = await expectRowToBeVisible('New row', rows);
         await firstRow.scrollIntoViewIfNeeded();
@@ -241,8 +235,7 @@ test.describe(
 
         await expect(panels.getPanels('New panel')).toHaveCount(0);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect(rows.getTitle('New row')).toBeVisible();
         await expect(rows.getContent('New row')).toBeHidden();
@@ -270,9 +263,9 @@ test.describe(
         await expectRowToBeVisible('New row', rows);
 
         // Duplicate the new row
-        await sidebar.clickDuplicateButton();
+        await sidebar.duplicateSelection();
         await panels.selectByIndex(0);
-        await sidebar.clickDeleteButton({ confirm: true }); // remove a panel from the 1st row
+        await sidebar.deleteSelection({ confirm: true }); // remove a panel from the 1st row
 
         await expectRowToBeVisible('New row', rows);
         await expectRowToBeVisible('New row 1', rows);
@@ -290,8 +283,7 @@ test.describe(
         await tabs.select('New row 1');
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expectTabToBeVisible('New row 1', tabs); // last active tab is selected
         await expect(panels.getPanels('New panel')).toHaveCount(3);
@@ -323,8 +315,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         // Verify tab, row and panel titles after reload
         await expectRowToBeVisible('New row', rows);
@@ -343,8 +334,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         // Verify Row title is gone
         await expect(rows.getTitle('New row')).toBeHidden();
@@ -396,8 +386,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         // Verify tab and panel titles after reload
         await expectTabToBeVisible('New tab', tabs);
@@ -413,8 +402,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         // Verify tab title is gone
         await expect(tabs.getTitle('New tab')).toBeHidden();
@@ -441,8 +429,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(1);
 
         // Save dashboard and reload
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect(tabs.getTitle('New tab')).toBeVisible();
         await expect(tabs.getTitle('New tab 1')).toBeVisible();
@@ -454,10 +441,10 @@ test.describe(
         await controls.enterEditMode();
 
         await tabs.select('New tab 2');
-        await sidebar.clickDeleteButton({ confirm: true });
+        await sidebar.deleteSelection({ confirm: true });
 
         await tabs.select('New tab 1');
-        await sidebar.clickDeleteButton({ confirm: true });
+        await sidebar.deleteSelection({ confirm: true });
 
         await expect(tabs.getTitle('New tab 1')).toBeHidden();
         await expect(tabs.getTitle('New tab 2')).toBeHidden();
@@ -465,8 +452,7 @@ test.describe(
         await expectTabToBeVisible('New tab', tabs);
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect(tabs.getTitle('New tab 1')).toBeHidden();
         await expect(tabs.getTitle('New tab 2')).toBeHidden();
@@ -483,15 +469,14 @@ test.describe(
         await expect(tabs.getTitle('New tab')).toBeVisible();
 
         // Copy-paste the new tab
-        await sidebar.clickCopyButton();
+        await sidebar.copySelection();
         await canvas.pasteTab();
 
         await expect(tabs.getTitle('New tab')).toBeVisible();
         await expect(tabs.getTitle('New tab 1')).toBeVisible();
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect(tabs.getTitle('New tab')).toBeVisible();
         await expect(tabs.getTitle('New tab 1')).toBeVisible();
@@ -506,14 +491,13 @@ test.describe(
         await expect(tabs.getTitle('New tab')).toBeVisible();
 
         // Duplicate by selecting tab and using duplicate button
-        await sidebar.clickDuplicateButton();
+        await sidebar.duplicateSelection();
 
         await expect(tabs.getTitle('New tab')).toBeVisible();
         await expect(tabs.getTitle('New tab 1')).toBeVisible();
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect(tabs.getTitle('New tab')).toBeVisible();
         await expect(tabs.getTitle('New tab 1')).toBeVisible();
@@ -538,8 +522,8 @@ test.describe(
         await expect(tabs.getTitle('New tab')).toBeVisible();
 
         // Duplicate tab twice
-        await sidebar.clickDuplicateButton();
-        await sidebar.clickDuplicateButton();
+        await sidebar.duplicateSelection();
+        await sidebar.duplicateSelection();
 
         await expect(tabs.getTitle('New tab')).toBeVisible();
         await expect(tabs.getTitle('New tab 1')).toBeVisible();
@@ -563,8 +547,7 @@ test.describe(
         await thirdRow.scrollIntoViewIfNeeded();
         await expect(panels.getPanels('New panel', thirdRow)).toHaveCount(3);
 
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         firstRow = await expectRowToBeVisible('New tab', rows);
         await firstRow.scrollIntoViewIfNeeded();
@@ -603,8 +586,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         // Verify tab, row and panel titles after reload
         await expect(tabs.getTitle('New tab')).toBeVisible();
@@ -623,8 +605,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         // Verify Row title is gone
         await expect(tabs.getTitle('New tab')).toBeHidden();
@@ -641,12 +622,12 @@ test.describe(
 
         // edit tab title to a non-default and close the pane to trigger the title update
         await sidebar.tabOptions.setTitle('Test tab 1');
-        await sidebar.clickCloseButton();
+        await sidebar.closePane();
 
         // clear the title input to simulate no title and close the pane to trigger the title update
         await tabs.select('Test tab 1');
         await sidebar.tabOptions.setTitle('');
-        await sidebar.clickCloseButton();
+        await sidebar.closePane();
         // title should be set to a default name
         await expect(tabs.getTitle('New tab')).toBeVisible();
 
@@ -656,12 +637,12 @@ test.describe(
 
         // edit tab title to a non-default and close the pane to trigger the title update
         await sidebar.tabOptions.setTitle('Test tab 2');
-        await sidebar.clickCloseButton();
+        await sidebar.closePane();
 
         // clear the title input to simulate no title and close the pane to trigger the title update
         await tabs.select('Test tab 2');
         await sidebar.tabOptions.setTitle('');
-        await sidebar.clickCloseButton();
+        await sidebar.closePane();
         // title should be set to a default name + 1 to avoid duplicates
         await expect(tabs.getTitle('New tab 1')).toBeVisible();
       });
