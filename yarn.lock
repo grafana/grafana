@@ -2455,7 +2455,7 @@ __metadata:
     typescript: "npm:@typescript/typescript6@^6.0.2"
     uplot: "npm:^1.6.32"
     xss: "npm:^1.0.14"
-    zod: "npm:^4.3.0"
+    zod: "npm:^4.5.4"
   peerDependencies:
     react: ">=19"
     react-dom: ">=19"
@@ -20402,7 +20402,7 @@ __metadata:
     webpackbar: "npm:^7.0.0"
     whatwg-fetch: "npm:3.6.20"
     yargs: "npm:^18.0.0"
-    zod: "npm:^4.3.0"
+    zod: "npm:^4.5.4"
   dependenciesMeta:
     msw:
       built: true
@@ -35945,10 +35945,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.25 || ^4.0, zod@npm:^4.1.11, zod@npm:^4.3.0":
+"zod@npm:^3.25 || ^4.0, zod@npm:^4.1.11":
   version: 4.4.3
   resolution: "zod@npm:4.4.3"
   checksum: 10/804b9a42aa8f35f2b3c5a8dff906291cb749115f83ee2afe3576d70b5b5c53c965365c7f4967690647a9c54af9838ff232a85ff9577a0a36c44b68bc6cdefe36
+  languageName: node
+  linkType: hard
+
+"zod@npm:^4.5.4":
+  version: 4.5.4
+  resolution: "zod@npm:4.5.4"
+  checksum: 10/b2fd4aaf358359650a1f27f303a462f0f49b4e5582f517ad8894ed566fdceb9da391b59babffe3c70574c8064174883735657eb28e12db5c7021455a631866c4
   languageName: node
   linkType: hard
 
