@@ -9,9 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/apimachinery/pkg/selection"
 )
 
-func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
+func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListWithFieldSelectors")
 	defer span.End()
 
@@ -39,6 +40,11 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 				Error: NewBadRequestError("invalid continue token"),
 			}, nil
 		}
+		if tokenFromOtherListPath(token, true) {
+			return &resourcepb.ListResponse{
+				Error: NewBadRequestError("continue token was not issued for a search-backed list"),
+			}, nil
+		}
 		listRv = token.ResourceVersion
 		srq.SearchAfter = token.SearchAfter
 		srq.SearchBefore = token.SearchBefore
@@ -51,7 +57,7 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		searchResp, err = s.search.Search(ctx, srq)
 	} else {
 		// Use remote search service
-		// useFieldSelectorSearch() already checks that either s.search or s.searchClient is set
+		// useSelectorSearch() already checks that either s.search or s.searchClient is set
 		searchResp, err = s.searchClient.Search(ctx, srq)
 	}
 	if err != nil {
@@ -69,7 +75,7 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		ResourceVersion: listRv,
 	}
 
-	s.log.Info("Search used for List with field selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "search_hits", searchResp.TotalHits, "with_pagination", req.NextPageToken != "", "search_after", srq.SearchAfter, "selectable_fields", req.Options.Fields)
+	s.log.Info("Search used for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "search_hits", searchResp.TotalHits, "with_pagination", req.NextPageToken != "", "search_after", srq.SearchAfter, "selectable_fields", req.Options.Fields, "labels", req.Options.Labels)
 	// Using searchResp.GetResults().GetRows() will not panic if anything is nil on the path.
 	for _, row := range searchResp.GetResults().GetRows() {
 		// TODO: use batch reads
@@ -107,9 +113,25 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 	return rsp, nil
 }
 
-func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
+// tokenFromOtherListPath reports whether a continue token was issued by the other
+// list path. The two encode a position differently, sort values against the index
+// and a name against the store, so continuing with the wrong one would silently
+// restart from the first result.
+func tokenFromOtherListPath(token *ContinueToken, searchPath bool) bool {
+	if searchPath {
+		return token.Name != "" || token.Namespace != ""
+	}
+	return len(token.SearchAfter) > 0 || len(token.SearchBefore) > 0
+}
+
+// filterSelectors drops the requirements the index cannot answer, so a request
+// carrying one of them is still served rather than refused. Callers re-apply the
+// selector to the returned objects, so a dropped requirement costs extra reads
+// rather than correctness.
+func filterSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 	fields := make([]*resourcepb.Requirement, 0, len(req.Options.Fields))
 	for _, f := range req.Options.Fields {
+		// metadata.namespace is already in the request key.
 		if (f.Operator != "=" && f.Operator != "==") || f.Key == "metadata.namespace" {
 			continue
 		}
@@ -117,11 +139,34 @@ func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 	}
 	req.Options.Fields = fields
 
+	labels := make([]*resourcepb.Requirement, 0, len(req.Options.Labels))
+	for _, l := range req.Options.Labels {
+		if !indexableSelectorOperator(l.Operator) {
+			continue
+		}
+		labels = append(labels, l)
+	}
+	req.Options.Labels = labels
+
 	return req
 }
 
-func (s *server) useFieldSelectorSearch(req *resourcepb.ListRequest) bool {
-	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE || len(req.Options.Fields) == 0 {
+// indexableSelectorOperator reports whether requirementQuery can turn the operator
+// into an index query. A label selector may also carry !=, key and !key.
+func indexableSelectorOperator(op string) bool {
+	switch selection.Operator(op) {
+	case selection.Equals, selection.DoubleEquals, selection.In, selection.NotIn:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
+	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE {
+		return false
+	}
+	if len(req.Options.Fields) == 0 && len(req.Options.Labels) == 0 {
 		return false
 	}
 

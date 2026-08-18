@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
-func TestUseFieldSelectorSearch(t *testing.T) {
+func TestUseSelectorSearch(t *testing.T) {
 	tests := map[string]struct {
 		disableSearch   bool
 		req             *resourcepb.ListRequest
@@ -44,7 +44,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
-		"false when no field selectors": {
+		"false when no field or label selectors": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
@@ -52,6 +52,16 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 				},
 			},
 			expectedAllowed: false,
+		},
+		"true when store, labels only, and search client": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app"},
+					Labels: []*resourcepb.Requirement{{Key: "alerting.grafana.app/has-rules", Operator: "=", Values: []string{"true"}}},
+				},
+			},
+			expectedAllowed: true,
 		},
 		"false when version match exact": {
 			req: &resourcepb.ListRequest{
@@ -104,12 +114,12 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 				s.searchClient = &stubSearchClient{}
 			}
 
-			require.Equal(t, tc.expectedAllowed, s.useFieldSelectorSearch(tc.req))
+			require.Equal(t, tc.expectedAllowed, s.useSelectorSearch(tc.req))
 		})
 	}
 }
 
-func TestFilterFieldSelectors(t *testing.T) {
+func TestFilterSelectors(t *testing.T) {
 	tests := map[string]struct {
 		req           *resourcepb.ListRequest
 		wantFieldKeys []string
@@ -142,7 +152,7 @@ func TestFilterFieldSelectors(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			out := filterFieldSelectors(tc.req)
+			out := filterSelectors(tc.req)
 
 			gotKeys := make([]string, 0, len(out.Options.Fields))
 			for _, f := range out.Options.Fields {
@@ -153,8 +163,109 @@ func TestFilterFieldSelectors(t *testing.T) {
 	}
 }
 
-func TestListWithFieldSelectors(t *testing.T) {
+func TestFilterSelectors_Labels(t *testing.T) {
+	req := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{Namespace: "nsx"},
+			Labels: []*resourcepb.Requirement{
+				{Key: "keep-equals", Operator: "="},
+				{Key: "keep-double-equals", Operator: "=="},
+				{Key: "keep-in", Operator: "in"},
+				{Key: "keep-notin", Operator: "notin"},
+				{Key: "drop-not-equals", Operator: "!="},
+				{Key: "drop-exists", Operator: "exists"},
+			},
+		},
+	}
+
+	got := make([]string, 0, len(req.Options.Labels))
+	for _, l := range filterSelectors(req).Options.Labels {
+		got = append(got, l.Key)
+	}
+	require.Equal(t, []string{"keep-equals", "keep-double-equals", "keep-in", "keep-notin"}, got)
+}
+
+func TestTokenFromOtherListPath(t *testing.T) {
+	searchToken := &ContinueToken{SearchAfter: []string{"s1"}, ResourceVersion: 100}
+	scanToken := &ContinueToken{Name: "a", ResourceVersion: 100}
+
+	require.False(t, tokenFromOtherListPath(searchToken, true))
+	require.True(t, tokenFromOtherListPath(searchToken, false))
+	require.True(t, tokenFromOtherListPath(scanToken, true))
+	require.False(t, tokenFromOtherListPath(scanToken, false))
+}
+
+func TestListWithSelectors(t *testing.T) {
 	searchServerRv := int64(100)
+
+	t.Run("label selectors reach search unprefixed, fields are prefixed", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{ResourceVersion: searchServerRv}}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+				Labels: []*resourcepb.Requirement{{Key: "alerting.grafana.app/has-rules", Operator: "=", Values: []string{"true"}}},
+			},
+		}
+
+		_, err := s.listWithSelectors(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, searchClient.last)
+		// The search backend prefixes label keys itself, so they are passed through.
+		require.Equal(t, "alerting.grafana.app/has-rules", searchClient.last.Options.Labels[0].Key)
+		require.Equal(t, SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.foo", searchClient.last.Options.Fields[0].Key)
+	})
+
+	t.Run("rejects a continue token from the store path", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		s := createTestServer(&stubSearchClient{resp: &resourcepb.ResourceSearchResponse{}}, 1024)
+		req := &resourcepb.ListRequest{
+			Limit:         10,
+			NextPageToken: ContinueToken{Name: "a", ResourceVersion: searchServerRv}.String(),
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Labels: []*resourcepb.Requirement{{Key: "has-rules", Operator: "=", Values: []string{"true"}}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
+	})
+
+	t.Run("a page left empty by authorization returns no items and no token", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{
+			resp: &resourcepb.ResourceSearchResponse{
+				ResourceVersion: searchServerRv,
+				Results: &resourcepb.ResourceTable{
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1, SortFields: []string{"s1"}},
+						{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2, SortFields: []string{"s2"}},
+					},
+				},
+			},
+		}
+		s := createTestServer(searchClient, 1024)
+		s.backend = &fakeBackend{forbidden: map[string]struct{}{"a": {}, "b": {}}}
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Labels: []*resourcepb.Requirement{{Key: "has-rules", Operator: "=", Values: []string{"true"}}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.NoError(t, err)
+		require.Empty(t, resp.Items)
+		require.Empty(t, resp.NextPageToken)
+		require.Equal(t, searchServerRv, resp.ResourceVersion)
+	})
 
 	t.Run("a single page result will have index rv and no next page token", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
@@ -181,7 +292,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 			},
 		}
 
-		resp, err := s.listWithFieldSelectors(ctx, req)
+		resp, err := s.listWithSelectors(ctx, req)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Len(t, resp.Items, 1)
@@ -227,7 +338,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 			},
 		}
 
-		resp, err := s.listWithFieldSelectors(ctx, req)
+		resp, err := s.listWithSelectors(ctx, req)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Len(t, resp.Items, 1)
@@ -264,7 +375,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 			},
 		}
 
-		resp, err := s.listWithFieldSelectors(ctx, req)
+		resp, err := s.listWithSelectors(ctx, req)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
@@ -311,7 +422,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 			},
 		}
 
-		resp, err := s.listWithFieldSelectors(ctx, req)
+		resp, err := s.listWithSelectors(ctx, req)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
@@ -361,7 +472,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 			},
 		}
 
-		resp, err := s.listWithFieldSelectors(ctx, req)
+		resp, err := s.listWithSelectors(ctx, req)
 
 		require.NoError(t, err)
 		require.NotNil(t, resp)
