@@ -94,6 +94,10 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 	ctx, span := s.tracer.Start(ctx, "user.legacy.Create")
 	defer span.End()
 
+	// Trim before empty checks / conflict detection so stored login matches what the UI displays.
+	cmd.Login = strings.TrimSpace(cmd.Login)
+	cmd.Email = strings.TrimSpace(cmd.Email)
+
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 	}

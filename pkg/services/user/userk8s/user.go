@@ -94,6 +94,10 @@ func (s *UserK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 }
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	// Trim before empty checks so stored login matches what the UI displays.
+	cmd.Login = strings.TrimSpace(cmd.Login)
+	cmd.Email = strings.TrimSpace(cmd.Email)
+
 	ctx, span := s.tracer.Start(ctx, "user.create", trace.WithAttributes(
 		attribute.String("login", cmd.Login),
 	))
@@ -372,7 +376,7 @@ func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLogi
 
 	ctxLogger := s.logger.FromContext(ctx)
 
-	loginOrEmail := strings.ToLower(cmd.LoginOrEmail)
+	loginOrEmail := strings.ToLower(strings.TrimSpace(cmd.LoginOrEmail))
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
@@ -432,7 +436,7 @@ func (s *UserK8sService) GetByEmail(ctx context.Context, cmd *user.GetUserByEmai
 		return nil, err
 	}
 
-	u, err := s.getByFieldSelector(ctx, ctxLogger, client, "spec.email", strings.ToLower(cmd.Email), namespace, orgID)
+	u, err := s.getByFieldSelector(ctx, ctxLogger, client, "spec.email", strings.ToLower(strings.TrimSpace(cmd.Email)), namespace, orgID)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -479,10 +483,10 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 		existing.Spec.Title = cmd.Name
 	}
 	if cmd.Email != "" {
-		existing.Spec.Email = strings.ToLower(cmd.Email)
+		existing.Spec.Email = strings.ToLower(strings.TrimSpace(cmd.Email))
 	}
 	if cmd.Login != "" {
-		existing.Spec.Login = strings.ToLower(cmd.Login)
+		existing.Spec.Login = strings.ToLower(strings.TrimSpace(cmd.Login))
 	}
 	if cmd.IsDisabled != nil {
 		existing.Spec.Disabled = *cmd.IsDisabled
@@ -604,9 +608,9 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 	case cmd.UserID > 0:
 		found, lookupErr = s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
 	case cmd.Login != "":
-		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.login", strings.ToLower(cmd.Login), namespace)
+		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.login", strings.ToLower(strings.TrimSpace(cmd.Login)), namespace)
 	case cmd.Email != "":
-		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.email", strings.ToLower(cmd.Email), namespace)
+		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.email", strings.ToLower(strings.TrimSpace(cmd.Email)), namespace)
 	default:
 		span.RecordError(user.ErrNoUniqueID)
 		span.SetStatus(codes.Error, user.ErrNoUniqueID.Error())

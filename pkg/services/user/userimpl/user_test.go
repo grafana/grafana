@@ -52,6 +52,18 @@ func TestUserService(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("create user trims leading and trailing whitespace from login and email", func(t *testing.T) {
+		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email: "  spaced@example.com  ",
+			Login: "  callview  ",
+			Name:  "name",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, userStore.LastInsertedUser)
+		require.Equal(t, "callview", userStore.LastInsertedUser.Login)
+		require.Equal(t, "spaced@example.com", userStore.LastInsertedUser.Email)
+	})
+
 	t.Run("create user should fail when username and email are empty", func(t *testing.T) {
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
 			Email: "",
@@ -658,6 +670,186 @@ func TestIntegrationCreateUser(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, user.ErrUserNotFound)
 	})
+
+	t.Run("create user trims login whitespace so GetByLogin works without spaces", func(t *testing.T) {
+		userService := LegacyService{
+			store:        userStore,
+			orgService:   &orgtest.FakeOrgService{},
+			cacheService: localcache.ProvideService(),
+			teamService:  &teamtest.FakeService{},
+			tracer:       tracing.InitializeTracerForTest(),
+			cfg:          setting.NewCfg(),
+			db:           ss,
+		}
+		created, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email:        "trimspace@example.com",
+			Login:        "  callview  ",
+			Name:         "callview",
+			SkipOrgSetup: true,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "callview", created.Login)
+
+		usr, err := userService.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "callview"})
+		require.NoError(t, err)
+		require.Equal(t, "callview", usr.Login)
+
+		usr, err = userService.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "  callview  "})
+		require.NoError(t, err)
+		require.Equal(t, "callview", usr.Login)
+	})
+
+	t.Run("GetByLogin and LoginConflict handle legacy login with trailing whitespace", func(t *testing.T) {
+		// Simulate a pre-fix row that still has trailing whitespace in the DB.
+		_, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "legacy-spaced@example.com",
+			Login:   "legacyuser ",
+			Name:    "legacyuser",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		usr, err := userStore.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "legacyuser"})
+		require.NoError(t, err)
+		require.Equal(t, "legacyuser ", usr.Login)
+
+		usr, err = userStore.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "  legacyuser  "})
+		require.NoError(t, err)
+		require.Equal(t, "legacyuser ", usr.Login)
+
+		err = userStore.LoginConflict(context.Background(), "legacyuser", "other@example.com")
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+
+		err = userStore.LoginConflict(context.Background(), "  legacyuser  ", "another@example.com")
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+	})
+
+	t.Run("Update cannot take trimmed login of a different legacy spaced user", func(t *testing.T) {
+		spacedID, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "spaced-owner@example.com",
+			Login:   "spacedlogin ",
+			Name:    "spaced-owner",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		otherID, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "other-owner@example.com",
+			Login:   "otherlogin",
+			Name:    "other-owner",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID: otherID,
+			Login:  "spacedlogin",
+			Email:  "other-owner@example.com",
+			Name:   "other-owner",
+		})
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+
+		// The spaced user can still normalize their own login.
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID: spacedID,
+			Login:  "spacedlogin",
+			Email:  "spaced-owner@example.com",
+			Name:   "spaced-owner",
+		})
+		require.NoError(t, err)
+
+		usr, err := userStore.GetByID(context.Background(), spacedID)
+		require.NoError(t, err)
+		require.Equal(t, "spacedlogin", usr.Login)
+	})
+
+	t.Run("Update with unchanged login succeeds when a legacy spaced duplicate exists", func(t *testing.T) {
+		cleanID, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "clean-dup@example.com",
+			Login:   "duplogin",
+			Name:    "clean-dup",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		_, err = userStore.Insert(context.Background(), &user.User{
+			Email:   "spaced-dup@example.com",
+			Login:   "duplogin ",
+			Name:    "spaced-dup",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		// Ordinary profile save must not fail just because a legacy spaced peer exists.
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID: cleanID,
+			Login:  "duplogin",
+			Email:  "clean-dup@example.com",
+			Name:   "clean-dup-renamed",
+		})
+		require.NoError(t, err)
+
+		usr, err := userStore.GetByID(context.Background(), cleanID)
+		require.NoError(t, err)
+		require.Equal(t, "clean-dup-renamed", usr.Name)
+		require.Equal(t, "duplogin", usr.Login)
+
+		// Changing onto that trimmed identity from a third user must still be blocked.
+		thirdID, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "third-dup@example.com",
+			Login:   "thirdlogin",
+			Name:    "third-dup",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID: thirdID,
+			Login:  "duplogin",
+			Email:  "third-dup@example.com",
+			Name:   "third-dup",
+		})
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+	})
+
+	t.Run("Update normalizing spaced login conflicts with peer that differs only by spacing", func(t *testing.T) {
+		trailingID, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "trailing-space@example.com",
+			Login:   "normlogin ",
+			Name:    "trailing",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		_, err = userStore.Insert(context.Background(), &user.User{
+			Email:   "leading-space@example.com",
+			Login:   " normlogin",
+			Name:    "leading",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		// Normalizing "normlogin " -> "normlogin" must not skip conflict against " normlogin".
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID: trailingID,
+			Login:  "normlogin",
+			Email:  "trailing-space@example.com",
+			Name:   "trailing",
+		})
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+
+		usr, err := userStore.GetByID(context.Background(), trailingID)
+		require.NoError(t, err)
+		require.Equal(t, "normlogin ", usr.Login, "failed normalization must leave login unchanged")
+	})
 }
 
 type FakeUserStore struct {
@@ -669,6 +861,7 @@ type FakeUserStore struct {
 	ExpectedDeleteUserError                 error
 	ExpectedCountUserAccountsWithEmptyRoles int64
 	ExpectedListUsersByIdOrUid              []*user.User
+	LastInsertedUser                        *user.User
 }
 
 func newUserStoreFake() *FakeUserStore {
@@ -676,7 +869,9 @@ func newUserStoreFake() *FakeUserStore {
 }
 
 func (f *FakeUserStore) Insert(ctx context.Context, query *user.User) (int64, error) {
-	return 0, f.ExpectedError
+	copied := *query
+	f.LastInsertedUser = &copied
+	return 1, f.ExpectedError
 }
 
 func (f *FakeUserStore) Delete(ctx context.Context, userID int64) error {
