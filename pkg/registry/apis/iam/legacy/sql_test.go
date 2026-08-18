@@ -783,6 +783,9 @@ func TestIdentityQueries(t *testing.T) {
 						IsDisabled: false,
 						OrgID:      1,
 						Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 13, 0, 0, 0, time.UTC)),
+						PreviousUpdated: legacysql.NewDBTime(
+							time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+						),
 					}),
 				},
 				{

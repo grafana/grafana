@@ -73,7 +73,7 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.ServiceAccount)
 		return apierrors.NewBadRequest("plugin of a service account cannot be changed")
 	}
 
-	isExternal := strings.HasPrefix(old.Spec.Title, serviceaccounts.ExtSvcPrefix)
+	isExternal := strings.HasPrefix(strings.ToLower(old.Spec.Title), serviceaccounts.ExtSvcPrefix)
 	if isExternal {
 		if obj.Spec.Title != old.Spec.Title {
 			return apierrors.NewBadRequest("title of an external service account cannot be changed")
@@ -106,7 +106,7 @@ func validateTitle(obj *iamv0alpha1.ServiceAccount) error {
 	}
 
 	protectedPrefix := strings.TrimSuffix(serviceaccounts.ExtSvcPrefix, "-")
-	if strings.HasPrefix(obj.Spec.Title, protectedPrefix) {
+	if strings.HasPrefix(strings.ToLower(obj.Spec.Title), protectedPrefix) {
 		return apierrors.NewBadRequest("service account title cannot start with protected prefix " + protectedPrefix)
 	}
 

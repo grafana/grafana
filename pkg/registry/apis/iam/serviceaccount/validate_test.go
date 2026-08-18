@@ -81,6 +81,21 @@ func TestValidateOnCreate(t *testing.T) {
 			errorContains: "protected prefix",
 		},
 		{
+			name: "case variant of protected external service account title without plugin",
+			serviceAccount: &iamv0alpha1.ServiceAccount{
+				Spec: iamv0alpha1.ServiceAccountSpec{
+					Title: "ExtSvc-test",
+					Role:  iamv0alpha1.ServiceAccountOrgRoleViewer,
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			expectError:   true,
+			errorContains: "protected prefix",
+		},
+		{
 			name: "role higher than requester's role",
 			serviceAccount: &iamv0alpha1.ServiceAccount{
 				Spec: iamv0alpha1.ServiceAccountSpec{
@@ -252,6 +267,17 @@ func TestValidateOnUpdate(t *testing.T) {
 			name:    "normal service account cannot acquire protected external title",
 			old:     sa("Test Service Account", iamv0alpha1.ServiceAccountOrgRoleViewer, ""),
 			updated: sa(strings.TrimSuffix(serviceaccounts.ExtSvcPrefix, "-")+"test", iamv0alpha1.ServiceAccountOrgRoleViewer, ""),
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			expectError:   true,
+			errorContains: "protected prefix",
+		},
+		{
+			name:    "normal service account cannot acquire a case variant of protected external title",
+			old:     sa("Test Service Account", iamv0alpha1.ServiceAccountOrgRoleViewer, ""),
+			updated: sa("ExtSvc-test", iamv0alpha1.ServiceAccountOrgRoleViewer, ""),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
 				OrgRole: identity.RoleAdmin,

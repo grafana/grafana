@@ -6,3 +6,6 @@ SET
 WHERE uid = {{ .Arg .Command.UID }}
   AND org_id = {{ .Arg .Command.OrgID }}
   AND is_service_account
+{{ if .Command.HasPreviousUpdated }}
+  AND updated = {{ .Arg .Command.PreviousUpdated }}
+{{ end }}

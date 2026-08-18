@@ -6,3 +6,4 @@ SET
 WHERE uid = 'abcdef'
   AND org_id = 1
   AND is_service_account
+  AND updated = '2023-01-01 12:00:00'
