@@ -2,6 +2,8 @@ import fs from 'fs';
 import { type OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
+import { escapeJsonPointer, simplifySchemaName } from './schema-name.ts';
+
 /**
  * Process an OpenAPI spec to remove k8s metadata from names and paths:
  * - Remove paths containing "/watch/" as they're deprecated.
