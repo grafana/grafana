@@ -83,6 +83,13 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
   // tabbable while transparent so keyboard users can reach it, and auto column widths reserve its
   // space unconditionally (see HEADER_MENU_SPACE) because it never leaves the flow. An active filter
   // is reported by a persistent icon in HeaderCell rather than by pinning this button visible.
+  //
+  // Scoped to `.table-ng-header-cell`, HeaderCell's own per-column root, rather than the bare
+  // `.rdg-cell` react-data-grid puts on every header cell: in a nested table, a column's header
+  // cell is also a descendant of the *outer* grid's nested-frame `.rdg-cell`, and `:hover`/
+  // `:focus-within` bubble up to that ancestor too. Matching on bare `.rdg-cell` would then reveal
+  // every column's menu in the nested table at once, since they're all descendants of that same
+  // outer cell.
   button: css({
     label: 'headerColumnMenuButton',
     color: theme.colors.text.secondary,
@@ -90,7 +97,7 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity', { duration: theme.transitions.duration.shorter }),
     },
-    '.rdg-cell:hover &, .rdg-cell:focus-within &, &:focus-visible': {
+    '.table-ng-header-cell:hover &, .table-ng-header-cell:focus-within &, &:focus-visible': {
       opacity: 1,
     },
   }),
