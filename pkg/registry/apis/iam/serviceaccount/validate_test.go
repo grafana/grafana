@@ -2,6 +2,7 @@ package serviceaccount
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -68,7 +69,7 @@ func TestValidateOnCreate(t *testing.T) {
 			name: "protected external service account title without plugin",
 			serviceAccount: &iamv0alpha1.ServiceAccount{
 				Spec: iamv0alpha1.ServiceAccountSpec{
-					Title: serviceaccounts.ExtSvcPrefix + "test",
+					Title: strings.TrimSuffix(serviceaccounts.ExtSvcPrefix, "-") + "test",
 					Role:  iamv0alpha1.ServiceAccountOrgRoleViewer,
 				},
 			},
@@ -250,7 +251,7 @@ func TestValidateOnUpdate(t *testing.T) {
 		{
 			name:    "normal service account cannot acquire protected external title",
 			old:     sa("Test Service Account", iamv0alpha1.ServiceAccountOrgRoleViewer, ""),
-			updated: sa(serviceaccounts.ExtSvcPrefix+"test", iamv0alpha1.ServiceAccountOrgRoleViewer, ""),
+			updated: sa(strings.TrimSuffix(serviceaccounts.ExtSvcPrefix, "-")+"test", iamv0alpha1.ServiceAccountOrgRoleViewer, ""),
 			requester: &identity.StaticRequester{
 				Type:    types.TypeUser,
 				OrgRole: identity.RoleAdmin,
@@ -312,7 +313,17 @@ func TestValidateOnUpdate(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:    "external service account - invalid title prefix",
+			name:    "external service account with legacy-derived empty plugin updated by service identity",
+			old:     sa(serviceaccounts.ExtSvcPrefix+"test", iamv0alpha1.ServiceAccountOrgRoleNone, ""),
+			updated: sa(serviceaccounts.ExtSvcPrefix+"test", iamv0alpha1.ServiceAccountOrgRoleNone, ""),
+			requester: &identity.StaticRequester{
+				Type:    types.TypeAccessPolicy,
+				OrgRole: identity.RoleAdmin,
+			},
+			expectError: false,
+		},
+		{
+			name:    "external service account title cannot change its prefix",
 			old:     sa(serviceaccounts.ExtSvcPrefix+"test", iamv0alpha1.ServiceAccountOrgRoleNone, "test"),
 			updated: sa("invalid-prefix-test", iamv0alpha1.ServiceAccountOrgRoleNone, "test"),
 			requester: &identity.StaticRequester{
@@ -320,10 +331,10 @@ func TestValidateOnUpdate(t *testing.T) {
 				OrgRole: identity.RoleAdmin,
 			},
 			expectError:   true,
-			errorContains: "title of external service accounts must start with " + serviceaccounts.ExtSvcPrefix,
+			errorContains: "title of an external service account cannot be changed",
 		},
 		{
-			name:    "external service account - invalid title suffix",
+			name:    "external service account title cannot change while retaining its plugin suffix",
 			old:     sa(serviceaccounts.ExtSvcPrefix+"test", iamv0alpha1.ServiceAccountOrgRoleNone, "test"),
 			updated: sa(serviceaccounts.ExtSvcPrefix+"wrong-suffix", iamv0alpha1.ServiceAccountOrgRoleNone, "test"),
 			requester: &identity.StaticRequester{
@@ -331,7 +342,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				OrgRole: identity.RoleAdmin,
 			},
 			expectError:   true,
-			errorContains: "title of external service accounts must end with test",
+			errorContains: "title of an external service account cannot be changed",
 		},
 		{
 			name:    "external service account - non-access-policy requester",

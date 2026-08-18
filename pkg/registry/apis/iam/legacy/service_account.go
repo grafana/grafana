@@ -131,17 +131,12 @@ type CreateServiceAccountResult struct {
 }
 
 type UpdateServiceAccountCommand struct {
-	UID             string
-	Name            string
-	Role            string
-	IsDisabled      bool
-	OrgID           int64
-	Updated         legacysql.DBTime
-	PreviousUpdated legacysql.DBTime
-}
-
-func (c UpdateServiceAccountCommand) HasPreviousUpdated() bool {
-	return !c.PreviousUpdated.IsZero()
+	UID        string
+	Name       string
+	Role       string
+	IsDisabled bool
+	OrgID      int64
+	Updated    legacysql.DBTime
 }
 
 type UpdateServiceAccountResult struct {
@@ -388,7 +383,7 @@ func (s *legacySQLStore) UpdateServiceAccount(ctx context.Context, ns claims.Nam
 			return fmt.Errorf("service account rows affected: %w", err)
 		}
 		if rows == 0 {
-			return serviceaccounts.ErrServiceAccountUpdateConflict
+			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account by uid %q", cmd.UID)
 		}
 
 		orgUserCmd := &UpdateOrgUserCommand{
@@ -404,8 +399,16 @@ func (s *legacySQLStore) UpdateServiceAccount(ctx context.Context, ns claims.Nam
 			return fmt.Errorf("execute org_user update template %q: %w", sqlUpdateOrgUserTemplate.Name(), err)
 		}
 
-		if _, err := st.Exec(ctx, orgUserQuery, orgUserReq.GetArgs()...); err != nil {
+		res, err = st.Exec(ctx, orgUserQuery, orgUserReq.GetArgs()...)
+		if err != nil {
 			return fmt.Errorf("failed to update org_user relationship: %w", err)
+		}
+		rows, err = res.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("org_user rows affected: %w", err)
+		}
+		if rows == 0 {
+			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account relationship by uid %q", cmd.UID)
 		}
 
 		updatedSA = ServiceAccount{

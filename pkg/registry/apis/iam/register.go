@@ -1119,7 +1119,7 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 		case *iamv0.User:
 			return user.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.ServiceAccount:
-			return serviceaccount.MutateOnCreate(ctx, typedObj)
+			return serviceaccount.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Team:
 			return team.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Role:
@@ -1140,7 +1140,7 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 				return user.MutateOnCreateAndUpdate(ctx, typedObj)
 			}
 		case *iamv0.ServiceAccount:
-			return serviceaccount.MutateOnUpdate(ctx, typedObj)
+			return serviceaccount.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Team:
 			return team.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Role:

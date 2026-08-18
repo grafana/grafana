@@ -54,21 +54,17 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) erro
 }
 
 func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.ServiceAccount) error {
-	if obj.Spec.Title == "" {
-		return apierrors.NewBadRequest("service account must have a title")
-	}
-
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
+	}
+	if obj.Spec.Title == "" {
+		return apierrors.NewBadRequest("service account must have a title")
 	}
 
 	requestedRole := identity.RoleType(obj.Spec.Role)
 	if !requestedRole.IsValid() {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid role: %s", requestedRole))
-	}
-	if err := validateTitle(obj); err != nil {
-		return err
 	}
 
 	// The plugin owning an external service account is set on creation and defines
@@ -77,7 +73,11 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.ServiceAccount)
 		return apierrors.NewBadRequest("plugin of a service account cannot be changed")
 	}
 
-	if obj.Spec.Plugin != "" {
+	isExternal := strings.HasPrefix(old.Spec.Title, serviceaccounts.ExtSvcPrefix)
+	if isExternal {
+		if obj.Spec.Title != old.Spec.Title {
+			return apierrors.NewBadRequest("title of an external service account cannot be changed")
+		}
 		if !requester.IsIdentityType(types.TypeAccessPolicy) {
 			return apierrors.NewForbidden(iamv0alpha1.ServiceAccountResourceInfo.GroupResource(),
 				obj.Name,
@@ -87,6 +87,8 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.ServiceAccount)
 		if obj.Spec.Role != iamv0alpha1.ServiceAccountOrgRoleNone {
 			return apierrors.NewBadRequest("external service accounts must have role None")
 		}
+	} else if err := validateTitle(obj); err != nil {
+		return err
 	}
 
 	if obj.Spec.Role != old.Spec.Role && !requester.HasRole(requestedRole) {

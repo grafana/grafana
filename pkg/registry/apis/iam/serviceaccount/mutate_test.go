@@ -9,7 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
-func TestMutateOnCreate(t *testing.T) {
+func TestMutateOnCreateAndUpdate(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 
 	testCases := []struct {
@@ -61,37 +61,9 @@ func TestMutateOnCreate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := MutateOnCreate(ctx, tc.inputSA)
+			err := MutateOnCreateAndUpdate(ctx, tc.inputSA)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedRole, tc.inputSA.Spec.Role)
 		})
 	}
-}
-
-func TestMutateOnUpdate(t *testing.T) {
-	ctx := request.WithNamespace(context.Background(), "default")
-
-	t.Run("external sa with no role specified gets none", func(t *testing.T) {
-		sa := &iamv0alpha1.ServiceAccount{
-			Spec: iamv0alpha1.ServiceAccountSpec{
-				Title:  "sa-1-extsvc-grafana-plugin-name",
-				Plugin: "grafana-plugin-name",
-			},
-		}
-
-		require.NoError(t, MutateOnUpdate(ctx, sa))
-		require.Equal(t, iamv0alpha1.ServiceAccountOrgRoleNone, sa.Spec.Role)
-	})
-
-	t.Run("non-external sa role is not mutated", func(t *testing.T) {
-		sa := &iamv0alpha1.ServiceAccount{
-			Spec: iamv0alpha1.ServiceAccountSpec{
-				Title: "My Test SA",
-				Role:  iamv0alpha1.ServiceAccountOrgRoleEditor,
-			},
-		}
-
-		require.NoError(t, MutateOnUpdate(ctx, sa))
-		require.Equal(t, iamv0alpha1.ServiceAccountOrgRoleEditor, sa.Spec.Role)
-	})
 }
