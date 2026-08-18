@@ -180,6 +180,9 @@ export function ExploreLogsTable(props: Props) {
         onFieldConfigChange={handleFieldConfigChange}
         replaceVariables={getTemplateSrv().replace.bind(getTemplateSrv())}
         onChangeTimeRange={props.onChangeTimeRange}
+        // Explore has no scene pipeline, so the transformation the plugin registers in module.tsx
+        // never runs on `props.data` and the panel has to extract the label columns itself.
+        extractFieldsInPanel
       />
     </PanelContextProvider>
   );
