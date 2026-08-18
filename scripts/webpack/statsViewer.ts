@@ -59,9 +59,7 @@ async function updateReport() {
       const nodes: BundleNode[] = JSON.parse(data);
       const { exclude, minDominance } = statsFilter;
       let filtered =
-        exclude == null
-          ? nodes
-          : nodes.filter((node) => !pathContains(node, node.parsedSize, exclude, minDominance));
+        exclude == null ? nodes : nodes.filter((node) => !pathContains(node, node.parsedSize, exclude, minDominance));
 
       if (includeFilenames.size > 0) {
         filtered = filtered.filter((node) => includeFilenames.has(lastSegment(node.label)));
@@ -87,7 +85,12 @@ function lastSegment(s: string): string {
 }
 
 function filenamesFromRequestUrls(urls: string): Set<string> {
-  return new Set(urls.split('\n').map((line) => lastSegment(line.trim())).filter((name) => name));
+  return new Set(
+    urls
+      .split('\n')
+      .map((line) => lastSegment(line.trim()))
+      .filter((name) => name)
+  );
 }
 
 function pathContains(node: BundleNode, rootParsedSize: number, exclude: RegExp, minDominance: number): boolean {
