@@ -106,4 +106,29 @@ describe('generate-coverage-run-summary', () => {
       "Not affected by this PR's changes: @grafana/datapro, @grafana/grafana-frontend-navigation"
     );
   });
+
+  it('surfaces a team whose job failed before the coverage comparison ran, instead of dropping it', () => {
+    // Regression test: a step before "Compare coverage" (install, tests, HTML
+    // upload) can fail and leave no coverage-comparison.json behind. The workflow
+    // synthesizes a {status: "error"} result for that case so the team doesn't
+    // silently vanish from the "one detailed report" the summary is meant to be.
+    const errored = {
+      team: '@grafana/dataviz-squad',
+      affected: true,
+      status: 'error',
+      runLocallyCommand: 'yarn test:coverage:by-codeowner @grafana/dataviz-squad',
+    };
+    const passing = result('@grafana/datapro');
+
+    const summary = generateRunSummary([errored, passing]);
+
+    expect(summary).toContain('## Coverage regressions');
+    expect(summary).toContain('### ⚠️ @grafana/dataviz-squad');
+    expect(summary).toContain("didn't complete");
+    // Grouped with regressions, ahead of the passing-teams table, so it's not
+    // mistaken for a routine pass.
+    const erroredIndex = summary.indexOf('### ⚠️ @grafana/dataviz-squad');
+    const passingIndex = summary.indexOf('## ✅ Passing teams');
+    expect(erroredIndex).toBeLessThan(passingIndex);
+  });
 });

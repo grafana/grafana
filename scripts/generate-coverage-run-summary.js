@@ -112,6 +112,29 @@ function renderTeamDetail(result) {
 }
 
 /**
+ * Renders a team whose job never reached the coverage comparison (an earlier step
+ * — install, tests, HTML upload — failed first). There's no coverage data to show,
+ * but the team still needs to appear here rather than silently vanish from the
+ * "one detailed report" the fan-in summary is meant to be.
+ * @param {Object} result - Structured coverage result with status "error"
+ * @returns {string} Markdown section
+ */
+function renderErroredTeam(result) {
+  const lines = [
+    `### ⚠️ ${result.team}`,
+    '',
+    "This team's coverage job didn't complete — a step before the coverage comparison failed (install, tests, or report upload). Check its job log for details.",
+    '',
+  ];
+
+  if (result.runLocallyCommand) {
+    lines.push(`💻 Run locally: \`${result.runLocallyCommand}\``);
+  }
+
+  return lines.join('\n');
+}
+
+/**
  * Renders one row of the compact "passing teams" table
  * @param {Object} result - Structured coverage result
  * @returns {string} Markdown table row
@@ -148,6 +171,7 @@ function generateRunSummary(results) {
     // eslint-disable-next-line @grafana/no-locale-compare
     a.team.localeCompare(b.team);
 
+  const errored = affected.filter((result) => result.status === 'error').sort(sortByTeam);
   const failed = affected.filter((result) => result.status === 'fail').sort(sortByTeam);
   const tolerated = affected.filter((result) => result.status === 'tolerated').sort(sortByTeam);
   const passed = affected.filter((result) => result.status === 'pass').sort(sortByTeam);
@@ -168,15 +192,18 @@ function generateRunSummary(results) {
     return lines.join('\n');
   }
 
+  const erroredNote = errored.length > 0 ? ` · ⚠️ ${errored.length} didn't complete` : '';
   lines.push(
-    `${affected.length} team(s) checked · ✅ ${passed.length} passed · 🟡 ${tolerated.length} within tolerance · ❌ ${failed.length} failed`,
+    `${affected.length} team(s) checked · ✅ ${passed.length} passed · 🟡 ${tolerated.length} within tolerance · ❌ ${failed.length} failed${erroredNote}`,
     ''
   );
 
-  const regressions = [...failed, ...tolerated];
-  if (regressions.length > 0) {
+  if (errored.length > 0 || failed.length > 0 || tolerated.length > 0) {
     lines.push('## Coverage regressions', '');
-    for (const result of regressions) {
+    for (const result of errored) {
+      lines.push(renderErroredTeam(result), '');
+    }
+    for (const result of [...failed, ...tolerated]) {
       lines.push(renderTeamDetail(result), '');
     }
   }
@@ -218,6 +245,7 @@ module.exports = {
   readResults,
   generateRunSummary,
   renderTeamDetail,
+  renderErroredTeam,
   renderPassingRow,
   renderIncreaseSummaryLine,
   renderMetricsTable,

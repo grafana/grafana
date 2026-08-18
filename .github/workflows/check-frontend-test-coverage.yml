@@ -206,10 +206,17 @@ jobs:
           fi
 
       # Uploaded unconditionally (affected or not) so the fan-in summary can report
-      # on every opted-in team, not just the ones with a comparison to show.
+      # on every opted-in team, not just the ones with a comparison to show. If an
+      # earlier step (install, tests, HTML upload) failed before writing
+      # coverage-comparison.json, synthesize an "error" result instead of letting
+      # this team silently disappear from the summary.
       - name: Rename coverage result for fan-in
         if: always()
-        run: mv ./coverage-comparison.json ./coverage-result-${{ steps.coverage-dir.outputs.slug }}.json
+        run: |
+          if [ ! -f ./coverage-comparison.json ]; then
+            echo '{"team": "${{ matrix.codeowner }}", "affected": true, "status": "error", "runLocallyCommand": "yarn test:coverage:by-codeowner ${{ matrix.codeowner }}"}' > ./coverage-comparison.json
+          fi
+          mv ./coverage-comparison.json ./coverage-result-${{ steps.coverage-dir.outputs.slug }}.json
 
       - name: Upload coverage result
         if: always()
