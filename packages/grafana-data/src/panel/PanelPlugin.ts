@@ -375,9 +375,10 @@ export class PanelPlugin<
   /**
    * Registers read-only transformations in dashboard panels.
    *
-   * Prepended transformations run before any user-configured transformation and before field
-   * overrides; appended ones run after all of them. An array result is shorthand for `prepend`.
-   * Neither is persisted to the dashboard.
+   * Prepended transformations run before every user-configured transformation, appended ones after
+   * all of them. Both run before field overrides, so the fields either position produces are
+   * matchable by an override. An array result is shorthand for `prepend`. Neither is persisted to
+   * the dashboard.
    *
    * The supplier receives the query result frames on every data update, so it can return
    * different transformations for different shapes of data. Empty results pass through

@@ -86,7 +86,10 @@ export interface PanelDataTransformations {
    * they produce are matchable by overrides and targetable by the user's own transformations.
    */
   prepend?: Array<DataTransformerConfig | CustomTransformOperator>;
-  /** Run after every user-configured transformation, and only after all of them. */
+  /**
+   * Run after every user-configured transformation, and only after all of them — but still before
+   * field overrides, so the fields they produce are matchable by overrides too.
+   */
   append?: Array<DataTransformerConfig | CustomTransformOperator>;
 }
 

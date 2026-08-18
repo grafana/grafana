@@ -781,5 +781,41 @@ describe('PanelDataTransformer', () => {
       // A second override pass would append the panel default link again.
       expect(level!.config.links).toHaveLength(1);
     });
+
+    it('applies overrides to fields produced by an appended plugin transformation', async () => {
+      // Appended transformations run after every user transformation, but still inside the data
+      // provider — so overrides, which are applied to the provider's output, see their fields just
+      // as they see a prepended one's.
+      registerPlugin('reducer', (p) => {
+        p.setDataTransformations(() => ({
+          append: [{ id: 'reduce', options: { reducers: ['count'] } }],
+        })).useFieldConfig({});
+      });
+
+      const { transformer, panel } = buildPipeline({ pluginId: 'reducer', series: [frameWithLabels()] });
+      panel.setState({
+        fieldConfig: {
+          defaults: {},
+          overrides: [
+            {
+              // `Count` only exists because the appended reduce ran.
+              matcher: { id: 'byName', options: 'Count' },
+              properties: [{ id: 'unit', value: 'bytes' }],
+            },
+          ],
+        },
+      });
+      activateFullSceneTree(panel);
+
+      await waitFor(() => {
+        expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toEqual(['Field', 'Count']);
+      });
+
+      const withFieldConfig = panel.applyFieldConfig(transformer.state.data!);
+      const count = withFieldConfig.series[0].fields.find((f) => f.name === 'Count');
+
+      expect(count).toBeDefined();
+      expect(count!.config.unit).toBe('bytes');
+    });
   });
 });
