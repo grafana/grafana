@@ -285,10 +285,10 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorJSON, _ := json.Marshal(tt.azureMonitorVariedProperties)
 			tsdbQuery := []backend.DataQuery{
 				{
-					JSON: (fmt.Appendf(nil, `{
+					JSON: fmt.Appendf(nil, `{
 							"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
 							"azureMonitor": %s
-						}`, string(azureMonitorJSON))),
+						}`, string(azureMonitorJSON)),
 					RefID:    "A",
 					Interval: tt.queryInterval,
 					TimeRange: backend.TimeRange{

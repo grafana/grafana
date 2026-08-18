@@ -194,10 +194,10 @@ func TestTestdataScenarios(t *testing.T) {
 						},
 						Interval:      100 * time.Millisecond,
 						MaxDataPoints: 100,
-						JSON: (fmt.Appendf(nil,
+						JSON: fmt.Appendf(nil,
 							`{"queryDelay":"0s","errorProbability":%v,"errorMessage":"test error","errorStatusCode":400,"errorSource":"downstream"}`,
 							probability,
-						)),
+						),
 					},
 				},
 			}

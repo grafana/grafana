@@ -358,7 +358,7 @@ func prometheusQueryWithoutDS(t *testing.T, refID, datasourceUID string, isInsta
 	return models.AlertQuery{
 		RefID:         refID,
 		DatasourceUID: datasourceUID,
-		Model: (fmt.Appendf(nil, `{
+		Model: fmt.Appendf(nil, `{
 					"instant": %t,
 					"range": %t,
 					"editorMode": "code",
@@ -366,7 +366,7 @@ func prometheusQueryWithoutDS(t *testing.T, refID, datasourceUID string, isInsta
 					"intervalMs": 1000,
 					"maxDataPoints": 43200,
 					"refId": "%s"
-				}`, isInstant, !isInstant, refID)),
+				}`, isInstant, !isInstant, refID),
 	}
 }
 

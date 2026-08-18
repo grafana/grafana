@@ -811,7 +811,7 @@ func (a apiClient) CreateDatasource(t *testing.T, dsType string) (result api.Cre
 	if resp.StatusCode != 200 {
 		require.Failf(t, "failed to create data source", "API request to create a datasource failed. Status code: %d, response: %s", resp.StatusCode, string(b))
 	}
-	require.NoError(t, json.Unmarshal((fmt.Appendf(nil, `{ "body": %s }`, string(b))), &result))
+	require.NoError(t, json.Unmarshal(fmt.Appendf(nil, `{ "body": %s }`, string(b)), &result))
 	return result
 }
 

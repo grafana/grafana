@@ -358,7 +358,7 @@ func TestEncryptedValueStoreUpdateBulk(t *testing.T) {
 		for i := 1; i <= 5; i++ {
 			ev, err := sut.EncryptedValueStorage.Create(ctx, ns, fmt.Sprintf("name-%d", i), int64(i), contracts.EncryptedPayload{
 				DataKeyID:     "key",
-				EncryptedData: (fmt.Appendf(nil, "data-%d", i)),
+				EncryptedData: fmt.Appendf(nil, "data-%d", i),
 			})
 			require.NoError(t, err)
 			created = append(created, ev)

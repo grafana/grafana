@@ -1208,7 +1208,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 
 func expectFolderMetadataReadTimes(repo *compositeRepo, folderPath, ref, uid string, times int) {
 	repo.MockReader.On("Read", mock.Anything, folderPath+"_folder.json", ref).Return(&repository.FileInfo{
-		Data: (fmt.Appendf(nil, `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"%s"},"spec":{"title":"Title"}}`, uid)),
+		Data: fmt.Appendf(nil, `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"%s"},"spec":{"title":"Title"}}`, uid),
 	}, nil).Times(times)
 }
 
