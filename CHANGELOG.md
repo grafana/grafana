@@ -1,3 +1,71 @@
+<!-- 13.0.4 START -->
+
+# 13.0.4 (2026-07-21)
+
+### Features and enhancements
+
+- **Alerting:** Return 403 instead of 500 on contact point provenance mismatch [#127815](https://github.com/grafana/grafana/pull/127815), [@rwwiv](https://github.com/rwwiv)
+- **Go:** Update version to 1.26.5 [#128016](https://github.com/grafana/grafana/pull/128016), [@macabu](https://github.com/macabu)
+- **Provisioning:** Improve form errors for github connections [#128209](https://github.com/grafana/grafana/pull/128209), [@floriecai](https://github.com/floriecai)
+
+### Bug fixes
+
+- **Dashboard:** Fixes issue with interval variable with Auto value [#127053](https://github.com/grafana/grafana/pull/127053), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** make GitHub webhook creation idempotent (fix repos stuck unhealthy with HTTP 422) [#128196](https://github.com/grafana/grafana/pull/128196), [@floriecai](https://github.com/floriecai)
+- **alerting:** fix ORM table mapping bug causing SELECT alert_rule columns FROM user on PostgreSQL [#128751](https://github.com/grafana/grafana/pull/128751), [@dhananjay6561](https://github.com/dhananjay6561)
+
+<!-- 13.0.4 END -->
+<!-- 12.4.6 START -->
+
+# 12.4.6 (2026-07-21)
+
+### Features and enhancements
+
+- **Alerting:** Add protected fields authorization check to provisioning API [#127940](https://github.com/grafana/grafana/pull/127940), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Alerting:** Return 403 instead of 500 on contact point provenance mismatch [#127814](https://github.com/grafana/grafana/pull/127814), [@rwwiv](https://github.com/rwwiv)
+- **Go:** Update version to 1.26.5 [#128017](https://github.com/grafana/grafana/pull/128017), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Jaeger:** Handle gzip, deflate, and brotli compressed API responses [#128062](https://github.com/grafana/grafana/pull/128062), [@zoltanbedi](https://github.com/zoltanbedi)
+- **alerting:** fix ORM table mapping bug causing SELECT alert_rule columns FROM user on PostgreSQL [#128753](https://github.com/grafana/grafana/pull/128753), [@dhananjay6561](https://github.com/dhananjay6561)
+
+<!-- 12.4.6 END -->
+<!-- 12.3.9 START -->
+
+# 12.3.9 (2026-07-21)
+
+### Features and enhancements
+
+- **Alerting:** Return 403 instead of 500 on contact point provenance mismatch [#127813](https://github.com/grafana/grafana/pull/127813), [@rwwiv](https://github.com/rwwiv)
+- **Go:** Update version to 1.26.5 [#128018](https://github.com/grafana/grafana/pull/128018), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **alerting:** fix ORM table mapping bug causing SELECT alert_rule columns FROM user on PostgreSQL [#128754](https://github.com/grafana/grafana/pull/128754), [@dhananjay6561](https://github.com/dhananjay6561)
+
+<!-- 12.3.9 END -->
+<!-- 13.1.1 START -->
+
+# 13.1.1 (2026-07-21)
+
+### Features and enhancements
+
+- **Go:** Update version to 1.26.5 [#128015](https://github.com/grafana/grafana/pull/128015), [@macabu](https://github.com/macabu)
+- **Provisioning:** Improve form errors for github connections [#128177](https://github.com/grafana/grafana/pull/128177), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** make sync per-resource write timeout configurable [#127868](https://github.com/grafana/grafana/pull/127868), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+### Bug fixes
+
+- **Accessibility:** Ensure `InlineToast` contents are announced by screenreaders [#128687](https://github.com/grafana/grafana/pull/128687), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **DashboardDS:** Fix chained dashboard datasource panels showing stale data [#127248](https://github.com/grafana/grafana/pull/127248), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Provisioning:** make GitHub webhook creation idempotent (fix repos stuck unhealthy with HTTP 422) [#128201](https://github.com/grafana/grafana/pull/128201), [@floriecai](https://github.com/floriecai)
+
+### Plugin development fixes & changes
+
+- **Pagination:** Set `aria-current` on active page [#128518](https://github.com/grafana/grafana/pull/128518), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.1.1 END -->
 <!-- 13.0.3 START -->
 
 # 13.0.3 (2026-06-23)
