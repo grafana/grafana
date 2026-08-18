@@ -341,6 +341,7 @@ export function TableFlat(props: TableNGProps) {
       noHeader={!!noHeader}
       headerHeight={headerHeight}
       transparent={transparent}
+      tableRefreshEnabled={tableRefreshEnabled}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
       enablePagination={enablePagination}
