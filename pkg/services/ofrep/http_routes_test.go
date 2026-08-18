@@ -163,6 +163,9 @@ func TestValidateNamespace_UnauthPathNamespace(t *testing.T) {
 		{"no eval-context namespace forwards path namespace", `{"context":{}}`, "stacks-1", "stacks-1", true},
 		{"matching eval-context namespace is valid", `{"context":{"namespace":"stacks-1"}}`, "stacks-1", "stacks-1", true},
 		{"conflicting eval-context namespace is rejected", `{"context":{"namespace":"stacks-99"}}`, "stacks-1", "stacks-1", false},
+		// A malformed path namespace is not trusted; it is dropped rather than forwarded.
+		{"invalid path namespace is not forwarded", `{"context":{}}`, "stacks:1", "", true},
+		{"invalid path namespace falls back to eval-context namespace", `{"context":{"namespace":"stacks-1"}}`, "stacks:1", "stacks-1", true},
 	}
 
 	for _, tt := range tests {

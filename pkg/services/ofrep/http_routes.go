@@ -26,7 +26,7 @@ import (
 //
 // Both prefixes serve the same handlers. Identity is populated by Grafana's ContextHandler
 // middleware (c.SignedInUser); grafanaHTTPHandler injects it into the request context before
-// the handler runs. The :namespace URL segment is used as a fallback namespace (see validateNamespace) - for                                   
+// the handler runs. The :namespace URL segment is used as a fallback namespace (see validateNamespace) - for
 // authenticated callers, the identity's namespace always takes precedence over the path.
 func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
 	routes := func(r routing.RouteRegister) {
@@ -179,7 +179,9 @@ func (b *APIBuilder) validateNamespace(r *http.Request, evalCtx evalContext) (st
 	// namespace-scoped — mirroring the apiserver's useNamespaceFromPath handling. This
 	// does not authenticate the request; access stays gated to public flags downstream.
 	if authNamespace == "" {
-		if pathNamespace := mux.Vars(r)["namespace"]; pathNamespace != "" {
+		// A malformed path namespace is not trusted to be forwarded upstream; fall through and
+		// resolve from the eval context instead.
+		if pathNamespace := mux.Vars(r)["namespace"]; pathNamespace != "" && len(validation.IsValidNamespace(pathNamespace)) == 0 {
 			span.SetAttributes(
 				attribute.String("path_namespace", pathNamespace),
 				attribute.String("eval_ctx_namespace", evalCtx.namespace),
