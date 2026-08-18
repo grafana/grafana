@@ -14,7 +14,7 @@ type PluginDefinition struct {
 
 	// apiVersion -> schema (currently only v0alpha1)
 	// This will be nil if no schemas are found, or if withSchemas is false when loading.
-	// NOTE: this will soon be merged into ManifestData
+	// NOTE: this will soon be merged into ManifestData (automatically)
 	Schemas map[string]*pluginschema.PluginSchema
 
 	// When an app manifest is defined, we can use that
