@@ -44,6 +44,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,
 			featuremgmt.FlagGrafanaDashboardGlobalVariables,
 			featuremgmt.FlagDashboardNotebooks,
+			featuremgmt.FlagCoordinationLeasesApi,
 		},
 	})
 
@@ -157,6 +158,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "plugins.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "coordination.grafana.app",
 		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {
