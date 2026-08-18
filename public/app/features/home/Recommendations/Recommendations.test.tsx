@@ -8,7 +8,7 @@ import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBr
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { ctaClicked } from '../analytics/main';
+import { ctaClicked, recommendationsShown } from '../analytics/main';
 
 import { Recommendations } from './Recommendations';
 import { HOSTED_TRACES_APP_ID } from './appPluginIds';
@@ -36,6 +36,7 @@ jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
 
 jest.mock('../analytics/main', () => ({
   ctaClicked: jest.fn(),
+  recommendationsShown: jest.fn(),
 }));
 
 // The RecommendationExisting child fetches its overview from Prometheus; resolve to no
@@ -129,6 +130,7 @@ function setSolutionState(
 beforeEach(() => {
   window.localStorage.clear();
   jest.mocked(ctaClicked).mockClear();
+  jest.mocked(recommendationsShown).mockClear();
   mockUsePluginBridge.mockReset();
   mockUsePluginBridge.mockReturnValue({
     loading: false,
@@ -173,6 +175,20 @@ describe('Recommendations', () => {
     expect(
       within(region).getByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })
     ).toBeInTheDocument();
+  });
+
+  it('tracks shown recommendations with the matrix starting state', async () => {
+    render(<Recommendations />);
+
+    await carouselRegion();
+
+    await waitFor(() =>
+      expect(jest.mocked(recommendationsShown)).toHaveBeenCalledWith({
+        recommendation_ids: ['hosted-traces', 'kubernetes-monitoring'],
+        starting_state: 'ml_no_traces',
+        solution: undefined,
+      })
+    );
   });
 
   it('follows the selected solution: metrics-led by default, logs-led after switching', async () => {

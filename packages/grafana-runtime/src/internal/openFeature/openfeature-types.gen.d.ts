@@ -16,6 +16,7 @@ declare module "@openfeature/core" {
     | "queryHistory.recentQueriesUI"
     | "awsAssumeRolePerDatasourceExternalId"
     | "provisioningFolderMetadata"
+    | "provisioningExport"
     | "provisioning.readmes"
     | "provisioning.gitConventions"
     | "provisioning.userAttribution"
@@ -93,7 +94,8 @@ declare module "@openfeature/core" {
     | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
-    | "grafana.panelPluginTransformations";
+    | "grafana.panelPluginTransformations"
+    | "tracesDrilldown.useValueTypeFiltering";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

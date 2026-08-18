@@ -42,14 +42,12 @@ func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Set
 }
 
 // Gets plugin context with decrypted secure values
-func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Context, backend.PluginContext, error) {
+func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context, apiVersion string) (context.Context, backend.PluginContext, error) {
 	settings, secure, err := b.getSettings(ctx)
 	if err != nil {
 		return ctx, backend.PluginContext{}, err
 	}
-	instance := &backend.AppInstanceSettings{
-		APIVersion: b.groupVersion.Version,
-	}
+	instance := &backend.AppInstanceSettings{APIVersion: apiVersion}
 	instance.JSONData, err = json.Marshal(settings.Spec.JsonData)
 	if err != nil {
 		return ctx, backend.PluginContext{}, fmt.Errorf("error marshalling JsonData: %w", err)

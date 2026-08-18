@@ -251,7 +251,7 @@ var (
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
 			Name:        "provisioning.readmes",
@@ -1651,9 +1651,9 @@ var (
 			Name:        "datasources.azureMonitorBatchAPI",
 			Description: "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
 			Generate:    Generate{Go: true, React: true, LegacyFrontend: true},
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "alertingRulePermanentlyDelete",
@@ -2543,15 +2543,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "dsAbstractionApp",
-			Description:  "Registers the dsabstraction app for querying datasources via unified SQL",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatasourcesCoreServicesSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "datasourcesApiServerEnableHealthEndpoint",
 			Description:     "Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
 			Stage:           FeatureStageExperimental,
@@ -3241,11 +3232,20 @@ var (
 		},
 		{
 			Name:        "grafana.panelPluginTransformations",
-			Description: "Let panel plugins register transformations that run before user-configured transformations",
+			Description: "Let panel plugins register system transformations",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "tracesDrilldown.useValueTypeFiltering",
+			Description:  "Enables value type filtering in Traces Drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Generate:     Generate{React: true},
+			Expression:   "false",
+			HideFromDocs: true,
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} falló con {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3282,8 +3283,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3305,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3330,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3625,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Un nombre único para el intervalo de tiempo",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Cargando intervalo de tiempo",
       "title-no-matching-time-interval-found": "No se ha encontrado ningún intervalo de tiempo coincidente"
     },
@@ -11734,6 +11754,7 @@
       "no-details": "No hay campos que mostrar.",
       "open-assistant": "",
       "pin-line": "Anclar log",
+      "prettify": "",
       "remove-displayed-field": "Eliminar campo",
       "remove-log": "Eliminar log",
       "scroll-to-logline": "Desplazarse a la línea de log",
@@ -11890,7 +11911,7 @@
     },
     "name-enable-field-selector": "Habilitar selector de campos",
     "name-enable-infinite-scrolling": "Habilitar el desplazamiento infinito",
-    "name-enable-log-details": "Habilitar detalles de log",
+    "name-enable-log-details": "Habilitar datos de log",
     "name-enable-logs-highlighting": "Habilitar resaltado de logs",
     "name-font-size": "Tamaño de letra",
     "name-order": "Orden",
@@ -12447,7 +12468,7 @@
     },
     "machine-learning": {
       "subtitle": "Explorar las funciones de IA y aprendizaje automático",
-      "title": "IA y aprendizaje automático"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
@@ -12768,6 +12789,23 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12805,8 +12843,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14353,6 +14391,12 @@
     "shared": {
       "branch-description": "La rama que se utilizará para el aprovisionamiento",
       "branch-label": "Rama",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16103,6 +16147,9 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
     },
     "options": {
       "render-mode": ""

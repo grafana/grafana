@@ -17,6 +17,7 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+  useDataSourceInstanceList: jest.fn().mockReturnValue({ isLoading: false, items: [] }),
   // LogsLinkButton resolves the query datasource to check for logs; the links used
   // here have no interpolated query, so this is only a safety net against real calls.
   getDataSourceInstance: jest.fn().mockResolvedValue({ query: jest.fn() }),
