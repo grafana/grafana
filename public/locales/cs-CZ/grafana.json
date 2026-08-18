@@ -1176,7 +1176,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} selhalo se stavem {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3332,8 +3333,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3350,9 +3355,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3363,6 +3380,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_few": "",
@@ -3658,6 +3677,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Jedinečný název časového intervalu",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Načítání časového intervalu",
       "title-no-matching-time-interval-found": "Nebyl nalezen žádný odpovídající časový interval"
     },
@@ -11924,6 +11944,7 @@
       "no-details": "Žádná pole k zobrazení.",
       "open-assistant": "",
       "pin-line": "Připnout protokol",
+      "prettify": "",
       "remove-displayed-field": "Odebrat pole",
       "remove-log": "Odebrat protokol",
       "scroll-to-logline": "Posunout na řádek protokolu",
@@ -12637,7 +12658,7 @@
     },
     "machine-learning": {
       "subtitle": "Prozkoumat funkce AI a strojového učení",
-      "title": "Umělá inteligence a strojové učení"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Spravujte nástěnky složek a oprávnění"
@@ -12964,6 +12985,23 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -13005,8 +13043,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14589,6 +14627,12 @@
     "shared": {
       "branch-description": "Větev, která bude použita pro zajištění",
       "branch-label": "Větev",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16363,6 +16407,9 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
     },
     "options": {
       "render-mode": ""

@@ -16,6 +16,7 @@ declare module "@openfeature/core" {
     | "queryHistory.recentQueriesUI"
     | "awsAssumeRolePerDatasourceExternalId"
     | "provisioningFolderMetadata"
+    | "provisioningExport"
     | "provisioning.readmes"
     | "provisioning.gitConventions"
     | "provisioning.userAttribution"
@@ -79,6 +80,7 @@ declare module "@openfeature/core" {
     | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
+    | "table.refresh"
     | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
@@ -92,7 +94,9 @@ declare module "@openfeature/core" {
     | "grafana.thresholdsInterpolation"
     | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"
-    | "datasources.queryGateway";
+    | "datasources.queryGateway"
+    | "grafana.panelPluginTransformations"
+    | "tracesDrilldown.useValueTypeFiltering";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

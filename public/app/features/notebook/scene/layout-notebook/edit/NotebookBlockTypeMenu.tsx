@@ -12,8 +12,9 @@ interface Props {
    */
   index: number;
   /**
-   * Not wired up yet. Edit mode owns cell insertion, so until it passes a handler the menu is inert
-   * by construction rather than by a scattering of empty click handlers.
+   * Optional so the menu stays renderable on its own: insertion belongs to the layout manager, and
+   * without a handler the menu is inert by construction rather than by a scattering of empty click
+   * handlers. Not every type is buildable yet — the manager decides which picks it acts on.
    */
   onAdd?: (type: NotebookBlockType, index: number) => void;
 }

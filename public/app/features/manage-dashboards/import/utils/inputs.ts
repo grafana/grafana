@@ -14,9 +14,12 @@ import {
   mapDashboardLayoutSections,
   visitDashboardLayoutSections,
 } from 'app/features/dashboard/utils/visitDashboardLayoutSections';
-import { ExportDatasourceName, ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
+import {
+  ExportDatasourceName,
+  ExportLabel,
+  type LibraryElementExport,
+} from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { type LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../../library-panels/state/api';
 import { LibraryElementKind } from '../../../library-panels/types';
 import {

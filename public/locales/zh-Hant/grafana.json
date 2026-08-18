@@ -1155,7 +1155,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} 失敗，顯示{{status}}：{{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3257,8 +3258,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3275,9 +3280,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3288,6 +3305,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_other": ""
       },
@@ -3580,6 +3599,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "時間間隔的專屬名稱",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "正在載入時間間隔",
       "title-no-matching-time-interval-found": "找不到相符的時間間隔"
     },
@@ -4112,14 +4132,14 @@
       "teams-url-description": "用於查詢團隊 ID 的網址。如未設定，則預設值為 /teams。",
       "teams-url-description-oauth": "若您設定了「{{ teamsURLLabel }}」，則必須同時設定「{{ teamIDsAttributePathLabel }}」。",
       "teams-url-label": "Teams 網址",
-      "teams-url-required": "若已設定「{{ teamIDsLabel }}」，則必須設定此欄位，且必須為有效的網址。",
+      "teams-url-required": "若已設定「{{ teamIDsLabel }}」，則此欄位為必填，且必須為有效的網址。",
       "tls-client-ca-description": "信任的憑證授權單位清單的檔案路徑。不適用於 Grafana Cloud。",
       "tls-client-ca-label": "TLS 用戶端 CA",
       "tls-client-cert-description": "憑證的檔案路徑。不適用於 Grafana Cloud。",
       "tls-client-cert-label": "TLS 用戶端憑證",
       "tls-client-key-description": "金鑰的檔案路徑。不適用於 Grafana Cloud。",
       "tls-client-key-label": "TLS 用戶端金鑰",
-      "tls-skip-verify-description": "若啟用，用戶端會接受伺服器提供的任何憑證，以及\n憑證中的任何主機名稱。您應僅將此用於測試，因為此模式會使\nSSL/TLS 容易受到中間人攻擊。",
+      "tls-skip-verify-description": "若啟用，用戶端會接受伺服器提供的任何憑證，以及憑證中的任何主機名稱。您應僅將此用於測試，因為此模式會使 SSL/TLS 容易受到中間人攻擊。",
       "tls-skip-verify-label": "跳過 TLS 驗證",
       "token-exchange-timeout-description": "",
       "token-exchange-timeout-label": "",
@@ -8793,7 +8813,7 @@
       }
     },
     "secondary-actions": {
-      "add-from-query-library": "從已儲存的查詢中新增",
+      "add-from-query-library": "從已儲存的查詢新增",
       "query-add-button": "新增查詢",
       "query-add-button-aria-label": "新增查詢",
       "query-history-button": "查詢歷史記錄",
@@ -11639,6 +11659,7 @@
       "no-details": "沒有要顯示的欄位。",
       "open-assistant": "在 Assistant 中解釋記錄行",
       "pin-line": "固定記錄",
+      "prettify": "",
       "remove-displayed-field": "移除欄位",
       "remove-log": "移除記錄",
       "scroll-to-logline": "捲動到記錄行",
@@ -12352,7 +12373,7 @@
     },
     "machine-learning": {
       "subtitle": "探索 AI 和機器學習功能",
-      "title": "AI 與機器學習"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "管理資料夾儀表板及權限"
@@ -12670,6 +12691,23 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12705,8 +12743,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14235,6 +14273,12 @@
     "shared": {
       "branch-description": "用於佈建的分支",
       "branch-label": "分支",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -15974,6 +16018,9 @@
       "view-split": "",
       "view-write": ""
     },
+    "frame-picker": {
+      "label": ""
+    },
     "options": {
       "render-mode": ""
     },
@@ -16963,7 +17010,7 @@
         "as-line": "作為線",
         "calculate-value": "計算值",
         "distance": "距離",
-        "heading": "方向",
+        "heading": "標題",
         "line-builder": "線條編輯器",
         "prepare-spatial-field": "準備空間欄位",
         "transform": "轉變"

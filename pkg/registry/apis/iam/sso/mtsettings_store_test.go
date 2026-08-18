@@ -303,6 +303,25 @@ func TestMTSettingsStore(t *testing.T) {
 			},
 		},
 		{
+			name: "Update keeps the stored secret when the client sends back the redacted placeholder",
+			rows: []*settingsvc.Setting{
+				usRow("auth.generic_oauth", "client_id", "abc"),
+				usRow("auth.generic_oauth", "client_secret", "storedsecret"),
+			},
+			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
+				return s.Update(nsCtx(), "generic_oauth",
+					rest.DefaultUpdatedObjectInfo(ssoObj("generic_oauth", map[string]any{"client_id": "abc", "client_secret": setting.RedactedPassword})),
+					nil, nil, false, &metav1.UpdateOptions{})
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, f *fakeSettings) {
+				require.NoError(t, err)
+				require.NotNil(t, sso)
+				// The placeholder is not persisted; the stored secret is preserved.
+				assert.Equal(t, "storedsecret", f.upserts["client_secret"])
+				assert.Equal(t, setting.RedactedPassword, sso.Spec.Settings.Object["client_secret"])
+			},
+		},
+		{
 			name: "List is not implemented",
 			rows: nil,
 			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
@@ -327,6 +346,28 @@ func TestMTSettingsStore(t *testing.T) {
 			tc.assert(t, sso, ok, err, f)
 		})
 	}
+}
+
+// TestRedactSecretsNestedLDAP covers LDAP's nested servers config, whose secrets
+// sit under config.servers[] rather than at the top level.
+func TestRedactSecretsNestedLDAP(t *testing.T) {
+	in := ssoObj("ldap", map[string]any{
+		"config": map[string]any{
+			"servers": []any{
+				map[string]any{"host": "ldap.example.com", "bind_password": "topsecret"},
+			},
+		},
+	})
+
+	out := redactSecrets(in)
+
+	server := out.Spec.Settings.Object["config"].(map[string]any)["servers"].([]any)[0].(map[string]any)
+	assert.Equal(t, setting.RedactedPassword, server["bind_password"])
+	assert.Equal(t, "ldap.example.com", server["host"])
+
+	// The input is left untouched (redaction works on a copy).
+	inServer := in.Spec.Settings.Object["config"].(map[string]any)["servers"].([]any)[0].(map[string]any)
+	assert.Equal(t, "topsecret", inServer["bind_password"])
 }
 
 func TestCoarseResourceVersion(t *testing.T) {
