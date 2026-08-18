@@ -58,8 +58,8 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
         {item.isManaged ? (
           <Button
             size="sm"
-            icon="times"
-            variant="destructive"
+            icon="trash-alt"
+            variant="secondary"
             disabled={!canSet}
             onClick={() => onRemove(item)}
             aria-label={t(

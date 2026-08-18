@@ -97,8 +97,10 @@ const LogLineDetailsTabs = memo(
       currentLog,
       closeDetails,
       detailsMode,
+      prettifyDetailsJSON,
       replaceDetails,
       setCurrentLog,
+      setPrettifyDetailsJSON,
       showDetails,
       setDetailsMode,
       toggleDetails,
@@ -209,7 +211,9 @@ const LogLineDetailsTabs = memo(
           <LogLineDetailsComponent
             log={currentLog}
             logs={logs}
+            prettifyDetailsJSON={prettifyDetailsJSON}
             search={search}
+            setPrettifyDetailsJSON={setPrettifyDetailsJSON}
             timeRange={timeRange}
             timeZone={timeZone}
           />
@@ -230,7 +234,8 @@ export interface InlineLogLineDetailsProps {
 
 export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, timeZone }: InlineLogLineDetailsProps) => {
   const { app, fontSize, logOptionsStorageKey, noInteractions } = useLogListContext();
-  const { closeDetails, detailsMode, detailsWidth, setDetailsMode } = useLogDetailsContext();
+  const { closeDetails, detailsMode, detailsWidth, prettifyDetailsJSON, setDetailsMode, setPrettifyDetailsJSON } =
+    useLogDetailsContext();
   const styles = useStyles2(getStyles, 'inline', undefined, fontSize);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [search, setSearch] = useState('');
@@ -295,11 +300,27 @@ export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, time
         />
         {inlineNoScroll ? (
           <div>
-            <LogLineDetailsComponent log={log} logs={logs} search={search} timeRange={timeRange} timeZone={timeZone} />
+            <LogLineDetailsComponent
+              log={log}
+              logs={logs}
+              prettifyDetailsJSON={prettifyDetailsJSON}
+              search={search}
+              setPrettifyDetailsJSON={setPrettifyDetailsJSON}
+              timeRange={timeRange}
+              timeZone={timeZone}
+            />
           </div>
         ) : (
           <ScrollContainer ref={scrollRef} onScroll={saveScroll} overflowY="auto" maxHeight={LOG_LINE_DETAILS_HEIGHT}>
-            <LogLineDetailsComponent log={log} logs={logs} search={search} timeRange={timeRange} timeZone={timeZone} />
+            <LogLineDetailsComponent
+              log={log}
+              logs={logs}
+              prettifyDetailsJSON={prettifyDetailsJSON}
+              search={search}
+              setPrettifyDetailsJSON={setPrettifyDetailsJSON}
+              timeRange={timeRange}
+              timeZone={timeZone}
+            />
           </ScrollContainer>
         )}
       </div>

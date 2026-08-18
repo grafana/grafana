@@ -12,6 +12,9 @@ import {
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { changeVariableName } from '../actions/variable/changeVariableName';
+import { changeVariableType } from '../actions/variable/changeVariableType';
+import { removeVariable } from '../actions/variable/removeVariable';
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -29,7 +32,6 @@ import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardOutline } from './outline/DashboardOutline';
-import { dashboardEditActions } from './shared';
 import { type DashboardSidebarLike } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -295,7 +297,7 @@ describe('DashboardSidebar', () => {
     sidebar.selectObject(variable, { force: true });
 
     const changedVariable = new ConstantVariable({ name: 'service' });
-    dashboardEditActions.changeVariableType({
+    changeVariableType({
       source: variableSet,
       oldVariable: variable,
       newVariable: changedVariable,
@@ -332,7 +334,7 @@ describe('DashboardSidebar', () => {
 
     activateFullSceneTree(dashboard);
 
-    dashboardEditActions.changeVariableName({
+    changeVariableName({
       source: local,
       oldValue: 'localVar',
       newValue: 'env',
@@ -364,14 +366,14 @@ describe('DashboardSidebar', () => {
 
     activateFullSceneTree(dashboard);
 
-    dashboardEditActions.changeVariableName({
+    changeVariableName({
       source: local,
       oldValue: 'localVar',
       newValue: 'env',
     });
     expect(variableSet.state.variables).toEqual([local]);
 
-    dashboardEditActions.changeVariableName({
+    changeVariableName({
       source: local,
       oldValue: 'env',
       newValue: 'localVar',
@@ -398,14 +400,14 @@ describe('DashboardSidebar', () => {
 
     activateFullSceneTree(dashboard);
 
-    dashboardEditActions.changeVariableName({
+    changeVariableName({
       source: local,
       oldValue: 'localVar',
       newValue: 'env',
     });
     expect(variableSet.state.variables).toEqual([local]);
 
-    dashboardEditActions.removeVariable({
+    removeVariable({
       source: variableSet,
       removedObject: local,
     });
