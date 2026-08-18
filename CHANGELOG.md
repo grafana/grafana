@@ -128,7 +128,7 @@
 - **Provisioning:** Make Migrate to GitOps resource-agnostic for playlists [#127028](https://github.com/grafana/grafana/pull/127028), [@MissingRoberto](https://github.com/MissingRoberto)
 - **Provisioning:** Make Resources tab tree foldable [#128453](https://github.com/grafana/grafana/pull/128453), [@MissingRoberto](https://github.com/MissingRoberto)
 - **Provisioning:** Paginate the Migrate to GitOps resources table [#128042](https://github.com/grafana/grafana/pull/128042), [@MissingRoberto](https://github.com/MissingRoberto)
-- **Provisioning:** Pretty-print generated _folder.json [#127947](https://github.com/grafana/grafana/pull/127947), [@MissingRoberto](https://github.com/MissingRoberto)
+- **Provisioning:** Pretty-print generated \_folder.json [#127947](https://github.com/grafana/grafana/pull/127947), [@MissingRoberto](https://github.com/MissingRoberto)
 - **Provisioning:** Show folder path in Migrate resources list [#128454](https://github.com/grafana/grafana/pull/128454), [@MissingRoberto](https://github.com/MissingRoberto)
 - **Provisioning:** Show job author and origin in recent jobs [#128820](https://github.com/grafana/grafana/pull/128820), [@amalavet](https://github.com/amalavet)
 - **Provisioning:** Show job errors in Migrate to GitOps drawer [#127936](https://github.com/grafana/grafana/pull/127936), [@MissingRoberto](https://github.com/MissingRoberto)

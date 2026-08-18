@@ -32,6 +32,8 @@ jest.mock('app/api/clients/iam/v0alpha1', () => ({
 jest.mock('app/api/clients/dashboard/v2beta1', () => ({
   useListNotebookQuery: jest.fn(() => ({ data: undefined, isLoading: false, error: undefined })),
   useCreateNotebookMutation: () => [mockCreateNotebook],
+  // The row menu fetches a spec on demand for export; nothing here exercises the fetch itself.
+  useLazyGetNotebookQuery: () => [jest.fn()],
 }));
 
 jest.mock('../list/notebookSearchApi', () => ({
@@ -226,6 +228,20 @@ describe('NotebooksListPage', () => {
     // The row still renders, just without a way into edit mode.
     expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
+  });
+
+  it('opens a row menu offering export, replacing the old disabled placeholder', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setList([makeNotebook('nb1', 'Checkout error spike')]);
+
+    render(<NotebooksListPage />);
+
+    const moreActions = await screen.findByRole('button', { name: 'More actions' });
+    expect(moreActions).toBeEnabled();
+
+    await userEvent.click(moreActions);
+
+    expect(await screen.findByRole('menuitem', { name: 'Export' })).toBeInTheDocument();
   });
 
   it('filters the list by title through the endpoint', async () => {
