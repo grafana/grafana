@@ -82,7 +82,7 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 		schema.SettingsSchema = defaultSchema().SettingsSchema
 	}
 
-	return definition.AugmentOpenAPI(oas, definition.PluginOptions{
+	return definition.AugmentOpenAPI(oas, definition.SettingsResource{
 		Schema:   schema,
 		Resource: ps,
 		SpecName: "SettingsSpec",

@@ -135,7 +135,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		return oas, nil
 	}
 
-	return definition.AugmentOpenAPI(oas, definition.PluginOptions{
+	return definition.AugmentOpenAPI(oas, definition.SettingsResource{
 		Schema:   schema,
 		Resource: ds,
 		SpecName: "DataSourceSpec",

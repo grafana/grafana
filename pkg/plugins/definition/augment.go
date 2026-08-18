@@ -18,7 +18,8 @@ import (
 
 const app_INSTANCE_NAME = "instance"
 
-type PluginOptions struct {
+// This will eventually be supported via app.ManifestData kinds
+type SettingsResource struct {
 	Schema *pluginschema.PluginSchema
 
 	// The full resource config (spec and secure are children)
@@ -37,7 +38,7 @@ type PluginOptions struct {
 }
 
 // nolint:gocyclo
-func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, error) {
+func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, error) {
 	if opts.Schema.IsZero() {
 		return oas, nil // nothing special
 	}
