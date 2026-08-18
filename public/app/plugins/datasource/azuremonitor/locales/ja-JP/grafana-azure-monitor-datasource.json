@@ -105,7 +105,11 @@
       "load-subscriptions": "サブスクリプションを読み込む"
     },
     "dimension-fields": {
-      "aria-label-remove": "削除",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "ディメンション",
       "placeholder-field": "フィールド",
       "placeholder-operation": "操作",
