@@ -3198,6 +3198,23 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelPluginTransformations",
+        "resourceVersion": "1787070031960",
+        "creationTimestamp": "2026-08-17T16:38:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 16:20:31.960083 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Let panel plugins register system transformations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.pluginPathNesting",
         "resourceVersion": "1785918906185",
         "creationTimestamp": "2026-08-05T08:35:06Z"
@@ -6292,6 +6309,21 @@
       },
       "spec": {
         "description": "Enables the refactored TableNG nested-table implementation",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.refresh",
+        "resourceVersion": "1786399613696",
+        "creationTimestamp": "2026-08-10T22:06:53Z"
+      },
+      "spec": {
+        "description": "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,

@@ -2993,6 +2993,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "table.refresh",
+			Description:  "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "table.inspectDataTableNG",
 			Description:  "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
 			Stage:        FeatureStageExperimental,
@@ -3229,6 +3238,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:        "grafana.panelPluginTransformations",
+			Description: "Let panel plugins register system transformations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "tracesDrilldown.useValueTypeFiltering",
