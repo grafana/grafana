@@ -1,4 +1,4 @@
-import { getTimeRangeFromTimestamps } from "./createTraceLink";
+import { getTimeRangeFromTimestamps } from './createTraceLink';
 
 describe('getTimeRangeFromTimestamps', () => {
   const startTimeUs = 1_000_000;
