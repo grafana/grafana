@@ -3397,8 +3397,9 @@ func numberOrBoolQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query
 		return numberOrBoolSetQuery(nb, req)
 	case selection.GreaterThan, selection.LessThan, resource.OperatorGreaterThanOrEqual, resource.OperatorLessThanOrEqual:
 		return numberOrBoolRangeQuery(nb, req)
+	default:
+		return nil, unsupportedRequirementError(req)
 	}
-	return nil, unsupportedRequirementError(req)
 }
 
 // Combining rules follow the string path: "=" with several values is an AND,
