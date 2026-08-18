@@ -140,6 +140,9 @@
     "switch": {
       "activeBackgroundHover": "palette.orange400"
     },
+    "tooltip": {
+      "borderColor": "palette.ink700"
+    },
     "input": {
       "background": "palette.ink850"
     },

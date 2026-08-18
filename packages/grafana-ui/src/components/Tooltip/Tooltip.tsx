@@ -143,16 +143,18 @@ const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
     theme.components.tooltip.background,
-    theme.components.tooltip.background,
+    theme.components.tooltip.borderColor,
     theme.components.tooltip.text,
-    { topBottom: 0.5, rightLeft: 1 }
+    { topBottom: 0.5, rightLeft: 1 },
+    theme.shadows.z1
   );
   const error = buildTooltipTheme(
     theme,
     theme.colors.error[visualRefreshEnabled ? 'background' : 'main'],
     theme.colors.error[visualRefreshEnabled ? 'border' : 'main'],
     theme.colors.error[visualRefreshEnabled ? 'text' : 'contrastText'],
-    { topBottom: 0.5, rightLeft: 1 }
+    { topBottom: 0.5, rightLeft: 1 },
+    theme.shadows.z1
   );
 
   return {

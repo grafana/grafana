@@ -140,6 +140,9 @@
     "switch": {
       "activeBackgroundHover": "palette.orange600"
     },
+    "tooltip": {
+      "borderColor": "palette.neutral200"
+    },
     "codeEditor": {
       "keyword": "palette.blue700",
       "controlKeyword": "palette.violet700",

@@ -94,6 +94,7 @@ export const ThemeComponentsInputSchema = z
     tooltip: z.object({
       text: z.string().optional(),
       background: z.string().optional(),
+      borderColor: z.string().optional(),
     }),
     panel: z.object({
       padding: z.number().optional(),
@@ -219,6 +220,7 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     },
     tooltip: {
       background: colors.background.elevated,
+      borderColor: 'transparent',
       text: colors.text.primary,
     },
     dashboard: {
