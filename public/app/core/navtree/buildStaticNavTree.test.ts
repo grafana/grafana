@@ -1,0 +1,139 @@
+import { type NavModelItem } from '@grafana/data';
+import { AccessControlAction } from 'app/types/accessControl';
+
+import { buildStaticNavTree } from './buildStaticNavTree';
+import { NavID } from './constants';
+import { navIds as ids, setupNavTestState as setup } from './test-utils';
+import { applyAppSubUrl, findNavById as findById, sortNavTree } from './utils';
+
+const DASHBOARD_READER = [AccessControlAction.DashboardsRead];
+
+describe('buildStaticNavTree', () => {
+  describe('sections', () => {
+    it('builds just Home for a user with no permissions', () => {
+      setup();
+
+      expect(ids(buildStaticNavTree())).toEqual([NavID.home]);
+    });
+
+    it('seeds Home first, then the sections a user can see', () => {
+      setup({ permissions: DASHBOARD_READER });
+
+      expect(ids(buildStaticNavTree())).toEqual([NavID.home, NavID.dashboards]);
+    });
+
+    it('points home at the login page when signed out and anonymous access is disabled', () => {
+      setup({ isSignedIn: false, config: { anonymousEnabled: false } });
+
+      expect(findById(buildStaticNavTree(), NavID.home)?.url).toBe('/login');
+    });
+
+    it('prefixes urls with the app sub url', () => {
+      setup({ permissions: DASHBOARD_READER, config: { appSubUrl: '/grafana' } });
+      const tree = applyAppSubUrl(buildStaticNavTree());
+
+      expect(findById(tree, NavID.dashboards)?.url).toBe('/grafana/dashboards');
+    });
+
+    it('shows global variables under dashboards with the toggle and write access', () => {
+      // globalDashboardVariables is an OpenFeature flag, not a config toggle
+      setup({
+        permissions: [AccessControlAction.DashboardsRead, AccessControlAction.DashboardsWrite],
+        openFeatureFlags: { globalDashboardVariables: true },
+      });
+
+      const children = ids(findById(buildStaticNavTree(), NavID.dashboards)?.children ?? []);
+      expect(children).toContain('dashboards/variables');
+    });
+  });
+
+  describe('dashboards section', () => {
+    it('shows the section for public dashboard views without permissions', () => {
+      setup({ isSignedIn: false, config: { publicDashboardAccessToken: 'abc' } });
+
+      expect(findById(buildStaticNavTree(), NavID.dashboards)).toBeDefined();
+    });
+
+    it('builds children based on permissions and config', () => {
+      setup({
+        permissions: [
+          AccessControlAction.DashboardsRead,
+          AccessControlAction.DashboardsCreate,
+          AccessControlAction.SnapshotsRead,
+        ],
+      });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.dashboards)?.children ?? [])).toEqual([
+        'dashboards/playlists',
+        'dashboards/snapshots',
+        'dashboards/library-panels',
+        'dashboards/public',
+        'dashboards/recently-deleted',
+        'dashboards/new',
+        'dashboards/import',
+      ]);
+    });
+
+    it('omits snapshots when disabled in config', () => {
+      setup({
+        permissions: [AccessControlAction.DashboardsRead, AccessControlAction.SnapshotsRead],
+        config: { snapshotEnabled: false },
+      });
+      const tree = buildStaticNavTree();
+
+      expect(findById(findById(tree, NavID.dashboards)?.children ?? [], 'dashboards/snapshots')).toBeUndefined();
+    });
+
+    it('gates playlists on the playlists RBAC permission when the toggle is on', () => {
+      setup({ permissions: DASHBOARD_READER, featureToggles: { playlistsRBAC: true } });
+      const withoutPermission = buildStaticNavTree();
+
+      setup({
+        permissions: [AccessControlAction.DashboardsRead, AccessControlAction.PlaylistsRead],
+        featureToggles: { playlistsRBAC: true },
+      });
+      const withPermission = buildStaticNavTree();
+
+      expect(
+        findById(findById(withoutPermission, NavID.dashboards)?.children ?? [], 'dashboards/playlists')
+      ).toBeUndefined();
+      expect(
+        findById(findById(withPermission, NavID.dashboards)?.children ?? [], 'dashboards/playlists')
+      ).toBeDefined();
+    });
+
+    it('shows playlists to any org role and to server admins when the RBAC toggle is off', () => {
+      const playlists = (tree: NavModelItem[]) =>
+        findById(findById(tree, NavID.dashboards)?.children ?? [], 'dashboards/playlists');
+
+      setup({ orgRole: 'Editor', permissions: DASHBOARD_READER });
+      expect(playlists(buildStaticNavTree())).toBeDefined();
+
+      setup({ orgRole: 'Admin', permissions: DASHBOARD_READER });
+      expect(playlists(buildStaticNavTree())).toBeDefined();
+
+      // A Grafana server admin passes regardless of org role, like Go's HasRole
+      setup({ orgRole: 'None', isGrafanaAdmin: true, permissions: DASHBOARD_READER });
+      expect(playlists(buildStaticNavTree())).toBeDefined();
+
+      setup({ orgRole: 'None', permissions: DASHBOARD_READER });
+      expect(playlists(buildStaticNavTree())).toBeUndefined();
+    });
+  });
+});
+
+describe('sortNavTree', () => {
+  it('sorts by weight with insertion-order fallback for unweighted items, without mutating the input', () => {
+    const nodes: NavModelItem[] = [
+      { id: 'c', text: 'C' },
+      { id: 'a', text: 'A', sortWeight: -100 },
+      { id: 'd', text: 'D' },
+      { id: 'b', text: 'B', sortWeight: -50 },
+    ];
+
+    const sorted = sortNavTree(nodes);
+
+    expect(ids(sorted)).toEqual(['a', 'b', 'c', 'd']);
+    expect(ids(nodes)).toEqual(['c', 'a', 'd', 'b']);
+  });
+});
