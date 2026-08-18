@@ -173,6 +173,10 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	return s.mergeZanzanaUserPermissions(ctx, user, permissions, options), nil
 }
 
+func (s *Service) GetLocalUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	return s.GetUserPermissions(ctx, user, options)
+}
+
 func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, user identity.Requester, legacy []accesscontrol.Permission, options accesscontrol.Options) []accesscontrol.Permission {
 	if s.zanzanaResolver == nil {
 		return legacy

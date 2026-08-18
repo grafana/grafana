@@ -45,6 +45,8 @@ import (
 // AuthzServiceAudience is the audience for the authz service.
 const AuthzServiceAudience = "authzService"
 
+const userPermissionsDelegatedGrant = "authz.grafana.app/userpermissions:get"
+
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
 	cfg *setting.Cfg,
@@ -87,6 +89,10 @@ func ProvideAuthZClient(
 		}
 		return rbacClient, nil
 	default:
+		userPermissionsEvaluator, ok := acService.(accesscontrol.UserPermissionsEvaluator)
+		if !ok {
+			return nil, errors.New("access control service does not support local user permission evaluation")
+		}
 		sql := legacysql.NewDatabaseProvider(db)
 		rbacSettings := rbac.Settings{
 			CacheTTL: authCfg.cacheTTL,
@@ -113,6 +119,9 @@ func ProvideAuthZClient(
 				store.NewStaticPermissionStore(acService),
 				store.NewSQLPermissionStore(sql, tracer),
 			),
+			userPermissionsEvaluator,
+			nil,
+			nil,
 			log.New("authz-grpc-server"),
 			tracer,
 			reg,
@@ -122,14 +131,18 @@ func ProvideAuthZClient(
 
 		channel := &inprocgrpc.Channel{}
 
-		authInterceptor := grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
+		authenticate := func(ctx context.Context) (context.Context, error) {
 			ctx = authlib.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
-					Namespace: "*",
+					Namespace:   "*",
+					Permissions: []string{userPermissionsDelegatedGrant},
 				},
 			}))
 			return ctx, nil
-		})
+		}
+		authInterceptor := grpcAuth.UnaryServerInterceptor(authenticate)
+		streamAuthInterceptor := grpcAuth.StreamServerInterceptor(authenticate)
+		channel.WithServerStreamInterceptor(streamAuthInterceptor)
 
 		// Chain trace propagation with the auth interceptor.
 		// inprocgrpc.Channel wraps the server context with noValuesContext which
@@ -296,6 +309,8 @@ func RegisterRBACAuthZService(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	cache cache.Cache,
+	actionResolver accesscontrol.ActionResolver,
+	userPermissionsResolver rbac.UserPermissionsResolver,
 	exchangeClient authnlib.TokenExchanger,
 	cfg RBACServerSettings,
 ) {
@@ -328,6 +343,9 @@ func RegisterRBACAuthZService(
 		folderStore,
 		legacy.NewLegacySQLStores(db),
 		store.NewSQLPermissionStore(db, tracer),
+		nil,
+		userPermissionsResolver,
+		actionResolver,
 		log.New("authz-grpc-server"),
 		tracer,
 		reg,
