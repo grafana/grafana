@@ -6067,6 +6067,7 @@
       "new-row-title": "New row",
       "row": {
         "collapse": "Collapse row {{title}}",
+        "copy-link": "Copy link to row",
         "expand": "Expand row {{title}}",
         "new": "New row",
         "repeat": {
@@ -8938,11 +8939,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "Logs for this span",
+        "no-logs-found-tooltip": "No matching logs found for this span",
         "no-logs-tooltip": "No logs found for this span using the trace data source configuration.",
         "tooltip": "See logs related to this span using the trace data source configuration."
       },
       "logs-for-this-trace": {
         "button": "Logs for this trace",
+        "logs-found-tooltip": "See related logs",
+        "no-logs-found-tooltip": "No matching logs found for this trace",
         "no-logs-tooltip": "No logs found for this trace using the trace data source configuration.",
         "tooltip": "See logs related to this trace using the trace data source configuration."
       },
@@ -12468,7 +12472,7 @@
     },
     "machine-learning": {
       "subtitle": "Explore AI and machine learning features",
-      "title": "AI & machine learning"
+      "title": "Machine learning"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
@@ -16147,6 +16151,9 @@
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
+    },
+    "frame-picker": {
+      "label": "Query"
     },
     "options": {
       "render-mode": "Render mode"

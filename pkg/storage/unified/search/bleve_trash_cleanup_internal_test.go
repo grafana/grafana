@@ -23,7 +23,10 @@ func TestRemoveExpiredTrash(t *testing.T) {
 	recent := time.Now().Add(-1 * time.Hour).UnixMilli()
 
 	for _, tc := range []struct {
-		name      string
+		name string
+		// Empty means dashboards.
+		group     string
+		resource  string
 		retention TrashRetentionConfig
 		// Names the index still holds after the pass, trash and live together.
 		want []string
@@ -46,6 +49,15 @@ func TestRemoveExpiredTrash(t *testing.T) {
 			want:      []string{"live", "old-live", "no-timestamp", "old", "recent"},
 		},
 		{
+			// The same settings as above, on a kind that gets no exception: the
+			// dashboard window must not leak into anything else.
+			name:      "a resource other than dashboards uses the general window",
+			group:     "folder.grafana.app",
+			resource:  "folders",
+			retention: TrashRetentionConfig{Enabled: true, MaxAge: 2 * day, DashboardsMaxAge: 365 * day},
+			want:      []string{"live", "old-live", "no-timestamp", "recent"},
+		},
+		{
 			// The collector computes the same cutoff from a zero window and removes
 			// everything, so the index has to as well.
 			name:      "a zero window removes all trash carrying a deletion time",
@@ -54,7 +66,11 @@ func TestRemoveExpiredTrash(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			backend, idx := newTrashCleanupIndex(t, tc.retention, old, recent)
+			group, res := tc.group, tc.resource
+			if group == "" {
+				group, res = dashboardGroup, dashboardResource
+			}
+			backend, idx := newTrashCleanupIndex(t, trashCleanupKey(group, res), tc.retention, old, recent)
 
 			backend.RemoveExpiredTrash(t.Context())
 
@@ -69,7 +85,7 @@ func TestRemoveExpiredTrashDrainsMoreThanOneBatch(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:           t.TempDir(),
 		FileThreshold:  5,
-		SearchFields:   trashCleanupSearchFields(),
+		SearchFields:   trashCleanupSearchFields(dashboardGroup, dashboardResource),
 		TrashRetention: TrashRetentionConfig{Enabled: true, MaxAge: time.Hour, DashboardsMaxAge: time.Hour},
 	}, nil)
 	require.NoError(t, err)
@@ -78,7 +94,7 @@ func TestRemoveExpiredTrashDrainsMoreThanOneBatch(t *testing.T) {
 	expired := time.Now().Add(-30 * 24 * time.Hour).UnixMilli()
 	total := trashCleanupBatchSize + 10
 
-	key := trashCleanupKey()
+	key := trashCleanupKey(dashboardGroup, dashboardResource)
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "ns"})
 	index, err := backend.BuildIndex(ctx, key, int64(total), "test", func(i resource.ResourceIndex) (int64, error) {
 		items := make([]*resource.BulkIndexItem, 0, total)
@@ -97,19 +113,18 @@ func TestRemoveExpiredTrashDrainsMoreThanOneBatch(t *testing.T) {
 // newTrashCleanupIndex builds an index holding two live documents, one older than
 // any window used here, and three deleted ones: expired, recent, and one with no
 // deletion time, as written before that field existed.
-func newTrashCleanupIndex(t testing.TB, retention TrashRetentionConfig, old, recent int64) (*bleveBackend, resource.ResourceIndex) {
+func newTrashCleanupIndex(t testing.TB, key resource.NamespacedResource, retention TrashRetentionConfig, old, recent int64) (*bleveBackend, resource.ResourceIndex) {
 	t.Helper()
 
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:           t.TempDir(),
 		FileThreshold:  5,
-		SearchFields:   trashCleanupSearchFields(),
+		SearchFields:   trashCleanupSearchFields(key.Group, key.Resource),
 		TrashRetention: retention,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
-	key := trashCleanupKey()
 	live := func(name string, rv int64) *resource.BulkIndexItem {
 		return &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
 			Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
@@ -135,13 +150,13 @@ func newTrashCleanupIndex(t testing.TB, retention TrashRetentionConfig, old, rec
 	return backend, index
 }
 
-func trashCleanupKey() resource.NamespacedResource {
-	return resource.NamespacedResource{Namespace: "default", Group: dashboardGroup, Resource: dashboardResource}
+func trashCleanupKey(group, res string) resource.NamespacedResource {
+	return resource.NamespacedResource{Namespace: "default", Group: group, Resource: res}
 }
 
-func trashCleanupSearchFields() *resource.SearchFieldsRegistry {
+func trashCleanupSearchFields(group, res string) *resource.SearchFieldsRegistry {
 	return resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-		resource.NewLowerGroupResource(dashboardGroup, dashboardResource): DashboardSearchFieldsProviderForTest(),
+		resource.NewLowerGroupResource(group, res): DashboardSearchFieldsProviderForTest(),
 	})
 }
 

@@ -6436,6 +6436,21 @@
     },
     {
       "metadata": {
+        "name": "tracesDrilldown.useValueTypeFiltering",
+        "resourceVersion": "1787032167500",
+        "creationTimestamp": "2026-08-18T05:49:27Z"
+      },
+      "spec": {
+        "description": "Enables value type filtering in Traces Drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tracesDrilldownTimeSeeker",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
