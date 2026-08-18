@@ -180,7 +180,12 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 
         {filterable && (
           <div className={styles.headerCellActions}>
-            <HeaderCellMenu displayName={displayName} filterable={filterable} onOpenFilter={openFilter} />
+            <HeaderCellMenu
+              displayName={displayName}
+              filterable={filterable}
+              hasActiveFilter={hasActiveFilter}
+              onOpenFilter={openFilter}
+            />
           </div>
         )}
 

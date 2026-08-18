@@ -197,6 +197,22 @@ describe('HeaderCell', () => {
       expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '0' });
     });
 
+    it('labels the filter menu item "Update filter" once the column has an active filter', async () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      const { rerender } = render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      expect(await screen.findByText('Filter values')).toBeInTheDocument();
+      expect(screen.queryByText('Update filter')).not.toBeInTheDocument();
+
+      // the dropdown stays open across the rerender and its content re-renders reactively, so the
+      // label updates without needing to reopen the menu
+      rerender(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />);
+
+      expect(await screen.findByText('Update filter')).toBeInTheDocument();
+      expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+    });
+
     it('reopens the filter popup from the filter icon', async () => {
       const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
       render(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />);
