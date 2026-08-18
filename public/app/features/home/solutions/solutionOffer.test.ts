@@ -83,7 +83,6 @@ describe('solutionOffer', () => {
     await expect(offer()).resolves.toEqual({
       availability: 'enable',
       description: 'Understand the example signal.',
-      setupHint: 'connect an example source',
       cta: { label: 'Enable', href: '/plugins/example-app/' },
       learnMore: { href: 'https://grafana.com/docs/example/' },
     });

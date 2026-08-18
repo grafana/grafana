@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 import { useAsync } from 'react-use';
 
@@ -31,7 +31,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
     <Card noMargin className={styles.card}>
       <Card.Heading>
         <Stack direction="row" gap={1.5} alignItems="center">
-          <div className={styles.icon}>
+          <div className={cx(styles.icon, styles.activeIcon)}>
             <Icon name={solution.icon} size="lg" />
           </div>
           <Stack direction="column" gap={0}>
@@ -127,7 +127,7 @@ export function AvailableSolutionCard({ solution, offer }: AvailableSolutionCard
     <Card noMargin className={styles.card}>
       <Card.Heading>
         <Stack direction="row" gap={1.5} alignItems="center">
-          <div className={styles.availableIcon}>
+          <div className={cx(styles.icon, styles.availableIcon)}>
             <Icon name={solution.icon} size="lg" />
           </div>
           <Stack direction="column" gap={0}>
@@ -188,7 +188,7 @@ export function SolutionCardSkeleton() {
     <Card noMargin className={styles.card}>
       <Card.Heading>
         <Stack direction="row" gap={1.5} alignItems="center">
-          <Skeleton width={44} height={44} />
+          <Skeleton width={32} height={32} />
           <Stack direction="column" gap={0}>
             <Skeleton width={180} height={20} />
             <Skeleton width={80} />
@@ -232,21 +232,16 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     alignItems: 'center',
     justifyContent: 'center',
     color: theme.colors.text.secondary,
+    borderRadius: theme.shape.radius.default,
+    width: theme.spacing(4),
+    height: theme.spacing(4),
+  }),
+  activeIcon: css({
     background: theme.colors.background.secondary,
     border: `1px solid ${theme.colors.border.medium}`,
-    borderRadius: theme.shape.radius.default,
-    width: theme.spacing(6),
-    height: theme.spacing(6),
   }),
   availableIcon: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: theme.colors.text.secondary,
     border: `1px dashed ${theme.colors.border.medium}`,
-    borderRadius: theme.shape.radius.default,
-    width: theme.spacing(6),
-    height: theme.spacing(6),
   }),
   statusDot: css({
     width: theme.spacing(1),

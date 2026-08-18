@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Badge, Stack, useStyles2 } from '@grafana/ui';
+import { Counter, Stack, useStyles2 } from '@grafana/ui';
 
 export type OverviewSectionHeadingVariant = 'success' | 'warning' | 'default';
 
@@ -18,8 +18,10 @@ export function OverviewSectionHeading({ children, count, variant = 'default' }:
   return (
     <Stack direction="row" gap={1} alignItems="center">
       {variant !== 'default' && <span className={cx(styles.statusDot, styles[variant])} aria-hidden="true" />}
-      {children}
-      {count !== undefined && <Badge text={count} color="darkgrey" className={styles.pill} />}
+      <Stack direction="row" gap={0} alignItems="center">
+        {children}
+        {count !== undefined && <Counter value={count} />}
+      </Stack>
     </Stack>
   );
 }
@@ -33,9 +35,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   warning: css({ background: theme.colors.warning.main }),
   success: css({ background: theme.colors.success.main }),
-  pill: css({
-    borderRadius: theme.shape.radius.pill,
-    lineHeight: 1.125,
-    padding: theme.spacing(0, 0.5),
-  }),
 });

@@ -15,7 +15,7 @@ export function LearnMoreLink({
   onClick,
 }: LearnMoreLinkProps) {
   return (
-    <TextLink external={external} href={href} aria-label={ariaLabel} onClick={onClick}>
+    <TextLink variant="bodySmall" external={external} href={href} aria-label={ariaLabel} onClick={onClick}>
       {label}
     </TextLink>
   );

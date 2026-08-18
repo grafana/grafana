@@ -42,7 +42,6 @@ export function solutionOffer(
         return {
           availability: 'enable',
           description: spec.description,
-          setupHint: spec.setupHint,
           cta: entry.canEnable
             ? {
                 label: t('home.solutions.cta.enable', 'Enable'),
