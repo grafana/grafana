@@ -129,6 +129,7 @@ type LogsPresence = 'loading' | 'present' | 'absent';
 type LogsCheckMatch = {
   datasourceUid: string;
   query: DataQuery;
+  refId?: string;
 };
 
 type LogsCheckResult = {
@@ -179,6 +180,7 @@ function useHasLogs(
         if (result.hasLogs && result.match) {
           setResolvedLinkModel(rewriteLinkForMatch(linkModel, result.match));
           setPresence('present');
+          reportPresence('present', result.match.refId);
           return;
         }
         setPresence('absent');
@@ -196,15 +198,20 @@ function useHasLogs(
   }, [queryKey, timeRangeKey, isLoadingDsList, dsList, traceDatasourceUid]);
 
   useEffect(() => {
-    if (presence === 'loading' || !dynamicTraceToLogsEnabled) {
+    if (presence !== 'absent' || !dynamicTraceToLogsEnabled) {
       return;
     }
-    reportInteraction('grafana_traces_trace_view_span_logs_checked', {
-      logs: presence === 'present',
-    });
+    reportPresence('absent');
   }, [dynamicTraceToLogsEnabled, presence]);
 
   return { presence, resolvedLinkModel };
+}
+
+function reportPresence(presence: LogsPresence, refId?: string) {
+  reportInteraction('grafana_traces_trace_view_span_logs_checked', {
+    logs: presence === 'present',
+    refId,
+  });
 }
 
 function getStoredLokiQueryMatch(
@@ -328,11 +335,11 @@ function checkForLogsInQueries(
     concatMap((datasourceUid) => {
       const dsQueries = remapQueriesToDatasource(queries, datasourceUid);
       return probeForMatchingQuery(dsQueries, timeRange, datasourceUid, traceDatasourceUid).pipe(
-        map((match) => (match ? { datasourceUid, query: match } : undefined)),
+        map((match) => (match ? { datasourceUid, query: match, refId: match.refId } : undefined)),
         catchError(() => of(undefined))
       );
     }),
-    filter((match): match is LogsCheckMatch => match != null),
+    filter((match) => match != null),
     take(1),
     tap((match) => {
       if (match.query.refId) {
