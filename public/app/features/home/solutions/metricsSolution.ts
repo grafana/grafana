@@ -53,12 +53,24 @@ export function metricsSolution(): Solution {
   // probe so the metrics solution does not depend on the Kubernetes card.
   const kubernetesPrometheus = memoize(() => detectSignal(resolveKubernetesDatasource));
 
-  const detect = async (): Promise<SignalDetection> => {
-    const [metrics, kubernetes] = await Promise.all([prometheus(), kubernetesPrometheus()]);
-    return kubernetes.status === 'active'
-      ? { status: 'active', datasource: metrics.datasource ?? kubernetes.datasource }
-      : metrics;
-  };
+  const detect = memoize(async (): Promise<SignalDetection> => {
+    const metricsPromise = prometheus();
+    const kubernetesPromise = kubernetesPrometheus();
+
+    const metrics = await metricsPromise;
+    if (metrics.status === 'active') {
+      return metrics;
+    }
+
+    const kubernetes = await kubernetesPromise;
+    if (kubernetes.status === 'active') {
+      return kubernetes;
+    }
+
+    return metrics.status === 'unknown' || kubernetes.status === 'unknown'
+      ? { status: 'unknown', datasource: null }
+      : { status: 'inactive', datasource: null };
+  });
   const datasource = async () => (await detect()).datasource;
 
   const activity = memoize(async () => {

@@ -82,6 +82,30 @@ describe('metricsSolution', () => {
     expect(mockFetchActivity).toHaveBeenCalledTimes(1);
   });
 
+  it('does not wait for Kubernetes when the metrics probe proves data is flowing', async () => {
+    const metricsDatasource = datasource('metrics-prom');
+    mockDetectSignal
+      .mockResolvedValueOnce({ status: 'active', datasource: metricsDatasource })
+      .mockReturnValueOnce(new Promise(() => {}));
+    const solution = metricsSolution();
+
+    const detected = Promise.all([solution.signal(), solution.datasource()]);
+    const timeout = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 0));
+
+    expect(mockDetectSignal).toHaveBeenCalledTimes(2);
+    await expect(Promise.race([detected, timeout])).resolves.toEqual(['active', metricsDatasource]);
+  });
+
+  it('keeps detection inconclusive when metrics is inactive and Kubernetes is unknown', async () => {
+    mockDetectSignal
+      .mockResolvedValueOnce({ status: 'inactive', datasource: null })
+      .mockResolvedValueOnce({ status: 'unknown', datasource: null });
+    const solution = metricsSolution();
+
+    await expect(solution.signal()).resolves.toBe('unknown');
+    await expect(solution.datasource()).resolves.toBeNull();
+  });
+
   it('uses the Kubernetes datasource when Kubernetes proves metrics are flowing', async () => {
     const kubernetesDatasource = datasource('kubernetes-prom');
     mockDetectSignal
