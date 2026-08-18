@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -327,10 +326,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			auth, err := cfg.Raw.NewSection("auth")
-			assert.NoError(t, err)
-			_, err = auth.NewKey("oauth_allow_insecure_email_lookup", strconv.FormatBool(tt.allowInsecureTakeover))
-			assert.NoError(t, err)
+			cfg.OAuthAllowInsecureEmailLookup = tt.allowInsecureTakeover
 
 			if tt.addStateCookie {
 				v := tt.stateCookieValue

@@ -374,7 +374,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
+	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1136,7 +1136,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
+	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1841,7 +1841,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 		return server.Runner{}, err
 	}
 	cacheService := localcache.ProvideService()
-	userimplService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
+	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
 	if err != nil {
 		return server.Runner{}, err
 	}
