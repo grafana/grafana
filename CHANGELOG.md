@@ -2,6 +2,10 @@
 
 # 13.0.7 (2026-08-18)
 
+### Security
+
+- CVE-2026-17183
+
 ### Bug fixes
 
 - **Reporting:** batch dashboard lookups when listing reports (Enterprise)
@@ -10,6 +14,10 @@
 <!-- 12.4.9 START -->
 
 # 12.4.9 (2026-08-18)
+
+### Security
+
+- CVE-2026-17183
 
 ### Features and enhancements
 
@@ -24,6 +32,10 @@
 
 # 13.1.4 (2026-08-18)
 
+### Security
+
+- CVE-2026-17183
+
 ### Bug fixes
 
 - **Reporting:** batch dashboard lookups when listing reports (Enterprise)
@@ -33,10 +45,18 @@
 
 # 12.3.11 (2026-08-18)
 
+### Security
+
+- CVE-2026-17183
+
 <!-- 12.3.11 END -->
 <!-- 13.2.0 START -->
 
 # 13.2.0 (2026-08-18)
+
+### Security
+
+- CVE-2026-17183
 
 ### Features and enhancements
 
