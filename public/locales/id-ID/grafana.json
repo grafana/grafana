@@ -9423,6 +9423,21 @@
     "requires-license": "Membutuhkan lisensi Grafana Enterprise",
     "title": "Enterprise"
   },
+  "gettingstarted": {
+    "docs-card": {
+      "complete": "selesai",
+      "learn-how": "Pelajari caranya di dokumen"
+    },
+    "getting-started": {
+      "aria-label-to-advanced-tutorials": "Ke tutorial lanjutan",
+      "aria-label-to-basic-tutorials": "Ke tutorial dasar",
+      "checking-completed-setup-steps": "Memeriksa langkah-langkah pengaturan yang telah selesai",
+      "remove-this-panel": "Hapus panel ini"
+    },
+    "tutorial-card": {
+      "complete": "selesai"
+    }
+  },
   "global-variables": {
     "details": {
       "create-error": "",
@@ -17322,6 +17337,12 @@
   "visualization": {
     "data-hover-view": {
       "link": "Tautan"
+    }
+  },
+  "welcome": {
+    "welcome-banner": {
+      "need-help": "Butuh bantuan?",
+      "welcome-to-grafana": "Selamat datang di Grafana"
     }
   },
   "xychart": {

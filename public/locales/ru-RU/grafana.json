@@ -9611,6 +9611,21 @@
     "requires-license": "Требуется лицензия Grafana Enterprise",
     "title": "Enterprise"
   },
+  "gettingstarted": {
+    "docs-card": {
+      "complete": "завершить",
+      "learn-how": "Подробнее — в документации"
+    },
+    "getting-started": {
+      "aria-label-to-advanced-tutorials": "К расширенным руководствам",
+      "aria-label-to-basic-tutorials": "К базовым руководствам",
+      "checking-completed-setup-steps": "Проверка завершенных этапов настройки",
+      "remove-this-panel": "Удалить панель"
+    },
+    "tutorial-card": {
+      "complete": "завершить"
+    }
+  },
   "global-variables": {
     "details": {
       "create-error": "",
@@ -17735,6 +17750,12 @@
   "visualization": {
     "data-hover-view": {
       "link": "Ссылка"
+    }
+  },
+  "welcome": {
+    "welcome-banner": {
+      "need-help": "Нужна помощь?",
+      "welcome-to-grafana": "Добро пожаловать в Grafana"
     }
   },
   "xychart": {

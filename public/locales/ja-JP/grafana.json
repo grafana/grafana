@@ -9423,6 +9423,21 @@
     "requires-license": "Grafana Enterpriseライセンスが必要です",
     "title": "エンタープライズ"
   },
+  "gettingstarted": {
+    "docs-card": {
+      "complete": "完了",
+      "learn-how": "ドキュメントで学習"
+    },
+    "getting-started": {
+      "aria-label-to-advanced-tutorials": "高度なチュートリアルへ",
+      "aria-label-to-basic-tutorials": "基本チュートリアルへ",
+      "checking-completed-setup-steps": "完了したセットアップ手順を確認中",
+      "remove-this-panel": "このパネルを削除"
+    },
+    "tutorial-card": {
+      "complete": "完了"
+    }
+  },
   "global-variables": {
     "details": {
       "create-error": "",
@@ -17322,6 +17337,12 @@
   "visualization": {
     "data-hover-view": {
       "link": "リンク"
+    }
+  },
+  "welcome": {
+    "welcome-banner": {
+      "need-help": "サポートが必要ですか？",
+      "welcome-to-grafana": "Grafanaへようこそ"
     }
   },
   "xychart": {
