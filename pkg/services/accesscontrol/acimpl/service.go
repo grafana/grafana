@@ -516,6 +516,9 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 	s.cache.ExclusiveDelete(accesscontrol.GetUserDirectPermissionCacheKey(user))
 	s.cache.ExclusiveDelete(accesscontrol.GetZanzanaUserPermissionCacheKey(user))
+	if s.userPermissionsClient != nil {
+		s.userPermissionsClient.ClearUserPermissionCache(user)
+	}
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
