@@ -471,6 +471,29 @@ describe('PanelDataTransformer', () => {
       expect(transformer.state.transformations).toBe(installed);
       expect(transformer.state.transformations).toHaveLength(2);
     });
+
+    it('ignores a runtime transformation belonging to another origin', async () => {
+      registerPlugin('plain');
+      registerPlugin('other-plain');
+
+      const { transformer, panel } = buildPipeline({ pluginId: 'plain', series: [frameWithLabels()] });
+      // Url-provided entries are system transformations too, but not ones this class installs — and
+      // `setSystemTransformations` leaves other origins alone, so treating one as "already installed"
+      // would leave every sync with a mismatch it can never resolve.
+      transformer.setSystemTransformations({ prepend: [() => (source) => source], origin: 'url' });
+      activateFullSceneTree(panel);
+
+      await waitFor(() => {
+        expect(transformer.state.data?.state).toBe(LoadingState.Done);
+      });
+
+      const reprocess = jest.spyOn(transformer, 'reprocessTransformations');
+      await panel.changePluginType('other-plain');
+
+      // Neither plugin registers anything, so this sync has nothing to install or remove.
+      expect(reprocess).not.toHaveBeenCalled();
+      expect(transformer.state.transformations).toHaveLength(1);
+    });
   });
 
   it('lets the supplier branch on frame metadata', async () => {

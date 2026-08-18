@@ -1,13 +1,8 @@
 import { type CustomTransformOperator } from '@grafana/data';
-import { SceneDataTransformer, type SceneDataTransformation } from '@grafana/scenes';
+import { type SceneDataTransformation } from '@grafana/scenes';
 import { DataTopic } from '@grafana/schema';
 
-import {
-  NO_SYSTEM_TRANSFORMATIONS,
-  getUserTransformations,
-  splitSystemTransformations,
-  withSystemTransformations,
-} from './systemTransformations';
+import { NO_SYSTEM_TRANSFORMATIONS, getUserTransformations, splitSystemTransformations } from './systemTransformations';
 
 const passthrough: CustomTransformOperator = () => (source) => source;
 
@@ -81,42 +76,6 @@ describe('getUserTransformations', () => {
 
   it('returns an empty list when only system transformations are installed', () => {
     expect(getUserTransformations([systemPrependEntry, systemAppendEntry])).toEqual([]);
-  });
-});
-
-describe('withSystemTransformations', () => {
-  it('re-joins an edited user list with the system groups at the edges', () => {
-    const transformer = new SceneDataTransformer({
-      transformations: [systemPrependEntry, userReduce, systemAppendEntry],
-    });
-
-    expect(withSystemTransformations(transformer, [userOrganize])).toEqual([
-      systemPrependEntry,
-      userOrganize,
-      systemAppendEntry,
-    ]);
-  });
-
-  it('preserves the system groups when the user clears their transformations', () => {
-    const transformer = new SceneDataTransformer({
-      transformations: [systemPrependEntry, userReduce, systemAppendEntry],
-    });
-
-    expect(withSystemTransformations(transformer, [])).toEqual([systemPrependEntry, systemAppendEntry]);
-  });
-
-  it('is a no-op when nothing is installed', () => {
-    const transformer = new SceneDataTransformer({ transformations: [userReduce] });
-
-    expect(withSystemTransformations(transformer, [userOrganize])).toEqual([userOrganize]);
-  });
-
-  it('round-trips a split', () => {
-    const transformations = [systemPrependEntry, userReduce, userOrganize, systemAppendEntry];
-    const transformer = new SceneDataTransformer({ transformations });
-    const { userTransformations } = splitSystemTransformations(transformations);
-
-    expect(withSystemTransformations(transformer, userTransformations)).toEqual(transformations);
   });
 });
 

@@ -1,5 +1,5 @@
 import { type CustomTransformOperator, type DataTransformerConfig } from '@grafana/data';
-import { isSystemTransformation, type SceneDataTransformation, type SceneDataTransformer } from '@grafana/scenes';
+import { isSystemTransformation, type SceneDataTransformation } from '@grafana/scenes';
 
 /**
  * The transformations a panel's plugin requires for a given set of query result frames, in the form
@@ -58,20 +58,4 @@ export function splitSystemTransformations(transformations: SceneDataTransformat
  */
 export function getUserTransformations(transformations: SceneDataTransformation[]): SceneDataTransformation[] {
   return transformations.filter((transformation) => !isSystemTransformation(transformation));
-}
-
-/**
- * Re-joins a user-edited list with the system groups the transformer currently holds.
- *
- * Every editor works on the user-only list, so writing that list straight back to
- * `state.transformations` would uninstall the panel plugin's transformations until the next resync.
- * Takes the transformer rather than an array so callers cannot pair the wrong two lists.
- */
-export function withSystemTransformations(
-  transformer: SceneDataTransformer,
-  userTransformations: SceneDataTransformation[]
-): SceneDataTransformation[] {
-  const { systemPrepend, systemAppend } = splitSystemTransformations(transformer.state.transformations);
-
-  return [...systemPrepend, ...userTransformations, ...systemAppend];
 }

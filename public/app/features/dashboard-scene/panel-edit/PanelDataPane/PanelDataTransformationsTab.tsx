@@ -35,7 +35,6 @@ import {
   type ResolvedSystemTransformations,
   getUserTransformations,
   splitSystemTransformations,
-  withSystemTransformations,
 } from '../../scene/systemTransformations';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
@@ -87,12 +86,10 @@ export class PanelDataTransformationsTab
   }
 
   public onChangeTransformations(transformations: DataTransformerConfig[]) {
-    const transformer = this.getDataTransformer();
-
-    // User edits never address the runtime transformations — re-join them at the edges. Writing the
-    // user list alone would uninstall the panel plugin's until the next resync.
-    transformer.setState({ transformations: withSystemTransformations(transformer, transformations) });
-    transformer.reprocessTransformations();
+    // Not `setState({ transformations })`: the runtime transformations share that array and this list
+    // holds only the user's, so a plain write would uninstall the panel plugin's until the next
+    // resync. `setUserTransformations` re-joins them at the edges and reprocesses.
+    this.getDataTransformer().setUserTransformations(transformations);
   }
 
   /**
@@ -396,7 +393,11 @@ function SystemTransformationRows({ transformations }: SystemTransformationRowsP
             );
 
         return (
-          <div key={`${id ?? 'custom'}-${index}`} className={styles.systemRow} data-testid="system-transformation-row">
+          <div
+            key={`${id ?? 'custom'}-${index}`}
+            className={styles.systemRow}
+            data-testid={selectors.components.Transforms.systemTransformationRow}
+          >
             <Icon name="lock" size="sm" />
             <span className={styles.systemRowName}>{name}</span>
             <Badge

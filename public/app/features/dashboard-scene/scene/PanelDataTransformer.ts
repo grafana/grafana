@@ -223,7 +223,11 @@ export class PanelDataTransformer extends SceneDataTransformer {
   private _installSystemTransformations(plugin: PanelPlugin) {
     const shouldInstall = pluginTransformationsEnabled() && plugin.hasDataTransformations();
     const nextPlugin = shouldInstall ? plugin : undefined;
-    const isInstalled = this.state.transformations.some(isSystemTransformation);
+    // Narrowed to this origin: `isSystemTransformation` also matches url-provided entries, which this
+    // class neither installs nor removes. Counting those as installed would make every sync see a
+    // mismatch it cannot resolve — `setSystemTransformations` leaves other origins alone — and fall
+    // through to a forced reprocess each time.
+    const isInstalled = this.state.transformations.some((t) => isSystemTransformation(t) && t.origin === 'system');
 
     // Idempotent, so re-activating a panel does not re-transform data that is already correct.
     if (nextPlugin === this._plugin && shouldInstall === isInstalled) {

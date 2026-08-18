@@ -28,7 +28,7 @@ import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
-import { splitSystemTransformations, withSystemTransformations } from '../../scene/systemTransformations';
+import { splitSystemTransformations } from '../../scene/systemTransformations';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
@@ -509,15 +509,6 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     return undefined;
   }
 
-  /**
-   * Writes a user-edited transformation list back, re-joining the runtime transformations the
-   * provider holds. Every mutator below works on the filtered user list, so writing that list
-   * straight to state would uninstall the panel plugin's transformations.
-   */
-  private setUserTransformations(transformer: SceneDataTransformer, transformations: DataTransformerConfig[]) {
-    transformer.setState({ transformations: withSystemTransformations(transformer, transformations) });
-  }
-
   /** The user-configured transformations, which are the only ones this editor addresses by index. */
   private getUserTransformerConfigs(transformer: SceneDataTransformer): DataTransformerConfig[] {
     return filterDataTransformerConfigs(
@@ -558,16 +549,14 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const newConfig: DataTransformerConfig = { id: transformationId, options: {} };
     const insertAt = afterIndex !== undefined ? afterIndex + 1 : transformations.length;
     transformations.splice(insertAt, 0, newConfig);
-    this.setUserTransformations(transformer, transformations);
-    transformer.reprocessTransformations();
+    transformer.setUserTransformations(transformations);
     return insertAt;
   };
 
   public reorderTransformations = (transformations: DataTransformerConfig[]) => {
     const transformer = this.getSceneDataTransformer();
     if (transformer) {
-      this.setUserTransformations(transformer, transformations);
-      transformer.reprocessTransformations();
+      transformer.setUserTransformations(transformations);
     }
   };
 
@@ -588,7 +577,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     transformations.splice(index, 1);
-    this.setUserTransformations(transformer, transformations);
+    transformer.setUserTransformations(transformations);
     this.runQueries();
   };
 
@@ -600,7 +589,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     const transformation = transformations[index];
     transformations[index] = { ...transformation, disabled: !transformation.disabled };
-    this.setUserTransformations(transformer, transformations);
+    transformer.setUserTransformations(transformations);
     this.runQueries();
   };
 
@@ -611,7 +600,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
     const indexSet = new Set(indices);
     const transformations = this.getUserTransformerConfigs(transformer).filter((_, i) => !indexSet.has(i));
-    this.setUserTransformations(transformer, transformations);
+    transformer.setUserTransformations(transformations);
     this.runQueries();
   };
 
@@ -624,7 +613,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const transformations = this.getUserTransformerConfigs(transformer).map((t, i) =>
       indexSet.has(i) ? { ...t, disabled } : t
     );
-    this.setUserTransformations(transformer, transformations);
+    transformer.setUserTransformations(transformations);
     this.runQueries();
   };
 

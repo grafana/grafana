@@ -1278,6 +1278,9 @@ export const versionedComponents = {
     removeAllTransformationsButton: {
       '10.4.0': 'data-testid remove all transformations button',
     },
+    systemTransformationRow: {
+      '13.3.0': 'data-testid system transformation row',
+    },
   },
   NavBar: {
     Configuration: {

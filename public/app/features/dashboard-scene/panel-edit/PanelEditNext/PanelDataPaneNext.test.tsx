@@ -59,6 +59,8 @@ const mockQueryRunner = {
   runQueries: jest.fn(),
   // onActivate subscribes to datasource changes; return an unsubscribable so activation works.
   subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
+  // Already active, so a parent activating skips recursing into this plain object.
+  isActive: true,
 } as unknown as SceneQueryRunner;
 
 // Mockable getDashboardSceneFor for localStorage tests
@@ -331,6 +333,9 @@ describe('PanelDataPaneNext', () => {
       });
 
       jest.spyOn(mockTransformer, 'setState');
+      // `setUserTransformations` only reprocesses an active provider, and every panel this editor
+      // can reach is active — an inactive one here would test a state the editor never sees.
+      mockTransformer.activate();
       mockPanel.state.$data = mockTransformer;
     });
 
@@ -1794,6 +1799,9 @@ describe('PanelDataPaneNext', () => {
       });
 
       jest.spyOn(mockTransformer, 'setState');
+      // `setUserTransformations` only reprocesses an active provider, and every panel this editor
+      // can reach is active — an inactive one here would test a state the editor never sees.
+      mockTransformer.activate();
       mockPanel.state.$data = mockTransformer;
     });
 

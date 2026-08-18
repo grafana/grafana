@@ -197,7 +197,7 @@ describe('PanelDataTransformationsTab', () => {
       });
       render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
-      const rows = await screen.findAllByTestId('system-transformation-row');
+      const rows = await screen.findAllByTestId(selectors.components.Transforms.systemTransformationRow);
       expect(rows.map((row) => row.textContent)).toEqual([
         expect.stringContaining('Limit'),
         expect.stringContaining('Reduce'),
@@ -211,7 +211,7 @@ describe('PanelDataTransformationsTab', () => {
       const modelMock = createModelMock(mockData, [], jest.fn(), { prepend: [{ id: 'limit', options: {} }] });
       render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
-      expect(await screen.findAllByTestId('system-transformation-row')).toHaveLength(1);
+      expect(await screen.findAllByTestId(selectors.components.Transforms.systemTransformationRow)).toHaveLength(1);
       expect(screen.queryByTestId(selectors.components.Transforms.noTransformationsMessage)).not.toBeInTheDocument();
       // Nothing of the user's to delete, so the destructive action is not offered.
       expect(
@@ -223,7 +223,7 @@ describe('PanelDataTransformationsTab', () => {
       const modelMock = createModelMock(mockData, [], jest.fn(), { prepend: [() => (source) => source] });
       render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
-      const row = await screen.findByTestId('system-transformation-row');
+      const row = await screen.findByTestId(selectors.components.Transforms.systemTransformationRow);
       expect(row).toHaveTextContent('Custom transformation (code defined)');
     });
 
@@ -232,7 +232,7 @@ describe('PanelDataTransformationsTab', () => {
       render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
       await screen.findByText('1 - Add field from calculation');
-      expect(screen.queryByTestId('system-transformation-row')).not.toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.components.Transforms.systemTransformationRow)).not.toBeInTheDocument();
     });
   });
 
