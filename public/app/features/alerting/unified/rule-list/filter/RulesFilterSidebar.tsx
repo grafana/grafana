@@ -249,40 +249,38 @@ function FilterSidebarForm({ filterState, showDataSourceManagedRules }: FilterSi
         <div className={styles.divider} />
 
         <SidebarSection>
-          <SidebarField
-            label={<Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>}
-            labelId="filter-label-rule-source"
-          >
-            <Controller
-              name="ruleSource"
-              control={control}
-              render={({ field }) => (
-                <ToggleButtonGroup<AdvancedFilters['ruleSource']>
-                  aria-labelledby="filter-label-rule-source"
-                  value={field.value}
-                  onChange={(value) => {
-                    field.onChange(value);
-                    applyFormValues({ ruleSource: value });
-                  }}
-                  options={[
-                    { label: t('common.all', 'All'), value: null },
-                    {
-                      label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
-                      value: RuleSource.Grafana,
-                    },
-                    ...(showDataSourceManagedRules
-                      ? [
-                          {
-                            label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
-                            value: RuleSource.DataSource,
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              )}
-            />
-          </SidebarField>
+          {showDataSourceManagedRules && (
+            <SidebarField
+              label={<Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>}
+              labelId="filter-label-rule-source"
+            >
+              <Controller
+                name="ruleSource"
+                control={control}
+                render={({ field }) => (
+                  <ToggleButtonGroup<AdvancedFilters['ruleSource']>
+                    aria-labelledby="filter-label-rule-source"
+                    value={field.value}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      applyFormValues({ ruleSource: value });
+                    }}
+                    options={[
+                      { label: t('common.all', 'All'), value: null },
+                      {
+                        label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
+                        value: RuleSource.Grafana,
+                      },
+                      {
+                        label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
+                        value: RuleSource.DataSource,
+                      },
+                    ]}
+                  />
+                )}
+              />
+            </SidebarField>
+          )}
 
           {showDataSourceManagedRules && (
             <SidebarField
