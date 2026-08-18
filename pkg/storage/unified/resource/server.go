@@ -290,10 +290,6 @@ type SearchOptions struct {
 	// TTL for the dedup cache used in ListModifiedSince updates. 0 disables the cache.
 	IndexModificationCacheTTL time.Duration
 
-	// Keep deleted objects in the index so trash searches can find them. Off means
-	// a delete removes the document, as it did before trash search existed.
-	IndexDeletedDocuments bool
-
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
 
@@ -2103,7 +2099,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
 					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Group, event.Key.Resource).Observe(latencySeconds)
 					}
 				}
 			}

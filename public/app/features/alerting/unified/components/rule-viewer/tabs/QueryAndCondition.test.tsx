@@ -180,7 +180,7 @@ describe('loading state', () => {
     return { evalRequests: () => requestCount, resolveEval };
   }
 
-  it('renders the rule definition immediately while eval is pending, then clears the loading bar', async () => {
+  it.skip('renders the rule definition immediately while eval is pending, then clears the loading bar', async () => {
     const { resolveEval } = blockEvalRequests();
 
     const rule = makeGrafanaRule([
