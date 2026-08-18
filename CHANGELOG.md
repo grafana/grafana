@@ -1,3 +1,37 @@
+<!-- 13.1.2 START -->
+
+# 13.1.2 (2026-08-04)
+
+### Bug fixes
+
+- **Logs Table:** Fix missing results when logs stream [#128946](https://github.com/grafana/grafana/pull/128946), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Logs Table:** Fix mixed usage of field name and display name [#128698](https://github.com/grafana/grafana/pull/128698), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Security**: Fix CVE-2026-13438
+
+<!-- 13.1.2 END -->
+<!-- 12.4.7 START -->
+
+# 12.4.7 (2026-08-04)
+
+### Features and enhancements
+
+- **Dashboards:** Get annotations and dashboard endpoint performance improvements [#129780](https://github.com/grafana/grafana/pull/129780), [@filewalkwithme](https://github.com/filewalkwithme)
+
+### Bug fixes
+
+- **DashboardDS:** Fix Mixed panels with a time override stuck in permanent loading [#129289](https://github.com/grafana/grafana/pull/129289), [@oscarkilhed](https://github.com/oscarkilhed)
+
+<!-- 12.4.7 END -->
+<!-- 12.3.10 START -->
+
+# 12.3.10 (2026-08-04)
+
+<!-- 12.3.10 END -->
+<!-- 13.0.5 START -->
+
+# 13.0.5 (2026-08-04)
+
+<!-- 13.0.5 END -->
 <!-- 13.0.3 START -->
 
 # 13.0.3 (2026-06-23)
