@@ -473,7 +473,7 @@ export function getLogsButtonCTA(
   }
 
   const options = getTraceToLogsOptions(settings.jsonData);
-  if (options?.filterBySpanID) {
+  if (options?.filterBySpanID && type === 'span') {
     return t('explore.span-detail-link-buttons.logs-for-this-span.button', 'Logs for this span');
   }
   if (options?.filterByTraceID) {
