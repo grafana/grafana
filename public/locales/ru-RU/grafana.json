@@ -1176,7 +1176,8 @@
         "with-causes": ""
       },
       "failedWith": "Ошибка {{-config}} со статусом {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3332,8 +3333,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3350,9 +3355,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3363,6 +3380,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_few": "",
@@ -3658,6 +3677,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Уникальное имя для временного интервала.",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Загрузка временного интервала",
       "title-no-matching-time-interval-found": "Соответствующий временной интервал не найден"
     },
@@ -3671,6 +3691,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Временные интервалы",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Выбрать временные интервалы..."
     },
     "time-intervals-table": {
@@ -4686,8 +4707,8 @@
     "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда.",
     "trash-state-manager": {
       "label": {
-        "alphabetically-az": "В алфавитном порядке (прямом)",
-        "alphabetically-za": "В алфавитном порядке (обратном)",
+        "alphabetically-az": "В алфавитном порядке (А–Я)",
+        "alphabetically-za": "В алфавитном порядке (Я–А)",
         "deleted-by-az": "",
         "deleted-by-za": "",
         "deleted-newest": "Удалено (сначала новые)",
@@ -5738,10 +5759,13 @@
       "add-conditional-rule": "Добавить {{ruleDescription}} правило",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Дублировать панель",
       "edit-query-result-rule": "Изменить правило результата запроса",
       "edit-template-variable-rule": "Изменить правило переменной шаблона",
       "edit-time-range-rule": "Изменить правило временного диапазона",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Переместить {{typeName}}",
       "panel-background": "Изменить фон панели",
       "panel-description": "Изменить описание панели",
@@ -5994,8 +6018,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Все вложенные группы будут разгруппированы.",
-      "ungroup-nested-title": "Разгруппировать вложенные группы?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} из {{numberOfPages}}",
@@ -6210,6 +6238,13 @@
       "save-json-to-file": "Сохранить модель JSON в файл",
       "see-docs": "Подробнее о подготовке см. в <2>документации</2>."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": "Нет совпадающих панелей"
     },
@@ -6385,6 +6420,12 @@
         "title-hidden_few": "",
         "title-hidden_many": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -6951,7 +6992,8 @@
         "change-annotation-enabled-state": "Изменить состояние включенной аннотации",
         "change-annotation-name": "Изменить имя аннотации",
         "change-annotation-panel-filter": "Изменить фильтр панели аннотаций"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Удалить запрос аннотаций",
@@ -7027,13 +7069,9 @@
       "placeholder-your-metric-prefix": "Префикс метрик"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Удалить",
-      "aria-label-edit": "Редактировать",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Правила отображения/скрытия не будут действовать",
@@ -7358,6 +7396,7 @@
         "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
         "would-still-dashboard": "Все равно сохранить дашборд?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Сохранить и перезаписать"
     },
     "legacy": {
@@ -7837,6 +7876,10 @@
     "variable-controls": {
       "add-variable": "Добавить переменную"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
+    },
     "variable-editable-element": {
       "delete-confirm": "Удалить переменную",
       "delete-text": "Удалить {{name}}?",
@@ -8172,7 +8215,8 @@
       "title-missing-rights": "Отсутствующие права"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Выбрать источник данных"
+      "aria-label-select-a-data-source": "Выбрать источник данных",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Страница {{page}} не найдена"
@@ -11111,6 +11155,12 @@
       "high-count_many": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -11894,6 +11944,7 @@
       "no-details": "Отсутствуют поля для отображения.",
       "open-assistant": "Объяснить строку журнала в Assistant",
       "pin-line": "Закрепить журнал",
+      "prettify": "",
       "remove-displayed-field": "Удалить поле",
       "remove-log": "Удалить журнал",
       "scroll-to-logline": "Прокрутить до строки журнала",
@@ -12607,7 +12658,7 @@
     },
     "machine-learning": {
       "subtitle": "Обзор функций ИИ и машинного обучения",
-      "title": "ИИ и машинное обучение"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Управление дашбордами папок и разрешениями"
@@ -12628,6 +12679,10 @@
     },
     "new-folder": {
       "title": "Новая папка"
+    },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
     },
     "oncall": {
       "title": "OnCall"
@@ -12812,6 +12867,7 @@
       "customise-saving": "",
       "dialog-label": "Навигация",
       "dock": "Закрепить меню",
+      "header-title": "",
       "list-label": "Навигация",
       "open": "Главное меню",
       "pin-error": "",
@@ -12929,7 +12985,67 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": ""
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_few": "",
+      "count_many": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_few": "",
+      "count-truncated_many": "",
+      "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "mode-edit": "",
+      "mode-view": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -14511,6 +14627,12 @@
     "shared": {
       "branch-description": "Ветвь, используемая для подготовки",
       "branch-label": "Ветвь",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -14995,7 +15117,6 @@
     },
     "header": {
       "alert": "Оповещение",
-      "expression": "Выражение",
       "pending-expression": "",
       "pending-expression-cancel": "Отмена",
       "pending-transformation": "",
@@ -15009,6 +15130,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
@@ -16256,6 +16378,7 @@
     "name-show-mini-map": "Показать мини-карту"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16284,6 +16407,19 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

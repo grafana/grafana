@@ -6,6 +6,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { recommendationsShown } from '../analytics/main';
+
 import { RecommendationCard } from './RecommendationCard';
 import { RecommendationExisting } from './RecommendationExisting';
 import { RecommendationPill } from './RecommendationPill';
@@ -75,6 +77,16 @@ export function RecommendationsView({
     return () => clearTimeout(timeout);
   }, [collapsed, paused, safeIndex, items.length, showControls, selectionPending]);
 
+  useEffect(() => {
+    if (items.length && !selectionPending) {
+      recommendationsShown({
+        recommendation_ids: items.map((r) => r.id),
+        starting_state: startingState,
+        solution: activeSolution ?? undefined,
+      });
+    }
+  }, [items, selectionPending, startingState, activeSolution]);
+
   return (
     <div>
       <Stack direction="row" alignItems="center" columnGap={2} rowGap={1} wrap="wrap">
@@ -82,7 +94,7 @@ export function RecommendationsView({
           <Trans i18nKey="home.recommendations.title">Recommendations for your stack</Trans>
         </Text>
 
-        {collapsed && hasRecommendations && (
+        {collapsed && hasRecommendations && !selectionPending && (
           <div className={styles.pills}>
             <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
               {items.map((recommendation) => (
@@ -206,7 +218,7 @@ export function RecommendationsView({
                           key={recommendation.id}
                           className={styles.item}
                           aria-hidden={i !== safeIndex}
-                          {...(i !== safeIndex && { inert: '' })}
+                          inert={i !== safeIndex}
                         >
                           <RecommendationCard
                             recommendation={recommendation}

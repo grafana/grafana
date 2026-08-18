@@ -14,15 +14,6 @@ jest.mock('@grafana/i18n', () => ({
   t: (_key: string, defaultValue: string) => defaultValue,
 }));
 
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  useTheme2: () => ({
-    visualization: {
-      getColorByName: (name: string) => name,
-    },
-  }),
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   isAppPluginInstalled: jest.fn(),

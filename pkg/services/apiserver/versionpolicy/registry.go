@@ -7,13 +7,22 @@ import (
 	"fmt"
 	"maps"
 	"sync"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+// ResourceEnabledChecker reports whether a GroupVersionResource is enabled, and whether any
+// resource in a group is enabled at all. *serverstorage.ResourceConfig satisfies this directly.
+type ResourceEnabledChecker interface {
+	ResourceEnabled(gvr schema.GroupVersionResource) bool
+	AnyResourceForGroupEnabled(group string) bool
+}
 
 type VersionPolicy struct {
 	// advisory: affects discovery only, never storage
-	PreferredVersion string
+	PreferredVersion string `json:"preferredVersion,omitempty"`
 	// persist ceiling: writes whose version outranks it are rejected
-	MaxAllowedVersion string
+	MaxAllowedVersion string `json:"maxAllowedVersion,omitempty"`
 }
 
 // VersionPolicyRegistry serves the resolved global policy. base holds the static layers
@@ -87,9 +96,10 @@ func (r *VersionPolicyRegistry) HasMaxAllowed(group string) bool {
 }
 
 // Validate checks the static boot configuration (defaults, ini) and fails fast on a misconfiguration.
-// The live runtime layer is deliberately not checked here: a bad runtime value must not crash a running
-// server (Resolve drops it with a warn and the last-known policy stands).
-func (r *VersionPolicyRegistry) Validate() error {
+// The live runtime layer is deliberately not checked here (Resolve drops a bad value with a warn).
+// resourceChecker may be nil (no enablement info available to the caller), in which case every
+// registered preferredVersion/maxAllowedVersion is assumed enabled.
+func (r *VersionPolicyRegistry) Validate(resourceChecker ResourceEnabledChecker) error {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -122,12 +132,27 @@ func (r *VersionPolicyRegistry) Validate() error {
 		if p.MaxAllowedVersion == "" {
 			continue
 		}
+		// InstallAPIs skips installing the group entirely once every version is filtered out as
+		// disabled, so discovery advertises nothing for it - nothing to compare against the cap.
+		if resourceChecker != nil && !resourceChecker.AnyResourceForGroupEnabled(group) {
+			continue
+		}
+		if resourceChecker != nil && !resourceChecker.ResourceEnabled(schema.GroupVersion{Group: group, Version: p.MaxAllowedVersion}.WithResource("")) {
+			logger.Warn("maxAllowedVersion is registered but disabled; the cap version itself is unreachable via the API",
+				"group", group, "version", p.MaxAllowedVersion)
+		}
 		advertised := p.PreferredVersion
+		if advertised != "" && resourceChecker != nil && !resourceChecker.ResourceEnabled(schema.GroupVersion{Group: group, Version: advertised}.WithResource("")) {
+			logger.Warn("ApplyPreferredForGroup skips the preferred resource version because it is disabled",
+				"group", group, "version", advertised)
+			advertised = ""
+		}
+		preferredApplies := advertised != ""
 		if advertised == "" {
 			advertised = r.resolver.naturalPreferred(group)
 		}
 		if advertised != "" && r.resolver.Outranks(group, advertised, p.MaxAllowedVersion) {
-			if p.PreferredVersion == "" {
+			if !preferredApplies {
 				return fmt.Errorf("version policy for group %q: maxAllowedVersion %q is below the version %q that discovery advertises; set preferredVersion to %q or lower",
 					group, p.MaxAllowedVersion, advertised, p.MaxAllowedVersion)
 			}

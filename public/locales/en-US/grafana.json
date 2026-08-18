@@ -1162,7 +1162,8 @@
         "with-causes": "{{-baseMessage}}: {{-causes}}"
       },
       "failedWith": "{{-config}} failed with {{status}}: {{-message}}",
-      "time-interval-in-use": "This time interval cannot be deleted because it is still used by one or more notification policies or alert rules."
+      "time-interval-in-use": "This time interval cannot be deleted because it is still used by one or more notification policies or alert rules.",
+      "time-interval-name-exists": "Time interval with this name already exists. Use a different name or update existing one."
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1617,17 +1618,6 @@
         "import-rules": "Import alert rules",
         "title": "Auto-sync is enabled"
       },
-      "autosync-review": {
-        "back": "Add method",
-        "badge": "Will sync continuously",
-        "card-title": "Auto-sync",
-        "enable": "Enable auto-sync",
-        "heading": "Review & enable auto-sync",
-        "scope": "Scope",
-        "scope-value": "Contact points, notification policies, templates, mute timings, and alert rules",
-        "source": "Source",
-        "subtitle": "Confirm the source. Once enabled, Grafana keeps these resources in sync until you turn it off in Alerting settings."
-      },
       "confirm": {
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
@@ -1675,26 +1665,6 @@
       "info-description": "This wizard helps you import alert rules and notification resources from external sources to Grafana Alerting. For more information, refer to the <2>documentation</2>.",
       "info-title": "Import wizard",
       "loading": "Loading…",
-      "method": {
-        "autosync": "Auto-sync",
-        "autosync-datasource-label": "Data source",
-        "autosync-datasource-placeholder": "Select a data source…",
-        "autosync-desc": "Grafana continuously syncs alert configuration from a Mimir or Cortex Alertmanager data source. The synced resources stay read-only and managed by the source.",
-        "autosync-no-datasources-desc": "Auto-sync needs a Mimir or Cortex Alertmanager data source. Add one, then start this wizard again.",
-        "autosync-no-datasources-title": "No Mimir or Cortex data sources",
-        "autosync-title": "Auto-sync",
-        "heading": "How do you want to add these resources?",
-        "next-steps": "Next you'll set up notification resources and alert rules, then review & import.",
-        "promote": "Promote",
-        "promote-desc": "Promote when you are ready to use these resources. Each contact point, policy, template, and mute timing merges into your live config and becomes a normal, editable Grafana resource.",
-        "promote-title": "Promote",
-        "promote-warning-desc": "The imported resources merge into your live notification config. To reverse it later you would have to delete each resulting resource by hand.",
-        "promote-warning-title": "Promoting can't be undone",
-        "stage": "Stage",
-        "stage-desc": "Stage brings the config in safely without touching your live setup. Resources stay visible but read-only so you can review them first. Promote when you are ready to use them as editable Grafana resources.",
-        "stage-title": "Stage",
-        "subtitle": "Choose how alert configuration from your external Alertmanager is brought into Grafana. You can change this before you finish."
-      },
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
@@ -1722,18 +1692,6 @@
         "filter": "Filter",
         "folder": "Target folder",
         "heading": "Review Import",
-        "merge-inhibition-rules_one": "{{count}} inhibition rule",
-        "merge-inhibition-rules_other": "{{count}} inhibition rules",
-        "merge-receivers_one": "{{count}} contact point",
-        "merge-receivers_other": "{{count}} contact points",
-        "merge-route": "a notification route",
-        "merge-summary": "Will merge into your live config: {{summary}}",
-        "merge-templates_one": "{{count}} template",
-        "merge-templates_other": "{{count}} templates",
-        "merge-time-intervals_one": "{{count}} mute timing",
-        "merge-time-intervals_other": "{{count}} mute timings",
-        "method": "Method",
-        "method-promote": "Promote",
         "namespace": "Namespace",
         "nothing": "Nothing to import",
         "nothing-desc": "Both steps were skipped. Go back and configure at least one import source.",
@@ -1871,14 +1829,10 @@
         "cancel-confirm-title": "Cancel import?",
         "cancel-confirm-yes": "Discard changes",
         "skip": "Skip",
-        "step-method": "Import method",
-        "step-method-desc": "How to bring resources into Grafana",
         "step-notifications": "Notification resources",
         "step-notifications-desc": "Contact points, policies, templates",
         "step-review": "Review & import",
         "step-review-desc": "Preview and confirm import",
-        "step-review-enable": "Review & enable",
-        "step-review-enable-desc": "Confirm and enable auto-sync",
         "step-rules": "Alert rules",
         "step-rules-desc": "Alert and recording rules"
       },
@@ -3282,8 +3236,12 @@
         "picker-label": "Datasource",
         "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
         "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
+        "save-disabled-staged-config": "Promote or revert the staged configuration before enabling auto-sync.",
         "save-error": "Failed to save Mimir Alertmanager auto-sync",
         "save-success": "Mimir Alertmanager auto-sync enabled",
+        "staged-conflict-active-title": "Auto-sync is not running",
+        "staged-conflict-body": "Grafana holds one imported configuration at a time, and {{identifier}} currently occupies that slot. Promote or revert it below to free auto-sync.",
+        "staged-conflict-title": "Auto-sync is unavailable while a configuration is staged",
         "title": "Auto-sync configuration"
       },
       "import": {
@@ -3300,11 +3258,56 @@
         "inhibition-equal": "equal: {{labels}}",
         "loading": "Loading imported configurations…",
         "no-matchers": "(no matchers)",
+        "no-write-permission": "You don't have permission to modify the imported configuration.",
         "parse-error-body": "The imported Alertmanager configuration could not be parsed.",
         "parse-error-title": "Couldn't read the staged configuration",
         "policy-tree-routes_one": "{{count}} route",
         "policy-tree-routes_other": "{{count}} routes",
+        "promote": {
+          "checking": "Checking promotion impact…",
+          "confirm": "Promote to live config",
+          "dry-run-error": "Couldn't check the promotion impact",
+          "dry-run-unavailable-body": "You can still promote — the merge itself is validated when you confirm.",
+          "dry-run-unavailable-title": "Couldn't preview the promotion impact",
+          "error-title": "Failed to promote configuration",
+          "invalid-title": "This configuration can't be promoted",
+          "merge-contact-points_one": "contact point added",
+          "merge-contact-points_other": "contact points added",
+          "merge-heading": "Will merge into your live config:",
+          "merge-info": "Promoting merges this configuration into your live Grafana Alertmanager. This is a one-time action and can't be undone.",
+          "merge-inhibition-rules_one": "inhibition rule added",
+          "merge-inhibition-rules_other": "inhibition rules added",
+          "merge-route": "notification route added",
+          "merge-templates_one": "template added",
+          "merge-templates_other": "templates added",
+          "merge-time-intervals_one": "time interval added",
+          "merge-time-intervals_other": "time intervals added",
+          "rename-contact-point": "Contact point",
+          "rename-heading": "Renamed to avoid conflicts",
+          "rename-subtitle": "These names already exist in your live config, so the imported copies are renamed.",
+          "rename-time-interval": "Time interval",
+          "rules-note-body": "Alert rules and recording rules are already active as Grafana-managed rules — promote only merges the Alertmanager resources above.",
+          "success-body": "The imported resources were merged into your live config.",
+          "success-title": "Configuration promoted",
+          "sync-not-cleared-body": "Nothing syncs from the datasource any more. Disable auto-sync in Alerting settings to import notification resources again — if it is set in grafana.ini, remove the key there.",
+          "sync-not-cleared-title": "Configuration promoted, but auto-sync is still configured",
+          "sync-stops-body": "Once merged, the resources become normal Grafana resources and stop tracking the datasource. Auto-sync is turned off as part of the merge.",
+          "sync-stops-title": "This will stop auto-sync",
+          "title": "Promote this configuration?"
+        },
+        "promote-button": "Promote to live config",
         "resources": "Resources",
+        "revert": {
+          "body": "This removes the staged copy of the imported configuration from Grafana.",
+          "confirm": "Revert",
+          "error-title": "Failed to revert configuration",
+          "reassure-live": "Your live Alertmanager config is not affected.",
+          "reassure-promoted": "Anything you already promoted stays in place.",
+          "reassure-reimport": "You can import this configuration again at any time.",
+          "success": "Staged configuration reverted",
+          "title": "Revert this staged configuration?"
+        },
+        "revert-button": "Revert",
         "section": {
           "contact-points": "Contact points",
           "inhibition-rules": "Inhibition rules",
@@ -3315,6 +3318,8 @@
         "staged-badge": "Staged · read-only",
         "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
         "staged-title": "Staged configuration",
+        "sync-managed-description": "This configuration is kept up to date by auto-sync, so it can't be reverted — disable auto-sync to remove it. Promoting it merges these resources into your live config and stops the sync.",
+        "synced-badge": "Synced · read-only",
         "view": "View"
       },
       "tabs": {
@@ -3606,6 +3611,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "A unique name for the time interval",
+      "error-save-time-interval": "Failed to save time interval",
       "text-loading-time-interval": "Loading time interval",
       "title-no-matching-time-interval-found": "No matching time interval found"
     },
@@ -3619,6 +3625,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Time intervals",
+      "imported-not-usable": "Imported from an external Alertmanager — promote it to use it here",
       "placeholder-select-time-intervals": "Select time intervals..."
     },
     "time-intervals-table": {
@@ -3849,6 +3856,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Failed to import resources",
+      "staged-success-body": "Your imported config is now staged in the Import tab.",
+      "staged-success-title": "Configuration staged",
       "success": "Successfully imported resources to Grafana Alerting."
     },
     "yaml-content-info": {
@@ -5658,10 +5667,13 @@
       "add-conditional-rule": "Add {{ruleDescription}} rule",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
+      "duplicate": "Duplicate {{typeName}}",
       "duplicate-panel": "Duplicate panel",
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
+      "group-into-row": "Group into row",
+      "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
@@ -6043,6 +6055,7 @@
       "new-row-title": "New row",
       "row": {
         "collapse": "Collapse row {{title}}",
+        "copy-link": "Copy link to row",
         "expand": "Expand row {{title}}",
         "new": "New row",
         "repeat": {
@@ -6131,6 +6144,13 @@
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
+    },
+    "schema-editor": {
+      "identifier-change-unsupported": "Unable to change identifier from JSON editor",
+      "invalid-api-version": "Invalid apiVersion: {{apiVersion}}. Expected '{{expectedAPIVersion}}'.",
+      "invalid-kind": "Invalid kind: {{kind}}. Expected 'Dashboard'.",
+      "metadata-edit-unsupported": "Editing dashboard metadata is not yet supported ({{keys}})",
+      "missing-spec": "Missing spec. Expected a valid dashboard spec."
     },
     "search-panel": {
       "no-match": "No panels matching"
@@ -6296,6 +6316,12 @@
         "title-hidden_other": "Hidden ({{count}})",
         "tooltip": "Filters overview"
       },
+      "group": {
+        "different-parents": "Select items within the same row, tab, or grid to group them",
+        "into-row": "Group into row",
+        "into-tab": "Group into tab",
+        "title": "Group"
+      },
       "links": {
         "add-link": "Add link",
         "new-link": "New link",
@@ -6320,7 +6346,7 @@
       },
       "predefined-variables": {
         "all": "All",
-        "description": "This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.",
+        "description": "This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.",
         "folder": "Folder",
         "global": "Global",
         "label": "Predefined variables",
@@ -6354,7 +6380,7 @@
         "custom-options": {
           "apply": "Apply",
           "discard": "Discard",
-          "modal-title": "Custom options"
+          "modal-title": "Custom variable: {{name}}"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -6847,7 +6873,8 @@
         "change-annotation-enabled-state": "Change annotation enabled state",
         "change-annotation-name": "Change annotation name",
         "change-annotation-panel-filter": "Change annotation panel filter"
-      }
+      },
+      "edit-query": "Edit query"
     },
     "annotation-editable-element": {
       "delete-confirm": "Delete annotation query",
@@ -6923,13 +6950,9 @@
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Delete",
-      "aria-label-edit": "Edit",
-      "delete": {
-        "confirm": "Are you sure you want to delete: {{name}}?",
-        "text": "Delete {{type}}",
-        "title": "Delete {{type}}"
-      }
+      "delete-tooltip": "Delete",
+      "duplicate-tooltip": "Duplicate",
+      "settings": "Settings"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -7254,6 +7277,7 @@
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
       },
+      "resource-validation-error-title": "Unable to save changes",
       "save-and-overwrite": "Save and overwrite"
     },
     "legacy": {
@@ -7729,6 +7753,10 @@
     "variable-controls": {
       "add-variable": "Add variable"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "Edit values",
+      "edit-query": "Edit query"
+    },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",
       "delete-text": "Are you sure you want to delete: {{name}}?",
@@ -8060,7 +8088,8 @@
       "title-missing-rights": "Missing rights"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Select a data source"
+      "aria-label-select-a-data-source": "Select a data source",
+      "clear-button": "Clear data source"
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Page not found: {{page}}"
@@ -8898,11 +8927,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "Logs for this span",
+        "no-logs-found-tooltip": "No matching logs found for this span",
         "no-logs-tooltip": "No logs found for this span using the trace data source configuration.",
         "tooltip": "See logs related to this span using the trace data source configuration."
       },
       "logs-for-this-trace": {
         "button": "Logs for this trace",
+        "logs-found-tooltip": "See related logs",
+        "no-logs-found-tooltip": "No matching logs found for this trace",
         "no-logs-tooltip": "No logs found for this trace using the trace data source configuration.",
         "tooltip": "See logs related to this trace using the trace data source configuration."
       },
@@ -10967,6 +10999,12 @@
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
     },
+    "header-actions": {
+      "active-incidents": "Active incidents",
+      "firing-alerts": "Firing alerts",
+      "no-active-incidents": "All clear",
+      "no-firing-alerts": "All clear"
+    },
     "home-page": {
       "edition": {
         "cloud": "Grafana Cloud",
@@ -11708,6 +11746,7 @@
       "no-details": "No fields to display.",
       "open-assistant": "Explain log line in Assistant",
       "pin-line": "Pin log",
+      "prettify": "Prettify",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
@@ -12421,7 +12460,7 @@
     },
     "machine-learning": {
       "subtitle": "Explore AI and machine learning features",
-      "title": "AI & machine learning"
+      "title": "Machine learning"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
@@ -12442,6 +12481,10 @@
     },
     "new-folder": {
       "title": "New folder"
+    },
+    "notebooks": {
+      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+      "title": "Notebooks"
     },
     "oncall": {
       "title": "OnCall"
@@ -12626,6 +12669,7 @@
       "customise-saving": "Saving…",
       "dialog-label": "Navigation",
       "dock": "Dock menu",
+      "header-title": "Navigation",
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
@@ -12737,7 +12781,63 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": "Notebooks"
+    "add-block": {
+      "code": "Code",
+      "heading": "Heading",
+      "label": "Add block",
+      "paragraph": "Paragraph",
+      "prompt": "Type to start writing — press / for blocks",
+      "visualization": "Visualization",
+      "visualization-placeholder": "Coming soon"
+    },
+    "cell": {
+      "delete": "Delete block",
+      "delete-confirm-text": "This removes the block and its content from the notebook. Are you sure you want to continue?",
+      "delete-confirm-title": "Delete block?",
+      "delete-confirm-yes": "Delete",
+      "drag-handle": "Drag to reorder",
+      "duplicate": "Duplicate block"
+    },
+    "errors": {
+      "entity": "Notebook",
+      "failed-to-load": "Failed to load notebook",
+      "not-found-title": "Not found"
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "All authors",
+      "author-filter": "Filter by author",
+      "count_one": "{{count}} notebook",
+      "count_other": "{{count}} notebooks",
+      "count-truncated_one": "First {{count}} notebook loaded",
+      "count-truncated_other": "First {{count}} notebooks loaded",
+      "create-error": "Failed to create notebook",
+      "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
+      "empty-title": "You haven't created any notebooks yet",
+      "empty-title-read-only": "No notebooks available to you",
+      "load-error": "Failed to load notebooks",
+      "new-notebook": "New notebook",
+      "new-notebook-title": "New notebook",
+      "no-results": "No notebooks found",
+      "search-placeholder": "Search notebooks by title...",
+      "table": {
+        "author": "Author",
+        "copy-link": "Copy link",
+        "created": "Created",
+        "edit": "Edit",
+        "more-actions": "More actions",
+        "tags": "Tags",
+        "title": "Title",
+        "updated": "Updated"
+      },
+      "unknown-author": "Anonymous"
+    },
+    "view": {
+      "copy-link": "Copy link",
+      "mode-edit": "Edit",
+      "mode-view": "View"
+    }
   },
   "notifications": {
     "empty-state": {
@@ -14283,6 +14383,12 @@
     "shared": {
       "branch-description": "The branch to use for provisioning",
       "branch-label": "Branch",
+      "commit-author-email-description": "Email used for the commit author.",
+      "commit-author-email-label": "Author email",
+      "commit-author-email-placeholder": "noreply@grafana.com",
+      "commit-author-name-description": "Author all commits as this name instead of the user who made the change.",
+      "commit-author-name-label": "Author name",
+      "commit-author-name-placeholder": "Grafana",
       "commit-signer-email-description": "Must match the signing key identity.",
       "commit-signer-email-label": "Signer email",
       "commit-signer-email-placeholder": "noreply@grafana.com",
@@ -16004,6 +16110,7 @@
     "name-show-mini-map": "Show mini map"
   },
   "textng": {
+    "category-data": "Data",
     "category-text": "Text",
     "code-view": {
       "aria-label-code-content": "Code content"
@@ -16032,6 +16139,19 @@
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
+    },
+    "frame-picker": {
+      "label": "Query"
+    },
+    "options": {
+      "render-mode": "Render mode"
+    },
+    "render": {
+      "truncated": "Showing the first {{maxRows}} rows."
+    },
+    "render-mode": {
+      "once": "Once",
+      "per-row": "Per row"
     }
   },
   "theme-playground": {

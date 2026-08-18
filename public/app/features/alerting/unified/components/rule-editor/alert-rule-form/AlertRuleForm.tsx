@@ -485,7 +485,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
   }),
   contentOuter: css({
-    background: theme.colors.background.primary,
     overflow: 'hidden',
     maxWidth: theme.breakpoints.values.xl,
     flex: 1,

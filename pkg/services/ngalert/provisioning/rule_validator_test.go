@@ -16,57 +16,76 @@ import (
 )
 
 type recordingRuleMutationValidator struct {
-	seen []string
-	err  error
+	batches [][]string
+	err     error
 }
 
-func (v *recordingRuleMutationValidator) ValidateRuleMutation(_ context.Context, rule *models.AlertRule, _ utils.ManagerProperties) error {
-	v.seen = append(v.seen, rule.Title)
+func (v *recordingRuleMutationValidator) ValidateRuleMutations(_ context.Context, rules []*models.AlertRule, _ utils.ManagerProperties) error {
+	titles := make([]string, 0, len(rules))
+	for _, rule := range rules {
+		titles = append(titles, rule.Title)
+	}
+	v.batches = append(v.batches, titles)
 	return v.err
 }
 
 func TestNoopRuleMutationValidator(t *testing.T) {
-	require.NoError(t, NoopRuleMutationValidator{}.ValidateRuleMutation(context.Background(), &models.AlertRule{}, utils.ManagerProperties{}))
+	require.NoError(t, NoopRuleMutationValidator{}.ValidateRuleMutations(context.Background(), []*models.AlertRule{{}}, utils.ManagerProperties{}))
 }
 
-func TestValidateRuleMutation(t *testing.T) {
-	rule := &models.AlertRule{Title: "CPU high"}
+func TestValidateRuleMutations(t *testing.T) {
+	rules := []*models.AlertRule{{Title: "CPU high"}, {Title: "Memory high"}}
 
 	t.Run("no validator configured accepts the mutation", func(t *testing.T) {
 		service := &AlertRuleService{}
 
-		require.NoError(t, service.validateRuleMutation(context.Background(), rule, utils.ManagerProperties{}))
+		require.NoError(t, service.validateRuleMutations(context.Background(), rules, utils.ManagerProperties{}))
 	})
 
-	t.Run("the configured validator sees the rule", func(t *testing.T) {
+	t.Run("the configured validator sees every rule in one batch", func(t *testing.T) {
 		validator := &recordingRuleMutationValidator{}
 		service := &AlertRuleService{ruleValidator: validator}
 
-		require.NoError(t, service.validateRuleMutation(context.Background(), rule, utils.ManagerProperties{}))
-		assert.Equal(t, []string{"CPU high"}, validator.seen)
+		require.NoError(t, service.validateRuleMutations(context.Background(), rules, utils.ManagerProperties{}))
+		assert.Equal(t, [][]string{{"CPU high", "Memory high"}}, validator.batches)
+	})
+
+	t.Run("nil rules are dropped", func(t *testing.T) {
+		validator := &recordingRuleMutationValidator{}
+		service := &AlertRuleService{ruleValidator: validator}
+
+		require.NoError(t, service.validateRuleMutations(context.Background(), []*models.AlertRule{nil, rules[0]}, utils.ManagerProperties{}))
+		assert.Equal(t, [][]string{{"CPU high"}}, validator.batches)
+	})
+
+	t.Run("a write with nothing to validate does not reach the validator", func(t *testing.T) {
+		validator := &recordingRuleMutationValidator{}
+		service := &AlertRuleService{ruleValidator: validator}
+
+		require.NoError(t, service.validateRuleMutations(context.Background(), nil, utils.ManagerProperties{}))
+		assert.Empty(t, validator.batches)
 	})
 
 	t.Run("a rejection is returned to the caller", func(t *testing.T) {
 		rejected := errors.New("missing required annotation")
 		service := &AlertRuleService{ruleValidator: &recordingRuleMutationValidator{err: rejected}}
 
-		assert.ErrorIs(t, service.validateRuleMutation(context.Background(), rule, utils.ManagerProperties{}), rejected)
+		assert.ErrorIs(t, service.validateRuleMutations(context.Background(), rules, utils.ManagerProperties{}), rejected)
 	})
 
-	// The gate filters on this to tell an as-code write from a boot-time one.
 	t.Run("the manager is passed through", func(t *testing.T) {
 		var got utils.ManagerProperties
 		service := &AlertRuleService{ruleValidator: managerCapturingValidator{&got}}
 		manager := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-1"}
 
-		require.NoError(t, service.validateRuleMutation(context.Background(), rule, manager))
+		require.NoError(t, service.validateRuleMutations(context.Background(), rules, manager))
 		assert.Equal(t, manager, got)
 	})
 }
 
 type managerCapturingValidator struct{ got *utils.ManagerProperties }
 
-func (v managerCapturingValidator) ValidateRuleMutation(_ context.Context, _ *models.AlertRule, manager utils.ManagerProperties) error {
+func (v managerCapturingValidator) ValidateRuleMutations(_ context.Context, _ []*models.AlertRule, manager utils.ManagerProperties) error {
 	*v.got = manager
 	return nil
 }
@@ -100,7 +119,7 @@ func TestRuleMutationValidatorIsReachedFromEveryWritePath(t *testing.T) {
 		_, err := service.CreateAlertRule(context.Background(), u, rule, manager)
 
 		require.NoError(t, err)
-		assert.Equal(t, []string{rule.Title}, validator.seen)
+		assert.Equal(t, [][]string{{rule.Title}}, validator.batches)
 	})
 
 	t.Run("UpdateAlertRule", func(t *testing.T) {
@@ -111,10 +130,9 @@ func TestRuleMutationValidatorIsReachedFromEveryWritePath(t *testing.T) {
 		_, err := service.UpdateAlertRule(context.Background(), u, *rule, manager)
 
 		require.NoError(t, err)
-		assert.Equal(t, []string{rule.Title}, validator.seen)
+		assert.Equal(t, [][]string{{rule.Title}}, validator.batches)
 	})
 
-	// Bypasses CreateAlertRule and UpdateAlertRule, so it needs its own call site.
 	t.Run("ReplaceRuleGroup", func(t *testing.T) {
 		service, validator := initWithData(t)
 		replacement := models.CopyRule(stored[0])
@@ -130,7 +148,28 @@ func TestRuleMutationValidatorIsReachedFromEveryWritePath(t *testing.T) {
 		err := service.ReplaceRuleGroup(context.Background(), u, group, manager, "")
 
 		require.NoError(t, err)
-		assert.Contains(t, validator.seen, replacement.Title)
+		assert.Equal(t, [][]string{{replacement.Title}}, validator.batches)
+	})
+
+	t.Run("ReplaceRuleGroup sends added and updated rules as a single batch", func(t *testing.T) {
+		service, validator := initWithData(t)
+		updated := models.CopyRule(stored[0])
+		updated.Title = updated.Title + "_updated"
+		added := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(30)).Generate()
+		added.UID = ""
+		group := models.AlertRuleGroup{
+			Title:      groupKey.RuleGroup,
+			FolderUID:  groupKey.NamespaceUID,
+			Interval:   30,
+			Provenance: models.ProvenanceAPI,
+			Rules:      []models.AlertRule{*updated, added},
+		}
+
+		err := service.ReplaceRuleGroup(context.Background(), u, group, manager, "")
+
+		require.NoError(t, err)
+		require.Len(t, validator.batches, 1)
+		assert.ElementsMatch(t, []string{updated.Title, added.Title}, validator.batches[0])
 	})
 
 	t.Run("a rejection stops the write", func(t *testing.T) {

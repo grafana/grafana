@@ -110,7 +110,7 @@ interface ContentHeaderProps {
    * Optional ref to the container div.
    * Used downstream for saved queries positioning.
    */
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
   /**
    * Optional type config for query editor types (icons, colors, labels).
    * If not provided, will be computed from the current theme.
@@ -195,7 +195,7 @@ export function ContentHeader({
               <Trans i18nKey="query-editor-next.header.alert">Alert</Trans>
             </Text>
             <NavToolbarSeparator />
-            <Text weight="light" variant="code" color="primary">
+            <Text weight="light" variant="body" color="primary">
               {selectedAlert.rule.name}
             </Text>
           </>
@@ -228,7 +228,7 @@ export function ContentHeader({
               <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
             <NavToolbarSeparator />
-            <Text weight="light" variant="code" color="primary">
+            <Text weight="light" variant="body" color="primary">
               {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
             </Text>
           </>

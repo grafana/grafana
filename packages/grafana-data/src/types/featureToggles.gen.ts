@@ -124,16 +124,6 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
-  * Enable export functionality for provisioned resources
-  * @default false
-  */
-  provisioningExport?: boolean;
-  /**
-  * Start an additional https handler and write kubectl options
-  * @default false
-  */
-  grafanaAPIServerEnsureKubectlAccess?: boolean;
-  /**
   * Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
   * @default true
   */
@@ -173,11 +163,6 @@ export interface FeatureToggles {
   * @default false
   */
   externalServiceAccounts?: boolean;
-  /**
-  * Routes snapshot requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesSnapshots?: boolean;
   /**
   * When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
   * @default false
@@ -550,11 +535,6 @@ export interface FeatureToggles {
   */
   preserveDashboardStateWhenNavigating?: boolean;
   /**
-  * Enables the new central alert history.
-  * @default false
-  */
-  alertingCentralAlertHistory?: boolean;
-  /**
   * Preserve plugin proxy trailing slash.
   * @default false
   */
@@ -862,9 +842,9 @@ export interface FeatureToggles {
   azureMonitorLogsBuilderEditor?: boolean;
   /**
   * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
-  * @default false
+  * @default true
   */
-  azureMonitorBatchAPI?: boolean;
+  ['datasources.azureMonitorBatchAPI']?: boolean;
   /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
@@ -1252,6 +1232,11 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
+  * Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
+  * @default false
+  */
+  kubernetesUsersRedirectNoFallback?: boolean;
+  /**
   * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false
   */
@@ -1296,11 +1281,6 @@ export interface FeatureToggles {
   * @default true
   */
   rememberUserOrgForSso?: boolean;
-  /**
-  * Registers the dsabstraction app for querying datasources via unified SQL
-  * @default false
-  */
-  dsAbstractionApp?: boolean;
   /**
   * Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
   * @default false

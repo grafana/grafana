@@ -529,8 +529,8 @@
       "label-metric": "Métrica",
       "label-name": "Nome",
       "message": {
-        "must-enter-a-metric-name": "Deve inserir um nome de métrica",
-        "must-enter-a-name": "Deve inserir um nome",
+        "must-enter-a-metric-name": "Tem de introduzir um nome de métrica",
+        "must-enter-a-name": "Tem de introduzir um nome",
         "please-select-a-data-source": "Selecione uma origem de dados"
       },
       "metric-aria-label-metric": "métrica",
@@ -559,7 +559,7 @@
       "unprocessed-the-alert-is-received": "Não processado: o alerta foi recebido, mas a sua notificação ainda não foi processada."
     },
     "alert-state-tag": {
-      "content-alert-evaluation-is-currently-paused": "A avaliação de alerta está pausada atualmente",
+      "content-alert-evaluation-is-currently-paused": "A avaliação de alerta está em pausa atualmente",
       "paused": "Em pausa"
     },
     "alert-warning": {
@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} falhou com {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -2191,7 +2192,7 @@
     },
     "mute-timing-time-interval": {
       "add-another-time-interval-item": "Adicionar outro item de intervalo de tempo",
-      "description": "Um item de intervalo de tempo é uma definição para um momento no tempo. Todos os campos são listas e pelo menos um elemento da lista deve ser satisfeito para corresponder ao campo. Se um campo for deixado em branco, qualquer momento corresponderá ao campo. Para que um instante de tempo corresponda a um intervalo de tempo completo, todos os campos devem corresponder. Um intervalo de tempo pode conter diversos elementos de intervalo de tempo.",
+      "description": "Um elemento de intervalo de tempo é uma definição para um momento no tempo. Todos os campos são listas e pelo menos um elemento da lista tem de ser satisfeito para corresponder ao campo. Se um campo for deixado em branco, qualquer momento corresponderá ao campo. Para que um instante de tempo corresponda a um intervalo de tempo completo, todos os campos devem corresponder. Um intervalo de tempo pode conter diversos elementos de intervalo de tempo.",
       "description-dats-of-the-month": "Os dias do mês, 1:31, de um mês. Os valores negativos podem ser utilizados para representar dias que começam no final do mês",
       "description-months": "Os meses do ano em formato numérico ou o mês completo do calendário",
       "label-days-of-the-month": "Dias do mês",
@@ -2656,7 +2657,7 @@
       "title-unable-to-check-the-rule-status": "Não foi possível verificar o estado da regra"
     },
     "provisioned-tooltip": {
-      "content-provisioned-items-cannot-edited": "Os itens fornecidos não podem ser editados na interface do utilizador"
+      "content-provisioned-items-cannot-edited": "Os elementos fornecidos não podem ser editados na interface do utilizador"
     },
     "provisioning": {
       "badge-tooltip-provenance": "Este recurso foi provisionado através de {{provenance}} e não pode ser editado através da interface do utilizador",
@@ -3282,8 +3283,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3305,21 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3330,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3625,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Um nome exclusivo para o intervalo de tempo",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "A carregar intervalo de tempo",
       "title-no-matching-time-interval-found": "Nenhum intervalo de tempo correspondente encontrado"
     },
@@ -3619,6 +3639,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Intervalos de tempo",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Selecionar intervalos de tempo..."
     },
     "time-intervals-table": {
@@ -4506,7 +4527,7 @@
       "non-folder-item": "Não pasta {{itemKind}} {{itemUID}}",
       "root-title": "Painéis de controlo",
       "search-placeholder": "Pesquisar pastas",
-      "shared-with-me": "Partilhado comigo",
+      "shared-with-me": "Partilhadas comigo",
       "starred-folders": "",
       "team-folders": "Pastas da equipa",
       "team-folders-error-title": "",
@@ -4722,7 +4743,7 @@
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4773,7 +4794,7 @@
     "ellipse-item": {
       "category-ellipse": "Elipse",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4827,7 +4848,7 @@
     },
     "metric-value-item": {
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4861,7 +4882,7 @@
     "parallelogram-item": {
       "category-parallelogram": "Paralelogramo",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4895,7 +4916,7 @@
       "label-position": "Cargo",
       "loading": "A carregar...",
       "vertical-options": {
-        "label-bottom": "Inferior",
+        "label-bottom": "Fundo",
         "label-center": "Centro",
         "label-scale": "Escala",
         "label-top": "Topo",
@@ -4913,7 +4934,7 @@
     "rectangle-item": {
       "category-rectangle": "Retângulo",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4948,7 +4969,7 @@
     "text-item": {
       "category-text": "Texto",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4991,7 +5012,7 @@
     "triangle-item": {
       "category-triangle": "Triângulo",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -5658,10 +5679,13 @@
       "add-conditional-rule": "Adicionar regra {{ruleDescription}}",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Duplicar painel",
       "edit-query-result-rule": "Alterar regra de resultado da consulta",
       "edit-template-variable-rule": "Alterar regra de variável de modelo",
       "edit-time-range-rule": "Alterar regra de intervalo de tempo",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Mover {{typeName}}",
       "panel-background": "Alterar fundo do painel",
       "panel-description": "Alterar descrição do painel",
@@ -5914,8 +5938,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Isto desagrupará todos os grupos aninhados.",
-      "ungroup-nested-title": "Desagrupar grupos aninhados?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} de {{numberOfPages}}",
@@ -6128,6 +6156,13 @@
       "save-json-to-file": "Guardar JSON no ficheiro",
       "see-docs": "Consulte a <2>documentação</2> para obter mais informações sobre aprovisionamento."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6291,6 +6326,12 @@
         "title-controls-menu_other": "",
         "title-hidden_one": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -6843,7 +6884,8 @@
         "change-annotation-enabled-state": "Alterar estado de ativação da anotação",
         "change-annotation-name": "Alterar nome da anotação",
         "change-annotation-panel-filter": "Alterar filtro do painel de anotações"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Eliminar consulta de anotação",
@@ -6919,13 +6961,9 @@
       "placeholder-your-metric-prefix": "O seu prefixo métrico"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Eliminar",
-      "aria-label-edit": "Editar",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "As regras de mostrar/ocultar não funcionarão",
@@ -7250,6 +7288,7 @@
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel de controlo",
         "would-still-dashboard": "Ainda pretende guardar este painel de controlo?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Guardar e substituir"
     },
     "legacy": {
@@ -7725,6 +7764,10 @@
     "variable-controls": {
       "add-variable": "Adicionar variável"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
+    },
     "variable-editable-element": {
       "delete-confirm": "Eliminar variável",
       "delete-text": "Tem a certeza de que pretende eliminar: {{name}}?",
@@ -8056,7 +8099,8 @@
       "title-missing-rights": "Direitos em falta"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Selecionar uma origem de dados"
+      "aria-label-select-a-data-source": "Selecionar uma origem de dados",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Página não encontrada: {{page}}"
@@ -9429,7 +9473,7 @@
       "placeholderText-select-symbol": "Selecionar um símbolo",
       "placeholderText-select-symbol-or-add-text": "Selecione um símbolo ou adicione uma etiqueta de texto",
       "vertical-align-options": {
-        "label-bottom": "Inferior",
+        "label-bottom": "Fundo",
         "label-center": "Centro",
         "label-top": "Topo"
       }
@@ -10139,7 +10183,7 @@
         },
         "placeholder-width": "",
         "placement-options": {
-          "label-bottom": "Inferior",
+          "label-bottom": "Fundo",
           "label-right": "Direita"
         }
       },
@@ -10963,6 +11007,12 @@
       "high-count_one": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -11704,6 +11754,7 @@
       "no-details": "Nenhum campo a mostrar.",
       "open-assistant": "",
       "pin-line": "Afixar registo",
+      "prettify": "",
       "remove-displayed-field": "Remover o campo",
       "remove-log": "Remover registo",
       "scroll-to-logline": "Deslizar para a linha de registo",
@@ -12417,7 +12468,7 @@
     },
     "machine-learning": {
       "subtitle": "Explorar funcionalidades de IA e aprendizagem automática",
-      "title": "IA e aprendizagem automática"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gerir painéis de controlo e permissões de pastas"
@@ -12438,6 +12489,10 @@
     },
     "new-folder": {
       "title": "Nova pasta"
+    },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
     },
     "oncall": {
       "title": "OnCall"
@@ -12622,6 +12677,7 @@
       "customise-saving": "",
       "dialog-label": "Navegação",
       "dock": "Ancorar menu",
+      "header-title": "",
       "list-label": "Navegação",
       "open": "Menu principal",
       "pin-error": "",
@@ -12733,7 +12789,63 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": ""
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "mode-edit": "",
+      "mode-view": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -14279,6 +14391,12 @@
     "shared": {
       "branch-description": "O ramo a utilizar para o aprovisionamento",
       "branch-label": "Ramo",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -14757,7 +14875,6 @@
     },
     "header": {
       "alert": "Alertar",
-      "expression": "Expressão",
       "pending-expression": "",
       "pending-expression-cancel": "Cancelar",
       "pending-transformation": "",
@@ -14771,6 +14888,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
@@ -16000,6 +16118,7 @@
     "name-show-mini-map": "Mostrar o minimapa"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16028,6 +16147,19 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {
