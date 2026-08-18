@@ -223,7 +223,7 @@ describe('NotebooksListPage', () => {
     expect(screen.queryByRole('button', { name: 'New notebook' })).not.toBeInTheDocument();
   });
 
-  it('creates a notebook and navigates to it', async () => {
+  it('creates a notebook and navigates to it in edit mode', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     setList([makeNotebook('nb1', 'Checkout error spike')]);
     mockCreateNotebook.mockReturnValue({
@@ -234,8 +234,11 @@ describe('NotebooksListPage', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'New notebook' }));
 
+    // A freshly created notebook is empty and exists only to be written into, so it should open ready
+    // to edit rather than in the read-only view a reader would otherwise land on first.
     await waitFor(() => {
       expect(locationService.getLocation().pathname).toBe('/notebooks/nb-new');
+      expect(locationService.getLocation().search).toBe('?edit=true');
     });
   });
 });

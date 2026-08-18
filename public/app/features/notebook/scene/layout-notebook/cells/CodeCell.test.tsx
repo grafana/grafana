@@ -86,11 +86,16 @@ describe('CodeCell', () => {
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
-  it('falls back to a generic label when the cell has no language', () => {
+  // Read mode and the picker used to disagree about the same '' value — one said `code`, the other
+  // `Plain text`. Both go through codeLanguageLabel now.
+  it('names the absent language the same way the picker does', () => {
     const plain: CellContentKind = { kind: 'Code', spec: { code: 'hello', language: '' } };
-    render(<CodeCell content={plain} isEditing={false} onChange={jest.fn()} />);
+    const { rerender } = render(<CodeCell content={plain} isEditing={false} onChange={jest.fn()} />);
 
-    expect(screen.getByText('code')).toBeInTheDocument();
+    expect(screen.getByText('Plain text')).toBeInTheDocument();
+
+    rerender(<CodeCell content={plain} isEditing={true} onChange={jest.fn()} />);
+    expect(screen.getByRole('combobox', { name: 'Code language' })).toHaveDisplayValue('Plain text');
   });
 
   it('offers the language picker once the notebook is being edited', () => {
@@ -186,10 +191,47 @@ describe('CodeCell', () => {
     });
   });
 
-  it('shows a language it cannot highlight rather than an empty picker', () => {
+  it('shows a language it cannot highlight by name rather than as a stored string', () => {
     const promql: CellContentKind = { kind: 'Code', spec: { code: 'up', language: 'promql' } };
     render(<CodeCell content={promql} isEditing={true} onChange={jest.fn()} />);
 
-    expect(screen.getByRole('combobox', { name: 'Code language' })).toHaveDisplayValue('promql');
+    expect(screen.getByRole('combobox', { name: 'Code language' })).toHaveDisplayValue('PromQL');
+  });
+
+  // The picker is the only way to set a language, and it offers ten. Anything else has to be typeable
+  // or those cells cannot be authored at all.
+  it('accepts a language it does not offer', async () => {
+    const onChange = jest.fn();
+    const { user } = render(<CodeCell content={content} isEditing={true} onChange={onChange} />);
+
+    // `{selectall}` first: the picker shows the current language, and Combobox keeps that as its
+    // search text, so typing alone would search for `SQLRust`.
+    await user.type(screen.getByRole('combobox', { name: 'Code language' }), '{selectall}Rust');
+    await user.click(screen.getByRole('option', { name: /Rust/ }));
+
+    // Normalised on the way in, so it matches the offered spelling if highlighting for it ever lands.
+    expect(onChange).toHaveBeenCalledWith({ kind: 'Code', spec: { code: 'select 1', language: 'rust' } });
+  });
+
+  // Filtered rather than read off the open list: the list is virtualised, so the last of the ten
+  // options is below the fold in jsdom.
+  it.each([
+    ['prom', 'PromQL'],
+    ['log', 'LogQL'],
+  ])('offers %s as %s, so an observability cell can be authored', async (search, label) => {
+    const { user } = render(<CodeCell content={content} isEditing={true} onChange={jest.fn()} />);
+
+    await user.type(screen.getByRole('combobox', { name: 'Code language' }), `{selectall}${search}`);
+
+    expect(screen.getByRole('option', { name: label })).toBeInTheDocument();
+  });
+
+  // Authored elsewhere as `yml`: it highlights as YAML, so the picker has to show YAML rather than an
+  // empty control.
+  it('shows the resolved language for a cell stored with an alias', () => {
+    const yml: CellContentKind = { kind: 'Code', spec: { code: 'a: 1', language: 'yml' } };
+    render(<CodeCell content={yml} isEditing={true} onChange={jest.fn()} />);
+
+    expect(screen.getByRole('combobox', { name: 'Code language' })).toHaveDisplayValue('YAML');
   });
 });

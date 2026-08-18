@@ -9,6 +9,10 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 // propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
 // does — a new `extensions` identity is what rebuilds CodeMirror's view plugins — which makes the
 // manager -> frame -> renderer -> cell wiring observable here.
+//
+// CodeCell passes only its (optional) focus request as `extensions`, so any non-empty array means one
+// was made. MarkdownCell always adds its live-preview extension on top of that, so `extensions` there
+// is never empty — the threshold for "a focus request is in there" is one entry higher.
 jest.mock('@grafana/ui/unstable', () => {
   // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');
@@ -29,15 +33,16 @@ jest.mock('@grafana/ui/unstable', () => {
       'aria-label'?: string;
     }) => {
       const ref = useRef(null);
+      const focusThreshold = ariaLabel === 'Markdown' ? 2 : 1;
 
       useEffect(() => {
-        if (!extensions?.length) {
+        if (!extensions || extensions.length < focusThreshold) {
           return;
         }
 
         const frame = requestAnimationFrame(() => ref.current?.focus());
         return () => cancelAnimationFrame(frame);
-      }, [extensions]);
+      }, [extensions, focusThreshold]);
 
       return (
         <textarea
@@ -365,6 +370,16 @@ describe('NotebookLayoutManager', () => {
       await user.click(screen.getByRole('menuitem', { name: 'Code' }));
     }
 
+    async function pickParagraph(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement) {
+      await user.click(trigger);
+      await user.click(screen.getByRole('menuitem', { name: 'Paragraph' }));
+    }
+
+    async function pickHeading(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement) {
+      await user.click(trigger);
+      await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
+    }
+
     // A divider belongs to the cell above it, so the one inside cell 'a' inserts between 'a' and 'b'.
     // The leading divider comes first in the DOM, so index 1 is cell 'a' s own divider.
     it('inserts an empty code cell where the divider offered it', async () => {
@@ -468,13 +483,39 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('textbox', { name: 'Code' })).not.toHaveFocus();
     });
 
-    // Only code is buildable so far. The rest of the menu stays inert rather than inserting a cell with
-    // no content kind behind it, which the renderer would draw as a blank gap.
+    // Heading and paragraph are both markdown cells under the hood — the menu offers them separately
+    // because that's how a reader thinks about what they're adding.
+    it('inserts a heading cell seeded with a heading marker', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await pickHeading(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
+
+      expect(cellNames(manager)).toEqual(['a', 'heading-1', 'b']);
+      expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '# ' } });
+    });
+
+    it('inserts an empty paragraph cell', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await pickParagraph(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
+
+      expect(cellNames(manager)).toEqual(['a', 'paragraph-1', 'b']);
+      expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
+    });
+
+    // The cell arrives editable and focused, same as a freshly inserted code cell.
+    it('renders a freshly inserted paragraph cell as an editable, focused markdown editor', async () => {
+      const { user } = renderManager(buildManager([], true));
+
+      await pickParagraph(user, screen.getByRole('button', { name: PROMPT }));
+
+      await waitFor(() => expect(screen.getByRole('textbox', { name: 'Markdown' })).toHaveFocus());
+    });
+
+    // Visualization is not buildable yet — its menu entry is a "Coming soon" submenu, not a pick.
     it('leaves the block types it cannot build yet alone', () => {
       const manager = buildManager(buildNarrativeCells(['a']));
 
-      expect(manager.addCell('heading', 1)).toBeUndefined();
-      expect(manager.addCell('paragraph', 1)).toBeUndefined();
       expect(manager.addCell('visualization', 1)).toBeUndefined();
       expect(cellNames(manager)).toEqual(['a']);
     });

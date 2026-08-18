@@ -23,6 +23,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import {
   type CellContentKind,
   defaultCodeCellContentKind,
+  defaultMarkdownCellContentKind,
   type NotebookLayoutItemKind,
   type NotebookLayoutKind,
 } from '../../types';
@@ -55,6 +56,9 @@ export class NotebookLayoutManager
 {
   public static Component = NotebookLayoutManagerRenderer;
   public readonly isDashboardLayoutManager = true;
+  // Lets a cell find the manager that owns it without importing this class — see
+  // isNotebookLayoutManager for why that import direction has to stay closed.
+  public readonly isNotebookLayoutManager = true;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
@@ -135,23 +139,24 @@ export class NotebookLayoutManager
   /**
    * Inserts a new empty cell at `index`, the position the add-block affordance was offering.
    *
-   * Only code blocks are buildable so far. The remaining menu entries stay inert rather than inserting
-   * a cell with no content kind behind it, which the renderer would draw as a blank gap.
+   * Visualization stays inert rather than inserting a cell with no content kind behind it, which the
+   * renderer would draw as a blank gap — the menu's "Coming soon" submenu is the only thing it offers.
    *
    * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
    */
   public addCell = (type: NotebookBlockType, index: number): NotebookCellItem | undefined => {
-    if (type !== 'code') {
+    const content = contentForBlockType(type);
+    if (!content) {
       return undefined;
     }
 
     const cell = new NotebookCellItem({
       // A fresh name for the same reason duplicateCell needs one: serialize() writes it as the key into
       // the notebook's `elements` map, so reusing one would collapse the two cells into one element.
-      elementName: this.nextElementName('code'),
+      elementName: this.nextElementName(type),
       // Everything the add-block menu inserts was asked for by a person, not proposed by the assistant.
       source: 'user',
-      content: defaultCodeCellContentKind(),
+      content,
     });
 
     const cells = [...this.state.cells];
@@ -328,7 +333,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     onAdd={onAdd}
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}
-                    onContentChange={model.setCellContent}
                   />
                 ))}
                 {dropProvided.placeholder}
@@ -344,6 +348,26 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
       </div>
     </div>
   );
+}
+
+/**
+ * The content a freshly added block starts with. Heading and paragraph are both markdown cells —
+ * the menu offers them as separate entries because that is how a reader thinks about what they're
+ * adding, but the editor underneath is the same one. A heading starts with its marker already typed
+ * so the live-preview cell opens straight into "type your heading text" rather than a blank block the
+ * reader has to know to prefix themselves.
+ */
+function contentForBlockType(type: NotebookBlockType): CellContentKind | undefined {
+  switch (type) {
+    case 'heading':
+      return { kind: 'Markdown', spec: { text: '# ' } };
+    case 'paragraph':
+      return defaultMarkdownCellContentKind();
+    case 'code':
+      return defaultCodeCellContentKind();
+    case 'visualization':
+      return undefined;
+  }
 }
 
 function confirmRemoveCell(model: NotebookLayoutManager, cell: NotebookCellItem) {

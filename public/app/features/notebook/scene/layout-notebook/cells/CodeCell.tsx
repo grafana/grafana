@@ -8,7 +8,13 @@ import { Box, Combobox, type ComboboxOption, Stack, Text, useStyles2 } from '@gr
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type CellContentKind } from 'app/features/notebook/types';
 
-import { codeLanguageLabel, getCodeLanguageOptions, PLAIN_TEXT_LANGUAGE, toCodeMirrorLanguage } from './codeLanguages';
+import {
+  canonicalLanguage,
+  codeLanguageLabel,
+  getCodeLanguageOptions,
+  normalizeLanguage,
+  toCodeMirrorLanguage,
+} from './codeLanguages';
 
 // Reading a notebook should look like reading a document, so everything that makes CodeMirror feel
 // like an IDE is off. The gutter goes in both modes: the design has no line numbers.
@@ -49,7 +55,7 @@ const EDIT_SETUP = {
  * A fresh plugin per request, because CodeMirror rebuilds its plugins exactly when the extensions
  * array stops being shallow-equal. That makes a new one the way to ask for the caret again.
  */
-function buildFocusExtension() {
+export function buildFocusExtension() {
   return [
     ViewPlugin.define((view) => {
       requestAnimationFrame(() => view.focus());
@@ -97,12 +103,20 @@ export function CodeCell({ content, isEditing, autoFocus, onChange }: Props) {
         {isEditing ? (
           <Combobox
             options={getCodeLanguageOptions(language)}
-            value={language}
+            // Canonical, so the control matches an option even when the cell was authored elsewhere
+            // as `yml` or `YAML`. getCodeLanguageOptions canonicalises the same way.
+            value={canonicalLanguage(language)}
             width="auto"
             minWidth={12}
-            aria-label={t('notebooks.cell.code.aria-label-language', 'Code language')}
+            aria-label={t('notebook.cell.code.aria-label-language', 'Code language')}
+            // The eight highlighted languages plus promql and logql are not the whole world, and the
+            // picker is the only way to set a language — so anything else can be typed in.
+            createCustomValue
+            customValueDescription={t('notebook.cell.code.custom-language', 'Use this language name')}
             onChange={(option: ComboboxOption<string>) => {
-              changeSpec({ language: option.value });
+              // Normalised on the way in, so a typed `PromQL` is stored the same as the offered
+              // `promql` and will match if highlighting for it lands later.
+              changeSpec({ language: normalizeLanguage(option.value) });
               // The picker is part of the cell, not a stop on the way out of it: choosing a language is
               // something you do in order to write code, so the caret goes back where it was typing.
               requestFocus();
@@ -110,7 +124,7 @@ export function CodeCell({ content, isEditing, autoFocus, onChange }: Props) {
           />
         ) : (
           <Text variant="bodySmall" color="secondary">
-            {language === PLAIN_TEXT_LANGUAGE ? t('notebooks.cell.code.label', 'code') : codeLanguageLabel(language)}
+            {codeLanguageLabel(language)}
           </Text>
         )}
       </Stack>
@@ -126,7 +140,7 @@ export function CodeCell({ content, isEditing, autoFocus, onChange }: Props) {
           lineWrapping
           basicSetup={isEditing ? EDIT_SETUP : VIEW_SETUP}
           extensions={focusExtension}
-          aria-label={t('notebooks.cell.code.aria-label-editor', 'Code')}
+          aria-label={t('notebook.cell.code.aria-label-editor', 'Code')}
           // The editor is a lazily loaded chunk; without this the cell is a blank gap mid-document
           // until it arrives.
           loadingFallback={<pre className={styles.loadingFallback}>{code}</pre>}

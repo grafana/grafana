@@ -2,6 +2,7 @@ import { render, screen } from 'test/test-utils';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookCellRenderer } from './NotebookCellRenderer';
+import { NotebookLayoutManager } from './NotebookLayoutManager';
 
 // See CodeCell.test.tsx — the real editor does not run in jsdom.
 jest.mock('@grafana/ui/unstable', () => ({
@@ -29,28 +30,41 @@ function buildCodeCell() {
   });
 }
 
+/** A cell reaches its layout manager through the scene graph, so it has to actually be in one. */
+function buildCellInLayout() {
+  const cell = buildCodeCell();
+  new NotebookLayoutManager({ cells: [cell] });
+
+  return cell;
+}
+
 describe('NotebookCellRenderer', () => {
-  it('hands an edit to the layout manager rather than writing it to the cell', async () => {
-    const cell = buildCodeCell();
-    const onContentChange = jest.fn();
-    const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} onContentChange={onContentChange} />);
+  // The edit goes out through the cell to its layout manager, which applies it — cells sharing an
+  // element have to move together, and only the manager can see the siblings.
+  it('routes an edit through the layout manager onto the cell', async () => {
+    const cell = buildCellInLayout();
+    const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
     await user.type(screen.getByLabelText('Code'), '0');
 
-    // The manager applies it, because cells sharing an element have to move together.
-    expect(onContentChange).toHaveBeenLastCalledWith(cell, {
-      kind: 'Code',
-      spec: { code: 'select 10', language: 'sql' },
-    });
-    expect(cell.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+    expect(cell.state.content).toEqual({ kind: 'Code', spec: { code: 'select 10', language: 'sql' } });
   });
 
   it('leaves the cell alone while the notebook is being read', () => {
-    const cell = buildCodeCell();
-    const onContentChange = jest.fn();
-    render(<NotebookCellRenderer cell={cell} isEditing={false} onContentChange={onContentChange} />);
+    const cell = buildCellInLayout();
+    render(<NotebookCellRenderer cell={cell} isEditing={false} />);
 
     expect(screen.getByLabelText('Code')).toHaveAttribute('readonly');
-    expect(onContentChange).not.toHaveBeenCalled();
+    expect(cell.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+  });
+
+  // A cell outside a layout is a wiring mistake. Failing loudly beats an editor that silently drops
+  // what the reader types.
+  it('refuses an edit from a cell that is not inside a layout', () => {
+    const orphan = buildCodeCell();
+
+    expect(() => orphan.onContentChange({ kind: 'Code', spec: { code: 'x', language: 'sql' } })).toThrow(
+      /not inside a NotebookLayoutManager/
+    );
   });
 });
