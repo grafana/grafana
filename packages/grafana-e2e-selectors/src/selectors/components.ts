@@ -691,6 +691,12 @@ export const versionedComponents = {
           activeFilterButton: {
             '13.2.0': 'data-testid tableng header active-filter-button',
           },
+          pinItem: {
+            '13.3.0': 'data-testid tableng header column-menu-pin-item',
+          },
+          hideItem: {
+            '13.3.0': 'data-testid tableng header column-menu-hide-item',
+          },
         },
         Filters: {
           HeaderButton: {

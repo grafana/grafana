@@ -1170,6 +1170,38 @@ export function orderFieldsByDisplayNames(fields: Field[], order?: string[]): Fi
 
 /**
  * @internal
+ * `table.refresh`: removes fields hidden via the ad hoc column menu/sidebar (as opposed to
+ * `getVisibleFields`'s config-driven `hideFrom.viz`). A no-op when `hiddenColumns` is undefined or
+ * empty.
+ */
+export function filterFieldsByHiddenColumns(fields: Field[], hiddenColumns?: ReadonlySet<string>): Field[] {
+  if (!hiddenColumns || hiddenColumns.size === 0) {
+    return fields;
+  }
+  return fields.filter((field) => !hiddenColumns.has(getDisplayName(field)));
+}
+
+/**
+ * @internal
+ * `table.refresh`: moves pinned fields to the front of `fields`, preserving the original relative
+ * order within the pinned group and within the remaining, unpinned group. Maps directly onto
+ * react-data-grid's frozen-column-count model, which only supports freezing a leading run of
+ * columns. A no-op when `pinnedColumns` is undefined or empty.
+ */
+export function orderFieldsByPinnedColumns(fields: Field[], pinnedColumns?: ReadonlySet<string>): Field[] {
+  if (!pinnedColumns || pinnedColumns.size === 0) {
+    return fields;
+  }
+  const pinned: Field[] = [];
+  const unpinned: Field[] = [];
+  for (const field of fields) {
+    (pinnedColumns.has(getDisplayName(field)) ? pinned : unpinned).push(field);
+  }
+  return [...pinned, ...unpinned];
+}
+
+/**
+ * @internal
  * returns a map of column types by display name
  */
 export function getColumnTypes(fields: Field[]): ColumnTypes {

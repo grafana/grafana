@@ -156,9 +156,66 @@ describe('HeaderCell', () => {
       expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
     });
 
-    it('renders no column menu for a non-filterable column', () => {
+    it('renders no column menu for a non-filterable column with no pin/hide handlers', () => {
       render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
       expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('renders a column menu for a non-filterable column once pin/hide are available', () => {
+      render(
+        <HeaderCell
+          {...baseProps}
+          field={makeField()}
+          tableRefreshEnabled
+          onTogglePin={jest.fn()}
+          onHideColumn={jest.fn()}
+        />
+      );
+      expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+    });
+
+    it('pins and unpins a column from the column menu', async () => {
+      const onTogglePin = jest.fn();
+      const { rerender } = render(
+        <HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled onTogglePin={onTogglePin} />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      await userEvent.click(await screen.findByText('Pin column left'));
+      expect(onTogglePin).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled onTogglePin={onTogglePin} isPinned />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      expect(await screen.findByText('Unpin column')).toBeInTheDocument();
+    });
+
+    it('hides a column from the column menu, disabled when it is the last visible column', async () => {
+      const onHideColumn = jest.fn();
+      const { rerender } = render(
+        <HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled onHideColumn={onHideColumn} canHideColumn />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      const hideItem = await screen.findByText('Hide column');
+      expect(hideItem.closest('button')).toBeEnabled();
+      await userEvent.click(hideItem);
+      expect(onHideColumn).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <HeaderCell
+          {...baseProps}
+          field={makeField()}
+          tableRefreshEnabled
+          onHideColumn={onHideColumn}
+          canHideColumn={false}
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
     });
 
     it('gives the header cell root a stable class the menu scopes its hover reveal to', () => {

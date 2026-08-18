@@ -420,6 +420,45 @@ describe('useColumnBuilderFromFields', () => {
     });
   });
 
+  describe('table.refresh column hide/pin', () => {
+    it('threads onHideColumn/onTogglePin/isPinned into each column, bound to its own display name', () => {
+      const onHideColumn = jest.fn();
+      const onTogglePin = jest.fn();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ onHideColumn, onTogglePin, pinnedColumns: new Set(['A']) }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const fieldAProps = getHeaderCellProps(result.columns[0]);
+      const fieldBProps = getHeaderCellProps(result.columns[1]);
+      expect(fieldAProps.isPinned).toBe(true);
+      expect(fieldBProps.isPinned).toBe(false);
+
+      fieldAProps.onHideColumn?.();
+      expect(onHideColumn).toHaveBeenCalledWith('A');
+      fieldBProps.onTogglePin?.();
+      expect(onTogglePin).toHaveBeenCalledWith('B');
+    });
+
+    it('omits onHideColumn/onTogglePin when not configured', () => {
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const headerProps = getHeaderCellProps(result.columns[0]);
+      expect(headerProps.onHideColumn).toBeUndefined();
+      expect(headerProps.onTogglePin).toBeUndefined();
+    });
+
+    it('sets canHideColumn based on the number of fields being built', () => {
+      const singleFieldFrame = createDataFrame({ fields: [{ name: 'A', type: FieldType.string, values: ['x'] }] });
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const result = callFromFields(hook, singleFieldFrame.fields, [100], singleFieldFrame, rows, rows);
+
+      expect(getHeaderCellProps(result.columns[0]).canHideColumn).toBe(false);
+    });
+  });
+
   describe('header alignment', () => {
     // Field B is numeric, so it right-aligns by default. table.refresh left-aligns every header
     // regardless, giving the column menu a stable trailing edge to sit against.

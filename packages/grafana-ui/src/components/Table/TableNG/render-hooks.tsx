@@ -159,6 +159,12 @@ export interface ColumnBuildConfig {
   maxRowHeight?: number;
   numFrozenColsFullyInView: number;
   onCellFilterAdded?: TableFilterActionCallback;
+  /** `table.refresh`: hides a column via the header column menu. */
+  onHideColumn?: (displayName: string) => void;
+  /** `table.refresh`: pins/unpins a column via the header column menu. */
+  onTogglePin?: (displayName: string) => void;
+  /** `table.refresh`: display names of currently pinned columns. */
+  pinnedColumns?: ReadonlySet<string>;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   rowHeightFn: (row: TableRow) => number;
   setFilter: Dispatch<SetStateAction<FilterType>>;
@@ -208,6 +214,9 @@ function buildColumnsFromFields(
     gridRef,
     getCellActions,
     onCellFilterAdded,
+    onHideColumn,
+    onTogglePin,
+    pinnedColumns,
     frozenColumns,
     numFrozenColsFullyInView,
     maxRowHeight,
@@ -542,6 +551,10 @@ function buildColumnsFromFields(
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
+          onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
+          canHideColumn={fields.length > 1}
+          isPinned={pinnedColumns?.has(displayName)}
+          onTogglePin={onTogglePin ? () => onTogglePin(displayName) : undefined}
           selectFirstCell={() => {
             gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
           }}

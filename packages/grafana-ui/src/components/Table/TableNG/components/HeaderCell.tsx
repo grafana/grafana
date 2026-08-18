@@ -36,6 +36,14 @@ interface HeaderCellProps {
   crossFilterTailRows: TableRow[];
   /** `table.refresh`: left-align the label and move the filter into a hover-revealed column menu. */
   tableRefreshEnabled?: boolean;
+  /** `table.refresh`: hides this column via the column menu. Omitted when hiding isn't available. */
+  onHideColumn?: () => void;
+  /** `table.refresh`: whether hiding this column is currently allowed (e.g. not the last visible column). */
+  canHideColumn?: boolean;
+  /** `table.refresh`: whether this column is currently pinned. */
+  isPinned?: boolean;
+  /** `table.refresh`: pins/unpins this column via the column menu. Omitted when pinning isn't available. */
+  onTogglePin?: () => void;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -52,6 +60,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   crossFilterRows,
   crossFilterTailRows,
   tableRefreshEnabled,
+  onHideColumn,
+  canHideColumn,
+  isPinned,
+  onTogglePin,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -178,13 +190,17 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
         <div className={styles.headerCellLabelGroup}>{label}</div>
 
-        {filterable && (
+        {(filterable || onHideColumn || onTogglePin) && (
           <div className={styles.headerCellActions}>
             <HeaderCellMenu
               displayName={displayName}
               filterable={filterable}
               hasActiveFilter={hasActiveFilter}
               onOpenFilter={openFilter}
+              onHideColumn={onHideColumn}
+              canHideColumn={canHideColumn}
+              isPinned={isPinned}
+              onTogglePin={onTogglePin}
             />
           </div>
         )}

@@ -53,8 +53,10 @@ import {
   createBoundedCache,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
+  filterFieldsByHiddenColumns,
   migrateTableDisplayModeToCellOptions,
   orderFieldsByDisplayNames,
+  orderFieldsByPinnedColumns,
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
@@ -2979,6 +2981,45 @@ describe('TableNG utils', () => {
 
     it('ignores names in order that do not match any field', () => {
       expect(orderFieldsByDisplayNames(fields, ['D', 'C'])).toEqual([fieldC, fieldA, fieldB]);
+    });
+  });
+
+  describe('filterFieldsByHiddenColumns', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when hiddenColumns is undefined', () => {
+      expect(filterFieldsByHiddenColumns(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when hiddenColumns is empty', () => {
+      expect(filterFieldsByHiddenColumns(fields, new Set())).toBe(fields);
+    });
+
+    it('filters out fields whose display name is hidden', () => {
+      expect(filterFieldsByHiddenColumns(fields, new Set(['B']))).toEqual([fieldA, fieldC]);
+    });
+  });
+
+  describe('orderFieldsByPinnedColumns', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when pinnedColumns is undefined', () => {
+      expect(orderFieldsByPinnedColumns(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when pinnedColumns is empty', () => {
+      expect(orderFieldsByPinnedColumns(fields, new Set())).toBe(fields);
+    });
+
+    it('moves pinned fields to the front, preserving relative order within each group', () => {
+      expect(orderFieldsByPinnedColumns(fields, new Set(['C']))).toEqual([fieldC, fieldA, fieldB]);
+      expect(orderFieldsByPinnedColumns(fields, new Set(['C', 'A']))).toEqual([fieldA, fieldC, fieldB]);
     });
   });
 

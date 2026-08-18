@@ -89,6 +89,40 @@ const createDisplayNameDataFrame = (displayName: string, values = ['A1', 'A2']):
           display: displayString,
           ...stdField,
         },
+      ]
+    })
+  );
+
+const createThreeColumnDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 3,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: ['A1', 'A2', 'A3'],
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'Column B',
+          type: FieldType.number,
+          values: [1, 2, 3],
+          config: stdCellConfig,
+          display: displayNumber,
+          ...stdField,
+        },
+        {
+          name: 'Column C',
+          type: FieldType.number,
+          values: [4, 5, 6],
+          config: stdCellConfig,
+          display: displayNumber,
+          ...stdField,
+        },
       ],
     })
   );
@@ -1012,7 +1046,7 @@ describe('TableNG', () => {
       );
 
       const headerText = () =>
-        Array.from(container.querySelectorAll('[role="columnheader"] button')).map((el) => el.textContent);
+        Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
       expect(headerText()).toEqual(['Column A', 'Column B']);
 
       const headers = container.querySelectorAll('[role="columnheader"]');
@@ -1034,7 +1068,7 @@ describe('TableNG', () => {
       headers.forEach((header) => expect(header).not.toHaveAttribute('draggable', 'true'));
 
       const headerText = () =>
-        Array.from(container.querySelectorAll('[role="columnheader"] button')).map((el) => el.textContent);
+        Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
       const dataTransfer = createDataTransfer();
       fireEvent.dragStart(headers[0], { dataTransfer });
       fireEvent.dragEnter(headers[1], { dataTransfer });
@@ -1043,6 +1077,55 @@ describe('TableNG', () => {
 
       // no reorder took place, since these columns were never made draggable
       expect(headerText()).toEqual(['Column A', 'Column B']);
+    });
+  });
+
+  describe('table.refresh column hide/pin', () => {
+    const headerText = (container: HTMLElement) =>
+      Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+
+    it('hides a column from the column menu, disabling hide once only one column remains', async () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createThreeColumnDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column B'));
+      await userEvent.click(await screen.findByText('Hide column'));
+      expect(headerText(container)).toEqual(['Column A', 'Column C']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column C'));
+      await userEvent.click(await screen.findByText('Hide column'));
+      expect(headerText(container)).toEqual(['Column A']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column A'));
+      expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
+    });
+
+    it('pins a column from the column menu, moving it to the front and freezing it', async () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createThreeColumnDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText('Column options for Column C'));
+      await userEvent.click(await screen.findByText('Pin column left'));
+
+      expect(headerText(container)).toEqual(['Column C', 'Column A', 'Column B']);
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers[0]).toHaveClass('rdg-cell-frozen');
+      expect(headers[1]).not.toHaveClass('rdg-cell-frozen');
     });
   });
 
