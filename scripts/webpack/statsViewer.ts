@@ -26,7 +26,11 @@ interface StatsFilter {
 
 export class StatsViewerPlugin {
   apply(compiler: Compiler) {
-    compiler.hooks.done.tapPromise('StatsViewerPlugin', async () => {
+    compiler.hooks.done.tapPromise('StatsViewerPlugin', async (stats) => {
+      if (stats.hasErrors()) {
+        return;
+      }
+
       await updateReport();
 
       // Editors often emit several watch events per save.
@@ -64,8 +68,11 @@ async function updateReport() {
     const filteredStatsHTML = statsHTML.replace(/(window.chartData = )(\[.*?\])(;)/, (_, head, data, tail) => {
       const nodes: BundleNode[] = JSON.parse(data);
       const { exclude, minDominance } = statsFilter;
-      let filtered =
-        exclude == null ? nodes : nodes.filter((node) => !pathContains(node, node.parsedSize, exclude, minDominance));
+      let filtered = nodes;
+
+      if (exclude != null) {
+        filtered = filtered.filter((node) => !pathContains(node, node.parsedSize, exclude, minDominance));
+      }
 
       if (includeFilenames.size > 0) {
         filtered = filtered.filter((node) => includeFilenames.has(lastSegment(node.label)));
@@ -94,7 +101,7 @@ function filenamesFromRequestUrls(urls: string): Set<string> {
   return new Set(
     urls
       .split('\n')
-      .map((line) => lastSegment(line.trim()))
+      .map((line) => lastSegment(line.trim().replace(/\?.*$/, '')))
       .filter((name) => name)
   );
 }
