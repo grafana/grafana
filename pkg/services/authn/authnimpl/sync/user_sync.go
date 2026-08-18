@@ -511,7 +511,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 
 	needsConnectionCreation := userAuth == nil
 
-	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthenticatedBy); errProtection != nil {
+	if errProtection := s.userProtectionService.AllowUserMapping(ctx, usr, id.AuthenticatedBy); errProtection != nil {
 		span.RecordError(errProtection)
 		span.SetStatus(codes.Error, errProtection.Error())
 		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)

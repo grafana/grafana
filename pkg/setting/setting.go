@@ -2119,7 +2119,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	auth := iniFile.Section("auth")
 
-	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
+	readOAuthAllowInsecureEmailLookup(iniFile, cfg)
 
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
