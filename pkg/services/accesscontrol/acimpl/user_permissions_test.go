@@ -17,6 +17,7 @@ import (
 
 func TestServiceGetUserPermissionsDelegatesToAuthZ(t *testing.T) {
 	service := setupTestEnv(t, false)
+	service.cfg.RBAC.SingleOrganization = true
 	service.features = featuremgmt.WithFeatures()
 	setAuthZUserPermissionsFlag(t, true)
 	expected := []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:*"}}
@@ -32,6 +33,21 @@ func TestServiceGetUserPermissionsDelegatesToAuthZ(t *testing.T) {
 	require.Same(t, user, client.user)
 	require.Equal(t, options, client.options)
 	require.Equal(t, 1, client.calls)
+}
+
+func TestServiceGetUserPermissionsUsesLocalRBACForMultiOrg(t *testing.T) {
+	service := setupTestEnv(t, false)
+	service.cfg.RBAC.SingleOrganization = false
+	service.features = featuremgmt.WithFeatures()
+	setAuthZUserPermissionsFlag(t, true)
+	client := &fakeUserPermissionsClient{}
+	service.SetUserPermissionsClient(client)
+	user := &identity.StaticRequester{Type: types.TypeUser, UserID: 1, UserUID: "user-uid", OrgID: 2}
+
+	_, err := service.GetUserPermissions(t.Context(), user, accesscontrol.Options{ReloadCache: true})
+
+	require.NoError(t, err)
+	require.Zero(t, client.calls)
 }
 
 func TestServiceGetUserPermissionsUsesLocalRBACForGlobalOrg(t *testing.T) {
@@ -75,23 +91,11 @@ func TestServiceGetRBACUserPermissionsDoesNotDelegateToAuthZ(t *testing.T) {
 	require.Zero(t, client.calls)
 }
 
-func TestServiceClearUserPermissionCacheInvalidatesAuthZCache(t *testing.T) {
-	service := setupTestEnv(t, false)
-	client := &fakeUserPermissionsClient{}
-	service.SetUserPermissionsClient(client)
-	user := &identity.StaticRequester{Type: types.TypeUser, UserID: 1, UserUID: "user-uid", OrgID: 2}
-
-	service.ClearUserPermissionCache(user)
-
-	require.Equal(t, user, client.invalidatedUser)
-}
-
 type fakeUserPermissionsClient struct {
-	permissions     []accesscontrol.Permission
-	user            identity.Requester
-	options         accesscontrol.Options
-	invalidatedUser identity.Requester
-	calls           int
+	permissions []accesscontrol.Permission
+	user        identity.Requester
+	options     accesscontrol.Options
+	calls       int
 }
 
 func (c *fakeUserPermissionsClient) GetUserPermissions(_ context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -101,6 +105,4 @@ func (c *fakeUserPermissionsClient) GetUserPermissions(_ context.Context, user i
 	return c.permissions, nil
 }
 
-func (c *fakeUserPermissionsClient) ClearUserPermissionCache(user identity.Requester) {
-	c.invalidatedUser = user
-}
+func (c *fakeUserPermissionsClient) ClearUserPermissionCache(identity.Requester) {}
