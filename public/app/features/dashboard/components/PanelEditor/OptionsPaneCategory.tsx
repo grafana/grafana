@@ -271,7 +271,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.primary,
   }),
   headerNested: css({
-    padding: theme.spacing(0.5),
+    padding: theme.spacing(0.5, 0),
   }),
   toggleButton: css({
     alignSelf: 'baseline',
