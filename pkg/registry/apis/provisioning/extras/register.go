@@ -90,10 +90,11 @@ func ProvideQuotaGetter(cfg *setting.Cfg) quotas.QuotaGetter {
 }
 
 func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, extras []connection.Extra) (connection.Factory, error) {
-	types := cfg.ProvisioningRepositoryTypes
+	types := cfg.ProvisioningConnectionTypes
 	if len(types) == 0 {
-		// Enforcing default connection values if settings are not set
-		types = []string{"github"}
+		for _, extra := range extras {
+			types = append(types, string(extra.Type()))
+		}
 	}
 
 	return connection.ProvideFactory(connection.ToConnectionTypes(types), extras)

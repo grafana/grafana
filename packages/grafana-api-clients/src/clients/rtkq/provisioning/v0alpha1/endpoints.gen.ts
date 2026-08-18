@@ -1499,7 +1499,7 @@ export type ConnectionWebhookConfig = {
   disabled?: boolean;
 };
 export type ConnectionSpec = {
-  /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
+  /** Bitbucket connection configuration Only applicable when provider is "bitbucketOAuth" */
   bitbucket?: BitbucketConnectionConfig;
   /** The connection description */
   description?: string;
@@ -1518,7 +1518,7 @@ export type ConnectionSpec = {
      - `"github"`
      - `"githubEnterprise"`
      - `"gitlab"` */
-  type: 'bitbucket' | 'github' | 'githubEnterprise' | 'gitlab';
+  type: 'bitbucketOAuth' | 'github' | 'githubEnterprise' | 'gitlabOAuth';
   /** The connection URL */
   url?: string;
   /** Webhook configuration for this connection */
@@ -2290,6 +2290,8 @@ export type RepositoryViewList = {
   allowedTargets?: ('folder' | 'folderless' | 'instance')[];
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  /** AvailableConnectionTypes is the list of connection types supported in this instance */
+  availableConnectionTypes?: ('bitbucketOAuth' | 'github' | 'githubEnterprise' | 'gitlabOAuth')[];
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
   availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local')[];
   /** AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled). */

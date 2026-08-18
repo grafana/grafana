@@ -1356,6 +1356,11 @@ func (in *RepositoryViewList) DeepCopyInto(out *RepositoryViewList) {
 		*out = make([]RepositoryType, len(*in))
 		copy(*out, *in)
 	}
+	if in.AvailableConnectionTypes != nil {
+		in, out := &in.AvailableConnectionTypes, &out.AvailableConnectionTypes
+		*out = make([]ConnectionType, len(*in))
+		copy(*out, *in)
+	}
 	if in.AvailableResources != nil {
 		in, out := &in.AvailableResources, &out.AvailableResources
 		*out = make([]SupportedResource, len(*in))

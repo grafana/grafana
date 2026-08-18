@@ -8,6 +8,7 @@ const defaultSettings = {
   items: [],
   allowImageRendering: true,
   availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'git', 'local'],
+  availableConnectionTypes: ['github', 'gitlabOAuth', 'bitbucketOAuth'],
 };
 
 const defaultStats = {

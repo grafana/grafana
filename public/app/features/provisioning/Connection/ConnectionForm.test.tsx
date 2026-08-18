@@ -75,7 +75,7 @@ describe('ConnectionForm', () => {
       mockComboboxRect();
       server.use(
         http.get(`${BASE}/settings`, () =>
-          HttpResponse.json({ availableRepositoryTypes: ['github', 'githubEnterprise'] })
+          HttpResponse.json({ availableConnectionTypes: ['github', 'githubEnterprise'] })
         )
       );
 

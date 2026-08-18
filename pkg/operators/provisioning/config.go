@@ -104,6 +104,7 @@ type ControllerConfig struct {
 // local_permitted_prefixes =
 // [provisioning]
 // repository_types =
+// connection_types =
 // [nats]
 // # when enabled, the informers take their watch from NATS instead of the
 // # apiserver watch; operators use an external NATS (no embedded server).
@@ -515,13 +516,15 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 		return nil, err
 	}
 
-	// Build enabled types from the extras
-	enabledTypes := make(map[provisioning.ConnectionType]struct{})
-	for _, extra := range extras {
-		enabledTypes[extra.Type()] = struct{}{}
+	types := c.Settings.ProvisioningConnectionTypes
+	if len(types) == 0 {
+		types = make([]string, 0, len(extras))
+		for _, extra := range extras {
+			types = append(types, string(extra.Type()))
+		}
 	}
 
-	connectionFactory, err := connection.ProvideFactory(enabledTypes, extras)
+	connectionFactory, err := connection.ProvideFactory(connection.ToConnectionTypes(types), extras)
 	if err != nil {
 		return nil, fmt.Errorf("create connection factory: %w", err)
 	}
