@@ -178,6 +178,32 @@ describe('Overview', () => {
     expect(firstStats).toHaveBeenCalledTimes(1);
   });
 
+  it('returns to skeletons while a changed solution set is classified', async () => {
+    const nextDatasource = deferred<DataSourceInstanceListItem | null>();
+    const metrics = solution('metrics', {
+      title: 'Metrics & infrastructure',
+      datasource: async () => datasource,
+    });
+    const logs = solution('logs', {
+      title: 'Logs',
+      datasource: () => nextDatasource.promise,
+    });
+    const { container, rerender } = render(<Overview solutions={[metrics]} />);
+
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    await waitFor(() => expect(container.querySelectorAll('.react-loading-skeleton')).toHaveLength(0));
+
+    rerender(<Overview solutions={[logs]} />);
+
+    await waitFor(() => expect(container.querySelectorAll('.react-loading-skeleton').length).toBeGreaterThan(0));
+    expect(screen.queryByRole('heading', { name: metrics.title })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: logs.title })).not.toBeInTheDocument();
+
+    await act(async () => nextDatasource.resolve(datasource));
+
+    expect(await screen.findByRole('heading', { name: logs.title })).toBeInTheDocument();
+  });
+
   it('classifies a live solution as enabled when its attention query fails', async () => {
     const metrics = solution('metrics', {
       title: 'Metrics & infrastructure',

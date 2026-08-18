@@ -34,9 +34,8 @@ export function Overview({ solutions }: OverviewProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const guides = useGuides();
-  const cards = useAsync(() => resolveOverviewCards(solutions), [solutions]);
-  const solutionsLoading = cards.value === undefined;
-  const groups = useMemo(() => groupOverviewCards(cards.value ?? []), [cards.value]);
+  const { value: cards, loading: cardsLoading } = useAsync(() => resolveOverviewCards(solutions), [solutions]);
+  const groups = useMemo(() => groupOverviewCards(cards ?? []), [cards]);
 
   const options = useMemo<Option[]>(
     () => [
@@ -45,8 +44,8 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.all', 'All solutions'),
         content: (
           <Solutions
-            loading={solutionsLoading}
-            cards={cards.value ?? []}
+            loading={cardsLoading}
+            cards={cards ?? []}
             emptyMessage={t('home.overview.empty.all', 'No solutions were found.')}
           />
         ),
@@ -56,7 +55,7 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.attention', 'Needs attention'),
         content: (
           <Solutions
-            loading={solutionsLoading}
+            loading={cardsLoading}
             cards={groups.attention}
             emptyMessage={t('home.overview.empty.attention', 'No solutions need attention.')}
           />
@@ -67,7 +66,7 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.enabled', 'Enabled solutions'),
         content: (
           <Solutions
-            loading={solutionsLoading}
+            loading={cardsLoading}
             cards={groups.enabled}
             emptyMessage={t('home.overview.empty.enabled', 'No enabled solutions with recent activity were found.')}
           />
@@ -78,7 +77,7 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.available', 'Available solutions'),
         content: (
           <Solutions
-            loading={solutionsLoading}
+            loading={cardsLoading}
             cards={groups.available}
             emptyMessage={t('home.overview.empty.available', 'No available solutions to show yet.')}
           />
@@ -97,7 +96,7 @@ export function Overview({ solutions }: OverviewProps) {
           ]
         : []),
     ],
-    [cards.value, groups, guides, solutionsLoading]
+    [cards, cardsLoading, groups, guides]
   );
   const [stored, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, options[0].value);
   const option = useMemo(() => options.find((o) => o.value === stored) ?? options[0], [options, stored]);
