@@ -7,6 +7,7 @@ import { type DataSourceApi, dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import {
   MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
@@ -428,4 +429,42 @@ describe('Silence create/edit', () => {
     },
     TEST_TIMEOUT
   );
+
+  const ruleSilenceUrlPath = `${baseUrlPath}?matcher=${MATCHER_ALERT_RULE_UID}%3D${grafanaRulerRule.grafana_alert.uid}`;
+
+  // A silence with no rule attached can silence alerts from any rule, so the backend asks for the
+  // org-wide create permission - folder permissions are no help. Someone whose silence permission
+  // comes from a folder can still follow a link to this page, and should be told rather than shown
+  // a form that fails on save.
+  it('shows a permission error for a silence that is not tied to an alert rule', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead]);
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+    renderSilences(baseUrlPath);
+
+    expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
+    expect(ui.editor.durationField.query()).not.toBeInTheDocument();
+  });
+
+  // A silence for a single rule only affects that rule, so silence create on the folder the rule
+  // lives in is enough - no org-wide permission needed.
+  it('renders the form for a rule silence when the rule folder allows creating silences', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead]);
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+    renderSilences(ruleSilenceUrlPath);
+
+    expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
+    expect(ui.noPermissionToEdit.query()).not.toBeInTheDocument();
+  });
+
+  it('shows a permission error for a rule silence when the rule folder does not allow creating silences', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead]);
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceRead]: true });
+
+    renderSilences(ruleSilenceUrlPath);
+
+    expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
+    expect(ui.editor.durationField.query()).not.toBeInTheDocument();
+  });
 });
