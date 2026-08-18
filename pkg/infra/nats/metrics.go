@@ -69,6 +69,7 @@ type publisherMetrics struct {
 	connectionMetrics
 	messagesPublished prometheus.Counter
 	publishErrors     prometheus.Counter
+	asyncErrors       *prometheus.CounterVec
 }
 
 func newPublisherMetrics() *publisherMetrics {
@@ -86,11 +87,17 @@ func newPublisherMetrics() *publisherMetrics {
 			Name:      "publisher_publish_errors_total",
 			Help:      "Total number of NATS publish errors.",
 		}),
+		asyncErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "publisher_async_errors_total",
+			Help:      "NATS asynchronous errors reported on the publisher connection, by group, resource and classified error. A non-zero permissions_violation means published messages are being dropped by the broker even though Publish returned successfully.",
+		}, []string{"group", "resource", "error"}),
 	}
 }
 
 func (m *publisherMetrics) collectors() []prometheus.Collector {
-	return append(m.connectionMetrics.collectors(), m.messagesPublished, m.publishErrors)
+	return append(m.connectionMetrics.collectors(), m.messagesPublished, m.publishErrors, m.asyncErrors)
 }
 
 // subscriberMetrics covers the subscriber connection plus its delivery counters.
