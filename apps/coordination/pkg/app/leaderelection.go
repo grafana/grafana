@@ -21,14 +21,19 @@ const (
 	// gcLeaseName is the ClusterLease the garbage collector elects its leader on. The
 	// controller dogfoods the very primitive it maintains: its own leader lease is a
 	// ClusterLease served by this app, and self-hosting is sound because GC only
-	// deletes leases dead for hours while this lease is renewed every few seconds.
+	// deletes leases dead for hours while this lease is renewed well within its term.
 	gcLeaseName = "coordination-gc"
 
-	// Election timings. LeaseDuration is within the admission bounds ([10, 600]s) so
-	// the GC lease is accepted by the same validator that guards every other lease.
-	gcLeaseDuration = 15 * time.Second
-	gcRenewDeadline = 10 * time.Second
-	gcRetryPeriod   = 2 * time.Second
+	// Election timings are deliberately coarse. Every renewal is a served, validated
+	// UPDATE to the ClusterLease, so a tight renew loop would generate constant
+	// admission traffic (and log noise) for no benefit: GC only ever deletes leases
+	// abandoned for hours, so a multi-minute failover is immaterial. Renewing roughly
+	// once a minute keeps that traffic negligible. LeaseDuration stays within the
+	// admission bounds ([10, 600]s) so the GC lease passes the same validator as any
+	// other lease.
+	gcLeaseDuration = 180 * time.Second
+	gcRenewDeadline = 120 * time.Second
+	gcRetryPeriod   = 60 * time.Second
 )
 
 // clusterLeaseLock adapts a coordination ClusterLease to client-go's
