@@ -4,8 +4,12 @@ import { valid } from 'semver';
 // consumed without executing code. Function selectors become named template descriptors that
 // @grafana/plugin-e2e reconstructs into functions locally. See design doc: Plugin E2E Selectors.
 
-// private-use characters, unlikely to appear in any selector, used to locate argument positions
-const ARG_SENTINELS = [0xe000, 0xe001, 0xe002, 0xe003].map((code) => String.fromCharCode(code));
+// private-use character, unlikely to appear in any selector, used to locate argument positions.
+// generated per argument index so there is no fixed cap on the number of parameters.
+const ARG_SENTINEL_BASE = 0xe000;
+function argSentinel(index: number): string {
+  return String.fromCharCode(ARG_SENTINEL_BASE + index);
+}
 
 type SelectorValue = string | ((...args: string[]) => string);
 type VersionedSelector = Record<string, SelectorValue>;
@@ -31,6 +35,10 @@ function parseParamNames(fn: (...args: string[]) => string): string[] {
   const src = fn.toString();
   const open = src.indexOf('(');
   const close = src.indexOf(')', open);
+  // fail fast rather than misparse: our selectors are always written with parenthesised params
+  if (open === -1 || close === -1) {
+    throw new Error(`Unable to parse parameters from selector function source: ${src}`);
+  }
   const inner = src.slice(open + 1, close).trim();
   if (!inner) {
     return [];
@@ -48,7 +56,7 @@ function serializeFunction(fn: (...args: string[]) => string): TemplateDescripto
     return { $template: fn(), params: [] };
   }
 
-  const sentinels = params.map((_, index) => ARG_SENTINELS[index]);
+  const sentinels = params.map((_, index) => argSentinel(index));
   const present = fn(...sentinels);
   let template = present;
   sentinels.forEach((sentinel, index) => {
