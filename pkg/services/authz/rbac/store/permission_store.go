@@ -133,7 +133,7 @@ func (s *StaticPermissionStore) GetUserPermissions(ctx context.Context, ns types
 		}
 
 		for _, p := range r.Permissions {
-			if p.Action == query.Action {
+			if query.Action == "" || p.Action == query.Action {
 				permissions = append(permissions, p)
 			}
 		}
