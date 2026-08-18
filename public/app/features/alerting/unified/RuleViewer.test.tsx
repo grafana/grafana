@@ -5,6 +5,7 @@ import { locationService } from '@grafana/runtime';
 
 import RuleViewer from './RuleViewer';
 import { DMAStatus, useDMAStatus } from './hooks/useDMAStatus';
+import { alertingFactory } from './mocks/server/db';
 
 jest.mock('./hooks/useDMAStatus', () => ({
   ...jest.requireActual('./hooks/useDMAStatus'),
@@ -12,6 +13,7 @@ jest.mock('./hooks/useDMAStatus', () => ({
 }));
 
 const useDMAStatusMock = jest.mocked(useDMAStatus);
+const prometheusDataSource = alertingFactory.dataSource.vanillaPrometheus().build();
 
 describe('Rule Viewer page', () => {
   beforeEach(() => {
@@ -50,7 +52,7 @@ describe('Rule Viewer page', () => {
 
     await waitFor(() =>
       expect(locationService.getLocation().pathname).toBe(
-        '/a/grafana-prometheusalerting-app/rules/pri%24Prometheus%24namespace%24group%24rule%24hash/view'
+        `/a/grafana-prometheusalerting-app/rules/pri%24${prometheusDataSource.uid}%24namespace%24group%24rule%24hash`
       )
     );
   });
