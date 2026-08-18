@@ -92,7 +92,8 @@ declare module "@openfeature/core" {
     | "grafana.thresholdsInterpolation"
     | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"
-    | "datasources.queryGateway";
+    | "datasources.queryGateway"
+    | "tracesDrilldown.useValueTypeFiltering";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
