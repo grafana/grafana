@@ -53,11 +53,6 @@ export function QueryEditorContextWrapper({
   const pendingSavedQuery = isDrawerOpen ? pendingSavedQueryState : null;
 
   const dataTransformer = panel.state.$data instanceof SceneDataTransformer ? panel.state.$data : null;
-  // Subscribes this component to the provider. The value is unused — `useTransformations` reads the
-  // list — but the subscription is what re-renders after a plugin swap installs or replaces the
-  // system transformations, which is when the resolver below starts answering differently for
-  // unchanged frames. Kept explicit rather than leaning on the hook's own subscription.
-  dataTransformer?.useState();
   const transformations = useTransformations(dataTransformer);
   const alertingState = useAlertRulesForPanel(dataPane, panel);
 
@@ -312,8 +307,8 @@ export function QueryEditorContextWrapper({
   // no user transformation's input, and the debug drawer shows a single transformation's own output.
   //
   // No `useMemo`: the provider caches on the frames array and the resolved plugin, so the identity is
-  // already stable across renders. `transformerState` above is what re-renders this component after a
-  // plugin swap, which is when the answer changes without the frames changing.
+  // already stable across renders. The `useTransformations` subscription above is what re-renders this
+  // component after a plugin swap, which is when the answer changes without the frames changing.
   const systemTransformations =
     dataTransformer instanceof PanelDataTransformer
       ? dataTransformer.getResolvedSystemTransformations(queryRunnerState?.data?.series ?? []).prepend
