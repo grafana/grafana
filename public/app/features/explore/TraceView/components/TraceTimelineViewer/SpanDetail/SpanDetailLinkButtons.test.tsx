@@ -272,7 +272,7 @@ describe('getProfileLinkButtonsContext', () => {
     expect(context).toEqual({
       serviceName: 'test-service',
       profileTypeId: 'test-type',
-      spanSelector: 'test-profile',
+      spanSelector: ['test-profile'],
       explorationType: 'flame-graph',
       timeRange: {
         from: new Date(0).toISOString(),
@@ -290,7 +290,7 @@ describe('getProfileLinkButtonsContext', () => {
     expect(context).toEqual({
       serviceName: 'test-service',
       profileTypeId: '',
-      spanSelector: 'test-profile',
+      spanSelector: ['test-profile'],
       explorationType: 'flame-graph',
       timeRange: {
         from: new Date(0).toISOString(),
@@ -321,6 +321,6 @@ describe('getProfileLinkButtonsContext', () => {
 
     const context = getProfileLinkButtonsContext(spanWithoutProfileId, traceToProfilesOptions, timeRange);
 
-    expect(context.spanSelector).toBe('');
+    expect(context.spanSelector).toEqual([]);
   });
 });

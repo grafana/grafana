@@ -1,8 +1,7 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
+import { flows, getPanelBox } from './helpers';
+import { type Panels } from './page-objects';
 import { type GridLayoutOptions } from './page-objects/sidebar/shared/GridLayoutOptions';
-import { getPanelBox, importTestDashboard } from './utils';
 
 test.use({
   featureToggles: {
@@ -23,12 +22,8 @@ test.describe(
   },
   () => {
     test.describe('Layout switching', () => {
-      test('can switch to auto grid layout', async ({ dashboardPage, selectors, page, components }) => {
-        await importTestDashboard(page, selectors, 'Switch to auto grid');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
+      test('can switch to auto grid layout', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Switch to auto grid');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -43,8 +38,7 @@ test.describe(
 
         await checkAutoGridLayoutInputs(gridLayoutOptions);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
@@ -56,12 +50,8 @@ test.describe(
     });
 
     test.describe('Auto grid column options', () => {
-      test('can change min column width', async ({ dashboardPage, selectors, page, components }) => {
-        await importTestDashboard(page, selectors, 'Set min column width');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
+      test('can change min column width', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set min column width');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -79,7 +69,7 @@ test.describe(
         // Verify wide layout wraps panels onto two rows; poll: boundingBox() doesn't auto-wait for the re-layout
         await expect(async () => {
           // getPanelBox asserts non-null; the inline .last() measurement needs its own null check
-          const firstPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
+          const firstPanelBox = await getPanelBox(panels, 'New panel');
           const lastPanelBox = await panels.getPanels('New panel').last().boundingBox();
           expect(lastPanelBox, 'Last panel should have a bounding box').not.toBeNull();
 
@@ -90,15 +80,14 @@ test.describe(
 
         // Verify narrow layout fits all panels on one row; poll until the re-layout lands
         await expect(async () => {
-          const firstPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
+          const firstPanelBox = await getPanelBox(panels, 'New panel');
           const lastPanelBox = await panels.getPanels('New panel').last().boundingBox();
           expect(lastPanelBox, 'Last panel should have a bounding box').not.toBeNull();
 
           expect(lastPanelBox!.y, 'Last panel should be on the same row as the first').toBe(firstPanelBox.y);
         }).toPass();
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
@@ -107,7 +96,7 @@ test.describe(
 
         // Verify the narrow layout persisted: all panels on one row; poll while panels re-render after the reload
         await expect(async () => {
-          const firstPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
+          const firstPanelBox = await getPanelBox(panels, 'New panel');
           const lastPanelBox = await panels.getPanels('New panel').last().boundingBox();
           expect(lastPanelBox, 'Last panel should have a bounding box').not.toBeNull();
 
@@ -115,12 +104,15 @@ test.describe(
         }).toPass();
       });
 
-      test('can change to custom min column width', async ({ dashboardPage, selectors, page, components }) => {
-        await importTestDashboard(page, selectors, 'Set custom min column width');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
+      test('can change to custom min column width', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        sidebar,
+        panels,
+      }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set custom min column width');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -136,8 +128,7 @@ test.describe(
         // Changing to 1100 custom width should have each panel span the whole row (stacked vertically)
         await verifyPanelsStackedVertically(panels);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await verifyPanelsStackedVertically(panels);
 
@@ -148,16 +139,12 @@ test.describe(
 
         await verifyPanelsStackedVertically(panels);
 
-        await gridLayoutOptions.clickClearCustomMinColumnWidth();
+        await gridLayoutOptions.clearCustomMinColumnWidth();
         await expect(gridLayoutOptions.getMinColumnWidthSelect()).toHaveValue('Standard');
       });
 
-      test('can change max columns', async ({ dashboardPage, selectors, page, components }) => {
-        await importTestDashboard(page, selectors, 'Set max columns');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
+      test('can change max columns', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set max columns');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -173,8 +160,7 @@ test.describe(
         // Changing to 1 max column should have each panel span the whole row (stacked vertically)
         await verifyPanelsStackedVertically(panels);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await verifyPanelsStackedVertically(panels);
 
@@ -188,12 +174,8 @@ test.describe(
     });
 
     test.describe('Auto grid row options', () => {
-      test('can change row height', async ({ dashboardPage, selectors, page, components }) => {
-        await importTestDashboard(page, selectors, 'Set row height');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
+      test('can change row height', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set row height');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -204,13 +186,13 @@ test.describe(
 
         await gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
-        const regularRowHeight = (await getPanelBox(dashboardPage, selectors, 'New panel')).height;
+        const regularRowHeight = (await getPanelBox(panels, 'New panel')).height;
 
         await gridLayoutOptions.selectRowHeight('Short');
 
         // boundingBox() doesn't auto-wait, so poll the height until the re-layout applies
         await expect
-          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+          .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
             message: 'Panel should shrink to the Short row height',
           })
           .toBeLessThan(regularRowHeight);
@@ -218,16 +200,15 @@ test.describe(
         await gridLayoutOptions.selectRowHeight('Tall');
 
         await expect
-          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+          .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
             message: 'Panel should grow to the Tall row height',
           })
           .toBeGreaterThan(regularRowHeight);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect
-          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+          .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
             message: 'Tall row height should persist after the reload',
           })
           .toBeGreaterThan(regularRowHeight);
@@ -239,18 +220,14 @@ test.describe(
 
         // The edit pane shrinks the canvas and re-flows the grid
         await expect
-          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+          .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
             message: 'Panel should keep the Tall row height in edit mode',
           })
           .toBeGreaterThan(regularRowHeight);
       });
 
-      test('can change to custom row height', async ({ dashboardPage, selectors, page, components }) => {
-        await importTestDashboard(page, selectors, 'Set custom row height');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
+      test('can change to custom row height', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set custom row height');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -261,22 +238,21 @@ test.describe(
 
         await gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
-        const regularRowHeight = (await getPanelBox(dashboardPage, selectors, 'New panel')).height;
+        const regularRowHeight = (await getPanelBox(panels, 'New panel')).height;
 
         await gridLayoutOptions.selectRowHeight('Custom', 800);
 
         // boundingBox() doesn't auto-wait; poll until the new row height applies
         await expect(async () => {
-          const customHeight = (await getPanelBox(dashboardPage, selectors, 'New panel')).height;
+          const customHeight = (await getPanelBox(panels, 'New panel')).height;
           expect(customHeight).toBeCloseTo(800, 5); // Allow some tolerance for rendering differences
           expect(customHeight).toBeGreaterThan(regularRowHeight);
         }).toPass();
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect
-          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+          .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
             message: 'Custom row height should persist after the reload',
           })
           .toBeCloseTo(800, 5);
@@ -286,16 +262,12 @@ test.describe(
 
         await expect(gridLayoutOptions.getCustomRowHeightInput()).toHaveValue('800');
 
-        await gridLayoutOptions.clickClearCustomRowHeight();
+        await gridLayoutOptions.clearCustomRowHeight();
         await expect(gridLayoutOptions.getRowHeightSelect()).toHaveValue('Standard');
       });
 
-      test('can change fill screen', async ({ dashboardPage, selectors, page, components }) => {
-        await importTestDashboard(page, selectors, 'Set fill screen');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
+      test('can change fill screen', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(page, selectors, 'Set fill screen');
         const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
         await controls.enterEditMode();
@@ -309,22 +281,21 @@ test.describe(
         // Set narrow column width first to ensure panels fit horizontally
         await gridLayoutOptions.selectMinColumnWidth('Narrow');
 
-        const initialHeight = (await getPanelBox(dashboardPage, selectors, 'New panel')).height;
+        const initialHeight = (await getPanelBox(panels, 'New panel')).height;
 
         await gridLayoutOptions.toggleFillScreen();
 
         // boundingBox() doesn't auto-wait, so poll the height until the re-layout applies
         await expect
-          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+          .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
             message: 'Fill screen should increase the panel height',
           })
           .toBeGreaterThan(initialHeight);
 
-        await controls.saveDashboard();
-        await page.reload();
+        await flows.dashboards.saveDashboard(page, controls);
 
         await expect
-          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+          .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
             message: 'Fill screen height should persist after the reload',
           })
           .toBeGreaterThan(initialHeight);
@@ -336,7 +307,7 @@ test.describe(
 
         // The edit pane shrinks the canvas and re-flows the grid
         await expect
-          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+          .poll(async () => (await getPanelBox(panels, 'New panel')).height, {
             message: 'Fill screen height should persist in edit mode',
           })
           .toBeGreaterThan(initialHeight);

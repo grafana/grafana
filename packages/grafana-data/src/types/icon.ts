@@ -171,6 +171,7 @@ export const availableIconsIndex = {
   'gf-pin-unfilled': true,
   'gf-prometheus': true,
   'gf-traces': true,
+  'gf-variable': true,
   globe: true,
   grafana: true,
   grid: true,

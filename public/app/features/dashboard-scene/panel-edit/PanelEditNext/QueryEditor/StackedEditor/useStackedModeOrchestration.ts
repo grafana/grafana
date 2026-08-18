@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useLocalStorage } from 'react-use';
 
-import { QueryEditorType } from '../../constants';
+import { QUERY_EDITOR_STACKED_VIEW_KEY, QueryEditorType } from '../../constants';
 import { type StackedEditorItem, type StackedEditorState } from '../QueryEditorContext';
 
 interface UseStackedModeOrchestrationArgs {
@@ -17,6 +18,9 @@ interface UseStackedModeOrchestrationArgs {
 /**
  * Owns the stacked-mode state machine: the user's on/off choice and the scroll-to-selection bridge.
  *
+ * The choice outlives the editing session — it says how this user likes to read a panel's queries,
+ * so re-toggling it on every panel edit would be busywork. Only `enter` and `exit` write to it.
+ *
  * `enabled` is derived rather than stored so that views which take over the content pane can
  * pre-empt the stack without discarding the user's choice — switching to alerts and back leaves
  * them where they were.
@@ -29,10 +33,10 @@ export function useStackedModeOrchestration({
   activateItem,
   isAlertView,
 }: UseStackedModeOrchestrationArgs): StackedEditorState {
-  const [prefersStackedMode, setPrefersStackedMode] = useState(false);
+  const [prefersStackedMode = false, setPrefersStackedMode] = useLocalStorage(QUERY_EDITOR_STACKED_VIEW_KEY, false);
 
-  const enter = useCallback(() => setPrefersStackedMode(true), []);
-  const exit = useCallback(() => setPrefersStackedMode(false), []);
+  const enter = useCallback(() => setPrefersStackedMode(true), [setPrefersStackedMode]);
+  const exit = useCallback(() => setPrefersStackedMode(false), [setPrefersStackedMode]);
 
   const syncActiveItem = useCallback(
     (item: StackedEditorItem) => {

@@ -97,6 +97,9 @@ export function ContentOutline({
   // effect keyed on the ref object itself — so the container has to arrive as a new ref, or the
   // listener never attaches and the active item stays wherever it started.
   const scrollerRef = useMemo(() => ({ current: scroller ?? null }), [scroller]);
+  // TODO remove when react-use is fixed
+  // see https://github.com/streamich/react-use/issues/2612
+  // @ts-expect-error
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
   const [activeSectionId, setActiveSectionId] = useState(outlineItems[0]?.id);

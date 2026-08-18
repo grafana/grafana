@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.26.5
+GO_VERSION = 1.26.6
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -787,6 +787,11 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
 	buf generate pkg/registry/apps/annotation/proto --template pkg/registry/apps/annotation/proto/buf.gen.yaml
 
+.PHONY: protobuf-breaking
+protobuf-breaking: ## Check protobuf definitions for breaking changes against main
+	bash scripts/protobuf-check.sh
+	buf breaking pkg/registry/apps/annotation/proto --against '.git#branch=main,subdir=pkg/registry/apps/annotation/proto'
+
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
@@ -842,6 +847,8 @@ GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1
 		.
 # We don't want the patch workflow to be run. This is exclusively useful for the security-mirror. It won't work in OSS.
 	sed -i.bak '/- Workflow \.github\/workflows\/create-security-patch-from-security-mirror/d' .policy.yml; rm -f .policy.yml.bak
+# The frontend preview deploy is opt-in and only triggers on `synchronize`, so a PR opened without a further push never produces a run for policy-bot to find.
+	sed -i.bak '/- Workflow \.github\/workflows\/deploy-frontend-preview/d' .policy.yml; rm -f .policy.yml.bak
 # Make govulncheck non-blocking - accept failure so it doesn't prevent merge
 	sed -i.bak '/name: Workflow \.github\/workflows\/govulncheck\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak
 # Make check-frontend-test-coverage non-blocking - accept failure so it doesn't prevent merge

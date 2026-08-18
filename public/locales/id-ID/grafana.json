@@ -3593,6 +3593,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Interval waktu",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Pilih interval waktu..."
     },
     "time-intervals-table": {
@@ -5618,10 +5619,13 @@
       "add-conditional-rule": "Tambah aturan {{ruleDescription}}",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Duplikasikan panel",
       "edit-query-result-rule": "Ubah aturan hasil kueri",
       "edit-template-variable-rule": "Ubah aturan variabel templat",
       "edit-time-range-rule": "Ubah aturan rentang waktu",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Pindahkan {{typeName}}",
       "panel-background": "Ubah latar belakang panel",
       "panel-description": "Ubah deskripsi panel",
@@ -5874,8 +5878,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Ini akan membatalkan pengelompokan semua grup yang bersarang.",
-      "ungroup-nested-title": "Batalkan pengelompokan grup yang bersarang?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} dari {{numberOfPages}}",
@@ -6087,6 +6095,13 @@
       "save-json-to-file": "Simpan JSON ke file",
       "see-docs": "Lihat <2>dokumentasi</2> untuk informasi selengkapnya tentang penyediaan."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": "Tidak ada panel yang cocok"
     },
@@ -6244,6 +6259,12 @@
         "title-above-dashboard_other": "",
         "title-controls-menu_other": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -6789,7 +6810,8 @@
         "change-annotation-enabled-state": "Ubah status anotasi yang diaktifkan",
         "change-annotation-name": "Ubah nama anotasi",
         "change-annotation-panel-filter": "Ubah filter panel anotasi"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Hapus kueri anotasi",
@@ -6865,13 +6887,9 @@
       "placeholder-your-metric-prefix": "Awalan metrik Anda"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Hapus",
-      "aria-label-edit": "Edit",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Tampilkan/sembunyikan aturan tidak akan berfungsi",
@@ -7196,6 +7214,7 @@
         "title-someone-else-has-updated-this-dashboard": "Orang lain telah memperbarui dasbor ini",
         "would-still-dashboard": "Ingin tetap menyimpan dasbor ini?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Simpan dan timpa"
     },
     "legacy": {
@@ -7669,6 +7688,10 @@
     "variable-controls": {
       "add-variable": "Tambah variabel"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
+    },
     "variable-editable-element": {
       "delete-confirm": "Hapus variabel",
       "delete-text": "Yakin ingin menghapus: {{name}}?",
@@ -7998,7 +8021,8 @@
       "title-missing-rights": "Hak tidak ada"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Pilih sumber data"
+      "aria-label-select-a-data-source": "Pilih sumber data",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Halaman tidak ditemukan: {{page}}"
@@ -10889,6 +10913,12 @@
       "critical-count_other": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12344,6 +12374,10 @@
     "new-folder": {
       "title": "Folder baru"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12527,6 +12561,7 @@
       "customise-saving": "",
       "dialog-label": "Navigasi",
       "dock": "Gandeng menu",
+      "header-title": "",
       "list-label": "Navigasi",
       "open": "Menu utama",
       "pin-error": "",
@@ -12635,7 +12670,44 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": ""
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_other": "",
+      "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -14638,7 +14710,6 @@
     },
     "header": {
       "alert": "Peringatan",
-      "expression": "Ekspresi",
       "pending-expression": "",
       "pending-expression-cancel": "Batalkan",
       "pending-transformation": "",
@@ -14652,6 +14723,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
@@ -15872,6 +15944,7 @@
     "name-show-mini-map": "Tampilkan peta mini"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -15900,6 +15973,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

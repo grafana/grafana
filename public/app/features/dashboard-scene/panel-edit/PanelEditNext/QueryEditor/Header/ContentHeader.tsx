@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { upperFirst } from 'lodash';
 import { type RefObject, useMemo, useRef } from 'react';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } from '@grafana/data';
@@ -19,7 +18,7 @@ import {
 } from '../QueryEditorContext';
 import { usePanelScopedVars } from '../hooks/usePanelScopedVars';
 import { type AlertRule, type Transformation } from '../types';
-import { getEditorBorderColor } from '../utils';
+import { getEditorBorderColor, getExpressionSectionLabel } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
@@ -111,7 +110,7 @@ interface ContentHeaderProps {
    * Optional ref to the container div.
    * Used downstream for saved queries positioning.
    */
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
   /**
    * Optional type config for query editor types (icons, colors, labels).
    * If not provided, will be computed from the current theme.
@@ -196,7 +195,7 @@ export function ContentHeader({
               <Trans i18nKey="query-editor-next.header.alert">Alert</Trans>
             </Text>
             <NavToolbarSeparator />
-            <Text weight="light" variant="code" color="primary">
+            <Text weight="light" variant="body" color="primary">
               {selectedAlert.rule.name}
             </Text>
           </>
@@ -217,7 +216,7 @@ export function ContentHeader({
         {cardType === QueryEditorType.Expression && selectedQuery && 'type' in selectedQuery && (
           <>
             <Text weight="light" variant="body" color="primary">
-              {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
+              {getExpressionSectionLabel(selectedQuery)}
             </Text>
             <NavToolbarSeparator />
           </>
@@ -229,7 +228,7 @@ export function ContentHeader({
               <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
             <NavToolbarSeparator />
-            <Text weight="light" variant="code" color="primary">
+            <Text weight="light" variant="body" color="primary">
               {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
             </Text>
           </>
