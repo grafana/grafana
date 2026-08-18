@@ -151,7 +151,7 @@ export const getFieldDisplayItems = (
   seriesIdx: number | null | undefined,
   mode: TooltipDisplayMode,
   sortOrder: SortOrder,
-  fieldFilter = (field: Field) => true,
+  fieldFilter = (field: Field, i?: number) => true,
   hideZeros = false,
   extraFields?: Field[]
 ): VizTooltipItem[] => {
@@ -166,7 +166,7 @@ export const getFieldDisplayItems = (
       field === xField ||
       field.type === FieldType.time ||
       isFrameValuedField(field) ||
-      !fieldFilter(field) ||
+      !fieldFilter(field, i) ||
       field.config.custom?.hideFrom?.tooltip
     ) {
       continue;

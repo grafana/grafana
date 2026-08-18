@@ -91,35 +91,54 @@ export const TimeSeriesTooltip = ({
 
   const xDisp = formattedValueToString(xField.display!(xVal));
 
+  let compareFieldIdx: number | undefined = undefined;
+  if (seriesIdx !== null && seriesIdx !== undefined) {
+    const hoveredFrameIdx = series.fields[seriesIdx].state?.origin?.frameIndex;
+    const hoveredFieldIdx = series.fields[seriesIdx].state?.origin?.fieldIndex;
+    if (hoveredFrameIdx !== undefined) {
+      // comparisonPairingMap is always compareIdx, origIdx
+      const origIdx = comparisonPairingMap.get(hoveredFrameIdx);
+      if (origIdx !== undefined) {
+        const origFrameIdx = series.fields.findIndex(
+          (field) => field.state?.origin?.frameIndex === origIdx && field.state.origin.fieldIndex === hoveredFieldIdx
+        );
+        compareFieldIdx = origFrameIdx;
+        console.log('found orig from comp', hoveredFrameIdx, origFrameIdx);
+      } else {
+        const compIdx = [...comparisonPairingMap].find(([_, value]) => value === hoveredFrameIdx)?.[0];
+        const compFrameIdx = series.fields.findIndex((field, i) => field.state?.origin?.frameIndex === compIdx);
+        console.log('found comp from orig', hoveredFrameIdx, compFrameIdx);
+        compareFieldIdx = compFrameIdx;
+      }
+    }
+  }
+
+  // if there is no compare, use mode.
+  // if there is a compare but mode is set to not multi, use mode.
+  // if there is a compare and mode is set to single, use multi to show compare field
+  const modeWithCompare =
+    compareFieldIdx === undefined || mode !== TooltipDisplayMode.Single ? mode : TooltipDisplayMode.Multi;
+
   const contentItems = getFieldDisplayItems(
     series.fields,
     xField,
     dataIdxs,
     seriesIdx,
-    mode,
+    modeWithCompare,
     sortOrder,
-    (field) => field.type === FieldType.number || field.type === FieldType.enum,
+    (field, i) => {
+      if (compareFieldIdx === undefined) {
+        return field.type === FieldType.number || field.type === FieldType.enum;
+      } else {
+        return (
+          field.state?.displayName === series.fields[compareFieldIdx].state?.displayName ||
+          (i !== undefined && field.state?.displayName === series.fields[i].state?.displayName)
+        );
+      }
+    },
     hideZeros,
     _rest
   );
-
-  if (seriesIdx !== null && seriesIdx !== undefined) {
-    const hoveredFrameIdx = series.fields[seriesIdx].state?.origin?.frameIndex;
-    if (hoveredFrameIdx !== undefined) {
-      // comparisonPairingMap is always compareIdx, origIdx
-      const origIdx = comparisonPairingMap.get(hoveredFrameIdx);
-      if (origIdx !== undefined) {
-        const origFrame = series.fields.find(
-          (field, i) => field.state?.origin?.frameIndex === origIdx && field.state.origin.fieldIndex === 1
-        );
-        console.log('found orig from comp', hoveredFrameIdx, origFrame);
-      } else {
-        const compIdx = [...comparisonPairingMap].find(([_, value]) => value === hoveredFrameIdx)?.[0];
-        const compFrame = series.fields.find((field, i) => field.state?.origin?.frameIndex === compIdx);
-        console.log('found comp from orig', hoveredFrameIdx, compFrame);
-      }
-    }
-  }
 
   let footer: ReactNode;
 
