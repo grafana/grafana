@@ -534,10 +534,6 @@ const (
 	// Enables SRI checks for Grafana JavaScript assets
 	FlagGrafanaAssetSriChecks = "grafana.assetSriChecks"
 
-	// FlagAlertRuleRestore
-	// Enables the alert rule restore feature
-	FlagAlertRuleRestore = "alertRuleRestore"
-
 	// FlagInfinityRunQueriesInParallel
 	// Enables running Infinity queries in parallel
 	FlagInfinityRunQueriesInParallel = "infinityRunQueriesInParallel"

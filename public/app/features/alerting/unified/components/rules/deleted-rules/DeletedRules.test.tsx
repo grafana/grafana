@@ -15,7 +15,7 @@ import { DeletedRules } from './DeletedRules';
 
 setupMswServer();
 testWithFeatureToggles({
-  enable: ['alertingRulePermanentlyDelete', 'alertingRuleRecoverDeleted', 'alertRuleRestore'],
+  enable: ['alertingRulePermanentlyDelete', 'alertingRuleRecoverDeleted'],
 });
 beforeEach(() => {
   grantUserRole('Admin');

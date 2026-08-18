@@ -1600,14 +1600,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "alertRuleRestore",
-			Description: "Enables the alert rule restore feature",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "infinityRunQueriesInParallel",
 			Description: "Enables running Infinity queries in parallel",
 			Stage:       FeatureStagePrivatePreview,
