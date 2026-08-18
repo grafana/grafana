@@ -1,4 +1,4 @@
-import { type EventProperty } from '@grafana/runtime/unstable';
+import { type EventProperty, type EventVariants } from '@grafana/runtime/unstable';
 
 export interface TabChanged extends EventProperty {
   /** Tab the user switched to. */
@@ -21,9 +21,7 @@ interface CtaClickedBase extends EventProperty {
   solution?: string;
 }
 
-type Satisfies<Constraint, Target extends Constraint> = Target;
-
-export type CtaClicked = Satisfies<
+export type CtaClicked = EventVariants<
   CtaClickedBase,
   | ({
       surface: 'alerts_card';

@@ -360,12 +360,10 @@ var selectableLabelKeys = map[string]struct{}{
 // generic search.grafana.app translation), not on the rules' spec labels: those
 // are filtered through a where filter leaf on the indexed "labels" field.
 //
-// Known limitation on the unified backend: metadata labels are indexed with the
-// default analyzer, so value matching can overmatch on values that share a
-// prefix segment (the same caveat the generic search translator carries).
-// Exact-match label semantics in the backend are the fix; until then, restrict
-// selection to the controlled keys below, whose values are generated and do not
-// collide in practice.
+// The unified backend now indexes label values whole, so matching is exact on any
+// index built since. An index built before that still overmatches values sharing
+// a word, until it is rebuilt, which is one reason selection stays restricted to
+// selectableLabelKeys, whose values are generated and do not collide in practice.
 func applyLabelSelector(req *resourcepb.ResourceSearchRequest, selector *string) error {
 	if selector == nil || *selector == "" {
 		return nil
