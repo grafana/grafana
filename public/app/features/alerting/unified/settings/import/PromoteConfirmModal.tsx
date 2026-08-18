@@ -1,16 +1,11 @@
-import { generatedAPI as notificationsAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, ConfirmModal, Spinner, Stack, Text } from '@grafana/ui';
-import { useAppNotification } from 'app/core/copy/appNotification';
-import { useDispatch } from 'app/types/store';
 
-import { logError } from '../../Analytics';
-import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { convertToGMAApi } from '../../api/convertToGMAApi';
-import { stringifyErrorLike } from '../../utils/misc';
+import { type DryRunValidationResult } from '../../components/import-to-gma/types';
 
 import { StagedPromotePreview } from './StagedPromotePreview';
 import { type StagedExtraConfig } from './stagedConfig';
+import { usePromoteStagedConfig } from './usePromoteStagedConfig';
 import { useStagedConfigDryRun } from './useStagedConfigDryRun';
 
 interface Props {
@@ -26,75 +21,12 @@ interface Props {
  * conflicts, then merges on confirm.
  */
 export function PromoteConfirmModal({ stagedConfig, isSyncManaged, onDismiss }: Props) {
-  const notifyApp = useAppNotification();
-  const dispatch = useDispatch();
   const { result, isLoading, error, isPreviewUnavailable } = useStagedConfigDryRun(stagedConfig);
-  const [promote, { isLoading: isPromoting }] = convertToGMAApi.usePromoteAlertmanagerConfigMutation();
-  const [updateAlertingConfiguration, { isLoading: isClearingAutoSync }] =
-    alertmanagerApi.endpoints.updateGrafanaAlertingConfiguration.useMutation();
+  const { onConfirm, isSubmitting } = usePromoteStagedConfig(stagedConfig, isSyncManaged, onDismiss);
 
-  const isSubmitting = isPromoting || isClearingAutoSync;
   // Enabled once the dry-run confirms the merge is valid, or the preview itself couldn't run for a
   // reason unrelated to whether the promote will succeed.
   const canPromote = !isLoading && !isSubmitting && (Boolean(result?.valid) || isPreviewUnavailable);
-
-  /**
-   * The sync worker stops on its own once it sees the merge committed, but the configured datasource
-   * UID stays on the org config — which keeps auto-sync reported as active and keeps the convert API
-   * rejecting notification imports. Clearing it is what actually ends the sync.
-   *
-   * Reports failure rather than throwing: it runs after an irreversible merge, so it must not be
-   * mistaken for a failed promote.
-   */
-  const clearAutoSync = async (): Promise<boolean> => {
-    try {
-      await updateAlertingConfiguration({
-        // Backend convention: empty string clears the configured UID.
-        external_alertmanager_uid: '',
-        notificationOptions: { showErrorAlert: false },
-      }).unwrap();
-      // The UID lives in a different RTKQ slice than the Config resource useIsAutoSyncActive reads,
-      // so tag invalidation doesn't cross over on its own.
-      dispatch(notificationsAPI.util.invalidateTags(['Config']));
-      return true;
-    } catch (err) {
-      logError(new Error(stringifyErrorLike(err)));
-      return false;
-    }
-  };
-
-  const onConfirm = async () => {
-    try {
-      await promote({ configIdentifier: stagedConfig.identifier }).unwrap();
-    } catch (err) {
-      logError(new Error(stringifyErrorLike(err)));
-      notifyApp.error(
-        t('alerting.settings.import.promote.error-title', 'Failed to promote configuration'),
-        stringifyErrorLike(err)
-      );
-      return;
-    }
-
-    // The merge has landed by this point, so nothing below may report the promote as failed.
-    if (isSyncManaged && !(await clearAutoSync())) {
-      notifyApp.warning(
-        t(
-          'alerting.settings.import.promote.sync-not-cleared-title',
-          'Configuration promoted, but auto-sync is still configured'
-        ),
-        t(
-          'alerting.settings.import.promote.sync-not-cleared-body',
-          'Nothing syncs from the datasource any more. Disable auto-sync in Alerting settings to import notification resources again — if it is set in grafana.ini, remove the key there.'
-        )
-      );
-    } else {
-      notifyApp.success(
-        t('alerting.settings.import.promote.success-title', 'Configuration promoted'),
-        t('alerting.settings.import.promote.success-body', 'The imported resources were merged into your live config.')
-      );
-    }
-    onDismiss();
-  };
 
   return (
     <ConfirmModal
@@ -128,56 +60,109 @@ export function PromoteConfirmModal({ stagedConfig, isSyncManaged, onDismiss }: 
             </Alert>
           )}
 
-          {isLoading && (
-            <Stack direction="row" gap={1} alignItems="center">
-              <Spinner size="sm" />
-              <Text color="secondary">
-                <Trans i18nKey="alerting.settings.import.promote.checking">Checking promotion impact…</Trans>
-              </Text>
-            </Stack>
-          )}
-
-          {!isLoading && error && isPreviewUnavailable && (
-            <Alert
-              severity="info"
-              title={t(
-                'alerting.settings.import.promote.dry-run-unavailable-title',
-                "Couldn't preview the promotion impact"
-              )}
-            >
-              <Trans i18nKey="alerting.settings.import.promote.dry-run-unavailable-body">
-                You can still promote — the merge itself is validated when you confirm.
-              </Trans>
-            </Alert>
-          )}
-
-          {!isLoading && error && !isPreviewUnavailable && (
-            <Alert
-              severity="error"
-              title={t('alerting.settings.import.promote.dry-run-error', "Couldn't check the promotion impact")}
-            >
-              {error}
-            </Alert>
-          )}
-
-          {!isLoading && !error && result && !result.valid && (
-            <Alert
-              severity="error"
-              title={t('alerting.settings.import.promote.invalid-title', "This configuration can't be promoted")}
-            >
-              {result.error}
-            </Alert>
-          )}
-
-          {!isLoading && !error && result?.valid && (
-            <StagedPromotePreview
-              stats={result.stats}
-              renamedReceivers={result.renamedReceivers}
-              renamedTimeIntervals={result.renamedTimeIntervals}
-            />
-          )}
+          <PromotePreviewBody
+            isLoading={isLoading}
+            error={error}
+            isPreviewUnavailable={isPreviewUnavailable}
+            result={result}
+          />
         </Stack>
       }
     />
   );
+}
+
+interface PromotePreviewBodyProps {
+  isLoading: boolean;
+  error?: string;
+  isPreviewUnavailable: boolean;
+  result?: DryRunValidationResult;
+}
+
+type PreviewState =
+  | { kind: 'loading' }
+  | { kind: 'unavailable' }
+  | { kind: 'error'; message: string }
+  | { kind: 'invalid'; message?: string }
+  | { kind: 'valid'; result: DryRunValidationResult }
+  | { kind: 'idle' };
+
+function getPreviewState({ isLoading, error, isPreviewUnavailable, result }: PromotePreviewBodyProps): PreviewState {
+  if (isLoading) {
+    return { kind: 'loading' };
+  }
+  if (error) {
+    return isPreviewUnavailable ? { kind: 'unavailable' } : { kind: 'error', message: error };
+  }
+  if (result && !result.valid) {
+    return { kind: 'invalid', message: result.error };
+  }
+  if (result?.valid) {
+    return { kind: 'valid', result };
+  }
+  return { kind: 'idle' };
+}
+
+/** Dry-run preview: a loading spinner, an unavailable/error/invalid banner, or the merge preview. */
+function PromotePreviewBody({ isLoading, error, isPreviewUnavailable, result }: PromotePreviewBodyProps) {
+  const state = getPreviewState({ isLoading, error, isPreviewUnavailable, result });
+
+  switch (state.kind) {
+    case 'loading':
+      return (
+        <Stack direction="row" gap={1} alignItems="center">
+          <Spinner size="sm" />
+          <Text color="secondary">
+            <Trans i18nKey="alerting.settings.import.promote.checking">Checking promotion impact…</Trans>
+          </Text>
+        </Stack>
+      );
+
+    case 'unavailable':
+      return (
+        <Alert
+          severity="info"
+          title={t(
+            'alerting.settings.import.promote.dry-run-unavailable-title',
+            "Couldn't preview the promotion impact"
+          )}
+        >
+          <Trans i18nKey="alerting.settings.import.promote.dry-run-unavailable-body">
+            You can still promote — the merge itself is validated when you confirm.
+          </Trans>
+        </Alert>
+      );
+
+    case 'error':
+      return (
+        <Alert
+          severity="error"
+          title={t('alerting.settings.import.promote.dry-run-error', "Couldn't check the promotion impact")}
+        >
+          {state.message}
+        </Alert>
+      );
+
+    case 'invalid':
+      return (
+        <Alert
+          severity="error"
+          title={t('alerting.settings.import.promote.invalid-title', "This configuration can't be promoted")}
+        >
+          {state.message}
+        </Alert>
+      );
+
+    case 'valid':
+      return (
+        <StagedPromotePreview
+          stats={state.result.stats}
+          renamedReceivers={state.result.renamedReceivers}
+          renamedTimeIntervals={state.result.renamedTimeIntervals}
+        />
+      );
+
+    case 'idle':
+      return null;
+  }
 }
