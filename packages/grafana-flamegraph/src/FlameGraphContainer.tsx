@@ -8,7 +8,7 @@ import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
-import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { FlameGraphDataContainer, type LevelItem } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
 import { MIN_WIDTH_FOR_SPLIT_VIEW, FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
@@ -86,6 +86,13 @@ export type Props = {
   onFocusChange?: (path: string[] | undefined) => void;
 
   /**
+   * Call paths of the nodes whose data is currently being loaded, as returned by onFocusChange. Those nodes are marked
+   * as loading in the flame graph. Useful when the profile is refined progressively and parts of it are still coming
+   * in.
+   */
+  loadingPaths?: string[][];
+
+  /**
    * If true, the assistant button will be shown in the header if available.
    * This is needed mainly for Profiles Drilldown where in some cases we need to hide the button to show alternative
    * option to use AI.
@@ -115,6 +122,7 @@ const FlameGraphContainer = ({
   disableCollapsing,
   keepFocusOnDataChange,
   onFocusChange,
+  loadingPaths,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
 }: Props) => {
@@ -168,6 +176,24 @@ const FlameGraphContainer = ({
   // Focus is tracked centrally as data frame indexes so it can be shared between panes; report it to the host as a
   // call path, which stays meaningful across data changes. Only actual changes are reported, so re-anchoring the
   // focus on new data for the same path stays silent.
+  const loadingItems = useMemo(() => {
+    if (!dataContainer || !loadingPaths?.length) {
+      return undefined;
+    }
+
+    const items = new Set<LevelItem>();
+
+    for (const path of loadingPaths) {
+      const item = dataContainer.getItemByPath(path);
+
+      if (item) {
+        items.add(item);
+      }
+    }
+
+    return items.size ? items : undefined;
+  }, [dataContainer, loadingPaths]);
+
   const reportedFocusPathRef = useRef<string[] | undefined>(undefined);
 
   useEffect(() => {
@@ -223,6 +249,7 @@ const FlameGraphContainer = ({
     keepFocusOnDataChange,
     focusedItemIndexes,
     setFocusedItemIndexes,
+    loadingItems,
   };
 
   let body;

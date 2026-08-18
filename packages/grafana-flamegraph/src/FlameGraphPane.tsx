@@ -6,7 +6,7 @@ import { escapeStringForRegex } from '@grafana/data';
 import FlameGraphCallTreeContainer from './CallTree/FlameGraphCallTreeContainer';
 import FlameGraph from './FlameGraph/FlameGraph';
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
-import { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { type FlameGraphDataContainer, type LevelItem } from './FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
 import { useColorScheme } from './hooks';
@@ -32,6 +32,7 @@ type FlameGraphPaneProps = {
   setFocusedItemIndexes?: (itemIndexes: number[] | undefined) => void;
   sharedSandwichItem?: string;
   setSharedSandwichItem?: (item: string | undefined) => void;
+  loadingItems?: Set<LevelItem>;
 };
 
 const FlameGraphPane = ({
@@ -54,6 +55,7 @@ const FlameGraphPane = ({
   setFocusedItemIndexes,
   sharedSandwichItem,
   setSharedSandwichItem,
+  loadingItems,
 }: FlameGraphPaneProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
   // Call path of the focused item, recorded against the data it was focused in, so the focus can be restored on the
@@ -291,6 +293,7 @@ const FlameGraphPane = ({
           search={search}
           collapsedMap={collapsedMap}
           setCollapsedMap={setCollapsedMap}
+          loadingItems={loadingItems}
         />
       );
       break;

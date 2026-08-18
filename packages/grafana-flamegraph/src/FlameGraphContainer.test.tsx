@@ -134,8 +134,10 @@ describe('FlameGraphContainer', () => {
 
   const FlameGraphContainerWithProps = ({
     onFocusChange,
+    loadingPaths,
   }: {
     onFocusChange?: (path: string[] | undefined) => void;
+    loadingPaths?: string[][];
   } = {}) => {
     const flameGraphData = createDataFrame(data);
     flameGraphData.meta = {
@@ -145,7 +147,14 @@ describe('FlameGraphContainer', () => {
     };
 
     const getTheme = useCallback(() => createTheme({ colors: { mode: 'dark' } }), []);
-    return <FlameGraphContainer data={flameGraphData} getTheme={getTheme} onFocusChange={onFocusChange} />;
+    return (
+      <FlameGraphContainer
+        data={flameGraphData}
+        getTheme={getTheme}
+        onFocusChange={onFocusChange}
+        loadingPaths={loadingPaths}
+      />
+    );
   };
 
   it('should render without error', async () => {
@@ -171,6 +180,18 @@ describe('FlameGraphContainer', () => {
     await userEvent.click(screen.getByLabelText('Remove focus'));
 
     await waitFor(() => expect(onFocusChange).toHaveBeenCalledWith(undefined));
+  });
+
+  it('marks the nodes given in loadingPaths as loading', async () => {
+    const { rerender } = render(<FlameGraphContainerWithProps />);
+    expect(screen.queryAllByTestId('flameGraphLoadingMarker')).toHaveLength(0);
+
+    rerender(<FlameGraphContainerWithProps loadingPaths={[['total']]} />);
+    await waitFor(() => expect(screen.getAllByTestId('flameGraphLoadingMarker')).toHaveLength(1));
+
+    // A path that does not exist in the profile is ignored rather than marking the wrong node.
+    rerender(<FlameGraphContainerWithProps loadingPaths={[['total', 'not.a.real.function']]} />);
+    await waitFor(() => expect(screen.queryAllByTestId('flameGraphLoadingMarker')).toHaveLength(0));
   });
 
   it('should update search when row selected in top table', async () => {
