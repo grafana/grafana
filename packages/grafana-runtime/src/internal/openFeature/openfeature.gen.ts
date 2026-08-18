@@ -143,6 +143,8 @@ export const FlagKeys = {
   ProvisioningReadmes: "provisioning.readmes",
   /** Author Git Sync commits as the acting Grafana user */
   ProvisioningUserAttribution: "provisioning.userAttribution",
+  /** Enable export functionality for provisioned resources */
+  ProvisioningExport: "provisioningExport",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
@@ -175,8 +177,12 @@ export const FlagKeys = {
   TableInspectDataTableNG: "table.inspectDataTableNG",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
+  /** Enables the refreshed table experience: reworked column headers and ad hoc column interactions */
+  TableRefresh: "table.refresh",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
+  /** Enables value type filtering in Traces Drilldown */
+  TracesDrilldownUseValueTypeFiltering: "tracesDrilldown.useValueTypeFiltering",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -318,10 +324,10 @@ export const useFlagDatasourcesApiserverUseNewAPIsForDatasourceResources = (opti
  *
  * **Details:**
  * - flag key: `datasources.azureMonitorBatchAPI`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datasources.azureMonitorBatchAPI", false, options).value;
+  return useFlag("datasources.azureMonitorBatchAPI", true, options).value;
 };
 
 /**
@@ -897,6 +903,17 @@ export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Enable export functionality for provisioned resources
+ *
+ * **Details:**
+ * - flag key: `provisioningExport`
+ * - default value: `false`
+ */
+export const useFlagProvisioningExport = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioningExport", false, options).value;
+};
+
+/**
  * Allow setting folder metadata for provisioned folders
  *
  * **Details:**
@@ -1073,6 +1090,17 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Enables the refreshed table experience: reworked column headers and ad hoc column interactions
+ *
+ * **Details:**
+ * - flag key: `table.refresh`
+ * - default value: `false`
+ */
+export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refresh", false, options).value;
+};
+
+/**
  * Enables the new features in text panel
  *
  * **Details:**
@@ -1081,6 +1109,17 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("text.newFeatures", false, options).value;
+};
+
+/**
+ * Enables value type filtering in Traces Drilldown
+ *
+ * **Details:**
+ * - flag key: `tracesDrilldown.useValueTypeFiltering`
+ * - default value: `false`
+ */
+export const useFlagTracesDrilldownUseValueTypeFiltering = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("tracesDrilldown.useValueTypeFiltering", false, options).value;
 };
 
 /**

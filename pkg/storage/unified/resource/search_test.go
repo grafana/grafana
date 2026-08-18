@@ -1924,20 +1924,20 @@ func (i *trashIterator) Folder() string         { return "" }
 func (i *trashIterator) Value() []byte          { return i.entries[i.pos].value }
 
 func testObjectJSON(name, title string) []byte {
-	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q},"spec":{"title":%q,"tags":["tag-a"]}}`, name, title))
+	return fmt.Appendf(nil, `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q},"spec":{"title":%q,"tags":["tag-a"]}}`, name, title)
 }
 
 // testDeletedObjectJSON is what storage holds after a delete: the deletion marker
 // records who deleted the object as its last updater, and when (see server.go).
 func testDeletedObjectJSON(name, title, deletedBy string, deletedAt time.Time) []byte {
-	return []byte(fmt.Sprintf(
+	return fmt.Appendf(nil,
 		`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"deletionTimestamp":%q,"annotations":{%q:%q}},"spec":{"title":%q}}`,
-		name, deletedAt.UTC().Format(time.RFC3339), utils.AnnoKeyUpdatedBy, deletedBy, title))
+		name, deletedAt.UTC().Format(time.RFC3339), utils.AnnoKeyUpdatedBy, deletedBy, title)
 }
 
 func testProvisionedObjectJSON(name, title string) []byte {
-	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"annotations":{%q:"repo"}},"spec":{"title":%q}}`,
-		name, utils.AnnoKeyManagerKind, title))
+	return fmt.Appendf(nil, `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"annotations":{%q:"repo"}},"spec":{"title":%q}}`,
+		name, utils.AnnoKeyManagerKind, title)
 }
 
 // trashSearchOptions returns search options with deleted objects kept in the
