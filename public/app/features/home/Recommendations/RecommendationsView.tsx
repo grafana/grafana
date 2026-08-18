@@ -6,6 +6,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { recommendationsShown } from '../analytics/main';
+
 import { RecommendationCard } from './RecommendationCard';
 import { RecommendationExisting } from './RecommendationExisting';
 import { RecommendationPill } from './RecommendationPill';
@@ -74,6 +76,16 @@ export function RecommendationsView({
 
     return () => clearTimeout(timeout);
   }, [collapsed, paused, safeIndex, items.length, showControls, selectionPending]);
+
+  useEffect(() => {
+    if (items.length) {
+      recommendationsShown({
+        recommendation_ids: items.map((r) => r.id),
+        starting_state: startingState,
+        solution: activeSolution ?? undefined,
+      });
+    }
+  }, [items, startingState, activeSolution]);
 
   return (
     <div>

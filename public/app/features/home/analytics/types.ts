@@ -5,6 +5,21 @@ export interface TabChanged extends EventProperty {
   tab: string;
 }
 
+export interface RecommendationsShown extends EventProperty {
+  /** Stable ids of the recommendations shown to the user. */
+  recommendation_ids: string[];
+  /**
+   * Matrix base-row id driving the current card selection;
+   * values are the BaseRow union in solutionsMatrix.ts.
+   */
+  starting_state: string;
+  /**
+   * Stable id of the solution that was selected when the recommendations were shown;
+   * absent when no solution is selected.
+   */
+  solution?: string;
+}
+
 export interface ClearHistoryClicked extends EventProperty {
   /** Number of dashboards in history before clearing. */
   dashboard_count: number;
