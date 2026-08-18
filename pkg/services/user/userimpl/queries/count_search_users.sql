@@ -12,7 +12,7 @@ LEFT JOIN {{ .Ident .UserAuthTable }} AS user_auth ON user_auth.id = (
 {{ range .Joins -}}
 {{ .Operator }} JOIN {{ $.Ident .Table }} AS {{ $.Ident .Alias }} ON {{ .Condition }}
 {{ end -}}
-WHERE u.is_service_account = {{ .Arg .IsServiceAccount }}
+WHERE u.is_service_account = FALSE
 {{ if gt .OrgID 0 -}}
   AND u.org_id = {{ .Arg .OrgID }}
 {{ end -}}

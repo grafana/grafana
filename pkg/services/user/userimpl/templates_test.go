@@ -25,13 +25,12 @@ func TestTemplates(t *testing.T) {
 
 	searchQuery := func(includeAuthJoin bool, withFilters bool) *searchUsersQuery {
 		query := &searchUsersQuery{
-			SQLTemplate:      queryTemplate(),
-			UserTable:        dbHelper.Table("user"),
-			UserAuthTable:    dbHelper.Table("user_auth"),
-			IsServiceAccount: false,
-			AccessAll:        true,
-			UseDefaultSort:   true,
-			IncludeAuthJoin:  includeAuthJoin,
+			SQLTemplate:     queryTemplate(),
+			UserTable:       dbHelper.Table("user"),
+			UserAuthTable:   dbHelper.Table("user_auth"),
+			AccessAll:       true,
+			UseDefaultSort:  true,
+			IncludeAuthJoin: includeAuthJoin,
 		}
 		if withFilters {
 			query.OrgID = 7
@@ -89,10 +88,9 @@ func TestTemplates(t *testing.T) {
 				{
 					Name: "user",
 					Data: &getUserByIDQuery{
-						SQLTemplate:      queryTemplate(),
-						UserTable:        dbHelper.Table("user"),
-						UserID:           42,
-						IsServiceAccount: false,
+						SQLTemplate: queryTemplate(),
+						UserTable:   dbHelper.Table("user"),
+						UserID:      42,
 					},
 				},
 			},
@@ -103,8 +101,7 @@ func TestTemplates(t *testing.T) {
 						SQLTemplate:      queryTemplate(),
 						UserTable:        dbHelper.Table("user"),
 						Identifier:       "alice@example.com",
-						ByEmail:          true,
-						IsServiceAccount: false,
+						IdentifierColumn: userEmailColumn,
 					},
 				},
 				{
@@ -113,7 +110,7 @@ func TestTemplates(t *testing.T) {
 						SQLTemplate:      queryTemplate(),
 						UserTable:        dbHelper.Table("user"),
 						Identifier:       "alice",
-						IsServiceAccount: false,
+						IdentifierColumn: userLoginColumn,
 					},
 				},
 			},
@@ -204,21 +201,20 @@ func TestTemplates(t *testing.T) {
 				{
 					Name: "all_fields",
 					Data: &updateUserQuery{
-						SQLTemplate:      queryTemplate(),
-						UserTable:        dbHelper.Table("user"),
-						UserID:           42,
-						IsServiceAccount: false,
-						Email:            "alice@example.com",
-						Name:             "Alice",
-						Login:            "alice",
-						Password:         "hashed-password",
-						EmailVerified:    new(true),
-						Theme:            "dark",
-						IsDisabled:       new(false),
-						IsGrafanaAdmin:   new(true),
-						OrgID:            new(int64(7)),
-						IsProvisioned:    new(false),
-						Updated:          legacysql.NewDBTime(time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)),
+						SQLTemplate:    queryTemplate(),
+						UserTable:      dbHelper.Table("user"),
+						UserID:         42,
+						Email:          "alice@example.com",
+						Name:           "Alice",
+						Login:          "alice",
+						Password:       "hashed-password",
+						EmailVerified:  new(true),
+						Theme:          "dark",
+						IsDisabled:     new(false),
+						IsGrafanaAdmin: new(true),
+						OrgID:          new(int64(7)),
+						IsProvisioned:  new(false),
+						Updated:        legacysql.NewDBTime(time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)),
 					},
 				},
 			},
@@ -228,15 +224,14 @@ func TestTemplates(t *testing.T) {
 
 func TestSearchUsersQueryArguments(t *testing.T) {
 	query := searchUsersQuery{
-		SQLTemplate:      sqltemplate.New(sqltemplate.PostgreSQL),
-		UserTable:        "test_schema.user",
-		UserAuthTable:    "test_schema.user_auth",
-		IsServiceAccount: false,
-		OrgID:            7,
-		AccessUserIDs:    []any{11, 12},
-		QueryPattern:     "%ops%",
-		IsDisabled:       new(true),
-		AuthModule:       "oauth",
+		SQLTemplate:   sqltemplate.New(sqltemplate.PostgreSQL),
+		UserTable:     "test_schema.user",
+		UserAuthTable: "test_schema.user_auth",
+		OrgID:         7,
+		AccessUserIDs: []any{11, 12},
+		QueryPattern:  "%ops%",
+		IsDisabled:    new(true),
+		AuthModule:    "oauth",
 		Filters: []searchUserFilter{
 			{
 				Kind:      "in",
@@ -259,7 +254,6 @@ func TestSearchUsersQueryArguments(t *testing.T) {
 	_, err := renderUserQuery(searchUsersTemplate, query)
 	require.NoError(t, err)
 	require.Equal(t, []any{
-		false,
 		int64(7),
 		11,
 		12,
@@ -279,21 +273,20 @@ func TestSearchUsersQueryArguments(t *testing.T) {
 func TestUpdateUserQueryArguments(t *testing.T) {
 	updated := legacysql.NewDBTime(time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC))
 	query := updateUserQuery{
-		SQLTemplate:      sqltemplate.New(sqltemplate.PostgreSQL),
-		UserTable:        "test_schema.user",
-		UserID:           42,
-		IsServiceAccount: false,
-		Email:            "alice@example.com",
-		Name:             "Alice",
-		Login:            "alice",
-		Password:         "hashed-password",
-		EmailVerified:    new(true),
-		Theme:            "dark",
-		IsDisabled:       new(false),
-		IsGrafanaAdmin:   new(true),
-		OrgID:            new(int64(7)),
-		IsProvisioned:    new(false),
-		Updated:          updated,
+		SQLTemplate:    sqltemplate.New(sqltemplate.PostgreSQL),
+		UserTable:      "test_schema.user",
+		UserID:         42,
+		Email:          "alice@example.com",
+		Name:           "Alice",
+		Login:          "alice",
+		Password:       "hashed-password",
+		EmailVerified:  new(true),
+		Theme:          "dark",
+		IsDisabled:     new(false),
+		IsGrafanaAdmin: new(true),
+		OrgID:          new(int64(7)),
+		IsProvisioned:  new(false),
+		Updated:        updated,
 	}
 
 	_, err := renderUserQuery(updateUserTemplate, query)
@@ -311,7 +304,6 @@ func TestUpdateUserQueryArguments(t *testing.T) {
 		false,
 		updated,
 		int64(42),
-		false,
 	}, query.GetArgs())
 }
 
@@ -326,5 +318,6 @@ func TestSearchUserWhereFilterPreservesSliceValue(t *testing.T) {
 func TestQueryValidation(t *testing.T) {
 	require.ErrorIs(t, (&signedInUserQuery{}).Validate(), user.ErrNoUniqueID)
 	require.ErrorContains(t, (&batchDisableUsersQuery{}).Validate(), "user IDs must not be empty")
+	require.ErrorContains(t, (&getUserByLoginOrEmailQuery{}).Validate(), "invalid user identifier column")
 	require.NoError(t, (&searchUsersQuery{Filters: []searchUserFilter{{Kind: "in"}}}).Validate())
 }

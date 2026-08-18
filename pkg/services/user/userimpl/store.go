@@ -112,19 +112,17 @@ func (ss *sqlStore) Delete(ctx context.Context, userID int64) error {
 
 type getUserByIDQuery struct {
 	sqltemplate.SQLTemplate
-	UserTable        string
-	UserID           int64
-	IsServiceAccount any
+	UserTable string
+	UserID    int64
 }
 
 func (q getUserByIDQuery) Validate() error { return nil }
 
 func getUserByID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID int64) (user.User, bool, error) {
 	query := getUserByIDQuery{
-		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
-		UserTable:        dbHelper.Table("user"),
-		UserID:           userID,
-		IsServiceAccount: dbHelper.DB.GetDialect().BooleanValue(false),
+		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
+		UserTable:   dbHelper.Table("user"),
+		UserID:      userID,
 	}
 	rawSQL, err := renderUserQuery(getUserByIDTemplate, query)
 	if err != nil {
@@ -205,19 +203,29 @@ type getUserByLoginOrEmailQuery struct {
 	sqltemplate.SQLTemplate
 	UserTable        string
 	Identifier       string
-	ByEmail          bool
-	IsServiceAccount any
+	IdentifierColumn string
 }
 
-func (q getUserByLoginOrEmailQuery) Validate() error { return nil }
+const (
+	userEmailColumn = "email"
+	userLoginColumn = "login"
+)
 
-func getUserByLoginOrEmail(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, identifier string, byEmail bool, usr *user.User) (bool, error) {
+func (q getUserByLoginOrEmailQuery) Validate() error {
+	switch q.IdentifierColumn {
+	case userEmailColumn, userLoginColumn:
+		return nil
+	default:
+		return fmt.Errorf("invalid user identifier column %q", q.IdentifierColumn)
+	}
+}
+
+func getUserByLoginOrEmail(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, identifier, identifierColumn string, usr *user.User) (bool, error) {
 	query := getUserByLoginOrEmailQuery{
 		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
 		UserTable:        dbHelper.Table("user"),
 		Identifier:       identifier,
-		ByEmail:          byEmail,
-		IsServiceAccount: dbHelper.DB.GetDialect().BooleanValue(false),
+		IdentifierColumn: identifierColumn,
 	}
 	rawSQL, err := renderUserQuery(getUserByLoginOrEmailTemplate, query)
 	if err != nil {
@@ -247,7 +255,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 		// Since username can be an email address, attempt login with email address
 		// first if the login field has the "@" symbol.
 		if strings.Contains(query.LoginOrEmail, "@") {
-			has, err = getUserByLoginOrEmail(dbHelper, sess, query.LoginOrEmail, true, usr)
+			has, err = getUserByLoginOrEmail(dbHelper, sess, query.LoginOrEmail, userEmailColumn, usr)
 			if err != nil {
 				return err
 			}
@@ -255,7 +263,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 
 		// Look for the login field instead of email
 		if !has {
-			has, err = getUserByLoginOrEmail(dbHelper, sess, query.LoginOrEmail, false, usr)
+			has, err = getUserByLoginOrEmail(dbHelper, sess, query.LoginOrEmail, userLoginColumn, usr)
 		}
 
 		if err != nil {
@@ -288,7 +296,7 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 			return user.ErrUserNotFound
 		}
 
-		has, err := getUserByLoginOrEmail(dbHelper, sess, query.Email, true, usr)
+		has, err := getUserByLoginOrEmail(dbHelper, sess, query.Email, userEmailColumn, usr)
 
 		if err != nil {
 			return err
@@ -333,20 +341,19 @@ func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) erro
 
 type updateUserQuery struct {
 	sqltemplate.SQLTemplate
-	UserTable        string
-	UserID           int64
-	IsServiceAccount any
-	Email            string
-	Name             string
-	Login            string
-	Password         string
-	EmailVerified    *bool
-	Theme            string
-	IsDisabled       *bool
-	IsGrafanaAdmin   *bool
-	OrgID            *int64
-	IsProvisioned    *bool
-	Updated          legacysql.DBTime
+	UserTable      string
+	UserID         int64
+	Email          string
+	Name           string
+	Login          string
+	Password       string
+	EmailVerified  *bool
+	Theme          string
+	IsDisabled     *bool
+	IsGrafanaAdmin *bool
+	OrgID          *int64
+	IsProvisioned  *bool
+	Updated        legacysql.DBTime
 }
 
 func (q updateUserQuery) EmailVerifiedValue() bool {
@@ -387,19 +394,18 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		now := time.Now().In(dbHelper.DB.GetEngine().DatabaseTZ).Truncate(time.Second)
 		query := updateUserQuery{
-			SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
-			UserTable:        dbHelper.Table("user"),
-			UserID:           cmd.UserID,
-			IsServiceAccount: dbHelper.DB.GetDialect().BooleanValue(false),
-			Email:            strings.ToLower(cmd.Email),
-			Name:             cmd.Name,
-			Login:            strings.ToLower(cmd.Login),
-			Theme:            cmd.Theme,
-			EmailVerified:    cmd.EmailVerified,
-			IsDisabled:       cmd.IsDisabled,
-			IsGrafanaAdmin:   cmd.IsGrafanaAdmin,
-			IsProvisioned:    cmd.IsProvisioned,
-			Updated:          legacysql.NewDBTime(now),
+			SQLTemplate:    sqltemplate.New(dbHelper.DialectForDriver()),
+			UserTable:      dbHelper.Table("user"),
+			UserID:         cmd.UserID,
+			Email:          strings.ToLower(cmd.Email),
+			Name:           cmd.Name,
+			Login:          strings.ToLower(cmd.Login),
+			Theme:          cmd.Theme,
+			EmailVerified:  cmd.EmailVerified,
+			IsDisabled:     cmd.IsDisabled,
+			IsGrafanaAdmin: cmd.IsGrafanaAdmin,
+			IsProvisioned:  cmd.IsProvisioned,
+			Updated:        legacysql.NewDBTime(now),
 		}
 		if cmd.Password != nil && *cmd.Password != "" {
 			query.Password = string(*cmd.Password)
@@ -693,22 +699,21 @@ type searchUserFilter struct {
 
 type searchUsersQuery struct {
 	sqltemplate.SQLTemplate
-	UserTable        string
-	UserAuthTable    string
-	Joins            []searchUserJoin
-	IsServiceAccount any
-	OrgID            int64
-	AccessAll        bool
-	AccessUserIDs    []any
-	QueryPattern     string
-	IsDisabled       *bool
-	AuthModule       string
-	Filters          []searchUserFilter
-	Sorts            []string
-	UseDefaultSort   bool
-	Limit            int
-	Offset           int
-	IncludeAuthJoin  bool
+	UserTable       string
+	UserAuthTable   string
+	Joins           []searchUserJoin
+	OrgID           int64
+	AccessAll       bool
+	AccessUserIDs   []any
+	QueryPattern    string
+	IsDisabled      *bool
+	AuthModule      string
+	Filters         []searchUserFilter
+	Sorts           []string
+	UseDefaultSort  bool
+	Limit           int
+	Offset          int
+	IncludeAuthJoin bool
 }
 
 func (q searchUsersQuery) IsDisabledValue() bool {
@@ -835,20 +840,19 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		}
 
 		searchQuery := searchUsersQuery{
-			SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
-			UserTable:        dbHelper.Table("user"),
-			UserAuthTable:    dbHelper.Table("user_auth"),
-			Joins:            joins,
-			IsServiceAccount: dbHelper.DB.GetDialect().BooleanValue(false),
-			OrgID:            query.OrgID,
-			AccessAll:        accessAll,
-			AccessUserIDs:    acFilter.Args,
-			QueryPattern:     searchQueryPattern(query.Query),
-			IsDisabled:       query.IsDisabled,
-			Filters:          queryFilters,
-			Sorts:            sorts,
-			UseDefaultSort:   len(query.SortOpts) == 0,
-			IncludeAuthJoin:  true,
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			UserTable:       dbHelper.Table("user"),
+			UserAuthTable:   dbHelper.Table("user_auth"),
+			Joins:           joins,
+			OrgID:           query.OrgID,
+			AccessAll:       accessAll,
+			AccessUserIDs:   acFilter.Args,
+			QueryPattern:    searchQueryPattern(query.Query),
+			IsDisabled:      query.IsDisabled,
+			Filters:         queryFilters,
+			Sorts:           sorts,
+			UseDefaultSort:  len(query.SortOpts) == 0,
+			IncludeAuthJoin: true,
 		}
 		if query.AuthModule != "" {
 			searchQuery.AuthModule = query.AuthModule

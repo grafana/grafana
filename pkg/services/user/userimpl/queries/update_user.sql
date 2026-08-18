@@ -32,4 +32,4 @@ SET
 {{ end -}}
   updated = {{ .Arg .Updated }}
 WHERE id = {{ .Arg .UserID }}
-  AND is_service_account = {{ .Arg .IsServiceAccount }}
+  AND is_service_account = FALSE
