@@ -53,6 +53,17 @@ func TestUseSelectorSearch(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
+		"false when the list is cross-namespace": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Group: "advisor.grafana.app"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+					Labels: []*resourcepb.Requirement{{Key: "has-rules", Operator: "=", Values: []string{"true"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
 		"true when store, labels only, and search client": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,

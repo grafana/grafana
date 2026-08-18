@@ -166,6 +166,11 @@ func (s *server) useSelectorSearch(req *resourcepb.ListRequest) bool {
 	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE {
 		return false
 	}
+	// An index covers one namespace, so a cross-namespace list stays on the store
+	// scan, which supports it.
+	if req.Options.Key.Namespace == "" {
+		return false
+	}
 	if len(req.Options.Fields) == 0 && len(req.Options.Labels) == 0 {
 		return false
 	}
