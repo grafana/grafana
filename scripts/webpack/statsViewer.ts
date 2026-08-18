@@ -1,8 +1,8 @@
 import { createServer } from 'http-server';
-import open from 'open';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import open from 'open';
 import type { Compiler } from 'webpack';
 
 const STATS_PATH = 'public/build/bundle-stats.html';
