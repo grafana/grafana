@@ -161,6 +161,8 @@ export interface ColumnBuildConfig {
   onCellFilterAdded?: TableFilterActionCallback;
   /** `table.refresh`: hides a column via the header column menu. */
   onHideColumn?: (displayName: string) => void;
+  /** `table.refresh`: opens the column-visibility sidebar, from the header column menu. */
+  onOpenColumnPanel?: () => void;
   /** `table.refresh`: pins/unpins a column via the header column menu. */
   onTogglePin?: (displayName: string) => void;
   /** `table.refresh`: display names of currently pinned columns. */
@@ -215,6 +217,7 @@ function buildColumnsFromFields(
     getCellActions,
     onCellFilterAdded,
     onHideColumn,
+    onOpenColumnPanel,
     onTogglePin,
     pinnedColumns,
     frozenColumns,
@@ -555,6 +558,7 @@ function buildColumnsFromFields(
           canHideColumn={fields.length > 1}
           isPinned={pinnedColumns?.has(displayName)}
           onTogglePin={onTogglePin ? () => onTogglePin(displayName) : undefined}
+          onOpenColumnPanel={onOpenColumnPanel}
           selectFirstCell={() => {
             gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
           }}

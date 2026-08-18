@@ -1129,6 +1129,56 @@ describe('TableNG', () => {
     });
   });
 
+  describe('table.refresh column visibility sidebar', () => {
+    it('opens from "Manage columns" and re-shows a hidden column via its checkbox', async () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createThreeColumnDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+      const headerText = () =>
+        Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+
+      // hide Column B from the header menu first
+      await userEvent.click(screen.getByLabelText('Column options for Column B'));
+      await userEvent.click(await screen.findByText('Hide column'));
+      expect(headerText()).toEqual(['Column A', 'Column C']);
+
+      // open the sidebar from a different column's menu and re-show it from there
+      await userEvent.click(screen.getByLabelText('Column options for Column A'));
+      await userEvent.click(await screen.findByText('Manage columns'));
+
+      const checkbox = await screen.findByLabelText('Show Column B');
+      expect(checkbox).not.toBeChecked();
+      await userEvent.click(checkbox);
+
+      expect(headerText()).toEqual(['Column A', 'Column B', 'Column C']);
+    });
+
+    it('closes via its own close button', async () => {
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createThreeColumnDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText('Column options for Column A'));
+      await userEvent.click(await screen.findByText('Manage columns'));
+      expect(screen.getByLabelText('Column visibility')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Close column visibility panel'));
+      expect(screen.queryByLabelText('Column visibility')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Footer options', () => {
     it('defaults to not showing footer', () => {
       const { container } = render(

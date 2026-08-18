@@ -26,6 +26,8 @@ interface HeaderCellMenuProps {
   isPinned?: boolean;
   /** `table.refresh`: pins/unpins this column. Omitted when pinning isn't available. */
   onTogglePin?: () => void;
+  /** `table.refresh`: opens the column-visibility sidebar. Omitted when the sidebar isn't available. */
+  onOpenColumnPanel?: () => void;
 }
 
 /**
@@ -44,6 +46,7 @@ export function HeaderCellMenu({
   canHideColumn,
   isPinned,
   onTogglePin,
+  onOpenColumnPanel,
 }: HeaderCellMenuProps) {
   // `Dropdown` overwrites its child's ref with its own floating-ui reference, so we can't hold a ref
   // on the button directly. We reach it through the wrapper instead, so the popup can anchor to it.
@@ -88,9 +91,27 @@ export function HeaderCellMenu({
             onClick={onHideColumn}
           />
         )}
+        {onOpenColumnPanel && (
+          <Menu.Item
+            label={t('grafana-ui.table.column-menu-manage-columns', 'Manage columns')}
+            icon="columns"
+            testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.manageColumnsItem}
+            onClick={onOpenColumnPanel}
+          />
+        )}
       </Menu>
     ),
-    [filterable, hasActiveFilter, menuLabel, onOpenFilter, onTogglePin, isPinned, onHideColumn, canHideColumn]
+    [
+      filterable,
+      hasActiveFilter,
+      menuLabel,
+      onOpenFilter,
+      onTogglePin,
+      isPinned,
+      onHideColumn,
+      canHideColumn,
+      onOpenColumnPanel,
+    ]
   );
 
   return (

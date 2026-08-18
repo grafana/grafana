@@ -7,9 +7,11 @@ import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-gri
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { usePanelContext } from '../../PanelChrome';
+import { useSplitter } from '../../Splitter/useSplitter';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
+import { ColumnVisibilitySidePanel } from './components/ColumnVisibilitySidePanel';
 import { COLUMN_SETTLE_MS, TABLE } from './constants';
 import {
   useColumnResize,
@@ -53,6 +55,13 @@ type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellC
 // Stable references avoid invalidating useDataGridRows' memo on every render.
 const EMPTY_EXPANDED_ROWS: Set<string> = new Set();
 const NOOP_STABLE_KEY = () => '';
+
+// `table.refresh`: sizing for the column-visibility sidebar. The handle size below must match the
+// `handleSize: 'sm'` passed to `useSplitter` — it isn't exported from there to derive directly.
+const COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH = 220;
+const COLUMN_VISIBILITY_PANEL_MIN_WIDTH = 160;
+const COLUMN_VISIBILITY_PANEL_MAX_WIDTH = 400;
+const COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH = 8;
 
 export function TableFlat(props: TableNGProps) {
   const {
@@ -207,9 +216,22 @@ export function TableFlat(props: TableNGProps) {
     [orderedVisibleFields, setFilter, setSortColumns]
   );
 
-  // Re-showing a hidden column has no entry point yet — the header menu only offers "Hide column" —
-  // so a toggle-back-on handler is added alongside the column-visibility sidebar in a follow-up
-  // commit, which is the first UI that needs one.
+  // The header menu can only hide a column; re-showing one happens from the column-visibility
+  // sidebar, which needs a two-way toggle rather than `handleHideColumn`'s one-way action.
+  const handleToggleColumnVisibility = useCallback(
+    (displayName: string, visible: boolean) => {
+      if (!visible) {
+        handleHideColumn(displayName);
+        return;
+      }
+      setHiddenColumns((current) => {
+        const next = new Set(current);
+        next.delete(displayName);
+        return next;
+      });
+    },
+    [handleHideColumn]
+  );
 
   const handleTogglePin = useCallback(
     (displayName: string) => {
@@ -225,9 +247,32 @@ export function TableFlat(props: TableNGProps) {
   );
 
   // only filter/pin when the flag is on, so a bug here can't affect the flag-off table at all.
-  const displayedFields = tableRefreshEnabled
-    ? filterFieldsByHiddenColumns(orderFieldsByPinnedColumns(orderedVisibleFields, pinnedColumnSet), hiddenColumns)
+  // `pinnedOrderedVisibleFields` keeps hidden columns in — the sidebar needs to list them so they
+  // can be re-shown — while `displayedFields` (what actually reaches the grid) filters them out.
+  const pinnedOrderedVisibleFields = tableRefreshEnabled
+    ? orderFieldsByPinnedColumns(orderedVisibleFields, pinnedColumnSet)
     : orderedVisibleFields;
+  const displayedFields = tableRefreshEnabled
+    ? filterFieldsByHiddenColumns(pinnedOrderedVisibleFields, hiddenColumns)
+    : orderedVisibleFields;
+
+  const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(false);
+  const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
+  const onOpenColumnPanel = useCallback(() => setIsColumnVisibilityPanelOpen(true), []);
+  const handlePanelResize = useCallback(
+    (_flexSize: number, _firstPanePixels: number, secondPanePixels: number) =>
+      setColumnVisibilityPanelWidth(secondPanePixels),
+    []
+  );
+  const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
+    direction: 'row',
+    usePixels: true,
+    initialSize: columnVisibilityPanelWidth,
+    dragPosition: 'end',
+    handleSize: 'sm',
+    onResizing: handlePanelResize,
+    onSizeChanged: handlePanelResize,
+  });
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -251,8 +296,16 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out.
-  const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
+  // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out —
+  // as does the column-visibility sidebar, while it's open.
+  const columnVisibilityPanelAllocation =
+    tableRefreshEnabled && isColumnVisibilityPanelOpen
+      ? columnVisibilityPanelWidth + COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH
+      : 0;
+  const availableWidth = useMemo(
+    () => width - scrollbarWidth - columnVisibilityPanelAllocation,
+    [width, scrollbarWidth, columnVisibilityPanelAllocation]
+  );
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const applyToRowBgFn = useMemo(
@@ -388,6 +441,7 @@ export function TableFlat(props: TableNGProps) {
       onHideColumn: tableRefreshEnabled ? handleHideColumn : undefined,
       onTogglePin: tableRefreshEnabled ? handleTogglePin : undefined,
       pinnedColumns: tableRefreshEnabled ? pinnedColumnSet : undefined,
+      onOpenColumnPanel: tableRefreshEnabled ? onOpenColumnPanel : undefined,
     }),
     [
       theme,
@@ -412,6 +466,7 @@ export function TableFlat(props: TableNGProps) {
       handleHideColumn,
       handleTogglePin,
       pinnedColumnSet,
+      onOpenColumnPanel,
     ]
   );
 
@@ -430,7 +485,7 @@ export function TableFlat(props: TableNGProps) {
     [cellRootRenderers]
   );
 
-  return (
+  const dataGrid = (
     <TableDataGrid
       role="grid"
       gridRef={gridRef}
@@ -479,5 +534,39 @@ export function TableFlat(props: TableNGProps) {
       inspectCell={inspectCell}
       onInspectCellDismiss={() => setInspectCell(null)}
     />
+  );
+
+  // The sidebar only ever mounts once the flag is on, there's a header to attach it to, and the
+  // user has actually opened it — so the common case (closed, or flag off) renders the grid alone,
+  // identical to before this feature existed.
+  if (!tableRefreshEnabled || !hasHeader || !isColumnVisibilityPanelOpen) {
+    return dataGrid;
+  }
+
+  return (
+    <div {...containerProps}>
+      <div {...primaryProps} style={{ ...primaryProps.style, minWidth: 0 }}>
+        {dataGrid}
+      </div>
+      <div {...splitterProps} />
+      <div
+        {...secondaryProps}
+        style={{
+          ...secondaryProps.style,
+          minWidth: COLUMN_VISIBILITY_PANEL_MIN_WIDTH,
+          maxWidth: COLUMN_VISIBILITY_PANEL_MAX_WIDTH,
+        }}
+      >
+        <ColumnVisibilitySidePanel
+          fields={pinnedOrderedVisibleFields}
+          hiddenColumns={hiddenColumns}
+          pinnedColumns={pinnedColumnSet}
+          onToggleColumn={handleToggleColumnVisibility}
+          onTogglePin={handleTogglePin}
+          onColumnsReorder={handleColumnsReorder}
+          onClose={() => setIsColumnVisibilityPanelOpen(false)}
+        />
+      </div>
+    </div>
   );
 }
