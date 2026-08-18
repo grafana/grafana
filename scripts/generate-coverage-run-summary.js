@@ -160,8 +160,8 @@ function generateRunSummary(results) {
       lines.push(
         '',
         `<sub>⏭️ Checked but not affected: ${notAffected
-          .map((result) => result.team)
           .sort(sortByTeam)
+          .map((result) => result.team)
           .join(', ')}</sub>`
       );
     }
@@ -200,8 +200,8 @@ function generateRunSummary(results) {
   if (notAffected.length > 0) {
     lines.push(
       `<sub>⏭️ Not affected by this PR's changes: ${notAffected
-        .map((result) => result.team)
         .sort(sortByTeam)
+        .map((result) => result.team)
         .join(', ')}</sub>`
     );
   }

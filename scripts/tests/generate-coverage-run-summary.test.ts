@@ -78,4 +78,32 @@ describe('generate-coverage-run-summary', () => {
 
     expect(summary).toContain('No opted-in codeowners were affected');
   });
+
+  it('sorts multiple not-affected teams by name without crashing', () => {
+    // Regression test: sorting must happen on the result objects (which carry
+    // .team) before mapping down to plain team-name strings — sorting after the
+    // map crashes because the comparator expects an object with `.team`. A
+    // single not-affected team can't catch this: Array.prototype.sort never
+    // invokes the comparator for arrays of 0 or 1 elements.
+    const notAffected = [
+      { team: '@grafana/grafana-frontend-navigation', affected: false },
+      { team: '@grafana/datapro', affected: false },
+    ];
+    const summary = generateRunSummary(notAffected);
+
+    expect(summary).toContain('@grafana/datapro, @grafana/grafana-frontend-navigation');
+  });
+
+  it('sorts multiple not-affected teams alongside affected ones without crashing', () => {
+    const passing = result('@grafana/dataviz-squad');
+    const notAffected = [
+      { team: '@grafana/grafana-frontend-navigation', affected: false },
+      { team: '@grafana/datapro', affected: false },
+    ];
+    const summary = generateRunSummary([passing, ...notAffected]);
+
+    expect(summary).toContain(
+      "Not affected by this PR's changes: @grafana/datapro, @grafana/grafana-frontend-navigation"
+    );
+  });
 });
