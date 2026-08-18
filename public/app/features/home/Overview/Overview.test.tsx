@@ -3,7 +3,7 @@ import { act, render, screen, waitFor, within } from 'test/test-utils';
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
 import { ctaClicked } from '../analytics/main';
-import { type Solution, type SolutionId } from '../solutions/model';
+import { type Solution, type SolutionId } from '../solutions/types';
 
 import { Overview } from './Overview';
 import { useGuides } from './useGuides';

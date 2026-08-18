@@ -1,9 +1,9 @@
 import { type DataSourceInstanceListItem, type IconName } from '@grafana/data';
 
 import { type SolutionSparklineData } from './SolutionSparkline';
+import { type SOLUTION_IDS } from './constants';
 import { type SignalStatus } from './solutionState';
 
-export const SOLUTION_IDS = ['kubernetes', 'metrics', 'logs', 'traces'] as const;
 export type SolutionId = (typeof SOLUTION_IDS)[number];
 
 /**

@@ -8,7 +8,7 @@ import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } fro
 
 import { ctaClicked } from '../analytics/main';
 import { SolutionStatsRow } from '../solutions/SolutionStatsRow';
-import { type Solution, type SolutionId } from '../solutions/model';
+import { type Solution, type SolutionId } from '../solutions/types';
 
 interface ExistingSolutionCardProps {
   existing: Solution[];

@@ -4,8 +4,8 @@
  * detection lives in solutionState.ts.
  */
 
-import { type SolutionId } from '../solutions/model';
 import { type SolutionState } from '../solutions/solutionState';
+import { type SolutionId } from '../solutions/types';
 
 export type RecommendedCardId =
   | 'connect-metrics'

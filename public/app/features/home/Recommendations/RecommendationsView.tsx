@@ -7,7 +7,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { recommendationsShown } from '../analytics/main';
-import { type Solution, type SolutionId } from '../solutions/model';
+import { type Solution, type SolutionId } from '../solutions/types';
 
 import { RecommendationCard } from './RecommendationCard';
 import { RecommendationExisting } from './RecommendationExisting';

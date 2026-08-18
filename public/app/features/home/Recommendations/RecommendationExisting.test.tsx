@@ -6,8 +6,8 @@ import { useAppPluginMetas } from '@grafana/runtime/internal';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
 import { ctaClicked } from '../analytics/main';
-import { type Solution, type SolutionId } from '../solutions/model';
 import { type SignalStatus } from '../solutions/solutionState';
+import { type Solution, type SolutionId } from '../solutions/types';
 
 import { RecommendationExisting } from './RecommendationExisting';
 

@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { t } from '@grafana/i18n';
 import { EmptyState, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { SOLUTION_IDS } from '../solutions/model';
+import { SOLUTION_IDS } from '../solutions/constants';
 
 import { OverviewSectionHeading, type OverviewSectionHeadingVariant } from './OverviewSectionHeading';
 import { AvailableSolutionCard, SolutionCard, SolutionCardSkeleton } from './SolutionCard';

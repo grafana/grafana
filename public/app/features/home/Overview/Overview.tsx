@@ -9,7 +9,7 @@ import { type IconName, Button, Icon, Stack, Text, Dropdown, Menu, useTheme2, us
 import { useStoredString } from 'app/core/hooks/useStored';
 
 import { ctaClicked } from '../analytics/main';
-import { type Solution } from '../solutions/model';
+import { type Solution } from '../solutions/types';
 
 import { GetStarted } from './GetStarted';
 import { Solutions } from './Solutions';

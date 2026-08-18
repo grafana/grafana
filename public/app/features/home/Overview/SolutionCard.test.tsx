@@ -3,7 +3,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
 import { ctaClicked } from '../analytics/main';
-import { type Solution, type SolutionId, type SolutionOffer } from '../solutions/model';
+import { type Solution, type SolutionId, type SolutionOffer } from '../solutions/types';
 
 import { AvailableSolutionCard, SolutionCard } from './SolutionCard';
 

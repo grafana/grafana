@@ -1,4 +1,4 @@
-import { SOLUTION_IDS } from '../solutions/model';
+import { SOLUTION_IDS } from '../solutions/constants';
 import { type SignalStatus, type SolutionState } from '../solutions/solutionState';
 
 import {

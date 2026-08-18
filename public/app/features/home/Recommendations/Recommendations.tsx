@@ -6,10 +6,10 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type SolutionId } from '../solutions/model';
 import { setupGuideEnabled } from '../solutions/pluginAvailability';
 import { type SolutionState } from '../solutions/solutionState';
 import { getTelemetrySetupLink } from '../solutions/telemetrySetup';
+import { type SolutionId } from '../solutions/types';
 import { type HomepageSolutions } from '../useHomepageSolutions';
 
 import { RecommendationsSkeleton } from './RecommendationsSkeleton';

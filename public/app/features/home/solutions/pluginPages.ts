@@ -6,8 +6,8 @@ import { createBridgeURL } from 'app/features/alerting/unified/components/Plugin
 import { canAccessPluginPage, isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
-import { type SolutionCta } from './model';
 import { PROBE_TIMEOUT_MS, withTimeout } from './probeUtils';
+import { type SolutionCta } from './types';
 
 async function probeApp(appId: string): Promise<PluginMeta<{}> | null> {
   try {

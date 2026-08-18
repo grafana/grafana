@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { type SolutionCta, type SolutionLearnMore } from './model';
+import { type SolutionCta, type SolutionLearnMore } from './types';
 
 export type TelemetryType = 'metrics' | 'logs' | 'traces';
 

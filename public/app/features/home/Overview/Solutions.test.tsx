@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { SOLUTION_IDS } from '../solutions/model';
+import { SOLUTION_IDS } from '../solutions/constants';
 
 import { Solutions } from './Solutions';
 

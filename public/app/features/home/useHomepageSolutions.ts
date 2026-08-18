@@ -1,13 +1,14 @@
 import memoize from 'micro-memoize';
 import { useMemo } from 'react';
 
+import { SOLUTION_IDS } from './solutions/constants';
 import { kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
-import { SOLUTION_IDS, type Solution } from './solutions/model';
 import { detectSignal, type SolutionState } from './solutions/solutionState';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
 import { tracesSolution } from './solutions/tracesSolution';
+import { type Solution } from './solutions/types';
 
 export interface HomepageSolutions {
   solutions: Solution[];

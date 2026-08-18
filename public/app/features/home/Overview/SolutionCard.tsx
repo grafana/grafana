@@ -9,7 +9,7 @@ import { Badge, Card, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana
 import { ctaClicked } from '../analytics/main';
 import { LearnMoreLink } from '../solutions/LearnMoreLink';
 import { SolutionStatsRow } from '../solutions/SolutionStatsRow';
-import { type Solution, type SolutionOffer } from '../solutions/model';
+import { type Solution, type SolutionOffer } from '../solutions/types';
 
 interface SolutionCardProps {
   solution: Solution;

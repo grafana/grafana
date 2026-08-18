@@ -4,8 +4,8 @@ import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/ui';
 
-import { type Solution, type SolutionId } from '../solutions/model';
 import { type SignalStatus } from '../solutions/solutionState';
+import { type Solution, type SolutionId } from '../solutions/types';
 
 import { ExistingSolutionCard } from './ExistingSolutionCard';
 import { NoDataCard } from './NoDataCard';

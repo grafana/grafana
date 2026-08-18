@@ -12,7 +12,6 @@ import { t } from '@grafana/i18n';
 
 import { METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { resolveKubernetesDatasource } from './kubernetesData';
-import { type Solution } from './model';
 import { drilldownActiveCta } from './pluginPages';
 import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, labelRecencyProbe, probeFound } from './solutionDataProbes';
 import { solutionOffer } from './solutionOffer';
@@ -24,6 +23,7 @@ import {
   METRICS_DISK_PRESSURE_QUERY,
 } from './telemetryData';
 import { getTelemetrySetupCta, getTelemetrySetupLearnMore } from './telemetrySetup';
+import { type Solution } from './types';
 
 const formatUsageNumber = getValueFormat('short');
 

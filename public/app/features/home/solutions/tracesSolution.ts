@@ -4,13 +4,13 @@ import { formattedValueToString, getValueFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { HOSTED_TRACES_APP_ID } from './appPluginIds';
-import { type Solution } from './model';
 import { drilldownActiveCta } from './pluginPages';
 import { probeFound, tempoHasTraces } from './solutionDataProbes';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal } from './solutionState';
 import { fetchTracesActivity, fetchTracesServices } from './telemetryData';
 import { getTelemetrySetupCta, getTelemetrySetupLearnMore } from './telemetrySetup';
+import { type Solution } from './types';
 
 const formatUsageNumber = getValueFormat('short');
 

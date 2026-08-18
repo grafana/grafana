@@ -1,4 +1,4 @@
-import { type Solution, type SolutionOffer } from '../solutions/model';
+import { type Solution, type SolutionOffer } from '../solutions/types';
 
 export type OverviewCard =
   | { solution: Solution; kind: 'live'; needsAttention: boolean }

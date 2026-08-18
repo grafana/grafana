@@ -6,7 +6,7 @@ import { useAsync } from 'react-use';
 import { Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { SolutionSparkline, type SolutionSparklineData } from './SolutionSparkline';
-import { type SolutionStats } from './model';
+import { type SolutionStats } from './types';
 
 interface SolutionStatsRowProps {
   stats: () => Promise<SolutionStats | null>;

@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { TextLink } from '@grafana/ui';
 
-import { type SolutionLearnMore } from './model';
+import { type SolutionLearnMore } from './types';
 
 interface LearnMoreLinkProps extends SolutionLearnMore {
   onClick?: () => void;

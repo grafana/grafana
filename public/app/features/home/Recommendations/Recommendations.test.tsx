@@ -9,8 +9,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { ctaClicked, recommendationsShown } from '../analytics/main';
 import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
-import { type Solution, type SolutionId } from '../solutions/model';
 import { type SignalStatus, type SolutionState } from '../solutions/solutionState';
+import { type Solution, type SolutionId } from '../solutions/types';
 import { type HomepageSolutions } from '../useHomepageSolutions';
 
 import { Recommendations } from './Recommendations';

@@ -4,13 +4,13 @@ import { formattedValueToString, getValueFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { LOGS_DRILLDOWN_APP_ID } from './appPluginIds';
-import { type Solution } from './model';
 import { drilldownActiveCta } from './pluginPages';
 import { CLOUD_UTILITY_LOKI_DATASOURCE_UIDS, labelRecencyProbe, probeFound } from './solutionDataProbes';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal } from './solutionState';
 import { fetchLogsActivity } from './telemetryData';
 import { getTelemetrySetupCta, getTelemetrySetupLearnMore } from './telemetrySetup';
+import { type Solution } from './types';
 
 // Loki label APIs use nanoseconds. This matches LokiDatasource, including its accepted precision loss.
 const lokiHasRecentLabels = labelRecencyProbe('labels', (ms) => ms * 1e6);

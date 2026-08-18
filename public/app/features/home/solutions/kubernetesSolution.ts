@@ -13,10 +13,10 @@ import {
   KUBERNETES_APP_ID,
   type KubernetesHealth,
 } from './kubernetesData';
-import { type Solution } from './model';
 import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal } from './solutionState';
+import { type Solution } from './types';
 
 const formatUsageNumber = getValueFormat('short');
 

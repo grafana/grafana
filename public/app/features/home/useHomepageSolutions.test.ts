@@ -5,9 +5,9 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
-import { type Solution, type SolutionId } from './solutions/model';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
 import { tracesSolution } from './solutions/tracesSolution';
+import { type Solution, type SolutionId } from './solutions/types';
 import { useHomepageSolutions } from './useHomepageSolutions';
 
 jest.mock('./solutions/kubernetesSolution', () => ({ kubernetesSolution: jest.fn() }));

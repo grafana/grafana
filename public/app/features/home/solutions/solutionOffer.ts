@@ -1,9 +1,9 @@
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { type SolutionCta, type SolutionLearnMore, type SolutionOffer } from './model';
 import { pluginAvailability, setupGuideEnabled } from './pluginAvailability';
 import { type SignalStatus } from './solutionState';
+import { type SolutionCta, type SolutionLearnMore, type SolutionOffer } from './types';
 
 export interface SolutionOfferSpec {
   appId: string;
