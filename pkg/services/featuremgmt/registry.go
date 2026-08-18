@@ -2543,15 +2543,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "dsAbstractionApp",
-			Description:  "Registers the dsabstraction app for querying datasources via unified SQL",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatasourcesCoreServicesSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "datasourcesApiServerEnableHealthEndpoint",
 			Description:     "Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
 			Stage:           FeatureStageExperimental,

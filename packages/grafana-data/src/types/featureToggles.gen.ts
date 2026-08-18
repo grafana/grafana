@@ -1282,11 +1282,6 @@ export interface FeatureToggles {
   */
   rememberUserOrgForSso?: boolean;
   /**
-  * Registers the dsabstraction app for querying datasources via unified SQL
-  * @default false
-  */
-  dsAbstractionApp?: boolean;
-  /**
   * Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
   * @default false
   */
