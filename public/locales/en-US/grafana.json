@@ -12831,9 +12831,11 @@
       "empty-title": "You haven't created any notebooks yet",
       "empty-title-read-only": "No notebooks available to you",
       "load-error": "Failed to load notebooks",
+      "loading": "Loading notebooks",
       "new-notebook": "New notebook",
       "new-notebook-title": "New notebook",
       "no-results": "No notebooks found",
+      "partial-load-error": "Some notebooks could not be loaded",
       "search-placeholder": "Search notebooks by title...",
       "table": {
         "author": "Author",

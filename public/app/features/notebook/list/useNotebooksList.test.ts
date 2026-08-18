@@ -58,6 +58,11 @@ interface SearchExtras {
   hasNextPage?: boolean;
   isFetching?: boolean;
   isError?: boolean;
+  /**
+   * These results belong to a previous argument: RTK Query still reports them as `data` while the
+   * request for the current filters is in flight, but not as `currentData`.
+   */
+  staleData?: boolean;
 }
 
 const mockFetchNextPage = jest.fn();
@@ -76,9 +81,16 @@ function searchPage(items: ResultItem[], extra: SearchExtras = {}): SearchResult
 
 /** Stands in for the infinite query: the pages accumulated so far, plus the paging controls. */
 function setSearchPages(pages: SearchResults[], extra: SearchExtras = {}) {
+  const data = extra.error
+    ? undefined
+    : { pages, pageParams: pages.map((_, i) => (i === 0 ? undefined : `cursor-${i}`)) };
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
   mockUseSearchNotebooksQuery.mockReturnValue({
-    data: extra.error ? undefined : { pages, pageParams: pages.map((_, i) => (i === 0 ? undefined : `cursor-${i}`)) },
+    data,
+    // What RTK Query holds for the argument being asked about right now, as opposed to the last
+    // successful answer for any argument. `staleData` is how a test says "these results belong to
+    // the previous filters, the new ones are still in flight".
+    currentData: extra.staleData ? undefined : data,
     isLoading: extra.isLoading ?? false,
     isFetching: extra.isFetching ?? false,
     isFetchingNextPage: false,
@@ -148,9 +160,11 @@ function makeNotebook(
 }
 
 function setList(items: Notebook[], extra: { isLoading?: boolean; error?: unknown; continueToken?: string } = {}) {
+  const data = { items, metadata: { continue: extra.continueToken } };
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
   mockUseListNotebookQuery.mockReturnValue({
-    data: { items, metadata: { continue: extra.continueToken } },
+    data,
+    currentData: data,
     isLoading: extra.isLoading ?? false,
     error: extra.error,
   } as unknown as ReturnType<typeof useListNotebookQuery>);
@@ -783,5 +797,108 @@ describe('useNotebooksList', () => {
 
     expect(result.current.error).toEqual(expect.objectContaining({ status: 500 }));
     expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
+  });
+
+  // The walk halts on a failure but leaves a next page on offer, so "still loading" would never
+  // resolve — and it would sit next to the error that stopped it.
+  it('stops reporting more on the way once a page has failed', () => {
+    setSearchPages([searchPage([makeHit({ name: 'nb1', title: 'One' })], { continueToken: 'next' })], {
+      hasNextPage: true,
+      isError: true,
+    });
+
+    const { result } = setupHook();
+
+    expect(result.current.isLoadingMore).toBe(false);
+  });
+
+  // RTK Query holds the last successful answer while a new argument loads. Serving it would show the
+  // previous filter's rows and counts underneath the new one.
+  describe('while a new set of filters is loading', () => {
+    it('reports no rows rather than the previous filter’s', () => {
+      setSearch([makeHit({ name: 'nb1', title: 'One' })], { staleData: true, isFetching: true });
+
+      const { result } = setupHook();
+
+      expect(result.current.rows).toEqual([]);
+    });
+
+    it('reports no counts rather than the previous filter’s', () => {
+      setSearch([makeHit({ name: 'nb1', title: 'One' })], {
+        staleData: true,
+        isFetching: true,
+        totalHits: 42,
+      });
+
+      const { result } = setupHook();
+
+      expect(result.current.totalCount).toBe(0);
+      expect(result.current.loadedCount).toBe(0);
+    });
+
+    it('says it is reloading, not loading, once something has been shown', async () => {
+      setSearch([makeHit({ name: 'nb1', title: 'One' })]);
+
+      const { result, rerender } = setupHook();
+
+      await waitFor(() => expect(result.current.rows).toHaveLength(1));
+      expect(result.current.isReloading).toBe(false);
+
+      setSearch([makeHit({ name: 'nb1', title: 'One' })], { staleData: true, isFetching: true });
+      rerender();
+
+      expect(result.current.isReloading).toBe(true);
+      // Not isLoading: the page swaps its whole body out for that, which would unmount the filter
+      // input and take the caret with it, mid-typing.
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('is loading rather than reloading before anything has been shown', () => {
+      setSearch([], { isLoading: true, isFetching: true, staleData: true });
+
+      const { result } = setupHook();
+
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isReloading).toBe(false);
+    });
+  });
+
+  // The table resets its page index by being remounted, so this has to change when the committed
+  // filters do — and not when rows merely accumulate.
+  describe('filterKey', () => {
+    it('changes when the author filter is applied', async () => {
+      setSearch([makeHit({ name: 'nb1', title: 'One' })]);
+      contextSrv.user = { ...contextSrv.user, uid: 'me' };
+      afterEachRestore.push(() => {
+        contextSrv.user = { ...contextSrv.user, uid: '' };
+      });
+
+      const { result } = setupHook();
+      const before = result.current.filterKey;
+
+      act(() => {
+        result.current.setCreatedByMe(true);
+      });
+
+      await waitFor(() => expect(result.current.filterKey).not.toBe(before));
+    });
+
+    it('does not change as more pages arrive', async () => {
+      setSearchPages([searchPage([makeHit({ name: 'nb1', title: 'One' })], { continueToken: 'next' })], {
+        hasNextPage: true,
+      });
+
+      const { result, rerender } = setupHook();
+      const before = result.current.filterKey;
+
+      setSearchPages([
+        searchPage([makeHit({ name: 'nb1', title: 'One' })], { continueToken: 'next' }),
+        searchPage([makeHit({ name: 'nb2', title: 'Two' })]),
+      ]);
+      rerender();
+
+      await waitFor(() => expect(result.current.rows).toHaveLength(2));
+      expect(result.current.filterKey).toBe(before);
+    });
   });
 });

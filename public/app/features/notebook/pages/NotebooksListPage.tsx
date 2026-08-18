@@ -12,7 +12,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { NotebooksTable } from '../list/NotebooksTable';
+import { NotebooksTable, NotebooksTableSkeleton } from '../list/NotebooksTable';
 import { useNotebooksList } from '../list/useNotebooksList';
 // Notebook schema types come from this module and nowhere else, so the eventual stable-v2
 // migration only has to change that one seam.
@@ -40,6 +40,8 @@ export function NotebooksListPage() {
     setCreatedByMe,
     canFilterByMe,
     isLoading,
+    isReloading,
+    filterKey,
     error,
   } = useNotebooksList({ enabled: notebooksEnabled });
 
@@ -88,16 +90,24 @@ export function NotebooksListPage() {
   ) : undefined;
 
   // Filtering happens server-side, so an empty page only means the library is empty when nothing
-  // is filtered — otherwise it is a no-results state and the CTA would be wrong.
-  const hasNoNotebooks = !isLoading && !error && !isFiltered && rows.length === 0;
+  // is filtered — otherwise it is a no-results state and the CTA would be wrong. While a new set of
+  // filters is loading the rows are empty because nothing has arrived yet, which is neither.
+  const hasNoNotebooks = !isLoading && !isReloading && !error && !isFiltered && rows.length === 0;
+
+  /**
+   * The cursor is walked page by page, so a failure can land after earlier pages already have. Only
+   * a failure with nothing to show is the whole story; otherwise the rows that did load stay, and
+   * the alert says some are missing rather than replacing them.
+   */
+  const isPartialFailure = Boolean(error) && rows.length > 0;
 
   return (
     // When nothing exists the empty state carries the create button, so drop it from the header.
     <Page navId="notebooks" actions={hasNoNotebooks ? undefined : createButton}>
       <Page.Contents isLoading={isLoading}>
         <Stack direction="column" gap={2}>
-          {/* On a load failure the alert is the whole story — filters over nothing would just add noise. */}
-          {error ? (
+          {/* With nothing loaded the alert is the whole story — filters over nothing would just add noise. */}
+          {error && !isPartialFailure ? (
             // Carry the detail through, so a permissions problem reads differently from an outage.
             <Alert severity="error" title={t('notebooks.list.load-error', 'Failed to load notebooks')}>
               {extractErrorMessage(error)}
@@ -123,6 +133,15 @@ export function NotebooksListPage() {
             </EmptyState>
           ) : (
             <>
+              {/* Warning, not error: what loaded is still usable and still on screen below. */}
+              {isPartialFailure && (
+                <Alert
+                  severity="warning"
+                  title={t('notebooks.list.partial-load-error', 'Some notebooks could not be loaded')}
+                >
+                  {extractErrorMessage(error)}
+                </Alert>
+              )}
               <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
                 <Stack alignItems="center" gap={1} wrap="wrap">
                   {/* Without an explicit width FilterInput fills the row and pushes the author
@@ -158,12 +177,19 @@ export function NotebooksListPage() {
                 </Stack>
               </Stack>
 
-              {rows.length === 0 ? (
+              {/* Rows are empty while new filters load, so a no-results state here would be a lie.
+                  The filters stay mounted either way — swapping them out would take the caret with
+                  them, mid-typing. */}
+              {isReloading ? (
+                <NotebooksTableSkeleton />
+              ) : rows.length === 0 ? (
                 <Box paddingTop={2}>
                   <EmptyState variant="not-found" message={t('notebooks.list.no-results', 'No notebooks found')} />
                 </Box>
               ) : (
-                <NotebooksTable notebooks={rows} />
+                // Keyed by the filters so narrowing the set drops the page index the reader was on,
+                // which is the one case the table itself no longer resets for.
+                <NotebooksTable key={filterKey} notebooks={rows} />
               )}
             </>
           )}

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { memo, useMemo } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -25,18 +26,35 @@ interface Props {
   notebooks: NotebookRow[];
 }
 
+/**
+ * Header and geometry per column, shared by the table and its loading skeleton. Held in one place
+ * so the placeholder keeps the real shape and the two cannot drift apart.
+ */
+function useColumnLayout() {
+  return useMemo(
+    () => ({
+      // Title is capped so it stops absorbing all the table's slack; tags take the remainder.
+      title: { header: t('notebooks.list.table.title', 'Title'), width: 320, maxWidth: 320 },
+      authorName: { header: t('notebooks.list.table.author', 'Author'), width: 180 },
+      tags: { header: t('notebooks.list.table.tags', 'Tags'), minWidth: 160 },
+      created: { header: t('notebooks.list.table.created', 'Created'), width: 120, disableGrow: true },
+      updated: { header: t('notebooks.list.table.updated', 'Updated'), width: 120, disableGrow: true },
+      actions: { header: '', disableGrow: true },
+    }),
+    []
+  );
+}
+
 export function NotebooksTable({ notebooks }: Props) {
   const styles = useStyles2(getStyles);
+  const layout = useColumnLayout();
 
   const columns: Array<Column<NotebookRow>> = useMemo(
     () => [
       {
         id: 'title',
-        header: t('notebooks.list.table.title', 'Title'),
+        ...layout.title,
         sortType: 'string',
-        // Capped so the title stops absorbing all the table's slack; tags take the remainder.
-        width: 320,
-        maxWidth: 320,
         cell: ({ row: { original } }) => (
           <TextLink color="primary" inline={false} href={notebookViewUrl(original.uid)} title={original.title}>
             {original.title}
@@ -45,41 +63,34 @@ export function NotebooksTable({ notebooks }: Props) {
       },
       {
         id: 'authorName',
-        header: t('notebooks.list.table.author', 'Author'),
+        ...layout.authorName,
         sortType: 'string',
-        width: 180,
       },
       {
         id: 'tags',
-        header: t('notebooks.list.table.tags', 'Tags'),
-        minWidth: 160,
+        ...layout.tags,
         cell: ({ row: { original } }) => <TagList tags={original.tags} displayMax={3} className={styles.tagList} />,
       },
       {
         id: 'created',
-        header: t('notebooks.list.table.created', 'Created'),
+        ...layout.created,
         sortType: 'number',
-        disableGrow: true,
-        width: 120,
         cell: ({ row: { original } }) => <RelativeTime timestamp={original.created} />,
       },
       {
         id: 'updated',
-        header: t('notebooks.list.table.updated', 'Updated'),
+        ...layout.updated,
         sortType: 'number',
-        disableGrow: true,
-        width: 120,
         cell: ({ row: { original } }) => <RelativeTime timestamp={original.updated} />,
       },
       {
         id: 'actions',
-        header: '',
-        disableGrow: true,
+        ...layout.actions,
         cell: ({ row: { original } }) => <NotebookRowActions uid={original.uid} />,
       },
     ],
-    // styles is memoized per theme, so this stays referentially stable and the table doesn't remount.
-    [styles]
+    // styles and layout are memoized, so this stays referentially stable and the table doesn't remount.
+    [styles, layout]
   );
 
   return (
@@ -89,12 +100,54 @@ export function NotebooksTable({ notebooks }: Props) {
       getRowId={(notebook) => notebook.uid}
       initialSortBy={[{ id: 'updated', desc: true }]}
       pageSize={ROWS_PER_PAGE}
-      // Filtering replaces the data. Without this the table keeps the page index it was on, so
-      // narrowing the set from page 3 renders an empty page that no empty state covers.
-      autoResetPage
+      // Deliberately not autoResetPage: it keys on the data reference, and these rows get a new one
+      // every time another cursor page lands or an author name resolves, which would drag a reader
+      // back to page 1 while the list is still filling in. Narrowing the set has to reset the page
+      // too, but that is a change of filters, so the caller remounts this table for it.
     />
   );
 }
+
+interface SkeletonRow {
+  uid: string;
+}
+
+/**
+ * The table's shape while a new set of filters loads: same headers and column widths, placeholders
+ * where the cells go. Built on the same InteractiveTable and the shared layout so the header and
+ * the column geometry cannot drift from the real thing, and the page does not jump when the rows
+ * arrive.
+ */
+export function NotebooksTableSkeleton() {
+  const layout = useColumnLayout();
+
+  const columns: Array<Column<SkeletonRow>> = useMemo(
+    () => [
+      { id: 'title', ...layout.title, cell: () => <Skeleton width={220} /> },
+      { id: 'authorName', ...layout.authorName, cell: () => <Skeleton width={120} /> },
+      { id: 'tags', ...layout.tags, cell: () => <TagList.Skeleton /> },
+      { id: 'created', ...layout.created, cell: () => <Skeleton width={70} /> },
+      { id: 'updated', ...layout.updated, cell: () => <Skeleton width={70} /> },
+      { id: 'actions', ...layout.actions, cell: () => <Skeleton width={60} /> },
+    ],
+    [layout]
+  );
+
+  const rows = useMemo(() => Array.from({ length: SKELETON_ROWS }, (_, i) => ({ uid: `skeleton-${i}` })), []);
+
+  return (
+    // Announced as one busy region rather than letting each placeholder speak for itself.
+    <div role="status" aria-label={t('notebooks.list.loading', 'Loading notebooks')}>
+      <InteractiveTable columns={columns} data={rows} getRowId={(row) => row.uid} />
+    </div>
+  );
+}
+
+/**
+ * Enough to read as a list without filling the viewport with grey. The wait is one request, and the
+ * real page that replaces this is ROWS_PER_PAGE long.
+ */
+const SKELETON_ROWS = 5;
 
 /**
  * The table renders every row it is given — no virtualization — and each row carries a link, a tag

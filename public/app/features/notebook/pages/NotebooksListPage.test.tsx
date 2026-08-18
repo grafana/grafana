@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import userEvent from '@testing-library/user-event';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -67,9 +67,11 @@ function makeNotebook(name: string, title: string): Notebook {
 }
 
 function setListNotebooks(items: Notebook[], extra: { continueToken?: string } = {}) {
+  const data = { items, metadata: { continue: extra.continueToken } };
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
   mockUseListNotebookQuery.mockReturnValue({
-    data: { items, metadata: { continue: extra.continueToken } },
+    data,
+    currentData: data,
     isLoading: false,
     error: undefined,
   } as unknown as ReturnType<typeof useListNotebookQuery>);
@@ -94,6 +96,11 @@ function setNotebooks(
     totalHitsRelation?: 'eq' | 'lte';
     /** A token with no next page on offer is what the accumulation ceiling looks like. */
     hasNextPage?: boolean;
+    /**
+     * A request for new filters is in flight and nothing is held for them yet: RTK Query still
+     * reports the previous answer as `data`, but not as `currentData`.
+     */
+    isReloading?: boolean;
   } = {}
 ) {
   mockUseSearchNotebooksQuery.mockImplementation((arg) => {
@@ -101,6 +108,7 @@ function setNotebooks(
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
       return {
         data: undefined,
+        currentData: undefined,
         isLoading: extra.isLoading ?? false,
         isFetching: false,
         isError: Boolean(extra.error),
@@ -122,25 +130,28 @@ function setNotebooks(
       return (!needle || title.includes(needle)) && (!authors || authors.includes(createdBy));
     });
 
+    // One page: what the walk looks like once it has finished, which is every case here bar the
+    // ones that set hasNextPage.
+    const data = {
+      pages: [
+        {
+          items: matched,
+          metadata: {
+            continue: extra.continueToken,
+            totalHits: extra.totalHits ?? matched.length,
+            totalHitsRelation: extra.totalHitsRelation ?? 'eq',
+          },
+        },
+      ],
+      pageParams: [undefined],
+    };
+
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
     return {
-      // One page: what the walk looks like once it has finished, which is every case here bar the
-      // ones that set hasNextPage.
-      data: {
-        pages: [
-          {
-            items: matched,
-            metadata: {
-              continue: extra.continueToken,
-              totalHits: extra.totalHits ?? matched.length,
-              totalHitsRelation: extra.totalHitsRelation ?? 'eq',
-            },
-          },
-        ],
-        pageParams: [undefined],
-      },
+      data,
+      currentData: extra.isReloading ? undefined : data,
       isLoading: extra.isLoading ?? false,
-      isFetching: false,
+      isFetching: extra.isReloading ?? false,
       isFetchingNextPage: false,
       isError: false,
       hasNextPage: extra.hasNextPage ?? false,
@@ -349,6 +360,87 @@ describe('NotebooksListPage', () => {
 
     expect(await screen.findByText('1 notebook')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'needle' })).toBeInTheDocument();
+  });
+
+  // Rows get a new array identity every time another cursor page lands or an author name resolves.
+  // Resetting on that would drag a reader back to page 1 while the list is still filling in.
+  it('stays on the page the reader chose while the rows keep arriving', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const rows = Array.from({ length: ROWS_PER_PAGE * 2 }, (_, i) => makeHit(`nb${i}`, `Notebook ${i}`));
+    setNotebooks(rows);
+    const titlesOnScreen = () =>
+      within(screen.getByRole('table'))
+        .getAllByRole('link')
+        .map((link) => link.textContent);
+
+    const { rerender } = render(<NotebooksListPage />);
+
+    expect(await screen.findByText(`${ROWS_PER_PAGE * 2} notebooks`)).toBeInTheDocument();
+    const firstPage = titlesOnScreen();
+    await userEvent.click(screen.getByRole('button', { name: '2' }));
+    const secondPage = titlesOnScreen();
+    expect(secondPage).not.toEqual(firstPage);
+
+    // A fresh identity for the same filters, as another cursor page arriving produces.
+    setNotebooks(rows.map((row) => ({ ...row })));
+    rerender(<NotebooksListPage />);
+
+    await waitFor(() => expect(titlesOnScreen()).toEqual(secondPage));
+  });
+
+  // A later page can fail after earlier ones already landed. Replacing the whole body with the alert
+  // would throw away notebooks the reader can still use.
+  it('keeps the rows it loaded when a later page fails, and says some are missing', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    // Rows in hand and an error at the same time: what a mid-walk failure looks like.
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+    const withRows = mockUseSearchNotebooksQuery.getMockImplementation()!;
+    mockUseSearchNotebooksQuery.mockImplementation((arg) => ({
+      ...withRows(arg),
+      isError: true,
+      error: { status: 500, data: { message: 'page three exploded' } },
+    }));
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText('Some notebooks could not be loaded')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
+    // The filters stay usable, and the fatal alert does not appear.
+    expect(screen.getByPlaceholderText('Search notebooks by title...')).toBeInTheDocument();
+    expect(screen.queryByText('Failed to load notebooks')).not.toBeInTheDocument();
+  });
+
+  // Rows are empty while a new set of filters loads, so "No notebooks found" would be a lie — and
+  // swapping the filters out for a page-wide spinner would take the caret with them, mid-typing.
+  it('shows a loading affordance, not a no-results state, while new filters load', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    const { rerender } = render(<NotebooksListPage />);
+    await screen.findByRole('link', { name: 'Checkout error spike' });
+
+    // A new set of filters in flight: the previous answer is still held, but not for these filters.
+    setNotebooks([makeHit('nb1', 'Checkout error spike')], { isReloading: true });
+    rerender(<NotebooksListPage />);
+
+    expect(await screen.findByRole('status', { name: 'Loading notebooks' })).toBeInTheDocument();
+    expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
+    // The filters stay put, caret and all.
+    expect(screen.getByPlaceholderText('Search notebooks by title...')).toBeInTheDocument();
+  });
+
+  it('does not serve the previous filter’s rows while the new ones load', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    const { rerender } = render(<NotebooksListPage />);
+    await screen.findByRole('link', { name: 'Checkout error spike' });
+
+    setNotebooks([makeHit('nb1', 'Checkout error spike')], { isReloading: true });
+    rerender(<NotebooksListPage />);
+
+    await screen.findByRole('status', { name: 'Loading notebooks' });
+    expect(screen.queryByRole('link', { name: 'Checkout error spike' })).not.toBeInTheDocument();
   });
 
   // On the fallback path the loaded window and the matches within it are different facts, and LIST

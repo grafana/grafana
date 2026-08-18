@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { compact, uniq } from 'lodash';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { t } from '@grafana/i18n';
@@ -131,12 +131,28 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
 
   const active = usingFallback ? list : search;
 
+  /**
+   * `currentData` rather than `data`, throughout: RTK Query holds the last successful result while
+   * a new argument loads, so reading `data` would show the previous query's rows and counts
+   * underneath the new filter. `currentData` is empty until the answer for these filters arrives,
+   * which `isReloading` below is there to cover.
+   */
   const rows = useMemo(() => {
     if (usingFallback) {
-      return (list.data?.items ?? []).map(listRow);
+      return (list.currentData?.items ?? []).map(listRow);
     }
-    return (search.data?.pages ?? []).flatMap((page) => page.items.map(searchRow));
-  }, [usingFallback, list.data, search.data]);
+    return (search.currentData?.pages ?? []).flatMap((page) => page.items.map(searchRow));
+  }, [usingFallback, list.currentData, search.currentData]);
+
+  /**
+   * Whether anything has ever been shown, so the first load and a filter change can be told apart.
+   * A ref because it only gates rendering of state we already have — flipping it must not itself
+   * schedule a render.
+   */
+  const hasLoadedOnce = useRef(false);
+  if (active.currentData !== undefined) {
+    hasLoadedOnce.current = true;
+  }
 
   const authorUids = useMemo(() => uniq(compact(rows.map((row) => row.authorUid))), [rows]);
 
@@ -204,8 +220,8 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   const isFiltered = Boolean(debouncedSearch.trim()) || filterByAuthor;
 
   // Every page carries the same total for the query, so the first one answers for all of them.
-  const searchMetadata = search.data?.pages[0]?.metadata;
-  const lastPageMetadata = search.data?.pages[search.data.pages.length - 1]?.metadata;
+  const searchMetadata = search.currentData?.pages[0]?.metadata;
+  const lastPageMetadata = search.currentData?.pages[search.currentData.pages.length - 1]?.metadata;
 
   return {
     rows: filteredRows,
@@ -228,8 +244,12 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     isTruncated: usingFallback
       ? Boolean(list.data?.metadata?.continue)
       : Boolean(lastPageMetadata?.continue) && !hasNextPage,
-    /** More pages are still on the way, so the rows and counts are still filling in. */
-    isLoadingMore: !usingFallback && (hasNextPage || search.isFetchingNextPage),
+    /**
+     * More pages are still on the way, so the rows and counts are still filling in. Not after a
+     * failure: the walk stops there but leaves a next page on offer, and saying the list is still
+     * loading alongside the error that stopped it would never resolve.
+     */
+    isLoadingMore: !usingFallback && !isError && (hasNextPage || search.isFetchingNextPage),
     /** Distinguishes "no notebooks at all" from "none matched the filters". */
     isFiltered,
     searchQuery,
@@ -238,7 +258,24 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     setCreatedByMe,
     /** Without an identity there is no "me", so the filter has nothing to mean. */
     canFilterByMe: Boolean(currentUserUid),
-    isLoading: active.isLoading,
+    /**
+     * The first load, when there is nothing to show yet and the whole page can be a spinner. Never
+     * true again once something has been shown: swapping the body out later would unmount the
+     * filter input and take the caret with it, mid-typing.
+     */
+    isLoading: active.isLoading && !hasLoadedOnce.current,
+    /**
+     * A new set of filters is being fetched and nothing is held for them yet. The rows and counts
+     * above are empty rather than stale, so this is what tells the page to show a loading
+     * affordance in place of "no results" while keeping the filters where they are.
+     */
+    isReloading: hasLoadedOnce.current && active.isFetching && active.currentData === undefined,
+    /**
+     * Identifies the filters the rows belong to, for callers that must reset per-filter view state
+     * (the table's page index) without resetting it as rows merely accumulate. Built from the
+     * committed filters, not the raw input, so it does not change on every keystroke.
+     */
+    filterKey: `${debouncedSearch.trim()}|${filterByAuthor}`,
     error: active.error,
   };
 }
