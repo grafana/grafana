@@ -18,6 +18,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
+import { useDraggableListItemActions } from './useDraggableListItemActions';
 
 const ID_VISIBLE_LIST = 'links-list-visible';
 const ID_CONTROLS_MENU_LIST = 'links-list-controls-menu';
@@ -60,6 +61,8 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
     },
     [getLinkEditableElement]
   );
+
+  const linkActions = useDraggableListItemActions<PseudoSceneLink>(onClickLink, onDuplicateLink, onDeleteLink);
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
@@ -112,19 +115,15 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
         items={visible}
         droppableId={ID_VISIBLE_LIST}
         title={t('dashboard.sidebar.links.title-above-dashboard', 'Above dashboard')}
-        onEditItem={onClickLink}
-        onDuplicateItem={onDuplicateLink}
-        onDeleteItem={onDeleteLink}
         renderItemLabel={renderItemLabel}
+        {...linkActions}
       />
       <DraggableList
         items={controlsMenu}
         droppableId={ID_CONTROLS_MENU_LIST}
         title={t('dashboard.sidebar.links.title-controls-menu', 'Controls menu')}
-        onEditItem={onClickLink}
-        onDuplicateItem={onDuplicateLink}
-        onDeleteItem={onDeleteLink}
         renderItemLabel={renderItemLabel}
+        {...linkActions}
       />
     </DragDropContext>
   );
@@ -141,7 +140,7 @@ export function AddLinkButton({ dashboard }: { dashboard: DashboardScene }) {
   return (
     <SidebarAddButton
       onAdd={onAddLink}
-      tooltip={t('dashboard-scene.dashboard-links-list.add-link', 'Add link')}
+      tooltip={t('dashboard.sidebar.links.add-link', 'Add link')}
       dataTestId={selectors.components.PanelEditor.ElementEditPane.addLinkButton}
     />
   );

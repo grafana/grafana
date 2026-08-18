@@ -8,12 +8,13 @@ import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getDashboardSceneFor } from '../../utils/utils';
 import { openAddFilterForm } from '../add-new/AddFilters';
 
 import { partitionVariablesByDisplay } from './DashboardVariablesList';
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
+import { selectSidebarObject } from './helpers';
+import { useDraggableListItemActions } from './useDraggableListItemActions';
 import { confirmDeleteVariable, createDragEndHandler } from './variableListActions';
 
 const ID_FILTERS_VISIBLE_LIST = 'filters-list-visible';
@@ -31,18 +32,11 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
   const filters = useMemo(() => variables.filter(sceneUtils.isAdHocVariable), [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(filters), [filters]);
 
-  const onClickFilter = useCallback((variable: SceneVariable) => {
-    const { sidebar } = getDashboardSceneFor(variable).state;
-    sidebar.selectObject(variable);
-  }, []);
-
-  const onDuplicateFilter = useCallback((variable: SceneVariable) => {
-    duplicateVariable(variable);
-  }, []);
-
-  const onDeleteFilter = useCallback((variable: SceneVariable) => {
-    confirmDeleteVariable(variable);
-  }, []);
+  const filterActions = useDraggableListItemActions<SceneVariable>(
+    selectSidebarObject,
+    duplicateVariable,
+    confirmDeleteVariable
+  );
 
   const onDragEnd = useMemo(
     () =>
@@ -68,28 +62,22 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
         items={visible}
         droppableId={ID_FILTERS_VISIBLE_LIST}
         title={t('dashboard.sidebar.filters.title-above-dashboard', 'Above dashboard')}
-        onEditItem={onClickFilter}
-        onDuplicateItem={onDuplicateFilter}
-        onDeleteItem={onDeleteFilter}
         renderItemLabel={renderItemLabel}
+        {...filterActions}
       />
       <DraggableList
         items={controlsMenu}
         droppableId={ID_FILTERS_CONTROLS_MENU_LIST}
         title={t('dashboard.sidebar.filters.title-controls-menu', 'Controls menu')}
-        onEditItem={onClickFilter}
-        onDuplicateItem={onDuplicateFilter}
-        onDeleteItem={onDeleteFilter}
         renderItemLabel={renderItemLabel}
+        {...filterActions}
       />
       <DraggableList
         items={hidden}
         droppableId={ID_FILTERS_HIDDEN_LIST}
         title={t('dashboard.sidebar.filters.title-hidden', 'Hidden')}
-        onEditItem={onClickFilter}
-        onDuplicateItem={onDuplicateFilter}
-        onDeleteItem={onDeleteFilter}
         renderItemLabel={renderItemLabel}
+        {...filterActions}
       />
     </DragDropContext>
   );

@@ -6327,6 +6327,7 @@
         "title": "Group"
       },
       "links": {
+        "add-link": "Add link",
         "new-link": "New link",
         "reorder-description": "Reorder links list",
         "title-above-dashboard": "Above dashboard",
@@ -6999,9 +7000,6 @@
       "tooltip-move-link-down": "Move link down",
       "tooltip-move-link-up": "Move link up",
       "type": "Type"
-    },
-    "dashboard-links-list": {
-      "add-link": "Add link"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Error loading dashboard"

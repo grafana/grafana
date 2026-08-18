@@ -12,12 +12,12 @@ import { edit } from '../../actions/utils/edit';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { AnnotationEditableElement } from '../../settings/annotations/AnnotationEditableElement';
-import { getDashboardSceneFor } from '../../utils/utils';
 import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
 
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { partitionSceneObjects } from './helpers';
+import { partitionSceneObjects, selectSidebarObject } from './helpers';
+import { useDraggableListItemActions } from './useDraggableListItemActions';
 
 const ID_VISIBLE_LIST = 'annotations-list-visible';
 const ID_CONTROLS_MENU_LIST = 'annotations-list-controls-menu';
@@ -36,18 +36,11 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
     [annotationLayers]
   );
 
-  const onClickAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
-    const { sidebar } = getDashboardSceneFor(a).state;
-    sidebar.selectObject(a);
-  }, []);
-
-  const onDuplicateAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
-    new AnnotationEditableElement(a).onDuplicate();
-  }, []);
-
-  const onDeleteAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
-    new AnnotationEditableElement(a).onConfirmDelete();
-  }, []);
+  const annotationActions = useDraggableListItemActions<DashboardAnnotationsDataLayer>(
+    selectSidebarObject,
+    duplicateAnnotation,
+    deleteAnnotation
+  );
 
   const onDragEnd = useCallback(
     (result: DropResult) => {
@@ -112,28 +105,22 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
           items={visible}
           droppableId={ID_VISIBLE_LIST}
           title={t('dashboard.sidebar.annotations.title-above-dashboard', 'Above dashboard')}
-          onEditItem={onClickAnnotation}
-          onDuplicateItem={onDuplicateAnnotation}
-          onDeleteItem={onDeleteAnnotation}
           renderItemLabel={renderItemLabel}
+          {...annotationActions}
         />
         <DraggableList
           items={controlsMenu}
           droppableId={ID_CONTROLS_MENU_LIST}
           title={t('dashboard.sidebar.annotations.title-controls-menu', 'Controls menu')}
-          onEditItem={onClickAnnotation}
-          onDuplicateItem={onDuplicateAnnotation}
-          onDeleteItem={onDeleteAnnotation}
           renderItemLabel={renderItemLabel}
+          {...annotationActions}
         />
         <DraggableList
           items={hidden}
           droppableId={ID_HIDDEN_LIST}
           title={t('dashboard.sidebar.annotations.title-hidden', 'Hidden')}
-          onEditItem={onClickAnnotation}
-          onDuplicateItem={onDuplicateAnnotation}
-          onDeleteItem={onDeleteAnnotation}
           renderItemLabel={renderItemLabel}
+          {...annotationActions}
         />
       </DragDropContext>
     </>
@@ -141,6 +128,14 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
 }
 
 const renderItemLabel = (a: DashboardAnnotationsDataLayer) => <AnnotationName annotation={a} />;
+
+function duplicateAnnotation(a: DashboardAnnotationsDataLayer) {
+  new AnnotationEditableElement(a).onDuplicate();
+}
+
+function deleteAnnotation(a: DashboardAnnotationsDataLayer) {
+  new AnnotationEditableElement(a).onConfirmDelete();
+}
 
 function AnnotationName({ annotation }: { annotation: DashboardAnnotationsDataLayer }) {
   const theme = useTheme2();

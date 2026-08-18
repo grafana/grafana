@@ -1,5 +1,12 @@
 import { type SceneObject } from '@grafana/scenes';
 
+import { getDashboardSceneFor } from '../../utils/utils';
+
+export function selectSidebarObject(obj: SceneObject) {
+  const { sidebar } = getDashboardSceneFor(obj).state;
+  sidebar.selectObject(obj);
+}
+
 // groups objects into named buckets
 // items whose getPartitionKey callback returns null are excluded
 export function partitionSceneObjects<T extends SceneObject>(

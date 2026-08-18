@@ -38,41 +38,43 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
             key={item.state.key ?? item.state.name}
             draggableId={item.state.key ?? item.state.name}
             index={index}
+            actions={
+              <div className={styles.itemButtons}>
+                <IconButton
+                  data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(
+                    item.state.key ?? item.state.name
+                  )}
+                  tooltip={t('dashboard-scene.draggable-items-list.edit', 'Edit')}
+                  onClick={() => onEditItem(item)}
+                  name="pen"
+                  variant="secondary"
+                />
+                <IconButton
+                  data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(
+                    item.state.key ?? item.state.name
+                  )}
+                  tooltip={t('dashboard-scene.draggable-items-list.duplicate', 'Duplicate')}
+                  onClick={() => onDuplicateItem(item)}
+                  name="copy"
+                  variant="secondary"
+                />
+                <IconButton
+                  data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(
+                    item.state.key ?? item.state.name
+                  )}
+                  tooltip={t('dashboard-scene.draggable-items-list.delete', 'Delete')}
+                  className={styles.destructiveButton}
+                  onClick={() => onDeleteItem(item)}
+                  name="trash-alt"
+                  variant="secondary"
+                />
+              </div>
+            }
           >
             <div className={styles.itemLabel}>
               <Text variant="body" truncate>
                 {renderItemLabel(item)}
               </Text>
-            </div>
-            <div className={styles.itemButtons}>
-              <IconButton
-                data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(
-                  item.state.key ?? item.state.name
-                )}
-                tooltip={t('dashboard-scene.draggable-items-list.edit', 'Edit')}
-                onClick={() => onEditItem(item)}
-                name="pen"
-                variant="secondary"
-              />
-              <IconButton
-                data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(
-                  item.state.key ?? item.state.name
-                )}
-                tooltip={t('dashboard-scene.draggable-items-list.duplicate', 'Duplicate')}
-                onClick={() => onDuplicateItem(item)}
-                name="copy"
-                variant="secondary"
-              />
-              <IconButton
-                data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(
-                  item.state.key ?? item.state.name
-                )}
-                tooltip={t('dashboard-scene.draggable-items-list.delete', 'Delete')}
-                className={styles.destructiveButton}
-                onClick={() => onDeleteItem(item)}
-                name="trash-alt"
-                variant="secondary"
-              />
             </div>
           </DraggableListItem>
         ))}

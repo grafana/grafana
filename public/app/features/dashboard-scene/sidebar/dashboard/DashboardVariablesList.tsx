@@ -16,11 +16,11 @@ import {
   isVariableEditable,
 } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getDashboardSceneFor } from '../../utils/utils';
 
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { partitionSceneObjects } from './helpers';
+import { partitionSceneObjects, selectSidebarObject } from './helpers';
+import { useDraggableListItemActions } from './useDraggableListItemActions';
 import { confirmDeleteVariable, createDragEndHandler } from './variableListActions';
 
 const ID_VISIBLE_LIST = 'variables-list-visible';
@@ -60,18 +60,11 @@ export function DashboardVariablesList({
   }, [includeAdHoc, listVariables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
-  const onClickVariable = useCallback((variable: SceneVariable) => {
-    const { sidebar } = getDashboardSceneFor(variable).state;
-    sidebar.selectObject(variable);
-  }, []);
-
-  const onDuplicateVariable = useCallback((variable: SceneVariable) => {
-    duplicateVariable(variable);
-  }, []);
-
-  const onDeleteVariable = useCallback((variable: SceneVariable) => {
-    confirmDeleteVariable(variable);
-  }, []);
+  const variableActions = useDraggableListItemActions<SceneVariable>(
+    selectSidebarObject,
+    duplicateVariable,
+    confirmDeleteVariable
+  );
 
   const onDragEnd = useMemo(
     () =>
@@ -93,30 +86,24 @@ export function DashboardVariablesList({
         items={visible}
         droppableId={ID_VISIBLE_LIST}
         title={resolvedTopPlacementLabel ?? t('dashboard.sidebar.variables.title-above-dashboard', 'Above dashboard')}
-        onEditItem={onClickVariable}
-        onDuplicateItem={onDuplicateVariable}
-        onDeleteItem={onDeleteVariable}
         renderItemLabel={renderItemLabel}
+        {...variableActions}
       />
       {!hideControlsMenuList && (
         <DraggableList
           items={controlsMenu}
           droppableId={ID_CONTROLS_MENU_LIST}
           title={t('dashboard.sidebar.variables.title-controls-menu', 'Controls menu')}
-          onEditItem={onClickVariable}
-          onDuplicateItem={onDuplicateVariable}
-          onDeleteItem={onDeleteVariable}
           renderItemLabel={renderItemLabel}
+          {...variableActions}
         />
       )}
       <DraggableList
         items={hidden}
         droppableId={ID_HIDDEN_LIST}
         title={t('dashboard.sidebar.variables.title-hidden', 'Hidden')}
-        onEditItem={onClickVariable}
-        onDuplicateItem={onDuplicateVariable}
-        onDeleteItem={onDeleteVariable}
         renderItemLabel={renderItemLabel}
+        {...variableActions}
       />
     </DragDropContext>
   );

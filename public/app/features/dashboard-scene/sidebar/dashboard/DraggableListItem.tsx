@@ -9,21 +9,20 @@ interface DraggableListItemProps {
   draggableId: string;
   index: number;
   children: ReactNode;
+  actions?: ReactNode;
 }
 
-export function DraggableListItem({ draggableId, index, children }: DraggableListItemProps) {
+export function DraggableListItem({ draggableId, index, children, actions }: DraggableListItemProps) {
   const styles = useStyles2(getStyles);
 
   return (
     <Draggable draggableId={draggableId} index={index}>
       {(provided) => (
-        <li
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          className={styles.listItem}
-        >
-          {children}
+        <li ref={provided.innerRef} {...provided.draggableProps} className={styles.listItem}>
+          <div className={styles.dragHandle} {...provided.dragHandleProps}>
+            {children}
+          </div>
+          {actions}
         </li>
       )}
     </Draggable>
@@ -42,10 +41,6 @@ function getStyles(theme: GrafanaTheme2) {
       paddingRight: theme.spacing(0.5),
       borderRadius: theme.shape.radius.default,
       color: theme.colors.text.primary,
-      cursor: 'grab',
-      '&:active': {
-        cursor: 'grabbing',
-      },
       '&:hover, &:focus-within': {
         color: theme.colors.text.maxContrast,
         backgroundColor: theme.colors.action.hover,
@@ -53,6 +48,16 @@ function getStyles(theme: GrafanaTheme2) {
         button: {
           visibility: 'visible',
         },
+      },
+    }),
+    dragHandle: css({
+      display: 'flex',
+      alignItems: 'center',
+      flexGrow: 1,
+      minWidth: 0,
+      cursor: 'grab',
+      '&:active': {
+        cursor: 'grabbing',
       },
     }),
   };
