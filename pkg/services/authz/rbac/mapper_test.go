@@ -259,6 +259,43 @@ func TestMapper_ServiceAccountTranslation_ActionSets(t *testing.T) {
 	}
 }
 
+// TestMapperRegistry_Notebooks verifies notebooks have their own notebooks:* actions and a
+// notebooks:uid: scope, and — being folder-scoped like dashboards — map their verbs onto the
+// folder action sets so folder grants cover them.
+func TestMapperRegistry_Notebooks(t *testing.T) {
+	reg := NewMapperRegistry()
+	mapping, ok := reg.Get("dashboard.grafana.app", "notebooks", "")
+	require.True(t, ok)
+	require.NotNil(t, mapping)
+
+	// Dedicated notebook actions per verb.
+	for verb, want := range map[string]string{
+		utils.VerbGet:              "notebooks:read",
+		utils.VerbList:             "notebooks:read",
+		utils.VerbWatch:            "notebooks:read",
+		utils.VerbCreate:           "notebooks:create",
+		utils.VerbUpdate:           "notebooks:write",
+		utils.VerbPatch:            "notebooks:write",
+		utils.VerbDelete:           "notebooks:delete",
+		utils.VerbDeleteCollection: "notebooks:delete",
+	} {
+		action, ok := mapping.Action(verb)
+		require.True(t, ok, "verb %q should map to an action", verb)
+		assert.Equal(t, want, action, "verb %q", verb)
+	}
+
+	// Verbs map onto the folder action sets (read via all three, write/delete/create via edit+admin)
+	// so folder view/edit/admin grants cover notebooks.
+	assert.ElementsMatch(t, []string{"folders:view", "folders:edit", "folders:admin"}, mapping.ActionSets(utils.VerbGet))
+	assert.ElementsMatch(t, []string{"folders:edit", "folders:admin"}, mapping.ActionSets(utils.VerbCreate))
+	assert.ElementsMatch(t, []string{"folders:edit", "folders:admin"}, mapping.ActionSets(utils.VerbDelete))
+	assert.True(t, mapping.HasFolderSupport())
+
+	// Object scope stays in the notebook's own namespace.
+	assert.Equal(t, "notebooks:uid:", mapping.Prefix())
+	assert.Equal(t, "notebooks:uid:nb1", mapping.Scope("nb1"))
+}
+
 // TestMapperRegistry_AlertRules verifies the rules.alerting.grafana.app rule
 // resources map to the alert.rules:* actions, support folder inheritance, use a
 // rules-specific direct-scope prefix (so the per-object check never spuriously

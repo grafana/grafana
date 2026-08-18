@@ -243,6 +243,97 @@ func TestService_checkPermission(t *testing.T) {
 			expected: false,
 		},
 		{
+			name: "should allow reading a notebook via a folder permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+			},
+			check: checkRequest{
+				Action:       "notebooks:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "notebooks",
+				Name:         "some_notebook",
+				ParentFolder: "child",
+			},
+			expected: true,
+		},
+		{
+			name: "should deny reading a notebook when the folder permission is on an unrelated folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Scope:      "folders:uid:other",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "other",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+				{UID: "other"},
+			},
+			check: checkRequest{
+				Action:       "notebooks:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "notebooks",
+				Name:         "some_notebook",
+				ParentFolder: "child",
+			},
+			expected: false,
+		},
+		{
+			name: "should allow creating a notebook in a folder the user can edit",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "notebooks:create",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}},
+			check: checkRequest{
+				Action:       "notebooks:create",
+				Group:        "dashboard.grafana.app",
+				Resource:     "notebooks",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbCreate,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny creating a notebook in a folder the user cannot edit",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "notebooks:create",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}, {UID: "other_parent"}},
+			check: checkRequest{
+				Action:       "notebooks:create",
+				Group:        "dashboard.grafana.app",
+				Resource:     "notebooks",
+				Name:         "",
+				ParentFolder: "other_parent",
+				Verb:         utils.VerbCreate,
+			},
+			expected: false,
+		},
+		{
 			name: "should allow if it's an any check",
 			permissions: []accesscontrol.Permission{
 				{
