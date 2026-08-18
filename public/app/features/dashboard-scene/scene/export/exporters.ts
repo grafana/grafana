@@ -26,7 +26,6 @@ import { dispatch } from 'app/store/store';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
-import { type DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
 
 // This label is used to store the export label for a datasource when exporting a V2 dashboard for external sharing.
@@ -334,7 +333,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
     );
 
     // make inputs and requires a top thing
-    const newObj: DashboardJson = defaults(
+    const newObj: ExternalDashboard = defaults(
       {
         __inputs: inputs,
         __elements,
