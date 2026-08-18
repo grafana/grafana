@@ -1505,6 +1505,10 @@ func WithoutProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
 	opts.DisableFeatureToggles = append(opts.DisableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
 }
 
+func WithOAuthConnections(opts *testinfra.GrafanaOpts) {
+	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningOauthConnections)
+}
+
 func WithRepositoryTypes(types []string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningRepositoryTypes = types

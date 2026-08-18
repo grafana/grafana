@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -157,7 +156,6 @@ type APIBuilder struct {
 	registry                      prometheus.Registerer
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
-	oauthConnectionsEnabled       func(context.Context) bool
 	maxFileSize                   int64
 	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
@@ -257,7 +255,7 @@ func NewAPIBuilder(
 		usageStats:                          usageStats,
 		features:                            features,
 		repoFactory:                         repoFactory,
-		connectionFactory:                   newOAuthFeatureGatedConnectionFactory(connectionFactory, oauthConnectionsEnabled),
+		connectionFactory:                   connectionFactory,
 		clients:                             clients,
 		supportedResources:                  supportedResources,
 		parsers:                             parsers,
@@ -277,7 +275,6 @@ func NewAPIBuilder(
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 		quotaGetter:                         quotaGetter,
 		folderMetadataEnabled:               folderMetadataEnabled,
-		oauthConnectionsEnabled:             oauthConnectionsEnabled,
 		incrementalPolicy:                   incrementalPolicy,
 		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
 		maxFileSize: maxFileSize,
@@ -980,7 +977,7 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	if a.GetOperation() == admission.Create || a.GetOperation() == admission.Update {
 		if connection, ok := a.GetObject().(*provisioning.Connection); ok {
-			if err := b.validateOAuthConnectionsEnabled(ctx, connection); err != nil {
+			if err := validateOAuthConnectionsEnabled(ctx, connection, oauthConnectionsEnabled); err != nil {
 				return err
 			}
 		}
@@ -1873,37 +1870,10 @@ func (b *APIBuilder) asConnection(ctx context.Context, obj runtime.Object, old r
 		}
 	}
 
-	return b.connectionFactory.Build(ctx, c)
-}
-
-type oauthFeatureGatedConnectionFactory struct {
-	connection.Factory
-	enabled func(context.Context) bool
-}
-
-func newOAuthFeatureGatedConnectionFactory(factory connection.Factory, enabled func(context.Context) bool) connection.Factory {
-	return &oauthFeatureGatedConnectionFactory{Factory: factory, enabled: enabled}
-}
-
-func (f *oauthFeatureGatedConnectionFactory) Build(ctx context.Context, conn *provisioning.Connection) (connection.Connection, error) {
-	if err := validateOAuthConnectionsEnabled(ctx, conn, f.enabled); err != nil {
+	if err := validateOAuthConnectionsEnabled(ctx, c, oauthConnectionsEnabled); err != nil {
 		return nil, err
 	}
-	return f.Factory.Build(ctx, conn)
-}
-
-func (f *oauthFeatureGatedConnectionFactory) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	conn, ok := obj.(*provisioning.Connection)
-	if ok {
-		if err := validateOAuthConnectionsEnabled(ctx, conn, f.enabled); err != nil {
-			return field.ErrorList{field.Forbidden(field.NewPath("spec", "oauth"), err.Error())}
-		}
-	}
-	return f.Factory.Validate(ctx, obj)
-}
-
-func (b *APIBuilder) validateOAuthConnectionsEnabled(ctx context.Context, connection *provisioning.Connection) error {
-	return validateOAuthConnectionsEnabled(ctx, connection, b.oauthConnectionsEnabled)
+	return b.connectionFactory.Build(ctx, c)
 }
 
 func validateOAuthConnectionsEnabled(ctx context.Context, connection *provisioning.Connection, enabled func(context.Context) bool) error {
