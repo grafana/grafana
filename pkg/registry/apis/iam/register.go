@@ -52,6 +52,7 @@ import (
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -1112,6 +1113,8 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 			return b.globalRoleApiInstaller.MutateOnCreate(ctx, typedObj)
 		case *iamv0.RoleBinding:
 			return b.roleBindingsApiInstaller.MutateOnCreate(ctx, typedObj)
+		case *iamv0.TeamLBACRule:
+			return b.teamLBACApiInstaller.MutateOnCreate(ctx, typedObj)
 		}
 	case admission.Update:
 		switch typedObj := a.GetObject().(type) {
@@ -1141,6 +1144,12 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 				return fmt.Errorf("old object is not a RoleBinding")
 			}
 			return b.roleBindingsApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
+		case *iamv0.TeamLBACRule:
+			oldObj, ok := a.GetOldObject().(*iamv0.TeamLBACRule)
+			if !ok {
+				return fmt.Errorf("old object is not a TeamLBACRule")
+			}
+			return b.teamLBACApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
 		}
 	case admission.Delete:
 		switch oldObj := a.GetOldObject().(type) {
@@ -1180,8 +1189,13 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 		return nil, err
 	}
 
+	var vp *versionpolicy.VersionPolicyRegistry
+	if g, ok := defaultOptsGetter.(*apistore.RESTOptionsGetter); ok {
+		vp = g.VersionPolicy()
+	}
+
 	client := resource.NewLocalResourceClient(server)
-	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil, nil)
+	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil, vp)
 
 	store, err := grafanaregistry.NewRegistryStoreWithSelectableFields(scheme, resourceInfo, optsGetter, selectableFieldsOpts)
 	return store, err

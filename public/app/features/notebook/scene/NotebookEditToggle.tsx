@@ -1,13 +1,15 @@
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { InlineSwitch } from '@grafana/ui';
+import { RadioButtonGroup } from '@grafana/ui';
 
 import { canEditNotebooks } from '../permissions';
 
 import { type NotebookScene } from './NotebookScene';
 
 /**
- * Switches the notebook between reading and editing. A temporary affordance pending design — the
- * mode itself lives on the scene, so this only flips it.
+ * Switches the notebook between reading and editing. Two named modes rather than a switch, so the
+ * current one is stated rather than inferred from a toggle's position. The mode itself lives on the
+ * scene — this only flips it.
  */
 export function NotebookEditToggle({ notebook }: { notebook: NotebookScene }) {
   const { isEditing } = notebook.useState();
@@ -18,13 +20,17 @@ export function NotebookEditToggle({ notebook }: { notebook: NotebookScene }) {
     return null;
   }
 
+  const options: Array<SelectableValue<boolean>> = [
+    { label: t('notebooks.view.mode-view', 'View'), value: false, icon: 'eye' },
+    { label: t('notebooks.view.mode-edit', 'Edit'), value: true, icon: 'pen' },
+  ];
+
   return (
-    <InlineSwitch
+    <RadioButtonGroup
       id="notebook-edit-mode"
-      label={t('notebooks.view.edit-mode', 'Edit')}
-      showLabel
+      options={options}
       value={Boolean(isEditing)}
-      onChange={(event) => (event.currentTarget.checked ? notebook.onEnterEditMode() : notebook.onExitEditMode())}
+      onChange={(value) => (value ? notebook.onEnterEditMode() : notebook.onExitEditMode())}
     />
   );
 }

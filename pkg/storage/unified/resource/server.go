@@ -290,10 +290,6 @@ type SearchOptions struct {
 	// TTL for the dedup cache used in ListModifiedSince updates. 0 disables the cache.
 	IndexModificationCacheTTL time.Duration
 
-	// Keep deleted objects in the index so trash searches can find them. Off means
-	// a delete removes the document, as it did before trash search existed.
-	IndexDeletedDocuments bool
-
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
 
@@ -1584,15 +1580,23 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		req.Limit = 500 // default max 500 items in a page
 	}
 
-	req = filterFieldSelectors(req)
-	if s.useFieldSelectorSearch(req) {
-		// If we get here, we're doing list with selectable fields. Let's do search instead, since
-		// we index all selectable fields, and fetch resulting documents one by one.
+	req = filterSelectors(req)
+	if s.useSelectorSearch(req) {
+		// If we get here, we're doing list with selectable fields or labels. Let's do
+		// search instead, since we index both, and fetch resulting documents one by one.
 		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
 		if s.storageMetrics != nil {
 			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
 		}
-		return s.listWithFieldSelectors(ctx, req)
+		return s.listWithSelectors(ctx, req)
+	}
+
+	if req.NextPageToken != "" {
+		if token, err := GetContinueToken(req.NextPageToken); err == nil && tokenFromOtherListPath(token, false) {
+			return &resourcepb.ListResponse{
+				Error: NewBadRequestError("continue token was issued for a search-backed list"),
+			}, nil
+		}
 	}
 
 	switch req.Source {
@@ -2103,7 +2107,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
 					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Group, event.Key.Resource).Observe(latencySeconds)
 					}
 				}
 			}

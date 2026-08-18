@@ -1974,7 +1974,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 
 func TestCleanUpDashboard(t *testing.T) {
 	t.Run("Should delete public dashboards and clean up after delete", func(t *testing.T) {
-		sqlStore, _ := sqlstore.InitTestDB(t)
+		sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 		service := &DashboardServiceImpl{
 			cfg:                    setting.NewCfg(),
@@ -2018,7 +2018,7 @@ func TestCleanUpDashboard(t *testing.T) {
 	})
 
 	t.Run("Should not delete org-scope annotations when dashboard ID is zero", func(t *testing.T) {
-		sqlStore, _ := sqlstore.InitTestDB(t)
+		sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 		service := &DashboardServiceImpl{
 			cfg:                    setting.NewCfg(),
@@ -2212,7 +2212,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup test database and utilities
-			sqlStore, _ := sqlstore.InitTestDB(t)
+			sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			lockService := serverlock.ProvideService(legacysql.NewDatabaseProvider(sqlStore), tracing.InitializeTracerForTest())
 			kv := kvstore.NewFakeKVStore()
 
@@ -2249,7 +2249,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 
 	t.Run("Should start and stop background job correctly", func(t *testing.T) {
 		// Setup test database and utilities
-		sqlStore, _ := sqlstore.InitTestDB(t)
+		sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		lockService := serverlock.ProvideService(legacysql.NewDatabaseProvider(sqlStore), tracing.InitializeTracerForTest())
 
 		cfg := setting.NewCfg()

@@ -105,7 +105,11 @@
       "load-subscriptions": "Charger les abonnements"
     },
     "dimension-fields": {
-      "aria-label-remove": "Supprimer",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensions",
       "placeholder-field": "Champ",
       "placeholder-operation": "Opération",
