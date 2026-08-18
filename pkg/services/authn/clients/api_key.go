@@ -85,7 +85,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	return newServiceAccountIdentity(key), nil
 }
 
-func (s *APIKey) IsEnabled() bool {
+func (s *APIKey) IsEnabled(context.Context) bool {
 	return true
 }
 

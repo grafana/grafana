@@ -17,6 +17,7 @@ import userEvent from '@testing-library/user-event';
 
 import {
   type IconName,
+  type LinkModel,
   MutableDataFrame,
   type PluginExtensionLink,
   PluginExtensionPoints,
@@ -36,6 +37,10 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn(),
   usePluginComponents: jest.fn(),
   reportInteraction: jest.fn(),
+}));
+
+jest.mock('../TraceTimelineViewer/SpanDetail/LogsLink', () => ({
+  LogsLinkButton: ({ linkModel }: { linkModel: LinkModel }) => <button type="button">{linkModel.title}</button>,
 }));
 
 // Mock useAppNotification
@@ -84,7 +89,8 @@ const createMockExtension = (
 
 const setup = (
   pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false },
-  hideHeaderDetails = false
+  hideHeaderDetails = false,
+  logsLinkModel?: LinkModel
 ) => {
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
@@ -111,6 +117,7 @@ const setup = (
     updateViewRangeTime: jest.fn(),
     viewRange: { time: { current: viewRangeTime } },
     hideHeaderDetails,
+    logsLinkModel,
   };
 
   return {
@@ -136,6 +143,23 @@ describe('TracePageHeader test', () => {
     expect(getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89')).toBeInTheDocument();
     expect(screen.getAllByText('2.36s')[0]).toBeInTheDocument();
     expect(getByText(header!, '2023-02-05 08:50:56.289')).toBeInTheDocument();
+  });
+
+  it('should render the trace-level logs link when provided', () => {
+    setup({ links: [], isLoading: false }, false, {
+      href: '/explore?logs',
+      title: 'Logs for this trace',
+      target: '_blank',
+      origin: {},
+    });
+
+    expect(screen.getByRole('button', { name: /Logs for this trace/i })).toBeInTheDocument();
+  });
+
+  it('should not render the logs link when logsLinkModel is absent', () => {
+    setup();
+
+    expect(screen.queryByRole('button', { name: /Logs for this trace/i })).not.toBeInTheDocument();
   });
 
   describe('Plugin Extensions', () => {
