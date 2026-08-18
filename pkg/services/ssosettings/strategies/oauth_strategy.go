@@ -5,11 +5,12 @@ import (
 	"maps"
 	"slices"
 
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type OAuthStrategy struct {
@@ -48,15 +49,21 @@ func (s *OAuthStrategy) GetProviderConfig(ctx context.Context, provider string) 
 }
 
 func (s *OAuthStrategy) loadAllSettings(ctx context.Context) (map[string]map[string]any, error) {
-	cfg, err := s.cfgProvider.Get(ctx)
+	allProviders := slices.Concat(ssosettings.AllOAuthProviders, []string{social.GrafanaNetProviderName})
+
+	sections := make([]string, 0, len(allProviders))
+	for _, provider := range allProviders {
+		sections = append(sections, "auth."+provider)
+	}
+
+	iniFile, err := s.cfgProvider.GetSections(ctx, sections...)
 	if err != nil {
 		return nil, err
 	}
 
 	settingsByProvider := make(map[string]map[string]any)
-	allProviders := slices.Concat(ssosettings.AllOAuthProviders, []string{social.GrafanaNetProviderName})
 	for _, provider := range allProviders {
-		settings := loadSettingsForProvider(cfg, provider)
+		settings := loadSettingsFromSection(iniFile.Section("auth."+provider), provider)
 		// This is required to support the legacy settings for the provider (auth.grafananet section)
 		// It will use the settings (and overwrite the current grafana_com settings) from auth.grafananet if
 		// the auth.grafananet section is enabled and the auth.grafana_com section is disabled.
@@ -73,9 +80,7 @@ func shouldUseGrafanaNetSettings(settingsByProvider map[string]map[string]any) b
 	return settingsByProvider[social.GrafanaComProviderName]["enabled"] == false
 }
 
-func loadSettingsForProvider(cfg *setting.Cfg, provider string) map[string]any {
-	section := cfg.Raw.Section("auth." + provider)
-
+func loadSettingsFromSection(section *ini.Section, provider string) map[string]any {
 	result := map[string]any{
 		"client_authentication":         section.Key("client_authentication").Value(),
 		"client_id":                     section.Key("client_id").Value(),
