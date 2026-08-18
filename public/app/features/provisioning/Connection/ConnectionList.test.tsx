@@ -47,7 +47,7 @@ const mockConnections: Connection[] = [
   }),
   createMockConnection({
     metadata: { name: 'gitlab-conn-2' },
-    spec: { title: 'GitLab Connection 2', type: 'gitlabOAuth', url: 'https://gitlab.com/org2/repo2' },
+    spec: { title: 'GitLab Connection 2', type: 'gitlab', url: 'https://gitlab.com/org2/repo2' },
   }),
   createMockConnection({
     metadata: { name: 'another-github' },
