@@ -1,3 +1,12 @@
+<!-- 13.0.7 START -->
+
+# 13.0.7 (2026-08-18)
+
+### Bug fixes
+
+- **Reporting:** batch dashboard lookups when listing reports (Enterprise)
+
+<!-- 13.0.7 END -->
 <!-- 12.4.9 START -->
 
 # 12.4.9 (2026-08-18)
