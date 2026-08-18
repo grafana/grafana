@@ -51,4 +51,3 @@ pre-commit:
       glob: '*devenv/dev-dashboards/**'
       files: git diff --name-only --cached --diff-filter=ACMRD
       run: make gen-jsonnet && git add devenv/jsonnet/dev-dashboards.libsonnet
-      stage_fixed: true
