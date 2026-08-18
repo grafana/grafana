@@ -34,7 +34,7 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
         transition: theme.transitions.create(['opacity', 'scale']),
       },
     }),
-    modalAppear: css({ opacity: 0, scale: 0.8 }),
+    modalAppear: css({ opacity: 0, scale: 0.85 }),
     modalAppearActive: css({ opacity: 1, scale: 1 }),
     modalBackdrop: css({
       position: 'fixed',

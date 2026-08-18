@@ -95,7 +95,7 @@ export function ModalBase({
         nodeRef={backdropRef}
         in={true}
         appear={true}
-        timeout={{ appear: theme.transitions.duration.standard, exit: theme.transitions.duration.standard }}
+        timeout={theme.transitions.duration.standard}
         classNames={{ appear: styles.modalBackdropAppear, appearActive: styles.modalBackdropActive }}
       >
         <div role="presentation" ref={backdropRef} className={styles.modalBackdrop} />
@@ -110,7 +110,7 @@ export function ModalBase({
           nodeRef={modalRef}
           in={true}
           appear={true}
-          timeout={theme.transitions.duration.standard}
+          timeout={theme.transitions.duration.shortest}
           classNames={{ appear: styles.modalAppear, appearActive: styles.modalAppearActive }}
         >
           <div
