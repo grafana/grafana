@@ -128,7 +128,7 @@ func ProvideRegistration(
 		authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
 	}
 
-	rbacSync := sync.ProvideRBACSync(cfg, accessControlService, tracer, permRegistry, features)
+	rbacSync := sync.ProvideRBACSync(cfg, accessControlService, tracer, permRegistry)
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
