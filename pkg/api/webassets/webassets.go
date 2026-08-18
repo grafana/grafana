@@ -11,11 +11,9 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/httpclient"
-	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -64,26 +62,10 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 
 	cdn := "" // "https://grafana-assets.grafana.net/grafana/10.3.0-64123/"
 	if cdn != "" {
-		result, err = readWebAssetsFromCDN(ctx, buildDir, cdn)
+		result, err = ReadWebAssetsFromCDN(ctx, buildDir, cdn)
 	}
-
-	// Get an OpenFeature client instance for feature flag evaluation
-	client := openfeature.NewDefaultClient()
-
-	// Evaluate the feature flag
-	useReact19 := client.Boolean(
-		ctx,                                 // Request context
-		featuremgmt.FlagReact19,             // Feature flag name
-		false,                               // Default value if evaluation fails
-		openfeature.TransactionContext(ctx), // Extract evaluation context from the request
-	)
 
 	assetsFilename := "assets-manifest.json"
-
-	// only use react19 manifest for grafana builds.
-	if useReact19 && buildDir == "build" {
-		assetsFilename = "assets-manifest-react19.json"
-	}
 
 	if result == nil {
 		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, buildDir, assetsFilename))
@@ -118,7 +100,7 @@ func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) 
 	return readWebAssets(f)
 }
 
-func readWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) (*dtos.EntryPointAssets, error) {
+func ReadWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) (*dtos.EntryPointAssets, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/"+buildDir+"/assets-manifest.json", nil)
 	if err != nil {
 		return nil, err
@@ -130,7 +112,11 @@ func readWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) 
 	defer func() {
 		_ = response.Body.Close()
 	}()
-	dto, err := readWebAssets(response.Body)
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code %d fetching assets-manifest.json from %s", response.StatusCode, baseURL)
+	}
+	const maxManifestSize = 10 * 1024 * 1024
+	dto, err := readWebAssets(io.LimitReader(response.Body, maxManifestSize))
 	if err == nil {
 		dto.SetContentDeliveryURL(baseURL)
 	}

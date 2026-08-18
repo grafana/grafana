@@ -20,9 +20,9 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { config, getTemplateSrv, reportInteraction, useAppPluginInstalled } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -153,13 +153,25 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, props.traceProp?.traceID]
   );
 
-  const instanceSettings = getDatasourceSrv().getInstanceSettings(datasource?.name);
+  const datasourceRef = datasource?.uid ?? datasource?.name;
+  const { settings: loadedInstanceSettings, isLoading } = useDataSourceInstanceSettings(datasourceRef);
+  const instanceSettings = datasourceRef && !isLoading ? loadedInstanceSettings : undefined;
   const traceToLogsOptions = getTraceToLogsOptions(instanceSettings?.jsonData);
   const traceToMetrics: TraceToMetricsData | undefined = instanceSettings?.jsonData;
   const traceToMetricsOptions = traceToMetrics?.tracesToMetrics;
   const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
   const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
   const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
+
+  const logsUid = traceToLogsOptions?.datasourceUid;
+  const metricsUid = traceToMetricsOptions?.datasourceUid;
+  const profilesUid = traceToProfilesOptions?.datasourceUid;
+  const { settings: loadedLogsSettings } = useDataSourceInstanceSettings(logsUid);
+  const { settings: loadedMetricsSettings } = useDataSourceInstanceSettings(metricsUid);
+  const { settings: loadedProfilesSettings } = useDataSourceInstanceSettings(profilesUid);
+  const logsDataSourceSettings = logsUid ? loadedLogsSettings : undefined;
+  const metricsDataSourceSettings = metricsUid ? loadedMetricsSettings : undefined;
+  const profilesDataSourceSettings = profilesUid ? loadedProfilesSettings : undefined;
 
   const dataLinksContext = useDataLinksContext();
 
@@ -175,6 +187,9 @@ export function TraceView(props: Props) {
         createFocusSpanLink,
         trace: traceProp,
         dataLinkPostProcessor: dataLinksContext?.dataLinkPostProcessor,
+        logsDataSourceSettings,
+        metricsDataSourceSettings,
+        profilesDataSourceSettings,
       }),
     [
       props.splitOpenFn,
@@ -186,6 +201,9 @@ export function TraceView(props: Props) {
       traceProp,
       createSpanLinkFromProps,
       dataLinksContext?.dataLinkPostProcessor,
+      logsDataSourceSettings,
+      metricsDataSourceSettings,
+      profilesDataSourceSettings,
     ]
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));

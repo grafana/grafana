@@ -209,6 +209,10 @@ func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) ite
 type mockSearchBackend struct {
 	openIndexes []NamespacedResource
 
+	// Recorded on every index this backend builds, standing in for the decision the
+	// real backend makes from its options at creation.
+	keepsDeletedDocuments bool
+
 	mu                sync.Mutex
 	buildIndexCalls   []buildIndexCall
 	cache             map[NamespacedResource]ResourceIndex
@@ -221,6 +225,8 @@ type mockSearchBackend struct {
 func (m *mockSearchBackend) SnapshotCountThreshold() int64 {
 	return m.snapshotThreshold
 }
+
+func (m *mockSearchBackend) RemoveExpiredTrash(context.Context) {}
 
 type buildIndexCall struct {
 	key  NamespacedResource
@@ -273,7 +279,7 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 }
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
-	index := &MockResourceIndex{}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(m.keepsDeletedDocuments)}}
 	m.mu.Lock()
 	m.lastUpdater = updater
 	m.mu.Unlock()
@@ -672,6 +678,50 @@ func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
 			require.Contains(t, CurrentIndexFeatures(), required)
 		}
 	}
+}
+
+// One index keeping deleted documents must not change what every other index
+// records.
+func TestIndexFeaturesForNewIndexLeavesCurrentAlone(t *testing.T) {
+	before := slices.Clone(currentIndexFeatures)
+
+	require.Contains(t, IndexFeaturesForNewIndex(true), IndexFeatureHoldsDeletedDocuments)
+	require.NotContains(t, IndexFeaturesForNewIndex(false), IndexFeatureHoldsDeletedDocuments)
+
+	require.Equal(t, before, currentIndexFeatures)
+	require.NotContains(t, CurrentIndexFeatures(), IndexFeatureHoldsDeletedDocuments)
+}
+
+// Anything this binary builds with, it must also know how to read, or it would
+// refuse its own indexes.
+func TestKnownIndexFeaturesCoverCurrent(t *testing.T) {
+	for _, current := range CurrentIndexFeatures() {
+		require.Contains(t, knownIndexFeatures, current)
+	}
+}
+
+// Declaring a requirement this binary cannot read would reject every index it
+// builds.
+func TestReaderRequiredFeaturesAreKnown(t *testing.T) {
+	for _, keeps := range []bool{true, false} {
+		require.Empty(t, UnknownIndexRequirements(IndexReaderRequirements(keeps)))
+	}
+}
+
+// The requirement follows what the index holds. An index keeping deleted documents
+// needs a reader that filters them; one that keeps none is safe for any reader.
+func TestIndexReaderRequirementsFollowContents(t *testing.T) {
+	require.Equal(t, []IndexFeature{IndexFeatureHoldsDeletedDocuments}, IndexReaderRequirements(true))
+	require.Empty(t, IndexReaderRequirements(false))
+}
+
+func TestUnknownIndexRequirements(t *testing.T) {
+	// An index built before requirements were recorded.
+	require.Empty(t, UnknownIndexRequirements(nil))
+
+	// Refused by name, so an older instance needs no knowledge of the feature.
+	require.Equal(t, []IndexFeature{"feature-from-the-future"},
+		UnknownIndexRequirements([]IndexFeature{IndexFeatureDeletedMarker, "feature-from-the-future"}))
 }
 
 // TestRequiredIndexFeaturesStoredFacets covers the gating that keeps the stored
@@ -1737,6 +1787,30 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "vector_storage_search_duration_seconds"))
 }
 
+// TestSearchServer_HybridSearch_ObservesDuration mirrors the VectorSearch
+// test above: the Unimplemented path confirms the histogram wiring.
+func TestSearchServer_HybridSearch_ObservesDuration(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := ProvideVectorMetrics(reg)
+	s := &searchServer{
+		log:           log.New("test-hybrid-search"),
+		vectorMetrics: m,
+	}
+
+	_, err := s.HybridSearch(context.Background(), &resourcepb.HybridSearchRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: "stack-1",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+		},
+		Query: "test",
+	})
+	require.Error(t, err)
+	require.Equal(t, codes.Unimplemented, status.Code(err))
+
+	require.Equal(t, 1, testutil.CollectAndCount(m.HybridSearchDuration, "vector_storage_hybrid_search_duration_seconds"))
+}
+
 func TestFolderFilterSet(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -1850,29 +1924,29 @@ func (i *trashIterator) Folder() string         { return "" }
 func (i *trashIterator) Value() []byte          { return i.entries[i.pos].value }
 
 func testObjectJSON(name, title string) []byte {
-	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q},"spec":{"title":%q,"tags":["tag-a"]}}`, name, title))
+	return fmt.Appendf(nil, `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q},"spec":{"title":%q,"tags":["tag-a"]}}`, name, title)
 }
 
 // testDeletedObjectJSON is what storage holds after a delete: the deletion marker
 // records who deleted the object as its last updater, and when (see server.go).
 func testDeletedObjectJSON(name, title, deletedBy string, deletedAt time.Time) []byte {
-	return []byte(fmt.Sprintf(
+	return fmt.Appendf(nil,
 		`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"deletionTimestamp":%q,"annotations":{%q:%q}},"spec":{"title":%q}}`,
-		name, deletedAt.UTC().Format(time.RFC3339), utils.AnnoKeyUpdatedBy, deletedBy, title))
+		name, deletedAt.UTC().Format(time.RFC3339), utils.AnnoKeyUpdatedBy, deletedBy, title)
 }
 
 func testProvisionedObjectJSON(name, title string) []byte {
-	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"annotations":{%q:"repo"}},"spec":{"title":%q}}`,
-		name, utils.AnnoKeyManagerKind, title))
+	return fmt.Appendf(nil, `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"annotations":{%q:"repo"}},"spec":{"title":%q}}`,
+		name, utils.AnnoKeyManagerKind, title)
 }
 
 // trashSearchOptions returns search options with deleted objects kept in the
 // index, which is off by default.
-func trashSearchOptions(backend SearchBackend) SearchOptions {
+func trashSearchOptions(backend *mockSearchBackend) SearchOptions {
+	backend.keepsDeletedDocuments = true
 	return SearchOptions{
-		Backend:               backend,
-		Resources:             &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
-		IndexDeletedDocuments: true,
+		Backend:   backend,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
 	}
 }
 
@@ -1889,7 +1963,8 @@ func TestIndexTrash(t *testing.T) {
 	server, err := newSearchServer(trashSearchOptions(&mockSearchBackend{}), storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
-	index := &MockResourceIndex{}
+	// The index records the decision, so a test driving indexTrash states it.
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
 	require.NoError(t, server.indexTrash(t.Context(), key, index, log.NewNopLogger()))
 
 	items := index.indexedItems()
@@ -1966,7 +2041,7 @@ func TestUpdaterMarksDeletedDocuments(t *testing.T) {
 	search.mu.Unlock()
 	require.NotNil(t, updater)
 
-	index := &MockResourceIndex{}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
 	_, docs, err := updater(t.Context(), index, 1)
 	require.NoError(t, err)
 	require.Equal(t, 2, docs)
@@ -2000,7 +2075,7 @@ func TestDeletedDocumentsAreRemovedWhenTheOptionIsOff(t *testing.T) {
 
 	search := &mockSearchBackend{}
 	options := trashSearchOptions(search)
-	options.IndexDeletedDocuments = false
+	search.keepsDeletedDocuments = false
 	server, err := newSearchServer(options, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 

@@ -13,9 +13,12 @@ import {
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
+import { addElement } from '../../actions/element/addElement';
+import { moveElement } from '../../actions/element/moveElement';
+import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getLegacySlugForRowOrTab } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -24,6 +27,7 @@ import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { convertRowToTab } from '../layouts-shared/convertRowToTab';
 import { convertTabToRow } from '../layouts-shared/convertTabToRow';
+import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
 import { moveSectionVariablesUp } from '../layouts-shared/moveSectionVariablesUp';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import {
@@ -46,7 +50,7 @@ import {
   isDashboardLayoutGroup,
   type NestedGroupsTarget,
 } from '../types/DashboardLayoutGroup';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -202,6 +206,20 @@ export class TabsLayoutManager
     return panels;
   }
 
+  public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
+    return canGroupSelection(items, target);
+  }
+
+  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
+    const groupEdit = buildGroupEdit(items, target);
+
+    if (!groupEdit) {
+      return;
+    }
+
+    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
+  }
+
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone();
   }
@@ -234,7 +252,7 @@ export class TabsLayoutManager
       newTab.setState({ title: newTitle });
     }
 
-    dashboardEditActions.addElement({
+    addElement({
       addedObject: newTab,
       source: this,
       perform: () => {
@@ -386,7 +404,7 @@ export class TabsLayoutManager
     let nextVariableSet: SceneVariables | undefined;
     let nextVariables: SceneVariable[] | undefined;
 
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.tabs-layout.edit.ungroup-tabs', 'Ungroup tabs'),
       source: scene,
       perform: () => {
@@ -570,7 +588,7 @@ export class TabsLayoutManager
     if (skipUndo) {
       perform();
     } else {
-      dashboardEditActions.removeElement({
+      removeElement({
         removedObject: tab,
         source: this,
         perform,
@@ -605,7 +623,7 @@ export class TabsLayoutManager
     const originalFromIndex = this.state.tabs.findIndex((tab) => tab === objectToMove);
     const originalToIndex = this.state.tabs.findIndex((tab) => tab === destinationTab);
 
-    dashboardEditActions.moveElement({
+    moveElement({
       source: this,
       movedObject: objectToMove,
       perform: () => {

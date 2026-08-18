@@ -8,7 +8,8 @@ INSERT INTO embeddings (
     "folder",
     "content",
     "metadata",
-    "embedding"
+    "embedding",
+    "content_version"
 )
 VALUES (
     'dashboards',
@@ -20,14 +21,16 @@ VALUES (
     'folder-uid',
     'panel title with queries',
     '[123 34 100 97 116 97 115 111 117 114 99 101 95 117 105 100 115 34 58 91 34 100 115 49 34 93 125]',
-    '[0.1,0.2,0.3]'
+    '[0.1,0.2,0.3]',
+    3
 )
 ON CONFLICT ("resource", "namespace", "model", "uid", "subresource")
 DO UPDATE SET
-    "title"      = 'CPU Dashboard',
-    "folder"     = 'folder-uid',
-    "content"    = 'panel title with queries',
-    "metadata"   = '[123 34 100 97 116 97 115 111 117 114 99 101 95 117 105 100 115 34 58 91 34 100 115 49 34 93 125]',
-    "embedding"  = '[0.1,0.2,0.3]',
-    "updated_at" = CURRENT_TIMESTAMP
+    "title"           = 'CPU Dashboard',
+    "folder"          = 'folder-uid',
+    "content"         = 'panel title with queries',
+    "metadata"        = '[123 34 100 97 116 97 115 111 117 114 99 101 95 117 105 100 115 34 58 91 34 100 115 49 34 93 125]',
+    "embedding"       = '[0.1,0.2,0.3]',
+    "content_version" = 3,
+    "updated_at"      = CURRENT_TIMESTAMP
 ;

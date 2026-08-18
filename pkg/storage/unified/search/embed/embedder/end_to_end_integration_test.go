@@ -74,11 +74,11 @@ func TestIntegration_EndToEndDashboardSearch(t *testing.T) {
 		require.NoError(t, err, "read %s", f.path)
 
 		items, err := extractor.Extract(ctx,
-			&resourcepb.ResourceKey{Resource: "dashboards", Name: f.name}, data)
+			&resourcepb.ResourceKey{Resource: "dashboards", Name: f.name}, data, "")
 		require.NoError(t, err)
 		require.NotEmpty(t, items, "%s produced no items", f.path)
 
-		vecs, err := be.Embed(ctx, f.namespace, "dashboards", f.rv, items)
+		vecs, err := be.Embed(ctx, f.namespace, "dashboards", f.rv, extractor.Version(), items)
 		require.NoError(t, err)
 		require.Len(t, vecs, len(items), "%s vector count != item count", f.path)
 		allVectors = append(allVectors, vecs...)

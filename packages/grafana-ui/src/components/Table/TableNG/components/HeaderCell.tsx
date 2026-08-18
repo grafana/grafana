@@ -44,9 +44,11 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
-  const styles = useStyles2(getStyles, headerCellWrap);
+  const sortable = field.config.custom?.sortable !== false;
+  const styles = useStyles2(getStyles, headerCellWrap, sortable);
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
+  const hideHeader = field.config.custom?.hideHeader ?? false;
 
   // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
@@ -58,6 +60,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       });
     }
   }, [filterable, displayName, filter, setFilter]);
+
+  if (hideHeader) {
+    return null;
+  }
 
   /* eslint-disable jsx-a11y/no-static-element-interactions */
   return (
@@ -124,10 +130,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   );
 };
 
-const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
+const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sortable = true) => ({
   headerCellLabel: css({
     all: 'unset',
-    cursor: 'pointer',
+    cursor: sortable ? 'pointer' : 'default',
     fontWeight: theme.typography.fontWeightMedium,
     color: theme.colors.text.secondary,
     overflow: 'hidden',
@@ -136,7 +142,7 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
     borderRadius: theme.spacing(0.25),
     lineHeight: '20px',
     '&:hover': {
-      textDecoration: 'underline',
+      textDecoration: sortable ? 'underline' : 'none',
     },
     '&::selection': {
       backgroundColor: 'var(--rdg-background-color)',

@@ -22,8 +22,10 @@ export const DEFAULT_BASEMAP_CONFIG: MapLayerOptions = {
   config: {},
 };
 
-// Default base layer depending on the server setting
-const defaultBaseLayer: MapLayerRegistryItem = {
+// Default base layer depending on the server setting. It delegates to whichever layer the
+// server configures, so its config type is genuinely heterogeneous.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const defaultBaseLayer: MapLayerRegistryItem<any> = {
   id: DEFAULT_BASEMAP_CONFIG.type,
   name: 'Default base layer',
   isBaseMap: true,
@@ -48,6 +50,7 @@ const defaultBaseLayer: MapLayerRegistryItem = {
 /**
  * Registry for layer handlers
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const geomapLayerRegistry = new Registry<MapLayerRegistryItem<any>>(() => [
   defaultBaseLayer,
   ...basemapLayers, // simple basemaps
@@ -59,6 +62,7 @@ interface RegistrySelectInfo {
   current: Array<SelectableValue<string>>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getLayersSelection(items: Array<MapLayerRegistryItem<any>>, current?: string): RegistrySelectInfo {
   const registry: RegistrySelectInfo = { options: [], current: [] };
   const alpha: Array<SelectableValue<string>> = [];

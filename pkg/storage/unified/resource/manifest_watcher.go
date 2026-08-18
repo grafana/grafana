@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/dskit/services"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -103,6 +105,7 @@ type ManifestWatcher struct {
 	client       dynamic.Interface
 	pollInterval time.Duration
 	onChange     func([]app.Manifest)
+	metrics      *manifestWatcherMetrics
 
 	// byName is the current snapshot, keyed by apiserver object name. The name key
 	// lets a poll keep a known manifest when the same object later fails to
@@ -110,6 +113,36 @@ type ManifestWatcher struct {
 	mu       sync.RWMutex
 	byName   map[string]app.Manifest
 	lastHash string
+}
+
+// manifestWatcherMetrics are the watcher's Prometheus metrics. Built with a nil
+// registerer in tests, which promauto treats as a no-op.
+type manifestWatcherMetrics struct {
+	polls       *prometheus.CounterVec
+	reloads     prometheus.Counter
+	manifests   prometheus.Gauge
+	lastSuccess prometheus.Gauge
+}
+
+func newManifestWatcherMetrics(reg prometheus.Registerer) *manifestWatcherMetrics {
+	return &manifestWatcherMetrics{
+		polls: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "search_manifest_watcher_polls_total",
+			Help: "Manifest watcher poll cycles by result (success, empty, error).",
+		}, []string{"result"}),
+		reloads: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "search_manifest_watcher_reloads_total",
+			Help: "Times the manifest watcher published a changed manifest set.",
+		}),
+		manifests: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "search_manifest_watcher_manifests",
+			Help: "Number of manifests in the current watcher snapshot.",
+		}),
+		lastSuccess: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "search_manifest_watcher_last_success_timestamp_seconds",
+			Help: "Unix time of the last successful manifest watcher poll (list succeeded).",
+		}),
+	}
 }
 
 // newManifestRESTConfig builds a rest.Config that authenticates to the
@@ -156,7 +189,7 @@ func manifestAuthWrapper(exchanger authnlib.TokenExchanger) transport.WrapperFun
 // NewManifestWatcher creates a ManifestWatcher as a dskit service. The initial
 // poll runs in the starting state, so anything that waits for Running observes a
 // populated snapshot. onChange may be nil.
-func NewManifestWatcher(cfg ManifestWatcherConfig, onChange func([]app.Manifest)) (*ManifestWatcher, error) {
+func NewManifestWatcher(cfg ManifestWatcherConfig, reg prometheus.Registerer, onChange func([]app.Manifest)) (*ManifestWatcher, error) {
 	restCfg, err := newManifestRESTConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("building manifest REST config: %w", err)
@@ -173,6 +206,7 @@ func NewManifestWatcher(cfg ManifestWatcherConfig, onChange func([]app.Manifest)
 	}
 
 	w := newManifestWatcher(client, interval, onChange, cfg.Log)
+	w.metrics = newManifestWatcherMetrics(reg)
 	w.Service = services.NewBasicService(w.starting, w.running, nil)
 	return w, nil
 }
@@ -188,6 +222,7 @@ func newManifestWatcher(client dynamic.Interface, pollInterval time.Duration, on
 		client:       client,
 		pollInterval: pollInterval,
 		onChange:     onChange,
+		metrics:      newManifestWatcherMetrics(nil),
 	}
 }
 
@@ -233,13 +268,17 @@ func (w *ManifestWatcher) runPollCycle(ctx context.Context) {
 
 	result, err := w.list(ctx, prev)
 	if err != nil {
+		w.metrics.polls.WithLabelValues("error").Inc()
 		w.log.Error("manifest watcher poll cycle: list failed, keeping previous set", "error", err)
 		return
 	}
+	w.metrics.lastSuccess.SetToCurrentTime()
 	if len(result) == 0 {
+		w.metrics.polls.WithLabelValues("empty").Inc()
 		w.log.Warn("manifest watcher poll cycle: zero manifests, keeping previous set")
 		return
 	}
+	w.metrics.polls.WithLabelValues("success").Inc()
 
 	manifests := sortedManifests(result)
 	hash, err := hashManifests(manifests)
@@ -260,9 +299,12 @@ func (w *ManifestWatcher) runPollCycle(ctx context.Context) {
 	}
 	w.mu.Unlock()
 
+	w.metrics.manifests.Set(float64(len(result)))
+
 	if !changed {
 		return
 	}
+	w.metrics.reloads.Inc()
 	w.log.Info("manifest watcher published new manifest set", "manifests", len(manifests))
 	if w.onChange != nil {
 		w.onChange(manifests)

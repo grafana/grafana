@@ -276,6 +276,8 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		Backfiller:    backfiller,
 		Interval:      opts.Cfg.VectorReconcilerInterval,
 		Metrics:       resourceOpts.VectorMetrics,
+
+		EmbeddingCountInterval: opts.Cfg.VectorEmbeddingCountInterval,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector reconciler: %w", err)
