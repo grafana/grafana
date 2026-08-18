@@ -36,7 +36,11 @@ const SilencesEditorComponent = () => {
   // needs the org-wide permission. With a rule matcher the silence only affects that one rule, so
   // permission on the rule's folder is enough - which means we need to know the rule's folder.
   const isGeneralSilence = !potentialRuleUid;
-  const { data: silencedRule, isLoading: silencedRuleLoading } = alertRuleApi.endpoints.getAlertRule.useQuery(
+  const {
+    data: silencedRule,
+    isLoading: silencedRuleLoading,
+    isError: silencedRuleUnavailable,
+  } = alertRuleApi.endpoints.getAlertRule.useQuery(
     { uid: potentialRuleUid ?? '' },
     { skip: isGeneralSilence || !isGrafanaAlertmanager }
   );
@@ -52,6 +56,21 @@ const SilencesEditorComponent = () => {
   }
 
   if (!createAbility.granted) {
+    // We never learned which folder to check, so a permission verdict isn't ours to give - the
+    // folder may well allow this silence. Say what actually went wrong instead.
+    if (silencedRuleUnavailable) {
+      return (
+        <Alert
+          severity="error"
+          title={t('alerting.new-silence-page.title-alert-rule-unavailable', 'Alert rule unavailable')}
+        >
+          <Trans i18nKey="alerting.new-silence-page.body-alert-rule-unavailable">
+            This alert rule may have been deleted, or you may not have permission to view it.
+          </Trans>
+        </Alert>
+      );
+    }
+
     return (
       <Alert
         severity="error"

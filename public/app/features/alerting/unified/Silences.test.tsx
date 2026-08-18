@@ -74,6 +74,7 @@ const ui = {
   addSilenceButton: byRole('link', { name: /add silence/i }),
   existingSilenceNotFound: byRole('alert', { name: /existing silence .* not found/i }),
   noPermissionToEdit: byRole('alert', { name: /do not have permission/i }),
+  ruleUnavailable: byRole('alert', { name: /alert rule unavailable/i }),
   editor: {
     timeRange: byTestId(selectors.components.TimePicker.openButton),
     durationField: byLabelText('Duration'),
@@ -466,5 +467,31 @@ describe('Silence create/edit', () => {
 
     expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
     expect(ui.editor.durationField.query()).not.toBeInTheDocument();
+  });
+
+  // Reading the rule needs alert.rules:read on its folder, which the backend does not ask for when
+  // creating a silence. A failed lookup therefore says nothing about whether the silence is
+  // allowed, so blaming permissions would be misleading.
+  it('reports the rule as unavailable rather than blaming permissions when the rule cannot be loaded', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead]);
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+    renderSilences(`${baseUrlPath}?matcher=${MATCHER_ALERT_RULE_UID}%3Ddoes-not-exist`);
+
+    expect(await ui.ruleUnavailable.find()).toBeInTheDocument();
+    expect(ui.noPermissionToEdit.query()).not.toBeInTheDocument();
+    expect(ui.editor.durationField.query()).not.toBeInTheDocument();
+  });
+
+  // The backend lets anyone holding the org-wide permission through before it resolves the rule's
+  // folder, so a rule we cannot load must not stop them.
+  it('renders the form for an unloadable rule when the org-wide permission is held', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingInstanceCreate]);
+
+    renderSilences(`${baseUrlPath}?matcher=${MATCHER_ALERT_RULE_UID}%3Ddoes-not-exist`);
+
+    expect(await ui.editor.durationField.find()).toBeInTheDocument();
+    expect(ui.ruleUnavailable.query()).not.toBeInTheDocument();
+    expect(ui.noPermissionToEdit.query()).not.toBeInTheDocument();
   });
 });

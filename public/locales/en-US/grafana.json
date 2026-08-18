@@ -2259,6 +2259,7 @@
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "This alert rule may have been deleted, or you may not have permission to view it.",
       "body-permission-create-silence": "You can still silence individual alert rules from their detail pages.",
       "page-nav": {
         "subTitle": {
@@ -2269,6 +2270,7 @@
         }
       },
       "text-checking-permissions": "Checking permissions...",
+      "title-alert-rule-unavailable": "Alert rule unavailable",
       "title-permission-create-silence": "You do not have permission to create this silence"
     },
     "no-alert-managers-available": {
