@@ -33,6 +33,7 @@ replace (
 	github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
 	github.com/grafana/grafana/apps/annotation => ../annotation
 	github.com/grafana/grafana/apps/collections => ../collections
+	github.com/grafana/grafana/apps/coordination => ../coordination
 	github.com/grafana/grafana/apps/correlations => ../correlations
 	github.com/grafana/grafana/apps/dashboard => ../dashboard
 	github.com/grafana/grafana/apps/dashvalidator => ../dashvalidator

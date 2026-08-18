@@ -742,6 +742,10 @@ const (
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
 
+	// FlagCoordinationLeasesApi
+	// Enables the cluster-scoped coordination.grafana.app Lease API for fleet-level leader election and shard ownership
+	FlagCoordinationLeasesApi = "coordinationLeasesApi"
+
 	// FlagGlobalDashboardVariables
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
 	FlagGlobalDashboardVariables = "globalDashboardVariables"

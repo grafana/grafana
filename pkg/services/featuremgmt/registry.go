@@ -2284,6 +2284,15 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:            "coordinationLeasesApi",
+			Description:     "Enables the cluster-scoped coordination.grafana.app Lease API for fleet-level leader election and shard ownership",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
+		},
+		{
 			Name:         "plugins.useMTPlugins",
 			Description:  "Enables plugins decoupling from bootdata",
 			Stage:        FeatureStageExperimental,

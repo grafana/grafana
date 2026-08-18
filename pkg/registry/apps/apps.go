@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
+	"github.com/grafana/grafana/pkg/registry/apps/coordination"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
@@ -49,6 +50,7 @@ func ProvideAppInstallers(
 	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
+	coordinationAppInstaller *coordination.AppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -89,6 +91,11 @@ func ProvideAppInstallers(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagDashboardValidatorApp) {
 		installers = append(installers, dashvalidatorAppInstaller)
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagCoordinationLeasesApi) && coordinationAppInstaller != nil {
+		installers = append(installers, coordinationAppInstaller)
 	}
 
 	// Applications under active development should be disabled by default

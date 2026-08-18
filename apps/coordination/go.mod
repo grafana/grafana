@@ -1,53 +1,11 @@
-module github.com/grafana/grafana/apps/iam
+module github.com/grafana/grafana/apps/coordination
 
 go 1.26.5
 
-// transitive dependencies that need replaced
-// TODO: stop depending on grafana core(
-replace (
-	github.com/grafana/grafana => ../..
-
-	github.com/grafana/grafana/apps/advisor => ../advisor
-	github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment
-	github.com/grafana/grafana/apps/alerting/notifications => ../alerting/notifications
-	github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
-	github.com/grafana/grafana/apps/annotation => ../annotation
-	github.com/grafana/grafana/apps/collections => ../collections
-	github.com/grafana/grafana/apps/coordination => ../coordination
-	github.com/grafana/grafana/apps/correlations => ../correlations
-	github.com/grafana/grafana/apps/dashboard => ../dashboard
-	github.com/grafana/grafana/apps/dashvalidator => ../dashvalidator
-	github.com/grafana/grafana/apps/example => ../example
-	github.com/grafana/grafana/apps/folder => ../folder
-	github.com/grafana/grafana/apps/iam => ../iam
-	github.com/grafana/grafana/apps/live => ../live
-	github.com/grafana/grafana/apps/logsdrilldown => ../logsdrilldown
-	github.com/grafana/grafana/apps/playlist => ../playlist
-	github.com/grafana/grafana/apps/plugins => ../plugins
-	github.com/grafana/grafana/apps/preferences => ../preferences
-	github.com/grafana/grafana/apps/provisioning => ../provisioning
-	github.com/grafana/grafana/apps/quotas => ../quotas
-	github.com/grafana/grafana/apps/scope => ../scope
-	github.com/grafana/grafana/apps/secret => ../secret
-	github.com/grafana/grafana/apps/shorturl => ../shorturl
-
-	// Packages
-	github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
-	github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
-	github.com/grafana/grafana/pkg/infra/features => ../../pkg/infra/features
-	github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
-	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
-	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
-	github.com/grafana/grafana/pkg/util/sqlite => ../../pkg/util/sqlite
-
-	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c
-)
-
 require (
-	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.56.4
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	k8s.io/apimachinery v0.36.1
+	k8s.io/klog/v2 v2.140.0
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
 )
 
@@ -79,6 +37,7 @@ require (
 	github.com/go-openapi/swag/stringutils v0.26.1 // indirect
 	github.com/go-openapi/swag/typeutils v0.26.1 // indirect
 	github.com/go-openapi/swag/yamlutils v0.26.1 // indirect
+	github.com/go-openapi/testify/v2 v2.6.0 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/authlib v0.0.0-20260715184607-1dffa9543b9f // indirect
@@ -89,6 +48,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
@@ -104,7 +64,6 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.44.0 // indirect
@@ -134,7 +93,6 @@ require (
 	k8s.io/api v0.36.1 // indirect
 	k8s.io/apiextensions-apiserver v0.36.0 // indirect
 	k8s.io/client-go v0.36.1 // indirect
-	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
