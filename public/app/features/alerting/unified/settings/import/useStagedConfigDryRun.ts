@@ -25,7 +25,8 @@ interface StagedConfigDryRun {
 export function useStagedConfigDryRun(stagedConfig: StagedExtraConfig): StagedConfigDryRun {
   const [dryRun, { data, isLoading, error }] = convertToGMAApi.useDryRunAlertmanagerConfigMutation();
 
-  // Captures stagedConfig at mount so the dry-run fires once per modal open, not on every re-render.
+  // Captures stagedConfig at mount so a parent passing a new-but-equivalent object on a later
+  // render doesn't re-fire the dry-run.
   const configRef = useRef(stagedConfig);
   useEffect(() => {
     const config = configRef.current;

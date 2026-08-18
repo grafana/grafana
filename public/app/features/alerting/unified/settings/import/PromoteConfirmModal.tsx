@@ -72,14 +72,14 @@ export function PromoteConfirmModal({ stagedConfig, isSyncManaged, onDismiss }: 
   );
 }
 
-interface PromotePreviewBodyProps {
+export interface PromotePreviewBodyProps {
   isLoading: boolean;
   error?: string;
   isPreviewUnavailable: boolean;
   result?: DryRunValidationResult;
 }
 
-type PreviewState =
+export type PreviewState =
   | { kind: 'loading' }
   | { kind: 'unavailable' }
   | { kind: 'error'; message: string }
@@ -87,7 +87,12 @@ type PreviewState =
   | { kind: 'valid'; result: DryRunValidationResult }
   | { kind: 'idle' };
 
-function getPreviewState({ isLoading, error, isPreviewUnavailable, result }: PromotePreviewBodyProps): PreviewState {
+export function getPreviewState({
+  isLoading,
+  error,
+  isPreviewUnavailable,
+  result,
+}: PromotePreviewBodyProps): PreviewState {
   if (isLoading) {
     return { kind: 'loading' };
   }
@@ -100,11 +105,13 @@ function getPreviewState({ isLoading, error, isPreviewUnavailable, result }: Pro
   if (result?.valid) {
     return { kind: 'valid', result };
   }
+  // Shouldn't be reachable once useStagedConfigDryRun resolves — kept for exhaustiveness.
   return { kind: 'idle' };
 }
 
 /** Dry-run preview: a loading spinner, an unavailable/error/invalid banner, or the merge preview. */
 function PromotePreviewBody({ isLoading, error, isPreviewUnavailable, result }: PromotePreviewBodyProps) {
+  // Re-packed (not `props` directly) so react/no-unused-prop-types can see each field is used.
   const state = getPreviewState({ isLoading, error, isPreviewUnavailable, result });
 
   switch (state.kind) {

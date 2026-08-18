@@ -405,9 +405,8 @@ function ImportWizardContent() {
         skipSubPath: true,
       });
 
-      // Hold the "Import Successful" state on screen for a beat before closing the modal and
-      // redirecting — Modal has no close animation, so this is what makes the confirmation visible
-      // rather than instantly disappearing.
+      // Holds the "Import Successful" state on screen for a beat — Modal has no close animation,
+      // so without this delay the confirmation would disappear instantly instead of being seen.
       setTimeout(() => {
         setShowConfirmModal(false);
         // A staged notifications import lands on the Import tab so the user can review the staged
