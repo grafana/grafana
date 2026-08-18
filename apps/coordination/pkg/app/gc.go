@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 
 	coordinationv0alpha1 "github.com/grafana/grafana/apps/coordination/pkg/apis/coordination/v0alpha1"
+	coordle "github.com/grafana/grafana/apps/coordination/pkg/leaderelection"
 )
 
 // newGarbageCollector builds the lease garbage collector from the app config: a
@@ -53,9 +54,9 @@ func newGarbageCollector(cfg app.Config) (operator.Reconciler, app.Runnable, err
 		now:                time.Now,
 		isLeader:           leader.Load,
 	}
-	identity := gcIdentity()
+	identity := coordle.DefaultIdentity()
 	runnable := &gcLeaderRunnable{
-		lock:      &clusterLeaseLock{client: clusterLeaseClient, name: gcLeaseName, identity: identity},
+		lock:      coordle.NewLock(clusterLeaseClient, gcLeaseName, identity),
 		setLeader: leader.Store,
 		identity:  identity,
 	}

@@ -1,4 +1,4 @@
-package app
+package leaderelection
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	coordinationv0alpha1 "github.com/grafana/grafana/apps/coordination/pkg/apis/coordination/v0alpha1"
 )
 
-func TestClusterLeaseRecordRoundTrip(t *testing.T) {
+func TestRecordRoundTrip(t *testing.T) {
 	acquire := time.Date(2026, 8, 18, 10, 0, 0, 0, time.UTC)
 	renew := time.Date(2026, 8, 18, 10, 0, 12, 0, time.UTC)
 	in := resourcelock.LeaderElectionRecord{
@@ -26,16 +26,16 @@ func TestClusterLeaseRecordRoundTrip(t *testing.T) {
 	}
 
 	var spec coordinationv0alpha1.ClusterLeaseSpec
-	recordToClusterLease(&spec, in)
+	fromRecord(&spec, in)
 
 	require.Equal(t, "host_1", *spec.HolderIdentity)
 	require.Equal(t, int32(15), *spec.LeaseDurationSeconds)
 	require.Equal(t, int32(3), *spec.LeaseTransitions)
-	// The GC lease duration must satisfy the same admission bounds as any lease.
-	require.GreaterOrEqual(t, *spec.LeaseDurationSeconds, int32(minLeaseDurationSeconds))
-	require.LessOrEqual(t, *spec.LeaseDurationSeconds, int32(maxLeaseDurationSeconds))
+	// The election lease duration must satisfy the ClusterLease admission bounds.
+	require.GreaterOrEqual(t, *spec.LeaseDurationSeconds, int32(10))
+	require.LessOrEqual(t, *spec.LeaseDurationSeconds, int32(600))
 
-	out := clusterLeaseToRecord(spec)
+	out := toRecord(spec)
 	require.Equal(t, in.HolderIdentity, out.HolderIdentity)
 	require.Equal(t, in.LeaseDurationSeconds, out.LeaseDurationSeconds)
 	require.Equal(t, in.LeaderTransitions, out.LeaderTransitions)
@@ -43,8 +43,8 @@ func TestClusterLeaseRecordRoundTrip(t *testing.T) {
 	require.True(t, in.RenewTime.Equal(&out.RenewTime))
 }
 
-// fakeLockClient implements the Get/Create/Update subset the lock needs, tracking the
-// resourceVersion the lock supplies as an update precondition.
+// fakeLockClient implements the Get/Create/Update subset the lock needs, tracking
+// the resourceVersion the lock supplies as an update precondition.
 type fakeLockClient struct {
 	resource.Client
 	obj      *coordinationv0alpha1.ClusterLease
@@ -70,9 +70,9 @@ func (f *fakeLockClient) Update(_ context.Context, _ resource.Identifier, obj re
 	return cl, nil
 }
 
-func TestClusterLeaseLock_CASThreadsResourceVersion(t *testing.T) {
+func TestLockCASThreadsResourceVersion(t *testing.T) {
 	client := &fakeLockClient{}
-	lock := &clusterLeaseLock{client: client, name: gcLeaseName, identity: "me_1"}
+	lock := NewLock(client, "coordination-gc", "me_1")
 
 	require.Equal(t, "me_1", lock.Identity())
 
@@ -94,8 +94,14 @@ func TestClusterLeaseLock_CASThreadsResourceVersion(t *testing.T) {
 	require.Equal(t, []string{"1", "2"}, client.updateRV)
 }
 
-func TestClusterLeaseLock_UpdateBeforeGetFails(t *testing.T) {
-	lock := &clusterLeaseLock{client: &fakeLockClient{}, name: gcLeaseName, identity: "me_1"}
+func TestLockUpdateBeforeGetFails(t *testing.T) {
+	lock := NewLock(&fakeLockClient{}, "coordination-gc", "me_1")
 	err := lock.Update(context.Background(), resourcelock.LeaderElectionRecord{HolderIdentity: "me_1"})
 	require.Error(t, err, "update without a prior get/create has no resourceVersion to CAS against")
+}
+
+func TestDefaultIdentity(t *testing.T) {
+	id := DefaultIdentity()
+	require.NotEmpty(t, id)
+	require.Contains(t, id, "_")
 }
