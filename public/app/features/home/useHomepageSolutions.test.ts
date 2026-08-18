@@ -88,14 +88,10 @@ describe('useHomepageSolutions', () => {
     expect(mockProbeSpanMetrics).not.toHaveBeenCalled();
   });
 
-  it('projects the same instances into each consumer-specific order', () => {
+  it('returns solutions in display order', () => {
     const { result } = renderHook(() => useHomepageSolutions());
 
-    expect(result.current.overviewSolutions.map(({ id }) => id)).toEqual(['kubernetes', 'traces', 'metrics', 'logs']);
     expect(result.current.solutions.map(({ id }) => id)).toEqual(['kubernetes', 'metrics', 'logs', 'traces']);
-    for (const item of result.current.solutions) {
-      expect(result.current.overviewSolutions.find(({ id }) => id === item.id)).toBe(item);
-    }
   });
 
   it('keeps the registry and its solution instances stable across rerenders', () => {

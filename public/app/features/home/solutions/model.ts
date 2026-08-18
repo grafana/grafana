@@ -3,15 +3,8 @@ import { type DataSourceInstanceListItem, type IconName } from '@grafana/data';
 import { type SolutionSparklineData } from './SolutionSparkline';
 import { type SignalStatus } from './solutionState';
 
-/** Overview uses this order; other surfaces can re-rank it. */
-export const SOLUTION_IDS = ['kubernetes', 'traces', 'metrics', 'logs'] as const;
+export const SOLUTION_IDS = ['kubernetes', 'metrics', 'logs', 'traces'] as const;
 export type SolutionId = (typeof SOLUTION_IDS)[number];
-
-// Keep the rank exhaustive when a solution is added.
-const EXISTING_DISPLAY_RANK: Record<SolutionId, number> = { kubernetes: 0, metrics: 1, logs: 2, traces: 3 };
-export const EXISTING_DISPLAY_ORDER: readonly SolutionId[] = [...SOLUTION_IDS].sort(
-  (a, b) => EXISTING_DISPLAY_RANK[a] - EXISTING_DISPLAY_RANK[b]
-);
 
 /**
  * The solution owns CTA copy and destination. Each surface owns presentation and analytics.

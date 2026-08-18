@@ -79,7 +79,7 @@ function homepageSolutions(
   solutions: Solution[] = [],
   signals: HomepageSolutions['signals'] = jest.fn(async () => state)
 ): HomepageSolutions {
-  return { solutions, overviewSolutions: solutions, signals };
+  return { solutions, signals };
 }
 
 function deferred<T>() {

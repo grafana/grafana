@@ -4,14 +4,13 @@ import { useMemo } from 'react';
 import { kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
-import { EXISTING_DISPLAY_ORDER, SOLUTION_IDS, type Solution } from './solutions/model';
+import { SOLUTION_IDS, type Solution } from './solutions/model';
 import { detectSignal, type SolutionState } from './solutions/solutionState';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
 import { tracesSolution } from './solutions/tracesSolution';
 
 export interface HomepageSolutions {
   solutions: Solution[];
-  overviewSolutions: Solution[];
   /** Aggregate signal snapshot used by the recommendation matrix. */
   signals: () => Promise<SolutionState>;
 }
@@ -48,8 +47,7 @@ export function useHomepageSolutions(): HomepageSolutions {
     };
 
     return {
-      solutions: EXISTING_DISPLAY_ORDER.map((id) => byId[id]),
-      overviewSolutions: SOLUTION_IDS.map((id) => byId[id]),
+      solutions: SOLUTION_IDS.map((id) => byId[id]),
       signals,
     };
   }, []);

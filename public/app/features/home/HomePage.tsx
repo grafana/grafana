@@ -58,7 +58,7 @@ function HomepageSolutionSections() {
   return (
     <>
       <Recommendations solutions={solutions} />
-      <Overview solutions={solutions.overviewSolutions} />
+      <Overview solutions={solutions.solutions} />
     </>
   );
 }
