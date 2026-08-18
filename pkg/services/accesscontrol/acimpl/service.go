@@ -181,7 +181,7 @@ func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, user identity
 	if s.zanzanaResolver == nil {
 		return legacy
 	}
-	if !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
+	if options.SkipZanzanaCache || !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
 		return s.zanzanaResolver.MergeCurrentUser(ctx, user, legacy, s.log)
 	}
 

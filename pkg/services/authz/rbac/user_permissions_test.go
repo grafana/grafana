@@ -104,7 +104,7 @@ func TestService_GetUserPermissionsUsesLocalEvaluator(t *testing.T) {
 	require.True(t, evaluator.user.GetIsGrafanaAdmin())
 	require.Equal(t, "org-12", evaluator.user.GetNamespace())
 	require.Equal(t, []int64{7, 9}, evaluator.teams)
-	require.Equal(t, accesscontrol.Options{ReloadCache: true}, evaluator.options)
+	require.Equal(t, accesscontrol.Options{ReloadCache: true, SkipZanzanaCache: true}, evaluator.options)
 }
 
 func TestService_GetUserPermissionsMergesZanzanaPermissions(t *testing.T) {

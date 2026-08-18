@@ -88,7 +88,8 @@ type UserPermissionsEvaluator interface {
 }
 
 type Options struct {
-	ReloadCache bool
+	ReloadCache      bool
+	SkipZanzanaCache bool
 }
 
 type SearchOptions struct {

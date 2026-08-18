@@ -135,7 +135,10 @@ func (s *Service) getAllIdentityPermissions(ctx context.Context, ns types.Namesp
 			ExternalGroups:   contextualTeams,
 		}
 		if s.userPermissionsEvaluator != nil {
-			permissions, err := s.userPermissionsEvaluator.GetLocalUserPermissions(ctx, requester, accesscontrol.Options{ReloadCache: skipCache})
+			permissions, err := s.userPermissionsEvaluator.GetLocalUserPermissions(ctx, requester, accesscontrol.Options{
+				ReloadCache:      skipCache,
+				SkipZanzanaCache: true,
+			})
 			return permissions, true, err
 		}
 		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{
@@ -159,7 +162,10 @@ func (s *Service) getAllIdentityPermissions(ctx context.Context, ns types.Namesp
 			ExternalGroups: contextualTeams,
 		}
 		if s.userPermissionsEvaluator != nil {
-			permissions, err := s.userPermissionsEvaluator.GetLocalUserPermissions(ctx, requester, accesscontrol.Options{ReloadCache: skipCache})
+			permissions, err := s.userPermissionsEvaluator.GetLocalUserPermissions(ctx, requester, accesscontrol.Options{
+				ReloadCache:      skipCache,
+				SkipZanzanaCache: true,
+			})
 			return permissions, true, err
 		}
 		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{Role: s.settings.AnonOrgRole})
