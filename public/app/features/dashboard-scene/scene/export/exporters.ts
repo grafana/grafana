@@ -148,7 +148,12 @@ export async function makeExportableV1(dashboard: DashboardModel) {
       }
     }
 
-    const ds = await getDataSourceInstance(datasource);
+    const ds = await getDataSourceInstanceSettings(datasource);
+
+    if (!ds) {
+      return;
+    }
+
     if (ds.meta?.builtIn) {
       return;
     }
