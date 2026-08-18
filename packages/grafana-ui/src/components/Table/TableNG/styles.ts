@@ -148,8 +148,18 @@ export const getGridStyles = memoize(
           },
         },
 
-        // `table.refresh` rounds the table's top-right corner, matching the header's own surface.
+        // `table.refresh` rounds the table's top corners, matching the header's own surface.
         ...(tableRefreshEnabled && {
+          '.rdg-header-row > .rdg-cell': {
+            // Sub-pixel scroll offsets can leave a hairline gap above the sticky header where the
+            // row scrolled underneath it shows through — invisible before this commit, since the
+            // header shared the row background, but visible now that it's its own surface. A
+            // same-color 1px shadow just above the header's own box masks it without needing to
+            // touch react-data-grid's own sticky positioning. `overflow: hidden` below (for the
+            // rounded corners) doesn't clip this: it governs the cell's own content, not a
+            // box-shadow painted at its border edge.
+            boxShadow: '0 -1px 0 0 var(--rdg-header-background-color)',
+          },
           '.rdg-header-row > .rdg-cell:first-child': {
             borderStartStartRadius: theme.shape.radius.default,
             overflow: 'hidden',
