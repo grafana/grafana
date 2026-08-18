@@ -2,43 +2,15 @@ package nats
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"regexp"
 
 	"github.com/grafana/dskit/services"
-	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
 const publisherName = "nats-publisher"
-
-const (
-	reasonPermissionsViolation = "permissions_violation"
-	reasonAuthorization        = "authorization"
-	reasonAuthExpired          = "auth_expired"
-	reasonAuthRevoked          = "auth_revoked"
-	reasonAccountAuthExpired   = "account_auth_expired"
-	reasonMaxSubscriptions     = "max_subscriptions"
-	reasonSlowConsumer         = "slow_consumer"
-	reasonOther                = "other"
-)
-
-var connStateErrs = []error{
-	natsclient.ErrReconnectBufExceeded,
-	natsclient.ErrConnectionClosed,
-	natsclient.ErrConnectionDraining,
-}
-
-// publishPermissionsRe extracts the subject from a publish permissions
-// violation. The server names the rejected subject in the error text only —
-// nats.go passes a nil *Subscription for a publish rejection, since no
-// subscription is involved — so the subject has to be read back out of the
-// message. Mirrors nats.go's own permissionsRe for the subscribe direction.
-var publishPermissionsRe = regexp.MustCompile(`Publish to "(\S+)"`)
 
 // Publisher hides nats.go types so callers can mock it.
 type Publisher interface {
@@ -55,7 +27,6 @@ type PublisherService struct {
 
 func newPublisher(logger log.Logger, m *publisherMetrics, config *Config) *PublisherService {
 	conn := newConnection(rolePublisher, logger, m.connectionMetrics, config, config.PublisherCredentials)
-	conn.onAsyncError = func(err error) { m.recordAsyncError(err) }
 	p := &PublisherService{connection: conn, metrics: m}
 	p.NamedService = services.NewBasicService(nil, p.running, p.stopping).WithName(publisherName)
 	return p
@@ -113,47 +84,4 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 	p.metrics.messagesPublished.Inc()
 	p.log.Debug("published message", "subject", subject, "bytes", len(data))
 	return nil
-}
-
-func isConnStateErr(err error) bool {
-	for _, target := range connStateErrs {
-		if errors.Is(err, target) {
-			return true
-		}
-	}
-	return false
-}
-
-func (m *publisherMetrics) recordAsyncError(err error) {
-	if err == nil {
-		return
-	}
-	var group, resource string
-	if errors.Is(err, natsclient.ErrPermissionViolation) {
-		if match := publishPermissionsRe.FindStringSubmatch(err.Error()); len(match) == 2 {
-			group, _, resource, _ = resourcewatch.ParseSubject(match[1])
-		}
-	}
-	m.asyncErrors.WithLabelValues(group, resource, asyncErrorReason(err)).Inc()
-}
-
-func asyncErrorReason(err error) string {
-	switch {
-	case errors.Is(err, natsclient.ErrPermissionViolation):
-		return reasonPermissionsViolation
-	case errors.Is(err, natsclient.ErrAuthorization):
-		return reasonAuthorization
-	case errors.Is(err, natsclient.ErrAuthExpired):
-		return reasonAuthExpired
-	case errors.Is(err, natsclient.ErrAuthRevoked):
-		return reasonAuthRevoked
-	case errors.Is(err, natsclient.ErrAccountAuthExpired):
-		return reasonAccountAuthExpired
-	case errors.Is(err, natsclient.ErrMaxSubscriptionsExceeded):
-		return reasonMaxSubscriptions
-	case errors.Is(err, natsclient.ErrSlowConsumer):
-		return reasonSlowConsumer
-	default:
-		return reasonOther
-	}
 }
