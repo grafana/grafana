@@ -21,7 +21,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginspec "github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -82,7 +82,7 @@ type AppPluginAPIBuilder struct {
 }
 
 func NewAppPluginAPIBuilder(
-	plugin pluginspec.PluginDefinition,
+	plugin definition.PluginDefinition,
 	client PluginClient, // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
@@ -124,7 +124,7 @@ func RegisterAPIService(
 	registerProxy := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx))
 
 	// Find all local plugins
-	pluginInfos, err := pluginspec.LoadPluginDefinition(ctx, pluginSources, pluginspec.Options{
+	plugins, err := definition.LoadPluginDefinition(ctx, pluginSources, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
 				// TODO? should we fail more loudly
@@ -145,7 +145,7 @@ func RegisterAPIService(
 	}
 
 	var last *AppPluginAPIBuilder
-	for _, plugin := range pluginInfos {
+	for _, plugin := range plugins {
 		b, err := NewAppPluginAPIBuilder(plugin,
 			pluginClient, // scoped to a single plugin!
 			contextProvider,

@@ -11,7 +11,7 @@ import (
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginspec "github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
@@ -95,12 +95,12 @@ func TestGetAppPlugins(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pluginInfos, err := pluginspec.LoadPluginDefinition(context.Background(), tt.registry, pluginspec.Options{
+			plugins, err := definition.LoadPluginDefinition(context.Background(), tt.registry, definition.Options{
 				Filter: func(jsonData plugins.JSONData) bool {
 					return jsonData.Type == plugins.TypeApp
 				},
 				Schemas:     true,
-				AppManifest: true,
+				AppManifest: false, // not for datasources yet
 			})
 
 			if tt.expectedErr {
@@ -110,7 +110,7 @@ func TestGetAppPlugins(t *testing.T) {
 			require.NoError(t, err)
 
 			var ids []string
-			for _, p := range pluginInfos {
+			for _, p := range plugins {
 				ids = append(ids, p.JSONData.ID)
 			}
 			require.Equal(t, tt.expectedIDs, ids)

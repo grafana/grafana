@@ -29,7 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginspec "github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -121,7 +121,7 @@ func RegisterAPIService(
 		return nil, regErr
 	}
 
-	pluginInfos, err := pluginspec.LoadPluginDefinition(context.Background(), pluginSources, pluginspec.Options{
+	plugins, err := definition.LoadPluginDefinition(context.Background(), pluginSources, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			return jsonData.Type == plugins.TypeDataSource
 		},
@@ -133,7 +133,7 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
 	}
 
-	for _, plugin := range pluginInfos {
+	for _, plugin := range plugins {
 		client, ok := pluginClient.(PluginClient)
 		if !ok {
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
