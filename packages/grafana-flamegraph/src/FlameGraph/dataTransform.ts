@@ -396,6 +396,49 @@ export class FlameGraphDataContainer {
     return this.uniqueLabelsMap![label];
   }
 
+  /**
+   * Returns the labels of the item's ancestors followed by the item's own label, i.e. the call path from the root to
+   * the item. This identifies a node much more precisely than its label alone, which can occur at many call sites.
+   */
+  getItemPath(item: LevelItem): string[] {
+    const path: string[] = [];
+    let current: LevelItem | undefined = item;
+
+    while (current) {
+      path.unshift(this.getLabel(current.itemIndexes[0]));
+      current = current.parents?.[0];
+    }
+
+    return path;
+  }
+
+  /**
+   * Finds the item at the given call path (as returned by getItemPath), or undefined if the path does not exist in
+   * this data, for example because the profile changed.
+   */
+  getItemByPath(path: string[]): LevelItem | undefined {
+    this.initLevels();
+    const root = this.levels![0]?.[0];
+
+    if (!root || !path.length || this.getLabel(root.itemIndexes[0]) !== path[0]) {
+      return undefined;
+    }
+
+    let current = root;
+
+    for (const label of path.slice(1)) {
+      const child = current.children.find((c) => this.getLabel(c.itemIndexes[0]) === label);
+
+      if (!child) {
+        return undefined;
+      }
+
+      current = child;
+    }
+
+    return current;
+  }
+
   getCollapsedMap() {
     this.initLevels();
     return this.collapsedMap!;

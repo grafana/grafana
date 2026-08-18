@@ -56,6 +56,9 @@ const FlameGraphPane = ({
   setSharedSandwichItem,
 }: FlameGraphPaneProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
+  // Call path of the focused item, recorded against the data it was focused in, so the focus can be restored on the
+  // matching node when the data changes. See the effects below.
+  const focusedItemPathRef = useRef<string[] | undefined>(undefined);
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
@@ -101,7 +104,12 @@ const FlameGraphPane = ({
     }
 
     if (dataContainer && focusedItemData) {
-      const item = dataContainer.getNodesWithLabel(focusedItemData.label)?.[0];
+      // Prefer the node at the exact same call path: a label can occur at many call sites, and re-anchoring on the
+      // first of them would silently move the focus to an unrelated part of the profile. Fall back to the label when
+      // the path no longer exists, which keeps the focus roughly where it was for a node that merely moved.
+      const item =
+        (focusedItemPathRef.current && dataContainer.getItemByPath(focusedItemPathRef.current)) ||
+        dataContainer.getNodesWithLabel(focusedItemData.label)?.[0];
 
       if (item) {
         setFocusedItemData({ ...focusedItemData, item });
@@ -128,6 +136,15 @@ const FlameGraphPane = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataContainer, keepFocusOnDataChange]);
+
+  // Declared after the re-anchoring effect so that on a data change that effect still sees the path recorded against
+  // the previous data, and this one then records the path of the re-anchored item.
+  useEffect(() => {
+    focusedItemPathRef.current =
+      focusedItemData && focusedItemData.item.itemIndexes.length
+        ? dataContainer?.getItemPath(focusedItemData.item)
+        : undefined;
+  }, [focusedItemData, dataContainer]);
 
   const weSetFocusRef = useRef(false);
 
