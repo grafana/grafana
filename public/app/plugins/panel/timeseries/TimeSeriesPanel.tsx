@@ -87,9 +87,19 @@ export const TimeSeriesPanel = ({
         });
 
         if (frame.meta?.timeCompare?.originalRefId !== undefined) {
-          const compareFrameIdx = frames?.findIndex(
-            (frameComp) => frameComp.refId === frame.meta!.timeCompare!.originalRefId
-          );
+          const compareFrameIdx = frames?.findIndex((frameComp) => {
+            const foundRefId = frameComp.refId === frame.meta!.timeCompare!.originalRefId;
+            if (foundRefId) {
+              const fieldCompExampleName = frameComp.fields.filter(
+                (fieldComp) => fieldComp.type === FieldType.number
+              )[0].name;
+              return frame.fields.some(
+                (frameField) => frameField.name.replace('-compare', '') === fieldCompExampleName
+              );
+            } else {
+              return false;
+            }
+          });
           if (compareFrameIdx !== undefined && compareFrameIdx > -1) {
             comparisonPairingMap.set(i, compareFrameIdx);
           }
