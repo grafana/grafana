@@ -38,6 +38,7 @@ jobs:
               - '!packages/**/*.gen.ts'
               - '!packages/grafana-openapi/**'
               - 'scripts/webpack/**'
+              - 'scripts/rspack/**'
               - '.eslintrc*'
               - '.prettierrc*'
               - '.stylelintrc*'

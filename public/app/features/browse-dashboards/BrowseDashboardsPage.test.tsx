@@ -3,7 +3,7 @@ import { type ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
-import { render as testRender, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
+import { act, render as testRender, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -409,8 +409,10 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         setTestFlags({ 'grafana.starredFolders': true });
       });
 
-      afterEach(() => {
-        setTestFlags({});
+      afterEach(async () => {
+        await act(async () => {
+          setTestFlags({});
+        });
       });
 
       it('shows the star toggle as the first action, before "Recently deleted"', async () => {

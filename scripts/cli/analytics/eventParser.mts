@@ -1,5 +1,4 @@
 import path from 'path';
-
 import {
   Node,
   SyntaxKind,
@@ -11,11 +10,10 @@ import {
   type JSDoc,
 } from 'ts-morph';
 
-import type { EventData, EventNamespace, EventPropertySchema, JSDocMetadata } from './types.mts';
-
+import { resolveOwner } from './codeowners.mts';
 import { extractSilentFromOptions } from './findAllEvents.mts';
 import { getMetadataFromJSDocs, getJsDocsFromNode, resolveType } from './typeResolution.mts';
-import { resolveOwner } from './codeowners.mts';
+import type { EventData, EventNamespace, EventPropertySchema, JSDocMetadata } from './types.mts';
 
 /**
  * Finds all events declared in a file by locating calls to known factory functions

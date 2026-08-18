@@ -291,10 +291,6 @@ type SearchOptions struct {
 	// TTL for the dedup cache used in ListModifiedSince updates. 0 disables the cache.
 	IndexModificationCacheTTL time.Duration
 
-	// Keep deleted objects in the index so trash searches can find them. Off means
-	// a delete removes the document, as it did before trash search existed.
-	IndexDeletedDocuments bool
-
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
 
@@ -1746,9 +1742,16 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 	)
 	maxPageBytes := s.maxPageSizeBytes
 
-	// Cache admin check results per folder to avoid redundant Check calls
-	// for items in the same folder.
-	folderAdminCache := make(map[string]bool)
+	// One authorizer per request: it caches folder-admin results, which must not
+	// outlive the request. The search path builds the same thing, so the two trash
+	// views cannot drift on who may see what.
+	authorizer := NewTrashAuthorizer(s.access, user, key, func(err error) {
+		s.degraded(ctx, "folder_admin_check", classifyAuthError(err), NamespacedResource{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}, err)
+	})
 
 	rv, err := s.backend.ListHistory(ctx, req, func(iter ListIterator) error {
 		for iter.Next() {
@@ -1767,11 +1770,9 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 				continue
 			}
 
-			// Check if user is admin in this folder (cached) or the user who deleted the item.
-			if !s.checkFolderAdmin(ctx, user, iter.Folder(), key, folderAdminCache) {
-				if obj.GetUpdatedBy() != user.GetUID() {
-					continue
-				}
+			// The deletion marker records the deleting user as the last updater.
+			if !authorizer.Allowed(ctx, iter.Folder(), obj.GetUpdatedBy()) {
+				continue
 			}
 
 			item := &resourcepb.ResourceWrapper{
@@ -1820,33 +1821,6 @@ func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListR
 		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
 	}
 	return rsp, nil
-}
-
-// checkFolderAdmin checks whether the user has admin permission (VerbSetPermissions) in the given
-// folder. Results are cached per folder to avoid redundant Check calls.
-func (s *server) checkFolderAdmin(ctx context.Context, user claims.AuthInfo, folder string, key *resourcepb.ResourceKey, cache map[string]bool) bool {
-	if isAdmin, ok := cache[folder]; ok {
-		return isAdmin
-	}
-	resp, err := s.access.Check(ctx, user, claims.CheckRequest{
-		Verb:      utils.VerbSetPermissions,
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-	}, folder)
-	if err != nil {
-		// The error is swallowed (user treated as non-admin), so without this
-		// the failure is invisible. Record it as a degraded operation, tagging
-		// whether authz was unavailable vs. a logical error.
-		s.degraded(ctx, "folder_admin_check", classifyAuthError(err), NamespacedResource{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-		}, err)
-	}
-	isAdmin := err == nil && resp.Allowed
-	cache[folder] = isAdmin
-	return isAdmin
 }
 
 // parseTrashItem unmarshals the raw value into a GrafanaMetaAccessor.
@@ -2126,7 +2100,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
 					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
+						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Group, event.Key.Resource).Observe(latencySeconds)
 					}
 				}
 			}
