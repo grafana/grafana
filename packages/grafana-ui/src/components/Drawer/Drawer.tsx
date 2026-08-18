@@ -9,8 +9,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { Button } from '../Button/Button';
 import { getDragStyles } from '../DragHandle/DragHandle';
-import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { getPortalContainer } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -141,8 +141,9 @@ export function Drawer({
           />
           <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
             <div className={styles.actions}>
-              <IconButton
-                name="times"
+              <Button
+                icon="times"
+                size="sm"
                 variant="secondary"
                 onClick={onClose}
                 data-testid={selectors.components.Drawer.General.close}

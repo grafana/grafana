@@ -142,7 +142,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			store := db.InitTestDB(t)
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 			cfg := setting.NewCfg()
 			cfg.Anonymous.Enabled = !tc.disableService
@@ -209,7 +209,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
 		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
@@ -324,7 +324,7 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 				ClientIP: "[2001:db8:3333:4444:cccc:DDDD:eeee:FFFF]:1000",
 			},
 		}}
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.Anonymous.Enabled = true
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
@@ -355,7 +355,7 @@ func TestIntegrationAnonDeviceService_DeviceLimitWithCache(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup test environment
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.Anonymous.DeviceLimit = 1 // Set device limit to 1 for testing
 	anonService := ProvideAnonymousDeviceService(
