@@ -21,7 +21,6 @@ permissions: {}
 jobs:
   setup:
     name: Setup opted-in teams
-    if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-small
     outputs:
       # NOTE: Only checks test coverage for opted-in codeowners.
@@ -40,7 +39,6 @@ jobs:
 
   detect-changes:
     name: Detect changed files
-    if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
@@ -78,7 +76,7 @@ jobs:
   coverage:
     name: Coverage - ${{ matrix.codeowner }}
     needs: [setup, detect-changes]
-    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false"
+    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
@@ -239,10 +237,7 @@ jobs:
       - name: Check if skipped
         id: check-skip
         run: |
-          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
-            echo "skipped=true" >> "$GITHUB_OUTPUT"
-            echo "⏭️ Coverage checks skipped for fork PR"
-          elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
             echo "skipped=true" >> "$GITHUB_OUTPUT"
             echo "✅ Coverage checks skipped due to 'no-check-frontend-test-coverage' label"
           else
@@ -258,17 +253,13 @@ jobs:
           {
             echo "# Frontend Test Coverage Summary"
             echo
-            if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
-              echo "⏭️ Skipped for a fork PR — coverage checks only run against branches of this repository."
-            else
-              echo "## ⚠️ Skipped via the \`no-check-frontend-test-coverage\` label"
-              echo
-              echo "Coverage checks were skipped for the following opted-in codeowners:"
-              echo
-              echo "$TEAMS" | jq -r '.[] | "- `" + . + "`"'
-              echo
-              echo "🚨 **Skip label:** remove the \`no-check-frontend-test-coverage\` label from this PR to re-enable coverage checks."
-            fi
+            echo "## ⚠️ Skipped via the \`no-check-frontend-test-coverage\` label"
+            echo
+            echo "Coverage checks were skipped for the following opted-in codeowners:"
+            echo
+            echo "$TEAMS" | jq -r '.[] | "- `" + . + "`"'
+            echo
+            echo "🚨 **Skip label:** remove the \`no-check-frontend-test-coverage\` label from this PR to re-enable coverage checks."
           } >> "$GITHUB_STEP_SUMMARY"
 
       # Checkout runs before downloading artifacts because actions/checkout cleans
