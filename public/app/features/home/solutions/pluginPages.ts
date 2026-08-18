@@ -1,5 +1,3 @@
-import memoize from 'micro-memoize';
-
 import { locationUtil, type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
@@ -19,11 +17,8 @@ async function probeApp(appId: string): Promise<PluginMeta<{}> | null> {
   }
 }
 
-/** Shares one bounded settings lookup per app across its CTAs. */
-const probeEnabledApp = memoize(probeApp, { isPromise: true, maxSize: 8 });
-
 export async function isDrilldownAvailable(appId: string, appPath: string): Promise<boolean> {
-  const settings = await probeEnabledApp(appId);
+  const settings = await probeApp(appId);
   if (!settings) {
     return false;
   }
@@ -34,7 +29,7 @@ export async function isDrilldownAvailable(appId: string, appPath: string): Prom
 }
 
 export async function accessibleAppPage(appId: string, path: string): Promise<string | null> {
-  const settings = await probeEnabledApp(appId);
+  const settings = await probeApp(appId);
   const bridgePath = createBridgeURL(appId, path);
   return settings && canAccessPluginPage(settings, bridgePath) ? bridgePath : null;
 }
