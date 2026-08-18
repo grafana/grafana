@@ -322,10 +322,10 @@ export const useFlagDatasourcesApiserverUseNewAPIsForDatasourceResources = (opti
  *
  * **Details:**
  * - flag key: `datasources.azureMonitorBatchAPI`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datasources.azureMonitorBatchAPI", false, options).value;
+  return useFlag("datasources.azureMonitorBatchAPI", true, options).value;
 };
 
 /**
