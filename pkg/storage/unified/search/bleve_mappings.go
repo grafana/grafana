@@ -138,8 +138,9 @@ func (k keywordField) term(value string) string {
 // that keyword form lives, from the declarations that produced the mapping, so
 // the query side cannot drift from it (see keywordVariant).
 //
-// Keys are the names filters, sorts and facets arrive with. Labels are absent on
-// purpose: the label sub-document has no keyword analyzer.
+// Keys are the names filters, sorts and facets arrive with. Label keys are
+// absent because they are dynamic; a label filter is exact anyway, because bleve
+// analyzes it with the label sub-document's keyword analyzer.
 func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) map[string]keywordField {
 	fields := map[string]keywordField{}
 	add := func(key string, def resource.SearchFieldDefinition, prefix string) {
@@ -187,8 +188,8 @@ var standardKeywordFields = keywordFieldsForMapping(nil, "", "", nil)
 
 // keywordSubDocumentFields are keyword-mapped fields that live in sub-documents
 // and so are not modellable as SearchFieldDefinitions yet (see
-// managerSubDocumentMapping and sourceSubDocumentMapping). The labels
-// sub-document is deliberately absent: it has no keyword default analyzer.
+// managerSubDocumentMapping and sourceSubDocumentMapping). The labels and
+// reference sub-documents are absent because their keys are dynamic.
 var keywordSubDocumentFields = []string{
 	resource.SEARCH_FIELD_MANAGER_KIND,
 	resource.SEARCH_FIELD_MANAGER_ID,
@@ -199,6 +200,10 @@ var keywordSubDocumentFields = []string{
 // referenceFieldPrefix is the keyword-analyzed reference sub-document. Its keys
 // are resource kinds, so they cannot be enumerated up front.
 const referenceFieldPrefix = "reference."
+
+// labelFieldPrefix is the keyword-analyzed labels sub-document. Its keys are
+// label names, so they cannot be enumerated up front.
+const labelFieldPrefix = resource.SEARCH_FIELD_LABELS + "."
 
 // storedFacetFieldsForMapping returns the stored keyword field that post-rank
 // authorization can load for each facet-capable API field. Facet terms come
@@ -521,7 +526,10 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 	referenceMapper.DefaultAnalyzer = keyword.Name
 	mapper.AddSubDocumentMapping(strings.TrimSuffix(referenceFieldPrefix, "."), referenceMapper)
 
+	// Keyword so a label selector, which compares whole values case-sensitively,
+	// cannot match one word of a multi-word value.
 	labelMapper := bleve.NewDocumentMapping()
+	labelMapper.DefaultAnalyzer = keyword.Name
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
 
 	// Static so undeclared keys are dropped rather than dynamically indexed

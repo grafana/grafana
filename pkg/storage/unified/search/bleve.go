@@ -20,6 +20,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
@@ -1705,6 +1706,8 @@ type bleveIndex struct {
 	index bleve.Index
 	// Index features this index was built with, from its build info.
 	features []resource.IndexFeature
+	// Whether this index holds label values whole, from its own mapping.
+	labelsAreKeyword bool
 	// Both are needed to tell "trash is off" from "trash is on but this index has
 	// not been rebuilt yet".
 	keepsDeletedDocuments bool
@@ -1784,6 +1787,7 @@ func (b *bleveBackend) newBleveIndex(
 		key:                   key,
 		index:                 index,
 		features:              features,
+		labelsAreKeyword:      labelAnalyzerIsKeyword(index),
 		keepsDeletedDocuments: slices.Contains(features, resource.IndexFeatureHoldsDeletedDocuments),
 		wantsDeletedDocuments: b.opts.IndexDeletedDocuments,
 		indexStorage:          newIndexType,
@@ -2995,12 +2999,33 @@ func (b *bleveIndex) textQueryKindFor(name string) textQueryKind {
 	if kind, ok := b.searchFields.textQueryKinds[name]; ok {
 		return kind
 	}
+	// Reference keys are dynamic, so the keyword sub-document is matched by prefix.
 	if strings.HasPrefix(name, referenceFieldPrefix) {
+		return textQueryTerm
+	}
+	// Label keys are dynamic too, but labels were text-analyzed until the keyword
+	// mapping shipped, so follow what this index actually holds.
+	if strings.HasPrefix(name, labelFieldPrefix) && b.labelsAreKeyword {
 		return textQueryTerm
 	}
 	// Undeclared fields (dynamically indexed, or named by a client we don't know
 	// about) keep the analyzed default.
 	return textQueryStandard
+}
+
+// labelAnalyzerIsKeyword reports whether an index holds label values whole. Read
+// from the index's own stored mapping, so an index written before labels became
+// keyword-analyzed is queried the way it was written. Any key answers for the
+// whole sub-document, which maps no key of its own.
+func labelAnalyzerIsKeyword(index bleve.Index) bool {
+	if index == nil {
+		return false
+	}
+	m := index.Mapping()
+	if m == nil {
+		return false
+	}
+	return m.AnalyzerNameForPath(labelFieldPrefix+"anyKey") == keyword.Name
 }
 
 // titleQueryFields expands a text query on the logical title field across its

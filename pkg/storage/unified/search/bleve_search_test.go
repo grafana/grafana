@@ -751,6 +751,126 @@ func TestTitleSetFilterExactMatch(t *testing.T) {
 	})
 }
 
+// TestLabelFilterExactMatch covers label selectors, which compare whole values
+// case-sensitively. /search does not re-apply the selector to the resource, so
+// whatever the index returns is the answer.
+func TestLabelFilterExactMatch(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	seed := func(t *testing.T) resource.ResourceIndex {
+		index := newTestDashboardsIndex(t, threshold, 3, noop)
+		indexDocumentsWithLabels(t, index, key, map[string]map[string]string{
+			"name1": {"team": "Team Alpha"},
+			"name2": {"team": "alpha"},
+			"name3": {"team": "Team Beta"},
+		})
+		return index
+	}
+
+	for _, operator := range []string{"in", "="} {
+		t.Run(operator+" on a label matches the whole value", func(t *testing.T) {
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "Team Alpha"), []string{"name1"})
+		})
+
+		t.Run(operator+" on a label does not match a word of the value", func(t *testing.T) {
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "Team"), nil)
+			// "alpha" is a word of name1's value, and the whole value of name2.
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "alpha"), []string{"name2"})
+		})
+
+		t.Run(operator+" on a label is case sensitive", func(t *testing.T) {
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "team alpha"), nil)
+		})
+	}
+
+	t.Run("in on a label matches any listed value", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("in", "team", "Team Alpha", "Team Beta"), []string{"name1", "name3"})
+	})
+
+	t.Run("notin on a label excludes the whole value only", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "Team Alpha"), []string{"name2", "name3"})
+		// The failure mode here is excluding too much.
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "Team"), []string{"name1", "name2", "name3"})
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "alpha"), []string{"name1", "name3"})
+	})
+
+	t.Run("wildcard label values still match", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("in", "team", "Team*"), []string{"name1", "name3"})
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "Team*"), []string{"name2"})
+	})
+
+	t.Run("filter on a label the document does not carry matches nothing", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("in", "other", "Team Alpha"), nil)
+	})
+
+	t.Run("values sharing a word do not match each other", func(t *testing.T) {
+		// Label values are identifiers, and a hyphen is a word boundary to the text
+		// analyzer, which is how these used to match each other.
+		index := newTestDashboardsIndex(t, threshold, 4, noop)
+		indexDocumentsWithLabels(t, index, key, map[string]map[string]string{
+			"ops":    {"team": "platform-ops"},
+			"eng":    {"team": "platform-engineering"},
+			"foo":    {"env": "foo"},
+			"foobar": {"env": "foo-bar"},
+		})
+		checkSearchQuery(t, index, labelFilterQuery("in", "team", "platform-ops"), []string{"ops"})
+		checkSearchQuery(t, index, labelFilterQuery("in", "env", "foo"), []string{"foo"})
+		checkSearchQuery(t, index, labelFilterQuery("notin", "env", "foo"), []string{"eng", "foobar", "ops"})
+	})
+
+	t.Run("a label is returned as written", func(t *testing.T) {
+		// Stored values are not analyzed, so retrieval is unaffected by the mapping.
+		q := labelFilterQuery("in", "team", "Team Alpha")
+		q.Fields = []string{"labels.team"}
+		res, err := seed(t).Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, res.Results.Rows, 1)
+		require.Equal(t, "Team Alpha", string(res.Results.Rows[0].Cells[0]))
+	})
+}
+
+func indexDocumentsWithLabels(t *testing.T, index resource.ResourceIndex, key resource.NamespacedResource, docsWithLabels map[string]map[string]string) {
+	items := make([]*resource.BulkIndexItem, 0, len(docsWithLabels))
+	for name, labels := range docsWithLabels {
+		items = append(items, &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:   1,
+				Name: name,
+				Key: &resourcepb.ResourceKey{
+					Name:      name,
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+				Title:  name,
+				Labels: labels,
+			},
+		})
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+}
+
+func labelFilterQuery(operator, key string, values ...string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+			Labels: []*resourcepb.Requirement{{Key: key, Operator: operator, Values: values}},
+		},
+		// Sort by name so multi-hit expectations are deterministic (filters alone
+		// impose no order).
+		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+		Limit:  100000,
+	}
+}
+
 // TestPublicFieldNameFilter checks the filter path resolves a public field name
 // to its physical fields.* location, so callers don't supply the prefix.
 func TestPublicFieldNameFilter(t *testing.T) {
