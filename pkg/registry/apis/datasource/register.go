@@ -121,7 +121,7 @@ func RegisterAPIService(
 		return nil, regErr
 	}
 
-	plugins, err := definition.LoadPluginDefinition(context.Background(), pluginSources, definition.Options{
+	pluginDefs, err := definition.LoadPluginDefinition(context.Background(), pluginSources, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			return jsonData.Type == plugins.TypeDataSource
 		},
@@ -133,7 +133,7 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
 	}
 
-	for _, plugin := range plugins {
+	for _, plugin := range pluginDefs {
 		client, ok := pluginClient.(PluginClient)
 		if !ok {
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)

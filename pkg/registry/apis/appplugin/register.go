@@ -126,7 +126,7 @@ func RegisterAPIService(
 	}
 
 	// Find all local plugins
-	plugins, err := definition.LoadPluginDefinition(ctx, pluginSources, definition.Options{
+	pluginDefs, err := definition.LoadPluginDefinition(ctx, pluginSources, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
 				// TODO? should we fail more loudly
@@ -147,7 +147,7 @@ func RegisterAPIService(
 	}
 
 	var last *AppPluginAPIBuilder
-	for _, plugin := range plugins {
+	for _, plugin := range pluginDefs {
 		b, err := NewAppPluginAPIBuilder(plugin,
 			pluginClient, // scoped to a single plugin!
 			contextProvider,

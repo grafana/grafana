@@ -54,7 +54,7 @@ func LoadPluginDefinition(ctx context.Context, pluginSources sources.Registry, o
 		for _, p := range res {
 			if opts.Filter(p.Primary.JSONData) {
 				if _, found := uniquePlugins[p.Primary.JSONData.ID]; found {
-					backend.Logger.Info("Found duplicate plugin %s when registering API groups.", p.Primary.JSONData.ID)
+					backend.Logger.Info("Found duplicate plugin when registering API groups", "pluginId", p.Primary.JSONData.ID)
 					continue
 				}
 				info, err := loadInfo(p.Primary.FS, p.Primary.JSONData, opts)
@@ -68,7 +68,7 @@ func LoadPluginDefinition(ctx context.Context, pluginSources sources.Registry, o
 			for _, child := range p.Children {
 				if opts.Filter(child.JSONData) {
 					if _, found := uniquePlugins[child.JSONData.ID]; found {
-						backend.Logger.Info("Found duplicate plugin %s when registering API groups.", child.JSONData.ID)
+						backend.Logger.Info("Found duplicate plugin when registering API groups", "pluginId", child.JSONData.ID)
 						continue
 					}
 
@@ -142,7 +142,8 @@ func loadManifest(rootfs fs.FS) (*app.ManifestData, error) {
 	// The AppManifest CR schema differs between versions (e.g. v1alpha1 kinds
 	// carry "schema" while v1alpha2 carries "schemas", and json decoding would
 	// silently drop the mismatched field), so dispatch on the declared
-	// apiVersion and reject versions we cannot faithfully decode.
+	// apiVersion and reject anything we cannot faithfully decode -- including a
+	// manifest that declares no apiVersion at all.
 	var meta struct {
 		APIVersion string `json:"apiVersion"`
 	}
@@ -152,7 +153,7 @@ func loadManifest(rootfs fs.FS) (*app.ManifestData, error) {
 
 	var manifest app.ManifestData
 	switch meta.APIVersion {
-	case "", "apps.grafana.app/v1alpha2":
+	case "apps.grafana.app/v1alpha2":
 		var cr appmanifestV1alpha2.AppManifest
 		if err := json.Unmarshal(raw, &cr); err != nil {
 			return nil, fmt.Errorf("decoding AppManifest CR: %w", err)

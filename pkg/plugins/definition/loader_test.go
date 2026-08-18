@@ -53,6 +53,13 @@ func TestLoadManifest(t *testing.T) {
 		require.ErrorContains(t, err, "unsupported AppManifest apiVersion")
 	})
 
+	// Without a declared apiVersion there is no way to tell which CR schema the
+	// file follows, and guessing would silently drop version-specific fields.
+	t.Run("missing apiVersion", func(t *testing.T) {
+		_, err := loadManifest(manifestFS(`{"spec": {"appName": "test", "group": "test-app"}}`))
+		require.ErrorContains(t, err, `unsupported AppManifest apiVersion ""`)
+	})
+
 	t.Run("malformed json", func(t *testing.T) {
 		_, err := loadManifest(manifestFS(`{not json`))
 		require.Error(t, err)
