@@ -162,7 +162,7 @@ func loadManifest(rootfs fs.FS) (*app.ManifestData, error) {
 	case "apps.grafana.app/v1alpha1":
 		var cr appmanifestV1alpha1.AppManifest
 		if err := json.Unmarshal(raw, &cr); err != nil {
-			return nil, fmt.Errorf("decoding AppManifest CR: %w", err)
+			return nil, fmt.Errorf("decoding AppManifest CR (%s): %w", meta.APIVersion, err)
 		}
 		manifest, err = cr.Spec.ToManifestData()
 	default:
