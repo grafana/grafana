@@ -642,6 +642,186 @@ func TestRequirementQuery_ExactPathFromCapabilities(t *testing.T) {
 	assert.True(t, ok, "= on an undeclared field should build an analyzed MatchQuery")
 }
 
+// numberOrBoolFieldsIndex returns an index declaring one boolean and one numeric
+// filterable field, plus a numeric field that can only be sorted.
+func numberOrBoolFieldsIndex(t *testing.T) *bleveIndex {
+	t.Helper()
+	return customFieldsIndex(t,
+		resource.SearchFieldDefinition{Name: "paused", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "panelID", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "ratio", Type: resource.SearchFieldTypeDouble, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "weight", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort}},
+		resource.SearchFieldDefinition{Name: "when", Type: resource.SearchFieldTypeDate, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+	)
+}
+
+// A date filter is out of scope until the value format is settled, so it keeps
+// the behaviour it had rather than picking RFC3339 or unix millis here.
+func TestRequirementQuery_DateFieldIsNotTypedYet(t *testing.T) {
+	b := numberOrBoolFieldsIndex(t)
+	_, ok := b.numberOrBoolFieldFor(resource.SEARCH_FIELD_PREFIX + "when")
+	assert.False(t, ok)
+}
+
+func TestRequirementQuery_BooleanField(t *testing.T) {
+	b := numberOrBoolFieldsIndex(t)
+	paused := resource.SEARCH_FIELD_PREFIX + "paused"
+
+	q, errRes := b.requirementQuery(&resourcepb.Requirement{Key: paused, Operator: "=", Values: []string{"true"}})
+	require.Nil(t, errRes)
+	bq, ok := q.(*query.BoolFieldQuery)
+	require.True(t, ok, "a boolean field needs a bool query; a term query cannot reach it")
+	assert.Equal(t, paused, bq.Field())
+	assert.True(t, bq.Bool)
+
+	// The unprefixed name a caller may send resolves to the same field.
+	q, errRes = b.requirementQuery(&resourcepb.Requirement{Key: "paused", Operator: "=", Values: []string{"false"}})
+	require.Nil(t, errRes)
+	bq, ok = q.(*query.BoolFieldQuery)
+	require.True(t, ok)
+	assert.Equal(t, paused, bq.Field())
+	assert.False(t, bq.Bool)
+
+	// notin excludes, and still requires the document to match something.
+	q, errRes = b.requirementQuery(&resourcepb.Requirement{Key: paused, Operator: "notin", Values: []string{"true"}})
+	require.Nil(t, errRes)
+	boolQuery, ok := q.(*query.BooleanQuery)
+	require.True(t, ok)
+	mustNot, ok := boolQuery.MustNot.(*query.DisjunctionQuery)
+	require.True(t, ok)
+	require.Len(t, mustNot.Disjuncts, 1)
+	_, ok = mustNot.Disjuncts[0].(*query.BoolFieldQuery)
+	assert.True(t, ok)
+
+	// Anything but the two canonical spellings is a mistake, not false.
+	for _, value := range []string{"yes", "True", "1", ""} {
+		q, errRes = b.requirementQuery(&resourcepb.Requirement{Key: paused, Operator: "=", Values: []string{value}})
+		require.Nil(t, q)
+		require.NotNil(t, errRes, "value %q", value)
+		assert.Equal(t, int32(400), errRes.Code)
+	}
+
+	// A boolean has no order, so a range comparison on it is refused.
+	q, errRes = b.requirementQuery(&resourcepb.Requirement{Key: paused, Operator: "gt", Values: []string{"true"}})
+	require.Nil(t, q)
+	require.NotNil(t, errRes)
+	assert.Equal(t, int32(400), errRes.Code)
+}
+
+func TestRequirementQuery_NumericField(t *testing.T) {
+	b := numberOrBoolFieldsIndex(t)
+	panelID := resource.SEARCH_FIELD_PREFIX + "panelID"
+
+	rangeOf := func(q query.Query) *query.NumericRangeQuery {
+		nq := numericRangeOf(t, q)
+		assert.Equal(t, panelID, nq.Field())
+		return nq
+	}
+
+	// Equality is a range with both bounds on the value: a number has no term form.
+	eq := rangeOf(mustQuery(t, b, panelID, "=", "10"))
+	assert.Equal(t, 10.0, *eq.Min)
+	assert.Equal(t, 10.0, *eq.Max)
+	assert.True(t, *eq.InclusiveMin)
+	assert.True(t, *eq.InclusiveMax)
+
+	for _, tc := range []struct {
+		operator     string
+		min, max     *float64
+		inclusiveMin bool
+		inclusiveMax bool
+	}{
+		{operator: "gt", min: new(15.0)},
+		{operator: "gte", min: new(15.0), inclusiveMin: true},
+		{operator: "lt", max: new(15.0)},
+		{operator: "lte", max: new(15.0), inclusiveMax: true},
+	} {
+		t.Run(tc.operator, func(t *testing.T) {
+			nq := rangeOf(mustQuery(t, b, panelID, tc.operator, "15"))
+			if tc.min == nil {
+				assert.Nil(t, nq.Min)
+			} else {
+				require.NotNil(t, nq.Min)
+				assert.Equal(t, *tc.min, *nq.Min)
+				assert.Equal(t, tc.inclusiveMin, *nq.InclusiveMin)
+			}
+			if tc.max == nil {
+				assert.Nil(t, nq.Max)
+			} else {
+				require.NotNil(t, nq.Max)
+				assert.Equal(t, *tc.max, *nq.Max)
+				assert.Equal(t, tc.inclusiveMax, *nq.InclusiveMax)
+			}
+		})
+	}
+
+	// A set of values is an OR of exact matches.
+	q, errRes := b.requirementQuery(&resourcepb.Requirement{Key: panelID, Operator: "in", Values: []string{"10", "20"}})
+	require.Nil(t, errRes)
+	dq, ok := q.(*query.DisjunctionQuery)
+	require.True(t, ok)
+	assert.Len(t, dq.Disjuncts, 2)
+
+	// No JSON number can hold these, and as a bound they would quietly widen or
+	// empty the result instead of failing.
+	for _, value := range []string{"NaN", "+Inf", "-Inf", "Inf", "inf"} {
+		assertBadRequest(t, b, resource.SEARCH_FIELD_PREFIX+"ratio", "gt", value)
+		assertBadRequest(t, b, resource.SEARCH_FIELD_PREFIX+"ratio", "=", value)
+	}
+
+	// A double field takes fractional values, an int64 field does not.
+	ratio := numericRangeOf(t, mustQuery(t, b, resource.SEARCH_FIELD_PREFIX+"ratio", "gt", "0.5"))
+	assert.Equal(t, 0.5, *ratio.Min)
+	assertBadRequest(t, b, panelID, "=", "0.5")
+	assertBadRequest(t, b, panelID, "=", "ten")
+
+	// A range needs exactly one bound value.
+	assertBadRequest(t, b, panelID, "gt", "1", "2")
+
+	// Membership of an empty set is not the same as no filter at all.
+	assertBadRequest(t, b, panelID, "in")
+	assertBadRequest(t, b, panelID, "=")
+}
+
+func TestRequirementQuery_TypedFieldWithoutFilterCapability(t *testing.T) {
+	b := numberOrBoolFieldsIndex(t)
+
+	// A sort-only field is indexed, but a filter on it was never declared: an
+	// empty page would read as "no results" rather than "wrong field".
+	assertBadRequest(t, b, resource.SEARCH_FIELD_PREFIX+"weight", "=", "1")
+
+	// The standard timestamps are stored but not indexed, so the same applies.
+	assertBadRequest(t, b, resource.SEARCH_FIELD_CREATED, "gt", "0")
+	assertBadRequest(t, b, resource.SEARCH_FIELD_UPDATED, "=", "0")
+}
+
+// mustQuery builds the query for one requirement and fails when it is refused.
+func mustQuery(t *testing.T, b *bleveIndex, key, operator string, values ...string) query.Query {
+	t.Helper()
+	q, errRes := b.requirementQuery(&resourcepb.Requirement{Key: key, Operator: operator, Values: values})
+	require.Nil(t, errRes)
+	require.NotNil(t, q)
+	return q
+}
+
+// assertBadRequest asserts that a requirement is refused with a 400 rather than
+// answered with a query that matches nothing.
+func assertBadRequest(t *testing.T, b *bleveIndex, key, operator string, values ...string) {
+	t.Helper()
+	q, errRes := b.requirementQuery(&resourcepb.Requirement{Key: key, Operator: operator, Values: values})
+	require.Nil(t, q)
+	require.NotNil(t, errRes)
+	assert.Equal(t, int32(400), errRes.Code)
+}
+
+// numericRangeOf asserts the query is the numeric range a non-string field needs.
+func numericRangeOf(t *testing.T, q query.Query) *query.NumericRangeQuery {
+	t.Helper()
+	nq, ok := q.(*query.NumericRangeQuery)
+	require.True(t, ok, "a numeric field needs a numeric range query")
+	return nq
+}
+
 func TestRequirementQuery_StandardExactFields(t *testing.T) {
 	// createdBy and ownerReferences are declared filter-capable standard fields:
 	// they stay exact without being named anywhere in the query path.

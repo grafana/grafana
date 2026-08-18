@@ -3220,3 +3220,110 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		}
 	})
 }
+
+// The mapping and the query have to agree on a field's type, and neither side
+// fails loudly when they don't, so these filters run against a real index
+// instead of asserting on query shapes.
+func TestFilteringOnBooleanAndNumericFields(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "rules.alerting.grafana.app",
+		Resource:  "rules",
+	}
+	index := newTestIndexWithTypedFields(t, key, []resource.SearchFieldDefinition{
+		{Name: "paused", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+		{Name: "panelID", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+	})
+
+	rule := func(name string, paused bool, panelID int64) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name,
+				},
+				Name:   name,
+				Title:  name,
+				RV:     1,
+				Fields: map[string]any{"paused": paused, "panelID": panelID},
+			},
+		}
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		rule("rule-paused", true, 10),
+		rule("rule-active", false, 20),
+	}}))
+
+	filter := func(field, operator string, values ...string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+				Fields: []*resourcepb.Requirement{{Key: field, Operator: operator, Values: values}},
+			},
+			Limit: 100,
+		}
+	}
+
+	for _, tc := range []struct {
+		name     string
+		query    *resourcepb.ResourceSearchRequest
+		expected []string
+	}{
+		{"boolean equals", filter("paused", "=", "true"), []string{"rule-paused"}},
+		{"boolean not in", filter("paused", "notin", "true"), []string{"rule-active"}},
+		{"number equals", filter("panelID", "=", "10"), []string{"rule-paused"}},
+		{"number in", filter("panelID", "in", "10", "20"), []string{"rule-paused", "rule-active"}},
+		{"number greater than", filter("panelID", "gt", "15"), []string{"rule-active"}},
+		{"number greater than or equal", filter("panelID", "gte", "20"), []string{"rule-active"}},
+		{"number less than", filter("panelID", "lt", "20"), []string{"rule-paused"}},
+		{"number less than or equal", filter("panelID", "lte", "15"), []string{"rule-paused"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			checkSearchQueryUnordered(t, index, tc.query, tc.expected)
+		})
+	}
+
+	// A value that does not parse, or a comparison the field's type has no
+	// meaning for, is a caller mistake. Answering with an empty page would look
+	// like a rule set with nothing in it.
+	for _, tc := range []struct {
+		name  string
+		query *resourcepb.ResourceSearchRequest
+	}{
+		{"boolean value that is not true or false", filter("paused", "=", "yes")},
+		{"boolean compared with a range", filter("paused", "gt", "true")},
+		{"number value that is not a number", filter("panelID", "=", "ten")},
+		{"filter on a field that only declares retrieve", filter(resource.SEARCH_FIELD_CREATED, "gt", "0")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := index.Search(context.Background(), nil, tc.query, nil, nil)
+			require.NoError(t, err, "a bad request comes back in the response, not as an error")
+			require.NotNil(t, res.Error)
+			require.Equal(t, int32(400), res.Error.Code)
+		})
+	}
+}
+
+// newTestIndexWithTypedFields creates a test index whose kind declares the
+// given search fields, so non-string types keep their declared mapping.
+func newTestIndexWithTypedFields(t testing.TB, key resource.NamespacedResource, sfds []resource.SearchFieldDefinition) resource.ResourceIndex {
+	gvr := apischema.GroupVersionResource{Group: key.Group, Version: "v0", Resource: key.Resource}
+	provider := resource.NewMapProvider(
+		map[apischema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: sfds},
+		map[apischema.GroupResource]string{gvr.GroupResource(): gvr.Version},
+	)
+	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
+
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: threshold,
+		SearchFields:  resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{sfKey: provider}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	return index
+}

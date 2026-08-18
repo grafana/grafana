@@ -3278,6 +3278,18 @@ func (b *bleveIndex) keywordFieldFor(key string) (keywordField, bool) {
 	return kf, ok
 }
 
+// numberOrBoolFieldFor is the counterpart of keywordFieldFor for fields that are
+// not strings.
+func (b *bleveIndex) numberOrBoolFieldFor(key string) (numberOrBoolField, bool) {
+	fields := b.searchFields.numberOrBoolFields
+	if fields == nil {
+		// Index opened without per-kind declarations; standard fields still apply.
+		fields = standardNumberOrBoolFields
+	}
+	nb, ok := fields[key]
+	return nb, ok
+}
+
 // usesExactTermFilter reports whether "=" or "in" on key matches the whole value
 // as one token rather than going through the analyzed path. That is what the
 // filter capability means: the field is keyword-analyzed. "==" does not ask,
@@ -3299,6 +3311,11 @@ func (b *bleveIndex) usesExactTermFilter(key string) bool {
 
 // Convert a "requirement" into a bleve query
 func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	// Boolean and numeric fields are indexed in their native form, which a term
+	// or match query cannot reach, so they take a separate path.
+	if nb, ok := b.numberOrBoolFieldFor(req.Key); ok {
+		return numberOrBoolQuery(nb, req)
+	}
 	useExactTermQuery := b.usesExactTermFilter(req.Key)
 	switch selection.Operator(req.Operator) {
 	case selection.DoubleEquals:
@@ -3359,9 +3376,151 @@ func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query,
 	case selection.LessThan:
 	case selection.Exists:
 	}
-	return nil, resource.NewBadRequestError(
+	return nil, unsupportedRequirementError(req)
+}
+
+func unsupportedRequirementError(req *resourcepb.Requirement) *resourcepb.ErrorResult {
+	return resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
 	)
+}
+
+func numberOrBoolQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	if !nb.filterable {
+		// The field is not indexed for filtering, so the alternative is an empty
+		// page with no sign the filter was ignored.
+		return nil, resource.NewBadRequestError(fmt.Sprintf("field %s does not support filtering", req.Key))
+	}
+
+	switch selection.Operator(req.Operator) {
+	case selection.Equals, selection.DoubleEquals, selection.In, selection.NotIn:
+		return numberOrBoolSetQuery(nb, req)
+	case selection.GreaterThan, selection.LessThan, resource.OperatorGreaterThanOrEqual, resource.OperatorLessThanOrEqual:
+		return numberOrBoolRangeQuery(nb, req)
+	default:
+		return nil, unsupportedRequirementError(req)
+	}
+}
+
+// Combining rules follow the string path: "=" with several values is an AND,
+// "in" is an OR.
+func numberOrBoolSetQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	op := selection.Operator(req.Operator)
+	if op == selection.DoubleEquals && len(req.Values) != 1 {
+		return nil, unsupportedRequirementError(req)
+	}
+	// The string path answers match-all here, turning "in the empty set" into no
+	// filter at all. Nothing can depend on that for these fields yet.
+	if len(req.Values) == 0 {
+		return nil, resource.NewBadRequestError(fmt.Sprintf("filter on field %s has no values", req.Key))
+	}
+
+	queries := make([]query.Query, 0, len(req.Values))
+	for _, v := range req.Values {
+		q, errRes := numberOrBoolValueQuery(nb, req.Key, v)
+		if errRes != nil {
+			return nil, errRes
+		}
+		queries = append(queries, q)
+	}
+
+	switch {
+	case op == selection.NotIn:
+		boolQuery := bleve.NewBooleanQuery()
+		boolQuery.AddMustNot(queries...)
+		// must still have a value
+		boolQuery.AddMust(bleve.NewMatchAllQuery())
+		return boolQuery, nil
+	case len(queries) == 1:
+		return queries[0], nil
+	case op == selection.Equals:
+		return query.NewConjunctionQuery(queries), nil
+	default:
+		return query.NewDisjunctionQuery(queries), nil
+	}
+}
+
+// A number has no term form, so equality has to be a range with both bounds on
+// the value.
+func numberOrBoolValueQuery(nb numberOrBoolField, key, value string) (query.Query, *resourcepb.ErrorResult) {
+	if nb.isBoolean() {
+		b, ok := parseBooleanFilterValue(value)
+		if !ok {
+			return nil, resource.NewBadRequestError(fmt.Sprintf("invalid boolean value for field %s: %q", key, value))
+		}
+		q := bleve.NewBoolFieldQuery(b)
+		q.SetField(nb.name)
+		return q, nil
+	}
+
+	n, errRes := parseNumericFilterValue(nb, key, value)
+	if errRes != nil {
+		return nil, errRes
+	}
+	inclusive := true
+	q := bleve.NewNumericRangeInclusiveQuery(&n, &n, &inclusive, &inclusive)
+	q.SetField(nb.name)
+	return q, nil
+}
+
+func numberOrBoolRangeQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	if nb.isBoolean() {
+		return nil, resource.NewBadRequestError(fmt.Sprintf("field %s is a boolean and cannot be compared with %s", req.Key, req.Operator))
+	}
+	if len(req.Values) != 1 {
+		return nil, resource.NewBadRequestError(fmt.Sprintf("operator %s on field %s takes exactly one value", req.Operator, req.Key))
+	}
+	bound, errRes := parseNumericFilterValue(nb, req.Key, req.Values[0])
+	if errRes != nil {
+		return nil, errRes
+	}
+
+	op := selection.Operator(req.Operator)
+	inclusive := op == resource.OperatorGreaterThanOrEqual || op == resource.OperatorLessThanOrEqual
+
+	var q *query.NumericRangeQuery
+	if op == selection.GreaterThan || op == resource.OperatorGreaterThanOrEqual {
+		q = bleve.NewNumericRangeInclusiveQuery(&bound, nil, &inclusive, nil)
+	} else {
+		q = bleve.NewNumericRangeInclusiveQuery(nil, &bound, nil, &inclusive)
+	}
+	q.SetField(nb.name)
+	return q, nil
+}
+
+// Only the two canonical spellings, so "yes" is reported rather than read as
+// false.
+func parseBooleanFilterValue(value string) (bool, bool) {
+	switch value {
+	case "true":
+		return true, true
+	case "false":
+		return false, true
+	}
+	return false, false
+}
+
+// An int64 field takes integers only, so "0.5" is reported rather than turned
+// into a query that cannot match.
+//
+// Bleve stores numbers as float64, so two int64 values past 2^53 can collapse
+// onto one. The bound is converted the same way as the indexed value, so such a
+// filter can match a neighbour but never misses.
+func parseNumericFilterValue(nb numberOrBoolField, key, value string) (float64, *resourcepb.ErrorResult) {
+	if nb.fieldType == resource.SearchFieldTypeDouble {
+		f, err := strconv.ParseFloat(value, 64)
+		// ParseFloat also reads NaN and Inf, which no JSON number can hold. As a
+		// bound they would give an empty or unbounded result rather than an error.
+		if err != nil || math.IsNaN(f) || math.IsInf(f, 0) {
+			return 0, resource.NewBadRequestError(fmt.Sprintf("invalid number value for field %s: %q", key, value))
+		}
+		return f, nil
+	}
+	n, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return 0, resource.NewBadRequestError(fmt.Sprintf("invalid integer value for field %s: %q", key, value))
+	}
+	return float64(n), nil
 }
 
 // allRequirementValuesQuery preserves selector semantics where multiple "=" values are combined with AND.
