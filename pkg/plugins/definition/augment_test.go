@@ -161,7 +161,7 @@ func newResourceSchema() *spec.Schema {
 func TestAugmentOpenAPI(t *testing.T) {
 	t.Run("zero schema is a no-op", func(t *testing.T) {
 		oas := newAugmentOAS(augmentPath)
-		got, err := AugmentOpenAPI(oas, PluginOptions{
+		got, err := AugmentOpenAPI(oas, SettingsResource{
 			Schema:   &pluginschema.PluginSchema{},
 			Resource: newResourceSchema(),
 			SpecName: "SettingsSpec",
@@ -174,7 +174,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 
 	t.Run("nil schema is a no-op", func(t *testing.T) {
 		oas := newAugmentOAS(augmentPath)
-		got, err := AugmentOpenAPI(oas, PluginOptions{Path: augmentPath})
+		got, err := AugmentOpenAPI(oas, SettingsResource{Path: augmentPath})
 		require.NoError(t, err)
 		assert.Same(t, oas, got)
 	})
@@ -223,7 +223,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 				oas := newAugmentOAS(augmentPath)
 				tc.mutate(oas)
 
-				_, err := AugmentOpenAPI(oas, PluginOptions{
+				_, err := AugmentOpenAPI(oas, SettingsResource{
 					Schema:   settingsOnly(),
 					Resource: newResourceSchema(),
 					SpecName: "SettingsSpec",
@@ -238,7 +238,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 		oas := newAugmentOAS(augmentPath)
 		resource := newResourceSchema()
 
-		_, err := AugmentOpenAPI(oas, PluginOptions{
+		_, err := AugmentOpenAPI(oas, SettingsResource{
 			Schema:   settingsOnly(),
 			Resource: resource,
 			SpecName: "DataSourceSpec",
@@ -258,7 +258,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 		oas := newAugmentOAS(augmentPath)
 		resource := newResourceSchema()
 
-		_, err := AugmentOpenAPI(oas, PluginOptions{
+		_, err := AugmentOpenAPI(oas, SettingsResource{
 			Schema:   settingsOnly(),
 			Resource: resource,
 			SpecName: "SettingsSpec",
@@ -293,7 +293,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 			{Key: "optional", Description: "not required"},
 		}
 
-		_, err := AugmentOpenAPI(oas, PluginOptions{
+		_, err := AugmentOpenAPI(oas, SettingsResource{
 			Schema:   schema,
 			Resource: resource,
 			SpecName: "DataSourceSpec",
@@ -322,7 +322,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 		oas := newAugmentOAS(augmentPath)
 		resource := newResourceSchema()
 
-		_, err := AugmentOpenAPI(oas, PluginOptions{
+		_, err := AugmentOpenAPI(oas, SettingsResource{
 			Schema:   settingsOnly(),
 			Resource: resource,
 			SpecName: "DataSourceSpec",
@@ -343,7 +343,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 			},
 		}
 
-		_, err := AugmentOpenAPI(oas, PluginOptions{
+		_, err := AugmentOpenAPI(oas, SettingsResource{
 			Schema:   schema,
 			Resource: newResourceSchema(),
 			SpecName: "DataSourceSpec",
@@ -378,7 +378,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 	t.Run("routes replace the default subresources", func(t *testing.T) {
 		oas := newAugmentOAS(augmentPath)
 
-		_, err := AugmentOpenAPI(oas, PluginOptions{
+		_, err := AugmentOpenAPI(oas, SettingsResource{
 			Schema:   routesSchema(),
 			Resource: newResourceSchema(),
 			SpecName: "DataSourceSpec",
@@ -400,7 +400,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 	t.Run("routes get tags, operation ids and path parameters", func(t *testing.T) {
 		oas := newAugmentOAS(augmentPath)
 
-		_, err := AugmentOpenAPI(oas, PluginOptions{
+		_, err := AugmentOpenAPI(oas, SettingsResource{
 			Schema:   routesSchema(),
 			Resource: newResourceSchema(),
 			SpecName: "DataSourceSpec",
@@ -431,7 +431,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 	t.Run("app routes hang off /instance and drop the name parameter", func(t *testing.T) {
 		oas := newAugmentOAS(augmentPath)
 
-		_, err := AugmentOpenAPI(oas, PluginOptions{
+		_, err := AugmentOpenAPI(oas, SettingsResource{
 			Schema:   routesSchema(),
 			Resource: newResourceSchema(),
 			SpecName: "SettingsSpec",
@@ -460,7 +460,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 			},
 		}
 
-		got, err := AugmentOpenAPI(oas, PluginOptions{
+		got, err := AugmentOpenAPI(oas, SettingsResource{
 			Schema:   schema,
 			Resource: newResourceSchema(),
 			SpecName: "DataSourceSpec",
