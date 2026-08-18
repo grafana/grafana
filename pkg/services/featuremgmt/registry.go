@@ -251,7 +251,7 @@ var (
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
 			Name:        "provisioning.readmes",
@@ -3238,6 +3238,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:         "tracesDrilldown.useValueTypeFiltering",
+			Description:  "Enables value type filtering in Traces Drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Generate:     Generate{React: true},
+			Expression:   "false",
+			HideFromDocs: true,
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

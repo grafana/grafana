@@ -105,7 +105,11 @@
       "load-subscriptions": "Загрузить подписки"
     },
     "dimension-fields": {
-      "aria-label-remove": "Удалить",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Размеры",
       "placeholder-field": "Поле",
       "placeholder-operation": "Операция",

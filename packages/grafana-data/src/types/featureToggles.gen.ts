@@ -124,11 +124,6 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
-  * Enable export functionality for provisioned resources
-  * @default false
-  */
-  provisioningExport?: boolean;
-  /**
   * Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
   * @default true
   */
