@@ -132,10 +132,7 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 	}
 
 	if err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email); err != nil {
-		if !errors.Is(err, user.ErrUserAlreadyExists) {
-			return nil, err
-		}
-		return nil, user.ErrUserAlreadyExists
+		return nil, err
 	}
 
 	// create user
