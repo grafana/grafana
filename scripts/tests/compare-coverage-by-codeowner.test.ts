@@ -1,10 +1,12 @@
 const {
   DROP_TOLERANCE_PCT,
   formatDelta,
-  generateMarkdown,
+  buildCoverageResult,
   getOverallStatus,
   getStatusIcon,
   hasToleratedDrop,
+  getFilesWithDecreasedCoverage,
+  getFilesWithIncreasedCoverage,
 } = require('../compare-coverage-by-codeowner.js');
 
 type Metrics = { lines: number; statements: number; functions: number; branches: number };
@@ -19,8 +21,18 @@ function summary(pcts: Partial<Metrics> = {}) {
   };
 }
 
-function coverage(pcts: Partial<Metrics> = {}) {
-  return { team: '@grafana/dataviz-squad', summary: summary(pcts), files: {} };
+function coverage(pcts: Partial<Metrics> = {}, files: Record<string, unknown> = {}) {
+  return { team: '@grafana/dataviz-squad', summary: summary(pcts), files };
+}
+
+function fileMetrics(pcts: Partial<Metrics> = {}) {
+  const { lines = 80, statements = 80, functions = 80, branches = 80 } = pcts;
+  return {
+    lines: { pct: lines },
+    statements: { pct: statements },
+    functions: { pct: functions },
+    branches: { pct: branches },
+  };
 }
 
 describe('compare-coverage-by-codeowner', () => {
@@ -71,40 +83,115 @@ describe('compare-coverage-by-codeowner', () => {
     });
   });
 
-  describe('generateMarkdown', () => {
-    it('reports a tolerated drop as passing and explains the tolerance', () => {
-      const markdown = generateMarkdown(coverage({ branches: 64.58 }), coverage({ branches: 64.57 }));
+  describe('getFilesWithDecreasedCoverage', () => {
+    it('flags a file with any metric decreased', () => {
+      const main = coverage({}, { 'a.ts': fileMetrics({ lines: 90 }) });
+      const pr = coverage({}, { 'a.ts': fileMetrics({ lines: 85 }) });
+      expect(getFilesWithDecreasedCoverage(main, pr)).toEqual([
+        { path: 'a.ts', main: fileMetrics({ lines: 90 }), pr: fileMetrics({ lines: 85 }) },
+      ]);
+    });
 
-      expect(markdown).toContain('## Test Coverage Checks 🟡 Passed within tolerance');
-      expect(markdown).toContain('| Branches | 64.58% | 64.57% | -0.01% | 🟡 Within tolerance |');
-      expect(markdown).toContain('Drops of 0.02% or less are tolerated');
+    it('ignores new files with no main-branch baseline', () => {
+      const main = coverage({}, {});
+      const pr = coverage({}, { 'a.ts': fileMetrics({ lines: 50 }) });
+      expect(getFilesWithDecreasedCoverage(main, pr)).toEqual([]);
+    });
+  });
+
+  describe('getFilesWithIncreasedCoverage', () => {
+    it('flags a file with every metric held or improved and at least one improved', () => {
+      const main = coverage({}, { 'a.ts': fileMetrics({ lines: 80 }) });
+      const pr = coverage({}, { 'a.ts': fileMetrics({ lines: 90 }) });
+      const [result] = getFilesWithIncreasedCoverage(main, pr);
+      expect(result.path).toBe('a.ts');
+      expect(result.totalIncrease).toBe(10);
+    });
+
+    it('excludes a file that also regressed on another metric', () => {
+      const main = coverage({}, { 'a.ts': fileMetrics({ lines: 80, branches: 80 }) });
+      const pr = coverage({}, { 'a.ts': fileMetrics({ lines: 90, branches: 70 }) });
+      expect(getFilesWithIncreasedCoverage(main, pr)).toEqual([]);
+    });
+
+    it('sorts by total increase descending', () => {
+      const main = coverage(
+        {},
+        {
+          'small.ts': fileMetrics({ lines: 80 }),
+          'big.ts': fileMetrics({ lines: 80 }),
+        }
+      );
+      const pr = coverage(
+        {},
+        {
+          'small.ts': fileMetrics({ lines: 81 }),
+          'big.ts': fileMetrics({ lines: 95 }),
+        }
+      );
+      const paths = getFilesWithIncreasedCoverage(main, pr).map((r) => r.path);
+      expect(paths).toEqual(['big.ts', 'small.ts']);
+    });
+  });
+
+  describe('buildCoverageResult', () => {
+    it('reports a tolerated drop as passing and includes the tolerance status', () => {
+      const result = buildCoverageResult(coverage({ branches: 64.58 }), coverage({ branches: 64.57 }));
+
+      expect(result.status).toBe('tolerated');
+      expect(result.metrics).toContainEqual({
+        metric: 'Branches',
+        main: 64.58,
+        pr: 64.57,
+        delta: '-0.01%',
+        status: '🟡 Within tolerance',
+      });
     });
 
     it('reports a larger drop as failing', () => {
-      const markdown = generateMarkdown(coverage({ branches: 64.58 }), coverage({ branches: 64.4 }));
+      const result = buildCoverageResult(coverage({ branches: 64.58 }), coverage({ branches: 64.4 }));
 
-      expect(markdown).toContain('## Test Coverage Checks ❌ Failed');
-      expect(markdown).toContain('| Branches | 64.58% | 64.40% | -0.18% | ❌ Fail |');
-      expect(markdown).not.toContain('are tolerated');
-    });
-
-    it('omits the tolerance note when another metric failed', () => {
-      const markdown = generateMarkdown(
-        coverage({ branches: 64.58, lines: 79.94 }),
-        coverage({ branches: 64.57, lines: 79.4 })
-      );
-
-      expect(markdown).toContain('## Test Coverage Checks ❌ Failed');
-      expect(markdown).toContain('| Branches | 64.58% | 64.57% | -0.01% | 🟡 Within tolerance |');
-      expect(markdown).toContain('| Lines | 79.94% | 79.40% | -0.54% | ❌ Fail |');
-      expect(markdown).not.toContain('are tolerated');
+      expect(result.status).toBe('fail');
+      expect(result.metrics).toContainEqual({
+        metric: 'Branches',
+        main: 64.58,
+        pr: 64.4,
+        delta: '-0.18%',
+        status: '❌ Fail',
+      });
     });
 
     it('reports unchanged coverage as passing', () => {
-      const markdown = generateMarkdown(coverage(), coverage());
+      const result = buildCoverageResult(coverage(), coverage());
+      expect(result.status).toBe('pass');
+    });
 
-      expect(markdown).toContain('## Test Coverage Checks ✅ Passed');
-      expect(markdown).not.toContain('Within tolerance');
+    it('includes decreased and increased file details, and the run-locally command', () => {
+      const main = coverage(
+        { branches: 64.58 },
+        {
+          'worse.ts': fileMetrics({ lines: 90 }),
+          'better.ts': fileMetrics({ lines: 80 }),
+        }
+      );
+      const pr = coverage(
+        { branches: 64.4 },
+        {
+          'worse.ts': fileMetrics({ lines: 70 }),
+          'better.ts': fileMetrics({ lines: 95 }),
+        }
+      );
+
+      const result = buildCoverageResult(main, pr, { artifactUrl: 'https://example.test/report', prSha: 'abc123' });
+
+      expect(result.decreasedFiles).toEqual([
+        { path: 'worse.ts', cells: { lines: { main: 90, pr: 70 }, statements: null, functions: null, branches: null } },
+      ]);
+      expect(result.decreasedFilesTotal).toBe(1);
+      expect(result.increasedFilesTop).toEqual([{ path: 'better.ts', totalIncrease: 15 }]);
+      expect(result.increasedFilesTotal).toBe(1);
+      expect(result.artifactUrl).toBe('https://example.test/report');
+      expect(result.runLocallyCommand).toBe('yarn test:coverage:by-codeowner @grafana/dataviz-squad');
     });
   });
 });
