@@ -2,6 +2,10 @@
 
 # 12.4.9 (2026-08-18)
 
+## Security
+
+- CVE-2026-17183
+
 ### Features and enhancements
 
 - **Dashboard Import:** Labels in v2 schema [#130428](https://github.com/grafana/grafana/pull/130428), [@harisrozajac](https://github.com/harisrozajac)
