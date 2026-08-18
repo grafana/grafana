@@ -251,7 +251,7 @@ var (
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
 			Name:        "provisioning.readmes",
@@ -1651,9 +1651,9 @@ var (
 			Name:        "datasources.azureMonitorBatchAPI",
 			Description: "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
 			Generate:    Generate{Go: true, React: true, LegacyFrontend: true},
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "alertingRulePermanentlyDelete",
@@ -2540,15 +2540,6 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 			Expression:   "true", // enabled by default
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "dsAbstractionApp",
-			Description:  "Registers the dsabstraction app for querying datasources via unified SQL",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatasourcesCoreServicesSquad,
-			HideFromDocs: true,
-			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{

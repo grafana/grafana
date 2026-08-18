@@ -9,6 +9,7 @@ import {
   store,
   toDataFrame,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import {
   getDataSourceInstance,
@@ -31,6 +32,11 @@ import {
   LogsLinkButton,
   LogsLinkMenuItem,
 } from './LogsLink';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
@@ -156,6 +162,7 @@ describe('LogsLinkButton', () => {
 
     // The datasource is never queried, and the button stays enabled (present).
     expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
+    expect(reportInteraction).not.toHaveBeenCalled();
     await userEvent.hover(await screen.findByRole('button'));
     expect(await screen.findByText('View related logs using the trace data source configuration.')).toBeInTheDocument();
     expect(
@@ -219,6 +226,10 @@ describe('LogsLinkButton', () => {
 
     await userEvent.hover(await screen.findByRole('button'));
     expect(await screen.findByText('No matching logs found for this span')).toBeInTheDocument();
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
+      logs: false,
+      refId: undefined,
+    });
   });
 
   it('uses the trace-level absent tooltip when forTrace is set', async () => {
@@ -256,6 +267,12 @@ describe('LogsLinkButton', () => {
     );
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
+        logs: true,
+        refId: undefined,
+      })
+    );
     await userEvent.hover(screen.getByRole('button'));
     expect(await screen.findByText('See related logs')).toBeInTheDocument();
   });
@@ -339,6 +356,12 @@ describe('LogsLinkButton', () => {
 
     await waitFor(() => expect(query).toHaveBeenCalledTimes(3));
     expect(store.get(queryMatchKey('logs-ds-uid'))).toBe('t2l:job:trace_id');
+    await waitFor(() =>
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
+        logs: true,
+        refId: 't2l:job:trace_id',
+      })
+    );
     await userEvent.hover(screen.getByRole('button'));
     expect(await screen.findByText('See related logs')).toBeInTheDocument();
   });
@@ -369,6 +392,12 @@ describe('LogsLinkButton', () => {
     expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
         targets: [expect.objectContaining({ refId: 't2l:job:trace_id', maxLines: 1 })],
+      })
+    );
+    await waitFor(() =>
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
+        logs: true,
+        refId: 't2l:job:trace_id',
       })
     );
   });
@@ -404,6 +433,10 @@ describe('LogsLinkButton', () => {
       })
     );
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true'));
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
+      logs: false,
+      refId: undefined,
+    });
   });
 
   it('marks the button absent when every loki query variation returns no rows', async () => {
@@ -427,6 +460,12 @@ describe('LogsLinkButton', () => {
 
     await waitFor(() => expect(query).toHaveBeenCalledTimes(2));
     expect(store.get(queryMatchKey('logs-ds-uid'))).toBeUndefined();
+    await waitFor(() =>
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
+        logs: false,
+        refId: undefined,
+      })
+    );
     await userEvent.hover(await screen.findByRole('button'));
     expect(await screen.findByText('No matching logs found for this span')).toBeInTheDocument();
   });
@@ -464,6 +503,12 @@ describe('LogsLinkButton', () => {
     await waitFor(() => expect(fallbackQuery).toHaveBeenCalled());
     expect(store.get(datasourceMatchKey())).toBe('loki-fallback-uid');
     expect(store.get(queryMatchKey('loki-fallback-uid'))).toBe('t2l:default:trace_id');
+    await waitFor(() =>
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
+        logs: true,
+        refId: 't2l:default:trace_id',
+      })
+    );
     await userEvent.hover(screen.getByRole('button'));
     expect(await screen.findByText('See related logs')).toBeInTheDocument();
   });

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -29,22 +30,22 @@ export function Overview() {
   const options = useMemo<Option[]>(
     () => [
       {
-        value: 'all',
+        value: 'all-solutions',
         label: t('home.overview.options.all', 'All solutions'),
         content: <></>,
       },
       {
-        value: 'attention',
+        value: 'needs-attention',
         label: t('home.overview.options.attention', 'Needs attention'),
         content: <></>,
       },
       {
-        value: 'enabled',
+        value: 'enabled-solutions',
         label: t('home.overview.options.enabled', 'Enabled solutions'),
         content: <></>,
       },
       {
-        value: 'available',
+        value: 'available-solutions',
         label: t('home.overview.options.available', 'Available solutions'),
         content: <></>,
       },
@@ -65,6 +66,16 @@ export function Overview() {
   );
   const [stored, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, options[0].value);
   const option = useMemo(() => options.find((o) => o.value === stored) ?? options[0], [options, stored]);
+
+  const ref = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  useEffect(() => {
+    const match = options.find((o) => o.value === location.hash.slice(1));
+    if (match) {
+      setStored(match.value);
+      ref.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [options, location.hash, setStored]);
 
   const menu = useMemo(
     () => (
@@ -103,7 +114,7 @@ export function Overview() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div>
+    <div ref={ref}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" columnGap={2} rowGap={1} wrap="wrap">
         <Text element="h2" variant="h5">
           <Trans i18nKey="home.overview.title">Your observability stack overview</Trans>

@@ -764,6 +764,10 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
+	// SearchEnforceSortCapability rejects a sort on a field that does not declare
+	// sorting. Off by default: violations are counted first, so they can be fixed
+	// before requests start failing.
+	SearchEnforceSortCapability bool
 	// SearchPostRankAuthz enables the post-filter authorization search path:
 	// bleve ranks without the in-searcher authz wrapper and authorization runs
 	// app-side in rank order with early exit once the page is filled.

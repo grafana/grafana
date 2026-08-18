@@ -285,6 +285,45 @@ func TestKeywordFieldsForMapping_StandardNameWins(t *testing.T) {
 	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS].name)
 }
 
+func TestSortableFieldsForMapping(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {
+			{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilitySort}},
+			{Name: "category", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+			{Name: "views", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort}},
+			// Must not make the standard "created" field sortable.
+			{Name: resource.SEARCH_FIELD_CREATED, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort}},
+		},
+	}, nil)
+
+	fields := sortableFieldsForMapping(provider, gvr.Group, gvr.Resource)
+
+	// A sort may name a per-kind field with or without the prefix.
+	assert.True(t, fields["fields.note"])
+	assert.True(t, fields["note"])
+	assert.True(t, fields["fields.views"])
+	assert.True(t, fields["views"])
+	// Standard fields, including the physical title variant clients name directly.
+	assert.True(t, fields[resource.SEARCH_FIELD_TITLE])
+	assert.True(t, fields[resource.SEARCH_FIELD_TITLE_PHRASE])
+	assert.True(t, fields[resource.SEARCH_FIELD_NAME])
+	assert.True(t, fields[resource.SEARCH_FIELD_FOLDER])
+	assert.True(t, fields[resource.SEARCH_FIELD_DELETION_TIME])
+	// Selectable fields exist to be filtered on; nothing sorts on them.
+	assert.False(t, fields[resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.slug"])
+
+	// Declared, but not with sort.
+	assert.False(t, fields["fields.category"])
+	assert.False(t, fields["category"])
+	// Retrieve-only standard fields, and a name nothing declares.
+	assert.False(t, fields[resource.SEARCH_FIELD_CREATED])
+	assert.False(t, fields[resource.SEARCH_FIELD_UPDATED])
+	assert.False(t, fields[resource.SEARCH_FIELD_DESCRIPTION])
+	assert.False(t, fields["nonexistent"])
+	// The per-kind field shadowing "created" is only reachable under the prefix.
+	assert.True(t, fields[resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_CREATED])
+}
 func TestStoredFacetFieldsForMapping(t *testing.T) {
 	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
 	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{

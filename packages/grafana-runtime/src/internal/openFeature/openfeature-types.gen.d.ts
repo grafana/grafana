@@ -16,6 +16,7 @@ declare module "@openfeature/core" {
     | "queryHistory.recentQueriesUI"
     | "awsAssumeRolePerDatasourceExternalId"
     | "provisioningFolderMetadata"
+    | "provisioningExport"
     | "provisioning.readmes"
     | "provisioning.gitConventions"
     | "provisioning.userAttribution"
