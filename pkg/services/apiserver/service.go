@@ -382,7 +382,7 @@ func (s *service) start(ctx context.Context) error {
 				versionpolicy.NewResolver(naturalOrder),
 				versionPolicyIni,
 			)
-			if err := s.vpRegistry.Validate(); err != nil {
+			if err := s.vpRegistry.Validate(apiResourceConfig); err != nil {
 				return err
 			}
 		}
