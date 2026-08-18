@@ -1139,6 +1139,12 @@
         "drawer": {
           "type": "object",
           "properties": {
+            "background": {
+              "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
+            },
             "padding": {
               "type": "number"
             }

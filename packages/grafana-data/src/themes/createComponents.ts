@@ -113,6 +113,8 @@ export const ThemeComponentsInputSchema = z
       padding: z.number().optional(),
     }),
     drawer: z.object({
+      background: z.string().optional(),
+      borderColor: z.string().optional(),
       padding: z.number().optional(),
     }),
     textHighlight: z.object({
@@ -218,6 +220,8 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       padding: 1,
     },
     drawer: {
+      background: colors.background.primary,
+      borderColor: colors.border.weak,
       padding: 2,
     },
     overlay: {

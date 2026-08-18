@@ -406,6 +406,8 @@ function getWrapperStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg') {
       },
     },
     visualRefreshEnabled && {
+      backgroundColor: theme.colors.background.page,
+      border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.lg,
       bottom: theme.spacing(1),
       right: theme.spacing(1),
