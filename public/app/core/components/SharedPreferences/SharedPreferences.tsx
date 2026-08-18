@@ -281,4 +281,4 @@ export const SharedPreferences = memo((props: Props) => {
   );
 });
 
-SharedPreferences.displayName = 'SharedPreferencesFunctional';
+SharedPreferences.displayName = 'SharedPreferences';
