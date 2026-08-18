@@ -190,4 +190,45 @@ func TestIntegration_FolderConsumer_DeleteInFolder(t *testing.T) {
 		require.NoError(t, dbErr)
 		require.Equal(t, []string{"panel-1"}, remaining)
 	})
+
+	t.Run("does not report an element moved out of the folder before delete", func(t *testing.T) {
+		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		repair := &FolderUIDRepairService{store: store, kv: kvstore.NewFakeKVStore(), log: log.New("test")}
+		markRepairComplete(t, repair)
+		insertLibraryElement(t, store, "panel-1", "CPU usage", "f1")
+		insertLibraryElement(t, store, "panel-2", "Memory usage", "f1")
+
+		dashSvc := dashboards.NewFakeDashboardService(t)
+		// The dashboard-connection check is the last read before the delete, so use it to land a
+		// concurrent move out of the folder right in the middle of DeleteInFolder's own work.
+		dashSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, "panel-1", mock.Anything).
+			Run(func(mock.Arguments) {
+				moveErr := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+					_, err := sess.Exec("UPDATE library_element SET folder_uid=? WHERE uid=?", "f2", "panel-1")
+					return err
+				})
+				require.NoError(t, moveErr)
+			}).
+			Return([]*dashboards.DashboardRef{}, nil)
+		dashSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, "panel-2", mock.Anything).
+			Return([]*dashboards.DashboardRef{}, nil)
+
+		svc := &LibraryElementService{SQLStore: store, log: log.New("test"), dashboardsService: dashSvc}
+		c := ProvideFolderConsumer(svc, repair)
+		fakeLog := &logtest.Fake{}
+		c.log = fakeLog
+
+		require.NoError(t, c.DeleteInFolder(context.Background(), repairOrgID, "f1"))
+
+		require.Equal(t, 1, fakeLog.InfoLogs.Calls)
+		require.Equal(t, []string{"panel-2 (Memory usage)"}, logCtxValue(t, fakeLog.InfoLogs.Ctx, "elements"))
+
+		var movedFolder string
+		err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.SQL("SELECT folder_uid FROM library_element WHERE uid=?", "panel-1").Get(&movedFolder)
+			return err
+		})
+		require.NoError(t, err)
+		require.Equal(t, "f2", movedFolder)
+	})
 }

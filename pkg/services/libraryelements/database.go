@@ -837,14 +837,26 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c cont
 		}
 	}
 
-	identifiers := make([]string, 0, len(elements))
-	for _, elem := range elements {
-		identifiers = append(identifiers, fmt.Sprintf("%s (%s)", elem.UID, elem.Name))
-	}
-
+	// Delete one row at a time so a concurrent move out of this folder (which leaves the row in
+	// place but changes its folder_uid) shows up as zero rows affected instead of being reported
+	// as deleted.
+	var identifiers []string
 	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		_, err := session.Exec("DELETE FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, orgID)
-		return err
+		identifiers = identifiers[:0]
+		for _, elem := range elements {
+			res, err := session.Exec("DELETE FROM library_element WHERE uid=? AND folder_uid=? AND org_id=?", elem.UID, folderUID, orgID)
+			if err != nil {
+				return err
+			}
+			rowsAffected, err := res.RowsAffected()
+			if err != nil {
+				return err
+			}
+			if rowsAffected > 0 {
+				identifiers = append(identifiers, fmt.Sprintf("%s (%s)", elem.UID, elem.Name))
+			}
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, err
