@@ -12,6 +12,11 @@ import (
 const (
 	// FeaturesProviderAudience is the default audience for Feature Flag service
 	FeaturesProviderAudience = "features.grafana.app"
+
+	// ClientUserAgentPrefix marks a User-Agent as having been set by this
+	// package's HTTP client, so a proxy can tell a caller-supplied UserAgent
+	// apart from anything else (e.g. a browser) without it.
+	ClientUserAgentPrefix = "feature-service-client:"
 )
 
 // HTTPClientOptions contains options for creating an HTTP client
@@ -36,24 +41,6 @@ type HTTPClientOptions struct {
 	UserAgent string
 }
 
-type userAgentMiddlewareImpl struct {
-	userAgent string
-	next      http.RoundTripper
-}
-
-var _ http.RoundTripper = &userAgentMiddlewareImpl{}
-
-func (m *userAgentMiddlewareImpl) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("User-Agent", m.userAgent)
-	return m.next.RoundTrip(req)
-}
-
-func newUserAgentMiddleware(userAgent string) sdkhttpclient.Middleware {
-	return sdkhttpclient.MiddlewareFunc(func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
-		return &userAgentMiddlewareImpl{userAgent: userAgent, next: next}
-	})
-}
-
 // TokenExchangeConfig holds all authentication configuration for token exchange.
 // The namespace specifies the identity scope for token exchange (e.g., "stack-123").
 // Use "*" for multi-tenant services that operate across multiple namespaces.
@@ -72,9 +59,6 @@ func CreateHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 	}
 
 	middlewares := opts.Middlewares
-	if opts.UserAgent != "" {
-		middlewares = append([]sdkhttpclient.Middleware{newUserAgentMiddleware(opts.UserAgent)}, middlewares...)
-	}
 	if opts.CacheTTL > 0 {
 		middlewares = append([]sdkhttpclient.Middleware{newCacheMiddleware(opts.CacheTTL)}, middlewares...)
 	}
@@ -84,6 +68,11 @@ func CreateHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 		CACertificate:      opts.RootCACertificate,
 	}
 
+	var header http.Header
+	if opts.UserAgent != "" {
+		header = http.Header{"User-Agent": []string{ClientUserAgentPrefix + opts.UserAgent}}
+	}
+
 	options := sdkhttpclient.Options{
 		TLS: tlsOptions,
 		Timeouts: &sdkhttpclient.TimeoutOptions{
@@ -91,6 +80,7 @@ func CreateHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 			Timeout:     timeout,
 		},
 		Middlewares: middlewares,
+		Header:      header,
 	}
 
 	httpcli, err := sdkhttpclient.NewProvider().New(options)

@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
@@ -154,11 +155,26 @@ func (b *APIBuilder) newProxy(proxyPath, namespace, incomingUserAgent string) (*
 	return proxy, nil
 }
 
+// maxUserAgentLen bounds a caller-supplied User-Agent before it's forwarded downstream.
+const maxUserAgentLen = 150
+
 func withStackTag(ua, ns string) string {
+	if len(ua) > maxUserAgentLen {
+		ua = ua[:maxUserAgentLen]
+	}
+
+	if strings.HasPrefix(ua, features.ClientUserAgentPrefix) {
+		// Known format from our own HTTP client
+		if ns == "" || strings.Contains(ua, " ns/"+ns) {
+			return ua
+		}
+		return ua + " ns/" + ns
+	}
+
 	if ua == "" {
 		ua = "unknown"
 	}
-	if ns == "" || strings.Contains(ua, ns) {
+	if ns == "" {
 		return ua
 	}
 	return ua + " ns/" + ns
