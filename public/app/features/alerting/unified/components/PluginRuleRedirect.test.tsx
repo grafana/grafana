@@ -3,6 +3,9 @@ import { render, waitFor } from 'test/test-utils';
 import { reportInteraction } from '@grafana/runtime';
 import { type PrometheusRuleIdentifier } from 'app/types/unified-alerting';
 
+import { mockDataSource } from '../mocks';
+import { setupDataSources } from '../testSetup/datasources';
+
 import { PluginRuleRedirect } from './PluginRuleRedirect';
 
 jest.mock('@grafana/runtime', () => ({
@@ -22,6 +25,7 @@ const identifier: PrometheusRuleIdentifier = {
 
 describe('PluginRuleRedirect', () => {
   beforeEach(() => {
+    setupDataSources(mockDataSource({ name: identifier.ruleSourceName, uid: 'prometheus-uid' }));
     reportInteractionMock.mockClear();
   });
 

@@ -1,8 +1,18 @@
 import { type CloudRuleIdentifier, type PrometheusRuleIdentifier } from 'app/types/unified-alerting';
 
+import { mockDataSource } from '../mocks';
+import { setupDataSources } from '../testSetup/datasources';
+
 import { prometheusAlertingPlugin } from './prometheusNavigation';
 
 describe('prometheusAlertingPlugin', () => {
+  beforeEach(() => {
+    setupDataSources(
+      mockDataSource({ name: 'Prometheus', uid: 'Prometheus-uid' }),
+      mockDataSource({ name: 'Mimir', uid: 'Mimir-uid' })
+    );
+  });
+
   it('builds the plugin rules routes', () => {
     expect(prometheusAlertingPlugin.install).toBe('/plugins/grafana-prometheusalerting-app');
     expect(prometheusAlertingPlugin.rules).toBe('/a/grafana-prometheusalerting-app/rules');
@@ -14,7 +24,7 @@ describe('prometheusAlertingPlugin', () => {
     );
   });
 
-  it('preserves the source name in Prometheus rule identifiers', () => {
+  it('uses the data source UID in Prometheus rule identifiers', () => {
     const identifier: PrometheusRuleIdentifier = {
       ruleSourceName: 'Prometheus',
       namespace: 'namespace',
@@ -24,17 +34,17 @@ describe('prometheusAlertingPlugin', () => {
     };
 
     expect(prometheusAlertingPlugin.viewRule(identifier)).toBe(
-      '/a/grafana-prometheusalerting-app/rules/pri%24Prometheus%24namespace%24group%24rule%24hash/view'
+      '/a/grafana-prometheusalerting-app/rules/pri%24Prometheus-uid%24namespace%24group%24rule%24hash'
     );
     expect(prometheusAlertingPlugin.editRule(identifier)).toBe(
-      '/a/grafana-prometheusalerting-app/rules/pri%24Prometheus%24namespace%24group%24rule%24hash/edit'
+      '/a/grafana-prometheusalerting-app/rules/pri%24Prometheus-uid%24namespace%24group%24rule%24hash/edit'
     );
     expect(prometheusAlertingPlugin.cloneRule(identifier)).toBe(
-      '/a/grafana-prometheusalerting-app/rules/new?copyFrom=pri%24Prometheus%24namespace%24group%24rule%24hash'
+      '/a/grafana-prometheusalerting-app/rules/new?copyFrom=pri%24Prometheus-uid%24namespace%24group%24rule%24hash'
     );
   });
 
-  it('preserves the source name in Cloud rule identifiers', () => {
+  it('uses the data source UID in Cloud rule identifiers', () => {
     const identifier: CloudRuleIdentifier = {
       ruleSourceName: 'Mimir',
       namespace: 'namespace',
@@ -44,7 +54,7 @@ describe('prometheusAlertingPlugin', () => {
     };
 
     expect(prometheusAlertingPlugin.editRule(identifier)).toBe(
-      '/a/grafana-prometheusalerting-app/rules/cri%24Mimir%24namespace%24group%24rule%24hash/edit'
+      '/a/grafana-prometheusalerting-app/rules/cri%24Mimir-uid%24namespace%24group%24rule%24hash/edit'
     );
   });
 
