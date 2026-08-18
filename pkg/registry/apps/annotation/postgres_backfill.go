@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 
 	"github.com/grafana/grafana/pkg/registry/apps/annotation/migrator"
@@ -38,9 +39,9 @@ func (s *PostgreSQLStore) InsertBatch(ctx context.Context, recs []migrator.Backf
 	})
 }
 
-// UpsertBatch reconciles a batch of changed legacy annotations: for each record
-// it removes any existing rows with the same name and re-inserts the current
-// version, all in one transaction. Returns the number of rows written.
+// UpsertBatch re-applies a batch of changed legacy annotations, updating each in
+// place and returning how many rows it refreshed. Postgres moves a row across
+// weekly partitions when the annotation's time changed.
 func (s *PostgreSQLStore) UpsertBatch(ctx context.Context, recs []migrator.BackfillRecord) (int64, error) {
 	if len(recs) == 0 {
 		return 0, nil
@@ -49,27 +50,16 @@ func (s *PostgreSQLStore) UpsertBatch(ctx context.Context, recs []migrator.Backf
 		return 0, err
 	}
 
-	namesByNamespace := make(map[string][]string, 1)
-	for _, rec := range recs {
-		namesByNamespace[rec.Namespace] = append(namesByNamespace[rec.Namespace], rec.Name)
-	}
-
-	query, args := buildInsertSQL(recs)
-
 	return s.execInTx(ctx, func(tx pgx.Tx) (int64, error) {
-		for namespace, names := range namesByNamespace {
-			if _, err := tx.Exec(ctx,
-				`DELETE FROM annotations WHERE namespace = $1 AND name = ANY($2::text[])`,
-				namespace, pq.Array(names),
-			); err != nil {
-				return 0, fmt.Errorf("failed to clear annotations for resync: %w", err)
+		var updated int64
+		for _, rec := range recs {
+			tag, err := tx.Exec(ctx, updateMigratedSQL, annotationArgs(rec))
+			if err != nil {
+				return 0, fmt.Errorf("failed to update annotation during resync: %w", err)
 			}
+			updated += tag.RowsAffected()
 		}
-		tag, err := tx.Exec(ctx, query, args...)
-		if err != nil {
-			return 0, fmt.Errorf("failed to upsert annotations: %w", err)
-		}
-		return tag.RowsAffected(), nil
+		return updated, nil
 	})
 }
 
@@ -91,7 +81,63 @@ func (s *PostgreSQLStore) ensureBatchPartitions(ctx context.Context, recs []migr
 	return nil
 }
 
-// buildInsertSQL builds a multi-row INSERT
+var annotationMatchColumns = map[string]struct{}{"namespace": {}, "name": {}}
+
+// updateMigratedSQL re-applies a record to the row already under its name. It
+// matches on name with no time predicate, which is what lets Postgres move the
+// row when the annotation's time changed, across weekly partitions if need be.
+var updateMigratedSQL = fmt.Sprintf(
+	"UPDATE annotations SET %s WHERE namespace = @namespace AND name = @name AND legacy_migrated",
+	namedAssignments(updatableColumns()))
+
+// updatableColumns is annotationColumns minus the match columns.
+func updatableColumns() []string {
+	cols := make([]string, 0, len(annotationColumns))
+	for _, col := range annotationColumns {
+		if _, isKey := annotationMatchColumns[col]; !isKey {
+			cols = append(cols, col)
+		}
+	}
+	return cols
+}
+
+// namedAssignments renders cols as "col1 = @col1, col2 = @col2, ...".
+func namedAssignments(cols []string) string {
+	assignments := make([]string, len(cols))
+	for i, col := range cols {
+		assignments[i] = col + " = @" + col
+	}
+	return strings.Join(assignments, ", ")
+}
+
+// annotationArgs binds rec's values to their column names.
+func annotationArgs(rec migrator.BackfillRecord) pgx.NamedArgs {
+	var createdBy *string
+	if rec.CreatedBy != "" {
+		createdBy = &rec.CreatedBy
+	}
+	var legacyID *int64
+	if rec.LegacyID > 0 {
+		legacyID = &rec.LegacyID
+	}
+	return pgx.NamedArgs{
+		"namespace":     rec.Namespace,
+		"name":          rec.Name,
+		"time":          rec.Time,
+		"time_end":      rec.TimeEnd,
+		"dashboard_uid": rec.DashboardUID,
+		"panel_id":      rec.PanelID,
+		"text":          rec.Text,
+		"tags":          pq.Array(rec.Tags),
+		"scopes":        pq.Array(rec.Scopes),
+		"created_by":    createdBy,
+		"created_at":    rec.CreatedAt,
+		"legacy_id":     legacyID,
+		"legacy_data":   rec.LegacyData,
+	}
+}
+
+// buildInsertSQL builds the multi-row INSERT for the bulk backfill path.
 func buildInsertSQL(recs []migrator.BackfillRecord) (string, []any) {
 	var sb strings.Builder
 	sb.WriteString("INSERT INTO annotations (")
@@ -114,26 +160,37 @@ func buildInsertSQL(recs []migrator.BackfillRecord) (string, []any) {
 		// legacy_migrated is always true on the backfill path
 		sb.WriteString(", true)")
 
-		var createdBy *string
-		if rec.CreatedBy != "" {
-			cb := rec.CreatedBy
-			createdBy = &cb
+		named := annotationArgs(rec)
+		for _, col := range annotationColumns {
+			args = append(args, named[col])
 		}
-		var legacyID *int64
-		if rec.LegacyID > 0 {
-			id := rec.LegacyID
-			legacyID = &id
-		}
-
-		args = append(args,
-			rec.Namespace, rec.Name, rec.Time, rec.TimeEnd, rec.DashboardUID, rec.PanelID,
-			rec.Text, pq.Array(rec.Tags), pq.Array(rec.Scopes), createdBy, rec.CreatedAt, legacyID, rec.LegacyData,
-		)
 	}
 	return sb.String(), args
 }
 
+// maxTxAttempts bounds how often execInTx replays a transaction Postgres asked
+// it to retry. The conflicting transaction has already resolved by the time the
+// error surfaces, so attempts go back-to-back with no backoff.
+const maxTxAttempts = 3
+
+// execInTx runs fn in a transaction, replaying it if Postgres rejects it with a
+// serialization failure. Both backfill write paths are idempotent, so a replay is
+// safe; fn must reset any accumulator it writes to.
 func (s *PostgreSQLStore) execInTx(ctx context.Context, fn func(tx pgx.Tx) (int64, error)) (int64, error) {
+	for attempt := 1; ; attempt++ {
+		n, err := s.execOnceInTx(ctx, fn)
+		if err == nil {
+			return n, nil
+		}
+		if attempt == maxTxAttempts || !isRetryableTxError(err) {
+			return 0, err
+		}
+		s.logger.Warn("retrying annotation transaction after a serialization failure",
+			"attempt", attempt, "error", err)
+	}
+}
+
+func (s *PostgreSQLStore) execOnceInTx(ctx context.Context, fn func(tx pgx.Tx) (int64, error)) (int64, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to begin transaction: %w", err)
@@ -153,6 +210,23 @@ func (s *PostgreSQLStore) execInTx(ctx context.Context, fn func(tx pgx.Tx) (int6
 		return 0, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 	return n, nil
+}
+
+// isRetryableTxError reports whether Postgres aborted the transaction for a
+// reason that a replay resolves.
+func isRetryableTxError(err error) bool {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return false
+	}
+	switch pgErr.Code {
+	case "40001": // serialization_failure
+		return true
+	case "40P01": // deadlock_detected
+		return true
+	default:
+		return false
+	}
 }
 
 // CountMigrated returns the number of backfilled annotations in the namespace,
