@@ -35,6 +35,29 @@ describe('dateTimeParse', () => {
     expect(date.format()).toEqual('2025-03-12T07:09:37Z');
   });
 
+  it('should retain millisecond precision when parsing a date string with milliseconds', () => {
+    systemDateFormats.update({
+      fullDate: 'YYYY-MM-DD HH:mm:ss',
+      interval: {} as SystemDateFormatsState['interval'],
+      useBrowserLocale: false,
+    });
+
+    const date = dateTimeParse('2020-03-02 15:00:22.123', { timeZone: 'utc' });
+    expect(date.isValid()).toBe(true);
+    expect(date.format('YYYY-MM-DD HH:mm:ss.SSS')).toEqual('2020-03-02 15:00:22.123');
+  });
+
+  it('should still parse a date string without milliseconds using the default format', () => {
+    systemDateFormats.update({
+      fullDate: 'YYYY-MM-DD HH:mm:ss',
+      interval: {} as SystemDateFormatsState['interval'],
+      useBrowserLocale: false,
+    });
+
+    const date = dateTimeParse('2020-03-02 15:00:22', { timeZone: 'utc' });
+    expect(date.format()).toEqual('2020-03-02T15:00:22Z');
+  });
+
   it('should be able to parse array formats used by calendar', () => {
     const date = dateTimeParse([2020, 5, 10, 10, 30, 20], { timeZone: 'utc' });
     expect(date.format()).toEqual('2020-06-10T10:30:20Z');

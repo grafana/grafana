@@ -30,6 +30,7 @@ export class SystemDateFormatsState {
 
   update(settings: SystemDateFormatSettings) {
     this.fullDate = settings.fullDate;
+    this.fullDateMS = settings.fullDate.replace('ss', 'ss.SSS');
     this.interval = settings.interval;
 
     if (settings.useBrowserLocale) {

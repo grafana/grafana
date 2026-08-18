@@ -282,15 +282,21 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
 
 function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   if (isDateTime(value)) {
-    return dateTimeFormat(value, { timeZone });
+    return dateTimeFormat(value, { timeZone, defaultWithMS: hasMilliseconds(value) });
   }
 
   if (value.endsWith('Z')) {
     const dt = dateTimeParse(value);
-    return dateTimeFormat(dt, { timeZone });
+    return dateTimeFormat(dt, { timeZone, defaultWithMS: hasMilliseconds(dt) });
   }
 
   return value;
+}
+
+// Milliseconds are shown only when the value actually carries a non-zero fraction — this keeps the
+// common (second-precision) case uncluttered while still surfacing ms ranges without any UI affordance.
+function hasMilliseconds(value: DateTime): boolean {
+  return value.isValid() && value.format('SSS') !== '000';
 }
 
 function getStyles(theme: GrafanaTheme2) {
