@@ -184,6 +184,7 @@
 /pkg/services/licensing/ @grafana/grafana-operator-experience-squad
 /pkg/services/dsquerierclient/ @grafana/grafana-datasources-core-services
 /pkg/services/navtree/ @grafana/grafana-frontend-navigation
+/pkg/services/notebooks/ @grafana/sharing-squad
 /pkg/services/notifications/ @grafana/grafana-backend-services-squad
 /pkg/services/org/ @grafana/identity-squad
 /pkg/services/preference/ @grafana/grafana-backend-services-squad

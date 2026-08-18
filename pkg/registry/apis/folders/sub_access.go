@@ -92,8 +92,9 @@ var folderTierChecks = []folderTierCheck{
 }
 
 // Action bundles below mirror FolderViewActions / FolderEditActions /
-// FolderAdminActions and DashboardViewActions / DashboardEditActions /
-// DashboardAdminActions in pkg/services/accesscontrol/ossaccesscontrol/. They
+// FolderAdminActions, DashboardViewActions / DashboardEditActions /
+// DashboardAdminActions, and NotebookViewActions / NotebookEditActions /
+// NotebookAdminActions in pkg/services/accesscontrol/ossaccesscontrol/. They
 // are inlined to avoid pulling that package's heavy DI graph into the apiserver
 // edge. Keep in sync if either bundle changes.
 var (
@@ -108,6 +109,7 @@ var (
 		"folders:delete",
 		"folders:create",
 		"dashboards:create",
+		"notebooks:create",
 		"alert.rules:create",
 		"alert.rules:write",
 		"alert.rules:delete",
@@ -137,6 +139,16 @@ var (
 		"dashboards.permissions:read",
 		"dashboards.permissions:write",
 	}...)
+
+	notebookViewActions = []string{
+		"notebooks:read",
+	}
+	notebookEditActions = append(append([]string{}, notebookViewActions...), []string{
+		"notebooks:write",
+		"notebooks:delete",
+	}...)
+	// No notebook-specific admin actions yet (no permissions management); Admin equals Edit.
+	notebookAdminActions = append([]string{}, notebookEditActions...)
 )
 
 func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*foldersV1.FolderAccessInfo, error) {
@@ -249,17 +261,20 @@ func actionsForTier(tier folderTier) map[string]bool {
 	var actions []string
 	switch tier {
 	case tierAdmin:
-		actions = make([]string, 0, len(folderAdminActions)+len(dashboardAdminActions))
+		actions = make([]string, 0, len(folderAdminActions)+len(dashboardAdminActions)+len(notebookAdminActions))
 		actions = append(actions, folderAdminActions...)
 		actions = append(actions, dashboardAdminActions...)
+		actions = append(actions, notebookAdminActions...)
 	case tierEditor:
-		actions = make([]string, 0, len(folderEditActions)+len(dashboardEditActions))
+		actions = make([]string, 0, len(folderEditActions)+len(dashboardEditActions)+len(notebookEditActions))
 		actions = append(actions, folderEditActions...)
 		actions = append(actions, dashboardEditActions...)
+		actions = append(actions, notebookEditActions...)
 	case tierViewer:
-		actions = make([]string, 0, len(folderViewActions)+len(dashboardViewActions))
+		actions = make([]string, 0, len(folderViewActions)+len(dashboardViewActions)+len(notebookViewActions))
 		actions = append(actions, folderViewActions...)
 		actions = append(actions, dashboardViewActions...)
+		actions = append(actions, notebookViewActions...)
 	default:
 		return nil
 	}
