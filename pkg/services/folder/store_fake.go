@@ -12,6 +12,8 @@ type fakeStore struct {
 	ExpectedError         error
 	CreateCalled          bool
 	DeleteCalled          bool
+	GetChildrenCalled     bool
+	LastGetChildrenQuery  GetChildrenQuery
 }
 
 func NewFakeStore() *fakeStore {
@@ -43,6 +45,8 @@ func (f *fakeStore) GetParents(ctx context.Context, q GetParentsQuery) ([]*Folde
 }
 
 func (f *fakeStore) GetChildren(ctx context.Context, cmd GetChildrenQuery) ([]*FolderReference, error) {
+	f.GetChildrenCalled = true
+	f.LastGetChildrenQuery = cmd
 	return f.ExpectedChildFolders, f.ExpectedError
 }
 

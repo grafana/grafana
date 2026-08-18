@@ -1070,3 +1070,89 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		publicDashboardFakeService.AssertExpectations(t)
 	})
 }
+
+func TestGetRootFolders(t *testing.T) {
+	tracer := noop.NewTracerProvider().Tracer("TestGetRootFolders")
+	realFolder := &folder.FolderReference{UID: "folder-a", Title: "Folder A"}
+
+	t.Run("editor with managed folder scopes sees folder and shared with me", func(t *testing.T) {
+		store := folder.NewFakeStore()
+		store.ExpectedChildFolders = []*folder.FolderReference{realFolder}
+		svc := &Service{unifiedStore: store, tracer: tracer}
+
+		editor := &user.SignedInUser{
+			OrgID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					folder.ActionFoldersRead: {
+						folder.ScopeFoldersPrefix + folder.SharedWithMeFolderUID,
+						folder.ScopeFoldersPrefix + "folder-a",
+					},
+				},
+			},
+		}
+
+		got, err := svc.getRootFolders(context.Background(), &folder.GetChildrenQuery{
+			OrgID:        1,
+			Page:         1,
+			SignedInUser: editor,
+		})
+		require.NoError(t, err)
+		require.True(t, store.GetChildrenCalled)
+		require.Equal(t, []string{"folder-a"}, store.LastGetChildrenQuery.FolderUIDs)
+		require.Len(t, got, 2)
+		require.Equal(t, folder.SharedWithMeFolderUID, got[0].UID)
+		require.Equal(t, "folder-a", got[1].UID)
+	})
+
+	t.Run("only sharedwithme skips search and returns shared with me", func(t *testing.T) {
+		store := folder.NewFakeStore()
+		store.ExpectedChildFolders = []*folder.FolderReference{realFolder} // must not be used
+		svc := &Service{unifiedStore: store, tracer: tracer}
+
+		editor := &user.SignedInUser{
+			OrgID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					folder.ActionFoldersRead: {
+						folder.ScopeFoldersPrefix + folder.SharedWithMeFolderUID,
+					},
+				},
+			},
+		}
+
+		got, err := svc.getRootFolders(context.Background(), &folder.GetChildrenQuery{
+			OrgID:        1,
+			Page:         1,
+			SignedInUser: editor,
+		})
+		require.NoError(t, err)
+		require.False(t, store.GetChildrenCalled, "must not search with empty FolderUIDs filter")
+		require.Len(t, got, 1)
+		require.Equal(t, folder.SharedWithMeFolderUID, got[0].UID)
+	})
+
+	t.Run("wildcard skips shared with me and does not filter by uid", func(t *testing.T) {
+		store := folder.NewFakeStore()
+		store.ExpectedChildFolders = []*folder.FolderReference{realFolder}
+		svc := &Service{unifiedStore: store, tracer: tracer}
+
+		adminish := &user.SignedInUser{
+			OrgID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {folder.ActionFoldersRead: {folder.ScopeFoldersAll}},
+			},
+		}
+
+		got, err := svc.getRootFolders(context.Background(), &folder.GetChildrenQuery{
+			OrgID:        1,
+			Page:         1,
+			SignedInUser: adminish,
+		})
+		require.NoError(t, err)
+		require.True(t, store.GetChildrenCalled)
+		require.Nil(t, store.LastGetChildrenQuery.FolderUIDs)
+		require.Len(t, got, 1)
+		require.Equal(t, "folder-a", got[0].UID)
+	})
+}

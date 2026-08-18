@@ -43,6 +43,12 @@ type Service interface {
 	SearchUsersPermissions(ctx context.Context, user identity.Requester, options SearchOptions) (map[int64][]Permission, error)
 	// ClearUserPermissionCache removes the permission cache entry for the given user
 	ClearUserPermissionCache(user identity.Requester)
+	// ClearBasicRolePermissionCache removes the cached permissions for a built-in org role
+	// (Viewer/Editor/Admin). Required when managed permissions on that role change; user-direct
+	// cache clears alone leave Editors/Viewers serving stale folder scopes.
+	ClearBasicRolePermissionCache(role string, orgID int64)
+	// ClearTeamPermissionCache removes the cached permissions for a team in an org.
+	ClearTeamPermissionCache(teamID, orgID int64)
 	// SearchUserPermissions returns single user's permissions filtered by an action prefix or an action
 	SearchUserPermissions(ctx context.Context, orgID int64, filterOptions SearchOptions) ([]Permission, error)
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user

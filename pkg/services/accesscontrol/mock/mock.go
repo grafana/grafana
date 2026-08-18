@@ -24,6 +24,8 @@ type Calls struct {
 	GetRoleByName                  []interface{}
 	GetUserPermissions             []interface{}
 	ClearUserPermissionCache       []interface{}
+	ClearBasicRolePermissionCache  []interface{}
+	ClearTeamPermissionCache       []interface{}
 	DeclareFixedRoles              []interface{}
 	DeclarePluginRoles             []interface{}
 	GetUserBuiltInRoles            []interface{}
@@ -54,6 +56,8 @@ type Mock struct {
 	GetRoleByNameFunc                  func(context.Context, int64, string) (*accesscontrol.RoleDTO, error)
 	GetUserPermissionsFunc             func(context.Context, identity.Requester, accesscontrol.Options) ([]accesscontrol.Permission, error)
 	ClearUserPermissionCacheFunc       func(identity.Requester)
+	ClearBasicRolePermissionCacheFunc  func(string, int64)
+	ClearTeamPermissionCacheFunc       func(int64, int64)
 	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
 	DeclarePluginRolesFunc             func(context.Context, string, string, []plugins.RoleRegistration) error
 	GetUserBuiltInRolesFunc            func(user identity.Requester) []string
@@ -163,6 +167,20 @@ func (m *Mock) ClearUserPermissionCache(user identity.Requester) {
 	// Use override if provided
 	if m.ClearUserPermissionCacheFunc != nil {
 		m.ClearUserPermissionCacheFunc(user)
+	}
+}
+
+func (m *Mock) ClearBasicRolePermissionCache(role string, orgID int64) {
+	m.Calls.ClearBasicRolePermissionCache = append(m.Calls.ClearBasicRolePermissionCache, []interface{}{role, orgID})
+	if m.ClearBasicRolePermissionCacheFunc != nil {
+		m.ClearBasicRolePermissionCacheFunc(role, orgID)
+	}
+}
+
+func (m *Mock) ClearTeamPermissionCache(teamID, orgID int64) {
+	m.Calls.ClearTeamPermissionCache = append(m.Calls.ClearTeamPermissionCache, []interface{}{teamID, orgID})
+	if m.ClearTeamPermissionCacheFunc != nil {
+		m.ClearTeamPermissionCacheFunc(teamID, orgID)
 	}
 }
 
