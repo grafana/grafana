@@ -12,6 +12,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestMigrationWorker_IsSupported(t *testing.T) {
@@ -39,8 +40,9 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 			want: false,
 		},
 	}
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 
-	worker := NewMigrationWorker(nil, true)
+	worker := NewMigrationWorker(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -51,7 +53,9 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 }
 
 func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
-	worker := NewMigrationWorker(NewMockMigrator(t), true)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+
+	worker := NewMigrationWorker(NewMockMigrator(t))
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
@@ -62,6 +66,7 @@ func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 	progressRecorder.On("SetTotal", mock.Anything, 10).Return()
 
 	repo := repository.NewMockReader(t)
+	repo.On("Config").Return(&provisioning.Repository{})
 	err := worker.Process(context.Background(), repo, job, progressRecorder)
 	require.EqualError(t, err, "migration job submitted targeting repository that is not a ReaderWriter")
 }
@@ -102,7 +107,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			setupRepo: func(repo *repository.MockRepository) {
-				// No Config() call needed anymore
+				repo.On("Config").Return(&provisioning.Repository{})
 			},
 		},
 		{
@@ -118,7 +123,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			setupRepo: func(repo *repository.MockRepository) {
-				// No Config() call needed anymore
+				repo.On("Config").Return(&provisioning.Repository{})
 			},
 			expectedError: "",
 		},
@@ -128,8 +133,9 @@ func TestMigrationWorker_Process(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			unifiedMigrator := NewMockMigrator(t)
 			progressRecorder := jobs.NewMockJobProgressRecorder(t)
+			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 
-			worker := NewMigrationWorker(unifiedMigrator, true)
+			worker := NewMigrationWorker(unifiedMigrator)
 
 			if tt.setupMocks != nil {
 				tt.setupMocks(unifiedMigrator, progressRecorder)
@@ -162,10 +168,10 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 		wantErrMsg string
 	}{
 		{
-			name:       "migrate job fails when disabled by configuration",
+			name:       "migrate job fails when feature flag is disabled",
 			enabled:    false,
 			wantErr:    true,
-			wantErrMsg: "migrate functionality is disabled by configuration",
+			wantErrMsg: "migrate functionality is disabled",
 		},
 		{
 			name:    "migrate job proceeds when enabled",
@@ -182,13 +188,15 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 			// Set up mock expectations for when enabled
 			if tt.enabled {
 				mockMigrator.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 			}
 
 			// Create migration worker
-			worker := NewMigrationWorker(mockMigrator, tt.enabled)
+			worker := NewMigrationWorker(mockMigrator)
 
 			// Create a mock repository (ReaderWriter interface required)
 			mockRepo := repository.NewMockReaderWriter(t)
+			mockRepo.On("Config").Return(&provisioning.Repository{})
 
 			// Create a test job
 			job := provisioning.Job{
@@ -221,7 +229,7 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 				// It may fail later due to minimal mocks, but the configuration check passed
 				if err != nil {
 					// Job failed due to mocking, not configuration - that's okay
-					assert.NotContains(t, err.Error(), "disabled by configuration")
+					assert.NotContains(t, err.Error(), "functionality is disabled")
 				}
 			}
 		})
