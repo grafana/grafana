@@ -38,8 +38,7 @@ func TestTemplates(t *testing.T) {
 			query.AccessAll = false
 			query.AccessUserIDs = []any{11, 12}
 			query.QueryPattern = "%ops%"
-			query.HasIsDisabled = true
-			query.IsDisabled = true
+			query.IsDisabled = new(true)
 			query.AuthModule = "oauth"
 			query.Joins = []searchUserJoin{{
 				Operator:  "INNER",
@@ -205,26 +204,21 @@ func TestTemplates(t *testing.T) {
 				{
 					Name: "all_fields",
 					Data: &updateUserQuery{
-						SQLTemplate:       queryTemplate(),
-						UserTable:         dbHelper.Table("user"),
-						UserID:            42,
-						IsServiceAccount:  false,
-						Email:             "alice@example.com",
-						Name:              "Alice",
-						Login:             "alice",
-						Password:          "hashed-password",
-						EmailVerified:     true,
-						HasEmailVerified:  true,
-						Theme:             "dark",
-						IsDisabled:        false,
-						HasIsDisabled:     true,
-						IsGrafanaAdmin:    true,
-						HasIsGrafanaAdmin: true,
-						OrgID:             7,
-						HasOrgID:          true,
-						IsProvisioned:     false,
-						HasIsProvisioned:  true,
-						Updated:           legacysql.NewDBTime(time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)),
+						SQLTemplate:      queryTemplate(),
+						UserTable:        dbHelper.Table("user"),
+						UserID:           42,
+						IsServiceAccount: false,
+						Email:            "alice@example.com",
+						Name:             "Alice",
+						Login:            "alice",
+						Password:         "hashed-password",
+						EmailVerified:    new(true),
+						Theme:            "dark",
+						IsDisabled:       new(false),
+						IsGrafanaAdmin:   new(true),
+						OrgID:            new(int64(7)),
+						IsProvisioned:    new(false),
+						Updated:          legacysql.NewDBTime(time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)),
 					},
 				},
 			},
@@ -241,8 +235,7 @@ func TestSearchUsersQueryArguments(t *testing.T) {
 		OrgID:            7,
 		AccessUserIDs:    []any{11, 12},
 		QueryPattern:     "%ops%",
-		HasIsDisabled:    true,
-		IsDisabled:       true,
+		IsDisabled:       new(true),
 		AuthModule:       "oauth",
 		Filters: []searchUserFilter{
 			{
@@ -286,26 +279,21 @@ func TestSearchUsersQueryArguments(t *testing.T) {
 func TestUpdateUserQueryArguments(t *testing.T) {
 	updated := legacysql.NewDBTime(time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC))
 	query := updateUserQuery{
-		SQLTemplate:       sqltemplate.New(sqltemplate.PostgreSQL),
-		UserTable:         "test_schema.user",
-		UserID:            42,
-		IsServiceAccount:  false,
-		Email:             "alice@example.com",
-		Name:              "Alice",
-		Login:             "alice",
-		Password:          "hashed-password",
-		EmailVerified:     true,
-		HasEmailVerified:  true,
-		Theme:             "dark",
-		IsDisabled:        false,
-		HasIsDisabled:     true,
-		IsGrafanaAdmin:    true,
-		HasIsGrafanaAdmin: true,
-		OrgID:             7,
-		HasOrgID:          true,
-		IsProvisioned:     false,
-		HasIsProvisioned:  true,
-		Updated:           updated,
+		SQLTemplate:      sqltemplate.New(sqltemplate.PostgreSQL),
+		UserTable:        "test_schema.user",
+		UserID:           42,
+		IsServiceAccount: false,
+		Email:            "alice@example.com",
+		Name:             "Alice",
+		Login:            "alice",
+		Password:         "hashed-password",
+		EmailVerified:    new(true),
+		Theme:            "dark",
+		IsDisabled:       new(false),
+		IsGrafanaAdmin:   new(true),
+		OrgID:            new(int64(7)),
+		IsProvisioned:    new(false),
+		Updated:          updated,
 	}
 
 	_, err := renderUserQuery(updateUserTemplate, query)

@@ -12,23 +12,23 @@ SET
 {{ if .Password -}}
   password = {{ .Arg .Password }},
 {{ end -}}
-{{ if .HasEmailVerified -}}
-  email_verified = {{ .Arg .EmailVerified }},
+{{ if .EmailVerified -}}
+  email_verified = {{ .Arg .EmailVerifiedValue }},
 {{ end -}}
 {{ if .Theme -}}
   theme = {{ .Arg .Theme }},
 {{ end -}}
-{{ if .HasIsDisabled -}}
-  is_disabled = {{ .Arg .IsDisabled }},
+{{ if .IsDisabled -}}
+  is_disabled = {{ .Arg .IsDisabledValue }},
 {{ end -}}
-{{ if .HasIsGrafanaAdmin -}}
-  is_admin = {{ .Arg .IsGrafanaAdmin }},
+{{ if .IsGrafanaAdmin -}}
+  is_admin = {{ .Arg .IsGrafanaAdminValue }},
 {{ end -}}
-{{ if .HasOrgID -}}
-  org_id = {{ .Arg .OrgID }},
+{{ if .OrgID -}}
+  org_id = {{ .Arg .OrgIDValue }},
 {{ end -}}
-{{ if .HasIsProvisioned -}}
-  is_provisioned = {{ .Arg .IsProvisioned }},
+{{ if .IsProvisioned -}}
+  is_provisioned = {{ .Arg .IsProvisionedValue }},
 {{ end -}}
   updated = {{ .Arg .Updated }}
 WHERE id = {{ .Arg .UserID }}

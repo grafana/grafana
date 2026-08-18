@@ -37,8 +37,8 @@ WHERE u.is_service_account = {{ .Arg .IsServiceAccount }}
     OR u.login {{ if eq .DialectName "postgres" }}ILIKE{{ else }}LIKE{{ end }} {{ .Arg .QueryPattern }}
   )
 {{ end -}}
-{{ if .HasIsDisabled -}}
-  AND u.is_disabled = {{ .Arg .IsDisabled }}
+{{ if .IsDisabled -}}
+  AND u.is_disabled = {{ .Arg .IsDisabledValue }}
 {{ end -}}
 {{ if .AuthModule -}}
   AND user_auth.auth_module = {{ .Arg .AuthModule }}

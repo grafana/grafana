@@ -333,25 +333,43 @@ func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) erro
 
 type updateUserQuery struct {
 	sqltemplate.SQLTemplate
-	UserTable         string
-	UserID            int64
-	IsServiceAccount  any
-	Email             string
-	Name              string
-	Login             string
-	Password          string
-	EmailVerified     bool
-	HasEmailVerified  bool
-	Theme             string
-	IsDisabled        bool
-	HasIsDisabled     bool
-	IsGrafanaAdmin    bool
-	HasIsGrafanaAdmin bool
-	OrgID             int64
-	HasOrgID          bool
-	IsProvisioned     bool
-	HasIsProvisioned  bool
-	Updated           legacysql.DBTime
+	UserTable        string
+	UserID           int64
+	IsServiceAccount any
+	Email            string
+	Name             string
+	Login            string
+	Password         string
+	EmailVerified    *bool
+	Theme            string
+	IsDisabled       *bool
+	IsGrafanaAdmin   *bool
+	OrgID            *int64
+	IsProvisioned    *bool
+	Updated          legacysql.DBTime
+}
+
+func (q updateUserQuery) EmailVerifiedValue() bool {
+	return q.EmailVerified != nil && *q.EmailVerified
+}
+
+func (q updateUserQuery) IsDisabledValue() bool {
+	return q.IsDisabled != nil && *q.IsDisabled
+}
+
+func (q updateUserQuery) IsGrafanaAdminValue() bool {
+	return q.IsGrafanaAdmin != nil && *q.IsGrafanaAdmin
+}
+
+func (q updateUserQuery) IsProvisionedValue() bool {
+	return q.IsProvisioned != nil && *q.IsProvisioned
+}
+
+func (q updateUserQuery) OrgIDValue() int64 {
+	if q.OrgID != nil {
+		return *q.OrgID
+	}
+	return 0
 }
 
 func (q updateUserQuery) Validate() error { return nil }
@@ -377,30 +395,17 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 			Name:             cmd.Name,
 			Login:            strings.ToLower(cmd.Login),
 			Theme:            cmd.Theme,
+			EmailVerified:    cmd.EmailVerified,
+			IsDisabled:       cmd.IsDisabled,
+			IsGrafanaAdmin:   cmd.IsGrafanaAdmin,
+			IsProvisioned:    cmd.IsProvisioned,
 			Updated:          legacysql.NewDBTime(now),
 		}
 		if cmd.Password != nil && *cmd.Password != "" {
 			query.Password = string(*cmd.Password)
 		}
 		if cmd.OrgID != nil && *cmd.OrgID != 0 {
-			query.HasOrgID = true
-			query.OrgID = *cmd.OrgID
-		}
-		if cmd.IsDisabled != nil {
-			query.HasIsDisabled = true
-			query.IsDisabled = *cmd.IsDisabled
-		}
-		if cmd.EmailVerified != nil {
-			query.HasEmailVerified = true
-			query.EmailVerified = *cmd.EmailVerified
-		}
-		if cmd.IsGrafanaAdmin != nil {
-			query.HasIsGrafanaAdmin = true
-			query.IsGrafanaAdmin = *cmd.IsGrafanaAdmin
-		}
-		if cmd.IsProvisioned != nil {
-			query.HasIsProvisioned = true
-			query.IsProvisioned = *cmd.IsProvisioned
+			query.OrgID = cmd.OrgID
 		}
 
 		rawSQL, err := renderUserQuery(updateUserTemplate, query)
@@ -696,8 +701,7 @@ type searchUsersQuery struct {
 	AccessAll        bool
 	AccessUserIDs    []any
 	QueryPattern     string
-	HasIsDisabled    bool
-	IsDisabled       bool
+	IsDisabled       *bool
 	AuthModule       string
 	Filters          []searchUserFilter
 	Sorts            []string
@@ -705,6 +709,10 @@ type searchUsersQuery struct {
 	Limit            int
 	Offset           int
 	IncludeAuthJoin  bool
+}
+
+func (q searchUsersQuery) IsDisabledValue() bool {
+	return q.IsDisabled != nil && *q.IsDisabled
 }
 
 func (q searchUsersQuery) Validate() error {
@@ -836,14 +844,11 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			AccessAll:        accessAll,
 			AccessUserIDs:    acFilter.Args,
 			QueryPattern:     searchQueryPattern(query.Query),
+			IsDisabled:       query.IsDisabled,
 			Filters:          queryFilters,
 			Sorts:            sorts,
 			UseDefaultSort:   len(query.SortOpts) == 0,
 			IncludeAuthJoin:  true,
-		}
-		if query.IsDisabled != nil {
-			searchQuery.HasIsDisabled = true
-			searchQuery.IsDisabled = *query.IsDisabled
 		}
 		if query.AuthModule != "" {
 			searchQuery.AuthModule = query.AuthModule
