@@ -1,8 +1,29 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { createTheme, type ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { Text } from './Text';
+
+let resizeObserverCallback: ResizeObserverCallback;
+let originalResizeObserver: typeof ResizeObserver;
+
+beforeEach(() => {
+  originalResizeObserver = global.ResizeObserver;
+  global.ResizeObserver = class ResizeObserver {
+    constructor(callback: ResizeObserverCallback) {
+      resizeObserverCallback = callback;
+    }
+
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+});
+
+afterEach(() => {
+  global.ResizeObserver = originalResizeObserver;
+});
 
 describe('Text', () => {
   it('renders correctly', () => {
@@ -31,5 +52,35 @@ describe('Text', () => {
     );
     const textComponent = screen.getByRole('heading');
     expect(textComponent).toHaveStyle(`color:${theme.colors.info.text}`);
+  });
+
+  it('updates the tooltip when already-truncated text changes', async () => {
+    const firstValue = 'first long title';
+    const secondValue = 'second long title';
+    const { rerender } = render(
+      <Text element="p" truncate>
+        {firstValue}
+      </Text>
+    );
+    const textElement = screen.getByText(firstValue);
+
+    Object.defineProperties(textElement, {
+      clientWidth: { configurable: true, value: 100 },
+      scrollWidth: { configurable: true, value: 200 },
+    });
+
+    act(() => {
+      resizeObserverCallback([{ target: textElement } as ResizeObserverEntry], {} as ResizeObserver);
+    });
+
+    rerender(
+      <Text element="p" truncate>
+        {secondValue}
+      </Text>
+    );
+
+    await userEvent.hover(screen.getByText(secondValue));
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(secondValue);
   });
 });
