@@ -466,11 +466,12 @@ func filterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requirement {
 	return &resourcepb.Requirement{Key: f.Field, Operator: op, Values: f.Values}
 }
 
-// applyLabelSelector lowers the selector onto Options.Labels. Exact-match label
-// semantics are a backend prerequisite: labels are indexed with the default
-// analyzer, so In/NotIn currently overmatch (env=foo matches env=foo-bar). This
-// endpoint does not re-apply the selector to full resources, so the backend
-// needs keyword label mapping/querying (or a post-filter) before /search wires.
+// applyLabelSelector lowers the selector onto Options.Labels. The backend now
+// indexes label values whole, so In/NotIn match exactly and case-sensitively.
+// An index built before that change still holds analyzed values and keeps
+// overmatching (env=foo matches env=foo-bar) until it is rebuilt, and this
+// endpoint does not re-apply the selector to full resources, so its answers are
+// only as exact as the index it read.
 func applyLabelSelector(req *resourcepb.ResourceSearchRequest, sel *metav1.LabelSelector) {
 	if sel == nil {
 		return

@@ -1162,7 +1162,8 @@
         "with-causes": "{{-baseMessage}}: {{-causes}}"
       },
       "failedWith": "{{-config}} failed with {{status}}: {{-message}}",
-      "time-interval-in-use": "This time interval cannot be deleted because it is still used by one or more notification policies or alert rules."
+      "time-interval-in-use": "This time interval cannot be deleted because it is still used by one or more notification policies or alert rules.",
+      "time-interval-name-exists": "Time interval with this name already exists. Use a different name or update existing one."
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1617,17 +1618,6 @@
         "import-rules": "Import alert rules",
         "title": "Auto-sync is enabled"
       },
-      "autosync-review": {
-        "back": "Add method",
-        "badge": "Will sync continuously",
-        "card-title": "Auto-sync",
-        "enable": "Enable auto-sync",
-        "heading": "Review & enable auto-sync",
-        "scope": "Scope",
-        "scope-value": "Contact points, notification policies, templates, mute timings, and alert rules",
-        "source": "Source",
-        "subtitle": "Confirm the source. Once enabled, Grafana keeps these resources in sync until you turn it off in Alerting settings."
-      },
       "confirm": {
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
@@ -1675,26 +1665,6 @@
       "info-description": "This wizard helps you import alert rules and notification resources from external sources to Grafana Alerting. For more information, refer to the <2>documentation</2>.",
       "info-title": "Import wizard",
       "loading": "Loading…",
-      "method": {
-        "autosync": "Auto-sync",
-        "autosync-datasource-label": "Data source",
-        "autosync-datasource-placeholder": "Select a data source…",
-        "autosync-desc": "Grafana continuously syncs alert configuration from a Mimir or Cortex Alertmanager data source. The synced resources stay read-only and managed by the source.",
-        "autosync-no-datasources-desc": "Auto-sync needs a Mimir or Cortex Alertmanager data source. Add one, then start this wizard again.",
-        "autosync-no-datasources-title": "No Mimir or Cortex data sources",
-        "autosync-title": "Auto-sync",
-        "heading": "How do you want to add these resources?",
-        "next-steps": "Next you'll set up notification resources and alert rules, then review & import.",
-        "promote": "Promote",
-        "promote-desc": "Promote when you are ready to use these resources. Each contact point, policy, template, and mute timing merges into your live config and becomes a normal, editable Grafana resource.",
-        "promote-title": "Promote",
-        "promote-warning-desc": "The imported resources merge into your live notification config. To reverse it later you would have to delete each resulting resource by hand.",
-        "promote-warning-title": "Promoting can't be undone",
-        "stage": "Stage",
-        "stage-desc": "Stage brings the config in safely without touching your live setup. Resources stay visible but read-only so you can review them first. Promote when you are ready to use them as editable Grafana resources.",
-        "stage-title": "Stage",
-        "subtitle": "Choose how alert configuration from your external Alertmanager is brought into Grafana. You can change this before you finish."
-      },
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
@@ -1722,18 +1692,6 @@
         "filter": "Filter",
         "folder": "Target folder",
         "heading": "Review Import",
-        "merge-inhibition-rules_one": "{{count}} inhibition rule",
-        "merge-inhibition-rules_other": "{{count}} inhibition rules",
-        "merge-receivers_one": "{{count}} contact point",
-        "merge-receivers_other": "{{count}} contact points",
-        "merge-route": "a notification route",
-        "merge-summary": "Will merge into your live config: {{summary}}",
-        "merge-templates_one": "{{count}} template",
-        "merge-templates_other": "{{count}} templates",
-        "merge-time-intervals_one": "{{count}} mute timing",
-        "merge-time-intervals_other": "{{count}} mute timings",
-        "method": "Method",
-        "method-promote": "Promote",
         "namespace": "Namespace",
         "nothing": "Nothing to import",
         "nothing-desc": "Both steps were skipped. Go back and configure at least one import source.",
@@ -1871,14 +1829,10 @@
         "cancel-confirm-title": "Cancel import?",
         "cancel-confirm-yes": "Discard changes",
         "skip": "Skip",
-        "step-method": "Import method",
-        "step-method-desc": "How to bring resources into Grafana",
         "step-notifications": "Notification resources",
         "step-notifications-desc": "Contact points, policies, templates",
         "step-review": "Review & import",
         "step-review-desc": "Preview and confirm import",
-        "step-review-enable": "Review & enable",
-        "step-review-enable-desc": "Confirm and enable auto-sync",
         "step-rules": "Alert rules",
         "step-rules-desc": "Alert and recording rules"
       },
@@ -3282,11 +3236,11 @@
         "picker-label": "Datasource",
         "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
         "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
-        "save-disabled-staged-config": "Revert the staged configuration before enabling auto-sync.",
+        "save-disabled-staged-config": "Promote or revert the staged configuration before enabling auto-sync.",
         "save-error": "Failed to save Mimir Alertmanager auto-sync",
         "save-success": "Mimir Alertmanager auto-sync enabled",
         "staged-conflict-active-title": "Auto-sync is not running",
-        "staged-conflict-body": "Grafana holds one imported configuration at a time, and {{identifier}} currently occupies that slot. Revert it below to free auto-sync.",
+        "staged-conflict-body": "Grafana holds one imported configuration at a time, and {{identifier}} currently occupies that slot. Promote or revert it below to free auto-sync.",
         "staged-conflict-title": "Auto-sync is unavailable while a configuration is staged",
         "title": "Auto-sync configuration"
       },
@@ -3309,6 +3263,39 @@
         "parse-error-title": "Couldn't read the staged configuration",
         "policy-tree-routes_one": "{{count}} route",
         "policy-tree-routes_other": "{{count}} routes",
+        "promote": {
+          "checking": "Checking promotion impact…",
+          "confirm": "Promote to live config",
+          "dry-run-error": "Couldn't check the promotion impact",
+          "dry-run-unavailable-body": "You can still promote — the merge itself is validated when you confirm.",
+          "dry-run-unavailable-title": "Couldn't preview the promotion impact",
+          "error-title": "Failed to promote configuration",
+          "invalid-title": "This configuration can't be promoted",
+          "merge-contact-points_one": "contact point added",
+          "merge-contact-points_other": "contact points added",
+          "merge-heading": "Will merge into your live config:",
+          "merge-info": "Promoting merges this configuration into your live Grafana Alertmanager. This is a one-time action and can't be undone.",
+          "merge-inhibition-rules_one": "inhibition rule added",
+          "merge-inhibition-rules_other": "inhibition rules added",
+          "merge-route": "notification route added",
+          "merge-templates_one": "template added",
+          "merge-templates_other": "templates added",
+          "merge-time-intervals_one": "time interval added",
+          "merge-time-intervals_other": "time intervals added",
+          "rename-contact-point": "Contact point",
+          "rename-heading": "Renamed to avoid conflicts",
+          "rename-subtitle": "These names already exist in your live config, so the imported copies are renamed.",
+          "rename-time-interval": "Time interval",
+          "rules-note-body": "Alert rules and recording rules are already active as Grafana-managed rules — promote only merges the Alertmanager resources above.",
+          "success-body": "The imported resources were merged into your live config.",
+          "success-title": "Configuration promoted",
+          "sync-not-cleared-body": "Nothing syncs from the datasource any more. Disable auto-sync in Alerting settings to import notification resources again — if it is set in grafana.ini, remove the key there.",
+          "sync-not-cleared-title": "Configuration promoted, but auto-sync is still configured",
+          "sync-stops-body": "Once merged, the resources become normal Grafana resources and stop tracking the datasource. Auto-sync is turned off as part of the merge.",
+          "sync-stops-title": "This will stop auto-sync",
+          "title": "Promote this configuration?"
+        },
+        "promote-button": "Promote to live config",
         "resources": "Resources",
         "revert": {
           "body": "This removes the staged copy of the imported configuration from Grafana.",
@@ -3331,7 +3318,7 @@
         "staged-badge": "Staged · read-only",
         "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
         "staged-title": "Staged configuration",
-        "sync-managed-description": "This configuration is kept up to date by auto-sync, so it can't be reverted — disable auto-sync to remove it.",
+        "sync-managed-description": "This configuration is kept up to date by auto-sync, so it can't be reverted — disable auto-sync to remove it. Promoting it merges these resources into your live config and stops the sync.",
         "synced-badge": "Synced · read-only",
         "view": "View"
       },
@@ -3624,6 +3611,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "A unique name for the time interval",
+      "error-save-time-interval": "Failed to save time interval",
       "text-loading-time-interval": "Loading time interval",
       "title-no-matching-time-interval-found": "No matching time interval found"
     },
@@ -3868,6 +3856,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Failed to import resources",
+      "staged-success-body": "Your imported config is now staged in the Import tab.",
+      "staged-success-title": "Configuration staged",
       "success": "Successfully imported resources to Grafana Alerting."
     },
     "yaml-content-info": {
@@ -6065,6 +6055,7 @@
       "new-row-title": "New row",
       "row": {
         "collapse": "Collapse row {{title}}",
+        "copy-link": "Copy link to row",
         "expand": "Expand row {{title}}",
         "new": "New row",
         "repeat": {
@@ -8936,11 +8927,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "Logs for this span",
+        "no-logs-found-tooltip": "No matching logs found for this span",
         "no-logs-tooltip": "No logs found for this span using the trace data source configuration.",
         "tooltip": "See logs related to this span using the trace data source configuration."
       },
       "logs-for-this-trace": {
         "button": "Logs for this trace",
+        "logs-found-tooltip": "See related logs",
+        "no-logs-found-tooltip": "No matching logs found for this trace",
         "no-logs-tooltip": "No logs found for this trace using the trace data source configuration.",
         "tooltip": "See logs related to this trace using the trace data source configuration."
       },
@@ -11752,6 +11746,7 @@
       "no-details": "No fields to display.",
       "open-assistant": "Explain log line in Assistant",
       "pin-line": "Pin log",
+      "prettify": "Prettify",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
@@ -12465,7 +12460,7 @@
     },
     "machine-learning": {
       "subtitle": "Explore AI and machine learning features",
-      "title": "AI & machine learning"
+      "title": "Machine learning"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
@@ -14396,6 +14391,12 @@
     "shared": {
       "branch-description": "The branch to use for provisioning",
       "branch-label": "Branch",
+      "commit-author-email-description": "Email used for the commit author.",
+      "commit-author-email-label": "Author email",
+      "commit-author-email-placeholder": "noreply@grafana.com",
+      "commit-author-name-description": "Author all commits as this name instead of the user who made the change.",
+      "commit-author-name-label": "Author name",
+      "commit-author-name-placeholder": "Grafana",
       "commit-signer-email-description": "Must match the signing key identity.",
       "commit-signer-email-label": "Signer email",
       "commit-signer-email-placeholder": "noreply@grafana.com",
@@ -16146,6 +16147,9 @@
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
+    },
+    "frame-picker": {
+      "label": "Query"
     },
     "options": {
       "render-mode": "Render mode"

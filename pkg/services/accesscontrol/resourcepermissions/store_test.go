@@ -527,7 +527,7 @@ func seedResourcePermissions(
 	require.NoError(t, err)
 
 	usrSvc, err := userimpl.ProvideService(
-		sql, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(sql), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
@@ -560,7 +560,7 @@ func seedResourcePermissions(
 }
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
-	sql, cfg := db.InitTestDBWithCfg(t)
+	sql, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg
 }
 

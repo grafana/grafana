@@ -41,6 +41,8 @@ export const FlagKeys = {
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
+  /** Data source query gateway */
+  DatasourcesQueryGateway: "datasources.queryGateway",
   /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
@@ -115,6 +117,8 @@ export const FlagKeys = {
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
+  /** Enables team APIs in the app platform */
+  KubernetesTeamsApi: "kubernetesTeamsApi",
   /** Enables the logs tableNG panel to replace existing tableRT */
   LogsTablePanelNG: "logsTablePanelNG",
   /** Use stream shards to split queries into smaller subqueries */
@@ -139,6 +143,8 @@ export const FlagKeys = {
   ProvisioningReadmes: "provisioning.readmes",
   /** Author Git Sync commits as the acting Grafana user */
   ProvisioningUserAttribution: "provisioning.userAttribution",
+  /** Enable export functionality for provisioned resources */
+  ProvisioningExport: "provisioningExport",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
@@ -147,6 +153,8 @@ export const FlagKeys = {
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
+  /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
+  RawPrometheusTableNg: "rawPrometheus.tableNg",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
@@ -169,8 +177,12 @@ export const FlagKeys = {
   TableInspectDataTableNG: "table.inspectDataTableNG",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
+  /** Enables the refreshed table experience: reworked column headers and ad hoc column interactions */
+  TableRefresh: "table.refresh",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
+  /** Enables value type filtering in Traces Drilldown */
+  TracesDrilldownUseValueTypeFiltering: "tracesDrilldown.useValueTypeFiltering",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -312,10 +324,10 @@ export const useFlagDatasourcesApiserverUseNewAPIsForDatasourceResources = (opti
  *
  * **Details:**
  * - flag key: `datasources.azureMonitorBatchAPI`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datasources.azureMonitorBatchAPI", false, options).value;
+  return useFlag("datasources.azureMonitorBatchAPI", true, options).value;
 };
 
 /**
@@ -327,6 +339,17 @@ export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvalua
  */
 export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.config.ui.useNewDatasourceCRUDAPIs", false, options).value;
+};
+
+/**
+ * Data source query gateway
+ *
+ * **Details:**
+ * - flag key: `datasources.queryGateway`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesQueryGateway = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.queryGateway", false, options).value;
 };
 
 /**
@@ -737,6 +760,17 @@ export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Enables team APIs in the app platform
+ *
+ * **Details:**
+ * - flag key: `kubernetesTeamsApi`
+ * - default value: `false`
+ */
+export const useFlagKubernetesTeamsApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("kubernetesTeamsApi", false, options).value;
+};
+
+/**
  * Enables the logs tableNG panel to replace existing tableRT
  *
  * **Details:**
@@ -869,6 +903,17 @@ export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Enable export functionality for provisioned resources
+ *
+ * **Details:**
+ * - flag key: `provisioningExport`
+ * - default value: `false`
+ */
+export const useFlagProvisioningExport = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioningExport", false, options).value;
+};
+
+/**
  * Allow setting folder metadata for provisioned folders
  *
  * **Details:**
@@ -910,6 +955,17 @@ export const useFlagQueryHistoryLocalOnly = (options?: ReactFlagEvaluationOption
  */
 export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryHistory.recentQueriesUI", false, options).value;
+};
+
+/**
+ * Renders the raw Prometheus query results table using TableNG instead of the legacy Table
+ *
+ * **Details:**
+ * - flag key: `rawPrometheus.tableNg`
+ * - default value: `false`
+ */
+export const useFlagRawPrometheusTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("rawPrometheus.tableNg", false, options).value;
 };
 
 /**
@@ -1034,6 +1090,17 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Enables the refreshed table experience: reworked column headers and ad hoc column interactions
+ *
+ * **Details:**
+ * - flag key: `table.refresh`
+ * - default value: `false`
+ */
+export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refresh", false, options).value;
+};
+
+/**
  * Enables the new features in text panel
  *
  * **Details:**
@@ -1042,6 +1109,17 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("text.newFeatures", false, options).value;
+};
+
+/**
+ * Enables value type filtering in Traces Drilldown
+ *
+ * **Details:**
+ * - flag key: `tracesDrilldown.useValueTypeFiltering`
+ * - default value: `false`
+ */
+export const useFlagTracesDrilldownUseValueTypeFiltering = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("tracesDrilldown.useValueTypeFiltering", false, options).value;
 };
 
 /**

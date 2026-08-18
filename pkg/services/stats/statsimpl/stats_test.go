@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationStatsDataAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := db.InitTestDBWithCfg(t)
+	db, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgSvc := populateDB(t, db, cfg)
 
 	dashSvc := &dashboards.FakeDashboardService{}
@@ -153,7 +153,7 @@ func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) org.Service {
 
 	orgService, _ := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotatest.New(false, nil))
 	userSvc, _ := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(db), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		&quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService(), nil,
 	)
 

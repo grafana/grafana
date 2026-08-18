@@ -842,10 +842,6 @@ const (
 	// Remember the last viewed organization for users using SSO
 	FlagRememberUserOrgForSso = "rememberUserOrgForSso"
 
-	// FlagDsAbstractionApp
-	// Registers the dsabstraction app for querying datasources via unified SQL
-	FlagDsAbstractionApp = "dsAbstractionApp"
-
 	// FlagDatasourcesApiServerEnableHealthEndpoint
 	// Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableHealthEndpoint = "datasourcesApiServerEnableHealthEndpoint"
@@ -1005,4 +1001,8 @@ const (
 	// FlagPluginsForceTls13
 	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client
 	FlagPluginsForceTls13 = "pluginsForceTls13"
+
+	// FlagDatasourcesQueryGateway
+	// Data source query gateway
+	FlagDatasourcesQueryGateway = "datasources.queryGateway"
 )
