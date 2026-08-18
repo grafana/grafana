@@ -8,6 +8,7 @@ import webpack, { type Configuration } from 'webpack';
 import { getEnvConfig } from '../cli/env-util.ts';
 
 import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
+import E2ESelectorsPlugin from './plugins/E2ESelectorsPlugin.ts';
 import { esbuildRule, sassRule } from './rules.ts';
 
 const require = createRequire(import.meta.url);
@@ -86,6 +87,7 @@ export default (env: Env = {}): Configuration => ({
   ],
   plugins: [
     new CorsWorkerPlugin(),
+    new E2ESelectorsPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
