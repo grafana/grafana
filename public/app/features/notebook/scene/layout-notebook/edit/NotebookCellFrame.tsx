@@ -6,7 +6,6 @@ import { t } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
-import { type CellContentKind } from '../../../types';
 import { type NotebookCellItem } from '../NotebookCellItem';
 import { NotebookCellRenderer } from '../NotebookCellRenderer';
 
@@ -55,13 +54,6 @@ interface Props {
    */
   onDuplicate?: () => void;
   onDelete?: () => void;
-  /**
-   * Required, unlike the action handlers above: a narrative cell is editable whenever the notebook
-   * is, and there is no version of it to render that quietly discards what the reader types. The
-   * layout binds it to the manager, which is what can see the sibling cells an edit may also apply
-   * to.
-   */
-  onContentChange: (cell: NotebookCellItem, content: CellContentKind) => void;
 }
 
 /**
@@ -79,7 +71,6 @@ export function NotebookCellFrame({
   onAdd,
   onDuplicate,
   onDelete,
-  onContentChange,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -118,12 +109,7 @@ export function NotebookCellFrame({
             />
           )}
 
-          <NotebookCellRenderer
-            cell={cell}
-            isEditing={Boolean(isEditing)}
-            autoFocus={autoFocus}
-            onContentChange={onContentChange}
-          />
+          <NotebookCellRenderer cell={cell} isEditing={Boolean(isEditing)} autoFocus={autoFocus} />
 
           {/* index + 1: this divider inserts *after* the cell it belongs to. */}
           {isEditing && (

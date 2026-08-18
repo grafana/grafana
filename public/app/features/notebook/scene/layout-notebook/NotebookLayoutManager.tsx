@@ -55,6 +55,9 @@ export class NotebookLayoutManager
 {
   public static Component = NotebookLayoutManagerRenderer;
   public readonly isDashboardLayoutManager = true;
+  // Lets a cell find the manager that owns it without importing this class — see
+  // isNotebookLayoutManager for why that import direction has to stay closed.
+  public readonly isNotebookLayoutManager = true;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
@@ -328,7 +331,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     onAdd={onAdd}
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}
-                    onContentChange={model.setCellContent}
                   />
                 ))}
                 {dropProvided.placeholder}

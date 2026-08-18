@@ -19,12 +19,10 @@ export function NotebookCellRenderer({
   cell,
   isEditing,
   autoFocus,
-  onContentChange,
 }: {
   cell: NotebookCellItem;
   isEditing: boolean;
   autoFocus?: boolean;
-  onContentChange: (cell: NotebookCellItem, content: CellContentKind) => void;
 }) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
 
@@ -37,15 +35,7 @@ export function NotebookCellRenderer({
   }
 
   if (narrative) {
-    return (
-      <NarrativeCell
-        cell={cell}
-        content={narrative}
-        isEditing={isEditing}
-        autoFocus={autoFocus}
-        onContentChange={onContentChange}
-      />
-    );
+    return <NarrativeCell cell={cell} content={narrative} isEditing={isEditing} autoFocus={autoFocus} />;
   }
 
   return null;
@@ -73,13 +63,11 @@ function NarrativeCell({
   content,
   isEditing,
   autoFocus,
-  onContentChange,
 }: {
   cell: NotebookCellItem;
   content: CellContentKind;
   isEditing: boolean;
   autoFocus?: boolean;
-  onContentChange: (cell: NotebookCellItem, content: CellContentKind) => void;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -95,7 +83,7 @@ function NarrativeCell({
         content={content}
         isEditing={isEditing}
         autoFocus={autoFocus}
-        onChange={(updated) => onContentChange(cell, updated)}
+        onChange={(updated) => cell.onContentChange(updated)}
       />
     </div>
   );
