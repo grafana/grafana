@@ -1,7 +1,10 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
+import { type PluginMeta, PluginType } from '@grafana/data';
 import { config, isAppPluginInstalled } from '@grafana/runtime';
 import { getPluginSettings } from '@grafana/runtime/unstable';
+
+import { logError } from '../Analytics';
 
 import { DMAStatus, useDMAStatus } from './useDMAStatus';
 
@@ -15,8 +18,31 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getPluginSettings: jest.fn(),
 }));
 
+jest.mock('../Analytics', () => ({
+  ...jest.requireActual('../Analytics'),
+  logError: jest.fn(),
+}));
+
 const isAppPluginInstalledMock = jest.mocked(isAppPluginInstalled);
 const getPluginSettingsMock = jest.mocked(getPluginSettings);
+const logErrorMock = jest.mocked(logError);
+
+const pluginSettings = {
+  id: 'grafana-prometheusalerting-app',
+  name: 'Prometheus Alerting',
+  type: PluginType.app,
+  info: {
+    author: { name: 'Grafana Labs' },
+    description: '',
+    links: [],
+    logos: { large: '', small: '' },
+    screenshots: [],
+    updated: '',
+    version: '',
+  },
+  module: '',
+  baseUrl: '',
+} satisfies PluginMeta;
 
 describe('useDMAStatus', () => {
   const originalFeatureToggle = config.featureToggles.alertingDisableDMAinUI;
@@ -28,6 +54,7 @@ describe('useDMAStatus', () => {
 
   afterEach(() => {
     config.featureToggles.alertingDisableDMAinUI = originalFeatureToggle;
+    jest.useRealTimers();
     jest.resetAllMocks();
   });
 
@@ -37,6 +64,23 @@ describe('useDMAStatus', () => {
     const { result } = renderHook(() => useDMAStatus());
 
     expect(result.current.status).toBe(DMAStatus.Loading);
+  });
+
+  it('falls back to Grafana-managed rules and logs when plugin discovery times out', async () => {
+    jest.useFakeTimers();
+    isAppPluginInstalledMock.mockReturnValue(new Promise<boolean>(() => {}));
+
+    const { result } = renderHook(() => useDMAStatus());
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(5_000);
+    });
+
+    expect(result.current.status).toBe(DMAStatus.ManagedByGrafana);
+    expect(logErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Timed out while checking Prometheus Alerting plugin status' }),
+      { timeout: '5000' }
+    );
   });
 
   it('enables DMA without requesting settings when the plugin is not installed', async () => {
@@ -49,7 +93,10 @@ describe('useDMAStatus', () => {
 
   it('enables DMA when the plugin is installed but disabled', async () => {
     isAppPluginInstalledMock.mockResolvedValue(true);
-    getPluginSettingsMock.mockResolvedValue({ enabled: false } as Awaited<ReturnType<typeof getPluginSettings>>);
+    getPluginSettingsMock.mockResolvedValue({
+      ...pluginSettings,
+      enabled: false,
+    });
 
     const { result } = renderHook(() => useDMAStatus());
 
@@ -58,7 +105,23 @@ describe('useDMAStatus', () => {
 
   it('disables DMA when the plugin is installed and enabled', async () => {
     isAppPluginInstalledMock.mockResolvedValue(true);
-    getPluginSettingsMock.mockResolvedValue({ enabled: true } as Awaited<ReturnType<typeof getPluginSettings>>);
+    getPluginSettingsMock.mockResolvedValue({
+      ...pluginSettings,
+      enabled: true,
+    });
+
+    const { result } = renderHook(() => useDMAStatus());
+
+    await waitFor(() => expect(result.current.status).toBe(DMAStatus.ManagedByPlugin));
+  });
+
+  it('uses an enabled plugin when the feature toggle is enabled', async () => {
+    config.featureToggles.alertingDisableDMAinUI = true;
+    isAppPluginInstalledMock.mockResolvedValue(true);
+    getPluginSettingsMock.mockResolvedValue({
+      ...pluginSettings,
+      enabled: true,
+    });
 
     const { result } = renderHook(() => useDMAStatus());
 

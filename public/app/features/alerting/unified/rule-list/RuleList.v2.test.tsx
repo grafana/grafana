@@ -4,9 +4,10 @@ import { byRole, byTestId } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { config, setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { DMAStatus, useDMAStatus } from '../hooks/useDMAStatus';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
 import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
@@ -29,22 +30,11 @@ jest.mock('./GroupedView', () => ({
 }));
 
 jest.mock('../hooks/useDMAStatus', () => {
-  const actual = jest.requireActual<{
-    DMAStatus: { ManagedByGrafana: 'managed-by-grafana'; NotAvailable: 'not-available' };
-  }>('../hooks/useDMAStatus');
+  const actual = jest.requireActual('../hooks/useDMAStatus');
 
   return {
     ...actual,
-    useDMAStatus: jest.fn(() => {
-      const { config } = jest.requireActual<{ config: { featureToggles: Record<string, boolean | undefined> } }>(
-        '@grafana/runtime'
-      );
-      const disabledByFeatureToggle = config.featureToggles.alertingDisableDMAinUI ?? false;
-
-      return {
-        status: disabledByFeatureToggle ? actual.DMAStatus.NotAvailable : actual.DMAStatus.ManagedByGrafana,
-      };
-    }),
+    useDMAStatus: jest.fn(),
   };
 });
 
@@ -62,8 +52,12 @@ jest.mock('./filter/useSavedSearches', () => ({
 }));
 
 const loadDefaultSavedSearchMock = loadDefaultSavedSearch as jest.MockedFunction<typeof loadDefaultSavedSearch>;
+const useDMAStatusMock = jest.mocked(useDMAStatus);
 
 beforeEach(() => {
+  useDMAStatusMock.mockImplementation(() => ({
+    status: config.featureToggles.alertingDisableDMAinUI ? DMAStatus.NotAvailable : DMAStatus.ManagedByGrafana,
+  }));
   loadDefaultSavedSearchMock.mockResolvedValue(null);
   // Clear session storage to ensure clean state for each test
   // This prevents the "visited" flag from affecting subsequent tests
@@ -94,6 +88,18 @@ alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
 describe('RuleListPage v2', () => {
+  it('shows loading without rendering rules or actions while DMA status is being resolved', () => {
+    useDMAStatusMock.mockReturnValue({ status: DMAStatus.Loading });
+    grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+    render(<RuleListPage />);
+
+    expect(ui.groupedView.query()).not.toBeInTheDocument();
+    expect(ui.filterView.query()).not.toBeInTheDocument();
+    expect(byRole('link', { name: /^new alert rule$/i }).query()).not.toBeInTheDocument();
+    expect(byRole('button', { name: /more/i }).query()).not.toBeInTheDocument();
+  });
+
   it('should show grouped view by default', async () => {
     render(<RuleListPage />);
 

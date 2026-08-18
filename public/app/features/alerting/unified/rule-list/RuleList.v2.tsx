@@ -29,12 +29,14 @@ import RulesFilter from './filter/RulesFilter.v2';
 import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
-function RuleList() {
+interface RuleListProps {
+  showDataSourceManagedRules: boolean;
+}
+
+function RuleList({ showDataSourceManagedRules }: RuleListProps) {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
   const showImportToGMABanner = useShowImportToGMARulesBanner();
-  const { status: dmaStatus } = useDMAStatus();
-  const showDataSourceManagedRules = dmaStatus === DMAStatus.ManagedByGrafana;
 
   return (
     <Stack direction="column">
@@ -60,21 +62,21 @@ function RuleList() {
   );
 }
 
-export function RuleListActions() {
+interface RuleListActionsContentProps {
+  showDataSourceManagedRules: boolean;
+}
+
+function RuleListActionsContent({ showDataSourceManagedRules }: RuleListActionsContentProps) {
   const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
-  const { status: dmaStatus } = useDMAStatus();
 
   // Check if there are any data sources with manageAlerts enabled
   const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
 
   const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
   const canCreateCloudRules =
-    createCloudRuleSupported &&
-    createCloudRuleAllowed &&
-    hasAlertEnabledDataSources &&
-    dmaStatus === DMAStatus.ManagedByGrafana;
+    createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources && showDataSourceManagedRules;
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
@@ -178,19 +180,28 @@ export function RuleListActions() {
   );
 }
 
+export function RuleListActions() {
+  const { status: dmaStatus } = useDMAStatus();
+
+  return <RuleListActionsContent showDataSourceManagedRules={dmaStatus === DMAStatus.ManagedByGrafana} />;
+}
+
 export default function RuleListPage() {
   const { isApplying } = useApplyDefaultSearch();
   const { navId, pageNav } = useAlertRulesNav();
+  const { status: dmaStatus } = useDMAStatus();
+  const isLoading = isApplying || dmaStatus === DMAStatus.Loading;
+  const showDataSourceManagedRules = dmaStatus === DMAStatus.ManagedByGrafana;
 
   return (
     <AlertingPageWrapper
       navId={navId}
       pageNav={pageNav}
       renderTitle={(title) => <RuleListPageTitle title={title} />}
-      isLoading={isApplying}
-      actions={<RuleListActions />}
+      isLoading={isLoading}
+      actions={!isLoading && <RuleListActionsContent showDataSourceManagedRules={showDataSourceManagedRules} />}
     >
-      {!isApplying && <RuleList />}
+      {!isLoading && <RuleList showDataSourceManagedRules={showDataSourceManagedRules} />}
     </AlertingPageWrapper>
   );
 }

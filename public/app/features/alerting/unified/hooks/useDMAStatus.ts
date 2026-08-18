@@ -3,9 +3,12 @@ import { useEffect } from 'react';
 import { config, isAppPluginInstalled, isFetchError } from '@grafana/runtime';
 import { getPluginSettings } from '@grafana/runtime/unstable';
 
+import { logError } from '../Analytics';
+
 import { type AsyncState, useAsync } from './useAsync';
 
 export const PROMETHEUS_ALERTING_APP_ID = 'grafana-prometheusalerting-app';
+const DMA_STATUS_TIMEOUT_MS = 5_000;
 
 export const DMAStatus = {
   Loading: 'loading',
@@ -23,7 +26,7 @@ export interface DMAState {
 
 export function useDMAStatus(): DMAState {
   const disabledByFeatureToggle = config.featureToggles.alertingDisableDMAinUI ?? false;
-  const [{ execute }, requestState] = useAsync(isDMAPluginEnabled);
+  const [{ execute }, requestState] = useAsync(getDMAPluginStatus);
 
   useEffect(() => {
     execute();
@@ -32,38 +35,68 @@ export function useDMAStatus(): DMAState {
   return getDMAState(requestState, disabledByFeatureToggle);
 }
 
-async function isDMAPluginEnabled(): Promise<boolean> {
+interface DMAPluginStatus {
+  enabled: boolean;
+  installed: boolean;
+}
+
+async function getDMAPluginStatus(): Promise<DMAPluginStatus> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    return await Promise.race([
+      fetchDMAPluginStatus(),
+      new Promise<DMAPluginStatus>((resolve) => {
+        timeoutId = setTimeout(() => {
+          logError(new Error('Timed out while checking Prometheus Alerting plugin status'), {
+            timeout: String(DMA_STATUS_TIMEOUT_MS),
+          });
+          resolve({ installed: false, enabled: false });
+        }, DMA_STATUS_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
+async function fetchDMAPluginStatus(): Promise<DMAPluginStatus> {
   const installed = await isAppPluginInstalled(PROMETHEUS_ALERTING_APP_ID);
 
   if (!installed) {
-    return false;
+    return { installed: false, enabled: false };
   }
 
   try {
     const settings = await getPluginSettings(PROMETHEUS_ALERTING_APP_ID);
-    return Boolean(settings.enabled);
+    return { installed: true, enabled: Boolean(settings.enabled) };
   } catch (error) {
     const cause = error instanceof Error ? error.cause : error;
     if (isFetchError(cause) && cause.status === 404) {
-      return false;
+      return { installed: true, enabled: false };
     }
     throw error;
   }
 }
 
-function getDMAState(requestState: AsyncState<boolean | undefined>, disabledByFeatureToggle: boolean): DMAState {
+function getDMAState(
+  requestState: AsyncState<DMAPluginStatus | undefined>,
+  disabledByFeatureToggle: boolean
+): DMAState {
   const error = requestState.error;
 
   if (requestState.status === 'not-executed' || requestState.status === 'loading') {
     return { status: DMAStatus.Loading, error };
   }
 
-  if (disabledByFeatureToggle) {
-    return { status: DMAStatus.NotAvailable, error };
+  if (requestState.result?.enabled) {
+    return { status: DMAStatus.ManagedByPlugin, error };
   }
 
-  if (requestState.result) {
-    return { status: DMAStatus.ManagedByPlugin, error };
+  if (disabledByFeatureToggle) {
+    return { status: DMAStatus.NotAvailable, error };
   }
 
   return { status: DMAStatus.ManagedByGrafana, error };
