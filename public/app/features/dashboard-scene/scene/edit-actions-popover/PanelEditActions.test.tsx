@@ -1,14 +1,17 @@
 import { act, fireEvent, render, screen, userEvent } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { ElementSelectionContext } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { VizPanelEditableElement } from '../../sidebar/VizPanelEditableElement';
+import { getCloneKey } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
-import * as utils from '../../utils/utils';
-import { type DashboardScene } from '../DashboardScene';
+import { getPanelIdForVizPanel } from '../../utils/utils';
+import { DashboardScene } from '../DashboardScene';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { SHOW_COPIED_DURATION_MS } from './EditActions';
 import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
@@ -21,6 +24,15 @@ jest.mock('app/core/app_events', () => ({
   },
 }));
 const mockPublishAppEvent = jest.mocked(appEvents.publish);
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  locationService: {
+    ...jest.requireActual('@grafana/runtime').locationService,
+    partial: jest.fn(),
+  },
+}));
+const mockLocationServicePartial = jest.mocked(locationService.partial);
 
 async function hoverAndRest(element: HTMLElement) {
   jest.useFakeTimers();
@@ -215,40 +227,48 @@ describe('<PanelEditWrapper />', () => {
     );
   }
 
-  function mockSidebarSelection() {
-    const onSelect = jest.fn();
-    const selectObject = jest.fn();
+  describe('when the user clicks Settings ', () => {
+    test('the panel is selected via the sidebar', async () => {
+      const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'test-panel' });
+      const scene = new DashboardScene({
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
 
-    jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue({
-      state: {
-        sidebar: {
-          selectObject,
-          state: {
-            selectionContext: { onSelect },
-          },
-        },
-      },
-    } as unknown as DashboardScene);
+      renderPanelEditWrapper(panel);
 
-    return { onSelect, selectObject };
-  }
+      await hoverAndRest(screen.getByTestId('reference-child'));
+      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
-  test('if the user clicks Settings, then the panel is selected via selectionContext.onSelect so repeated clones remap to the source panel', async () => {
-    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'test-panel' });
-    const { onSelect, selectObject } = mockSidebarSelection();
+      expect(scene.state.sidebar.getSelectedObject()).toBe(panel);
+    });
 
-    renderPanelEditWrapper(panel);
+    test('the source panel is always selected in case of repeated panels', async () => {
+      const sourcePanel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'test-panel' });
+      const clonedPanel = new VizPanel({
+        title: 'Test panel',
+        pluginId: 'timeseries',
+        key: getCloneKey('test-panel', 1),
+        repeatSourceKey: 'test-panel',
+      });
+      const scene = new DashboardScene({
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromGridItems([
+          new DashboardGridItem({ body: sourcePanel, repeatedPanels: [clonedPanel] }),
+        ]),
+      });
 
-    await hoverAndRest(screen.getByTestId('reference-child'));
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+      renderPanelEditWrapper(clonedPanel);
 
-    expect(onSelect).toHaveBeenCalledWith({ id: 'test-panel' }, { force: true });
-    expect(selectObject).not.toHaveBeenCalled();
+      await hoverAndRest(screen.getByTestId('reference-child'));
+      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+
+      expect(scene.state.sidebar.getSelectedObject()).toBe(sourcePanel);
+    });
   });
 
   test('if the user clicks Edit visualization, then panelActionClicked is called', async () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
-    const getPanelIdForVizPanel = jest.spyOn(utils, 'getPanelIdForVizPanel');
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
     renderPanelEditWrapper(panel);
@@ -256,64 +276,69 @@ describe('<PanelEditWrapper />', () => {
     await hoverAndRest(screen.getByTestId('reference-child'));
     fireEvent.click(screen.getByRole('button', { name: 'Edit visualization' }));
 
-    expect(getPanelIdForVizPanel).toHaveBeenCalledWith(panel);
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure', 1, 'edit_popover');
+    expect(mockLocationServicePartial).toHaveBeenCalledWith({ editPanel: getPanelIdForVizPanel(panel) });
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith(
+      'configure',
+      getPanelIdForVizPanel(panel),
+      'edit_popover'
+    );
   });
 
-  test('if the user clicks Copy, then VizPanelEditableElement.onCopy is called', async () => {
+  test('if the user clicks Copy, the panel is copied via the dashboard', async () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
-    let copiedPanel: VizPanel | undefined;
-    const onCopy = jest.spyOn(VizPanelEditableElement.prototype, 'onCopy').mockImplementation(function (
-      this: VizPanelEditableElement
-    ) {
-      copiedPanel = this.panel;
+    const scene = new DashboardScene({
+      isEditing: true,
+      body: DefaultGridLayoutManager.fromVizPanels([panel]),
     });
+
+    const copyPanel = jest.spyOn(scene, 'copyPanel').mockImplementation();
+    jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
     renderPanelEditWrapper(panel);
 
     await hoverAndRest(screen.getByTestId('reference-child'));
     fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
 
-    expect(copiedPanel).toBe(panel);
-    expect(onCopy).toHaveBeenCalledWith('edit_popover');
+    expect(copyPanel).toHaveBeenCalledWith(panel);
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith(
+      'copy',
+      getPanelIdForVizPanel(panel),
+      'edit_popover'
+    );
   });
 
-  test('if the user clicks Duplicate, then VizPanelEditableElement.onDuplicate is called', async () => {
+  test('if the user clicks Duplicate, the panel is duplicated via its layout manager', async () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
-    let duplicatedPanel: VizPanel | undefined;
-    const onDuplicate = jest.spyOn(VizPanelEditableElement.prototype, 'onDuplicate').mockImplementation(function (
-      this: VizPanelEditableElement
-    ) {
-      duplicatedPanel = this.panel;
-    });
+    const layoutManager = DefaultGridLayoutManager.fromVizPanels([panel]);
+    const duplicatePanel = jest.spyOn(layoutManager, 'duplicatePanel').mockImplementation();
+    jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
     renderPanelEditWrapper(panel);
 
     await hoverAndRest(screen.getByTestId('reference-child'));
     fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
 
-    expect(duplicatedPanel).toBe(panel);
-    expect(onDuplicate).toHaveBeenCalledWith('edit_popover');
+    expect(duplicatePanel).toHaveBeenCalledWith(panel);
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('duplicate', 1, 'edit_popover');
   });
 
-  test('if the user confirms Delete, then VizPanelEditableElement.onDelete is called', async () => {
+  test('if the user clicks & confirms Delete,  the panel is removed via its layout manager', async () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
-    let deletedPanel: VizPanel | undefined;
-    const onDelete = jest.spyOn(VizPanelEditableElement.prototype, 'onDelete').mockImplementation(function (
-      this: VizPanelEditableElement
-    ) {
-      deletedPanel = this.panel;
-    });
+    const layoutManager = DefaultGridLayoutManager.fromVizPanels([panel]);
+    const removePanel = jest.spyOn(layoutManager, 'removePanel').mockImplementation();
+    jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
     renderPanelEditWrapper(panel);
 
     await hoverAndRest(screen.getByTestId('reference-child'));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
-    const [arg] = mockPublishAppEvent.mock.calls[0];
-    arg.payload.onConfirm();
+    expect(removePanel).not.toHaveBeenCalled();
 
-    expect(deletedPanel).toBe(panel);
-    expect(onDelete).toHaveBeenCalledWith('edit_popover');
+    const [event] = mockPublishAppEvent.mock.calls[0];
+    event.payload.onConfirm();
+
+    expect(removePanel).toHaveBeenCalledWith(panel);
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover');
   });
 });
