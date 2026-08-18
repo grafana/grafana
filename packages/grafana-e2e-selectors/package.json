@@ -38,7 +38,7 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild && yarn generate-e2e-selectors-json",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "generate-e2e-selectors-json": "tsx ./scripts/generate-e2e-selectors-json.ts",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
