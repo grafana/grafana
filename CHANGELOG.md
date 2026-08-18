@@ -1,3 +1,20 @@
+<!-- 12.4.9 START -->
+
+# 12.4.9 (2026-08-18)
+
+### Security
+
+- CVE-2026-17183
+
+### Features and enhancements
+
+- **Dashboard Import:** Labels in v2 schema [#130428](https://github.com/grafana/grafana/pull/130428), [@harisrozajac](https://github.com/harisrozajac)
+
+### Bug fixes
+
+- **Azure Monitor:** fix migration for dimension filters [#130521](https://github.com/grafana/grafana/pull/130521), [@olivierlemasle](https://github.com/olivierlemasle)
+
+<!-- 12.4.9 END -->
 <!-- 12.4.8 START -->
 
 # 12.4.8 (2026-08-07)
