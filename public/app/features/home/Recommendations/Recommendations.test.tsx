@@ -202,22 +202,19 @@ describe('Recommendations', () => {
     expect(visibleRecommendationTitle(region)).toBe('Trace requests across services');
   });
 
-  it('waits for all existing-solution detections before revealing the recommendation order', async () => {
-    const logsDatasource = deferred<DataSourceInstanceListItem | null>();
+  it('does not let inactive datasource details delay the recommendation order', async () => {
+    const logsDatasource = jest.fn(() => new Promise<DataSourceInstanceListItem | null>(() => {}));
     const metrics = solution('metrics', 'active', datasource, { title: 'Metrics & infrastructure' });
     const logs = solution('logs', 'inactive', null, {
       title: 'Logs',
-      datasource: () => logsDatasource.promise,
+      datasource: logsDatasource,
     });
     render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [metrics, logs])} />);
 
-    expect(await screen.findByTestId('recommended-card-skeleton')).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
-
-    await act(async () => logsDatasource.resolve(null));
-
     expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
     expect(await carouselRegion()).toBeInTheDocument();
+    expect(screen.queryByTestId('recommended-card-skeleton')).not.toBeInTheDocument();
+    expect(logsDatasource).not.toHaveBeenCalled();
   });
 
   it('does not start selection while initially collapsed, then starts it on expansion', async () => {

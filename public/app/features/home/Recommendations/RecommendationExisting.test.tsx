@@ -80,26 +80,21 @@ afterEach(() => {
 });
 
 describe('RecommendationExisting', () => {
-  it('waits for every required detection before choosing the default solution', async () => {
-    const logsDatasource = deferred<DataSourceInstanceListItem | null>();
+  it('does not let an inactive solution datasource block choosing the active solution', async () => {
+    const logsDatasource = jest.fn(() => new Promise<DataSourceInstanceListItem | null>(() => {}));
     const selection = jest.fn();
     const metrics = solution('metrics', { status: 'active', data: datasource, title: 'Metrics' });
     const logs = solution('logs', {
       status: 'inactive',
       title: 'Logs',
-      datasource: () => logsDatasource.promise,
+      datasource: logsDatasource,
     });
 
     render(<RecommendationExisting solutions={[metrics, logs]} onSelectionChange={selection} />);
 
-    expect(screen.getByTestId('recommendation-existing-skeleton')).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Metrics' })).not.toBeInTheDocument();
-    expect(selection).toHaveBeenLastCalledWith(undefined);
-
-    await act(async () => logsDatasource.resolve(null));
-
     expect(await screen.findByRole('heading', { name: 'Metrics' })).toBeInTheDocument();
     expect(selection).toHaveBeenLastCalledWith('metrics');
+    expect(logsDatasource).not.toHaveBeenCalled();
   });
 
   it('lists only live solutions and lets the user switch between them', async () => {
@@ -238,15 +233,9 @@ describe('RecommendationExisting', () => {
       description: /Connect a data source to light up/,
     },
     {
-      name: 'partial',
-      status: 'active' as const,
-      heading: 'Add more telemetry',
-      description: /Some signals are already flowing/,
-    },
-    {
       name: 'unknown',
       status: 'unknown' as const,
-      heading: 'Add more telemetry',
+      heading: "We couldn't confirm your data",
       description: /We couldn't confirm live data yet/,
     },
   ])('renders the $name no-data state from settled signals', async ({ status, heading, description }) => {

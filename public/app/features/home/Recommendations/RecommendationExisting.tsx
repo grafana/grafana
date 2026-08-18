@@ -25,14 +25,13 @@ export function RecommendationExisting({ onSelectionChange, solutions }: Recomme
       Promise.all(
         solutions.map(async (solution) => ({
           solution,
-          hasData: (await solution.datasource().catch(() => null)) !== null,
           signal: await solution.signal().catch(() => 'unknown' as const),
         }))
       ),
     [solutions]
   );
   const loading = resolved.value === undefined;
-  const existing = (resolved.value ?? []).filter(({ hasData }) => hasData).map(({ solution }) => solution);
+  const existing = (resolved.value ?? []).filter(({ signal }) => signal === 'active').map(({ solution }) => solution);
 
   // The effective selection (explicit pick ?? default) is computed before the early returns so
   // the report effect runs unconditionally (Rules of Hooks). While loading it reports undefined
@@ -51,16 +50,10 @@ export function RecommendationExisting({ onSelectionChange, solutions }: Recomme
   }
 
   if (!selected) {
-    // NoDataCard's hard claim is only true when every core signal settled inactive; a confirmed
-    // active signal earns the "already flowing" copy; anything else (all unknown, solutions
-    // missing) gets the neutral inconclusive variant so the card never overclaims.
+    // NoDataCard's hard claim is only true when every core signal settled inactive. Anything
+    // inconclusive gets neutral copy so the card never overclaims.
     const core: SignalStatus[] = (resolved.value ?? []).map(({ signal }) => signal);
-    const variant =
-      core.length > 0 && core.every((v) => v === 'inactive')
-        ? 'empty'
-        : core.some((v) => v === 'active')
-          ? 'partial'
-          : 'unknown';
+    const variant = core.length > 0 && core.every((v) => v === 'inactive') ? 'empty' : 'unknown';
     return <NoDataCard variant={variant} />;
   }
 
