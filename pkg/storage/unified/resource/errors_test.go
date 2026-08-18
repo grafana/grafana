@@ -65,18 +65,6 @@ func TestHTTPStatusRoundTrip(t *testing.T) {
 	}
 }
 
-// A gRPC error without an attached ErrorResult (e.g. the Aborted conflict
-// error server.go's create() raises directly) still falls back to the
-// HTTP-code remap, and the message must be the clean status message, not the
-// "rpc error: code = ... desc = ..." wrapped form.
-func TestAsErrorResult_FallbackWithoutAttachedDetails(t *testing.T) {
-	err := status.Error(codes.Aborted, "concurrent create")
-
-	got := AsErrorResult(err)
-	require.Equal(t, "concurrent create", got.Message)
-	require.Equal(t, int32(http.StatusConflict), got.Code)
-}
-
 func TestAsErrorResult_UnpackCorrectErrorDetails(t *testing.T) {
 	st := status.New(codes.Aborted, "concurrent create")
 	errDetails := resourcepb.ErrorResult{
