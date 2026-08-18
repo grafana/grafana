@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,15 +26,13 @@ import (
 
 func setCloudRBACRolesFlag(t *testing.T, enabled bool) {
 	t.Helper()
-	err := openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
 		featuremgmt.FlagCloudRBACRoles: {
 			Key:            featuremgmt.FlagCloudRBACRoles,
 			Variants:       map[string]any{"on": enabled},
 			DefaultVariant: "on",
 		},
-	}))
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+	})
 }
 
 func TestRBACSync_SyncPermission(t *testing.T) {
