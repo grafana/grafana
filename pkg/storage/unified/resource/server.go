@@ -2307,7 +2307,7 @@ func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRe
 		Kinds:     []string{nsr.GroupResource()},
 	})
 	if err != nil {
-		resErr := AsErrorResult(err)
+		resErr := ErrorResultFromGRPCDetails(err)
 		if resErr != nil {
 			return &resourcepb.QuotaUsageResponse{Error: resErr}, nil
 		}
@@ -2492,7 +2492,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		Kinds:     []string{nsr.GroupResource()},
 	})
 	if err != nil {
-		resErr := AsErrorResult(err)
+		resErr := ErrorResultFromGRPCDetails(err)
 		if resErr != nil {
 			s.degraded(ctx, "check_quota", "stats_error", nsr, errors.New(resErr.Message))
 			return nil
