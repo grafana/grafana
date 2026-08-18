@@ -7,7 +7,7 @@ import {
 } from '@grafana/data';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
+import { GroupByVariable, SceneDataTransformer, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
@@ -507,6 +507,27 @@ describe('setDashboardPanelContext', () => {
 
       context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([]);
+    });
+  });
+
+  describe('onSetSystemTransformations', () => {
+    it('updates the panel data transformer with system transformations', () => {
+      const { vizPanel, context } = buildTestScene({});
+
+      context.onSetSystemTransformations!({
+        prepend: [{ id: 'limit', options: {} }],
+        append: [{ id: 'reduce', options: {} }],
+      });
+
+      const transformer = vizPanel.state.$data;
+      if (!(transformer instanceof SceneDataTransformer)) {
+        throw new Error('Expected panel data provider to be a SceneDataTransformer');
+      }
+
+      expect(transformer.state.transformations).toEqual([
+        { id: 'limit', options: {}, origin: 'system', position: 'prepend' },
+        { id: 'reduce', options: {}, origin: 'system', position: 'append' },
+      ]);
     });
   });
 });

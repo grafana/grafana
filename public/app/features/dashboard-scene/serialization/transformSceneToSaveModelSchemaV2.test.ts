@@ -77,6 +77,7 @@ import {
   getDataQueryKind,
   getAutoAssignedDSRef,
   getVizPanelQueries,
+  getVizPanelTransformations,
   vizPanelToSchemaV2,
 } from './transformSceneToSaveModelSchemaV2';
 
@@ -2300,5 +2301,36 @@ describe('normalizeDataSourceRef', () => {
     // Template variables short-circuit and never call getInstanceSettings.
     expect(normalizeDataSourceRef('$datasource')).toEqual({ uid: '$datasource' });
     expect(normalizeDataSourceRef('${datasource}')).toEqual({ uid: '${datasource}' });
+  });
+});
+
+describe('getVizPanelTransformations', () => {
+  it('excludes system transformations from the save model', () => {
+    const transformer = new SceneDataTransformer({
+      $data: new SceneDataNode({}),
+      transformations: [{ id: 'reduce', options: { reducers: ['max'] } }],
+    });
+
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      $data: transformer,
+    });
+
+    transformer.setSystemTransformations({
+      prepend: [{ id: 'limit', options: {} }],
+      // Custom operators can not be persisted and would previously throw on save
+      append: [() => (source) => source],
+    });
+
+    const result = getVizPanelTransformations(vizPanel);
+
+    expect(result).toEqual([
+      {
+        kind: 'Transformation',
+        group: 'reduce',
+        spec: { options: { reducers: ['max'] } },
+      },
+    ]);
   });
 });

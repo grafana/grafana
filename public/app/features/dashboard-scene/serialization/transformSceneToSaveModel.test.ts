@@ -21,6 +21,7 @@ import {
   CustomVariable,
   type MultiValueVariable,
   sceneGraph,
+  SceneDataTransformer,
   SceneGridLayout,
   type SceneGridRow,
   VizPanel,
@@ -693,6 +694,28 @@ describe('transformSceneToSaveModel', () => {
         uid: 'abc',
       });
     });
+
+    it('Given panel with system transformations, they are not persisted', () => {
+      const gridItem = buildGridItemFromPanelSchema({
+        transformations: [{ id: 'reduce', options: {} }],
+        targets: [{ refId: 'A', datasource: { type: 'grafana-testdata', uid: 'abc' } }],
+      });
+
+      const transformer = gridItem.state.body.state.$data;
+      if (!(transformer instanceof SceneDataTransformer)) {
+        throw new Error('Expected panel data provider to be a SceneDataTransformer');
+      }
+
+      transformer.setSystemTransformations({
+        prepend: [{ id: 'limit', options: {} }],
+        append: [{ id: 'organize', options: {} }],
+      });
+
+      const result = gridItemToPanel(gridItem);
+
+      expect(result.transformations).toEqual([{ id: 'reduce', options: {} }]);
+    });
+
     it('Given panel with shared query', () => {
       const panel = buildGridItemFromPanelSchema({
         datasource: {

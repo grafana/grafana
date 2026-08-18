@@ -24,6 +24,7 @@ export enum DebugMode {
   Render = 'render',
   State = 'State',
   ThrowError = 'ThrowError',
+  Transformations = 'transformations',
 }
 
 export interface Options {
