@@ -4,7 +4,7 @@
   "id": "logstable",
   "suggestions": true,
   "state": "beta",
-  "hideFromList": true,
+  "hideFromList": false,
   "info": {
     "author": {
       "name": "Grafana Labs",
