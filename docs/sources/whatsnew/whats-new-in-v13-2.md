@@ -35,7 +35,6 @@ posts:
   - title: Git Sync
     items:
       - whats-new/2026-08-13-git-sync-support-for-github-enterprise.md
-      - whats-new/2026-08-14-authoring-commits-in-git-sync-1.md
       - whats-new/2026-08-14-authoring-commits-in-git-sync.md
       - whats-new/2026-08-14-webhooks-available-for-gitlab-and-bitbucket.md
   - title: Other
