@@ -179,9 +179,12 @@ function TextNGView({ mode, content, code, fitContent }: TextNGViewProps) {
 
   if (mode === TextMode.Code) {
     const codeOptions = code ?? defaultCodeOptions;
-    // CodeMirror needs an explicit height. In fit-content mode there is none, so
-    // approximate from the line count (the cell's CSS max-height caps it).
-    const codeHeight = fitContent ? `${estimateCodeHeight(content)}px` : '100%';
+    // CodeMirror always wraps lines here, so a line-count estimate (as v1 uses
+    // for Monaco, which doesn't wrap) would undercount soft-wrapped lines. Use
+    // 'auto' instead: CodeMirror's own .cm-scroller is forced to a CSS height
+    // of 100%, which resolves to auto against an auto-height .cm-editor, so it
+    // grows to fit exactly what's rendered, wraps included.
+    const codeHeight = fitContent ? 'auto' : '100%';
     return (
       <div className={cx(styles.codeContainer, fitContent && styles.codeContainerFit)} data-testid="TextNGPanel-code">
         <TextNGCodeView
@@ -214,14 +217,6 @@ function TextNGView({ mode, content, code, fitContent }: TextNGViewProps) {
       <ScrollContainer minHeight="100%">{rendered}</ScrollContainer>
     </div>
   );
-}
-
-const CODE_LINE_HEIGHT = 18;
-const CODE_VERTICAL_PADDING = 16;
-
-function estimateCodeHeight(content: string): number {
-  const lines = content ? content.split('\n').length : 1;
-  return lines * CODE_LINE_HEIGHT + CODE_VERTICAL_PADDING;
 }
 
 // Only mounted while the lazy editor chunk loads, so the extra processing runs

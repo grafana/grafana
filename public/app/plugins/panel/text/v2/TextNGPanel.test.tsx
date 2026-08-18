@@ -495,7 +495,7 @@ describe('TextNGPanel', () => {
     });
 
     it.each([
-      ['70px', 'line 1\nline 2\nline 3', true],
+      ['auto', 'line 1\nline 2\nline 3', true],
       ['100%', 'line 1\nline 2\nline 3', false],
     ])('gives the code view a height of %s when fitContent is %s', async (expectedHeight, contentTest, fitContent) => {
       replaceVariablesMock.mockReturnValueOnce(contentTest);
