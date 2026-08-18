@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
 import { OverlayContainer } from '@react-aria/overlays';
-import { type ComponentProps, type PropsWithChildren, useEffect, useRef, useState } from 'react';
+import { type ComponentProps, type PropsWithChildren, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
