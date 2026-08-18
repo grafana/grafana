@@ -1,26 +1,4 @@
-SELECT
-  u.id,
-  u.uid,
-  u.email,
-  u.name,
-  u.login,
-  u.is_admin,
-  u.is_disabled,
-  u.last_seen_at,
-  user_auth.auth_module,
-  u.is_provisioned,
-  u.created
-FROM {{ .Ident .UserTable }} AS u
-LEFT JOIN {{ .Ident .UserAuthTable }} AS user_auth ON user_auth.id = (
-  SELECT id
-  FROM {{ .Ident .UserAuthTable }} AS user_auth
-  WHERE user_auth.user_id = u.id
-  ORDER BY user_auth.created DESC
-  LIMIT 1
-)
-{{ range .Joins -}}
-{{ .Operator }} JOIN {{ $.Ident .Table }} AS {{ $.Ident .Alias }} ON {{ .Condition }}
-{{ end -}}
+{{ define "search_users_where" -}}
 WHERE u.is_service_account = FALSE
 {{ if gt .OrgID 0 -}}
   AND u.org_id = {{ .Arg .OrgID }}
@@ -54,6 +32,31 @@ WHERE u.is_service_account = FALSE
   AND {{ range .Parts }}{{ .SQL }}{{ if .HasValue }}{{ $.Arg .Value }}{{ end }}{{ end }}
 {{ end -}}
 {{ end -}}
+{{ end -}}
+SELECT
+  u.id,
+  u.uid,
+  u.email,
+  u.name,
+  u.login,
+  u.is_admin,
+  u.is_disabled,
+  u.last_seen_at,
+  user_auth.auth_module,
+  u.is_provisioned,
+  u.created
+FROM {{ .Ident .UserTable }} AS u
+LEFT JOIN {{ .Ident .UserAuthTable }} AS user_auth ON user_auth.id = (
+  SELECT id
+  FROM {{ .Ident .UserAuthTable }} AS user_auth
+  WHERE user_auth.user_id = u.id
+  ORDER BY user_auth.created DESC
+  LIMIT 1
+)
+{{ range .Joins -}}
+{{ .Operator }} JOIN {{ $.Ident .Table }} AS {{ $.Ident .Alias }} ON {{ .Condition }}
+{{ end -}}
+{{ template "search_users_where" . }}
 {{ if or .Sorts .UseDefaultSort -}}
 ORDER BY
 {{ if .Sorts -}}

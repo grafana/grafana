@@ -12,36 +12,4 @@ LEFT JOIN {{ .Ident .UserAuthTable }} AS user_auth ON user_auth.id = (
 {{ range .Joins -}}
 {{ .Operator }} JOIN {{ $.Ident .Table }} AS {{ $.Ident .Alias }} ON {{ .Condition }}
 {{ end -}}
-WHERE u.is_service_account = FALSE
-{{ if gt .OrgID 0 -}}
-  AND u.org_id = {{ .Arg .OrgID }}
-{{ end -}}
-{{ if .AccessUserIDs -}}
-  AND u.id IN ({{ .ArgList .AccessUserIDs }})
-{{ else if not .AccessAll -}}
-  AND 1 = 0
-{{ end -}}
-{{ if .QueryPattern -}}
-  AND (
-    u.email {{ if eq .DialectName "postgres" }}ILIKE{{ else }}LIKE{{ end }} {{ .Arg .QueryPattern }}
-    OR u.name {{ if eq .DialectName "postgres" }}ILIKE{{ else }}LIKE{{ end }} {{ .Arg .QueryPattern }}
-    OR u.login {{ if eq .DialectName "postgres" }}ILIKE{{ else }}LIKE{{ end }} {{ .Arg .QueryPattern }}
-  )
-{{ end -}}
-{{ if .IsDisabled -}}
-  AND u.is_disabled = {{ .Arg .IsDisabledValue }}
-{{ end -}}
-{{ if .AuthModule -}}
-  AND user_auth.auth_module = {{ .Arg .AuthModule }}
-{{ end -}}
-{{ range .Filters -}}
-{{ if eq .Kind "in" -}}
-{{ if .Values -}}
-  AND {{ $.Ident .Condition }} IN ({{ $.ArgList .Values }})
-{{ else -}}
-  AND 0 = 1
-{{ end -}}
-{{ else -}}
-  AND {{ range .Parts }}{{ .SQL }}{{ if .HasValue }}{{ $.Arg .Value }}{{ end }}{{ end }}
-{{ end -}}
-{{ end -}}
+{{ template "search_users_where" . }}
