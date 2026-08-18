@@ -78,14 +78,14 @@ export function RecommendationsView({
   }, [collapsed, paused, safeIndex, items.length, showControls, selectionPending]);
 
   useEffect(() => {
-    if (items.length) {
+    if (items.length && !selectionPending) {
       recommendationsShown({
         recommendation_ids: items.map((r) => r.id),
         starting_state: startingState,
         solution: activeSolution ?? undefined,
       });
     }
-  }, [items, startingState, activeSolution]);
+  }, [items, selectionPending, startingState, activeSolution]);
 
   return (
     <div>
@@ -94,7 +94,7 @@ export function RecommendationsView({
           <Trans i18nKey="home.recommendations.title">Recommendations for your stack</Trans>
         </Text>
 
-        {collapsed && hasRecommendations && (
+        {collapsed && hasRecommendations && !selectionPending && (
           <div className={styles.pills}>
             <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
               {items.map((recommendation) => (
