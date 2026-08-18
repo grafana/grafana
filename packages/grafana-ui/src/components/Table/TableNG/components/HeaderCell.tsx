@@ -8,6 +8,7 @@ import { type Column, type SortDirection } from '@grafana/react-data-grid';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
+import { IconButton } from '../../../IconButton/IconButton';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Filter } from '../Filter/Filter';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
@@ -49,6 +50,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
+  const headerTooltip = field.config.custom?.headerTooltip;
 
   // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
@@ -112,6 +114,16 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
         )}
       </button>
+      {headerTooltip && (
+        <IconButton
+          name="info-circle"
+          size="sm"
+          tooltip={headerTooltip}
+          onClick={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        />
+      )}
 
       {filterable && (
         <Filter
