@@ -95,6 +95,7 @@ declare module "@openfeature/core" {
     | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
+    | "grafana.panelPluginTransformations"
     | "tracesDrilldown.useValueTypeFiltering";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;

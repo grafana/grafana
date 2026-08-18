@@ -3240,6 +3240,14 @@ var (
 			Generate:     Generate{Go: true, React: true},
 		},
 		{
+			Name:        "grafana.panelPluginTransformations",
+			Description: "Let panel plugins register system transformations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "tracesDrilldown.useValueTypeFiltering",
 			Description:  "Enables value type filtering in Traces Drilldown",
 			Stage:        FeatureStageExperimental,
