@@ -41,7 +41,10 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
           new File(['{{ define "email" }}{{ end }}'], 'email.tmpl', { type: 'text/plain' }),
           new File(['{{ define "slack" }}{{ end }}'], 'slack.tmpl', { type: 'text/plain' }),
         ]);
-        onTriggerDryRun?.();
+        // Mounting on the wizard's very first render (Notifications is now step one), these setValue
+        // calls aren't guaranteed to be visible via getValues() yet within the same tick — defer so
+        // handleTriggerDryRun reads the values above rather than the stale defaults.
+        queueMicrotask(() => onTriggerDryRun?.());
       }, [setValue, onTriggerDryRun]);
       return null;
     },
@@ -73,15 +76,10 @@ beforeEach(() => {
 });
 
 /**
- * Drives the wizard: pick the method, complete the notifications step, skip the rules step, then
- * open and accept the confirm modal. Leaves the rest to the caller's assertions.
+ * Drives the wizard: complete the notifications step, skip the rules step, then open and accept the
+ * confirm modal. Leaves the rest to the caller's assertions.
  */
-async function importWith(method: 'stage' | 'promote', user: ReturnType<typeof render>['user']) {
-  if (method === 'promote') {
-    await user.click(await screen.findByRole('radio', { name: /promote/i }));
-  }
-  // Method -> Notifications
-  await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+async function importWith(user: ReturnType<typeof render>['user']) {
   await screen.findByRole('group', { name: /import notification resources/i });
   // Notifications -> Rules: the stub triggers a dry-run; wait for it to pass so Next is enabled
   // (Next is gated on a passing dry-run, and is disabled while blocked). Re-query each poll — the
@@ -107,22 +105,24 @@ async function importWith(method: 'stage' | 'promote', user: ReturnType<typeof r
   await user.click(within(dialog).getByRole('button', { name: /start import/i }));
 }
 
-describe('ImportToGMA wizard — stage/promote analytics', () => {
-  it.each(['stage', 'promote'] as const)('tracks success with importMethod=%s', async (method) => {
+describe('ImportToGMA wizard — stage analytics', () => {
+  it('tracks success and lands on the Import settings tab', async () => {
     const { user } = render(<ImportWizardGate />);
 
-    await importWith(method, user);
+    await importWith(user);
 
     await waitFor(() =>
       expect(mockReportInteraction).toHaveBeenCalledWith(
         'grafana_alerting_import_to_gma_success',
-        expect.objectContaining({ importMethod: method })
+        expect.objectContaining({ notificationsSource: 'yaml' })
       )
     );
-    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/list'), { timeout: 3000 });
+    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/admin/import'), {
+      timeout: 3000,
+    });
   });
 
-  it('tracks an error with importMethod when the import fails', async () => {
+  it('tracks an error when the import fails', async () => {
     // Only fail the real import — the dry-run (same URL, distinguished by the dry-run header) must
     // still pass so the wizard can advance to the confirm step under the passing-dry-run gate.
     server.use(
@@ -134,12 +134,12 @@ describe('ImportToGMA wizard — stage/promote analytics', () => {
     );
     const { user } = render(<ImportWizardGate />);
 
-    await importWith('stage', user);
+    await importWith(user);
 
     await waitFor(() =>
       expect(mockReportInteraction).toHaveBeenCalledWith(
         'grafana_alerting_import_to_gma_error',
-        expect.objectContaining({ importMethod: 'stage' })
+        expect.objectContaining({ notificationsSource: 'yaml' })
       )
     );
     expect(mockReportInteraction).not.toHaveBeenCalledWith('grafana_alerting_import_to_gma_success', expect.anything());
@@ -159,8 +159,6 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
     );
     const { user } = render(<ImportWizardGate />);
 
-    // Method -> Notifications
-    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
     await screen.findByRole('group', { name: /import notification resources/i });
 
     // The dry-run runs and fails; Next stays disabled (aria-disabled keeps the tooltip reachable).
@@ -178,8 +176,6 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
   it('lists the uploaded template files in the review step', async () => {
     const { user } = render(<ImportWizardGate />);
 
-    // Method -> Notifications
-    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
     await screen.findByRole('group', { name: /import notification resources/i });
     // Notifications -> Rules (wait for the seeded dry-run to pass; re-query — the button node is
     // replaced when its disabled-state tooltip wrapper is removed on enable).

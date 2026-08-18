@@ -143,6 +143,8 @@ export const FlagKeys = {
   ProvisioningReadmes: "provisioning.readmes",
   /** Author Git Sync commits as the acting Grafana user */
   ProvisioningUserAttribution: "provisioning.userAttribution",
+  /** Enable export functionality for provisioned resources */
+  ProvisioningExport: "provisioningExport",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
@@ -320,10 +322,10 @@ export const useFlagDatasourcesApiserverUseNewAPIsForDatasourceResources = (opti
  *
  * **Details:**
  * - flag key: `datasources.azureMonitorBatchAPI`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datasources.azureMonitorBatchAPI", false, options).value;
+  return useFlag("datasources.azureMonitorBatchAPI", true, options).value;
 };
 
 /**
@@ -896,6 +898,17 @@ export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("provisioning.userAttribution", true, options).value;
+};
+
+/**
+ * Enable export functionality for provisioned resources
+ *
+ * **Details:**
+ * - flag key: `provisioningExport`
+ * - default value: `false`
+ */
+export const useFlagProvisioningExport = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioningExport", false, options).value;
 };
 
 /**

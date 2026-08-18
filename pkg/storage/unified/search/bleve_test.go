@@ -953,6 +953,131 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 	})
 }
 
+// TestBleveSortCapabilityCheck covers both the counting and the rejecting mode.
+func TestBleveSortCapabilityCheck(t *testing.T) {
+	const group, kindResource = "example.grafana.app", "widgets"
+	// v1 and v2 declare different fields on purpose: a request naming no version
+	// is validated against the union.
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		{Group: group, Version: "v1", Resource: kindResource}: {
+			{
+				Name:         "note",
+				Type:         resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilitySort},
+			},
+			{
+				Name:         "category",
+				Type:         resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve},
+			},
+		},
+		{Group: group, Version: "v2", Resource: kindResource}: {
+			{
+				Name:         "weight",
+				Type:         resource.SearchFieldTypeInt64,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve},
+			},
+		},
+	}, map[schema.GroupResource]string{{Group: group, Resource: kindResource}: "v1"})
+
+	newIndex := func(enforce bool) *bleveIndex {
+		return &bleveIndex{
+			key:                   resource.NamespacedResource{Namespace: "ns", Group: group, Resource: kindResource},
+			fields:                resource.StandardSearchFields(),
+			searchFields:          newKindSearchFields(provider, group, kindResource, []string{"spec.slug"}),
+			enforceSortCapability: enforce,
+			logger:                log.NewNopLogger(),
+		}
+	}
+
+	sortBy := func(field string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{},
+			Limit:   10,
+			SortBy:  []*resourcepb.ResourceSearchRequest_Sort{{Field: field}},
+		}
+	}
+
+	accepted := []struct {
+		name  string
+		field string
+	}{
+		{"standard sortable field", resource.SEARCH_FIELD_TITLE},
+		{"physical title variant", resource.SEARCH_FIELD_TITLE_PHRASE},
+		{"name", resource.SEARCH_FIELD_NAME},
+		{"folder", resource.SEARCH_FIELD_FOLDER},
+		{"per-kind field, bare name", "note"},
+		{"per-kind field, prefixed name", resource.SEARCH_FIELD_PREFIX + "note"},
+		// Declared by v2 only.
+		{"field declared by another version", resource.SEARCH_FIELD_PREFIX + "weight"},
+	}
+	for _, tc := range accepted {
+		t.Run("accepts "+tc.name, func(t *testing.T) {
+			searchReq, errResult := newIndex(true).toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
+			require.Nil(t, errResult)
+			require.NotNil(t, searchReq)
+		})
+	}
+
+	rejected := []struct {
+		name  string
+		field string
+	}{
+		{"standard retrieve-only field", resource.SEARCH_FIELD_CREATED},
+		{"per-kind field without sort", "category"},
+		{"per-kind field without sort, prefixed", resource.SEARCH_FIELD_PREFIX + "category"},
+		{"undeclared field", "nonexistent"},
+		{"label", "labels.region"},
+		// A standard field lives top-level, so nothing is indexed under this path.
+		{"standard field under the per-kind prefix", resource.SEARCH_FIELD_PREFIX + resource.SEARCH_FIELD_TITLE},
+		// Selectable fields exist to be filtered on; nothing sorts on them.
+		{"selectable field", resource.SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.slug"},
+	}
+	for _, tc := range rejected {
+		t.Run("rejects "+tc.name, func(t *testing.T) {
+			searchReq, errResult := newIndex(true).toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
+			require.Nil(t, searchReq)
+			require.NotNil(t, errResult)
+			assert.Contains(t, errResult.Message, fmt.Sprintf("field %q does not support sorting", tc.field))
+		})
+
+		t.Run("counts but allows "+tc.name+" with enforcement off", func(t *testing.T) {
+			idx := newIndex(false)
+			reg := prometheus.NewPedanticRegistry()
+			idx.indexMetrics = resource.ProvideIndexMetrics(reg)
+
+			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
+			require.Nil(t, errResult)
+			require.NotNil(t, searchReq)
+			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "index_server_search_capability_violations_total"))
+		})
+	}
+
+	// Trash fields are refused on a live search, so they cannot go in the list above.
+	t.Run("accepts a trash field when searching deleted resources", func(t *testing.T) {
+		idx := newIndex(true)
+		idx.keepsDeletedDocuments = true
+		idx.wantsDeletedDocuments = true
+		req := sortBy(resource.SEARCH_FIELD_DELETION_TIME)
+		req.IsDeleted = true
+		_, errResult := idx.toBleveSearchRequest(t.Context(), req, nil, false, nil)
+		require.Nil(t, errResult)
+	})
+
+	t.Run("an index without declarations still allows standard sortable fields", func(t *testing.T) {
+		idx := &bleveIndex{
+			fields:                resource.StandardSearchFields(),
+			enforceSortCapability: true,
+			logger:                log.NewNopLogger(),
+		}
+		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil)
+		require.Nil(t, errResult)
+
+		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_CREATED), nil, false, nil)
+		require.NotNil(t, errResult)
+	})
+}
+
 var _ authlib.AccessClient = (*StubAccessClient)(nil)
 
 func NewStubAccessClient(permissions map[string]bool) *StubAccessClient {
