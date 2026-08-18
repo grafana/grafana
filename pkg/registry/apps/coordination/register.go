@@ -41,11 +41,15 @@ func RegisterAppInstaller() (*AppInstaller, error) {
 	installer := &AppInstaller{
 		logger: log.New("coordination.api"),
 	}
-	provider := simple.NewAppProvider(manifestdata.LocalManifest(), nil, coordinationapp.New)
+	// Run the lease garbage collector on the served app: it watches Leases and
+	// ClusterLeases and deletes those abandoned past the grace period.
+	specificConfig := &coordinationapp.CoordinationConfig{EnableGarbageCollector: true}
+	provider := simple.NewAppProvider(manifestdata.LocalManifest(), specificConfig, coordinationapp.New)
 
 	appConfig := app.Config{
-		KubeConfig:   restclient.Config{}, // overridden by the installer's InitializeApp method
-		ManifestData: *manifestdata.LocalManifest().ManifestData,
+		KubeConfig:     restclient.Config{}, // overridden by the installer's InitializeApp method
+		ManifestData:   *manifestdata.LocalManifest().ManifestData,
+		SpecificConfig: specificConfig,
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &manifestdata.GoTypeAssociator{})
 	if err != nil {
