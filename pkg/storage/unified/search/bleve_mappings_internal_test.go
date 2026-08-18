@@ -408,7 +408,8 @@ func TestTextQueryKindsForMapping(t *testing.T) {
 	// Selectable fields are keyword-mapped.
 	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.slug"])
 
-	// Keyword-mapped sub-document fields, and labels which are not.
+	// Keyword-mapped sub-document fields. Label keys are dynamic, so
+	// textQueryKindFor matches them by prefix instead.
 	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_MANAGER_KIND])
 	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_SOURCE_PATH])
 	assert.NotContains(t, kinds, resource.SEARCH_FIELD_LABELS+".region")
@@ -422,9 +423,12 @@ func TestBleveIndex_textQueryKindFor(t *testing.T) {
 	assert.Equal(t, textQueryTerm, b.textQueryKindFor(resource.SEARCH_FIELD_TITLE_PHRASE))
 	// reference keys are dynamic, so the keyword sub-document is matched by prefix.
 	assert.Equal(t, textQueryTerm, b.textQueryKindFor("reference.datasource"))
-	// Undeclared fields fall back to the analyzed query.
+	// Undeclared fields fall back to the analyzed query, as do labels when there is
+	// no index to read the analyzer from (TestTextQueryKindFor_LabelsFollowIndexMapping).
+	assert.Equal(t, textQueryStandard, b.textQueryKindFor("somethingElse"))
 	assert.Equal(t, textQueryStandard, b.textQueryKindFor(resource.SEARCH_FIELD_LABELS+".region"))
 }
+
 func TestAddCapabilityFieldMappings_RetrieveOnly_StoreOnly(t *testing.T) {
 	// With no dynamic fallback, a retrieve-only field must be stored explicitly.
 	t.Run("int64", func(t *testing.T) {
@@ -838,9 +842,11 @@ func TestRequirementQuery_StandardExactFields(t *testing.T) {
 
 func TestFilterQueries_LabelsUseAnalyzedPath(t *testing.T) {
 	b := &bleveIndex{standard: resource.StandardSearchFields()}
-	// Labels are standard-analyzed, so every label filter goes through the
-	// analyzed path. "login" used to be an exception, hardcoded back when the
-	// exact-term decision was a name list.
+	// Label keys are dynamic, so label filters take the analyzed path. The value
+	// still matches whole, because bleve analyzes the MatchQuery with the label
+	// sub-document's keyword analyzer (TestLabelFilterExactMatch covers that end
+	// to end). "login" used to be an exception, hardcoded back when the exact-term
+	// decision was a name list.
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "in", Values: []string{"foo-bar"}}},
 	}}
@@ -855,7 +861,8 @@ func TestFilterQueries_LabelsUseAnalyzedPath(t *testing.T) {
 
 func TestFilterQueries_LabelNotInUsesAnalyzedPath(t *testing.T) {
 	b := &bleveIndex{standard: resource.StandardSearchFields()}
-	// A raw TermQuery here would fail to exclude standard-analyzed labels.
+	// The analyzed path keeps wildcard exclusions working, and the keyword
+	// analyzer makes a plain value exact anyway.
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "notin", Values: []string{"foo-bar"}}},
 	}}
@@ -869,6 +876,96 @@ func TestFilterQueries_LabelNotInUsesAnalyzedPath(t *testing.T) {
 	require.Len(t, mustNot.Disjuncts, 1)
 	_, ok = mustNot.Disjuncts[0].(*query.MatchQuery)
 	require.True(t, ok, "notin on a label should use an analyzed MatchQuery, not a raw TermQuery")
+}
+
+// labelIndex builds an in-memory index holding one document per label value,
+// named after its value. keywordLabels chooses between the current mapping and
+// the text-analyzed one every index used before it, so the same query can be run
+// against both.
+func labelIndex(t *testing.T, keywordLabels bool, key string, values ...string) bleve.Index {
+	t.Helper()
+	mappings, err := GetBleveMappings(nil, "", "", nil)
+	require.NoError(t, err)
+	if !keywordLabels {
+		im, ok := mappings.(*mapping.IndexMappingImpl)
+		require.True(t, ok)
+		im.DefaultMapping.Properties[resource.SEARCH_FIELD_LABELS].DefaultAnalyzer = ""
+	}
+	idx, err := bleve.NewMemOnly(mappings)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, idx.Close()) })
+	for _, value := range values {
+		require.NoError(t, idx.Index(value, map[string]any{resource.SEARCH_FIELD_LABELS: map[string]string{key: value}}))
+	}
+	return idx
+}
+
+// labelFilterHits returns the documents a label requirement matches in idx.
+func labelFilterHits(t *testing.T, idx bleve.Index, key, operator string, values ...string) []string {
+	t.Helper()
+	b := &bleveIndex{index: idx, labelsAreKeyword: labelAnalyzerIsKeyword(idx), standard: resource.StandardSearchFields()}
+	queries, errRes := b.filterQueries(&resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
+		Labels: []*resourcepb.Requirement{{Key: key, Operator: operator, Values: values}},
+	}})
+	require.Nil(t, errRes)
+	require.Len(t, queries, 1)
+	res, err := idx.Search(bleve.NewSearchRequest(queries[0]))
+	require.NoError(t, err)
+	names := make([]string, 0, len(res.Hits))
+	for _, hit := range res.Hits {
+		names = append(names, hit.ID)
+	}
+	slices.Sort(names)
+	return names
+}
+
+// TestFilterQueries_LabelExactnessFollowsIndexMapping is the compatibility case:
+// bleve analyzes a MatchQuery with the analyzer stored in the index, so an index
+// written before labels were keyword-mapped keeps answering as it always has
+// instead of matching nothing.
+func TestFilterQueries_LabelExactnessFollowsIndexMapping(t *testing.T) {
+	// Values the text analyzer alters: case, a separator, and a word boundary.
+	values := []string{"Prod", "a/b", "Team Alpha", "true"}
+
+	t.Run("index written with the keyword mapping matches whole values", func(t *testing.T) {
+		idx := labelIndex(t, true, "env", values...)
+		for _, value := range values {
+			assert.Equal(t, []string{value}, labelFilterHits(t, idx, "env", "in", value))
+		}
+		assert.Empty(t, labelFilterHits(t, idx, "env", "in", "prod"), "exact means case-sensitive")
+		assert.Empty(t, labelFilterHits(t, idx, "env", "in", "alpha"), "a word of a value is not the value")
+	})
+
+	t.Run("index written before it still matches its analyzed tokens", func(t *testing.T) {
+		idx := labelIndex(t, false, "env", values...)
+		// The values an exact term query would silently stop matching here.
+		for _, value := range values {
+			assert.Equal(t, []string{value}, labelFilterHits(t, idx, "env", "in", value))
+		}
+		// The overmatching this mapping causes, until the index is rebuilt.
+		assert.Equal(t, []string{"Prod"}, labelFilterHits(t, idx, "env", "in", "prod"))
+		assert.Equal(t, []string{"Team Alpha"}, labelFilterHits(t, idx, "env", "in", "alpha"))
+		// A value that is only a stop word is dropped from both the document and the
+		// filter here, so it matches nothing. Pre-existing, and fixed by the keyword
+		// mapping above rather than caused by it.
+		assert.Empty(t, labelFilterHits(t, labelIndex(t, false, "env", "a"), "env", "in", "a"))
+		assert.Equal(t, []string{"a"}, labelFilterHits(t, labelIndex(t, true, "env", "a"), "env", "in", "a"))
+	})
+}
+
+// TestTextQueryKindFor_LabelsFollowIndexMapping covers the free-text path, where
+// the query kind is chosen by the binary rather than resolved by bleve, so it has
+// to read the analyzer out of the index.
+func TestTextQueryKindFor_LabelsFollowIndexMapping(t *testing.T) {
+	field := resource.SEARCH_FIELD_LABELS + ".env"
+
+	keywordIdx := labelIndex(t, true, "env", "Prod")
+	assert.True(t, labelAnalyzerIsKeyword(keywordIdx))
+	assert.Equal(t, textQueryTerm, (&bleveIndex{labelsAreKeyword: true}).textQueryKindFor(field))
+
+	textIdx := labelIndex(t, false, "env", "Prod")
+	assert.False(t, labelAnalyzerIsKeyword(textIdx))
+	assert.Equal(t, textQueryStandard, (&bleveIndex{}).textQueryKindFor(field))
 }
 
 func TestFilterQueries_DoesNotMutateRequest(t *testing.T) {
