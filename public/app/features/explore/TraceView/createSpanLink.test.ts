@@ -18,7 +18,8 @@ import { TemplateSrv } from '../../templating/template_srv';
 
 import { SpanLinkType } from './components/types/links';
 import { type Trace, type TraceSpan } from './components/types/trace';
-import { createSpanLinkFactory, getTimeRangeFromTimestamps, pyroscopeProfileIdTagKey } from './createSpanLink';
+import { createSpanLinkFactory, pyroscopeProfileIdTagKey } from './createSpanLink';
+import { getTimeRangeFromTimestamps } from './createTraceLink';
 
 const dummyTraceData = { duration: 10, traceID: 'trace1', traceName: 'test trace' } as unknown as Trace;
 const dummyDataFrame = createDataFrame({

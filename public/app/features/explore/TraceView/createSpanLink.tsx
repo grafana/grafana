@@ -4,7 +4,6 @@ import {
   type DataLinkPostProcessor,
   type DataSourceInstanceSettings,
   type DataSourceJsonData,
-  dateTime,
   type Field,
   FieldType,
   type LinkModel,
@@ -29,7 +28,7 @@ import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageIn
 import { getTraceToLogsSpanQuery, interpolateQueries } from './components/logsLink';
 import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from './components/types/links';
 import { type Trace, type TraceSpan, type TraceSpanReference } from './components/types/trace';
-import { scopedVarsFromTrace } from './createTraceLink';
+import { getTimeRangeFromTimestamps, scopedVarsFromTrace } from './createTraceLink';
 import { getDefaultMetricTags, getDefaultProfilingTags, getFormattedTags, getSpanTags } from './crossSignalConfig';
 
 /**
@@ -432,43 +431,6 @@ function getTimeRangeFromSpan(
   shouldCreatePyroscopeLink = false
 ): TimeRange {
   return getTimeRangeFromTimestamps(span.startTime, span.duration, timeShift, isSplunkDS, shouldCreatePyroscopeLink);
-}
-
-export function getTimeRangeFromTimestamps(
-  startTimeUs: number,
-  durationUs: number,
-  timeShift: { startMs: number; endMs: number } = { startMs: 0, endMs: 0 },
-  isSplunkDS = false,
-  shouldCreatePyroscopeLink = false
-): TimeRange {
-  let adjustedStartTime = Math.floor(startTimeUs / 1000 + timeShift.startMs);
-  const endMs = (startTimeUs + durationUs) / 1000;
-  let adjustedEndTime = Math.floor(endMs + timeShift.endMs);
-
-  // Splunk requires a time interval of >= 1s, rather than >=1ms like Loki timerange in below elseif block
-  if (isSplunkDS && adjustedEndTime - adjustedStartTime < 1000) {
-    adjustedEndTime = adjustedStartTime + 1000;
-  } else if (shouldCreatePyroscopeLink) {
-    adjustedStartTime = adjustedStartTime - 60000;
-    adjustedEndTime = adjustedEndTime + 60000;
-  } else if (adjustedStartTime >= adjustedEndTime) {
-    // Because we can only pass milliseconds in the url we need to check if they are greater or equal.
-    // We need end time to be later than start time
-    adjustedEndTime = adjustedStartTime + 1;
-  }
-
-  const to = dateTime(adjustedEndTime);
-  const from = dateTime(adjustedStartTime);
-
-  // Beware that public/app/features/explore/state/main.ts SplitOpen fn uses the range from here. No matter what is in the url.
-  return {
-    from,
-    to,
-    raw: {
-      from,
-      to,
-    },
-  };
 }
 
 /**
