@@ -10,7 +10,7 @@ export enum StepKey {
   ReviewEnable = 'review-enable',
 }
 
-export type ImportMethod = 'stage' | 'promote' | 'autosync' | 'legacy-datasource-rules';
+export type ImportMethod = 'stage' | 'autosync' | 'legacy-datasource-rules';
 export interface WizardFormValues {
   importMethod: ImportMethod;
 }

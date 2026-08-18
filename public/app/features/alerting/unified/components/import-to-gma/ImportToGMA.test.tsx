@@ -73,14 +73,11 @@ beforeEach(() => {
 });
 
 /**
- * Drives the wizard: pick the method, complete the notifications step, skip the rules step, then
- * open and accept the confirm modal. Leaves the rest to the caller's assertions.
+ * Drives the wizard: complete the notifications step, skip the rules step, then open and accept the
+ * confirm modal. Leaves the rest to the caller's assertions.
  */
-async function importWith(method: 'stage' | 'promote', user: ReturnType<typeof render>['user']) {
-  if (method === 'promote') {
-    await user.click(await screen.findByRole('radio', { name: /promote/i }));
-  }
-  // Method -> Notifications
+async function importWith(user: ReturnType<typeof render>['user']) {
+  // Method -> Notifications (Stage is the default selection)
   await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
   await screen.findByRole('group', { name: /import notification resources/i });
   // Notifications -> Rules: the stub triggers a dry-run; wait for it to pass so Next is enabled
@@ -107,19 +104,21 @@ async function importWith(method: 'stage' | 'promote', user: ReturnType<typeof r
   await user.click(within(dialog).getByRole('button', { name: /start import/i }));
 }
 
-describe('ImportToGMA wizard — stage/promote analytics', () => {
-  it.each(['stage', 'promote'] as const)('tracks success with importMethod=%s', async (method) => {
+describe('ImportToGMA wizard — stage analytics', () => {
+  it('tracks success with importMethod=stage and lands on the Import settings tab', async () => {
     const { user } = render(<ImportWizardGate />);
 
-    await importWith(method, user);
+    await importWith(user);
 
     await waitFor(() =>
       expect(mockReportInteraction).toHaveBeenCalledWith(
         'grafana_alerting_import_to_gma_success',
-        expect.objectContaining({ importMethod: method })
+        expect.objectContaining({ importMethod: 'stage' })
       )
     );
-    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/list'), { timeout: 3000 });
+    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/admin/import'), {
+      timeout: 3000,
+    });
   });
 
   it('tracks an error with importMethod when the import fails', async () => {
@@ -134,7 +133,7 @@ describe('ImportToGMA wizard — stage/promote analytics', () => {
     );
     const { user } = render(<ImportWizardGate />);
 
-    await importWith('stage', user);
+    await importWith(user);
 
     await waitFor(() =>
       expect(mockReportInteraction).toHaveBeenCalledWith(

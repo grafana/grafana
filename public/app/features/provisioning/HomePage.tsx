@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagProvisioningExport } from '@grafana/runtime/internal';
 import { ConfirmModal, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useDeletecollectionRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
@@ -24,7 +24,7 @@ export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isLoading = isLoadingRepos || isLoadingConnections;
-  const isMigrateTabEnabled = !!config.featureToggles.provisioningExport;
+  const isMigrateTabEnabled = useFlagProvisioningExport();
 
   const urlTab = searchParams.get('tab');
   const defaultTab = useMemo(() => {

@@ -21,7 +21,6 @@ const MIMIR_DS_NAME = 'Test Mimir Alertmanager';
 
 const ui = {
   stageRadio: byRole('radio', { name: /stage/i }),
-  promoteRadio: byRole('radio', { name: /promote/i }),
   autosyncRadio: byRole('radio', { name: /auto-sync/i }),
   datasourcePicker: byRole('combobox'),
   // Method step: the Next button is labelled with the next step's name. Anchored so it matches
@@ -70,9 +69,9 @@ describe('Import wizard navigation — auto-sync path (real wizard)', () => {
   });
 });
 
-describe('Import wizard navigation — stage/promote back navigation', () => {
-  // Stage/Promote use the shared Wizard PreviousButton (the auto-sync review step has its own
-  // back button). This harness exercises the real StepImportMethod + Next/Previous buttons and
+describe('Import wizard navigation — stage back navigation', () => {
+  // Stage uses the shared Wizard PreviousButton (the auto-sync review step has its own back
+  // button). This harness exercises the real StepImportMethod + Next/Previous buttons and
   // react-hook-form persistence without mounting the network-backed Notification resources step.
   function ActiveStepView() {
     const { activeStep } = useStepperState();
@@ -103,21 +102,17 @@ describe('Import wizard navigation — stage/promote back navigation', () => {
     return render(<Wrapper />);
   }
 
-  it.each(['stage', 'promote'] as const)(
-    'returns to the method step with %s still selected after going back',
-    async (method) => {
-      const { user } = renderHarness(method);
-      const methodRadio = method === 'stage' ? ui.stageRadio : ui.promoteRadio;
+  it('returns to the method step with stage still selected after going back', async () => {
+    const { user } = renderHarness('stage');
 
-      expect(methodRadio.get()).toBeChecked();
+    expect(ui.stageRadio.get()).toBeChecked();
 
-      // Forward into the (stubbed) Notification resources step.
-      await user.click(ui.toNotifications.get());
-      expect(ui.notificationsPlaceholder.get()).toBeInTheDocument();
+    // Forward into the (stubbed) Notification resources step.
+    await user.click(ui.toNotifications.get());
+    expect(ui.notificationsPlaceholder.get()).toBeInTheDocument();
 
-      // Back to the method step via the shared Previous button.
-      await user.click(ui.backToMethodShared.get());
-      expect(methodRadio.get()).toBeChecked();
-    }
-  );
+    // Back to the method step via the shared Previous button.
+    await user.click(ui.backToMethodShared.get());
+    expect(ui.stageRadio.get()).toBeChecked();
+  });
 });

@@ -1709,11 +1709,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/sharing/ShareButton/share-externally/EmailShare/ConfigEmailSharing/EmailListConfiguration.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/sharing/ShareButton/share-snapshot/UpsertSnapshot.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -2181,11 +2176,6 @@
   "public/app/features/explore/TraceView/createSpanLink.test.ts": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/createSpanLink.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
     }
   },
   "public/app/features/explore/spec/helper/setup.tsx": {

@@ -25,7 +25,6 @@ function isAutoSyncSegmentEnabled(): boolean {
 function getMethodOptions(includeAutoSync: boolean): Array<SelectableValue<ImportMethod>> {
   const options: Array<SelectableValue<ImportMethod>> = [
     { value: 'stage', label: t('alerting.import-to-gma.method.stage', 'Stage') },
-    { value: 'promote', label: t('alerting.import-to-gma.method.promote', 'Promote') },
   ];
   if (includeAutoSync) {
     options.push({ value: 'autosync', label: t('alerting.import-to-gma.method.autosync', 'Auto-sync') });
@@ -40,8 +39,8 @@ interface StepImportMethodProps {
 
 /**
  * First wizard step: choose how external Alertmanager config is brought into Grafana.
- * Stage and Promote continue into the full import flow; Auto-sync collapses the wizard
- * to a single confirmation step.
+ * Stage continues into the full import flow; Auto-sync collapses the wizard to a single
+ * confirmation step.
  */
 export function StepImportMethod({ onNext, onCancel }: StepImportMethodProps) {
   const { control, watch } = useFormContext<ImportFormValues>();
@@ -51,8 +50,8 @@ export function StepImportMethod({ onNext, onCancel }: StepImportMethodProps) {
   const options = useMemo(() => getMethodOptions(includeAutoSync), [includeAutoSync]);
 
   // For autosync the user must pick a data source before proceeding; the panel only lets a
-  // source be selected when one can actually be synced (see AutoSyncMethodPanel). Stage/Promote
-  // can always proceed.
+  // source be selected when one can actually be synced (see AutoSyncMethodPanel). Stage can
+  // always proceed.
   const disableNext = method === 'autosync' ? !autosyncDatasourceUID : false;
 
   return (
@@ -78,7 +77,6 @@ export function StepImportMethod({ onNext, onCancel }: StepImportMethodProps) {
           )}
         />
         {method === 'stage' && <StagePanel />}
-        {method === 'promote' && <PromotePanel />}
         {method === 'autosync' && <AutoSyncMethodPanel />}
       </Stack>
     </WizardStep>
@@ -112,32 +110,9 @@ function StagePanel() {
   );
 }
 
-function PromotePanel() {
-  return (
-    <MethodPanelCard title={t('alerting.import-to-gma.method.promote-title', 'Promote')}>
-      <Text color="secondary">
-        <Trans i18nKey="alerting.import-to-gma.method.promote-desc">
-          Promote when you are ready to use these resources. Each contact point, policy, template, and mute timing
-          merges into your live config and becomes a normal, editable Grafana resource.
-        </Trans>
-      </Text>
-      <Alert
-        severity="warning"
-        title={t('alerting.import-to-gma.method.promote-warning-title', "Promoting can't be undone")}
-      >
-        <Trans i18nKey="alerting.import-to-gma.method.promote-warning-desc">
-          The imported resources merge into your live notification config. To reverse it later you would have to delete
-          each resulting resource by hand.
-        </Trans>
-      </Alert>
-      <NextStepsNote />
-    </MethodPanelCard>
-  );
-}
-
 /**
  * Auto-sync method panel. Mounted only when the Auto-sync segment is selected so its
- * queries (which require org admin) don't run for Stage/Promote imports. The picked source
+ * queries (which require org admin) don't run for Stage imports. The picked source
  * is written straight to the form, which is the single source of truth for the wizard's
  * "can proceed" gating. Reuses the Settings auto-sync hook for the data-source list and state.
  */

@@ -2,8 +2,8 @@ import { getNextStep, getPreviousStep, getWizardSteps, isAutoSyncMethod, isFirst
 import { StepKey } from './types';
 
 describe('getWizardSteps', () => {
-  it.each(['stage', 'promote'] as const)('returns the full four-step rail for the %s import method', (method) => {
-    const steps = getWizardSteps(method).map((s) => s.id);
+  it('returns the full four-step rail for the stage import method', () => {
+    const steps = getWizardSteps('stage').map((s) => s.id);
     expect(steps).toEqual([StepKey.Method, StepKey.Notifications, StepKey.Rules, StepKey.Review]);
   });
 
@@ -15,7 +15,7 @@ describe('getWizardSteps', () => {
 
 describe('getNextStep', () => {
   it('advances from Method into Notification resources for an import method', () => {
-    expect(getNextStep(StepKey.Method, 'promote')?.id).toBe(StepKey.Notifications);
+    expect(getNextStep(StepKey.Method, 'stage')?.id).toBe(StepKey.Notifications);
   });
 
   it('advances from Method straight to Review & enable for autosync', () => {
@@ -38,7 +38,7 @@ describe('getPreviousStep', () => {
   });
 
   it('returns undefined before the first step', () => {
-    expect(getPreviousStep(StepKey.Method, 'promote')).toBeUndefined();
+    expect(getPreviousStep(StepKey.Method, 'stage')).toBeUndefined();
   });
 });
 
@@ -65,6 +65,5 @@ describe('isAutoSyncMethod', () => {
   it('is true only for the autosync method', () => {
     expect(isAutoSyncMethod('autosync')).toBe(true);
     expect(isAutoSyncMethod('stage')).toBe(false);
-    expect(isAutoSyncMethod('promote')).toBe(false);
   });
 });
