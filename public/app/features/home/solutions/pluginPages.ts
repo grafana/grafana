@@ -29,9 +29,8 @@ export async function isDrilldownAvailable(appId: string, appPath: string): Prom
 }
 
 export async function accessibleAppPage(appId: string, path: string): Promise<string | null> {
-  const settings = await probeApp(appId);
   const bridgePath = createBridgeURL(appId, path);
-  return settings && canAccessPluginPage(settings, bridgePath) ? bridgePath : null;
+  return (await isDrilldownAvailable(appId, bridgePath)) ? bridgePath : null;
 }
 
 export async function drilldownActiveCta(

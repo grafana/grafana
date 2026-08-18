@@ -91,3 +91,15 @@ it('returns a bridge path only when that app page is accessible', async () => {
   canAccessPluginPageMock.mockReturnValue(false);
   await expect(accessibleAppPage('blocked-bridge-app', '/alerts')).resolves.toBeNull();
 });
+
+it('requires access to the default page before returning a deep bridge path', async () => {
+  const appSettings = {
+    ...settings('root-gated-app'),
+    includes: [{ defaultNav: true, path: '/a/root-gated-app/home' }],
+  } as PluginMeta<{}>;
+  probePluginMock.mockResolvedValue({ settings: appSettings });
+  canAccessPluginPageMock.mockImplementation((_settings, path) => path !== '/a/root-gated-app/home');
+
+  await expect(accessibleAppPage('root-gated-app', '/alerts')).resolves.toBeNull();
+  expect(canAccessPluginPageMock).toHaveBeenCalledWith(appSettings, '/a/root-gated-app/home');
+});
