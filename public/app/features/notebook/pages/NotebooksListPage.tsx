@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
@@ -166,14 +167,20 @@ export function NotebooksListPage() {
                   )}
                 </Stack>
                 <Stack alignItems="center" gap={1}>
-                  <CountSummary
-                    shown={rows.length}
-                    loadedCount={loadedCount}
-                    totalCount={totalCount}
-                    isTotalExact={isTotalExact}
-                    isTruncated={isTruncated}
-                    isLoadingMore={isLoadingMore}
-                  />
+                  {/* Nothing is held for these filters yet, so every number here would be zero —
+                      "0 notebooks" beside a loading table claims a result we do not have. */}
+                  {isReloading ? (
+                    <Skeleton width={COUNT_SKELETON_WIDTH} />
+                  ) : (
+                    <CountSummary
+                      shown={rows.length}
+                      loadedCount={loadedCount}
+                      totalCount={totalCount}
+                      isTotalExact={isTotalExact}
+                      isTruncated={isTruncated}
+                      isLoadingMore={isLoadingMore}
+                    />
+                  )}
                 </Stack>
               </Stack>
 
@@ -198,6 +205,9 @@ export function NotebooksListPage() {
     </Page>
   );
 }
+
+/** About the width of the longest count this can show, so the row does not shift when it resolves. */
+const COUNT_SKELETON_WIDTH = 120;
 
 interface CountSummaryProps {
   /** Rows on screen. */

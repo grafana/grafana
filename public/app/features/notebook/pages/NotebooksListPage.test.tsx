@@ -232,7 +232,7 @@ describe('NotebooksListPage', () => {
 
   it('opens a row menu offering export, replacing the old disabled placeholder', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([makeNotebook('nb1', 'Checkout error spike')]);
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
 
@@ -443,6 +443,23 @@ describe('NotebooksListPage', () => {
     expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
     // The filters stay put, caret and all.
     expect(screen.getByPlaceholderText('Search notebooks by title...')).toBeInTheDocument();
+  });
+
+  // The counts come from the same absent data as the rows, so leaving them rendered would claim
+  // "0 notebooks" next to a loading table on every filter change.
+  it('does not claim a count while new filters load', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    const { rerender } = render(<NotebooksListPage />);
+    expect(await screen.findByText('1 notebook')).toBeInTheDocument();
+
+    setNotebooks([makeHit('nb1', 'Checkout error spike')], { isReloading: true });
+    rerender(<NotebooksListPage />);
+
+    await screen.findByRole('status', { name: 'Loading notebooks' });
+    expect(screen.queryByText('0 notebooks')).not.toBeInTheDocument();
+    expect(screen.queryByText('1 notebook')).not.toBeInTheDocument();
   });
 
   it('does not serve the previous filter’s rows while the new ones load', async () => {

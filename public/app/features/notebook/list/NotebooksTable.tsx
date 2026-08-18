@@ -198,7 +198,7 @@ const NotebookRowActions = memo(function NotebookRowActions({ uid }: { uid: stri
       <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(uid)}>
         {t('notebooks.list.table.copy-link', 'Copy link')}
       </ClipboardButton>
-      <Dropdown overlay={<NotebookRowMenu uid={notebook.uid} />} placement="bottom-end">
+      <Dropdown overlay={<NotebookRowMenu uid={uid} />} placement="bottom-end">
         <IconButton
           name="ellipsis-v"
           variant="secondary"
