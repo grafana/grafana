@@ -21,10 +21,6 @@ leaseSpecFields: {
 	renewTime?: string
 	// leaseTransitions is incremented each time the holder changes.
 	leaseTransitions?: int32
-	// strategy is reserved for coordinated/preference-based election (k8s KEP-4355).
-	strategy?: string
-	// preferredHolder is reserved for coordinated/preference-based election (k8s KEP-4355).
-	preferredHolder?: string
 }
 
 // Lease coordinates work whose domain is a single tenant (org/stack). It lives in

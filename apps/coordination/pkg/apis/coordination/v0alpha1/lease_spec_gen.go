@@ -17,10 +17,6 @@ type LeaseSpec struct {
 	RenewTime *string `json:"renewTime,omitempty"`
 	// leaseTransitions is incremented each time the holder changes.
 	LeaseTransitions *int32 `json:"leaseTransitions,omitempty"`
-	// strategy is reserved for coordinated/preference-based election (k8s KEP-4355).
-	Strategy *string `json:"strategy,omitempty"`
-	// preferredHolder is reserved for coordinated/preference-based election (k8s KEP-4355).
-	PreferredHolder *string `json:"preferredHolder,omitempty"`
 }
 
 // NewLeaseSpec creates a new LeaseSpec object.
