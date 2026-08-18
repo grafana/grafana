@@ -19,7 +19,7 @@ func TestNewStorageBackendKVGrpc(t *testing.T) {
 	t.Run("fails when the kv client is missing", func(t *testing.T) {
 		_, err := NewStorageBackend(kvGrpcCfg(), nil, prometheus.NewRegistry(), nil, true, nil, nil)
 
-		require.ErrorContains(t, err, "kv store missing")
+		require.ErrorContains(t, err, "needs a kv client dialed by the wiring")
 	})
 
 	t.Run("builds on the kv alone", func(t *testing.T) {

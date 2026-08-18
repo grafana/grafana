@@ -243,7 +243,7 @@ func NewStorageBackend(
 
 func newKVGrpcBackend(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, opts ...StorageBackendOption) (resource.StorageBackend, error) {
 	if kvStore == nil {
-		return nil, fmt.Errorf("storage_type=%s: kv store missing", options.StorageTypeUnifiedKVGrpc)
+		return nil, fmt.Errorf("storage_type=%s needs a kv client dialed by the wiring, and this build provides none (enterprise only)", options.StorageTypeUnifiedKVGrpc)
 	}
 	return resource.NewKVStorageBackend(newKVGrpcBackendOptions(cfg, reg, disableStorageServices, kvStore, opts...))
 }
