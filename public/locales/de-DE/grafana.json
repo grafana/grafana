@@ -3619,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Zeitintervalle",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Zeitintervalle auswählen …"
     },
     "time-intervals-table": {
@@ -5658,10 +5659,13 @@
       "add-conditional-rule": "Hinzufügen von {{ruleDescription}}-Regel",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Panel duplizieren",
       "edit-query-result-rule": "Regel für Abfrageergebnis ändern",
       "edit-template-variable-rule": "Regel für Vorlagenvariable ändern",
       "edit-time-range-rule": "Regel für Zeitbereich ändern",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Verschieben von {{typeName}}",
       "panel-background": "Panel-Hintergrund ändern",
       "panel-description": "Panel-Beschreibung ändern",
@@ -5914,8 +5918,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Dadurch wird die Gruppierung aller verschachtelten Gruppen aufgehoben.",
-      "ungroup-nested-title": "Gruppierung verschachtelter Gruppen aufheben?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} von {{numberOfPages}}",
@@ -6128,6 +6136,13 @@
       "save-json-to-file": "JSON in Datei speichern",
       "see-docs": "Weitere Informationen zur Bereitstellung finden Sie in der <2>Dokumentation</2>."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6291,6 +6306,12 @@
         "title-controls-menu_other": "",
         "title-hidden_one": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -6843,7 +6864,8 @@
         "change-annotation-enabled-state": "Aktivierungsstatus der Anmerkung ändern",
         "change-annotation-name": "Anmerkungsnamen ändern",
         "change-annotation-panel-filter": "Filter für das Anmerkungs-Panel ändern"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Anmerkungsabfrage löschen",
@@ -6919,13 +6941,9 @@
       "placeholder-your-metric-prefix": "Ihr Metrik-Präfix"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Löschen",
-      "aria-label-edit": "Bearbeiten",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Regeln zum Ein-/Ausblenden funktionieren nicht",
@@ -7250,6 +7268,7 @@
         "title-someone-else-has-updated-this-dashboard": "Eine andere Person hat dieses Dashboard aktualisiert",
         "would-still-dashboard": "Möchten Sie dieses Dashboard trotzdem speichern?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Speichern und überschreiben"
     },
     "legacy": {
@@ -7725,6 +7744,10 @@
     "variable-controls": {
       "add-variable": "Variable hinzufügen"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
+    },
     "variable-editable-element": {
       "delete-confirm": "Variable löschen",
       "delete-text": "Möchten Sie {{name}} wirklich löschen?",
@@ -8056,7 +8079,8 @@
       "title-missing-rights": "Fehlende Rechte"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Wählen Sie eine Datenquelle aus"
+      "aria-label-select-a-data-source": "Wählen Sie eine Datenquelle aus",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Seite nicht gefunden: {{page}}"
@@ -10963,6 +10987,12 @@
       "high-count_one": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12439,6 +12469,10 @@
     "new-folder": {
       "title": "Neuer Ordner"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12622,6 +12656,7 @@
       "customise-saving": "",
       "dialog-label": "Navigation",
       "dock": "Menü andocken",
+      "header-title": "",
       "list-label": "Navigation",
       "open": "Hauptmenü",
       "pin-error": "",
@@ -12733,7 +12768,46 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": ""
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -14757,7 +14831,6 @@
     },
     "header": {
       "alert": "Warnung",
-      "expression": "Ausdruck",
       "pending-expression": "",
       "pending-expression-cancel": "Abbrechen",
       "pending-transformation": "",
@@ -14771,6 +14844,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
@@ -16000,6 +16074,7 @@
     "name-show-mini-map": "Minikarte anzeigen"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16028,6 +16103,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

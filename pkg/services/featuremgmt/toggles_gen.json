@@ -337,7 +337,8 @@
       "metadata": {
         "name": "alertingCentralAlertHistory",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-05-29T15:01:38Z"
+        "creationTimestamp": "2024-05-29T15:01:38Z",
+        "deletionTimestamp": "2026-08-05T14:47:01Z"
       },
       "spec": {
         "description": "Enables the new central alert history.",
@@ -1216,19 +1217,6 @@
     },
     {
       "metadata": {
-        "name": "azureMonitorBatchAPI",
-        "resourceVersion": "1782267315125",
-        "creationTimestamp": "2026-06-24T02:15:15Z"
-      },
-      "spec": {
-        "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
-        "stage": "experimental",
-        "codeowner": "@grafana/data-sources-plugins",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "azureMonitorDisableLogLimit",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-10-24T13:32:09Z"
@@ -2009,6 +1997,19 @@
     },
     {
       "metadata": {
+        "name": "datasources.azureMonitorBatchAPI",
+        "resourceVersion": "1786542896418",
+        "creationTimestamp": "2026-08-12T13:54:56Z"
+      },
+      "spec": {
+        "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.chunkedQueryStreaming",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -2045,6 +2046,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.queryGateway",
+        "resourceVersion": "1786455922969",
+        "creationTimestamp": "2026-08-11T13:45:22Z"
+      },
+      "spec": {
+        "description": "Data source query gateway",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2172,14 +2187,16 @@
     {
       "metadata": {
         "name": "datetime.useLuxon",
-        "resourceVersion": "1785947524842",
-        "creationTimestamp": "2026-08-05T16:32:04Z"
+        "resourceVersion": "1786019066815",
+        "creationTimestamp": "2026-08-05T16:32:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-06 12:24:26.815649031 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2187,13 +2204,17 @@
     {
       "metadata": {
         "name": "deletedFolderResourceCleanup",
-        "resourceVersion": "1783997108632",
-        "creationTimestamp": "2026-07-14T02:45:08Z"
+        "resourceVersion": "1786556486769",
+        "creationTimestamp": "2026-07-14T02:45:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-12 17:41:26.769183788 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server",
+        "description": "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2677,6 +2698,20 @@
     },
     {
       "metadata": {
+        "name": "flameGraph.tableNg",
+        "resourceVersion": "1786566030661",
+        "creationTimestamp": "2026-08-12T20:20:30Z"
+      },
+      "spec": {
+        "description": "Renders the flame graph's top table using TableNG instead of the legacy Table",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "flameGraphWithCallTree",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -3097,6 +3132,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.ofrepRootUrl",
+        "resourceVersion": "1786015306366",
+        "creationTimestamp": "2026-08-06T11:21:46Z"
+      },
+      "spec": {
+        "description": "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.onDemandDiagnostics",
         "resourceVersion": "1782469062023",
         "creationTimestamp": "2026-06-26T10:14:02Z",
@@ -3145,6 +3194,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.pluginPathNesting",
+        "resourceVersion": "1785918906185",
+        "creationTimestamp": "2026-08-05T08:35:06Z"
+      },
+      "spec": {
+        "description": "Nest app plugin navigation items in the mega menu based on their URL path hierarchy",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1781718345897",
         "creationTimestamp": "2026-06-17T17:45:45Z"
@@ -3155,6 +3217,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.rspackBuild",
+        "resourceVersion": "1786019246422",
+        "creationTimestamp": "2026-08-06T12:27:26Z"
+      },
+      "spec": {
+        "description": "Switches the backend to load frontend assets built with rspack instead of webpack",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
       }
     },
     {
@@ -3247,6 +3322,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.unifiedDataSourcePicker",
+        "resourceVersion": "1786018155159",
+        "creationTimestamp": "2026-08-06T12:09:15Z"
+      },
+      "spec": {
+        "description": "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z",
@@ -3295,10 +3384,10 @@
     {
       "metadata": {
         "name": "grafana.viewPanelPane",
-        "resourceVersion": "1784896787869",
+        "resourceVersion": "1786705585860",
         "creationTimestamp": "2026-05-14T12:19:55Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-07-24 12:39:47.869351 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-08-14 11:06:25.860376 +0000 UTC"
         }
       },
       "spec": {
@@ -3306,7 +3395,6 @@
         "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "hideFromDocs": true,
         "expression": "true"
       }
     },
@@ -3329,7 +3417,8 @@
       "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-12-06T20:21:21Z"
+        "creationTimestamp": "2023-12-06T20:21:21Z",
+        "deletionTimestamp": "2026-06-29T17:32:22Z"
       },
       "spec": {
         "description": "Start an additional https handler and write kubectl options",
@@ -4020,13 +4109,18 @@
     {
       "metadata": {
         "name": "kubernetesSnapshots",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-12-05T22:31:49Z"
+        "resourceVersion": "1785415648917",
+        "creationTimestamp": "2023-12-05T22:31:49Z",
+        "deletionTimestamp": "2026-08-12T12:19:48Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-30 12:47:28.917575 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Routes snapshot requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true,
         "requiresRestart": true,
         "expression": "false"
       }
@@ -4117,6 +4211,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUsersRedirectNoFallback",
+        "resourceVersion": "1786539440242",
+        "creationTimestamp": "2026-08-12T12:57:20Z"
+      },
+      "spec": {
+        "description": "Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "libpanels.kubernetesLibraryPanels",
         "resourceVersion": "1784652694911",
         "creationTimestamp": "2026-07-21T16:51:34Z",
@@ -4126,6 +4234,40 @@
         "description": "Routes library panel requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libraryElementFolderUIDHeal",
+        "resourceVersion": "1786544808568",
+        "creationTimestamp": "2026-08-11T01:11:20Z",
+        "deletionTimestamp": "2026-08-12T17:41:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-12 14:26:48.568641559 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libraryElementFolderUIDRepair",
+        "resourceVersion": "1786556486769",
+        "creationTimestamp": "2026-08-12T17:41:26Z"
+      },
+      "spec": {
+        "description": "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -4941,6 +5083,19 @@
     },
     {
       "metadata": {
+        "name": "pluginsForceTls13",
+        "resourceVersion": "1786362691770",
+        "creationTimestamp": "2026-08-10T11:51:31Z"
+      },
+      "spec": {
+        "description": "Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsSriChecks",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-10-04T12:55:09Z"
@@ -5100,15 +5255,18 @@
     {
       "metadata": {
         "name": "provisioning.gitConventions",
-        "resourceVersion": "1780985056992",
-        "creationTimestamp": "2026-06-09T06:04:16Z"
+        "resourceVersion": "1786613642168",
+        "creationTimestamp": "2026-06-09T06:04:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-13 09:34:02.168032 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5147,17 +5305,17 @@
     {
       "metadata": {
         "name": "provisioning.userAttribution",
-        "resourceVersion": "1783717809512",
+        "resourceVersion": "1786613782023",
         "creationTimestamp": "2026-07-08T13:32:58Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-07-10 21:10:09.512157 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-08-13 09:36:22.023466 +0000 UTC"
         }
       },
       "spec": {
         "description": "Author Git Sync commits as the acting Grafana user",
         "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5433,6 +5591,20 @@
         "description": "Enables the query service to do query caching",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "rawPrometheus.tableNg",
+        "resourceVersion": "1786565901949",
+        "creationTimestamp": "2026-08-12T20:18:21Z"
+      },
+      "spec": {
+        "description": "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -5839,6 +6011,19 @@
     },
     {
       "metadata": {
+        "name": "snapshots.kubernetesSnapshots",
+        "resourceVersion": "1785421660642",
+        "creationTimestamp": "2026-07-30T14:27:40Z"
+      },
+      "spec": {
+        "description": "Routes snapshot requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "splashScreen",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -6050,6 +6235,21 @@
     },
     {
       "metadata": {
+        "name": "table.inspectDataTableNG",
+        "resourceVersion": "1786484899208",
+        "creationTimestamp": "2026-08-11T21:48:19Z"
+      },
+      "spec": {
+        "description": "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "table.paginationPageSize",
         "resourceVersion": "1785352708239",
         "creationTimestamp": "2026-07-29T19:18:28Z"
@@ -6067,7 +6267,8 @@
       "metadata": {
         "name": "table.protoRowParser",
         "resourceVersion": "1782139478281",
-        "creationTimestamp": "2026-06-22T14:44:38Z"
+        "creationTimestamp": "2026-06-22T14:44:38Z",
+        "deletionTimestamp": "2026-08-11T20:21:15Z"
       },
       "spec": {
         "description": "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
@@ -6082,7 +6283,8 @@
       "metadata": {
         "name": "table.refactorNested",
         "resourceVersion": "1782413661913",
-        "creationTimestamp": "2026-06-25T18:54:21Z"
+        "creationTimestamp": "2026-06-25T18:54:21Z",
+        "deletionTimestamp": "2026-08-11T20:20:39Z"
       },
       "spec": {
         "description": "Enables the refactored TableNG nested-table implementation",
@@ -6191,6 +6393,21 @@
     },
     {
       "metadata": {
+        "name": "text.newFeatures",
+        "resourceVersion": "1786536451233",
+        "creationTimestamp": "2026-08-12T12:07:31Z"
+      },
+      "spec": {
+        "description": "Enables the new features in text panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "timeComparison",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-07-24T20:07:28Z"
@@ -6213,6 +6430,21 @@
         "description": "Enables time pickers sync",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "tracesDrilldown.useValueTypeFiltering",
+        "resourceVersion": "1787032167500",
+        "creationTimestamp": "2026-08-18T05:49:27Z"
+      },
+      "spec": {
+        "description": "Enables value type filtering in Traces Drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -6269,6 +6501,34 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorage.vectorStore",
+        "resourceVersion": "1785880163909",
+        "creationTimestamp": "2026-08-04T21:49:23Z",
+        "deletionTimestamp": "2026-08-04T22:01:34Z"
+      },
+      "spec": {
+        "description": "Enables the VectorStore write RPCs on the unified storage server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageVectorStore",
+        "resourceVersion": "1785880096317",
+        "creationTimestamp": "2026-08-04T21:48:16Z",
+        "deletionTimestamp": "2026-08-04T21:49:23Z"
+      },
+      "spec": {
+        "description": "Enables the VectorStore write RPCs on the unified storage server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "expression": "false"
       }
     },

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -100,6 +101,11 @@ type StorageOptions struct {
 
 	// Access to the other clients
 	ConfigProvider RestConfigProvider
+
+	// VersionPolicy caps the version each resource may persist. Built by the caller, which is where
+	// the scheme's natural version order and the configured cap are both available; nil disables
+	// enforcement.
+	VersionPolicy *versionpolicy.VersionPolicyRegistry
 }
 
 // unifiedStorageConfigValue implements pflag.Value for parsing unified storage config
@@ -297,8 +303,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 
 	o.SearchIndexClient = unified
 
-	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider)
-	serverConfig.RESTOptionsGetter = getter
+	serverConfig.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider, o.VersionPolicy)
 	return nil
 }
 

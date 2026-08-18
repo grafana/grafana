@@ -15,9 +15,11 @@ import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
+import { addElement } from '../../actions/element/addElement';
+import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import {
@@ -28,10 +30,11 @@ import {
   useDashboard,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { AutoGridItem } from './AutoGridItem';
@@ -129,7 +132,7 @@ export class AutoGridLayoutManager
 
     const newGridItem = new AutoGridItem({ body: vizPanel });
 
-    dashboardEditActions.addElement({
+    addElement({
       addedObject: vizPanel,
       source: this,
       perform: () => {
@@ -157,7 +160,7 @@ export class AutoGridLayoutManager
     }
 
     if (config.featureToggles.dashboardNewLayouts) {
-      dashboardEditActions.edit({
+      edit({
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: panel.state.body,
         source: this,
@@ -186,7 +189,7 @@ export class AutoGridLayoutManager
 
     const gridItemIndex = this.state.layout.state.children.indexOf(gridItem);
 
-    dashboardEditActions.removeElement({
+    removeElement({
       removedObject: panel,
       source: this,
       perform: () => {
@@ -295,6 +298,20 @@ export class AutoGridLayoutManager
   public editModeChanged(isEditing: boolean) {
     this.state.layout.setState({ isDraggable: isEditing });
     forceRenderChildren(this.state.layout, true);
+  }
+
+  public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
+    return canGroupSelection(items, target);
+  }
+
+  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
+    const groupEdit = buildGroupEdit(items, target);
+
+    if (!groupEdit) {
+      return;
+    }
+
+    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {

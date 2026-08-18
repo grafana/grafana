@@ -4,6 +4,8 @@ import XYZ from 'ol/source/XYZ';
 
 import { type EventBus, type GrafanaTheme2, type MapLayerOptions } from '@grafana/data';
 
+import { getTileSource } from '../test-utils';
+
 import { carto, type CartoConfig, LayerTheme } from './carto';
 
 describe('CARTO basemap layer noRepeat functionality', () => {
@@ -32,7 +34,7 @@ describe('CARTO basemap layer noRepeat functionality', () => {
     const layer = result.init();
 
     expect(layer).toBeInstanceOf(TileLayer);
-    const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+    const source = getTileSource(layer, XYZ);
     expect(source).toBeInstanceOf(XYZ);
     expect(source.getWrapX()).toBe(false);
   });
@@ -52,7 +54,7 @@ describe('CARTO basemap layer noRepeat functionality', () => {
     const layer = result.init();
 
     expect(layer).toBeInstanceOf(TileLayer);
-    const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+    const source = getTileSource(layer, XYZ);
     expect(source).toBeInstanceOf(XYZ);
     expect(source.getWrapX()).toBe(true);
   });
@@ -72,7 +74,7 @@ describe('CARTO basemap layer noRepeat functionality', () => {
     const layer = result.init();
 
     expect(layer).toBeInstanceOf(TileLayer);
-    const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+    const source = getTileSource(layer, XYZ);
     expect(source).toBeInstanceOf(XYZ);
     expect(source.getWrapX()).toBe(true);
   });
@@ -93,7 +95,7 @@ describe('CARTO basemap layer noRepeat functionality', () => {
     const layer = result.init();
 
     expect(layer).toBeInstanceOf(TileLayer);
-    const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+    const source = getTileSource(layer, XYZ);
     expect(source.getWrapX()).toBe(false);
 
     // Check that the URL reflects the dark theme without labels

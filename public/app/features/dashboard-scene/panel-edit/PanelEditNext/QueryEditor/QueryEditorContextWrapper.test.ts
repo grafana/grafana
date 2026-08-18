@@ -1,14 +1,14 @@
 import { act, renderHook } from '@testing-library/react';
 import React from 'react';
 
-import { AlertState } from '@grafana/data';
+import { AlertState, store } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { mockCombinedRule } from 'app/features/alerting/unified/mocks';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
-import { QueryEditorType } from '../constants';
+import { QUERY_EDITOR_STACKED_VIEW_KEY, QueryEditorType } from '../constants';
 
 import { type StackedEditorItem, useActionsContext, useQueryEditorUIContext } from './QueryEditorContext';
 import { QueryEditorContextWrapper } from './QueryEditorContextWrapper';
@@ -795,9 +795,11 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     getQueryRunnerFor.mockReturnValue({ useState: () => ({ queries: stackedQueries }) });
   });
 
+  // The on/off choice is persisted, so it would otherwise survive into the next test.
   afterEach(() => {
     const { getQueryRunnerFor } = require('../../../utils/utils');
     getQueryRunnerFor.mockReturnValue(null);
+    store.delete(QUERY_EDITOR_STACKED_VIEW_KEY);
   });
 
   it('activates a clicked query in stacked mode (scrolling is the renderer’s job)', () => {
@@ -881,6 +883,52 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
 
     act(() => result.current.stackedMode.exit());
     expect(result.current.stackedMode.enabled).toBe(false);
+  });
+
+  // Reading a panel's queries stacked or one at a time is a per-user habit, not a per-panel one,
+  // so the choice has to survive leaving panel edit.
+  describe('persistence', () => {
+    it('opens the stack for a user who left it on last time', () => {
+      store.set(QUERY_EDITOR_STACKED_VIEW_KEY, 'true');
+
+      const { result } = renderWithWrapper(makeMockDataPane());
+
+      expect(result.current.stackedMode.enabled).toBe(true);
+    });
+
+    it('stays closed for a user who has never turned it on', () => {
+      const { result } = renderWithWrapper(makeMockDataPane());
+
+      expect(result.current.stackedMode.enabled).toBe(false);
+      expect(store.get(QUERY_EDITOR_STACKED_VIEW_KEY)).toBeUndefined();
+    });
+
+    it('remembers both entering and exiting the stack', () => {
+      const { result } = renderWithWrapper(makeMockDataPane());
+
+      act(() => result.current.stackedMode.enter());
+      expect(store.get(QUERY_EDITOR_STACKED_VIEW_KEY)).toBe('true');
+
+      act(() => result.current.stackedMode.exit());
+      expect(store.get(QUERY_EDITOR_STACKED_VIEW_KEY)).toBe('false');
+    });
+
+    it('does not record the alerts view suppressing the stack', () => {
+      mockUseAlertRulesForPanel.mockReturnValue({
+        alertRules: [mockAlert],
+        loading: false,
+        isDashboardSaved: true,
+      });
+      const { result } = renderWithWrapper(makeMockDataPane());
+
+      act(() => result.current.stackedMode.enter());
+      act(() => result.current.setSelectedAlert(mockAlert));
+
+      // The stack is hidden, but the user never asked for that — the next panel edit should still
+      // open stacked.
+      expect(result.current.stackedMode.enabled).toBe(false);
+      expect(store.get(QUERY_EDITOR_STACKED_VIEW_KEY)).toBe('true');
+    });
   });
 
   it('stays off after returning from the alerts view when the user never turned it on', () => {

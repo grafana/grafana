@@ -457,9 +457,9 @@ function ImportWizardContent() {
           <Trans i18nKey="alerting.import-to-gma.info-description">
             This wizard helps you import alert rules and notification resources from external sources to Grafana
             Alerting. For more information, refer to the{' '}
-            <a href={DOCS_URL_ALERTING_MIGRATION} target="_blank" rel="noreferrer">
+            <TextLink href={DOCS_URL_ALERTING_MIGRATION} external>
               documentation
-            </a>
+            </TextLink>
             .
           </Trans>
         </Alert>

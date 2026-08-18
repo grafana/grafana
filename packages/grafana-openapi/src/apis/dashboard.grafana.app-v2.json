@@ -2696,6 +2696,9 @@
           },
           "timeShift": {
             "type": "string"
+          },
+          "timeTo": {
+            "type": "string"
           }
         }
       },

@@ -11,3 +11,4 @@
 
 export { useObservable } from './hooks/useObservable';
 export { DEFAULT_TAG_COLORS } from './themes/createComponents';
+export { getTimeZonesAt, findTimeZoneAt, canonicalZoneName, type EasyTzInfo } from './datetime/easytz_lookup';

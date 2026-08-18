@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'react';
 
 import { type SelectableValue, type TimeZone, InternalTimeZones } from '@grafana/data';
+import { canonicalZoneName, getTimeZonesAt } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 
 import { Select } from '../Select/Select';
@@ -8,12 +9,7 @@ import { Select } from '../Select/Select';
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { CompactTimeZoneOption, WideTimeZoneOption, type SelectableZone } from './TimeZonePicker/TimeZoneOption';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
-import {
-  canonicalZoneName,
-  getTimeZoneDisplayInfo,
-  getTimeZonesAt,
-  type TimeZoneDisplayInfo,
-} from './TimeZonePicker/timeZoneUtils';
+import { getTimeZoneDisplayInfo, type TimeZoneDisplayInfo } from './TimeZonePicker/timeZoneUtils';
 
 export interface Props {
   onChange: (timeZone?: TimeZone) => void;
@@ -139,7 +135,12 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
 
       const delimiter = tz.name.indexOf('/');
       const group = delimiter === -1 ? '' : tz.name.slice(0, delimiter);
-      pushOption(group, tz.name, { name: tz.name, abbreviation: tz.abbr, offset: tz.offset }, legacyNames.get(tz.name));
+      pushOption(
+        group,
+        tz.name,
+        { name: tz.name, abbreviation: tz.abbr, offset: tz.offsetDisplay },
+        legacyNames.get(tz.name)
+      );
     }
 
     return Array.from(groups, ([label, options]) => ({ label, options }));
@@ -160,7 +161,7 @@ const useSelectedTimeZone = (
     // Options are keyed by canonical IANA ids, but the incoming value may use
     // a legacy spelling (e.g. Asia/Calcutta persisted by an older Grafana or
     // returned by Chrome's Intl).
-    const tz = canonicalZoneName(timeZone, Date.now()).toLowerCase();
+    const tz = canonicalZoneName(timeZone).toLowerCase();
 
     for (const group of groups) {
       const option = group.options.find((option) => option.value?.toLowerCase() === tz);

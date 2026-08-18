@@ -308,6 +308,10 @@
       window.__grafanaRenderBindingSupported = true;
       [[end]]
 
+      [[if .UseLuxon]]
+      window.__grafanaUseLuxon = true;
+      [[end]]
+
       [[if .AssetSriChecksEnabled]]
         // For enabling SRI checks on dynamically loaded Grafana assets
         window.__grafanaAssetSriChecksEnabled = true;
@@ -315,6 +319,10 @@
 
       [[if .NewPreferencesPage]]
         window.__grafanaNewPreferencesPage = true;
+      [[end]]
+
+      [[if .OFREPRootUrlEnabled]]
+        window.__grafanaOFREPRootUrlEnabled = true;
       [[end]]
 
       // FEMT index.html uses this, and we want to keep the index.ts the same for both

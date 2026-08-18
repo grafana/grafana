@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { store } from '@grafana/data';
+import { locationUtil, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, logWarning } from '@grafana/runtime';
+import { config, locationService, logWarning } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   sceneGraph,
@@ -18,11 +18,11 @@ import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { edit } from '../../actions/utils/edit';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
@@ -44,6 +44,7 @@ import { useSidebarOptions } from './RowItemEditor';
 import { RowItemRenderer } from './RowItemRenderer';
 import { RowItems } from './RowItems';
 import { RowsLayoutManager } from './RowsLayoutManager';
+import { getRowSlugPath } from './scrollToRow';
 
 export interface RowItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
@@ -138,6 +139,15 @@ export class RowItem
     return getSlugForRowOrTab(this, siblings);
   }
 
+  /** Returns an absolute url that scrolls this row into view when the dashboard is opened */
+  public getUrl(): string {
+    const urlWithRowParam = locationUtil.getUrlForPartial(locationService.getLocation(), {
+      drow: getRowSlugPath(this),
+    });
+
+    return new URL(urlWithRowParam, window.location.origin).toString();
+  }
+
   public switchLayout(layout: DashboardLayoutManager, skipUndo?: boolean) {
     const currentLayout = this.state.layout;
 
@@ -151,7 +161,7 @@ export class RowItem
       return;
     }
 
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.edit-actions.switch-layout-row', 'Switch layout'),
       source: this,
       perform,
