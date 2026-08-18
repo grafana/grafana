@@ -33,6 +33,10 @@ type GRPCServerSettings struct {
 	certFile string
 	keyFile  string
 
+	// ReportGrpcCodesInInstrumentationLabelEnabled controls whether gRPC status codes are included in metric labels.
+	// It's a temporary migration flag that should be removed after the full migration to gRPC status codes is done.
+	//
+	// Do not remove / set default to true without consulting unified storage and IAM team for adjusting SLOs.
 	ReportGrpcCodesInInstrumentationLabelEnabled bool
 }
 

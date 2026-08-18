@@ -15,7 +15,6 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -1062,8 +1061,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
 		}
-		st := grpc.GRPCStatusFromErrorResult(rsp.Error)
-		return rsp, st
+		return rsp, nil
 	}
 
 	err := s.checkQuota(ctx, NamespacedResource{
@@ -1079,10 +1077,12 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 			msg = quotaErr.Message()
 		}
 
-		errRes, st := grpc.ErrorResultWithGRPCStatus(msg, http.StatusForbidden, codes.PermissionDenied)
 		return &resourcepb.CreateResponse{
-			Error: errRes,
-		}, st
+			Error: &resourcepb.ErrorResult{
+				Message: msg,
+				Code:    http.StatusForbidden,
+			},
+		}, nil
 	}
 
 	var res *resourcepb.CreateResponse
@@ -2299,6 +2299,10 @@ func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRe
 		Kinds:     []string{nsr.GroupResource()},
 	})
 	if err != nil {
+		resErr := AsErrorResult(err)
+		if resErr != nil {
+			return &resourcepb.QuotaUsageResponse{Error: resErr}, nil
+		}
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
 	}
 	if statsRsp.Error != nil {
@@ -2480,6 +2484,11 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		Kinds:     []string{nsr.GroupResource()},
 	})
 	if err != nil {
+		resErr := AsErrorResult(err)
+		if resErr != nil {
+			s.degraded(ctx, "check_quota", "stats_error", nsr, errors.New(resErr.Message))
+			return nil
+		}
 		s.degraded(ctx, "check_quota", "get_stats_failed", nsr, err)
 		return nil
 	}
