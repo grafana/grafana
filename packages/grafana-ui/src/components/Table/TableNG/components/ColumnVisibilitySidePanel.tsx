@@ -219,7 +219,7 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.5, 1),
     borderRadius: theme.shape.radius.default,
     '&:hover': {
-      background: theme.colors.action.hover,
+      background: theme.colors.secondary.background,
     },
     '&:hover [data-column-drag-handle], &:focus-within [data-column-drag-handle]': {
       opacity: 1,
@@ -277,12 +277,15 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     cursor: 'pointer',
     '&[aria-pressed="true"]': {
-      color: theme.colors.primary.text,
-      background: theme.colors.primary.transparent,
+      color: theme.colors.accent.main,
+      background: 'transparent',
     },
     '&:hover': {
       color: theme.colors.text.primary,
-      background: theme.colors.action.hover,
+      background: 'transparent',
+    },
+    '&[aria-pressed="true"]:hover': {
+      color: theme.colors.accent.main,
     },
     '&:focus-visible': {
       outline: `2px solid ${theme.colors.primary.main}`,

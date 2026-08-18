@@ -77,7 +77,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
     }),
     grid: css({
       '--rdg-background-color': bgColor,
-      '--rdg-header-background-color': bgColor,
+      '--rdg-header-background-color': theme.colors.background.elevated,
       '--rdg-header-draggable-background-color': theme.colors.action.hover,
       '--rdg-border-color': borderColor,
       '--rdg-color': theme.colors.text.primary,
@@ -149,6 +149,10 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
             zIndex: theme.zIndex.tooltip - 1,
           },
         },
+      },
+      '.rdg-header-row > .rdg-cell:last-child': {
+        borderStartEndRadius: theme.shape.radius.default,
+        overflow: 'hidden',
       },
       '.rdg-summary-row >': {
         '.rdg-cell': {
