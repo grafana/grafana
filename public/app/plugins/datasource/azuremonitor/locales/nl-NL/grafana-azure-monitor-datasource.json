@@ -105,7 +105,11 @@
       "load-subscriptions": "Abonnementen laden"
     },
     "dimension-fields": {
-      "aria-label-remove": "Verwijderen",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensies",
       "placeholder-field": "Veld",
       "placeholder-operation": "Werking",

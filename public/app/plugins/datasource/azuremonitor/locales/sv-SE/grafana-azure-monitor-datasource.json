@@ -105,7 +105,11 @@
       "load-subscriptions": "Ladda prenumerationer"
     },
     "dimension-fields": {
-      "aria-label-remove": "Ta bort",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Mått",
       "placeholder-field": "Fält",
       "placeholder-operation": "Drift",

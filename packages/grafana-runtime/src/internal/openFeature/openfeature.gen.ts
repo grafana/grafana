@@ -41,6 +41,8 @@ export const FlagKeys = {
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
+  /** Data source query gateway */
+  DatasourcesQueryGateway: "datasources.queryGateway",
   /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
@@ -175,6 +177,8 @@ export const FlagKeys = {
   TablePaginationPageSize: "table.paginationPageSize",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
+  /** Enables value type filtering in Traces Drilldown */
+  TracesDrilldownUseValueTypeFiltering: "tracesDrilldown.useValueTypeFiltering",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -331,6 +335,17 @@ export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvalua
  */
 export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.config.ui.useNewDatasourceCRUDAPIs", false, options).value;
+};
+
+/**
+ * Data source query gateway
+ *
+ * **Details:**
+ * - flag key: `datasources.queryGateway`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesQueryGateway = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.queryGateway", false, options).value;
 };
 
 /**
@@ -1068,6 +1083,17 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("text.newFeatures", false, options).value;
+};
+
+/**
+ * Enables value type filtering in Traces Drilldown
+ *
+ * **Details:**
+ * - flag key: `tracesDrilldown.useValueTypeFiltering`
+ * - default value: `false`
+ */
+export const useFlagTracesDrilldownUseValueTypeFiltering = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("tracesDrilldown.useValueTypeFiltering", false, options).value;
 };
 
 /**

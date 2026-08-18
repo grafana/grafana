@@ -40,6 +40,7 @@ import { type SpanLinkFunc } from './components/types/links';
 import { type Trace } from './components/types/trace';
 import { isSummarySpan } from './components/utils/summary-span';
 import { createSpanLinkFactory } from './createSpanLink';
+import { createTraceLogsLink } from './createTraceLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
@@ -206,6 +207,28 @@ export function TraceView(props: Props) {
       profilesDataSourceSettings,
     ]
   );
+
+  const logsLinkModel = useMemo(
+    () =>
+      createTraceLogsLink({
+        splitOpenFn: props.splitOpenFn,
+        traceToLogsOptions,
+        trace: traceProp,
+        dataFrame: props.dataFrames[0],
+        dataLinkPostProcessor: dataLinksContext?.dataLinkPostProcessor,
+        logsDataSourceSettings,
+        traceDataSourceSettings: instanceSettings,
+      }),
+    [
+      props.splitOpenFn,
+      props.dataFrames,
+      traceToLogsOptions,
+      traceProp,
+      dataLinksContext?.dataLinkPostProcessor,
+      logsDataSourceSettings,
+      instanceSettings,
+    ]
+  );
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
   const datasourceName = datasource ? datasource?.name : 'unknown';
@@ -274,6 +297,7 @@ export function TraceView(props: Props) {
             updateViewRangeTime={updateViewRangeTime}
             viewRange={viewRange}
             hideHeaderDetails={hideHeaderDetails}
+            logsLinkModel={logsLinkModel}
           />
 
           <TraceTimelineViewer
