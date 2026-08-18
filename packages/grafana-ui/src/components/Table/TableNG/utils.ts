@@ -1141,6 +1141,35 @@ export function getVisibleFields(fields: Field[]): Field[] {
 
 /**
  * @internal
+ * `table.refresh`: reorders `fields` to match `order`, a list of display names captured from a
+ * drag-and-drop column reorder. Fields not present in `order` — new columns since the order was
+ * captured — are appended at the end, preserving their original relative order. A no-op when
+ * `order` is undefined or empty, so this is safe to call unconditionally with ephemeral state that
+ * starts out unset.
+ */
+export function orderFieldsByDisplayNames(fields: Field[], order?: string[]): Field[] {
+  if (!order || order.length === 0) {
+    return fields;
+  }
+  const byDisplayName = new Map(fields.map((field) => [getDisplayName(field), field]));
+  const ordered: Field[] = [];
+  for (const name of order) {
+    const field = byDisplayName.get(name);
+    if (field) {
+      ordered.push(field);
+      byDisplayName.delete(name);
+    }
+  }
+  for (const field of fields) {
+    if (byDisplayName.has(getDisplayName(field))) {
+      ordered.push(field);
+    }
+  }
+  return ordered;
+}
+
+/**
+ * @internal
  * returns a map of column types by display name
  */
 export function getColumnTypes(fields: Field[]): ColumnTypes {

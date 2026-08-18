@@ -1,5 +1,5 @@
 import memoize from 'micro-memoize';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Field } from '@grafana/data';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
@@ -10,7 +10,7 @@ import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { TABLE } from './constants';
+import { COLUMN_SETTLE_MS, TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
@@ -40,7 +40,9 @@ import {
   getCellColorInlineStylesFactory,
   getCellLinks,
   getDefaultRowHeight,
+  getDisplayName,
   getVisibleFields,
+  orderFieldsByDisplayNames,
 } from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
@@ -105,6 +107,50 @@ export function TableFlat(props: TableNGProps) {
     () => (hasFooter ? calculateFooterHeight(visibleFields) : 0),
     [hasFooter, visibleFields]
   );
+
+  // `table.refresh`: ephemeral column order from dragging a header cell. `undefined` means "use
+  // field order as-is". Reset whenever the query structurally changes, same as the column-width
+  // reset below — a stale order pointing at columns that no longer exist would be confusing.
+  const [columnOrder, setColumnOrder] = useState<string[]>();
+  const [settlingColumnKeys, setSettlingColumnKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    setColumnOrder(undefined);
+    setSettlingColumnKeys(new Set());
+  }, [structureRev]);
+
+  useEffect(() => {
+    return () => clearTimeout(settleTimeoutRef.current);
+  }, []);
+
+  const markColumnsSettling = useCallback((displayNames: string[]) => {
+    setSettlingColumnKeys(new Set(displayNames));
+    clearTimeout(settleTimeoutRef.current);
+    settleTimeoutRef.current = setTimeout(() => setSettlingColumnKeys(new Set()), COLUMN_SETTLE_MS);
+  }, []);
+
+  const handleColumnsReorder = useCallback(
+    (sourceColumnKey: string, targetColumnKey: string) => {
+      setColumnOrder((current) => {
+        const next = [...(current ?? visibleFields.map(getDisplayName))];
+        const sourceIndex = next.indexOf(sourceColumnKey);
+        const targetIndex = next.indexOf(targetColumnKey);
+        if (sourceIndex < 0 || targetIndex < 0) {
+          return current;
+        }
+        next.splice(targetIndex, 0, next.splice(sourceIndex, 1)[0]);
+        return next;
+      });
+      markColumnsSettling([sourceColumnKey, targetColumnKey]);
+    },
+    [markColumnsSettling, visibleFields]
+  );
+
+  // only reorder when the flag is on, so a bug here can't affect the flag-off table at all.
+  const orderedVisibleFields = tableRefreshEnabled
+    ? orderFieldsByDisplayNames(visibleFields, columnOrder)
+    : visibleFields;
 
   const resizeHandler = useColumnResize(onColumnResize);
 
@@ -181,7 +227,7 @@ export function TableFlat(props: TableNGProps) {
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
-    visibleFields,
+    orderedVisibleFields,
     availableWidth,
     frozenColumns,
     widthConfigResetKey,
@@ -190,7 +236,7 @@ export function TableFlat(props: TableNGProps) {
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
-    fields: visibleFields,
+    fields: orderedVisibleFields,
     enabled: hasHeader,
     sortColumns,
     showTypeIcons: showTypeIcons ?? false,
@@ -205,7 +251,7 @@ export function TableFlat(props: TableNGProps) {
 
   const rowHeight = useFlatRowHeight({
     columnWidths: widths,
-    fields: visibleFields,
+    fields: orderedVisibleFields,
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,
@@ -271,6 +317,8 @@ export function TableFlat(props: TableNGProps) {
       showTypeIcons,
       timeRange,
       tableRefreshEnabled,
+      enableColumnReorder: tableRefreshEnabled,
+      settlingColumnKeys,
     }),
     [
       theme,
@@ -291,14 +339,15 @@ export function TableFlat(props: TableNGProps) {
       showTypeIcons,
       timeRange,
       tableRefreshEnabled,
+      settlingColumnKeys,
     ]
   );
 
   const fromFields = useColumnBuilderFromFields(filterResult, columnBuildConfig);
 
   const { columns, cellRootRenderers } = useMemo(
-    () => fromFields(visibleFields, widths, data, rows, sortedRows),
-    [fromFields, visibleFields, widths, data, rows, sortedRows]
+    () => fromFields(orderedVisibleFields, widths, data, rows, sortedRows),
+    [fromFields, orderedVisibleFields, widths, data, rows, sortedRows]
   );
 
   // invalidate columns on every structureRev change to support width editing in fieldConfig.
@@ -320,6 +369,7 @@ export function TableFlat(props: TableNGProps) {
       columnWidths={resetColumnWidths}
       onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
       onColumnResize={resizeHandler}
+      onColumnsReorder={tableRefreshEnabled ? handleColumnsReorder : undefined}
       onCellClick={onCellClick}
       onCellKeyDown={({ column, row }, event) => {
         if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {

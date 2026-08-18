@@ -32,6 +32,9 @@ export const TABLE = {
  */
 export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT;
 
+// `table.refresh`: how long a column's "settle" highlight plays after it's reordered or pinned.
+export const COLUMN_SETTLE_MS = 280;
+
 // Space a single header affordance icon (filter / sort / type) reserves next to the label. Sized to
 // the widest of them — the sort arrow, rendered at Icon size "lg" (18px) — plus the flex gap, so a
 // filterable or sorted column doesn't ellipsize its title once its icon appears.

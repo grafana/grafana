@@ -4,7 +4,7 @@ import memoize, { type Key, type RawKey } from 'micro-memoize';
 
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 
-import { COLUMN, TABLE } from './constants';
+import { COLUMN, COLUMN_SETTLE_MS, TABLE } from './constants';
 import { type TableCellStyles } from './types';
 
 // TextAlign, getJustifyContent, and IS_SAFARI_26 live here rather than in utils.tsx to avoid a
@@ -192,6 +192,21 @@ export const getGridStyles = memoize(
         paddingBlockStart: 0,
         fontWeight: 'normal',
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
+        // `table.refresh`: react-data-grid applies these classes itself while a column drag is in
+        // progress — only the visual treatment lives here, gated so a column can only look
+        // draggable once `enableColumnReorder` actually makes it so.
+        ...(tableRefreshEnabled && {
+          '& .rdg-cell-draggable': { cursor: 'grab' },
+          '& .rdg-cell-dragging': {
+            cursor: 'grabbing',
+            opacity: 0.45,
+            boxShadow: `inset 0 0 0 1px ${theme.colors.border.medium}`,
+          },
+          '& .rdg-cell-drag-over': {
+            backgroundColor: theme.colors.primary.transparent,
+            boxShadow: `inset 3px 0 0 0 ${theme.colors.primary.main}`,
+          },
+        }),
       }),
       displayNone: css({ display: 'none' }),
       paginationContainer: css({
@@ -222,6 +237,22 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
     paddingBlockEnd: TABLE.CELL_PADDING,
     justifyContent,
     '&:last-child': { borderInlineEnd: 'none' },
+  })
+);
+
+// `table.refresh`: a brief highlight applied to a column's header after it's reordered or pinned,
+// so the change is noticeable even though the column itself doesn't move far.
+export const getColumnSettleStyles = memoize((theme: GrafanaTheme2) =>
+  css({
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      animationName: 'table-ng-column-settle',
+      animationDuration: `${COLUMN_SETTLE_MS}ms`,
+      animationTimingFunction: 'ease-out',
+    },
+    '@keyframes table-ng-column-settle': {
+      from: { backgroundColor: theme.colors.primary.transparent },
+      to: { backgroundColor: 'transparent' },
+    },
   })
 );
 

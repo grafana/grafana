@@ -22,7 +22,7 @@ import { type PanelContext } from '../../PanelChrome';
 
 import { type HeaderCell } from './components/HeaderCell';
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
-import { getHeaderCellStyles } from './styles';
+import { getColumnSettleStyles, getHeaderCellStyles } from './styles';
 import { type FilterType, type NestedRowEntry, type TableColumn, type TableRow, type TableSummaryRow } from './types';
 import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
 
@@ -392,6 +392,32 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
     expect(result.columns[0].width).toBe(150);
     expect(result.columns[1].width).toBe(200);
+  });
+
+  describe('table.refresh column reorder', () => {
+    it('is draggable only when enableColumnReorder is set', () => {
+      const withReorder = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ enableColumnReorder: true }),
+      });
+      const reorderable = callFromFields(withReorder, frame.fields, [100, 100], frame, rows, rows);
+      expect(reorderable.columns.map((c) => c.draggable)).toEqual([true, true]);
+
+      const withoutReorder = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const notReorderable = callFromFields(withoutReorder, frame.fields, [100, 100], frame, rows, rows);
+      expect(notReorderable.columns.map((c) => c.draggable)).toEqual([undefined, undefined]);
+    });
+
+    it('adds the settle class to headerCellClass only for settling columns', () => {
+      const theme = createTheme();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ theme, settlingColumnKeys: new Set(['A']) }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(result.columns[0].headerCellClass).toContain(getColumnSettleStyles(theme));
+      expect(result.columns[1].headerCellClass).not.toContain(getColumnSettleStyles(theme));
+    });
   });
 
   describe('header alignment', () => {

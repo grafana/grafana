@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -984,6 +984,65 @@ describe('TableNG', () => {
       // The header shows the cached (frame-substituted) name — the important thing is that it's
       // consistent with the cells above, not blank or mismatched.
       expect(columnHeaders[1].querySelector('button')).toHaveAttribute('title', 'SortingValueTest');
+    });
+  });
+
+  describe('Column reordering', () => {
+    // jsdom has no native DataTransfer; react-data-grid's column drag only reads/writes a few
+    // members of it, so a minimal stub is enough to drive the drag/drop event sequence.
+    function createDataTransfer() {
+      return {
+        dropEffect: '',
+        effectAllowed: '',
+        setDragImage: jest.fn(),
+        setData: jest.fn(),
+        getData: jest.fn(),
+      };
+    }
+
+    it('reorders columns by dragging one header cell onto another', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+
+      const headerText = () =>
+        Array.from(container.querySelectorAll('[role="columnheader"] button')).map((el) => el.textContent);
+      expect(headerText()).toEqual(['Column A', 'Column B']);
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      const dataTransfer = createDataTransfer();
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[1], { dataTransfer });
+      fireEvent.dragOver(headers[1], { dataTransfer });
+      fireEvent.drop(headers[1], { dataTransfer });
+
+      expect(headerText()).toEqual(['Column B', 'Column A']);
+    });
+
+    it('does not make columns draggable when the flag is off', () => {
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+      );
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      headers.forEach((header) => expect(header).not.toHaveAttribute('draggable', 'true'));
+
+      const headerText = () =>
+        Array.from(container.querySelectorAll('[role="columnheader"] button')).map((el) => el.textContent);
+      const dataTransfer = createDataTransfer();
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[1], { dataTransfer });
+      fireEvent.dragOver(headers[1], { dataTransfer });
+      fireEvent.drop(headers[1], { dataTransfer });
+
+      // no reorder took place, since these columns were never made draggable
+      expect(headerText()).toEqual(['Column A', 'Column B']);
     });
   });
 

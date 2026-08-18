@@ -54,6 +54,7 @@ import {
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
   migrateTableDisplayModeToCellOptions,
+  orderFieldsByDisplayNames,
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
@@ -2951,6 +2952,33 @@ describe('TableNG utils', () => {
       const field: Field = { name: 'test', type: FieldType.string, config: {}, values: [] };
       const predicate = predicateByName('other');
       expect(predicate(field)).toBe(false);
+    });
+  });
+
+  describe('orderFieldsByDisplayNames', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when order is undefined', () => {
+      expect(orderFieldsByDisplayNames(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when order is empty', () => {
+      expect(orderFieldsByDisplayNames(fields, [])).toBe(fields);
+    });
+
+    it('reorders fields to match the given display names', () => {
+      expect(orderFieldsByDisplayNames(fields, ['C', 'A', 'B'])).toEqual([fieldC, fieldA, fieldB]);
+    });
+
+    it('appends fields missing from order, preserving their original relative order', () => {
+      expect(orderFieldsByDisplayNames(fields, ['B'])).toEqual([fieldB, fieldA, fieldC]);
+    });
+
+    it('ignores names in order that do not match any field', () => {
+      expect(orderFieldsByDisplayNames(fields, ['D', 'C'])).toEqual([fieldC, fieldA, fieldB]);
     });
   });
 

@@ -46,6 +46,7 @@ import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
 import {
   getCellActionStyles,
+  getColumnSettleStyles,
   getDefaultCellStyles,
   getHeaderCellStyles,
   getLinkStyles,
@@ -147,6 +148,8 @@ export interface ColumnBuildConfig {
   applyToRowBgFn: ((rowIdx: number) => Partial<CSSProperties>) | undefined;
   disableKeyboardEvents?: boolean;
   disableSanitizeHtml?: boolean;
+  /** `table.refresh`: lets columns be reordered by dragging their header cell. */
+  enableColumnReorder?: boolean;
   filter: FilterType;
   frozenColumns: number;
   getCellActions: GetActionsFunctionLocal;
@@ -160,6 +163,8 @@ export interface ColumnBuildConfig {
   rowHeightFn: (row: TableRow) => number;
   setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
+  /** `table.refresh`: column keys currently animating into their post-reorder/pin position. */
+  settlingColumnKeys?: ReadonlySet<string>;
   showTypeIcons?: boolean;
   /** `table.refresh`: left-align header labels and move the filter into the header column menu. */
   tableRefreshEnabled?: boolean;
@@ -208,6 +213,8 @@ function buildColumnsFromFields(
     maxRowHeight,
     disableKeyboardEvents,
     disableSanitizeHtml,
+    enableColumnReorder,
+    settlingColumnKeys,
     showTypeIcons,
     tableRefreshEnabled,
     timeRange,
@@ -291,7 +298,10 @@ function buildColumnsFromFields(
     const displayName = getDisplayName(field);
     // the refreshed header always left-aligns its label, independent of how the body cells align,
     // so the column menu has a stable trailing edge to sit against
-    const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
+    const headerCellClass = clsx(
+      getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent),
+      settlingColumnKeys?.has(displayName) && getColumnSettleStyles(theme)
+    );
     const CellType = getCellRenderer(field, cellOptions);
 
     const cellInspect = isCellInspectEnabled(field);
@@ -516,6 +526,7 @@ function buildColumnsFromFields(
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       // every column is sortable unless explicitly disabled
       sortable: field.config.custom?.sortable !== false,
+      draggable: enableColumnReorder,
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell
