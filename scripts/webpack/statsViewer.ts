@@ -1,4 +1,5 @@
-import { spawn } from 'node:child_process';
+import { createServer } from 'http-server';
+import open from 'open';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -38,8 +39,13 @@ export class StatsViewerPlugin {
         filterTimer = setTimeout(() => void updateReport(), 50);
       });
 
-      spawn('http-server', ['public/build', '-o', 'bundle-stats-filtered.html'], {
-        stdio: 'inherit',
+      const server = createServer({
+        root: 'public/build',
+        cache: -1,
+      });
+      server.listen(8080, '127.0.0.1', () => {
+        const reportUrl = new URL('/bundle-stats-filtered.html', 'http://127.0.0.1:8080');
+        void open(reportUrl.toString());
       });
     });
   }
