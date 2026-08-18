@@ -2,6 +2,10 @@
 
 # 13.2.0 (2026-08-18)
 
+## Security
+
+- CVE-2026-17183
+
 ### Features and enhancements
 
 - **Alerting:** Add Import tab in alerting settings page [#129051](https://github.com/grafana/grafana/pull/129051), [@rodrigopk](https://github.com/rodrigopk)
