@@ -47,6 +47,18 @@ describe('serializeSelectorGroup', () => {
     });
   });
 
+  it('serializes a function with more parameters than the legacy sentinel count', () => {
+    const result = serializeSelectorGroup({
+      Group: {
+        many: { '13.2.0': (a: string, b: string, c: string, d: string, e: string) => `${a}-${b}-${c}-${d}-${e}` },
+      },
+    });
+
+    expect(result).toEqual({
+      Group: { many: { '13.2.0': { $template: '{a}-{b}-{c}-{d}-{e}', params: ['a', 'b', 'c', 'd', 'e'] } } },
+    });
+  });
+
   it('serializes a function that ignores its argument (no placeholder in template)', () => {
     const result = serializeSelectorGroup({
       Group: { ignores: { [MIN]: (_: string) => 'Panel status' } },
