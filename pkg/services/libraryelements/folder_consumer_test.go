@@ -2,6 +2,7 @@ package libraryelements
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -110,8 +111,9 @@ func TestIntegration_FolderConsumer_FoldersInUse(t *testing.T) {
 }
 
 // deleteConsumerSetup wires a FolderConsumer with the repair already marked complete and an
-// observable logger, ready to exercise DeleteInFolder.
-func deleteConsumerSetup(t *testing.T) (*FolderConsumer, db.DB, *logtest.Fake) {
+// observable logger, ready to exercise DeleteInFolder. dashboardsErr, if non-nil, is returned by
+// the dashboard-lookup dependency instead of an empty connected-dashboards list.
+func deleteConsumerSetup(t *testing.T, dashboardsErr error) (*FolderConsumer, db.DB, *logtest.Fake) {
 	t.Helper()
 	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	repair := &FolderUIDRepairService{store: store, kv: kvstore.NewFakeKVStore(), log: log.New("test")}
@@ -119,7 +121,7 @@ func deleteConsumerSetup(t *testing.T) (*FolderConsumer, db.DB, *logtest.Fake) {
 
 	dashSvc := dashboards.NewFakeDashboardService(t)
 	dashSvc.On("GetDashboardsByLibraryPanelUID", mock.Anything, mock.Anything, mock.Anything).
-		Return([]*dashboards.DashboardRef{}, nil).Maybe()
+		Return([]*dashboards.DashboardRef{}, dashboardsErr).Maybe()
 
 	svc := &LibraryElementService{SQLStore: store, log: log.New("test"), dashboardsService: dashSvc}
 	c := ProvideFolderConsumer(svc, repair)
@@ -144,7 +146,7 @@ func TestIntegration_FolderConsumer_DeleteInFolder(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("logs uid and name of deleted elements", func(t *testing.T) {
-		c, store, fakeLog := deleteConsumerSetup(t)
+		c, store, fakeLog := deleteConsumerSetup(t, nil)
 		insertLibraryElement(t, store, "panel-1", "CPU usage", "f1")
 		insertLibraryElement(t, store, "panel-2", "Memory usage", "f1")
 
@@ -166,9 +168,26 @@ func TestIntegration_FolderConsumer_DeleteInFolder(t *testing.T) {
 	})
 
 	t.Run("does not log when there is nothing to delete", func(t *testing.T) {
-		c, _, fakeLog := deleteConsumerSetup(t)
+		c, _, fakeLog := deleteConsumerSetup(t, nil)
 
 		require.NoError(t, c.DeleteInFolder(context.Background(), repairOrgID, "empty-folder"))
 		require.Equal(t, 0, fakeLog.InfoLogs.Calls)
+	})
+
+	t.Run("does not log when the dashboard lookup fails", func(t *testing.T) {
+		lookupErr := errors.New("dashboard lookup failed")
+		c, store, fakeLog := deleteConsumerSetup(t, lookupErr)
+		insertLibraryElement(t, store, "panel-1", "CPU usage", "f1")
+
+		err := c.DeleteInFolder(context.Background(), repairOrgID, "f1")
+		require.ErrorIs(t, err, lookupErr)
+		require.Equal(t, 0, fakeLog.InfoLogs.Calls)
+
+		var remaining []string
+		dbErr := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+			return sess.SQL("SELECT uid FROM library_element WHERE folder_uid=?", "f1").Find(&remaining)
+		})
+		require.NoError(t, dbErr)
+		require.Equal(t, []string{"panel-1"}, remaining)
 	})
 }
