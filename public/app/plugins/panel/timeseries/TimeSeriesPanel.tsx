@@ -10,16 +10,18 @@ import {
   shouldAlignTimeCompare,
   useDataLinksContext,
 } from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import {
   EventBusPlugin,
   KeyboardPlugin,
   TooltipPlugin2,
   usePanelContext,
+  useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
@@ -46,6 +48,7 @@ export const TimeSeriesPanel = ({
   onOptionsChange,
   replaceVariables,
   id,
+  title,
 }: TimeSeriesPanelProps) => {
   const {
     sync,
@@ -56,6 +59,7 @@ export const TimeSeriesPanel = ({
     getFiltersBasedOnGrouping,
     onAddAdHocFilters,
   } = usePanelContext();
+  const theme = useTheme2();
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 
@@ -64,11 +68,14 @@ export const TimeSeriesPanel = ({
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
   const { frames, compareDiffMs } = useMemo(() => {
-    let frames = prepareGraphableFields(data.series, config.theme2, timeRange);
+    let frames = prepareGraphableFields(data.series, theme, timeRange);
     if (frames != null) {
       let compareDiffMs: number[] = [0];
+      // Held separately from `frames` below: TS won't retain the null-check narrowing of `frames`
+      // inside the .map callback once `frames` itself gets reassigned in this scope.
+      const originalFrames = frames;
 
-      frames.forEach((frame: DataFrame) => {
+      frames = originalFrames.map((frame: DataFrame) => {
         const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
 
         frame.fields.forEach((field) => {
@@ -80,19 +87,21 @@ export const TimeSeriesPanel = ({
         if (diffMs !== 0) {
           // Check if the compared frame needs time alignment
           // Apply alignment when time ranges match (no shift applied yet)
-          const needsAlignment = shouldAlignTimeCompare(frame, frames, timeRange);
+          const needsAlignment = shouldAlignTimeCompare(frame, originalFrames, timeRange);
 
           if (needsAlignment) {
-            alignTimeRangeCompareData(frame, diffMs, config.theme2);
+            return alignTimeRangeCompareData(frame, diffMs, theme);
           }
         }
+
+        return frame;
       });
 
       return { frames, compareDiffMs };
     }
 
     return { frames };
-  }, [data.series, timeRange]);
+  }, [data.series, timeRange, theme]);
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
@@ -207,6 +216,7 @@ export const TimeSeriesPanel = ({
                       filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );
                 }}

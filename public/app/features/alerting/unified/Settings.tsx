@@ -1,10 +1,8 @@
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { WithReturnButton } from './components/WithReturnButton';
-import { AutoSyncConfiguration } from './components/settings/AutoSyncConfiguration';
 import { useEditConfigurationDrawer } from './components/settings/ConfigurationDrawer';
 import { ExternalAlertmanagers } from './components/settings/ExternalAlertmanagers';
 import InternalAlertmanager from './components/settings/InternalAlertmanager';
@@ -23,7 +21,6 @@ function AlertmanagerSettingsPage() {
 function AlertmanagerSettingsContent() {
   const [configurationDrawer, showConfiguration] = useEditConfigurationDrawer();
   const { isLoading } = useSettings();
-  const isAutoSyncEnabled = config.featureToggles['alerting.syncExternalAlertmanager'];
 
   const { navId, pageNav } = useSettingsPageNav();
 
@@ -45,7 +42,6 @@ function AlertmanagerSettingsContent() {
       ]}
     >
       <Stack direction="column" gap={2}>
-        {isAutoSyncEnabled && <AutoSyncConfiguration />}
         {/* Grafana built-in Alertmanager */}
         <Text variant="h5">
           <Trans i18nKey="alerting.settings-content.builtin-alertmanager">Built-in Alertmanager</Trans>

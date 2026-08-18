@@ -18,7 +18,15 @@ export interface IncidentPreview {
 
 interface QueryIncidentPreviewsResponse {
   incidentPreviews?: IncidentPreview[];
+  // Pagination cursor: hasMore means the server truncated the result at the requested limit.
+  cursor?: { hasMore?: boolean };
   error?: string;
+}
+
+export interface ActiveIncidents {
+  incidents: IncidentPreview[];
+  /** True when there are more active incidents than the query limit allowed the server to return. */
+  hasMore: boolean;
 }
 
 const getProxyApiUrl = (path: string, pluginId: string) => `/api/plugins/${pluginId}/resources${path}`;
@@ -33,7 +41,7 @@ export const incidentsApi = alertingApi.injectEndpoints({
         showErrorAlert: false,
       }),
     }),
-    getActiveIncidents: build.query<IncidentPreview[], { pluginId: string }>({
+    getActiveIncidents: build.query<ActiveIncidents, { pluginId: string }>({
       query: ({ pluginId }) => ({
         url: getProxyApiUrl('/api/v1/IncidentsService.QueryIncidentPreviews', pluginId),
         data: {
@@ -47,7 +55,10 @@ export const incidentsApi = alertingApi.injectEndpoints({
         method: 'POST',
         showErrorAlert: false,
       }),
-      transformResponse: (response: QueryIncidentPreviewsResponse) => response.incidentPreviews ?? [],
+      transformResponse: (response: QueryIncidentPreviewsResponse): ActiveIncidents => ({
+        incidents: response.incidentPreviews ?? [],
+        hasMore: response.cursor?.hasMore ?? false,
+      }),
     }),
   }),
 });

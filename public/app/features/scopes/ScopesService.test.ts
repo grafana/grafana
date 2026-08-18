@@ -1098,7 +1098,7 @@ describe('ScopesService', () => {
 
         expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
         // redirectOnApply=true so the user lands on the scope's redirectPath
-        // or first scope navigation, matching manual selection behavior.
+        // when one is configured, matching manual selection behavior.
         expect(selectorService.changeScopes).toHaveBeenCalledWith(['gdev-shoe-org'], undefined, undefined, true);
       });
 

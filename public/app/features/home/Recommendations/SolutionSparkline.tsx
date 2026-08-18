@@ -10,6 +10,7 @@ const SPARKLINE_HEIGHT = 56;
 // stable config reference across renders.
 const sparklineConfig: FieldConfig<GraphFieldConfig> = {
   color: { mode: 'fixed', fixedColor: 'blue' },
+  min: 0,
   custom: {
     lineWidth: 2,
     fillOpacity: 30,

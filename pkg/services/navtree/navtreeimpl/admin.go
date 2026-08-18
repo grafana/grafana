@@ -52,9 +52,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if c.HasRole(identity.RoleAdmin) &&
-		s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	if c.HasRole(identity.RoleAdmin) && s.cfg.ProvisioningEnabled {
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
@@ -73,9 +71,9 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Children: generalNodeLinks,
 	}
 
-	if len(generalNode.Children) > 0 {
-		configNodes = append(configNodes, generalNode)
-	}
+	// Always append: index data hooks can inject children (e.g. banner settings),
+	// so pruning when empty is deferred to RemoveEmptyAdminSections.
+	configNodes = append(configNodes, generalNode)
 
 	pluginsNodeLinks := []*navtree.NavLink{}
 	// FIXME: If plugin admin is disabled or externally managed, server admins still need to access the page, this is why
@@ -119,9 +117,9 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Children: pluginsNodeLinks,
 	}
 
-	if len(pluginsNode.Children) > 0 {
-		configNodes = append(configNodes, pluginsNode)
-	}
+	// Always append: index data hooks can inject children (e.g. recorded queries),
+	// so pruning when empty is deferred to RemoveEmptyAdminSections.
+	configNodes = append(configNodes, pluginsNode)
 
 	accessNodeLinks := []*navtree.NavLink{}
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))) {

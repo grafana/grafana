@@ -100,6 +100,30 @@ describe('Datasources / API', () => {
       };
       expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings)).toEqual(dsLegacySettings);
     });
+
+    it('should default jsonData to an empty object when the apiserver omits it', () => {
+      const dsK8sSettings: DataSourceSettingsK8s = {
+        kind: 'DataSource',
+        metadata: {
+          name: 'fortytwo',
+          namespace: 'default',
+          resourceVersion: '2',
+          labels: { 'grafana.app/deprecatedInternalID': '42' },
+        },
+        spec: {
+          access: 'all areas',
+          title: 'slartybartfast',
+          url: 'example.com',
+          basicAuth: false,
+          basicAuthUser: '',
+          user: '',
+          database: '',
+        },
+        apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
+      };
+
+      expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings).jsonData).toEqual({});
+    });
   });
 
   describe('deleteDataSource()', () => {

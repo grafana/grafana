@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -160,16 +161,16 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 
 func setupDB(b testing.TB) benchScenario {
 	b.Helper()
-	db, cfg := sqlstore.InitTestDB(b)
+	db, cfg := sqlstore.InitTestDB(b) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	IDs := map[int64]struct{}{}
 
 	opts := sqlstore.NativeSettingsForDialect(db.GetDialect())
 
 	quotaService := quotatest.New(false, nil)
 
-	teamSvc, err := teamimpl.ProvideService(db, cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(b, err)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(b, err)
 
 	cache := localcache.ProvideService()
@@ -441,7 +442,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		nil,
 		nil,
 		dualwrite.ProvideTestService(),
-		serverlock.ProvideService(sc.db, tracing.InitializeTracerForTest()),
+		serverlock.ProvideService(legacysql.NewDatabaseProvider(sc.db), tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
 		dashclient.NewK8sClientWithFallback(
 			sc.cfg,

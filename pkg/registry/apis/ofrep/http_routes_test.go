@@ -28,65 +28,82 @@ func TestAPIBuilder_ValidateNamespaceIfPresent(t *testing.T) {
 	b := &APIBuilder{logger: logger}
 
 	tests := []struct {
-		name          string
-		authNamespace string
-		requestBody   string
-		noAuthInfo    bool
-		expectedValid bool
+		name              string
+		authNamespace     string
+		requestBody       string
+		noAuthInfo        bool
+		expectedValid     bool
+		expectedNamespace string
 	}{
 		{
-			name:          "no namespace in eval context - always valid",
-			authNamespace: "stacks-1",
-			requestBody:   `{"context":{}}`,
-			expectedValid: true,
+			name:              "no namespace in eval context - always valid",
+			authNamespace:     "stacks-1",
+			requestBody:       `{"context":{}}`,
+			expectedValid:     true,
+			expectedNamespace: "stacks-1",
 		},
 		{
-			name:          "no context object at all - always valid",
-			authNamespace: "stacks-1",
-			requestBody:   `{}`,
-			expectedValid: true,
+			name:              "no context object at all - always valid",
+			authNamespace:     "stacks-1",
+			requestBody:       `{}`,
+			expectedValid:     true,
+			expectedNamespace: "stacks-1",
 		},
 		{
-			name:          "namespace matches auth namespace - valid",
-			authNamespace: "stacks-1",
-			requestBody:   `{"context":{"namespace":"stacks-1"}}`,
-			expectedValid: true,
+			name:              "namespace matches auth namespace - valid",
+			authNamespace:     "stacks-1",
+			requestBody:       `{"context":{"namespace":"stacks-1"}}`,
+			expectedValid:     true,
+			expectedNamespace: "stacks-1",
 		},
 		{
-			name:          "namespace does not match auth namespace - invalid",
-			authNamespace: "stacks-1",
-			requestBody:   `{"context":{"namespace":"stacks-99"}}`,
-			expectedValid: false,
+			name:              "namespace does not match auth namespace - invalid, resolves to auth namespace",
+			authNamespace:     "stacks-1",
+			requestBody:       `{"context":{"namespace":"stacks-99"}}`,
+			expectedValid:     false,
+			expectedNamespace: "stacks-1",
 		},
 		{
-			name:          "unauthenticated with namespace in eval context - valid",
-			authNamespace: "",
-			requestBody:   `{"context":{"namespace":"stacks-1"}}`,
-			expectedValid: true,
+			name:              "unauthenticated with namespace in eval context - valid, resolves to eval ctx namespace",
+			authNamespace:     "",
+			requestBody:       `{"context":{"namespace":"stacks-1"}}`,
+			expectedValid:     true,
+			expectedNamespace: "stacks-1",
 		},
 		{
-			name:          "unauthenticated with no namespace - valid",
-			authNamespace: "",
-			requestBody:   `{"context":{}}`,
-			expectedValid: true,
+			name:              "unauthenticated with no namespace - valid, resolves to empty",
+			authNamespace:     "",
+			requestBody:       `{"context":{}}`,
+			expectedValid:     true,
+			expectedNamespace: "",
 		},
 		{
-			name:          "no auth info at all - valid (public flag gating handles unauthed)",
-			requestBody:   `{"context":{"namespace":"stacks-1"}}`,
-			noAuthInfo:    true,
-			expectedValid: true,
+			name:              "no auth info at all - valid (public flag gating handles unauthed), resolves to eval ctx namespace",
+			requestBody:       `{"context":{"namespace":"stacks-1"}}`,
+			noAuthInfo:        true,
+			expectedValid:     true,
+			expectedNamespace: "stacks-1",
 		},
 		{
-			name:          "wildcard auth namespace - valid for any specific namespace",
-			authNamespace: "*",
-			requestBody:   `{"context":{"namespace":"stacks-1"}}`,
-			expectedValid: true,
+			name:              "wildcard auth namespace - valid for any specific namespace, resolves to eval ctx namespace",
+			authNamespace:     "*",
+			requestBody:       `{"context":{"namespace":"stacks-1"}}`,
+			expectedValid:     true,
+			expectedNamespace: "stacks-1",
 		},
 		{
-			name:          "empty body - always valid",
-			authNamespace: "stacks-1",
-			requestBody:   ``,
-			expectedValid: true,
+			name:              "wildcard auth namespace with header-unsafe eval ctx namespace - falls back to wildcard",
+			authNamespace:     "*",
+			requestBody:       `{"context":{"namespace":"stacks-1\r\nX-Injected: evil"}}`,
+			expectedValid:     true,
+			expectedNamespace: "*",
+		},
+		{
+			name:              "empty body - always valid",
+			authNamespace:     "stacks-1",
+			requestBody:       ``,
+			expectedValid:     true,
+			expectedNamespace: "stacks-1",
 		},
 	}
 
@@ -109,8 +126,9 @@ func TestAPIBuilder_ValidateNamespaceIfPresent(t *testing.T) {
 			evalCtx, err := b.readEvalContext(httptest.NewRecorder(), req)
 			require.NoError(t, err)
 
-			_, valid := b.validateNamespaceIfPresent(req, evalCtx)
+			namespace, valid := b.validateNamespaceIfPresent(req, evalCtx)
 			assert.Equal(t, tt.expectedValid, valid)
+			assert.Equal(t, tt.expectedNamespace, namespace)
 
 			// Body must still be readable after readEvalContext
 			body, err := io.ReadAll(req.Body)

@@ -1,7 +1,8 @@
 import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
@@ -32,7 +33,7 @@ export function useQueryDatasource(
       // normally specify their own. Fall back to the default for legacy/transition cases —
       // matches behavior in resolveNewQueryDatasource.
       if (panelDsSettings.meta.mixed) {
-        const defaultDs = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+        const defaultDs = await getDataSourceInstanceSettings(config.defaultDatasource);
         dsRef = defaultDs ? getDataSourceRef(defaultDs) : undefined;
       } else {
         dsRef = getDataSourceRef(panelDsSettings);
@@ -45,12 +46,12 @@ export function useQueryDatasource(
 
     const scopedVars = panel ? getPanelScopedVars(panel) : undefined;
 
-    const queryDsSettings = getDataSourceSrv().getInstanceSettings(dsRef, scopedVars);
+    const queryDsSettings = await getDataSourceInstanceSettings(dsRef, scopedVars);
     if (!queryDsSettings) {
       throw new Error(`Datasource settings not found for ${JSON.stringify(dsRef)}`);
     }
 
-    const queryDatasource = await getDataSourceSrv().get(dsRef, scopedVars);
+    const queryDatasource = await getDataSourceInstance(dsRef, scopedVars);
     return { datasource: queryDatasource, dsSettings: queryDsSettings };
     // Narrow deps are intentional: widening to [query, panelDsSettings] would re-run on every
     // field change (SQL text, refId, hide flag), flickering `loading` and briefly clearing

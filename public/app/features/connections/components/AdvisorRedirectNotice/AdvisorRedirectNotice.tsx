@@ -9,6 +9,11 @@ import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  alert: css({
+    // Alert defaults to flexGrow: 1, which makes the notice absorb free space
+    // when the page content is a flex column (e.g. the plugins catalog)
+    flexGrow: 0,
+  }),
   alertContent: css({
     display: 'flex',
     flexDirection: 'row',
@@ -51,6 +56,7 @@ export function AdvisorRedirectNotice() {
     <Alert
       severity="info"
       title=""
+      className={styles.alert}
       onRemove={() => {
         userStorage.setItem('showNotice', 'false');
         setShowNotice(false);

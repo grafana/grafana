@@ -2,13 +2,14 @@ import { render, screen } from '@testing-library/react';
 
 import { ColorScale } from './ColorScale';
 
-// Controls the measured container width so tick-count decisions are
+// Controls the measured container size so tick-count decisions are
 // deterministic (real measurement needs layout that jsdom doesn't do).
 let mockMeasuredWidth = 0;
+let mockMeasuredHeight = 0;
 
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
-  useMeasure: () => [jest.fn(), { width: mockMeasuredWidth }],
+  useMeasure: () => [jest.fn(), { width: mockMeasuredWidth, height: mockMeasuredHeight }],
 }));
 
 const palette = ['#0000ff', '#ff0000'];
@@ -137,6 +138,82 @@ describe('ColorScale', () => {
       render(<ColorScale colorPalette={palette} min={0} max={100} display={(v) => `${v}`} />);
 
       expect(getTickLabels()).toEqual(expected);
+    });
+  });
+
+  describe('vertical orientation', () => {
+    const renderVertical = (props: Partial<Parameters<typeof ColorScale>[0]> = {}) =>
+      render(
+        <ColorScale
+          colorPalette={palette}
+          min={0}
+          max={100}
+          display={(v) => `${v}`}
+          orientation="vertical"
+          {...props}
+        />
+      );
+
+    it('sizes tick count by measured height, not width', () => {
+      mockMeasuredWidth = 320;
+      // each vertical label needs a 15 + 20 = 35px slot
+      mockMeasuredHeight = 175;
+      renderVertical();
+
+      expect(getTickLabels()).toEqual(['0', '25', '50', '75', '100']);
+    });
+
+    it('renders only min and max when the container is too short for more', () => {
+      mockMeasuredWidth = 320;
+      mockMeasuredHeight = 100;
+      renderVertical();
+
+      expect(getTickLabels()).toEqual(['0', '100']);
+    });
+
+    it('renders three ticks once there is room for three slots', () => {
+      mockMeasuredWidth = 320;
+      mockMeasuredHeight = 105;
+      renderVertical();
+
+      expect(getTickLabels()).toEqual(['0', '50', '100']);
+    });
+
+    it('positions ticks from the bottom of the scale', () => {
+      mockMeasuredWidth = 320;
+      mockMeasuredHeight = 175;
+      renderVertical();
+
+      expect(screen.getByText('0').style.bottom).toBe('0%');
+      expect(screen.getByText('25').style.bottom).toBe('25%');
+      expect(screen.getByText('100').style.bottom).toBe('100%');
+    });
+
+    it('anchors the min tick at the bottom, the max tick at the top, and centers intermediates', () => {
+      mockMeasuredWidth = 320;
+      mockMeasuredHeight = 175;
+      renderVertical();
+
+      expect(screen.getByText('0').style.transform).toBe('');
+      expect(screen.getByText('50').style.transform).toBe('translateY(50%)');
+      expect(screen.getByText('100').style.transform).toBe('translateY(100%)');
+    });
+
+    it('drops ticks that would collapse into duplicate labels after snapping', () => {
+      mockMeasuredHeight = 175;
+      renderVertical({ min: 0, max: 2 });
+
+      expect(getTickLabels()).toEqual(['0', '1', '2']);
+    });
+
+    it('gives the values column an explicit width derived from the widest label', () => {
+      mockMeasuredWidth = 320;
+      mockMeasuredHeight = 175;
+      renderVertical();
+
+      // "100" is the widest label: 3 chars * 8px
+      const valuesEl = screen.getByText('100').parentElement!;
+      expect(valuesEl.style.width).toBe('24px');
     });
   });
 

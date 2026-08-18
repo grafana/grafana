@@ -100,6 +100,10 @@ func (f *fakeResourceIndexClient) VectorSearch(ctx context.Context, in *resource
 	return nil, nil
 }
 
+func (f *fakeResourceIndexClient) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	return nil, nil
+}
+
 func setupTestSearchClient(t *testing.T) (schema.GroupResource, *fakeResourceIndexClient, *fakeResourceIndexClient) {
 	t.Helper()
 	gr := schema.GroupResource{Group: "test", Resource: "items"}

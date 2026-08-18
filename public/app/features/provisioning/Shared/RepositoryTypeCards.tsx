@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { Card, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
@@ -38,6 +39,7 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                 className={styles.card}
                 noMargin
                 disabled={disabled}
+                data-testid={selectors.pages.Provisioning.repositoryTypeCard(config.type)}
               >
                 <Card.Heading>
                   <Stack gap={2} alignItems="center">
@@ -81,6 +83,7 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
                 className={styles.card}
                 noMargin
                 disabled={disabled}
+                data-testid={selectors.pages.Provisioning.repositoryTypeCard(config.type)}
               >
                 <Card.Heading>
                   <Stack gap={2} alignItems="center">

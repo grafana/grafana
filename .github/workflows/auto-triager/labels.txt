@@ -103,15 +103,11 @@ datasource/GoogleCloudMonitoring
 datasource/GoogleSheets
 datasource/Graphite
 datasource/InfluxDB
-datasource/Jaeger
 datasource/JSON
-datasource/Loki
 datasource/MSSQL
 datasource/MySQL
 datasource/OpenSearch
 datasource/Phlare
-datasource/Postgres
-datasource/Prometheus
 datasource/SiteWIse
 datasource/Splunk
 datasource/TestDataDB

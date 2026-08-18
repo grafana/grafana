@@ -6,7 +6,7 @@ import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal
 import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rtkq';
-import { generatedAPI as preferencesAPI, type Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { generatedAPI as preferencesAPI, type Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';

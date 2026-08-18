@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -278,6 +279,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		OrgID:      orgID,
 		OrgRole:    role,
 		LastSeenAt: time.Now(),
+		IDToken:    "test-id-token",
 		// Allow user to create folders and library elements
 		Permissions: map[int64]map[string][]string{
 			1: {
@@ -302,7 +304,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 
 	features := featuremgmt.WithFeatures()
 	tracer := tracing.InitializeTracerForTest()
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 	quotaService := quotatest.New(false, nil)
 	ac := acimpl.ProvideAccessControl(features)
@@ -335,7 +337,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		dashboardsService: dashService,
 		AccessControl:     ac,
 		log:               log.NewNopLogger(),
-		treeCache:         newFolderTreeCache(folderSvc),
+		treeCache:         newFolderTreeCache(folderSvc, false),
 	}
 
 	service.AccessControl.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(&service, folderSvc))
@@ -348,7 +350,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		Name:  "User In DB",
 		Login: userInDbName,
 	}
-	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		sqlStore, orgSvc, cfg, nil, nil, tracer,

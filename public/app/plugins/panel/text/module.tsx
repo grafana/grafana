@@ -1,63 +1,8 @@
-import { PanelPlugin } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
-import { TextPanel } from './TextPanel';
-import { TextPanelEditor } from './TextPanelEditor';
-import { CodeLanguage, defaultCodeOptions, defaultOptions, type Options, TextMode } from './panelcfg.gen';
-import { textPanelMigrationHandler } from './textPanelMigrationHandler';
+import { plugin as pluginV1 } from './v1/module';
+import { plugin as pluginV2 } from './v2/module';
 
-export const plugin = new PanelPlugin<Options>(TextPanel)
-  .setPanelOptions((builder) => {
-    const category = [t('text.category-text', 'Text')];
-    builder
-      .addRadio({
-        path: 'mode',
-        name: t('text.name-mode', 'Mode'),
-        category,
-        settings: {
-          options: [
-            { value: TextMode.Markdown, label: t('text.mode-options.label-markdown', 'Markdown') },
-            { value: TextMode.HTML, label: t('text.mode-options.label-html', 'HTML') },
-            { value: TextMode.Code, label: t('text.mode-options.label-code', 'Code') },
-          ],
-        },
-        defaultValue: defaultOptions.mode,
-      })
-      .addSelect({
-        path: 'code.language',
-        name: t('text.name-language', 'Language'),
-        category,
-        settings: {
-          options: Object.values(CodeLanguage).map((v) => ({
-            value: v,
-            label: v,
-          })),
-        },
-        defaultValue: defaultCodeOptions.language,
-        showIf: (v) => v.mode === TextMode.Code,
-      })
-      .addBooleanSwitch({
-        path: 'code.showLineNumbers',
-        name: t('text.name-show-line-numbers', 'Show line numbers'),
-        category,
-        defaultValue: defaultCodeOptions.showLineNumbers,
-        showIf: (v) => v.mode === TextMode.Code,
-      })
-      .addBooleanSwitch({
-        path: 'code.showMiniMap',
-        name: t('text.name-show-mini-map', 'Show mini map'),
-        category,
-        defaultValue: defaultCodeOptions.showMiniMap,
-        showIf: (v) => v.mode === TextMode.Code,
-      })
-      .addCustomEditor({
-        id: 'content',
-        path: 'content',
-        name: t('text.name-content', 'Content'),
-        category,
-        editor: TextPanelEditor,
-        defaultValue: defaultOptions.content,
-      });
-  })
-  .setMigrationHandler(textPanelMigrationHandler)
-  .setSuggestionsSupplier(() => []);
+// Both versions register under the same plugin id, so dashboards always persist type "text"
+// and no migration is needed when v2 becomes the default.
+export const plugin = getFeatureFlagClient().getBooleanValue('grafana.newTextPanel', false) ? pluginV2 : pluginV1;

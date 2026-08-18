@@ -2,8 +2,10 @@ package nats
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -31,6 +33,40 @@ func TestPublisher(t *testing.T) {
 
 		p.close()
 		require.ErrorIs(t, p.Publish(context.Background(), "grafana.test.a", []byte("world")), ErrClosed)
+	})
+
+	t.Run("publish reports a connection that was never established", func(t *testing.T) {
+		cfg := setting.NATSSettings{
+			Enabled:    true,
+			Mode:       setting.NATSModeExternal,
+			ClientURLs: []string{"nats://127.0.0.1:1"},
+		}
+		p := newPublisher(log.NewNopLogger(), newPublisherMetrics(), newConfig(cfg, nil))
+		t.Cleanup(p.close)
+
+		err := p.Publish(context.Background(), "grafana.test.a", []byte("hello"))
+		require.ErrorIs(t, err, natsclient.ErrReconnectBufExceeded)
+		require.ErrorContains(t, err, "connection not established")
+	})
+
+	t.Run("isConnStateErr", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			err  error
+			want bool
+		}{
+			{"reconnect buffer exceeded", natsclient.ErrReconnectBufExceeded, true},
+			{"connection closed", natsclient.ErrConnectionClosed, true},
+			{"connection draining", natsclient.ErrConnectionDraining, true},
+			{"wrapped", fmt.Errorf("publish: %w", natsclient.ErrConnectionClosed), true},
+			{"max payload", natsclient.ErrMaxPayload, false},
+			{"bad subject", natsclient.ErrBadSubject, false},
+			{"nil", nil, false},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				require.Equal(t, tc.want, isConnStateErr(tc.err))
+			})
+		}
 	})
 
 	t.Run("publish honours a cancelled context", func(t *testing.T) {

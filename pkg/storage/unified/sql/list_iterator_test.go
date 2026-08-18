@@ -31,7 +31,7 @@ func TestIntegrationListIter(t *testing.T) {
 
 	ctx := context.Background()
 
-	grafanaDB := db.InitTestDB(t)
+	grafanaDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	resourceDBProvider, err := dbimpl.ProvideResourceDB(grafanaDB, setting.NewCfg(), tracing.NewNoopTracerService())
 	require.NoError(t, err)

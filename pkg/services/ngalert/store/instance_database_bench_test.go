@@ -2,29 +2,18 @@ package store_test
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 )
 
-var saveStateCompressed = flag.Bool("save-state-compressed", false, "Save state compressed")
-
 func BenchmarkSaveAlertInstances(b *testing.B) {
 	ctx := context.Background()
 
-	opts := []tests.TestEnvOption{}
-	if *saveStateCompressed {
-		opts = append(opts, tests.WithFeatureToggles(
-			featuremgmt.WithFeatures(featuremgmt.FlagAlertingSaveStateCompressed)),
-		)
-	}
-
 	benchmarkRun := func(b *testing.B, instanceCount, labelCount int) {
-		ng, dbstore := tests.SetupTestEnv(b, baseIntervalSeconds, opts...)
+		ng, dbstore := tests.SetupTestEnv(b, baseIntervalSeconds)
 
 		const mainOrgID int64 = 1
 
@@ -32,7 +21,6 @@ func BenchmarkSaveAlertInstances(b *testing.B) {
 
 		// Create some instances to write down and then delete.
 		instances := make([]models.AlertInstance, 0, instanceCount)
-		keys := make([]models.AlertInstanceKey, 0, instanceCount)
 		for i := 0; i < instanceCount; i++ {
 			labels := models.InstanceLabels{"instance": fmt.Sprintf("instance-%d", i)}
 			for li := 0; li < labelCount; li++ {
@@ -51,43 +39,23 @@ func BenchmarkSaveAlertInstances(b *testing.B) {
 				Labels:        labels,
 			}
 			instances = append(instances, instance)
-			keys = append(keys, instance.AlertInstanceKey)
 		}
 
 		b.ResetTimer()
 
 		for range b.N {
-			var err error
-
-			if *saveStateCompressed {
-				err = ng.InstanceStore.SaveAlertInstancesForRule(ctx, alertRule.GetKeyWithGroup(), instances)
-				if err != nil {
-					b.Fatalf("error: %s", err)
-				}
-
-				// Clean up instances.
-				b.StopTimer()
-				err = ng.InstanceStore.DeleteAlertInstancesByRule(ctx, alertRule.GetKeyWithGroup())
-				if err != nil {
-					b.Fatalf("error: %s", err)
-				}
-				b.StartTimer()
-			} else {
-				for _, instance := range instances {
-					err = ng.InstanceStore.SaveAlertInstance(ctx, instance)
-					if err != nil {
-						b.Fatalf("error: %s", err)
-					}
-				}
-
-				// Clean up instances.
-				b.StopTimer()
-				err = ng.InstanceStore.DeleteAlertInstances(ctx, keys...)
-				if err != nil {
-					b.Fatalf("error: %s", err)
-				}
-				b.StartTimer()
+			err := ng.InstanceStore.SaveAlertInstancesForRule(ctx, alertRule.GetKeyWithGroup(), instances)
+			if err != nil {
+				b.Fatalf("error: %s", err)
 			}
+
+			// Clean up instances.
+			b.StopTimer()
+			err = ng.InstanceStore.DeleteAlertInstancesByRule(ctx, alertRule.GetKeyWithGroup())
+			if err != nil {
+				b.Fatalf("error: %s", err)
+			}
+			b.StartTimer()
 		}
 	}
 

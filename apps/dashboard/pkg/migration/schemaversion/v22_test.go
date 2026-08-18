@@ -93,6 +93,65 @@ func TestV22(t *testing.T) {
 			},
 		},
 		{
+			name: "sets table style align for panels nested in collapsed rows",
+			input: map[string]interface{}{
+				"title":         "V22 Nested Table Panel Styles Test",
+				"schemaVersion": 21,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   1,
+								"type": "table",
+								"styles": []interface{}{
+									map[string]interface{}{
+										"type":    "number",
+										"pattern": "Time",
+										"align":   "left",
+									},
+									map[string]interface{}{
+										"type":    "string",
+										"pattern": "Value",
+										"align":   "right",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V22 Nested Table Panel Styles Test",
+				"schemaVersion": 22,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":   1,
+								"type": "table",
+								"styles": []interface{}{
+									map[string]interface{}{
+										"type":    "number",
+										"pattern": "Time",
+										"align":   "auto",
+									},
+									map[string]interface{}{
+										"type":    "string",
+										"pattern": "Value",
+										"align":   "auto",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "table panel with no styles is unchanged except schemaVersion",
 			input: map[string]interface{}{
 				"title":         "V22 Table Panel No Styles Test",

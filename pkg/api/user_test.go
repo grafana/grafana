@@ -55,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -65,7 +66,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
@@ -85,12 +86,12 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		authInfoStore, err := authinfoimpl.ProvideStore(sqlStore, secretsService)
+		authInfoStore, err := authinfoimpl.ProvideStore(context.Background(), legacysql.NewDatabaseProvider(sqlStore), secretsService)
 		require.NoError(t, err)
 		srv := authinfoimpl.ProvideService(
 			authInfoStore, remotecache.NewFakeCacheStorage(), secretsService)
 		hs.authInfoService = srv
-		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), settings, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -165,7 +166,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "admin",
 			IsAdmin: true,
 		}
-		orgSvc, err := orgimpl.ProvideService(sqlStore, sc.cfg, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), sc.cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -197,7 +198,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "multi",
 			IsAdmin: true,
 		}
-		orgSvc, err := orgimpl.ProvideService(sqlStore, sc.cfg, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), sc.cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -619,7 +620,7 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	hs := &HTTPServer{
 		Cfg:           settings,
@@ -650,15 +651,30 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 			assert.Equal(t, 403, sc.resp.Code)
 		},
 	}, hs)
+
+	hs.userService = &usertest.FakeUserService{ExpectedError: user.ErrUserAlreadyExists}
+
+	updateUserScenario(t, updateUserContext{
+		desc:         "Should return 409 when the login or email is taken by another user",
+		url:          "/api/users/1",
+		routePattern: "/api/users/:id",
+		cmd:          updateUserCommand,
+		fn: func(sc *scenarioContext) {
+			sc.authInfoService.ExpectedError = user.ErrUserNotFound
+
+			sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
+			assert.Equal(t, http.StatusConflict, sc.resp.Code)
+		},
+	}, hs)
 }
 
 func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPServer, *notifications.NotificationServiceMock) {
 	t.Helper()
 
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	tempUserService := tempuserimpl.ProvideService(sqlStore, cfg)
-	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil))
+	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
 		sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -886,10 +902,10 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		}
 
 		nsMock := notifications.MockNotificationService()
-		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settings)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), settings, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
@@ -1372,7 +1388,7 @@ func TestIntegrationHTTPServer_UpdateSignedInUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	hs := &HTTPServer{
 		Cfg:           settings,

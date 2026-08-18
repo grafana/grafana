@@ -14,6 +14,7 @@
  *    in `useMemo` or call them via the `useRulesAccess()` hook in `accessControlHooks.ts`.
  */
 
+import { userHasAllPermissions } from '@grafana/data';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -90,12 +91,6 @@ export const silencesPermissions = {
   },
 };
 
-const provisioningPermissions = {
-  read: AccessControlAction.AlertingProvisioningRead,
-  readSecrets: AccessControlAction.AlertingProvisioningReadSecrets,
-  write: AccessControlAction.AlertingProvisioningWrite,
-};
-
 const rulesPermissions = {
   read: {
     grafana: AccessControlAction.AlertingRuleRead,
@@ -130,18 +125,6 @@ export function getInstancesPermissions(rulesSourceName: string) {
   };
 }
 
-export function getNotificationsPermissions(rulesSourceName: string) {
-  const sourceType = getRulesSourceType(rulesSourceName);
-
-  return {
-    read: notificationsPermissions.read[sourceType],
-    create: notificationsPermissions.create[sourceType],
-    update: notificationsPermissions.update[sourceType],
-    delete: notificationsPermissions.delete[sourceType],
-    provisioning: provisioningPermissions,
-  };
-}
-
 export function getRulesPermissions(rulesSourceName: string) {
   const sourceType = getRulesSourceType(rulesSourceName);
 
@@ -169,6 +152,16 @@ export function evaluateAccess(actions: AccessControlAction[]) {
   return () => {
     return contextSrv.evaluatePermission(actions);
   };
+}
+
+/**
+ * Like `evaluateAccess`, but requires the user to hold ALL of the given actions (AND
+ * semantics) rather than any one of them. Use when access depends on a combination of
+ * permissions — e.g. the import-to-GMA route, which needs both the convert endpoint's
+ * rule-create and provisioning-set-status permissions.
+ */
+export function evaluateAccessAll(actions: AccessControlAction[]) {
+  return () => (userHasAllPermissions(actions, contextSrv.user) ? [] : ['Reject']);
 }
 
 /**

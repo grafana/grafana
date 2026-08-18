@@ -1,14 +1,18 @@
 import { t, Trans } from '@grafana/i18n';
-import { Badge, LinkButton, Stack, Text } from '@grafana/ui';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
+import { Badge, LinkButton, Stack, Tooltip } from '@grafana/ui';
+import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
-import { alertsCardClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
-import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
+import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
-import { canViewFiringAlerts, useFiringAlerts, type FiringAlertsData } from './useFiringAlerts';
+import { type FiringAlertsData } from './useFiringAlerts';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
 function alertDetailHref(alert: AlertmanagerAlert) {
@@ -39,31 +43,37 @@ function severityLabel(level?: SeverityLevel): string {
   }
 }
 
-export function FiringAlertsCard() {
-  if (!canViewFiringAlerts()) {
-    return null;
-  }
-
-  return <FiringAlertsCardInner />;
-}
-
 /**
- * Inner component avoids calling hooks conditionally —
- * the permission gate is in the parent wrapper.
+ * Empty-state copy scoped to the active team filter. The "All teams" sentinel is
+ * checked first so it never leaks into copy; an explicit team selection overrides
+ * the "your teams" default filter, so the copy names that team instead of
+ * claiming it's the user's own.
  */
-function FiringAlertsCardInner() {
-  const data = useFiringAlerts();
-  return <FiringAlertsCardView data={data} />;
+function emptyMessage(selectedTeam: string | undefined, hasTeams: boolean): string {
+  if (selectedTeam === ALL_VARIABLE_VALUE) {
+    return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+  }
+  if (selectedTeam) {
+    return t('home.firing-alerts-card.empty-selected-team', 'No firing alerts for {{team}}.', {
+      team: selectedTeam,
+      interpolation: { escapeValue: false },
+    });
+  }
+  if (hasTeams) {
+    return t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.');
+  }
+  return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
 }
 
 /** Render-only card body; data comes from useFiringAlerts so callers control where the hook runs. */
-export function FiringAlertsCardView({
+export function FiringAlertsCard({
   data,
   hideFooterActions = false,
 }: {
   data: FiringAlertsData;
   hideFooterActions?: boolean;
 }) {
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
   const {
     count,
     criticalCount,
@@ -71,6 +81,7 @@ export function FiringAlertsCardView({
     visibleAlerts,
     hasAlerts,
     hasTeams,
+    selectedTeam,
     loading,
     error,
     refetch,
@@ -116,40 +127,47 @@ export function FiringAlertsCardView({
             }
           : undefined
       }
-      emptyMessage={
-        hasTeams
-          ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
-          : t('home.firing-alerts-card.empty', 'You have no firing alerts.')
-      }
       items={visibleAlerts}
       getItemKey={({ alert }) => alert.fingerprint}
       renderItem={({ alert, level, startedAt }) => {
         const detailHref = alertDetailHref(alert);
         return (
-          <>
-            <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
-            <SummaryCardTitle
-              href={detailHref}
-              onClick={() => alertsCardClicked({ action: 'alert_detail', placement: 'list', severity: level })}
-            >
-              {alert.labels.alertname}
-            </SummaryCardTitle>
-            {alert.labels.team && (
-              <Text color="secondary" variant="bodySmall" truncate>
-                {alert.labels.team}
-              </Text>
-            )}
-            <SummaryCardAge date={startedAt} />
-          </>
+          <ListRow
+            isCompact
+            showDivider={redesignEnabled}
+            title={alert.labels.alertname}
+            subtitle={alert.labels.team}
+            // when redesignEnabled is false, we want to show the subtitle inline with the title
+            // when its true, we want to show the subtitle below the title
+            oneRow={!redesignEnabled}
+            prefix={
+              redesignEnabled ? (
+                <Tooltip content={severityLabel(level)}>
+                  <span>
+                    <SeverityBars level={level} />
+                    <span className="sr-only">{severityLabel(level)}</span>
+                  </span>
+                </Tooltip>
+              ) : (
+                <SummaryCardPrefix>
+                  <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
+                </SummaryCardPrefix>
+              )
+            }
+            trailing={<SummaryCardAge date={startedAt} />}
+            href={detailHref}
+            onClick={() => ctaClicked({ surface: 'alerts_card', action: 'alert_detail', placement: 'list' })}
+          />
         );
       }}
+      emptyMessage={emptyMessage(selectedTeam, hasTeams)}
       emptyAction={
         canCreate ? (
           <LinkButton
             variant="primary"
             icon="plus"
             href={newRuleHref}
-            onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'empty_state' })}
+            onClick={() => ctaClicked({ surface: 'alerts_card', action: 'create_rule', placement: 'empty_state' })}
           >
             <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
           </LinkButton>

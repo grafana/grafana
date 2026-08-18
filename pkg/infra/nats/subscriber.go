@@ -168,7 +168,16 @@ func (s *SubscriberService) subscribe(ctx context.Context, subject string, sub f
 	natsSub, err := sub(nc, cb)
 	if err != nil {
 		s.metrics.subscribeErrors.Inc()
+		if isConnStateErr(err) {
+			return nil, fmt.Errorf("subscribe to %q: nats connection not established (status=%s, last_err=%v): %w", subject, nc.Status(), nc.LastError(), err)
+		}
 		return nil, fmt.Errorf("subscribe to %q: %w", subject, err)
+	}
+	if !nc.IsConnected() {
+		s.log.Warn("subscribed while the nats connection is not established; delivery starts once it connects",
+			"subject", subject,
+			"status", nc.Status(),
+			"last_err", nc.LastError())
 	}
 	return natsSub, nil
 }

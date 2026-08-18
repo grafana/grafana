@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { SortOrder } from '../utils/richHistoryTypes';

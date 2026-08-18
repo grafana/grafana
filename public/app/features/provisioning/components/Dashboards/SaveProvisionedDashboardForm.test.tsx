@@ -28,6 +28,9 @@ jest.mock('@grafana/runtime', () => {
           state: 'alpha',
         },
       },
+      // getProvisionedMeta's k8s folder lookup isn't mocked in this suite; keep it disabled
+      // so folder selection doesn't attempt a real getFolder query.
+      provisioningEnabled: false,
     },
   };
 });
@@ -394,6 +397,7 @@ describe('SaveProvisionedDashboardForm', () => {
         getSaveModel: jest.fn().mockReturnValue({}),
         saveCompleted: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
+        getSaveResourceFromSpec: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
       } as unknown as DashboardScene,
@@ -416,6 +420,101 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
     expect(request.url.searchParams.get('message')).toBe('Update dashboard');
     expect(request.body).toEqual(updatedDashboard);
+  });
+
+  // Regression: when updating a git-synced dashboard the committed body must come
+  // from the change-trimmed model (changeInfo.changedSaveModel), not the full scene
+  // save model. Otherwise unsaved variable/time/refresh values leak into the PR even
+  // when the user leaves "Change default variables" unchecked (see issue #127533).
+  it('commits the change-trimmed model, not the full save model, when updating', async () => {
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
+      })
+    );
+
+    // The trimmed model the drawer would produce with "Change default variables" off.
+    const trimmedResource = {
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      kind: 'Dashboard',
+      metadata: { name: 'test-dashboard' },
+      spec: { title: 'Test Dashboard', templating: { list: [{ name: 'v', current: { value: 'original' } }] } },
+    };
+    const trimmedSaveModel = trimmedResource.spec;
+
+    // getSaveResource would serialize the full scene (current variable value) — the bug.
+    const fullResource = {
+      ...trimmedResource,
+      spec: { title: 'Test Dashboard', templating: { list: [{ name: 'v', current: { value: 'changed' } }] } },
+    };
+
+    const getSaveResourceFromSpec = jest.fn().mockReturnValue(trimmedResource);
+    const getSaveResource = jest.fn().mockReturnValue(fullResource);
+    const saveCompleted = jest.fn();
+    // Full, untrimmed scene model — must NOT be used to baseline after save.
+    const fullSaveModel = {
+      title: 'Test Dashboard',
+      templating: { list: [{ name: 'v', current: { value: 'changed' } }] },
+    };
+    const getSaveModel = jest.fn().mockReturnValue(fullSaveModel);
+
+    const { user } = setup({
+      isNew: false,
+      changeInfo: {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        changedSaveModel: trimmedSaveModel as unknown as Dashboard,
+        // Distinct baseline (old title) so the fixture reads coherently: an existing
+        // dashboard with a real, saved change.
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        initialSaveModel: {
+          title: 'Original Dashboard',
+          templating: { list: [{ name: 'v', current: { value: 'original' } }] },
+        } as unknown as Dashboard,
+        diffCount: 1,
+        hasChanges: true,
+        hasTimeChanges: false,
+        hasVariableValueChanges: false,
+        hasRefreshChange: false,
+        diffs: {},
+      },
+      dashboard: {
+        state: { meta: { folderUid: 'folder-uid', slug: 'test-dashboard', uid: 'test-dashboard' }, isDirty: true },
+        useState: () => ({
+          meta: { folderUid: 'folder-uid', slug: 'test-dashboard', uid: 'test-dashboard' },
+          isDirty: true,
+        }),
+        setState: jest.fn(),
+        saveCompleted,
+        getSaveModel,
+        getSaveResource,
+        getSaveResourceFromSpec,
+        setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      } as unknown as DashboardScene,
+    });
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    // Body must be built from the trimmed changedSaveModel, and getSaveResource
+    // (the full scene serializer) must not be used on the update path.
+    expect(getSaveResourceFromSpec).toHaveBeenCalledWith(trimmedSaveModel);
+    expect(getSaveResource).not.toHaveBeenCalled();
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.body).toEqual(trimmedResource);
+
+    // saveCompleted must re-baseline against the same trimmed model, not the full
+    // scene model — otherwise change detection treats the omitted values as saved.
+    await waitFor(() => {
+      expect(saveCompleted).toHaveBeenCalledWith(trimmedSaveModel, expect.anything(), expect.anything());
+    });
+    expect(saveCompleted).not.toHaveBeenCalledWith(fullSaveModel, expect.anything(), expect.anything());
   });
 
   it('shows the in-progress state on Save while new dashboard validation is pending', async () => {
@@ -559,7 +658,10 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
+        getSaveModel: jest.fn().mockReturnValue({}),
+        saveCompleted: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
+        getSaveResourceFromSpec: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
       } as unknown as DashboardScene,
@@ -643,6 +745,7 @@ describe('SaveProvisionedDashboardForm', () => {
         getSaveModel: jest.fn().mockReturnValue({}),
         saveCompleted: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
+        getSaveResourceFromSpec: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
       } as unknown as DashboardScene,
@@ -731,6 +834,7 @@ describe('SaveProvisionedDashboardForm', () => {
         getSaveModel: jest.fn().mockReturnValue({}),
         saveCompleted: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
+        getSaveResourceFromSpec: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
       } as unknown as DashboardScene,
@@ -970,6 +1074,68 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => {
       expect(saveButton).toBeEnabled();
+    });
+  });
+
+  describe('enforced branch name template', () => {
+    beforeEach(() => {
+      setTestFlags({ 'provisioning.gitConventions': true });
+    });
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    const enforcedRepo: NonNullable<Props['repository']> = {
+      type: 'github',
+      name: 'test-repo',
+      title: 'Test Repo',
+      workflows: ['branch', 'write'],
+      target: 'folder',
+      branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}-{{title}}' },
+    };
+
+    const branchDefaults: Props['defaultValues'] = {
+      ref: 'dashboard/2023-01-01-abcde',
+      path: 'test-dashboard.json',
+      repo: 'test-repo',
+      comment: '',
+      folder: { uid: 'folder-uid', title: '' },
+      title: 'Test Dashboard',
+      description: 'Test Description',
+      workflow: 'branch',
+    };
+
+    it('sends the enforced template branch as ref to the /files endpoint on save', async () => {
+      // The whole point of the fix: the enforced branch must be sent as `ref` so the change lands
+      // on the template branch instead of being dropped (forbidden / direct push to configured branch).
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        })
+      );
+
+      const { user, props } = setup({
+        repository: { ...enforcedRepo, branch: 'main' },
+        defaultValues: branchDefaults,
+      });
+      props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+        apiVersion: 'dashboard.grafana.app/v1alpha1',
+        kind: 'Dashboard',
+        metadata: { generateName: 'p' },
+        spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+      });
+
+      const branch = await screen.findByRole('textbox', { name: /branch/i });
+      await waitFor(() => expect(branch).toHaveValue('grafana/create-test-dashboard'));
+
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      const request = requireCapturedRequest(capturedRequest);
+      expect(request.url.searchParams.get('ref')).toBe('grafana/create-test-dashboard');
     });
   });
 
@@ -1549,6 +1715,7 @@ describe('SaveProvisionedDashboardForm', () => {
         getSaveModel: jest.fn().mockReturnValue({}),
         saveCompleted: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
+        getSaveResourceFromSpec: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
       } as unknown as DashboardScene,
