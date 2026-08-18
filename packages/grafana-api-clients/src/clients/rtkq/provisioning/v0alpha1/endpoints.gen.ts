@@ -1514,10 +1514,10 @@ export type ConnectionSpec = {
   /** The connection provider type
     
     Possible enum values:
-     - `"bitbucket"`
+     - `"bitbucketOAuth"`
      - `"github"`
      - `"githubEnterprise"`
-     - `"gitlab"` */
+     - `"gitlabOAuth"` */
   type: 'bitbucketOAuth' | 'github' | 'githubEnterprise' | 'gitlabOAuth';
   /** The connection URL */
   url?: string;
