@@ -26,7 +26,7 @@ import (
 func New(cfg app.Config) (app.App, error) {
 	cfg.KubeConfig.APIPath = "apis"
 
-	reconciler, err := newGCReconciler(cfg)
+	reconciler, gcRunnable, err := newGarbageCollector(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +68,11 @@ func New(cfg app.Config) (app.App, error) {
 
 	if err := a.ValidateManifest(cfg.ManifestData); err != nil {
 		return nil, err
+	}
+
+	// The GC runnable runs the leader election that gates the reconciler's deletions.
+	if gcRunnable != nil {
+		a.AddRunnable(gcRunnable)
 	}
 
 	return a, nil

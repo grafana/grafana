@@ -140,6 +140,28 @@ func TestGC_SkipsDeleteAndMalformed(t *testing.T) {
 	require.Empty(t, cluster.deleted)
 }
 
+func TestGC_NonLeaderDoesNotDelete(t *testing.T) {
+	cluster := &fakeClient{}
+	r := newReconciler(&fakeClient{}, cluster)
+	r.isLeader = func() bool { return false }
+
+	// Expired past grace, but this replica isn't the elected leader.
+	res := reconcile(t, r, clusterLeaseAt("x", "", 30, "1", -25*time.Hour), operator.ReconcileActionUpdated)
+
+	require.Empty(t, cluster.deleted, "only the elected GC leader may delete")
+	require.Nil(t, res.RequeueAfter)
+}
+
+func TestGC_LeaderDeletes(t *testing.T) {
+	cluster := &fakeClient{}
+	r := newReconciler(&fakeClient{}, cluster)
+	r.isLeader = func() bool { return true }
+
+	reconcile(t, r, clusterLeaseAt("x", "", 30, "1", -25*time.Hour), operator.ReconcileActionUpdated)
+
+	require.Len(t, cluster.deleted, 1, "the leader collects expired leases")
+}
+
 func TestGC_ToleratesNotFoundAndConflict(t *testing.T) {
 	gr := schema.GroupResource{Group: "coordination.grafana.app", Resource: "clusterleases"}
 	for _, tc := range []struct {

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,35 +17,49 @@ import (
 	coordinationv0alpha1 "github.com/grafana/grafana/apps/coordination/pkg/apis/coordination/v0alpha1"
 )
 
-// newGCReconciler builds the lease garbage collector from the app config, or returns
-// (nil, nil) when garbage collection is disabled — in which case the app serves the
-// kinds without running any reconciler.
-func newGCReconciler(cfg app.Config) (operator.Reconciler, error) {
+// newGarbageCollector builds the lease garbage collector from the app config: a
+// reconciler that watches both lease kinds, and a leader-election runnable that
+// elects the single replica allowed to delete. It returns (nil, nil, nil) when
+// garbage collection is disabled — in which case the app serves the kinds without
+// running any GC. The reconciler and runnable share a leader flag: every replica
+// watches and schedules cleanups, but only the elected one performs deletions.
+func newGarbageCollector(cfg app.Config) (operator.Reconciler, app.Runnable, error) {
 	ccfg, ok := cfg.SpecificConfig.(*CoordinationConfig)
 	if !ok || ccfg == nil || !ccfg.EnableGarbageCollector {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	clients := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
 	leaseClient, err := clients.ClientFor(coordinationv0alpha1.LeaseKind())
 	if err != nil {
-		return nil, fmt.Errorf("coordination GC: unable to create Lease client: %w", err)
+		return nil, nil, fmt.Errorf("coordination GC: unable to create Lease client: %w", err)
 	}
 	clusterLeaseClient, err := clients.ClientFor(coordinationv0alpha1.ClusterLeaseKind())
 	if err != nil {
-		return nil, fmt.Errorf("coordination GC: unable to create ClusterLease client: %w", err)
+		return nil, nil, fmt.Errorf("coordination GC: unable to create ClusterLease client: %w", err)
 	}
 
 	grace := ccfg.GracePeriod
 	if grace <= 0 {
 		grace = defaultGCGracePeriod
 	}
-	return &leaseGCReconciler{
+
+	// leader is toggled by the election runnable and read by the reconciler.
+	leader := &atomic.Bool{}
+	reconciler := &leaseGCReconciler{
 		leaseClient:        leaseClient,
 		clusterLeaseClient: clusterLeaseClient,
 		gracePeriod:        grace,
 		now:                time.Now,
-	}, nil
+		isLeader:           leader.Load,
+	}
+	identity := gcIdentity()
+	runnable := &gcLeaderRunnable{
+		lock:      &clusterLeaseLock{client: clusterLeaseClient, name: gcLeaseName, identity: identity},
+		setLeader: leader.Store,
+		identity:  identity,
+	}
+	return reconciler, runnable, nil
 }
 
 // leaseGCReconciler deletes leases whose expiry (renewTime + leaseDurationSeconds)
@@ -64,6 +79,10 @@ type leaseGCReconciler struct {
 	gracePeriod        time.Duration
 	// now is injectable for tests; defaults to time.Now.
 	now func() time.Time
+	// isLeader reports whether this replica is the elected GC leader. Only the leader
+	// deletes; non-leaders watch and schedule but defer the mutation. Nil means
+	// unguarded (used in tests).
+	isLeader func() bool
 }
 
 var _ operator.Reconciler = (*leaseGCReconciler)(nil)
@@ -92,6 +111,13 @@ func (r *leaseGCReconciler) Reconcile(ctx context.Context, req operator.Reconcil
 	if wait := deadline.Sub(r.now()); wait > 0 {
 		// Not yet collectable — come back exactly when it becomes eligible.
 		return operator.ReconcileResult{RequeueAfter: &wait}, nil
+	}
+
+	if r.isLeader != nil && !r.isLeader() {
+		// This replica watches and schedules but isn't the elected GC leader; the
+		// leader will collect this lease. A subsequent resync re-evaluates it here if
+		// leadership moves to this replica.
+		return operator.ReconcileResult{}, nil
 	}
 
 	id := req.Object.GetStaticMetadata().Identifier()
