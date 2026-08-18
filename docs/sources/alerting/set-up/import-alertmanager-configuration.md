@@ -95,21 +95,9 @@ Ensure you have the following:
 
   The legacy `alert.notifications:write` permission also grants all of the preceding actions.
 
-## Import method
-
-The first step of the import wizard asks how you want to bring the resources in. Choose the method that matches your intent.
-
-| Method    | What it does                                                                                                                       | Reversible                                 |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Stage     | Saves a read-only copy for review. Nothing merges into your live configuration until you promote it.                               | Yes. Revert removes the copy.              |
-| Promote   | Merges the resources straight into your live configuration as normal, editable Grafana resources.                                  | No. You must delete each resource by hand. |
-| Auto-sync | Continuously syncs configuration from a Mimir or Cortex Alertmanager data source. The synced resources stay read-only and tracked. | Yes. Disable sync to stop it.              |
-
-**Auto-sync** appears only when the `alerting.syncExternalAlertmanager` feature toggle is enabled and you hold the Admin organization role. Choosing it collapses the wizard to a single confirmation step, because there's nothing to configure per resource.
-
-As a best practice, choose **Stage** the first time you import from a given source. Review what landed, then promote it.
-
 ## Import an Alertmanager configuration
+
+The wizard always stages what it imports. It never writes to your live Alertmanager, so you can review the result before you promote it.
 
 To import notification configuration through the Grafana Alerting user interface, complete the following steps.
 
@@ -118,10 +106,6 @@ To import notification configuration through the Grafana Alerting user interface
 1. Click **Import Alertmanager configuration**.
 
    If a configuration is already staged, promote or revert it first.
-
-1. On the **Import method** step, select **Stage** or **Promote**, then click **Notification resources**.
-
-   To sync continuously instead of importing once, select **Auto-sync** and refer to [Import with auto-sync](#import-with-auto-sync).
 
 1. On the **Notification resources** step, choose an **Import source**:
    - **YAML file**: Upload your Alertmanager configuration YAML file. You can also upload the template files your configuration references. Grafana imports each file as a template named after the file, so filenames must be unique.
@@ -141,11 +125,11 @@ To import notification configuration through the Grafana Alerting user interface
 
    Each section shows what happens to it, for example **Will import this configuration** or **Skipped**.
 
-1. Click **Start Import** to confirm.
+1. In **Confirm Import**, click **Start Import**.
 
-A staged import returns you to the **Import** tab so you can review the staged copy. A promoted import takes you to the alert rule list.
+Grafana stages the configuration and returns you to the **Import** tab, where you can review it. If you skipped the notification resources step and imported only alert rules, you land on the alert rule list instead.
 
-The wizard names each navigation button after the step it takes you to, rather than labeling them **Next** and **Back**.
+The wizard's navigation buttons are named after the step they open rather than **Next** and **Back**.
 
 ## Review a staged configuration
 
@@ -202,29 +186,22 @@ To revert, click **Revert** on the staged configuration card, then confirm.
 
 ## Import with auto-sync
 
-Auto-sync keeps an imported configuration up to date instead of importing it once. It can only read from a Mimir or Cortex Alertmanager data source.
+Auto-sync keeps an imported configuration up to date instead of importing it once. It reads from a Mimir or Cortex Alertmanager data source and writes to the same staged slot a manual import uses, so the synced resources stay read-only.
 
-To enable auto-sync, complete the following steps:
+You configure auto-sync on the **Import** tab rather than in the wizard. The **Auto-sync configuration** card appears only when the `alerting.syncExternalAlertmanager` feature toggle is enabled.
 
-1. Go to **Alerting** > **Settings** and click the **Import** tab.
+To turn auto-sync on, select a **Datasource** and click **Save**. The card badge changes from **Not configured** to **Active**. To turn it off, click **Disable sync** and confirm.
 
-1. Click **Import Alertmanager configuration**.
-
-1. On the **Import method** step, select **Auto-sync**, then select a **Data source**.
-
-   The picker lists only Mimir and Cortex Alertmanager data sources. If you have none, add one and start the wizard again.
-
-1. Click **Review & enable**, then click **Enable auto-sync**.
-
-You can also enable it without the wizard: on the **Import** tab, select a **Datasource** in the **Auto-sync configuration** card and click **Save**. The card shows a **Not configured** or **Active** badge. To stop syncing, click **Disable sync** and confirm.
-
-If auto-sync is set through the `external_alertmanager_uid` key in the `[unified_alerting]` section of the Grafana configuration file, the card is read-only. Change the key and restart Grafana, or remove it to manage auto-sync from the UI.
+If the `external_alertmanager_uid` key in the `[unified_alerting]` section of `grafana.ini` sets the data source, the card shows a **Managed by operator** badge and you can't change the picker. Change the key and restart Grafana, or remove it to manage auto-sync from the UI.
 
 When auto-sync writes the staged configuration, the card shows a **Synced · read-only** badge. Grafana hides the **Revert** button, because the next sync would recreate the copy. To remove the configuration, disable auto-sync instead.
 
-You can still promote a synced configuration. Promoting merges the resources into your live configuration, stops them from tracking the data source, and turns auto-sync off.
+You can still promote a synced configuration. Promoting stops the resources from tracking the data source and turns auto-sync off.
 
-Because Grafana holds one staged configuration at a time, a manually staged import blocks auto-sync from starting: the sync writes to the same slot and every attempt fails. When this happens, the **Auto-sync configuration** card reports that auto-sync is unavailable and names the identifier occupying the slot. Promote or revert that configuration to free it.
+Auto-sync and the wizard compete for the same slot, so only one of them can hold a configuration at a time:
+
+- While auto-sync is active, the wizard won't import notification resources. It shows an **Auto-sync is enabled** warning and points you to Alerting settings to disable sync first. You can still import alert rules.
+- While a manually staged configuration occupies the slot, auto-sync can't start. The card reports **Auto-sync is unavailable while a configuration is staged** and names the identifier holding it. Promote or revert that configuration to free the slot.
 
 ## Import with the API
 
