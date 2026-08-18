@@ -2,6 +2,10 @@
 
 # 13.0.7 (2026-08-18)
 
+## Security
+
+- CVE-2026-17183
+
 ### Bug fixes
 
 - **Reporting:** batch dashboard lookups when listing reports (Enterprise)
