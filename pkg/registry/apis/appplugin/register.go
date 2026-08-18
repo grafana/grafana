@@ -118,10 +118,12 @@ func RegisterAPIService(
 	cfg *setting.Cfg,
 ) (*AppPluginAPIBuilder, error) {
 	ctx := context.Background()
-	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsRegisterAPIServer, false, openfeature.TransactionContext(ctx)) {
+	getflag := func(f string) bool {
+		return openfeature.NewDefaultClient().Boolean(ctx, f, false, openfeature.TransactionContext(ctx))
+	}
+	if !getflag(featuremgmt.FlagApppluginsRegisterAPIServer) {
 		return nil, nil
 	}
-	registerProxy := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx))
 
 	// Find all local plugins
 	plugins, err := definition.LoadPluginDefinition(ctx, pluginSources, definition.Options{
@@ -137,7 +139,7 @@ func RegisterAPIService(
 			return false
 		},
 		Schemas:     true,
-		AppManifest: false, // TODO, load from feature toggle
+		AppManifest: getflag(featuremgmt.FlagApppluginsLoadAppManifest),
 	})
 
 	if err != nil {
@@ -152,7 +154,7 @@ func RegisterAPIService(
 			decrypter,
 			NewPluginAccessChecker(accessControl),
 			AppPluginRunnerOptions{
-				RegisterProxy: registerProxy, // FROM feature toggles
+				RegisterProxy: getflag(featuremgmt.FlagApppluginsHandleProxyRequests),
 				LegacyStore:   NewLegacySettingsStore(plugin.JSONData.ID, pluginSettings),
 				AccessControl: accessControl,
 

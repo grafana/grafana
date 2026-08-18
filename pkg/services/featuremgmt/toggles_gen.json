@@ -1046,6 +1046,20 @@
     },
     {
       "metadata": {
+        "name": "appplugins.loadAppManifest",
+        "resourceVersion": "1787025041045",
+        "creationTimestamp": "2026-08-18T03:50:41Z"
+      },
+      "spec": {
+        "description": "Load app manifest when loading plugin definitions",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appplugins.registerAPIServer",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
