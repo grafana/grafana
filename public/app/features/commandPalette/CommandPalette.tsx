@@ -574,6 +574,7 @@ function useDeepSearchResultsShownReporting(
 }
 
 const getSearchStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -592,7 +593,7 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
     animator: css({
       width: '100%',
       maxWidth: theme.breakpoints.values.lg,
-      background: theme.colors.background.primary,
+      background: theme.colors.background[visualRefreshEnabled ? 'page' : 'primary'],
       color: theme.colors.text.primary,
       borderRadius: theme.shape.radius.lg,
       border: `1px solid ${theme.colors.border.weak}`,
