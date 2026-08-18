@@ -2279,7 +2279,8 @@
       "metadata": {
         "name": "dsAbstractionApp",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-18T13:19:09Z"
       },
       "spec": {
         "description": "Registers the dsabstraction app for querying datasources via unified SQL",
