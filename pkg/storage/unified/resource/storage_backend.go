@@ -328,6 +328,9 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 		TenantWatcherConfig:     NewTenantWatcherConfig(cfg),
 		TenantDeleterConfig:     NewTenantDeleterConfig(cfg),
+		// Callers that know better override this. Without a default, a wiring
+		// that forgets to set it runs garbage collection on every replica.
+		DisableStorageServices: !cfg.StorageServicesEnabled(),
 		GarbageCollection: GarbageCollectionConfig{
 			Enabled:          cfg.EnableGarbageCollection,
 			DryRun:           cfg.GarbageCollectionDryRun,

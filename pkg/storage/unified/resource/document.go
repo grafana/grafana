@@ -281,7 +281,7 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 		doc.Created = ts.UnixMilli()
 	}
 	tt, err := obj.GetUpdatedTimestamp()
-	if err != nil && tt != nil {
+	if err == nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
 	}
 	for _, owner := range obj.GetOwnerReferences() {
