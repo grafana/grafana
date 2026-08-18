@@ -1111,6 +1111,9 @@
           "properties": {
             "background": {
               "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
             }
           },
           "additionalProperties": false

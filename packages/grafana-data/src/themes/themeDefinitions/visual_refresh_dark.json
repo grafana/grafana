@@ -134,6 +134,9 @@
     "overlay": {
       "background": "hsl(from palette.ink700 h s l / 0.6)"
     },
+    "dropdown": {
+      "borderColor": "palette.ink700"
+    },
     "switch": {
       "activeBackgroundHover": "palette.orange400"
     },

@@ -104,6 +104,7 @@ export const ThemeComponentsInputSchema = z
     }),
     dropdown: z.object({
       background: z.string().optional(),
+      borderColor: z.string().optional(),
     }),
     modal: z.object({
       background: z.string().optional(),
@@ -214,6 +215,7 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     },
     dropdown: {
       background: colors.background.elevated,
+      borderColor: 'transparent',
     },
     tooltip: {
       background: colors.background.elevated,
