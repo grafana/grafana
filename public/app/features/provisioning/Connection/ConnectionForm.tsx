@@ -31,12 +31,10 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const navigate = useNavigate();
 
   const { data: frontendSettings } = useGetFrontendSettingsQuery();
-  const availableTypes = frontendSettings?.availableConnectionTypes ?? [];
+  const availableTypes = frontendSettings?.availableRepositoryTypes ?? [];
   const providerOptions = [
-    ...(availableTypes.includes('github')
-      ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        [{ value: 'github', label: 'GitHub' }]
-      : []),
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+    { value: 'github', label: 'GitHub' },
     ...(availableTypes.includes('githubEnterprise')
       ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         [{ value: 'githubEnterprise', label: 'GitHub Enterprise' }]
