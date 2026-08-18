@@ -214,6 +214,30 @@ describe('useDefaultValues', () => {
     await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Error));
     expect(result.current.values).toBeNull();
   });
+
+  it('resolves a folderless repo when copying an existing dashboard to the root', async () => {
+    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
+
+    // Meta after picking "No folder (repository root)": the folder's manager annotations are gone
+    // but the source dashboard's k8s identity and source path remain
+    const meta = {
+      slug: 'existing-dashboard',
+      k8s: {
+        name: 'existing-dashboard-uid',
+        resourceVersion: '42',
+        annotations: { [AnnoKeySourcePath]: 'My Team/existing-dashboard.json' },
+      },
+    };
+
+    const { result } = renderHook(
+      () => useDefaultValues({ meta, defaultTitle: 'Existing Dashboard', saveAsCopy: true }),
+      { wrapper: getWrapper({}) }
+    );
+
+    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Ready));
+    expect(result.current.isNew).toBe(true);
+    expect(result.current.values?.repo).toBe('folderless-repo');
+  });
 });
 
 describe('useProvisionedDashboardData', () => {

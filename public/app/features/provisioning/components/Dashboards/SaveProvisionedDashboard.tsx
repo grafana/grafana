@@ -9,7 +9,7 @@ import { type DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 
 import { useDatabaseSaveSwitch } from '../../hooks/useDatabaseSaveSwitch';
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
-import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
+import { getIsNewDashboardSave, useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
@@ -27,7 +27,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
 
   // Same check the data hook does, read straight from meta: the hook reports isNew as false
   // whenever the repository is not Ready, which is when the escape hatch is needed most
-  const isNewDashboard = !dashboard.state.meta.k8s?.name || !!saveAsCopy;
+  const isNewDashboard = getIsNewDashboardSave(dashboard.state.meta, saveAsCopy);
 
   const { saveToDatabase, canSwitch, switchToDatabase, switchToGit } = useDatabaseSaveSwitch({
     dashboard,

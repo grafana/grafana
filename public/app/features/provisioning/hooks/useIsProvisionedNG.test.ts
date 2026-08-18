@@ -31,10 +31,11 @@ function createDashboard({
   managed = false,
   k8sName,
   uid,
-}: { managed?: boolean; k8sName?: string; uid?: string } = {}) {
+  folderUid,
+}: { managed?: boolean; k8sName?: string; uid?: string; folderUid?: string } = {}) {
   return {
     isManagedRepository: jest.fn().mockReturnValue(managed),
-    state: { uid, meta: { k8s: k8sName ? { name: k8sName } : undefined } },
+    state: { uid, meta: { folderUid, k8s: k8sName ? { name: k8sName } : undefined } },
   } as unknown as DashboardScene;
 }
 
@@ -121,13 +122,13 @@ describe('useIsProvisionedNG', () => {
     });
   });
 
-  it('does not ask for a folderless repo when a folder is already selected', () => {
-    locationService.push('/?folderUid=some-folder');
+  it('resolves the folder picked in the save form, not the one the URL was entered with', () => {
+    locationService.push('/?folderUid=entry-folder');
 
-    renderHook(() => useIsProvisionedNG(createDashboard()));
+    renderHook(() => useIsProvisionedNG(createDashboard({ folderUid: 'picked-folder' })));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
-      folderName: 'some-folder',
+      folderName: 'picked-folder',
       includeFolderless: false,
     });
   });
@@ -141,10 +142,33 @@ describe('useIsProvisionedNG', () => {
     });
   });
 
-  it('treats an empty URL folderUid as no folder', () => {
-    locationService.push('/?folderUid=');
+  it('asks for a folderless repo when copying an existing dashboard', () => {
+    // The Git save form clears the source's manager annotations when the copy is targeted at the
+    // root, so the copy can only keep resolving through the folderless lookup
+    renderHook(() => useIsProvisionedNG(createDashboard({ uid: 'existing-uid', k8sName: 'existing-uid' }), true));
 
-    renderHook(() => useIsProvisionedNG(createDashboard()));
+    expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      folderName: undefined,
+      includeFolderless: true,
+    });
+  });
+
+  it('resolves the folder picked in the save form when copying an existing dashboard to a folder', () => {
+    renderHook(() =>
+      useIsProvisionedNG(
+        createDashboard({ uid: 'existing-uid', k8sName: 'existing-uid', folderUid: 'picked-folder' }),
+        true
+      )
+    );
+
+    expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      folderName: 'picked-folder',
+      includeFolderless: false,
+    });
+  });
+
+  it('treats an empty folderUid as no folder', () => {
+    renderHook(() => useIsProvisionedNG(createDashboard({ folderUid: '' })));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
       folderName: undefined,

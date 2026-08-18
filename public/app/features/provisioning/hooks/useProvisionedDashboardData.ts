@@ -21,6 +21,11 @@ import { generatePath } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { type ProvisionedDashboardFormData } from '../types/form';
 
+// A save-as copy writes a new file even though the source dashboard already exists.
+export function getIsNewDashboardSave(meta: DashboardMeta, saveAsCopy?: boolean) {
+  return !meta.k8s?.name || Boolean(saveAsCopy);
+}
+
 interface UseDefaultValuesParams {
   meta: DashboardMeta;
   defaultTitle: string;
@@ -40,7 +45,7 @@ export function useDefaultValues({
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
   const sourcePath = annotations?.[AnnoKeySourcePath];
-  const isNew = !meta.k8s?.name;
+  const isNew = getIsNewDashboardSave(meta, saveAsCopy);
   const { repository, folder, isLoading, status, error } = useGetResourceRepositoryView({
     name: managerKind === 'repo' ? managerIdentity : undefined,
     folderName: meta.folderUid,

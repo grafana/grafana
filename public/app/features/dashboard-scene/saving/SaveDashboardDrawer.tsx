@@ -91,7 +91,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const { meta } = dashboard.useState();
   const { provisioned: isProvisioned, folderTitle } = meta;
   const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
-  const { isProvisioned: isProvisionedNG, isLoading: isResolvingRepo } = useIsProvisionedNG(dashboard);
+  const { isProvisioned: isProvisionedNG, isLoading: isResolvingRepo } = useIsProvisionedNG(dashboard, saveAsCopy);
 
   const tabs = (
     <TabsBar>

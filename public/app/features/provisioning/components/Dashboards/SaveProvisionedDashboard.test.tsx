@@ -13,6 +13,7 @@ import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboard
 import { SaveProvisionedDashboard, type SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 
 jest.mock('../../hooks/useProvisionedDashboardData', () => ({
+  ...jest.requireActual('../../hooks/useProvisionedDashboardData'),
   useProvisionedDashboardData: jest.fn(),
 }));
 
