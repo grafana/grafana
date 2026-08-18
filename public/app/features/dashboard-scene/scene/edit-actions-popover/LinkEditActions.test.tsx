@@ -35,7 +35,7 @@ describe('<LinkEditActions />', () => {
     jest.clearAllMocks();
   });
 
-  test('renders link settings, duplicate, and delete controls', () => {
+  test('renders link Settings, Duplicate, and Delete controls', () => {
     renderLinkEditActions();
 
     expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
@@ -43,30 +43,27 @@ describe('<LinkEditActions />', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
 
-  describe('when the user clicks on Link settings', () => {
+  describe('when the user clicks on Settings', () => {
     test('calls onClickEdit', () => {
-      const { onClickEdit, onClickDelete } = renderLinkEditActions();
+      const { onClickEdit } = renderLinkEditActions();
 
       fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
-      expect(onClickDelete).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on Duplicate', () => {
     test('calls onClickDuplicate', () => {
-      const { onClickEdit, onClickDuplicate, onClickDelete } = renderLinkEditActions();
+      const { onClickDuplicate } = renderLinkEditActions();
 
       fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
 
       expect(onClickDuplicate).toHaveBeenCalledTimes(1);
-      expect(onClickEdit).not.toHaveBeenCalled();
-      expect(onClickDelete).not.toHaveBeenCalled();
     });
   });
 
-  describe('when the user clicks on the delete action', () => {
+  describe('when the user clicks on Delete', () => {
     test('publishes a ShowConfirmModalEvent', () => {
       const { onClickDelete } = renderLinkEditActions();
 

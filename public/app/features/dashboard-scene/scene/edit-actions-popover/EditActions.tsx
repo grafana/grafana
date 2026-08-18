@@ -26,10 +26,12 @@ export function SettingsActionButton({ onClick }: { onClick: () => void }) {
 
 export const SHOW_COPIED_DURATION_MS = 2000;
 
-export function CopyActionButton({ onClick }: { onClick: () => void }) {
+export function CopyActionButton({ onClick, isRepeated }: { onClick: () => void; isRepeated?: boolean }) {
   const styles = useStyles2(getActionStyles);
   const [copied, setCopied] = useState(false);
-  const copyLabel = t('dashboard-scene.control-edit-actions.copy-clipboard-tooltip', 'Copy to clipboard');
+  const tooltip = isRepeated
+    ? t('dashboard-scene.control-edit-actions.copied-tooltip-disabled', "Repeated panels can't be copied individually")
+    : t('dashboard-scene.control-edit-actions.copy-clipboard-tooltip', 'Copy to clipboard');
 
   useEffect(() => {
     if (!copied) {
@@ -41,7 +43,7 @@ export function CopyActionButton({ onClick }: { onClick: () => void }) {
 
   return (
     <Tooltip
-      content={copied ? t('clipboard-button.inline-toast.success', 'Copied') : copyLabel}
+      content={copied ? t('clipboard-button.inline-toast.success', 'Copied') : tooltip}
       show={copied ? true : undefined}
       placement="top"
     >
@@ -50,18 +52,27 @@ export function CopyActionButton({ onClick }: { onClick: () => void }) {
         variant="secondary"
         size="md"
         className={styles.action}
-        aria-label={copyLabel}
+        aria-label={tooltip}
         onClick={() => {
           onClick();
           setCopied(true);
         }}
+        disabled={isRepeated}
       />
     </Tooltip>
   );
 }
 
-export function DuplicateActionButton({ onClick }: { onClick: () => void }) {
+export function DuplicateActionButton({ onClick, isRepeated }: { onClick: () => void; isRepeated?: boolean }) {
   const styles = useStyles2(getActionStyles);
+
+  const tooltip = isRepeated
+    ? t(
+        'dashboard-scene.control-edit-actions.duplicate-tooltip-disabled',
+        "Repeated panels can't be duplicated individually"
+      )
+    : t('dashboard-scene.control-edit-actions.duplicate-tooltip', 'Duplicate');
+
   return (
     <IconButton
       name="copy"
@@ -69,8 +80,9 @@ export function DuplicateActionButton({ onClick }: { onClick: () => void }) {
       size="md"
       className={styles.action}
       onClick={onClick}
-      tooltip={t('dashboard-scene.control-edit-actions.duplicate-tooltip', 'Duplicate')}
+      tooltip={tooltip}
       tooltipPlacement="top"
+      disabled={isRepeated}
     />
   );
 }
@@ -80,11 +92,13 @@ export function DeleteActionButton({
   text,
   yesText,
   onConfirm,
+  isRepeated,
 }: {
   title: string;
   text: string;
   yesText: string;
   onConfirm: () => void;
+  isRepeated?: boolean;
 }) {
   const styles = useStyles2(getActionStyles);
   const { closePopover } = useEditActionsPopover();
@@ -101,6 +115,10 @@ export function DeleteActionButton({
     );
   }, [closePopover, title, text, yesText, onConfirm]);
 
+  const tooltip = isRepeated
+    ? t('dashboard-scene.control-edit-actions.delete-tooltip-disabled', "Repeated panels can't be deleted individually")
+    : t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete');
+
   return (
     <IconButton
       name="trash-alt"
@@ -108,8 +126,9 @@ export function DeleteActionButton({
       size="md"
       className={cx(styles.action, styles.deleteAction)}
       onClick={onClickInternal}
-      tooltip={t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete')}
+      tooltip={tooltip}
       tooltipPlacement="top"
+      disabled={isRepeated}
     />
   );
 }

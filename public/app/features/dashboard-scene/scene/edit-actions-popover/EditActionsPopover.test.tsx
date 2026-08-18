@@ -1,15 +1,6 @@
-import { type ReactNode } from 'react';
 import { act, createEvent, fireEvent, render, screen, userEvent } from 'test/test-utils';
 
-import { QueryVariable } from '@grafana/scenes';
-
-import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer';
-
-import { AnnotationEditActions } from './AnnotationEditActions';
 import { EditActionsPopover, WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
-import { LinkEditActions } from './LinkEditActions';
-import { PanelEditActions } from './PanelEditActions';
-import { VariableEditActions } from './VariableEditActions';
 
 jest.mock('app/core/app_events', () => ({
   appEvents: {
@@ -93,6 +84,7 @@ describe('<EditActionsPopover />', () => {
         );
 
         const referenceChild = screen.getByTestId('reference-child');
+
         await user.hover(referenceChild);
         act(() => {
           jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS);
@@ -106,20 +98,6 @@ describe('<EditActionsPopover />', () => {
 
         expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
       });
-    });
-
-    test('if content is null, then no floating panel is mounted when open', async () => {
-      render(
-        <EditActionsPopover isEditable={true} content={null}>
-          <div data-testid="reference-child">variable control</div>
-        </EditActionsPopover>
-      );
-
-      expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
-
-      await hoverAndRest(screen.getByTestId('reference-child'));
-
-      expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
     });
 
     test('pointerdown stops event propagation', async () => {
@@ -138,121 +116,6 @@ describe('<EditActionsPopover />', () => {
       fireEvent(actionButton, pointerDownEvent);
 
       expect(stopPropagation).toHaveBeenCalled();
-    });
-  });
-
-  describe('when a popover action opens a modal', () => {
-    async function renderAndOpenPopover(content: ReactNode) {
-      render(
-        <EditActionsPopover isEditable={true} content={content}>
-          <div data-testid="reference-child">control</div>
-        </EditActionsPopover>
-      );
-      await hoverAndRest(screen.getByTestId('reference-child'));
-    }
-
-    test('clicking Edit query closes the popover', async () => {
-      await renderAndOpenPopover(
-        <VariableEditActions
-          variable={new QueryVariable({ name: 'queryVar', query: 'label_values(job)' })}
-          onClickEdit={jest.fn()}
-          onClickEditQuery={jest.fn()}
-          onClickDuplicate={jest.fn()}
-          onClickDelete={jest.fn()}
-        />
-      );
-
-      fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
-
-      expect(screen.queryByRole('button', { name: 'Edit query' })).not.toBeInTheDocument();
-    });
-
-    test('clicking the delete action closes the popover', async () => {
-      await renderAndOpenPopover(
-        <LinkEditActions
-          name="Test link"
-          onClickEdit={jest.fn()}
-          onClickDuplicate={jest.fn()}
-          onClickDelete={jest.fn()}
-        />
-      );
-
-      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-
-      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-    });
-
-    test('clicking the panel Edit visualization action closes the popover', async () => {
-      await renderAndOpenPopover(
-        <PanelEditActions
-          onClickEdit={jest.fn()}
-          onClickEditVisualization={jest.fn()}
-          onClickCopy={jest.fn()}
-          onClickDuplicate={jest.fn()}
-          onClickDelete={jest.fn()}
-        />
-      );
-
-      fireEvent.click(screen.getByRole('button', { name: 'Edit visualization' }));
-
-      expect(screen.queryByRole('button', { name: 'Edit visualization' })).not.toBeInTheDocument();
-    });
-
-    test('clicking the annotation Edit query action closes the popover', async () => {
-      await renderAndOpenPopover(
-        <AnnotationEditActions
-          layer={
-            new DashboardAnnotationsDataLayer({
-              name: 'Test annotation',
-              query: {
-                name: 'Test annotation',
-                enable: false,
-                iconColor: '',
-              },
-            })
-          }
-          onClickEdit={jest.fn()}
-          onClickEditQuery={jest.fn()}
-          onClickDuplicate={jest.fn()}
-          onClickDelete={jest.fn()}
-        />
-      );
-
-      fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
-
-      expect(screen.queryByRole('button', { name: 'Edit query' })).not.toBeInTheDocument();
-    });
-
-    test('clicking Variable settings keeps the popover open', async () => {
-      await renderAndOpenPopover(
-        <VariableEditActions
-          variable={new QueryVariable({ name: 'queryVar', query: 'label_values(job)' })}
-          onClickEdit={jest.fn()}
-          onClickEditQuery={jest.fn()}
-          onClickDuplicate={jest.fn()}
-          onClickDelete={jest.fn()}
-        />
-      );
-
-      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-
-      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
-    });
-
-    test('clicking Duplicate keeps the popover open', async () => {
-      await renderAndOpenPopover(
-        <VariableEditActions
-          variable={new QueryVariable({ name: 'queryVar', query: 'label_values(job)' })}
-          onClickEdit={jest.fn()}
-          onClickEditQuery={jest.fn()}
-          onClickDuplicate={jest.fn()}
-          onClickDelete={jest.fn()}
-        />
-      );
-
-      fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
-
-      expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
     });
   });
 });

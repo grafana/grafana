@@ -3,10 +3,11 @@ import { useCallback, useMemo, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import { Button, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { VizPanelEditableElement } from '../../sidebar/VizPanelEditableElement';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 
@@ -17,7 +18,7 @@ import {
   getActionStyles,
   SettingsActionButton,
 } from './EditActions';
-import { EditActionsPopover, useEditActionsPopover } from './EditActionsPopover';
+import { EditActionsPopover } from './EditActionsPopover';
 
 export function PanelEditActions({
   onClickEdit,
@@ -25,20 +26,16 @@ export function PanelEditActions({
   onClickCopy,
   onClickDuplicate,
   onClickDelete,
+  isRepeated,
 }: {
   onClickEdit: () => void;
   onClickEditVisualization: () => void;
   onClickCopy: () => void;
   onClickDuplicate: () => void;
   onClickDelete: () => void;
+  isRepeated: boolean;
 }) {
   const styles = useStyles2(getActionStyles);
-  const { closePopover } = useEditActionsPopover();
-
-  const onClickEditVisualizationInternal = useCallback(() => {
-    closePopover();
-    onClickEditVisualization();
-  }, [onClickEditVisualization, closePopover]);
 
   return (
     <>
@@ -49,13 +46,13 @@ export function PanelEditActions({
         variant="secondary"
         size="sm"
         className={cx(styles.action, styles.textAction)}
-        onClick={onClickEditVisualizationInternal}
+        onClick={onClickEditVisualization}
       >
         {t('dashboard-scene.panel-edit-actions.edit-visualization', 'Edit visualization')}
       </Button>
       <div className={styles.actionsDivider} />
-      <CopyActionButton onClick={onClickCopy} />
-      <DuplicateActionButton onClick={onClickDuplicate} />
+      <CopyActionButton onClick={onClickCopy} isRepeated={isRepeated} />
+      <DuplicateActionButton onClick={onClickDuplicate} isRepeated={isRepeated} />
       <DeleteActionButton
         title={t('dashboard.sidebar.viz-panel.delete-panel-title', 'Delete panel?')}
         text={t(
@@ -64,6 +61,7 @@ export function PanelEditActions({
         )}
         yesText={t('dashboard.sidebar.viz-panel.delete-panel-yes', 'Delete')}
         onConfirm={onClickDelete}
+        isRepeated={isRepeated}
       />
     </>
   );
@@ -79,21 +77,21 @@ export function PanelEditWrapper({ panel, children }: { panel: VizPanel; childre
   }, [panel]);
 
   const onClickEditVisualization = useCallback(() => {
-    const panelId = getPanelIdForVizPanel(getSourceVizPanel(panel));
+    const panelId = getPanelIdForVizPanel(panel);
     locationService.partial({ editPanel: panelId });
     DashboardInteractions.panelActionClicked('configure', panelId, 'edit_popover');
   }, [panel]);
 
   const onClickCopy = useCallback(() => {
-    new VizPanelEditableElement(getSourceVizPanel(panel)).onCopy('edit_popover');
+    new VizPanelEditableElement(panel).onCopy('edit_popover');
   }, [panel]);
 
   const onClickDuplicate = useCallback(() => {
-    new VizPanelEditableElement(getSourceVizPanel(panel)).onDuplicate('edit_popover');
+    new VizPanelEditableElement(panel).onDuplicate('edit_popover');
   }, [panel]);
 
   const onClickDelete = useCallback(() => {
-    new VizPanelEditableElement(getSourceVizPanel(panel)).onDelete('edit_popover');
+    new VizPanelEditableElement(panel).onDelete('edit_popover');
   }, [panel]);
 
   const editActions = useMemo(
@@ -104,9 +102,10 @@ export function PanelEditWrapper({ panel, children }: { panel: VizPanel; childre
         onClickCopy={onClickCopy}
         onClickDuplicate={onClickDuplicate}
         onClickDelete={onClickDelete}
+        isRepeated={isRepeatCloneOrChildOf(panel)}
       />
     ),
-    [onClickEdit, onClickEditVisualization, onClickCopy, onClickDuplicate, onClickDelete]
+    [onClickEdit, onClickEditVisualization, onClickCopy, onClickDuplicate, onClickDelete, panel]
   );
 
   return (
@@ -114,9 +113,4 @@ export function PanelEditWrapper({ panel, children }: { panel: VizPanel; childre
       {children}
     </EditActionsPopover>
   );
-}
-
-function getSourceVizPanel(panel: VizPanel): VizPanel {
-  const sourceKey = panel.state.repeatSourceKey;
-  return sourceKey ? sceneGraph.findByKeyAndType(panel, sourceKey, VizPanel) : panel;
 }

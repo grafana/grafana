@@ -9,7 +9,6 @@ import { VizPanelEditableElement } from '../../sidebar/VizPanelEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import * as utils from '../../utils/utils';
 import { type DashboardScene } from '../DashboardScene';
-import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 
 import { SHOW_COPIED_DURATION_MS } from './EditActions';
 import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
@@ -36,7 +35,7 @@ async function hoverAndRest(element: HTMLElement) {
   }
 }
 
-function renderPanelEditActions() {
+function renderPanelEditActions({ isRepeated = false }: { isRepeated?: boolean } = {}) {
   const onClickEdit = jest.fn();
   const onClickEditVisualization = jest.fn();
   const onClickCopy = jest.fn();
@@ -50,6 +49,7 @@ function renderPanelEditActions() {
       onClickCopy={onClickCopy}
       onClickDuplicate={onClickDuplicate}
       onClickDelete={onClickDelete}
+      isRepeated={isRepeated}
     />
   );
 
@@ -69,7 +69,7 @@ describe('<PanelEditActions />', () => {
     jest.useRealTimers();
   });
 
-  test('renders settings, edit visualization, copy, duplicate, and delete controls', () => {
+  test('renders Settings, Edit visualization, Copy, Duplicate, and Delete controls', () => {
     renderPanelEditActions();
 
     expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
@@ -79,102 +79,86 @@ describe('<PanelEditActions />', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
 
-  test('renders Copy to clipboard before Duplicate', () => {
-    renderPanelEditActions();
-
-    const buttons = screen.getAllByRole('button');
-    const copyIndex = buttons.findIndex((button) => button.getAttribute('aria-label') === 'Copy to clipboard');
-    const duplicateIndex = buttons.findIndex((button) => button.getAttribute('aria-label') === 'Duplicate');
-
-    expect(copyIndex).toBeGreaterThan(-1);
-    expect(duplicateIndex).toBeGreaterThan(-1);
-    expect(copyIndex).toBeLessThan(duplicateIndex);
-  });
-
   describe('when the user clicks on Settings', () => {
     test('calls onClickEdit', () => {
-      const { onClickEdit, onClickDelete } = renderPanelEditActions();
+      const { onClickEdit } = renderPanelEditActions();
 
       fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
-      expect(onClickDelete).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on Edit visualization', () => {
     test('calls onClickEditVisualization', () => {
-      const { onClickEdit, onClickEditVisualization } = renderPanelEditActions();
+      const { onClickEditVisualization } = renderPanelEditActions();
 
       fireEvent.click(screen.getByRole('button', { name: 'Edit visualization' }));
 
       expect(onClickEditVisualization).toHaveBeenCalledTimes(1);
-      expect(onClickEdit).not.toHaveBeenCalled();
     });
   });
 
-  describe('when the user hovers Copy to clipboard', () => {
-    test('shows a Copy to clipboard tooltip', async () => {
-      const { user } = renderPanelEditActions();
+  describe('Copy to clipboard', () => {
+    describe('when the user hovers over the control', () => {
+      test('shows a Copy to clipboard tooltip', async () => {
+        const { user } = renderPanelEditActions();
 
-      await user.hover(screen.getByRole('button', { name: 'Copy to clipboard' }));
+        await user.hover(screen.getByRole('button', { name: 'Copy to clipboard' }));
 
-      expect(screen.getByRole('tooltip')).toHaveTextContent('Copy to clipboard');
-    });
-  });
-
-  describe('when the user clicks on Copy to clipboard', () => {
-    test('calls onClickCopy', () => {
-      const { onClickCopy, onClickDuplicate, onClickDelete } = renderPanelEditActions();
-
-      fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
-
-      expect(onClickCopy).toHaveBeenCalledTimes(1);
-      expect(onClickDuplicate).not.toHaveBeenCalled();
-      expect(onClickDelete).not.toHaveBeenCalled();
+        expect(screen.getByRole('tooltip')).toHaveTextContent('Copy to clipboard');
+      });
     });
 
-    test('shows a Copied tooltip that disappears after 2 seconds', () => {
-      jest.useFakeTimers();
-      renderPanelEditActions();
+    describe('when the user clicks on the control', () => {
+      test('calls onClickCopy', () => {
+        const { onClickCopy } = renderPanelEditActions();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
 
-      expect(screen.getByRole('tooltip')).toHaveTextContent('Copied');
-
-      act(() => {
-        jest.advanceTimersByTime(SHOW_COPIED_DURATION_MS);
+        expect(onClickCopy).toHaveBeenCalledTimes(1);
       });
 
-      expect(screen.queryByText('Copied')).not.toBeInTheDocument();
-    });
+      test('shows a Copied tooltip that disappears after 2 seconds', () => {
+        jest.useFakeTimers();
+        renderPanelEditActions();
 
-    test('if the Copied tooltip has disappeared, then hovering shows Copy to clipboard', async () => {
-      jest.useFakeTimers();
-      const { user } = renderPanelEditActions();
+        fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
 
-      fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
+        expect(screen.getByRole('tooltip')).toHaveTextContent('Copied');
 
-      act(() => {
-        jest.advanceTimersByTime(SHOW_COPIED_DURATION_MS);
+        act(() => {
+          jest.advanceTimersByTime(SHOW_COPIED_DURATION_MS);
+        });
+
+        expect(screen.queryByText('Copied')).not.toBeInTheDocument();
       });
-      jest.useRealTimers();
 
-      await user.hover(screen.getByRole('button', { name: 'Copy to clipboard' }));
+      test('if the Copied tooltip has disappeared, then hovering again over the control shows a Copy to clipboard tooltip', async () => {
+        jest.useFakeTimers();
+        const { user } = renderPanelEditActions();
 
-      expect(screen.getByRole('tooltip')).toHaveTextContent('Copy to clipboard');
+        fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
+
+        act(() => {
+          jest.advanceTimersByTime(SHOW_COPIED_DURATION_MS);
+        });
+        jest.useRealTimers();
+
+        await user.hover(screen.getByRole('button', { name: 'Copy to clipboard' }));
+
+        expect(screen.getByRole('tooltip')).toHaveTextContent('Copy to clipboard');
+      });
     });
   });
 
   describe('when the user clicks on Duplicate', () => {
     test('calls onClickDuplicate', () => {
-      const { onClickEdit, onClickDuplicate, onClickDelete } = renderPanelEditActions();
+      const { onClickDuplicate } = renderPanelEditActions();
 
       fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
 
       expect(onClickDuplicate).toHaveBeenCalledTimes(1);
-      expect(onClickEdit).not.toHaveBeenCalled();
-      expect(onClickDelete).not.toHaveBeenCalled();
     });
   });
 
@@ -200,6 +184,18 @@ describe('<PanelEditActions />', () => {
       );
     });
   });
+
+  describe('when isRepeated is true', () => {
+    test('disables Copy, Duplicate, and Delete controls ; keeps Settings and Edit visualization enabled', () => {
+      renderPanelEditActions({ isRepeated: true });
+
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Edit visualization' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: "Repeated panels can't be copied individually" })).toBeDisabled();
+      expect(screen.getByRole('button', { name: "Repeated panels can't be duplicated individually" })).toBeDisabled();
+      expect(screen.getByRole('button', { name: "Repeated panels can't be deleted individually" })).toBeDisabled();
+    });
+  });
 });
 
 describe('<PanelEditWrapper />', () => {
@@ -217,16 +213,6 @@ describe('<PanelEditWrapper />', () => {
         </PanelEditWrapper>
       </ElementSelectionContext.Provider>
     );
-  }
-
-  function buildRepeatClone() {
-    const sourcePanel = new VizPanel({ title: 'Source', pluginId: 'timeseries', key: 'panel-1' });
-    const clonePanel = sourcePanel.clone({ key: 'panel-1-clone-1', repeatSourceKey: sourcePanel.state.key });
-    new DashboardGridItem({
-      body: sourcePanel,
-      repeatedPanels: [clonePanel],
-    });
-    return { sourcePanel, clonePanel };
   }
 
   function mockSidebarSelection() {
@@ -247,8 +233,8 @@ describe('<PanelEditWrapper />', () => {
     return { onSelect, selectObject };
   }
 
-  test('if the user clicks Settings, then the panel is selected via selectionContext.onSelect with force true', async () => {
-    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+  test('if the user clicks Settings, then the panel is selected via selectionContext.onSelect so repeated clones remap to the source panel', async () => {
+    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'test-panel' });
     const { onSelect, selectObject } = mockSidebarSelection();
 
     renderPanelEditWrapper(panel);
@@ -256,108 +242,78 @@ describe('<PanelEditWrapper />', () => {
     await hoverAndRest(screen.getByTestId('reference-child'));
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
-    expect(onSelect).toHaveBeenCalledWith({ id: 'panel-1' }, { force: true });
+    expect(onSelect).toHaveBeenCalledWith({ id: 'test-panel' }, { force: true });
     expect(selectObject).not.toHaveBeenCalled();
   });
 
-  describe('when the panel is a repeat clone', () => {
-    test('if the user clicks Settings, then onSelect is called with the clone key', async () => {
-      const { clonePanel } = buildRepeatClone();
-      const { onSelect, selectObject } = mockSidebarSelection();
+  test('if the user clicks Edit visualization, then panelActionClicked is called', async () => {
+    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+    const getPanelIdForVizPanel = jest.spyOn(utils, 'getPanelIdForVizPanel');
+    jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
-      renderPanelEditWrapper(clonePanel);
+    renderPanelEditWrapper(panel);
 
-      await hoverAndRest(screen.getByTestId('reference-child'));
-      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    await hoverAndRest(screen.getByTestId('reference-child'));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit visualization' }));
 
-      expect(onSelect).toHaveBeenCalledWith({ id: clonePanel.state.key }, { force: true });
-      expect(selectObject).not.toHaveBeenCalled();
-    });
-    test('if the user clicks Edit visualization, then panel edit opens for the source panel', async () => {
-      const { sourcePanel, clonePanel } = buildRepeatClone();
-      const getPanelIdForVizPanel = jest.spyOn(utils, 'getPanelIdForVizPanel');
-      jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+    expect(getPanelIdForVizPanel).toHaveBeenCalledWith(panel);
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure', 1, 'edit_popover');
+  });
 
-      renderPanelEditWrapper(clonePanel);
-
-      await hoverAndRest(screen.getByTestId('reference-child'));
-      fireEvent.click(screen.getByRole('button', { name: 'Edit visualization' }));
-
-      expect(getPanelIdForVizPanel).toHaveBeenCalledWith(sourcePanel);
-      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure', 1, 'edit_popover');
+  test('if the user clicks Copy, then VizPanelEditableElement.onCopy is called', async () => {
+    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+    let copiedPanel: VizPanel | undefined;
+    const onCopy = jest.spyOn(VizPanelEditableElement.prototype, 'onCopy').mockImplementation(function (
+      this: VizPanelEditableElement
+    ) {
+      copiedPanel = this.panel;
     });
 
-    test('if the user clicks Copy, then the source panel is copied', async () => {
-      const { sourcePanel, clonePanel } = buildRepeatClone();
-      let copiedPanel: VizPanel | undefined;
-      jest.spyOn(VizPanelEditableElement.prototype, 'onCopy').mockImplementation(function (
-        this: VizPanelEditableElement
-      ) {
-        copiedPanel = this.panel;
-      });
+    renderPanelEditWrapper(panel);
 
-      renderPanelEditWrapper(clonePanel);
+    await hoverAndRest(screen.getByTestId('reference-child'));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
 
-      await hoverAndRest(screen.getByTestId('reference-child'));
-      fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
+    expect(copiedPanel).toBe(panel);
+    expect(onCopy).toHaveBeenCalledWith('edit_popover');
+  });
 
-      expect(copiedPanel).toBe(sourcePanel);
+  test('if the user clicks Duplicate, then VizPanelEditableElement.onDuplicate is called', async () => {
+    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+    let duplicatedPanel: VizPanel | undefined;
+    const onDuplicate = jest.spyOn(VizPanelEditableElement.prototype, 'onDuplicate').mockImplementation(function (
+      this: VizPanelEditableElement
+    ) {
+      duplicatedPanel = this.panel;
     });
 
-    test('if the user clicks Duplicate, then the source panel is duplicated', async () => {
-      const { sourcePanel, clonePanel } = buildRepeatClone();
-      let duplicatedPanel: VizPanel | undefined;
-      jest.spyOn(VizPanelEditableElement.prototype, 'onDuplicate').mockImplementation(function (
-        this: VizPanelEditableElement
-      ) {
-        duplicatedPanel = this.panel;
-      });
+    renderPanelEditWrapper(panel);
 
-      renderPanelEditWrapper(clonePanel);
+    await hoverAndRest(screen.getByTestId('reference-child'));
+    fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
 
-      await hoverAndRest(screen.getByTestId('reference-child'));
-      fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
+    expect(duplicatedPanel).toBe(panel);
+    expect(onDuplicate).toHaveBeenCalledWith('edit_popover');
+  });
 
-      expect(duplicatedPanel).toBe(sourcePanel);
+  test('if the user confirms Delete, then VizPanelEditableElement.onDelete is called', async () => {
+    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+    let deletedPanel: VizPanel | undefined;
+    const onDelete = jest.spyOn(VizPanelEditableElement.prototype, 'onDelete').mockImplementation(function (
+      this: VizPanelEditableElement
+    ) {
+      deletedPanel = this.panel;
     });
 
-    test('if the user confirms Delete, then the source panel is deleted', async () => {
-      const { sourcePanel, clonePanel } = buildRepeatClone();
-      let deletedPanel: VizPanel | undefined;
-      jest.spyOn(VizPanelEditableElement.prototype, 'onDelete').mockImplementation(function (
-        this: VizPanelEditableElement
-      ) {
-        deletedPanel = this.panel;
-      });
+    renderPanelEditWrapper(panel);
 
-      renderPanelEditWrapper(clonePanel);
+    await hoverAndRest(screen.getByTestId('reference-child'));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
-      await hoverAndRest(screen.getByTestId('reference-child'));
-      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    const [arg] = mockPublishAppEvent.mock.calls[0];
+    arg.payload.onConfirm();
 
-      const [arg] = mockPublishAppEvent.mock.calls[0];
-      arg.payload.onConfirm();
-
-      expect(deletedPanel).toBe(sourcePanel);
-    });
-
-    test('if the source panel is missing, then clicking Copy throws', async () => {
-      const clonePanel = new VizPanel({
-        title: 'Clone',
-        pluginId: 'timeseries',
-        key: 'panel-1-clone-1',
-        repeatSourceKey: 'panel-1',
-      });
-      const onCopy = jest.spyOn(VizPanelEditableElement.prototype, 'onCopy');
-      const consoleError = jest.spyOn(console, 'error').mockImplementation();
-
-      renderPanelEditWrapper(clonePanel);
-
-      await hoverAndRest(screen.getByTestId('reference-child'));
-      fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
-
-      expect(onCopy).not.toHaveBeenCalled();
-      expect(consoleError.mock.calls.flat()).toContainEqual(new Error('Unable to find scene with key panel-1'));
-    });
+    expect(deletedPanel).toBe(panel);
+    expect(onDelete).toHaveBeenCalledWith('edit_popover');
   });
 });

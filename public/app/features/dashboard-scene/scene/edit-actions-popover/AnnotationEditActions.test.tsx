@@ -15,8 +15,8 @@ jest.mock('app/core/app_events', () => ({
 }));
 const mockPublishAppEvent = jest.mocked(appEvents.publish);
 
-const buildDataLayer = () =>
-  new DashboardAnnotationsDataLayer({
+function renderAnnotationEditActions() {
+  const dataLayer = new DashboardAnnotationsDataLayer({
     name: 'Test annotation',
     query: {
       name: 'Test annotation',
@@ -25,7 +25,6 @@ const buildDataLayer = () =>
     },
   });
 
-function renderAnnotationEditActions(dataLayer = buildDataLayer()) {
   const onClickEdit = jest.fn();
   const onClickEditQuery = jest.fn();
   const onClickDuplicate = jest.fn();
@@ -41,7 +40,7 @@ function renderAnnotationEditActions(dataLayer = buildDataLayer()) {
     />
   );
 
-  return { ...renderResult, onClickEdit, onClickEditQuery, onClickDuplicate, onClickDelete };
+  return { ...renderResult, onClickEdit, onClickEditQuery, onClickDuplicate, onClickDelete, dataLayer };
 }
 
 describe('<AnnotationEditActions />', () => {
@@ -49,7 +48,7 @@ describe('<AnnotationEditActions />', () => {
     jest.clearAllMocks();
   });
 
-  test('renders annotation settings, edit query, duplicate, and delete controls', () => {
+  test('renders Settings, Edit query, Duplicate, and Delete controls', () => {
     renderAnnotationEditActions();
 
     expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
@@ -58,44 +57,39 @@ describe('<AnnotationEditActions />', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
 
-  describe('when the user clicks on Annotation settings', () => {
+  describe('when the user clicks on Settings', () => {
     test('calls onClickEdit', () => {
-      const { onClickEdit, onClickDelete } = renderAnnotationEditActions();
+      const { onClickEdit } = renderAnnotationEditActions();
 
       fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
-      expect(onClickDelete).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on Edit query', () => {
     test('calls onClickEditQuery', () => {
-      const { onClickEdit, onClickEditQuery } = renderAnnotationEditActions();
+      const { onClickEditQuery } = renderAnnotationEditActions();
 
       fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
 
       expect(onClickEditQuery).toHaveBeenCalledTimes(1);
-      expect(onClickEdit).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on Duplicate', () => {
     test('calls onClickDuplicate', () => {
-      const { onClickEdit, onClickDuplicate, onClickDelete } = renderAnnotationEditActions();
+      const { onClickDuplicate } = renderAnnotationEditActions();
 
       fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
 
       expect(onClickDuplicate).toHaveBeenCalledTimes(1);
-      expect(onClickEdit).not.toHaveBeenCalled();
-      expect(onClickDelete).not.toHaveBeenCalled();
     });
   });
 
-  describe('when the user clicks on the delete action', () => {
+  describe('when the user clicks on Delete', () => {
     test('publishes a ShowConfirmModalEvent', () => {
-      const dataLayer = buildDataLayer();
-      const { onClickDelete } = renderAnnotationEditActions(dataLayer);
+      const { onClickDelete, dataLayer } = renderAnnotationEditActions();
 
       fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
