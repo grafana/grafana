@@ -149,12 +149,7 @@ const TEMPO_V2_METRICS_LOOKBACK_HOURS = 3;
 const TEMPO_V2_METRICS_DURATION_ERROR = 'maximum allowed duration of 3h0m0s';
 
 function isTempoV2MetricsDurationError(error: unknown): boolean {
-  return (
-    isFetchError<{ message?: unknown }>(error) &&
-    error.status === 400 &&
-    typeof error.data?.message === 'string' &&
-    error.data.message.includes(TEMPO_V2_METRICS_DURATION_ERROR)
-  );
+  return isFetchError(error) && error.status === 400 && error.data.message.includes(TEMPO_V2_METRICS_DURATION_ERROR);
 }
 
 function queryTracesActivity(dsUid: string, end: number, lookbackHours: number): Promise<TempoQueryRangeResponse> {
