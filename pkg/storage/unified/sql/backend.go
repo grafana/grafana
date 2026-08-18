@@ -159,7 +159,7 @@ func NewStorageBackend(
 	case options.StorageTypeUnifiedGrpc:
 		return nil, nil
 	case options.StorageTypeUnifiedKVGrpc:
-		return newKVGrpcBackend(cfg, reg, disableStorageServices, kvStore, opts...)
+		return newKVGrpcBackend(cfg, reg, disableStorageServices, kvStore, gcGate, opts...)
 	default: // fall back to SQL backend
 	}
 
@@ -241,18 +241,19 @@ func NewStorageBackend(
 	return resource.NewKVStorageBackend(kvBackendOpts)
 }
 
-func newKVGrpcBackend(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, opts ...StorageBackendOption) (resource.StorageBackend, error) {
+func newKVGrpcBackend(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, gcGate *resource.GCGate, opts ...StorageBackendOption) (resource.StorageBackend, error) {
 	if kvStore == nil {
 		return nil, fmt.Errorf("storage_type=%s needs a kv client dialed by the wiring, and this build provides none (enterprise only)", options.StorageTypeUnifiedKVGrpc)
 	}
-	return resource.NewKVStorageBackend(newKVGrpcBackendOptions(cfg, reg, disableStorageServices, kvStore, opts...))
+	return resource.NewKVStorageBackend(newKVGrpcBackendOptions(cfg, reg, disableStorageServices, kvStore, gcGate, opts...))
 }
 
-func newKVGrpcBackendOptions(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, opts ...StorageBackendOption) resource.KVBackendOptions {
+func newKVGrpcBackendOptions(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, gcGate *resource.GCGate, opts ...StorageBackendOption) resource.KVBackendOptions {
 	kvBackendOpts := resource.NewKVBackendOptions(cfg)
 	kvBackendOpts.KvStore = kvStore
 	kvBackendOpts.Reg = reg
 	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.GCGate = gcGate
 	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
 
 	if cfg.EnableKVLeases {

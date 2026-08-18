@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
 // The KV comes over gRPC, so this backend must build without a resource DB.
@@ -39,22 +40,30 @@ func TestNewStorageBackendKVGrpc(t *testing.T) {
 // publishing nor subscribing.
 func TestNewKVGrpcBackendOptions(t *testing.T) {
 	subscriber := &fakeEventSubscriber{}
+	vectorBackend := &fakeVectorBackend{}
+	experimentalKV := &resource.ExperimentalKVOptions{}
+	gcGate := resource.NewGCGate()
 
-	opts := newKVGrpcBackendOptions(kvGrpcCfg(), prometheus.NewRegistry(), false, testKV(t),
+	opts := newKVGrpcBackendOptions(kvGrpcCfg(), prometheus.NewRegistry(), false, testKV(t), gcGate,
 		WithEventPublisher(&fakeEventPublisher{}),
 		WithNatsNotifier(subscriber),
+		WithVectorBackend(vectorBackend),
+		WithExperimentalKV(experimentalKV),
 	)
 
 	require.NotNil(t, opts.EventPublisher)
 	require.Same(t, subscriber, opts.EventSubscriber)
 	require.True(t, opts.EnableNatsNotifier)
+	require.Same(t, gcGate, opts.GCGate)
+	require.Equal(t, vectorBackend, opts.EmbeddingDeleter)
+	require.Same(t, experimentalKV, opts.ExperimentalKV)
 }
 
 func TestNewKVGrpcBackendOptionsStorageServices(t *testing.T) {
 	cfg := kvGrpcCfg()
 
-	require.True(t, newKVGrpcBackendOptions(cfg, nil, true, nil).DisableStorageServices)
-	require.False(t, newKVGrpcBackendOptions(cfg, nil, false, nil).DisableStorageServices)
+	require.True(t, newKVGrpcBackendOptions(cfg, nil, true, nil, nil).DisableStorageServices)
+	require.False(t, newKVGrpcBackendOptions(cfg, nil, false, nil, nil).DisableStorageServices)
 }
 
 func kvGrpcCfg() *setting.Cfg {
@@ -87,3 +96,5 @@ func (*fakeEventSubscriber) Enabled() bool { return true }
 func (*fakeEventSubscriber) Subscribe(_ context.Context, _ string, _ func(string, []byte)) (resource.Subscription, error) {
 	return nil, nil
 }
+
+type fakeVectorBackend struct{ vector.VectorBackend }
