@@ -26,8 +26,8 @@ import (
 //
 // Both prefixes serve the same handlers. Identity is populated by Grafana's ContextHandler
 // middleware (c.SignedInUser); grafanaHTTPHandler injects it into the request context before
-// the handler runs. The :namespace URL segment is ignored — the trusted namespace comes from
-// the authenticated identity, not the client-supplied path.
+// the handler runs. The :namespace URL segment is used as a fallback namespace (see validateNamespace) - for                                   
+// authenticated callers, the identity's namespace always takes precedence over the path.
 func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
 	routes := func(r routing.RouteRegister) {
 		r.Post("/v1/evaluate/flags", b.grafanaHTTPHandler(b.allFlagsHandler))
