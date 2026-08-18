@@ -270,7 +270,7 @@ describe('LogsLinkButton', () => {
     await waitFor(() =>
       expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
         logs: true,
-        refId: 'A',
+        refId: undefined,
       })
     );
     await userEvent.hover(screen.getByRole('button'));
