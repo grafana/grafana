@@ -21,8 +21,8 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginspec "github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -82,8 +82,7 @@ type AppPluginAPIBuilder struct {
 }
 
 func NewAppPluginAPIBuilder(
-	plugin pluginspec.PluginInfo,
-	apiVersion string,
+	plugin pluginspec.PluginDefinition,
 	client PluginClient, // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
@@ -125,8 +124,8 @@ func RegisterAPIService(
 	registerProxy := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx))
 
 	// Find all local plugins
-	pluginInfos, err := pluginspec.LoadPlugins(ctx, pluginSources,
-		func(jsonData plugins.JSONData) bool {
+	pluginInfos, err := pluginspec.LoadPluginDefinition(ctx, pluginSources, pluginspec.Options{
+		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
 				// TODO? should we fail more loudly
 				if !strings.Contains(jsonData.ID, "-") || strings.Contains(jsonData.ID, ".") || jsonData.ID == "v1" {
@@ -136,7 +135,10 @@ func RegisterAPIService(
 				return true
 			}
 			return false
-		}, true)
+		},
+		Schemas:     true,
+		AppManifest: false, // TODO, load from feature toggle
+	})
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
@@ -145,8 +147,7 @@ func RegisterAPIService(
 	var last *AppPluginAPIBuilder
 	for _, plugin := range pluginInfos {
 		b, err := NewAppPluginAPIBuilder(plugin,
-			apppluginV0.VERSION, // v0alpha1
-			pluginClient,        // scoped to a single plugin!
+			pluginClient, // scoped to a single plugin!
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),

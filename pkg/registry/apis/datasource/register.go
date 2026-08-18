@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +18,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -29,8 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginspec "github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -121,10 +121,13 @@ func RegisterAPIService(
 		return nil, regErr
 	}
 
-	pluginInfos, err := pluginspec.LoadPlugins(context.Background(), pluginSources,
-		func(jsonData plugins.JSONData) bool {
+	pluginInfos, err := pluginspec.LoadPluginDefinition(context.Background(), pluginSources, pluginspec.Options{
+		Filter: func(jsonData plugins.JSONData) bool {
 			return jsonData.Type == plugins.TypeDataSource
-		}, flags.LoadOpenAPISpec || flags.LoadQueryTypes)
+		},
+		Schemas:     flags.LoadOpenAPISpec || flags.LoadQueryTypes,
+		AppManifest: false, // not yet
+	})
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
