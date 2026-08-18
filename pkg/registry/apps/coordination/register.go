@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	claims "github.com/grafana/authlib/types"
+	coordinationv0alpha1 "github.com/grafana/grafana/apps/coordination/pkg/apis/coordination/v0alpha1"
 	"github.com/grafana/grafana/apps/coordination/pkg/apis/manifestdata"
 	coordinationapp "github.com/grafana/grafana/apps/coordination/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -26,9 +27,10 @@ var (
 	_ appinstaller.ClusterScopedStorageAuthorizerProvider = (*AppInstaller)(nil)
 )
 
-// AppInstaller installs the coordination app, which serves the cluster-scoped
-// coordination.grafana.app Lease kind used for fleet-level coordination
-// (leader election and shard ownership across a multi-tenant operator's replicas).
+// AppInstaller installs the coordination app, which serves two coordination.grafana.app
+// kinds: a namespaced Lease for tenant-scoped coordination, and a cluster-scoped
+// ClusterLease for fleet-level coordination (leader election and shard ownership
+// across a multi-tenant operator's replicas) that is owned by no tenant.
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	logger log.Logger
@@ -53,10 +55,12 @@ func RegisterAppInstaller() (*AppInstaller, error) {
 	return installer, nil
 }
 
-// GetAuthorizer is the API-level authorizer. Fleet leases are owned by no tenant,
-// so access is default-deny: only Grafana admins (on-prem) and service identities
-// (service accounts / access policies, in Cloud) may reach the kind. Regular tenant
-// users are denied. The storage authorizer (below) is the fail-closed backstop.
+// GetAuthorizer is the API-level authorizer for both kinds. Coordination leases are
+// default-deny to regular users: only Grafana admins (on-prem) and service identities
+// (service accounts / access policies, in Cloud) may reach them. For the namespaced
+// Lease, the caller's namespace-scoped token additionally confines it to its own
+// tenant; for the cluster-scoped ClusterLease, the storage authorizer (below) is the
+// fail-closed backstop and adds per-service owner scoping.
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -67,7 +71,7 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			if err != nil {
 				return authorizer.DecisionDeny, "valid identity is required", err
 			}
-			if isFleetIdentity(requester) {
+			if isServiceIdentity(requester) {
 				return authorizer.DecisionAllow, "", nil
 			}
 			return authorizer.DecisionDeny, "coordination leases are restricted to service identities", nil
@@ -76,18 +80,23 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 }
 
 // GetClusterScopedStorageAuthorizer returns the storage-level authorizer for the
-// cluster-scoped Lease kind. Implementing this is the mandatory opt-in for
+// cluster-scoped ClusterLease. Implementing this is the mandatory opt-in for
 // cluster-scoped storage; it gates create/update/delete/get/list AND watch, so a
-// tenant token can neither mutate nor observe fleet leases. Returning nil for an
-// unexpected resource keeps the default deny authorizer (fail-closed).
+// tenant token can neither mutate nor observe fleet leases, and it scopes each
+// service to the leases it owns. Returning nil for any other resource keeps the
+// default deny authorizer (fail-closed). The namespaced Lease does not reach here —
+// it uses ordinary namespace-scoped storage.
 func (a *AppInstaller) GetClusterScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer {
+	if gr.Resource != coordinationv0alpha1.ClusterLeaseKind().Plural() {
+		return nil
+	}
 	return &leaseStorageAuthorizer{logger: a.logger}
 }
 
-// isFleetIdentity reports whether the requester may act on fleet-scoped leases:
+// isServiceIdentity reports whether the requester may act on coordination leases:
 // a Grafana server admin, or a non-human service identity (service account or
 // access policy). Everything else — regular tenant users, anonymous — is denied.
-func isFleetIdentity(requester identity.Requester) bool {
+func isServiceIdentity(requester identity.Requester) bool {
 	if requester.GetIsGrafanaAdmin() {
 		return true
 	}

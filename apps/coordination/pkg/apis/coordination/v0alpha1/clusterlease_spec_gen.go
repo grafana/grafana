@@ -3,7 +3,7 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type LeaseSpec struct {
+type ClusterLeaseSpec struct {
 	// holderIdentity is the identity of the current holder, "<pod>_<uid>" by convention.
 	HolderIdentity *string `json:"holderIdentity,omitempty"`
 	// leaseDurationSeconds is how long a candidate must wait after renewTime before
@@ -23,12 +23,12 @@ type LeaseSpec struct {
 	PreferredHolder *string `json:"preferredHolder,omitempty"`
 }
 
-// NewLeaseSpec creates a new LeaseSpec object.
-func NewLeaseSpec() *LeaseSpec {
-	return &LeaseSpec{}
+// NewClusterLeaseSpec creates a new ClusterLeaseSpec object.
+func NewClusterLeaseSpec() *ClusterLeaseSpec {
+	return &ClusterLeaseSpec{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for LeaseSpec.
-func (LeaseSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.LeaseSpec"
+// OpenAPIModelName returns the OpenAPI model name for ClusterLeaseSpec.
+func (ClusterLeaseSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseSpec"
 }

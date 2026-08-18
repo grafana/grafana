@@ -11,7 +11,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaLease = resource.NewSimpleSchema("coordination.grafana.app", "v0alpha1", NewLease(), &LeaseList{}, resource.WithKind("Lease"),
-		resource.WithPlural("leases"), resource.WithScope(resource.ClusterScope))
+		resource.WithPlural("leases"), resource.WithScope(resource.NamespacedScope))
 	kindLease = resource.Kind{
 		Schema: schemaLease,
 		Codecs: map[resource.KindEncoding]resource.Codec{

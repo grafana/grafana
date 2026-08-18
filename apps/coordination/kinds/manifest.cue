@@ -5,7 +5,7 @@ manifest: {
 	groupOverride: "coordination.grafana.app"
 	versions: {
 		"v0alpha1": {
-			kinds: [lease]
+			kinds: [lease, clusterLease]
 		}
 	}
 	roles: {}

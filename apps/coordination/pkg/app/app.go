@@ -14,11 +14,13 @@ import (
 	coordinationv0alpha1 "github.com/grafana/grafana/apps/coordination/pkg/apis/coordination/v0alpha1"
 )
 
-// New creates the coordination app. The app serves a single cluster-scoped Lease
-// kind. It carries no reconciler: a Lease is a dumb record and all election logic
-// lives client-side. The app only enforces admission policy (see validation.go),
-// while cluster-scoped read/write authorization is enforced by the storage
-// authorizer wired in the registry installer.
+// New creates the coordination app. The app serves two kinds sharing one spec: a
+// namespaced Lease (tenant-scoped coordination) and a cluster-scoped ClusterLease
+// (fleet coordination owned by no tenant). It carries no reconciler: a lease is a
+// dumb record and all election logic lives client-side. The app only enforces
+// admission policy (see validation.go); read/write authorization for the
+// cluster-scoped ClusterLease is enforced by the storage authorizer wired in the
+// registry installer, while the namespaced Lease relies on ordinary namespace authz.
 func New(cfg app.Config) (app.App, error) {
 	cfg.KubeConfig.APIPath = "apis"
 
@@ -36,6 +38,10 @@ func New(cfg app.Config) (app.App, error) {
 			{
 				Kind:      coordinationv0alpha1.LeaseKind(),
 				Validator: &simple.Validator{ValidateFunc: validateLease},
+			},
+			{
+				Kind:      coordinationv0alpha1.ClusterLeaseKind(),
+				Validator: &simple.Validator{ValidateFunc: validateClusterLease},
 			},
 		},
 	}
@@ -59,6 +65,6 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 		Version: coordinationv0alpha1.LeaseKind().Version(),
 	}
 	return map[schema.GroupVersion][]resource.Kind{
-		gv: {coordinationv0alpha1.LeaseKind()},
+		gv: {coordinationv0alpha1.LeaseKind(), coordinationv0alpha1.ClusterLeaseKind()},
 	}
 }

@@ -20,9 +20,12 @@ import (
 )
 
 var (
-	rawSchemaLeasev0alpha1     = []byte(`{"Lease":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"description":"Spec mirrors coordination.k8s.io/v1 LeaseSpec. Timestamps are RFC3339\nstrings (sub-second precision) rather than metav1.MicroTime, consistent\nwith other app-platform kinds; the client adapter converts.","properties":{"acquireTime":{"description":"acquireTime is when the current holder first acquired the lease (RFC3339).","type":"string"},"holderIdentity":{"description":"holderIdentity is the identity of the current holder, \"\u003cpod\u003e_\u003cuid\u003e\" by convention.","type":"string"},"leaseDurationSeconds":{"description":"leaseDurationSeconds is how long a candidate must wait after renewTime\nbefore taking over. Bounds (floor 10s to cap the fleet-wide write rate,\nceiling 600s to keep worst-case takeover under ~10 minutes) are enforced\nby the admission validator so the field stays int32, matching k8s.","type":"integer"},"leaseTransitions":{"description":"leaseTransitions is incremented each time the holder changes.","type":"integer"},"preferredHolder":{"description":"preferredHolder is reserved for coordinated/preference-based election (k8s KEP-4355).","type":"string"},"renewTime":{"description":"renewTime is the last renewal; holders update this on every renew (RFC3339).","type":"string"},"strategy":{"description":"strategy is reserved for coordinated/preference-based election (k8s KEP-4355).","type":"string"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
-	versionSchemaLeasev0alpha1 app.VersionSchema
-	_                          = json.Unmarshal(rawSchemaLeasev0alpha1, &versionSchemaLeasev0alpha1)
+	rawSchemaLeasev0alpha1            = []byte(`{"Lease":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"acquireTime":{"description":"acquireTime is when the current holder first acquired the lease (RFC3339).","type":"string"},"holderIdentity":{"description":"holderIdentity is the identity of the current holder, \"\u003cpod\u003e_\u003cuid\u003e\" by convention.","type":"string"},"leaseDurationSeconds":{"description":"leaseDurationSeconds is how long a candidate must wait after renewTime before\ntaking over. Bounds (floor 10s to cap the fleet-wide write rate, ceiling 600s to\nkeep worst-case takeover under ~10 minutes) are enforced by the admission\nvalidator so the field stays int32, matching k8s.","type":"integer"},"leaseTransitions":{"description":"leaseTransitions is incremented each time the holder changes.","type":"integer"},"preferredHolder":{"description":"preferredHolder is reserved for coordinated/preference-based election (k8s KEP-4355).","type":"string"},"renewTime":{"description":"renewTime is the last renewal; holders update this on every renew (RFC3339).","type":"string"},"strategy":{"description":"strategy is reserved for coordinated/preference-based election (k8s KEP-4355).","type":"string"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaLeasev0alpha1        app.VersionSchema
+	_                                 = json.Unmarshal(rawSchemaLeasev0alpha1, &versionSchemaLeasev0alpha1)
+	rawSchemaClusterLeasev0alpha1     = []byte(`{"ClusterLease":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"acquireTime":{"description":"acquireTime is when the current holder first acquired the lease (RFC3339).","type":"string"},"holderIdentity":{"description":"holderIdentity is the identity of the current holder, \"\u003cpod\u003e_\u003cuid\u003e\" by convention.","type":"string"},"leaseDurationSeconds":{"description":"leaseDurationSeconds is how long a candidate must wait after renewTime before\ntaking over. Bounds (floor 10s to cap the fleet-wide write rate, ceiling 600s to\nkeep worst-case takeover under ~10 minutes) are enforced by the admission\nvalidator so the field stays int32, matching k8s.","type":"integer"},"leaseTransitions":{"description":"leaseTransitions is incremented each time the holder changes.","type":"integer"},"preferredHolder":{"description":"preferredHolder is reserved for coordinated/preference-based election (k8s KEP-4355).","type":"string"},"renewTime":{"description":"renewTime is the last renewal; holders update this on every renew (RFC3339).","type":"string"},"strategy":{"description":"strategy is reserved for coordinated/preference-based election (k8s KEP-4355).","type":"string"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaClusterLeasev0alpha1 app.VersionSchema
+	_                                 = json.Unmarshal(rawSchemaClusterLeasev0alpha1, &versionSchemaClusterLeasev0alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -38,7 +41,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Lease",
 					Plural:     "Leases",
-					Scope:      "Cluster",
+					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
@@ -49,6 +52,22 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaLeasev0alpha1,
+				},
+
+				{
+					Kind:       "ClusterLease",
+					Plural:     "ClusterLeases",
+					Scope:      "Cluster",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaClusterLeasev0alpha1,
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
@@ -69,7 +88,8 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Lease/v0alpha1": v0alpha1.LeaseKind(),
+	"Lease/v0alpha1":        v0alpha1.LeaseKind(),
+	"ClusterLease/v0alpha1": v0alpha1.ClusterLeaseKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
