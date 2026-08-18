@@ -20,13 +20,13 @@ const SEARCH_API_VERSION = 'search.grafana.app/v0alpha1';
 const SEARCH_QUERY_KIND = 'SearchQuery';
 
 /** Matches free text against text-capable fields; defaults to `title` when fields is omitted. */
-export interface TextPredicate {
+interface TextPredicate {
   value: string;
   fields?: string[];
 }
 
 /** Exact / set membership against one field. */
-export interface FilterPredicate {
+interface FilterPredicate {
   field: string;
   operator: 'In' | 'NotIn';
   values: string[];
@@ -39,7 +39,7 @@ export interface WhereNode {
   filter?: FilterPredicate;
 }
 
-export interface SortField {
+interface SortField {
   field: string;
   direction?: 'asc' | 'desc';
 }
@@ -63,7 +63,7 @@ export interface NotebookSearchQuery {
   limit?: number;
 }
 
-export interface ResourceRef {
+interface ResourceRef {
   group: string;
   resource: string;
   kind: string;
@@ -79,15 +79,15 @@ export interface ResultItem {
 }
 
 /** `eq` when totalHits is exact, `lte` when it is an upper bound. */
-export type TotalHitsRelation = 'eq' | 'lte';
+type TotalHitsRelation = 'eq' | 'lte';
 
-export interface ResultsMetadata {
+interface ResultsMetadata {
   continue?: string;
   totalHits: number;
   totalHitsRelation: TotalHitsRelation;
 }
 
-export interface FacetTerm {
+interface FacetTerm {
   value: string;
   count: number;
 }
@@ -107,7 +107,7 @@ const notebookListTag = { type: 'Notebook' as const, id: 'LIST' };
  * Counted in rows rather than pages, so it does not silently change meaning when the page size
  * does — though a smaller page size does mean more requests to reach the same ceiling.
  */
-export const MAX_ACCUMULATED_NOTEBOOKS = 2000;
+const MAX_ACCUMULATED_NOTEBOOKS = 2000;
 
 /** The cursor for the next page: absent on the first request, opaque afterwards. */
 type PageCursor = string | undefined;
