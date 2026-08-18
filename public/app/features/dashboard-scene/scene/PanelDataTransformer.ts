@@ -192,6 +192,15 @@ export class PanelDataTransformer extends SceneDataTransformer {
       return;
     }
 
+    // Resolving further is only worth it if there is something to install from the result. Every
+    // panel on every dashboard reaches this line, so while the feature is off the import below would
+    // be an async plugin resolution per panel that can only ever decide to do nothing. Skipping it
+    // gives up no reachable behaviour: the branch above declines for the same reason once it has a
+    // plugin in hand, so a flag enabled mid-session already does not retro-install either way.
+    if (!pluginTransformationsEnabled()) {
+      return;
+    }
+
     // Nothing resolves this id synchronously, and the panel may never load it: a provider can be
     // activated on its own, without its panel — conditional rendering and the dashboard datasource's
     // source-panel path both do. Import it from here, once per resolution attempt, rather than from

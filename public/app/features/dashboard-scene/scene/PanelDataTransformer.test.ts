@@ -22,6 +22,7 @@ import {
 } from '@grafana/scenes';
 import { DataTopic } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { PanelDataPaneNext } from '../panel-edit/PanelEditNext/PanelDataPaneNext';
@@ -44,10 +45,10 @@ const importerBlindPlugins = new Set<string>();
 jest.mock('app/features/plugins/importPanelPlugin', () => ({
   syncGetPanelPlugin: (id: string) =>
     coldPlugins.has(id) || importerBlindPlugins.has(id) ? undefined : plugins.get(id),
-  importPanelPlugin: (id: string) => {
+  importPanelPlugin: jest.fn((id: string) => {
     const plugin = importerBlindPlugins.has(id) ? undefined : plugins.get(id);
     return plugin ? Promise.resolve(plugin) : Promise.reject(new Error(`Plugin ${id} not found`));
-  },
+  }),
 }));
 
 setPluginImportUtils({
@@ -121,6 +122,7 @@ describe('PanelDataTransformer', () => {
     plugins.clear();
     coldPlugins.clear();
     importerBlindPlugins.clear();
+    jest.mocked(importPanelPlugin).mockClear();
     setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
   });
 
@@ -330,6 +332,23 @@ describe('PanelDataTransformer', () => {
     expect(transformer.state.transformations).toEqual([]);
     // An empty transformations list means the base class keeps its identity-preserving fast path.
     expect(transformer.state.data?.series === series).toBe(true);
+  });
+
+  it('does not resolve the plugin at all when the feature toggle is off', async () => {
+    setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: false });
+    registerPlugin('cold', (p) => p.setDataTransformations(() => [extractLabels]));
+    coldPlugins.add('cold');
+
+    const { transformer } = buildPipeline({ pluginId: 'cold', series: [frameWithLabels()] });
+    activateFullSceneTree(transformer);
+
+    await waitFor(() => {
+      expect(transformer.state.data?.state).toBe(LoadingState.Done);
+    });
+    // Every panel of every dashboard is a `PanelDataTransformer` now, so an import that could only
+    // ever decide to install nothing is a cost the whole product pays while this feature is off.
+    // The flag-on counterpart is the cold-plugin test below, which only passes via this import.
+    expect(importPanelPlugin).not.toHaveBeenCalled();
   });
 
   it('stops applying plugin transformations when the toggle is turned off mid-session', async () => {
