@@ -201,6 +201,10 @@
         window.__grafanaRenderBindingSupported = true;
       [[end]]
 
+      [[if .UseLuxon]]
+        window.__grafanaUseLuxon = true;
+      [[end]]
+
       [[if .AssetSriChecksEnabled]]
         // For enabling SRI checks on dynamically loaded Grafana assets
         window.__grafanaAssetSriChecksEnabled = true;
@@ -212,6 +216,15 @@
 
       [[if .NewPreferencesPage]]
         window.__grafanaNewPreferencesPage = true;
+      [[end]]
+
+      [[if .OFREPRootUrlEnabled]]
+        window.__grafanaOFREPRootUrlEnabled = true;
+      [[end]]
+
+      [[if .PreviewAssetsFolder]]
+        // Set when the assets on this page come from a PR preview build
+        window.__grafanaPreviewAssets = '[[.PreviewAssetsFolder]]';
       [[end]]
 
       window.__grafanaLegacyAPIMode = [[.LegacyAPIMode]];

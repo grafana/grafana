@@ -1,12 +1,9 @@
 package home
 
 import (
-	"bytes"
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -16,25 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-//go:embed home.json
-var defaultHomeDashboardJSON []byte
-
 // HasCustomHome reports whether the deployment is configured to serve a custom
-// home dashboard. It mirrors the path resolution in homeDashboardPath so the
-// answer matches what the getter will actually serve.
+// home dashboard via default_home_dashboard_path. When unset, Grafana uses the
+// unified React homepage instead of a bundled dashboard JSON file.
 func HasCustomHome(cfg *setting.Cfg) bool {
-	if cfg.DefaultHomeDashboardPath != "" {
-		// An explicit override is always considered custom, even if the file
-		// happens to be missing — the getter will log and fall back, but the
-		// operator's intent is clear.
-		return true
-	}
-
-	loaded, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, "dashboards/home.json"))
-	if err != nil {
-		return false
-	}
-	return !bytes.Equal(defaultHomeDashboardJSON, loaded)
+	return cfg.DefaultHomeDashboardPath != ""
 }
 
 func readDashboard(filePath string) (runtime.Object, error) {
@@ -76,10 +59,4 @@ func readDashboardBytes(raw []byte) (runtime.Object, error) {
 		return nil, fmt.Errorf("decode home dashboard spec: %w", err)
 	}
 	return &dashv0.Dashboard{Spec: v0alpha1.Unstructured{Object: spec}}, nil
-}
-
-// defaultHomeDashboard is the fallback returned when no file is configured or
-// the configured file cannot be read.
-func defaultHomeDashboard() (runtime.Object, error) {
-	return readDashboardBytes(defaultHomeDashboardJSON)
 }

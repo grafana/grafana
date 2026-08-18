@@ -1,10 +1,9 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { test, expect } from '@grafana/plugin-e2e';
 
 import v2DashboardWithTabsForSlug from '../dashboards/V2DashboardWithTabsForSlugTest.json';
 
-import { Rows, Tabs } from './page-objects';
-import { importTestDashboard } from './utils';
+import { test, expect } from './fixtures';
+import { flows } from './helpers';
 
 test.use({
   featureToggles: {
@@ -98,7 +97,12 @@ test.describe(
     test.beforeAll(async ({ browser, baseURL }) => {
       const page = await browser.newPage({ baseURL });
       try {
-        await importTestDashboard(page, selectors, 'url-sync-tabs-test', JSON.stringify(v2DashboardWithTabsForSlug));
+        await flows.dashboards.importTestDashboard(
+          page,
+          selectors,
+          'url-sync-tabs-test',
+          JSON.stringify(v2DashboardWithTabsForSlug)
+        );
         const match = page.url().match(/\/d\/([^/?]+)/);
         dashboardUid = match![1];
       } finally {
@@ -107,10 +111,7 @@ test.describe(
     });
 
     for (const testCase of testCases) {
-      test(testCase.description, async ({ dashboardPage, selectors, page, components }) => {
-        const tabs = new Tabs({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-
+      test(testCase.description, async ({ page, rows, tabs }) => {
         await page.goto(buildDashboardPathWithSearch(dashboardUid, testCase.searchParams));
 
         const tabLocator = testCase.rowTitle

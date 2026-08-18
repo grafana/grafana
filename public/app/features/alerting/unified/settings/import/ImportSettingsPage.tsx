@@ -8,7 +8,6 @@ import { logError } from '../../Analytics';
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import { WithReturnButton } from '../../components/WithReturnButton';
 import { AutoSyncConfiguration } from '../../components/settings/AutoSyncConfiguration';
-import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
@@ -17,7 +16,8 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { useSettingsPageNav } from '../navigation';
 
 import { StagedConfiguration } from './StagedConfiguration';
-import { isStagedExtraConfig } from './stagedConfig';
+import { getStagedConfigPermissions } from './stagedConfigPermissions';
+import { useStagedConfig } from './useStagedConfig';
 
 const IMPORT_WIZARD_URL = '/alerting/import-to-gma';
 
@@ -49,27 +49,27 @@ function ImportSettingsPage() {
 
 function ImportSettingsContent() {
   const isAutoSyncEnabled = config.featureToggles['alerting.syncExternalAlertmanager'];
+  const { stagedConfig } = useStagedConfig();
 
   return (
     <Stack direction="column" gap={2}>
-      {isAutoSyncEnabled && <AutoSyncConfiguration />}
+      {isAutoSyncEnabled && <AutoSyncConfiguration stagedConfigIdentifier={stagedConfig?.identifier} />}
       <StagedConfigurationSection />
     </Stack>
   );
 }
 
 function StagedConfigurationSection() {
-  const { data, isLoading, isError, error, refetch } = useAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
+  const { canRevert } = getStagedConfigPermissions();
+  const { stagedConfig, liveConfig, isLoading, isError, error, refetch } = useStagedConfig();
+
+  const isSyncManaged = stagedConfig?.managed_by === 'auto-sync';
 
   useEffect(() => {
     if (isError) {
       logError(new Error(stringifyErrorLike(error)));
     }
   }, [isError, error]);
-
-  // A user can have at most one staged configuration at a time
-  const rawStagedConfig: unknown = data?.extra_config?.[0];
-  const stagedConfig = isStagedExtraConfig(rawStagedConfig) ? rawStagedConfig : undefined;
 
   return (
     <Stack direction="column" gap={1}>
@@ -124,7 +124,12 @@ function StagedConfigurationSection() {
       )}
 
       {!isLoading && !isError && stagedConfig && (
-        <StagedConfiguration stagedConfig={stagedConfig} liveConfig={data?.alertmanager_config} />
+        <StagedConfiguration
+          stagedConfig={stagedConfig}
+          canRevert={canRevert}
+          isSyncManaged={isSyncManaged}
+          liveConfig={liveConfig}
+        />
       )}
     </Stack>
   );

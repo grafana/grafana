@@ -3671,6 +3671,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Odstępy czasu",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Wybierz odstępy czasu…"
     },
     "time-intervals-table": {
@@ -5738,10 +5739,13 @@
       "add-conditional-rule": "Dodaj regułę {{ruleDescription}}",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Duplikuj panel",
       "edit-query-result-rule": "Zmień regułę wyniku zapytania",
       "edit-template-variable-rule": "Zmień regułę zmiennej szablonu",
       "edit-time-range-rule": "Zmień regułę zakresu czasu",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Przenieś {{typeName}}",
       "panel-background": "Zmień tło panelu",
       "panel-description": "Zmień opis panelu",
@@ -5994,8 +5998,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Spowoduje to rozgrupowanie wszystkich zagnieżdżonych grup.",
-      "ungroup-nested-title": "Rozgrupować zagnieżdżone grupy?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} z {{numberOfPages}}",
@@ -6210,6 +6218,13 @@
       "save-json-to-file": "Zapisz JSON w pliku",
       "see-docs": "Więcej informacji na temat konfiguracji można znaleźć w <2>dokumentacji</2>."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6385,6 +6400,12 @@
         "title-hidden_few": "",
         "title-hidden_many": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -6951,7 +6972,8 @@
         "change-annotation-enabled-state": "Zmień stan włączenia adnotacji",
         "change-annotation-name": "Zmień nazwę adnotacji",
         "change-annotation-panel-filter": "Zmień filtr panelu adnotacji"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Usuń zapytanie dotyczące adnotacji",
@@ -7027,13 +7049,9 @@
       "placeholder-your-metric-prefix": "Prefiks metryki"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Usuń",
-      "aria-label-edit": "Edytuj",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Reguły pokazywania/ukrywania nie będą działać",
@@ -7358,6 +7376,7 @@
         "title-someone-else-has-updated-this-dashboard": "Ktoś inny zaktualizował ten pulpit",
         "would-still-dashboard": "Czy nadal chcesz zapisać ten pulpit?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Zapisz i zastąp"
     },
     "legacy": {
@@ -7837,6 +7856,10 @@
     "variable-controls": {
       "add-variable": "Dodaj zmienną"
     },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
+    },
     "variable-editable-element": {
       "delete-confirm": "Usuń zmienną",
       "delete-text": "Czy na pewno chcesz usunąć: {{name}}?",
@@ -8172,7 +8195,8 @@
       "title-missing-rights": "Brak uprawnień"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Wybierz źródło danych"
+      "aria-label-select-a-data-source": "Wybierz źródło danych",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Nie znaleziono strony: {{page}}"
@@ -11111,6 +11135,12 @@
       "high-count_many": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12629,6 +12659,10 @@
     "new-folder": {
       "title": "Nowy folder"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12812,6 +12846,7 @@
       "customise-saving": "",
       "dialog-label": "Nawigacja",
       "dock": "Zadokuj menu",
+      "header-title": "",
       "list-label": "Nawigacja",
       "open": "Menu główne",
       "pin-error": "",
@@ -12929,7 +12964,50 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": ""
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_few": "",
+      "count_many": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_few": "",
+      "count-truncated_many": "",
+      "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -14995,7 +15073,6 @@
     },
     "header": {
       "alert": "Alert",
-      "expression": "Wyrażenie",
       "pending-expression": "",
       "pending-expression-cancel": "Anuluj",
       "pending-transformation": "",
@@ -15009,6 +15086,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
@@ -16256,6 +16334,7 @@
     "name-show-mini-map": "Pokaż minimapę"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16284,6 +16363,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {
