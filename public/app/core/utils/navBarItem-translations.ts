@@ -115,6 +115,10 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.authentication.title', 'Authentication');
     case 'licensing':
       return t('nav.statistics-and-licensing.title', 'Statistics and licensing');
+    case 'banner-settings':
+      return t('nav.banner-settings.title', 'Announcement banner');
+    case 'secrets-management':
+      return t('nav.secrets-management.title', 'Secrets Management');
     case 'recordedQueries':
       return t('nav.recorded-queries.title', 'Recorded queries');
     case 'correlations':
@@ -244,6 +248,10 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.recently-deleted.subtitle', 'Deleted dashboards are kept for up to 12 months.');
     case 'saved-queries':
       return t('nav.saved-queries.subtitle', 'Reusable queries across Grafana');
+    case 'banner-settings':
+      return t('nav.banner-settings.subtitle', 'Show important updates and information at the top of every page');
+    case 'secrets-management':
+      return t('nav.secrets-management.subtitle', 'Manage secrets for your Grafana instance');
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');
     case 'alerting-upgrade':
