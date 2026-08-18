@@ -1,3 +1,16 @@
+<!-- 13.0.7 START -->
+
+# 13.0.7 (2026-08-18)
+
+### Security
+
+- CVE-2026-17183
+
+### Bug fixes
+
+- **Reporting:** batch dashboard lookups when listing reports (Enterprise)
+
+<!-- 13.0.7 END -->
 <!-- 13.0.6 START -->
 
 # 13.0.6 (2026-08-07)
