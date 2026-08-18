@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -170,7 +171,11 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     // Same DOM depth as the default branch below — the Tab handler above walks up from `ref` to the
     // react-data-grid header cell, so this root has to stay its direct child.
     return (
-      <div ref={ref} className={styles.headerCellRoot} onKeyDown={onKeyDown}>
+      // A nested table's own header cells sit inside the outer grid's nested-frame cell, so
+      // `:hover`/`:focus-within` on that outer `.rdg-cell` would otherwise reveal every column's
+      // menu at once. `table-ng-header-cell` gives HeaderCellMenu something to scope to that's
+      // unique per column, regardless of how deep it sits in a nested table.
+      <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
         <div className={styles.headerCellLabelGroup}>{label}</div>
 
         {filterable && (

@@ -161,6 +161,16 @@ describe('HeaderCell', () => {
       expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
     });
 
+    it('gives the header cell root a stable class the menu scopes its hover reveal to', () => {
+      // Regression guard: the column menu's hover/focus-reveal CSS matches this class rather than
+      // the bare `.rdg-cell` react-data-grid puts on every header cell. In a nested table, a
+      // column's header cell also sits inside the *outer* grid's nested-frame `.rdg-cell`, and
+      // `:hover`/`:focus-within` bubble up to that ancestor — matching on bare `.rdg-cell` would
+      // reveal every column's menu in the nested table at once. See HeaderCellMenu's styles.
+      const { container } = render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+      expect(container.querySelector('.table-ng-header-cell')).toBeInTheDocument();
+    });
+
     it('opens the filter popup from the column menu', async () => {
       render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
 
@@ -264,9 +274,7 @@ describe('HeaderCell', () => {
 
       const filterIcon = screen.getByLabelText(filterIconLabel).querySelector('svg')!;
       const typeIcon = screen.getByTitle('string').closest('svg')!;
-      const sortArrow = [...container.querySelectorAll('svg')].find(
-        (svg) => svg !== filterIcon && svg !== typeIcon
-      )!;
+      const sortArrow = [...container.querySelectorAll('svg')].find((svg) => svg !== filterIcon && svg !== typeIcon)!;
 
       // The funnel fills its box where the arrow is a thin glyph, so rendering both at the arrow's
       // "lg" made the funnel read as oversized. It tracks the type icon's size instead.
