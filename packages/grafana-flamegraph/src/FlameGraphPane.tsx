@@ -166,22 +166,13 @@ const FlameGraphPane = ({
       }
     }
 
-    const levels = dataContainer.getLevels();
-    for (const level of levels) {
-      for (const item of level) {
-        if (
-          item.itemIndexes.length === focusedItemIndexes.length &&
-          item.itemIndexes.every((val, idx) => val === focusedItemIndexes[idx])
-        ) {
-          const label = dataContainer.getLabel(item.itemIndexes[0]);
-          const totalViewTicks = levels[0][0].value;
+    const item = dataContainer.getItemByIndexes(focusedItemIndexes);
+    if (item) {
+      const totalViewTicks = dataContainer.getLevels()[0][0].value;
 
-          setFocusedItemData({ label, item, posX: 0, posY: 0 });
-          setRangeMin(item.start / totalViewTicks);
-          setRangeMax((item.start + item.value) / totalViewTicks);
-          return;
-        }
-      }
+      setFocusedItemData({ label: dataContainer.getLabel(item.itemIndexes[0]), item, posX: 0, posY: 0 });
+      setRangeMin(item.start / totalViewTicks);
+      setRangeMax((item.start + item.value) / totalViewTicks);
     }
   }, [focusedItemIndexes, dataContainer, focusedItemData]);
 

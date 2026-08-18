@@ -413,6 +413,24 @@ export class FlameGraphDataContainer {
   }
 
   /**
+   * Finds the item with the given data frame indexes, or undefined if no item has them.
+   */
+  getItemByIndexes(itemIndexes: number[]): LevelItem | undefined {
+    for (const level of this.getLevels()) {
+      for (const item of level) {
+        if (
+          item.itemIndexes.length === itemIndexes.length &&
+          item.itemIndexes.every((val, idx) => val === itemIndexes[idx])
+        ) {
+          return item;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
    * Finds the item at the given call path (as returned by getItemPath), or undefined if the path does not exist in
    * this data, for example because the profile changed.
    */

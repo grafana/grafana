@@ -79,6 +79,13 @@ export type Props = {
   keepFocusOnDataChange?: boolean;
 
   /**
+   * Called when the user focuses a node or resets the focus, with the call path of the focused node from the root
+   * (undefined when the focus is reset). Lets a host react to what the user is looking at, for example to load more
+   * detail for that part of the profile.
+   */
+  onFocusChange?: (path: string[] | undefined) => void;
+
+  /**
    * If true, the assistant button will be shown in the header if available.
    * This is needed mainly for Profiles Drilldown where in some cases we need to hide the button to show alternative
    * option to use AI.
@@ -107,6 +114,7 @@ const FlameGraphContainer = ({
   showFlameGraphOnly,
   disableCollapsing,
   keepFocusOnDataChange,
+  onFocusChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
 }: Props) => {
@@ -128,11 +136,13 @@ const FlameGraphContainer = ({
   const onTableSymbolClickRef = useRef(onTableSymbolClick);
   const onTextAlignSelectedRef = useRef(onTextAlignSelected);
   const onTableSortRef = useRef(onTableSort);
+  const onFocusChangeRef = useRef(onFocusChange);
 
   useEffect(() => {
     onTableSymbolClickRef.current = onTableSymbolClick;
     onTextAlignSelectedRef.current = onTextAlignSelected;
     onTableSortRef.current = onTableSort;
+    onFocusChangeRef.current = onFocusChange;
   });
 
   const stableOnTableSymbolClick = useCallback((symbol: string) => {
@@ -154,6 +164,28 @@ const FlameGraphContainer = ({
 
     return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
   }, [data, theme, disableCollapsing]);
+
+  // Focus is tracked centrally as data frame indexes so it can be shared between panes; report it to the host as a
+  // call path, which stays meaningful across data changes. Only actual changes are reported, so re-anchoring the
+  // focus on new data for the same path stays silent.
+  const reportedFocusPathRef = useRef<string[] | undefined>(undefined);
+
+  useEffect(() => {
+    if (!dataContainer) {
+      return;
+    }
+
+    const item = focusedItemIndexes?.length ? dataContainer.getItemByIndexes(focusedItemIndexes) : undefined;
+    const path = item && dataContainer.getItemPath(item);
+    const previous = reportedFocusPathRef.current;
+    const unchanged =
+      path === previous || (path && previous && path.length === previous.length && path.every((l, i) => l === previous[i]));
+
+    if (!unchanged) {
+      reportedFocusPathRef.current = path;
+      onFocusChangeRef.current?.(path);
+    }
+  }, [focusedItemIndexes, dataContainer]);
 
   const styles = getStyles(theme);
   const matchedLabels = useLabelSearch(search, dataContainer);
