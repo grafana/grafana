@@ -429,7 +429,7 @@ describe('LogsTable', () => {
 
   describe('Loki time column tooltip', () => {
     const lokiTooltip =
-      'Sorting this column only reorders the results on display. Use the sort button in the controls on the right to control time sorting, which updates the underlying query.';
+      'Sorting this column only changes the order of the displayed results. To update the query’s time-based sort order, use the Sort control on the right.';
 
     it('shows a tooltip on the timestamp column when the query uses Loki', async () => {
       const { container } = setUp({
