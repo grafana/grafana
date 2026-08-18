@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -37,9 +37,19 @@ export const TruncatedText = React.forwardRef<HTMLElement, TruncatedTextProps>((
     };
   }, [setIsOverflowing, resizeObserver]);
 
+  const [textContent, setTextContent] = useState('');
+  // we intentionally want to update the state on every render to ensure the
+  //  tooltip content is always up to date with the text content of the children
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    if (internalRef.current) {
+      setTextContent(internalRef.current.textContent ?? '');
+    }
+  });
+
   if (isOverflowing) {
     return (
-      <Tooltip ref={internalRef} content={internalRef.current?.textContent ?? ''}>
+      <Tooltip ref={internalRef} content={textContent}>
         {childElement(undefined)}
       </Tooltip>
     );
