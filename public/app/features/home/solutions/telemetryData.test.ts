@@ -340,6 +340,26 @@ describe('fetchTracesActivity', () => {
     );
   });
 
+  it('retries when Tempo returns the duration limit as a string response body', async () => {
+    mockProxyGet
+      .mockRejectedValueOnce({
+        status: 400,
+        data: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s',
+      })
+      .mockResolvedValueOnce({ series: [] });
+
+    await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null, lookbackHours: 3 });
+    expect(mockProxyGet).toHaveBeenCalledTimes(2);
+  });
+
+  it('preserves a malformed Tempo error response', async () => {
+    const error = { status: 400, data: {} };
+    mockProxyGet.mockRejectedValue(error);
+
+    await expect(fetchTracesActivity(tempo)).rejects.toBe(error);
+    expect(mockProxyGet).toHaveBeenCalledTimes(1);
+  });
+
   it('does not retry unrelated Tempo errors', async () => {
     const error = { status: 400, data: { message: 'invalid TraceQL query' } };
     mockProxyGet.mockRejectedValue(error);
