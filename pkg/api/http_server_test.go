@@ -401,8 +401,8 @@ func TestHTTPServer_getListeners(t *testing.T) {
 func TestHTTPServer_mapStaticBuildDir(t *testing.T) {
 	staticRoot := t.TempDir()
 	for dir, body := range map[string]string{
-		webassets.WebpackBuildDir: "webpack",
-		webassets.RspackBuildDir:  "rspack",
+		webassets.BuildDir:       "webpack",
+		webassets.RspackBuildDir: "rspack",
 	} {
 		require.NoError(t, os.MkdirAll(filepath.Join(staticRoot, dir), 0o750))
 		require.NoError(t, os.WriteFile(filepath.Join(staticRoot, dir, "app.js"), []byte(body), 0o644))

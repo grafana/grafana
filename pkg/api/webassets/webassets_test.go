@@ -203,7 +203,7 @@ func TestPublicPathFollowsBuildDir(t *testing.T) {
 		buildDir string
 		expected string
 	}{
-		{buildDir: WebpackBuildDir, expected: "public/build/"},
+		{buildDir: BuildDir, expected: "public/build/"},
 		{buildDir: RspackBuildDir, expected: "public/build/rspack/"},
 		{buildDir: "build-swagger", expected: "public/build-swagger/"},
 	}

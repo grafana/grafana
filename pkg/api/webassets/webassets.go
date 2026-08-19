@@ -24,43 +24,29 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api/webassets")
 
 const (
-	// BuildDir is the static root subdirectory served at the public/build URL prefix.
-	// Both bundlers write inside it, so serving it does not depend on the rspack flag.
+	// BuildDir is served at the public/build URL prefix. Both bundlers write inside it,
+	// so serving it never depends on the rspack flag.
 	BuildDir = "build"
-	// WebpackBuildDir holds the frontend assets built by webpack.
-	WebpackBuildDir = BuildDir
-	// RspackBuildDir holds the frontend assets built by rspack. It is nested inside
-	// BuildDir so that on-disk layout, URL path and CDN path all agree: an asset at
-	// <static root>/build/rspack/app.js is served at /public/build/rspack/app.js and
-	// uploaded to the CDN under the same path.
+	// RspackBuildDir nests inside BuildDir so disk path, URL and CDN path all match.
 	RspackBuildDir = BuildDir + "/rspack"
 
-	// AssetsManifestFile is the manifest each bundler writes into its own build
-	// directory. The name is the same for both; the directory is what differs.
 	AssetsManifestFile = "assets-manifest.json"
-	// BootScriptFile is the boot script each bundler writes into its build directory.
-	BootScriptFile = "boot.js"
 )
 
-// ResolveBuildDir returns the directory under the static root holding the frontend
-// assets manifest and boot script to read: the rspack output when grafana.rspackBuild
-// is enabled, the webpack output otherwise. It selects which manifest is rendered into
-// the page, never which directory is served — BuildDir covers both. Callers that read a
-// fixed asset set, such as swagger, pass their own directory instead.
-//
-// Call this per request, from a handler holding the incoming context. Resolving it once
-// at startup would pin the rollout to process lifetime and defeat percentage rollouts.
-// PublicPathFor returns the URL prefix, relative to the server root, that assets in
-// buildDir are referenced by. It always matches the bundler's output.publicPath.
+// PublicPathFor returns the URL prefix assets in buildDir are referenced by. It must
+// match the bundler's output.publicPath.
 func PublicPathFor(buildDir string) string {
 	return path.Join("public", buildDir) + "/"
 }
 
+// ResolveBuildDir returns the directory holding the manifest and boot script to read.
+// Call it per request: resolving once at startup pins the rollout to process lifetime
+// and defeats percentage rollouts.
 func ResolveBuildDir(ctx context.Context) string {
 	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRspackBuild, false, openfeature.TransactionContext(ctx)) {
 		return RspackBuildDir
 	}
-	return WebpackBuildDir
+	return BuildDir
 }
 
 type ManifestInfo struct {

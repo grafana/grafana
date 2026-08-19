@@ -35,9 +35,8 @@ type IndexProvider struct {
 	license      licensing.Licensing
 	previewCfg   fswebassets.PreviewAssetsConfig
 
-	// bootScripts holds each bundler's boot script, keyed by its build directory. Both
-	// are read at startup so the rspack flag can be evaluated per request without
-	// touching the disk on the hot path.
+	// bootScripts holds each bundler's boot script, keyed by build directory, read at
+	// startup so the per-request flag lookup never touches disk.
 	bootScripts map[string]template.JS
 }
 
@@ -106,13 +105,12 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 
 	logger := logging.DefaultLogger.With("logger", "index-provider")
 
-	// A deployment may carry either bundler's build, or both, so read whichever are
-	// present and require only that one is. Selecting a bundler whose boot script is
-	// missing fails the request in HandleRequest rather than serving the other one.
+	// A deployment may carry either bundler's build, or both. Selecting one whose boot
+	// script is absent fails the request, not startup.
 	bootScripts := make(map[string]template.JS, 2)
-	for _, dir := range []string{webassets.WebpackBuildDir, webassets.RspackBuildDir} {
+	for _, dir := range []string{webassets.BuildDir, webassets.RspackBuildDir} {
 		//nolint:gosec
-		raw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, dir, webassets.BootScriptFile))
+		raw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, dir, "boot.js"))
 		if err != nil {
 			logger.Info("no boot script for build directory, skipping", "dir", dir, "err", err)
 			continue

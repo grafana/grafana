@@ -306,7 +306,7 @@ func TestSourceMapStore_ResolvesEitherBundlerFromURL(t *testing.T) {
 		{
 			desc:        "webpack asset",
 			sourceURL:   "http://localhost:3000/public/build/foo.js",
-			expectedMap: filepath.Join(webassets.WebpackBuildDir, "foo.js.map"),
+			expectedMap: filepath.Join(webassets.BuildDir, "foo.js.map"),
 		},
 		{
 			desc:        "rspack asset",
