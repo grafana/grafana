@@ -1,3 +1,12 @@
+{{ define "latest_user_auth_join" -}}
+LEFT JOIN {{ .Ident .UserAuthTable }} AS user_auth ON user_auth.id = (
+  SELECT id
+  FROM {{ .Ident .UserAuthTable }} AS user_auth
+  WHERE user_auth.user_id = u.id
+  ORDER BY user_auth.created DESC
+  LIMIT 1
+)
+{{ end -}}
 {{ define "search_users_where" -}}
 WHERE u.is_service_account = FALSE
 {{ if gt .OrgID 0 -}}
@@ -22,14 +31,14 @@ WHERE u.is_service_account = FALSE
   AND user_auth.auth_module = {{ .Arg .AuthModule }}
 {{ end -}}
 {{ range .Filters -}}
-{{ if eq .Kind "in" -}}
+{{ if .IsIn -}}
 {{ if .Values -}}
   AND {{ $.Ident .Condition }} IN ({{ $.ArgList .Values }})
 {{ else -}}
   AND 0 = 1
 {{ end -}}
 {{ else -}}
-  AND {{ range .Parts }}{{ .SQL }}{{ if .HasValue }}{{ $.Arg .Value }}{{ end }}{{ end }}
+  AND {{ .Prefix }}{{ if .HasValue }}{{ $.Arg .Value }}{{ end }}{{ .Suffix }}
 {{ end -}}
 {{ end -}}
 {{ end -}}
@@ -46,24 +55,16 @@ SELECT
   u.is_provisioned,
   u.created
 FROM {{ .Ident .UserTable }} AS u
-LEFT JOIN {{ .Ident .UserAuthTable }} AS user_auth ON user_auth.id = (
-  SELECT id
-  FROM {{ .Ident .UserAuthTable }} AS user_auth
-  WHERE user_auth.user_id = u.id
-  ORDER BY user_auth.created DESC
-  LIMIT 1
-)
+{{ template "latest_user_auth_join" . }}
 {{ range .Joins -}}
 {{ .Operator }} JOIN {{ $.Ident .Table }} AS {{ $.Ident .Alias }} ON {{ .Condition }}
 {{ end -}}
 {{ template "search_users_where" . }}
-{{ if or .Sorts .UseDefaultSort -}}
 ORDER BY
 {{ if .Sorts -}}
   {{ range $index, $sort := .Sorts }}{{ if $index }}, {{ end }}{{ $sort }}{{ end }}
-{{ else if .UseDefaultSort -}}
+{{ else -}}
   u.login ASC, u.email ASC
-{{ end -}}
 {{ end -}}
 {{ if gt .Limit 0 -}}
 LIMIT {{ .Arg .Limit }}{{ if gt .Offset 0 }} OFFSET {{ .Arg .Offset }}{{ end }}
