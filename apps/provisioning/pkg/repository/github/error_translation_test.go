@@ -61,7 +61,7 @@ func TestTranslateGitHubError(t *testing.T) {
 				Response: &http.Response{StatusCode: http.StatusForbidden},
 				Message:  "API rate limit exceeded",
 			},
-			expectedErr:         repo.ErrPermissionDenied,
+			expectedErr:         repo.ErrTooManyRequests,
 			expectedMsgContains: "API rate limit exceeded",
 		},
 		{
