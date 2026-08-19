@@ -741,7 +741,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 	// applyPatches flushes any patches not yet written
 	applyPatches := func() error {
 		if len(patchOperations) == 0 {
-			return nil
+			return err
 		}
 		if patchErr := rc.statusPatcher.Patch(ctx, obj, patchOperations...); patchErr != nil {
 			patchErr = fmt.Errorf("status patch operations failed: %w", patchErr)
@@ -753,11 +753,13 @@ func (rc *RepositoryController) process(key string) (err error) {
 			return err
 		}
 		patchOperations = nil
-		return nil
+		return err
 	}
 	defer func() {
 		err = applyPatches()
-		logger.Error("failed to apply patches: %w", err)
+		if err != nil {
+			logger.Error("failed to apply patches", "error", err)
+		}
 	}()
 
 	hasQuotaChanged := obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
@@ -925,13 +927,9 @@ func (rc *RepositoryController) process(key string) (err error) {
 	}
 	testResults := healthResult.TestResults
 	healthStatus := healthResult.HealthStatus
-	// Captured before the over-quota override below: being over quota doesn't
-	// mean the repository itself is unreachable, so this (not healthStatus.Healthy)
-	// is what gates whether hooks can run — a quota-blocked-but-reachable repo
-	// must not be treated as unreachable for that purpose. Also not every failed
-	// Test() means unreachable: e.g. branch protection blocking direct pushes is
-	// reported as a failure even though the repository and webhook API are both
-	// reachable, so a reachability-specific read of the test result is used
+	// Captured before the over-quota override status below. We only block hooks being run if the repo is unreachable.
+	// Also not every failed Test() means unreachable: e.g. branch protection blocking direct pushes is
+	// reported. Hooks should still be able to run so a reachability-specific read of the test result is used
 	// instead of the raw Success flag.
 	reachable := isReachableTestResult(testResults)
 
@@ -969,12 +967,14 @@ func (rc *RepositoryController) process(key string) (err error) {
 	}
 
 	// Only mark this generation observed once hook processing wasn't suppressed
-	// for being unreachable or in cooldown. Queuing this earlier/unconditionally
-	// meant a suppressed or even a not-yet-attempted pass (e.g. an
-	// error before this point) could advance observedGeneration while the
-	// corresponding webhook create/update/delete never ran, permanently losing
-	// the retry once the repository is healthy/out of cooldown again.
-	if hasSpecChanged && !hooksSuppressed {
+	// for being unreachable or in cooldown, AND didn't itself fail. processHooks
+	// reports suppressed=false on a genuine runHooks failure (hooks were
+	// attempted, not skipped), so hookErr must be checked separately here --
+	// otherwise a failed webhook create/update/delete would still advance
+	// observedGeneration, and since retries after this point only trigger on a
+	// generation mismatch or a missing webhook, that failure would never be
+	// retried once cooldown ends.
+	if hasSpecChanged && hookErr == nil && !hooksSuppressed {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/observedGeneration",
@@ -1093,19 +1093,12 @@ func classifyHookFailureReason(err error) string {
 	return provisioning.ReasonInvalidSpec
 }
 
-// isReachableTestResult reports whether the repository and its webhook API were
-// actually reachable during the health check, as opposed to Test() merely
-// reporting some other validation/policy failure (e.g. branch protection
-// blocking direct pushes, which repository implementations report as a plain
-// 400 alongside 401/403/503 connectivity failures). Only the latter mean any
-// create/update/delete call against the repository is doomed; the former still
-// permit hook operations like webhook cleanup.
 func isReachableTestResult(testResults *provisioning.TestResults) bool {
 	if testResults == nil || testResults.Success {
 		return true
 	}
 	switch testResults.Code {
-	case http.StatusUnauthorized, http.StatusForbidden, http.StatusServiceUnavailable:
+	case http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusServiceUnavailable:
 		return false
 	default:
 		return true
