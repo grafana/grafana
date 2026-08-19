@@ -61,11 +61,11 @@ describe('Sparkline', () => {
 
   async function mountAndGetPlot(sparkline: FieldSparkline) {
     renderSparkline(sparkline);
-    await waitFor(() => expect(plotInstance).toBeDefined());
+    await waitFor(() => expect(plotInstance?.status).toBe(1));
     return plotInstance!;
   }
 
-  it('plots the y values against the x values, at the requested size and y field range', async () => {
+  it('plots the y values against the x values at the requested size, with both scales spanning the data', async () => {
     const plot = await mountAndGetPlot(makeSparkline());
 
     expect(plot.data).toEqual([
@@ -77,7 +77,7 @@ describe('Sparkline', () => {
     expect(scaleRange(plot, '__fixed')).toEqual([1, 5]);
   });
 
-  it('spans the x scale across the sparkline timeRange and null-pads the data out to it', async () => {
+  it('spans the x scale across the sparkline timeRange and null-pads the data across it', async () => {
     const plot = await mountAndGetPlot(
       makeSparkline({
         x: { name: 'x', values: [200, 400, 600], type: FieldType.time, config: { interval: 200 } },
