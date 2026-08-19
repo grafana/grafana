@@ -95,7 +95,8 @@ declare module "@openfeature/core" {
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
     | "grafana.panelPluginTransformations"
-    | "tracesDrilldown.useValueTypeFiltering";
+    | "tracesDrilldown.useValueTypeFiltering"
+    | "grafana.dashboardsAutoHeightPanels";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

@@ -284,6 +284,7 @@
 /devenv/dev-dashboards/panel-text @grafana/grafana-frontend-platform
 /devenv/dev-dashboards/scenarios @grafana/grafana-frontend-platform
 
+/devenv/dev-dashboards/dashboard-auto-grid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/feature-templating/ @grafana/dashboards-squad
 /devenv/dev-dashboards/panel-common @grafana/dashboards-squad
 /devenv/dev-dashboards/panel-dashlist @grafana/dashboards-squad
