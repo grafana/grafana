@@ -870,7 +870,7 @@ describe('getComparisonFieldPairs', () => {
   /**
    * Aligned frames arrive from GraphNG's outer join: `state.origin` points back into the
    * pre-join frames, and `state.seriesIndex` has already been assigned by setClassicPaletteIdxs
-   * (which gives a compare series the same index as its current-period counterpart).
+   * (which runs regardless of palette and gives a compare series the same index as its current-period counterpart).
    */
   function alignedField(seriesIndex: number | undefined, frameIndex: number, fieldIndex = 1) {
     return {
@@ -949,7 +949,7 @@ describe('getComparisonFieldPairs', () => {
     );
   });
 
-  it('does not pair two current-period series that share a palette index', () => {
+  it('does not pair two current-period series that share an index', () => {
     // a shared seriesIndex only means "same color" - without a compare frame it is not a pair
     const alignedFrame = {
       length: 2,
@@ -959,7 +959,7 @@ describe('getComparisonFieldPairs', () => {
     expect(getComparisonFieldPairs(alignedFrame, [currentFrame('A'), currentFrame('B')]).size).toBe(0);
   });
 
-  it('does not pair two compare series that share a palette index', () => {
+  it('does not pair two compare series that share a series index', () => {
     const alignedFrame = {
       length: 2,
       fields: [timeField(), alignedField(0, 0), alignedField(0, 1)],
@@ -987,7 +987,7 @@ describe('getComparisonFieldPairs', () => {
     expect(getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]).size).toBe(0);
   });
 
-  it('pairs against the real seriesIndex assignment from setClassicPaletteIdxs', () => {
+  it('pairs against the real seriesIndex assignment', () => {
     // Guards the coupling this relies on: setClassicPaletteIdxs is what makes a compare field
     // share its counterpart's seriesIndex, and getComparisonFieldPairs reads that back.
     const main = toDataFrame({

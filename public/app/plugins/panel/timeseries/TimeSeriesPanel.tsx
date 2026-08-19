@@ -71,12 +71,11 @@ export const TimeSeriesPanel = ({
     let frames = prepareGraphableFields(data.series, theme, timeRange);
     if (frames != null) {
       let compareDiffMs: number[] = [0];
-
       // Held separately from `frames` below: TS won't retain the null-check narrowing of `frames`
       // inside the .map callback once `frames` itself gets reassigned in this scope.
       const originalFrames = frames;
 
-      frames = originalFrames.map((frame: DataFrame, i) => {
+      frames = originalFrames.map((frame: DataFrame) => {
         const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
 
         frame.fields.forEach((field) => {
