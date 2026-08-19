@@ -419,7 +419,7 @@ func TestStatus_HeadSeedsCursorThatReplaysEditsRacingTheBackfill(t *testing.T) {
 
 	st, err := m.Status(context.Background(), req("stacks-1", 0), Cursors{})
 	require.NoError(t, err)
-	seed := Cursors{Updates: st.Head}
+	seed := Cursors{Updates: st.UpdatesHead}
 	require.Equal(t, UpdateCursor{Updated: 40, ID: 4}, seed.Updates)
 
 	// Once ids 1-2 are copied, someone edits id 1, bumping it past the head.
@@ -440,7 +440,7 @@ func TestStatus_HeadSeedsCursorThatReplaysEditsRacingTheBackfill(t *testing.T) {
 
 	after, err := m.Status(context.Background(), req("stacks-1", 0), Cursors{})
 	require.NoError(t, err)
-	require.True(t, seed.Updates.Before(after.Head), "the racing edit moved the head past the seed")
+	require.True(t, seed.Updates.Before(after.UpdatesHead), "the racing edit moved the head past the seed")
 }
 
 func TestStatus_HeadIsZeroForEmptyTenant(t *testing.T) {
@@ -448,9 +448,9 @@ func TestStatus_HeadIsZeroForEmptyTenant(t *testing.T) {
 
 	st, err := m.Status(context.Background(), req("stacks-1", 0), Cursors{})
 	require.NoError(t, err)
-	require.Equal(t, UpdateCursor{}, st.Head)
+	require.Equal(t, UpdateCursor{}, st.UpdatesHead)
 	require.False(t, st.BackfillPending, "nothing to copy on an empty tenant")
-	require.False(t, st.UpdatesPending, "nothing to sync on an empty tenant")
+	require.False(t, Cursors{}.Updates.Before(st.UpdatesHead), "nothing to sync on an empty tenant")
 }
 
 func TestStatus_BackfillPendingUntilDrained(t *testing.T) {
@@ -518,9 +518,9 @@ func TestStatus_BackfillPendingIgnoresDestinationCountDrift(t *testing.T) {
 	require.False(t, st.BackfillPending, "expired rows must not re-trigger a backfill that would resurrect them")
 }
 
-// An edit creates no new id, so the backfill cursor cannot see it. Only
-// UpdatesPending can.
-func TestStatus_UpdatesPendingAfterEditOnConvergedTenant(t *testing.T) {
+// An edit creates no new id, so the backfill cursor cannot see it. Only the
+// `updated` timeline can.
+func TestStatus_HeadMovesAfterEditOnConvergedTenant(t *testing.T) {
 	r := &fakeReader{rows: []LegacyAnnotation{
 		{ID: 1, Epoch: 1000, Updated: 10},
 		{ID: 2, Epoch: 2000, Updated: 20},
@@ -531,7 +531,7 @@ func TestStatus_UpdatesPendingAfterEditOnConvergedTenant(t *testing.T) {
 	seeded, err := m.Status(context.Background(), req("stacks-1", 0), Cursors{})
 	require.NoError(t, err)
 
-	_, cursors, err := m.Migrate(context.Background(), req("stacks-1", 10), Cursors{Updates: seeded.Head})
+	_, cursors, err := m.Migrate(context.Background(), req("stacks-1", 10), Cursors{Updates: seeded.UpdatesHead})
 	require.NoError(t, err)
 
 	_, cursors, err = m.SyncUpdates(context.Background(), req("stacks-1", 10), cursors)
@@ -540,15 +540,15 @@ func TestStatus_UpdatesPendingAfterEditOnConvergedTenant(t *testing.T) {
 	st, err := m.Status(context.Background(), req("stacks-1", 0), cursors)
 	require.NoError(t, err)
 	require.False(t, st.BackfillPending, "every legacy id has been copied")
-	require.False(t, st.UpdatesPending, "nothing changed since the cursor")
+	require.False(t, cursors.Updates.Before(st.UpdatesHead), "nothing changed since the cursor")
 
 	r.rows[0] = LegacyAnnotation{ID: 1, Epoch: 1500, Updated: 30}
 
 	st, err = m.Status(context.Background(), req("stacks-1", 0), cursors)
 	require.NoError(t, err)
 	require.False(t, st.BackfillPending, "an edit creates no new id")
-	require.True(t, st.UpdatesPending, "the edit must make the tenant eligible")
-	require.Equal(t, UpdateCursor{Updated: 30, ID: 1}, st.Head)
+	require.True(t, cursors.Updates.Before(st.UpdatesHead), "the edit must leave the tenant behind")
+	require.Equal(t, UpdateCursor{Updated: 30, ID: 1}, st.UpdatesHead)
 }
 
 func TestStatus_IgnoresNativeSnowflakeRows(t *testing.T) {
@@ -864,10 +864,10 @@ func TestSyncUpdates_LookbackKeepsCursorWhenNothingChanged(t *testing.T) {
 	require.Equal(t, at, next)
 }
 
-// Status must apply the same rewind SyncUpdates does, or it reports no work for
-// exactly the rows the lookback exists to catch. Driven through the gate, since
-// calling SyncUpdates directly hides the bug.
-func TestStatus_LookbackKeepsUpdatesPendingForRowBehindTheCursor(t *testing.T) {
+// A row that surfaces behind the cursor never moves the head, so nothing in
+// Status can see it. This is why the pass is not gated: a caller that skipped it
+// because the tenant looked caught up would drop exactly this row.
+func TestSyncUpdates_LookbackCatchesRowBehindTheCursor(t *testing.T) {
 	r := &fakeReader{rows: []LegacyAnnotation{
 		{ID: 1, Epoch: 1000, Updated: 100_000, Text: "a1"},
 		{ID: 2, Epoch: 2000, Updated: 100_000, Text: "a2"},
@@ -888,26 +888,21 @@ func TestStatus_LookbackKeepsUpdatesPendingForRowBehindTheCursor(t *testing.T) {
 
 	st, err := m.Status(context.Background(), syncReq, cursors)
 	require.NoError(t, err)
-	require.Equal(t, UpdateCursor{Updated: 100_000, ID: 2}, st.Head, "the late row does not move the head")
-	require.True(t, st.UpdatesPending, "the lookback window must be reported as scannable")
-	require.False(t, cursors.Updates.Before(st.Head), "nothing sits past the cursor")
+	require.Equal(t, UpdateCursor{Updated: 100_000, ID: 2}, st.UpdatesHead, "the late row does not move the head")
+	require.False(t, cursors.Updates.Before(st.UpdatesHead), "the tenant looks caught up")
 
-	// The caller only works when the gating flag says so.
-	if st.UpdatesPending {
-		_, _, err = m.SyncUpdates(context.Background(), syncReq, cursors)
-		require.NoError(t, err)
-	}
+	// The pass runs anyway, and the lookback is what finds the row.
+	_, _, err = m.SyncUpdates(context.Background(), syncReq, cursors)
+	require.NoError(t, err)
 
 	key, ok := w.findByName("stacks-1", "legacy-1")
 	require.True(t, ok)
 	require.Equal(t, "a1-late", w.rows[key].rec.Text, "the late row must converge")
 }
 
-// UpdatesPending stays set under a lookback even at the head, by design: a row
-// behind the cursor does not move the head, so nothing cheaper detects it. Do not
-// "fix" this into a strict comparison — that skips the pass that catches those
-// rows. For "how far behind is this tenant", compare against Head.
-func TestStatus_UpdatesPendingStaysSetUnderALookback(t *testing.T) {
+// The lookback rewinds the scan, not the tenant's reported position, so it must
+// not reach Status at all.
+func TestStatus_LookbackDoesNotAffectReportedPosition(t *testing.T) {
 	r := &fakeReader{rows: []LegacyAnnotation{{ID: 1, Epoch: 1000, Updated: 100_000}}}
 	m := ProvideMigrator(r, newFakeWriter(), nil)
 	at := Cursors{Backfill: 1, Updates: UpdateCursor{Updated: 100_000, ID: 1}}
@@ -915,14 +910,10 @@ func TestStatus_UpdatesPendingStaysSetUnderALookback(t *testing.T) {
 	syncReq := req("stacks-1", 0)
 	syncReq.Lookback = time.Minute
 
-	st, err := m.Status(context.Background(), syncReq, at)
+	withLookback, err := m.Status(context.Background(), syncReq, at)
 	require.NoError(t, err)
-	require.True(t, st.UpdatesPending, "the window is always worth rescanning")
-	require.False(t, at.Updates.Before(st.Head), "though the tenant is not behind")
-
-	// Without a lookback it is strict, so the default does not make every tenant
-	// eligible on every cycle.
-	st, err = m.Status(context.Background(), req("stacks-1", 0), at)
+	without, err := m.Status(context.Background(), req("stacks-1", 0), at)
 	require.NoError(t, err)
-	require.False(t, st.UpdatesPending, "cursor is at the head and there is no window to rescan")
+	require.Equal(t, without, withLookback, "the lookback is a scan concern only")
+	require.False(t, at.Updates.Before(withLookback.UpdatesHead), "the cursor is at the head")
 }

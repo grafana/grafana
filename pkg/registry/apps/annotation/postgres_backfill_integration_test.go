@@ -43,6 +43,17 @@ func textAt(t *testing.T, store *PostgreSQLStore, ns, name string, at int64) str
 	return text
 }
 
+// xminOf reads the row's inserting transaction id, which Postgres changes on
+// every write. It tells a no-op UPDATE apart from one that rewrote the tuple
+// with identical values.
+func xminOf(t *testing.T, store *PostgreSQLStore, ns, name string) int64 {
+	t.Helper()
+	var xmin int64
+	require.NoError(t, store.pool.QueryRow(t.Context(),
+		`SELECT xmin::text::bigint FROM annotations WHERE namespace = $1 AND name = $2`, ns, name).Scan(&xmin))
+	return xmin
+}
+
 // insertNativeRow writes a row the way a native API write does, leaving
 // legacy_migrated false. Its partition must already exist.
 func insertNativeRow(t *testing.T, store *PostgreSQLStore, ns, name string, at int64, text string, legacyID int64) {
@@ -164,6 +175,61 @@ func TestIntegrationBackfill(t *testing.T) {
 		var pgErr *pgconn.PgError
 		require.ErrorAs(t, err, &pgErr)
 		require.Equal(t, "23505", pgErr.Code, "unique_violation")
+	})
+
+	// The resync rescans a lookback window every cycle, so the rows nearest the head
+	// are re-applied indefinitely on a quiet tenant. They must not cost a write.
+	t.Run("re-applying an unchanged record writes nothing", func(t *testing.T) {
+		ctx, ns := t.Context(), "stacks-itest-unchanged"
+		at := week(0)
+		rec := record(ns, "legacy-1", at, "deploy")
+
+		_, err := store.InsertBatch(ctx, []migrator.BackfillRecord{rec})
+		require.NoError(t, err)
+		before := xminOf(t, store, ns, "legacy-1")
+
+		for range 3 {
+			updated, err := store.UpsertBatch(ctx, []migrator.BackfillRecord{rec})
+			require.NoError(t, err)
+			require.Zero(t, updated, "an identical record is not a refresh")
+		}
+		require.Equal(t, before, xminOf(t, store, ns, "legacy-1"), "the tuple must not be rewritten")
+
+		// A real edit still lands, so the guard has not pinned the row.
+		updated, err := store.UpsertBatch(ctx, []migrator.BackfillRecord{
+			record(ns, "legacy-1", at, "deploy-edited"),
+		})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), updated)
+		require.Equal(t, "deploy-edited", textAt(t, store, ns, "legacy-1", at))
+	})
+
+	// tags is a text[] compared inside a row constructor, so it needs its own case:
+	// an encoding mismatch there would read as "always changed" and quietly disable
+	// the guard for every tagged annotation.
+	t.Run("the unchanged guard handles array columns", func(t *testing.T) {
+		ctx, ns := t.Context(), "stacks-itest-unchanged-tags"
+		at := week(0)
+		tagged := record(ns, "legacy-1", at, "deploy")
+		tagged.Tags = []string{"prod", "team:ops"}
+
+		_, err := store.InsertBatch(ctx, []migrator.BackfillRecord{tagged})
+		require.NoError(t, err)
+
+		updated, err := store.UpsertBatch(ctx, []migrator.BackfillRecord{tagged})
+		require.NoError(t, err)
+		require.Zero(t, updated, "the same tags must compare equal, not distinct")
+
+		// A tag change is a real edit and must not be swallowed.
+		edited := tagged
+		edited.Tags = []string{"prod", "team:sre"}
+		updated, err = store.UpsertBatch(ctx, []migrator.BackfillRecord{edited})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), updated)
+
+		got, err := store.Get(ctx, ns, "legacy-1")
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"prod", "team:sre"}, got.Spec.Tags)
 	})
 
 	// The API does not reserve the legacy-<id> prefix, so a native annotation can

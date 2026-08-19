@@ -58,6 +58,20 @@ func TestUpdateMigratedSQL(t *testing.T) {
 	require.NotContains(t, setClause, "deleted_at")
 }
 
+// Without this guard the resync rewrites the rows in its lookback window on every
+// cycle, since they stay in the window for as long as the head does not move.
+func TestUpdateMigratedSQLSkipsUnchangedRows(t *testing.T) {
+	_, whereClause, found := strings.Cut(updateMigratedSQL, " WHERE ")
+	require.True(t, found)
+
+	require.Contains(t, whereClause, "IS DISTINCT FROM", "an unchanged row must not be rewritten")
+	// Every column the update can write has to be compared, or a change to one the
+	// comparison misses is silently dropped.
+	for _, col := range updatableColumns() {
+		require.Containsf(t, whereClause, col, "column %q is written but never compared", col)
+	}
+}
+
 // pgx silently binds NULL for an @name it cannot find, so one the args miss would
 // blank a column rather than fail.
 func TestUpdateMigratedSQLBindsEveryNamedParameter(t *testing.T) {

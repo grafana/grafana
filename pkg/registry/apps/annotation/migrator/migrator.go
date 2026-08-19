@@ -105,8 +105,7 @@ type LegacyReader interface {
 	// Used for incremental resync of edits made after the initial backfill.
 	ReadChangedBatch(ctx context.Context, orgID, sinceUpdated, afterID int64, limit int) ([]LegacyAnnotation, error)
 	// LatestChange returns the newest point on the legacy `updated` timeline.
-	// It bounds what SyncUpdates can find, so it both seeds the initial cursor
-	// after a backfill and answers "is there anything to resync".
+	// It bounds what SyncUpdates can find, and seeds Cursors.Updates.
 	LatestChange(ctx context.Context, orgID int64) (UpdateCursor, error)
 }
 
@@ -314,12 +313,11 @@ type Status struct {
 	LegacyCount int64
 	// MigratedCount is how many of the destination's rows came from a backfill
 	MigratedCount int64
-	// Head is the newest point on the legacy `updated` timeline.
-	Head UpdateCursor
+	// UpdatesHead is the newest point on the legacy `updated` timeline. Compare a
+	// tenant's cursor against it for how far behind it is.
+	UpdatesHead UpdateCursor
 	// BackfillPending is true while legacy holds an id above the backfill cursor.
 	BackfillPending bool
-	// UpdatesPending is true when a SyncUpdates pass has something to read.
-	UpdatesPending bool
 }
 
 // Status reports where a tenant sits in the migration, given the cursors the
@@ -343,8 +341,7 @@ func (m *Migrator) Status(ctx context.Context, req Request, cursors Cursors) (St
 	return Status{
 		LegacyCount:     totals.Count,
 		MigratedCount:   migrated,
-		Head:            head,
+		UpdatesHead:     head,
 		BackfillPending: cursors.Backfill < totals.MaxID,
-		UpdatesPending:  cursors.Updates.rewind(req.Lookback).Before(head),
 	}, nil
 }

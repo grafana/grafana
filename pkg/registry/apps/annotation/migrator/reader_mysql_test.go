@@ -84,8 +84,7 @@ func TestMySQLReader_ReadBatch_MapsRowsAndResolvesTags(t *testing.T) {
 	require.Equal(t, int64(600), a.Updated)
 	require.Equal(t, "user-uid", a.UserUID)
 	require.False(t, a.UserIsServiceAccount)
-	// "key:value" for a valued tag, bare "key" when the value is empty.
-	require.Equal(t, []string{"team:ops", "prod"}, a.Tags)
+	require.Equal(t, []string{"prod", "team:ops"}, a.Tags)
 
 	b := batch[1]
 	require.True(t, b.UserIsServiceAccount, "is_service_account=1 maps to true")

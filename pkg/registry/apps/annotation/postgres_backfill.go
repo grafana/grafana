@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -40,7 +42,8 @@ func (s *PostgreSQLStore) InsertBatch(ctx context.Context, recs []migrator.Backf
 }
 
 // UpsertBatch re-applies a batch of changed legacy annotations, updating each in
-// place and returning how many rows it refreshed. Postgres moves a row across
+// place and returning how many rows it refreshed. A record identical to the stored
+// row is not written and does not count. Postgres moves a row across
 // weekly partitions when the annotation's time changed.
 func (s *PostgreSQLStore) UpsertBatch(ctx context.Context, recs []migrator.BackfillRecord) (int64, error) {
 	if len(recs) == 0 {
@@ -86,9 +89,11 @@ var annotationMatchColumns = map[string]struct{}{"namespace": {}, "name": {}}
 // updateMigratedSQL re-applies a record to the row already under its name. It
 // matches on name with no time predicate, which is what lets Postgres move the
 // row when the annotation's time changed, across weekly partitions if need be.
+//
+// The IS DISTINCT FROM guard makes re-applying an unchanged row a no-op.
 var updateMigratedSQL = fmt.Sprintf(
-	"UPDATE annotations SET %s WHERE namespace = @namespace AND name = @name AND legacy_migrated",
-	namedAssignments(updatableColumns()))
+	"UPDATE annotations SET %s WHERE namespace = @namespace AND name = @name AND legacy_migrated AND %s",
+	namedAssignments(updatableColumns()), namedRowDiffers(updatableColumns()))
 
 // updatableColumns is annotationColumns minus the match columns.
 func updatableColumns() []string {
@@ -108,6 +113,15 @@ func namedAssignments(cols []string) string {
 		assignments[i] = col + " = @" + col
 	}
 	return strings.Join(assignments, ", ")
+}
+
+// namedRowDiffers renders cols as "(col1, col2) IS DISTINCT FROM (@col1, @col2)".
+func namedRowDiffers(cols []string) string {
+	names := make([]string, len(cols))
+	for i, col := range cols {
+		names[i] = "@" + col
+	}
+	return "(" + strings.Join(cols, ", ") + ") IS DISTINCT FROM (" + strings.Join(names, ", ") + ")"
 }
 
 // annotationArgs binds rec's values to their column names.
@@ -169,9 +183,12 @@ func buildInsertSQL(recs []migrator.BackfillRecord) (string, []any) {
 }
 
 // maxTxAttempts bounds how often execInTx replays a transaction Postgres asked
-// it to retry. The conflicting transaction has already resolved by the time the
-// error surfaces, so attempts go back-to-back with no backoff.
+// it to retry.
 const maxTxAttempts = 3
+
+// We may not need to wait longer because a serialization failure means the
+// conflicting transaction has already committed
+const txRetryDelay = 20 * time.Millisecond
 
 // execInTx runs fn in a transaction, replaying it if Postgres rejects it with a
 // serialization failure. Both backfill write paths are idempotent, so a replay is
@@ -187,6 +204,22 @@ func (s *PostgreSQLStore) execInTx(ctx context.Context, fn func(tx pgx.Tx) (int6
 		}
 		s.logger.Warn("retrying annotation transaction after a serialization failure",
 			"attempt", attempt, "error", err)
+		if waitErr := sleepBeforeRetry(ctx, attempt); waitErr != nil {
+			return 0, waitErr
+		}
+	}
+}
+
+func sleepBeforeRetry(ctx context.Context, attempt int) error {
+	window := txRetryDelay << (attempt - 1)
+	timer := time.NewTimer(rand.N(window))
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
 	}
 }
 

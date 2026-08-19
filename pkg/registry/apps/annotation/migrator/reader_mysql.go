@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -158,6 +159,10 @@ func (r *MySQLReader) readTags(ctx context.Context, ids []int64) (map[int64][]st
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterating legacy tags: %w", err)
+	}
+
+	for id := range result {
+		slices.Sort(result[id])
 	}
 
 	return result, nil
