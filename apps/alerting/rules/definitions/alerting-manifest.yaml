@@ -262,6 +262,9 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      search:
+        endpoint: false
+        trash: false
       searchFields:
       - capabilities:
         - filter
@@ -515,6 +518,9 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      search:
+        endpoint: false
+        trash: false
       searchFields:
       - capabilities:
         - filter

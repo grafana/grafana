@@ -46,6 +46,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "AlertRules",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+						Trash:    func(b bool) *bool { return &b }(false),
+					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -169,6 +173,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "RecordingRules",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+						Trash:    func(b bool) *bool { return &b }(false),
+					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
