@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
@@ -990,17 +991,22 @@ func (rc *RepositoryController) process(key string) (err error) {
 		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
 
-	// Update fieldErrors from test results - always update to ensure fieldErrors are cleared when there are no errors
+	// Only update fieldErrors from test results if they have changed.
+	// Updating patchOperations will bump the resourceVersion on every pass, which the
+	// informer's UpdateFunc turns straight back into a re-enqueue and we will
+	// immediately check for for repoHealth
 	if testResults != nil {
 		fieldErrors := testResults.Errors
 		if fieldErrors == nil {
 			fieldErrors = []provisioning.ErrorDetails{}
 		}
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/fieldErrors",
-			"value": fieldErrors,
-		})
+		if !slices.Equal(obj.Status.FieldErrors, fieldErrors) {
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/fieldErrors",
+				"value": fieldErrors,
+			})
+		}
 	}
 
 	// determine the sync strategy and sync status to apply
