@@ -14,11 +14,11 @@ port_goff     = base_port + 6   # +6  go feature flag
 # port_tilt   = base_port + 9   # +9  tilt UI (set in run.sh)
 
 # --- Bundler selection
-# Set RSPACK=1 to build the frontend with rspack instead of webpack. Both write
-# assets that resolve under the public/build URL prefix, so only the on-disk
-# directory and the grafana.rspackBuild flag change.
+# Set RSPACK=1 to build the frontend with rspack instead of webpack. rspack writes
+# inside the webpack output directory, so the CDN mount and the public/build URL
+# prefix are the same either way; only the manifest and the flag change.
 use_rspack = os.environ.get('RSPACK', '') in ('1', 'true')
-build_dir = 'build-rspack' if use_rspack else 'build'
+build_dir = 'build/rspack' if use_rspack else 'build'
 manifest_path = 'public/%s/assets-manifest.json' % build_dir
 boot_path = 'public/%s/boot.js' % build_dir
 
@@ -74,11 +74,6 @@ local_resource(
 # --- Docker Compose
 base_config = read_yaml('./docker-compose.yaml')
 
-# The CDN serves whichever build directory is in use under the public/build path,
-# so replace the mount rather than adding a second one on the same target.
-cdn_volumes = [v for v in base_config['services']['proxy']['volumes'] if not v.endswith(':/cdn/public/build')]
-cdn_volumes.append('../../public/%s:/cdn/public/build' % build_dir)
-
 # grafana-api evaluates feature flags from static config; the frontend-service
 # evaluates them from GOFF, so the two need the bundler flag set separately.
 grafana_api_env = {
@@ -96,7 +91,6 @@ compose_overrides = {'services': {
       '%d:80' % port_proxy,
       '%d:81' % port_cdn,
     ],
-    'volumes': cdn_volumes,
   },
   'grafana-api': {
     'ports': ['%d:3000' % port_api],
