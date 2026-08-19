@@ -78,11 +78,12 @@ export function isDataSourceCompatibleWithPicker(
     return selected == null || selected === '';
   }
   // Template refs keep the variable string as uid (`$ds`, `${ds}`, `logs-${stage}-loki`)
-  // and the concrete datasource in rawRef. Those wrapper uids are often missing from the
-  // picker list: getList({ variables: true }) injects `${name}` only for dashboard-level
-  // variables, not `$name`, interpolated names, or section-scoped refs. Match the
-  // interpolated datasource so a Tempo-backed ${ds} is still invalid in a Prometheus field.
-  return allowed.some((ds) => ds.uid === resolved.uid || ds.uid === resolved.rawRef?.uid);
+  // and the concrete datasource in rawRef. Match only the interpolated uid: getList({ variables: true })
+  // injects `${name}` after type filters, so matching the wrapper uid would treat a Tempo-backed
+  // ${ds} as valid in a Prometheus field. `$name`, interpolated names, and section-scoped refs
+  // are also absent from that injected list.
+  const uidToMatch = resolved.rawRef?.uid ?? resolved.uid;
+  return allowed.some((ds) => ds.uid === uidToMatch);
 }
 
 /**

@@ -270,6 +270,72 @@ describe('DataSourcePicker', () => {
       expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute('aria-invalid', 'true');
     });
 
+    it('should mark the input as invalid when a listed template variable interpolates to a filtered-out data source', () => {
+      const injectedVariable = { ...mockDS2, uid: '${ds}', name: '${ds}' };
+      mockUseDatasources.mockReturnValue([mockDS1, injectedVariable]);
+      getInstanceSettingsMock.mockReturnValue({
+        ...mockDS2,
+        uid: '${ds}',
+        name: '${ds}',
+        rawRef: { type: mockDS2.type, uid: mockDS2.uid },
+      });
+      render(
+        <DataSourcePicker onChange={jest.fn()} current="${ds}" pluginId="prometheus" variables></DataSourcePicker>
+      );
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('should not mark the input as invalid when a listed template variable interpolates to an allowed data source', () => {
+      const injectedVariable = { ...mockDS1, uid: '${ds}', name: '${ds}' };
+      mockUseDatasources.mockReturnValue([mockDS1, injectedVariable]);
+      getInstanceSettingsMock.mockReturnValue({
+        ...mockDS1,
+        uid: '${ds}',
+        name: '${ds}',
+        rawRef: { type: mockDS1.type, uid: mockDS1.uid },
+      });
+      render(
+        <DataSourcePicker onChange={jest.fn()} current="${ds}" pluginId="prometheus" variables></DataSourcePicker>
+      );
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'aria-invalid',
+        'false'
+      );
+    });
+
+    it('should mark the input as invalid when the org default is used and is not in the filtered list', () => {
+      mockUseDatasources.mockReturnValue([mockDS1]);
+      getInstanceSettingsMock.mockReturnValue(mockDS2);
+      render(<DataSourcePicker onChange={jest.fn()} current={undefined} pluginId="prometheus"></DataSourcePicker>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('should not mark the input as invalid when the org default is used and matches picker filters', () => {
+      mockUseDatasources.mockReturnValue([mockDS1]);
+      getInstanceSettingsMock.mockReturnValue(mockDS1);
+      render(<DataSourcePicker onChange={jest.fn()} current={undefined} pluginId="prometheus"></DataSourcePicker>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'aria-invalid',
+        'false'
+      );
+    });
+
+    it('should recompute validity on render when the allowed list changes without filter prop changes', () => {
+      mockUseDatasources.mockReturnValue([mockDS1]);
+      getInstanceSettingsMock.mockReturnValue(mockDS1);
+      const { rerender } = render(
+        <DataSourcePicker onChange={jest.fn()} current={mockDS1} pluginId="prometheus"></DataSourcePicker>
+      );
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'aria-invalid',
+        'false'
+      );
+
+      mockUseDatasources.mockReturnValue([]);
+      rerender(<DataSourcePicker onChange={jest.fn()} current={mockDS1} pluginId="prometheus"></DataSourcePicker>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute('aria-invalid', 'true');
+    });
+
     it('should not mark the input as invalid when noDefault is set and nothing is selected', () => {
       getInstanceSettingsMock.mockReturnValue(undefined);
       render(<DataSourcePicker onChange={jest.fn()} current={null} noDefault></DataSourcePicker>);
