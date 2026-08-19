@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -187,6 +188,10 @@ func (s *frontendService) addMiddlewares(m *web.Mux) {
 func (s *frontendService) registerRoutes(m *web.Mux) {
 	s.routeGet(m, "/metrics", promhttp.HandlerFor(s.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}))
 
+	// Serve the generated e2e-selectors file so @grafana/plugin-e2e can fetch selectors that match the
+	// frontend this service serves. Registered as an exact route so it wins over the /public/* 404 below.
+	s.routeGet(m, "/public/e2e-selectors.json", s.handleE2ESelectors)
+
 	// Frontend service doesn't (yet?) serve any assets, so explicitly 404
 	// them so we can get logs for them
 	s.routeGet(m, "/public/*", http.NotFound)
@@ -247,4 +252,16 @@ func (s *frontendService) handleBootError(w http.ResponseWriter, r *http.Request
 	if _, err := w.Write([]byte("OK")); err != nil {
 		s.log.Error("failed to write boot error response", "error", err)
 	}
+}
+
+// handleE2ESelectors serves the generated e2e-selectors.json from the frontend build output. It lets
+// @grafana/plugin-e2e fetch selectors that match the frontend this service serves. When the file is
+// absent, http.ServeFile returns 404 and plugin-e2e falls back to its bundled selectors.
+func (s *frontendService) handleE2ESelectors(w http.ResponseWriter, r *http.Request) {
+	if s.cfg.Env == setting.Dev {
+		w.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+	} else {
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+	}
+	http.ServeFile(w, r, filepath.Join(s.cfg.StaticRootPath, "e2e-selectors.json"))
 }
