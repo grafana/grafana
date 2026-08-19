@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { isDefaultRoutingTreeName } from '@grafana/alerting';
@@ -23,11 +24,8 @@ const PoliciesTreeWrapper = () => {
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
   const skipAlertGroups = !canSeeAlertGroups || !selectedAlertmanager;
   const { currentData: alertGroups, refetch } = alertmanagerApi.useGetAlertmanagerAlertGroupsQuery(
-    { amSourceName: selectedAlertmanager },
-    { skip: skipAlertGroups }
+    skipAlertGroups ? skipToken : { amSourceName: selectedAlertmanager }
   );
-  // RTK Query throws when refetch() is called for a query that never started, so only
-  // hand down the refetch callback when the query is actually running.
   const refetchAlertGroups = skipAlertGroups ? undefined : refetch;
 
   const routeName = decodeURIComponent(name);

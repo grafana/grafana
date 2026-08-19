@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSet } from 'react-use';
@@ -151,11 +152,8 @@ function PolicyTreeTab() {
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
   const skipAlertGroups = !canSeeAlertGroups || !selectedAlertmanager;
   const { currentData: alertGroups, refetch } = alertmanagerApi.useGetAlertmanagerAlertGroupsQuery(
-    { amSourceName: selectedAlertmanager },
-    { skip: skipAlertGroups }
+    skipAlertGroups ? skipToken : { amSourceName: selectedAlertmanager }
   );
-  // RTK Query throws when refetch() is called for a query that never started, so only
-  // hand down the refetch callback when the query is actually running.
   const refetchAlertGroups = skipAlertGroups ? undefined : refetch;
 
   const useMultiplePolicies = isGrafanaAlertmanager;
