@@ -163,6 +163,10 @@ type APIBuilder struct {
 	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
+	// leaderElection enables single-leader election (on a coordination ClusterLease)
+	// for the repository, connection, and job history/cleanup controllers, via the
+	// [provisioning] leader_election setting. When false they run on every replica.
+	leaderElection bool
 	// controllerResyncInterval is the informer re-list interval for the
 	// repository and connection controllers; historyExpiration is both the
 	// HistoricJob retention and the historic-job informer's resync;
@@ -363,6 +367,9 @@ func RegisterAPIService(
 	maxFileSize := cfg.ProvisioningMaxFileSize
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
+	// leader_election opts the repository, connection, and job history/cleanup
+	// controllers into single-leader election on a coordination ClusterLease.
+	leaderElection := provisioningSec.Key("leader_election").MustBool(false)
 
 	// allowed_git_urls contain an allowlist of Git URLs that are allowed to be used for Git repositories.
 	// It should contain enpoints that otherwise would be blocked by the URL validator.
@@ -411,6 +418,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.repoValidatorOpts = repoValidatorOpts
+	builder.leaderElection = leaderElection
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
@@ -457,6 +465,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
+	v1beta1Builder.leaderElection = leaderElection
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
@@ -982,15 +991,15 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 const controllerLeaseName = "provisioning-controller"
 
 // newControllerElector returns the leader elector that gates the repository,
-// connection, and job history/cleanup controllers. When the coordination
-// ClusterLease API is available (its feature toggle is on), it elects a single
-// leader across replicas on a shared ClusterLease; otherwise it falls back to
-// always-leader, preserving the historical behavior of running these controllers
-// on every replica. The job queue driver is deliberately not gated — it distributes
-// work across all replicas via per-job claiming.
+// connection, and job history/cleanup controllers. When [provisioning]
+// leader_election is enabled it elects a single leader across replicas on a shared
+// coordination ClusterLease (which requires the coordination.grafana.app API to be
+// served); otherwise it falls back to always-leader, preserving the historical
+// behavior of running these controllers on every replica. The job queue driver is
+// deliberately not gated — it distributes work across all replicas via per-job
+// claiming.
 func (b *APIBuilder) newControllerElector(restCfg *clientrest.Config) (leaderelection.Elector, error) {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features == nil || !b.features.IsEnabledGlobally(featuremgmt.FlagCoordinationLeasesApi) {
+	if !b.leaderElection {
 		return leaderelection.NewDefaultElector(), nil
 	}
 	return clusterlease.New(restCfg, leaderelection.Config{

@@ -20,6 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 )
 
+// repoControllerLeaseName is the coordination ClusterLease the repository operator
+// elects its single active replica on.
+const repoControllerLeaseName = "provisioning-repo-controller"
+
 func RunRepoController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,

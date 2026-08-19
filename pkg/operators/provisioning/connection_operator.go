@@ -17,6 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 )
 
+// connectionControllerLeaseName is the coordination ClusterLease the connection
+// operator elects its single active replica on.
+const connectionControllerLeaseName = "provisioning-connection-controller"
+
 // RunConnectionController starts the connection controller operator.
 func RunConnectionController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{

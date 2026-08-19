@@ -17,6 +17,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// jobControllerLeaseName is the coordination ClusterLease the jobs operator (cleanup
+// reaper + historic-job cleanup) elects its single active replica on.
+const jobControllerLeaseName = "provisioning-job-controller"
+
 func RunJobController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
