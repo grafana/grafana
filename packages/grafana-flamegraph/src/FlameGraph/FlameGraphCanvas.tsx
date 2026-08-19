@@ -6,7 +6,7 @@ import { useMeasure } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { PIXELS_PER_LEVEL } from '../constants';
+import { MUTE_THRESHOLD, PIXELS_PER_LEVEL } from '../constants';
 import {
   type ClickedItemData,
   type ColorScheme,
@@ -20,9 +20,6 @@ import FlameGraphContextMenu, { type GetExtraContextMenuButtonsFunction } from '
 import FlameGraphTooltip from './FlameGraphTooltip';
 import { type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
 import { getBarX, useFlameRender } from './rendering';
-
-// Narrow bars would show no overlay at all, so loading markers are never drawn thinner than this (in pixels).
-const MIN_LOADING_MARKER_WIDTH = 6;
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -202,15 +199,10 @@ const FlameGraphCanvas = ({
 
       width = Math.min(width, wrapperWidth - left);
 
-      if (width < 1 || left > wrapperWidth) {
+      // Never mark a bar the flame graph draws as a muted sliver: the host decides what to load from its own idea of
+      // the layout, and only the renderer knows what actually ended up on screen.
+      if (width <= MUTE_THRESHOLD || left > wrapperWidth) {
         continue;
-      }
-
-      // A node can be too narrow to show an overlay on; widen the marker around its centre so that loading is still
-      // visible.
-      if (width < MIN_LOADING_MARKER_WIDTH) {
-        left = Math.max(0, left + width / 2 - MIN_LOADING_MARKER_WIDTH / 2);
-        width = MIN_LOADING_MARKER_WIDTH;
       }
 
       // Collapsed groups are drawn as a single level, so count the levels that are actually rendered.

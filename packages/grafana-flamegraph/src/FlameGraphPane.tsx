@@ -61,6 +61,8 @@ const FlameGraphPane = ({
   // Call path of the focused item, recorded against the data it was focused in, so the focus can be restored on the
   // matching node when the data changes. See the effects below.
   const focusedItemPathRef = useRef<string[] | undefined>(undefined);
+  // Set when this pane is the one moving the focus, so the effect syncing focus between panes skips that round.
+  const weSetFocusRef = useRef(false);
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
@@ -131,7 +133,6 @@ const FlameGraphPane = ({
             level: 0,
           },
         });
-
         setRangeMin(0);
         setRangeMax(1);
       }
@@ -147,8 +148,6 @@ const FlameGraphPane = ({
         ? dataContainer?.getItemPath(focusedItemData.item)
         : undefined;
   }, [focusedItemData, dataContainer]);
-
-  const weSetFocusRef = useRef(false);
 
   useEffect(() => {
     if (!focusedItemIndexes || focusedItemIndexes.length === 0) {

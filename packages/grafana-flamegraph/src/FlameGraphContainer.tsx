@@ -194,6 +194,11 @@ const FlameGraphContainer = ({
     return items.size ? items : undefined;
   }, [dataContainer, loadingPaths]);
 
+  // Focus is tracked centrally as data frame indexes so it can be shared between panes, and reported to the host as a
+  // call path, which stays meaningful across data changes. When the data is replaced those indexes belong to the
+  // previous frame, so they are re-mapped onto the node at the same path before anything is read from them,
+  // otherwise the focus would jump to whatever now sits at those rows.
+  const previousDataContainerRef = useRef(dataContainer);
   const reportedFocusPathRef = useRef<string[] | undefined>(undefined);
 
   useEffect(() => {
@@ -201,12 +206,22 @@ const FlameGraphContainer = ({
       return;
     }
 
-    const item = focusedItemIndexes?.length ? dataContainer.getItemByIndexes(focusedItemIndexes) : undefined;
+    const dataChanged = previousDataContainerRef.current !== dataContainer;
+    previousDataContainerRef.current = dataContainer;
+
+    let item = focusedItemIndexes?.length ? dataContainer.getItemByIndexes(focusedItemIndexes) : undefined;
+
+    if (dataChanged) {
+      item = reportedFocusPathRef.current ? dataContainer.getItemByPath(reportedFocusPathRef.current) : undefined;
+      setFocusedItemIndexes(item ? item.itemIndexes : undefined);
+    }
+
     const path = item && dataContainer.getItemPath(item);
     const previous = reportedFocusPathRef.current;
     const unchanged =
       path === previous || (path && previous && path.length === previous.length && path.every((l, i) => l === previous[i]));
 
+    // Only real changes are reported, so re-anchoring the focus on new data for the same path stays silent.
     if (!unchanged) {
       reportedFocusPathRef.current = path;
       onFocusChangeRef.current?.(path);
