@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2, type PanelData, urlUtil } from '@grafana/data';
+import { type DataSourceInstanceListItem, type GrafanaTheme2, type PanelData, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
@@ -32,26 +32,30 @@ import { type ThresholdDefinition, getThresholdsForQueries } from './components/
 import { EvalLoadingBar, NoEvalData } from './components/rule-viewer/EvalStatus';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
+import { type AlertQueryDataSources } from './hooks/alertQueriesStatus';
 import { AlertRuleAction, useAlertRuleAbility } from './hooks/useAbilities';
 
 interface GrafanaRuleViewerProps {
   rule: CombinedRule;
   queries: AlertQuery[];
   condition: string;
+  dataSourcesByUid: AlertQueryDataSources;
   evalDataByQuery?: Record<string, PanelData>;
   queryGraphLoading?: boolean;
   queryDataLoading?: boolean;
+  dataSourcesLoading?: boolean;
 }
 
 export function GrafanaRuleQueryViewer({
   rule,
   queries,
   condition,
+  dataSourcesByUid,
   evalDataByQuery = {},
   queryGraphLoading = false,
   queryDataLoading = false,
+  dataSourcesLoading = false,
 }: GrafanaRuleViewerProps) {
-  const dsByUid = keyBy(Object.values(config.datasources), (ds) => ds.uid);
   const dataQueries = queries.filter((q) => !isExpressionQuery(q.model));
   const expressions = queries.filter((q) => isExpressionQuery(q.model));
   const styles = useStyles2(getExpressionViewerStyles);
@@ -62,23 +66,25 @@ export function GrafanaRuleQueryViewer({
     <Stack gap={1} direction="column" flex={'1 1 320px'}>
       <div className={styles.maxWidthContainer}>
         <Stack gap={1} wrap="wrap" data-testid="queries-container">
-          {dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
-            const dataSource = dsByUid[datasourceUid];
+          {dataSourcesLoading && <EvalLoadingBar />}
+          {!dataSourcesLoading &&
+            dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
+              const dataSource = dataSourcesByUid.get(datasourceUid);
 
-            return (
-              <QueryPreview
-                rule={rule}
-                key={index}
-                refId={refId}
-                model={model}
-                relativeTimeRange={relativeTimeRange}
-                dataSource={dataSource}
-                thresholds={thresholds[refId]}
-                queryData={evalDataByQuery[refId]}
-                isLoading={queryGraphLoading}
-              />
-            );
-          })}
+              return (
+                <QueryPreview
+                  rule={rule}
+                  key={index}
+                  refId={refId}
+                  model={model}
+                  relativeTimeRange={relativeTimeRange}
+                  dataSource={dataSource}
+                  thresholds={thresholds[refId]}
+                  queryData={evalDataByQuery[refId]}
+                  isLoading={queryGraphLoading}
+                />
+              );
+            })}
         </Stack>
       </div>
       <div className={styles.maxWidthContainer}>
@@ -105,7 +111,7 @@ export function GrafanaRuleQueryViewer({
 
 interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRange' | 'model'> {
   rule: CombinedRule;
-  dataSource?: DataSourceInstanceSettings;
+  dataSource?: DataSourceInstanceListItem;
   queryData?: PanelData;
   thresholds?: ThresholdDefinition;
   isLoading?: boolean;

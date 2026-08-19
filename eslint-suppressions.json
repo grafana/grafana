@@ -997,11 +997,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/GrafanaRuleQueryViewer.tsx": {
-    "@grafana/no-config-datasources": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/AnnotationDetailsField.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1164,11 +1159,6 @@
   },
   "public/app/features/alerting/unified/components/rule-viewer/tabs/QueryAndCondition.test.tsx": {
     "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-viewer/tabs/QueryAndCondition.tsx": {
-    "@grafana/no-config-datasources": {
       "count": 1
     }
   },
