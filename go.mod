@@ -4,7 +4,7 @@ go 1.26.6
 
 // Direct requirements -- every entry needs an owner
 require (
-	cloud.google.com/go/aiplatform v1.125.0 // @grafana/grafana-search-and-storage
+	cloud.google.com/go/aiplatform v1.126.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/discoveryengine v1.32.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/kms v1.31.0 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.63.0 // @grafana/grafana-backend-group
