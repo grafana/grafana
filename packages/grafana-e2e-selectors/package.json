@@ -51,6 +51,7 @@
     "@types/node": "24.10.1",
     "@types/semver": "7.7.1",
     "@typescript/native": "npm:typescript@^7.0.2",
+    "acorn": "8.15.0",
     "esbuild": "0.25.8",
     "rimraf": "6.0.1",
     "rollup": "^4.60.1",

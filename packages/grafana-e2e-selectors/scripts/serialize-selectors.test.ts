@@ -59,6 +59,16 @@ describe('serializeSelectorGroup', () => {
     });
   });
 
+  it('reads parameter names via AST even with commas in a default value', () => {
+    const result = serializeSelectorGroup({
+      Group: { def: { '13.2.0': (value = String([1, 2].length)) => `data-testid opt ${value}` } },
+    });
+
+    expect(result).toEqual({
+      Group: { def: { '13.2.0': { $template: 'data-testid opt {value}', params: ['value'] } } },
+    });
+  });
+
   it('serializes a function that ignores its argument (no placeholder in template)', () => {
     const result = serializeSelectorGroup({
       Group: { ignores: { [MIN]: (_: string) => 'Panel status' } },
