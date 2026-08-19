@@ -32,6 +32,8 @@ import {
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
+  PaneClosedEvent,
+  type PaneCloseReason,
   RepeatsUpdatedEvent,
 } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
@@ -560,7 +562,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.publishEvent(new NewSceneObjectAddedEvent(openPane), true);
   }
 
-  public closePane() {
+  public closePane(reason: PaneCloseReason = 'explicit') {
     this.cancelPaneRequest();
     if (this.state.selectionContext.selected.length) {
       this.clearSelection(true);
@@ -572,6 +574,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
       // UrlSyncManager subscribes to this and removes the pane url state from url
       this.publishEvent(new SceneObjectRemovedEvent(openPane), true);
+      this.publishEvent(new PaneClosedEvent({ pane: openPane, reason }));
     }
   }
 
