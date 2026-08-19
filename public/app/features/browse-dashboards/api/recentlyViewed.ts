@@ -28,7 +28,9 @@ export async function getRecentlyViewedDashboards(maxItems = 5): Promise<Dashboa
     };
 
     dashboards.sort((a, b) => order(a.uid) - order(b.uid));
-    return dashboards;
+    // The uid filter and limit are only hints to the search backend, so trim the response
+    // to keep the maxItems contract even if it returns more hits than we asked for.
+    return dashboards.slice(0, maxItems);
   } catch (error) {
     console.error('Failed to load recently viewed dashboards', error);
     return [];
