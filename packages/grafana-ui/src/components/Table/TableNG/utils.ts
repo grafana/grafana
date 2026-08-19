@@ -1411,11 +1411,16 @@ function measureInlineRunWidth(
 
 /**
  * `table.refresh`: whether the header column menu renders for a column. It offers whichever of
- * filter/hide/pin apply, so it shows as soon as any one of them is available — shared by the menu's
- * own render gate and the header width estimate, so the two can't drift out of sync.
+ * filter/hide/pin/reorder apply — reorder via the "Manage columns" item that opens the sidebar, the
+ * others directly — so it shows as soon as any one of them is available. Shared by the menu's own
+ * render gate and the header width estimate, so the two can't drift out of sync.
  */
-export function isColumnMenuVisible(filterable: boolean, canManageColumns: boolean): boolean {
-  return filterable || canManageColumns;
+export function isColumnMenuVisible(
+  filterable: boolean,
+  canManageColumns: boolean,
+  enableColumnReorder: boolean
+): boolean {
+  return filterable || canManageColumns || enableColumnReorder;
 }
 
 /**
@@ -1446,7 +1451,7 @@ function measureHeaderWidth(
   headerWidth += enableColumnReorder ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
     // stays in flow (opacity-faded, not unmounted) whenever the menu itself would render.
-    headerWidth += isColumnMenuVisible(isFilterable, canManageColumns) ? HEADER_MENU_SPACE : 0;
+    headerWidth += isColumnMenuVisible(isFilterable, canManageColumns, enableColumnReorder) ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon next to the sort arrow. Like
     // the arrow, it only exists while that state holds, so its space is reserved only then (the
     // widths recompute when the filter changes).

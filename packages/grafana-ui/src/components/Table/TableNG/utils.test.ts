@@ -1709,16 +1709,21 @@ describe('TableNG utils', () => {
   });
 
   describe('isColumnMenuVisible', () => {
-    it('is visible when the column is filterable, even with no hide/pin', () => {
-      expect(isColumnMenuVisible(true, false)).toBe(true);
+    it('is visible when the column is filterable, even with no hide/pin/reorder', () => {
+      expect(isColumnMenuVisible(true, false, false)).toBe(true);
     });
 
     it('is visible when hide/pin are available, even on a non-filterable column', () => {
-      expect(isColumnMenuVisible(false, true)).toBe(true);
+      expect(isColumnMenuVisible(false, true, false)).toBe(true);
     });
 
-    it('is hidden when neither filter nor hide/pin apply', () => {
-      expect(isColumnMenuVisible(false, false)).toBe(false);
+    it('is visible when reorder is available, even with nothing else', () => {
+      // The "Manage columns" item opens the sidebar for reorder, so reorder alone justifies the menu.
+      expect(isColumnMenuVisible(false, false, true)).toBe(true);
+    });
+
+    it('is hidden when none of filter/hide/pin/reorder apply', () => {
+      expect(isColumnMenuVisible(false, false, false)).toBe(false);
     });
   });
 
@@ -2198,6 +2203,20 @@ describe('TableNG utils', () => {
           canManageColumns: true,
         })
       ).toEqual([67]);
+    });
+
+    it('reserves column menu space for a non-filterable, unmanaged column when reorder is available', () => {
+      // Reorder alone justifies the menu too, since its "Manage columns" item opens the sidebar.
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 32, + drag handle 20 + menu 22 + chrome 13 = 87; content "a" is tiny.
+      expect(
+        computeContentAwareColWidths(fields, 87, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          enableColumnReorder: true,
+        })
+      ).toEqual([87]);
     });
 
     it('reserves header space for the filter icon on a filtered column when table.refresh is on', () => {

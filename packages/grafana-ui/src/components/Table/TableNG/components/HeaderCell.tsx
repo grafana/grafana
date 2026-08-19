@@ -46,6 +46,11 @@ interface HeaderCellProps {
   isPinned?: boolean;
   /** `table.refresh`: pins/unpins this column via the column menu. Omitted when pinning isn't available. */
   onTogglePin?: () => void;
+  /**
+   * `table.refresh`: opens the column-visibility sidebar via the column menu. Omitted when none of
+   * reorder/hide/pin are available for this table.
+   */
+  onOpenColumnPanel?: () => void;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -67,6 +72,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   canHideColumn,
   isPinned,
   onTogglePin,
+  onOpenColumnPanel,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -77,8 +83,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
   const hasActiveFilter = tableRefreshEnabled && filterable && filter[filterKey]?.filtered != null;
-  // Whether hide/pin apply to this column at all.
+  // Whether hide/pin apply to this column at all — the "Manage columns" item opens the sidebar for
+  // reorder too, so it needs its own broader check rather than reusing this alone.
   const canManageColumns = Boolean(onHideColumn) || Boolean(onTogglePin);
+  const canOpenColumnPanel = Boolean(onOpenColumnPanel) && (canManageColumns || Boolean(enableColumnReorder));
 
   // The filter popup is shared by the two controls that open it — the column menu's "Filter values"
   // item and the filter icon that marks an already-filtered column — so it lives here rather than in
@@ -206,7 +214,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         )}
         <div className={styles.headerCellLabelGroup}>{label}</div>
 
-        {isColumnMenuVisible(filterable, canManageColumns) && (
+        {isColumnMenuVisible(filterable, canManageColumns, Boolean(enableColumnReorder)) && (
           <div className={styles.headerCellActions}>
             <HeaderCellMenu
               displayName={displayName}
@@ -217,6 +225,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               canHideColumn={canHideColumn}
               isPinned={isPinned}
               onTogglePin={onTogglePin}
+              onOpenColumnPanel={canOpenColumnPanel ? onOpenColumnPanel : undefined}
             />
           </div>
         )}

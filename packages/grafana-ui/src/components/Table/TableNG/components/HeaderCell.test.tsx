@@ -174,6 +174,54 @@ describe('HeaderCell', () => {
       expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
     });
 
+    it('renders a column menu for a non-filterable, unmanaged column once reorder is enabled', () => {
+      render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled enableColumnReorder />);
+      expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+    });
+
+    it('opens the column-visibility sidebar from the "Manage columns" item', async () => {
+      const onOpenColumnPanel = jest.fn();
+      render(
+        <HeaderCell
+          {...baseProps}
+          field={makeField()}
+          tableRefreshEnabled
+          enableColumnReorder
+          onOpenColumnPanel={onOpenColumnPanel}
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      await userEvent.click(await screen.findByText('Manage columns'));
+      expect(onOpenColumnPanel).toHaveBeenCalledTimes(1);
+    });
+
+    it('omits "Manage columns" when reorder/hide/pin are unavailable, even with a handler passed', async () => {
+      // Filterable alone shows the menu, but there's nothing for "Manage columns" to open a sidebar
+      // onto — the item should stay out rather than open an empty panel.
+      const onOpenColumnPanel = jest.fn();
+      render(
+        <HeaderCell
+          {...baseProps}
+          field={filterableField()}
+          tableRefreshEnabled
+          onOpenColumnPanel={onOpenColumnPanel}
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      await screen.findByText('Filter values');
+      expect(screen.queryByText('Manage columns')).not.toBeInTheDocument();
+    });
+
+    it('omits "Manage columns" when no handler is passed, even with reorder/hide/pin available', async () => {
+      render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled onTogglePin={jest.fn()} />);
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      await screen.findByText('Pin column left');
+      expect(screen.queryByText('Manage columns')).not.toBeInTheDocument();
+    });
+
     it('pins and unpins a column from the column menu', async () => {
       const onTogglePin = jest.fn();
       const { rerender } = render(

@@ -257,9 +257,6 @@ export function TableFlat(props: TableNGProps) {
     ? filterFieldsByHiddenColumns(pinnedOrderedVisibleFields, hiddenColumns)
     : orderedVisibleFields;
 
-  // No UI currently opens this — "Manage columns" was pulled from the per-column menu (it doesn't
-  // belong there; a proper trigger needs the dashboard's own panel menu, which panel-plugin code
-  // can't add to). Left wired up so it's ready once that trigger exists.
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(false);
   const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
   const handlePanelResize = useCallback(
@@ -448,6 +445,7 @@ export function TableFlat(props: TableNGProps) {
       settlingColumnKeys,
       onHideColumn: tableRefreshEnabled ? handleHideColumn : undefined,
       onTogglePin: tableRefreshEnabled ? handleTogglePin : undefined,
+      onOpenColumnPanel: tableRefreshEnabled ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
       pinnedColumns: tableRefreshEnabled ? pinnedColumnSet : undefined,
     }),
     [
