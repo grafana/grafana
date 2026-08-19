@@ -48,8 +48,10 @@ type RuntimeConfig struct {
 	// watches all namespaces (on-prem default); in cloud it must be the stack
 	// namespace, else the all-namespace watch is rejected as a mismatch.
 	WatchNamespace string
-	// SearchRulesHandler is built by the registry with access to the alerting
-	// services. It backs the single namespaced POST /search custom route, which
-	// federates alert and recording rules into one result set.
-	SearchRulesHandler simple.AppCustomRouteHandler
+	// The search handlers are built by the registry with access to the alerting
+	// services. One per kind, because each backs its own namespaced
+	// POST {resource}/search custom route and reads through a search client that
+	// is dual-writer-aware per resource.
+	SearchAlertRulesHandler     simple.AppCustomRouteHandler
+	SearchRecordingRulesHandler simple.AppCustomRouteHandler
 }

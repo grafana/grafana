@@ -2,23 +2,38 @@ package search
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
-	"github.com/grafana/grafana/pkg/expr"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// translate validates and lowers a query for the alert rule kind, failing the
+// test if validation rejects it. Translation assumes a valid query, so a test
+// that means to exercise it must not smuggle in an invalid one.
+func translate(t *testing.T, q *searchv0.SearchQuery) translated {
+	t.Helper()
+	return translateFor(t, alertRuleKind(t), q)
+}
+
+func translateFor(t *testing.T, k kind, q *searchv0.SearchQuery) translated {
+	t.Helper()
+	leaves, errs := validateQuery(q, k)
+	require.Empty(t, errs, "query must be valid to be translated")
+	return translateQuery(q, leaves, "default", k)
+}
 
 func TestParseLabelMatcher(t *testing.T) {
 	tests := map[string]labelMatcher{
@@ -62,61 +77,59 @@ func TestMatchLabels(t *testing.T) {
 
 func TestSortRules(t *testing.T) {
 	rules := []*ngmodels.AlertRule{
-		{Title: "b", UID: "u2"},
-		{Title: "a", UID: "u1"},
-		{Title: "c", UID: "u3"},
+		{Title: "Banana", UID: "u2"},
+		{Title: "apple", UID: "u1"},
+		{Title: "banana", UID: "u0"},
 	}
 
 	sortRules(rules, fieldTitle, false)
-	assert.Equal(t, []string{"a", "b", "c"}, titles(rules))
+	assert.Equal(t, []string{"apple", "banana", "Banana"}, titles(rules))
+	assert.Equal(t, []string{"u1", "u0", "u2"}, []string{rules[0].UID, rules[1].UID, rules[2].UID})
 
 	sortRules(rules, fieldTitle, true)
-	assert.Equal(t, []string{"c", "b", "a"}, titles(rules))
+	assert.Equal(t, []string{"banana", "Banana", "apple"}, titles(rules))
+	assert.Equal(t, []string{"u0", "u2", "u1"}, []string{rules[0].UID, rules[1].UID, rules[2].UID})
 }
 
-// filterLeaf and textLeaf build where nodes for the tests.
-func filterLeaf(field string, op model.CreateSearchRulesRequestSearchFilterLeafOperator, values ...string) model.CreateSearchRulesRequestSearchWhereNode {
-	return model.CreateSearchRulesRequestSearchWhereNode{
-		Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: field, Operator: op, Values: values},
+// TestTranslateQuery_targetsTheEndpointsKind asserts each endpoint searches only
+// its own kind. Federation is gone: the kind comes from the path, so a search
+// never reaches across to the other one.
+func TestTranslateQuery_targetsTheEndpointsKind(t *testing.T) {
+	for name, k := range map[string]kind{
+		"alert rules":     alertRuleKind(t),
+		"recording rules": recordingRuleKind(t),
+	} {
+		t.Run(name, func(t *testing.T) {
+			req := translateFor(t, k, query()).req
+			assert.Equal(t, k.groupResource().Group, req.Options.Key.Group)
+			assert.Equal(t, k.groupResource().Resource, req.Options.Key.Resource)
+			assert.Equal(t, "default", req.Options.Key.Namespace)
+			assert.Empty(t, req.Federated, "each endpoint searches one kind")
+		})
 	}
 }
 
-func textLeaf(value string) model.CreateSearchRulesRequestSearchWhereNode {
-	return model.CreateSearchRulesRequestSearchWhereNode{
-		Text: &model.CreateSearchRulesRequestSearchTextLeaf{Value: value},
-	}
-}
-
-func andNode(children ...model.CreateSearchRulesRequestSearchWhereNode) *model.CreateSearchRulesRequestSearchWhereNode {
-	return &model.CreateSearchRulesRequestSearchWhereNode{And: children}
-}
-
-const opIn = model.CreateSearchRulesRequestSearchFilterLeafOperatorIn
-
-// TestBuildSearchRequestExtractRoundTrip verifies the request built from a
-// SearchQuery body can be decoded back into the same filters by the legacy
-// backend.
-func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
+// TestTranslateQuery_extractRoundTrip verifies the request built from a
+// SearchQuery can be decoded back into the same filters by the legacy backend.
+func TestTranslateQuery_extractRoundTrip(t *testing.T) {
+	q := query()
+	q.Where = andNode(
+		textLeaf("cpu"),
+		filterLeaf(fieldFolder, filterOperatorIn, "f1", "f2"),
+		filterLeaf(fieldPaused, filterOperatorIn, "true"),
+		filterLeaf(fieldDatasourceUIDs, filterOperatorIn, "ds1", "ds2"),
+		filterLeaf(fieldReceiver, filterOperatorIn, "slack"),
+		filterLeaf(fieldLabels, filterOperatorNotIn, "__grafana_origin"),
+	)
 	// labelSelector selects on resource metadata labels, so it targets the
 	// controlled group key, not the rules' spec labels.
-	labelSelector := model.GroupLabelKey + "=g1"
-	body := model.CreateSearchRulesRequestBody{
-		Where: andNode(
-			textLeaf("cpu"),
-			filterLeaf(fieldFolder, opIn, "f1", "f2"),
-			filterLeaf(fieldPaused, opIn, "true"),
-			filterLeaf(fieldDatasourceUIDs, opIn, "ds1", "ds2"),
-			filterLeaf(fieldReceiver, opIn, "slack"),
-			filterLeaf(fieldLabels, model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn, "__grafana_origin"),
-		),
-		LabelSelector: &labelSelector,
-		Sort:          []model.CreateSearchRulesRequestSearchSortField{"-title"},
-	}
-	req, offset, err := buildSearchRequest(body, "default", alertrule.ResourceInfo.GroupResource(), nil)
-	require.NoError(t, err)
-	assert.Zero(t, offset)
+	q.LabelSelector = &metav1.LabelSelector{MatchLabels: map[string]string{model.GroupLabelKey: "g1"}}
+	q.Sort = []searchv0.SortField{{Field: fieldTitle, Direction: sortDescending}}
 
-	f := extractFilters(req)
+	tr := translate(t, q)
+	assert.Zero(t, tr.offset)
+
+	f := extractFilters(tr.req)
 	assert.Equal(t, "cpu", f.title)
 	assert.Equal(t, []string{"f1", "f2"}, f.folders)
 	assert.Equal(t, []string{"ds1", "ds2"}, f.datasourceUIDs)
@@ -135,29 +148,57 @@ func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
 	assert.Empty(t, f.groupsExclude)
 }
 
-// TestBuildSearchRequest_labelSelector covers the labelSelector lowering onto
-// metadata label requirements: it targets metadata.labels (not the rules' spec
-// labels), only controlled keys are selectable, and a Kubernetes "in (a, b)" is
-// set membership so its values must stay in one multi-value requirement.
-func TestBuildSearchRequest_labelSelector(t *testing.T) {
-	gr := alertrule.ResourceInfo.GroupResource()
-	build := func(t *testing.T, selector string) *resourcepb.ResourceSearchRequest {
-		t.Helper()
-		sel := selector
-		req, _, err := buildSearchRequest(
-			model.CreateSearchRulesRequestBody{LabelSelector: &sel}, "default", gr, nil)
-		require.NoError(t, err)
-		return req
+// TestTranslateQuery_typeFilter covers the "type" filter now that the endpoint
+// already fixes the kind. It stays a real requirement so the two backends agree:
+// unified filters on the indexed field, and the legacy backend answers with an
+// empty page when the filter contradicts the kind it is searching.
+func TestTranslateQuery_typeFilter(t *testing.T) {
+	typeQuery := func(value string) *searchv0.SearchQuery {
+		q := query()
+		q.Where = &searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: fieldType, Operator: filterOperatorIn, Values: []string{value}},
+		}
+		return q
 	}
-	buildErr := func(selector string) error {
-		sel := selector
-		_, _, err := buildSearchRequest(
-			model.CreateSearchRulesRequestBody{LabelSelector: &sel}, "default", gr, nil)
-		return err
+
+	t.Run("becomes a field requirement", func(t *testing.T) {
+		req := translate(t, typeQuery(ruleTypeAlerting)).req
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, fieldType, req.Options.Fields[0].Key)
+		assert.Equal(t, "in", req.Options.Fields[0].Operator)
+		assert.Equal(t, []string{ruleTypeAlerting}, req.Options.Fields[0].Values)
+		assert.Equal(t, ruleTypeAlerting, extractFilters(req).ruleType)
+	})
+
+	t.Run("the legacy backend matches it against the kind it searches", func(t *testing.T) {
+		matching := translate(t, typeQuery(ruleTypeAlerting)).req
+		assert.Equal(t, ruleTypeAlerting, ruleTypeForResource(matching))
+		assert.Equal(t, ngmodels.RuleTypeFilterAlerting, ruleTypeForRequest(matching))
+
+		contradicting := translate(t, typeQuery(ruleTypeRecording)).req
+		assert.NotEqual(t, extractFilters(contradicting).ruleType, ruleTypeForResource(contradicting),
+			"a contradicted type filter must not be silently ignored")
+
+		recording := translateFor(t, recordingRuleKind(t), typeQuery(ruleTypeRecording)).req
+		assert.Equal(t, ruleTypeRecording, ruleTypeForResource(recording))
+		assert.Equal(t, ngmodels.RuleTypeFilterRecording, ruleTypeForRequest(recording))
+	})
+}
+
+// TestTranslateQuery_labelSelector covers the labelSelector lowering onto
+// metadata label requirements: it targets metadata.labels (not the rules' spec
+// labels), and a Kubernetes "in (a, b)" is set membership so its values must stay
+// in one multi-value requirement.
+func TestTranslateQuery_labelSelector(t *testing.T) {
+	build := func(t *testing.T, sel *metav1.LabelSelector) *resourcepb.ResourceSearchRequest {
+		t.Helper()
+		q := query()
+		q.LabelSelector = sel
+		return translate(t, q).req
 	}
 
 	t.Run("selects on metadata labels, not spec labels", func(t *testing.T) {
-		req := build(t, model.GroupLabelKey+"=g1")
+		req := build(t, &metav1.LabelSelector{MatchLabels: map[string]string{model.GroupLabelKey: "g1"}})
 		require.Len(t, req.Options.Labels, 1)
 		assert.Empty(t, req.Options.Fields, "must not touch the indexed spec-labels field")
 		assert.Equal(t, model.GroupLabelKey, req.Options.Labels[0].Key)
@@ -166,18 +207,21 @@ func TestBuildSearchRequest_labelSelector(t *testing.T) {
 	})
 
 	t.Run("multi-value In stays one requirement so values OR", func(t *testing.T) {
-		req := build(t, model.GroupLabelKey+" in (g1,g2)")
+		req := build(t, &metav1.LabelSelector{MatchExpressions: []metav1.LabelSelectorRequirement{{
+			Key: model.GroupLabelKey, Operator: metav1.LabelSelectorOpIn, Values: []string{"g1", "g2"},
+		}}})
 		require.Len(t, req.Options.Labels, 1, "values must stay in one requirement to OR")
 		assert.Equal(t, "in", req.Options.Labels[0].Operator)
 		assert.ElementsMatch(t, []string{"g1", "g2"}, req.Options.Labels[0].Values)
 
 		// the legacy side reads both values into the group include filter
-		f := extractFilters(req)
-		assert.ElementsMatch(t, []string{"g1", "g2"}, f.groupsInclude)
+		assert.ElementsMatch(t, []string{"g1", "g2"}, extractFilters(req).groupsInclude)
 	})
 
 	t.Run("NotIn becomes a group exclusion", func(t *testing.T) {
-		req := build(t, model.GroupLabelKey+" notin (g1,g2)")
+		req := build(t, &metav1.LabelSelector{MatchExpressions: []metav1.LabelSelectorRequirement{{
+			Key: model.GroupLabelKey, Operator: metav1.LabelSelectorOpNotIn, Values: []string{"g1", "g2"},
+		}}})
 		require.Len(t, req.Options.Labels, 1)
 		assert.Equal(t, "notin", req.Options.Labels[0].Operator)
 
@@ -185,79 +229,49 @@ func TestBuildSearchRequest_labelSelector(t *testing.T) {
 		assert.ElementsMatch(t, []string{"g1", "g2"}, f.groupsExclude)
 		assert.Empty(t, f.groupsInclude)
 	})
-
-	t.Run("rejects keys that are not selectable", func(t *testing.T) {
-		// A rule spec label is not a metadata label: selecting on it would match
-		// nothing rather than filter by rule label, so it must be rejected.
-		require.Error(t, buildErr("team=a"))
-	})
-
-	t.Run("rejects existence operators", func(t *testing.T) {
-		for _, sel := range []string{model.GroupLabelKey, "!" + model.GroupLabelKey} {
-			require.Error(t, buildErr(sel), "selector %q", sel)
-		}
-	})
-
-	t.Run("rejects a malformed selector", func(t *testing.T) {
-		require.Error(t, buildErr("=="))
-	})
 }
 
-// TestBuildSearchRequest_labelsFilterLeaf covers the labels filter leaf. A leaf
-// carries exactly one matcher (see scalarFields): a requirement holds a single
-// operator for all its values, so matchers sharing a leaf could not each keep
-// their own polarity. In encodes the matcher as given, NotIn its complement, and
-// repeating the leaf conjoins matchers.
-func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
-	const notIn = model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn
-	gr := alertrule.ResourceInfo.GroupResource()
-	leaf := func(op model.CreateSearchRulesRequestSearchFilterLeafOperator, vals ...string) model.CreateSearchRulesRequestSearchWhereNode {
-		return model.CreateSearchRulesRequestSearchWhereNode{
-			Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldLabels, Operator: op, Values: vals},
-		}
+// TestTranslateQuery_labelsFilterLeaf covers the labels filter leaf. A leaf
+// carries exactly one matcher (see scalarFilterFields): a requirement holds a
+// single operator for all its values, so matchers sharing a leaf could not each
+// keep their own polarity. In keeps the positive matcher, NotIn complements it,
+// and repeating the leaf conjoins matchers. Negated values are rejected before
+// translation so the operator is the only source of polarity.
+func TestTranslateQuery_labelsFilterLeaf(t *testing.T) {
+	leaf := func(op string, vals ...string) searchv0.WhereNode {
+		return filterLeaf(fieldLabels, op, vals...)
 	}
-	build := func(nodes ...model.CreateSearchRulesRequestSearchWhereNode) (*resourcepb.ResourceSearchRequest, error) {
-		req, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{
-			Where: &model.CreateSearchRulesRequestSearchWhereNode{And: nodes},
-		}, "default", gr, nil)
-		return req, err
+	build := func(t *testing.T, nodes ...searchv0.WhereNode) *resourcepb.ResourceSearchRequest {
+		t.Helper()
+		q := query()
+		q.Where = andNode(nodes...)
+		return translate(t, q).req
 	}
 
 	t.Run("encodes one matcher per leaf", func(t *testing.T) {
 		for _, tc := range []struct {
-			op       model.CreateSearchRulesRequestSearchFilterLeafOperator
+			op       string
 			value    string
 			operator string
-			// The term stays positive whatever the polarity: negation rides on
-			// the requirement's operator, so both forms share an indexed term.
+			// The term stays positive whatever the polarity: negation rides on the
+			// requirement's operator, so both forms share an indexed term.
 			term string
 		}{
-			{opIn, "team=a", "in", "team=a"},
+			{filterOperatorIn, "team=a", "in", "team=a"},
 			// "team=" would mean team equals the empty string, not team exists.
-			{opIn, "team", "in", "team"},
-			{opIn, "team!=a", "notin", "team=a"},
-			{notIn, "team=a", "notin", "team=a"},
-			{notIn, "team", "notin", "team"},
-			{notIn, "team!=a", "in", "team=a"},
+			{filterOperatorIn, "team", "in", "team"},
+			{filterOperatorNotIn, "team=a", "notin", "team=a"},
+			{filterOperatorNotIn, "team", "notin", "team"},
 		} {
-			req, err := build(leaf(tc.op, tc.value))
-			require.NoError(t, err, "%s %q", tc.op, tc.value)
+			req := build(t, leaf(tc.op, tc.value))
 			require.Len(t, req.Options.Fields, 1, "%s %q", tc.op, tc.value)
 			assert.Equal(t, tc.operator, req.Options.Fields[0].Operator, "%s %q", tc.op, tc.value)
 			assert.Equal(t, []string{tc.term}, req.Options.Fields[0].Values, "%s %q", tc.op, tc.value)
 		}
 	})
 
-	t.Run("rejects more than one value", func(t *testing.T) {
-		for _, op := range []model.CreateSearchRulesRequestSearchFilterLeafOperator{opIn, notIn} {
-			_, err := build(leaf(op, "team=a", "team=b"))
-			require.Error(t, err, "%s", op)
-		}
-	})
-
 	t.Run("repeated leaves conjoin", func(t *testing.T) {
-		req, err := build(leaf(opIn, "team=a"), leaf(notIn, "env=prod"))
-		require.NoError(t, err)
+		req := build(t, leaf(filterOperatorIn, "team=a"), leaf(filterOperatorNotIn, "env=prod"))
 		require.Len(t, req.Options.Fields, 2, "each leaf gets its own requirement")
 		assert.Equal(t, "in", req.Options.Fields[0].Operator)
 		assert.Equal(t, "notin", req.Options.Fields[1].Operator)
@@ -271,168 +285,97 @@ func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
 	})
 }
 
-func TestBuildSearchRequest_rejectsUnknownFilterField(t *testing.T) {
-	body := model.CreateSearchRulesRequestBody{
-		Where: &model.CreateSearchRulesRequestSearchWhereNode{
-			Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: "bogus", Operator: opIn, Values: []string{"x"}},
-		},
-	}
-	_, _, err := buildSearchRequest(body, "default", alertrule.ResourceInfo.GroupResource(), nil)
-	require.Error(t, err)
-}
-
-func TestBuildSearchRequest_rejectsNegatedLabelFilterValue(t *testing.T) {
-	// The In/NotIn operator carries negation, so a "!"-prefixed labels value is
-	// double-negation and must be rejected rather than silently resolved.
-	body := model.CreateSearchRulesRequestBody{
-		Where: &model.CreateSearchRulesRequestSearchWhereNode{
-			Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldLabels, Operator: opIn, Values: []string{"!team"}},
-		},
-	}
-	_, _, err := buildSearchRequest(body, "default", alertrule.ResourceInfo.GroupResource(), nil)
-	require.Error(t, err)
-}
-
-func TestBuildSearchRequest_rejectsUnsupportedBodyFields(t *testing.T) {
-	gr := alertrule.ResourceInfo.GroupResource()
-	t.Run("field projection", func(t *testing.T) {
-		_, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{Fields: []string{"title"}}, "default", gr, nil)
-		require.Error(t, err)
+// TestTranslateQuery_sort covers the sort lowering. An absent sort becomes title
+// ascending so free-text order does not change with the storage mode.
+func TestTranslateQuery_sort(t *testing.T) {
+	t.Run("defaults to title ascending", func(t *testing.T) {
+		sorts := translate(t, query()).req.SortBy
+		require.Len(t, sorts, 1)
+		assert.Equal(t, fieldTitle, sorts[0].Field)
+		assert.False(t, sorts[0].Desc)
 	})
-	t.Run("facets", func(t *testing.T) {
-		_, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{Facets: []string{"type"}}, "default", gr, nil)
-		require.Error(t, err)
-	})
-}
 
-func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
-	gr := alertrule.ResourceInfo.GroupResource()
-	build := func(node model.CreateSearchRulesRequestSearchWhereNode) error {
-		body := model.CreateSearchRulesRequestBody{Where: &node}
-		_, _, err := buildSearchRequest(body, "default", gr, nil)
-		return err
-	}
-
-	t.Run("scalar field rejects multiple values", func(t *testing.T) {
-		require.Error(t, build(filterLeaf(fieldPanelID, opIn, "1", "2")))
-	})
-	t.Run("scalar field accepts single value", func(t *testing.T) {
-		require.NoError(t, build(filterLeaf(fieldPanelID, opIn, "1")))
-	})
-	// Synthetic expression UIDs are never indexed as query datasources, so they
-	// are dropped from the filter rather than rejected — matching what the
-	// in-memory pass used to do when it built the rule's datasource set.
-	t.Run("rejects synthetic datasourceUIDs", func(t *testing.T) {
-		gr := alertrule.ResourceInfo.GroupResource()
-		reqFor := func(vals ...string) (*resourcepb.ResourceSearchRequest, error) {
-			body := model.CreateSearchRulesRequestBody{Where: &model.CreateSearchRulesRequestSearchWhereNode{
-				Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldDatasourceUIDs, Operator: opIn, Values: vals},
-			}}
-			req, _, err := buildSearchRequest(body, "default", gr, nil)
-			return req, err
-		}
-
-		t.Run("accepts real datasources", func(t *testing.T) {
-			req, err := reqFor("ds1", "ds2", "ds3")
-			require.NoError(t, err)
-			require.Len(t, req.Options.Fields, 1)
-			assert.Equal(t, []string{"ds1", "ds2", "ds3"}, req.Options.Fields[0].Values)
+	for _, tc := range []struct {
+		direction string
+		desc      bool
+	}{
+		{"", false},
+		{sortAscending, false},
+		{sortDescending, true},
+	} {
+		t.Run("direction "+tc.direction, func(t *testing.T) {
+			q := query()
+			q.Sort = []searchv0.SortField{{Field: fieldTitle, Direction: tc.direction}}
+			req := translate(t, q).req
+			require.Len(t, req.SortBy, 1)
+			assert.Equal(t, fieldTitle, req.SortBy[0].Field)
+			assert.Equal(t, tc.desc, req.SortBy[0].Desc)
 		})
+	}
+}
 
-		t.Run("rejects synethic datasources", func(t *testing.T) {
-			_, err := reqFor(expr.DatasourceUID)
-			require.Error(t, err)
-		})
-	})
-
-	t.Run("paused rejects non-boolean", func(t *testing.T) {
-		require.Error(t, build(filterLeaf(fieldPaused, opIn, "yes")))
-	})
-	t.Run("paused accepts boolean", func(t *testing.T) {
-		require.NoError(t, build(filterLeaf(fieldPaused, opIn, "true")))
+// TestTranslateQuery_returnFields covers the projection. It defaults to what the
+// generic search API returns, so the projection does not change when that
+// endpoint takes over.
+func TestTranslateQuery_returnFields(t *testing.T) {
+	t.Run("defaults to title and folder", func(t *testing.T) {
+		assert.Equal(t, []string{fieldTitle, fieldFolder}, translate(t, query()).fields)
 	})
 
-	// Both backends parse these values again themselves and disagree on the forms
-	// they accept, so the request carries one spelling of each.
-	t.Run("scalar values are normalized", func(t *testing.T) {
-		for _, tc := range []struct {
-			field, value, want string
-		}{
-			{fieldPaused, "TRUE", "true"},
-			{fieldPaused, "True", "true"},
-			{fieldPaused, "1", "true"},
-			{fieldPaused, "t", "true"},
-			{fieldPaused, "0", "false"},
-			{fieldPanelID, "+10", "10"},
-			{fieldPanelID, "010", "10"},
-		} {
-			body := model.CreateSearchRulesRequestBody{Where: andNode(filterLeaf(tc.field, opIn, tc.value))}
-			req, _, err := buildSearchRequest(body, "default", alertrule.ResourceInfo.GroupResource(), nil)
-			require.NoError(t, err, "%s=%s", tc.field, tc.value)
-
-			var got []string
-			for _, r := range req.Options.Fields {
-				if r.Key == tc.field {
-					got = r.Values
-				}
-			}
-			require.Equal(t, []string{tc.want}, got, "%s=%s", tc.field, tc.value)
-		}
-	})
-	t.Run("type rejects NotIn", func(t *testing.T) {
-		require.Error(t, build(filterLeaf(fieldType, model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn, "alertrule")))
-	})
-	t.Run("type rejects multiple values", func(t *testing.T) {
-		require.Error(t, build(filterLeaf(fieldType, opIn, "alertrule", "recordingrule")))
-	})
-	t.Run("type rejects invalid value", func(t *testing.T) {
-		require.Error(t, build(filterLeaf(fieldType, opIn, "bogus")))
-	})
-	t.Run("type accepts valid kind", func(t *testing.T) {
-		require.NoError(t, build(filterLeaf(fieldType, opIn, "recordingrule")))
+	t.Run("honours an explicit projection", func(t *testing.T) {
+		q := query()
+		q.Fields = []string{fieldPaused, fieldLabels}
+		assert.Equal(t, []string{fieldPaused, fieldLabels}, translate(t, q).fields)
 	})
 
-	// Fields declared in searchFields but not applied by the legacy in-memory
-	// filter pass must be rejected, not silently dropped on the SQL backend.
-	t.Run("rejects filter on legacy-unsupported fields", func(t *testing.T) {
-		for _, field := range []string{fieldTitle, fieldInterval, fieldFor, fieldKeepFiringFor, fieldAnnotations} {
-			require.Error(t, build(filterLeaf(field, opIn, "x")), "field %q", field)
-		}
-	})
-
-	// NotIn only round-trips negation on the labels field; on any other field
-	// the legacy backend ignores the operator and would invert the result.
-	t.Run("rejects NotIn on non-labels fields", func(t *testing.T) {
-		notIn := model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn
-		for _, field := range []string{fieldName, fieldFolder, fieldDatasourceUIDs, fieldReceiver, fieldMetric} {
-			require.Error(t, build(filterLeaf(field, notIn, "x")), "field %q", field)
-		}
-	})
-	t.Run("accepts NotIn on labels", func(t *testing.T) {
-		notIn := model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn
-		require.NoError(t, build(filterLeaf(fieldLabels, notIn, "team=a")))
+	// The backend is asked for every column whatever the projection, because
+	// bleve does not populate them all for a free-text query. Narrowing happens
+	// when the response is built.
+	t.Run("still asks the backend for every column", func(t *testing.T) {
+		q := query()
+		q.Fields = []string{fieldTitle}
+		assert.ElementsMatch(t, resultColumns, translate(t, q).req.Fields)
 	})
 }
 
-// legacyResponse builds the search response the legacy backend would return for
-// a single rule.
-func legacyResponse(t *testing.T, rule *ngmodels.AlertRule) *resourcepb.ResourceSearchResponse {
-	t.Helper()
-	cells, err := ruleCells(rule)
-	require.NoError(t, err)
-	return &resourcepb.ResourceSearchResponse{
-		TotalHits: 1,
-		Results: &resourcepb.ResourceTable{
-			Columns: resultColumnDefinitions(),
-			Rows:    []*resourcepb.ResourceTableRow{{Key: ruleKey("default", rule), Cells: cells}},
-		},
+// TestTranslateQuery_pagination covers limit clamping and the continue token.
+// The bounds match the generic search API so a client's limit is clamped
+// identically, and the page size is capped because the legacy backend loads and
+// filters the full rule set in memory before paginating.
+func TestTranslateQuery_pagination(t *testing.T) {
+	limitQuery := func(n int64) *searchv0.SearchQuery {
+		q := query()
+		q.Limit = n
+		return q
 	}
+
+	t.Run("defaults an unset limit", func(t *testing.T) {
+		assert.Equal(t, int64(defaultLimit), translate(t, limitQuery(0)).req.Limit)
+	})
+	t.Run("clamps a limit above the maximum", func(t *testing.T) {
+		assert.Equal(t, int64(maxLimit), translate(t, limitQuery(maxLimit+1)).req.Limit)
+	})
+	t.Run("keeps a limit in range", func(t *testing.T) {
+		assert.Equal(t, int64(25), translate(t, limitQuery(25)).req.Limit)
+	})
+	t.Run("resumes from a token it issued", func(t *testing.T) {
+		q := query()
+		q.Continue = encodeCursor(40)
+		tr := translate(t, q)
+		assert.Equal(t, int64(40), tr.offset)
+		assert.Equal(t, int64(40), tr.req.Offset)
+	})
+	t.Run("starts from the beginning with no token", func(t *testing.T) {
+		tr := translate(t, query())
+		assert.Zero(t, tr.offset)
+		assert.Zero(t, tr.req.Offset)
+	})
 }
 
 // TestResultColumnsCoverSearchFields asserts the result table carries exactly
 // the fields the kinds declare, plus the two standard fields the document
 // builder supplies. A field added to the CUE but not here would be indexed and
-// filterable on the unified backend yet missing from every hit, and a name here
+// filterable on the unified backend yet impossible to return, and a name here
 // that no kind declares has no column definition to encode against.
 func TestResultColumnsCoverSearchFields(t *testing.T) {
 	want := map[string]struct{}{fieldTitle: {}, fieldFolder: {}}
@@ -451,6 +394,43 @@ func TestResultColumnsCoverSearchFields(t *testing.T) {
 		names = append(names, name)
 	}
 	assert.ElementsMatch(t, names, resultColumns)
+}
+
+// TestDefaultReturnFieldsAreServable guards the defaults: a projection can only
+// return a column the result table carries, so a default that is not one would
+// make every unprojected hit come back with no fields at all.
+func TestDefaultReturnFieldsAreServable(t *testing.T) {
+	for _, name := range defaultReturnFields {
+		assert.Contains(t, results.index, name, "default return field %q is not a result column", name)
+	}
+}
+
+// TestFieldSets asserts each kind's field set is built and per kind, since every
+// validation rule is expressed against it.
+func TestFieldSets(t *testing.T) {
+	alert := fieldSets[alertrule.ResourceInfo.GroupResource()]
+	recording := fieldSets[recordingrule.ResourceInfo.GroupResource()]
+	require.NotNil(t, alert)
+	require.NotNil(t, recording)
+
+	// Standard fields reach both.
+	for _, s := range []*fieldSet{alert, recording} {
+		assert.True(t, s.known(fieldTitle))
+		assert.True(t, s.known(fieldFolder))
+		assert.True(t, s.known(fieldName))
+	}
+
+	// Declared fields do not leak across kinds.
+	assert.True(t, alert.known(fieldReceiver))
+	assert.False(t, recording.known(fieldReceiver))
+	assert.True(t, recording.known(fieldMetric))
+	assert.False(t, alert.known(fieldMetric))
+
+	// Capabilities come from the declarations.
+	assert.True(t, alert.has(fieldTitle, resource.SearchCapabilityText))
+	assert.True(t, alert.has(fieldPaused, resource.SearchCapabilityFilter))
+	assert.False(t, alert.has(fieldAnnotations, resource.SearchCapabilityFilter))
+	assert.False(t, alert.has(fieldName, resource.SearchCapabilityRetrieve))
 }
 
 // TestSearchFieldsAgreeAcrossKinds guards the fields both rule kinds declare.
@@ -514,223 +494,6 @@ func TestResultColumnsAreTyped(t *testing.T) {
 	require.True(t, byName[fieldLabels].IsArray, "labels is indexed as flattened terms")
 	require.True(t, byName[fieldDatasourceUIDs].IsArray)
 	require.False(t, byName[fieldAnnotations].IsArray, "annotations is a whole JSON object")
-}
-
-func TestBuildSearchRequest_rejectsUnsortableField(t *testing.T) {
-	body := model.CreateSearchRulesRequestBody{
-		Sort: []model.CreateSearchRulesRequestSearchSortField{"folder"},
-	}
-	_, _, err := buildSearchRequest(body, "default", alertrule.ResourceInfo.GroupResource(), nil)
-	require.Error(t, err)
-}
-
-// An unset node carries no constraint, so accepting one would turn a filtered
-// search into a match-all.
-func TestBuildSearchRequest_rejectsUnsetWhereNode(t *testing.T) {
-	gr := alertrule.ResourceInfo.GroupResource()
-	empty := model.CreateSearchRulesRequestSearchWhereNode{}
-	for name, node := range map[string]*model.CreateSearchRulesRequestSearchWhereNode{
-		"bare node":       &empty,
-		"empty and":       andNode(),
-		"empty and child": andNode(empty),
-	} {
-		t.Run(name, func(t *testing.T) {
-			_, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{Where: node}, "default", gr, nil)
-			require.Error(t, err)
-		})
-	}
-}
-
-func TestBuildSearchRequest_rejectsNestedAnd(t *testing.T) {
-	body := model.CreateSearchRulesRequestBody{
-		Where: andNode(*andNode(textLeaf("x"))),
-	}
-	_, _, err := buildSearchRequest(body, "default", alertrule.ResourceInfo.GroupResource(), nil)
-	require.Error(t, err)
-}
-
-// TestBuildSearchRequest_repeatedFilterFields covers a field filtered twice.
-// Neither backend can honor it and they disagree: legacy keeps the last leaf,
-// unified ANDs both into an unsatisfiable conjunction and returns nothing.
-func TestBuildSearchRequest_repeatedFilterFields(t *testing.T) {
-	gr := alertrule.ResourceInfo.GroupResource()
-	build := func(node *model.CreateSearchRulesRequestSearchWhereNode) error {
-		_, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{Where: node}, "default", gr, nil)
-		return err
-	}
-
-	t.Run("rejects a repeated field", func(t *testing.T) {
-		require.Error(t, build(andNode(
-			filterLeaf(fieldFolder, opIn, "folder-a"),
-			filterLeaf(fieldFolder, opIn, "folder-b"),
-		)))
-	})
-
-	// type never becomes a requirement — kindSelection reads it off the body and
-	// applyFilter drops the leaf — so a second, differing type leaf would
-	// otherwise be silently ignored in favour of the first.
-	t.Run("rejects repeated type", func(t *testing.T) {
-		require.Error(t, build(andNode(
-			filterLeaf(fieldType, opIn, "alertrule"),
-			filterLeaf(fieldType, opIn, "recordingrule"),
-		)))
-	})
-
-	// labels is the exception: repeating it is how a caller ANDs matchers, and
-	// extractFilters accumulates those rather than overwriting.
-	t.Run("allows repeated labels", func(t *testing.T) {
-		require.NoError(t, build(andNode(
-			filterLeaf(fieldLabels, opIn, "team=a"),
-			filterLeaf(fieldLabels, opIn, "env=prod"),
-		)))
-	})
-
-	t.Run("still allows one filter per field", func(t *testing.T) {
-		require.NoError(t, build(andNode(
-			filterLeaf(fieldFolder, opIn, "folder-a", "folder-b"),
-			filterLeaf(fieldReceiver, opIn, "slack"),
-		)))
-	})
-}
-
-// TestCellsParseRoundTrip verifies a rule encoded into table cells decodes back
-// into the expected hit fields.
-func TestCellsParseRoundTrip(t *testing.T) {
-	dashboardUID := "dash1"
-	// Eight digits is exactly the width of the int64 fast path in
-	// resourceTableColumn.Decode, so a panel ID written as a decimal string
-	// would decode to an unrelated number instead of failing.
-	panelID := int64(12345678)
-	rule := &ngmodels.AlertRule{
-		UID:             "uid1",
-		Title:           "cpu high",
-		NamespaceUID:    "folder1",
-		RuleGroup:       "group1",
-		IntervalSeconds: 60,
-		For:             5 * time.Minute,
-		IsPaused:        true,
-		Labels:          map[string]string{"team": "a"},
-		Annotations:     map[string]string{"summary": "cpu is high"},
-		Data:            []ngmodels.AlertQuery{{DatasourceUID: "ds1"}, {DatasourceUID: expr.DatasourceUID}},
-		DashboardUID:    &dashboardUID,
-		PanelID:         &panelID,
-		NotificationSettings: &ngmodels.NotificationSettings{
-			ContactPointRouting: &ngmodels.ContactPointRouting{Receiver: "slack"},
-		},
-	}
-
-	resp := legacyResponse(t, rule)
-	hits := NewHandler(nil, nil).parseHits(resp)
-	require.Len(t, hits, 1)
-	h := hits[0]
-
-	assert.Equal(t, "uid1", h.Resource.Name)
-	assert.Equal(t, alertrule.ResourceInfo.GroupVersionKind().Kind, h.Resource.Kind)
-	assert.Equal(t, alertrule.ResourceInfo.GroupResource().Resource, h.Resource.Resource)
-
-	fields := h.Fields
-	require.NotNil(t, fields.Type)
-	assert.Equal(t, "alertrule", *fields.Type)
-	require.NotNil(t, fields.Title)
-	assert.Equal(t, "cpu high", *fields.Title)
-	require.NotNil(t, fields.Folder)
-	assert.Equal(t, "folder1", *fields.Folder)
-	require.NotNil(t, fields.Paused)
-	assert.True(t, *fields.Paused)
-	assert.Equal(t, map[string]string{"team": "a"}, fields.Labels)
-	assert.Equal(t, []string{"ds1"}, fields.DatasourceUIDs)
-	require.NotNil(t, fields.Interval)
-	assert.Equal(t, "1m", *fields.Interval)
-	require.NotNil(t, fields.For)
-	assert.Equal(t, "5m", *fields.For)
-	assert.Equal(t, map[string]string{"summary": "cpu is high"}, fields.Annotations)
-	require.NotNil(t, fields.Receiver)
-	assert.Equal(t, "slack", *fields.Receiver)
-	require.NotNil(t, fields.NotificationType)
-	assert.Equal(t, "SimplifiedRouting", *fields.NotificationType)
-	require.NotNil(t, fields.DashboardUID)
-	assert.Equal(t, "dash1", *fields.DashboardUID)
-	require.NotNil(t, fields.PanelID)
-	assert.Equal(t, int64(12345678), *fields.PanelID)
-}
-
-// TestParseHits_recordingRuleKind verifies a recording-rule row is discriminated
-// by its type column into the recording-rule identity and field set.
-func TestParseHits_recordingRuleKind(t *testing.T) {
-	rule := &ngmodels.AlertRule{
-		UID:             "rec1",
-		Title:           "cpu recording",
-		NamespaceUID:    "folder1",
-		IntervalSeconds: 60,
-		Record:          &ngmodels.Record{Metric: "cpu_total", TargetDatasourceUID: "ds-target"},
-		Data:            []ngmodels.AlertQuery{{DatasourceUID: "ds1"}},
-	}
-	resp := legacyResponse(t, rule)
-	hits := NewHandler(nil, nil).parseHits(resp)
-	require.Len(t, hits, 1)
-	h := hits[0]
-
-	assert.Equal(t, recordingrule.ResourceInfo.GroupVersionKind().Kind, h.Resource.Kind)
-	require.NotNil(t, h.Fields.Type)
-	assert.Equal(t, "recordingrule", *h.Fields.Type)
-	require.NotNil(t, h.Fields.Metric)
-	assert.Equal(t, "cpu_total", *h.Fields.Metric)
-	require.NotNil(t, h.Fields.TargetDatasourceUID)
-	assert.Equal(t, "ds-target", *h.Fields.TargetDatasourceUID)
-	// Alert-only fields stay nil on a recording-rule hit.
-	assert.Nil(t, h.Fields.Receiver)
-	assert.Nil(t, h.Fields.Annotations)
-}
-
-// TestBuildSearchRequestPagination covers limit/continue validation and
-// clamping: malformed or out-of-range input must be rejected, and the page size
-// must be capped so a single request cannot materialize an entire tenant's rules.
-func TestBuildSearchRequestPagination(t *testing.T) {
-	gr := alertrule.ResourceInfo.GroupResource()
-
-	limitBody := func(n int64) model.CreateSearchRulesRequestBody {
-		return model.CreateSearchRulesRequestBody{Limit: &n}
-	}
-	continueBody := func(s string) model.CreateSearchRulesRequestBody {
-		return model.CreateSearchRulesRequestBody{Continue: &s}
-	}
-
-	t.Run("rejects non-positive limit", func(t *testing.T) {
-		for _, v := range []int64{0, -5} {
-			_, _, err := buildSearchRequest(limitBody(v), "default", gr, nil)
-			require.Error(t, err, "limit=%d", v)
-		}
-	})
-	t.Run("clamps limit to maxLimit", func(t *testing.T) {
-		req, _, err := buildSearchRequest(limitBody(maxLimit+1), "default", gr, nil)
-		require.NoError(t, err)
-		assert.Equal(t, int64(maxLimit), req.Limit)
-	})
-	t.Run("defaults limit when unset", func(t *testing.T) {
-		req, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{}, "default", gr, nil)
-		require.NoError(t, err)
-		assert.Equal(t, int64(defaultLimit), req.Limit)
-	})
-	// The token is opaque, so a client-constructed one is rejected rather than
-	// interpreted: "40" is a plausible offset but not a token this API issued.
-	t.Run("rejects invalid continue token", func(t *testing.T) {
-		for _, v := range []string{"notanumber", "-1", "40", encodeCursor(0), encodeCursor(-1)} {
-			_, _, err := buildSearchRequest(continueBody(v), "default", gr, nil)
-			require.Error(t, err, "continue=%s", v)
-		}
-	})
-	t.Run("accepts a token it issued", func(t *testing.T) {
-		req, offset, err := buildSearchRequest(continueBody(encodeCursor(40)), "default", gr, nil)
-		require.NoError(t, err)
-		assert.Equal(t, int64(40), offset)
-		assert.Equal(t, int64(40), req.Offset)
-	})
-	t.Run("treats an empty continue token as the first page", func(t *testing.T) {
-		req, offset, err := buildSearchRequest(continueBody(""), "default", gr, nil)
-		require.NoError(t, err)
-		assert.Zero(t, offset)
-		assert.Zero(t, req.Offset)
-	})
 }
 
 func titles(rules []*ngmodels.AlertRule) []string {

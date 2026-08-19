@@ -15,10 +15,8 @@
 // cannot express, so the contract is duplicated here and served by a
 // rules-specific handler.
 //
-// This lives in its own package so these definitions can hold the plain names
-// while the superseded cross-kind /searchRules contract still occupies them in
-// the parent package. That contract is removed once its handler moves over, and
-// these do not have to be renamed when it goes.
+// This lives in its own package so the generic-shaped contract stays isolated
+// from the rule kind schemas it is temporarily served alongside.
 package search
 
 // #SearchTextLeaf is a free-text predicate against one or more text-capable

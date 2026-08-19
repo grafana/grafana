@@ -13,23 +13,55 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Unified search can report totalHits as an upper bound, so the relation has to
 // travel with the count instead of letting a client assume it is exact.
-func TestHandlerMetadata_totalHitsRelation(t *testing.T) {
-	h := NewHandler(nil, nil)
+func TestTotalHitsRelation(t *testing.T) {
+	assert.Equal(t, searchv0.TotalHitsEqual, totalHitsRelation(true))
+	assert.Equal(t, searchv0.TotalHitsAtMost, totalHitsRelation(false))
+}
 
-	exact := h.metadata(&resourcepb.ResourceSearchResponse{TotalHits: 3, TotalHitsExact: true}, "")
-	require.NotNil(t, exact.TotalHitsRelation)
-	assert.Equal(t, model.CreateSearchRulesTotalHitsRelationEq, *exact.TotalHitsRelation)
+// TestNextPageToken covers when a cursor is offered. An inexact total may need
+// one extra empty page because unified storage can stop an authorized scan
+// before exhausting all matches.
+func TestNextPageToken(t *testing.T) {
+	page := func(rows int) *resourcepb.ResourceSearchResponse {
+		table := &resourcepb.ResourceTable{}
+		for i := 0; i < rows; i++ {
+			table.Rows = append(table.Rows, &resourcepb.ResourceTableRow{})
+		}
+		return &resourcepb.ResourceSearchResponse{Results: table, TotalHitsExact: true}
+	}
+	withTotal := func(resp *resourcepb.ResourceSearchResponse, total int64) *resourcepb.ResourceSearchResponse {
+		resp.TotalHits = total
+		return resp
+	}
 
-	bounded := h.metadata(&resourcepb.ResourceSearchResponse{TotalHits: 700}, "")
-	require.NotNil(t, bounded.TotalHitsRelation)
-	assert.Equal(t, model.CreateSearchRulesTotalHitsRelationLte, *bounded.TotalHitsRelation)
+	t.Run("offers a cursor when rules remain", func(t *testing.T) {
+		assert.Equal(t, encodeCursor(10), nextPageToken(withTotal(page(10), 25), 0))
+		assert.Equal(t, encodeCursor(20), nextPageToken(withTotal(page(10), 25), 10))
+	})
+
+	t.Run("offers none on the last page", func(t *testing.T) {
+		assert.Empty(t, nextPageToken(withTotal(page(5), 25), 20))
+		assert.Empty(t, nextPageToken(withTotal(page(10), 10), 0))
+	})
+
+	t.Run("offers none for an empty page", func(t *testing.T) {
+		assert.Empty(t, nextPageToken(withTotal(page(0), 0), 0))
+		// A page past the end reads as the end rather than looping forever.
+		assert.Empty(t, nextPageToken(withTotal(page(0), 25), 40))
+	})
+
+	t.Run("continues after a non-empty page when the total is inexact", func(t *testing.T) {
+		resp := withTotal(page(5), 5)
+		resp.TotalHitsExact = false
+		assert.Equal(t, encodeCursor(5), nextPageToken(resp, 0))
+	})
 }
 
 func TestWithAPIStatusErrorResponse(t *testing.T) {

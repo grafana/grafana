@@ -86,7 +86,8 @@ func RegisterAppInstaller(
 		MembershipResolver:            membershipIndex,
 		NotificationSettingsValidator: newNotificationSettingsValidator(ng),
 		WatchNamespace:                watchNamespace(cfg),
-		SearchRulesHandler:            search.WithAPIStatusErrorResponse(searchHandler.SearchRules),
+		SearchAlertRulesHandler:       search.WithAPIStatusErrorResponse(searchHandler.SearchAlertRules),
+		SearchRecordingRulesHandler:   search.WithAPIStatusErrorResponse(searchHandler.SearchRecordingRules),
 	}
 
 	provider := simple.NewAppProvider(rulesManifest.LocalManifest(), appSpecificConfig, rulesApp.New)
@@ -226,8 +227,6 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return alertrule.Authorize(ctx, authz, a)
 			case rulesequence.ResourceInfo.GroupResource().Resource:
 				return rulesequence.Authorize(ctx, authz, a)
-			case search.RouteResource:
-				return search.Authorize(ctx, authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		},

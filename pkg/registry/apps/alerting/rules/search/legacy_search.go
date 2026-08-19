@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	prom_model "github.com/prometheus/common/model"
@@ -51,6 +52,15 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	}
 
 	f := extractFilters(req)
+
+	// A "type" filter is redundant with the endpoint's own kind, so it either
+	// confirms it or contradicts it. Contradicted, nothing can match: answer with
+	// an empty page rather than the whole kind, which is what the unified backend
+	// does with the same requirement.
+	if f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
+		return emptyResponse(), nil
+	}
+
 	rules, _, _, err := c.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:                  ruleTypeForRequest(req),
 		RuleUIDs:                  f.names,
@@ -73,7 +83,17 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 
 	filtered := rules[:0]
 	for _, r := range rules {
+		// The SQL title prefilter uses LIKE. Recheck literal terms so '_' cannot
+		// broaden a match as a single-character wildcard.
+		if !matchTitle(r, f.title) {
+			continue
+		}
 		if !matchLabels(r, f.labelMatchers) {
+			continue
+		}
+		// The SQL prefilter uses LIKE over the rule JSON. Recheck exact UIDs so
+		// valid UID characters such as '_' cannot broaden the result as wildcards.
+		if !matchSourceDatasourceUIDs(r, f.datasourceUIDs) {
 			continue
 		}
 		filtered = append(filtered, r)
@@ -205,21 +225,41 @@ func notificationFields(ns *ngmodels.NotificationSettings) (receiver, notificati
 
 func ruleType(r *ngmodels.AlertRule) string {
 	if r.Type() == ngmodels.RuleTypeRecording {
-		return "recordingrule"
+		return ruleTypeRecording
 	}
-	return "alertrule"
+	return ruleTypeAlerting
 }
 
-func ruleTypeForRequest(req *resourcepb.ResourceSearchRequest) ngmodels.RuleTypeFilter {
-	resourceName := req.Options.GetKey().GetResource()
-	// A federated request (cross-kind /search) carries the other kind too.
-	if len(req.Federated) > 0 {
-		return ngmodels.RuleTypeFilterAll
+// isRecordingRuleRequest reports whether the request targets the recording rule
+// kind. Each search endpoint targets exactly one kind, named by the resource key.
+func isRecordingRuleRequest(req *resourcepb.ResourceSearchRequest) bool {
+	return req.Options.GetKey().GetResource() == recordingrule.ResourceInfo.GroupResource().Resource
+}
+
+// ruleTypeForResource is the indexed "type" value of the kind being searched.
+func ruleTypeForResource(req *resourcepb.ResourceSearchRequest) string {
+	if isRecordingRuleRequest(req) {
+		return ruleTypeRecording
 	}
-	if resourceName == recordingrule.ResourceInfo.GroupResource().Resource {
+	return ruleTypeAlerting
+}
+
+// ruleTypeForRequest narrows the store query to the kind being searched.
+func ruleTypeForRequest(req *resourcepb.ResourceSearchRequest) ngmodels.RuleTypeFilter {
+	if isRecordingRuleRequest(req) {
 		return ngmodels.RuleTypeFilterRecording
 	}
 	return ngmodels.RuleTypeFilterAlerting
+}
+
+// emptyResponse is a well-formed page with no rows. The column definitions are
+// still carried so the response layer sees the same table shape it would for a
+// non-empty page.
+func emptyResponse() *resourcepb.ResourceSearchResponse {
+	return &resourcepb.ResourceSearchResponse{
+		Results:        &resourcepb.ResourceTable{Columns: resultColumnDefinitions()},
+		TotalHitsExact: true,
+	}
 }
 
 func applyOffset(rules []*ngmodels.AlertRule, offset, limit int64) []*ngmodels.AlertRule {
@@ -252,4 +292,48 @@ func sourceDatasourceUIDs(r *ngmodels.AlertRule) []string {
 		out = append(out, q.DatasourceUID)
 	}
 	return out
+}
+
+func matchSourceDatasourceUIDs(r *ngmodels.AlertRule, wanted []string) bool {
+	if len(wanted) == 0 {
+		return true
+	}
+	available := make(map[string]struct{})
+	for _, uid := range sourceDatasourceUIDs(r) {
+		available[uid] = struct{}{}
+	}
+	for _, uid := range wanted {
+		if _, ok := available[uid]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func matchTitle(r *ngmodels.AlertRule, query string) bool {
+	title := strings.ToLower(r.Title)
+	for _, term := range titleSearchTerms(query) {
+		if !strings.Contains(title, term) {
+			return false
+		}
+	}
+	return true
+}
+
+// titleSearchTerms mirrors the three-byte term floor used by both the legacy
+// SQL prefilter and unified title search. Short terms are ignored unless every
+// term is short, so this exact post-filter cannot reject a prefilter match.
+func titleSearchTerms(query string) []string {
+	const minTermBytes = 3
+	words := strings.Fields(strings.ToLower(query))
+	terms := make([]string, 0, len(words))
+	for _, word := range words {
+		if len(word) >= minTermBytes {
+			terms = append(terms, word)
+		}
+	}
+	if len(terms) == 0 {
+		return words
+	}
+	return terms
 }

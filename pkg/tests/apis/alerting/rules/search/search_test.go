@@ -11,6 +11,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,6 +27,16 @@ func TestMain(m *testing.M) {
 }
 
 const searchFolder = "search-folder"
+
+// The resource segments the two search endpoints are mounted under. They are the
+// resource names, because the routes sit where the generic search API mounts:
+// .../namespaces/{ns}/{resource}/search.
+const (
+	alertRules     = "alertrules"
+	recordingRules = "recordingrules"
+)
+
+const opIn = "In"
 
 func TestIntegrationRuleSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -46,45 +57,50 @@ func TestIntegrationRuleSearch(t *testing.T) {
 	}
 }
 
-const opIn = v0alpha1.CreateSearchRulesRequestSearchFilterLeafOperatorIn
-
-// query is a small builder for a SearchQuery body used by the tests.
+// query is a small builder for a SearchQuery body used by the tests. It starts
+// from a valid envelope, since the endpoint requires one.
 type query struct {
-	body v0alpha1.CreateSearchRulesRequestBody
+	body searchv0.SearchQuery
 }
 
-func newQuery() *query { return &query{} }
+func newQuery() *query {
+	return &query{body: searchv0.SearchQuery{
+		TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
+	}}
+}
 
 func (q *query) text(v string) *query {
-	q.and(v0alpha1.CreateSearchRulesRequestSearchWhereNode{
-		Text: &v0alpha1.CreateSearchRulesRequestSearchTextLeaf{Value: v},
+	q.and(searchv0.WhereNode{Text: &searchv0.TextPredicate{Value: v}})
+	return q
+}
+
+func (q *query) filter(field, op string, values ...string) *query {
+	q.and(searchv0.WhereNode{
+		Filter: &searchv0.FilterPredicate{Field: field, Operator: op, Values: values},
 	})
 	return q
 }
 
-func (q *query) filter(field string, op v0alpha1.CreateSearchRulesRequestSearchFilterLeafOperator, values ...string) *query {
-	q.and(v0alpha1.CreateSearchRulesRequestSearchWhereNode{
-		Filter: &v0alpha1.CreateSearchRulesRequestSearchFilterLeaf{Field: field, Operator: op, Values: values},
-	})
-	return q
-}
-
-func (q *query) and(node v0alpha1.CreateSearchRulesRequestSearchWhereNode) {
+func (q *query) and(node searchv0.WhereNode) {
 	if q.body.Where == nil {
-		q.body.Where = &v0alpha1.CreateSearchRulesRequestSearchWhereNode{}
+		q.body.Where = &searchv0.WhereNode{}
 	}
 	q.body.Where.And = append(q.body.Where.And, node)
 }
 
-func (q *query) labelSelector(s string) *query { q.body.LabelSelector = &s; return q }
-func (q *query) sort(fields ...string) *query {
-	for _, f := range fields {
-		q.body.Sort = append(q.body.Sort, v0alpha1.CreateSearchRulesRequestSearchSortField(f))
-	}
+func (q *query) labelSelector(sel *v1.LabelSelector) *query {
+	q.body.LabelSelector = sel
 	return q
 }
-func (q *query) limit(n int64) *query       { q.body.Limit = &n; return q }
-func (q *query) continueAt(s string) *query { q.body.Continue = &s; return q }
+
+func (q *query) sort(field, direction string) *query {
+	q.body.Sort = append(q.body.Sort, searchv0.SortField{Field: field, Direction: direction})
+	return q
+}
+
+func (q *query) fields(names ...string) *query { q.body.Fields = names; return q }
+func (q *query) limit(n int64) *query          { q.body.Limit = n; return q }
+func (q *query) continueAt(s string) *query    { q.body.Continue = s; return q }
 
 func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
 	ctx := context.Background()
@@ -100,49 +116,91 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.Dual
 	createRecordingRule(t, ctx, recClient, "disk recording", "ds-prom", "disk_bytes_total")
 
 	rc := helper.Org1.Admin.RESTClient(t, &v0alpha1.GroupVersion)
-	search := func(t *testing.T, q *query) v0alpha1.CreateSearchRulesResponse {
+	// search posts to one kind's endpoint. There is no cross-kind search: the
+	// kind is the path, so searching both means two calls.
+	search := func(t *testing.T, resourceName string, q *query) searchv0.SearchResults {
 		t.Helper()
-		var payload []byte
-		if q != nil {
-			var err error
-			payload, err = json.Marshal(q.body)
-			require.NoError(t, err)
-		}
-		raw, err := rc.Post().
-			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", "searchRules").
-			Body(payload).
-			DoRaw(ctx)
-		require.NoError(t, err)
-		var resp v0alpha1.CreateSearchRulesResponse
-		require.NoError(t, json.Unmarshal(raw, &resp))
-		return resp
-	}
-	// searchKind narrows to a single kind via a type filter leaf.
-	searchKind := func(t *testing.T, kind string, q *query) v0alpha1.CreateSearchRulesResponse {
 		if q == nil {
 			q = newQuery()
 		}
-		return search(t, q.filter("type", opIn, kind))
+		payload, err := json.Marshal(q.body)
+		require.NoError(t, err)
+
+		raw, err := rc.Post().
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, "search").
+			Body(payload).
+			DoRaw(ctx)
+		require.NoError(t, err)
+
+		var resp searchv0.SearchResults
+		require.NoError(t, json.Unmarshal(raw, &resp))
+		return resp
+	}
+	searchAlerts := func(t *testing.T, q *query) searchv0.SearchResults {
+		t.Helper()
+		return search(t, alertRules, q)
 	}
 
-	t.Run("alert rules: returns all alert rules", func(t *testing.T) {
-		require.Len(t, searchKind(t, "alertrule", nil).Items, 3)
+	// The envelope identifies the generic search contract, not the alerting group
+	// that happens to serve it: that is what lets the generic endpoint take these
+	// routes over without a client change.
+	t.Run("response carries the generic search envelope", func(t *testing.T) {
+		resp := searchAlerts(t, nil)
+		require.Equal(t, searchv0.APIVERSION, resp.APIVersion)
+		require.Equal(t, searchv0.KindSearchResults, resp.Kind)
 	})
 
-	t.Run("alert rules: compact-view fields populated", func(t *testing.T) {
+	t.Run("alert rules: returns all alert rules", func(t *testing.T) {
+		resp := searchAlerts(t, nil)
+		require.Len(t, resp.Items, 3)
+		require.EqualValues(t, 3, resp.Metadata.TotalHits)
+		for _, h := range resp.Items {
+			require.Equal(t, "AlertRule", h.Resource.Kind)
+			require.Equal(t, alertRules, h.Resource.Resource)
+			require.Equal(t, v0alpha1.APIGroup, h.Resource.Group)
+		}
+	})
+
+	t.Run("recording rules: returns all recording rules", func(t *testing.T) {
+		resp := search(t, recordingRules, nil)
+		require.ElementsMatch(t, []string{"cpu recording", "disk recording"}, titles(resp))
+		for _, h := range resp.Items {
+			require.Equal(t, "RecordingRule", h.Resource.Kind)
+			require.Equal(t, recordingRules, h.Resource.Resource)
+		}
+	})
+
+	// Each endpoint sees only its own kind, so no alert rule can surface on the
+	// recording rule endpoint or the other way round.
+	t.Run("each endpoint returns only its own kind", func(t *testing.T) {
+		require.NotContains(t, titles(searchAlerts(t, nil)), "cpu recording")
+		require.NotContains(t, titles(search(t, recordingRules, nil)), "cpu usage high")
+	})
+
+	// A hit carries title and folder unless the query asks for more, matching the
+	// generic contract's default projection.
+	t.Run("projection defaults to title and folder", func(t *testing.T) {
+		for _, h := range searchAlerts(t, nil).Items {
+			require.NotNil(t, h.Fields)
+			require.ElementsMatch(t, []string{"title", "folder"}, fieldNames(h))
+			require.Equal(t, searchFolder, stringField(t, h, "folder"))
+		}
+	})
+
+	t.Run("projection returns the requested fields", func(t *testing.T) {
 		// interval is a config field common to both backends; assert it round
 		// trips consistently regardless of storage mode.
-		for _, h := range searchKind(t, "alertrule", nil).Items {
-			require.NotNil(t, h.Fields.Interval, title(h))
-			require.Equal(t, "10s", *h.Fields.Interval, title(h))
+		for _, h := range searchAlerts(t, newQuery().fields("title", "interval")).Items {
+			require.ElementsMatch(t, []string{"title", "interval"}, fieldNames(h), title(h))
+			require.Equal(t, "10s", stringField(t, h, "interval"), title(h))
 		}
 	})
 
 	t.Run("alert rules: filter by name (uid)", func(t *testing.T) {
-		all := searchKind(t, "alertrule", nil).Items
+		all := searchAlerts(t, nil).Items
 		require.GreaterOrEqual(t, len(all), 2)
 		want := []string{all[0].Resource.Name, all[1].Resource.Name}
-		got := searchKind(t, "alertrule", newQuery().filter("name", opIn, want...))
+		got := searchAlerts(t, newQuery().filter("name", opIn, want...))
 		gotNames := make([]string, 0, len(got.Items))
 		for _, h := range got.Items {
 			gotNames = append(gotNames, h.Resource.Name)
@@ -151,48 +209,55 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.Dual
 	})
 
 	t.Run("alert rules: free-text title filter", func(t *testing.T) {
-		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, titles(searchKind(t, "alertrule", newQuery().text("usage"))))
+		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, titles(searchAlerts(t, newQuery().text("usage"))))
 	})
 
 	// A text leaf searches the title and only the title: the handler rejects a
-	// per-field text leaf, legacy pushes it into a LIKE on the title column, and
-	// unified defaults its query fields to title. Every term must appear, in any
-	// order, which a single-word query cannot show, so pin both axes explicitly.
+	// per-field text leaf naming anything else, legacy pushes it into a LIKE on
+	// the title column, and unified defaults its query fields to title. Every term
+	// must appear, in any order, which a single-word query cannot show, so pin
+	// both axes explicitly.
 	t.Run("alert rules: title text spans non-adjacent words", func(t *testing.T) {
-		require.Equal(t, []string{"cpu usage high"}, titles(searchKind(t, "alertrule", newQuery().text("cpu high"))))
+		require.Equal(t, []string{"cpu usage high"}, titles(searchAlerts(t, newQuery().text("cpu high"))))
 	})
 
 	t.Run("alert rules: title text is order-insensitive", func(t *testing.T) {
-		require.Equal(t, []string{"cpu usage high"}, titles(searchKind(t, "alertrule", newQuery().text("high cpu"))))
+		require.Equal(t, []string{"cpu usage high"}, titles(searchAlerts(t, newQuery().text("high cpu"))))
+	})
+
+	t.Run("alert rules: title text ignores short terms when a searchable term remains", func(t *testing.T) {
+		require.Equal(t, []string{"cpu usage high"}, titles(searchAlerts(t, newQuery().text("cpu xy"))))
 	})
 
 	t.Run("alert rules: title text requires every term to match", func(t *testing.T) {
-		require.Empty(t, titles(searchKind(t, "alertrule", newQuery().text("cpu nonexistent"))))
+		require.Empty(t, titles(searchAlerts(t, newQuery().text("cpu nonexistent"))))
 	})
 
 	t.Run("alert rules: title text is case-insensitive", func(t *testing.T) {
-		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, titles(searchKind(t, "alertrule", newQuery().text("USAGE"))))
+		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, titles(searchAlerts(t, newQuery().text("USAGE"))))
 	})
 
 	t.Run("alert rules: title text matches nothing when no title contains it", func(t *testing.T) {
-		require.Empty(t, titles(searchKind(t, "alertrule", newQuery().text("nonexistent"))))
+		require.Empty(t, titles(searchAlerts(t, newQuery().text("nonexistent"))))
 	})
 
 	// Rule spec labels are filtered through a labels filter leaf. The separate
 	// labelSelector selects on resource metadata labels, not these.
 	t.Run("alert rules: label matcher", func(t *testing.T) {
-		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, titles(searchKind(t, "alertrule", newQuery().filter("labels", opIn, "team=a"))))
+		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, titles(searchAlerts(t, newQuery().filter("labels", opIn, "team=a"))))
 	})
 
-	// labelSelector targets metadata labels. Selecting a group that no rule is
-	// in must return nothing: were the selector dropped, every rule would match.
+	// labelSelector targets metadata labels. Selecting a group that no rule is in
+	// must return nothing: were the selector dropped, every rule would match.
 	t.Run("alert rules: metadata labelSelector is applied", func(t *testing.T) {
-		got := searchKind(t, "alertrule", newQuery().labelSelector(v0alpha1.GroupLabelKey+"=no-such-group"))
+		got := searchAlerts(t, newQuery().labelSelector(&v1.LabelSelector{
+			MatchLabels: map[string]string{v0alpha1.GroupLabelKey: "no-such-group"},
+		}))
 		require.Empty(t, got.Items)
 	})
 
 	t.Run("alert rules: source datasource filter", func(t *testing.T) {
-		require.Equal(t, []string{"memory usage high"}, titles(searchKind(t, "alertrule", newQuery().filter("datasourceUIDs", opIn, "ds-loki"))))
+		require.Equal(t, []string{"memory usage high"}, titles(searchAlerts(t, newQuery().filter("datasourceUIDs", opIn, "ds-loki"))))
 	})
 
 	t.Run("alert rules: paused filter", func(t *testing.T) {
@@ -200,7 +265,7 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.Dual
 		if mode == rest.Mode4 {
 			t.Skip()
 		}
-		require.Equal(t, []string{"memory usage high"}, titles(searchKind(t, "alertrule", newQuery().filter("paused", opIn, "true"))))
+		require.Equal(t, []string{"memory usage high"}, titles(searchAlerts(t, newQuery().filter("paused", opIn, "true"))))
 	})
 
 	t.Run("alert rules: panelID filter", func(t *testing.T) {
@@ -208,125 +273,121 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.Dual
 		if mode == rest.Mode4 {
 			t.Skip()
 		}
-		require.Equal(t, []string{"cpu usage high"}, titles(searchKind(t, "alertrule", newQuery().filter("panelID", opIn, "1234"))))
+		require.Equal(t, []string{"cpu usage high"}, titles(searchAlerts(t, newQuery().filter("panelID", opIn, "1234"))))
+	})
+
+	// The endpoint already fixes the kind, so a type filter can only agree or
+	// disagree with it. Agreeing changes nothing; disagreeing can match nothing,
+	// and both backends have to say so rather than return the whole kind.
+	t.Run("type filter is redundant with the endpoint's kind", func(t *testing.T) {
+		require.Len(t, searchAlerts(t, newQuery().filter("type", opIn, "alertrule")).Items, 3)
+
+		contradicted := searchAlerts(t, newQuery().filter("type", opIn, "recordingrule"))
+		require.Empty(t, contradicted.Items)
+		require.Zero(t, contradicted.Metadata.TotalHits)
 	})
 
 	t.Run("alert rules: sort by title descending", func(t *testing.T) {
-		require.Equal(t, []string{"memory usage high", "disk low", "cpu usage high"}, titles(searchKind(t, "alertrule", newQuery().sort("-title"))))
+		require.Equal(t, []string{"memory usage high", "disk low", "cpu usage high"},
+			titles(searchAlerts(t, newQuery().sort("title", "desc"))))
 	})
 
 	t.Run("alert rules: pagination", func(t *testing.T) {
-		first := searchKind(t, "alertrule", newQuery().sort("title").limit(2))
+		first := searchAlerts(t, newQuery().sort("title", "asc").limit(2))
 		require.Equal(t, []string{"cpu usage high", "disk low"}, titles(first))
-		require.NotNil(t, first.Metadata.Continue)
-		require.NotEmpty(t, *first.Metadata.Continue)
+		require.NotEmpty(t, first.Metadata.Continue)
 
-		second := searchKind(t, "alertrule", newQuery().sort("title").limit(2).continueAt(*first.Metadata.Continue))
+		second := searchAlerts(t, newQuery().sort("title", "asc").limit(2).continueAt(first.Metadata.Continue))
 		require.Equal(t, []string{"memory usage high"}, titles(second))
-		require.Nil(t, second.Metadata.Continue)
+		require.Empty(t, second.Metadata.Continue)
 	})
 
-	t.Run("recording rules: returns all recording rules", func(t *testing.T) {
-		require.ElementsMatch(t, []string{"cpu recording", "disk recording"}, titles(searchKind(t, "recordingrule", nil)))
-	})
-
-	t.Run("cross-kind: returns both kinds", func(t *testing.T) {
-		require.Len(t, search(t, nil).Items, 5)
-	})
-
-	t.Run("cross-kind: type narrowing", func(t *testing.T) {
-		require.ElementsMatch(t, []string{"cpu recording", "disk recording"}, titles(searchKind(t, "recordingrule", nil)))
-	})
-
-	t.Run("cross-kind: interleaved by title", func(t *testing.T) {
-		// Sorting the union by title mixes the two kinds rather than grouping
-		// them: the recordings land between alert rules.
-		asc := search(t, newQuery().sort("title"))
-		require.Equal(t, []string{"cpu recording", "cpu usage high", "disk low", "disk recording", "memory usage high"}, titles(asc))
-		require.Equal(t, []string{"recordingrule", "alertrule", "alertrule", "recordingrule", "alertrule"}, kinds(asc))
-
-		desc := search(t, newQuery().sort("-title"))
-		require.Equal(t, []string{"memory usage high", "disk recording", "disk low", "cpu usage high", "cpu recording"}, titles(desc))
-		require.Equal(t, []string{"alertrule", "recordingrule", "alertrule", "alertrule", "recordingrule"}, kinds(desc))
-	})
-
-	t.Run("cross-kind: kind-specific fields", func(t *testing.T) {
-		hits := map[string]v0alpha1.CreateSearchRulesSearchResultHit{}
-		for _, h := range search(t, nil).Items {
-			hits[title(h)] = h
-		}
-		require.Len(t, hits, 5)
-
-		t.Run("primary kind carries its own fields", func(t *testing.T) {
-			h, ok := hits["cpu usage high"]
-			require.True(t, ok)
-			require.Equal(t, "alertrule", *h.Fields.Type)
-
-			require.NotNil(t, h.Fields.DashboardUID, "alert-only field must be populated")
-			require.Equal(t, "foo", *h.Fields.DashboardUID)
-			require.NotNil(t, h.Fields.PanelID)
-			require.Equal(t, int64(1234), *h.Fields.PanelID)
-
-			// recording-only fields belong to the other kind
-			require.Nil(t, h.Fields.Metric)
-			require.Nil(t, h.Fields.TargetDatasourceUID)
+	t.Run("kind-specific fields", func(t *testing.T) {
+		t.Run("alert rules carry their own", func(t *testing.T) {
+			h := hitFor(t, searchAlerts(t, newQuery().fields("title", "type", "dashboardUID", "panelID")), "cpu usage high")
+			require.Equal(t, "alertrule", stringField(t, h, "type"))
+			require.Equal(t, "foo", stringField(t, h, "dashboardUID"))
+			require.EqualValues(t, 1234, numberField(t, h, "panelID"))
 		})
 
-		t.Run("federated kind carries its own fields", func(t *testing.T) {
-			// TODO: unskip this once federated searches in Unified Search return
-			// the federated kinds' columns and not just the primary kind's
-			if mode == rest.Mode4 {
-				t.Skip()
-			}
-			h, ok := hits["cpu recording"]
-			require.True(t, ok)
-			require.Equal(t, "recordingrule", *h.Fields.Type)
-
-			require.NotNil(t, h.Fields.Metric, "recording-only field must be populated")
-			require.Equal(t, "cpu_seconds_total", *h.Fields.Metric)
-			require.NotNil(t, h.Fields.TargetDatasourceUID)
-			require.Equal(t, "ds-prom", *h.Fields.TargetDatasourceUID)
-
-			// alert-only fields belong to the other kind
-			require.Nil(t, h.Fields.DashboardUID)
-			require.Nil(t, h.Fields.PanelID)
+		t.Run("recording rules carry their own", func(t *testing.T) {
+			resp := search(t, recordingRules, newQuery().fields("title", "type", "metric", "targetDatasourceUID"))
+			h := hitFor(t, resp, "cpu recording")
+			require.Equal(t, "recordingrule", stringField(t, h, "type"))
+			require.Equal(t, "cpu_seconds_total", stringField(t, h, "metric"))
+			require.Equal(t, "ds-prom", stringField(t, h, "targetDatasourceUID"))
 		})
+	})
 
-		// Narrowing to the recording kind makes it primary, so its fields are
-		// returned on every backend. That contrast is what isolates the gap above
-		// to federation rather than to the kind's own declarations.
-		t.Run("narrowed to the federated kind its fields return", func(t *testing.T) {
-			var h v0alpha1.CreateSearchRulesSearchResultHit
-			var found bool
-			for _, got := range searchKind(t, "recordingrule", nil).Items {
-				if title(got) == "cpu recording" {
-					h, found = got, true
-				}
-			}
-			require.True(t, found, "cpu recording should be returned when narrowed to recordingrule")
+	// A field the other kind declares is not part of this kind's contract, so
+	// naming it is a rejected query rather than one that answers with nothing.
+	t.Run("rejects a query naming another kind's field", func(t *testing.T) {
+		payload, err := json.Marshal(newQuery().fields("metric").body)
+		require.NoError(t, err)
+		_, err = rc.Post().
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", alertRules, "search").
+			Body(payload).
+			DoRaw(ctx)
+		require.Error(t, err)
+	})
 
-			require.NotNil(t, h.Fields.Metric)
-			require.Equal(t, "cpu_seconds_total", *h.Fields.Metric)
-			require.NotNil(t, h.Fields.TargetDatasourceUID)
-			require.Equal(t, "ds-prom", *h.Fields.TargetDatasourceUID)
-		})
+	t.Run("default title order is case-insensitive", func(t *testing.T) {
+		createAlertRule(t, ctx, alertClient, "zebra case", false, nil, "ds-prom", 2000)
+		createAlertRule(t, ctx, alertClient, "Apple case", false, nil, "ds-prom", 2001)
+		require.Equal(t, []string{"Apple case", "zebra case"},
+			titles(searchAlerts(t, newQuery().text("case"))))
 	})
 
 	t.Run("consistency: search matches list", func(t *testing.T) {
 		list, err := alertClient.List(ctx, v1.ListOptions{})
 		require.NoError(t, err)
-		require.Len(t, searchKind(t, "alertrule", nil).Items, len(list.Items))
+		require.Len(t, searchAlerts(t, nil).Items, len(list.Items))
 	})
 }
 
-func title(h v0alpha1.CreateSearchRulesSearchResultHit) string {
-	if h.Fields.Title == nil {
-		return ""
+// Field readers. A hit's fields are an open JSON object, because that is what the
+// generic endpoint returns; the tests read through it by name.
+
+func fieldValues(h searchv0.ResultItem) map[string]any {
+	if h.Fields == nil {
+		return nil
 	}
-	return *h.Fields.Title
+	return h.Fields.Object
 }
 
-func titles(resp v0alpha1.CreateSearchRulesResponse) []string {
+func fieldNames(h searchv0.ResultItem) []string {
+	values := fieldValues(h)
+	out := make([]string, 0, len(values))
+	for name := range values {
+		out = append(out, name)
+	}
+	return out
+}
+
+func stringField(t *testing.T, h searchv0.ResultItem, name string) string {
+	t.Helper()
+	v, ok := fieldValues(h)[name]
+	require.True(t, ok, "hit is missing field %q", name)
+	s, ok := v.(string)
+	require.True(t, ok, "field %q is %T, not a string", name, v)
+	return s
+}
+
+func numberField(t *testing.T, h searchv0.ResultItem, name string) float64 {
+	t.Helper()
+	v, ok := fieldValues(h)[name]
+	require.True(t, ok, "hit is missing field %q", name)
+	n, ok := v.(float64)
+	require.True(t, ok, "field %q is %T, not a number", name, v)
+	return n
+}
+
+func title(h searchv0.ResultItem) string {
+	s, _ := fieldValues(h)["title"].(string)
+	return s
+}
+
+func titles(resp searchv0.SearchResults) []string {
 	out := make([]string, 0, len(resp.Items))
 	for _, h := range resp.Items {
 		out = append(out, title(h))
@@ -334,16 +395,15 @@ func titles(resp v0alpha1.CreateSearchRulesResponse) []string {
 	return out
 }
 
-// kinds reports the "type" field of each hit, in order, so a test can assert the
-// two kinds are interleaved rather than grouped.
-func kinds(resp v0alpha1.CreateSearchRulesResponse) []string {
-	out := make([]string, 0, len(resp.Items))
+func hitFor(t *testing.T, resp searchv0.SearchResults, want string) searchv0.ResultItem {
+	t.Helper()
 	for _, h := range resp.Items {
-		if h.Fields.Type != nil {
-			out = append(out, *h.Fields.Type)
+		if title(h) == want {
+			return h
 		}
 	}
-	return out
+	require.FailNowf(t, "hit not found", "no hit titled %q in %v", want, titles(resp))
+	return searchv0.ResultItem{}
 }
 
 func createAlertRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList], title string, paused bool, labels map[string]string, dsUID string, panelID int64) {

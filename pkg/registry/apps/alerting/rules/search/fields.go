@@ -38,6 +38,14 @@ const (
 	fieldTargetDatasourceUID = "targetDatasourceUID"
 )
 
+// The values of the indexed "type" field. Each kind's documents carry a constant,
+// which is what lets a federated index distinguish them and what a "type" filter
+// matches against.
+const (
+	ruleTypeAlerting  = "alertrule"
+	ruleTypeRecording = "recordingrule"
+)
+
 // resultColumns are the columns every search result table carries, in order.
 // Kind-specific columns are empty for the other kind.
 var resultColumns = []string{
@@ -45,6 +53,55 @@ var resultColumns = []string{
 	fieldAnnotations, fieldFor, fieldKeepFiringFor,
 	fieldDashboardUID, fieldPanelID, fieldReceiver, fieldNotificationType, fieldRoutingTree,
 	fieldMetric, fieldTargetDatasourceUID,
+}
+
+// fieldSet is what a request may reference on one kind's search endpoint: the
+// standard fields every kind shares plus that kind's own declared searchFields,
+// keyed by the public field name. It mirrors the generic search API's fieldSet
+// (pkg/registry/apis/search/translate.go) so an unknown or
+// insufficiently-capable field is rejected the same way here.
+//
+// Per kind rather than a union across both, so filtering or projecting a
+// recording-rule field on the alert-rule endpoint is a 400 rather than a field
+// that silently never matches.
+type fieldSet struct {
+	byName map[string]resource.SearchFieldDefinition
+}
+
+// has reports whether the field is declared for the kind and supports c.
+func (s *fieldSet) has(name string, c resource.SearchCapability) bool {
+	def, ok := s.byName[name]
+	return ok && def.HasCapability(c)
+}
+
+func (s *fieldSet) known(name string) bool {
+	_, ok := s.byName[name]
+	return ok
+}
+
+// fieldSets holds one fieldSet per searchable rule kind.
+var fieldSets = buildFieldSets()
+
+func buildFieldSets() map[schema.GroupResource]*fieldSet {
+	provider := resource.NewManifestBackedProvider([]app.Manifest{rulesmanifest.LocalManifest()})
+	out := map[schema.GroupResource]*fieldSet{}
+	for _, gr := range []schema.GroupResource{
+		alertrule.ResourceInfo.GroupResource(),
+		recordingrule.ResourceInfo.GroupResource(),
+	} {
+		byName := map[string]resource.SearchFieldDefinition{}
+		for _, d := range resource.StandardSearchFieldDefinitions() {
+			byName[d.Name] = d
+		}
+		// Empty Version asks for the union across every registered version of the
+		// kind rather than pinning to whichever one the generated kind reports.
+		gvr := schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource}
+		for _, d := range provider.Fields(gvr) {
+			byName[d.Name] = d
+		}
+		out[gr] = &fieldSet{byName: byName}
+	}
+	return out
 }
 
 // searchColumns is the column definition for every field a rule hit can carry,
