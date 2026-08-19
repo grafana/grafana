@@ -5,36 +5,37 @@ import { isExpressionReference } from '@grafana/runtime';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
-/** The data sources referenced by a set of alert queries, keyed by uid. */
 export type AlertQueryDataSources = Map<string, DataSourceInstanceListItem>;
 
 function referencedUids(queries: AlertQuery[]): string[] {
   return queries.filter((query) => !isExpressionReference(query.datasourceUid)).map((query) => query.datasourceUid);
 }
 
-/**
- * Resolve the data sources referenced by `queries`, keyed by uid. Expression references are
- * skipped — they are not real data sources.
- */
+/** Resolves the data sources referenced by `queries`, keyed by uid. */
 export function useAlertQueryDataSources(queries: AlertQuery[]) {
-  // `all: true` so resolution isn't gated by plugin capability flags (metrics/logs/etc.) —
-  // we only care whether a uid resolves, not what the data source can do.
+  // `all: true` because we only need the uids to resolve, not any particular capability.
   const { items, isLoading, error } = useDataSourceInstanceList({ all: true });
 
   const uids = referencedUids(queries);
-  const uidKey = uids.join(',');
+  const uidKey = JSON.stringify(uids);
 
   const dataSourcesByUid: AlertQueryDataSources = useMemo(() => {
     const referenced = new Set(uids);
     return new Map(items.filter((item) => referenced.has(item.uid)).map((item) => [item.uid, item]));
-    // `uids` is left out of the deps on purpose: `uidKey` is its stable serialization, so the map is
-    // only rebuilt when the referenced uids actually change. Callers may pass a new queries array on
-    // every render (e.g. react-hook-form's watch in PreviewRule), which would otherwise rebuild it
-    // — and the filter is over every data source in the instance list.
+    // Keyed on the serialized uids rather than `uids` itself: callers pass a new array every render,
+    // and a rebuild filters the whole instance list. JSON, not join, so a uid containing the
+    // separator can't collide with two shorter ones.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, uidKey]);
 
-  return { dataSourcesByUid, isLoading, error };
+  // With nothing referenced there is nothing to resolve, so don't report the list's state as ours.
+  const hasReferences = uids.length > 0;
+
+  return {
+    dataSourcesByUid,
+    isLoading: hasReferences && isLoading,
+    error: hasReferences ? error : undefined,
+  };
 }
 
 /** Whether every non-expression query in `queries` resolved to a data source. */

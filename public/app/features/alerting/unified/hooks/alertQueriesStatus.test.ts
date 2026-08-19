@@ -102,6 +102,43 @@ describe('useAlertQueryDataSources', () => {
     expect(result.current.dataSourcesByUid.size).toBe(0);
   });
 
+  it('rebuilds the map when a uid containing the key separator is swapped for two uids', () => {
+    // A uid can contain any character, so serializing the referenced uids has to distinguish
+    // ['a,b'] from ['a', 'b'] — joining on a comma would give both the same memo key.
+    mockList([makeListItem('a'), makeListItem('b'), makeListItem('a,b')]);
+
+    const { result, rerender } = renderHook(
+      ({ queries }: { queries: AlertQuery[] }) => useAlertQueryDataSources(queries),
+      { initialProps: { queries: [makeQuery('a,b')] } }
+    );
+
+    expect([...result.current.dataSourcesByUid.keys()]).toEqual(['a,b']);
+
+    rerender({ queries: [makeQuery('a'), makeQuery('b')] });
+
+    expect([...result.current.dataSourcesByUid.keys()]).toEqual(['a', 'b']);
+  });
+
+  it('reports no loading state when the queries reference no data sources', () => {
+    // An expression-only rule has nothing to resolve, so it must not be held in a loading state by
+    // the underlying list request.
+    mockIsExpressionReference.mockReturnValue(true);
+    mockList([], { isLoading: true });
+
+    const { result } = renderHook(() => useAlertQueryDataSources([makeQuery('__expr__')]));
+
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('hides a list error when the queries reference no data sources', () => {
+    mockIsExpressionReference.mockReturnValue(true);
+    mockList([], { error: new Error('network failure') });
+
+    const { result } = renderHook(() => useAlertQueryDataSources([makeQuery('__expr__')]));
+
+    expect(result.current.error).toBeUndefined();
+  });
+
   it('keeps the same map across a rerender with a new but equivalent queries array', () => {
     mockList([makeListItem('ds-1')]);
 
