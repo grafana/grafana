@@ -1,8 +1,8 @@
 import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
-import { EditorState, Prec } from '@codemirror/state';
+import { EditorState, type Extension, Prec } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import CodeMirror from '@uiw/react-codemirror';
-import { memo, useMemo } from 'react';
+import { memo, use, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -10,19 +10,14 @@ import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
 import { createCodeEditorTheme } from './theme';
-import {
-  type CodeMirrorCompletionMode,
-  type CodeMirrorCompletionSource,
-  type CodeMirrorEditorProps,
-  type CodeMirrorExtension,
-} from './types';
+import { type CodeMirrorCompletionMode, type CodeMirrorCompletionSource, type CodeMirrorEditorProps } from './types';
 import { useLanguageExtension } from './useLanguageExtension';
 import { useShallowStable, useStableCallback } from './useStableProps';
 
 const getCompletionExtensions = (
   sources: readonly CodeMirrorCompletionSource[] | undefined,
   mode: CodeMirrorCompletionMode
-): CodeMirrorExtension[] => {
+): Extension[] => {
   if (!sources || sources.length === 0) {
     return [];
   }
@@ -40,10 +35,7 @@ const getCompletionExtensions = (
   ];
 };
 
-const getAccessibilityExtensions = (
-  ariaLabel: string | undefined,
-  ariaLabelledby: string | undefined
-): CodeMirrorExtension[] => {
+const getAccessibilityExtensions = (ariaLabel: string | undefined, ariaLabelledby: string | undefined): Extension[] => {
   if (!ariaLabel && !ariaLabelledby) {
     return [];
   }
@@ -109,6 +101,11 @@ export const CodeEditor = memo(function CodeEditor({
   const sources = useShallowStable(completionSources);
   const basicSetup = useShallowStable(basicSetupProp);
   const handleChange = useStableCallback(onChange);
+  const additionalExtensionsPromise = useMemo(
+    () => (additionalExtensions ? Promise.all(additionalExtensions) : Promise.resolve([])),
+    [additionalExtensions]
+  );
+  const additionalExtensionsResolved = use(additionalExtensionsPromise);
 
   const extensions = useMemo(
     () => [
@@ -117,10 +114,11 @@ export const CodeEditor = memo(function CodeEditor({
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(sources, completionMode),
       ...(lineWrapping ? [EditorView.lineWrapping] : []),
-      ...(additionalExtensions ?? []),
+      ...additionalExtensionsResolved,
     ],
-    [ariaLabel, ariaLabelledby, languageExtension, sources, completionMode, lineWrapping, additionalExtensions]
+    [ariaLabel, ariaLabelledby, languageExtension, sources, completionMode, lineWrapping, additionalExtensionsResolved]
   );
+
   return (
     <>
       {languageExtensionError && (

@@ -1,33 +1,34 @@
 import { type SQLDialect } from '@codemirror/lang-sql';
+import { type Extension } from '@codemirror/state';
 
-import { type CodeMirrorEditorLanguage, type CodeMirrorExtension, type CodeMirrorSqlDialect } from './types';
+import { type CodeMirrorEditorLanguage, type CodeMirrorSqlDialect } from './types';
 
 const DEFAULT_SQL_DIALECT: CodeMirrorSqlDialect = 'standardSql';
 
-const loadGo = async (): Promise<CodeMirrorExtension> =>
+const loadGo = async (): Promise<Extension> =>
   (await import(/* webpackChunkName: "codemirror-lang-go" */ '@codemirror/lang-go')).go();
 
-const loadHtml = async (): Promise<CodeMirrorExtension> =>
+const loadHtml = async (): Promise<Extension> =>
   (await import(/* webpackChunkName: "codemirror-lang-html" */ '@codemirror/lang-html')).html();
 
-const loadJson = async (): Promise<CodeMirrorExtension> =>
+const loadJson = async (): Promise<Extension> =>
   (await import(/* webpackChunkName: "codemirror-lang-json" */ '@codemirror/lang-json')).json();
 
-const loadMarkdown = async (): Promise<CodeMirrorExtension> =>
+const loadMarkdown = async (): Promise<Extension> =>
   (await import(/* webpackChunkName: "codemirror-lang-markdown" */ '@codemirror/lang-markdown')).markdown();
 
-const loadTypescript = async (): Promise<CodeMirrorExtension> =>
+const loadTypescript = async (): Promise<Extension> =>
   (await import(/* webpackChunkName: "codemirror-lang-javascript" */ '@codemirror/lang-javascript')).javascript({
     typescript: true,
   });
 
-const loadXml = async (): Promise<CodeMirrorExtension> =>
+const loadXml = async (): Promise<Extension> =>
   (await import(/* webpackChunkName: "codemirror-lang-xml" */ '@codemirror/lang-xml')).xml();
 
-const loadYaml = async (): Promise<CodeMirrorExtension> =>
+const loadYaml = async (): Promise<Extension> =>
   (await import(/* webpackChunkName: "codemirror-lang-yaml" */ '@codemirror/lang-yaml')).yaml();
 
-const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtension> => {
+const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<Extension> => {
   const [{ sql, StandardSQL, MySQL }, { foldByIndentation }] = await Promise.all([
     import(/* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql'),
     import(/* webpackChunkName: "codemirror-lang-sql" */ './sqlFolding'),
@@ -50,7 +51,7 @@ interface LoadLanguageOptions {
 const resolveLoad = (
   language: CodeMirrorEditorLanguage,
   options: LoadLanguageOptions
-): { cacheKey: string; load: () => Promise<CodeMirrorExtension> } => {
+): { cacheKey: string; load: () => Promise<Extension> } => {
   switch (language) {
     case 'go':
       return { cacheKey: 'go', load: loadGo };
@@ -73,12 +74,12 @@ const resolveLoad = (
   }
 };
 
-const languagePromises = new Map<string, Promise<CodeMirrorExtension>>();
+const languagePromises = new Map<string, Promise<Extension>>();
 
 export async function loadLanguageExtension(
   language?: CodeMirrorEditorLanguage,
   options: LoadLanguageOptions = {}
-): Promise<CodeMirrorExtension | null> {
+): Promise<Extension | null> {
   if (!language) {
     return null;
   }

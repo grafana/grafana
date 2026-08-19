@@ -1,11 +1,10 @@
-import { ViewPlugin } from '@codemirror/view';
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, Combobox, type ComboboxOption, Stack, Text, useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, type CodeMirrorExtension } from '@grafana/ui/unstable';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import {
@@ -56,11 +55,15 @@ const EDIT_SETUP = {
  * A fresh plugin per request, because CodeMirror rebuilds its plugins exactly when the extensions
  * array stops being shallow-equal. That makes a new one the way to ask for the caret again.
  */
-function buildFocusExtension() {
+function buildFocusExtension(): CodeMirrorExtension[] {
   return [
-    ViewPlugin.define((view) => {
-      requestAnimationFrame(() => view.focus());
-      return {};
+    import('@codemirror/view').then(({ ViewPlugin }) => {
+      return [
+        ViewPlugin.define((view) => {
+          requestAnimationFrame(() => view.focus());
+          return {};
+        }),
+      ];
     }),
   ];
 }

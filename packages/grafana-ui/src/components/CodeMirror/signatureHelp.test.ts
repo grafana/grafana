@@ -1,7 +1,7 @@
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { showTooltip, type EditorView, type Tooltip } from '@codemirror/view';
 
-import { signatureHelp } from './signatureHelp';
+import { createSignatureHelpExtension } from './signatureHelpExtension';
 import { type SignatureHelp, type SignatureHelpProvider } from './types';
 
 const HELP: SignatureHelp = {
@@ -18,7 +18,11 @@ const HELP: SignatureHelp = {
 };
 
 const stateFor = (provider: SignatureHelpProvider, doc = 'abcdef', pos = 0) =>
-  EditorState.create({ doc, selection: EditorSelection.single(pos), extensions: [signatureHelp(provider)] });
+  EditorState.create({
+    doc,
+    selection: EditorSelection.single(pos),
+    extensions: [createSignatureHelpExtension(provider)],
+  });
 
 const activeTooltip = (state: EditorState): Tooltip | undefined =>
   state.facet(showTooltip).find((tooltip): tooltip is Tooltip => tooltip != null);

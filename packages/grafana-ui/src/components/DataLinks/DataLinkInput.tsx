@@ -12,7 +12,7 @@ import {
   type DataLinkInterpolationMode,
 } from './codemirrorUtils';
 
-interface DataLinkInputProps {
+export interface DataLinkInputProps {
   value: string;
   onChange: (url: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];

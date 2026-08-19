@@ -21,11 +21,16 @@ import { QueryToolbox } from '../QueryToolbox';
 
 import { getSqlCompletionProvider as getLegacySqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
 import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
-import { SqlEditor } from './SqlEditor/SqlEditor';
 import { type SqlCompletionProvider } from './SqlEditor/utils';
 import { SqlQueryActions } from './SqlQueryActions';
 import { useFunctionSignatures } from './hooks/useFunctionSignatures';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
+
+const SqlEditor = lazy(() =>
+  import(/* webpackChunkName: "sql-expressions-codemirror-editor" */ './SqlEditor/SqlEditor').then((module) => ({
+    default: module.SqlEditor,
+  }))
+);
 
 const SQLEditor = lazy(() =>
   import('@grafana/plugin-ui').then((module) => ({
@@ -283,17 +288,19 @@ LIMIT
 
             return useCodeMirrorEditor ? (
               <div style={{ width }}>
-                <SqlEditor
-                  value={query.expression ?? initialQuery}
-                  onChange={onEditorChange}
-                  completionProvider={completionProvider}
-                  functionSignatures={functionSignatures}
-                  formatter={formatSQL}
-                  height={editorHeight}
-                  ariaLabel={t('expressions.sql-expression.editor.aria-label', 'SQL expression editor')}
-                >
-                  {renderQueryToolbox}
-                </SqlEditor>
+                <Suspense fallback={null}>
+                  <SqlEditor
+                    value={query.expression ?? initialQuery}
+                    onChange={onEditorChange}
+                    completionProvider={completionProvider}
+                    functionSignatures={functionSignatures}
+                    formatter={formatSQL}
+                    height={editorHeight}
+                    ariaLabel={t('expressions.sql-expression.editor.aria-label', 'SQL expression editor')}
+                  >
+                    {renderQueryToolbox}
+                  </SqlEditor>
+                </Suspense>
               </div>
             ) : (
               <Suspense fallback={null}>
