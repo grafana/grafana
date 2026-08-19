@@ -79,6 +79,13 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 			ResourceVersion: row.ResourceVersion,
 		})
 		if err != nil {
+			resErr := ErrorResultFromGRPCDetails(err)
+			if resErr != nil {
+				if resErr.Code == http.StatusForbidden {
+					continue
+				}
+				return &resourcepb.ListResponse{Error: resErr}, nil
+			}
 			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 		}
 		if val.Error != nil {

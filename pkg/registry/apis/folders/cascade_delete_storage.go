@@ -289,6 +289,10 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 			Offset: offset,
 		})
 		if err != nil {
+			resErr := resource.ErrorResultFromGRPCDetails(err)
+			if resErr != nil {
+				return nil, fmt.Errorf("search dashboards in folder %q: %s", folderUID, resErr.Message)
+			}
 			return nil, fmt.Errorf("search dashboards in folder %q: %w", folderUID, err)
 		}
 		if resp.Error != nil {

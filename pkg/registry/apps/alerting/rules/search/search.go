@@ -120,6 +120,10 @@ func (h *Handler) run(ctx context.Context, body model.CreateSearchRulesRequestBo
 	}
 	resp, err := h.clientFor(primary).Search(ctx, searchReq)
 	if err != nil {
+		resErr := resource.ErrorResultFromGRPCDetails(err)
+		if resErr != nil {
+			return nil, "", resource.GetError(resErr)
+		}
 		return nil, "", err
 	}
 	if resp.Error != nil {

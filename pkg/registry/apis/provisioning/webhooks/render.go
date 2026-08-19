@@ -144,6 +144,11 @@ func (c *renderConnector) Connect(
 			Uid:            blobID,
 		})
 		if err != nil {
+			resErr := resource.ErrorResultFromGRPCDetails(err)
+			if resErr != nil {
+				responder.Error(resource.GetError(resErr))
+				return
+			}
 			responder.Error(err)
 			return
 		}

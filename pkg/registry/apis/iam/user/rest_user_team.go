@@ -160,6 +160,11 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 
 		result, err := s.client.Search(ctx, searchRequest)
 		if err != nil {
+			resErr := resource.ErrorResultFromGRPCDetails(err)
+			if resErr != nil {
+				responder.Error(apierrors.NewInternalError(fmt.Errorf("%d error searching: %s: %s", resErr.Code, resErr.Message, resErr.Details)))
+				return
+			}
 			responder.Error(apierrors.NewInternalError(err))
 			return
 		}

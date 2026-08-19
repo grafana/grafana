@@ -275,6 +275,12 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 		Keys:      keys,
 	})
 	if err != nil {
+		resErr := resource.ErrorResultFromGRPCDetails(err)
+		if resErr != nil {
+			m.log.Error("error rebuilding index for resource", "error", resErr.Message, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+			return fmt.Errorf("rebuild index error: %s", resErr.Message)
+		}
+
 		return fmt.Errorf("error rebuilding index: %w", err)
 	}
 

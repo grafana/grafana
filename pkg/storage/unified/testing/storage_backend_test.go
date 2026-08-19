@@ -289,6 +289,14 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 		wg.Go(func() {
 			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value}, retryOpts...)
 			if err != nil {
+				resErr := resource.ErrorResultFromGRPCDetails(err)
+				if resErr != nil {
+					results[i] = result{
+						err:           resource.GetError(resErr),
+						alreadyExists: resErr.Reason == string(metav1.StatusReasonAlreadyExists),
+					}
+					return
+				}
 				results[i] = result{err: err}
 				return
 			}

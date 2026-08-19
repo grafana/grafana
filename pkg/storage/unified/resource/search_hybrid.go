@@ -121,6 +121,10 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	g.Go(func() error {
 		lexResp, err := s.Search(gctx, hybridLexicalRequest(req, depth))
 		if err != nil {
+			resErr := ErrorResultFromGRPCDetails(err)
+			if resErr != nil {
+				return fmt.Errorf("lexical leg: %w", grpcErrorFromErrorResult(resErr))
+			}
 			return fmt.Errorf("lexical leg: %w", err)
 		}
 		if lexResp.Error != nil {
@@ -214,8 +218,13 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 		err = grpcErrorFromErrorResult(resp.Error)
 	}
 	if err != nil || resp == nil {
-		s.log.Warn("hybrid search: folder title resolution failed", "err", err)
-		return
+		resErr := ErrorResultFromGRPCDetails(err)
+		if resErr != nil {
+			err = grpcErrorFromErrorResult(resErr)
+		} else {
+			s.log.Warn("hybrid search: folder title resolution failed", "err", err)
+			return
+		}
 	}
 
 	titles := make(map[string]string, len(uids))

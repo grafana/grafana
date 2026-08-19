@@ -46,6 +46,10 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		Id:        repository,
 	})
 	if err != nil {
+		resErr := resource.ErrorResultFromGRPCDetails(err)
+		if resErr != nil {
+			return nil, resource.GetError(resErr)
+		}
 		return nil, err
 	}
 	if objects.Error != nil {
@@ -80,6 +84,10 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 
 	counts, err := o.store.CountManagedObjects(ctx, req)
 	if err != nil {
+		resErr := resource.ErrorResultFromGRPCDetails(err)
+		if resErr != nil {
+			return nil, resource.GetError(resErr)
+		}
 		return nil, err
 	}
 	if counts.Error != nil {

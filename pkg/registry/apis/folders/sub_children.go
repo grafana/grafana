@@ -93,6 +93,11 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			Offset: offset,
 		})
 		if err != nil {
+			resErr := resource.ErrorResultFromGRPCDetails(err)
+			if resErr != nil {
+				responder.Error(resource.GetError(resErr))
+				return
+			}
 			responder.Error(err)
 			return
 		}

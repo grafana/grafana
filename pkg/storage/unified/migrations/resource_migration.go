@@ -220,6 +220,11 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 	// Execute the migration via legacy migrator
 	response, err := r.unifiedMigrator.Migrate(ctx, migrateOpts)
 	if err != nil {
+		resErr := resource.ErrorResultFromGRPCDetails(err)
+		if resErr != nil {
+			r.log.Error("Migration reported error", "org_id", info.OrgID, "error", resErr.String(), "duration", time.Since(startTime))
+			return nil, fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, fmt.Errorf("migration error: %s", resErr.Message))
+		}
 		r.log.Error("Migration failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
 		return nil, fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, err)
 	}

@@ -43,6 +43,10 @@ func ValidateNoOwnedFolders(ctx context.Context, searcher resourcepb.ResourceInd
 		Limit: 1,
 	})
 	if err != nil {
+		resErr := resource.ErrorResultFromGRPCDetails(err)
+		if resErr != nil {
+			return resource.GetError(resErr)
+		}
 		return err
 	}
 	if resp == nil {
