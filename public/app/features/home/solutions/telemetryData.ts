@@ -23,6 +23,11 @@ export const METRICS_STATS_LOOKBACK_DAYS = 7;
 const NS_IN_MS = 1e6;
 const NS_IN_S = 1e9;
 
+// Card details load after placement and only hold their own skeleton, so they get a larger
+// budget than the placement-gating probes: a cold TraceQL-metrics scan on a busy tenant
+// takes well over 10s, and the disk-pressure alert query can be similarly slow.
+const DETAIL_QUERY_TIMEOUT_MS = 30_000;
+
 export interface LogsActivity {
   bytes: number | null;
   sources: number | null;
@@ -134,10 +139,12 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
 export async function fetchTracesServices(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<number | null> {
   const end = Math.floor(Date.now() / 1000);
   const start = end - DATA_LOOKBACK_HOURS * 3600;
-  const res = await probeProxyGet<TempoTagValuesResponse>(ds.uid, 'api/v2/search/tag/resource.service.name/values', {
-    start,
-    end,
-  });
+  const res = await probeProxyGet<TempoTagValuesResponse>(
+    ds.uid,
+    'api/v2/search/tag/resource.service.name/values',
+    { start, end },
+    DETAIL_QUERY_TIMEOUT_MS
+  );
   return Array.isArray(res?.tagValues) ? res.tagValues.length : null;
 }
 
@@ -158,12 +165,17 @@ function isTempoV2MetricsDurationError(error: unknown): boolean {
 }
 
 function queryTracesActivity(dsUid: string, end: number, lookbackHours: number): Promise<TempoQueryRangeResponse> {
-  return probeProxyGet<TempoQueryRangeResponse>(dsUid, 'api/metrics/query_range', {
-    q: '{} | count_over_time()',
-    start: end - lookbackHours * 3600,
-    end,
-    step: '30m',
-  });
+  return probeProxyGet<TempoQueryRangeResponse>(
+    dsUid,
+    'api/metrics/query_range',
+    {
+      q: '{} | count_over_time()',
+      start: end - lookbackHours * 3600,
+      end,
+      step: '30m',
+    },
+    DETAIL_QUERY_TIMEOUT_MS
+  );
 }
 
 /**
@@ -229,7 +241,6 @@ export interface MetricsActivity {
 // Threshold and ETA clamp for the disk-pressure alert row (design/judgment constants).
 const DISK_PRESSURE_RATIO = 0.9;
 const DISK_ETA_MAX_HOURS = 48;
-const METRICS_ALERT_TIMEOUT_MS = 30_000;
 
 const FS_EXCLUDE = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
 // Per-filesystem fill ratio; pseudo filesystems excluded.
@@ -290,7 +301,7 @@ export async function fetchMetricsDiskPressure(
       diskWorst: `topk(1, ${FS_USED})`,
     },
     ds,
-    METRICS_ALERT_TIMEOUT_MS,
+    DETAIL_QUERY_TIMEOUT_MS,
     true
   ).catch(() => null);
   if (!frames) {

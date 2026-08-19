@@ -37,9 +37,14 @@ export async function resolveBackendInstance(uid: string): Promise<DataSourceWit
  * GET through the classic datasource proxy, timeout-bounded, never toasts. Some datasource
  * backends (e.g. Tempo) serve their HTTP API only here, not on the resource router.
  */
-export async function probeProxyGet<T>(uid: string, path: string, params: Record<string, unknown>): Promise<T> {
+export async function probeProxyGet<T>(
+  uid: string,
+  path: string,
+  params: Record<string, unknown>,
+  timeoutMs = PROBE_TIMEOUT_MS
+): Promise<T> {
   const url = `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
-  return withTimeout(getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false }), PROBE_TIMEOUT_MS);
+  return withTimeout(getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false }), timeoutMs);
 }
 
 /** Rejects when `promise` outlasts `ms`; the underlying request keeps running but stops gating the caller. */
