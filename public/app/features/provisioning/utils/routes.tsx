@@ -29,8 +29,7 @@ const connectionRoles = () =>
   ]);
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
-  const featureToggles = config.featureToggles || {};
-  if (!featureToggles.provisioning) {
+  if (!config.provisioningEnabled) {
     return [];
   }
 

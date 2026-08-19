@@ -16,6 +16,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -362,6 +363,129 @@ func TestService_GetForProvider(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tc.want, actual)
 
+			env.secrets.AssertExpectations(t)
+		})
+	}
+}
+
+func TestService_GetForProvider_StorageReadMode(t *testing.T) {
+	t.Parallel()
+
+	dbRow := func() *models.SSOSettings {
+		return &models.SSOSettings{
+			Provider: "github",
+			Settings: map[string]any{"client_id": "client_id_db", "db_only": "db_only"},
+			Source:   models.DB,
+		}
+	}
+
+	testCases := []struct {
+		name                string
+		servedByMT          bool
+		mtReadAuthoritative bool
+		dbSettings          map[string]any // overrides dbRow().Settings when set
+		mtConfig            map[string]any // overrides the default fallback config when set
+		setup               func(env testEnv)
+		want                *models.SSOSettings
+	}{
+		{
+			name:       "below the read-flip the database wins and the fallback fills gaps",
+			servedByMT: false,
+			want: &models.SSOSettings{
+				Provider: "github",
+				Source:   models.DB,
+				Settings: map[string]any{"client_id": "client_id_db", "db_only": "db_only", "mt_only": "mt_only"},
+			},
+		},
+		{
+			name:       "at the read-flip MT-Settings wins and the database fills gaps",
+			servedByMT: true,
+			want: &models.SSOSettings{
+				Provider: "github",
+				Source:   models.System,
+				Settings: map[string]any{"client_id": "client_id_mt", "mt_only": "mt_only", "db_only": "db_only"},
+			},
+		},
+		{
+			name:                "once authoritative MT-Settings is the sole source and the database is not read",
+			servedByMT:          true,
+			mtReadAuthoritative: true,
+			want: &models.SSOSettings{
+				Provider: "github",
+				Source:   models.System,
+				Settings: map[string]any{"client_id": "client_id_mt", "mt_only": "mt_only"},
+			},
+		},
+		{
+			name:       "the MT-authoritative merge gap-fills credential fields from the database",
+			servedByMT: true,
+			dbSettings: map[string]any{
+				"certificate": base64.RawStdEncoding.EncodeToString([]byte("certificate")),
+				"private_key": base64.RawStdEncoding.EncodeToString([]byte("private_key")),
+			},
+			setup: func(env testEnv) {
+				env.secrets.On("Decrypt", mock.Anything, []byte("certificate"), mock.Anything).Return([]byte("decrypted-certificate"), nil).Once()
+				env.secrets.On("Decrypt", mock.Anything, []byte("private_key"), mock.Anything).Return([]byte("decrypted-private_key"), nil).Once()
+			},
+			want: &models.SSOSettings{
+				Provider: "github",
+				Source:   models.System,
+				Settings: map[string]any{
+					"client_id":   "client_id_mt",
+					"mt_only":     "mt_only",
+					"certificate": "decrypted-certificate",
+					"private_key": "decrypted-private_key",
+				},
+			},
+		},
+		{
+			name:       "the MT-authoritative merge does not resolve variant conflicts, validation owns them",
+			servedByMT: true,
+			mtConfig:   map[string]any{"certificate_path": "/etc/saml/cert.pem"},
+			dbSettings: map[string]any{
+				"certificate": base64.RawStdEncoding.EncodeToString([]byte("certificate")),
+			},
+			setup: func(env testEnv) {
+				env.secrets.On("Decrypt", mock.Anything, []byte("certificate"), mock.Anything).Return([]byte("decrypted-certificate"), nil).Once()
+			},
+			want: &models.SSOSettings{
+				Provider: "github",
+				Source:   models.System,
+				Settings: map[string]any{
+					"certificate_path": "/etc/saml/cert.pem",
+					"certificate":      "decrypted-certificate",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			env := setupTestEnv(t, false, false, true)
+			env.service.mtReadAuthoritative = tc.mtReadAuthoritative
+			env.fallbackStrategy.ExpectedIsMatch = true
+			env.fallbackStrategy.ExpectedServesMTSettings = tc.servedByMT
+			mtConfig := tc.mtConfig
+			if mtConfig == nil {
+				mtConfig = map[string]any{"client_id": "client_id_mt", "mt_only": "mt_only"}
+			}
+			env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{"github": mtConfig}
+			row := dbRow()
+			if tc.dbSettings != nil {
+				row.Settings = tc.dbSettings
+			}
+			env.store.ExpectedSSOSetting = row
+			if tc.setup != nil {
+				tc.setup(env)
+			}
+
+			actual, err := env.service.GetForProvider(context.Background(), "github")
+
+			require.NoError(t, err)
+			require.Equal(t, tc.want, actual)
 			env.secrets.AssertExpectations(t)
 		})
 	}
@@ -2487,6 +2611,7 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 
 	svc := ProvideService(
 		cfg,
+		mustConfigProvider(t, cfg),
 		&dbtest.FakeDB{},
 		accessControl,
 		routing.NewRouteRegister(),
@@ -2517,6 +2642,13 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 		secrets:          secrets,
 		reloadables:      reloadables,
 	}
+}
+
+func mustConfigProvider(t *testing.T, cfg *setting.Cfg) configprovider.ConfigProvider {
+	t.Helper()
+	provider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	return provider
 }
 
 type testEnv struct {

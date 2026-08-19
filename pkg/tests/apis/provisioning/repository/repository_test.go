@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -950,6 +951,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
 		require.NotEmpty(t, createdRepo.Finalizers, "finalizers should be automatically added")
 		require.Contains(t, createdRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
+		require.Contains(t, createdRepo.Finalizers, repository.RemovePendingJobsFinalizer, "should contain RemovePendingJobsFinalizer")
 		require.Contains(t, createdRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
 	})
 
@@ -968,6 +970,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
 		require.NotEmpty(t, createdRepo.Finalizers, "finalizers should be present after creation")
 		require.Contains(t, createdRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
+		require.Contains(t, createdRepo.Finalizers, repository.RemovePendingJobsFinalizer, "should contain RemovePendingJobsFinalizer")
 		require.Contains(t, createdRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
 
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -1879,6 +1882,69 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 		require.NotContains(t, annotations, utils.AnnoKeySourcePath, "sourcePath annotation should be removed")
 		require.NotContains(t, annotations, utils.AnnoKeySourceChecksum, "sourceChecksum annotation should be removed")
 	})
+}
+
+// TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue verifies that a
+// repository carrying the remove-pending-jobs finalizer can be deleted while
+// jobs are queued against it, and that no jobs linger afterwards.
+//
+// Note: the environment runs a live job driver that also drains pending jobs,
+// so this test cannot deterministically attribute a specific deletion to the
+// finalizer — that behaviour (delete pending, preserve executing/orphan-cleanup
+// jobs) is covered by the CleanupQueue unit tests. What it does guarantee is the
+// end-to-end wiring: the finalizer is present and runs to completion (otherwise
+// the repository would stay Terminating and WaitForRepositoryDeleted would time
+// out), and the queue is empty once the repository is gone.
+func TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "finalizer-clear-queue"
+
+	// Sync disabled so the repository controller does not enqueue its own sync job.
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		SkipSync:   true,
+	})
+
+	// The remove-pending-jobs finalizer must be present for the queue to be cleared.
+	createdRepo, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Contains(t, createdRepo.GetFinalizers(), repository.RemovePendingJobsFinalizer,
+		"repository should carry the remove-pending-jobs finalizer")
+
+	// countJobsForRepo counts the active jobs queued for the repository. It uses
+	// assert (not require) so it is safe to call inside an EventuallyWithT loop.
+	ctx := t.Context()
+	countJobsForRepo := func(t assert.TestingT) int {
+		list, err := helper.Jobs.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(t, err, "failed to list jobs") {
+			return 0
+		}
+		var total int
+		for _, job := range list.Items {
+			if job.GetLabels()[jobs.LabelRepository] == repo {
+				total++
+			}
+		}
+		return total
+	}
+
+	// Enqueue several jobs against the repository so the finalizer has queued work
+	// to clear when the repository is deleted.
+	for i := 0; i < 5; i++ {
+		helper.CreatePullJob(t, fmt.Sprintf("%s-queued-%02d", repo, i), repo)
+	}
+
+	// Deleting the repository must run the finalizer to completion (proven by the
+	// repository actually being removed) and leave no jobs behind for it.
+	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}),
+		"should delete repository")
+	helper.WaitForRepositoryDeleted(t, repo)
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		assert.Zero(collect, countJobsForRepo(collect), "no jobs should remain queued for the deleted repository")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "queue should be cleared for the deleted repository")
 }
 
 func TestIntegrationProvisioning_JobPermissions(t *testing.T) {

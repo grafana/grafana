@@ -69,15 +69,17 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 		region = ds.Settings.Region
 	}
 	authSettings := awsauth.Settings{
-		CredentialsProfile: ds.Settings.Profile,
-		LegacyAuthType:     ds.Settings.AuthType,
-		AssumeRoleARN:      ds.Settings.AssumeRoleARN,
-		ExternalID:         ds.Settings.ExternalID,
-		Endpoint:           ds.Settings.Endpoint,
-		Region:             region,
-		AccessKey:          ds.Settings.AccessKey,
-		SecretKey:          ds.Settings.SecretKey,
-		HTTPClient:         &http.Client{},
+		CredentialsProfile:         ds.Settings.Profile,
+		LegacyAuthType:             ds.Settings.AuthType,
+		AssumeRoleARN:              ds.Settings.AssumeRoleARN,
+		ExternalID:                 ds.Settings.ExternalID,
+		GrafanaExternalID:          ds.Settings.GrafanaExternalID,
+		UsePerDatasourceExternalID: ds.Settings.UsePerDatasourceExternalID,
+		Endpoint:                   ds.Settings.Endpoint,
+		Region:                     region,
+		AccessKey:                  ds.Settings.AccessKey,
+		SecretKey:                  ds.Settings.SecretKey,
+		HTTPClient:                 &http.Client{},
 	}
 	if ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && ds.Settings.SecureSocksProxyEnabled {
 		authSettings.ProxyOptions = ds.ProxyOpts

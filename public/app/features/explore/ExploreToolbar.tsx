@@ -276,6 +276,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
                 className={cx(shouldRotateSplitIcon && styles.rotateIcon)}
               />
               <ToolbarButton
+                data-testid={selectors.pages.Explore.toolbar.closeSplit}
                 tooltip={t('explore.toolbar.split-close-tooltip', 'Close split pane')}
                 onClick={onCloseSplitView}
                 icon="times"

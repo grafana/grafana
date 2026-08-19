@@ -56,6 +56,52 @@ describe('PanelStatus', () => {
       expect(screen.getByText('Window size adjusted')).toBeInTheDocument();
     });
 
+    it('lists items sorted error > warning > info regardless of input order', async () => {
+      render(
+        <PanelStatus
+          items={[
+            { severity: 'info', text: 'an info notice' },
+            { severity: 'warning', text: 'a warning notice' },
+            { severity: 'error', text: 'an error' },
+          ]}
+        />
+      );
+
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+
+      const error = await screen.findByText('an error');
+      const warning = screen.getByText('a warning notice');
+      const info = screen.getByText('an info notice');
+      expect(error.compareDocumentPosition(warning) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(warning.compareDocumentPosition(info) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('groups multiple items per severity, preserving input order within a severity', async () => {
+      render(
+        <PanelStatus
+          items={[
+            { severity: 'info', text: 'first info' },
+            { severity: 'warning', text: 'first warning' },
+            { severity: 'error', text: 'first error' },
+            { severity: 'info', text: 'second info' },
+            { severity: 'error', text: 'second error' },
+            { severity: 'warning', text: 'second warning' },
+          ]}
+        />
+      );
+
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+      await screen.findByText('first error');
+
+      const texts = ['first error', 'second error', 'first warning', 'second warning', 'first info', 'second info'].map(
+        (text) => screen.getByText(text)
+      );
+
+      for (let i = 0; i < texts.length - 1; i++) {
+        expect(texts[i].compareDocumentPosition(texts[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      }
+    });
+
     it('calls onClick (inspect) from the tooltip', async () => {
       const onClick = jest.fn();
       render(<PanelStatus items={items} onClick={onClick} />);

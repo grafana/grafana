@@ -132,7 +132,7 @@ function getPanelShareView(
     case shareDashboardType.libraryPanel:
       return new ShareLibraryPanelTab({ panelRef, onDismiss });
     case shareDashboardType.downloadDiagnostics:
-      return new DownloadDiagnostics({ panelRef, onDismiss });
+      return new DownloadDiagnostics({ panelRef, dashboardRef, onDismiss });
     default:
       return new SharePanelInternally({ panelRef, onDismiss });
   }

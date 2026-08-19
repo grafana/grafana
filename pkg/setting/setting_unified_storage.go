@@ -35,7 +35,7 @@ var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:         true,  // Only Mode5!
 	FolderResource:           true,  // Only Mode5!
 	DashboardResource:        true,  // Only Mode5!
-	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
+	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
 	StarsResource:            false,
 	PreferencesResource:      false,
@@ -173,6 +173,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MigrationChunkMaxBytes = section.Key("migration_chunk_max_bytes").MustInt64(256 * 1024 * 1024)
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
+	cfg.UnifiedStorageAuthzExemptionEnabled = section.Key("authz_exemption_enabled").MustBool(false)
+	cfg.UnifiedStorageAuthzExemptResources = parseCommaSeparatedList(section.Key("authz_exempt_resources").String())
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
 	if cfg.SearchInjectFailuresPercent < 0 {
 		cfg.SearchInjectFailuresPercent = 0
@@ -180,19 +182,25 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
+	cfg.SearchEnforceSortCapability = section.Key("search_enforce_sort_capability").MustBool(false)
 	cfg.SearchPostRankAuthz = section.Key("search_post_rank_authz").MustBool(false)
 	// Zero values keep the search.PostRankAuthzConfig.effective() defaults.
 	cfg.SearchPostRankAuthzOverFetchFactor = section.Key("search_post_rank_authz_over_fetch_factor").MustInt(0)
 	cfg.SearchPostRankAuthzMaxWindow = section.Key("search_post_rank_authz_max_window").MustInt(0)
 	cfg.SearchPostRankAuthzMaxCandidates = section.Key("search_post_rank_authz_max_candidates").MustInt(0)
+	cfg.SearchPostRankAuthzFacetSampleSize = section.Key("search_post_rank_authz_facet_sample_size").MustInt(0)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
+	cfg.EnableVectorStore = section.Key("vector_store_enabled").MustBool(false)
 	cfg.VectorAllowedInternalCollections = section.Key("vector_allowed_internal_collections").Strings(",")
 	if len(cfg.VectorAllowedInternalCollections) == 0 {
 		cfg.VectorAllowedInternalCollections = []string{"dashboard.grafana.app/dashboards"}
 	}
 	cfg.VectorAllowedExternalCollections = section.Key("vector_allowed_external_collections").Strings(",")
+	cfg.VectorAllowedWriteServices = section.Key("vector_allowed_write_services").Strings(",")
 	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
 	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
+	// Full aggregate scan of the embeddings table; hourly by default, zero disables.
+	cfg.VectorEmbeddingCountInterval = section.Key("vector_embedding_count_interval").MustDuration(time.Hour)
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
@@ -219,6 +227,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
+	// Off by default: switching this on makes the next rebuild of every index pull
+	// in all trash the storage still holds, which is unbounded where garbage
+	// collection is disabled.
+	cfg.IndexDeletedDocuments = section.Key("index_deleted_documents").MustBool(false)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -251,7 +263,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
-	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(true)
+	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(false)
 	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
 	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
 	cfg.GarbageCollectionBatchWait = section.Key("garbage_collection_batch_wait").MustDuration(1 * time.Second)
@@ -352,6 +364,17 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.AzureAPIVersion = embedSection.Key("azure_api_version").MustString("2024-02-01")
 	cfg.AzureDimensions = embedSection.Key("azure_dimensions").MustInt(1024)
 	cfg.AzureBatchSize = embedSection.Key("azure_batch_size").MustInt(50)
+
+	// Rerank provider for the HybridSearch RPC. Empty = disabled (results
+	// keep their RRF ordering and min_relevance is a no-op). When set, the
+	// matching provider's connection fields must also be configured.
+	rerankSection := cfg.Raw.Section("vector_reranker")
+	cfg.RerankProvider = rerankSection.Key("provider").String()
+	cfg.RerankVertexProjectID = rerankSection.Key("vertex_project_id").String()
+	cfg.RerankVertexLocation = rerankSection.Key("vertex_location").MustString("global")
+	cfg.RerankVertexModel = rerankSection.Key("vertex_model").MustString("semantic-ranker-fast-004")
+	cfg.RerankBedrockRegion = rerankSection.Key("bedrock_region").MustString("us-east-1")
+	cfg.RerankBedrockModel = rerankSection.Key("bedrock_model").MustString("cohere.rerank-v3-5:0")
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,
@@ -405,6 +428,17 @@ func (cfg *Cfg) shouldProxySearchRemotely() bool {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	return apiserverCfg.Key("search_server_address").MustString("") != "" &&
 		!slices.Contains(cfg.Target, "search-server")
+}
+
+// StorageServicesEnabled reports whether this process should run the unified
+// storage background jobs that write, such as garbage collection and event
+// pruning. Only the process that runs the storage server may run them,
+// otherwise every replica would delete data on its own. A process with no
+// module targets, or with the "all" target, does everything itself.
+func (cfg *Cfg) StorageServicesEnabled() bool {
+	return len(cfg.Target) == 0 ||
+		slices.Contains(cfg.Target, "all") ||
+		slices.Contains(cfg.Target, "storage-server")
 }
 
 // ShouldRunMigrations reports whether data migrations to unified storage should run.

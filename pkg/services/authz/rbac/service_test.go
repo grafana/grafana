@@ -1594,6 +1594,189 @@ func TestService_Check(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "should allow datasources get with datasources:read scoped to uid",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "get",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny datasources get without matching scope",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "get",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:uid:ds2"},
+			},
+			expected: false,
+		},
+		{
+			name: "should allow datasources get via datasources:query action set",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "get",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:query", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow datasources create with unscoped datasources:create (create skips scope)",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "create",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:create", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow datasources update via datasources:edit action set scoped to uid",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "update",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:edit", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny datasources update without matching scope",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "update",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:edit", Scope: "datasources:uid:other"},
+			},
+			expected: false,
+		},
+		{
+			name: "should allow datasources delete with datasources:delete scoped to uid",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "delete",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:delete", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny datasources delete when only holding read permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "delete",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:uid:ds1"},
+			},
+			expected: false,
+		},
+		{
+			// Coarse by design: a list request carries no name, so holding the
+			// action on any single datasource authorizes the call. Narrowing the
+			// results to the readable subset is the datasource service's job, not
+			// this check's.
+			name: "should allow datasources list when user can read at least one datasource",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "list",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny datasources list when user holds no read permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "list",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:write", Scope: "datasources:uid:ds1"},
+			},
+			expected: false,
+		},
+		{
+			name: "should allow datasources query subresource with datasources:query scoped to uid",
+			req: &authzv1.CheckRequest{
+				Namespace:   "org-12",
+				Subject:     "user:test-uid",
+				Group:       "loki.datasource.grafana.app",
+				Resource:    "datasources",
+				Subresource: "query",
+				Verb:        "create",
+				Name:        "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:query", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny datasources query subresource without matching scope",
+			req: &authzv1.CheckRequest{
+				Namespace:   "org-12",
+				Subject:     "user:test-uid",
+				Group:       "loki.datasource.grafana.app",
+				Resource:    "datasources",
+				Subresource: "query",
+				Verb:        "create",
+				Name:        "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:query", Scope: "datasources:uid:ds2"},
+			},
+			expected: false,
+		},
 	}
 	t.Run("User permission check", func(t *testing.T) {
 		for _, tc := range testCases {
@@ -1626,6 +1809,20 @@ func TestService_Check(t *testing.T) {
 				}
 				if tc.req.Resource == "folders" {
 					expAction = "folders:delete"
+				}
+				if tc.req.Resource == "datasources" && tc.req.Subresource == "query" {
+					expAction = "datasources:query"
+				} else if tc.req.Resource == "datasources" {
+					switch tc.req.Verb {
+					case "get", "list", "watch":
+						expAction = "datasources:read"
+					case "create":
+						expAction = "datasources:create"
+					case "update", "patch":
+						expAction = "datasources:write"
+					case "delete", "deletecollection":
+						expAction = "datasources:delete"
+					}
 				}
 				if tc.req.Subresource == "annotations" {
 					switch tc.req.Verb {
@@ -1713,6 +1910,17 @@ func TestService_Check(t *testing.T) {
 				Resource:  "dashboards",
 				Verb:      "get",
 				Name:      "dash1",
+			},
+			expected: true,
+		},
+		{
+			name: "should allow rendering to list plugin metas",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "plugins.grafana.app",
+				Resource:  "metas",
+				Verb:      "list",
 			},
 			expected: true,
 		},
@@ -2435,6 +2643,19 @@ func TestService_List(t *testing.T) {
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 				Verb:      "get",
+			},
+			expected: &authzv1.ListResponse{
+				All: true,
+			},
+		},
+		{
+			name: "should list plugin metas for rendering",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "plugins.grafana.app",
+				Resource:  "metas",
+				Verb:      "list",
 			},
 			expected: &authzv1.ListResponse{
 				All: true,

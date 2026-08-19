@@ -198,6 +198,13 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 		fileName = safepath.Join(options.Path, fileName)
 	}
 
+	// The folder path is derived from folder titles, which are not sanitized.
+	// Reject any unsafe path (traversal, absolute, too deep) before it reaches
+	// the backend, using the same validation enforced on the import side.
+	if err := IsPathSupported(fileName); err != nil {
+		return "", fmt.Errorf("unsafe export path %q: %w", fileName, err)
+	}
+
 	parsed := ParsedResource{
 		Info: &repository.FileInfo{
 			Path: fileName,
@@ -400,7 +407,7 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 	}
 
 	if currentPath := existing.GetAnnotations()[utils.AnnoKeySourcePath]; currentPath != "" && currentPath != sourcePath {
-		return fmt.Errorf("skipping delete of old resource %s: now managed by %s, not %s", oldName, currentPath, sourcePath)
+		return NewResourceManagedByOtherFileError(oldName, currentPath, sourcePath)
 	}
 
 	requestingManager := utils.ManagerProperties{

@@ -54,18 +54,22 @@ var dsnMapping = map[string]string{
 }
 
 func convertSQLite3URL(dsn string) (string, error) {
-	pos := strings.IndexRune(dsn, '?')
-	if pos < 1 {
-		return dsn, nil // no parameters to convert
+	newDSN := dsn
+	var params url.Values
+	if pos := strings.IndexRune(dsn, '?'); pos >= 1 {
+		var err error
+		if params, err = url.ParseQuery(dsn[pos+1:]); err != nil {
+			return "", err
+		}
+		newDSN = dsn[:pos]
 	}
-	params, err := url.ParseQuery(dsn[pos+1:])
-	if err != nil {
-		return "", err
-	}
-	newDSN := dsn[:pos]
 
 	q := url.Values{}
 	q.Add("_pragma", "busy_timeout(7500)") // Default of mattn/go-sqlite3 is 5s but we increase it to 7.5s to try and avoid busy errors.
+	// Without this, modernc serializes time.Time values with time.Time.String(), which Go documents as a
+	// debugging representation. That can embed a monotonic reading or a duplicated zone offset, producing
+	// values that don't round-trip. A user-supplied _time_format below overrides this default.
+	q.Set("_time_format", "sqlite")
 
 	for key, values := range params {
 		if alias, ok := dsnAlias[strings.ToLower(key)]; ok {

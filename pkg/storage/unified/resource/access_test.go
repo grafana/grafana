@@ -241,3 +241,80 @@ func TestNamespaceMatching(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateAuthzOptions(t *testing.T) {
+	for _, value := range []string{"", "group", "/resource", "group/", "group/resource/extra", "group/*"} {
+		t.Run("rejects malformed exemption "+value, func(t *testing.T) {
+			err := ValidateAuthzOptions(AuthzOptions{ExemptResources: []string{value}})
+			require.ErrorContains(t, err, "invalid unified storage authz exemption")
+		})
+	}
+
+	for _, value := range []string{
+		"dashboard.grafana.app/dashboards",
+		"folder.grafana.app/folders",
+		"iam.grafana.app/users",
+		"iam.grafana.app/teams",
+		"iam.grafana.app/serviceaccounts",
+		"plugin.ext.grafana.app/widgets",
+	} {
+		t.Run("rejects already enforced exemption "+value, func(t *testing.T) {
+			err := ValidateAuthzOptions(AuthzOptions{ExemptResources: []string{value}})
+			require.ErrorContains(t, err, "it is already enforced")
+		})
+	}
+
+	t.Run("deduplicates exact exemptions", func(t *testing.T) {
+		client := NewAuthzLimitedClient(authlib.FixedAccessClient(true), AuthzOptions{
+			ExemptResources: []string{"example.grafana.app/widgets", "example.grafana.app/widgets"},
+		})
+		wrapped := client.(*authzLimitedClient)
+		require.Len(t, wrapped.exemptions, 1)
+		require.Len(t, wrapped.exemptions["example.grafana.app"], 1)
+	})
+
+	t.Run("client ignores exemptions that fail validation", func(t *testing.T) {
+		client := NewAuthzLimitedClient(authlib.FixedAccessClient(true), AuthzOptions{
+			ExemptionEnabled: true,
+			ExemptResources:  []string{"example.grafana.app/widgets", "malformed"},
+		})
+		require.True(t, client.(*authzLimitedClient).IsCompatibleWithRBAC("example.grafana.app", "widgets"))
+	})
+}
+
+func TestAuthzLimitedClientExemptionGate(t *testing.T) {
+	exempted := AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{"example.grafana.app/widgets"}}
+
+	tests := []struct {
+		name       string
+		opts       AuthzOptions
+		group      string
+		resource   string
+		isEnforced bool
+	}{
+		{"disabled enforces allowlist resource", AuthzOptions{}, "dashboard.grafana.app", "dashboards", true},
+		{"disabled enforces extension group", AuthzOptions{}, "plugin.ext.grafana.app", "widgets", true},
+		{"disabled bypasses unknown resource", AuthzOptions{}, "example.grafana.app", "widgets", false},
+		{"disabled ignores exemptions", AuthzOptions{ExemptResources: exempted.ExemptResources}, "example.grafana.app", "widgets", false},
+		{"enabled without exemptions enforces unknown resource", AuthzOptions{ExemptionEnabled: true}, "example.grafana.app", "widgets", true},
+		{"enabled enforces dashboards", AuthzOptions{ExemptionEnabled: true}, "dashboard.grafana.app", "dashboards", true},
+		{"enabled enforces folders", AuthzOptions{ExemptionEnabled: true}, "folder.grafana.app", "folders", true},
+		{"enabled enforces iam", AuthzOptions{ExemptionEnabled: true}, "iam.grafana.app", "users", true},
+		{"enabled enforces extension group", AuthzOptions{ExemptionEnabled: true}, "plugin.ext.grafana.app", "widgets", true},
+		{"enabled bypasses exact exemption", exempted, "example.grafana.app", "widgets", false},
+		{"enabled enforces sibling of exemption", exempted, "example.grafana.app", "gadgets", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := NewAuthzLimitedClient(authlib.FixedAccessClient(false), tt.opts)
+
+			// The underlying client denies everything, so an allowed response means the check was bypassed.
+			check, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, authlib.CheckRequest{
+				Group: tt.group, Resource: tt.resource, Verb: utils.VerbGet, Namespace: "stacks-1", Name: "one",
+			}, "")
+			require.NoError(t, err)
+			assert.Equal(t, !tt.isEnforced, check.Allowed)
+		})
+	}
+}

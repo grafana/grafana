@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	registryrest "k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/utils/ptr"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -160,7 +161,10 @@ func TestK8sAdapter_StoreErrorMapping(t *testing.T) {
 			})
 
 			t.Run("Create", func(t *testing.T) {
-				obj := &annotationV0.Annotation{ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns}}
+				obj := &annotationV0.Annotation{
+					ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns},
+					Spec:       annotationV0.AnnotationSpec{Time: 1000},
+				}
 				_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 				assert.True(t, tc.predicate(err), "got %v", err)
 			})
@@ -181,7 +185,10 @@ func TestK8sAdapter_Create(t *testing.T) {
 		adapter := newTestAdapter(NewMemoryStore(), allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
-		obj := &annotationV0.Annotation{ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns}}
+		obj := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Time: 1000},
+		}
 		_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
@@ -288,6 +295,68 @@ func TestK8sAdapter_Create(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Empty(t, testGetLegacyData(t, result.(*annotationV0.Annotation)))
+	})
+}
+
+func TestK8sAdapter_DryRun(t *testing.T) {
+	ns := "org-1"
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+	dryRunOpt := []string{metav1.DryRunAll}
+
+	t.Run("Create rejects dry-run", func(t *testing.T) {
+		store := NewMemoryStore()
+		adapter := newTestAdapter(store, allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		obj := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+		}
+		_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{DryRun: dryRunOpt})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err), "expected 400 BadRequest, got %v", err)
+
+		_, getErr := store.Get(ctx, ns, "obj")
+		assert.True(t, errors.Is(getErr, ErrNotFound), "dry-run must not persist, got %v", getErr)
+	})
+
+	t.Run("Update rejects dry-run", func(t *testing.T) {
+		adapter := newTestAdapter(NewMemoryStore(), allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+		_, err := adapter.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+		}, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		incoming := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+		}
+		_, _, err = adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{DryRun: dryRunOpt})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err), "expected 400 BadRequest, got %v", err)
+
+		got, err := adapter.Get(ctx, "anno", &metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, "hello", got.(*annotationV0.Annotation).Spec.Text, "dry-run must not persist")
+	})
+
+	t.Run("Delete rejects dry-run", func(t *testing.T) {
+		adapter := newTestAdapter(NewMemoryStore(), allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+		_, err := adapter.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+		}, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		_, _, err = adapter.Delete(ctx, "obj", nil, &metav1.DeleteOptions{DryRun: dryRunOpt})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err), "expected 400 BadRequest, got %v", err)
+
+		_, getErr := adapter.Get(ctx, "obj", &metav1.GetOptions{})
+		require.NoError(t, getErr, "dry-run must not delete")
 	})
 }
 
@@ -429,6 +498,41 @@ func TestK8sAdapter_Update(t *testing.T) {
 		}
 		_, _, err = adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		assert.True(t, apierrors.IsGone(err), "expected 410 Gone, got %v", err)
+	})
+
+	t.Run("rejects updates to immutable fields", func(t *testing.T) {
+		cases := []struct {
+			name   string
+			mutate func(*annotationV0.Annotation)
+		}{
+			{"time", func(a *annotationV0.Annotation) { a.Spec.Time = 2000 }},
+			{"timeEnd", func(a *annotationV0.Annotation) { a.Spec.TimeEnd = ptr.To(int64(3000)) }},
+			{"dashboardUID", func(a *annotationV0.Annotation) { a.Spec.DashboardUID = ptr.To("dash") }},
+			{"panelID", func(a *annotationV0.Annotation) { a.Spec.PanelID = ptr.To(int64(7)) }},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				adapter, ctx := seedWithData(t)
+				incoming := &annotationV0.Annotation{
+					ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
+					Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+				}
+				tc.mutate(incoming)
+				_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
+				assert.True(t, apierrors.IsBadRequest(err), "expected 400 BadRequest, got %v", err)
+			})
+		}
+	})
+
+	t.Run("allows updates that leave immutable fields unchanged", func(t *testing.T) {
+		adapter, ctx := seedWithData(t)
+		incoming := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated text", Time: 1000, Tags: []string{"new"}},
+		}
+		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, "updated text", updated.(*annotationV0.Annotation).Spec.Text)
 	})
 }
 
@@ -651,6 +755,8 @@ func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
 		errContains       string
 	}{
 		{name: "time is current", time: now, retentionTTL: defaultTTL},
+		{name: "time not present", time: 0, retentionTTL: defaultTTL, expectErr: true, errContains: "time is required"},
+		{name: "time negative", time: -1, retentionTTL: defaultTTL, expectErr: true, errContains: "time is required"},
 		{name: "recent past within retention", time: now - retentionMs/2, retentionTTL: defaultTTL},
 		{name: "inside future bound", time: now + futureWindowMs - second, retentionTTL: defaultTTL},
 		{name: "too far in the future", time: now + futureWindowMs + second, retentionTTL: defaultTTL, expectErr: true, errContains: "time cannot be more than 1 week in the future"},

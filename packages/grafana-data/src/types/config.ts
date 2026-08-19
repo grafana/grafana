@@ -105,6 +105,8 @@ export interface GrafanaJavascriptAgentConfig {
   performanceInstrumentalizationEnabled: boolean;
   cspInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
+  botFilterEnabled: boolean;
+  trackResources?: boolean;
 }
 
 interface UnifiedAlertingStateHistoryConfig {
@@ -310,6 +312,7 @@ export interface GrafanaConfig {
   sharedWithMeFolderUID: string;
   rootFolderUID: string;
   localFileSystemAvailable: boolean;
+  provisioningEnabled: boolean;
   cloudMigrationEnabled: boolean;
   cloudMigrationIsTarget: boolean;
   cloudMigrationPollIntervalMs: number;

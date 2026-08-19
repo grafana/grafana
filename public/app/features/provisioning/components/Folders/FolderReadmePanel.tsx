@@ -61,6 +61,9 @@ function FolderReadmePanelContent({ folderUID }: Props) {
   const { status, markdownContent, readmePath, refetch } = useFolderReadme(folderUID, activePath);
 
   const sectionRef = useRef<HTMLElement>(null);
+  // TODO remove when react-use is fixed
+  // see https://github.com/streamich/react-use/issues/2612
+  // @ts-expect-error
   const intersection = useIntersection(sectionRef, { threshold: 0.5 });
   const reportedStatusRef = useRef<string | null>(null);
 

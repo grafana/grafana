@@ -19,6 +19,7 @@ type PluginVersions struct {
 
 type Version struct {
 	Version           string              `json:"version"`
+	Status            string              `json:"status"`
 	Arch              map[string]ArchMeta `json:"packages"`
 	URL               string              `json:"url"`
 	CreatedAt         string              `json:"createdAt"`

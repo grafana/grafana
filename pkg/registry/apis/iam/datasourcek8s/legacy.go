@@ -39,6 +39,27 @@ func K8sDSActionToLegacy(action string) (string, bool) {
 	}
 }
 
+// IsInvalidK8sDatasourceScope reports whether scope is a k8s-format datasource resource scope
+// (i.e. "<group>/datasources:<rest>" where group ends in K8sDatasourceAPIGroupSuffix) that does
+// not use the required "uid:<uid>" attribute or the wildcard form "*"; the short
+// "datasources:<uid>" form (without the uid: attribute) is not accepted. Non-datasource scopes
+// always return false.
+func IsInvalidK8sDatasourceScope(scope string) bool {
+	group, resource, ok := strings.Cut(scope, "/")
+	if !ok || !strings.HasSuffix(group, K8sDatasourceAPIGroupSuffix) {
+		return false
+	}
+	resource, rest, ok := strings.Cut(resource, ":")
+	if !ok || resource != "datasources" {
+		return false
+	}
+	if rest == "*" {
+		return false
+	}
+	uid, ok := strings.CutPrefix(rest, "uid:")
+	return !ok || uid == ""
+}
+
 // K8sDSUIDScopeToLegacy converts a k8s datasource instance scope to legacy datasources:uid:
 // and returns the datasource type (e.g. "loki", or "*" for wildcard groups).
 // e.g. "loki.datasource.grafana.app/datasources:uid:abc" → "datasources:uid:abc", "loki"

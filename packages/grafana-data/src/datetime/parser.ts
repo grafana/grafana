@@ -72,9 +72,23 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
     timeZone = 'utc';
   }
 
-  const zone = moment.tz.zone(timeZone);
+  const parsed = parseWithFormat(value, format, timeZone);
 
-  if (zone && zone.name) {
+  // An all-digit string that the format could not parse is an epoch millisecond value, e.g.
+  // "1704067200000" from a URL param like ?from=1704067200000 checked against the default
+  // "YYYY-MM-DD HH:mm:ss". Without this fallback moment returns an invalid DateTime whose
+  // valueOf() is NaN, which reaches $__from/$__to and emits a literal "NaN" in SQL (#119445).
+  // Formats that legitimately parse digits (X, x, YYYYMMDD) parse above and are left alone.
+  if (!parsed.isValid() && /^\d+$/.test(value)) {
+    return parseOthers(parseInt(value, 10), options);
+  }
+
+  return parsed;
+};
+
+const parseWithFormat = (value: string, format: string, timeZone: string): DateTime => {
+  const zone = moment.tz.zone(timeZone);
+  if (zone) {
     return dateTimeForTimeZone(zone.name, value, format);
   }
 
@@ -91,7 +105,7 @@ const parseOthers = (value: DateTimeInput, options?: DateTimeOptionsWhenParsing)
   const timeZone = getTimeZone(options);
   const zone = moment.tz.zone(timeZone);
 
-  if (zone && zone.name) {
+  if (zone) {
     return dateTimeForTimeZone(zone.name, date);
   }
 
