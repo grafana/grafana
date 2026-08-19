@@ -38,7 +38,7 @@ WHERE u.is_service_account = FALSE
 {{ end -}}
 {{ end -}}
 {{ range .WhereFilters -}}
-  AND {{ .Prefix }}{{ if .HasValue }}{{ $.Arg .Value }}{{ end }}{{ .Suffix }}
+  AND {{ $.WhereSQL . }}
 {{ end -}}
 {{ end -}}
 SELECT
