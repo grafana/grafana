@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	// Retry jitter only, never a secret or a token.
-	"math/rand/v2" // #nosec G404 nosemgrep: go.lang.security.audit.crypto.math_random.math-random-used
 	"strings"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
@@ -184,44 +182,30 @@ func buildInsertSQL(recs []migrator.BackfillRecord) (string, []any) {
 	return sb.String(), args
 }
 
-// maxTxAttempts bounds how often execInTx replays a transaction Postgres asked
-// it to retry.
-const maxTxAttempts = 3
-
-// We may not need to wait longer because a serialization failure means the
-// conflicting transaction has already committed
-const txRetryDelay = 20 * time.Millisecond
+// Two retries, so three attempts in all. Waiting long is not needed, a
+// serialization failure means the conflicting transaction has already committed.
+var txRetryBackoff = backoff.Config{
+	MinBackoff: 20 * time.Millisecond,
+	MaxBackoff: 100 * time.Millisecond,
+	MaxRetries: 2,
+}
 
 // execInTx runs fn in a transaction, replaying it if Postgres rejects it with a
 // serialization failure. Both backfill write paths are idempotent, so a replay is
 // safe; fn must reset any accumulator it writes to.
 func (s *PostgreSQLStore) execInTx(ctx context.Context, fn func(tx pgx.Tx) (int64, error)) (int64, error) {
-	for attempt := 1; ; attempt++ {
+	boff := backoff.New(ctx, txRetryBackoff)
+	for {
 		n, err := s.execOnceInTx(ctx, fn)
 		if err == nil {
 			return n, nil
 		}
-		if attempt == maxTxAttempts || !isRetryableTxError(err) {
+		if !isRetryableTxError(err) || !boff.Ongoing() {
 			return 0, err
 		}
 		s.logger.Warn("retrying annotation transaction after a serialization failure",
-			"attempt", attempt, "error", err)
-		if waitErr := sleepBeforeRetry(ctx, attempt); waitErr != nil {
-			return 0, waitErr
-		}
-	}
-}
-
-func sleepBeforeRetry(ctx context.Context, attempt int) error {
-	window := txRetryDelay << (attempt - 1)
-	timer := time.NewTimer(rand.N(window))
-	defer timer.Stop()
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-timer.C:
-		return nil
+			"attempt", boff.NumRetries()+1, "error", err)
+		boff.Wait()
 	}
 }
 
