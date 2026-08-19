@@ -21,21 +21,21 @@ import (
 // namespace. Cluster-scoped kinds have no namespace to search within.
 const namespacedScope = "Namespaced"
 
-// allowed lists the kinds that expose the search API, as (group, resource).
+// enrolledWithoutSearchFields keeps kinds that were already served but declare
+// no search fields, which enrolled would otherwise drop.
 //
-// Temporary. Every namespaced kind is a candidate, but turning them all on at
-// once would expose endpoints on kinds nobody has looked at yet, so the set is
-// widened deliberately. Kinds state their own choice in their manifest; this
-// list holds that choice back until someone has reviewed the kind.
-var allowed = map[groupResource]bool{
-	{group: "dashboard.grafana.app", resource: "dashboards"}: true,
-	{group: "folder.grafana.app", resource: "folders"}:       true,
-	{group: "dashboard.grafana.app", resource: "notebooks"}:  true,
+// Temporary: we plan to stop asking for fields at all.
+var enrolledWithoutSearchFields = map[string]bool{
+	"folder.grafana.app/folders":      true,
+	"dashboard.grafana.app/notebooks": true,
 }
 
-type groupResource struct {
-	group    string
-	resource string
+// enrolled reports whether a kind gets the search endpoints at all.
+//
+// Declared fields stand in for "someone reviewed this kind". Search works
+// without them, so this gate is about review, not capability.
+func enrolled(group, resourceName string, kind app.ManifestVersionKind) bool {
+	return len(kind.SearchFields) > 0 || enrolledWithoutSearchFields[group+"/"+resourceName]
 }
 
 // Build returns the search and trash routes to mount, or nil when both are off or
@@ -99,11 +99,11 @@ func build(
 					continue
 				}
 				resourceName := resource.ManifestResourceName(kind)
-				if !allowed[groupResource{group: gv.Group, resource: resourceName}] {
+				if !enrolled(gv.Group, resourceName, kind) {
 					continue
 				}
-				// The list above and the kind's manifest both have to want the
-				// endpoint. The two endpoints are answered separately.
+				// Answered separately so a kind can opt out of one endpoint
+				// without the other.
 				if searchEnabled && kind.HasSearchEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
