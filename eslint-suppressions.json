@@ -842,14 +842,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/SharedPreferences/SharedPreferencesOld.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 5
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/core/components/Signup/SignupPage.tsx": {
     "@grafana/require-no-margin": {
       "count": 6
@@ -1046,11 +1038,6 @@
   "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeInterval.tsx": {
     "@grafana/require-no-margin": {
       "count": 5
-    }
-  },
-  "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeRange.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/components/notification-policies/EditNotificationPolicyForm.tsx": {
@@ -1533,11 +1520,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManagerEditor.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 4
-    }
-  },
   "public/app/features/dashboard-scene/scene/layout-default/DashboardGridItemEditor.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 1
@@ -1800,22 +1782,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 6
-    }
-  },
-  "public/app/features/dashboard/components/DashExportModal/DashboardExporter.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 7
-    }
-  },
   "public/app/features/dashboard/components/GenAI/hooks.ts": {
     "react-hooks/exhaustive-deps": {
       "count": 2
@@ -1999,11 +1965,6 @@
   "public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/features/datasources/api.ts": {
-    "@grafana/no-config-datasources": {
-      "count": 2
     }
   },
   "public/app/features/datasources/components/ButtonRow.tsx": {

@@ -285,6 +285,21 @@ func TestKeywordFieldsForMapping_StandardNameWins(t *testing.T) {
 	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS].name)
 }
 
+func TestKeywordFieldsForMapping_StandardNameWithoutKeywordFormStillWins(t *testing.T) {
+	// description is a standard field with no keyword form, so it is absent from
+	// the map. The bare name must stay free of the per-kind field anyway: a filter
+	// on "description" resolves to the top-level field, so pointing it at
+	// fields.description would query the wrong one.
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {{Name: resource.SEARCH_FIELD_DESCRIPTION, Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}}},
+	}, nil)
+
+	fields := keywordFieldsForMapping(provider, gvr.Group, gvr.Resource, nil)
+	assert.NotContains(t, fields, resource.SEARCH_FIELD_DESCRIPTION)
+	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_DESCRIPTION, fields[resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_DESCRIPTION].name)
+}
+
 func TestSortableFieldsForMapping(t *testing.T) {
 	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
 	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{

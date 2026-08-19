@@ -3,6 +3,9 @@ import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/typ
 
 import { type CellContentKind } from '../../types';
 
+import { type NotebookLayoutManager } from './NotebookLayoutManager';
+import { isNotebookLayoutManager } from './isNotebookLayoutManager';
+
 export interface NotebookCellItemState extends SceneObjectState {
   // Name of the element this cell references in the notebook `elements` map. Kept so
   // serialize() can round-trip the cell back to a NotebookLayoutItem.
@@ -27,5 +30,37 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
 
   public setElementBody(body: VizPanel) {
     this.setState({ body });
+  }
+
+  /**
+   * Records an edit to this cell's narrative content.
+   *
+   * Routed through the layout manager rather than straight onto this cell: two layout items may
+   * legally reference one element, and serialize() folds them back into a single `elements` entry
+   * where the last one processed wins — so writing only here would lose the edit whenever an unedited
+   * duplicate follows it. The manager owns `cells`, so it is the only thing that can see the siblings.
+   */
+  public onContentChange(content: CellContentKind): void {
+    this.getParentLayout().setCellContent(this, content);
+  }
+
+  /**
+   * Throws rather than returning undefined, matching getLayoutManagerFor: a cell outside a layout is a
+   * wiring mistake, and failing quietly here would look like an editor that drops what you type.
+   *
+   * Resolved on demand rather than at construction, so a cell can still be built and rendered on its
+   * own — only editing one needs the ancestor.
+   */
+  public getParentLayout(): NotebookLayoutManager {
+    let parent = this.parent;
+
+    while (parent) {
+      if (isNotebookLayoutManager(parent)) {
+        return parent;
+      }
+      parent = parent.parent;
+    }
+
+    throw new Error('NotebookCellItem is not inside a NotebookLayoutManager');
   }
 }

@@ -975,7 +975,7 @@ func (rc *RepositoryController) process(key string) error {
 
 // processHooks handles hook execution with intelligent retry logic
 // Returns hook operations, whether processing should continue, and any error
-func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) (hookOps []map[string]interface{}, shouldContinue bool, err error) {
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
 		repository.GetID(obj.Status.Webhook).IsEmpty()
 
@@ -994,16 +994,31 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 		return nil, true, nil
 	}
 
-	hookOps, err := rc.runHooks(ctx, repo, obj)
+	hookOps, err = rc.runHooks(ctx, repo, obj)
 	if err != nil {
 		if err := rc.healthChecker.RecordFailure(ctx, provisioning.HealthFailureHook, err, obj); err != nil {
 			return nil, false, fmt.Errorf("update status after hook failure: %w", err)
 		}
 
+		if rc.isUserCaused(err) {
+			logging.FromContext(ctx).Warn("repository hook failed with a user-facing error", "error", err)
+			return nil, false, nil
+		}
 		return nil, false, err
 	}
 
 	return hookOps, true, nil
+}
+
+// Returns errors that are due to user errors
+func (rc *RepositoryController) isUserCaused(err error) bool {
+	// List of errors that are user-facing errors and are left recorded on the repository
+	if errors.Is(err, repository.ErrUnauthorized) ||
+		errors.Is(err, repository.ErrPermissionDenied) {
+		return true
+	}
+
+	return false
 }
 
 // shouldRotateWebhookSecret returns true when a repository has an active webhook

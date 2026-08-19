@@ -1046,6 +1046,24 @@
     },
     {
       "metadata": {
+        "name": "appplugins.loadAppManifest",
+        "resourceVersion": "1787026732819",
+        "creationTimestamp": "2026-08-18T03:50:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 04:18:52.819374 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Load app manifest when loading plugin definitions",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appplugins.registerAPIServer",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -2901,6 +2919,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardsAutoHeightPanels",
+        "resourceVersion": "1787048864683",
+        "creationTimestamp": "2026-08-18T10:27:44Z"
+      },
+      "spec": {
+        "description": "Enables the auto-height feature for dashboard panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dedicatedGrafanaComProxyAPIToken",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -3106,6 +3139,7 @@
         "name": "grafana.newPreferencesPage",
         "resourceVersion": "1783676521307",
         "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-17T12:25:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
         }
@@ -3193,6 +3227,23 @@
         "codeowner": "@grafana/datapro",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.panelPluginTransformations",
+        "resourceVersion": "1787070031960",
+        "creationTimestamp": "2026-08-17T16:38:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 16:20:31.960083 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Let panel plugins register system transformations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
