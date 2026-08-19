@@ -191,7 +191,9 @@ function ImportWizardContent() {
   }, []);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
+  const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error' | 'partial-error'>(
+    'idle'
+  );
   const {
     runDryRun,
     reset: resetDryRun,
@@ -342,8 +344,8 @@ function ImportWizardContent() {
     formValues.autoSyncNotificationsEnabled ?? false,
     formValues.notificationsSource
   );
-  const shouldFetchRules =
-    formValues.step2Completed && !formValues.step2Skipped && formValues.rulesSource === 'datasource';
+  const willImportRules = formValues.step2Completed && !formValues.step2Skipped;
+  const shouldFetchRules = willImportRules && formValues.rulesSource === 'datasource';
   const { rulerRules: rulesFromDatasource } = useGetRulerRules(
     shouldFetchRules ? (formValues.rulesDatasourceName ?? undefined) : undefined
   );
@@ -436,12 +438,15 @@ function ImportWizardContent() {
       setTimeout(() => {
         setShowConfirmModal(false);
         if (willEnableAutoSync) {
+          const autoSyncSuccessBody = t(
+            'alerting.wizard-import-to-gma.autosync-success-body',
+            'Grafana will keep syncing alert configuration from this data source.'
+          );
           notifyApp.success(
             t('alerting.wizard-import-to-gma.autosync-success-title', 'Auto-sync enabled'),
-            t(
-              'alerting.wizard-import-to-gma.autosync-success-body',
-              'Grafana will keep syncing alert configuration from this data source.'
-            )
+            willImportRules
+              ? `${autoSyncSuccessBody} ${t('alerting.wizard-import-to-gma.autosync-rules-imported-note', 'Your alert rules were also imported.')}`
+              : autoSyncSuccessBody
           );
           locationService.push(ALERTING_IMPORT_SETTINGS_URL);
         } else if (willImportNotifications) {
@@ -463,9 +468,20 @@ function ImportWizardContent() {
         }
       }, 1500);
     } catch (err) {
-      setImportStatus('error');
+      // saveAutoSync swallows its own errors and resolves to false rather than throwing, so
+      // reaching here with willEnableAutoSync means auto-sync had already been persisted and the
+      // rules import that followed is what failed — the copy must not claim auto-sync failed.
+      setImportStatus(willEnableAutoSync ? 'partial-error' : 'error');
       trackImportToGMAError({ notificationsSource: trackedNotificationsSource, rulesSource: trackedRulesSource });
-      notifyApp.error(t('alerting.wizard-import-to-gma.error', 'Failed to import resources'), stringifyErrorLike(err));
+      notifyApp.error(
+        willEnableAutoSync
+          ? t(
+              'alerting.wizard-import-to-gma.autosync-rules-error',
+              'Auto-sync was enabled, but importing alert rules failed.'
+            )
+          : t('alerting.wizard-import-to-gma.error', 'Failed to import resources'),
+        stringifyErrorLike(err)
+      );
     }
   }, [getValues, importNotifications, importRules, rulesFromDatasource, saveAutoSync, notifyApp]);
 
@@ -546,6 +562,7 @@ function ImportWizardContent() {
         isOpen={showConfirmModal}
         importStatus={importStatus}
         autoSyncActive={autoSyncActive}
+        willImportRules={willImportRules}
         onConfirm={handleConfirmImport}
         onDismiss={handleCancelConfirm}
       />
@@ -1132,17 +1149,49 @@ const getPreviewModalStyles = (theme: GrafanaTheme2) => ({
 // Confirm Import Modal Component
 interface ConfirmImportModalProps {
   isOpen: boolean;
-  importStatus: 'idle' | 'importing' | 'success' | 'error';
+  importStatus: 'idle' | 'importing' | 'success' | 'error' | 'partial-error';
   /** Swaps the generic staging copy for Auto-sync-specific copy. */
   autoSyncActive: boolean;
+  /** Whether the Rules step will also run in this same submit, alongside Auto-sync. */
+  willImportRules: boolean;
   onConfirm: () => void;
   onDismiss: () => void;
 }
 
-function ConfirmImportModal({ isOpen, importStatus, autoSyncActive, onConfirm, onDismiss }: ConfirmImportModalProps) {
+function ConfirmImportModal({
+  isOpen,
+  importStatus,
+  autoSyncActive,
+  willImportRules,
+  onConfirm,
+  onDismiss,
+}: ConfirmImportModalProps) {
   const isImporting = importStatus === 'importing';
   const isSuccess = importStatus === 'success';
   const isError = importStatus === 'error';
+  // Rules import failed after Auto-sync had already been persisted — distinct from Auto-sync
+  // itself failing, so the copy must not claim Auto-sync failed.
+  const isPartialError = importStatus === 'partial-error';
+
+  // Only referenced from inside each body getter's Auto-sync branch below, so rules riding along
+  // with Auto-sync just appends this fact rather than needing a fully separate sentence per stage
+  // — the non-Auto-sync copy already covers rules implicitly via "resources".
+  const rulesPendingNote = willImportRules && (
+    <>
+      {' '}
+      <Trans i18nKey="alerting.import-to-gma.confirm.autosync-rules-note">
+        Your selected alert rules will also be imported.
+      </Trans>
+    </>
+  );
+  const rulesImportedNote = willImportRules && (
+    <>
+      {' '}
+      <Trans i18nKey="alerting.import-to-gma.confirm.autosync-rules-imported-note">
+        Your selected alert rules were also imported.
+      </Trans>
+    </>
+  );
 
   const getTitle = () => {
     if (isImporting) {
@@ -1155,6 +1204,9 @@ function ConfirmImportModal({ isOpen, importStatus, autoSyncActive, onConfirm, o
         ? t('alerting.import-to-gma.confirm.autosync-success-title', 'Auto-sync Enabled')
         : t('alerting.import-to-gma.confirm.success-title', 'Import Successful');
     }
+    if (isPartialError) {
+      return t('alerting.import-to-gma.confirm.autosync-rules-error-title', 'Rules Import Failed');
+    }
     if (isError) {
       return autoSyncActive
         ? t('alerting.import-to-gma.confirm.autosync-error-title', 'Auto-sync Failed')
@@ -1165,72 +1217,100 @@ function ConfirmImportModal({ isOpen, importStatus, autoSyncActive, onConfirm, o
       : t('alerting.import-to-gma.confirm.title', 'Confirm Import');
   };
 
+  const getConfirmBody = () => {
+    if (autoSyncActive) {
+      return (
+        <>
+          <Trans i18nKey="alerting.import-to-gma.confirm.autosync-body">
+            Are you sure you want to enable Auto-sync? Grafana will continuously sync alert configuration from this data
+            source until you turn it off in Alerting settings.
+          </Trans>
+          {rulesPendingNote}
+        </>
+      );
+    }
+    return (
+      <Trans i18nKey="alerting.import-to-gma.confirm.body">
+        Are you sure you want to start the import? This action will create new resources in Grafana Alerting.
+      </Trans>
+    );
+  };
+
+  const getImportingBody = () => {
+    if (autoSyncActive) {
+      return (
+        <>
+          <Trans i18nKey="alerting.import-to-gma.confirm.autosync-importing-body">
+            Enabling Auto-sync. Please wait...
+          </Trans>
+          {rulesPendingNote}
+        </>
+      );
+    }
+    return (
+      <Trans i18nKey="alerting.import-to-gma.confirm.importing-body">
+        Importing resources to Grafana Alerting. Please wait...
+      </Trans>
+    );
+  };
+
+  const getSuccessBody = () => {
+    if (autoSyncActive) {
+      return (
+        <>
+          <Trans i18nKey="alerting.import-to-gma.confirm.autosync-success-body">
+            Auto-sync enabled. Redirecting...
+          </Trans>
+          {rulesImportedNote}
+        </>
+      );
+    }
+    return (
+      <Trans i18nKey="alerting.import-to-gma.confirm.success-body">
+        Resources imported successfully. Redirecting...
+      </Trans>
+    );
+  };
+
+  const getErrorBody = () => {
+    if (isPartialError) {
+      return (
+        <Trans i18nKey="alerting.import-to-gma.confirm.autosync-rules-error-body">
+          Auto-sync was enabled, but importing alert rules failed. Please check the error details and try again.
+        </Trans>
+      );
+    }
+    return autoSyncActive ? (
+      <Trans i18nKey="alerting.import-to-gma.confirm.autosync-error-body">
+        Failed to enable Auto-sync. Please check the error details and try again.
+      </Trans>
+    ) : (
+      <Trans i18nKey="alerting.import-to-gma.confirm.error-body">
+        Failed to import resources. Please check the error details and try again.
+      </Trans>
+    );
+  };
+
   return (
     <Modal isOpen={isOpen} title={getTitle()} onDismiss={onDismiss}>
       <Stack direction="column" gap={2}>
-        {importStatus === 'idle' &&
-          (autoSyncActive ? (
-            <Text>
-              <Trans i18nKey="alerting.import-to-gma.confirm.autosync-body">
-                Are you sure you want to enable Auto-sync? Grafana will continuously sync alert configuration from this
-                data source until you turn it off in Alerting settings.
-              </Trans>
-            </Text>
-          ) : (
-            <Text>
-              <Trans i18nKey="alerting.import-to-gma.confirm.body">
-                Are you sure you want to start the import? This action will create new resources in Grafana Alerting.
-              </Trans>
-            </Text>
-          ))}
+        {importStatus === 'idle' && <Text>{getConfirmBody()}</Text>}
 
         {isImporting && (
           <Stack direction="row" gap={2} alignItems="center">
             <Spinner />
-            <Text>
-              {autoSyncActive ? (
-                <Trans i18nKey="alerting.import-to-gma.confirm.autosync-importing-body">
-                  Enabling Auto-sync. Please wait...
-                </Trans>
-              ) : (
-                <Trans i18nKey="alerting.import-to-gma.confirm.importing-body">
-                  Importing resources to Grafana Alerting. Please wait...
-                </Trans>
-              )}
-            </Text>
+            <Text>{getImportingBody()}</Text>
           </Stack>
         )}
 
         {isSuccess && (
           <Stack direction="row" gap={2} alignItems="center">
             <Icon name="check-circle" size="xl" color="green" />
-            <Text>
-              {autoSyncActive ? (
-                <Trans i18nKey="alerting.import-to-gma.confirm.autosync-success-body">
-                  Auto-sync enabled. Redirecting...
-                </Trans>
-              ) : (
-                <Trans i18nKey="alerting.import-to-gma.confirm.success-body">
-                  Resources imported successfully. Redirecting...
-                </Trans>
-              )}
-            </Text>
+            <Text>{getSuccessBody()}</Text>
           </Stack>
         )}
 
-        {isError && (
-          <Text color="error">
-            {autoSyncActive ? (
-              <Trans i18nKey="alerting.import-to-gma.confirm.autosync-error-body">
-                Failed to enable Auto-sync. Please check the error details and try again.
-              </Trans>
-            ) : (
-              <Trans i18nKey="alerting.import-to-gma.confirm.error-body">
-                Failed to import resources. Please check the error details and try again.
-              </Trans>
-            )}
-          </Text>
-        )}
+        {(isError || isPartialError) && <Text color="error">{getErrorBody()}</Text>}
       </Stack>
 
       <Modal.ButtonRow>
@@ -1247,7 +1327,7 @@ function ConfirmImportModal({ isOpen, importStatus, autoSyncActive, onConfirm, o
           </>
         )}
 
-        {isError && (
+        {(isError || isPartialError) && (
           <Button variant="secondary" onClick={onDismiss}>
             {t('alerting.common.close', 'Close')}
           </Button>
