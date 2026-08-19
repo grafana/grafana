@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -25,6 +24,7 @@ import (
 // talk to: the authorization code exchange and the repository listing.
 type githubOAuthTransport struct {
 	accessToken string
+	base        http.RoundTripper
 }
 
 func (f *githubOAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -38,6 +38,9 @@ func (f *githubOAuthTransport) RoundTrip(req *http.Request) (*http.Response, err
 			{"name":"oauth-repo-2","owner":{"login":"oauth-owner-2"},"html_url":"https://github.com/oauth-owner-2/oauth-repo-2"}
 		]`
 	default:
+		if f.base != nil {
+			return f.base.RoundTrip(req)
+		}
 		return &http.Response{
 			StatusCode: http.StatusNotFound,
 			Body:       io.NopCloser(strings.NewReader(`{"message":"Not Found"}`)),
@@ -56,9 +59,13 @@ func (f *githubOAuthTransport) RoundTrip(req *http.Request) (*http.Response, err
 
 func oauthHelper(t *testing.T) *common.ProvisioningTestHelper {
 	t.Helper()
+	const accessToken = "fake-access-token"
+	base := http.DefaultTransport
+	http.DefaultTransport = &githubOAuthTransport{accessToken: accessToken, base: base}
+	t.Cleanup(func() { http.DefaultTransport = base })
+
 	helper := sharedHelper(t)
-	githuboauth.Default.Client = &http.Client{Transport: &githubOAuthTransport{accessToken: "fake-access-token"}}
-	t.Cleanup(func() { githuboauth.Default.Client = nil })
+	helper.GetEnv().GithubRepoFactory.Client = &http.Client{Transport: &githubOAuthTransport{accessToken: accessToken}}
 	return helper
 }
 

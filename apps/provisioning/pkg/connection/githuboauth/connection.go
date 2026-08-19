@@ -3,7 +3,6 @@ package githuboauth
 import (
 	"context"
 	"errors"
-	"net/http"
 
 	"golang.org/x/oauth2"
 	oauth2github "golang.org/x/oauth2/github"
@@ -17,14 +16,7 @@ import (
 
 // provider implements the GitHub-specific parts of an OAuth app connection.
 type provider struct {
-	httpClient *http.Client
-	client     github.Client
-}
-
-// HTTPClient returns the overriding HTTP client, if any. It exists primarily
-// for testing: the oauth exchange honors it in place of the default transport.
-func (p *provider) HTTPClient() *http.Client {
-	return p.httpClient
+	client github.Client
 }
 
 func (p *provider) Endpoint() oauth2.Endpoint {

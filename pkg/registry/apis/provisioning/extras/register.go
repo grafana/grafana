@@ -57,12 +57,13 @@ func ProvideProvisioningOSSConnectionExtras(
 	_ *setting.Cfg,
 	decryptSvc decrypt.DecryptService,
 	ghFactory ghconnection.GithubFactory,
+	ghRepoFactory *github.Factory,
 	reg prometheus.Registerer,
 ) []connection.Extra {
 	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(reg))
 	return []connection.Extra{
 		ghconnection.Extra(decrypter, ghFactory),
-		githuboauth.Extra(decrypter),
+		githuboauth.Extra(decrypter, ghRepoFactory),
 	}
 }
 

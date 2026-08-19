@@ -161,11 +161,6 @@ func (c *oauthConnection) ExchangeAuthorizationCode(ctx context.Context, code, r
 		RedirectURL:  redirectURI,
 	}
 
-	// Providers can override the HTTP client used for the exchange (testing).
-	if hc, ok := c.provider.(interface{ HTTPClient() *http.Client }); ok && hc.HTTPClient() != nil {
-		ctx = context.WithValue(ctx, oauth2.HTTPClient, hc.HTTPClient())
-	}
-
 	token, err := cfg.Exchange(ctx, code)
 	if err != nil {
 		return "", fmt.Errorf("exchange authorization code: %w", err)

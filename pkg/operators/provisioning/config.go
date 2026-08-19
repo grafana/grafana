@@ -656,7 +656,7 @@ func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
 
 	extras := []connection.Extra{
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),
-		githuboauth.Extra(decrypter),
+		githuboauth.Extra(decrypter, githubrepo.ProvideFactory()),
 	}
 
 	c.connectionExtras = extras
