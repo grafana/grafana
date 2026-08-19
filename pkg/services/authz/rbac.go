@@ -255,7 +255,12 @@ func newShadowClient(engine setting.ZanzanaPrimaryEngine, rbacClient authlib.Acc
 	return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
 }
 
-func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (*authzlib.ClientImpl, error) {
+type remoteRBACClient struct {
+	authlib.AccessClient
+	authlib.UserPermissionsClient
+}
+
+func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (*remoteRBACClient, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            clientCfg.token,
 		TokenExchangeURL: clientCfg.tokenExchangeURL,
@@ -316,9 +321,20 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 		})
 	}
 
-	client := authzlib.NewClient(conn, authzlib.WithCacheClientOption(authzCache), authzlib.WithTracerClientOption(tracer))
-
-	return client, nil
+	return &remoteRBACClient{
+		AccessClient: authzlib.NewClient(
+			conn,
+			authzlib.WithCacheClientOption(authzCache),
+			authzlib.WithTracerClientOption(tracer),
+		),
+		// Keep permission snapshots out of the process-local cache. The standalone
+		// AuthZ server owns their bounded-staleness caching strategy.
+		UserPermissionsClient: authzlib.NewClient(
+			conn,
+			authzlib.WithCacheClientOption(&NoopCache{}),
+			authzlib.WithTracerClientOption(tracer),
+		),
+	}, nil
 }
 
 func RegisterRBACAuthZService(

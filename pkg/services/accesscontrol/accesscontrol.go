@@ -85,7 +85,6 @@ type RoleRegistry interface {
 
 type UserPermissionsClient interface {
 	GetUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
-	ClearUserPermissionCache(user identity.Requester)
 }
 
 type UserPermissionsClientSetter interface {

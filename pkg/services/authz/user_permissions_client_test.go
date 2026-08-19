@@ -63,29 +63,10 @@ func TestConfigureUserPermissionsClient(t *testing.T) {
 	require.IsType(t, &userPermissionsClient{}, service.client)
 }
 
-func TestUserPermissionsClientInvalidatesCachedPermissions(t *testing.T) {
-	backend := &fakeAuthlibUserPermissionsClient{}
-	client := newUserPermissionsClient(backend, false)
-	user := &identity.StaticRequester{
-		Type:    authlib.TypeUser,
-		UserID:  1,
-		UserUID: "user-uid",
-		OrgID:   2,
-	}
-
-	client.ClearUserPermissionCache(user)
-
-	require.Equal(t, "user:user-uid", backend.invalidatedInfo.GetUID())
-	require.Equal(t, "org-2", backend.invalidatedInfo.GetNamespace())
-	require.Equal(t, authlib.GetUserPermissionsRequest{Namespace: "org-2"}, backend.invalidatedRequest)
-}
-
 type fakeAuthlibUserPermissionsClient struct {
-	response           authlib.GetUserPermissionsResponse
-	info               authlib.AuthInfo
-	request            authlib.GetUserPermissionsRequest
-	invalidatedInfo    authlib.AuthInfo
-	invalidatedRequest authlib.GetUserPermissionsRequest
+	response authlib.GetUserPermissionsResponse
+	info     authlib.AuthInfo
+	request  authlib.GetUserPermissionsRequest
 }
 
 func (c *fakeAuthlibUserPermissionsClient) GetUserPermissions(_ context.Context, info authlib.AuthInfo, request authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
@@ -94,9 +75,7 @@ func (c *fakeAuthlibUserPermissionsClient) GetUserPermissions(_ context.Context,
 	return c.response, nil
 }
 
-func (c *fakeAuthlibUserPermissionsClient) InvalidateUserPermissions(_ context.Context, info authlib.AuthInfo, request authlib.GetUserPermissionsRequest) error {
-	c.invalidatedInfo = info
-	c.invalidatedRequest = request
+func (c *fakeAuthlibUserPermissionsClient) InvalidateUserPermissions(context.Context, authlib.AuthInfo, authlib.GetUserPermissionsRequest) error {
 	return nil
 }
 

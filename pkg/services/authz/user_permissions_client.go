@@ -40,11 +40,6 @@ func (c *userPermissionsClient) GetUserPermissions(ctx context.Context, user ide
 	return permissions, nil
 }
 
-func (c *userPermissionsClient) ClearUserPermissionCache(user identity.Requester) {
-	info, namespace := userPermissionsAuthInfo(user, c.useExternalGroups)
-	_ = c.client.InvalidateUserPermissions(context.Background(), info, authlib.GetUserPermissionsRequest{Namespace: namespace})
-}
-
 func userPermissionsAuthInfo(user identity.Requester, useExternalGroups bool) (delegatedUserPermissionsAuthInfo, string) {
 	namespace := user.GetNamespace()
 	if namespace == "" {
