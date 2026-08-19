@@ -136,7 +136,7 @@ The tab shows the same notification list as the **History** page, pre-filtered t
 
 ## Explore and query notification history
 
-Because notification history is stored in Loki, you can query it directly in Loki through [Grafana Explore](ref:explore). Use Explore to build custom dashboards or run ad hoc investigations of your notification delivery.
+Because notification history is stored in Loki, you can query it directly in Loki through [Grafana Explore](ref:explore). Use Explore to build custom dashboards or run free-form investigations of your notification delivery.
 
 ## Next steps
 
