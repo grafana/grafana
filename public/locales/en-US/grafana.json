@@ -1698,7 +1698,6 @@
       "review": {
         "autosync-badge": "Will sync continuously",
         "back": "Alert rules",
-        "back-notifications": "Notification resources",
         "enable-autosync": "Enable auto-sync",
         "filter": "Filter",
         "folder": "Target folder",
@@ -1717,7 +1716,6 @@
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
-        "rules-autosync-badge": "Syncs automatically",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Alert Rules",
         "skipped": "Skipped",
@@ -1745,7 +1743,7 @@
       "step1": {
         "autosync-datasource-filtered": "Auto-sync can only mirror from Mimir or Cortex Alertmanager data sources.",
         "autosync-label": "Auto-sync",
-        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Skips the Alert Rules step since rules sync automatically too.",
+        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.",
         "datasource": "Alertmanager data source",
         "heading": "Import Notification Resources",
         "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
