@@ -1309,13 +1309,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
-					"projectPath": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ProjectPath is the project's namespace/path as GitLab reported it at the time ProjectID was last resolved, used to match incoming webhook events. Read-only, set alongside ProjectID.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
 				Required: []string{"branch"},
 			},

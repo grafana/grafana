@@ -169,11 +169,6 @@ type GitLabRepositoryConfig struct {
 	// transfer/move even if the project's path changes. Read-only: it is
 	// always system-derived and never taken from client-supplied input.
 	ProjectID string `json:"projectID,omitempty"`
-
-	// ProjectPath is the project's namespace/path as GitLab reported it at
-	// the time ProjectID was last resolved, used to match incoming webhook
-	// events. Read-only, set alongside ProjectID.
-	ProjectPath string `json:"projectPath,omitempty"`
 }
 
 func (GitLabRepositoryConfig) OpenAPIModelName() string {

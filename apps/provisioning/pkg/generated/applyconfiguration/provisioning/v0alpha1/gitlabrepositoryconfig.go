@@ -22,10 +22,6 @@ type GitLabRepositoryConfigApplyConfiguration struct {
 	// transfer/move even if the project's path changes. Read-only: it is
 	// always system-derived and never taken from client-supplied input.
 	ProjectID *string `json:"projectID,omitempty"`
-	// ProjectPath is the project's namespace/path as GitLab reported it at
-	// the time ProjectID was last resolved, used to match incoming webhook
-	// events. Read-only, set alongside ProjectID.
-	ProjectPath *string `json:"projectPath,omitempty"`
 }
 
 // GitLabRepositoryConfigApplyConfiguration constructs a declarative configuration of the GitLabRepositoryConfig type for use with
@@ -63,13 +59,5 @@ func (b *GitLabRepositoryConfigApplyConfiguration) WithPath(value string) *GitLa
 // If called multiple times, the ProjectID field is set to the value of the last call.
 func (b *GitLabRepositoryConfigApplyConfiguration) WithProjectID(value string) *GitLabRepositoryConfigApplyConfiguration {
 	b.ProjectID = &value
-	return b
-}
-
-// WithProjectPath sets the ProjectPath field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ProjectPath field is set to the value of the last call.
-func (b *GitLabRepositoryConfigApplyConfiguration) WithProjectPath(value string) *GitLabRepositoryConfigApplyConfiguration {
-	b.ProjectPath = &value
 	return b
 }

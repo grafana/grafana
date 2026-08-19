@@ -4391,10 +4391,6 @@
             "description": "ProjectID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input.",
             "type": "string"
           },
-          "projectPath": {
-            "description": "ProjectPath is the project's namespace/path as GitLab reported it at the time ProjectID was last resolved, used to match incoming webhook events. Read-only, set alongside ProjectID.",
-            "type": "string"
-          },
           "url": {
             "description": "The repository URL (e.g. `https://gitlab.com/example/test`).",
             "type": "string"
