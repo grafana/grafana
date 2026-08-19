@@ -24,9 +24,11 @@ import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboar
 
 import { canEditNotebooks } from '../permissions';
 
+import { NotebookAutosave } from './NotebookAutosave';
 import { NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 import { NotebookEditToggle } from './NotebookEditToggle';
+import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
@@ -56,6 +58,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   // The layout manager needs to find the scene it lives in. It cannot use instanceof, because
   // importing this class would make the two files import each other, so it looks for this field.
   public readonly isNotebookScene = true;
+  public readonly autosave = new NotebookAutosave(this);
 
   // Edit mode is reflected in the url by this handler rather than by the methods below, so the url
   // stays a projection of the state instead of a second copy of it.
@@ -118,8 +121,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       });
 
       const destroyMutationClient = createMutationClient(this, 'notebook');
+      const stopAutosave = this.autosave.start();
 
       return () => {
+        stopAutosave();
         destroyMutationClient();
         stateSub.unsubscribe();
         refreshPickerDeactivation?.();
@@ -161,6 +166,9 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     this.state.body.commitContentEdits();
     this.setState({ isEditing: false });
     this.state.body.editModeChanged?.(false);
+    // Leaving edit mode is a natural save point, and it is where changes stop counting. Without this, a
+    // save still waiting on the debounce would sit there until the page unmounts.
+    this.autosave.flush();
   };
 
   public showModal(modal: SceneObject) {
@@ -203,6 +211,7 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
     <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
       <div className={styles.controls}>
+        {isEditing && <NotebookSaveStatus autosave={model.autosave} />}
         {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
         <NotebookEditToggle notebook={model} />
         {!hideTimeControls && (

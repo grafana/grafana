@@ -291,6 +291,22 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(scene.state.body.state.isEditing).toBe(false);
   });
 
+  it('hands the applied change to autosave, which the change signal would otherwise miss', async () => {
+    const scene = notebookScene();
+    const notify = jest.spyOn(scene.autosave, 'notifyDocumentChanged');
+    const client = new NotebookMutationClient(scene);
+
+    const result = await client.execute({
+      type: 'APPLY_NOTEBOOK_SPEC',
+      payload: { spec: notebookSpec({ elements: { summary: markdownCell('## Resolved') }, cells: ['summary'] }) },
+    });
+
+    expect(result.success).toBe(true);
+    // The notebook was never in edit mode, so the scene's own change signal is ignored for this write.
+    expect(scene.state.isEditing).toBeFalsy();
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
   it('is refused without dashboard write permission', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     const scene = notebookScene();

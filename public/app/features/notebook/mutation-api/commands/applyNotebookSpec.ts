@@ -5,7 +5,8 @@
  * swapped onto the live NotebookScene in place (as `JsonModelEditView.onSaveSuccess` does for a
  * dashboard), so transient runtime state (in-flight queries, scroll position) is reset.
  *
- * In memory only. Saving is the caller's, and there is no notebook save flow yet.
+ * After the swap it tells the notebook's autosave, which then saves it. The scene's own change signal only
+ * counts while the notebook is being edited, and there is no edit mode to enter from here.
  */
 
 import * as z from 'zod';
@@ -64,7 +65,7 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
   description:
     'Replace the notebook with a complete NotebookSpec: settings, elements (markdown, code, panel and ' +
     'library panel cells) and the ordered NotebookLayout that places them. The scene is rebuilt from ' +
-    'the spec. The change is in memory and is not saved.',
+    'the spec. The change is saved automatically.',
 
   payloadSchema: applyNotebookSpecPayloadSchema,
   permission: requiresNotebookEdit,
@@ -101,6 +102,8 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         ...sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key }),
         overlay: undefined,
       });
+
+      scene.autosave.notifyDocumentChanged();
 
       // Echo the re-serialized spec so the caller sees what landed, and check it for dropped cells. One
       // guard around both: the write has already landed, so nothing below may report `success: false`.
