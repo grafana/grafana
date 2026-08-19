@@ -1309,6 +1309,11 @@ export interface ContentAwareColWidthsOptions {
   filter?: FilterType;
   /** `table.refresh`: a reorderable column reserves space for its drag handle. */
   enableColumnReorder?: boolean;
+  /**
+   * `table.refresh`: hide/pin are available for every column, not just filterable ones, so the
+   * column menu they live in reserves space even when the column isn't filterable.
+   */
+  canManageColumns?: boolean;
   /** overridable for testing; otherwise derived from the auto-column count */
   sampleSize?: number;
 }
@@ -1405,6 +1410,15 @@ function measureInlineRunWidth(
 }
 
 /**
+ * `table.refresh`: whether the header column menu renders for a column. It offers whichever of
+ * filter/hide/pin apply, so it shows as soon as any one of them is available — shared by the menu's
+ * own render gate and the header width estimate, so the two can't drift out of sync.
+ */
+export function isColumnMenuVisible(filterable: boolean, canManageColumns: boolean): boolean {
+  return filterable || canManageColumns;
+}
+
+/**
  * Width the header label needs, including its filter/sort/type-icon affordances.
  *
  * Canvas-measured exactly rather than estimated from `avgCharWidth`: this is a hard lower bound on
@@ -1420,7 +1434,8 @@ function measureHeaderWidth(
   tableRefreshEnabled: boolean,
   isFilterable: boolean,
   isFiltered: boolean,
-  enableColumnReorder: boolean
+  enableColumnReorder: boolean,
+  canManageColumns: boolean
 ): number {
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
@@ -1430,9 +1445,8 @@ function measureHeaderWidth(
   // which only reserve space while that state is active.
   headerWidth += enableColumnReorder ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
-    // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
-    // stays in flow (opacity-faded, not unmounted) whenever the column is filterable at all.
-    headerWidth += isFilterable ? HEADER_MENU_SPACE : 0;
+    // stays in flow (opacity-faded, not unmounted) whenever the menu itself would render.
+    headerWidth += isColumnMenuVisible(isFilterable, canManageColumns) ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon next to the sort arrow. Like
     // the arrow, it only exists while that state holds, so its space is reserved only then (the
     // widths recompute when the filter changes).
@@ -1633,6 +1647,7 @@ export function computeContentAwareColWidths(
     filter,
     sampleSize,
     enableColumnReorder = false,
+    canManageColumns = false,
   }: ContentAwareColWidthsOptions
 ): number[] {
   const autoIdxs: number[] = [];
@@ -1679,7 +1694,8 @@ export function computeContentAwareColWidths(
       tableRefreshEnabled,
       field.config.custom?.filterable ?? false,
       filteredKeys.has(getDisplayName(field)),
-      enableColumnReorder
+      enableColumnReorder,
+      canManageColumns
     );
 
     // Wrapped columns are measured like any other: a content-based width keeps a content-heavy
@@ -1709,13 +1725,23 @@ export function computeContentAwareColWidths(
   const growTotal = autoIdxs.reduce((sum, i) => sum + growShare(i), 0);
 
   const leftover = availWidth - definedWidth - contentTotal;
+  const shouldGrow = leftover > 0 && growTotal > 0;
   // Round cumulatively so the rounded widths sum to the same total as the exact ones. Rounding each
   // independently can push the total past availWidth and trigger a spurious horizontal scrollbar.
   let exactSoFar = 0;
   let roundedSoFar = 0;
   for (const i of autoIdxs) {
     const contentWidth = contentWidths.get(i)!;
-    const grown = leftover > 0 && growTotal > 0 ? contentWidth + leftover * (growShare(i) / growTotal) : contentWidth;
+    if (!shouldGrow) {
+      // No leftover to distribute — the columns already fill or overflow availWidth, so the grid
+      // scrolls regardless and matching the total exactly no longer matters. Round up instead of
+      // cumulatively: a column sitting exactly at its measured content need (fractional canvas
+      // measurement) has no slack to give up, and cumulative rounding can shave a random column
+      // below that need and truncate its header for no benefit.
+      widths[i] = Math.ceil(contentWidth);
+      continue;
+    }
+    const grown = contentWidth + leftover * (growShare(i) / growTotal);
     exactSoFar += grown;
     const rounded = Math.round(exactSoFar) - roundedSoFar;
     roundedSoFar += rounded;

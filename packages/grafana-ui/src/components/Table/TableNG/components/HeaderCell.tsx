@@ -17,7 +17,7 @@ import { Filter } from '../Filter/Filter';
 import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import { getDisplayName } from '../utils';
+import { getDisplayName, isColumnMenuVisible } from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
 
@@ -77,6 +77,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
   const hasActiveFilter = tableRefreshEnabled && filterable && filter[filterKey]?.filtered != null;
+  // Whether hide/pin apply to this column at all.
+  const canManageColumns = Boolean(onHideColumn) || Boolean(onTogglePin);
 
   // The filter popup is shared by the two controls that open it — the column menu's "Filter values"
   // item and the filter icon that marks an already-filtered column — so it lives here rather than in
@@ -204,7 +206,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         )}
         <div className={styles.headerCellLabelGroup}>{label}</div>
 
-        {(filterable || onHideColumn || onTogglePin) && (
+        {isColumnMenuVisible(filterable, canManageColumns) && (
           <div className={styles.headerCellActions}>
             <HeaderCellMenu
               displayName={displayName}

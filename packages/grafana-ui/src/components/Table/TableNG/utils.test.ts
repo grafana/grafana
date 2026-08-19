@@ -54,6 +54,7 @@ import {
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
   filterFieldsByHiddenColumns,
+  isColumnMenuVisible,
   migrateTableDisplayModeToCellOptions,
   orderFieldsByDisplayNames,
   orderFieldsByPinnedColumns,
@@ -1707,6 +1708,20 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('isColumnMenuVisible', () => {
+    it('is visible when the column is filterable, even with no hide/pin', () => {
+      expect(isColumnMenuVisible(true, false)).toBe(true);
+    });
+
+    it('is visible when hide/pin are available, even on a non-filterable column', () => {
+      expect(isColumnMenuVisible(false, true)).toBe(true);
+    });
+
+    it('is hidden when neither filter nor hide/pin apply', () => {
+      expect(isColumnMenuVisible(false, false)).toBe(false);
+    });
+  });
+
   describe('computeContentAwareColWidths', () => {
     // Deterministic text measurement: every glyph is CHAR_W px wide, so a string of length L is
     // CHAR_W * L. Header widths are canvas-measured, so we mock measureText; body/pill content is
@@ -2156,9 +2171,10 @@ describe('TableNG utils', () => {
       ).toEqual([67]);
     });
 
-    it('reserves no column menu space for a non-filterable column when table.refresh is on', () => {
-      // The menu only renders on filterable columns (it has nothing else to offer yet), so a
-      // non-filterable column must not pay for it: content "a" floors to MIN_WIDTH either way.
+    it('reserves no column menu space for a non-filterable column with no hide/pin either', () => {
+      // Without `canManageColumns` the menu has nothing to offer a non-filterable column (no
+      // filter, no hide/pin), so it doesn't render and the column shouldn't pay for it: content
+      // "a" floors to MIN_WIDTH either way.
       const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
       expect(
         computeContentAwareColWidths(fields, 50, {
@@ -2167,6 +2183,21 @@ describe('TableNG utils', () => {
           tableRefreshEnabled: true,
         })
       ).toEqual([50]);
+    });
+
+    it('reserves column menu space for a non-filterable column when hide/pin are available', () => {
+      // Hide/pin apply to every column, not just filterable ones, so the menu (and its space) is in
+      // flow whenever `canManageColumns` is set, independent of `filterable`.
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 32, + menu 22 + chrome 13 = 67; content "a" is tiny.
+      expect(
+        computeContentAwareColWidths(fields, 67, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          canManageColumns: true,
+        })
+      ).toEqual([67]);
     });
 
     it('reserves header space for the filter icon on a filtered column when table.refresh is on', () => {
@@ -2229,6 +2260,36 @@ describe('TableNG utils', () => {
       });
 
       expect(widths).toEqual([63]);
+    });
+
+    it('rounds a header-bound column up rather than truncating it via cumulative rounding on overflow', () => {
+      // Real canvas measurement returns fractional widths, unlike this suite's integer CHAR_W mock.
+      // With no leftover to distribute (auto columns already overflow availWidth), the second
+      // column's cumulative running sum can cross a whole-pixel boundary the "wrong" way and shave
+      // its own fractional need down — even though it has zero slack to give up (it's sized to its
+      // header's exact minimum). Ceiling each column independently in that branch avoids that.
+      const typographyCtx = createTypographyContext(14, 'sans-serif', 0.15);
+      const headerWidths: Record<string, number> = { A: 37.5, B: 47.4 };
+      jest
+        .spyOn(typographyCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((text: string) => ({
+          width: headerWidths[String(text)],
+        })) as typeof typographyCtx.ctx.measureText);
+
+      const fields: Field[] = [
+        { name: 'A', type: FieldType.string, values: ['x'], config: {} },
+        { name: 'B', type: FieldType.string, values: ['x'], config: {} },
+      ];
+      // header "A" => 37.5 + chrome 13 = 50.5; header "B" => 47.4 + chrome 13 = 60.4. Content "x" is
+      // tiny, so the header drives both. availWidth 110 < their 110.9 total, so this overflows.
+      const widths = computeContentAwareColWidths(fields, 110, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: typographyCtx,
+      });
+
+      // Without the fix this comes back [51, 60] — B truncated below its own 60.4 need.
+      expect(widths).toEqual([51, 61]);
     });
 
     it('samples a bounded number of rows (spread across the field) rather than scanning every value', () => {
