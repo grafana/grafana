@@ -138,6 +138,77 @@ func (l *clusterLeaseLock) Describe() string {
 	return "clusterleases.coordination.grafana.app/" + l.name
 }
 
+// NewNamespacedLock returns a resourcelock.Interface backed by the namespaced
+// coordination Lease named `name` in `namespace`, using `client` (a client for the
+// Lease kind) and holder `identity`. Use it for tenant-scoped leader election, where
+// the lease lives in the tenant's own namespace.
+func NewNamespacedLock(client resource.Client, namespace, name, identity string) resourcelock.Interface {
+	return &namespacedLeaseLock{client: client, id: resource.Identifier{Namespace: namespace, Name: name}, identity: identity}
+}
+
+// namespacedLeaseLock is the namespaced Lease counterpart of clusterLeaseLock.
+type namespacedLeaseLock struct {
+	client   resource.Client
+	id       resource.Identifier
+	identity string
+	lastRV   string
+}
+
+var _ resourcelock.Interface = (*namespacedLeaseLock)(nil)
+
+func (l *namespacedLeaseLock) Get(ctx context.Context) (*resourcelock.LeaderElectionRecord, []byte, error) {
+	obj, err := l.client.Get(ctx, l.id)
+	if err != nil {
+		return nil, nil, err
+	}
+	lease, ok := obj.(*coordinationv0alpha1.Lease)
+	if !ok {
+		return nil, nil, fmt.Errorf("unexpected object type %T for lease %q", obj, l.id.Name)
+	}
+	l.lastRV = lease.GetResourceVersion()
+	record := leaseToRecord(lease.Spec)
+	recordBytes, err := json.Marshal(record)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &record, recordBytes, nil
+}
+
+func (l *namespacedLeaseLock) Create(ctx context.Context, ler resourcelock.LeaderElectionRecord) error {
+	lease := &coordinationv0alpha1.Lease{}
+	lease.SetNamespace(l.id.Namespace)
+	lease.SetName(l.id.Name)
+	fromLeaseRecord(&lease.Spec, ler)
+	created, err := l.client.Create(ctx, l.id, lease, resource.CreateOptions{})
+	if err != nil {
+		return err
+	}
+	l.lastRV = created.GetResourceVersion()
+	return nil
+}
+
+func (l *namespacedLeaseLock) Update(ctx context.Context, ler resourcelock.LeaderElectionRecord) error {
+	if l.lastRV == "" {
+		return fmt.Errorf("lease %q not fetched before update", l.id.Name)
+	}
+	lease := &coordinationv0alpha1.Lease{}
+	lease.SetNamespace(l.id.Namespace)
+	lease.SetName(l.id.Name)
+	fromLeaseRecord(&lease.Spec, ler)
+	updated, err := l.client.Update(ctx, l.id, lease, resource.UpdateOptions{ResourceVersion: l.lastRV})
+	if err != nil {
+		return err
+	}
+	l.lastRV = updated.GetResourceVersion()
+	return nil
+}
+
+func (l *namespacedLeaseLock) RecordEvent(string) {}
+func (l *namespacedLeaseLock) Identity() string   { return l.identity }
+func (l *namespacedLeaseLock) Describe() string {
+	return "leases.coordination.grafana.app/" + l.id.Namespace + "/" + l.id.Name
+}
+
 // Object-lease annotation keys. An object lease stores the leader-election record in
 // an existing object's annotations instead of a dedicated Lease resource; the
 // object's own resourceVersion provides the compare-and-swap.
@@ -263,46 +334,66 @@ func setLeaseAnnotations(obj resource.Object, r resourcelock.LeaderElectionRecor
 	obj.SetAnnotations(anns)
 }
 
-// toRecord maps a ClusterLease spec onto client-go's election record.
-func toRecord(spec coordinationv0alpha1.ClusterLeaseSpec) resourcelock.LeaderElectionRecord {
+// recordFromLeaseFields builds an election record from the shared lease spec fields
+// (Lease and ClusterLease have the same field set).
+func recordFromLeaseFields(holder *string, durationSeconds, transitions *int32, acquire, renew *string) resourcelock.LeaderElectionRecord {
 	r := resourcelock.LeaderElectionRecord{}
-	if spec.HolderIdentity != nil {
-		r.HolderIdentity = *spec.HolderIdentity
+	if holder != nil {
+		r.HolderIdentity = *holder
 	}
-	if spec.LeaseDurationSeconds != nil {
-		r.LeaseDurationSeconds = int(*spec.LeaseDurationSeconds)
+	if durationSeconds != nil {
+		r.LeaseDurationSeconds = int(*durationSeconds)
 	}
-	if spec.LeaseTransitions != nil {
-		r.LeaderTransitions = int(*spec.LeaseTransitions)
+	if transitions != nil {
+		r.LeaderTransitions = int(*transitions)
 	}
-	if spec.AcquireTime != nil {
-		if t, err := time.Parse(time.RFC3339, *spec.AcquireTime); err == nil {
+	if acquire != nil {
+		if t, err := time.Parse(time.RFC3339, *acquire); err == nil {
 			r.AcquireTime = metav1.NewTime(t)
 		}
 	}
-	if spec.RenewTime != nil {
-		if t, err := time.Parse(time.RFC3339, *spec.RenewTime); err == nil {
+	if renew != nil {
+		if t, err := time.Parse(time.RFC3339, *renew); err == nil {
 			r.RenewTime = metav1.NewTime(t)
 		}
 	}
 	return r
 }
 
-// fromRecord maps client-go's election record onto a ClusterLease spec.
-// Timestamps become RFC3339 strings, matching the kind's schema.
-func fromRecord(spec *coordinationv0alpha1.ClusterLeaseSpec, r resourcelock.LeaderElectionRecord) {
-	holder := r.HolderIdentity
-	spec.HolderIdentity = &holder
-	dur := int32(r.LeaseDurationSeconds)
-	spec.LeaseDurationSeconds = &dur
-	trans := int32(r.LeaderTransitions)
-	spec.LeaseTransitions = &trans
+// leaseFieldsFromRecord maps an election record onto the shared lease spec fields.
+// Timestamps become RFC3339 strings, matching the kinds' schema.
+func leaseFieldsFromRecord(r resourcelock.LeaderElectionRecord) (holder *string, durationSeconds, transitions *int32, acquire, renew *string) {
+	h := r.HolderIdentity
+	holder = &h
+	d := int32(r.LeaseDurationSeconds)
+	durationSeconds = &d
+	tr := int32(r.LeaderTransitions)
+	transitions = &tr
 	if !r.AcquireTime.IsZero() {
 		s := r.AcquireTime.UTC().Format(time.RFC3339)
-		spec.AcquireTime = &s
+		acquire = &s
 	}
 	if !r.RenewTime.IsZero() {
 		s := r.RenewTime.UTC().Format(time.RFC3339)
-		spec.RenewTime = &s
+		renew = &s
 	}
+	return holder, durationSeconds, transitions, acquire, renew
+}
+
+// toRecord / fromRecord map a ClusterLease spec.
+func toRecord(spec coordinationv0alpha1.ClusterLeaseSpec) resourcelock.LeaderElectionRecord {
+	return recordFromLeaseFields(spec.HolderIdentity, spec.LeaseDurationSeconds, spec.LeaseTransitions, spec.AcquireTime, spec.RenewTime)
+}
+
+func fromRecord(spec *coordinationv0alpha1.ClusterLeaseSpec, r resourcelock.LeaderElectionRecord) {
+	spec.HolderIdentity, spec.LeaseDurationSeconds, spec.LeaseTransitions, spec.AcquireTime, spec.RenewTime = leaseFieldsFromRecord(r)
+}
+
+// leaseToRecord / fromLeaseRecord map a namespaced Lease spec.
+func leaseToRecord(spec coordinationv0alpha1.LeaseSpec) resourcelock.LeaderElectionRecord {
+	return recordFromLeaseFields(spec.HolderIdentity, spec.LeaseDurationSeconds, spec.LeaseTransitions, spec.AcquireTime, spec.RenewTime)
+}
+
+func fromLeaseRecord(spec *coordinationv0alpha1.LeaseSpec, r resourcelock.LeaderElectionRecord) {
+	spec.HolderIdentity, spec.LeaseDurationSeconds, spec.LeaseTransitions, spec.AcquireTime, spec.RenewTime = leaseFieldsFromRecord(r)
 }
