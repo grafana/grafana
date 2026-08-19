@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
@@ -148,7 +149,7 @@ func TestTemplates(t *testing.T) {
 						Email:          "alice@example.com",
 						Name:           "Alice",
 						Login:          "alice",
-						Password:       "hashed-password",
+						Password:       new(user.Password("hashed-password")),
 						EmailVerified:  new(true),
 						Theme:          "dark",
 						IsDisabled:     new(false),
@@ -172,7 +173,7 @@ func TestUpdateUserQueryArguments(t *testing.T) {
 		Email:          "alice@example.com",
 		Name:           "Alice",
 		Login:          "alice",
-		Password:       "hashed-password",
+		Password:       new(user.Password("hashed-password")),
 		EmailVerified:  new(true),
 		Theme:          "dark",
 		IsDisabled:     new(false),

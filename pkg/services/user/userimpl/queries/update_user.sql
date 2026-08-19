@@ -9,8 +9,8 @@ SET
 {{ if .Login -}}
   login = {{ .Arg .Login }},
 {{ end -}}
-{{ if .Password -}}
-  password = {{ .Arg .Password }},
+{{ if .PasswordValue -}}
+  password = {{ .Arg .PasswordValue }},
 {{ end -}}
 {{ if .EmailVerified -}}
   email_verified = {{ .Arg .EmailVerifiedValue }},

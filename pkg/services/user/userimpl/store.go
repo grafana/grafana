@@ -358,7 +358,7 @@ type updateUserQuery struct {
 	Email          string
 	Name           string
 	Login          string
-	Password       string
+	Password       *user.Password
 	EmailVerified  *bool
 	Theme          string
 	IsDisabled     *bool
@@ -370,6 +370,13 @@ type updateUserQuery struct {
 
 func (q updateUserQuery) EmailVerifiedValue() bool {
 	return q.EmailVerified != nil && *q.EmailVerified
+}
+
+func (q updateUserQuery) PasswordValue() string {
+	if q.Password == nil {
+		return ""
+	}
+	return string(*q.Password)
 }
 
 func (q updateUserQuery) IsDisabledValue() bool {
@@ -412,18 +419,14 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 			Email:          strings.ToLower(cmd.Email),
 			Name:           cmd.Name,
 			Login:          strings.ToLower(cmd.Login),
+			Password:       cmd.Password,
 			Theme:          cmd.Theme,
 			EmailVerified:  cmd.EmailVerified,
 			IsDisabled:     cmd.IsDisabled,
 			IsGrafanaAdmin: cmd.IsGrafanaAdmin,
+			OrgID:          cmd.OrgID,
 			IsProvisioned:  cmd.IsProvisioned,
 			Updated:        legacysql.NewDBTime(now),
-		}
-		if cmd.Password != nil && *cmd.Password != "" {
-			query.Password = string(*cmd.Password)
-		}
-		if cmd.OrgID != nil && *cmd.OrgID != 0 {
-			query.OrgID = cmd.OrgID
 		}
 
 		rawSQL, err := renderUserQuery(updateUserTemplate, query)
