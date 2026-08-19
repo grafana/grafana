@@ -7,6 +7,11 @@ LEFT JOIN {{ .Ident .UserAuthTable }} AS user_auth ON user_auth.id = (
   LIMIT 1
 )
 {{ end -}}
+{{ define "search_users_joins" -}}
+{{ range .Joins -}}
+{{ .Operator }} JOIN {{ $.Ident .Table }} AS {{ $.Ident .Alias }} ON {{ .Condition }}
+{{ end -}}
+{{ end -}}
 {{ define "search_users_where" -}}
 WHERE u.is_service_account = FALSE
 {{ if gt .OrgID 0 -}}
@@ -55,9 +60,7 @@ SELECT
   u.created
 FROM {{ .Ident .UserTable }} AS u
 {{ template "latest_user_auth_join" . }}
-{{ range .Joins -}}
-{{ .Operator }} JOIN {{ $.Ident .Table }} AS {{ $.Ident .Alias }} ON {{ .Condition }}
-{{ end -}}
+{{ template "search_users_joins" . }}
 {{ template "search_users_where" . }}
 ORDER BY
 {{ if .Sorts -}}
