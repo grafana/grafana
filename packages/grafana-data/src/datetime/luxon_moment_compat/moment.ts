@@ -44,25 +44,7 @@ export type MomentUnit =
   | 'millisecond'
   | 'ms';
 
-type StartEndUnit =
-  | 'year'
-  | 'month'
-  | 'week'
-  | 'isoWeek'
-  | 'day'
-  | 'date'
-  | 'hour'
-  | 'minute'
-  | 'second'
-  | 'quarter'
-  | 'y'
-  | 'M'
-  | 'w'
-  | 'd'
-  | 'h'
-  | 'm'
-  | 's'
-  | 'Q';
+type StartEndUnit = MomentUnit | 'date';
 
 type InputObject = Partial<{
   year: number;
@@ -156,11 +138,11 @@ export interface MomentLike {
   millisecond: UnitAccessor;
   milliseconds: UnitAccessor;
   isValid(): boolean;
-  isBefore(input: MomentInput, unit?: DateTimeUnit): boolean;
-  isAfter(input: MomentInput, unit?: DateTimeUnit): boolean;
-  isBetween(a: MomentInput, b: MomentInput, unit?: DateTimeUnit, inclusivity?: string): boolean;
-  isSame(input: MomentInput, unit?: DateTimeUnit): boolean;
-  diff(input: MomentInput, unit?: DurationUnit, asFloat?: boolean): number;
+  isBefore(input: MomentInput, unit?: StartEndUnit): boolean;
+  isAfter(input: MomentInput, unit?: StartEndUnit): boolean;
+  isBetween(a: MomentInput, b: MomentInput, unit?: StartEndUnit, inclusivity?: string): boolean;
+  isSame(input: MomentInput, unit?: StartEndUnit): boolean;
+  diff(input: MomentInput, unit?: MomentUnit, asFloat?: boolean): number;
   toDate(): Date;
   toISOString(keepOffset?: boolean): string | null;
   toJSON(): string | null;
@@ -217,24 +199,35 @@ const UNIT_MAP: Record<MomentUnit, DurationUnit> = {
 };
 
 const START_END_UNIT_MAP: Record<StartEndUnit, DateTimeUnit> = {
+  years: 'year',
   year: 'year',
   y: 'year',
+  quarters: 'quarter',
+  quarter: 'quarter',
+  Q: 'quarter',
+  months: 'month',
   month: 'month',
   M: 'month',
+  weeks: 'week',
   week: 'week',
   isoWeek: 'week',
   w: 'week',
+  days: 'day',
   day: 'day',
   date: 'day',
   d: 'day',
+  hours: 'hour',
   hour: 'hour',
   h: 'hour',
+  minutes: 'minute',
   minute: 'minute',
   m: 'minute',
+  seconds: 'second',
   second: 'second',
   s: 'second',
-  quarter: 'quarter',
-  Q: 'quarter',
+  milliseconds: 'millisecond',
+  millisecond: 'millisecond',
+  ms: 'millisecond',
 };
 
 const DEFAULT_LOCALE = 'en';
@@ -743,11 +736,12 @@ function weekdayNames(locale: string): string[] {
 }
 
 // millis of `dt` and `other`, truncated to `unit` when given, for comparisons
-function comparableMillis(dt: DateTime, other: MomentInput, unit?: DateTimeUnit): [number, number] {
+function comparableMillis(dt: DateTime, other: MomentInput, unit?: StartEndUnit): [number, number] {
   const b = normalizeInput(other);
 
   if (unit) {
-    return [dt.startOf(unit).toMillis(), b.startOf(unit).toMillis()];
+    const normalizedUnit = normalizeStartEndUnit(unit);
+    return [dt.startOf(normalizedUnit).toMillis(), b.startOf(normalizedUnit).toMillis()];
   }
 
   return [dt.toMillis(), b.toMillis()];
@@ -944,19 +938,19 @@ class MomentCompat implements MomentLike {
     return this._dt.isValid;
   }
 
-  isBefore(other: MomentInput, unit?: DateTimeUnit): boolean {
+  isBefore(other: MomentInput, unit?: StartEndUnit): boolean {
     const [a, b] = comparableMillis(this._dt, other, unit);
     return a < b;
   }
 
-  isAfter(other: MomentInput, unit?: DateTimeUnit): boolean {
+  isAfter(other: MomentInput, unit?: StartEndUnit): boolean {
     const [a, b] = comparableMillis(this._dt, other, unit);
     return a > b;
   }
 
   // like moment, bounds are not reordered (a reversed range is simply never matched) and the
   // unit truncates the endpoints as well as this instant
-  isBetween(a: MomentInput, b: MomentInput, unit?: DateTimeUnit, inclusivity = '()'): boolean {
+  isBetween(a: MomentInput, b: MomentInput, unit?: StartEndUnit, inclusivity = '()'): boolean {
     const [value, left] = comparableMillis(this._dt, a, unit);
     const [, right] = comparableMillis(this._dt, b, unit);
 
@@ -966,14 +960,15 @@ class MomentCompat implements MomentLike {
     return afterStart && beforeEnd;
   }
 
-  isSame(other: MomentInput, unit?: DateTimeUnit): boolean {
+  isSame(other: MomentInput, unit?: StartEndUnit): boolean {
     const [a, b] = comparableMillis(this._dt, other, unit);
     return a === b;
   }
 
-  diff(other: MomentInput, unit: DurationUnit = 'milliseconds', asFloat = false): number {
+  diff(other: MomentInput, unit: MomentUnit = 'milliseconds', asFloat = false): number {
     const b = normalizeInput(other);
-    const value = this._dt.diff(b, unit).as(unit);
+    const normalizedUnit = normalizeUnit(unit);
+    const value = this._dt.diff(b, normalizedUnit).as(normalizedUnit);
     // moment truncates toward zero (returning 0, never -0) unless asFloat is passed
     return asFloat ? value : Math.trunc(value) || 0;
   }

@@ -34,6 +34,11 @@ describe('isBetween', () => {
     expect(mk('2024-05-06 13:00:00').isBetween(a, b, 'day', '[]')).toBe(true);
     expect(mk('2024-05-06 13:00:00').isBetween(a, b, 'day')).toBe(false);
   });
+
+  it('normalizes aliases used for calendar comparisons', () => {
+    expect(mk('2024-05-06 11:00:00').isSame(mk('2024-05-06 14:00:00'), 'd')).toBe(true);
+    expect(mk('2024-05-06 11:00:00').isBefore(mk('2024-05-07 11:00:00'), 'hours')).toBe(true);
+  });
 });
 
 describe('diff', () => {
@@ -49,6 +54,22 @@ describe('diff', () => {
   it('returns fractions when asFloat is passed', () => {
     expect(a().diff(b(), 'days', true)).toBe(2.5);
     expect(b().diff(a(), 'days', true)).toBe(-2.5);
+  });
+
+  it('normalizes moment unit aliases before passing them to luxon', () => {
+    expect(a().diff(b(), 'd')).toBe(2);
+    expect(a().diff(b(), 'h')).toBe(60);
+    expect(a().diff(b(), 'y')).toBe(0);
+    expect(a().diff(b(), 'ms')).toBe(216000000);
+  });
+});
+
+describe('startOf and endOf', () => {
+  it('accept plural duration units from the public DateTime API', () => {
+    const value = moment.utc('2024-05-10 18:30:45.123', 'YYYY-MM-DD HH:mm:ss.SSS');
+
+    expect(value.clone().startOf('days').toISOString()).toBe('2024-05-10T00:00:00.000Z');
+    expect(value.clone().endOf('hours').toISOString()).toBe('2024-05-10T18:59:59.999Z');
   });
 });
 
