@@ -163,10 +163,10 @@ describe('WizardStep', () => {
 
   it('should hide Previous button on first step', () => {
     renderWithProvider(
-      <WizardStep stepId={StepKey.Method} label="Test Step">
+      <WizardStep stepId={StepKey.Notifications} label="Test Step">
         <div>Step content</div>
       </WizardStep>,
-      StepKey.Method
+      StepKey.Notifications
     );
 
     expect(screen.queryByTestId('wizard-prev-button')).not.toBeInTheDocument();

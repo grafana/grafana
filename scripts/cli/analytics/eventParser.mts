@@ -4,7 +4,6 @@ import {
   SyntaxKind,
   type CallExpression,
   type SourceFile,
-  type ts,
   type Type,
   type VariableStatement,
   type JSDoc,
@@ -85,8 +84,10 @@ const parseEventFromCall = (
   }
 
   const eventName = arg.getLiteralText();
+  // Names the event and its file so a parse failure points at the definition to fix.
+  const location = `event '${eventName}' in ${path.relative(process.cwd(), callExpr.getSourceFile().getFilePath())}`;
   // Properties come from the TypeScript type, not the source text — e.g. the ClickProperties in createNavEvent<ClickProperties>('click').
-  const ownProperties = resolveEventProperties(type);
+  const { properties: ownProperties, variants } = resolveEventProperties(type, callExpr, location);
 
   // Namespace defaults (e.g. schema_version) are merged first; event-specific properties take precedence on name collision, matching { ...defaultProps, ...props }.
   const defaultProperties = eventNamespace.defaultProperties ?? [];
@@ -106,6 +107,7 @@ const parseEventFromCall = (
     description: metadata.description,
     owner: metadata.owner,
     properties: mergedProperties,
+    variants,
     silent,
   };
 };
@@ -140,35 +142,57 @@ const parseEventMetadata = (eventCallExpr: CallExpression): JSDocMetadata => {
 
 /**
  * Given the type of an event function (e.g. `(props: ClickProperties) => void`),
- * returns the schema of its properties, or undefined if the event takes no properties.
+ * returns the schema of its properties, empty if the event takes no properties. Union properties
+ * also return one schema per variant, so the report can show which combinations are valid.
  * Reads from the TypeScript type system rather than source text.
  */
-const resolveEventProperties = (type: Type): EventPropertySchema[] | undefined => {
+const resolveEventProperties = (
+  type: Type,
+  callExpr: CallExpression,
+  location: string
+): { properties?: EventPropertySchema[]; variants?: EventPropertySchema[][] } => {
   // The factory call returns a function like (props: ClickProperties) => void — we want the parameter type.
   const [callSignature, ...restCallSignatures] = type.getCallSignatures();
   if (callSignature === undefined || restCallSignatures.length > 0) {
-    throw new Error(`Expected type to be a function with one call signature, got ${type.getText()}`);
+    throw new Error(`Expected ${location} to be a function with one call signature, got ${type.getText()}`);
   }
 
   const [parameter, ...restParameters] = callSignature.getParameters();
   if (parameter === undefined || restParameters.length > 0) {
-    throw new Error('Expected function to have one parameter');
+    throw new Error(`Expected ${location} to have one parameter`);
   }
 
   const declarations = parameter.getDeclarations();
   if (declarations.length === 0) {
-    throw new Error('Expected parameter to have at least one declaration');
+    throw new Error(`Expected the parameter of ${location} to have at least one declaration`);
   }
 
   const parameterType = parameter.getTypeAtLocation(declarations[0]);
 
   if (parameterType.isObject() || parameterType.isIntersection()) {
-    return describeObjectParameters(parameterType);
+    return { properties: requireDescriptions(describeObjectParameters(parameterType, location), location) };
   } else if (parameterType.isVoid()) {
-    return undefined;
+    return {};
+  } else if (parameterType.isUnion()) {
+    // Exact<P, A> distributes over a union P, and every distributed member resolves its properties
+    // through A's constraint — which only exposes the keys common to all variants, as A["surface"].
+    // The explicit type argument is the undistributed union, so variant-only properties survive.
+    const [typeArgument] = callExpr.getTypeArguments();
+    if (!typeArgument) {
+      throw new Error(`Expected ${location} to declare its union properties as an explicit type argument`);
+    }
+
+    const variants = describeUnionVariants(typeArgument.getType(), location);
+
+    return {
+      properties: requireDescriptions(mergeUnionVariants(variants), location),
+      variants,
+    };
   }
 
-  throw new Error(`Expected parameter type to be an object or void, got ${parameterType.getText()}`);
+  throw new Error(
+    `Expected the parameter type of ${location} to be an object, a union of objects, or void, got ${parameterType.getText()}`
+  );
 };
 
 // JSDoc attaches to the VariableStatement (the whole `const x = ...` line), not the VariableDeclaration inside it, so we walk up until we find one.
@@ -185,26 +209,83 @@ const getParentVariableStatement = (node: Node): VariableStatement | undefined =
   return undefined;
 };
 
-const describeObjectParameters = (objectType: Type<ts.ObjectType | ts.IntersectionType>): EventPropertySchema[] => {
+const describeObjectParameters = (objectType: Type, location: string): EventPropertySchema[] => {
   return objectType.getProperties().map((property) => {
+    // A property has several declarations whenever types are combined — EventVariants intersects a
+    // documented base into each variant, so the type comes from any declaration (they agree after
+    // narrowing) while only the base carries the JSDoc.
     const declarations = property.getDeclarations();
-    if (declarations.length !== 1) {
-      throw new Error(`Expected property to have one declaration, got ${declarations.length}`);
+    if (declarations.length === 0) {
+      throw new Error(`Expected property '${property.getName()}' of ${location} to have a declaration`);
     }
 
-    const declaration = declarations[0];
-    const propertyType = property.getTypeAtLocation(declaration);
-    const resolvedType = resolveType(propertyType);
-
-    if (!Node.isPropertySignature(declaration)) {
-      throw new Error(`Expected property to be a property signature, got ${declaration.getKindName()}`);
+    for (const declaration of declarations) {
+      if (!Node.isPropertySignature(declaration)) {
+        throw new Error(
+          `Expected property '${property.getName()}' of ${location} to be a property signature, got ${declaration.getKindName()}`
+        );
+      }
     }
 
-    const { description } = getMetadataFromJSDocs(declaration.getJsDocs());
+    const resolvedType = resolveType(property.getTypeAtLocation(declarations[0]));
+    const description = declarations
+      .map((declaration) => getMetadataFromJSDocs(getJsDocsFromNode(declaration)).description)
+      .find((candidate) => candidate !== undefined);
+
     return {
       name: property.getName(),
       type: resolvedType,
       description,
     };
   });
+};
+
+// The report publishes one row per property, so an undescribed property ships as a blank cell.
+// Fail instead: ESLint only checks interfaces, and properties declared in type aliases slip past it.
+const requireDescriptions = (properties: EventPropertySchema[], location: string): EventPropertySchema[] => {
+  const undocumented = properties.filter((property) => !property.description).map((property) => property.name);
+  if (undocumented.length > 0) {
+    throw new Error(
+      `Expected every property of ${location} to have a JSDoc description, missing: ${undocumented.join(', ')}`
+    );
+  }
+
+  return properties;
+};
+
+// resolveType joins unions with ' | ', so splitting on the same separator keeps a merged type flat and duplicate-free.
+const mergeTypeText = (a: string, b: string): string => {
+  return [...new Set([...a.split(' | '), ...b.split(' | ')])].join(' | ');
+};
+
+const describeUnionVariants = (unionType: Type, location: string): EventPropertySchema[][] => {
+  return unionType.getUnionTypes().map((variant) => {
+    if (!variant.isObject() && !variant.isIntersection()) {
+      throw new Error(`Expected every variant of ${location} to be an object, got ${variant.getText()}`);
+    }
+
+    return describeObjectParameters(variant, location);
+  });
+};
+
+const mergeUnionVariants = (variants: EventPropertySchema[][]): EventPropertySchema[] => {
+  const merged = new Map<string, EventPropertySchema>();
+
+  for (const variant of variants) {
+    for (const property of variant) {
+      const existing = merged.get(property.name);
+      if (!existing) {
+        merged.set(property.name, property);
+        continue;
+      }
+
+      merged.set(property.name, {
+        name: property.name,
+        type: mergeTypeText(existing.type, property.type),
+        description: existing.description ?? property.description,
+      });
+    }
+  }
+
+  return [...merged.values()];
 };
