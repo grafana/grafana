@@ -2,7 +2,7 @@ import { type DataFrame, getFrameDisplayName, type PanelProps, type SelectableVa
 import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
-import { Combobox, Field, Stack, usePanelContext, useTheme2 } from '@grafana/ui';
+import { Box, Combobox, Field, Stack, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
   useCacheFieldDisplayNames,
@@ -58,9 +58,13 @@ export function TablePanel(props: Props) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
+  // Under `table.refresh` the panel drops its own padding so the table can run edge to edge, so the
+  // frame picker below it has to bring its own.
+  const framePickerPadding = commonTableProps.tableRefreshEnabled ? 1 : 0;
+
   if (count > 1 && !fitContent) {
     const inputHeight = theme.spacing.gridSize * theme.components.height.md;
-    const padding = theme.spacing.gridSize;
+    const padding = theme.spacing.gridSize * (1 + framePickerPadding);
 
     tableHeight = height - inputHeight - padding;
   }
@@ -84,6 +88,7 @@ export function TablePanel(props: Props) {
       getActions={getActions}
       structureRev={data.structureRev}
       transparent={transparent}
+      noPanelPadding={commonTableProps.tableRefreshEnabled}
     />
   );
 
@@ -101,14 +106,16 @@ export function TablePanel(props: Props) {
   return (
     <Stack direction="column" gap={1.5} justifyContent="space-between" height="100%">
       {tableElement}
-      <Field noMargin>
-        <Combobox
-          aria-label={t('table.frame-picker.label', 'Query')}
-          options={names}
-          value={names[currentIndex]}
-          onChange={(val) => onChangeTableSelection(val, props)}
-        />
-      </Field>
+      <Box paddingX={framePickerPadding} paddingBottom={framePickerPadding}>
+        <Field noMargin>
+          <Combobox
+            aria-label={t('table.frame-picker.label', 'Query')}
+            options={names}
+            value={names[currentIndex]}
+            onChange={(val) => onChangeTableSelection(val, props)}
+          />
+        </Field>
+      </Box>
     </Stack>
   );
 }

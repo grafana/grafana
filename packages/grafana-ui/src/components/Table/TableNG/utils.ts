@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
@@ -38,9 +39,12 @@ import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from '.
 import {
   CELL_HORIZONTAL_CHROME,
   COLUMN,
+  FIRST_COLUMN_CLASS,
+  FIRST_COLUMN_EXTRA_PADDING,
   HEADER_DRAG_HANDLE_SPACE,
   HEADER_ICON_SPACE,
   HEADER_MENU_SPACE,
+  LAST_COLUMN_CLASS,
   TABLE,
 } from './constants';
 import { type TextAlign } from './styles';
@@ -54,6 +58,7 @@ import {
   type MeasureCellHeightEntry,
   type FilterType,
   type GetActionsFunctionLocal,
+  type TableColumn,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
@@ -1314,6 +1319,8 @@ export interface ContentAwareColWidthsOptions {
    * column menu they live in reserves space even when the column isn't filterable.
    */
   canManageColumns?: boolean;
+  /** The first column carries extra inline-start padding to line up with the panel title. */
+  noPanelPadding?: boolean;
   /** overridable for testing; otherwise derived from the auto-column count */
   sampleSize?: number;
 }
@@ -1653,6 +1660,7 @@ export function computeContentAwareColWidths(
     sampleSize,
     enableColumnReorder = false,
     canManageColumns = false,
+    noPanelPadding = false,
   }: ContentAwareColWidthsOptions
 ): number[] {
   const autoIdxs: number[] = [];
@@ -1718,9 +1726,12 @@ export function computeContentAwareColWidths(
     const floor = Math.max(COLUMN.MIN_WIDTH, field.config.custom?.minWidth ?? 0);
     const cap = Math.max(COLUMN.MAX_AUTO_WIDTH, floor);
     const clamped = Math.min(Math.max(Math.max(cellWidth, headerWidth, footerWidth), floor), cap);
+    // The first column's extra padding is chrome, not content, so it's added after the cap rather
+    // than eating into the room the content was measured to need.
+    const extraPadding = noPanelPadding && i === 0 ? FIRST_COLUMN_EXTRA_PADDING : 0;
 
-    contentWidths.set(i, clamped);
-    contentTotal += clamped;
+    contentWidths.set(i, clamped + extraPadding);
+    contentTotal += clamped + extraPadding;
   }
 
   // Distribute leftover space by growthWeight × √(content width): a column with more content grows
@@ -1754,6 +1765,35 @@ export function computeContentAwareColWidths(
   }
 
   return widths;
+}
+
+type CellClass<TRow> = string | null | undefined | ((row: TRow) => string | null | undefined);
+
+const appendCellClass = <TRow>(existing: CellClass<TRow>, edgeClass: string): CellClass<TRow> =>
+  typeof existing === 'function' ? (row: TRow) => clsx(existing(row), edgeClass) : clsx(existing, edgeClass);
+
+const withEdgeClass = (column: TableColumn, edgeClass: string): TableColumn => ({
+  ...column,
+  headerCellClass: clsx(column.headerCellClass, edgeClass),
+  cellClass: appendCellClass(column.cellClass, edgeClass),
+  summaryCellClass: appendCellClass(column.summaryCellClass, edgeClass),
+});
+
+/**
+ * @internal
+ * Tags the edge columns with {@link FIRST_COLUMN_CLASS}/{@link LAST_COLUMN_CLASS}. Call this on the
+ * finished column list, after any programmatically injected columns (the nested table's row
+ * expander) are in place — a field's own index isn't enough to tell whether it ends up on an edge.
+ */
+export function markEdgeColumns(columns: TableColumn[]): TableColumn[] {
+  if (columns.length === 0) {
+    return columns;
+  }
+  const marked = [...columns];
+  marked[0] = withEdgeClass(marked[0], FIRST_COLUMN_CLASS);
+  const lastIdx = marked.length - 1;
+  marked[lastIdx] = withEdgeClass(marked[lastIdx], LAST_COLUMN_CLASS);
+  return marked;
 }
 
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {

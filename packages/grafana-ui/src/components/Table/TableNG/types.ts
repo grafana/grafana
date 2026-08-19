@@ -132,6 +132,11 @@ interface BaseTableProps {
   maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
+  /**
+   * Set by callers whose surrounding panel renders without padding, so the table can indent the
+   * first column's content back into line with the panel title.
+   */
+  noPanelPadding?: boolean;
   /* message to show when no rows are present */
   noValue?: string;
   /** used by SparklineCell when provided */

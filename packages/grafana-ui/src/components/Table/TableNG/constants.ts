@@ -32,6 +32,27 @@ export const TABLE = {
  */
 export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT;
 
+/**
+ * Marker classes stamped onto the first and last columns once the final column list is assembled.
+ * CSS can't find those columns on its own: `:first-child`/`:last-child` match the first and last
+ * *rendered* cells, and react-data-grid drops off-screen columns from the DOM, so they stop being
+ * the edge columns as soon as the grid scrolls horizontally.
+ */
+export const FIRST_COLUMN_CLASS = 'table-ng-first-col';
+export const LAST_COLUMN_CLASS = 'table-ng-last-col';
+
+// Distance from a panel's content edge to the start of its title text: PanelChrome's header
+// container padding (theme.spacing(1)) plus the title's own inline-start padding (x0_5).
+const PANEL_TITLE_INSET = 12;
+
+/**
+ * Extra inline-start padding the first column takes when the surrounding panel renders without
+ * padding of its own (see the `noPanelPadding` prop). The table then sits flush against the panel
+ * edge, which would leave the first column's content 6px in while the panel title sits at 12px —
+ * this makes up the difference so the two line up.
+ */
+export const FIRST_COLUMN_EXTRA_PADDING = PANEL_TITLE_INSET - TABLE.CELL_PADDING;
+
 // `table.refresh`: how long a column's "settle" highlight plays after it's reordered or pinned.
 export const COLUMN_SETTLE_MS = 280;
 

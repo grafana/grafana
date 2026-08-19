@@ -58,6 +58,7 @@ import {
   getDisplayName,
   getStableRowKey,
   getVisibleFields,
+  markEdgeColumns,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -86,6 +87,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     structureRev,
     timeRange,
     transparent,
+    noPanelPadding = false,
     width,
     initialRowIndex,
     sortBy,
@@ -558,7 +560,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     const result = fromFields(visibleFields, widths, data, rows, sortedRows);
 
     if (!firstRowNestedData) {
-      return result;
+      return { ...result, columns: markEdgeColumns(result.columns) };
     }
 
     const expanderCellRenderer: CellRootRenderer = (key, cellProps) => <Cell key={key} {...cellProps} />;
@@ -579,7 +581,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       )
     );
 
-    return result;
+    // after the expander column is in place, so it (not the first field) is tagged as the edge.
+    return { ...result, columns: markEdgeColumns(result.columns) };
   }, [
     buildNestedTableExpanderColumn,
     data,
@@ -637,6 +640,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       headerHeight={headerHeight}
       transparent={transparent}
       tableRefreshEnabled={tableRefreshEnabled}
+      noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
       enablePagination={enablePagination}

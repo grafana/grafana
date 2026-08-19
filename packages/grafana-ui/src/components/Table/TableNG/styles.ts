@@ -4,7 +4,14 @@ import memoize, { type Key, type RawKey } from 'micro-memoize';
 
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 
-import { COLUMN, COLUMN_SETTLE_MS, TABLE } from './constants';
+import {
+  COLUMN,
+  COLUMN_SETTLE_MS,
+  FIRST_COLUMN_CLASS,
+  FIRST_COLUMN_EXTRA_PADDING,
+  LAST_COLUMN_CLASS,
+  TABLE,
+} from './constants';
 import { type TableCellStyles } from './types';
 
 // TextAlign, getJustifyContent, and IS_SAFARI_26 live here rather than in utils.tsx to avoid a
@@ -51,7 +58,13 @@ const buildHeaderColors = (theme: GrafanaTheme2, transparent?: boolean, tableRef
 };
 
 export const getGridStyles = memoize(
-  (theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean, tableRefreshEnabled?: boolean) => {
+  (
+    theme: GrafanaTheme2,
+    enablePagination?: boolean,
+    transparent?: boolean,
+    tableRefreshEnabled?: boolean,
+    noPanelPadding?: boolean
+  ) => {
     const visualRefreshEnabled = theme.flags.visualDesignRefresh;
     let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
     if (visualRefreshEnabled) {
@@ -192,13 +205,23 @@ export const getGridStyles = memoize(
           '.rdg-header-row > .rdg-cell.rdg-cell-frozen': {
             backgroundColor: 'var(--rdg-header-background-color)',
           },
-          '.rdg-header-row > .rdg-cell:first-child': {
+          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
             borderStartStartRadius: theme.shape.radius.default,
             overflow: 'hidden',
           },
-          '.rdg-header-row > .rdg-cell:last-child': {
+          [`.rdg-header-row > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
             borderStartEndRadius: theme.shape.radius.default,
             overflow: 'hidden',
+          },
+        }),
+
+        // The panel around the table drops its own padding so the header surface can bleed to the
+        // panel edges, which leaves the first column's content further left than the panel title.
+        // Scoped to rows that are *direct* children, so a nested table's own grid (which lives
+        // inside a cell) keeps the standard padding throughout.
+        ...(noPanelPadding && {
+          [`& > * > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
+            paddingInlineStart: TABLE.CELL_PADDING + FIRST_COLUMN_EXTRA_PADDING,
           },
         }),
       }),

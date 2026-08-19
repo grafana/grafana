@@ -32,7 +32,7 @@ import { type MatcherScope } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
-import { CELL_HORIZONTAL_CHROME, HEADER_ICON_SPACE, TABLE } from './constants';
+import { CELL_HORIZONTAL_CHROME, FIRST_COLUMN_EXTRA_PADDING, HEADER_ICON_SPACE, TABLE } from './constants';
 import { IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
@@ -351,6 +351,7 @@ interface UseHeaderHeightOptions {
   sortColumns: SortColumn[];
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
+  noPanelPadding?: boolean;
 }
 
 export function useHeaderHeight({
@@ -360,6 +361,7 @@ export function useHeaderHeight({
   sortColumns,
   typographyCtx,
   showTypeIcons = false,
+  noPanelPadding = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
 
@@ -371,6 +373,9 @@ export function useHeaderHeight({
         }
 
         let width = c - CELL_HORIZONTAL_CHROME;
+        if (noPanelPadding && idx === 0) {
+          width -= FIRST_COLUMN_EXTRA_PADDING;
+        }
         const field = fields[idx];
 
         // filtering icon
@@ -388,7 +393,7 @@ export function useHeaderHeight({
         // sadly, the math for this is off by exactly 1 pixel. shrug.
         return Math.floor(width) - 1;
       }),
-    [fields, columnWidths, sortColumns, showTypeIcons]
+    [fields, columnWidths, sortColumns, showTypeIcons, noPanelPadding]
   );
 
   const headerHeight = useMemo(() => {
@@ -425,7 +430,8 @@ interface UseRowHeightOptions {
   nestedFooterHeight?: number;
 }
 
-const getTrueColWidths = (cw: number[]): number[] => cw.map((c) => c - CELL_HORIZONTAL_CHROME);
+const getTrueColWidths = (cw: number[], noPanelPadding = false): number[] =>
+  cw.map((c, i) => c - CELL_HORIZONTAL_CHROME - (noPanelPadding && i === 0 ? FIRST_COLUMN_EXTRA_PADDING : 0));
 
 // TODO: maybe there's a way to decouple the nested rows from the top-level rows here.
 export function useRowHeight({
@@ -574,6 +580,7 @@ interface UseFlatRowHeightOptions {
   defaultHeight: NonNullable<CSSProperties['height']>;
   typographyCtx: TypographyCtx;
   maxHeight?: number;
+  noPanelPadding?: boolean;
 }
 
 /**
@@ -586,6 +593,7 @@ export function useFlatRowHeight({
   defaultHeight,
   typographyCtx,
   maxHeight,
+  noPanelPadding = false,
 }: UseFlatRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const measurers = useMemo(
     () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
@@ -598,7 +606,7 @@ export function useFlatRowHeight({
       return defaultHeight;
     }
 
-    const trueColWidths = getTrueColWidths(columnWidths);
+    const trueColWidths = getTrueColWidths(columnWidths, noPanelPadding);
     const cache: Array<number | undefined> = Array(fields[0]?.values.length ?? 0);
     return (row: TableRow) => {
       let result = cache[row.__index];
@@ -607,7 +615,7 @@ export function useFlatRowHeight({
       }
       return result;
     };
-  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols]);
+  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols, noPanelPadding]);
 }
 
 /**
@@ -735,6 +743,7 @@ export interface ContentAwareWidths {
   filter?: FilterType;
   enableColumnReorder?: boolean;
   canManageColumns?: boolean;
+  noPanelPadding?: boolean;
 }
 
 const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
@@ -766,6 +775,7 @@ interface UseContentAwareWidthsOptions {
   filter?: FilterType;
   enableColumnReorder?: boolean;
   canManageColumns?: boolean;
+  noPanelPadding?: boolean;
 }
 
 /**
@@ -783,6 +793,7 @@ export function useContentAwareWidths({
   filter,
   enableColumnReorder = false,
   canManageColumns = false,
+  noPanelPadding = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
   const headerTypographyCtx = useMemo(
@@ -808,6 +819,7 @@ export function useContentAwareWidths({
             filter,
             enableColumnReorder,
             canManageColumns,
+            noPanelPadding,
           }
         : undefined,
     [
@@ -821,6 +833,7 @@ export function useContentAwareWidths({
       tableRefreshEnabled,
       enableColumnReorder,
       canManageColumns,
+      noPanelPadding,
     ]
   );
 }
