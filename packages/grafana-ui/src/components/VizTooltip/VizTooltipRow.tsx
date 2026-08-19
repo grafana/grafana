@@ -61,13 +61,8 @@ export const VizTooltipRow = ({
 }: VizTooltipRowProps) => {
   const styles = useStyles2(getStyles, justify, marginRight);
 
-  // Formatters already emit '-' for negatives, so only the positive sign needs adding. The sign is
-  // rendered as text as well as color so direction survives red/green color vision deficiency and
-  // satisfies WCAG 1.4.1 (color is not the only channel). Built once so the rendered and copied
-  // text cannot drift apart.
   const deltaDisplay = delta == null ? null : `(${delta.numeric > 0 ? '+' : ''}${delta.text})`;
 
-  // a zero or non-numeric (NaN) difference gets no class and inherits the value color
   const deltaNode =
     delta == null ? null : (
       <span
@@ -75,7 +70,7 @@ export const VizTooltipRow = ({
       >{` ${deltaDisplay}`}</span>
     );
 
-  // the delta is a separate node for coloring, but copy should still yield the whole reading
+  // the delta is a separate node for coloring, but copying the value should keep both values
   const copyText = deltaDisplay == null ? value : `${value} ${deltaDisplay}`;
 
   const innerValueScrollStyle: CSSProperties = showValueScroll
@@ -287,8 +282,6 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     fontWeight: theme.typography.fontWeightBold,
     color: theme.colors.text.maxContrast,
   }),
-  // `.text` shades (not `.main`) are the text-on-surface variants, so they keep contrast against
-  // the tooltip background in both themes
   deltaPositive: css({
     color: theme.colors.success.text,
   }),

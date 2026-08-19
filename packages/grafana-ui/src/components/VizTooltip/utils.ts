@@ -218,9 +218,6 @@ export const getFieldDisplayItems = (
       const compData = fields[compareFieldIdx].values[dataIdxs[compareFieldIdx]];
       const normalData = fields[seriesIdx].values[dataIdxs[seriesIdx]];
       let diffVal;
-      // NOTE: the diff direction depends on which row is hovered - hovering the comparison series
-      // diffs the other way around, so the same pair can show opposite signs (and now opposite
-      // colors) depending on where the cursor is. Pre-existing behavior, just more visible now.
       if (seriesIdx === compareFieldIdx) {
         diffVal = getTooltipDisplayValue(normalData - compData, field);
       } else {
