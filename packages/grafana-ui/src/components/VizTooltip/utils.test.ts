@@ -806,40 +806,114 @@ describe('utils', () => {
       );
     }
 
-    it('annotates the compare row with the signed difference from the hovered series', () => {
+    it('reports a positive difference on the compare row, keeping value and delta separate', () => {
       // hovering current (20) with compare (25) -> compare is 5 higher
       const rows = getFieldDisplayItemsWrapper([1, 1, 1], CURRENT_IDX, COMPARE_IDX);
 
       expect(rows[0].value).toBe('20');
-      expect(rows[1].value).toBe('25 (+5)');
+      expect(rows[0].delta).toBeUndefined();
+
+      // value stays a bare string so clipboard copy and sorting keep working
+      expect(rows[1].value).toBe('25');
+      expect(rows[1].delta).toEqual({ text: '5', numeric: 5 });
     });
 
-    it('renders a negative difference without a plus sign', () => {
+    it('reports a negative difference with a negative numeric', () => {
       // hovering current (10) with compare (8) -> compare is 2 lower
       const rows = getFieldDisplayItemsWrapper([0, 0, 0], CURRENT_IDX, COMPARE_IDX);
 
-      expect(rows[1].value).toBe('8 (-2)');
+      expect(rows[1].value).toBe('8');
+      expect(rows[1].delta).toEqual({ text: '-2', numeric: -2 });
     });
 
-    it('renders a zero difference unsigned', () => {
+    it('reports a zero difference, which renders uncolored', () => {
       const rows = getFieldDisplayItemsWrapper([2, 2, 2], CURRENT_IDX, COMPARE_IDX);
 
-      expect(rows[1].value).toBe('30 (0)');
+      expect(rows[1].value).toBe('30');
+      expect(rows[1].delta).toEqual({ text: '0', numeric: 0 });
     });
 
-    it('annotates the current row when the comparison series is the hovered one', () => {
+    it('reports the difference on the current row when the comparison series is the hovered one', () => {
       // hovering compare (25), so the delta lands on the current row (20): 20 - 25 = -5
       const rows = getFieldDisplayItemsWrapper([1, 1, 1], COMPARE_IDX, CURRENT_IDX);
 
-      expect(rows[0].value).toBe('20 (-5)');
-      expect(rows[1].value).toBe('25');
+      expect(rows[0].value).toBe('20');
+      expect(rows[0].delta).toEqual({ text: '-5', numeric: -5 });
+      expect(rows[1].delta).toBeUndefined();
     });
 
-    it('leaves values untouched when there is no comparison pair', () => {
+    it('keeps the field unit formatting in the delta text', () => {
+      // The delta text comes from the field's display processor, so it carries unit/decimal
+      // formatting that cannot be recovered from the numeric alone. Guards against reducing the
+      // delta to a bare number, which would render '25 B (+5)' instead of '25 B (+5 B)'.
+      const withUnit = (values: number[]) => ({
+        ...fields[1],
+        display: (value: string) => ({ text: String(value), suffix: ' B', color: undefined, numeric: Number(value) }),
+        values,
+      });
+      const unitFields = [xField, withUnit(current), withUnit(compare)] as unknown as typeof fields;
+
+      const rows = getFieldDisplayItems(
+        unitFields,
+        xField,
+        [1, 1, 1],
+        CURRENT_IDX,
+        TooltipDisplayMode.Multi,
+        SortOrder.None,
+        undefined,
+        false,
+        undefined,
+        COMPARE_IDX
+      );
+
+      expect(rows[1].delta).toEqual({ text: '5 B', numeric: 5 });
+    });
+
+    it('marks a non-numeric difference neutral so it does not render as a decrease', () => {
+      // Multi-element arrays coerce to NaN when subtracted. NaN compares false in both directions,
+      // so it must land on the neutral sign rather than the negative (red) one.
+      // (single-element arrays coerce to plain numbers, so they would not exercise this at all)
+      const arrayFields = [
+        xField,
+        {
+          ...fields[1],
+          values: [
+            [1, 2],
+            [3, 4],
+            [5, 6],
+          ],
+        },
+        {
+          ...fields[2],
+          values: [
+            [7, 8],
+            [9, 10],
+            [11, 12],
+          ],
+        },
+      ] as unknown as typeof fields;
+
+      const rows = getFieldDisplayItems(
+        arrayFields,
+        xField,
+        [1, 1, 1],
+        CURRENT_IDX,
+        TooltipDisplayMode.Multi,
+        SortOrder.None,
+        undefined,
+        false,
+        undefined,
+        COMPARE_IDX
+      );
+
+      expect(rows[1].delta?.numeric).toBeNaN();
+    });
+
+    it('sets no delta when there is no comparison pair', () => {
       const rows = getFieldDisplayItemsWrapper([1, 1, 1], CURRENT_IDX, undefined);
 
-      expect(rows[0].value).toBe('20');
-      expect(rows[1].value).toBe('25');
+      expect(rows.map((row) => row.value)).toEqual(['20', '25']);
+      expect(rows.map((row) => row.delta)).toEqual([undefined, undefined]);
     });
 
     it('omits the compare row entirely when it has no value at the hovered index', () => {
@@ -848,11 +922,12 @@ describe('utils', () => {
       expect(rows.map((row) => row.value)).toEqual(['20']);
     });
 
-    it('leaves the compare row un-annotated when no series is hovered', () => {
+    it('sets no delta when no series is hovered', () => {
       // xAll / synced hovers report no closest series, so there is nothing to diff against
       const rows = getFieldDisplayItemsWrapper([1, 1, 1], null, COMPARE_IDX);
 
       expect(rows.map((row) => row.value)).toEqual(['20', '25']);
+      expect(rows.map((row) => row.delta)).toEqual([undefined, undefined]);
     });
   });
 

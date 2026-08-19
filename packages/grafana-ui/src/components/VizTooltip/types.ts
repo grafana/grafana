@@ -35,6 +35,20 @@ export enum VizTooltipColorPlacement {
 }
 
 /** @alpha */
+export interface VizTooltipDelta {
+  /**
+   * Formatted difference, carrying the field's unit and decimal formatting (e.g. `'5 B'`, `'1.5 s'`).
+   * This cannot be derived from `numeric` alone, which is why it is kept alongside it.
+   */
+  text: string;
+  /**
+   * Raw numeric difference. Its sign selects the text color; a zero or non-numeric (NaN) difference
+   * renders uncolored.
+   */
+  numeric: number;
+}
+
+/** @alpha */
 export interface VizTooltipItem {
   /** Display label for this row. */
   label: string;
@@ -52,6 +66,13 @@ export interface VizTooltipItem {
   lineStyle?: LineStyle;
   /** When true the row's color indicator is rendered hollow, indicating the field is not shown in the visualization. */
   isHiddenFromViz?: boolean;
+
+  /**
+   * Difference against the hovered series, set on time-comparison counterpart rows. Rendered after
+   * `value` and colored by the sign of its `numeric`. Kept out of `value` so that `value` stays a
+   * plain string for clipboard copy and sorting.
+   */
+  delta?: VizTooltipDelta;
 
   /**
    * Numeric representation of `value` used for sorting rows.

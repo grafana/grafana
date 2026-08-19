@@ -168,7 +168,9 @@ describe('TimeSeriesTooltip comparison pairing', () => {
   it('annotates the compare entry with the delta from the hovered series', () => {
     renderPair({ seriesIdx: CURRENT_IDX });
 
-    expect(screen.getByText('25 (+5)')).toBeInTheDocument();
+    // value and delta are separate elements so the delta can be colored independently
+    expect(screen.getByText('25')).toBeInTheDocument();
+    expect(screen.getByText('(+5)')).toBeInTheDocument();
   });
 
   it('shows the paired current entry when hovering the comparison series', () => {
@@ -177,7 +179,8 @@ describe('TimeSeriesTooltip comparison pairing', () => {
     expect(screen.getByText('CPU')).toBeInTheDocument();
     expect(screen.getByText('CPU (comparison)')).toBeInTheDocument();
     // hovering compare (25) puts the delta on the current row: 20 - 25
-    expect(screen.getByText('20 (-5)')).toBeInTheDocument();
+    expect(screen.getByText('20')).toBeInTheDocument();
+    expect(screen.getByText('(-5)')).toBeInTheDocument();
   });
 
   it('falls back to single-series behavior when the hovered series has no counterpart', () => {
@@ -212,7 +215,10 @@ describe('TimeSeriesTooltip comparison pairing', () => {
 
     // Showing every series does not spread the delta around: only the hovered series'
     // counterpart is annotated, and an unrelated series keeps its plain value.
-    expect(screen.getByText('25 (+5)')).toBeInTheDocument();
+    expect(screen.getByText('25')).toBeInTheDocument();
+    expect(screen.getByText('(+5)')).toBeInTheDocument();
     expect(screen.getByText('99')).toBeInTheDocument();
+    // the unrelated series carries no delta at all
+    expect(screen.queryByText('(+79)')).not.toBeInTheDocument();
   });
 });

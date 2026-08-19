@@ -158,6 +158,7 @@ export {
   VizTooltipColorIndicator,
   VizTooltipColorPlacement,
   type VizTooltipItem,
+  type VizTooltipDelta,
   DEFAULT_VIZ_TOOLTIP_COLOR_INDICATOR,
   getFieldDisplayItems,
   getFieldDisplayLinks,

@@ -15,7 +15,7 @@ export interface TooltipScrollableOptions {
 }
 
 import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
-import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipItem } from './types';
+import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem } from './types';
 
 export const calculateTooltipPosition = (
   xPos = 0,
@@ -206,7 +206,7 @@ export const getFieldDisplayItems = (
 
     const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
 
-    let displayText = display.text;
+    let delta: VizTooltipDelta | undefined;
 
     if (
       compareFieldIdx != null &&
@@ -218,23 +218,30 @@ export const getFieldDisplayItems = (
       const compData = fields[compareFieldIdx].values[dataIdxs[compareFieldIdx]];
       const normalData = fields[seriesIdx].values[dataIdxs[seriesIdx]];
       let diffVal;
+      // NOTE: the diff direction depends on which row is hovered - hovering the comparison series
+      // diffs the other way around, so the same pair can show opposite signs (and now opposite
+      // colors) depending on where the cursor is. Pre-existing behavior, just more visible now.
       if (seriesIdx === compareFieldIdx) {
         diffVal = getTooltipDisplayValue(normalData - compData, field);
       } else {
         diffVal = getTooltipDisplayValue(compData - normalData, field);
       }
-      displayText = `${displayText} (${diffVal.numeric > 0 ? '+' : ''}${diffVal.text})`;
+
+      // text comes from the field's display processor, so it keeps the field's unit and decimals
+      // (e.g. '5 B') - it is not recoverable from numeric alone
+      delta = { text: diffVal.text, numeric: diffVal.numeric };
     }
 
     rows.push({
       label: field.state?.displayName ?? field.name,
-      value: displayText,
+      value: display.text,
       color: display.color ?? FALLBACK_COLOR,
       colorIndicator,
       colorPlacement,
       isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
       numeric,
       lineStyle: field.config.custom?.lineStyle,
+      delta,
     });
   }
 
