@@ -31,7 +31,10 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
         transform: 'translateY(-50%)',
       },
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['opacity', 'scale']),
+        transition: theme.transitions.create(['opacity', 'scale'], {
+          duration: theme.transitions.duration.shortest,
+          easing: theme.transitions.easing.easeIn,
+        }),
       },
     }),
     modalAppear: css({ opacity: 0, scale: 0.85 }),
@@ -45,7 +48,7 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       left: 0,
       backgroundColor: theme.components.overlay.background,
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create('opacity'),
+        transition: theme.transitions.create('opacity', { duration: theme.transitions.duration.standard }),
       },
     }),
     modalBackdropAppear: css({ opacity: 0 }),

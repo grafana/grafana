@@ -272,7 +272,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '.rc-drawer-content-wrapper': {
         boxShadow: theme.shadows.z3,
-        border: `1px solid ${theme.colors.border.weak}`,
       },
     }),
     scrollWrapper: css(
