@@ -115,9 +115,9 @@
     "borderRadiusLg": 12
   },
   "shadows": {
-    "z1": "0px 0px 2px 2px hsl(from palette.neutral150 h s l / 0.30)",
-    "z2": "0px 0px 3px 3px hsl(from palette.neutral150 h s l / 0.40)",
-    "z3": "0px 0px 4px 4px hsl(from palette.neutral150 h s l / 0.50)"
+    "z1": "0px 1px 2px hsl(from palette.neutral350 h s l / 0.75)",
+    "z2": "0px 4px 8px hsl(from palette.neutral350 h s l / 0.75)",
+    "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
   },
   "components": {
     "checkbox": {
@@ -132,7 +132,7 @@
       "borderColor": "palette.neutral200"
     },
     "overlay": {
-      "background": "hsl(from palette.neutral300 h s l / 0.5)"
+      "background": "hsl(from palette.neutral400 h s l / 0.5)"
     },
     "dropdown": {
       "borderColor": "palette.neutral200"
