@@ -28,7 +28,9 @@ describe('addVariable', () => {
     const newVariable = new CustomVariable({ name: 'added', query: 'c,d' });
     addVariable({ source: variableSet, addedObject: newVariable });
 
-    expect(variableSet.state.variables).toEqual([existing, newVariable]);
+    expect(variableSet.state.variables).toHaveLength(2);
+    expect(variableSet.state.variables[0]).toBe(existing);
+    expect(variableSet.state.variables[1]).toBe(newVariable);
     // Adding an element selects it so the user can edit it straight away
     expect(dashboard.state.sidebar.getSelectedObject()).toBe(newVariable);
 
