@@ -55,7 +55,7 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
-  comparisonPairingMap?: Map<number, number>;
+  comparisonPairingPairs?: Map<number, number>;
   /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
   assistantContext?: AssistantTooltipContext;
 }
@@ -78,7 +78,7 @@ export const TimeSeriesTooltip = ({
   compareDiffMs,
   filterByGroupedLabels,
   assistantContext,
-  comparisonPairingMap = new Map(),
+  comparisonPairingPairs,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -91,32 +91,11 @@ export const TimeSeriesTooltip = ({
 
   const xDisp = formattedValueToString(xField.display!(xVal));
 
-  let compareFieldIdx: number | undefined = undefined;
-  let isForCompareField = false;
-  if (seriesIdx !== null && seriesIdx !== undefined) {
-    const hoveredFrameIdx = series.fields[seriesIdx].state?.origin?.frameIndex;
-    const hoveredFieldIdx = series.fields[seriesIdx].state?.origin?.fieldIndex;
-    if (hoveredFrameIdx !== undefined) {
-      // comparisonPairingMap is always compareIdx, origIdx
-      const origIdx = comparisonPairingMap.get(hoveredFrameIdx);
-      if (origIdx !== undefined) {
-        const origFrameIdx = series.fields.findIndex(
-          (field) => field.state?.origin?.frameIndex === origIdx && field.state.origin.fieldIndex === hoveredFieldIdx
-        );
-        compareFieldIdx = origFrameIdx;
-        console.log('found orig from comp', hoveredFrameIdx, origFrameIdx);
-      } else {
-        const compIdx = [...comparisonPairingMap].find(([_, value]) => value === hoveredFrameIdx)?.[0];
-        const compFrameIdx = series.fields.findIndex((field, i) => field.state?.origin?.frameIndex === compIdx);
-        console.log('found comp from orig', hoveredFrameIdx, compFrameIdx);
-        compareFieldIdx = compFrameIdx;
-      }
-    }
-  }
+  const compareFieldIdx = seriesIdx == null ? undefined : comparisonPairingPairs?.get(seriesIdx);
 
   // if there is no compare, use mode.
   // if there is a compare but mode is set to not multi, use mode.
-  // if there is a compare and mode is set to single, use multi to show compare field
+  // if there is a compare and mode is set to single, use multi to show compare field (we filter out only relevant fields)
   const modeWithCompare =
     compareFieldIdx === undefined || mode !== TooltipDisplayMode.Single ? mode : TooltipDisplayMode.Multi;
 
@@ -131,13 +110,9 @@ export const TimeSeriesTooltip = ({
       const isRightType = field.type === FieldType.number || field.type === FieldType.enum;
       if (compareFieldIdx === undefined) {
         return isRightType;
-      } else {
-        return (
-          isRightType &&
-          (field.state?.displayName === series.fields[compareFieldIdx].state?.displayName ||
-            (seriesIdx !== undefined && seriesIdx !== null && series.fields[seriesIdx].name === field.name))
-        );
       }
+      // narrow Multi back down to just the hovered series and its counterpart
+      return isRightType && (i === seriesIdx || i === compareFieldIdx);
     },
     hideZeros,
     _rest,

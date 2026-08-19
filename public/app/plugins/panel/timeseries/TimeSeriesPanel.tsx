@@ -32,7 +32,7 @@ import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getTimezones, prepareGraphableFields } from './utils';
+import { getTimezones, prepareGraphableFields, getComparisonFieldPairs } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -67,11 +67,10 @@ export const TimeSeriesPanel = ({
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
-  const { frames, compareDiffMs, comparisonPairingMap } = useMemo(() => {
+  const { frames, compareDiffMs } = useMemo(() => {
     let frames = prepareGraphableFields(data.series, theme, timeRange);
     if (frames != null) {
       let compareDiffMs: number[] = [0];
-      let comparisonPairingMap = new Map();
 
       // Held separately from `frames` below: TS won't retain the null-check narrowing of `frames`
       // inside the .map callback once `frames` itself gets reassigned in this scope.
@@ -86,25 +85,6 @@ export const TimeSeriesPanel = ({
           }
         });
 
-        if (frame.meta?.timeCompare?.originalRefId !== undefined) {
-          const compareFrameIdx = frames?.findIndex((frameComp) => {
-            const foundRefId = frameComp.refId === frame.meta!.timeCompare!.originalRefId;
-            if (foundRefId) {
-              const fieldCompExampleName = frameComp.fields.filter(
-                (fieldComp) => fieldComp.type === FieldType.number
-              )[0].name;
-              return frame.fields.some(
-                (frameField) => frameField.name.replace('-compare', '') === fieldCompExampleName
-              );
-            } else {
-              return false;
-            }
-          });
-          if (compareFrameIdx !== undefined && compareFrameIdx > -1) {
-            comparisonPairingMap.set(i, compareFrameIdx);
-          }
-        }
-
         if (diffMs !== 0) {
           // Check if the compared frame needs time alignment
           // Apply alignment when time ranges match (no shift applied yet)
@@ -118,7 +98,7 @@ export const TimeSeriesPanel = ({
         return frame;
       });
 
-      return { frames, compareDiffMs, comparisonPairingMap };
+      return { frames, compareDiffMs };
     }
 
     return { frames };
@@ -186,6 +166,8 @@ export const TimeSeriesPanel = ({
       onPinnedToSidebarChange={onPinnedToSidebarChange}
     >
       {(uplotConfig, alignedFrame) => {
+        const compFieldPairs = getComparisonFieldPairs(alignedFrame, frames);
+        console.log('wat', compFieldPairs);
         return (
           <>
             {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}
@@ -237,7 +219,7 @@ export const TimeSeriesPanel = ({
                       filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
-                      comparisonPairingMap={comparisonPairingMap}
+                      comparisonPairingPairs={compFieldPairs}
                       assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );
