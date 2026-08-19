@@ -1,5 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { openMenu } from 'react-select-event';
 
 import { selectors } from '../../e2e/selectors';
 import createMockDatasource from '../../mocks/datasource';
@@ -7,8 +8,13 @@ import createMockPanelData from '../../mocks/panelData';
 import createMockQuery from '../../mocks/query';
 import { selectOptionInTest } from '../../utils/testUtils';
 import { createMockResourcePickerData } from '../LogsQueryEditor/mocks';
+import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 
-import MetricsQueryEditor from './MetricsQueryEditor';
+import MetricsQueryEditor, {
+  getSelectionNotice,
+  isBatchableNamespace,
+  isResourceRowDisabled,
+} from './MetricsQueryEditor';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -353,6 +359,64 @@ describe('MetricsQueryEditor', () => {
     });
   });
 
+  it('hides non-batchable namespaces from the namespace picker when the batch API is enabled', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    mockDatasource.azureMonitorDatasource.batchAPIEnabled = true;
+    mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest.fn().mockResolvedValue([
+      { text: 'Microsoft.Compute/virtualMachines', value: 'microsoft.compute/virtualmachines' },
+      { text: 'Guest (classic)', value: 'azure.vm.windows.guestmetrics' },
+      { text: 'Windows Azure Diagnostics', value: 'Windows Azure Diagnostics' },
+      { text: 'My Custom Metrics', value: 'wad' },
+    ]);
+
+    render(
+      <MetricsQueryEditor
+        data={mockPanelData}
+        query={createMockQuery()}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={jest.fn()}
+        setError={() => {}}
+      />
+    );
+
+    const namespaceField = await screen.findByLabelText('Metric namespace');
+    openMenu(namespaceField);
+
+    const listbox = await screen.findByRole('listbox');
+    await waitFor(() => expect(within(listbox).getByText('Microsoft.Compute/virtualMachines')).toBeInTheDocument());
+    expect(within(listbox).queryByText('Guest (classic)')).not.toBeInTheDocument();
+    expect(within(listbox).queryByText('Windows Azure Diagnostics')).not.toBeInTheDocument();
+    expect(within(listbox).queryByText('My Custom Metrics')).not.toBeInTheDocument();
+  });
+
+  it('shows all namespaces in the namespace picker when the batch API is disabled', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    mockDatasource.azureMonitorDatasource.batchAPIEnabled = false;
+    mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest.fn().mockResolvedValue([
+      { text: 'Microsoft.Compute/virtualMachines', value: 'microsoft.compute/virtualmachines' },
+      { text: 'Guest (classic)', value: 'azure.vm.windows.guestmetrics' },
+    ]);
+
+    render(
+      <MetricsQueryEditor
+        data={mockPanelData}
+        query={createMockQuery()}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={jest.fn()}
+        setError={() => {}}
+      />
+    );
+
+    const namespaceField = await screen.findByLabelText('Metric namespace');
+    openMenu(namespaceField);
+
+    const listbox = await screen.findByRole('listbox');
+    await waitFor(() => expect(within(listbox).getByText('Guest (classic)')).toBeInTheDocument());
+    expect(within(listbox).getByText('Microsoft.Compute/virtualMachines')).toBeInTheDocument();
+  });
+
   it('should show unselect a resource if the value is manually edited', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
@@ -444,5 +508,126 @@ describe('MetricsQueryEditor', () => {
         }),
       })
     );
+  });
+});
+
+const makeRow = (subscription: string, region: string, namespace: string, name: string): ResourceRow => ({
+  id: name,
+  uri: `/subscriptions/${subscription}/resourceGroups/rg/providers/${namespace}/${name}`,
+  name,
+  type: ResourceRowType.Resource,
+  typeLabel: namespace,
+  location: region,
+});
+
+const vmEastA = makeRow('sub-a', 'eastus', 'Microsoft.Compute/virtualMachines', 'vm-a');
+const vmWestB = makeRow('sub-b', 'westus', 'Microsoft.Compute/virtualMachines', 'vm-b');
+const storageEastA = makeRow('sub-a', 'eastus', 'Microsoft.Storage/storageAccounts', 'sa-a');
+
+describe('isResourceRowDisabled', () => {
+  it('never disables a row when nothing is selected', () => {
+    expect(isResourceRowDisabled(vmWestB, [], true)).toBe(false);
+    expect(isResourceRowDisabled(vmWestB, [], false)).toBe(false);
+  });
+
+  describe('batch API enabled', () => {
+    it('allows the same namespace across subscriptions and regions', () => {
+      expect(isResourceRowDisabled(vmWestB, [vmEastA], true)).toBe(false);
+    });
+
+    it('disables a different namespace', () => {
+      expect(isResourceRowDisabled(storageEastA, [vmEastA], true)).toBe(true);
+    });
+
+    it('never disables subscription or resource group rows, as they may contain selectable resources', () => {
+      const subscriptionRow: ResourceRow = {
+        id: 'sub-b',
+        uri: '/subscriptions/sub-b',
+        name: 'sub-b',
+        type: ResourceRowType.Subscription,
+        typeLabel: 'Subscription',
+      };
+      const resourceGroupRow: ResourceRow = {
+        id: 'rg',
+        uri: '/subscriptions/sub-b/resourceGroups/rg',
+        name: 'rg',
+        type: ResourceRowType.ResourceGroup,
+        typeLabel: 'Resource group',
+      };
+      // A VM is selected; these containers have a different (or absent) namespace but must stay enabled.
+      expect(isResourceRowDisabled(subscriptionRow, [vmEastA], true)).toBe(false);
+      expect(isResourceRowDisabled(resourceGroupRow, [vmEastA], true)).toBe(false);
+    });
+
+    it('disables Guest OS metric namespaces, even as the first selection', () => {
+      const windowsGuest = makeRow('sub-a', 'eastus', 'azure.vm.windows.guestmetrics', 'vm-guest');
+      const linuxGuest = makeRow('sub-a', 'eastus', 'azure.vm.linux.guestmetrics', 'vm-guest');
+      expect(isResourceRowDisabled(windowsGuest, [], true)).toBe(true);
+      expect(isResourceRowDisabled(linuxGuest, [], true)).toBe(true);
+    });
+
+    it('disables Guest OS metric namespaces case-insensitively', () => {
+      const windowsGuest = makeRow('sub-a', 'eastus', 'Azure.VM.Windows.GuestMetrics', 'vm-guest');
+      expect(isResourceRowDisabled(windowsGuest, [], true)).toBe(true);
+    });
+
+    it('disables legacy Windows Azure Diagnostics namespaces, even as the first selection', () => {
+      const wadShort = makeRow('sub-a', 'eastus', 'WAD', 'vm-wad');
+      const wadDiagnostics = makeRow('sub-a', 'eastus', 'Windows Azure Diagnostics', 'vm-wad');
+      expect(isResourceRowDisabled(wadShort, [], true)).toBe(true);
+      expect(isResourceRowDisabled(wadDiagnostics, [], true)).toBe(true);
+    });
+
+    it('keeps standard resource-type namespaces selectable', () => {
+      expect(isResourceRowDisabled(vmEastA, [], true)).toBe(false);
+      expect(isResourceRowDisabled(storageEastA, [], true)).toBe(false);
+    });
+  });
+
+  describe('batch API disabled', () => {
+    it('allows the same subscription, region, and compatible namespace', () => {
+      const vmEastA2 = makeRow('sub-a', 'eastus', 'Microsoft.Compute/virtualMachines', 'vm-a2');
+      expect(isResourceRowDisabled(vmEastA2, [vmEastA], false)).toBe(false);
+    });
+
+    it('disables a row in a different subscription or region', () => {
+      expect(isResourceRowDisabled(vmWestB, [vmEastA], false)).toBe(true);
+    });
+  });
+});
+
+describe('isBatchableNamespace', () => {
+  it('treats standard resource-type namespaces as batchable', () => {
+    expect(isBatchableNamespace('microsoft.compute/virtualmachines')).toBe(true);
+    expect(isBatchableNamespace('Microsoft.Storage/storageAccounts')).toBe(true);
+  });
+
+  it('treats an empty or undefined namespace as batchable', () => {
+    expect(isBatchableNamespace(undefined)).toBe(true);
+    expect(isBatchableNamespace('')).toBe(true);
+  });
+
+  it('treats Guest OS metric namespaces as non-batchable', () => {
+    expect(isBatchableNamespace('azure.vm.windows.guestmetrics')).toBe(false);
+    expect(isBatchableNamespace('azure.vm.linux.guestmetrics')).toBe(false);
+    expect(isBatchableNamespace('Azure.VM.Windows.GuestMetrics')).toBe(false);
+  });
+
+  it('treats legacy Windows Azure Diagnostics namespaces as non-batchable', () => {
+    expect(isBatchableNamespace('Windows Azure Diagnostics')).toBe(false);
+    expect(isBatchableNamespace('WAD')).toBe(false);
+    expect(isBatchableNamespace('  wad  ')).toBe(false);
+  });
+});
+
+describe('getSelectionNotice', () => {
+  const selected: ResourceRowGroup = [vmEastA];
+
+  it('mentions cross-subscription/region selection when the batch API is enabled', () => {
+    expect(getSelectionNotice(selected, true)).toContain('across subscriptions and regions');
+  });
+
+  it('mentions same-location selection when the batch API is disabled', () => {
+    expect(getSelectionNotice(selected, false)).toContain('same resource type and location');
   });
 });

@@ -1,5 +1,6 @@
 import React, { type FC, useMemo, useState } from 'react';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, type ModalProps, Space, Spinner, Stack, Text } from '@grafana/ui';
@@ -8,7 +9,6 @@ import { type RouteWithID } from '../../../../../../plugins/datasource/alertmana
 import { type FormAmRoute } from '../../../types/amroutes';
 import { defaultGroupBy } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { ErrorModal } from '../../ErrorModal';
 import { AmRootRouteForm } from '../EditDefaultPolicyForm';
@@ -64,7 +64,7 @@ const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: Del
           <Text element="p">
             <Trans
               i18nKey="alerting.policies.delete-modal.permanently-remove"
-              values={{ routeName: routeName === ROOT_ROUTE_NAME || !routeName ? 'Default Policy' : routeName }}
+              values={{ routeName: isDefaultRoutingTreeName(routeName) ? 'Default Policy' : routeName }}
             >
               This action will permanently remove the <code>{'{{routeName}}'}</code> notification policy.
             </Trans>
@@ -132,7 +132,7 @@ export const ResetModal = React.memo(
       return <ErrorModal isOpen={isOpen} onDismiss={onResetDismiss} error={error} />;
     }
 
-    const displayName = routeName === ROOT_ROUTE_NAME || !routeName ? 'Default Policy' : routeName;
+    const displayName = isDefaultRoutingTreeName(routeName) ? 'Default Policy' : routeName;
 
     return (
       <ConfirmModal

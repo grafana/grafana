@@ -5,7 +5,7 @@
  * model.
  */
 
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';

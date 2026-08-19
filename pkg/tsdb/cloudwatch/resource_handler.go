@@ -329,6 +329,8 @@ func (ds *DataSource) LogGroupFieldsHandler(ctx context.Context, parameters url.
 }
 
 func (ds *DataSource) ExternalIdHandler(_ context.Context, _ url.Values) ([]byte, *models.HttpError) {
+	// Always return the stack external ID. ConnectionConfig uses this as the mint/display
+	// base and chooses per-DS vs stack from jsonData (usePerDatasourceExternalId + grafanaExternalId).
 	response := map[string]string{
 		"externalId": ds.Settings.GrafanaSettings.ExternalID,
 	}

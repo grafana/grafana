@@ -1,12 +1,20 @@
 package resource
 
 import (
+	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
+	authn "github.com/grafana/authlib/authn"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -15,6 +23,47 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
+
+type fakeTokenExchanger struct {
+	token  string
+	gotReq *authn.TokenExchangeRequest
+}
+
+func (f *fakeTokenExchanger) Exchange(_ context.Context, req authn.TokenExchangeRequest) (*authn.TokenExchangeResponse, error) {
+	f.gotReq = &req
+	return &authn.TokenExchangeResponse{Token: f.token}, nil
+}
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+// The app-platform apiserver authenticates a standard bearer token, so the
+// watcher's transport must send the exchanged token in Authorization, not the
+// authlib X-Access-Token header (which the server ignores, yielding anonymous).
+func TestManifestWatcher_AuthUsesAuthorizationHeader(t *testing.T) {
+	exchanger := &fakeTokenExchanger{token: "exchanged-token"}
+
+	var authorization, accessToken string
+	base := roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+		authorization = r.Header.Get("Authorization")
+		accessToken = r.Header.Get("X-Access-Token")
+		rr := httptest.NewRecorder()
+		rr.WriteHeader(http.StatusOK)
+		return rr.Result(), nil
+	})
+
+	req, _ := http.NewRequestWithContext(t.Context(), http.MethodGet, "http://example.org", nil)
+	resp, err := manifestAuthWrapper(exchanger)(base).RoundTrip(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+
+	require.Equal(t, "Bearer exchanged-token", authorization)
+	require.Empty(t, accessToken)
+	require.NotNil(t, exchanger.gotReq)
+	require.Equal(t, []string{appManifestGVR.Group}, exchanger.gotReq.Audiences)
+	require.Equal(t, clientauth.WildcardNamespace, exchanger.gotReq.Namespace)
+}
 
 // testAppManifestObj builds an unstructured AppManifest (v1alpha2) with one
 // version declaring a single kind and the given search fields.
@@ -127,6 +176,34 @@ func TestManifestWatcher_EmptyListKeepsPreviousSet(t *testing.T) {
 	})
 	w.runPollCycle(t.Context())
 	require.Len(t, w.Manifests(), 1)
+}
+
+func TestManifestWatcher_RecordsMetrics(t *testing.T) {
+	client := fakeManifestClient(
+		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
+	)
+	w := newManifestWatcher(client, 0, nil, nil)
+	w.metrics = newManifestWatcherMetrics(prometheus.NewPedanticRegistry())
+
+	// First poll: one successful poll, one reload, one manifest, a fresh timestamp.
+	w.runPollCycle(t.Context())
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.polls.WithLabelValues("success")))
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.reloads))
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.manifests))
+	require.Positive(t, testutil.ToFloat64(w.metrics.lastSuccess))
+
+	// Unchanged data: another successful poll, but no new reload.
+	w.runPollCycle(t.Context())
+	require.Equal(t, float64(2), testutil.ToFloat64(w.metrics.polls.WithLabelValues("success")))
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.reloads))
+
+	// A list failure increments the error label and leaves reloads untouched.
+	client.PrependReactor("list", "appmanifests", func(k8stesting.Action) (bool, runtime.Object, error) {
+		return true, nil, errors.New("apiserver down")
+	})
+	w.runPollCycle(t.Context())
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.polls.WithLabelValues("error")))
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.reloads))
 }
 
 func TestManifestWatcher_PicksUpChangesOnNextPoll(t *testing.T) {

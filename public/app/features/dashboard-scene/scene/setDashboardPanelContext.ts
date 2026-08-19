@@ -21,14 +21,13 @@ import { type DashboardScene } from './DashboardScene';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
-  context.app = dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard;
 
-  dashboard.subscribeToState((state) => {
-    if (state.editPanel) {
-      context.app = CoreApp.PanelEditor;
-    } else {
-      context.app = CoreApp.Dashboard;
-    }
+  // Read on access. The panel context is built once and cached on the VizPanel, but deactivating the
+  // dashboard clears its event bus, so a subscription here would be dropped and never re-established.
+  Object.defineProperty(context, 'app', {
+    enumerable: true,
+    configurable: true,
+    get: () => (dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard),
   });
 
   context.canAddAnnotations = () => {

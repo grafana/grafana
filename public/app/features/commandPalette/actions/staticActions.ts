@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
@@ -18,6 +18,7 @@ import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashg
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
@@ -215,9 +216,7 @@ export function useStaticActions(): CommandPaletteAction[] {
       });
     }
 
-    const canReadQueries = config.featureToggles.savedQueriesRBAC
-      ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
-      : contextSrv.isSignedIn;
+    const canReadQueries = hasSavedQueryReadPermissions();
 
     if (queryLibraryEnabled && canReadQueries) {
       navBarActions.push({

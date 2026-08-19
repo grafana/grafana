@@ -1,18 +1,16 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-// TODO: re-enable once flakiness is resolved (see tracking issue)
-test.describe.skip(
+test.describe(
   'Keyboard shortcuts',
   {
     tag: ['@various'],
   },
   () => {
-    test.beforeEach(async ({ page, selectors }) => {
+    test.beforeEach(async ({ page }) => {
       await page.goto('/');
 
       // Wait for the page to load
-      const panelTitle = page.getByTestId(selectors.components.Panels.Panel.title('Latest from the blog'));
-      await expect(panelTitle).toBeVisible();
+      await expect(page.getByText('Welcome to Grafana')).toBeVisible();
     });
 
     test('sequence shortcuts should work', async ({ page, selectors }) => {
@@ -28,8 +26,7 @@ test.describe.skip(
 
       // Navigate back to home with 'gh' shortcut
       await page.keyboard.type('gh');
-      const panelTitle = page.getByTestId(selectors.components.Panels.Panel.title('Latest from the blog'));
-      await expect(panelTitle).toBeVisible();
+      await expect(page.getByText('Welcome to Grafana')).toBeVisible();
     });
 
     test('ctrl+z should zoom out the time range', async ({ page, selectors }) => {
@@ -102,6 +99,7 @@ test.describe.skip(
         .waitFor({ state: 'visible' });
 
       // Test the keyboard shortcut first in the main dashboard view
+      await page.waitForURL('/dashboard/new?orgId=1&from=now-6h&to=now&timezone=browser');
       const currentUrl = page.url();
       const modKey = process.platform === 'darwin' ? 'Meta' : 'Control';
 

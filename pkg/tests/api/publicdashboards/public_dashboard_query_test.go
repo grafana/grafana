@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -37,9 +38,8 @@ func TestPublicDashboardQueryAPI(t *testing.T) {
 
 	datasourcePayload := map[string]interface{}{
 		"name":   "Test Data Source",
-		"type":   "prometheus",
-		"uid":    "prometheus",
-		"url":    "http://localhost:9090",
+		"type":   datasources.DS_TESTDATA,
+		"uid":    "testdata",
 		"access": "proxy",
 	}
 	datasourceBytes, err := json.Marshal(datasourcePayload)
@@ -64,11 +64,11 @@ func TestPublicDashboardQueryAPI(t *testing.T) {
 						"title": "Test Panel",
 						"targets": []map[string]interface{}{
 							{
-								"refId": "A",
-								"expr":  "up",
+								"refId":      "A",
+								"scenarioId": "random_walk",
 								"datasource": map[string]interface{}{
-									"type": "prometheus",
-									"uid":  "prometheus",
+									"type": datasources.DS_TESTDATA,
+									"uid":  "testdata",
 								},
 							},
 						},

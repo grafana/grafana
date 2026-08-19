@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand/v2"
 	"net/http"
@@ -25,7 +26,7 @@ type TenantDeleterConfig struct {
 	Interval time.Duration
 	Log      log.Logger
 	// Gcom, when non-nil, is used to confirm the stack is removed in GCOM before local
-	// tenant data is deleted: GetInstanceByID returns Instance with Status "deleted".
+	// tenant data is deleted: GetInstanceByID returns Instance with Status "deleted" or 404.
 	Gcom gcom.Service
 }
 
@@ -56,6 +57,11 @@ func NewTenantDeleterConfig(cfg *setting.Cfg) *TenantDeleterConfig {
 	}
 }
 
+// EmbeddingDeleter removes all vector embeddings for a namespace.
+type EmbeddingDeleter interface {
+	DeleteNamespace(ctx context.Context, namespace string) (int64, error)
+}
+
 // TenantDeleter periodically checks the pending-delete store and removes
 // expired tenant data from the data store.
 type TenantDeleter struct {
@@ -64,17 +70,20 @@ type TenantDeleter struct {
 	dataStore          *dataStore
 	cfg                TenantDeleterConfig
 	gcom               gcom.Service
-	stopCh             chan struct{}
+	// embeddingDeleter is nil when the vector backend is disabled.
+	embeddingDeleter EmbeddingDeleter
+	stopCh           chan struct{}
 }
 
 // NewTenantDeleter creates a new TenantDeleter. It does NOT start the background goroutine.
-func NewTenantDeleter(ds *dataStore, pds *PendingDeleteStore, cfg TenantDeleterConfig) *TenantDeleter {
+func NewTenantDeleter(ds *dataStore, pds *PendingDeleteStore, cfg TenantDeleterConfig, embeddingDeleter EmbeddingDeleter) *TenantDeleter {
 	return &TenantDeleter{
 		log:                cfg.Log,
 		pendingDeleteStore: pds,
 		dataStore:          ds,
 		cfg:                cfg,
 		gcom:               cfg.Gcom,
+		embeddingDeleter:   embeddingDeleter,
 		stopCh:             make(chan struct{}),
 	}
 }
@@ -164,8 +173,8 @@ func (td *TenantDeleter) runDeletionPass(ctx context.Context) {
 	}
 }
 
-// gcomAllowsTenantDeletion returns true when GCOM returns 200 with Status "deleted" for the given
-// tenant name. Otherwise it returns false and logs.
+// gcomAllowsTenantDeletion returns true when GCOM returns 200 with Status "deleted" or 404 for
+// the given tenant name. Otherwise it returns false and logs.
 func (td *TenantDeleter) gcomAllowsTenantDeletion(ctx context.Context, tenantName string) bool {
 	ctx, span := tracer.Start(ctx, "resource.TenantDeleter.gcomAllowsTenantDeletion", trace.WithAttributes(
 		attribute.String("tenant", tenantName),
@@ -194,6 +203,14 @@ func (td *TenantDeleter) gcomAllowsTenantDeletion(ctx context.Context, tenantNam
 	span.SetAttributes(attribute.Int64("gcom_request_duration_ms", gcomDuration.Milliseconds()))
 
 	if err != nil {
+		// A 404 means the stack no longer exists in GCOM, which is as good as
+		// Status "deleted" — proceed with local data deletion.
+		if errors.Is(err, gcom.ErrInstanceNotFound) {
+			td.log.Info("stack not found in GCOM; proceeding with local data deletion",
+				"tenant", tenantName, "gcom_instance_id", instanceID)
+			span.SetAttributes(attribute.String("gcom_status", "not_found"))
+			return true
+		}
 		td.log.Error("GCOM instance check failed; skipping local data deletion",
 			"tenant", tenantName, "gcom_instance_id", instanceID, "err", err,
 			"gcom_request_duration_ms", gcomDuration.Milliseconds())
@@ -277,6 +294,20 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 			"duration_ms", time.Since(grStart).Milliseconds(),
 		)
 		totalKeys += len(keys)
+	}
+
+	// Remove the tenant's embeddings from the (separate) vector store.
+	if td.embeddingDeleter != nil && !td.cfg.DryRun {
+		deleted, err := td.embeddingDeleter.DeleteNamespace(ctx, tenantName)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "deleting tenant embeddings failed")
+			return fmt.Errorf("deleting tenant embeddings: %w", err)
+		}
+		span.SetAttributes(attribute.Int64("embeddings_deleted", deleted))
+		td.log.Info("deleted tenant embeddings", "tenant", tenantName, "embeddings_deleted", deleted)
+	} else if td.embeddingDeleter != nil && td.cfg.DryRun {
+		td.log.Info("dry run: would delete tenant embeddings", "tenant", tenantName)
 	}
 
 	span.SetAttributes(

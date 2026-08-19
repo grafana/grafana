@@ -159,7 +159,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
   const goToSidebar = () => {
     // close settings and open dashboard sidebar
     const dashboard = getDashboardSceneFor(model);
-    dashboard.state.editPane.selectObject(dashboard);
+    dashboard.state.sidebar.selectObject(dashboard);
     locationService.partial({
       editview: null,
       [HIGHLIGHT_CATEGORY_PARAM_NAME]: 'dashboard-annotations',

@@ -1,8 +1,8 @@
 .github
 .yarn
-build
+/build
 compiled
-data
+/data
 dist
 pkg
 public/lib/monaco
@@ -19,6 +19,7 @@ public/sass/*.generated.scss
 theme.light.generated.json
 theme.dark.generated.json
 packages/grafana-data/src/themes/schema.generated.json
+packages/grafana-data/src/datetime/easytz.js
 
 # Generated Swagger API specs
 public/api-merged.json

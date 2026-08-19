@@ -1,0 +1,10 @@
+# Panels — agent guide
+
+Built-in visualization panels live here. When adding or changing panel code — and
+especially its tests — invoke these skills with the Skill tool:
+
+- **`panel-testing-strategy`** — how panel/visualization unit + E2E tests should be
+  written: assert real behavior (not existence), the canvas draw-call snapshot
+  harness, and the anti-flake rules. Read it before writing or reviewing panel tests.
+- **`add-e2e-selectors`** — add versioned `@grafana/e2e-selectors` and wire
+  `data-testid` into JSX when making panel UI testable.

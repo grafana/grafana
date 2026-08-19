@@ -157,9 +157,9 @@ describe('PlaylistSrv', () => {
     // Start the playlist
     await srv.start(mockPlaylist);
 
-    // Get history entries
+    // Get history entries via the underlying MemoryHistory (test-env only)
     const history = locationService.getHistory();
-    const entries = (history as unknown as { entries: Location[] }).entries;
+    const entries = (history as unknown as { base: { entries: Location[] } }).base.entries;
 
     // The current entry should be the first dashboard
     expect(entries[entries.length - 1].pathname).toBe('/url/to/aaa');

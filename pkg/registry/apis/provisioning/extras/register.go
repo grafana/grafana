@@ -95,10 +95,6 @@ func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, extras []connection.Ex
 		// Enforcing default connection values if settings are not set
 		types = []string{"github"}
 	}
-	enabledTypes := make(map[apisprovisioning.ConnectionType]struct{}, len(types))
-	for _, e := range types {
-		enabledTypes[apisprovisioning.ConnectionType(e)] = struct{}{}
-	}
 
-	return connection.ProvideFactory(enabledTypes, extras)
+	return connection.ProvideFactory(connection.ToConnectionTypes(types), extras)
 }

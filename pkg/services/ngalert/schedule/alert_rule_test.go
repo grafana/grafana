@@ -499,8 +499,51 @@ func TestAlertRuleAfterEval(t *testing.T) {
 	})
 }
 
+func TestRuleRoutine_GatedUntilWarmed(t *testing.T) {
+	gen := models.RuleGen
+
+	t.Run("results are not applied while the state cache is not warmed", func(t *testing.T) {
+		evalAppliedChan := make(chan time.Time)
+		ruleStore := newFakeRulesStore()
+		instanceStore := &state.FakeInstanceStore{}
+		reg := prometheus.NewPedanticRegistry()
+		sch := setupScheduler(t, ruleStore, instanceStore, reg, nil, nil, nil,
+			withSchedulerClock(clock.NewMock()), withStateGatingUntilWarm(time.Minute))
+		sch.evalAppliedFunc = func(_ models.AlertRuleKey, tm time.Time) { evalAppliedChan <- tm }
+
+		require.Equal(t, state.NotReady, sch.stateManager.Ready(), "manager must start not-warmed")
+
+		rule := gen.With(withQueryForState(t, eval.Alerting)).GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+		folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
+		factory := ruleFactoryFromScheduler(sch)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+		ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: folderTitle})
+		go func() { _ = ruleInfo.Run() }()
+
+		ruleInfo.Eval(&Evaluation{scheduledAt: time.UnixMicro(rand.Int63()), rule: rule, folderTitle: folderTitle})
+		waitForTimeChannel(t, evalAppliedChan)
+
+		orgID := fmt.Sprint(rule.OrgID)
+
+		// The evaluation runs (giving the cache time to warm)...
+		require.Equal(t, 1.0, testutil.ToFloat64(sch.metrics.EvalTotal.WithLabelValues(orgID)),
+			"the rule should still be evaluated")
+
+		// ...but its results are not applied to the cold cache: no state is produced...
+		states := sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
+		require.Empty(t, states, "no state should be produced while gated")
+
+		// ...and the skipped processing is counted with the not-warmed reason.
+		require.Equal(t, 1.0, testutil.ToFloat64(
+			sch.metrics.EvaluationMissed.WithLabelValues(orgID, rule.Title, "state_not_warmed")))
+	})
+}
+
 func blankRuleForTests(ctx context.Context, key models.AlertRuleKeyWithGroup) *alertRule {
 	managerCfg := state.ManagerCfg{
+		Clock:     clock.NewMock(),
 		Historian: &state.FakeHistorian{},
 		Log:       log.NewNopLogger(),
 	}
@@ -731,7 +774,7 @@ func TestRuleRoutine(t *testing.T) {
 			sender := NewSyncAlertsSenderMock()
 			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
+			_, _ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
 			expectedStates := sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 			require.NotEmpty(t, expectedStates)
 
@@ -756,7 +799,7 @@ func TestRuleRoutine(t *testing.T) {
 			sender := NewSyncAlertsSenderMock()
 			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
+			_, _ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
 			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 
 			factory := ruleFactoryFromScheduler(sch)
@@ -780,7 +823,7 @@ func TestRuleRoutine(t *testing.T) {
 			sender.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Times(1)
 			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
+			_, _ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
 			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 
 			factory := ruleFactoryFromScheduler(sch)

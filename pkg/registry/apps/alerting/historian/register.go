@@ -3,6 +3,7 @@ package historian
 import (
 	"context"
 
+	authtypes "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
@@ -38,6 +39,7 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
+	accessClient authtypes.AccessClient,
 ) (*AppInstaller, error) {
 	appSpecificConfig := historianAppConfig.RuntimeConfig{}
 
@@ -57,6 +59,12 @@ func RegisterAppInstaller(
 				Loki: historianAppConfig.LokiConfig{
 					LokiConfig: lokiConfig,
 				},
+				// Restrict notification history to the folders whose alert rules the
+				// caller can read. RBAC resolves accessible folders via the folder API
+				// and the multi-tenant authz service, so it works in the standalone
+				// (multi-tenant) historian deployment.
+				RBACEnabled:  true,
+				AccessClient: accessClient,
 			}
 		}
 	}

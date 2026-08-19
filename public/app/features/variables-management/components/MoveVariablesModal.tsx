@@ -2,9 +2,10 @@ import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Modal, Stack } from '@grafana/ui';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
-import { getVariableFolderPickerExcludeUIDs } from '../utils';
+import { canManageGlobalVariables, canManageVariableScope, getVariableFolderPickerExcludeUIDs } from '../utils';
 
 export interface MoveVariablesModalProps {
   count: number;
@@ -14,25 +15,42 @@ export interface MoveVariablesModalProps {
 }
 
 export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: MoveVariablesModalProps) {
-  // '' is the FolderPicker's uid for the root Dashboards folder (global scope).
-  const [targetFolderUid, setTargetFolderUid] = useState('');
+  const allowGlobalScope = canManageGlobalVariables();
+  // '' is root/global. Non-editors hide root, so start empty (undefined) — NestedFolderPicker
+  // labels '' as "Dashboards" even when showRootFolder is false.
+  const [targetFolderUid, setTargetFolderUid] = useState<string | undefined>(() =>
+    canManageGlobalVariables() ? '' : undefined
+  );
+  const { data: targetFolder } = useGetFolderQueryFacade(targetFolderUid || undefined);
+  // Match the editor Save gate: require CanEdit on folder targets (picker alone is not enough
+  // for team folders / other surfaces that may still appear without Edit).
+  const targetFolderMatches = Boolean(targetFolderUid && targetFolder?.uid === targetFolderUid);
+  const targetFolderCanEdit = targetFolderMatches ? targetFolder?.canEdit : undefined;
+  const targetScopeReady = !targetFolderUid || targetFolderMatches;
+  const canConfirm = targetScopeReady && canManageVariableScope(targetFolderUid, targetFolderCanEdit, allowGlobalScope);
 
   return (
     <Modal isOpen title={t('variables-management.move-modal.title', 'Move variables')} onDismiss={onDismiss}>
       <p>
-        {t('variables-management.move-modal.body', '', {
-          count,
-          defaultValue_one:
-            'Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available everywhere in the organization).',
-          defaultValue_other:
-            'Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).',
-        })}
+        {allowGlobalScope
+          ? t('variables-management.move-modal.body', '', {
+              count,
+              defaultValue_one:
+                'Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available everywhere in the organization).',
+              defaultValue_other:
+                'Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).',
+            })
+          : t('variables-management.move-modal.body-folder-only', '', {
+              count,
+              defaultValue_one: 'Move {{count}} selected variable to a folder you can edit.',
+              defaultValue_other: 'Move {{count}} selected variables to a folder you can edit.',
+            })}
       </p>
       <Field noMargin label={t('variables-management.move-modal.folder-label', 'Folder')}>
         <FolderPicker
-          showRootFolder
+          showRootFolder={allowGlobalScope}
           value={targetFolderUid}
-          onChange={(uid) => setTargetFolderUid(uid ?? '')}
+          onChange={(uid) => setTargetFolderUid(allowGlobalScope ? (uid ?? '') : uid)}
           excludeUIDs={getVariableFolderPickerExcludeUIDs()}
         />
       </Field>
@@ -41,7 +59,7 @@ export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: Mo
           <Button variant="secondary" onClick={onDismiss} fill="outline">
             <Trans i18nKey="variables-management.move-modal.cancel">Cancel</Trans>
           </Button>
-          <Button disabled={isMoving} onClick={() => onConfirm(targetFolderUid || undefined)}>
+          <Button disabled={isMoving || !canConfirm} onClick={() => onConfirm(targetFolderUid || undefined)}>
             {isMoving
               ? t('variables-management.move-modal.moving', 'Moving...')
               : t('variables-management.move-modal.move', 'Move')}

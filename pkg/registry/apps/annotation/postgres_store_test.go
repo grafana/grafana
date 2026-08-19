@@ -196,6 +196,31 @@ func TestIntegrationPostgresStore(t *testing.T) {
 			all := append(annotationNames(first), annotationNames(second)...)
 			assert.ElementsMatch(t, []string{"page-a", "page-b", "page-c"}, all)
 		})
+
+		t.Run("Orders a limited list by end time across points and tied ranges", func(t *testing.T) {
+			ordDash := "ord-dash"
+			at := func(start int64, end ...int64) func(*annotationV0.Annotation) {
+				return func(a *annotationV0.Annotation) {
+					a.Spec.Time = start
+					a.Spec.DashboardUID = &ordDash
+					if len(end) > 0 {
+						a.Spec.TimeEnd = &end[0]
+					}
+				}
+			}
+			create(t, "a-point-hi", at(1000))
+			create(t, "win-800", at(800, 900))
+			create(t, "win-500", at(500, 900))
+			create(t, "drop-300", at(300, 900))
+			create(t, "drop-100", at(100, 900))
+			create(t, "drop-50", at(50, 900))
+			create(t, "b-point-lo", at(400))
+
+			list, err := store.List(ctx, ns, ListOptions{DashboardUID: ordDash, Limit: 3})
+			require.NoError(t, err)
+
+			assert.Equal(t, []string{"a-point-hi", "win-800", "win-500"}, annotationNames(list))
+		})
 	})
 
 	t.Run("Delete of a missing annotation returns ErrNotFound", func(t *testing.T) {

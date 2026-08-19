@@ -5,7 +5,7 @@ import * as React from 'react';
 import { type FC, Fragment, type JSX, type ReactNode, useCallback, useState } from 'react';
 import { useToggle } from 'react-use';
 
-import { AlertLabel, getInheritedProperties } from '@grafana/alerting';
+import { AlertLabel, getInheritedProperties, isDefaultRoutingTreeName } from '@grafana/alerting';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -40,7 +40,7 @@ import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager
 import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { NotificationPolicyAction, TimeIntervalAction } from '../../hooks/abilities/types';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
-import { ROOT_ROUTE_NAME, ROUTES_RESOURCE_TYPE } from '../../utils/k8s/constants';
+import { ROUTES_RESOURCE_TYPE } from '../../utils/k8s/constants';
 import { canAdminEntity, canDeleteEntity, canEditEntity, isProvisionedResource } from '../../utils/k8s/utils';
 import { type MatcherFormatter, normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createContactPointSearchLink, createMuteTimingLink } from '../../utils/misc';
@@ -833,10 +833,10 @@ export const DefaultPolicyIndicator: FC<DefaultPolicyIndicatorProps> = ({ route 
   return (
     <Stack direction="row" alignItems="center" gap={1}>
       <Text element="h2" variant="body" weight="medium">
-        {route.name === ROOT_ROUTE_NAME || !route.name ? (
+        {isDefaultRoutingTreeName(route.name) ? (
           <Trans i18nKey="alerting.policies.default-policy.title">Default policy</Trans>
         ) : (
-          route.name
+          (route.name ?? '')
         )}
       </Text>
       {isFinite(routeCount) && (

@@ -17,7 +17,7 @@ jest.mock('@grafana/runtime', () => {
     ...actual,
     config: {
       ...actual.config,
-      featureToggles: { provisioning: true },
+      provisioningEnabled: true,
     },
   };
 });

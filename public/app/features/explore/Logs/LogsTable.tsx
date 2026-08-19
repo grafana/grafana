@@ -23,7 +23,7 @@ import {
   type LogRowModel,
   type GrafanaTheme2,
 } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   type AdHocFilterItem,
   type CustomCellRendererProps,
@@ -31,6 +31,7 @@ import {
   Table,
   TableCellDisplayMode,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { DATAPLANE_ID_NAME, type LogsFrame } from 'app/features/logs/logsFrame';
@@ -80,6 +81,7 @@ export function LogsTable(props: Props) {
   const [columnWidthMap, setColumnWidthMap] = useState<Record<string, number>>({});
   const timeIndex = logsFrame?.timeField.index;
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   // Extract selected log ID from URL parameter
   const selectedLogInfo = useMemo(() => {
@@ -144,7 +146,7 @@ export function LogsTable(props: Props) {
       const [frameWithOverrides] = applyFieldOverrides({
         data: [sortedFrame],
         timeZone,
-        theme: config.theme2,
+        theme,
         replaceVariables: (v: string) => v,
         fieldConfig: {
           defaults: {
@@ -236,6 +238,7 @@ export function LogsTable(props: Props) {
       timeIndex,
       styles.firstColumnCell,
       styles.firstColumnHeader,
+      theme,
       props.displayedFields,
       props.exploreId,
       props.panelState,

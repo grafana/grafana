@@ -4,8 +4,9 @@ import { type DataLink } from '../../types/dataLink';
 import { type FieldOverrideContext } from '../../types/fieldOverrides';
 import { type SelectableValue } from '../../types/select';
 import { type SliderMarks } from '../../types/slider';
-import { type ThresholdsConfig } from '../../types/thresholds';
+import { type Threshold, type ThresholdsConfig } from '../../types/thresholds';
 import { type ValueMapping } from '../../types/valueMapping';
+import { sortThresholds } from '../thresholds';
 
 export const identityOverrideProcessor = <T>(value: T) => {
   return value;
@@ -127,12 +128,63 @@ export interface ThresholdsFieldConfigSettings {
   // Anything?
 }
 
+/**
+ * Resolves a threshold step's optional `valueExpr` (a dashboard-variable expression)
+ * against the current variable values. Falls back to the numeric `value` when the
+ * expression is missing, resolves to something non-numeric, or the variable currently
+ * has more than one value selected. The returned step never carries `valueExpr`.
+ */
+function resolveThreshold(step: Threshold, context: FieldOverrideContext): Threshold {
+  const { valueExpr, ...resolved } = step;
+
+  if (!valueExpr || !context.replaceVariables) {
+    return resolved;
+  }
+
+  // The function format exposes raw variable values at interpolation time:
+  // multi-value selections arrive as arrays and are only valid with exactly one value selected
+  let multiInvalid = false;
+  const text = context.replaceVariables(valueExpr, context.field?.state?.scopedVars, (v: unknown) => {
+    if (Array.isArray(v)) {
+      if (v.length > 1) {
+        multiInvalid = true;
+        return '';
+      }
+      return String(v[0]);
+    }
+    return String(v);
+  });
+
+  // Strict parsing: Number() rejects partial-numeric strings like '80ms';
+  // unknown variables are left uninterpolated and fail parsing the same way
+  const trimmed = text.trim();
+  const num = trimmed === '' ? NaN : Number(trimmed);
+
+  if (multiInvalid || !Number.isFinite(num)) {
+    return resolved;
+  }
+
+  return { ...resolved, value: num };
+}
+
 export const thresholdsOverrideProcessor = (
   value: any,
-  _context: FieldOverrideContext,
+  context: FieldOverrideContext,
   _settings?: ThresholdsFieldConfigSettings
 ): ThresholdsConfig => {
-  return value; // !!!! likely not !!!!
+  if (!value || !Array.isArray(value.steps) || !value.steps.some((step: Threshold) => step.valueExpr != null)) {
+    return value;
+  }
+
+  // The base step is always -Infinity (null in JSON); an expression there is meaningless and ignored
+  const [{ valueExpr: baseExpr, ...base }, ...rawRest] = value.steps;
+  const rest: Threshold[] = rawRest.map((step: Threshold) => resolveThreshold(step, context));
+
+  // Edit-time sorting cannot know variable values, so re-sort the resolved copy,
+  // keeping the base step first
+  sortThresholds(rest);
+
+  return { ...value, steps: [base, ...rest] };
 };
 
 export interface UnitFieldConfigSettings {

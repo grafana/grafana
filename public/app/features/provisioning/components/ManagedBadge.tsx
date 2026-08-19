@@ -48,7 +48,7 @@ interface ManagedBadgeProps {
 export function ManagedBadge({ managerKind, name, isOrphaned = false, repositoryName, sourcePath }: ManagedBadgeProps) {
   // The interactive variant is a separate component so the RTK Query hook only runs (and only
   // requires a store context) when a repository lookup can actually yield actions.
-  if (config.featureToggles.provisioning && managerKind === ManagerKind.Repo && repositoryName && !isOrphaned) {
+  if (config.provisioningEnabled && managerKind === ManagerKind.Repo && repositoryName && !isOrphaned) {
     return <RepoManagedBadge name={name} repositoryName={repositoryName} sourcePath={sourcePath} />;
   }
 

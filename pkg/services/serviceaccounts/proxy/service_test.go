@@ -62,7 +62,11 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 			t.Run(tc.description, func(t *testing.T) {
 				tc := tc
 				_, err := svc.CreateServiceAccount(context.Background(), autoAssignOrgID, &tc.form)
-				assert.Equal(t, err, tc.expectedError, tc.description)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError, tc.description)
+				} else {
+					assert.NoError(t, err, tc.description)
+				}
 			})
 		}
 	})
@@ -93,7 +97,11 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 			t.Run(tc.description, func(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				err := svc.DeleteServiceAccount(context.Background(), autoAssignOrgID, testServiceAccountId)
-				assert.Equal(t, err, tc.expectedError, tc.description)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError, tc.description)
+				} else {
+					assert.NoError(t, err, tc.description)
+				}
 			})
 		}
 	})
@@ -124,7 +132,11 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 			t.Run(tc.description, func(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				err := svc.DeleteServiceAccountToken(context.Background(), autoAssignOrgID, testServiceAccountId, testServiceAccountTokenId)
-				assert.Equal(t, err, tc.expectedError, tc.description)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError, tc.description)
+				} else {
+					assert.NoError(t, err, tc.description)
+				}
 			})
 		}
 	})
@@ -234,7 +246,11 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 				tc := tc
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				_, err := svc.UpdateServiceAccount(context.Background(), autoAssignOrgID, testServiceAccountId, &tc.form)
-				assert.Equal(t, tc.expectedError, err, tc.description)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError, tc.description)
+				} else {
+					assert.NoError(t, err, tc.description)
+				}
 			})
 		}
 	})
@@ -273,7 +289,11 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 				tc := tc
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				_, err := svc.AddServiceAccountToken(context.Background(), testServiceAccountId, &tc.cmd)
-				assert.Equal(t, tc.expectedError, err, tc.description)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError, tc.description)
+				} else {
+					assert.NoError(t, err, tc.description)
+				}
 			})
 		}
 	})

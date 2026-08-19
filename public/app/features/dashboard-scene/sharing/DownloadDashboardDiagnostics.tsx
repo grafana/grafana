@@ -23,6 +23,7 @@ import {
   getDashboardDiagnosticsStatus,
   startDashboardDiagnostics,
 } from 'app/features/query/diagnostics/downloadDiagnostics';
+import { interpolateDiagnosticsQueries } from 'app/features/query/diagnostics/interpolateQueries';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
@@ -79,43 +80,55 @@ function panelIdFrom(panel: VizPanel): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
-// Collects every data panel's queries (with the runner-level datasource filled in and hidden queries
-// dropped, mirroring the single-panel view) into the whole-dashboard request payload. Panels with no
-// active queries (e.g. text panels) are omitted.
-function collectDashboardPanels(dashboard: DashboardScene): DashboardDiagnosticsPanel[] {
+// Collects every data panel's queries (with the runner-level datasource filled in, hidden queries
+// dropped, and template/scoped variables interpolated, mirroring the single-panel view) into the
+// whole-dashboard request payload. Panels with no active queries (e.g. text panels) are omitted.
+async function collectDashboardPanels(dashboard: DashboardScene): Promise<DashboardDiagnosticsPanel[]> {
   const vizPanels = sceneGraph.findAllObjects(dashboard, (o) => o instanceof VizPanel);
-  const panels: DashboardDiagnosticsPanel[] = [];
 
-  for (const obj of vizPanels) {
-    const panel = obj instanceof VizPanel ? obj : undefined;
-    if (!panel) {
-      continue;
-    }
-    const runner = getQueryRunnerFor(panel);
-    const runnerDatasource = runner?.state.datasource;
-    const queries: DataQuery[] = (runner?.state.queries ?? [])
-      .map((query) => (query.datasource ? query : { ...query, datasource: runnerDatasource }))
-      .filter((query) => !query.hide);
-    if (queries.length === 0) {
-      continue;
-    }
-    const timeRange = sceneGraph.getTimeRange(panel).state.value;
-    // Repeat-by-variable clones share their source panel's key (e.g. `panel-3-clone-1` and
-    // `panel-3-clone-2` both parse to id 3 in panelIdFrom), so multiple entries below can carry the
-    // same id -- that's intentional. dashboard.getSaveModel(), sent alongside this list in
-    // startDashboardDiagnostics, only serializes the source panel once (clones aren't separate
-    // save-model elements), so the id has to match that source panel for the backend to resolve its
-    // panel JSON. Each clone still gets its own array entry, so its captured queries aren't lost.
-    panels.push({
-      id: panelIdFrom(panel),
-      title: panel.state.title ?? '',
-      from: String(timeRange.from.valueOf()),
-      to: String(timeRange.to.valueOf()),
-      queries,
-    });
-  }
+  // Resolve every panel in parallel: each panel's interpolation makes its own datasource round
+  // trips, so serializing them would scale latency with the panel count on large dashboards.
+  // Promise.all preserves scene-graph order, and null entries (non-VizPanels, panels with no active
+  // queries such as text panels) are dropped afterwards.
+  const collected = await Promise.all(
+    vizPanels.map(async (obj): Promise<DashboardDiagnosticsPanel | null> => {
+      const panel = obj instanceof VizPanel ? obj : undefined;
+      if (!panel) {
+        return null;
+      }
+      const runner = getQueryRunnerFor(panel);
+      const runnerDatasource = runner?.state.datasource;
+      const rawQueries: DataQuery[] = (runner?.state.queries ?? [])
+        .map((query) => (query.datasource ? query : { ...query, datasource: runnerDatasource }))
+        .filter((query) => !query.hide);
+      if (rawQueries.length === 0) {
+        return null;
+      }
+      // Interpolate so each captured panel matches what it ran; scopedVars carries this panel so a
+      // repeated panel's clone-local variable value resolves from its position in the scene graph.
+      const queries = await interpolateDiagnosticsQueries(
+        rawQueries,
+        { __sceneObject: { value: panel } },
+        runner?.state.data?.request?.filters
+      );
+      const timeRange = sceneGraph.getTimeRange(panel).state.value;
+      // Repeat-by-variable clones share their source panel's key (e.g. `panel-3-clone-1` and
+      // `panel-3-clone-2` both parse to id 3 in panelIdFrom), so multiple entries below can carry the
+      // same id -- that's intentional. dashboard.getSaveModel(), sent alongside this list in
+      // startDashboardDiagnostics, only serializes the source panel once (clones aren't separate
+      // save-model elements), so the id has to match that source panel for the backend to resolve its
+      // panel JSON. Each clone still gets its own array entry, so its captured queries aren't lost.
+      return {
+        id: panelIdFrom(panel),
+        title: panel.state.title ?? '',
+        from: String(timeRange.from.valueOf()),
+        to: String(timeRange.to.valueOf()),
+        queries,
+      };
+    })
+  );
 
-  return panels;
+  return collected.filter((panel): panel is DashboardDiagnosticsPanel => panel !== null);
 }
 
 // The download uses blob/json fetches whose FetchError carries the detail in status/statusText, so
@@ -155,15 +168,20 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
     if (!dashboard) {
       return;
     }
-    const panels = collectDashboardPanels(dashboard);
-    // Known limitation (follow-up): template variables are sent un-interpolated, so captured traffic
-    // won't match panels that use $vars until per-datasource interpolation is applied.
+    // Create the controller before collecting panels: interpolation awaits datasource round trips,
+    // so a cancel or drawer unmount during that phase must abort here rather than no-op against a
+    // null ref and let backend generation start after the UI is gone.
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const panels = await collectDashboardPanels(dashboard);
+    if (controller.signal.aborted) {
+      return;
+    }
     if (panels.length === 0) {
       throw new Error(t('dashboard.diagnostics.no-panels', 'This dashboard has no panels with active queries.'));
     }
 
-    const controller = new AbortController();
-    abortRef.current = controller;
     setProgress({ done: 0, total: panels.length });
 
     const uid = await startDashboardDiagnostics(panels, dashboard.getSaveModel(), controller.signal);

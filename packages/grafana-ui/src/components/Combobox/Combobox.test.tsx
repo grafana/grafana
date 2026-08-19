@@ -559,6 +559,90 @@ describe('Combobox', () => {
       expect(asyncSpy).toHaveBeenCalledTimes(1); // Called only for 'abc'
     });
 
+    it('should debounce to a single request when a re-rendering parent recreates the options function', async () => {
+      const loaderSpy = jest.fn((searchTerm: string) => Promise.resolve(simpleAsyncOptions));
+
+      // Mimics consumers like query editors: the parent re-renders on every keystroke and
+      // passes an inline arrow as `options`, minting a new function identity each render.
+      const Wrapper = () => {
+        const [, setKeystrokes] = React.useState(0);
+        return (
+          <div onKeyDown={() => setKeystrokes((count) => count + 1)}>
+            <Combobox options={(inputValue: string) => loaderSpy(inputValue)} value={null} onChange={onChangeHandler} />
+          </div>
+        );
+      };
+
+      render(<Wrapper />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      await user.keyboard('a');
+      await act(async () => jest.advanceTimersByTime(10));
+      await user.keyboard('b');
+      await act(async () => jest.advanceTimersByTime(10));
+      await user.keyboard('c');
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+
+      expect(loaderSpy).toHaveBeenCalledTimes(1);
+      expect(loaderSpy).toHaveBeenCalledWith('abc');
+    });
+
+    it('should not show an error when a stale request rejects after a newer request has succeeded', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+
+      const asyncOptions = jest.fn(async (searchTerm: string) => {
+        if (searchTerm === 'a') {
+          return new Promise<ComboboxOption[]>((_resolve, reject) =>
+            setTimeout(() => reject(new Error('slow failure')), 1500)
+          );
+        }
+        return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'fresh result' }]), 500));
+      });
+
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => {
+        await user.keyboard('a');
+        jest.advanceTimersByTime(DEBOUNCE_TIME_MS); // Start request A (slow, will reject)
+        await user.keyboard('b');
+        jest.advanceTimersByTime(DEBOUNCE_TIME_MS); // Start request B (fast, will resolve)
+        jest.advanceTimersByTime(500); // Resolve request B
+      });
+
+      expect(await screen.findByRole('option', { name: 'fresh result' })).toBeInTheDocument();
+
+      await act(async () => {
+        jest.advanceTimersByTime(1500); // Reject request A, long after B already rendered
+      });
+
+      expect(screen.queryByText('An error occurred while loading options.')).not.toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'fresh result' })).toBeInTheDocument();
+    });
+
+    it('should not load options if unmounted while a debounced load is pending', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+
+      const { unmount } = render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.keyboard('a'); // Schedule a debounced load
+
+      unmount();
+
+      await act(async () => {
+        jest.advanceTimersByTime(DEBOUNCE_TIME_MS * 2);
+      });
+
+      expect(asyncOptions).not.toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
+
     it('should allow custom value while async is being run', async () => {
       const asyncOptions = jest.fn(async () => {
         return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 2000));
