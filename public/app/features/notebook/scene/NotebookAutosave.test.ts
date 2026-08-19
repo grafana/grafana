@@ -133,6 +133,38 @@ describe('NotebookAutosave', () => {
     expect(scene.autosave.state.status).toBe('saved');
   });
 
+  // Coming back to a notebook reuses the cached scene and reactivates it, so this is the same
+  // controller it was before, holding edits that never reached the server.
+  it('still sends an edit whose save failed, after leaving the notebook and coming back', async () => {
+    const scene = activateEditing();
+    jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+
+    editFirstCell(scene, 'work I would rather not lose');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    expect(scene.autosave.state.status).toBe('error');
+
+    deactivate?.();
+    deactivate = scene.activate();
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(savedTexts()).toEqual(['work I would rather not lose', 'work I would rather not lose']);
+    expect(scene.autosave.state.status).toBe('saved');
+  });
+
+  it('sends nothing when a notebook with no unsaved work is reopened', async () => {
+    const scene = activateEditing();
+
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    expect(updateNotebook).toHaveBeenCalledTimes(1);
+
+    deactivate?.();
+    deactivate = scene.activate();
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(updateNotebook).toHaveBeenCalledTimes(1);
+  });
+
   it('sends a failed save again when asked to retry', async () => {
     const scene = activateEditing();
     jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));

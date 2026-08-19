@@ -53,9 +53,18 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
   /** Begins watching for changes. Returns the teardown, which flushes anything still pending. */
   public start(): () => void {
-    // Entering edit mode publishes state changes of its own, so without a baseline the first comparison
-    // would write the notebook straight back unchanged.
-    this.lastSaved = JSON.stringify(transformNotebookSceneToSaveModel(this.scene));
+    const current = JSON.stringify(transformNotebookSceneToSaveModel(this.scene));
+
+    if (this.lastSaved === undefined) {
+      // Entering edit mode publishes state changes of its own, so without a baseline the first
+      // comparison would write the notebook straight back unchanged.
+      this.lastSaved = current;
+    } else if (current !== this.lastSaved) {
+      // A scene is cached and reactivated when you come back to a notebook, so this can be the same
+      // controller with edits that never reached the server. Recording them as written here would lose
+      // them, so try the save again instead of waiting for a change that may never come.
+      this.schedule();
+    }
 
     this.changeSub = this.scene.subscribeToEvent(SceneObjectStateChangedEvent, () => {
       if (!this.scene.state.isEditing) {
