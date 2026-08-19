@@ -55,8 +55,6 @@ jobs:
         if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
         run: |
           {
-            echo "# Frontend Test Coverage Summary"
-            echo
             echo "🚨 **Skip label:** in an emergency, add the \`no-check-frontend-test-coverage\` label to this PR to bypass this check."
             echo
             echo "💻 **Run locally:** \`yarn test:coverage:by-codeowner <codeowner>\`"
