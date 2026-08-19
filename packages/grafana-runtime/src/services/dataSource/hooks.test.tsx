@@ -3,13 +3,16 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
 
 import { setBackendSrv } from '../backendSrv';
+import { setDatasourcePluginMetas } from '../pluginMeta/datasources';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { _resetForTests as resetPlugin, setDataSourcePluginImporter } from './dataSource';
 import {
   useDataSourceInstance,
   useDataSourceInstanceList,
+  useDataSourceInstanceMeta,
   useDataSourceInstanceSettings,
+  useDataSourceInstanceType,
   useDefaultDataSourceInstance,
   useHasDataSourceInstance,
 } from './hooks';
@@ -63,10 +66,15 @@ beforeAll(() => {
   } as any);
 });
 
+// Distinguishable from the copy embedded on the instance settings, so the meta hook's
+// assertions prove which cache answered.
+const testDbPluginMeta = { ...ds({}).meta, name: 'Test DB (plugin meta)' };
+
 beforeEach(() => {
   resetInstanceSettings();
   resetPlugin();
   initDataSourceInstanceSettings(fixtures, 'Bravo');
+  setDatasourcePluginMetas({ 'test-db': testDbPluginMeta });
 });
 
 describe('useDataSourceInstanceSettings', () => {
@@ -88,6 +96,68 @@ describe('useDataSourceInstanceSettings', () => {
 
     rerender({ ref: 'uid-bravo' });
     await waitFor(() => expect(result.current.settings?.name).toBe('Bravo'));
+  });
+});
+
+describe('useDataSourceInstanceMeta', () => {
+  it('starts loading then resolves to the plugin meta', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceMeta('uid-alpha'));
+
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.meta?.name).toBe('Test DB (plugin meta)');
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('resolves to undefined without an error for an unknown ref', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceMeta('nonexistent'));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.meta).toBeUndefined();
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('refetches when the ref changes', async () => {
+    const { result, rerender } = renderHook(({ ref }) => useDataSourceInstanceMeta(ref), {
+      initialProps: { ref: 'nonexistent' },
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.meta).toBeUndefined();
+
+    rerender({ ref: 'uid-alpha' });
+    await waitFor(() => expect(result.current.meta?.name).toBe('Test DB (plugin meta)'));
+  });
+});
+
+describe('useDataSourceInstanceType', () => {
+  it('starts loading then resolves to the instance type', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceType('uid-alpha'));
+
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.type).toBe('test-db');
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('resolves to undefined without an error for an unknown ref', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceType('nonexistent'));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.type).toBeUndefined();
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('refetches when the ref changes', async () => {
+    const { result, rerender } = renderHook(({ ref }) => useDataSourceInstanceType(ref), {
+      initialProps: { ref: 'nonexistent' },
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.type).toBeUndefined();
+
+    rerender({ ref: 'uid-alpha' });
+    await waitFor(() => expect(result.current.type).toBe('test-db'));
   });
 });
 
