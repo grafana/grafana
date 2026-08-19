@@ -226,6 +226,11 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 
 			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
 			if err != nil {
+				resErr := ErrorResultFromGRPCDetails(err)
+				if resErr != nil {
+					errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %s", inst.Id, resErr.Message)
+					return
+				}
 				errorCh <- fmt.Errorf("instance %s: failed to distribute rebuild index request, %w", inst.Id, err)
 				return
 			}
