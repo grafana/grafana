@@ -75,20 +75,22 @@ describe('StateTimelinePanel hooks', () => {
       });
     });
 
-    const frame = createDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time, values: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] },
-        { name: 'value-A', type: FieldType.number, values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
-        { name: 'value-B', type: FieldType.number, values: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20] },
-        { name: 'value-C', type: FieldType.number, values: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30] },
-      ],
+    it('renders the pagination control when there is more than one page', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] },
+          { name: 'value-A', type: FieldType.number, values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+          { name: 'value-B', type: FieldType.number, values: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20] },
+          { name: 'value-C', type: FieldType.number, values: [21, 22, 23, 24, 25, 26, 27, 28, 29, 30] },
+        ],
+      });
+      const { result } = renderHook(() => usePagination([frame], 2));
+
+      render(result.current.paginationElement);
+
+      expect(screen.getByText('1')).toBeInTheDocument(); // current page
+      expect(screen.getByText('2')).toBeInTheDocument(); // last page
+      expect(screen.getByLabelText('next page')).not.toBeDisabled();
     });
-    const { result } = renderHook(() => usePagination([frame], 2));
-
-    render(result.current.paginationElement);
-
-    expect(screen.getByText('1')).toBeInTheDocument(); // current page
-    expect(screen.getByText('2')).toBeInTheDocument(); // last page
-    expect(screen.getByLabelText('next page')).not.toBeDisabled();
   });
 });
