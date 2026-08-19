@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -44,7 +44,6 @@ export function ColumnVisibilitySidePanel({
   // `onColumnsReorder`, the same handler the grid's own header-drag reorder uses.
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
-  const dragImageRef = useRef<HTMLDivElement>(null);
 
   return (
     <aside className={styles.container} aria-label={t('grafana-ui.table.column-visibility', 'Column visibility')}>
@@ -101,9 +100,11 @@ export function ColumnVisibilitySidePanel({
                   // above), so there's no payload for an external drop target to read. Setting one
                   // anyway (e.g. `text/plain`) would let the column name be dropped as plain text
                   // into other apps, which isn't what this handle is for.
-                  if (dragImageRef.current) {
-                    ev.dataTransfer.setDragImage(dragImageRef.current, 0, 0);
-                  }
+                  //
+                  // No `setDragImage` either: the browser's own snapshot of the dragged element is
+                  // this handle's grip icon, which is the right feedback. Pointing it at an
+                  // offscreen placeholder instead left Chrome with nothing it could snapshot, and
+                  // it fell back to the generic link/document icon.
                   setDraggedColumn(displayName);
                 }}
                 onDragEnd={() => {
@@ -141,9 +142,6 @@ export function ColumnVisibilitySidePanel({
           );
         })}
       </div>
-      {/* the browser's own default drag image is a full-width, oddly-styled snapshot of the row;
-          this one-line placeholder reads better while dragging */}
-      <div ref={dragImageRef} className={styles.dragImage} aria-hidden="true" />
     </aside>
   );
 }
@@ -231,10 +229,5 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     '&[aria-pressed="true"]': {
       color: theme.colors.warning.text,
     },
-  }),
-  dragImage: css({
-    position: 'fixed',
-    top: '-9999px',
-    left: '-9999px',
   }),
 }));
