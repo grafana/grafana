@@ -233,28 +233,6 @@ func (NotebookV2PanelKind) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-<<<<<<< HEAD
-type NotebookPanelSpec struct {
-	Id    float64 `json:"id"`
-	Title string  `json:"title"`
-	// Shown in a info icon tooltip next to panel title
-	Description *string `json:"description,omitempty"`
-	// Shown in a sub header below the title.
-	Subtitle    *string                `json:"subtitle,omitempty"`
-	Links       []NotebookDataLink     `json:"links"`
-	Data        NotebookQueryGroupKind `json:"data"`
-	VizConfig   NotebookVizConfigKind  `json:"vizConfig"`
-	Transparent *bool                  `json:"transparent,omitempty"`
-||||||| 0b66c76e462
-type NotebookPanelSpec struct {
-	Id          float64                `json:"id"`
-	Title       string                 `json:"title"`
-	Description string                 `json:"description"`
-	Links       []NotebookDataLink     `json:"links"`
-	Data        NotebookQueryGroupKind `json:"data"`
-	VizConfig   NotebookVizConfigKind  `json:"vizConfig"`
-	Transparent *bool                  `json:"transparent,omitempty"`
-=======
 type NotebookV2PanelSpec struct {
 	Id    float64 `json:"id"`
 	Title string  `json:"title"`
@@ -266,7 +244,6 @@ type NotebookV2PanelSpec struct {
 	Data        NotebookV2QueryGroupKind `json:"data"`
 	VizConfig   NotebookVizConfigKind    `json:"vizConfig"`
 	Transparent *bool                    `json:"transparent,omitempty"`
->>>>>>> 113d219ea2edf6a168e4c7081d086ea1038f6f1e
 }
 
 // NewNotebookV2PanelSpec creates a new NotebookV2PanelSpec object.
