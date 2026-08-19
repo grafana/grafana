@@ -98,9 +98,6 @@ func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
 // and falls through to next for anything the router does not own. There is no
 // separate exported OpenAPI handler — a caller wraps this as
 // http.HandlerFunc(func(w, r) { router.HandleFunc(w, r, next) }).
-//
-// NOTE: /apis still needs serverAddressByClientCIDRs support to allow local
-// in-network clients to connect directly as desired.
 func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	path := req.URL.Path
 

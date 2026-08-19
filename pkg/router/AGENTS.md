@@ -1,14 +1,15 @@
-# AGENTS.md — Cloud Apps Router
+# AGENTS.md — Grafana Router
 
-Guidance for AI agents working on the cloud apps router. This is an internal router for Grafana
-Cloud: all microservice (m2m) and user-facing API traffic passes through it. Routes are supplied
+Guidance for AI agents working on the Grafana Router. This is a generic internal reverse-proxy
+router: microservice (m2m) and user-facing API traffic can be routed through it. Routes are supplied
 by a `RoutesLoader` (the concrete loader lives in the enterprise package) as `[]*RouteConfig`, and
 change infrequently (roughly weekly) as plugins/apps are introduced via GitOps, plus new versions
 over time.
 
 ## Package layout (OSS vs enterprise split)
 
-The generic router lives here in OSS; only the loader (which knows the cloud kinds) is enterprise.
+The generic router lives here in OSS; only the loader (which knows the deployment-specific kinds) is
+enterprise.
 
 - **this package (`pkg/router`, OSS)** — the generic machinery: `GrafanaRouter` (`router.go`: the
   reconcile engine — `Run` drives the reconcile loop only; `HandleFunc` is the serving handler),
@@ -17,10 +18,10 @@ The generic router lives here in OSS; only the loader (which knows the cloud kin
   `http.Server`, listener TLS, graceful shutdown) is NOT here** — it is a factory concern in the
   enterprise `router` command; see Lifecycle below.
 - **`.../appmanifest/pkg/app/router` (enterprise)** — only `Loader` (`routes_loader.go`): the
-  `RoutesLoader` implementation that produces `[]*RouteConfig` from the cloud control plane. How it
+  `RoutesLoader` implementation that produces `[]*RouteConfig` from the control plane. How it
   sources and watches the underlying custom resources is its own concern (see that package's
-  AGENTS.md). There is no cloud apps router in enterprise; the loader is the enterprise/cloud-specific
-  piece.
+  AGENTS.md). There is no separate router implementation in enterprise; the loader is the
+  enterprise-specific piece.
 
 This doc stays generic: it must not encode which custom resources the loader watches or how it
 triggers — the router only knows the `RoutesLoader` contract. File references below are in this
@@ -167,6 +168,26 @@ backends (reconcile keys `entries` by group; a duplicate group is last-wins). Co
 If the one-backend-per-group ownership rule is ever relaxed (multiple backends per group),
 `/apis/{group}` must become a synthesized merge as well — update this file and the discovery
 handler together.
+
+### `serverAddressByClientCIDRs`: intentionally omitted
+
+`metav1.APIGroupList`/`APIGroup` carry a `ServerAddressByClientCIDRs` field (k8s: lets a client pick
+a cheaper/closer address to reach the server, based on the client's own IP — e.g. an in-cluster
+client dials the internal Service/ClusterIP directly instead of round-tripping out through the
+public LB). The router's synthesized `/apis` does **not** populate it:
+
+- Almost no modern client actually reads this field to choose a host (`client-go`'s discovery client
+  doesn't); it's legacy from very old bootstrap flows. Adding it would be schema parity, not a fix
+  for a real gap, absent a confirmed consumer.
+- On individual backends: their own `/apis/{group}` doc never carries this field either, even in
+  vanilla k8s — `discovery.NewAPIGroupHandler` builds a static `metav1.APIGroup` at route-install time
+  with the field unset; only the root aggregator (`rootAPIsHandler`) patches it per-request. So a
+  backend built on `k8s.io/apiserver` needs no extra work here regardless of this decision.
+- Deployment-specific reasoning for why this wouldn't help in a given topology (reachable addresses,
+  edge LB behavior, etc.) belongs with the deployment, not here — see the enterprise router factory's
+  AGENTS.md (`pkg/extensions/router`) for that reasoning.
+
+Revisit only if a concrete client is confirmed to read the field.
 
 ## Notify / reconcile
 
