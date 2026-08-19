@@ -5,7 +5,7 @@ import { LinkButton, useStyles2 } from '@grafana/ui';
 
 import { ctaClicked } from '../analytics/main';
 
-import type { RecommendationItem } from './types';
+import { isExternal, type RecommendationItem } from './types';
 
 interface RecommendationPillProps {
   recommendation: RecommendationItem;
@@ -16,10 +16,11 @@ interface RecommendationPillProps {
 
 export function RecommendationPill({ recommendation, startingState, solution }: RecommendationPillProps) {
   const styles = useStyles2(getStyles, recommendation.color);
+  const external = isExternal(recommendation.href);
   const trackClick = () =>
     ctaClicked({
       surface: 'recommendations',
-      action: recommendation.external ? 'learn_more' : (recommendation.cta ?? 'enable'),
+      action: recommendation.cta ?? 'enable',
       placement: 'pill',
       recommendation_id: recommendation.id,
       starting_state: startingState,
@@ -33,8 +34,8 @@ export function RecommendationPill({ recommendation, startingState, solution }: 
       fill="solid"
       icon={recommendation.icon}
       href={recommendation.href}
-      target={recommendation.external ? '_blank' : undefined}
-      rel={recommendation.external ? 'noopener noreferrer' : undefined}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noopener noreferrer' : undefined}
       onClick={trackClick}
       className={styles.pill}
     >

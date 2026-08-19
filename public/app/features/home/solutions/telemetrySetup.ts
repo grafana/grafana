@@ -14,7 +14,7 @@ interface TelemetrySetupCapabilities {
 export interface TelemetrySetupLink {
   action: string;
   href: string;
-  external: boolean;
+  cta: 'setup' | 'learn_more';
 }
 
 export const TELEMETRY_SETUP_DOCS = {
@@ -54,13 +54,13 @@ export function getTelemetrySetupLink(
   const definition = setup[type];
   const cta = getTelemetrySetupCta(type, capabilities);
   if (cta) {
-    return { action: cta.label, href: cta.href, external: false };
+    return { action: cta.label, href: cta.href, cta: 'setup' };
   }
 
   return {
     action: definition.action(),
     href: getTelemetrySetupLearnMore(type, capabilities).href,
-    external: true,
+    cta: 'learn_more',
   };
 }
 

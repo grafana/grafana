@@ -21,7 +21,7 @@ describe('getTelemetrySetupLink', () => {
   ] as const)('prefers the guided %s onboarding flow', (type, action, href) => {
     jest.mocked(contextSrv.hasRole).mockImplementation((role) => role === 'Admin');
 
-    expect(getTelemetrySetupLink(type, { setupGuideEnabled: true })).toEqual({ action, href, external: false });
+    expect(getTelemetrySetupLink(type, { setupGuideEnabled: true })).toEqual({ action, href, cta: 'setup' });
   });
 
   it.each([
@@ -29,14 +29,14 @@ describe('getTelemetrySetupLink', () => {
     ['logs', 'Add logs', 'https://grafana.com/docs/loki/latest/send-data/'],
     ['traces', 'Instrument traces', 'https://grafana.com/docs/tempo/latest/set-up-for-tracing/'],
   ] as const)('falls back to public %s setup documentation', (type, action, href) => {
-    expect(getTelemetrySetupLink(type, { setupGuideEnabled: false })).toEqual({ action, href, external: true });
+    expect(getTelemetrySetupLink(type, { setupGuideEnabled: false })).toEqual({ action, href, cta: 'learn_more' });
   });
 
   it('uses public documentation when the setup guide is not accessible to the user', () => {
     expect(getTelemetrySetupLink('logs', { setupGuideEnabled: true })).toEqual({
       action: 'Add logs',
       href: 'https://grafana.com/docs/grafana-cloud/send-data/logs/',
-      external: true,
+      cta: 'learn_more',
     });
   });
 
@@ -46,7 +46,7 @@ describe('getTelemetrySetupLink', () => {
     expect(getTelemetrySetupLink('traces', { setupGuideEnabled: true })).toEqual({
       action: 'Instrument traces',
       href: 'https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/instrument-apps/',
-      external: true,
+      cta: 'learn_more',
     });
   });
 });

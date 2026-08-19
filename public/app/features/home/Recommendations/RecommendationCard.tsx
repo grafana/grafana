@@ -6,7 +6,7 @@ import { Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { ctaClicked } from '../analytics/main';
 import { LearnMoreLink } from '../solutions/LearnMoreLink';
 
-import type { RecommendationItem } from './types';
+import { isExternal, type RecommendationItem } from './types';
 
 interface RecommendationCardProps {
   recommendation: RecommendationItem;
@@ -17,10 +17,12 @@ interface RecommendationCardProps {
 
 export function RecommendationCard({ recommendation, startingState, solution }: RecommendationCardProps) {
   const styles = useStyles2(getStyles, recommendation.color);
+  const action = recommendation.cta ?? 'enable';
+  const external = isExternal(recommendation.href);
   const trackClick = () =>
     ctaClicked({
       surface: 'recommendations',
-      action: recommendation.external ? 'learn_more' : (recommendation.cta ?? 'enable'),
+      action,
       placement: 'card',
       recommendation_id: recommendation.id,
       starting_state: startingState,
@@ -45,8 +47,8 @@ export function RecommendationCard({ recommendation, startingState, solution }: 
       </Stack>
 
       <Stack direction="row" alignItems="center" gap={1}>
-        {recommendation.external ? (
-          <LearnMoreLink href={recommendation.href} onClick={trackClick} />
+        {action === 'learn_more' ? (
+          <LearnMoreLink href={recommendation.href} external={external} onClick={trackClick} />
         ) : (
           <LinkButton
             variant="primary"
@@ -55,6 +57,8 @@ export function RecommendationCard({ recommendation, startingState, solution }: 
             icon="arrow-right"
             iconPlacement="right"
             href={recommendation.href}
+            target={external ? '_blank' : undefined}
+            rel={external ? 'noopener noreferrer' : undefined}
             onClick={trackClick}
           >
             {recommendation.action}

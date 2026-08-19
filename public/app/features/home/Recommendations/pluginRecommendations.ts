@@ -66,7 +66,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       ),
       action: t('home.recommendations.connect-metrics.action', 'Connect metrics'),
       href: TELEMETRY_SETUP_DOCS.metrics,
-      external: true,
+      cta: 'learn_more',
     },
     'hosted-traces': pluginCard({
       telemetryType: 'traces',
@@ -132,7 +132,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       ),
       action: t('home.recommendations.enable-logs.action', 'Add Logs'),
       href: TELEMETRY_SETUP_DOCS.logs,
-      external: true,
+      cta: 'learn_more',
     },
     'enable-logs-k8s': {
       kind: 'connection',
@@ -150,7 +150,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       ),
       action: t('home.recommendations.enable-logs-k8s.action', 'Set up log collection'),
       href: KUBERNETES_LOGS_SETUP_DOCS,
-      external: true,
+      cta: 'learn_more',
     },
   };
 }

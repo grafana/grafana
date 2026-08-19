@@ -9,8 +9,10 @@ export interface RecommendationItem {
   description: string;
   action: string; // CTA label, e.g. "Enable Hosted Traces"
   href: string;
-  /** Opens documentation or another external destination in a new tab. */
-  external?: boolean;
-  /** CTA intent for analytics: enable a disabled app (default) or set up an enabled-but-silent one. */
-  cta?: 'enable' | 'setup';
+  /** CTA intent for analytics; defaults to enabling a disabled app. */
+  cta?: 'enable' | 'setup' | 'learn_more';
+}
+
+export function isExternal(href: string): boolean {
+  return /^https?:\/\//.test(href);
 }

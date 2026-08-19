@@ -66,9 +66,9 @@ function selectRecommendationState(inventory: LocalPlugin[], signals: SolutionSt
           return [];
         }
         if (card.telemetryType) {
-          return [{ ...card, ...getTelemetrySetupLink(card.telemetryType, { setupGuideEnabled }), cta: 'setup' }];
+          return [{ ...card, ...getTelemetrySetupLink(card.telemetryType, { setupGuideEnabled }) }];
         }
-        return [{ ...card, cta: 'setup' }];
+        return [card];
       }
       if (!listReady) {
         return [];
