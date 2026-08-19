@@ -81,9 +81,7 @@ func buildAPIGroupList(backends []Backend) cachedDoc {
 // deterministic output and a stable hash input.
 func sortedManifestBackends(backends []Backend) []Backend {
 	out := make([]Backend, 0, len(backends))
-	for _, b := range backends {
-		out = append(out, b)
-	}
+	out = append(out, backends...)
 	sort.Slice(out, func(i, j int) bool { return out[i].Group() < out[j].Group() })
 	return out
 }
