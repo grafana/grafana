@@ -221,10 +221,9 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 		resErr := ErrorResultFromGRPCDetails(err)
 		if resErr != nil {
 			err = grpcErrorFromErrorResult(resErr)
-		} else {
-			s.log.Warn("hybrid search: folder title resolution failed", "err", err)
-			return
 		}
+		s.log.Warn("hybrid search: folder title resolution failed", "err", err)
+		return
 	}
 
 	titles := make(map[string]string, len(uids))
