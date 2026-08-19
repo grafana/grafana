@@ -1,3 +1,4 @@
+import { parseExpressionAt } from 'acorn';
 import { valid } from 'semver';
 
 // Serializes the versioned selector tree into a data-only form so it can be served as JSON and
@@ -30,23 +31,34 @@ function isVersionedLeaf(node: VersionedSelector | SelectorGroup): node is Versi
   return firstKey !== undefined && valid(firstKey) !== null;
 }
 
-// reads parameter names from the (transpiled) function source, e.g. "(from, to) => ..." -> [from, to]
+// minimal shape of the parsed function node we read; acorn's return type is intentionally loose
+type ParamNode = { type: string; name?: string; left?: ParamNode };
+type FunctionNode = { params: ParamNode[] };
+
+function isFunctionNode(node: object): node is FunctionNode {
+  return 'params' in node && Array.isArray(node.params);
+}
+
+function paramName(param: ParamNode): string {
+  if (param.type === 'Identifier' && param.name !== undefined) {
+    return param.name;
+  }
+  // a default value, e.g. "(value = 'x') => ..." -> read the name from the left-hand side
+  if (param.type === 'AssignmentPattern' && param.left !== undefined) {
+    return paramName(param.left);
+  }
+  throw new Error(`Unsupported selector parameter of type "${param.type}"; use plain named parameters`);
+}
+
+// reads parameter names from the (transpiled) function source via an AST parse, e.g.
+// "(from, to) => ..." -> ['from', 'to']. wrapped in parens so a bare arrow parses as an expression.
 function parseParamNames(fn: (...args: string[]) => string): string[] {
   const src = fn.toString();
-  const open = src.indexOf('(');
-  const close = src.indexOf(')', open);
-  // fail fast rather than misparse: our selectors are always written with parenthesised params
-  if (open === -1 || close === -1) {
+  const node = parseExpressionAt(`(${src})`, 0, { ecmaVersion: 'latest' });
+  if (!isFunctionNode(node)) {
     throw new Error(`Unable to parse parameters from selector function source: ${src}`);
   }
-  const inner = src.slice(open + 1, close).trim();
-  if (!inner) {
-    return [];
-  }
-  return inner
-    .split(',')
-    .map((param) => param.split('=')[0].trim())
-    .filter(Boolean);
+  return node.params.map(paramName);
 }
 
 function serializeFunction(fn: (...args: string[]) => string): TemplateDescriptor {
