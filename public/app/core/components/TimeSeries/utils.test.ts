@@ -1,3 +1,5 @@
+import type uPlot from 'uplot';
+
 import {
   createDataFrame,
   createTheme,
@@ -649,5 +651,236 @@ describe('x-axis time range', () => {
 
     expect(getXTimeRange(builder)()).toEqual([2000, 4000]);
     expect(builder.getState().isPanning).toBe(false);
+  });
+});
+
+describe('comparison cursor point', () => {
+  /**
+   * Current-period + time-comparison pair, already aligned and joined the way GraphNG hands
+   * it to preparePlotConfigBuilder: shared `state.seriesIndex` (assigned by setClassicPaletteIdxs
+   * so the pair renders in one color) and `state.origin` pointing back into allFrames.
+   */
+  function makeComparePair(): { alignedFrame: DataFrame; allFrames: DataFrame[] } {
+    const current: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [1000, 2000] },
+        { name: 'Value', type: FieldType.number, config: {}, values: [10, 20] },
+      ],
+    };
+
+    const compare: DataFrame = {
+      refId: 'A-compare',
+      length: 2,
+      meta: { timeCompare: { diffMs: -1000, isTimeShiftQuery: true } },
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [1000, 2000] },
+        { name: 'Value', type: FieldType.number, config: {}, values: [5, 8] },
+      ],
+    };
+
+    const alignedFrame: DataFrame = {
+      length: 2,
+      fields: [
+        {
+          name: 'Time',
+          type: FieldType.time,
+          config: {},
+          values: [1000, 2000],
+          state: { origin: { frameIndex: 0, fieldIndex: 0 } },
+        },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          config: {},
+          values: [10, 20],
+          state: { seriesIndex: 0, origin: { frameIndex: 0, fieldIndex: 1 } },
+        },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          config: {},
+          values: [5, 8],
+          state: { seriesIndex: 0, origin: { frameIndex: 1, fieldIndex: 1 } },
+        },
+      ],
+    };
+
+    return { alignedFrame, allFrames: [current, compare] };
+  }
+
+  /** Minimal uPlot stand-in covering only what the cursor point hook reads. */
+  interface MockUPlot {
+    over: HTMLDivElement;
+    data: Array<Array<number | null>>;
+    series: Array<{ show: boolean; scale: string }>;
+    cursor: {
+      event: Event | null;
+      idxs: Array<number | null>;
+      points: {
+        size: (u: unknown, i: number) => number;
+        width: (u: unknown, i: number, size: number) => number;
+        fill: (u: unknown, i: number) => string;
+        stroke: (u: unknown, i: number) => string;
+      };
+    };
+    valToPos: (val: number, scale: string) => number;
+  }
+
+  function makeMockUPlot(overrides: Partial<MockUPlot> = {}): MockUPlot {
+    return {
+      over: document.createElement('div'),
+      data: [
+        [1000, 2000],
+        [10, 20],
+        [5, 8],
+      ],
+      series: [
+        { show: true, scale: 'x' },
+        { show: true, scale: 'y' },
+        { show: true, scale: 'y' },
+      ],
+      cursor: {
+        event: new MouseEvent('mousemove'),
+        idxs: [1, 1, 1],
+        points: {
+          size: () => 8,
+          width: (_u, _i, size) => size / 4,
+          fill: () => '#ff0000',
+          stroke: () => '#ff000080',
+        },
+      },
+      // stand-in projection: x -> val/10, y -> 100 - val
+      valToPos: (val, scale) => (scale === 'x' ? val / 10 : 100 - val),
+      ...overrides,
+    };
+  }
+
+  /**
+   * Casts the mock for hook invocation. The hooks read a small, well-defined slice of the
+   * uPlot instance; confining the assertion to one helper keeps it out of the tests.
+   */
+  function asUPlot(u: MockUPlot): uPlot {
+    // @ts-expect-error MockUPlot implements only the surface the cursor point hooks touch
+    return u;
+  }
+
+  /** Runs init + setSeries(hoveredIdx) + setCursor, returning the point element (if any). */
+  function hover(
+    builder: ReturnType<typeof preparePlotConfigBuilder>,
+    u: MockUPlot,
+    hoveredSeriesIdx: number | null
+  ): HTMLElement | null {
+    const hooks = builder.getConfig().hooks ?? {};
+    const asU = asUPlot(u);
+
+    hooks.init?.forEach((hook) => hook?.(asU, {} as uPlot.Options, []));
+    hooks.setSeries?.forEach((hook) => hook?.(asU, hoveredSeriesIdx, {}));
+    hooks.setCursor?.forEach((hook) => hook?.(asU));
+
+    return u.over.querySelector('.u-cursor-pt');
+  }
+
+  it('pairs a comparison series with its current-period counterpart on the builder', () => {
+    const { alignedFrame, allFrames } = makeComparePair();
+    const builder = buildBuilder(alignedFrame, { allFrames });
+
+    // bidirectional, in aligned field index space (field 0 is the x field)
+    expect(builder.comparisonFieldPairs).toEqual(
+      new Map([
+        [1, 2],
+        [2, 1],
+      ])
+    );
+  });
+
+  it('leaves the pairing empty and adds no cursor point when there is no comparison series', () => {
+    const frame = makeTimeFrame();
+    const builder = buildBuilder(frame, { allFrames: [frame] });
+
+    expect(builder.comparisonFieldPairs.size).toBe(0);
+    expect(hover(builder, makeMockUPlot(), 1)).toBeNull();
+  });
+
+  it('positions the point on the paired series at the hovered index', () => {
+    const { alignedFrame, allFrames } = makeComparePair();
+    const builder = buildBuilder(alignedFrame, { allFrames });
+
+    // hovering series 1 (current, y=20) should mark series 2 (compare, y=8) at the same x
+    const point = hover(builder, makeMockUPlot(), 1);
+
+    // x: 2000/10 = 200, y: 100 - 8 = 92
+    expect(point?.style.transform).toBe('translate(200px, 92px)');
+  });
+
+  it('positions the point on the current-period series when hovering the comparison series', () => {
+    const { alignedFrame, allFrames } = makeComparePair();
+    const builder = buildBuilder(alignedFrame, { allFrames });
+
+    const point = hover(builder, makeMockUPlot(), 2);
+
+    // pairs back to series 1 (y=20): x 2000/10 = 200, y 100 - 20 = 80
+    expect(point?.style.transform).toBe('translate(200px, 80px)');
+  });
+
+  it('sizes and colors the point from the resolved cursor point config', () => {
+    const { alignedFrame, allFrames } = makeComparePair();
+    const builder = buildBuilder(alignedFrame, { allFrames });
+
+    const point = hover(builder, makeMockUPlot(), 1);
+
+    expect(point?.style.width).toBe('8px');
+    expect(point?.style.height).toBe('8px');
+    // centered on the datapoint
+    expect(point?.style.marginLeft).toBe('-4px');
+    expect(point?.style.marginTop).toBe('-4px');
+    expect(point?.style.borderWidth).toBe('2px');
+    expect(point?.style.background).toBe('rgb(255, 0, 0)');
+  });
+
+  it('hides the point when the paired series has no value at the hovered index', () => {
+    const { alignedFrame, allFrames } = makeComparePair();
+    const builder = buildBuilder(alignedFrame, { allFrames });
+    const u = makeMockUPlot({
+      data: [
+        [1000, 2000],
+        [10, 20],
+        [5, null],
+      ],
+    });
+
+    expect(hover(builder, u, 1)?.style.transform).toBe('translate(-10px, -10px)');
+  });
+
+  it('hides the point when the paired series is toggled off in the legend', () => {
+    const { alignedFrame, allFrames } = makeComparePair();
+    const builder = buildBuilder(alignedFrame, { allFrames });
+    const u = makeMockUPlot({
+      series: [
+        { show: true, scale: 'x' },
+        { show: true, scale: 'y' },
+        { show: false, scale: 'y' },
+      ],
+    });
+
+    expect(hover(builder, u, 1)?.style.transform).toBe('translate(-10px, -10px)');
+  });
+
+  it('hides the point when no series is within cursor proximity', () => {
+    const { alignedFrame, allFrames } = makeComparePair();
+    const builder = buildBuilder(alignedFrame, { allFrames });
+
+    // uPlot reports a null series once the cursor leaves focus.prox
+    expect(hover(builder, makeMockUPlot(), null)?.style.transform).toBe('translate(-10px, -10px)');
+  });
+
+  it('hides the point for cursor updates synced from another panel', () => {
+    const { alignedFrame, allFrames } = makeComparePair();
+    const builder = buildBuilder(alignedFrame, { allFrames });
+    // uPlot leaves cursor.event null when the update came from a synced panel
+    const u = makeMockUPlot({ cursor: { ...makeMockUPlot().cursor, event: null } });
+
+    expect(hover(builder, u, 1)?.style.transform).toBe('translate(-10px, -10px)');
   });
 });

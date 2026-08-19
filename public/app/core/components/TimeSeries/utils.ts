@@ -100,6 +100,7 @@ import {
 } from '@grafana/ui/internal';
 
 import { ANNOTATION_LANE_SIZE } from '../../../plugins/panel/timeseries/plugins/utils';
+import { getComparisonFieldPairs } from '../../../plugins/panel/timeseries/utils';
 
 // See UPlotAxisBuilder.ts::calculateAxisSize for default axis size calculation
 const UPLOT_DEFAULT_AXIS_SIZE = 17;
@@ -754,6 +755,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
 
   builder.setCursor(cursor);
 
+  // Build comparsion pairing once per config build, to be reused elsewhere
+  builder.comparisonFieldPairs = getComparisonFieldPairs(frame, allFrames);
+  addComparisonCursorPoint(builder, builder.comparisonFieldPairs);
+
   return builder;
 };
 
@@ -769,6 +774,109 @@ function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<str
     }
   });
   return originNames;
+}
+
+/**
+ * uPlot types its cursor point options as value-or-function. It normalizes them to
+ * functions during init, but accept either so this doesn't depend on that detail.
+ */
+function resolvePointOpt<T>(
+  opt: T | ((u: uPlot, seriesIdx: number, ...rest: number[]) => T) | undefined,
+  ...args: [uPlot, number, ...number[]]
+): T | undefined {
+  return opt instanceof Function ? opt(...args) : opt;
+}
+
+/**
+ * Renders a second cursor point on the time-comparison counterpart of the hovered series,
+ * so a comparison pair highlights together the same way it appears together in the tooltip.
+ *
+ * uPlot can't do this natively: `cursor.points.one` (set below) makes it create exactly one
+ * point element and move it to whichever series is closest, so there is no second element to
+ * light up. Turning `one` off instead draws a point on *every* series, gated on legend updates
+ * rather than cursor proximity. So we add one element of our own and drive it off the same
+ * cursor state uPlot uses for its own.
+ */
+function addComparisonCursorPoint(builder: UPlotConfigBuilder, pairs: Map<number, number>) {
+  if (pairs.size === 0) {
+    return;
+  }
+
+  let point: HTMLDivElement | null = null;
+  let closestSeriesIdx: number | null = null;
+
+  const hide = () => {
+    // (-10, -10) is uPlot's own offscreen convention for cursor points
+    point && (point.style.transform = 'translate(-10px, -10px)');
+  };
+
+  builder.addHook('init', (u) => {
+    point = document.createElement('div');
+    // inherits the round shape and pointer-events: none from uPlot's stylesheet
+    point.classList.add('u-cursor-pt');
+    hide();
+    u.over.appendChild(point);
+  });
+
+  // uPlot only reports a series here once it is within cursor.focus.prox, so this doubles as
+  // the proximity gate - our point appears and disappears in lockstep with uPlot's own.
+  builder.addHook('setSeries', (_u, seriesIdx) => {
+    closestSeriesIdx = seriesIdx;
+  });
+
+  builder.addHook('setCursor', (u) => {
+    if (point == null) {
+      return;
+    }
+
+    // uPlot leaves cursor.event set between mouse moves (it only clears it for synced
+    // updates), so a null event means this came from another panel's cursor rather than
+    // from hovering this one.
+    if (u.cursor.event == null) {
+      hide();
+      return;
+    }
+
+    const pairIdx = closestSeriesIdx == null ? undefined : pairs.get(closestSeriesIdx);
+
+    if (pairIdx == null || !u.series[pairIdx]?.show) {
+      hide();
+      return;
+    }
+
+    const dataIdx = u.cursor.idxs?.[pairIdx];
+    const yVal = dataIdx == null ? null : u.data[pairIdx][dataIdx];
+
+    if (dataIdx == null || yVal == null) {
+      hide();
+      return;
+    }
+
+    // CSS pixels, not canvas pixels - this positions a DOM element, not a canvas draw
+    const left = u.valToPos(u.data[0][dataIdx]!, 'x');
+    const top = u.valToPos(yVal, u.series[pairIdx].scale!);
+
+    // Read the resolved cursor point styling off the instance so this stays in step with
+    // whatever UPlotConfigBuilder configured (size, ring width, per-series colors).
+    // These are typed as value-or-function; uPlot normalizes them to functions at init,
+    // but resolve both shapes rather than assume the normalization.
+    const points = u.cursor.points!;
+    const size = resolvePointOpt(points.size, u, pairIdx) ?? 0;
+    const width = resolvePointOpt(points.width, u, pairIdx, size) ?? 0;
+    // Non-string fills (CanvasGradient) only arise for canvas-drawn series points, never for
+    // the DOM cursor point, but fall back to the series stroke rather than assume that.
+    const fill = resolvePointOpt(points.fill, u, pairIdx);
+    const stroke = resolvePointOpt(points.stroke, u, pairIdx);
+
+    point.style.width = `${size}px`;
+    point.style.height = `${size}px`;
+    point.style.marginLeft = `${-size / 2}px`;
+    point.style.marginTop = `${-size / 2}px`;
+    width && (point.style.borderWidth = `${width}px`);
+    typeof fill === 'string' && (point.style.background = fill);
+    typeof stroke === 'string' && (point.style.borderColor = stroke);
+    point.style.transform = `translate(${Math.ceil(left)}px, ${Math.ceil(top)}px)`;
+  });
 }
 
 export function getXAxisConfig(lanes = 1): Pick<AxisProps, 'size' | 'gap' | 'ticks'> | undefined {

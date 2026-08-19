@@ -32,7 +32,7 @@ import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getTimezones, prepareGraphableFields, getComparisonFieldPairs } from './utils';
+import { getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -166,8 +166,7 @@ export const TimeSeriesPanel = ({
       onPinnedToSidebarChange={onPinnedToSidebarChange}
     >
       {(uplotConfig, alignedFrame) => {
-        const compFieldPairs = getComparisonFieldPairs(alignedFrame, frames);
-        console.log('wat', compFieldPairs);
+        const compFieldPairs = uplotConfig.comparisonFieldPairs;
         return (
           <>
             {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}

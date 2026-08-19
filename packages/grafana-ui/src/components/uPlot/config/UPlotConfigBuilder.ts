@@ -82,6 +82,12 @@ export class UPlotConfigBuilder {
   // Exposed to let the container know the primary scale keys
   scaleKeys: [string, string] = ['', ''];
 
+  /**
+   * Bidirectional pairing between a time-comparison series and its current-period
+   * counterpart, keyed by the aligned frame's fields index
+   */
+  comparisonFieldPairs: Map<number, number> = new Map();
+
   setState(state: PlotState) {
     this.state = merge({}, this.state, state);
   }
