@@ -718,7 +718,7 @@ type searchUsersQuery struct {
 	AuthModule    string
 	InFilters     []searchUserInFilter
 	WhereFilters  []searchUserWhereFilter
-	Sorts         []string
+	OrderBy       string
 	Limit         int
 	Offset        int
 }
@@ -843,6 +843,9 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 				sorts = append(sorts, query.SortOpts[i].Filter[j].OrderBy())
 			}
 		}
+		if len(sorts) == 0 {
+			sorts = []string{"u.login ASC", "u.email ASC"}
+		}
 
 		searchQuery := searchUsersQuery{
 			SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
@@ -856,7 +859,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			IsDisabled:    query.IsDisabled,
 			InFilters:     inFilters,
 			WhereFilters:  whereFilters,
-			Sorts:         sorts,
+			OrderBy:       strings.Join(sorts, ", "),
 			AuthModule:    query.AuthModule,
 		}
 		if query.Limit > 0 {

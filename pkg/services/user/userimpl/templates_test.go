@@ -29,6 +29,7 @@ func TestTemplates(t *testing.T) {
 			UserTable:     dbHelper.Table("user"),
 			UserAuthTable: dbHelper.Table("user_auth"),
 			AccessAll:     true,
+			OrderBy:       "u.login ASC, u.email ASC",
 		}
 		if withFilters {
 			query.OrgID = 7
@@ -56,7 +57,7 @@ func TestTemplates(t *testing.T) {
 					HasParams: true,
 				},
 			}
-			query.Sorts = []string{"u.login DESC", "u.email ASC"}
+			query.OrderBy = "u.login DESC, u.email ASC"
 			query.Limit = 25
 			query.Offset = 50
 		}
@@ -228,6 +229,7 @@ func TestSearchUsersQueryArguments(t *testing.T) {
 		QueryPattern:  "%ops%",
 		IsDisabled:    new(true),
 		AuthModule:    "oauth",
+		OrderBy:       "u.login ASC, u.email ASC",
 		InFilters: []searchUserInFilter{
 			{
 				Condition: "user_stats.billing_role",
@@ -319,6 +321,7 @@ func TestSearchUserWhereFilterRendersTrailingSQLAfterValue(t *testing.T) {
 		UserTable:     "test_schema.user",
 		UserAuthTable: "test_schema.user_auth",
 		AccessAll:     true,
+		OrderBy:       "u.login ASC, u.email ASC",
 		WhereFilters:  []searchUserWhereFilter{filter},
 	}
 	rawSQL, err := renderUserQuery(searchUsersTemplate, query)

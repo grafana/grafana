@@ -62,12 +62,7 @@ FROM {{ .Ident .UserTable }} AS u
 {{ template "latest_user_auth_join" . }}
 {{ template "search_users_joins" . }}
 {{ template "search_users_where" . }}
-ORDER BY
-{{ if .Sorts -}}
-  {{ range $index, $sort := .Sorts }}{{ if $index }}, {{ end }}{{ $sort }}{{ end }}
-{{ else -}}
-  u.login ASC, u.email ASC
-{{ end -}}
+ORDER BY {{ .OrderBy }}
 {{ if gt .Limit 0 -}}
 LIMIT {{ .Arg .Limit }}{{ if gt .Offset 0 }} OFFSET {{ .Arg .Offset }}{{ end }}
 {{ end -}}

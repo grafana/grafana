@@ -19,5 +19,4 @@ LEFT JOIN "test_schema"."user_auth" AS user_auth ON user_auth.id = (
   LIMIT 1
 )
 WHERE u.is_service_account = FALSE
-ORDER BY
-u.login ASC, u.email ASC
+ORDER BY u.login ASC, u.email ASC
