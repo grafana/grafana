@@ -1482,6 +1482,32 @@ func TestService_Check(t *testing.T) {
 			expected:    false,
 		},
 		{
+			name: "should allow registered wildcard datasource group with wildcard permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "*.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "get",
+				Name:      "*",
+			},
+			permissions: []accesscontrol.Permission{{Action: "datasources:read", Scope: "datasources:*"}},
+			expected:    true,
+		},
+		{
+			name: "should deny registered wildcard datasource group with instance permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "*.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "get",
+				Name:      "*",
+			},
+			permissions: []accesscontrol.Permission{{Action: "datasources:read", Scope: "datasources:uid:ds1"}},
+			expected:    false,
+		},
+		{
 			name: "should translate from id to uid based permissions",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
@@ -1626,6 +1652,9 @@ func TestService_Check(t *testing.T) {
 				}
 				if tc.req.Resource == "folders" {
 					expAction = "folders:delete"
+				}
+				if tc.req.Resource == "datasources" {
+					expAction = "datasources:read"
 				}
 				if tc.req.Subresource == "annotations" {
 					switch tc.req.Verb {
