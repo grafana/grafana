@@ -325,13 +325,13 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('7');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('7');
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByLabelText('1'));
       await userEvent.click(screen.getByText('Ok'));
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('3');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('3');
     });
 
     it('should filter rows and recalculate footer values when multiple filter values are selected', async () => {
@@ -354,17 +354,18 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(8);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('13');
+      // 7 data rows + header row + footer row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(9);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('13');
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByLabelText('2'));
       await userEvent.click(screen.getByLabelText('3'));
       await userEvent.click(screen.getByText('Ok'));
 
-      //4 + header row
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('10');
+      //4 + header row + footer row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('10');
     });
 
     it('should reset when clear filters button is pressed', async () => {
@@ -391,16 +392,16 @@ describe('Table', () => {
       await userEvent.click(screen.getByLabelText('1'));
       await userEvent.click(screen.getByText('Ok'));
 
-      //3 + header row
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('3');
+      //3 + header row + footer row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('3');
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByText('Clear filter'));
 
-      //5 + header row
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('7');
+      //5 + header row + footer row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(7);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('7');
     });
   });
 
@@ -425,9 +426,9 @@ describe('Table', () => {
         }),
       });
 
-      //5 + header row
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('7');
+      //5 + header row + footer row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(7);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('7');
 
       const onSortByChange = jest.fn();
       const onCellFilterAdded = jest.fn();
@@ -465,9 +466,9 @@ describe('Table', () => {
 
       rerender(<Table {...props} />);
 
-      //4 + header row
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('5');
+      //4 + header row + footer row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('5');
     });
   });
 
@@ -517,7 +518,7 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('4');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('4');
     });
 
     it('should show count of rows when `count rows` is selected', async () => {
@@ -540,8 +541,8 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('Count');
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1]).toHaveTextContent('5');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('Count');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[1]).toHaveTextContent('5');
     });
 
     it('should show correct counts when turning `count rows` on and off', async () => {
@@ -564,8 +565,8 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('Count');
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1]).toHaveTextContent('5');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('Count');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[1]).toHaveTextContent('5');
 
       const onSortByChange = jest.fn();
       const onCellFilterAdded = jest.fn();
@@ -603,7 +604,7 @@ describe('Table', () => {
 
       rerender(<Table {...props} />);
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('4');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('4');
     });
   });
 
