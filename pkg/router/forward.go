@@ -72,8 +72,3 @@ func (b *forwardBackend) Load(ctx context.Context) (http.Handler, error) {
 		b.proxy.ServeHTTP(w, req)
 	}), nil
 }
-
-func _proxyError(w http.ResponseWriter, _ *http.Request, _ string, error string, code int) {
-	http.Error(w, error, code)
-	// TODO: log and observe request termination (group, code).
-}

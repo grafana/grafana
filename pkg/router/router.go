@@ -389,7 +389,7 @@ func (r *GrafanaRouter) publish(backends []Backend) {
 
 func rejectBackendRedirects(resp *http.Response) error {
 	if resp.StatusCode >= 300 && resp.StatusCode <= 399 && resp.Header.Get("Location") != "" {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		// replace with 502 — don't forward the redirect
 	}
 	return nil
