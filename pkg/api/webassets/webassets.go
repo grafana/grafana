@@ -24,10 +24,8 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api/webassets")
 
 const (
-	// BuildDir is served at the public/build URL prefix. Both bundlers write inside it,
-	// so serving it never depends on the rspack flag.
-	BuildDir = "build"
-	// RspackBuildDir nests inside BuildDir so disk path, URL and CDN path all match.
+	// BuildDir is served at the public/build URL prefix; both bundlers write inside it.
+	BuildDir       = "build"
 	RspackBuildDir = BuildDir + "/rspack"
 
 	AssetsManifestFile = "assets-manifest.json"
@@ -40,8 +38,7 @@ func PublicPathFor(buildDir string) string {
 }
 
 // ResolveBuildDir returns the directory holding the manifest and boot script to read.
-// Call it per request: resolving once at startup pins the rollout to process lifetime
-// and defeats percentage rollouts.
+// Call it per request; resolving at startup pins the rollout to process lifetime.
 func ResolveBuildDir(ctx context.Context) string {
 	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRspackBuild, false, openfeature.TransactionContext(ctx)) {
 		return RspackBuildDir

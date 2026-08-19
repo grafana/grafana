@@ -26,8 +26,6 @@ func TestGetWebAssets_WithoutCDNConfigured(t *testing.T) {
 	assert.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
 }
 
-// The manifest is read from the given build directory, while the asset URLs inside it
-// stay under the public/build prefix for every build.
 func TestGetWebAssets_ReadsGivenBuildDir(t *testing.T) {
 	cfg := &setting.Cfg{
 		StaticRootPath: "../../../api/webassets/testdata",

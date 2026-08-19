@@ -295,8 +295,6 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 	})
 }
 
-// Both bundlers write inside public/build, so the source URL already carries the path
-// relative to it. The store resolves either one without consulting the rspack flag.
 func TestSourceMapStore_ResolvesEitherBundlerFromURL(t *testing.T) {
 	tests := []struct {
 		desc        string

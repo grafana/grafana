@@ -396,8 +396,6 @@ func TestHTTPServer_getListeners(t *testing.T) {
 	})
 }
 
-// One static route serves both bundlers: webpack writes to build/, rspack to
-// build/rspack/. The rspack flag picks a manifest, so routing must not depend on it.
 func TestHTTPServer_mapStaticBuildDir(t *testing.T) {
 	staticRoot := t.TempDir()
 	for dir, body := range map[string]string{

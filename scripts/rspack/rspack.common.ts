@@ -98,10 +98,7 @@ export default (env: Env = {}): Configuration => ({
     asyncWebAssembly: true,
   },
   output: {
-    // `path` and `publicPath` must agree: on-disk layout, URL path and CDN path are the
-    // same string, so an asset written here is served and uploaded at the same location.
-    // Nesting inside webpack's output keeps both bundlers under the public/build prefix,
-    // and confines `clean: true` to rspack's own subdirectory.
+    // `path` and `publicPath` must agree: disk layout, URL and CDN path are one string.
     clean: true,
     path: path.resolve(import.meta.dirname, '../../public/build/rspack'),
     filename: (pathData) => {

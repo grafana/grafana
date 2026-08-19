@@ -32,9 +32,7 @@ export default (env: Env = {}): Configuration => ({
     asyncWebAssembly: true,
   },
   output: {
-    // rspack writes into a subdirectory of this one, and clean removes anything this
-    // compilation did not emit. Without the keep rule, building webpack deletes the
-    // rspack build.
+    // rspack writes into a subdirectory of this one; without keep, cleaning deletes it.
     clean: { keep: 'rspack' },
     path: path.resolve(import.meta.dirname, '../../public/build'),
     filename: (pathData) => {

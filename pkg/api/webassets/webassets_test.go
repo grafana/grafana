@@ -25,8 +25,6 @@ func TestResolveBuildDir(t *testing.T) {
 	})
 }
 
-// Both builds publish their assets under the public/build URL prefix, so the
-// manifests are told apart by their content hashes rather than by path prefix.
 func TestGetWebAssetsBuildDir(t *testing.T) {
 	// Env must be dev so GetWebAssets skips its process-wide cache between subtests.
 	cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata"}
@@ -53,8 +51,6 @@ func TestGetWebAssetsBuildDir(t *testing.T) {
 	})
 }
 
-// Swagger passes its build dir literally rather than going through ResolveBuildDir, so
-// the rspack flag never applies to it.
 func TestGetWebAssetsSwagger(t *testing.T) {
 	cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata"}
 	license := licensingtest.NewFakeLicensing()
@@ -75,7 +71,6 @@ func TestGetWebAssetsSwagger(t *testing.T) {
 	})
 }
 
-// A build directory without a manifest must surface an error, not panic on a nil DTO.
 func TestGetWebAssetsMissingBuildDir(t *testing.T) {
 	cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata"}
 	license := licensingtest.NewFakeLicensing()
@@ -195,9 +190,6 @@ func TestReadWebassetsFromCDN(t *testing.T) {
 	  }`, string(dto))
 }
 
-// The page rebuilds the CDN asset prefix from PublicPath, so it has to match the
-// bundler's output.publicPath or every lazy chunk and worker resolves to the wrong
-// directory.
 func TestPublicPathFollowsBuildDir(t *testing.T) {
 	tests := []struct {
 		buildDir string

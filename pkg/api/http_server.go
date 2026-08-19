@@ -702,8 +702,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.UseMiddleware(middleware.Recovery(hs.Cfg, hs.License))
 	m.UseMiddleware(hs.Csrf.Middleware())
 
-	// Serves both bundlers: webpack writes to build/, rspack to build/rspack/. The
-	// rspack flag picks a manifest, so it must not reach route registration.
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, webassets.BuildDir, "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")

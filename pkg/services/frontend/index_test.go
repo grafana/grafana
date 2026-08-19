@@ -29,8 +29,6 @@ func setupTestWebAssets(tb testing.TB) string {
 	return publicDir
 }
 
-// setupTestWebAssetsWithRspack adds an rspack build next to the webpack one, as a server
-// has once the frontend is built with both bundlers.
 func setupTestWebAssetsWithRspack(tb testing.TB) string {
 	tb.Helper()
 
@@ -40,9 +38,8 @@ func setupTestWebAssetsWithRspack(tb testing.TB) string {
 	return publicDir
 }
 
-// writeTestWebAssets writes a test assets manifest and boot script under the given build
-// directory. On-disk path and URL prefix agree, so the asset URLs in the rendered page
-// show which manifest was read.
+// writeTestWebAssets writes a manifest and boot script under the given build directory.
+// The asset URLs show which manifest was read.
 func writeTestWebAssets(tb testing.TB, publicDir string, dir string) {
 	tb.Helper()
 
@@ -235,7 +232,6 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		assert.Equal(t, 200, recorder.Code)
 
-		// The assets come from the rspack manifest, nested under the public/build prefix
 		body := recorder.Body.String()
 		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\" type=\"text/javascript\"")
 		assert.Contains(t, body, "src=\"public/build/rspack/app.js\" type=\"text/javascript\"")
@@ -243,8 +239,6 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		assert.Contains(t, body, "// test boot stub for build/rspack")
 	})
 
-	// A webpack-only deployment must still start; the rspack build is optional until it
-	// ships. Turning the flag on without it fails the request instead, loudly.
 	t.Run("should start without an rspack build and fail the request when the flag is on", func(t *testing.T) {
 		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
 
