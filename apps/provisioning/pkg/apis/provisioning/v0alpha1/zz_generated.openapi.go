@@ -1302,9 +1302,9 @@ func schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
-					"projectID": {
+					"repoID": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ProjectID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input.",
+							Description: "RepoID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

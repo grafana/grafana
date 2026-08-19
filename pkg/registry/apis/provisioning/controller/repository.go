@@ -904,12 +904,12 @@ func (rc *RepositoryController) process(key string) error {
 		}
 	}
 
-	// Backfill the pinned project ID for repos written before it was resolved
+	// Backfill the pinned repo ID for repos written before it was resolved
 	// at admission time, so Build doesn't keep re-resolving it on every call.
 	if repoIDHandler, ok := repo.(repository.RepoIDHandler); ok && repoIDHandler.ShouldUpdateRepoID() {
 		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  fmt.Sprintf("/spec/%s/projectID", repo.Config().Spec.Type),
+			"op":    "add",
+			"path":  fmt.Sprintf("/spec/%s/repoID", repo.Config().Spec.Type),
 			"value": repoIDHandler.ResolvedRepoID(),
 		})
 	}
