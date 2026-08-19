@@ -74,6 +74,7 @@ func TestIntegrationServiceAccountTokens(t *testing.T) {
 				},
 			})
 
+			doServiceAccountTokenCascadeDeleteTests(t, helper)
 			doServiceAccountTokenCRUDTests(t, helper)
 		})
 	}
@@ -105,6 +106,42 @@ func tokensPath(ns, saName string) string {
 
 func tokenPath(ns, saName, tokenName string) string {
 	return fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/serviceaccounts/%s/tokens/%s", ns, saName, tokenName)
+}
+
+func doServiceAccountTokenCascadeDeleteTests(t *testing.T, helper *apis.K8sTestHelper) {
+	ctx := context.Background()
+	ns := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	saClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: ns,
+		GVR:       gvrServiceAccounts,
+	})
+
+	createToken := func(saName, tokenName string) apis.K8sResponse[createTokenResponse] {
+		body, err := json.Marshal(createTokenRequest{TokenName: tokenName})
+		require.NoError(t, err)
+		return apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   tokensPath(ns, saName),
+			Body:   body,
+		}, &createTokenResponse{})
+	}
+
+	t.Run("deleting a service account deletes its tokens", func(t *testing.T) {
+		saName := createServiceAccount(t, helper)
+		require.Equal(t, http.StatusCreated, createToken(saName, "cascade-delete-token-1").Response.StatusCode)
+		require.Equal(t, http.StatusCreated, createToken(saName, "cascade-delete-token-2").Response.StatusCode)
+
+		require.NoError(t, saClient.Resource.Delete(ctx, saName, metav1.DeleteOptions{}))
+
+		// Token names are unique within an organization, so recreating both names proves
+		// that the original rows were removed rather than merely hidden by owner deletion.
+		replacementSAName := createServiceAccount(t, helper)
+		require.Equal(t, http.StatusCreated, createToken(replacementSAName, "cascade-delete-token-1").Response.StatusCode)
+		require.Equal(t, http.StatusCreated, createToken(replacementSAName, "cascade-delete-token-2").Response.StatusCode)
+		require.NoError(t, saClient.Resource.Delete(ctx, replacementSAName, metav1.DeleteOptions{}))
+	})
 }
 
 func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {

@@ -205,6 +205,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	deleteServiceAccountTokens := func(cmd *deleteServiceAccountTokensCommand) sqltemplate.SQLTemplate {
+		v := newDeleteServiceAccountTokens(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -907,6 +913,15 @@ func TestIdentityQueries(t *testing.T) {
 					Name: "delete_token_basic",
 					Data: deleteServiceAccountToken(&DeleteServiceAccountTokenCommand{
 						Name:             "my-token",
+						OrgID:            1,
+						ServiceAccountID: 42,
+					}),
+				},
+			},
+			sqlDeleteServiceAccountTokensTemplate: {
+				{
+					Name: "delete_service_account_tokens",
+					Data: deleteServiceAccountTokens(&deleteServiceAccountTokensCommand{
 						OrgID:            1,
 						ServiceAccountID: 42,
 					}),
