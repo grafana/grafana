@@ -2212,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "This alert rule may have been deleted, or you may not have permission to view it.",
+      "body-permission-create-silence": "You can still silence individual alert rules from their detail pages.",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Configure silences to stop notifications from a particular alert rule"
@@ -2219,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Silence alert rule"
         }
-      }
+      },
+      "text-checking-permissions": "Checking permissions...",
+      "title-alert-rule-unavailable": "Alert rule unavailable",
+      "title-permission-create-silence": "You do not have permission to create this silence"
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "We could not find any external Alertmanagers and you may not have access to the built-in Grafana Alertmanager.",
