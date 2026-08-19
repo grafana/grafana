@@ -1153,6 +1153,20 @@
     },
     {
       "metadata": {
+        "name": "auth.cloudSupportTicketRoles",
+        "resourceVersion": "1787083315240",
+        "creationTimestamp": "2026-08-18T20:01:55Z"
+      },
+      "spec": {
+        "description": "Gates access to Grafana Cloud support-ticket RBAC roles",
+        "stage": "preview",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "auth.tokenRotationGracePeriod",
         "resourceVersion": "1782472850879",
         "creationTimestamp": "2026-06-26T10:33:47Z",
@@ -1450,7 +1464,8 @@
       "metadata": {
         "name": "cloudRBACRoles",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-01-10T13:19:01Z"
+        "creationTimestamp": "2024-01-10T13:19:01Z",
+        "deletionTimestamp": "2026-08-18T20:01:55Z"
       },
       "spec": {
         "description": "Enabled grafana cloud specific RBAC roles",

@@ -335,11 +335,6 @@ export interface FeatureToggles {
   */
   tableSharedCrosshair?: boolean;
   /**
-  * Enabled grafana cloud specific RBAC roles
-  * @default false
-  */
-  cloudRBACRoles?: boolean;
-  /**
   * Optimizes eligible queries in order to reduce load on datasources
   * @default false
   */

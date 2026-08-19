@@ -24,11 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setCloudRBACRolesFlag(t *testing.T, enabled bool) {
+func setCloudSupportTicketRolesFlag(t *testing.T, enabled bool) {
 	t.Helper()
 	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagCloudRBACRoles: {
-			Key:            featuremgmt.FlagCloudRBACRoles,
+		featuremgmt.FlagAuthCloudSupportTicketRoles: {
+			Key:            featuremgmt.FlagAuthCloudSupportTicketRoles,
 			Variants:       map[string]any{"on": enabled},
 			DefaultVariant: "on",
 		},
@@ -380,7 +380,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			setCloudRBACRolesFlag(t, true)
+			setCloudSupportTicketRolesFlag(t, true)
 			var called bool
 			s := &RBACSync{
 				ac: &acmock.Mock{
@@ -566,7 +566,7 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			setCloudRBACRolesFlag(t, tt.includeSupportTicketRoles)
+			setCloudSupportTicketRolesFlag(t, tt.includeSupportTicketRoles)
 			s := &RBACSync{}
 
 			rolesToAdd, rolesToRemove, err := s.cloudRolesToAddAndRemove(context.Background(), tt.identity)

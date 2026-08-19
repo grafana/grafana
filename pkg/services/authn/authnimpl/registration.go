@@ -130,10 +130,7 @@ func ProvideRegistration(
 
 	rbacSync := sync.ProvideRBACSync(cfg, accessControlService, tracer, permRegistry)
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
-		authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
-	}
+	authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
