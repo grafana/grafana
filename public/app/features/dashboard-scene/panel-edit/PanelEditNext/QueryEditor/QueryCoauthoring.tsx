@@ -584,6 +584,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
       {isAssistantAvailable && !proposal && !fallback && !clarification && !error && (
         <div className={styles.promptRow}>
           <TextArea
+            className={styles.promptInput}
             value={intent}
             rows={1}
             autoFocus
@@ -597,9 +598,9 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
               }
             }}
           />
-          <Button
-            icon={isGenerating ? 'square-shape' : 'arrow-up'}
-            size="sm"
+          <IconButton
+            className={styles.promptSubmit}
+            name={isGenerating ? 'square-shape' : 'enter'}
             variant="secondary"
             aria-label={
               isGenerating
@@ -723,6 +724,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           </div>
           <div className={styles.promptRow}>
             <TextArea
+              className={styles.promptInput}
               value={intent}
               rows={1}
               autoFocus
@@ -736,9 +738,9 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
                 }
               }}
             />
-            <Button
-              icon="arrow-up"
-              size="sm"
+            <IconButton
+              className={styles.promptSubmit}
+              name="enter"
               variant="secondary"
               aria-label={t('query-editor-coauthoring.continue', 'Continue')}
               disabled={!intent.trim()}
@@ -1129,7 +1131,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-      width: 'min(420px, calc(100vw - 16px))',
+      width: 'min(403px, calc(100vw - 16px))',
       minHeight: 0,
       padding: theme.spacing(1),
       overflow: 'hidden',
@@ -1147,8 +1149,19 @@ function getStyles(theme: GrafanaTheme2) {
     promptRow: css({
       display: 'grid',
       gridTemplateColumns: '1fr auto',
-      gap: theme.spacing(0.5),
-      alignItems: 'start',
+      alignItems: 'center',
+      columnGap: theme.spacing(0.5),
+      marginInline: theme.spacing(1),
+    }),
+    promptInput: css({
+      height: theme.spacing(4),
+      minHeight: theme.spacing(4),
+    }),
+    promptSubmit: css({
+      width: theme.spacing(3.5),
+      height: theme.spacing(3.5),
+      margin: 0,
+      padding: theme.spacing(0.75),
     }),
     status: css({
       display: 'flex',
