@@ -196,7 +196,7 @@ export async function getDataSourceInstanceList(
   return (results.length > 0 ? results : getInstanceSettingsListFallback(filtersWithAdapter)).map(toListItem);
 }
 
-function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
+export function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
     uid: settings.uid,
     type: settings.type,
@@ -206,38 +206,6 @@ function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceLis
     readOnly: settings.readOnly,
     isDefault: settings.isDefault ?? false,
   };
-}
-
-// Delegating to getDataSourceInstanceSettings is only valid while that is a synchronous read of
-// the boot-data map. Once it fetches per-instance settings from the backend this becomes one
-// request per data source — reimplement over the getDataSourceInstanceList cache, whose items
-// already carry uid, type and name.
-export async function getDataSourceInstanceListItem(
-  ref?: DataSourceRef | string | null,
-  scopedVars?: ScopedVars
-): Promise<DataSourceInstanceListItem | undefined> {
-  const settings = await getDataSourceInstanceSettings(ref, scopedVars);
-  return settings ? toListItem(settings) : undefined;
-}
-
-/**
- * Resolve the plugin type of a data source instance (e.g. `prometheus`, `loki`) from a uid,
- * name, stringified id or {@link DataSourceRef}. Returns `undefined` when the data source
- * cannot be resolved.
- *
- * Prefer this over fetching the full settings just to read `type`. If the goal is plugin
- * capabilities or a logo, use `getDataSourceInstanceMeta` instead of pairing this with
- * `getDatasourcePluginMeta` — the built-in data sources all report `type: 'datasource'` and
- * need a name-based mapping to reach their plugin id.
- *
- * @public
- */
-export async function getDataSourceInstanceType(
-  ref?: DataSourceRef | string | null,
-  scopedVars?: ScopedVars
-): Promise<string | undefined> {
-  const item = await getDataSourceInstanceListItem(ref, scopedVars);
-  return item?.type;
 }
 
 // getDataSourceInstanceList appends the built-in -- Grafana -- data source to most results.

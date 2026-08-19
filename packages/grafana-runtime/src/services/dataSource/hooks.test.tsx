@@ -10,9 +10,8 @@ import { _resetForTests as resetPlugin, setDataSourcePluginImporter } from './da
 import {
   useDataSourceInstance,
   useDataSourceInstanceList,
-  useDataSourceInstanceMeta,
+  useDataSourceInstanceListItem,
   useDataSourceInstanceSettings,
-  useDataSourceInstanceType,
   useDefaultDataSourceInstance,
   useHasDataSourceInstance,
 } from './hooks';
@@ -66,7 +65,7 @@ beforeAll(() => {
   } as any);
 });
 
-// Distinguishable from the copy embedded on the instance settings, so the meta hook's
+// Distinguishable from the copy embedded on the instance settings, so the list-item hook's
 // assertions prove which cache answered.
 const testDbPluginMeta = { ...ds({}).meta, name: 'Test DB (plugin meta)' };
 
@@ -99,65 +98,35 @@ describe('useDataSourceInstanceSettings', () => {
   });
 });
 
-describe('useDataSourceInstanceMeta', () => {
-  it('starts loading then resolves to the plugin meta', async () => {
-    const { result } = renderHook(() => useDataSourceInstanceMeta('uid-alpha'));
+describe('useDataSourceInstanceListItem', () => {
+  it('starts loading then resolves to the list item', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceListItem('uid-alpha'));
 
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.meta?.name).toBe('Test DB (plugin meta)');
+    expect(result.current.item?.name).toBe('Alpha');
+    expect(result.current.item?.type).toBe('test-db');
+    expect(result.current.item?.meta.name).toBe('Test DB (plugin meta)');
     expect(result.current.error).toBeUndefined();
   });
 
   it('resolves to undefined without an error for an unknown ref', async () => {
-    const { result } = renderHook(() => useDataSourceInstanceMeta('nonexistent'));
+    const { result } = renderHook(() => useDataSourceInstanceListItem('nonexistent'));
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.meta).toBeUndefined();
+    expect(result.current.item).toBeUndefined();
     expect(result.current.error).toBeUndefined();
   });
 
   it('refetches when the ref changes', async () => {
-    const { result, rerender } = renderHook(({ ref }) => useDataSourceInstanceMeta(ref), {
-      initialProps: { ref: 'nonexistent' },
+    const { result, rerender } = renderHook(({ ref }) => useDataSourceInstanceListItem(ref), {
+      initialProps: { ref: 'uid-alpha' },
     });
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.meta).toBeUndefined();
+    await waitFor(() => expect(result.current.item?.name).toBe('Alpha'));
 
-    rerender({ ref: 'uid-alpha' });
-    await waitFor(() => expect(result.current.meta?.name).toBe('Test DB (plugin meta)'));
-  });
-});
-
-describe('useDataSourceInstanceType', () => {
-  it('starts loading then resolves to the instance type', async () => {
-    const { result } = renderHook(() => useDataSourceInstanceType('uid-alpha'));
-
-    expect(result.current.isLoading).toBe(true);
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.type).toBe('test-db');
-    expect(result.current.error).toBeUndefined();
-  });
-
-  it('resolves to undefined without an error for an unknown ref', async () => {
-    const { result } = renderHook(() => useDataSourceInstanceType('nonexistent'));
-
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.type).toBeUndefined();
-    expect(result.current.error).toBeUndefined();
-  });
-
-  it('refetches when the ref changes', async () => {
-    const { result, rerender } = renderHook(({ ref }) => useDataSourceInstanceType(ref), {
-      initialProps: { ref: 'nonexistent' },
-    });
-
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.type).toBeUndefined();
-
-    rerender({ ref: 'uid-alpha' });
-    await waitFor(() => expect(result.current.type).toBe('test-db'));
+    rerender({ ref: 'uid-bravo' });
+    await waitFor(() => expect(result.current.item?.name).toBe('Bravo'));
   });
 });
 

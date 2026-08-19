@@ -4,19 +4,17 @@ import {
   type DataSourceApi,
   type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
-  type DataSourcePluginMeta,
   type DataSourceRef,
 } from '@grafana/data';
 
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
 import { getDataSourceInstance } from './dataSource';
-import { getDataSourceInstanceMeta } from './meta';
+import { getDataSourceInstanceListItem } from './listItem';
 import {
   type GetDataSourceInstanceListFilters,
   getDataSourceInstanceSettings,
   getDataSourceInstanceList,
-  getDataSourceInstanceType,
   getDefaultDataSourceInstance,
   hasDataSourceInstance,
 } from './settings';
@@ -33,19 +31,10 @@ export interface UseDataSourceInstanceSettingsResult {
 /**
  * @public
  */
-export interface UseDataSourceInstanceMetaResult {
+export interface UseDataSourceInstanceListItemResult {
   isLoading: boolean;
   error?: Error;
-  meta?: DataSourcePluginMeta;
-}
-
-/**
- * @public
- */
-export interface UseDataSourceInstanceTypeResult {
-  isLoading: boolean;
-  error?: Error;
-  type?: string;
+  item?: DataSourceInstanceListItem;
 }
 
 /**
@@ -115,38 +104,26 @@ export function useDataSourceInstanceSettings(
 }
 
 /**
- * React hook wrapping {@link getDataSourceInstanceMeta}. Re-fetches when `ref`
+ * React hook wrapping {@link getDataSourceInstanceListItem}. Re-fetches when `ref`
  * changes (compared by value, so inline objects are safe).
  *
- * Returns the *plugin* metadata for a data source instance — prefer it over reading `meta`
- * off {@link useDataSourceInstanceSettings}.
+ * Prefer this over {@link useDataSourceInstanceSettings} whenever only identity or plugin
+ * metadata is needed — `item` carries `uid`, `type`, `name`, `meta`, `readOnly` and
+ * `isDefault`, and avoids depending on per-instance settings that will later be fetched on
+ * demand.
  *
  * Template variable strings (e.g. `$ds` or `${ds}`) are not supported — interpolate
  * them before passing the resolved uid or name to this hook.
  *
  * @public
  */
-export function useDataSourceInstanceMeta(ref?: DataSourceRef | string | null): UseDataSourceInstanceMetaResult {
+export function useDataSourceInstanceListItem(
+  ref?: DataSourceRef | string | null
+): UseDataSourceInstanceListItemResult {
   const refKey = stableKey(ref);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getDataSourceInstanceMeta(ref), [refKey]);
-  return { isLoading: loading, error, meta: value };
-}
-
-/**
- * React hook wrapping {@link getDataSourceInstanceType}. Re-fetches when `ref`
- * changes (compared by value, so inline objects are safe).
- *
- * Template variable strings (e.g. `$ds` or `${ds}`) are not supported — interpolate
- * them before passing the resolved uid or name to this hook.
- *
- * @public
- */
-export function useDataSourceInstanceType(ref?: DataSourceRef | string | null): UseDataSourceInstanceTypeResult {
-  const refKey = stableKey(ref);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getDataSourceInstanceType(ref), [refKey]);
-  return { isLoading: loading, error, type: value };
+  const { loading, error, value } = useAsync(() => getDataSourceInstanceListItem(ref), [refKey]);
+  return { isLoading: loading, error, item: value };
 }
 
 /**

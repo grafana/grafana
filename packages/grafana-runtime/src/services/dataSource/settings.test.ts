@@ -10,9 +10,7 @@ import { setExpressionDataSourceInstance } from './expressionDs';
 import {
   _resetForTests,
   getDataSourceInstanceList,
-  getDataSourceInstanceListItem,
   getDataSourceInstanceSettings,
-  getDataSourceInstanceType,
   getDefaultDataSourceInstance,
   hasDataSourceInstance,
   initDataSourceInstanceSettings,
@@ -658,75 +656,6 @@ describe('instanceSettings', () => {
 
         setTemplateSrv(templateSrv);
       });
-    });
-  });
-
-  describe('getDataSourceInstanceListItem', () => {
-    it('returns the slim shape for a known uid', async () => {
-      initDataSourceInstanceSettings(fixtures, 'Bravo');
-
-      const item = await getDataSourceInstanceListItem('uid-alpha');
-
-      expect(item).toEqual({
-        uid: 'uid-alpha',
-        type: 'test-db',
-        apiVersion: undefined,
-        name: 'Alpha',
-        meta: fixtures.Alpha.meta,
-        readOnly: false,
-        isDefault: false,
-      });
-    });
-
-    it('normalises a missing isDefault to false', async () => {
-      initDataSourceInstanceSettings(fixtures, 'Bravo');
-
-      expect(fixtures.Alpha.isDefault).toBeUndefined();
-      expect((await getDataSourceInstanceListItem('uid-alpha'))?.isDefault).toBe(false);
-    });
-
-    it('returns undefined for an unknown ref', async () => {
-      initDataSourceInstanceSettings(fixtures, 'Bravo');
-
-      expect(await getDataSourceInstanceListItem('nonexistent')).toBeUndefined();
-    });
-  });
-
-  describe('getDataSourceInstanceType', () => {
-    beforeEach(() => {
-      initDataSourceInstanceSettings(fixtures, 'Bravo');
-    });
-
-    it.each([
-      ['uid', 'uid-alpha'],
-      ['name', 'Alpha'],
-      ['stringified id', '1'],
-    ])('resolves by %s', async (_label, ref) => {
-      expect(await getDataSourceInstanceType(ref)).toBe('test-db');
-    });
-
-    it('resolves a DataSourceRef', async () => {
-      expect(await getDataSourceInstanceType({ uid: 'uid-alpha', type: 'test-db' })).toBe('test-db');
-    });
-
-    it.each([undefined, null, 'default'])('resolves the default data source for ref %p', async (ref) => {
-      expect(await getDataSourceInstanceType(ref)).toBe('test-db');
-    });
-
-    it('returns the instance type, not the plugin id', async () => {
-      // Charlie's plugin id diverges from its instance type, so this pins which one is returned.
-      expect(fixtures.Charlie.meta.id).toBe('charlie');
-      expect(await getDataSourceInstanceType('uid-charlie')).toBe('test-db');
-    });
-
-    it('interpolates a template variable ref when scopedVars are supplied', async () => {
-      // The one caller that needs the scopedVars param is
-      // PanelDataPaneNext.resolvePreviousDatasourceTypes, whose query refs can be `${myds}`.
-      expect(await getDataSourceInstanceType({ uid: '${myds}' }, {})).toBe('test-db');
-    });
-
-    it('returns undefined for an unknown ref', async () => {
-      expect(await getDataSourceInstanceType('nonexistent')).toBeUndefined();
     });
   });
 
