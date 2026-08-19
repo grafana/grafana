@@ -261,11 +261,18 @@ export function TableFlat(props: TableNGProps) {
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(false);
   const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
-  const handlePanelResize = useCallback((_flexFraction: number, sidebarPixels: number) => {
+  // Mid-drag the sidebar just follows the handle, however narrow that gets: closing it the moment
+  // the width crossed the threshold would yank it out from under a drag the user hasn't committed
+  // to yet, with no way to change their mind by dragging back out.
+  const handlePanelResizing = useCallback((_flexFraction: number, sidebarPixels: number) => {
+    setColumnVisibilityPanelWidth(sidebarPixels);
+  }, []);
+  // The decision lands on release instead.
+  const handlePanelResizeEnd = useCallback((_flexFraction: number, sidebarPixels: number) => {
     if (sidebarPixels < COLUMN_VISIBILITY_PANEL_MIN_WIDTH) {
-      // Dragged past the point of usefulness — close it, same as the "Manage columns" trigger
-      // would, and reset its width so reopening starts back at a comfortable default rather than
-      // wherever it was dragged down to.
+      // Let go past the point of usefulness — close it, same as the "Manage columns" trigger would,
+      // and reset its width so reopening starts back at a comfortable default rather than wherever
+      // it was dragged down to.
       setIsColumnVisibilityPanelOpen(false);
       setColumnVisibilityPanelWidth(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
       return;
@@ -282,8 +289,8 @@ export function TableFlat(props: TableNGProps) {
     initialSize: clamp(columnVisibilityPanelWidth / Math.max(width, 1), 0.05, 0.5),
     dragPosition: 'middle',
     handleSize: 'sm',
-    onResizing: handlePanelResize,
-    onSizeChanged: handlePanelResize,
+    onResizing: handlePanelResizing,
+    onSizeChanged: handlePanelResizeEnd,
   });
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
