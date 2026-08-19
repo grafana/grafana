@@ -2434,6 +2434,16 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:            "appplugins.loadAppManifest",
+			Description:     "Load app manifest when loading plugin definitions",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			Generate:        Generate{Go: true},
+			RequiresRestart: true,
+			Expression:      "false",
+			HideFromDocs:    true,
+		},
+		{
 			Name:            "appplugins.registerAPIServer",
 			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
 			Stage:           FeatureStageExperimental,
