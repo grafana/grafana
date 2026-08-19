@@ -69,6 +69,18 @@ describe('serializeSelectorGroup', () => {
     });
   });
 
+  it('parses minified single-arg arrows that drop their parentheses', () => {
+    const fn = (value: string) => `data-testid opt ${value}`;
+    // production builds minify `(value) => ...` down to `value=>...`; fn.toString() then has no parens
+    fn.toString = () => 'value=>`data-testid opt ${value}`';
+
+    const result = serializeSelectorGroup({ Group: { opt: { '13.2.0': fn } } });
+
+    expect(result).toEqual({
+      Group: { opt: { '13.2.0': { $template: 'data-testid opt {value}', params: ['value'] } } },
+    });
+  });
+
   it('serializes a function that ignores its argument (no placeholder in template)', () => {
     const result = serializeSelectorGroup({
       Group: { ignores: { [MIN]: (_: string) => 'Panel status' } },
