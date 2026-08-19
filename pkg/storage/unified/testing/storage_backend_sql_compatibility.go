@@ -1809,6 +1809,10 @@ func runBackendOperationsWithCounts(ctx context.Context, server resource.Resourc
 			Value: []byte(resourceJSON),
 		})
 		if err != nil {
+			resErr := resource.ErrorResultFromGRPCDetails(err)
+			if resErr != nil {
+				return fmt.Errorf("create error for resource %d: %s", i, resErr.Message)
+			}
 			return fmt.Errorf("failed to create resource %d: %w", i, err)
 		}
 		if created.Error != nil {
@@ -1850,6 +1854,10 @@ func runBackendOperationsWithCounts(ctx context.Context, server resource.Resourc
 			ResourceVersion: resourceVersions[i-1],
 		})
 		if err != nil {
+			resErr := resource.ErrorResultFromGRPCDetails(err)
+			if resErr != nil {
+				return fmt.Errorf("update error for resource %d: %s", i, resErr.Message)
+			}
 			return fmt.Errorf("failed to update resource %d: %w", i, err)
 		}
 		if updated.Error != nil {
@@ -1876,6 +1884,10 @@ func runBackendOperationsWithCounts(ctx context.Context, server resource.Resourc
 			ResourceVersion: resourceVersions[i-1], // Use the resource version from updates
 		})
 		if err != nil {
+			resErr := resource.ErrorResultFromGRPCDetails(err)
+			if resErr != nil {
+				return fmt.Errorf("delete error for resource %d: %s", i, resErr.Message)
+			}
 			return fmt.Errorf("failed to delete resource %d: %w", i, err)
 		}
 		if deleted.Error != nil {
