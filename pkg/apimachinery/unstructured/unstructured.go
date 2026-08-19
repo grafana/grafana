@@ -25,8 +25,11 @@ type Unstructured struct {
 }
 
 func (u *Unstructured) SetGroupVersionKind(gvk schema.GroupVersionKind) {
-	u.Set("apiVersion", gvk.GroupVersion().String())
-	u.Set("kind", gvk.Kind)
+	if u.Object == nil {
+		u.Object = make(map[string]any)
+	}
+	u.Object["apiVersion"] = gvk.GroupVersion().String()
+	u.Object["kind"] = gvk.Kind
 }
 
 func (u *Unstructured) GroupVersionKind() schema.GroupVersionKind {
@@ -44,11 +47,13 @@ func (u *Unstructured) GetObjectKind() schema.ObjectKind {
 }
 
 func (u *Unstructured) GetAPIVersion() string {
-	return u.getNestedString("apiVersion")
+	v, _, _ := unstructured.NestedString(u.Object, "apiVersion")
+	return v
 }
 
 func (u *Unstructured) GetKind() string {
-	return u.getNestedString("kind")
+	v, _, _ := unstructured.NestedString(u.Object, "kind")
+	return v
 }
 
 func (Unstructured) OpenAPIModelName() string {
@@ -156,33 +161,4 @@ func deepCopyJSONValue(x any) any {
 		}
 		return x
 	}
-}
-
-func (u *Unstructured) Set(field string, value any) {
-	if u.Object == nil {
-		u.Object = make(map[string]any)
-	}
-	_ = unstructured.SetNestedField(u.Object, value, field)
-}
-
-// func (u *Unstructured) Remove(fields ...string) {
-// 	if u.Object == nil {
-// 		u.Object = make(map[string]any)
-// 	}
-// 	unstructured.RemoveNestedField(u.Object, fields...)
-// }
-
-func (u *Unstructured) setNestedField(value any, fields ...string) {
-	if u.Object == nil {
-		u.Object = make(map[string]any)
-	}
-	_ = unstructured.SetNestedField(u.Object, value, fields...)
-}
-
-func (u *Unstructured) getNestedString(fields ...string) string {
-	val, found, err := unstructured.NestedString(u.Object, fields...)
-	if !found || err != nil {
-		return ""
-	}
-	return val
 }

@@ -2,102 +2,62 @@ package unstructured
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+// Decode interface that maintains context
 type Decoder interface {
-	Decode(ctx context.Context, data []byte, apiVersion string) (runtime.Object, error)
+	Decode(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error)
 }
 
 type Converter interface {
 	Convert(ctx context.Context, input map[string]any, targetVersion string) (map[string]any, error)
 }
 
-func NewSimpleDecoder() Decoder {
-	return &simpleDecoder{}
+// Runtime Decoder uses the standard runtime codec to decode (and maybe convert) input
+func NewRuntimeDecoder(decoder runtime.Decoder) Decoder {
+	return &runtimeDecoder{decoder}
 }
 
-type simpleDecoder struct{}
+type runtimeDecoder struct {
+	decoder runtime.Decoder
+}
 
-func (d simpleDecoder) Decode(ctx context.Context, data []byte, apiVersion string) (runtime.Object, error) {
-	u := &Unstructured{}
+func (d runtimeDecoder) Decode(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error) {
+	obj, _, err := d.decoder.Decode(data, nil, obj)
+	return obj, err
+}
+
+func NewConvertingDecoder(converter Converter) Decoder {
+	return &convertingDecoder{converter}
+}
+
+type convertingDecoder struct {
+	converter Converter
+}
+
+func (d convertingDecoder) Decode(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error) {
+	u, ok := obj.(*Unstructured)
+	if !ok {
+		return nil, fmt.Errorf("The converting decoder must be unstructured")
+	}
+
+	target := u.GetAPIVersion()
 	err := u.UnmarshalJSON(data)
 	if err != nil {
 		return nil, err
 	}
-	return u, nil
+
+	// When the APIVersion does not match, execute the conversion
+	if u.GetAPIVersion() != target && d.converter != nil {
+		gv, err := schema.ParseGroupVersion(target)
+		if err != nil {
+			return nil, err
+		}
+		u.Object, err = d.converter.Convert(ctx, u.Object, gv.Version)
+	}
+	return u, err
 }
-
-func NewCodecDecoder(codec runtime.Codec, newFunc func() runtime.Object) Decoder {
-	return &codecDecoder{codec, newFunc}
-}
-
-type codecDecoder struct {
-	codec   runtime.Codec
-	newFunc func() runtime.Object
-}
-
-func (d codecDecoder) Decode(ctx context.Context, data []byte, apiVersion string) (runtime.Object, error) {
-	obj, _, err := d.codec.Decode(data, nil, d.newFunc())
-	return obj, err
-}
-
-type convertingDecoder struct {
-}
-
-func (d convertingDecoder) Decode(ctx context.Context, data []byte, apiVersion string) (runtime.Object, error) {
-	return nil, nil
-}
-
-// func ConvertingDecoder(ctx context.Context, data []byte, _ string) (runtime.Object, error) {
-// 	u := &Unstructured{}
-// 	err := u.UnmarshalJSON(data)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return u, nil
-// }
-
-// var (
-// 	_ runtime.Decoder = (*JSONDecoder)(nil)
-// )
-
-// // Decode implements [runtime.Decoder].
-// func (c *JSONDecoder) Decode(data []byte, _ *schema.GroupVersionKind, into runtime.Object) (runtime.Object, *schema.GroupVersionKind, error) {
-// 	if into == nil {
-// 		into = &Unstructured{}
-// 	}
-// 	u, ok := into.(*Unstructured)
-// 	if !ok {
-// 		return nil, nil, fmt.Errorf("this decoder only supports decoding into Unstructured objects")
-// 	}
-
-// 	targetAPIVersion := u.GetAPIVersion()
-
-// 	gv, err := schema.ParseGroupVersion(targetAPIVersion)
-// 	if err != nil {
-// 		return nil, nil, fmt.Errorf("invalid target %w", err)
-// 	}
-
-// 	if err = u.UnmarshalJSON(data); err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	if targetAPIVersion != "" && targetAPIVersion != u.GetAPIVersion() {
-// 		if c.Converter == nil {
-// 			return nil, nil, fmt.Errorf("unable to convert to target version")
-// 		}
-// 		gv, err := schema.ParseGroupVersion(targetAPIVersion)
-// 		if err != nil {
-// 			return nil, nil, err
-// 		}
-
-// 		if err = c.Converter(u.Object, gv.Version); err != nil {
-// 			return nil, nil, err
-// 		}
-// 	}
-
-// 	gvk := gv.WithKind(u.GetKind())
-// 	return u, &gvk, nil
-// }
