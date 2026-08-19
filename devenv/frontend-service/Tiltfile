@@ -171,6 +171,7 @@ docker_build('grafana-fs-dev',
     'public/app/plugins',
     manifest_path,
     boot_path,
+    'public/e2e-selectors.json',
     'public/gazetteer',
     'public/maps',
     'public/img/bg',
@@ -187,6 +188,7 @@ docker_build('grafana-fs-dev',
     sync('../../public/app/plugins', '/grafana/public/app/plugins'),
     sync('../../' + manifest_path, '/grafana/' + manifest_path),
     sync('../../' + boot_path, '/grafana/' + boot_path),
+    sync('../../public/e2e-selectors.json', '/grafana/public/e2e-selectors.json'),
     sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
     sync('./configs/grafana-api.local.ini', '/ignore/grafana-api.local.ini'),  # Just to trigger a restart instead of rebuild
     sync('./configs/frontend-service.local.ini', '/ignore/frontend-service.local.ini'),  # Just to trigger a restart instead of rebuild
