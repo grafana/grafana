@@ -82,7 +82,7 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 	}
 
 	var instrumentationOptions []middleware.InstrumentationOption
-	if cfg.GRPCServer.ReportGrpcCodesInInstrumentationLabelEnabled {
+	if cfg.GRPCServer.ReportGRPCCodesInInstrumentationLabelEnabled {
 		instrumentationOptions = append(instrumentationOptions, middleware.ReportGRPCStatusOption)
 	}
 

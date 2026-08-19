@@ -169,9 +169,7 @@ func newRequiredFieldError(
 	}
 }
 
-// AsErrorResult converts golang errors to status result errors that can be returned to a client.
-// Returns the first status details entity that matches the resourcepb.ErrorResult type, if given. If multiple entries
-// are given in the status details array, only the first matching one is used; all others are discarded.
+// Convert golang errors to status result errors that can be returned to a client
 func AsErrorResult(err error) *resourcepb.ErrorResult {
 	if err == nil {
 		return nil
