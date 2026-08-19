@@ -250,7 +250,7 @@ func (s *legacySQLStore) CreateServiceAccount(ctx context.Context, ns claims.Nam
 	cmd.OrgID = ns.OrgID
 	cmd.Email = cmd.Login
 
-	now := time.Now().UTC()
+	now := time.Now().UTC().Truncate(time.Second)
 	lastSeenAt := now.AddDate(-10, 0, 0) // Set last seen 10 years ago like in user service
 
 	cmd.Created = legacysql.NewDBTime(now)
@@ -344,7 +344,7 @@ func (s *legacySQLStore) UpdateServiceAccount(ctx context.Context, ns claims.Nam
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 	cmd.OrgID = ns.OrgID
-	cmd.Updated = legacysql.NewDBTime(time.Now().UTC())
+	cmd.Updated = legacysql.NewDBTime(time.Now().UTC().Truncate(time.Second))
 
 	sql, err := s.getDB(ctx)
 	if err != nil {
@@ -374,16 +374,8 @@ func (s *legacySQLStore) UpdateServiceAccount(ctx context.Context, ns claims.Nam
 			return fmt.Errorf("execute service account template %q: %w", sqlUpdateServiceAccountTemplate.Name(), err)
 		}
 
-		res, err := st.Exec(ctx, saQuery, req.GetArgs()...)
-		if err != nil {
+		if _, err := st.Exec(ctx, saQuery, req.GetArgs()...); err != nil {
 			return fmt.Errorf("failed to update service account: %w", err)
-		}
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return fmt.Errorf("service account rows affected: %w", err)
-		}
-		if rows == 0 {
-			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account by uid %q", cmd.UID)
 		}
 
 		orgUserCmd := &UpdateOrgUserCommand{
@@ -399,16 +391,8 @@ func (s *legacySQLStore) UpdateServiceAccount(ctx context.Context, ns claims.Nam
 			return fmt.Errorf("execute org_user update template %q: %w", sqlUpdateOrgUserTemplate.Name(), err)
 		}
 
-		res, err = st.Exec(ctx, orgUserQuery, orgUserReq.GetArgs()...)
-		if err != nil {
+		if _, err := st.Exec(ctx, orgUserQuery, orgUserReq.GetArgs()...); err != nil {
 			return fmt.Errorf("failed to update org_user relationship: %w", err)
-		}
-		rows, err = res.RowsAffected()
-		if err != nil {
-			return fmt.Errorf("org_user rows affected: %w", err)
-		}
-		if rows == 0 {
-			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account relationship by uid %q", cmd.UID)
 		}
 
 		updatedSA = ServiceAccount{
