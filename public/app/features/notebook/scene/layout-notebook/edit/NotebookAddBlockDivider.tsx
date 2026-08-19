@@ -14,10 +14,7 @@ interface Props {
    * owns; the layout manager renders it standalone.
    */
   index: number;
-  /**
-   * Not wired up yet. Edit mode owns cell insertion, so until it passes a handler the menu is inert
-   * by construction rather than by a scattering of empty click handlers.
-   */
+  /** Insertion belongs to the layout manager; without a handler the menu is inert. */
   onAdd?: (type: NotebookBlockType, index: number) => void;
   /**
    * Stable class name the parent cell frame's hover rule targets. Carries no styles of its own — the

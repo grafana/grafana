@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import {
   ClipboardButton,
   type Column,
+  Dropdown,
   IconButton,
   InteractiveTable,
   LinkButton,
@@ -20,6 +21,7 @@ import { canEditNotebooks } from '../permissions';
 import { getNeutralTagListStyle } from '../tagColors';
 import { notebookEditHref, notebookShareUrl, notebookViewUrl } from '../urls';
 
+import { NotebookRowMenu } from './NotebookRowMenu';
 import { type NotebookRow } from './useNotebooksList';
 
 interface Props {
@@ -122,13 +124,17 @@ function NotebookRowActions({ notebook }: { notebook: NotebookRow }) {
       <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(notebook.uid)}>
         {t('notebooks.list.table.copy-link', 'Copy link')}
       </ClipboardButton>
-      {/* Row-level actions land in a follow-up; the menu is a disabled placeholder for now. */}
-      <IconButton
-        name="ellipsis-v"
-        disabled
-        aria-label={t('notebooks.list.table.more-actions', 'More actions')}
-        tooltip={t('notebooks.list.table.more-actions', 'More actions')}
-      />
+      <Dropdown overlay={<NotebookRowMenu uid={notebook.uid} />} placement="bottom-end">
+        <IconButton
+          name="ellipsis-v"
+          variant="secondary"
+          // Dropdown injects aria-expanded but not aria-haspopup, so without this the trigger
+          // announces as a plain button and gives no hint that it opens a menu.
+          aria-haspopup="menu"
+          // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
+          tooltip={t('notebooks.list.table.more-actions', 'More actions')}
+        />
+      </Dropdown>
     </Stack>
   );
 }

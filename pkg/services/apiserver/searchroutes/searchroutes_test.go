@@ -1,8 +1,10 @@
 package searchroutes
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -79,14 +81,39 @@ func TestBuild_SearchAndTrashAreIndependent(t *testing.T) {
 	})
 }
 
-// Trash must not reach a kind that search cannot.
-func TestBuild_TrashRespectsTheAllowlist(t *testing.T) {
-	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: "playlist.grafana.app", Version: "v0alpha1"}}}
+// Search fields are the enrolment signal, so a kind without them gets nothing.
+func TestBuild_SearchFieldsEnrolAKind(t *testing.T) {
+	gv := schema.GroupVersion{Group: "playlist.grafana.app", Version: "v0alpha1"}
+	builders := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{gv}}}
 
-	assert.Empty(t, paths(Build(true, true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil)))
+	playlists := func(fields []app.ManifestVersionKindSearchField) []app.Manifest {
+		return []app.Manifest{{ManifestData: &app.ManifestData{
+			Group: gv.Group,
+			Versions: []app.ManifestVersion{{
+				Name:   gv.Version,
+				Served: true,
+				Kinds: []app.ManifestVersionKind{{
+					Kind:         "Playlist",
+					Plural:       "playlists",
+					Scope:        namespacedScope,
+					SearchFields: fields,
+				}},
+			}},
+		}}}
+	}
+
+	t.Run("no fields, not enrolled", func(t *testing.T) {
+		assert.Empty(t, paths(BuildFromManifests(playlists(nil), true, true, nil, fakeClient{}, builders, nil)))
+	})
+
+	t.Run("one field, gets both endpoints", func(t *testing.T) {
+		fields := []app.ManifestVersionKindSearchField{{Name: "interval", Path: "spec.interval", Type: "string"}}
+		got := paths(BuildFromManifests(playlists(fields), true, true, nil, fakeClient{}, builders, nil))
+		assert.ElementsMatch(t, []string{"playlists/search", "playlists/trash"}, got[gv.String()])
+	})
 }
 
-func TestBuild_MountsAllowedKinds(t *testing.T) {
+func TestBuild_MountsNamespacedKinds(t *testing.T) {
 	b := &fakeBuilder{gvs: []schema.GroupVersion{
 		{Group: "dashboard.grafana.app", Version: "v1"},
 		{Group: "folder.grafana.app", Version: "v1"},
@@ -109,16 +136,25 @@ func TestBuild_SkipsGroupVersionsNotServed(t *testing.T) {
 	assert.NotContains(t, got, "dashboard.grafana.app/v2", "v2 is a served version, but not served by this builder")
 }
 
-// The allowlist is what keeps the endpoint off kinds nobody has reviewed yet.
-func TestBuild_SkipsKindsNotAllowed(t *testing.T) {
-	notAllowed := []schema.GroupVersion{
-		{Group: "secret.grafana.app", Version: "v1beta1"},
+// Serving a group must not enrol the kinds in it that declare no fields.
+func TestBuild_EnrolmentIsPerKindNotPerGroup(t *testing.T) {
+	gvs := []schema.GroupVersion{
 		{Group: "iam.grafana.app", Version: "v0alpha1"},
+		{Group: "secret.grafana.app", Version: "v1beta1"},
 		{Group: "playlist.grafana.app", Version: "v0alpha1"},
 	}
-	b := &fakeBuilder{gvs: notAllowed}
 
-	assert.Empty(t, paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil)))
+	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{&fakeBuilder{gvs: gvs}}, nil))
+
+	assert.ElementsMatch(t, []string{
+		"users/search",
+		"teams/search",
+		"teambindings/search",
+		"externalgroupmappings/search",
+	}, got["iam.grafana.app/v0alpha1"], "only the IAM kinds declaring search fields")
+
+	assert.Empty(t, got["secret.grafana.app/v1beta1"])
+	assert.Empty(t, got["playlist.grafana.app/v0alpha1"])
 }
 
 // Every served version of an allowed kind gets the endpoint, so a client can use
@@ -174,6 +210,107 @@ func TestBuild_MountsNotebooksOnDeclaringVersionOnly(t *testing.T) {
 		}
 		assert.NotContains(t, got[gv.String()], "notebooks/search", "unexpected notebooks route on %s", gv)
 	}
+}
+
+// allServedGroupVersions lets a test ask for everything at once and see what
+// comes back.
+func allServedGroupVersions(t *testing.T) []schema.GroupVersion {
+	t.Helper()
+
+	var gvs []schema.GroupVersion
+	for _, m := range resource.AppManifests() {
+		if m.ManifestData == nil {
+			continue
+		}
+		for _, v := range m.ManifestData.Versions {
+			if v.Served {
+				gvs = append(gvs, schema.GroupVersion{Group: m.ManifestData.Group, Version: v.Name})
+			}
+		}
+	}
+	require.NotEmpty(t, gvs)
+	return gvs
+}
+
+// A kind can gain two public endpoints without anyone editing this package.
+// Listing the set makes that a failing test rather than a silent change.
+func TestBuild_EnrolledKindsAreListedHere(t *testing.T) {
+	got := paths(Build(true, true, nil, fakeClient{},
+		[]builder.APIGroupBuilder{&fakeBuilder{gvs: allServedGroupVersions(t)}}, nil))
+
+	resources := map[string]bool{}
+	for _, ps := range got {
+		for _, p := range ps {
+			resources[strings.SplitN(p, "/", 2)[0]] = true
+		}
+	}
+	names := make([]string, 0, len(resources))
+	for r := range resources {
+		names = append(names, r)
+	}
+
+	assert.ElementsMatch(t, []string{
+		// Declare search fields.
+		"alertrules",
+		"dashboards",
+		"externalgroupmappings",
+		"recordingrules",
+		"teambindings",
+		"teams",
+		"users",
+		// Served before enrolment asked for search fields.
+		"folders",
+		"notebooks",
+	}, names)
+}
+
+// Declining one endpoint must leave the other alone.
+func TestBuild_ManifestOptOutIsHonoured(t *testing.T) {
+	gv := schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v1"}
+	builders := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{gv}}}
+
+	dashboards := func(search *app.ManifestVersionKindSearch) []app.Manifest {
+		return []app.Manifest{{ManifestData: &app.ManifestData{
+			Group: gv.Group,
+			Versions: []app.ManifestVersion{{
+				Name:   gv.Version,
+				Served: true,
+				Kinds: []app.ManifestVersionKind{{
+					Kind:   "Dashboard",
+					Plural: "dashboards",
+					Scope:  namespacedScope,
+					Search: search,
+					// Enrols the kind, so what is under test is the opt-out alone.
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{Name: "title", Path: "spec.title", Type: "string"},
+					},
+				}},
+			}},
+		}}}
+	}
+	optOut := func(v bool) *bool { return &v }
+
+	t.Run("says nothing, so gets both", func(t *testing.T) {
+		got := paths(BuildFromManifests(dashboards(nil), true, true, nil, fakeClient{}, builders, nil))
+		assert.ElementsMatch(t, []string{"dashboards/search", "dashboards/trash"}, got[gv.String()])
+	})
+
+	t.Run("declines search, keeps trash", func(t *testing.T) {
+		search := &app.ManifestVersionKindSearch{Endpoint: optOut(false)}
+		got := paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
+		assert.Equal(t, []string{"dashboards/trash"}, got[gv.String()])
+	})
+
+	t.Run("declines trash, keeps search", func(t *testing.T) {
+		search := &app.ManifestVersionKindSearch{Trash: optOut(false)}
+		got := paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
+		assert.Equal(t, []string{"dashboards/search"}, got[gv.String()])
+	})
+
+	t.Run("declines both", func(t *testing.T) {
+		search := &app.ManifestVersionKindSearch{Endpoint: optOut(false), Trash: optOut(false)}
+		assert.Empty(t, paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil)))
+	})
 }
 
 func TestServedGroupVersions_CoversBothRegistrationPaths(t *testing.T) {

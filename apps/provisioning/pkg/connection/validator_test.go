@@ -370,7 +370,7 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
 					Title: "Test Connection",
-					Type:  provisioning.GitlabConnectionType,
+					Type:  provisioning.GitlabOAuthConnectionType,
 					OAuth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "client-123",
 					},

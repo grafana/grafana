@@ -77,7 +77,7 @@ function NotebookDocument({ scene }: { scene: NotebookScene }) {
 
   return (
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
-      {uid && <NotebookToolbar uid={uid} />}
+      {uid && <NotebookToolbar uid={uid} scene={scene} />}
       <scene.Component model={scene} />
     </Page>
   );

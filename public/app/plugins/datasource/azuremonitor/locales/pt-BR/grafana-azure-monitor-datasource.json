@@ -105,7 +105,11 @@
       "load-subscriptions": "Carregar assinaturas"
     },
     "dimension-fields": {
-      "aria-label-remove": "Remover",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensões",
       "placeholder-field": "Campo",
       "placeholder-operation": "Operação",
