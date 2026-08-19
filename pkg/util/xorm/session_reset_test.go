@@ -49,6 +49,7 @@ func TestSessionStateDoesNotLeakBetweenOperations(t *testing.T) {
 		rows, err := sess.Table("leak_rule").Rows(new(LeakRule))
 		require.NoError(t, err)
 		require.True(t, rows.Next())
+		require.NoError(t, rows.Scan(new(LeakRule)))
 		require.NoError(t, rows.Close())
 
 		var users []LeakUser
@@ -98,6 +99,20 @@ func TestSessionStateDoesNotLeakBetweenOperations(t *testing.T) {
 		require.Len(t, users, 1)
 	})
 
+	t.Run("after InsertMulti with nothing to insert", func(t *testing.T) {
+		eng := newLeakEngine(t)
+		sess := eng.NewSession()
+		defer sess.Close()
+
+		inserted, err := sess.Table(LeakRule{}).Cols("guid").InsertMulti(&[]LeakRule{})
+		require.NoError(t, err)
+		require.Zero(t, inserted)
+
+		var users []LeakUser
+		require.NoError(t, sess.Table("leak_user").Find(&users))
+		require.Len(t, users, 1)
+	})
+
 	t.Run("after Rows that fails to build a query", func(t *testing.T) {
 		eng := newLeakEngine(t)
 		sess := eng.NewSession()
@@ -105,6 +120,24 @@ func TestSessionStateDoesNotLeakBetweenOperations(t *testing.T) {
 
 		_, err := sess.Table(LeakRule{}).ID(core.PK{1, 2}).Rows(new(LeakRule))
 		require.Error(t, err)
+
+		var users []LeakUser
+		require.NoError(t, sess.Table("leak_user").Find(&users))
+		require.Len(t, users, 1)
+	})
+
+	t.Run("after buffered Iterate", func(t *testing.T) {
+		eng := newLeakEngine(t)
+		sess := eng.NewSession()
+		defer sess.Close()
+
+		visited := 0
+		err := sess.Table(LeakRule{}).Cols("guid").BufferSize(1).Iterate(new(LeakRule), func(int, interface{}) error {
+			visited++
+			return nil
+		})
+		require.NoError(t, err)
+		require.Equal(t, 1, visited)
 
 		var users []LeakUser
 		require.NoError(t, sess.Table("leak_user").Find(&users))

@@ -30,6 +30,9 @@ func (session *Session) Iterate(bean interface{}, fun IterFunc) error {
 		defer session.Close()
 	}
 
+	// Runs after bufferIterate has restored autoResetStatement, so the buffered path is covered too.
+	defer session.resetStatement()
+
 	if session.statement.lastError != nil {
 		return session.statement.lastError
 	}
