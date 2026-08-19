@@ -180,16 +180,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     theme.colors.background.primary,
     theme.colors.border.weak,
     theme.components.tooltip.text,
-    { topBottom: 2, rightLeft: 2 },
-    theme.shadows.z2
+    { topBottom: 2, rightLeft: 2 }
   );
   const error = buildTooltipTheme(
     theme,
     theme.colors.error[visualRefreshEnabled ? 'background' : 'main'],
     theme.colors.error[visualRefreshEnabled ? 'border' : 'main'],
     theme.colors.error[visualRefreshEnabled ? 'text' : 'contrastText'],
-    { topBottom: 2, rightLeft: 2 },
-    theme.shadows.z2
+    { topBottom: 2, rightLeft: 2 }
   );
 
   return {

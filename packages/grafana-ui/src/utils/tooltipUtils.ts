@@ -23,8 +23,7 @@ export function buildTooltipTheme(
   tooltipBg: string,
   toggletipBorder: string,
   tooltipText: string,
-  tooltipPadding: { topBottom: number; rightLeft: number },
-  tooltipShadow: string
+  tooltipPadding: { topBottom: number; rightLeft: number }
 ) {
   return {
     arrow: css({
@@ -36,7 +35,7 @@ export function buildTooltipTheme(
       backgroundColor: tooltipBg,
       borderRadius: theme.shape.radius.lg,
       border: `1px solid ${toggletipBorder}`,
-      boxShadow: tooltipShadow,
+      boxShadow: theme.shadows.z2,
       color: tooltipText,
       fontSize: theme.typography.bodySmall.fontSize,
       padding: theme.spacing(tooltipPadding.topBottom, tooltipPadding.rightLeft),

@@ -6,9 +6,9 @@ import { type DeepRequired } from './types';
 
 /** @internal */
 export const ThemeShadowsInputSchema = z.object({
-  /** Applies to overlays that are triggered by hover, e.g. tooltip */
+  /** Applies to elements that sit directly on the page */
   z1: z.string().optional(),
-  /** Applies to overlays that are triggered by click, e.g. dropdown, menu, toggletip */
+  /** Applies to overlays e.g. dropdown, menu, tooltip */
   z2: z.string().optional(),
   /** Applies to overlays that require a backdrop, e.g. modals, drawers */
   z3: z.string().optional(),
