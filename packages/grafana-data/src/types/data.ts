@@ -95,7 +95,6 @@ export interface QueryResultMeta {
   timeCompare?: {
     diffMs: number;
     isTimeShiftQuery: boolean;
-    originalRefId: string;
   };
 
   /**
