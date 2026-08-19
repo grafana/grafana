@@ -55,7 +55,14 @@ export function MetricDetailPanel({ refId, metric, onClose }: Props) {
           />
         </div>
         <div className={styles.name}>{metric.name}</div>
-        {metric.help && <div className={styles.description}>{metric.help}</div>}
+        {metric.help && (
+          // Focusable because it scrolls once the help text passes the cap, and a scroll region a
+          // keyboard cannot reach is text a keyboard cannot read.
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          <div className={styles.description} tabIndex={0}>
+            {metric.help}
+          </div>
+        )}
         {/* Additional data (active series, scrape interval, cardinality) lands here. */}
       </div>
     </section>
@@ -66,11 +73,15 @@ export function MetricDetailPanel({ refId, metric, onClose }: Props) {
 const DESCRIPTION_MAX_HEIGHT = 100;
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // Takes the height it needs; the card list's scroll region above gives up exactly that much. The
-  // rule runs the full sidebar width, so it sits on the wrapper rather than the inset card.
+  // Takes the height it needs and the card list above gives up exactly that much — but never past
+  // half the sidebar, or a verbose metric on a short viewport would leave no list to pick the next
+  // one from. The rule runs the full width, so it sits on the wrapper rather than the inset card.
   panel: css({
     label: 'metric-detail-panel',
-    flex: '0 0 auto',
+    display: 'flex',
+    flex: '0 1 auto',
+    minHeight: 0,
+    maxHeight: '50%',
     padding: theme.spacing(1),
     borderTop: `1px solid ${theme.colors.border.weak}`,
   }),
@@ -78,16 +89,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'metric-detail-panel-card',
     display: 'flex',
     flexDirection: 'column',
+    flex: '1 1 auto',
+    minHeight: 0,
     gap: theme.spacing(0.5),
     padding: theme.spacing(1),
     background: theme.colors.background.secondary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
+    overflow: 'hidden',
   }),
   header: css({
     label: 'metric-detail-panel-header',
     display: 'flex',
     alignItems: 'center',
+    flex: '0 0 auto',
     gap: theme.spacing(1),
   }),
   fromQuery: css({
@@ -104,18 +119,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   name: css({
     label: 'metric-detail-panel-name',
+    flex: '0 0 auto',
     color: theme.colors.text.primary,
     fontSize: theme.typography.bodySmall.fontSize,
     fontFamily: theme.typography.fontFamilyMonospace,
     overflowWrap: 'anywhere',
   }),
-  // Help text is unbounded and every line of it costs the card list above. Capped so a verbose metric
-  // takes a known amount of room instead of all of it.
+  // Help text is unbounded and every line of it costs the card list above, so it is capped and
+  // scrolls. The only part of the panel that shrinks, so squeezing the panel never clips the name.
   description: css({
     label: 'metric-detail-panel-description',
+    flex: '0 1 auto',
+    minHeight: 0,
     maxHeight: DESCRIPTION_MAX_HEIGHT,
     overflowY: 'auto',
     color: theme.colors.text.secondary,
     fontSize: theme.typography.bodySmall.fontSize,
+    '&:focus-visible': {
+      outline: `2px solid ${theme.colors.accent.main}`,
+      outlineOffset: '-2px',
+    },
   }),
 });

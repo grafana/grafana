@@ -37,6 +37,26 @@ describe('<MetricDetailPanel />', () => {
     expect(screen.queryByText('Total number of HTTP requests observed.')).not.toBeInTheDocument();
   });
 
+  // The description scrolls once the help text passes its cap, and a scroll region with no tab stop
+  // is help text a keyboard user cannot read past the first few lines.
+  it('lets a keyboard reach the description to scroll it', async () => {
+    render(<MetricDetailPanel refId="A" metric={metric()} onClose={jest.fn()} />);
+
+    // The close button comes first in the panel, so the description is the second stop.
+    await userEvent.tab();
+    await userEvent.tab();
+
+    expect(screen.getByText('Total number of HTTP requests observed.')).toHaveFocus();
+  });
+
+  it('leaves no stray tab stop when there is no description to scroll', async () => {
+    render(<MetricDetailPanel refId="A" metric={metric({ help: undefined })} onClose={jest.fn()} />);
+
+    await userEvent.tab();
+
+    expect(screen.getByRole('button', { name: 'Close metric details' })).toHaveFocus();
+  });
+
   it.each<[MetricType, string]>([
     ['counter', 'COUNTER'],
     ['gauge', 'GAUGE'],
