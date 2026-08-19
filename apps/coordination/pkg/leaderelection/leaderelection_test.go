@@ -105,3 +105,94 @@ func TestDefaultIdentity(t *testing.T) {
 	require.NotEmpty(t, id)
 	require.Contains(t, id, "_")
 }
+
+func TestObjectLeaseAnnotationsRoundTrip(t *testing.T) {
+	acquire := time.Date(2026, 8, 18, 10, 0, 0, 0, time.UTC)
+	renew := time.Date(2026, 8, 18, 10, 0, 30, 0, time.UTC)
+	in := resourcelock.LeaderElectionRecord{
+		HolderIdentity:       "holder_1",
+		LeaseDurationSeconds: 45,
+		LeaderTransitions:    2,
+		AcquireTime:          metav1.NewTime(acquire),
+		RenewTime:            metav1.NewTime(renew),
+	}
+
+	// Unrelated annotations must be preserved.
+	obj := &coordinationv0alpha1.Lease{}
+	obj.SetAnnotations(map[string]string{"keep": "yes"})
+	setLeaseAnnotations(obj, in)
+	require.Equal(t, "yes", obj.GetAnnotations()["keep"])
+
+	out := annotationsToRecord(obj.GetAnnotations())
+	require.Equal(t, in.HolderIdentity, out.HolderIdentity)
+	require.Equal(t, in.LeaseDurationSeconds, out.LeaseDurationSeconds)
+	require.Equal(t, in.LeaderTransitions, out.LeaderTransitions)
+	require.True(t, in.AcquireTime.Equal(&out.AcquireTime))
+	require.True(t, in.RenewTime.Equal(&out.RenewTime))
+}
+
+// fakeObjectClient is a resource.Client whose Get/Update operate on a single stored
+// object, tracking the resourceVersion the object lock supplies as an update
+// precondition.
+type fakeObjectClient struct {
+	resource.Client
+	obj      *coordinationv0alpha1.Lease
+	updateRV []string
+}
+
+func (f *fakeObjectClient) Get(_ context.Context, _ resource.Identifier) (resource.Object, error) {
+	return f.obj, nil
+}
+
+func (f *fakeObjectClient) Update(_ context.Context, _ resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
+	f.updateRV = append(f.updateRV, opts.ResourceVersion)
+	o := obj.(*coordinationv0alpha1.Lease)
+	o.SetResourceVersion("rv2")
+	f.obj = o
+	return o, nil
+}
+
+func TestObjectLeaseLock(t *testing.T) {
+	target := &coordinationv0alpha1.Lease{}
+	target.SetName("target")
+	target.SetResourceVersion("rv1")
+	client := &fakeObjectClient{obj: target}
+
+	lock := NewObjectLock(client, resource.Identifier{Namespace: "ns", Name: "target"}, "me_1")
+	require.Equal(t, "me_1", lock.Identity())
+	require.Equal(t, "ns/target", lock.Describe())
+
+	// A never-leased object yields an empty record.
+	rec, _, err := lock.Get(context.Background())
+	require.NoError(t, err)
+	require.Empty(t, rec.HolderIdentity)
+
+	// Acquire writes the record into the object's annotations, CAS'd on the observed RV.
+	require.NoError(t, lock.Update(context.Background(), resourcelock.LeaderElectionRecord{
+		HolderIdentity: "me_1", LeaseDurationSeconds: 30, LeaderTransitions: 1,
+	}))
+	require.Equal(t, []string{"rv1"}, client.updateRV)
+	require.Equal(t, "me_1", client.obj.GetAnnotations()[AnnotationHolderIdentity])
+
+	// A subsequent read reflects the acquired lease.
+	rec2, _, err := lock.Get(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, "me_1", rec2.HolderIdentity)
+	require.Equal(t, 30, rec2.LeaseDurationSeconds)
+	require.Equal(t, 1, rec2.LeaderTransitions)
+
+	// The next update presents the RV the previous update returned.
+	require.NoError(t, lock.Update(context.Background(), resourcelock.LeaderElectionRecord{
+		HolderIdentity: "me_1", LeaseDurationSeconds: 30, LeaderTransitions: 1,
+	}))
+	require.Equal(t, []string{"rv1", "rv2"}, client.updateRV)
+}
+
+func TestObjectLeaseLock_CreateAndUpdateGuards(t *testing.T) {
+	// Create is never valid: an object lease targets an existing object.
+	lock := NewObjectLock(&fakeObjectClient{}, resource.Identifier{Name: "x"}, "me")
+	require.Error(t, lock.Create(context.Background(), resourcelock.LeaderElectionRecord{}))
+
+	// Update before a successful Get has no resourceVersion to CAS against.
+	require.Error(t, lock.Update(context.Background(), resourcelock.LeaderElectionRecord{HolderIdentity: "me"}))
+}

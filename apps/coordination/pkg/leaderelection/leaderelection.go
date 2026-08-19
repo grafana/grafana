@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -135,6 +136,131 @@ func (l *clusterLeaseLock) RecordEvent(string) {}
 func (l *clusterLeaseLock) Identity() string   { return l.identity }
 func (l *clusterLeaseLock) Describe() string {
 	return "clusterleases.coordination.grafana.app/" + l.name
+}
+
+// Object-lease annotation keys. An object lease stores the leader-election record in
+// an existing object's annotations instead of a dedicated Lease resource; the
+// object's own resourceVersion provides the compare-and-swap.
+const (
+	AnnotationHolderIdentity   = "coordination.grafana.app/holder-identity"
+	AnnotationLeaseDurationSec = "coordination.grafana.app/lease-duration-seconds"
+	AnnotationAcquireTime      = "coordination.grafana.app/acquire-time"
+	AnnotationRenewTime        = "coordination.grafana.app/renew-time"
+	AnnotationLeaseTransitions = "coordination.grafana.app/lease-transitions"
+)
+
+// NewObjectLock returns a resourcelock.Interface that stores the leader-election
+// record in the annotations of an existing object (identified by id), using client
+// (a client for that object's kind) and holder identity. Unlike NewLock it never
+// creates a dedicated lease object: the target must already exist and its
+// resourceVersion provides the compare-and-swap. Use it to lease an object in place
+// rather than parking a separate ClusterLease.
+//
+// Note: each renewal writes the target object's annotations, bumping its
+// resourceVersion — so a controller watching that object will observe the renewals.
+// Object leases suit objects without a hot reconciler, or reconcilers that ignore
+// annotation-only changes.
+func NewObjectLock(client resource.Client, id resource.Identifier, identity string) resourcelock.Interface {
+	return &objectLeaseLock{client: client, id: id, identity: identity}
+}
+
+// objectLeaseLock adapts an existing object's annotations to client-go's
+// resourcelock.Interface, using the object's resourceVersion as the update
+// precondition.
+type objectLeaseLock struct {
+	client   resource.Client
+	id       resource.Identifier
+	identity string
+	lastObj  resource.Object
+	lastRV   string
+}
+
+var _ resourcelock.Interface = (*objectLeaseLock)(nil)
+
+func (l *objectLeaseLock) Get(ctx context.Context) (*resourcelock.LeaderElectionRecord, []byte, error) {
+	obj, err := l.client.Get(ctx, l.id)
+	if err != nil {
+		return nil, nil, err
+	}
+	l.lastObj = obj
+	l.lastRV = obj.GetResourceVersion()
+	record := annotationsToRecord(obj.GetAnnotations())
+	recordBytes, err := json.Marshal(record)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &record, recordBytes, nil
+}
+
+// Create is never used for object leases: the target object must already exist, so
+// Get does not return NotFound — the only case in which client-go calls Create.
+func (l *objectLeaseLock) Create(_ context.Context, _ resourcelock.LeaderElectionRecord) error {
+	return fmt.Errorf("object %q must exist before it can be leased", l.id.Name)
+}
+
+func (l *objectLeaseLock) Update(ctx context.Context, ler resourcelock.LeaderElectionRecord) error {
+	if l.lastObj == nil {
+		return fmt.Errorf("object %q not fetched before update", l.id.Name)
+	}
+	obj := l.lastObj.Copy()
+	setLeaseAnnotations(obj, ler)
+	updated, err := l.client.Update(ctx, l.id, obj, resource.UpdateOptions{ResourceVersion: l.lastRV})
+	if err != nil {
+		return err
+	}
+	l.lastObj = updated
+	l.lastRV = updated.GetResourceVersion()
+	return nil
+}
+
+func (l *objectLeaseLock) RecordEvent(string) {}
+func (l *objectLeaseLock) Identity() string   { return l.identity }
+func (l *objectLeaseLock) Describe() string {
+	if l.id.Namespace != "" {
+		return l.id.Namespace + "/" + l.id.Name
+	}
+	return l.id.Name
+}
+
+// annotationsToRecord reads an object-lease record from an object's annotations.
+func annotationsToRecord(anns map[string]string) resourcelock.LeaderElectionRecord {
+	r := resourcelock.LeaderElectionRecord{}
+	if anns == nil {
+		return r
+	}
+	r.HolderIdentity = anns[AnnotationHolderIdentity]
+	if v, err := strconv.Atoi(anns[AnnotationLeaseDurationSec]); err == nil {
+		r.LeaseDurationSeconds = v
+	}
+	if v, err := strconv.Atoi(anns[AnnotationLeaseTransitions]); err == nil {
+		r.LeaderTransitions = v
+	}
+	if t, err := time.Parse(time.RFC3339, anns[AnnotationAcquireTime]); err == nil {
+		r.AcquireTime = metav1.NewTime(t)
+	}
+	if t, err := time.Parse(time.RFC3339, anns[AnnotationRenewTime]); err == nil {
+		r.RenewTime = metav1.NewTime(t)
+	}
+	return r
+}
+
+// setLeaseAnnotations writes an object-lease record into an object's annotations,
+// preserving any other annotations.
+func setLeaseAnnotations(obj resource.Object, r resourcelock.LeaderElectionRecord) {
+	anns := obj.GetAnnotations()
+	if anns == nil {
+		anns = map[string]string{}
+	}
+	anns[AnnotationHolderIdentity] = r.HolderIdentity
+	anns[AnnotationLeaseDurationSec] = strconv.Itoa(r.LeaseDurationSeconds)
+	anns[AnnotationLeaseTransitions] = strconv.Itoa(r.LeaderTransitions)
+	if !r.AcquireTime.IsZero() {
+		anns[AnnotationAcquireTime] = r.AcquireTime.UTC().Format(time.RFC3339)
+	}
+	if !r.RenewTime.IsZero() {
+		anns[AnnotationRenewTime] = r.RenewTime.UTC().Format(time.RFC3339)
+	}
+	obj.SetAnnotations(anns)
 }
 
 // toRecord maps a ClusterLease spec onto client-go's election record.
