@@ -112,8 +112,9 @@ export function useDataSourceInstanceSettings(
  * `isDefault`, and avoids depending on per-instance settings that will later be fetched on
  * demand.
  *
- * Template variable strings (e.g. `$ds` or `${ds}`) are not supported — interpolate
- * them before passing the resolved uid or name to this hook.
+ * Resolves **by uid only**: a ref with no usable uid — including `'default'`, `undefined` and
+ * type-only refs — yields `item: undefined` rather than the default data source. Template
+ * variable strings (e.g. `$ds` or `${ds}`) are not interpolated; resolve them to a uid first.
  *
  * @public
  */

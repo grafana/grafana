@@ -196,6 +196,21 @@ export async function getDataSourceInstanceList(
   return (results.length > 0 ? results : getInstanceSettingsListFallback(filtersWithAdapter)).map(toListItem);
 }
 
+/**
+ * Strict uid lookup — no name/id fallback, no default-data-source resolution, no template
+ * variable interpolation. Deliberately unlike {@link getDataSourceInstanceSettings}, which
+ * mirrors the legacy `DataSourceSrv.getInstanceSettings` and all of its coercions.
+ *
+ * The expression data source is included because `__expr__` (and the legacy `-100`) is the uid
+ * it is registered under; it lives outside `byUid` only because it is set at boot.
+ */
+export function lookupByUid(uid: string): DataSourceInstanceSettings | undefined {
+  if (isExpressionReference(uid)) {
+    return getExpressionDataSourceSettings();
+  }
+  return byUid[uid];
+}
+
 export function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
     uid: settings.uid,
