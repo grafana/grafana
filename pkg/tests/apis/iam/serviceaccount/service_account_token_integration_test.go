@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -81,7 +82,7 @@ func TestIntegrationServiceAccountTokens(t *testing.T) {
 }
 
 // createServiceAccount is a test helper that creates a SA and returns its k8s name (UID).
-func createServiceAccount(t *testing.T, helper *apis.K8sTestHelper) string {
+func createServiceAccount(t *testing.T, helper *apis.K8sTestHelper, name string) string {
 	t.Helper()
 	ctx := context.Background()
 
@@ -91,13 +92,17 @@ func createServiceAccount(t *testing.T, helper *apis.K8sTestHelper) string {
 		GVR:       gvrServiceAccounts,
 	})
 
-	created, err := saClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-create-v0.yaml"), metav1.CreateOptions{})
+	obj := helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-create-v0.yaml")
+	obj.SetName(name)
+	require.NoError(t, unstructured.SetNestedField(obj.Object, name, "spec", "title"))
+
+	created, err := saClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, created)
 
-	name := created.GetName()
-	require.NotEmpty(t, name)
-	return name
+	createdName := created.GetName()
+	require.NotEmpty(t, createdName)
+	return createdName
 }
 
 func tokensPath(ns, saName string) string {
@@ -129,24 +134,43 @@ func doServiceAccountTokenCascadeDeleteTests(t *testing.T, helper *apis.K8sTestH
 	}
 
 	t.Run("deleting a service account deletes its tokens", func(t *testing.T) {
-		saName := createServiceAccount(t, helper)
+		createServiceAccountWithCleanup := func(name string) string {
+			saName := createServiceAccount(t, helper, name)
+			t.Cleanup(func() {
+				_ = saClient.Resource.Delete(ctx, saName, metav1.DeleteOptions{})
+			})
+			return saName
+		}
+
+		saName := createServiceAccountWithCleanup("cascade-delete-sa")
 		require.Equal(t, http.StatusCreated, createToken(saName, "cascade-delete-token-1").Response.StatusCode)
 		require.Equal(t, http.StatusCreated, createToken(saName, "cascade-delete-token-2").Response.StatusCode)
 
+		bystanderSAName := createServiceAccountWithCleanup("cascade-delete-bystander-sa")
+		require.Equal(t, http.StatusCreated, createToken(bystanderSAName, "bystander-token").Response.StatusCode)
+
 		require.NoError(t, saClient.Resource.Delete(ctx, saName, metav1.DeleteOptions{}))
+
+		var bystanderToken getTokenResponse
+		bystanderRsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   tokenPath(ns, bystanderSAName, "bystander-token"),
+		}, &bystanderToken)
+		require.Equal(t, http.StatusOK, bystanderRsp.Response.StatusCode)
+		require.Equal(t, "bystander-token", bystanderToken.Body.Title)
 
 		// Token names are unique within an organization, so recreating both names proves
 		// that the original rows were removed rather than merely hidden by owner deletion.
-		replacementSAName := createServiceAccount(t, helper)
+		replacementSAName := createServiceAccountWithCleanup("cascade-delete-replacement-sa")
 		require.Equal(t, http.StatusCreated, createToken(replacementSAName, "cascade-delete-token-1").Response.StatusCode)
 		require.Equal(t, http.StatusCreated, createToken(replacementSAName, "cascade-delete-token-2").Response.StatusCode)
-		require.NoError(t, saClient.Resource.Delete(ctx, replacementSAName, metav1.DeleteOptions{}))
 	})
 }
 
 func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 	ns := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
-	saName := createServiceAccount(t, helper)
+	saName := createServiceAccount(t, helper, "test-sa-1")
 
 	t.Run("should create a token and receive the plaintext key", func(t *testing.T) {
 		body, err := json.Marshal(createTokenRequest{
