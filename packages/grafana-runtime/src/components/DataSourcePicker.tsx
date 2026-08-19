@@ -55,27 +55,34 @@ type DataSourcePickerComponentType = ComponentType<DataSourcePickerProps>;
 
 let DataSourcePickerComponent: DataSourcePickerComponentType | undefined;
 
-/** @internal */
-export function getDataSourcePickerError(
-  current: DataSourcePickerProps['current'],
-  currentSettings: DataSourceInstanceSettings | undefined,
-  allowed: DataSourceInstanceSettings[],
-  noDefault?: boolean
-): string | undefined {
-  if (!current && noDefault) {
-    return undefined;
-  }
+type DataSourcePickerSelection = string | DataSourceRef | DataSourceInstanceSettings | null | undefined;
+
+/**
+ * Config/provisioning can set a data source the UI picker would never offer
+ * (e.g. Tempo in a Prometheus-only field). Callers should pass `resolved` as
+ * undefined when `noDefault` is set and nothing is selected, so a fallback
+ * default is not treated as the current value.
+ *
+ * @internal
+ */
+export function isDataSourceCompatibleWithPicker(
+  selected: DataSourcePickerSelection,
+  resolved: DataSourceInstanceSettings | undefined,
+  allowed: DataSourceInstanceSettings[]
+): boolean {
   // Expressions are valid query datasources but are not returned by getList().
-  if (isExpressionReference(current) || isExpressionReference(currentSettings)) {
-    return undefined;
+  if (isExpressionReference(selected) || isExpressionReference(resolved)) {
+    return true;
   }
-  if (!currentSettings) {
-    return 'Could not find data source ' + current;
+  if (!resolved) {
+    return selected == null || selected === '';
   }
-  if (!allowed.some((ds) => ds.uid === currentSettings.uid)) {
-    return `Data source type is not valid for this field: ${currentSettings.type}`;
-  }
-  return undefined;
+  // Template refs keep the variable string as uid (`$ds`, `${ds}`, `logs-${stage}-loki`)
+  // and the concrete datasource in rawRef. Those wrapper uids are often missing from the
+  // picker list: getList({ variables: true }) injects `${name}` only for dashboard-level
+  // variables, not `$name`, interpolated names, or section-scoped refs. Match the
+  // interpolated datasource so a Tempo-backed ${ds} is still invalid in a Prometheus field.
+  return allowed.some((ds) => ds.uid === resolved.uid || ds.uid === resolved.rawRef?.uid);
 }
 
 /**
@@ -138,7 +145,7 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
   isLoading = false,
 }: DataSourcePickerProps) {
   const dataSourceSrv = getDataSourceSrv();
-  const currentSettings = dataSourceSrv.getInstanceSettings(current);
+  const currentSettings = !current && noDefault ? undefined : dataSourceSrv.getInstanceSettings(current);
   const allowed = dataSourceSrv.getList({
     alerting,
     tracing,
@@ -152,7 +159,7 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
     filter,
     type,
   });
-  const error = getDataSourcePickerError(current, currentSettings, allowed, noDefault);
+  const isCurrentCompatible = isDataSourceCompatibleWithPicker(current, currentSettings, allowed);
 
   function handleChange(item: SelectableValue<string>, actionMeta: ActionMeta) {
     if (actionMeta.action === 'clear' && onClear) {
@@ -198,6 +205,7 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
   }));
   const value = getCurrentValue();
   const isClearable = typeof onClear === 'function';
+  const isInvalid = Boolean(invalid) || !isCurrentCompatible;
 
   return (
     <div aria-label="Data source picker select container" data-testid={selectors.components.DataSourcePicker.container}>
@@ -205,6 +213,7 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
         isLoading={isLoading}
         disabled={disabled}
         aria-label={'Select a data source'}
+        aria-invalid={isInvalid}
         data-testid={selectors.components.DataSourcePicker.inputV2}
         inputId={inputId || 'data-source-picker'}
         className="ds-picker select-container"
@@ -221,7 +230,7 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
         placeholder={placeholder}
         noOptionsMessage="No datasources found"
         value={value ?? null}
-        invalid={Boolean(error) || Boolean(invalid)}
+        invalid={isInvalid}
         getOptionLabel={(o) => {
           if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
             return (

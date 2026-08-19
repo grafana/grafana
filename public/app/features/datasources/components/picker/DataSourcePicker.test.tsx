@@ -238,10 +238,36 @@ describe('DataSourcePicker', () => {
       mockUseDatasources.mockReturnValue([mockDS1]);
       getInstanceSettingsMock.mockReturnValue(undefined);
       render(<DataSourcePicker onChange={jest.fn()} current="__expr__" pluginId="prometheus"></DataSourcePicker>);
+      const input = screen.getByTestId(selectors.components.DataSourcePicker.inputV2);
+      expect(input).toHaveAttribute('aria-invalid', 'false');
+      expect(input).not.toHaveAttribute('placeholder', '__expr__ - not found');
+    });
+
+    it('should not mark the input as invalid when the current value is a template datasource ref', () => {
+      mockUseDatasources.mockReturnValue([mockDS1]);
+      getInstanceSettingsMock.mockReturnValue({
+        ...mockDS1,
+        uid: '${ds}',
+        name: '${ds}',
+        rawRef: { type: mockDS1.type, uid: mockDS1.uid },
+      });
+      render(<DataSourcePicker onChange={jest.fn()} current="${ds}" pluginId="prometheus"></DataSourcePicker>);
       expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
         'aria-invalid',
         'false'
       );
+    });
+
+    it('should mark the input as invalid when a template datasource ref interpolates to a filtered-out data source', () => {
+      mockUseDatasources.mockReturnValue([mockDS1]);
+      getInstanceSettingsMock.mockReturnValue({
+        ...mockDS2,
+        uid: '${ds}',
+        name: '${ds}',
+        rawRef: { type: mockDS2.type, uid: mockDS2.uid },
+      });
+      render(<DataSourcePicker onChange={jest.fn()} current="${ds}" pluginId="prometheus"></DataSourcePicker>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute('aria-invalid', 'true');
     });
 
     it('should not mark the input as invalid when noDefault is set and nothing is selected', () => {

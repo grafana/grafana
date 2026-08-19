@@ -1,11 +1,6 @@
 import { type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
 
-import {
-  isDataSourceMatch,
-  getDataSourceCompareFn,
-  matchDataSourceWithSearch,
-  isDataSourceCompatibleWithPicker,
-} from './utils';
+import { isDataSourceMatch, getDataSourceCompareFn, matchDataSourceWithSearch } from './utils';
 
 describe('isDataSourceMatch', () => {
   const dataSourceInstanceSettings = { uid: 'a' } as DataSourceInstanceSettings;
@@ -31,41 +26,6 @@ describe('isDataSourceMatch', () => {
   });
   it('doesnt match a datasource with a datasource ref with a different uid', () => {
     expect(isDataSourceMatch(dataSourceInstanceSettings, { uid: 'b' } as DataSourceRef)).toBeFalsy();
-  });
-});
-
-describe('isDataSourceCompatibleWithPicker', () => {
-  const prometheus = { uid: 'prom', type: 'prometheus' } as DataSourceInstanceSettings;
-  const tempo = { uid: 'tempo', type: 'tempo' } as DataSourceInstanceSettings;
-
-  it('allows an empty selection', () => {
-    expect(isDataSourceCompatibleWithPicker(undefined, [prometheus])).toBe(true);
-  });
-
-  it('rejects a selected data source that cannot be resolved', () => {
-    expect(isDataSourceCompatibleWithPicker(undefined, [prometheus], undefined, 'missing-uid')).toBe(false);
-    expect(isDataSourceCompatibleWithPicker(undefined, [prometheus], undefined, { uid: 'missing-uid' })).toBe(false);
-  });
-
-  it('allows an explicit empty string as no selection', () => {
-    expect(isDataSourceCompatibleWithPicker(undefined, [prometheus], undefined, '')).toBe(true);
-  });
-
-  it('allows expression datasources even when they are not in the filtered list', () => {
-    expect(isDataSourceCompatibleWithPicker(undefined, [prometheus], undefined, '__expr__')).toBe(true);
-    expect(isDataSourceCompatibleWithPicker(undefined, [prometheus], undefined, { uid: '__expr__' })).toBe(true);
-  });
-
-  it('allows a current data source that is in the filtered list', () => {
-    expect(isDataSourceCompatibleWithPicker(prometheus, [prometheus, tempo])).toBe(true);
-  });
-
-  it('rejects a current data source that is not in the filtered list', () => {
-    expect(isDataSourceCompatibleWithPicker(tempo, [prometheus])).toBe(false);
-  });
-
-  it('rejects a current data source excluded by the custom filter', () => {
-    expect(isDataSourceCompatibleWithPicker(tempo, [prometheus, tempo], (ds) => ds.type === 'prometheus')).toBe(false);
   });
 });
 

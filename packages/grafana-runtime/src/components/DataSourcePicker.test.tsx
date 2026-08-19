@@ -6,7 +6,7 @@ import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@gra
 import {
   DataSourcePicker,
   type DataSourcePickerProps,
-  getDataSourcePickerError,
+  isDataSourceCompatibleWithPicker,
   setDataSourcePicker,
 } from './DataSourcePicker';
 
@@ -141,7 +141,7 @@ describe('DataSourcePicker', () => {
     });
   });
 
-  describe('data source type checks', () => {
+  describe('data source compatibility', () => {
     const prometheusDs: DataSourceInstanceSettings = {
       uid: 'prom-uid',
       name: 'Prometheus',
@@ -179,28 +179,76 @@ describe('DataSourcePicker', () => {
       },
     };
 
-    it('returns an error when the current data source type is not in the filtered list', () => {
-      expect(getDataSourcePickerError('tempo-uid', tempoDs, [prometheusDs])).toBe(
-        'Data source type is not valid for this field: tempo'
+    it('rejects a current data source that is not in the filtered list', () => {
+      expect(isDataSourceCompatibleWithPicker('tempo-uid', tempoDs, [prometheusDs])).toBe(false);
+    });
+
+    it('allows a current data source that is in the filtered list', () => {
+      expect(isDataSourceCompatibleWithPicker('prom-uid', prometheusDs, [prometheusDs])).toBe(true);
+    });
+
+    it('allows an empty selection', () => {
+      expect(isDataSourceCompatibleWithPicker(null, undefined, [prometheusDs])).toBe(true);
+      expect(isDataSourceCompatibleWithPicker(undefined, undefined, [prometheusDs])).toBe(true);
+      expect(isDataSourceCompatibleWithPicker('', undefined, [prometheusDs])).toBe(true);
+    });
+
+    it('rejects a selected data source that cannot be resolved', () => {
+      expect(isDataSourceCompatibleWithPicker('missing-uid', undefined, [prometheusDs])).toBe(false);
+      expect(isDataSourceCompatibleWithPicker({ uid: 'missing-uid' }, undefined, [prometheusDs])).toBe(false);
+    });
+
+    it('allows expression datasources even when they are not in the filtered list', () => {
+      expect(isDataSourceCompatibleWithPicker('__expr__', undefined, [prometheusDs])).toBe(true);
+      expect(isDataSourceCompatibleWithPicker({ uid: '__expr__' }, undefined, [prometheusDs])).toBe(true);
+    });
+
+    it('allows template datasource refs that resolved via rawRef even when the variable uid is not in the list', () => {
+      const variableSettings: DataSourceInstanceSettings = {
+        ...prometheusDs,
+        uid: '${ds}',
+        name: '${ds}',
+        rawRef: { type: 'prometheus', uid: 'prom-uid' },
+      };
+      expect(isDataSourceCompatibleWithPicker('${ds}', variableSettings, [prometheusDs])).toBe(true);
+      expect(isDataSourceCompatibleWithPicker('$ds', { ...variableSettings, uid: '$ds', name: '$ds' }, [prometheusDs])).toBe(
+        true
       );
+      expect(
+        isDataSourceCompatibleWithPicker('${rowDs}', { ...variableSettings, uid: '${rowDs}', name: '${rowDs}' }, [
+          prometheusDs,
+        ])
+      ).toBe(true);
     });
 
-    it('returns undefined when the current data source type matches the filter', () => {
-      expect(getDataSourcePickerError('prom-uid', prometheusDs, [prometheusDs])).toBeUndefined();
+    it('rejects an unresolved template datasource ref', () => {
+      expect(isDataSourceCompatibleWithPicker('${missing}', undefined, [prometheusDs])).toBe(false);
     });
 
-    it('returns undefined when noDefault is set and nothing is selected', () => {
-      expect(getDataSourcePickerError(null, undefined, [prometheusDs], true)).toBeUndefined();
+    it('rejects a template datasource ref whose interpolated datasource is not in the filtered list', () => {
+      const variableSettings: DataSourceInstanceSettings = {
+        ...tempoDs,
+        uid: '${ds}',
+        name: '${ds}',
+        rawRef: { type: 'tempo', uid: 'tempo-uid' },
+      };
+      expect(isDataSourceCompatibleWithPicker('${ds}', variableSettings, [prometheusDs])).toBe(false);
     });
 
-    it('returns a not-found error when the current data source cannot be resolved', () => {
-      expect(getDataSourcePickerError('missing-uid', undefined, [prometheusDs])).toBe(
-        'Could not find data source missing-uid'
-      );
+    it('marks the select invalid when the current data source is not in the filtered list', () => {
+      mockGetInstanceSettings.mockReturnValue(tempoDs);
+      mockGetList.mockReturnValue([prometheusDs]);
+      render(<DataSourcePicker current="tempo-uid" pluginId="prometheus" onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
     });
 
-    it('returns undefined for expression datasources even when they are not in the filtered list', () => {
-      expect(getDataSourcePickerError('__expr__', undefined, [prometheusDs])).toBeUndefined();
+    it('does not mark the select invalid when the current data source matches the filter', () => {
+      mockGetInstanceSettings.mockReturnValue(prometheusDs);
+      mockGetList.mockReturnValue([prometheusDs]);
+      render(<DataSourcePicker current="prom-uid" pluginId="prometheus" onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'false');
     });
 
     it('recomputes validity on render when the allowed list changes without filter prop changes', () => {
@@ -208,13 +256,12 @@ describe('DataSourcePicker', () => {
       mockGetList.mockReturnValue([prometheusDs]);
       const { rerender } = render(<DataSourcePicker current="prom-uid" pluginId="prometheus" onChange={jest.fn()} />);
 
-      const wrapper = () => screen.getByLabelText('Data source picker select container').querySelector('.ds-picker');
-      const validClass = wrapper()?.className;
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'false');
 
       mockGetList.mockReturnValue([]);
       rerender(<DataSourcePicker current="prom-uid" pluginId="prometheus" onChange={jest.fn()} />);
 
-      expect(wrapper()?.className).not.toBe(validClass);
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
     });
   });
 
