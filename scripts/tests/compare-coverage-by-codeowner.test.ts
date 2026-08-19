@@ -67,7 +67,7 @@ describe('compare-coverage-by-codeowner', () => {
     });
 
     it('renders an explicit zero delta rather than a bare dash', () => {
-      expect(formatDelta(80, 80)).toBe('± 0.00%');
+      expect(formatDelta(80, 80)).toBe('±0.00%');
     });
   });
 

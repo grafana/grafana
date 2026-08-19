@@ -132,7 +132,7 @@ function formatDelta(prValue, mainValue) {
   } else if (delta < 0) {
     return `${delta.toFixed(2)}%`;
   }
-  return '± 0.00%';
+  return '±0.00%';
 }
 
 /**
