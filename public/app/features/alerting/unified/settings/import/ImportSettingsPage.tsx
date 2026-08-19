@@ -60,7 +60,7 @@ function ImportSettingsContent() {
 }
 
 function StagedConfigurationSection() {
-  const { canRevert } = getStagedConfigPermissions();
+  const { canPromote, canRevert } = getStagedConfigPermissions();
   const { stagedConfig, liveConfig, isLoading, isError, error, refetch } = useStagedConfig();
 
   const isSyncManaged = stagedConfig?.managed_by === 'auto-sync';
@@ -126,6 +126,7 @@ function StagedConfigurationSection() {
       {!isLoading && !isError && stagedConfig && (
         <StagedConfiguration
           stagedConfig={stagedConfig}
+          canPromote={canPromote}
           canRevert={canRevert}
           isSyncManaged={isSyncManaged}
           liveConfig={liveConfig}
