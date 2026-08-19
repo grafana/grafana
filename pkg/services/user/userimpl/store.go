@@ -700,10 +700,9 @@ type searchUserInFilter struct {
 }
 
 type searchUserWhereFilter struct {
-	Prefix   string
-	Suffix   string
-	Value    any
-	HasValue bool
+	Condition string
+	Params    any
+	HasParams bool
 }
 
 type searchUsersQuery struct {
@@ -730,7 +729,7 @@ func (q searchUsersQuery) IsDisabledValue() bool {
 
 func (q searchUsersQuery) Validate() error {
 	for _, filter := range q.WhereFilters {
-		if filter.Prefix == "" && filter.Suffix == "" && !filter.HasValue {
+		if filter.Condition == "" {
 			return fmt.Errorf("search filter condition must not be empty")
 		}
 	}
@@ -755,23 +754,30 @@ func searchInFilterArgs(params any) []any {
 }
 
 func newSearchUserWhereFilter(condition string, params any) (searchUserWhereFilter, error) {
-	parts := strings.Split(condition, "?")
-	if len(parts) == 1 {
+	if !strings.Contains(condition, "?") {
 		if params != nil {
 			return searchUserWhereFilter{}, fmt.Errorf("search filter condition has no placeholder for its value")
 		}
-		return searchUserWhereFilter{Prefix: condition}, nil
+		return searchUserWhereFilter{Condition: condition}, nil
 	}
-	if len(parts) != 2 {
+	_, suffix, _ := strings.Cut(condition, "?")
+	if strings.Contains(suffix, "?") {
 		return searchUserWhereFilter{}, fmt.Errorf("search filter condition must have one placeholder")
 	}
 
 	return searchUserWhereFilter{
-		Prefix:   parts[0],
-		Suffix:   parts[1],
-		Value:    params,
-		HasValue: true,
+		Condition: condition,
+		Params:    params,
+		HasParams: true,
 	}, nil
+}
+
+func (q searchUsersQuery) WhereSQL(filter searchUserWhereFilter) string {
+	if !filter.HasParams {
+		return filter.Condition
+	}
+	prefix, suffix, _ := strings.Cut(filter.Condition, "?")
+	return prefix + q.Arg(filter.Params) + suffix
 }
 
 func buildSearchUserFilters(dbHelper *legacysql.LegacyDatabaseHelper, filters []user.Filter) ([]searchUserJoin, []searchUserInFilter, []searchUserWhereFilter, error) {

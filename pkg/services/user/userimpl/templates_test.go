@@ -51,9 +51,9 @@ func TestTemplates(t *testing.T) {
 			}
 			query.WhereFilters = []searchUserWhereFilter{
 				{
-					Prefix:   "is_admin = ",
-					Value:    true,
-					HasValue: true,
+					Condition: "is_admin = ?",
+					Params:    true,
+					HasParams: true,
 				},
 			}
 			query.Sorts = []string{"u.login DESC", "u.email ASC"}
@@ -236,9 +236,9 @@ func TestSearchUsersQueryArguments(t *testing.T) {
 		},
 		WhereFilters: []searchUserWhereFilter{
 			{
-				Prefix:   "is_admin = ",
-				Value:    true,
-				HasValue: true,
+				Condition: "is_admin = ?",
+				Params:    true,
+				HasParams: true,
 			},
 		},
 		Limit:  25,
@@ -305,10 +305,9 @@ func TestSearchUserWhereFilterPreservesSliceValue(t *testing.T) {
 	value := []int{1, 2}
 	filter, err := newSearchUserWhereFilter("user_id = ?", value)
 	require.NoError(t, err)
-	require.Equal(t, "user_id = ", filter.Prefix)
-	require.Empty(t, filter.Suffix)
-	require.Equal(t, value, filter.Value)
-	require.True(t, filter.HasValue)
+	require.Equal(t, "user_id = ?", filter.Condition)
+	require.Equal(t, value, filter.Params)
+	require.True(t, filter.HasParams)
 }
 
 func TestSearchUserWhereFilterRendersTrailingSQLAfterValue(t *testing.T) {
@@ -386,9 +385,9 @@ func TestBuildSearchUserFilters(t *testing.T) {
 	}, inFilters)
 	require.Equal(t, []searchUserWhereFilter{
 		{
-			Prefix:   "is_admin = ",
-			Value:    true,
-			HasValue: true,
+			Condition: "is_admin = ?",
+			Params:    true,
+			HasParams: true,
 		},
 	}, whereFilters)
 }
@@ -408,5 +407,5 @@ func TestQueryValidation(t *testing.T) {
 	require.ErrorIs(t, (&signedInUserQuery{}).Validate(), user.ErrNoUniqueID)
 	require.ErrorContains(t, (&batchDisableUsersQuery{}).Validate(), "user IDs must not be empty")
 	require.ErrorContains(t, (&getUserQuery{}).Validate(), "invalid user identifier column")
-	require.NoError(t, (&searchUsersQuery{InFilters: []searchUserInFilter{{Condition: "user_id", Values: []any{}}}}).Validate())
+	require.NoError(t, (&searchUsersQuery{WhereFilters: []searchUserWhereFilter{{Condition: "is_admin = FALSE"}}}).Validate())
 }
