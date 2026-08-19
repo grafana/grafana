@@ -32,7 +32,7 @@ func quoteETag(s string) string {
 // backend round-trip: this is pure local synthesis, called once per
 // reconcile cycle alongside the handler snapshot.
 func buildAPIGroupList(backends []Backend) cachedDoc {
-	sorted := sortedManifestBackends(backends, "APIGroupList")
+	sorted := sortedManifestBackends(backends)
 
 	groups := make([]metav1.APIGroup, 0, len(sorted))
 	var hashInput strings.Builder
@@ -77,11 +77,9 @@ func buildAPIGroupList(backends []Backend) cachedDoc {
 	return cachedDoc{body: body, etag: quoteETag(hashHex(hashInput.String()))}
 }
 
-// sortedManifestBackends filters out backends with a nil Manifest (logged and
-// skipped, never fatal — matches the existing duplicate-group
-// warn-and-continue tolerance for bad GitOps config) and returns the rest
-// sorted by group name for deterministic output and a stable hash input.
-func sortedManifestBackends(backends []Backend, forDoc string) []Backend {
+// sortedManifestBackends returns backends sorted by group name for
+// deterministic output and a stable hash input.
+func sortedManifestBackends(backends []Backend) []Backend {
 	out := make([]Backend, 0, len(backends))
 	for _, b := range backends {
 		out = append(out, b)
@@ -102,7 +100,7 @@ func hashHex(s string) string {
 // "Discovery endpoints" / the design spec's "no cross-group merge" decision).
 // One entry per served group/version, hash-busted by that group's RV.
 func buildOpenAPIV3Index(backends []Backend) cachedDoc {
-	sorted := sortedManifestBackends(backends, "OpenAPIV3Discovery")
+	sorted := sortedManifestBackends(backends)
 
 	paths := make(map[string]handler3.OpenAPIV3DiscoveryGroupVersion, len(sorted))
 	var hashInput strings.Builder
