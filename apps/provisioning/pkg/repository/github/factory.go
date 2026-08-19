@@ -69,16 +69,15 @@ func (r *Factory) New(owner, repo string, ghToken common.RawSecureValue, opts ..
 		opt(&options)
 	}
 
-	if r.Client != nil {
-		return NewClient(github.NewClient(r.Client), owner, repo), nil
-	}
-
 	httpClient := &http.Client{}
+	if r.Client != nil {
+		client := *r.Client
+		httpClient = &client
+	}
 	if !ghToken.IsZero() {
-		httpClient = &http.Client{
-			Transport: &oauth2.Transport{
-				Source: oauth2.StaticTokenSource(&oauth2.Token{AccessToken: string(ghToken)}),
-			},
+		httpClient.Transport = &oauth2.Transport{
+			Source: oauth2.StaticTokenSource(&oauth2.Token{AccessToken: string(ghToken)}),
+			Base:   httpClient.Transport,
 		}
 	}
 

@@ -2629,6 +2629,26 @@ func TestGithubClient_ListRepositories(t *testing.T) {
 	}, repos)
 }
 
+func TestGithubClient_ListRepositories_CustomClientUsesToken(t *testing.T) {
+	mockHandler := mockhub.NewMockedHTTPClient(
+		mockhub.WithRequestMatchHandler(
+			mockhub.GetUserRepos,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
+				_ = json.NewEncoder(w).Encode([]*github.Repository{})
+			}),
+		),
+	)
+
+	factory := ProvideFactory()
+	factory.Client = mockHandler
+	client, err := factory.New("", "", "test-token")
+	require.NoError(t, err)
+
+	_, err = client.ListRepositories(t.Context())
+	require.NoError(t, err)
+}
+
 func TestGithubClient_ListRepositories_Errors(t *testing.T) {
 	tests := []struct {
 		name    string
