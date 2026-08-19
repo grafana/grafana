@@ -46,6 +46,8 @@ interface FeedbackState {
 interface Props {
   capability: QueryEditorCoauthoringCapability;
   onAccept: (query: DataQuery) => void;
+  onPreview: (query: DataQuery) => void;
+  onRevertPreview: () => void;
 }
 
 type CoauthoringVisibility = 'expanded' | 'minimized';
@@ -53,7 +55,7 @@ type CoauthoringVisibility = 'expanded' | 'minimized';
 const VIEWPORT_MARGIN = 8;
 const ASSISTANT_FEEDBACK_URL = '/api/plugins/grafana-assistant-app/resources/api/v1/feedback';
 
-export function QueryCoauthoring({ capability, onAccept }: Props) {
+export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPreview }: Props) {
   const {
     isLoading: isAssistantLoading,
     isAvailable: isAssistantAvailable,
@@ -86,7 +88,18 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
   const identificationIdRef = useRef(0);
   const invocationRef = useRef<QueryEditorCoauthoringInvocation>();
   const contextPromiseRef = useRef<Promise<QueryEditorCoauthoringContext>>();
+  const previewActiveRef = useRef(false);
+  const onRevertPreviewRef = useRef(onRevertPreview);
+  onRevertPreviewRef.current = onRevertPreview;
   const visibilityRef = useRef<CoauthoringVisibility>('expanded');
+
+  const revertQueryPreview = useCallback(() => {
+    if (!previewActiveRef.current) {
+      return;
+    }
+    previewActiveRef.current = false;
+    onRevertPreviewRef.current();
+  }, []);
 
   const clearSession = useCallback(() => {
     generationIdRef.current++;
@@ -96,6 +109,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     cancel();
     reset();
     capability.clearPreview();
+    revertQueryPreview();
     setContext(undefined);
     setContextError(false);
     setSelectionExplanation(undefined);
@@ -109,7 +123,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     setFeedbackError(undefined);
     setIsSubmittingFeedback(false);
     contextPromiseRef.current = undefined;
-  }, [cancel, cancelIdentification, capability, reset, resetIdentification]);
+  }, [cancel, cancelIdentification, capability, reset, resetIdentification, revertQueryPreview]);
 
   const closeFeedback = useCallback(() => {
     if (isSubmittingFeedback) {
@@ -156,6 +170,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
 
     if (proposal) {
       if (capability.getValue() !== proposal.baseline) {
+        revertQueryPreview();
         setProposal(undefined);
         setError(
           t(
@@ -169,6 +184,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
       }
       const preview = capability.stagePreview(proposal.proposedQuery);
       if (!preview) {
+        revertQueryPreview();
         setProposal(undefined);
         setError(
           t('query-editor-coauthoring.error-preview-failed', 'The query proposal could not be previewed. Try again.')
@@ -179,7 +195,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     }
     visibilityRef.current = 'expanded';
     setVisibility('expanded');
-  }, [capability, clearSession, context, proposal]);
+  }, [capability, clearSession, context, proposal, revertQueryPreview]);
 
   const loadContext = useCallback(() => {
     setContext(undefined);
@@ -255,10 +271,11 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
       cancelIdentification();
       cancel();
       capability.clearPreview();
+      revertQueryPreview();
       invocationRef.current?.dismiss();
       invocationRef.current = undefined;
     };
-  }, [cancel, cancelIdentification, capability, clearSession, loadContext]);
+  }, [cancel, cancelIdentification, capability, clearSession, loadContext, revertQueryPreview]);
 
   useLayoutEffect(() => {
     if (!invocation) {
@@ -298,6 +315,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     generationIdRef.current++;
     cancel();
     capability.clearPreview();
+    revertQueryPreview();
     setProposal(undefined);
     setFallback(undefined);
     setClarification(undefined);
@@ -460,6 +478,8 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
         if (visibilityRef.current === 'minimized') {
           capability.clearPreview();
         }
+        previewActiveRef.current = true;
+        onPreview(capability.createQuery(submittedProposal.proposedQuery));
         setProposal({ ...submittedProposal, baseline, context: submittedContext, preview });
       },
       onError: () => {
@@ -501,6 +521,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     }
     if (capability.getValue() !== proposal.baseline || !capability.validateQuery(proposal.proposedQuery)) {
       capability.clearPreview();
+      revertQueryPreview();
       setProposal(undefined);
       setError(
         t(
@@ -512,9 +533,10 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     }
 
     const acceptedQuery = capability.createQuery(proposal.proposedQuery);
+    previewActiveRef.current = false;
     dismiss();
     onAccept(acceptedQuery);
-  }, [capability, dismiss, onAccept, proposal]);
+  }, [capability, dismiss, onAccept, proposal, revertQueryPreview]);
 
   const continueInAssistant = (reason?: string) => {
     const activeContext = proposal?.context ?? fallback?.context ?? context;

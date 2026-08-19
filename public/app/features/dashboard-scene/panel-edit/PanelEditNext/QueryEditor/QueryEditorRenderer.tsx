@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
   CoreApp,
@@ -46,6 +46,10 @@ export function QueryEditorPanel({
 }: QueryEditorPanelProps) {
   const coauthoringEnabled = useFlagQueryeditorCoauthoringUi();
   const coauthoringIdentity = `${queryDsData?.dsSettings?.uid ?? ''}:${query?.refId ?? ''}`;
+  const queryRef = useRef(query);
+  queryRef.current = query;
+  const coauthoringBaselineRef = useRef<DataQuery>();
+  const [coauthoringBaseline, setCoauthoringBaseline] = useState<DataQuery>();
   const [coauthoringRegistration, setCoauthoringRegistration] = useState<{
     identity: string;
     capability: QueryEditorCoauthoringCapability;
@@ -60,7 +64,50 @@ export function QueryEditorPanel({
   // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
   const handleChange = useCallback(
     (updatedQuery: DataQuery) => {
+      if (coauthoringBaselineRef.current?.refId === updatedQuery.refId) {
+        coauthoringBaselineRef.current = updatedQuery;
+        setCoauthoringBaseline(updatedQuery);
+        return;
+      }
       updateQuery(updatedQuery, updatedQuery.refId);
+    },
+    [updateQuery]
+  );
+
+  const previewCoauthoredQuery = useCallback(
+    (proposedQuery: DataQuery) => {
+      const currentQuery = queryRef.current;
+      if (!currentQuery) {
+        return;
+      }
+
+      const baseline =
+        coauthoringBaselineRef.current?.refId === currentQuery.refId ? coauthoringBaselineRef.current : currentQuery;
+      coauthoringBaselineRef.current = baseline;
+      setCoauthoringBaseline(baseline);
+      updateQuery(proposedQuery, baseline.refId);
+      runQueries();
+    },
+    [runQueries, updateQuery]
+  );
+
+  const revertCoauthoredQueryPreview = useCallback(() => {
+    const baseline = coauthoringBaselineRef.current;
+    if (!baseline) {
+      return;
+    }
+
+    coauthoringBaselineRef.current = undefined;
+    setCoauthoringBaseline(undefined);
+    updateQuery(baseline, baseline.refId);
+    runQueries();
+  }, [runQueries, updateQuery]);
+
+  const acceptCoauthoredQuery = useCallback(
+    (acceptedQuery: DataQuery) => {
+      coauthoringBaselineRef.current = undefined;
+      setCoauthoringBaseline(undefined);
+      updateQuery(acceptedQuery, acceptedQuery.refId);
     },
     [updateQuery]
   );
@@ -115,28 +162,37 @@ export function QueryEditorPanel({
   }
 
   const { datasource, dsSettings } = queryDsData;
+  const editorQuery = coauthoringBaseline?.refId === query.refId ? coauthoringBaseline : query;
+  const editorQueries = coauthoringBaseline
+    ? queries.map((candidate) => (candidate.refId === coauthoringBaseline.refId ? coauthoringBaseline : candidate))
+    : queries;
 
   return (
     <>
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
         <ErrorBoundaryAlert boundaryName="query-editor-renderer">
           <QueryEditorComponent
-            key={query.refId}
+            key={editorQuery.refId}
             app={CoreApp.PanelEditor}
             data={filteredData}
             datasource={datasource}
             onAddQuery={addQuery}
             onChange={handleChange}
             onRunQuery={runQueries}
-            queries={queries}
-            query={query}
+            queries={editorQueries}
+            query={editorQuery}
             range={filteredData?.timeRange}
             onRegisterQueryEditorCoauthoring={coauthoringEnabled ? registerCoauthoringCapability : undefined}
           />
         </ErrorBoundaryAlert>
       </DataSourcePluginContextProvider>
       {coauthoringEnabled && coauthoringCapability && (
-        <QueryCoauthoring capability={coauthoringCapability} onAccept={handleChange} />
+        <QueryCoauthoring
+          capability={coauthoringCapability}
+          onAccept={acceptCoauthoredQuery}
+          onPreview={previewCoauthoredQuery}
+          onRevertPreview={revertCoauthoredQueryPreview}
+        />
       )}
       {error && <QueryErrorAlert error={error} />}
     </>

@@ -18,7 +18,7 @@ import { type DataQuery } from '@grafana/schema';
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorProvider } from './QueryEditorContext';
-import { QueryEditorRenderer } from './QueryEditorRenderer';
+import { QueryEditorPanel, QueryEditorRenderer } from './QueryEditorRenderer';
 import {
   ds1SettingsMock,
   mockActions,
@@ -37,8 +37,12 @@ jest.mock('app/features/query/components/QueryErrorAlert', () => ({
   QueryErrorAlert: ({ error }: { error: DataQueryError }) => <div data-testid="query-error-alert">{error.message}</div>,
 }));
 
+const mockQueryCoauthoring = jest.fn();
 jest.mock('./QueryCoauthoring', () => ({
-  QueryCoauthoring: () => <button>Query with Assistant</button>,
+  QueryCoauthoring: (props: unknown) => {
+    mockQueryCoauthoring(props);
+    return <button>Query with Assistant</button>;
+  },
 }));
 
 jest.mock('@grafana/runtime/internal', () => ({
@@ -99,6 +103,7 @@ function renderRenderer(
 
 describe('QueryEditorRenderer', () => {
   beforeEach(() => {
+    mockQueryCoauthoring.mockClear();
     mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(false);
   });
 
@@ -176,6 +181,82 @@ describe('QueryEditorRenderer', () => {
     });
 
     expect(screen.getByRole('button', { name: /query with assistant/i })).toBeInTheDocument();
+  });
+
+  it('runs a proposed query while keeping the baseline in the editor and coordinates revert and accept', () => {
+    mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
+    const updateQuery = jest.fn();
+    const runQueries = jest.fn();
+    const proposedQuery = { ...queryA, legendFormat: 'proposed' };
+
+    function CapabilityQueryEditor(props: {
+      query: DataQuery;
+      queries?: DataQuery[];
+      onRegisterQueryEditorCoauthoring?: (capability: QueryEditorCoauthoringCapability | undefined) => void;
+    }) {
+      const { onRegisterQueryEditorCoauthoring, query, queries } = props;
+      useEffect(() => {
+        onRegisterQueryEditorCoauthoring?.({
+          getValue: () => query.refId,
+          getContext: async () => ({ query: query.refId, focusRanges: [], metricMetadata: [] }),
+          refreshContext: async () => ({ query: query.refId, focusRanges: [], metricMetadata: [] }),
+          createQuery: (value) => ({ ...query, refId: value }),
+          validateQuery: () => true,
+          stagePreview: () => ({ changes: [] }),
+          clearPreview: jest.fn(),
+          subscribeToInvocation: () => jest.fn(),
+          focus: jest.fn(),
+        });
+        return () => onRegisterQueryEditorCoauthoring?.(undefined);
+      }, [onRegisterQueryEditorCoauthoring, query]);
+
+      return (
+        <div data-testid="preview-editor">{`${getLegendFormat(query)}:${queries?.[0] ? getLegendFormat(queries[0]) : ''}`}</div>
+      );
+    }
+
+    const queryDsData = {
+      datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
+      dsSettings: ds1SettingsMock,
+    };
+    const renderPanel = (query: DataQuery, queries: DataQuery[]) => (
+      <QueryEditorPanel
+        query={query}
+        queryDsData={queryDsData}
+        queryDsLoading={false}
+        queries={queries}
+        updateQuery={updateQuery}
+        addQuery={jest.fn()}
+        runQueries={runQueries}
+      />
+    );
+    const { rerender } = render(renderPanel(queryA, [queryA, queryB]));
+    const coauthoringProps = mockQueryCoauthoring.mock.lastCall?.[0] as {
+      onAccept: (query: DataQuery) => void;
+      onPreview: (query: DataQuery) => void;
+      onRevertPreview: () => void;
+    };
+
+    act(() => coauthoringProps.onPreview(proposedQuery));
+    expect(updateQuery).toHaveBeenCalledWith(proposedQuery, 'A');
+    expect(runQueries).toHaveBeenCalledTimes(1);
+
+    rerender(renderPanel(proposedQuery, [proposedQuery, queryB]));
+    expect(screen.getByTestId('preview-editor')).toHaveTextContent('series-a:series-a');
+
+    act(() => coauthoringProps.onRevertPreview());
+    expect(updateQuery).toHaveBeenLastCalledWith(queryA, 'A');
+    expect(runQueries).toHaveBeenCalledTimes(2);
+
+    rerender(renderPanel(queryA, [queryA, queryB]));
+    act(() => coauthoringProps.onPreview(proposedQuery));
+    rerender(renderPanel(proposedQuery, [proposedQuery, queryB]));
+    expect(screen.getByTestId('preview-editor')).toHaveTextContent('series-a:series-a');
+
+    act(() => coauthoringProps.onAccept(proposedQuery));
+    rerender(renderPanel(proposedQuery, [proposedQuery, queryB]));
+    expect(screen.getByTestId('preview-editor')).toHaveTextContent('proposed:proposed');
+    expect(runQueries).toHaveBeenCalledTimes(3);
   });
 
   it('contains errors thrown by the datasource query editor', () => {
