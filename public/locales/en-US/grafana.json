@@ -11887,7 +11887,8 @@
         "disable-highlighting": "Highlight text",
         "enable-highlighting": "Plain text",
         "escape-newlines": "Escape newlines",
-        "expand": "Collapsed"
+        "expand": "Collapsed",
+        "highlighting-unavailable": "Highlighting unavailable"
       },
       "labels": {
         "font-large": "Large font",
@@ -11940,7 +11941,8 @@
         "disable-highlighting": "Disable highlighting",
         "download": "Download",
         "enable-highlighting": "Enable highlighting",
-        "filter-level": "Filter logs result by level"
+        "filter-level": "Filter logs result by level",
+        "highlighting-unavailable": "Highlighting is disabled because these logs are too large and could freeze the browser"
       },
       "unwrapped-columns": {
         "disable": "Disable columns",
