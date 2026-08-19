@@ -38,6 +38,10 @@ recordingRulev0alpha1: recordingRuleKind & {
 	// See alertRule.cue for the path vs computed-field split; recording rules
 	// have metric and targetDatasourceUID instead of the alerting-only fields
 	// and share the computed type / labels / datasourceUIDs handling.
+	search: {
+		endpoint: false
+		trash:    false
+	}
 	searchFields: [
 		{
 			name: "type"

@@ -22,8 +22,6 @@ import (
 // nothing new should be built against it.
 
 // #SearchTextLeaf is a free-text search across one or more text-capable
-
-// #SearchTextLeaf is a free-text search across one or more text-capable
 // fields. When fields is omitted, the kind's default text field set is used.
 // A match requires every whitespace-separated term of value to appear in the
 // field, in any order. How very short terms, punctuation, and common words are
