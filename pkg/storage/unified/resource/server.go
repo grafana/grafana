@@ -2488,11 +2488,6 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		Kinds:     []string{nsr.GroupResource()},
 	})
 	if err != nil {
-		// this is the equivalent of checking statsRsp.Error below
-		if errorResultFromGRPCDetails(err) != nil {
-			s.degraded(ctx, "check_quota", "stats_error", nsr, err)
-			return nil
-		}
 		s.degraded(ctx, "check_quota", "get_stats_failed", nsr, err)
 		return nil
 	}
