@@ -170,6 +170,7 @@ describe('addNewRowTo', () => {
       addNewRowTo(grid);
 
       const newBody = (grid.parent as DashboardScene).state.body as RowsLayoutManager;
+      expect(newBody).toBeInstanceOf(RowsLayoutManager);
       expect(newBody.state.rows[0].getLayout()).toBeInstanceOf(DefaultGridLayoutManager);
     });
   });
