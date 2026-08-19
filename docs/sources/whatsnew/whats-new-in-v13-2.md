@@ -13,9 +13,6 @@ labels:
     - oss
 title: What's new in Grafana v13.2
 posts:
-  - title: Authentication and authorization
-    items:
-      - whats-new/2026-06-24-google-workload-identity-federation-for-bigquery-and-google-cloud-monitoring.md
   - title: Dashboards and visualizations
     items:
       - whats-new/2026-06-30-redesigned-query-variable-editor.md
@@ -29,6 +26,7 @@ posts:
       - whats-new/2026-08-14-improved-auto-layout-indication-when-editing-dashboards.md
   - title: Data sources
     items:
+      - whats-new/2026-06-24-google-workload-identity-federation-for-bigquery-and-google-cloud-monitoring.md
       - whats-new/2026-07-28-opensearch-added-index-browser-to-datasource-configuration-and-query.md
       - whats-new/2026-08-03-oracle-easy-connect-plus-support.md
       - whats-new/2026-08-13-azure-monitor-batch-api.md
