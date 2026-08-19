@@ -358,7 +358,33 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
 }
 
+/**
+ * Single-entry cache for {@link getComparisonFieldPairs}.
+ *
+ * The pairing is needed twice per panel: once when the uPlot config is built (for the comparison
+ * cursor point) and once per render (for the tooltip). Both derive from the same aligned frame
+ * instance, which GraphNG only recreates when it re-joins the data, so caching on that identity
+ * collapses the two into one computation without any risk of the two consumers disagreeing about
+ * field indices - a stale entry is impossible, because a new frame is a new key.
+ */
+let cachedPairs: { alignedFrame: DataFrame; allFrames: DataFrame[]; pairs: Map<number, number> } | undefined;
+
+/**
+ * Bidirectional pairing between a time-comparison series and its current-period counterpart, keyed
+ * by index into `alignedFrame.fields`. Memoized on the identity of its inputs.
+ */
 export function getComparisonFieldPairs(alignedFrame: DataFrame, allFrames: DataFrame[]): Map<number, number> {
+  if (cachedPairs?.alignedFrame === alignedFrame && cachedPairs.allFrames === allFrames) {
+    return cachedPairs.pairs;
+  }
+
+  const pairs = computeComparisonFieldPairs(alignedFrame, allFrames);
+  cachedPairs = { alignedFrame, allFrames, pairs };
+
+  return pairs;
+}
+
+function computeComparisonFieldPairs(alignedFrame: DataFrame, allFrames: DataFrame[]): Map<number, number> {
   const pairs = new Map<number, number>();
   const bySeriesIndex = new Map<number, number[]>();
 

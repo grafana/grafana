@@ -12,6 +12,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { getTheme } from '@grafana/ui';
+import { getComparisonFieldPairs } from 'app/plugins/panel/timeseries/utils';
 
 import { getXAxisConfig, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
 
@@ -758,6 +759,14 @@ describe('comparison cursor point', () => {
   }
 
   /**
+   * The pairing derivation is injected by the panel rather than imported by the config builder, so
+   * these tests wire in the real one to exercise the same path production takes.
+   */
+  function buildComparisonBuilder(frame: DataFrame, allFrames: DataFrame[]) {
+    return buildBuilder(frame, { allFrames, getComparisonFieldPairs });
+  }
+
+  /**
    * Casts the mock for hook invocation. The hooks read a small, well-defined slice of the
    * uPlot instance; confining the assertion to one helper keeps it out of the tests.
    */
@@ -782,12 +791,11 @@ describe('comparison cursor point', () => {
     return u.over.querySelector('.u-cursor-pt');
   }
 
-  it('pairs a comparison series with its current-period counterpart on the builder', () => {
+  it('derives the pairing from the frame the config is built against', () => {
     const { alignedFrame, allFrames } = makeComparePair();
-    const builder = buildBuilder(alignedFrame, { allFrames });
 
     // bidirectional, in aligned field index space (field 0 is the x field)
-    expect(builder.comparisonFieldPairs).toEqual(
+    expect(getComparisonFieldPairs(alignedFrame, allFrames)).toEqual(
       new Map([
         [1, 2],
         [2, 1],
@@ -795,17 +803,24 @@ describe('comparison cursor point', () => {
     );
   });
 
-  it('leaves the pairing empty and adds no cursor point when there is no comparison series', () => {
+  it('adds no cursor point when there is no comparison series', () => {
     const frame = makeTimeFrame();
-    const builder = buildBuilder(frame, { allFrames: [frame] });
+    const builder = buildComparisonBuilder(frame, [frame]);
 
-    expect(builder.comparisonFieldPairs.size).toBe(0);
+    expect(hover(builder, makeMockUPlot(), 1)).toBeNull();
+  });
+
+  it('adds no cursor point when the panel supplies no pairing derivation', () => {
+    // other GraphNG-based panels do not pass getComparisonFieldPairs at all
+    const { alignedFrame, allFrames } = makeComparePair();
+    const builder = buildBuilder(alignedFrame, { allFrames });
+
     expect(hover(builder, makeMockUPlot(), 1)).toBeNull();
   });
 
   it('positions the point on the paired series at the hovered index', () => {
     const { alignedFrame, allFrames } = makeComparePair();
-    const builder = buildBuilder(alignedFrame, { allFrames });
+    const builder = buildComparisonBuilder(alignedFrame, allFrames);
 
     // hovering series 1 (current, y=20) should mark series 2 (compare, y=8) at the same x
     const point = hover(builder, makeMockUPlot(), 1);
@@ -816,7 +831,7 @@ describe('comparison cursor point', () => {
 
   it('positions the point on the current-period series when hovering the comparison series', () => {
     const { alignedFrame, allFrames } = makeComparePair();
-    const builder = buildBuilder(alignedFrame, { allFrames });
+    const builder = buildComparisonBuilder(alignedFrame, allFrames);
 
     const point = hover(builder, makeMockUPlot(), 2);
 
@@ -826,7 +841,7 @@ describe('comparison cursor point', () => {
 
   it('sizes and colors the point from the resolved cursor point config', () => {
     const { alignedFrame, allFrames } = makeComparePair();
-    const builder = buildBuilder(alignedFrame, { allFrames });
+    const builder = buildComparisonBuilder(alignedFrame, allFrames);
 
     const point = hover(builder, makeMockUPlot(), 1);
 
@@ -841,7 +856,7 @@ describe('comparison cursor point', () => {
 
   it('hides the point when the paired series has no value at the hovered index', () => {
     const { alignedFrame, allFrames } = makeComparePair();
-    const builder = buildBuilder(alignedFrame, { allFrames });
+    const builder = buildComparisonBuilder(alignedFrame, allFrames);
     const u = makeMockUPlot({
       data: [
         [1000, 2000],
@@ -855,7 +870,7 @@ describe('comparison cursor point', () => {
 
   it('hides the point when the paired series is toggled off in the legend', () => {
     const { alignedFrame, allFrames } = makeComparePair();
-    const builder = buildBuilder(alignedFrame, { allFrames });
+    const builder = buildComparisonBuilder(alignedFrame, allFrames);
     const u = makeMockUPlot({
       series: [
         { show: true, scale: 'x' },
@@ -869,7 +884,7 @@ describe('comparison cursor point', () => {
 
   it('hides the point when no series is within cursor proximity', () => {
     const { alignedFrame, allFrames } = makeComparePair();
-    const builder = buildBuilder(alignedFrame, { allFrames });
+    const builder = buildComparisonBuilder(alignedFrame, allFrames);
 
     // uPlot reports a null series once the cursor leaves focus.prox
     expect(hover(builder, makeMockUPlot(), null)?.style.transform).toBe('translate(-10px, -10px)');
@@ -877,7 +892,7 @@ describe('comparison cursor point', () => {
 
   it('hides the point for cursor updates synced from another panel', () => {
     const { alignedFrame, allFrames } = makeComparePair();
-    const builder = buildBuilder(alignedFrame, { allFrames });
+    const builder = buildComparisonBuilder(alignedFrame, allFrames);
     // uPlot leaves cursor.event null when the update came from a synced panel
     const u = makeMockUPlot({ cursor: { ...makeMockUPlot().cursor, event: null } });
 

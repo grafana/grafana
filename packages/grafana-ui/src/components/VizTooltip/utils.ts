@@ -225,7 +225,6 @@ export const getFieldDisplayItems = (
       }
 
       // text comes from the field's display processor, so it keeps the field's unit and decimals
-      // (e.g. '5 B') - it is not recoverable from numeric alone
       delta = { text: diffVal.text, numeric: diffVal.numeric };
     }
 

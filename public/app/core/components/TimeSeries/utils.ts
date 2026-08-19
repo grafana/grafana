@@ -100,7 +100,6 @@ import {
 } from '@grafana/ui/internal';
 
 import { ANNOTATION_LANE_SIZE } from '../../../plugins/panel/timeseries/plugins/utils';
-import { getComparisonFieldPairs } from '../../../plugins/panel/timeseries/utils';
 
 // See UPlotAxisBuilder.ts::calculateAxisSize for default axis size calculation
 const UPLOT_DEFAULT_AXIS_SIZE = 17;
@@ -115,7 +114,14 @@ const defaultConfig: GraphFieldConfig = {
   showValues: false,
 };
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
+/*
+  Derives the bidirectional pairing between a time-comparison series and its current-period counterpart, keyed by index into the aligned frame's fields.
+*/
+export interface TimeSeriesConfigPrepOpts {
+  getComparisonFieldPairs?: (alignedFrame: DataFrame, allFrames: DataFrame[]) => Map<number, number>;
+}
+
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimeSeriesConfigPrepOpts> = ({
   frame,
   theme,
   timeZones,
@@ -127,6 +133,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   hoverProximity,
   orientation = VizOrientation.Horizontal,
   xAxisConfig,
+  getComparisonFieldPairs,
 }) => {
   // we want the Auto and Horizontal orientation to default to Horizontal
   const isHorizontal = orientation !== VizOrientation.Vertical;
@@ -755,9 +762,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
 
   builder.setCursor(cursor);
 
-  // Build comparsion pairing once per config build, to be reused elsewhere
-  builder.comparisonFieldPairs = getComparisonFieldPairs(frame, allFrames);
-  addComparisonCursorPoint(builder, builder.comparisonFieldPairs);
+  if (getComparisonFieldPairs != null) {
+    addComparisonCursorPoint(builder, getComparisonFieldPairs(frame, allFrames));
+  }
 
   return builder;
 };

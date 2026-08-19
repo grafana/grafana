@@ -1024,4 +1024,43 @@ describe('getComparisonFieldPairs', () => {
       ])
     );
   });
+
+  describe('memoization', () => {
+    // The config build (cursor point) and each render (tooltip) both ask for this pairing. Sharing
+    // one result stops them disagreeing about field indices, and avoids recomputing per render.
+    function makeAlignedFrame() {
+      return { length: 2, fields: [timeField(), alignedField(0, 0), alignedField(0, 1)] };
+    }
+
+    it('returns the same map instance for the same aligned frame and frames', () => {
+      const alignedFrame = makeAlignedFrame();
+      const allFrames = [currentFrame(), compareFrame()];
+
+      expect(getComparisonFieldPairs(alignedFrame, allFrames)).toBe(getComparisonFieldPairs(alignedFrame, allFrames));
+    });
+
+    it('recomputes when the aligned frame is replaced', () => {
+      const allFrames = [currentFrame(), compareFrame()];
+      const first = getComparisonFieldPairs(makeAlignedFrame(), allFrames);
+
+      // GraphNG builds a new aligned frame whenever it re-joins, and indices may have moved
+      expect(getComparisonFieldPairs(makeAlignedFrame(), allFrames)).not.toBe(first);
+    });
+
+    it('recomputes when the source frames are replaced', () => {
+      const alignedFrame = makeAlignedFrame();
+      const first = getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]);
+
+      // a refresh produces new frame objects, and compare-ness is read off those
+      expect(getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()])).not.toBe(first);
+    });
+
+    it('does not serve a stale pairing when the same aligned frame is reused with new frames', () => {
+      const alignedFrame = makeAlignedFrame();
+      expect(getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]).size).toBe(2);
+
+      // same aligned frame, but neither source frame is a comparison query now
+      expect(getComparisonFieldPairs(alignedFrame, [currentFrame('A'), currentFrame('B')]).size).toBe(0);
+    });
+  });
 });
