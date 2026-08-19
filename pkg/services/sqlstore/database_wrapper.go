@@ -12,7 +12,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/xorm/core"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -44,7 +44,7 @@ func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
 	drivers := map[string]driver.Driver{
 		migrator.SQLite:   &sqlite.Driver{},
 		migrator.MySQL:    &mysql.MySQLDriver{},
-		migrator.Postgres: &pq.Driver{},
+		migrator.Postgres: stdlib.GetDefaultDriver(),
 	}
 
 	d, exist := drivers[dbType]

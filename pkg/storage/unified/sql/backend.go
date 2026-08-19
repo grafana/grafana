@@ -19,7 +19,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/dskit/services"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -963,12 +962,6 @@ func IsRowAlreadyExistsError(err error) bool {
 	if errors.As(err, &pg) {
 		// https://www.postgresql.org/docs/current/errcodes-appendix.html
 		return pg.Code == "23505" // unique_violation
-	}
-
-	var pqerr *pq.Error
-	if errors.As(err, &pqerr) {
-		// https://www.postgresql.org/docs/current/errcodes-appendix.html
-		return pqerr.Code == "23505" // unique_violation
 	}
 
 	var mysqlerr *mysql.MySQLError

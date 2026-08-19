@@ -10,7 +10,6 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.56.4
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0
 	github.com/jackc/pgx/v5 v5.10.0
-	github.com/lib/pq v1.12.3
 	github.com/stretchr/testify v1.12.0
 )
 

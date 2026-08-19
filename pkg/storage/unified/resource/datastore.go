@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/lib/pq"
 	gocache "github.com/patrickmn/go-cache"
 
 	"github.com/grafana/grafana/pkg/util/sqlite"
@@ -1189,11 +1188,6 @@ func isRowAlreadyExistsError(err error) bool {
 	var pg *pgconn.PgError
 	if errors.As(err, &pg) {
 		return pg.Code == "23505"
-	}
-
-	var pqerr *pq.Error
-	if errors.As(err, &pqerr) {
-		return pqerr.Code == "23505"
 	}
 
 	var mysqlerr *mysql.MySQLError

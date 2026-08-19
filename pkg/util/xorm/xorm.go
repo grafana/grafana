@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"github.com/jackc/pgx/v5/stdlib"
 )
 
 const (
@@ -53,6 +54,7 @@ func close(engine *Engine) {
 }
 
 func init() {
+	sql.Register("postgres", stdlib.GetDefaultDriver())
 	regDrvsNDialects()
 }
 

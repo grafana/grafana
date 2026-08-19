@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/lib/pq"
 
 	"github.com/grafana/grafana/pkg/registry/apps/annotation/migrator"
 )
@@ -60,7 +59,7 @@ func (s *PostgreSQLStore) UpsertBatch(ctx context.Context, recs []migrator.Backf
 		for namespace, names := range namesByNamespace {
 			if _, err := tx.Exec(ctx,
 				`DELETE FROM annotations WHERE namespace = $1 AND name = ANY($2::text[])`,
-				namespace, pq.Array(names),
+				namespace, names,
 			); err != nil {
 				return 0, fmt.Errorf("failed to clear annotations for resync: %w", err)
 			}
@@ -127,7 +126,7 @@ func buildInsertSQL(recs []migrator.BackfillRecord) (string, []any) {
 
 		args = append(args,
 			rec.Namespace, rec.Name, rec.Time, rec.TimeEnd, rec.DashboardUID, rec.PanelID,
-			rec.Text, pq.Array(rec.Tags), pq.Array(rec.Scopes), createdBy, rec.CreatedAt, legacyID, rec.LegacyData,
+			rec.Text, rec.Tags, rec.Scopes, createdBy, rec.CreatedAt, legacyID, rec.LegacyData,
 		)
 	}
 	return sb.String(), args

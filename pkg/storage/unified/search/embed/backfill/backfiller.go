@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/lib/pq"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -352,10 +351,6 @@ func isPermanentItemError(err error) bool {
 	var pgxErr *pgconn.PgError
 	if errors.As(err, &pgxErr) {
 		return strings.HasPrefix(pgxErr.Code, "22")
-	}
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
-		return pqErr.Code.Class() == "22"
 	}
 	return false
 }

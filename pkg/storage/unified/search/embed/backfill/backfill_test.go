@@ -12,7 +12,6 @@ import (
 	"github.com/aws/smithy-go"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/lib/pq"
 	"github.com/openai/openai-go/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -1204,14 +1203,12 @@ func TestIsPermanentItemError(t *testing.T) {
 		err  error
 		want bool
 	}{
-		{"pq data exception", &pq.Error{Code: "22021"}, true},
-		{"wrapped pq data exception", fmt.Errorf("upsert: %w", &pq.Error{Code: "22021"}), true},
 		{"pgx data exception", &pgconn.PgError{Code: "22021"}, true},
+		{"wrapped pgx data exception", fmt.Errorf("upsert: %w", &pgconn.PgError{Code: "22021"}), true},
 		{"pgx check violation", &pgconn.PgError{Code: "23514"}, false},
 		// Class 23 stays retryable: a missing partition is 23514 check_violation.
-		{"pq check violation", &pq.Error{Code: "23514"}, false},
-		{"pq connection failure", &pq.Error{Code: "08006"}, false},
-		{"pq insufficient resources", &pq.Error{Code: "53100"}, false},
+		{"pgx connection failure", &pgconn.PgError{Code: "08006"}, false},
+		{"pgx insufficient resources", &pgconn.PgError{Code: "53100"}, false},
 		// Provider rejections stay retryable: misconfig produces the same codes.
 		{"grpc invalid argument", grpcstatus.Error(grpccodes.InvalidArgument, "bad input"), false},
 		{"bedrock validation", &smithy.GenericAPIError{Code: "ValidationException", Message: "bad input"}, false},
@@ -1253,7 +1250,7 @@ func TestRunBackfillJob_PermanentUpsertError_SkipsItem(t *testing.T) {
 	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
 
 	vec := newFakeVector()
-	vec.upsertErr = &pq.Error{Code: "22021"}
+	vec.upsertErr = &pgconn.PgError{Code: "22021"}
 	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
 
 	o := newBackfiller(t, storage, vec)

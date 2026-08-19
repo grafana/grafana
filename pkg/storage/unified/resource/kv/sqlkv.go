@@ -14,7 +14,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/lib/pq"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -685,11 +684,6 @@ func isDuplicateKeyError(err error) bool {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		return pgErr.Code == "23505"
-	}
-
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
-		return pqErr.Code == "23505"
 	}
 
 	var mysqlErr *mysql.MySQLError

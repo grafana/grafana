@@ -1,10 +1,42 @@
 package migrator
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/require"
 )
+
+func TestPostgresDialectErrors(t *testing.T) {
+	dialect := &PostgresDialect{}
+
+	uniqueErr := fmt.Errorf("insert: %w", &pgconn.PgError{Code: "23505", Message: "duplicate key"})
+	require.True(t, dialect.IsUniqueConstraintViolation(uniqueErr))
+	require.Equal(t, "duplicate key", dialect.ErrorMessage(uniqueErr))
+
+	deadlockErr := &pgconn.PgError{Code: "40P01", Message: "deadlock detected"}
+	require.True(t, dialect.IsDeadlock(deadlockErr))
+}
+
+func TestPostgresDialectGetDBName(t *testing.T) {
+	dialect := &PostgresDialect{}
+
+	for _, tc := range []struct {
+		name string
+		dsn  string
+		want string
+	}{
+		{name: "keyword DSN", dsn: "host=localhost dbname=grafana user=grafana", want: "grafana"},
+		{name: "URL DSN", dsn: "postgres://grafana:secret@localhost:5432/grafana-test?sslmode=disable", want: "grafana-test"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := dialect.GetDBName(tc.dsn)
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
+		})
+	}
+}
 
 func TestInsertQuery(t *testing.T) {
 	tests := []struct {

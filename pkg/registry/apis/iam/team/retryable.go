@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/lib/pq"
 
 	"github.com/grafana/grafana/pkg/util/sqlite"
 )
@@ -46,11 +45,6 @@ func isRetryableTxnError(err error) bool {
 		return pgErr.Code == postgresErrDeadlockDetected ||
 			pgErr.Code == postgresErrSerializationFailure
 	}
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
-		return string(pqErr.Code) == postgresErrDeadlockDetected ||
-			string(pqErr.Code) == postgresErrSerializationFailure
-	}
 	// String-match fallback: unified-storage's AsErrorResult stringifies
 	// the error into a proto Message field, so errors.As can't reach the
 	// driver type — match what each driver's Error() actually emits.
@@ -60,6 +54,6 @@ func isRetryableTxnError(err error) bool {
 		strings.Contains(msg, "Error 1205") || // MySQL ER_LOCK_WAIT_TIMEOUT
 		strings.Contains(msg, "SQLSTATE 40P01") || // pgx v5 deadlock_detected
 		strings.Contains(msg, "SQLSTATE 40001") || // pgx v5 serialization_failure
-		strings.Contains(msg, "deadlock detected") || // lib/pq deadlock_detected
-		strings.Contains(msg, "could not serialize") // lib/pq serialization_failure
+		strings.Contains(msg, "deadlock detected") || // Legacy servers may omit the SQLSTATE when stringifying errors.
+		strings.Contains(msg, "could not serialize")
 }

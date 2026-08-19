@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,10 +24,6 @@ func TestIsRetryableTxnError_Structured(t *testing.T) {
 	pgxSerialization := &pgconn.PgError{Severity: "ERROR", Code: "40001", Message: "could not serialize access due to concurrent update"}
 	pgxUnique := &pgconn.PgError{Severity: "ERROR", Code: "23505", Message: "duplicate key value"}
 
-	pqDeadlock := &pq.Error{Severity: "ERROR", Code: "40P01", Message: "deadlock detected"}
-	pqSerialization := &pq.Error{Severity: "ERROR", Code: "40001", Message: "could not serialize access due to concurrent update"}
-	pqUnique := &pq.Error{Severity: "ERROR", Code: "23505", Message: "duplicate key value"}
-
 	cases := []struct {
 		name string
 		err  error
@@ -40,12 +35,8 @@ func TestIsRetryableTxnError_Structured(t *testing.T) {
 		{"pgx 40P01 deadlock", pgxDeadlock, true},
 		{"pgx 40001 serialization", pgxSerialization, true},
 		{"pgx 23505 unique (not retryable)", pgxUnique, false},
-		{"pq 40P01 deadlock", pqDeadlock, true},
-		{"pq 40001 serialization", pqSerialization, true},
-		{"pq 23505 unique (not retryable)", pqUnique, false},
 		{"wrapped mysql deadlock", fmt.Errorf("Exec: %w", mysqlDeadlock), true},
 		{"wrapped pgx deadlock", fmt.Errorf("Exec: %w", pgxDeadlock), true},
-		{"wrapped pq deadlock", fmt.Errorf("Exec: %w", pqDeadlock), true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -70,8 +61,8 @@ func TestIsRetryableTxnError_StringFallback(t *testing.T) {
 		{"mysql 1205", &mysql.MySQLError{Number: 1205, SQLState: [5]byte{'H', 'Y', '0', '0', '0'}, Message: "Lock wait timeout exceeded"}},
 		{"pgx 40P01", &pgconn.PgError{Severity: "ERROR", Code: "40P01", Message: "deadlock detected"}},
 		{"pgx 40001", &pgconn.PgError{Severity: "ERROR", Code: "40001", Message: "could not serialize access due to concurrent update"}},
-		{"pq 40P01", &pq.Error{Severity: "ERROR", Code: "40P01", Message: "deadlock detected"}},
-		{"pq 40001", &pq.Error{Severity: "ERROR", Code: "40001", Message: "could not serialize access due to concurrent update"}},
+		{"legacy 40P01 format", errors.New(`pq: deadlock detected`)},
+		{"legacy 40001 format", errors.New(`pq: could not serialize access due to concurrent update`)},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
