@@ -941,10 +941,9 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 		"/a/grafana-assistant-app/settings",
 		"/a/grafana-assistant-app/irrelevant",
 	}
-	ossModeChildPaths := []string{
+	ossChildPaths := []string{
 		"/a/grafana-assistant-app/workspace",
 		"/a/grafana-assistant-app/settings",
-		"/a/grafana-assistant-app/irrelevant",
 	}
 
 	for _, tt := range []struct {
@@ -955,12 +954,9 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 		wantChildPaths []string
 	}{
 		{
-			name: "OSS only includes supported entries",
-			cfg:  setting.NewCfg(),
-			wantChildPaths: []string{
-				"/a/grafana-assistant-app/workspace",
-				"/a/grafana-assistant-app/settings",
-			},
+			name:           "OSS only includes supported entries",
+			cfg:            setting.NewCfg(),
+			wantChildPaths: ossChildPaths,
 		},
 		{
 			name:           "Enterprise includes all entries",
@@ -981,16 +977,16 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			},
 		},
 		{
-			name:           "Enterprise ossMode hides Automations, Watchers, and Search",
+			name:           "Enterprise ossMode only includes supported OSS entries",
 			cfg:            &setting.Cfg{IsEnterprise: true},
 			ossMode:        true,
-			wantChildPaths: ossModeChildPaths,
+			wantChildPaths: ossChildPaths,
 		},
 		{
-			name:           "Cloud ossMode hides Automations, Watchers, and Search",
+			name:           "Cloud ossMode only includes supported OSS entries",
 			cfg:            &setting.Cfg{StackID: "1"},
 			ossMode:        true,
-			wantChildPaths: ossModeChildPaths,
+			wantChildPaths: ossChildPaths,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

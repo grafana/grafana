@@ -37,14 +37,6 @@ var assistantTrialNavigationPaths = map[string]struct{}{
 	"/a/grafana-assistant-app/workspace": {},
 }
 
-// Cloud-only assistant pages that must stay hidden when the plugin is running
-// in ossMode, including on Grafana Enterprise / Cloud.
-var assistantOSSHiddenNavigationPaths = map[string]struct{}{
-	"/a/grafana-assistant-app/automations":      {},
-	"/a/grafana-assistant-app/watchers":         {},
-	"/a/grafana-assistant-app/assistant-search": {},
-}
-
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
@@ -385,17 +377,12 @@ func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin
 		_, allowed := assistantTrialNavigationPaths[include.Path]
 		return allowed
 	}
-	if ossMode {
-		if _, hidden := assistantOSSHiddenNavigationPaths[include.Path]; hidden {
-			return false
-		}
-	}
-	if s.cfg.IsEnterprise || s.cfg.StackID != "" {
-		return true
+	if ossMode || !(s.cfg.IsEnterprise || s.cfg.StackID != "") {
+		_, allowed := assistantOSSNavigationPaths[include.Path]
+		return allowed
 	}
 
-	_, allowed := assistantOSSNavigationPaths[include.Path]
-	return allowed
+	return true
 }
 
 // attachPendingIncludes puts pages under their nearest path ancestor when nesting
