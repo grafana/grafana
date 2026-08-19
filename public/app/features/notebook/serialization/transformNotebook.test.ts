@@ -172,4 +172,27 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(() => getDashboardSceneFor(panel)).toThrow();
     expect(() => transformNotebookSceneToSaveModel(scene)).not.toThrow();
   });
+
+  // Two layout items referencing one element is legal, and the deserializer gives each its own cell.
+  // getElements folds them back into a single elements[name] entry by walking cells in order, so the
+  // last one wins: an edit applied to only the edited cell is silently dropped by the duplicate that
+  // follows it, and the exported notebook still carries the original code.
+  it('keeps an edit to a cell whose element is referenced twice', () => {
+    const resource = notebookResource();
+    resource.spec.layout.spec.cells.push({
+      kind: 'NotebookLayoutItem',
+      spec: { element: { kind: 'ElementReference', name: 'query' }, source: 'user' },
+    });
+
+    const scene = transformNotebookToScene(resource);
+    const [first] = scene.state.body.state.cells.filter((cell) => cell.state.elementName === 'query');
+    expect(scene.state.body.state.cells.filter((cell) => cell.state.elementName === 'query')).toHaveLength(2);
+
+    scene.state.body.setCellContent(first, { kind: 'Code', spec: { language: 'sql', code: 'select 2' } });
+
+    expect(transformNotebookSceneToSaveModel(scene).elements.query).toEqual({
+      kind: 'Cell',
+      spec: { content: { kind: 'Code', spec: { language: 'sql', code: 'select 2' } } },
+    });
+  });
 });

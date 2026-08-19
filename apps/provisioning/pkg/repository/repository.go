@@ -60,6 +60,13 @@ var ErrPermissionDenied error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "permission denied",
 }}
 
+var ErrTooManyRequests error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusTooManyRequests,
+	Reason:  metav1.StatusReasonTooManyRequests,
+	Message: "too many requests",
+}}
+
 // ErrServerUnavailable indicates that the remote server is unavailable or returned a 5xx error.
 var ErrServerUnavailable error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Status:  metav1.StatusFailure,

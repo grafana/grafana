@@ -842,7 +842,7 @@ export interface FeatureToggles {
   azureMonitorLogsBuilderEditor?: boolean;
   /**
   * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
-  * @default false
+  * @default true
   */
   ['datasources.azureMonitorBatchAPI']?: boolean;
   /**
@@ -1281,11 +1281,6 @@ export interface FeatureToggles {
   * @default true
   */
   rememberUserOrgForSso?: boolean;
-  /**
-  * Registers the dsabstraction app for querying datasources via unified SQL
-  * @default false
-  */
-  dsAbstractionApp?: boolean;
   /**
   * Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
   * @default false

@@ -1611,17 +1611,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "您确定要开始导入吗？此操作将在 Grafana 警报中创建新资源。",
         "confirm": "开始导入",
@@ -1669,26 +1658,6 @@
       "info-description": "此向导可帮助您将警报规则和通知资源从外部源导入到 Grafana Alerting。如需了解更多信息，请参阅<2>文档</2>。",
       "info-title": "导入向导",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "键入以搜索现有命名空间",
         "label": "命名空间"
@@ -1712,10 +1681,6 @@
         "filter": "筛选条件",
         "folder": "目标文件夹",
         "heading": "检查导入内容",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "命名空间",
         "nothing": "没有要导入的内容",
         "nothing-desc": "这两个步骤均已被跳过。请返回并至少配置一个导入源。",
@@ -1742,10 +1707,6 @@
         "validation-warning": "为了避免冲突，某些资源将被重命名。",
         "will-import-config": "将导入此配置",
         "will-import-rules": "将导入规则",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_other": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_other": "将导入 {{count}} 条规则"
       },
       "routing-tree": {
@@ -1856,14 +1817,10 @@
         "cancel-confirm-title": "要取消导入吗？",
         "cancel-confirm-yes": "丢弃更改",
         "skip": "跳过",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "通知资源",
         "step-notifications-desc": "联络点、策略、模板",
         "step-review": "检查并导入",
         "step-review-desc": "预览并确认导入",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "警报规则",
         "step-rules-desc": "警报和录制规则"
       },
@@ -3283,6 +3240,35 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3841,6 +3827,8 @@
     },
     "wizard-import-to-gma": {
       "error": "导入资源失败",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "已成功将资源导入到 Grafana Alerting。"
     },
     "yaml-content-info": {
@@ -6026,6 +6014,7 @@
       "new-row-title": "新行",
       "row": {
         "collapse": "折叠行“{{title}}”",
+        "copy-link": "",
         "expand": "展开行“{{title}}”",
         "new": "新行",
         "repeat": {
@@ -8876,11 +8865,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -12701,6 +12693,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -12715,6 +12713,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",

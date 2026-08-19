@@ -1624,17 +1624,6 @@
         "import-rules": "Import alert rules",
         "title": "Auto-sync is enabled"
       },
-      "autosync-review": {
-        "back": "Add method",
-        "badge": "Will sync continuously",
-        "card-title": "Auto-sync",
-        "enable": "Enable auto-sync",
-        "heading": "Review & enable auto-sync",
-        "scope": "Scope",
-        "scope-value": "Contact points, notification policies, templates, mute timings, and alert rules",
-        "source": "Source",
-        "subtitle": "Confirm the source. Once enabled, Grafana keeps these resources in sync until you turn it off in Alerting settings."
-      },
       "confirm": {
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
@@ -1682,21 +1671,6 @@
       "info-description": "This wizard helps you import alert rules and notification resources from external sources to Grafana Alerting. For more information, refer to the <2>documentation</2>.",
       "info-title": "Import wizard",
       "loading": "Loading…",
-      "method": {
-        "autosync": "Auto-sync",
-        "autosync-datasource-label": "Data source",
-        "autosync-datasource-placeholder": "Select a data source…",
-        "autosync-desc": "Grafana continuously syncs alert configuration from a Mimir or Cortex Alertmanager data source. The synced resources stay read-only and managed by the source.",
-        "autosync-no-datasources-desc": "Auto-sync needs a Mimir or Cortex Alertmanager data source. Add one, then start this wizard again.",
-        "autosync-no-datasources-title": "No Mimir or Cortex data sources",
-        "autosync-title": "Auto-sync",
-        "heading": "How do you want to add these resources?",
-        "next-steps": "Next you'll set up notification resources and alert rules, then review & import.",
-        "stage": "Stage",
-        "stage-desc": "Stage brings the config in safely without touching your live setup. Resources stay visible but read-only so you can review them first. Promote when you are ready to use them as editable Grafana resources.",
-        "stage-title": "Stage",
-        "subtitle": "Choose how alert configuration from your external Alertmanager is brought into Grafana. You can change this before you finish."
-      },
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
@@ -1861,14 +1835,10 @@
         "cancel-confirm-title": "Cancel import?",
         "cancel-confirm-yes": "Discard changes",
         "skip": "Skip",
-        "step-method": "Import method",
-        "step-method-desc": "How to bring resources into Grafana",
         "step-notifications": "Notification resources",
         "step-notifications-desc": "Contact points, policies, templates",
         "step-review": "Review & import",
         "step-review-desc": "Preview and confirm import",
-        "step-review-enable": "Review & enable",
-        "step-review-enable-desc": "Confirm and enable auto-sync",
         "step-rules": "Alert rules",
         "step-rules-desc": "Alert and recording rules"
       },
@@ -12829,6 +12799,12 @@
       "visualization-placeholder": "Coming soon"
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "Code",
+        "aria-label-language": "Code language",
+        "custom-language": "Use this language name",
+        "language-plain-text": "Plain text"
+      },
       "delete": "Delete block",
       "delete-confirm-text": "This removes the block and its content from the notebook. Are you sure you want to continue?",
       "delete-confirm-title": "Delete block?",
@@ -12843,6 +12819,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "Notebook copied as Markdown",
+      "copy-markdown": "Copy as Markdown",
+      "download-markdown": "Download as .md",
+      "error": "Failed to export notebook",
+      "label": "Export",
+      "open-in-cursor": "Open in Cursor",
+      "opening-in-cursor": "Opening in Cursor"
+    },
     "list": {
       "all-authors": "All authors",
       "author-filter": "Filter by author",

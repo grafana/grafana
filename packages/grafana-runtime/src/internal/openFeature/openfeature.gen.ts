@@ -93,6 +93,8 @@ export const FlagKeys = {
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Let panel plugins register system transformations */
+  GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -177,6 +179,8 @@ export const FlagKeys = {
   TableInspectDataTableNG: "table.inspectDataTableNG",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
+  /** Enables the refreshed table experience: reworked column headers and ad hoc column interactions */
+  TableRefresh: "table.refresh",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
   /** Enables value type filtering in Traces Drilldown */
@@ -322,10 +326,10 @@ export const useFlagDatasourcesApiserverUseNewAPIsForDatasourceResources = (opti
  *
  * **Details:**
  * - flag key: `datasources.azureMonitorBatchAPI`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datasources.azureMonitorBatchAPI", false, options).value;
+  return useFlag("datasources.azureMonitorBatchAPI", true, options).value;
 };
 
 /**
@@ -623,6 +627,17 @@ export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Let panel plugins register system transformations
+ *
+ * **Details:**
+ * - flag key: `grafana.panelPluginTransformations`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelPluginTransformations", false, options).value;
 };
 
 /**
@@ -1085,6 +1100,17 @@ export const useFlagTableInspectDataTableNG = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.paginationPageSize", false, options).value;
+};
+
+/**
+ * Enables the refreshed table experience: reworked column headers and ad hoc column interactions
+ *
+ * **Details:**
+ * - flag key: `table.refresh`
+ * - default value: `false`
+ */
+export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refresh", false, options).value;
 };
 
 /**

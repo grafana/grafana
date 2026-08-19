@@ -80,6 +80,7 @@ declare module "@openfeature/core" {
     | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
+    | "table.refresh"
     | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
@@ -94,6 +95,7 @@ declare module "@openfeature/core" {
     | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
+    | "grafana.panelPluginTransformations"
     | "tracesDrilldown.useValueTypeFiltering";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
