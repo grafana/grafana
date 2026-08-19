@@ -155,6 +155,21 @@ describe('FolderReadmePanel', () => {
       await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
     });
 
+    it('resolves when the click lands on a non-HTML element inside the link (e.g. an SVG icon)', async () => {
+      setResources([dashboardItem]);
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
+
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      const link = screen.getByRole('link', { name: 'CPU' });
+      // An inline SVG icon's element is an SVGElement, not an HTMLElement.
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      link.appendChild(svg);
+      await user.click(svg);
+
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
+    });
+
     it('navigates the current tab to the host URL when a JSON link has no synced resource', async () => {
       setResources([]);
       const assignMock = jest.fn();

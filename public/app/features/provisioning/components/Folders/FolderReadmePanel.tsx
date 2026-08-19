@@ -276,7 +276,9 @@ function RenderedMarkdown({
     };
 
     const handleClick = (e: MouseEvent) => {
-      if (!(e.target instanceof HTMLElement)) {
+      // Element (not HTMLElement): a click can land on an SVGElement — e.g. an
+      // inline icon inside the link — which still supports closest().
+      if (!(e.target instanceof Element)) {
         return;
       }
       const anchor = e.target.closest('a');
