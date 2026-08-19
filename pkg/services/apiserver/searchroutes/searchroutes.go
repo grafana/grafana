@@ -54,21 +54,20 @@ func Build(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
-	// Whether an endpoint is on is read by the caller, because the two servers
-	// that mount them are configured differently: one from an ini file, one from
-	// flags.
-	if (!searchEnabled && !trashEnabled) || index == nil {
-		return nil
-	}
-
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
-	return build(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers)
+	return BuildFromManifests(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers)
 }
 
-// build takes the manifests as an argument so a test can describe a kind that
-// opts out. No compiled-in manifest does yet.
-func build(
+// BuildFromManifests is Build with the kind declarations supplied by the caller.
+//
+// A host that learns about apps after it starts can pass those manifests here,
+// merged with the compiled-in set, and their kinds are mounted like any other.
+// Build is the same call with only the compiled-in set.
+//
+// The provider is built from the manifests passed in, so a route can only ever
+// validate against the declarations it was mounted from.
+func BuildFromManifests(
 	manifests []app.Manifest,
 	searchEnabled bool,
 	trashEnabled bool,
@@ -77,6 +76,13 @@ func build(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
+	// Whether an endpoint is on is read by the caller, because the two servers
+	// that mount them are configured differently: one from an ini file, one from
+	// flags.
+	if (!searchEnabled && !trashEnabled) || index == nil {
+		return nil
+	}
+
 	handler := searchapi.NewHandler(index, resource.NewManifestBackedProvider(manifests), tracer)
 
 	served := servedGroupVersions(builders, installers)
