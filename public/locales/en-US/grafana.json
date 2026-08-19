@@ -1745,14 +1745,14 @@
         "yaml-description": "Import rules from a Prometheus YAML file."
       },
       "step1": {
-        "autosync-datasource-filtered": "Auto-sync can only mirror from Mimir or Cortex Alertmanager data sources.",
         "autosync-label": "Auto-sync",
         "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.",
+        "autosync-tooltip-unsupported": "Auto-sync isn't available for this Alertmanager type. Select a Mimir or Cortex data source to enable it.",
         "datasource": "Alertmanager data source",
+        "datasource-autosync-badge": "Auto-sync",
         "heading": "Import Notification Resources",
         "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
         "no-datasources": "No Alertmanager data sources found",
-        "no-mimir-cortex-datasources": "No Mimir or Cortex data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
         "policy-tree-autosync-disabled": "Not needed. Auto-sync mirrors the source directly, so there's no policy tree to name.",
