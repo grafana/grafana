@@ -31,7 +31,13 @@ export function FooterRow(props: FooterRowProps) {
       {footerGroups.map((footerGroup: HeaderGroup) => {
         const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
         return (
-          <div className={tableStyles.tfoot} {...footerGroupProps} key={key} data-testid={e2eSelectorsTable.footer}>
+          <div
+            className={tableStyles.tfoot}
+            {...footerGroupProps}
+            role="row"
+            key={key}
+            data-testid={e2eSelectorsTable.footer}
+          >
             {footerGroup.headers.map((column: ColumnInstance) => renderFooterCell(column, tableStyles))}
           </div>
         );
@@ -50,6 +56,10 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
   footerProps.style = footerProps.style ?? {};
   footerProps.style.position = 'absolute';
   footerProps.style.justifyContent = (column as any).justifyContent;
+  // getHeaderProps() defaults to role="columnheader", which is wrong here: footer cells
+  // summarize column values, they don't label them, and an empty footer value would then
+  // be an empty header (which axe flags). "cell" is the correct role for a footer/summary row.
+  footerProps.role = 'cell';
 
   return (
     <div key={key} className={tableStyles.headerCell} {...footerProps}>
