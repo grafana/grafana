@@ -56,9 +56,8 @@ func isBatchableModel(model dataquery.AzureMonitorQuery) bool {
 // overridden (and Subscription/Region overridden when the corresponding
 // argument is non-nil). All other fields are preserved byte-for-byte: the raw
 // JSON is patched in place rather than round-tripped through the generated
-// model, so fields not present on that type (e.g. grafanaSql, which buildQuery
-// reads via its own wrapper) and empty slices that omitempty would drop
-// survive the clone unchanged.
+// model, so fields not present on that type and empty slices that omitempty
+// would drop survive the clone unchanged.
 func cloneQueryWithResources(query backend.DataQuery, resources []dataquery.AzureMonitorResource, sub, region *string) (backend.DataQuery, error) {
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(query.JSON, &raw); err != nil {
