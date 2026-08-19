@@ -22,8 +22,7 @@ func mustTemplate(filename string) *template.Template {
 
 var (
 	deleteUserTemplate                     = mustTemplate("delete_user.sql")
-	getUserByIDTemplate                    = mustTemplate("get_user_by_id.sql")
-	getUserByLoginOrEmailTemplate          = mustTemplate("get_user_by_login_or_email.sql")
+	getUserTemplate                        = mustTemplate("get_user.sql")
 	getSignedInUserTemplate                = mustTemplate("get_signed_in_user.sql")
 	countUsersTemplate                     = mustTemplate("count_users.sql")
 	countUserAccountsWithEmptyRoleTemplate = mustTemplate("count_user_accounts_with_empty_role.sql")

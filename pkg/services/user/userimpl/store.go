@@ -114,21 +114,14 @@ func (ss *sqlStore) Delete(ctx context.Context, userID int64) error {
 	return nil
 }
 
-type getUserByIDQuery struct {
-	sqltemplate.SQLTemplate
-	UserTable string
-	UserID    int64
-}
-
-func (q getUserByIDQuery) Validate() error { return nil }
-
 func getUserByID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID int64) (user.User, bool, error) {
-	query := getUserByIDQuery{
-		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
-		UserTable:   dbHelper.Table("user"),
-		UserID:      userID,
+	query := getUserQuery{
+		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
+		UserTable:        dbHelper.Table("user"),
+		Identifier:       userID,
+		IdentifierColumn: userIDColumn,
 	}
-	rawSQL, err := renderUserQuery(getUserByIDTemplate, query)
+	rawSQL, err := renderUserQuery(getUserTemplate, query)
 	if err != nil {
 		return user.User{}, false, err
 	}
@@ -203,21 +196,22 @@ func (ss *sqlStore) ListByIdOrUID(ctx context.Context, uids []string, ids []int6
 	return users, err
 }
 
-type getUserByIdentifierQuery struct {
+type getUserQuery struct {
 	sqltemplate.SQLTemplate
 	UserTable        string
-	Identifier       string
+	Identifier       any
 	IdentifierColumn string
 }
 
 const (
 	userEmailColumn = "email"
+	userIDColumn    = "id"
 	userLoginColumn = "login"
 )
 
-func (q getUserByIdentifierQuery) Validate() error {
+func (q getUserQuery) Validate() error {
 	switch q.IdentifierColumn {
-	case userEmailColumn, userLoginColumn:
+	case userEmailColumn, userIDColumn, userLoginColumn:
 		return nil
 	default:
 		return fmt.Errorf("invalid user identifier column %q", q.IdentifierColumn)
@@ -225,13 +219,13 @@ func (q getUserByIdentifierQuery) Validate() error {
 }
 
 func getUserByLogin(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, identifier string, usr *user.User) (bool, error) {
-	query := getUserByIdentifierQuery{
+	query := getUserQuery{
 		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
 		UserTable:        dbHelper.Table("user"),
 		Identifier:       identifier,
 		IdentifierColumn: userLoginColumn,
 	}
-	rawSQL, err := renderUserQuery(getUserByLoginOrEmailTemplate, query)
+	rawSQL, err := renderUserQuery(getUserTemplate, query)
 	if err != nil {
 		return false, err
 	}
@@ -239,13 +233,13 @@ func getUserByLogin(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, 
 }
 
 func getUserByEmail(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, identifier string, usr *user.User) (bool, error) {
-	query := getUserByIdentifierQuery{
+	query := getUserQuery{
 		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
 		UserTable:        dbHelper.Table("user"),
 		Identifier:       identifier,
 		IdentifierColumn: userEmailColumn,
 	}
-	rawSQL, err := renderUserQuery(getUserByLoginOrEmailTemplate, query)
+	rawSQL, err := renderUserQuery(getUserTemplate, query)
 	if err != nil {
 		return false, err
 	}

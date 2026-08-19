@@ -36,20 +36,19 @@ func TestTemplates(t *testing.T) {
 					},
 				},
 			},
-			getUserByIDTemplate: {
+			getUserTemplate: {
 				{
-					Name: "user",
-					Data: &getUserByIDQuery{
-						SQLTemplate: queryTemplate(),
-						UserTable:   dbHelper.Table("user"),
-						UserID:      42,
+					Name: "by_id",
+					Data: &getUserQuery{
+						SQLTemplate:      queryTemplate(),
+						UserTable:        dbHelper.Table("user"),
+						Identifier:       int64(42),
+						IdentifierColumn: userIDColumn,
 					},
 				},
-			},
-			getUserByLoginOrEmailTemplate: {
 				{
 					Name: "by_email",
-					Data: &getUserByIdentifierQuery{
+					Data: &getUserQuery{
 						SQLTemplate:      queryTemplate(),
 						UserTable:        dbHelper.Table("user"),
 						Identifier:       "alice@example.com",
@@ -58,7 +57,7 @@ func TestTemplates(t *testing.T) {
 				},
 				{
 					Name: "by_login",
-					Data: &getUserByIdentifierQuery{
+					Data: &getUserQuery{
 						SQLTemplate:      queryTemplate(),
 						UserTable:        dbHelper.Table("user"),
 						Identifier:       "alice",
