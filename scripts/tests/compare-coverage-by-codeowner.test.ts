@@ -196,31 +196,36 @@ describe('compare-coverage-by-codeowner', () => {
       expect(result.increasedFilesTop).toEqual([{ path: 'better.ts', totalIncrease: 15 }]);
       expect(result.increasedFilesTotal).toBe(1);
       expect(result.artifactUrl).toBe('https://example.test/report');
-      expect(result.runLocallyCommand).toBe('yarn test:coverage:by-codeowner @grafana/dataviz-squad');
     });
   });
 
   describe('renderTeamMarkdown', () => {
-    it('places the skip-label reminder right under a failure, ahead of the file-by-file details', () => {
-      const result = buildCoverageResult(coverage({ lines: 80 }), coverage({ lines: 70 }));
-      const markdown = renderTeamMarkdown(result);
+    // The skip-label reminder and the run-locally command are identical for every
+    // team, so they're written once by the coverage-summary job instead — this
+    // block should never repeat them.
+    it('never includes the skip-label reminder or a run-locally command, for any status', () => {
+      const fail = renderTeamMarkdown(buildCoverageResult(coverage({ lines: 80 }), coverage({ lines: 70 })));
+      const tolerated = renderTeamMarkdown(
+        buildCoverageResult(coverage({ branches: 64.58 }), coverage({ branches: 64.57 }))
+      );
+      const pass = renderTeamMarkdown(buildCoverageResult(coverage(), coverage()));
 
-      expect(markdown).toContain('### ❌ @grafana/dataviz-squad');
-      const headingIndex = markdown.indexOf('### ❌');
-      const skipLabelIndex = markdown.indexOf('no-check-frontend-test-coverage');
-      const runLocallyIndex = markdown.indexOf('Run locally');
-
-      expect(skipLabelIndex).toBeGreaterThan(headingIndex);
-      expect(skipLabelIndex).toBeLessThan(runLocallyIndex);
+      for (const markdown of [fail, tolerated, pass]) {
+        expect(markdown).not.toContain('no-check-frontend-test-coverage');
+        expect(markdown).not.toContain('Run locally');
+      }
     });
 
-    it('omits the skip-label reminder for a tolerated drop', () => {
-      const result = buildCoverageResult(coverage({ branches: 64.58 }), coverage({ branches: 64.57 }));
-      const markdown = renderTeamMarkdown(result);
+    it('mentions the tolerance for a tolerated drop but not for a failure or a clean pass', () => {
+      const tolerated = renderTeamMarkdown(
+        buildCoverageResult(coverage({ branches: 64.58 }), coverage({ branches: 64.57 }))
+      );
+      const fail = renderTeamMarkdown(buildCoverageResult(coverage({ lines: 80 }), coverage({ lines: 70 })));
+      const pass = renderTeamMarkdown(buildCoverageResult(coverage(), coverage()));
 
-      expect(markdown).toContain('### 🟡 @grafana/dataviz-squad');
-      expect(markdown).not.toContain('no-check-frontend-test-coverage');
-      expect(markdown).toContain('tolerated');
+      expect(tolerated).toContain('tolerated');
+      expect(fail).not.toContain('tolerated');
+      expect(pass).not.toContain('tolerated');
     });
 
     it('renders a full block for a passing team, not just a compact row', () => {
@@ -229,7 +234,6 @@ describe('compare-coverage-by-codeowner', () => {
 
       expect(markdown).toContain('### ✅ @grafana/dataviz-squad');
       expect(markdown).toContain('| Metric | Main | PR | Change | Status |');
-      expect(markdown).not.toContain('no-check-frontend-test-coverage');
     });
 
     it('includes the HTML report link and the file-by-file breakdown when files decreased', () => {
@@ -252,13 +256,6 @@ describe('compare-coverage-by-codeowner', () => {
       expect(markdown).toContain('📈 1 file(s) improved');
       expect(markdown).toContain('better.ts');
       expect(markdown).not.toContain('<details>');
-    });
-
-    it('ends with the run-locally command regardless of status', () => {
-      const result = buildCoverageResult(coverage(), coverage());
-      expect(
-        renderTeamMarkdown(result).trim().endsWith('yarn test:coverage:by-codeowner @grafana/dataviz-squad`')
-      ).toBe(true);
     });
   });
 });

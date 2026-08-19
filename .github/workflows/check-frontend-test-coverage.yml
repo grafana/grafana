@@ -238,6 +238,26 @@ jobs:
             echo "🚨 **Skip label:** remove the \`no-check-frontend-test-coverage\` label from this PR to re-enable coverage checks."
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # The skip-label reminder and the run-locally command are identical for every
+      # opted-in team, so they're written once here instead of repeated in each
+      # `coverage` matrix leg's own block. This job's name sorts alphabetically
+      # ahead of every "Coverage - @team" job on the run's Summary page, so this
+      # lands above all of them without needing any explicit ordering.
+      - name: Write shared coverage-check info
+        if: steps.check-skip.outputs.skipped == 'false'
+        env:
+          TEAMS: ${{ needs.setup.outputs.opted-in-teams }}
+        run: |
+          {
+            echo "# Frontend Test Coverage Summary"
+            echo
+            echo "🚨 **Skip label:** in an emergency, add the \`no-check-frontend-test-coverage\` label to this PR to bypass this check."
+            echo
+            echo "💻 **Run locally:**"
+            echo
+            echo "$TEAMS" | jq -r '.[] | "- `yarn test:coverage:by-codeowner " + . + "`"'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Verify all checks passed
         if: steps.check-skip.outputs.skipped == 'false'
         run: |

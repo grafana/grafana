@@ -277,7 +277,6 @@ function buildCoverageResult(mainCoverage, prCoverage, meta = {}) {
     artifactUrl: meta.artifactUrl || '',
     prSha: meta.prSha || '',
     repo: meta.repo || '',
-    runLocallyCommand: `yarn test:coverage:by-codeowner ${team}`,
   };
 }
 
@@ -342,11 +341,14 @@ function renderIncreaseNote(result) {
 }
 
 /**
- * Renders one codeowner's full job-summary block: status heading, metrics, the
- * skip-label reminder (placed right under a failure so it's never far from it),
- * the HTML report link, and the file-by-file breakdown. Each `coverage` matrix leg
- * writes its own block via this function — there's no separate fan-in step, so
- * every status (pass, tolerated, fail) needs to be fully self-contained here.
+ * Renders one codeowner's job-summary block: status heading, metrics, the HTML
+ * report link, and the file-by-file breakdown. Each `coverage` matrix leg writes
+ * its own block via this function — there's no separate fan-in step, so every
+ * status (pass, tolerated, fail) needs to be fully self-contained here.
+ *
+ * The skip-label reminder and the run-locally command are the same for every team,
+ * so they're written once by the coverage-summary job instead of repeated here —
+ * this block sticks to what's actually specific to this codeowner.
  * @param {Object} result - Structured coverage result
  * @returns {string} Markdown for this leg's $GITHUB_STEP_SUMMARY
  */
@@ -354,12 +356,7 @@ function renderTeamMarkdown(result) {
   const icon = { fail: '❌', tolerated: '🟡', pass: '✅' }[result.status];
   const lines = [`### ${icon} ${result.team}`, '', renderMetricsTable(result.metrics), ''];
 
-  if (result.status === 'fail') {
-    lines.push(
-      '🚨 **Skip label:** in an emergency, add the `no-check-frontend-test-coverage` label to this PR to bypass this check.',
-      ''
-    );
-  } else if (result.status === 'tolerated') {
+  if (result.status === 'tolerated') {
     lines.push(
       `_Drops of ${formatPercentage(DROP_TOLERANCE_PCT)} or less are tolerated and do not fail the check._`,
       ''
@@ -375,11 +372,10 @@ function renderTeamMarkdown(result) {
   }
 
   if (result.increasedFilesTotal > 0) {
-    lines.push(renderIncreaseNote(result), '');
+    lines.push(renderIncreaseNote(result));
   }
 
-  lines.push(`💻 Run locally: \`${result.runLocallyCommand}\``);
-  return lines.join('\n');
+  return lines.join('\n').trimEnd();
 }
 
 /**
