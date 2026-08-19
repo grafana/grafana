@@ -305,6 +305,9 @@ func (s *LegacyService) Update(ctx context.Context, cmd *user.UpdateUserCommand)
 		if err != nil {
 			return err
 		}
+		if hashed == usr.Password {
+			return user.ErrNewPasswordSameAsOld.Errorf("new password cannot be the same as the current password")
+		}
 		cmd.Password = &hashed
 	}
 
