@@ -548,7 +548,12 @@ export function TableFlat(props: TableNGProps) {
   }
 
   return (
-    <div {...containerProps}>
+    // Without the sidebar, `<TableDataGrid>` (`blockSize: 100%`) is TableFlat's own root and
+    // resolves its height directly against the real ancestor react-data-grid needs for its internal
+    // vertical scroll region. The splitter's container has no height of its own (`flexGrow: 1` needs
+    // a flex parent, which this one may not have) — without an explicit height here, that
+    // percentage chain breaks and the grid can't bound (or scroll) its rows vertically.
+    <div {...containerProps} style={{ height: '100%' }}>
       <div
         {...primaryProps}
         style={{
