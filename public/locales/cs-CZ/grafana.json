@@ -1176,7 +1176,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} selhalo se stavem {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1631,17 +1632,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Opravdu chcete zahájit import? Tato akce vytvoří nové zdroje v Upozorňování Grafana.",
         "confirm": "Spustit import",
@@ -1689,26 +1679,6 @@
       "info-description": "Tento průvodce vám pomůže importovat pravidla výstrah a zdroje oznámení z externích zdrojů do Upozorňování Grafana. Další informace najdete v <2>dokumentaci</2>.",
       "info-title": "Průvodce importem",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Zadejte a vyhledejte existující jmenný prostor",
         "label": "Jmenný prostor"
@@ -1732,10 +1702,6 @@
         "filter": "Filtr",
         "folder": "Cílová složka",
         "heading": "Zkontrolovat import",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Jmenný prostor",
         "nothing": "Nic k importování",
         "nothing-desc": "Oba kroky byly přeskočeny. Vraťte se a nakonfigurujte alespoň jeden zdroj importu.",
@@ -1762,22 +1728,6 @@
         "validation-warning": "Některé zdroje budou přejmenovány, aby se předešlo konfliktům.",
         "will-import-config": "Importuje tuto konfiguraci",
         "will-import-rules": "Importuje pravidla skupiny",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_few": "",
-        "merge-inhibition-rules_many": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_few": "",
-        "merge-receivers_many": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_few": "",
-        "merge-templates_many": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_few": "",
-        "merge-time-intervals_many": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Importuje {{count}} pravidlo",
         "will-import-rules-count_few": "Importuje {{count}} pravidla",
         "will-import-rules-count_many": "Importuje {{count}} pravidel",
@@ -1891,14 +1841,10 @@
         "cancel-confirm-title": "Zrušit import?",
         "cancel-confirm-yes": "Zahodit změny",
         "skip": "Přeskočit",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Zdroje oznámení",
         "step-notifications-desc": "Kontaktní body, zásady, šablony",
         "step-review": "Zkontrolovat a importovat",
         "step-review-desc": "Zobrazit náhled a potvrdit import",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Pravidla výstrah",
         "step-rules-desc": "Pravidla pro výstrahy a nahrávání"
       },
@@ -3332,8 +3278,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3350,9 +3300,62 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_few": "",
+          "merge-contact-points_many": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_few": "",
+          "merge-inhibition-rules_many": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_few": "",
+          "merge-templates_many": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_few": "",
+          "merge-time-intervals_many": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3363,6 +3366,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_few": "",
@@ -3658,6 +3663,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Jedinečný název časového intervalu",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Načítání časového intervalu",
       "title-no-matching-time-interval-found": "Nebyl nalezen žádný odpovídající časový interval"
     },
@@ -3908,6 +3914,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Nepodařilo se importovat zdroje",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Zdroje byly úspěšně importovány do Upozorňování Grafana."
     },
     "yaml-content-info": {
@@ -6129,6 +6137,7 @@
       "new-row-title": "Nový řádek",
       "row": {
         "collapse": "Sbalit řádek {{title}}",
+        "copy-link": "",
         "expand": "Rozbalit řádek {{title}}",
         "new": "Nový řádek",
         "repeat": {
@@ -9042,11 +9051,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -11924,6 +11936,7 @@
       "no-details": "Žádná pole k zobrazení.",
       "open-assistant": "",
       "pin-line": "Připnout protokol",
+      "prettify": "",
       "remove-displayed-field": "Odebrat pole",
       "remove-log": "Odebrat protokol",
       "scroll-to-logline": "Posunout na řádek protokolu",
@@ -12637,7 +12650,7 @@
     },
     "machine-learning": {
       "subtitle": "Prozkoumat funkce AI a strojového učení",
-      "title": "Umělá inteligence a strojové učení"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Spravujte nástěnky složek a oprávnění"
@@ -12964,6 +12977,29 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12971,6 +13007,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -13005,8 +13050,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14589,6 +14634,12 @@
     "shared": {
       "branch-description": "Větev, která bude použita pro zajištění",
       "branch-label": "Větev",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16363,6 +16414,9 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
     },
     "options": {
       "render-mode": ""

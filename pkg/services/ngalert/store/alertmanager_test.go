@@ -112,7 +112,7 @@ func TestIntegrationAlertmanagerStore(t *testing.T) {
 		cmd.FetchedConfigurationHash = fmt.Sprintf("%x", md5.Sum([]byte("my-config")))
 		err := store.UpdateAlertmanagerConfiguration(context.Background(), &cmd)
 
-		require.ErrorIs(t, err, ErrVersionLockedObjectNotFound)
+		require.ErrorIs(t, err, models.ErrVersionLockedObjectNotFound)
 	})
 
 	t.Run("UpdateAlertmanagerConfiguration doesn't update the db if the update is a no-op", func(t *testing.T) {
@@ -137,8 +137,7 @@ func TestIntegrationAlertmanagerStore(t *testing.T) {
 		cmd := buildSaveConfigCmd(t, configRaw, 1)
 		cmd.FetchedConfigurationHash = configHash
 		err := store.UpdateAlertmanagerConfiguration(context.Background(), &cmd)
-		require.Error(t, err)
-		require.EqualError(t, err, ErrVersionLockedObjectNotFound.Error())
+		require.ErrorIs(t, err, models.ErrVersionLockedObjectNotFound)
 	})
 }
 
@@ -183,8 +182,7 @@ func TestIntegrationAlertmanagerHash(t *testing.T) {
 			Default:                   false,
 			OrgID:                     1,
 		})
-		require.Error(t, err)
-		require.EqualError(t, ErrVersionLockedObjectNotFound, err.Error())
+		require.ErrorIs(t, err, models.ErrVersionLockedObjectNotFound)
 	})
 }
 
