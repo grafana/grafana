@@ -438,7 +438,7 @@ describe('Silence create/edit', () => {
   // comes from a folder can still follow a link to this page, and should be told rather than shown
   // a form that fails on save.
   it('shows a permission error for a silence that is not tied to an alert rule', async () => {
-    grantUserPermissions([AccessControlAction.AlertingInstanceRead]);
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingSilenceCreate]);
     setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
 
     renderSilences(baseUrlPath);
@@ -481,6 +481,26 @@ describe('Silence create/edit', () => {
     expect(await ui.ruleUnavailable.find()).toBeInTheDocument();
     expect(ui.noPermissionToEdit.query()).not.toBeInTheDocument();
     expect(ui.editor.durationField.query()).not.toBeInTheDocument();
+  });
+
+  // Sending someone to the rule detail pages only helps if they can silence a rule once they get
+  // there. Reaching this page on silence update permission alone does not give them that.
+  it('omits the rule-page suggestion for a user who cannot silence any rule', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingSilenceUpdate]);
+
+    renderSilences(baseUrlPath);
+
+    expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
+    expect(screen.queryByText(/silence individual alert rules/i)).not.toBeInTheDocument();
+  });
+
+  it('suggests the rule detail pages to a user who can silence rules in a folder', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingSilenceCreate]);
+
+    renderSilences(baseUrlPath);
+
+    expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
+    expect(screen.getByText(/silence individual alert rules/i)).toBeInTheDocument();
   });
 
   // The backend lets anyone holding the org-wide permission through before it resolves the rule's

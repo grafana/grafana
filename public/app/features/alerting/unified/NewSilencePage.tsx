@@ -9,11 +9,12 @@ import {
 } from 'app/features/alerting/unified/components/silences/utils';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
 import { SilencesEditor } from './components/silences/SilencesEditor';
-import { isLoading } from './hooks/abilities/abilityUtils';
+import { hasAnyPermission, isLoading } from './hooks/abilities/abilityUtils';
 import { useSilenceAbility } from './hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from './hooks/abilities/types';
 import { useAlertmanager } from './state/AlertmanagerContext';
@@ -71,6 +72,11 @@ const SilencesEditorComponent = () => {
       );
     }
 
+    // Pointing someone at the rule detail pages is only useful if they can silence a rule there:
+    // they need the folder-level permission somewhere, and those pages silence through the Grafana
+    // alertmanager.
+    const canSilenceSomeRule = isGrafanaAlertmanager && hasAnyPermission([AccessControlAction.AlertingSilenceCreate]);
+
     return (
       <Alert
         severity="error"
@@ -79,9 +85,11 @@ const SilencesEditorComponent = () => {
           'You do not have permission to create this silence'
         )}
       >
-        <Trans i18nKey="alerting.new-silence-page.body-permission-create-silence">
-          You can still silence individual alert rules from their detail pages.
-        </Trans>
+        {canSilenceSomeRule && (
+          <Trans i18nKey="alerting.new-silence-page.body-permission-create-silence">
+            You can still silence individual alert rules from their detail pages.
+          </Trans>
+        )}
       </Alert>
     );
   }
