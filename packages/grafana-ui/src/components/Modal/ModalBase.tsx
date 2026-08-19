@@ -107,7 +107,7 @@ export function ModalBase({
         getInsideElements={() => [getPortalContainer()]}
       >
         <CSSTransition
-          nodeRef={modalRef}
+          nodeRef={refs.floating}
           in={true}
           appear={true}
           timeout={theme.transitions.duration.shortest}
@@ -115,10 +115,7 @@ export function ModalBase({
         >
           <div
             className={cx(styles.modal, className)}
-            ref={(node) => {
-              modalRef.current = node;
-              refs.setFloating(node);
-            }}
+            ref={refs.setFloating}
             aria-label={ariaLabel}
             aria-labelledby={ariaLabelledBy}
             {...getFloatingProps()}
