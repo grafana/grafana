@@ -36,7 +36,7 @@ func TestGetWebAssets_ReadsGivenBuildDir(t *testing.T) {
 	license.On("ContentDeliveryPrefix").Return("grafana")
 	ctx := context.Background()
 
-	assets, err := fswebassets.GetWebAssets(ctx, cfg, license, "build-rspack")
+	assets, err := fswebassets.GetWebAssets(ctx, cfg, license, "build/rspack")
 	assert.NoError(t, err)
 
 	assert.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)

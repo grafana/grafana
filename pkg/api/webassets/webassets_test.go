@@ -18,10 +18,10 @@ func TestResolveBuildDir(t *testing.T) {
 		require.Equal(t, "build", ResolveBuildDir(context.Background()))
 	})
 
-	t.Run("resolves build-rspack when the rspack flag is on", func(t *testing.T) {
+	t.Run("resolves build/rspack when the rspack flag is on", func(t *testing.T) {
 		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
 
-		require.Equal(t, "build-rspack", ResolveBuildDir(context.Background()))
+		require.Equal(t, "build/rspack", ResolveBuildDir(context.Background()))
 	})
 }
 

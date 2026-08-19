@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	sourcemap "github.com/go-sourcemap/sourcemap"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,20 +51,14 @@ type SourceMapStore struct {
 	cfg           *setting.Cfg
 	readSourceMap ReadSourceMapFn
 	routeResolver plugins.StaticRouteResolver
-
-	// buildDir is the static root subdirectory core assets are served from. Every build
-	// serves under the public/build URL prefix, so the URL alone cannot tell us which
-	// directory holds the maps.
-	buildDir string
 }
 
-func NewSourceMapStore(cfg *setting.Cfg, routeResolver plugins.StaticRouteResolver, readSourceMap ReadSourceMapFn, buildDir string) *SourceMapStore {
+func NewSourceMapStore(cfg *setting.Cfg, routeResolver plugins.StaticRouteResolver, readSourceMap ReadSourceMapFn) *SourceMapStore {
 	return &SourceMapStore{
 		cache:         make(map[string]*sourceMap),
 		cfg:           cfg,
 		routeResolver: routeResolver,
 		readSourceMap: readSourceMap,
-		buildDir:      buildDir,
 	}
 }
 
@@ -81,11 +76,13 @@ func (store *SourceMapStore) guessSourceMapLocation(ctx context.Context, sourceU
 	// determine if source comes from grafana core, locally or CDN, look in public build dir on fs
 	if strings.HasPrefix(u.Path, "/public/build/") || (store.cfg.CDNRootURL != nil &&
 		strings.HasPrefix(sourceURL, store.cfg.CDNRootURL.String()) && strings.Contains(u.Path, "/public/build/")) {
+		// The remainder is already relative to the build directory, and carries the
+		// rspack/ segment for rspack assets, so this resolves for either bundler.
 		pathParts := strings.SplitN(u.Path, "/public/build/", 2)
 		if len(pathParts) == 2 {
 			return &sourceMapLocation{
 				dir:      store.cfg.StaticRootPath,
-				path:     filepath.Join(store.buildDir, pathParts[1]+".map"),
+				path:     filepath.Join(webassets.BuildDir, pathParts[1]+".map"),
 				pluginID: "",
 			}, nil
 		}

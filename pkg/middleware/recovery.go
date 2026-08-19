@@ -105,7 +105,7 @@ func function(pc uintptr) []byte {
 
 // Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
 // While Martini is in development mode, Recovery will also output the panic as HTML.
-func Recovery(cfg *setting.Cfg, license licensing.Licensing, buildDir string) web.Middleware {
+func Recovery(cfg *setting.Cfg, license licensing.Licensing) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			c := web.FromContext(req.Context())
@@ -138,7 +138,7 @@ func Recovery(cfg *setting.Cfg, license licensing.Licensing, buildDir string) we
 						return
 					}
 
-					assets, _ := webassets.GetWebAssets(req.Context(), buildDir, cfg, license)
+					assets, _ := webassets.GetWebAssets(req.Context(), webassets.ResolveBuildDir(req.Context()), cfg, license)
 					if assets == nil {
 						assets = &dtos.EntryPointAssets{JSFiles: []dtos.EntryPointAsset{}}
 					}

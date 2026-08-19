@@ -14,7 +14,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
@@ -65,10 +64,6 @@ type frontendService struct {
 	settingsService      settingservice.Service // nil if not configured
 	pluginsCDN           *pluginscdn.Service
 
-	// buildDir is the static root subdirectory the frontend assets are read from,
-	// resolved once at startup because the rspack rollout is per instance.
-	buildDir string
-
 	// baggageEvalContextKeys are the W3C baggage member keys copied into the
 	// per-request OpenFeature evaluation context.
 	baggageEvalContextKeys []string
@@ -78,9 +73,8 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 	logger := log.New("frontend-service")
 
 	previewCfg := fswebassets.ReadPreviewAssetsConfig(cfg)
-	buildDir := webassets.ResolveBuildDir(context.Background())
 
-	index, err := NewIndexProvider(cfg, license, hooksService, previewCfg, buildDir)
+	index, err := NewIndexProvider(cfg, license, hooksService, previewCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +106,6 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		previewAssetsHandler: newPreviewAssetsHandler(cfg, previewCfg),
 		settingsService:      settingsService,
 		pluginsCDN:           pluginsCDN,
-		buildDir:             buildDir,
 
 		baggageEvalContextKeys: readBaggageEvalContextKeys(cfg),
 	}
@@ -188,7 +181,7 @@ func (s *frontendService) addMiddlewares(m *web.Mux) {
 
 	m.UseMiddleware(CSPMiddleware())
 
-	m.UseMiddleware(middleware.Recovery(s.cfg, s.license, s.buildDir))
+	m.UseMiddleware(middleware.Recovery(s.cfg, s.license))
 }
 
 func (s *frontendService) registerRoutes(m *web.Mux) {

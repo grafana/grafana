@@ -82,7 +82,7 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 
 	// Assets
 	hash.Reset()
-	dto, err := webassets.GetWebAssets(c.Req.Context(), hs.buildDir, hs.Cfg, hs.License)
+	dto, err := webassets.GetWebAssets(c.Req.Context(), webassets.ResolveBuildDir(c.Req.Context()), hs.Cfg, hs.License)
 	if err == nil && dto != nil {
 		_, _ = hash.Write([]byte(dto.ContentDeliveryURL))
 		_, _ = hash.Write([]byte(dto.Dark))

@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -143,7 +142,6 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 
 		dsGuardian:              guardian.ProvideGuardian(),
 		publicDashboardsService: &publicdashboards.FakePublicDashboardService{},
-		buildDir:                webassets.ResolveBuildDir(context.Background()),
 	}
 
 	m := web.New()

@@ -24,7 +24,7 @@ func setupTestWebAssets(tb testing.TB) string {
 	publicDir := tb.TempDir()
 	tb.Cleanup(func() { _ = os.RemoveAll(publicDir) })
 
-	writeTestWebAssets(tb, publicDir, "build", "")
+	writeTestWebAssets(tb, publicDir, "build")
 
 	return publicDir
 }
@@ -35,16 +35,15 @@ func setupTestWebAssetsWithRspack(tb testing.TB) string {
 	tb.Helper()
 
 	publicDir := setupTestWebAssets(tb)
-	writeTestWebAssets(tb, publicDir, "build-rspack", ".rspack")
+	writeTestWebAssets(tb, publicDir, "build/rspack")
 
 	return publicDir
 }
 
 // writeTestWebAssets writes a test assets manifest and boot script under the given build
-// directory. Every build publishes its assets under the public/build URL prefix, so
-// assetSuffix marks the file names instead, making the directory a manifest was read
-// from visible in the rendered page.
-func writeTestWebAssets(tb testing.TB, publicDir string, dir string, assetSuffix string) {
+// directory. On-disk path and URL prefix agree, so the asset URLs in the rendered page
+// show which manifest was read.
+func writeTestWebAssets(tb testing.TB, publicDir string, dir string) {
 	tb.Helper()
 
 	// Create build directory
@@ -53,43 +52,45 @@ func writeTestWebAssets(tb testing.TB, publicDir string, dir string, assetSuffix
 	require.NoError(tb, err)
 
 	// Create test assets manifest
+	urlPrefix := "public/" + dir
+
 	manifest := fmt.Sprintf(`{
 		"entrypoints": {
 			"app": {
 				"assets": {
 					"js": [
-						"public/build/runtime%[1]s.js",
-						"public/build/app%[1]s.js"
+						"%[1]s/runtime.js",
+						"%[1]s/app.js"
 					],
-					"css": ["public/build/grafana.app%[1]s.css"]
+					"css": ["%[1]s/grafana.app.css"]
 				}
 			},
 			"swagger": {
 				"assets": {
-					"js": ["public/build/runtime%[1]s.js", "public/build/swagger%[1]s.js"],
-					"css": ["public/build/grafana.swagger%[1]s.css"]
+					"js": ["%[1]s/runtime.js", "%[1]s/swagger.js"],
+					"css": ["%[1]s/grafana.swagger.css"]
 				}
 			},
 			"dark": {
 				"assets": {
-					"css": ["public/build/grafana.dark%[1]s.css"]
+					"css": ["%[1]s/grafana.dark.css"]
 				}
 			},
 			"light": {
 				"assets": {
-					"css": ["public/build/grafana.light%[1]s.css"]
+					"css": ["%[1]s/grafana.light.css"]
 				}
 			}
 		},
 		"runtime.js": {
-			"src": "public/build/runtime%[1]s.js",
+			"src": "%[1]s/runtime.js",
 			"integrity": "sha256-test123"
 		},
 		"app.js": {
-			"src": "public/build/app%[1]s.js",
+			"src": "%[1]s/app.js",
 			"integrity": "sha256-test456"
 		}
-	}`, assetSuffix)
+	}`, urlPrefix)
 
 	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(manifest), 0644)
 	require.NoError(tb, err)
@@ -222,7 +223,6 @@ func TestFrontendService_WebAssets(t *testing.T) {
 			Env:            setting.Dev, // needs to be dev to bypass the cache
 		}
 		service := createTestService(t, cfg)
-		assert.Equal(t, "build-rspack", service.buildDir)
 
 		mux := web.New()
 		service.addMiddlewares(mux)
@@ -235,15 +235,17 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		assert.Equal(t, 200, recorder.Code)
 
-		// The assets come from the rspack manifest, still under the public/build prefix
+		// The assets come from the rspack manifest, nested under the public/build prefix
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/runtime.rspack.js\" type=\"text/javascript\"")
-		assert.Contains(t, body, "src=\"public/build/app.rspack.js\" type=\"text/javascript\"")
+		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\" type=\"text/javascript\"")
+		assert.Contains(t, body, "src=\"public/build/rspack/app.js\" type=\"text/javascript\"")
 		assert.NotContains(t, body, "src=\"public/build/runtime.js\"")
-		assert.Contains(t, body, "// test boot stub for build-rspack")
+		assert.Contains(t, body, "// test boot stub for build/rspack")
 	})
 
-	t.Run("should refuse to start when the rspack flag is on but the build is missing", func(t *testing.T) {
+	// A webpack-only deployment must still start; the rspack build is optional until it
+	// ships. Turning the flag on without it fails the request instead, loudly.
+	t.Run("should start without an rspack build and fail the request when the flag is on", func(t *testing.T) {
 		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
 
 		publicDir := setupTestWebAssets(t) // webpack assets only
@@ -254,9 +256,16 @@ func TestFrontendService_WebAssets(t *testing.T) {
 			Env:            setting.Dev,
 		}
 
-		_, err := newTestService(cfg)
-		require.ErrorContains(t, err, "read boot.js")
-		require.ErrorContains(t, err, "build-rspack")
-		require.ErrorIs(t, err, os.ErrNotExist)
+		service, err := newTestService(cfg)
+		require.NoError(t, err)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, httptest.NewRequest("GET", "/", nil))
+
+		assert.Equal(t, http.StatusInternalServerError, recorder.Code)
 	})
 }

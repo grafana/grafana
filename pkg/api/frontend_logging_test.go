@@ -87,7 +87,7 @@ func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event fro
 			},
 		}
 
-		sourceMapStore := frontendlogging.NewSourceMapStore(cfg, &pm, readSourceMap, webassets.WebpackBuildDir)
+		sourceMapStore := frontendlogging.NewSourceMapStore(cfg, &pm, readSourceMap)
 
 		loggingHandler := GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)
 
@@ -295,12 +295,28 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 	})
 }
 
-// Core assets are served under public/build whichever bundler produced them, so the
-// source URL cannot say which directory holds the maps. The store has to use the build
-// directory the server resolved at startup.
-func TestSourceMapStore_ReadsFromResolvedBuildDir(t *testing.T) {
-	for _, buildDir := range []string{webassets.WebpackBuildDir, webassets.RspackBuildDir} {
-		t.Run(buildDir, func(t *testing.T) {
+// Both bundlers write inside public/build, so the source URL already carries the path
+// relative to it. The store resolves either one without consulting the rspack flag.
+func TestSourceMapStore_ResolvesEitherBundlerFromURL(t *testing.T) {
+	tests := []struct {
+		desc        string
+		sourceURL   string
+		expectedMap string
+	}{
+		{
+			desc:        "webpack asset",
+			sourceURL:   "http://localhost:3000/public/build/foo.js",
+			expectedMap: filepath.Join(webassets.WebpackBuildDir, "foo.js.map"),
+		},
+		{
+			desc:        "rspack asset",
+			sourceURL:   "http://localhost:3000/public/build/rspack/foo.js",
+			expectedMap: filepath.Join(webassets.RspackBuildDir, "foo.js.map"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
 			var reads []SourceMapReadRecord
 			readSourceMap := func(dir string, path string) ([]byte, error) {
 				reads = append(reads, SourceMapReadRecord{dir: dir, path: path})
@@ -311,13 +327,12 @@ func TestSourceMapStore_ReadsFromResolvedBuildDir(t *testing.T) {
 				&setting.Cfg{StaticRootPath: "/staticroot"},
 				&fakePluginStaticRouteResolver{},
 				readSourceMap,
-				buildDir,
 			)
 
 			frontendlogging.TransformException(context.Background(), &frontendlogging.Exception{
 				Stacktrace: &frontendlogging.Stacktrace{
 					Frames: []frontendlogging.Frame{{
-						Filename: "http://localhost:3000/public/build/foo.js",
+						Filename: tt.sourceURL,
 						Lineno:   20,
 						Colno:    30,
 					}},
@@ -326,7 +341,7 @@ func TestSourceMapStore_ReadsFromResolvedBuildDir(t *testing.T) {
 
 			require.Len(t, reads, 1)
 			assert.Equal(t, "/staticroot", reads[0].dir)
-			assert.Equal(t, filepath.Join(buildDir, "foo.js.map"), reads[0].path)
+			assert.Equal(t, tt.expectedMap, reads[0].path)
 		})
 	}
 }

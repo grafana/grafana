@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -397,56 +396,60 @@ func TestHTTPServer_getListeners(t *testing.T) {
 	})
 }
 
-// The rspack flag picks the on-disk build directory; the URL prefix, and with it the
-// immutable cache header, stay the same.
+// One static route serves both bundlers: webpack writes to build/, rspack to
+// build/rspack/. The rspack flag picks a manifest, so routing must not depend on it.
 func TestHTTPServer_mapStaticBuildDir(t *testing.T) {
 	staticRoot := t.TempDir()
-	for dir, body := range map[string]string{"build": "webpack", "build-rspack": "rspack"} {
+	for dir, body := range map[string]string{
+		webassets.WebpackBuildDir: "webpack",
+		webassets.RspackBuildDir:  "rspack",
+	} {
 		require.NoError(t, os.MkdirAll(filepath.Join(staticRoot, dir), 0o750))
 		require.NoError(t, os.WriteFile(filepath.Join(staticRoot, dir, "app.js"), []byte(body), 0o644))
 	}
 
-	tests := []struct {
-		desc             string
-		enabledFlags     []string
-		expectedBuildDir string
-		expectedBody     string
+	assets := []struct {
+		desc         string
+		url          string
+		expectedBody string
 	}{
-		{
-			desc:             "flag off serves the webpack build",
-			expectedBuildDir: "build",
-			expectedBody:     "webpack",
-		},
-		{
-			desc:             "flag on serves the rspack build",
-			enabledFlags:     []string{featuremgmt.FlagGrafanaRspackBuild},
-			expectedBuildDir: "build-rspack",
-			expectedBody:     "rspack",
-		},
+		{desc: "webpack assets", url: "/public/build/app.js", expectedBody: "webpack"},
+		{desc: "rspack assets", url: "/public/build/rspack/app.js", expectedBody: "rspack"},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			if len(tt.enabledFlags) > 0 {
-				featuremgmt.WithEnabledFlags(t, tt.enabledFlags...)
+	flagStates := []struct {
+		desc         string
+		enabledFlags []string
+	}{
+		{desc: "flag off"},
+		{desc: "flag on", enabledFlags: []string{featuremgmt.FlagGrafanaRspackBuild}},
+	}
+
+	for _, flagState := range flagStates {
+		t.Run(flagState.desc, func(t *testing.T) {
+			if len(flagState.enabledFlags) > 0 {
+				featuremgmt.WithEnabledFlags(t, flagState.enabledFlags...)
 			}
 
 			cfg := setting.NewCfg()
 			cfg.Env = setting.Prod
 			cfg.StaticRootPath = staticRoot
 
-			hs := &HTTPServer{Cfg: cfg, buildDir: webassets.ResolveBuildDir(context.Background())}
-			require.Equal(t, tt.expectedBuildDir, hs.buildDir)
+			hs := &HTTPServer{Cfg: cfg}
 
 			m := web.New()
-			hs.mapStatic(m, cfg.StaticRootPath, hs.buildDir, "public/build")
+			hs.mapStatic(m, cfg.StaticRootPath, webassets.BuildDir, "public/build")
 
-			recorder := httptest.NewRecorder()
-			m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/public/build/app.js", nil))
+			for _, asset := range assets {
+				t.Run(asset.desc, func(t *testing.T) {
+					recorder := httptest.NewRecorder()
+					m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, asset.url, nil))
 
-			require.Equal(t, http.StatusOK, recorder.Code)
-			require.Equal(t, tt.expectedBody, recorder.Body.String())
-			require.Equal(t, "public, max-age=31536000", recorder.Header().Get("Cache-Control"))
+					require.Equal(t, http.StatusOK, recorder.Code)
+					require.Equal(t, asset.expectedBody, recorder.Body.String())
+					require.Equal(t, "public, max-age=31536000", recorder.Header().Get("Cache-Control"))
+				})
+			}
 		})
 	}
 }

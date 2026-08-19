@@ -111,7 +111,7 @@ func (hs *HTTPServer) frontendLogEndpoints() web.Handler {
 		}
 	}
 
-	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS, hs.buildDir)
+	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)
 	rateLimiter := rate.NewLimiter(rate.Limit(hs.Cfg.GrafanaJavascriptAgent.EndpointRPS), hs.Cfg.GrafanaJavascriptAgent.EndpointBurst)
 	handler := GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)
 
