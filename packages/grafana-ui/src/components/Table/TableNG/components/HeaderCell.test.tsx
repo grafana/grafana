@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type Field, FieldType } from '@grafana/data';
+import { createTheme, type Field, FieldType } from '@grafana/data';
 import { type Column } from '@grafana/react-data-grid';
 
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
@@ -73,6 +73,34 @@ describe('HeaderCell', () => {
     render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { sortable: false } } })} />);
     const label = screen.getByRole('button', { name: 'Field1' });
     expect(window.getComputedStyle(label).cursor).toBe('default');
+  });
+
+  it('gives the header label the body text colour under table.refresh', () => {
+    const theme = createTheme();
+    const { unmount } = render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color).toBe(
+      theme.colors.text.primary
+    );
+
+    unmount();
+
+    // the classic header sits on the same background as the body rows, so its label stays de-emphasised
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color).toBe(
+      theme.colors.text.secondary
+    );
+  });
+
+  it('collapses the reorder drag handle until the header cell is hovered', () => {
+    const { container } = render(
+      <HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled enableColumnReorder />
+    );
+    const handle = container.querySelector('button[aria-hidden="true"]')!;
+    const styles = window.getComputedStyle(handle);
+    // collapsed rather than unmounted, so the label's shift can be animated in and out
+    expect(styles.width).toBe('0px');
+    expect(styles.opacity).toBe('0');
+    expect(handle.querySelector('svg')).toBeInTheDocument();
   });
 
   it('renders nothing when hideHeader is set', () => {

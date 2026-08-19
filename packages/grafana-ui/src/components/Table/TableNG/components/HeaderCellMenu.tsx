@@ -34,8 +34,8 @@ interface HeaderCellMenuProps {
 }
 
 /**
- * The `table.refresh` per-column "..." menu. Hidden until the header cell is hovered or something
- * inside it takes focus.
+ * The `table.refresh` per-column "..." menu. Hidden until the header cell is hovered, the button
+ * itself takes keyboard focus, or its own menu is open.
  *
  * Built on Dropdown + Menu so it matches the dashboard panel menu. The filter popup itself is owned
  * by `HeaderCell`, which also opens it from the persistent filter icon.
@@ -155,12 +155,17 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
   // space unconditionally (see HEADER_MENU_SPACE) because it never leaves the flow. An active filter
   // is reported by a persistent icon in HeaderCell rather than by pinning this button visible.
   //
+  // Deliberately keyed on the button's own `:focus-visible` rather than the header cell's
+  // `:focus-within`: react-data-grid moves DOM focus into the header cell whenever it's the grid's
+  // active cell, so `:focus-within` revealed the menu on plain cell navigation, with no pointer or
+  // keyboard intent behind it. `aria-expanded` (set by Dropdown) keeps it visible while its own menu
+  // is open, which would otherwise vanish the moment the pointer left the cell.
+  //
   // Scoped to `.table-ng-header-cell`, HeaderCell's own per-column root, rather than the bare
   // `.rdg-cell` react-data-grid puts on every header cell: in a nested table, a column's header
-  // cell is also a descendant of the *outer* grid's nested-frame `.rdg-cell`, and `:hover`/
-  // `:focus-within` bubble up to that ancestor too. Matching on bare `.rdg-cell` would then reveal
-  // every column's menu in the nested table at once, since they're all descendants of that same
-  // outer cell.
+  // cell is also a descendant of the *outer* grid's nested-frame `.rdg-cell`, and `:hover` bubbles
+  // up to that ancestor too. Matching on bare `.rdg-cell` would then reveal every column's menu in
+  // the nested table at once, since they're all descendants of that same outer cell.
   button: css({
     label: 'headerColumnMenuButton',
     color: theme.colors.text.secondary,
@@ -168,7 +173,7 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity', { duration: theme.transitions.duration.shorter }),
     },
-    '.table-ng-header-cell:hover &, .table-ng-header-cell:focus-within &, &:focus-visible': {
+    '.table-ng-header-cell:hover &, &:focus-visible, &[aria-expanded="true"]': {
       opacity: 1,
     },
   }),

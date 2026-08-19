@@ -16,6 +16,7 @@ import { Popover } from '../../../Tooltip/Popover';
 import { Filter } from '../Filter/Filter';
 import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
+import { HEADER_DRAG_HANDLE_WIDTH } from '../constants';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 import { getDisplayName, isColumnMenuVisible } from '../utils';
 
@@ -160,7 +161,11 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       {showTypeIcons && (
         <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
       )}
-      <button tabIndex={0} className={styles.headerCellLabel} title={displayName}>
+      <button
+        tabIndex={0}
+        className={clsx(styles.headerCellLabel, tableRefreshEnabled && styles.headerCellLabelPrimary)}
+        title={displayName}
+      >
         {displayName}
         {direction && (
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
@@ -288,6 +293,10 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
     // gesture to be unambiguous.
     userSelect: 'none',
   }),
+  // Collapsed to nothing rather than unmounted when the cell isn't hovered, so the label's shift can
+  // be animated in and out: `width` is what the label reacts to, and the negative inline-end margin
+  // cancels the root's flex gap so a collapsed handle occupies no space at all. Stays the muted
+  // secondary colour — it's an affordance, not part of the column's label.
   headerCellDragHandle: css({
     label: 'headerCellDragHandle',
     display: 'flex',
@@ -298,6 +307,25 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
     padding: 0,
     color: theme.colors.text.secondary,
     cursor: 'grab',
+    width: 0,
+    opacity: 0,
+    overflow: 'hidden',
+    marginInlineEnd: theme.spacing(-0.5),
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['width', 'opacity', 'margin-inline-end'], {
+        duration: theme.transitions.duration.shorter,
+      }),
+    },
+    // Hover only, and scoped to `.table-ng-header-cell` rather than the bare `.rdg-cell`, for the
+    // same two reasons HeaderCellMenu's button is: `:focus-within` would also match react-data-grid
+    // moving focus into the header cell when it becomes the grid's active cell, and in a nested
+    // table every column's header cell is a descendant of the outer grid's nested-frame cell, so
+    // `:hover` there would reveal all of them at once.
+    '.table-ng-header-cell:hover &': {
+      width: HEADER_DRAG_HANDLE_WIDTH,
+      opacity: 1,
+      marginInlineEnd: 0,
+    },
   }),
   headerCellLabelGroup: css({
     label: 'headerCellLabelGroup',
@@ -328,8 +356,14 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
     },
     '&::selection': {
       backgroundColor: 'var(--rdg-background-color)',
-      color: theme.colors.text.secondary,
+      color: 'inherit',
     },
+  }),
+  // `table.refresh` gives the header its own background, so the label no longer needs to be
+  // de-emphasised against the body rows to read as a header — it takes the body text colour.
+  headerCellLabelPrimary: css({
+    label: 'headerCellLabelPrimary',
+    color: theme.colors.text.primary,
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,
