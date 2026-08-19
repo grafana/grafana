@@ -18,6 +18,7 @@ const DASH_LINE_STYLE = { fill: 'dash', dash: [1, 5, 4, 5] };
 interface ValueFieldOpts {
   displayName: string;
   dashed?: boolean;
+  value?: number;
 }
 
 // Builds an aligned series frame like the one the panel hands to the tooltip: the compare series' time
@@ -26,10 +27,10 @@ function makeSeries(...valueFields: ValueFieldOpts[]): DataFrame {
   const frame = createDataFrame({
     fields: [
       { name: 'time', type: FieldType.time, values: [ALIGNED_TIME] },
-      ...valueFields.map(({ dashed }, i) => ({
+      ...valueFields.map(({ dashed, value = 10 }, i) => ({
         name: `value${i}`,
         type: FieldType.number,
-        values: [10],
+        values: [value],
         config: {
           color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' },
           custom: dashed ? { lineStyle: DASH_LINE_STYLE } : {},
@@ -116,5 +117,98 @@ describe('TimeSeriesTooltip time comparison (#126189)', () => {
 
     expect(screen.getByText('CPU')).toBeInTheDocument();
     expect(screen.getByText('CPU (comparison)')).toBeInTheDocument();
+  });
+});
+
+describe('TimeSeriesTooltip comparison pairing', () => {
+  // aligned field indices: 0 is the x field, 1 the current series, 2 its compare counterpart
+  const CURRENT_IDX = 1;
+  const COMPARE_IDX = 2;
+  const PAIRS = new Map([
+    [CURRENT_IDX, COMPARE_IDX],
+    [COMPARE_IDX, CURRENT_IDX],
+  ]);
+
+  function renderPair({
+    seriesIdx,
+    mode = TooltipDisplayMode.Single,
+    pairs = PAIRS,
+  }: {
+    seriesIdx: number | null;
+    mode?: TooltipDisplayMode;
+    pairs?: Map<number, number>;
+  }) {
+    render(
+      <TimeSeriesTooltip
+        series={makeSeries(
+          { displayName: 'CPU', value: 20 },
+          { displayName: 'CPU (comparison)', dashed: true, value: 25 }
+        )}
+        dataIdxs={[0, 0, 0]}
+        seriesIdx={seriesIdx}
+        mode={mode}
+        sortOrder={SortOrder.None}
+        isPinned={false}
+        dataLinks={[]}
+        compareDiffMs={[0, 0, -ONE_DAY_MS]}
+        comparisonPairingPairs={pairs}
+      />
+    );
+  }
+
+  it('shows the paired compare entry in single mode', () => {
+    // Single mode normally renders only the hovered series; a pair coerces it to Multi
+    // so the counterpart can be shown alongside.
+    renderPair({ seriesIdx: CURRENT_IDX });
+
+    expect(screen.getByText('CPU')).toBeInTheDocument();
+    expect(screen.getByText('CPU (comparison)')).toBeInTheDocument();
+  });
+
+  it('annotates the compare entry with the delta from the hovered series', () => {
+    renderPair({ seriesIdx: CURRENT_IDX });
+
+    expect(screen.getByText('25 (+5)')).toBeInTheDocument();
+  });
+
+  it('shows the paired current entry when hovering the comparison series', () => {
+    renderPair({ seriesIdx: COMPARE_IDX });
+
+    expect(screen.getByText('CPU')).toBeInTheDocument();
+    expect(screen.getByText('CPU (comparison)')).toBeInTheDocument();
+    // hovering compare (25) puts the delta on the current row: 20 - 25
+    expect(screen.getByText('20 (-5)')).toBeInTheDocument();
+  });
+
+  it('falls back to single-series behavior when the hovered series has no counterpart', () => {
+    renderPair({ seriesIdx: CURRENT_IDX, pairs: new Map() });
+
+    expect(screen.getByText('CPU')).toBeInTheDocument();
+    expect(screen.queryByText('CPU (comparison)')).not.toBeInTheDocument();
+  });
+
+  it('narrows multi mode down to just the hovered series and its counterpart', () => {
+    render(
+      <TimeSeriesTooltip
+        series={makeSeries(
+          { displayName: 'CPU', value: 20 },
+          { displayName: 'CPU (comparison)', dashed: true, value: 25 },
+          { displayName: 'Memory', value: 99 }
+        )}
+        dataIdxs={[0, 0, 0, 0]}
+        seriesIdx={CURRENT_IDX}
+        mode={TooltipDisplayMode.Multi}
+        sortOrder={SortOrder.None}
+        isPinned={false}
+        dataLinks={[]}
+        compareDiffMs={[0, 0, -ONE_DAY_MS, 0]}
+        comparisonPairingPairs={PAIRS}
+      />
+    );
+
+    expect(screen.getByText('CPU')).toBeInTheDocument();
+    expect(screen.getByText('CPU (comparison)')).toBeInTheDocument();
+    // an unrelated series is filtered out so the pair reads as one comparison
+    expect(screen.queryByText('Memory')).not.toBeInTheDocument();
   });
 });
