@@ -1060,8 +1060,8 @@
             "description": "Panel IDs that should be included or excluded",
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int64",
+              "type": "number",
+              "format": "double",
               "default": 0
             }
           }
@@ -1191,6 +1191,9 @@
               }
             ]
           },
+          "fitContent": {
+            "type": "boolean"
+          },
           "repeat": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridRepeatOptions"
           }
@@ -1247,6 +1250,9 @@
           "fillScreen": {
             "type": "boolean"
           },
+          "fitContent": {
+            "type": "boolean"
+          },
           "items": {
             "type": "array",
             "items": {
@@ -1258,9 +1264,26 @@
               ]
             }
           },
+          "matchRowHeights": {
+            "type": "boolean"
+          },
           "maxColumnCount": {
             "type": "number",
             "format": "double"
+          },
+          "maxHeight": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxHeightMode": {
+            "type": "string"
+          },
+          "minHeight": {
+            "type": "number",
+            "format": "double"
+          },
+          "minHeightMode": {
+            "type": "string"
           },
           "rowHeight": {
             "type": "number",
@@ -2006,6 +2029,10 @@
         "properties": {
           "fixedColor": {
             "description": "The fixed color value for fixed or shades color modes.",
+            "type": "string"
+          },
+          "gradientColorTo": {
+            "description": "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
             "type": "string"
           },
           "mode": {
@@ -2785,7 +2812,6 @@
         "required": [
           "id",
           "title",
-          "description",
           "links",
           "data",
           "vizConfig"
@@ -2800,8 +2826,8 @@
             ]
           },
           "description": {
-            "type": "string",
-            "default": ""
+            "description": "Shown in a info icon tooltip next to panel title",
+            "type": "string"
           },
           "id": {
             "type": "number",
@@ -2818,6 +2844,10 @@
                 }
               ]
             }
+          },
+          "subtitle": {
+            "description": "Shown in a sub header below the title.",
+            "type": "string"
           },
           "title": {
             "type": "string",
@@ -2938,6 +2968,9 @@
             "type": "string"
           },
           "timeShift": {
+            "type": "string"
+          },
+          "timeTo": {
             "type": "string"
           }
         }
@@ -3720,6 +3753,10 @@
             "description": "Value null means -Infinity",
             "type": "number",
             "format": "double"
+          },
+          "valueExpr": {
+            "description": "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+            "type": "string"
           }
         }
       },

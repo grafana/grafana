@@ -16,66 +16,92 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func MetricCollector(tracer tracing.Tracer, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), unified resource.ResourceClient) usagestats.MetricsFunc {
-	return func(ctx context.Context) (metrics map[string]any, err error) {
+// NamespaceLister returns the set of namespaces to collect provisioning usage
+// stats for. In a single-tenant deployment this is one namespace per org.
+type NamespaceLister func(ctx context.Context) ([]string, error)
+
+func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), unified resource.ResourceClient) usagestats.MetricsFunc {
+	return func(ctx context.Context) (m map[string]any, err error) {
 		ctx, span := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats")
 		defer func() {
-			span.SetStatus(codes.Error, fmt.Sprintf("failed to fetch provisioning usage stats: %v", err))
+			if err != nil {
+				span.SetStatus(codes.Error, fmt.Sprintf("failed to fetch provisioning usage stats: %v", err))
+			} else {
+				span.SetStatus(codes.Ok, "")
+			}
 			span.End()
 		}()
 
-		m := map[string]any{}
+		m = map[string]any{}
 		if unified == nil {
-			// FIXME: does this case make any sense? no unified storage -> no game
+			// No unified storage means there is nothing to count.
 			span.SetStatus(codes.Ok, "unified storage is not available")
 			return m, nil
 		}
 
-		// FIXME: hardcoded to "default" for now -- it works for single tenant deployments
-		// we could discover the set of valid namespaces, but that would count everything for
-		// each instance in cloud.
-		ns := "default"
-		ctx, _, err = identity.WithProvisioningIdentity(ctx, ns)
-		if err != nil {
-			return nil, err
-		}
-		ctx = request.WithNamespace(ctx, ns)
-
-		// FIXME: hardcoded to "default" for now -- it works for single tenant deployments
-		// we could discover the set of valid namespaces, but that would count everything for
-		// each instance in cloud.
-		//
-		// We could get namespaces from the list of repos below, but that could be zero
-		// while we still have resources managed by terraform, etc
-		count, err := unified.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
-			Namespace: ns,
-		})
-		if err != nil {
-			return m, fmt.Errorf("count managed objects: %w", err)
-		}
-		counts := make(map[string]int, 10)
-		for _, v := range count.Items {
-			counts[v.Kind] = counts[v.Kind] + int(v.Count)
+		// Resolve the namespaces to collect for (one per org). When no lister is
+		// wired -- the multi-tenant standalone path -- fall back to the default
+		// namespace, which preserves single-tenant behaviour.
+		nss := []string{"default"}
+		if namespaces != nil {
+			nss, err = namespaces(ctx)
+			if err != nil {
+				return m, fmt.Errorf("list namespaces: %w", err)
+			}
 		}
 
-		span.SetAttributes(attribute.Int("totalManagedObjectsCount", len(count.Items)))
-		for k, v := range counts {
+		// Counts are aggregated across all namespaces into the same stat keys.
+		managedCounts := make(map[string]int)
+		repoCounts := make(map[string]int)
+		for _, ns := range nss {
+			nsSpanCtx, nsSpan := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats.countManagedObjects")
+
+			var nsCtx context.Context
+			nsCtx, _, err = identity.WithProvisioningIdentity(nsSpanCtx, ns)
+			if err != nil {
+				nsSpan.RecordError(err)
+				nsSpan.SetStatus(codes.Error, fmt.Sprintf("failed to create provisioning identity: %v", err))
+				return m, fmt.Errorf("create provisioning identity: %w", err)
+			}
+
+			nsCtx = request.WithNamespace(nsCtx, ns)
+			var count *resourcepb.CountManagedObjectsResponse
+			count, err = unified.CountManagedObjects(nsCtx, &resourcepb.CountManagedObjectsRequest{
+				Namespace: ns,
+			})
+			if err != nil {
+				nsSpan.RecordError(err)
+				nsSpan.SetStatus(codes.Error, fmt.Sprintf("failed to count managed objects on namespace %s: %v", ns, err))
+				return m, fmt.Errorf("count managed objects on namespace %s: %w", ns, err)
+			}
+			for _, v := range count.Items {
+				managedCounts[v.Kind] += int(v.Count)
+			}
+			nsSpan.SetAttributes(attribute.Int("totalManagedObjectsCount", len(count.Items)))
+
+			var repos []provisioning.Repository
+			repos, err = repositoryLister(nsCtx)
+			if err != nil {
+				nsSpan.RecordError(err)
+				nsSpan.SetStatus(codes.Error, fmt.Sprintf("failed to list repositories on namespace %s: %v", ns, err))
+				return m, fmt.Errorf("list repositories on namespace %s: %w", ns, err)
+			}
+
+			for _, repo := range repos {
+				repoCounts[string(repo.Spec.Type)]++
+			}
+
+			nsSpan.SetAttributes(attribute.Int("totalRepositoriesCount", len(repos)))
+			nsSpan.SetStatus(codes.Ok, "")
+			nsSpan.End()
+		}
+
+		span.SetAttributes(attribute.Int("namespaceCount", len(nss)))
+		for k, v := range managedCounts {
 			m[fmt.Sprintf("stats.managed_by.%s.count", k)] = v
 		}
-
-		// Inspect all configs
-		repos, err := repositoryLister(ctx)
-		if err != nil {
-			return m, fmt.Errorf("list repositories: %w", err)
-		}
-		clear(counts)
-		for _, repo := range repos {
-			counts[string(repo.Spec.Type)] = counts[string(repo.Spec.Type)] + 1
-		}
-
-		span.SetAttributes(attribute.Int("repositoryCount", len(repos)))
-		// Count how many items of each repository type
-		for k, v := range counts {
+		// Count how many items of each repository type.
+		for k, v := range repoCounts {
 			m[fmt.Sprintf("stats.repository.%s.count", k)] = v
 		}
 

@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -24,17 +23,16 @@ import (
 // with the same name as a file in the repository.
 func TestIntegrationProvisioning_PullJobUnmanagedConflict(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Step 1: Create an unmanaged dashboard directly via the API.
 	unmanagedDash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	created, err := helper.DashboardsV1.Resource.Create(ctx, unmanagedDash, metav1.CreateOptions{})
+	created, err := helper.DashboardsV1.Resource.Create(t.Context(), unmanagedDash, metav1.CreateOptions{})
 	require.NoError(t, err, "should create unmanaged dashboard")
 	dashName := created.GetName()
 	t.Logf("Created unmanaged dashboard: %s", dashName)
 
 	// Verify it is truly unmanaged (no manager annotation).
-	dash, err := helper.DashboardsV1.Resource.Get(ctx, dashName, metav1.GetOptions{})
+	dash, err := helper.DashboardsV1.Resource.Get(t.Context(), dashName, metav1.GetOptions{})
 	require.NoError(t, err)
 	managerID := dash.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 	require.Empty(t, managerID, "dashboard should be unmanaged before sync")
@@ -58,11 +56,10 @@ func TestIntegrationProvisioning_PullJobUnmanagedConflict(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(repoPath, "conflict-dashboard.json"), []byte(dashFileContent), 0o600))
 
 	testRepo := common.TestRepo{
-		Name:                   repo,
-		SyncTarget:             "folder",
-		LocalPath:              repoPath,
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		Name:       repo,
+		SyncTarget: "folder",
+		LocalPath:  repoPath,
+		SkipSync:   true,
 	}
 	helper.CreateLocalRepo(t, testRepo)
 
@@ -96,7 +93,7 @@ func TestIntegrationProvisioning_PullJobUnmanagedConflict(t *testing.T) {
 	require.True(t, found, "should have unmanaged conflict warning, got: %v", jobObj.Status.Warnings)
 
 	// Step 5: Verify the original dashboard is still unmanaged and unchanged.
-	dash, err = helper.DashboardsV1.Resource.Get(ctx, dashName, metav1.GetOptions{})
+	dash, err = helper.DashboardsV1.Resource.Get(t.Context(), dashName, metav1.GetOptions{})
 	require.NoError(t, err, "unmanaged dashboard should still exist")
 	managerID = dash.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 	require.Empty(t, managerID, "dashboard should remain unmanaged after sync warning")
@@ -108,17 +105,16 @@ func TestIntegrationProvisioning_PullJobUnmanagedConflict(t *testing.T) {
 // 3. After migration, the dashboards are managed by the repository.
 func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Step 1: Create two unmanaged dashboards directly.
 	dash1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	created1, err := helper.DashboardsV1.Resource.Create(ctx, dash1, metav1.CreateOptions{})
+	created1, err := helper.DashboardsV1.Resource.Create(t.Context(), dash1, metav1.CreateOptions{})
 	require.NoError(t, err, "should create first unmanaged dashboard")
 	dashName1 := created1.GetName()
 	t.Logf("Created unmanaged dashboard 1: %s", dashName1)
 
 	dash2 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
-	created2, err := helper.DashboardsV2beta1.Resource.Create(ctx, dash2, metav1.CreateOptions{})
+	created2, err := helper.DashboardsV2beta1.Resource.Create(t.Context(), dash2, metav1.CreateOptions{})
 	require.NoError(t, err, "should create second unmanaged dashboard")
 	dashName2 := created2.GetName()
 	t.Logf("Created unmanaged dashboard 2: %s", dashName2)
@@ -126,14 +122,15 @@ func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 	// Step 2: Create a repository targeting the whole instance.
 	const repo = "migrate-takeover-repo"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "instance",
-		Workflows:          []string{"write"},
-		Copies:             map[string]string{},
-		ExpectedDashboards: 2,
-		ExpectedFolders:    0,
+		Name:       repo,
+		SyncTarget: "instance",
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireDashboards(t, dashName1, dashName2)
+	helper.RequireRepoFolderCount(t, repo, 0)
 
 	// Step 3: Trigger a migration job (export + sync).
 	spec := provisioning.JobSpec{
@@ -146,14 +143,14 @@ func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 
 	// Step 4: After migration, both dashboards should be managed by the repository.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		d1, err := helper.DashboardsV1.Resource.Get(ctx, dashName1, metav1.GetOptions{})
+		d1, err := helper.DashboardsV1.Resource.Get(t.Context(), dashName1, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "dashboard 1 should still exist") {
 			return
 		}
 		assert.Equal(collect, repo, d1.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 			"dashboard 1 should be managed by the repo after migration")
 
-		d2, err := helper.DashboardsV1.Resource.Get(ctx, dashName2, metav1.GetOptions{})
+		d2, err := helper.DashboardsV1.Resource.Get(t.Context(), dashName2, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "dashboard 2 should still exist") {
 			return
 		}
@@ -162,7 +159,7 @@ func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "both dashboards should become managed after migration")
 
 	// Step 5: Verify no warnings or errors on the completed migration job.
-	result, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "jobs")
+	result, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "jobs")
 	require.NoError(t, err)
 	list, err := result.ToList()
 	require.NoError(t, err)
@@ -195,29 +192,29 @@ func TestIntegrationProvisioning_MigrateTakeover(t *testing.T) {
 // This test focuses on files written to each repository directory.
 func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Create two unmanaged dashboards.
 	dashboard1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard1, metav1.CreateOptions{})
+	created1, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard1, metav1.CreateOptions{})
 	require.NoError(t, err, "should create first dashboard")
 
 	dashboard2 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
-	_, err = helper.DashboardsV2beta1.Resource.Create(ctx, dashboard2, metav1.CreateOptions{})
+	created2, err := helper.DashboardsV2beta1.Resource.Create(t.Context(), dashboard2, metav1.CreateOptions{})
 	require.NoError(t, err, "should create second dashboard")
 
 	// Create repo1 and migrate — should export both dashboards.
 	const repo1 = "first-repository"
 	repo1Path := filepath.Join(helper.ProvisioningPath, repo1)
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:               repo1,
-		SyncTarget:         "folder",
-		Workflows:          []string{"write"},
-		LocalPath:          repo1Path,
-		Copies:             map[string]string{},
-		ExpectedDashboards: 2,
-		ExpectedFolders:    1,
+		Name:       repo1,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
+		LocalPath:  repo1Path,
+		Copies:     map[string]string{},
 	})
+
+	helper.RequireDashboards(t, created1.GetName(), created2.GetName())
+	helper.RequireRepoFolderCount(t, repo1, 1)
 
 	helper.TriggerJobAndWaitForSuccess(t, repo1, provisioning.JobSpec{
 		Action:  provisioning.JobActionMigrate,
@@ -233,17 +230,16 @@ func TestIntegrationProvisioning_SecondMigrateOnlyExportsNewDashboards(t *testin
 	const repo2 = "second-repository"
 	repo2Path := filepath.Join(helper.ProvisioningPath, repo2)
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:                   repo2,
-		SyncTarget:             "folder",
-		Workflows:              []string{"write"},
-		LocalPath:              repo2Path,
-		Copies:                 map[string]string{},
-		SkipResourceAssertions: true,
+		Name:       repo2,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
+		LocalPath:  repo2Path,
+		Copies:     map[string]string{},
 	})
 
 	// Create a third dashboard that is still unmanaged.
 	dashboard3 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
-	_, err = helper.DashboardsV0.Resource.Create(ctx, dashboard3, metav1.CreateOptions{})
+	_, err = helper.DashboardsV0.Resource.Create(t.Context(), dashboard3, metav1.CreateOptions{})
 	require.NoError(t, err, "should create third dashboard")
 
 	// Migrate repo2 — should only export dashboard3 (the unmanaged one).

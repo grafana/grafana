@@ -155,6 +155,29 @@ describe('transformSaveModelToScene', () => {
       expect(liveNowTimer).toBeInstanceOf(behaviors.LiveNowTimer);
     });
 
+    it('should leave preload undefined when the dashboard JSON omits it', () => {
+      const dash = {
+        ...defaultDashboard,
+        title: 'test',
+        uid: 'test-uid',
+      };
+      const oldModel = new DashboardModel(dash);
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
+
+      // Unset preload must stay undefined so getIsLazy can defer to the instance-wide default.
+      expect(scene.state.preload).toBeUndefined();
+    });
+
+    it('should preserve an explicit preload value from the dashboard JSON', () => {
+      const dashOff = { ...defaultDashboard, title: 'off', uid: 'off', preload: false };
+      const sceneOff = createDashboardSceneFromDashboardModel(new DashboardModel(dashOff), dashOff);
+      expect(sceneOff.state.preload).toBe(false);
+
+      const dashOn = { ...defaultDashboard, title: 'on', uid: 'on', preload: true };
+      const sceneOn = createDashboardSceneFromDashboardModel(new DashboardModel(dashOn), dashOn);
+      expect(sceneOn.state.preload).toBe(true);
+    });
+
     it('should initialize the Dashboard Scene with empty template variables', () => {
       const dash = {
         ...defaultDashboard,
@@ -654,6 +677,7 @@ describe('transformSaveModelToScene', () => {
         type: 'test-plugin',
         timeFrom: '2h',
         timeShift: '1d',
+        timeCompare: '1d',
       };
 
       const { vizPanel } = buildGridItemForTest(panel);
@@ -662,6 +686,20 @@ describe('transformSaveModelToScene', () => {
       expect(timeRange).toBeInstanceOf(PanelTimeRange);
       expect(timeRange.state.timeFrom).toBe('2h');
       expect(timeRange.state.timeShift).toBe('1d');
+      expect(timeRange.state.compareWith).toBe('1d');
+    });
+
+    it('should set PanelTimeRange when only timeCompare is present', () => {
+      const panel = {
+        type: 'test-plugin',
+        timeCompare: '1w',
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+      const timeRange = vizPanel.state.$timeRange as PanelTimeRange;
+
+      expect(timeRange).toBeInstanceOf(PanelTimeRange);
+      expect(timeRange.state.compareWith).toBe('1w');
     });
 
     it('should handle a dashboard query data source', () => {

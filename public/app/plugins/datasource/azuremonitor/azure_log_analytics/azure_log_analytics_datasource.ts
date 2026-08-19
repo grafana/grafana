@@ -17,7 +17,7 @@ import {
   type DatasourceValidationResult,
   type Subscription,
 } from '../types/types';
-import { interpolateVariable, routeNames } from '../utils/common';
+import { fetchAllArmPages, interpolateVariable, routeNames } from '../utils/common';
 
 import { transformMetadataToKustoSchema } from './utils';
 
@@ -66,32 +66,33 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return [];
     }
 
-    const path = `${this.azureMonitorPath}?api-version=2019-03-01`;
-    return await this.getResource<AzureAPIResponse<Subscription>>(path).then((result) => {
-      return ResponseParser.parseSubscriptions(result);
-    });
+    const value = await fetchAllArmPages<Subscription>(
+      routeNames.azureMonitor,
+      `${this.azureMonitorPath}?api-version=2019-03-01`,
+      (path) => this.getResource<AzureAPIResponse<Subscription>>(path)
+    );
+    return ResponseParser.parseSubscriptions({ value });
   }
 
   async getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {
-    const response = await this.getWorkspaceList(subscription);
+    const subscriptionId = this.templateSrv.replace(subscription || this.defaultSubscriptionId);
+
+    const workspaceListUrl =
+      this.azureMonitorPath +
+      `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
+
+    const value = await fetchAllArmPages<Workspace>(routeNames.azureMonitor, workspaceListUrl, (path) =>
+      this.getResource<AzureAPIResponse<Workspace>>(path)
+    );
 
     return (
-      map(response.value, (val: Workspace) => {
+      map(value, (val: Workspace) => {
         return {
           text: val.name,
           value: val.id,
         };
       }) || []
     );
-  }
-
-  private getWorkspaceList(subscription: string): Promise<AzureAPIResponse<Workspace>> {
-    const subscriptionId = this.templateSrv.replace(subscription || this.defaultSubscriptionId);
-
-    const workspaceListUrl =
-      this.azureMonitorPath +
-      `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
-    return this.getResource<AzureAPIResponse<Workspace>>(workspaceListUrl);
   }
 
   async getMetadata(resourceUri: string) {

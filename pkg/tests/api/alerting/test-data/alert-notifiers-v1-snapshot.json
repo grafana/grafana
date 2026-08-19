@@ -250,6 +250,24 @@
         "secure": false,
         "dependsOn": "",
         "subformOptions": null
+      },
+      {
+        "element": "checkbox",
+        "inputType": "",
+        "label": "Show Message in Embed",
+        "description": "Show the message inside the embed instead of above it. Note: mentions (@ or \u003c@ID\u003e) in the message will not trigger Discord notifications when this is enabled, as Discord only pings for mentions in the main message content.",
+        "placeholder": "",
+        "propertyName": "use_embed_description",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false,
+        "dependsOn": "",
+        "subformOptions": null
       }
     ]
   },
@@ -3199,10 +3217,10 @@
       {
         "element": "checkbox",
         "inputType": "",
-        "label": "Disable Notification",
+        "label": "Disable Notifications",
         "description": "Sends the message silently. Users will receive a notification with no sound.",
         "placeholder": "",
-        "propertyName": "disable_notification",
+        "propertyName": "disable_notifications",
         "selectOptions": null,
         "showWhen": {
           "field": "",

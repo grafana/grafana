@@ -274,7 +274,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     expect(fourthPageStatus.total).toBe(largeRowStatus.total);
   });
 
-  test.skip('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
+  test('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
     const addDataLink = async (title: string, url: string) => {
       await dashboardPage
         .getByGrafanaSelector(
@@ -285,11 +285,14 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
         .click();
 
       // DataLinks dialog has popped open - fill it in and add a global datalink.
+      // use click and press sequentially for codemirror
       await expect(page.getByRole('dialog')).toBeVisible();
-      await page.getByRole('dialog').locator('#link-title').fill(title);
-      await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').focus();
-      await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').fill(url);
-      await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').blur();
+      const titleInput = page.getByRole('dialog').getByLabel('Title');
+      await titleInput.click();
+      await titleInput.pressSequentially(title);
+      const urlInput = page.getByRole('dialog').getByLabel('URL');
+      await urlInput.click();
+      await urlInput.pressSequentially(url);
       await page.getByRole('dialog').locator('button[aria-disabled="false"]').filter({ hasText: 'Save' }).click();
       await expect(page.getByRole('dialog')).not.toBeVisible();
     };
@@ -303,18 +306,20 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).toBeVisible();
 
+    await waitForTableLoad(page);
+
     await disableAllTextWrap(page, selectors);
 
     const table = page.locator('.rdg');
-    const infoColumnIdx = await getColumnIdx(table, 'Info');
-    const pillColIdx = await getColumnIdx(table, 'Pills');
-    const dataLinkColIdx = await getColumnIdx(table, 'Data Link');
 
-    // Info column has a single DataLink by default.
-    const infoCell = getCell(table, 1, infoColumnIdx);
-    await expect(infoCell.locator('a')).toBeVisible();
-    expect(infoCell.locator('a')).toHaveAttribute('href');
-    expect(infoCell.locator('a')).not.toHaveAttribute('aria-haspopup');
+    // - pills column currently does not support DataLinks.
+    // - we don't apply DataLinks to Actions or DataLinks columns.
+    // - info column has both a link and an action, so it has a popup.
+    // - image w/ link already has one link, so adding a global link gives it a popover.
+    const excludedColumnIdxs = await Promise.all(
+      ['Pills', 'Data Link', 'Action', 'Info', 'Image w/ Link'].map((name) => getColumnIdx(table, name))
+    );
+    const excludedColumns = new Set<number>(excludedColumnIdxs);
 
     // now, add a DataLink to the whole table
     await addDataLink('Test link', 'https://grafana.com');
@@ -322,9 +327,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // add a DataLink to the whole table, all cells will now have a single link.
     const colCount = await page.getByRole('row').nth(1).getByRole('gridcell').count();
     for (let colIdx = 0; colIdx < colCount; colIdx++) {
-      // - pills column currently does not support DataLinks.
-      // - we don't apply DataLinks to the DataLinks column itself, since they're rendered inside.
-      if (colIdx === pillColIdx || colIdx === dataLinkColIdx) {
+      if (excludedColumns.has(colIdx)) {
         continue;
       }
 
@@ -342,15 +345,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // loop thru the columns, click the links, observe that the tooltip appears, and close the tooltip.
     for (let colIdx = 0; colIdx < colCount; colIdx++) {
       const cell = getCell(table, 1, colIdx);
-      if (colIdx === infoColumnIdx) {
-        // the Info column should still have its single link.
-        expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
-        continue;
-      }
-
-      // - pills column currently does not support DataLinks.
-      // - we don't apply DataLinks to the DataLinks column itself, since they're rendered inside.
-      if (colIdx === pillColIdx || colIdx === dataLinkColIdx) {
+      if (excludedColumns.has(colIdx)) {
         continue;
       }
 
@@ -506,6 +501,34 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
     ).not.toBeVisible();
+  });
+
+  test('Tooltip from field picker can be cleared', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '12' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tooltip from field'))
+    ).toBeVisible();
+    await waitForTableLoad(page);
+
+    // this panel ships with a field override that renders a tooltip caret on the "Info" column.
+    const caret = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Caret);
+    await expect(caret.first()).toBeVisible();
+
+    const overrideGroup = dashboardPage.getByGrafanaSelector(
+      selectors.components.OptionsGroup.group('panel-options-override-1')
+    );
+    const tooltipFieldPicker = overrideGroup.getByLabel('Tooltip from field');
+    await expect(tooltipFieldPicker).toHaveValue('Long Text');
+
+    // clearing the picker should remove the tooltip entirely, not just leave it stuck on a value.
+    await overrideGroup.getByRole('button', { name: 'Clear value' }).click();
+
+    await expect(tooltipFieldPicker).toHaveValue('');
+    await expect(caret).toHaveCount(0);
   });
 
   test('Styling overrides with styling from field', async ({ gotoDashboardPage, selectors, page }) => {

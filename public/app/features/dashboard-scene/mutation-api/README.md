@@ -19,6 +19,20 @@ All responses share this shape:
 
 On failure, `success` is `false` and `error` contains a message. `changes` is always `[]` on failure.
 
+## Which commands exist depends on the open document
+
+The API is mounted on whichever document is rendering, and each document type registers its own
+commands. A dashboard exposes the dashboard commands; a notebook exposes the notebook commands. Asking
+for one that is not registered fails with `Unknown command type: X. Available commands: ...`, so
+`getAvailableCommands()` (or that error) is how a caller finds out where it is.
+
+This is why no command has to be described as "dashboards only": the dashboard commands are simply not
+reachable from a notebook, and a notebook spec is a different schema that would silently lose every
+narrative cell if a dashboard serializer answered for it.
+
+`CREATE_NOTEBOOK_SPEC` is the one exception, registered on both, because there is no blank notebook to
+open before creating one.
+
 ---
 
 ## Layout
@@ -143,7 +157,7 @@ Add a row to the layout. If the target is not a RowsLayout, the existing content
 }
 ```
 
-Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization (requires the **`dashboardSectionVariables`** feature toggle; when off, `variables` in the payload are ignored).
+Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization.
 
 **Response:**
 
@@ -310,7 +324,7 @@ Add a tab to the layout. If the target is not a TabsLayout, the existing content
 }
 ```
 
-Tab `spec` may include optional **`variables`** for section-scoped template variables on that tab (same rules as row `variables` and the **`dashboardSectionVariables`** toggle).
+Tab `spec` may include optional **`variables`** for section-scoped template variables on that tab (same rules as row `variables`).
 
 **Response:**
 
@@ -611,8 +625,10 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 
 **Request (with runtime status and data schema):**
 
+`includeStatus` and `includeSchema` are independent; request either or both.
+
 ```json
-{ "type": "LIST_PANELS", "payload": { "includeStatus": true } }
+{ "type": "LIST_PANELS", "payload": { "includeStatus": true, "includeSchema": true } }
 ```
 
 **Response:**
@@ -641,7 +657,15 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
             "element": { "kind": "ElementReference", "name": "panel-1" }
           }
         },
-        "status": { "isLoading": false, "hasError": false, "hasNoData": false },
+        "status": {
+          "loadingState": "Error",
+          "hasError": true,
+          "hasNoData": false,
+          "errors": [
+            { "source": "query", "message": "parse error: unexpected } in query", "refId": "A", "type": "unknown" }
+          ],
+          "notices": [{ "severity": "warning", "text": "Query returned partial data" }]
+        },
         "dataSchema": [
           {
             "name": "response_time",
@@ -665,7 +689,16 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 }
 ```
 
-`status` and `dataSchema` are only present when `includeStatus` is `true` and the panel has a data provider. `dataSchema` contains field metadata (name, type, labels) from the panel's query results — not actual values.
+`status` is present only when `includeStatus` is `true`, and `dataSchema` only when `includeSchema` is `true` (and the panel has a data provider). Both are a runtime side-channel: never part of the saved v2 dashboard spec (`element`), only the read result.
+
+`status` reports the panel's live query health:
+
+- `loadingState` — the raw scene loading state (`NotStarted`, `Loading`, `Streaming`, `Done`, `Error`). Whether a panel is loading is derivable from this, so no separate `isLoading` is returned.
+- `hasError` / `hasNoData` — reported explicitly because `loadingState` does not imply them: a `Done` panel can still carry errors (a query error or an error-severity notice) or return no data.
+- `errors` — every panel error in one structured array. `source` (`query` / `plugin` / `notice`) says where the error came from; `message` plus `refId`/`type` (query errors only) are a curated subset of `@grafana/data`'s `DataQueryError`. Consolidates all channels: query/datasource errors, error-severity data-frame notices, and plugin failures (unknown/missing viz type, library-panel load failure, or a module that fails to compile).
+- `notices` — non-error (`info` / `warning`) data-frame notices, deduped across frames. Error-severity notices are folded into `errors` instead.
+
+`dataSchema` contains the fields each result frame produced (`name`, `type`, `labels`) — metadata, not values. Use it to get the real field (column) names before referencing a field by name in a transformation (`organize`, `calculateField`, `filterFieldsByName`, `sortBy`) or a `byName` field override, so you target names that actually exist.
 
 ````
 
@@ -744,7 +777,7 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 
 ## Variables
 
-Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set **only when `dashboardSectionVariables` is enabled**. When the toggle is off, `parentPath` is ignored and commands behave as dashboard-scope (`"/"`). **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section (with section variables enabled).
+Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set. **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section.
 
 ### `ADD_VARIABLE`
 
@@ -795,7 +828,7 @@ Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT
 }
 ```
 
-For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variables/region"`). With `dashboardSectionVariables` disabled, `changes[0].path` remains dashboard-scoped (for example `"/variables/env"`).
+For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variables/region"`).
 
 ### `UPDATE_VARIABLE`
 
@@ -1016,6 +1049,81 @@ If already in edit mode, `wasAlreadyEditing` is `true` and `changes` is `[]`.
 
 ---
 
+## Notebooks
+
+Available on a notebook page only (except `CREATE_NOTEBOOK_SPEC`), behind the `dashboard.notebooks`
+feature flag. A notebook is a flat, ordered list of cells — markdown, code, panel, library panel —
+described by a `NotebookSpec`. Its panel elements use the same shape as a dashboard v2 spec; what it
+adds is `Cell` (narrative content) and `NotebookLayout`.
+
+These are whole-spec commands: there are no granular notebook commands, so an edit is read, change the
+JSON, write back.
+
+### `GET_NOTEBOOK_SPEC`
+
+Return the whole notebook.
+
+```json
+{ "type": "GET_NOTEBOOK_SPEC", "payload": { "validate": false } }
+```
+
+`validate` checks the serialized spec against the notebook schema and fails the read if it is invalid.
+Worth requesting: a read that comes back with dangling cell references means the scene lost elements on
+the way out.
+
+**Response:** `{ "success": true, "data": { "spec": { ... } } }`
+
+### `APPLY_NOTEBOOK_SPEC`
+
+Replace the notebook from a whole spec. **In memory** — nothing is saved.
+
+```json
+{ "type": "APPLY_NOTEBOOK_SPEC", "payload": { "spec": { ... }, "validate": false } }
+```
+
+**Response:** `{ "success": true, "data": { "applied": true, "spec": { ... } }, "warnings": [...] }`
+
+`data.spec` is the notebook re-serialized after the write, so there is no need for a follow-up read. It
+is absent if that re-serialization failed — the write still landed, and `warnings` says the surviving
+cells could not be checked.
+
+`warnings` names any cell that was requested and is not in the result. A layout entry pointing at an
+element that is not in `elements` is skipped rather than rejected, so without this a write could lose a
+cell and still report success. Pass `validate: true` to have that rejected up front instead.
+
+The payload is strict: an unknown key is rejected rather than ignored, so a mistyped `validate` cannot
+silently apply the spec unchecked.
+
+### `CREATE_NOTEBOOK_SPEC`
+
+Create a **new** notebook and open it. Registered on dashboards too, because there is no blank notebook
+to apply a spec into the way `/dashboard/new` is one for a dashboard.
+
+```json
+{ "type": "CREATE_NOTEBOOK_SPEC", "payload": { "spec": { ... }, "validate": true, "open": true } }
+```
+
+**Response:**
+`{ "success": true, "data": { "created": true, "opened": true, "uid": "n-abc123", "url": "/notebooks/n-abc123" } }`
+
+Unlike every other command here this one **persists immediately**, and the server assigns the uid — so
+`validate` defaults to `true`. Set `open: false` to create without navigating. Use
+`APPLY_NOTEBOOK_SPEC` to change a notebook that already exists.
+
+`opened` is whether the navigation was accepted, which is not the same as `open`: a dirty dashboard's
+unsaved-changes prompt blocks it. The notebook exists either way, but `GET_NOTEBOOK_SPEC` and
+`APPLY_NOTEBOOK_SPEC` only reach it once its page is mounted.
+
+`opened: false` is conclusive. `opened: true` is not the same as "the notebook client is mounted": it
+reads the history entry, and the route behind it is a lazy chunk plus a fetch, so a command sent
+immediately afterwards can still land on the previous document. `getAvailableCommands()` is the
+authoritative answer to which document is mounted.
+
+The command is registered on a dashboard only when the `dashboard.notebooks` flag is on, so
+`getAvailableCommands()` names it exactly where it can run.
+
+---
+
 ## Paths
 
 Every layout node has a path string returned by `GET_LAYOUT`:
@@ -1041,7 +1149,8 @@ Paths are positional and shift after add/remove operations. Re-read the layout b
 
 ## Nesting rules
 
-- Maximum two layers of group nesting (root group + one nested group).
-- No same-type nesting (rows inside rows, tabs inside tabs).
+- Maximum four layers of group nesting.
+- Tabs cannot be nested directly inside tabs. Deeper nesting (e.g. tabs > rows > tabs) is allowed.
+- Rows can be nested inside both rows and tabs.
 
-For example, tabs containing rows is valid. Tabs containing tabs is rejected.
+For example, tabs containing rows is valid, and rows containing rows is valid. Tabs directly containing tabs is rejected.

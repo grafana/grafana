@@ -1,4 +1,4 @@
-import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
+import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { screen } from 'test/test-utils';
 import { byText } from 'testing-library-selector';
 
@@ -183,6 +183,8 @@ describe('RuleEditor cloud: checking editable data sources', () => {
     const { user } = renderRuleEditor();
 
     await ui.inputs.name.find();
+
+    await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
 
     const switchToCloudButton = await screen.findByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();

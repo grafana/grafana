@@ -243,6 +243,97 @@ func TestService_checkPermission(t *testing.T) {
 			expected: false,
 		},
 		{
+			name: "should allow reading a notebook via a folder permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+			},
+			check: checkRequest{
+				Action:       "notebooks:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "notebooks",
+				Name:         "some_notebook",
+				ParentFolder: "child",
+			},
+			expected: true,
+		},
+		{
+			name: "should deny reading a notebook when the folder permission is on an unrelated folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Scope:      "folders:uid:other",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "other",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+				{UID: "other"},
+			},
+			check: checkRequest{
+				Action:       "notebooks:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "notebooks",
+				Name:         "some_notebook",
+				ParentFolder: "child",
+			},
+			expected: false,
+		},
+		{
+			name: "should allow creating a notebook in a folder the user can edit",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "notebooks:create",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}},
+			check: checkRequest{
+				Action:       "notebooks:create",
+				Group:        "dashboard.grafana.app",
+				Resource:     "notebooks",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbCreate,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny creating a notebook in a folder the user cannot edit",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "notebooks:create",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}, {UID: "other_parent"}},
+			check: checkRequest{
+				Action:       "notebooks:create",
+				Group:        "dashboard.grafana.app",
+				Resource:     "notebooks",
+				Name:         "",
+				ParentFolder: "other_parent",
+				Verb:         utils.VerbCreate,
+			},
+			expected: false,
+		},
+		{
 			name: "should allow if it's an any check",
 			permissions: []accesscontrol.Permission{
 				{
@@ -260,6 +351,143 @@ func TestService_checkPermission(t *testing.T) {
 				Resource:     "dashboards",
 				Name:         "",
 				ParentFolder: "",
+				Verb:         utils.VerbList,
+			},
+			expected: true,
+		},
+		{
+			name: "should allow a folder-scoped any check if user has permission on an ancestor folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+			},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "child",
+				Verb:         utils.VerbList,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny a folder-scoped any check if user only has permission on an unrelated folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:other",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "other",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+				{UID: "other"},
+			},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "child",
+				Verb:         utils.VerbList,
+			},
+			expected: false,
+		},
+		{
+			name: "should allow a folder-scoped any check if user has a wildcard folder permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:    "dashboards:read",
+					Scope:     "folders:*",
+					Kind:      "folders",
+					Attribute: "*",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbList,
+			},
+			expected: true,
+		},
+		{
+			name: "should allow a folder-scoped set_permissions any check only via the folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards.permissions:write",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}},
+			check: checkRequest{
+				Action:       "dashboards.permissions:write",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbSetPermissions,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny a folder-scoped set_permissions any check if the grant is on another folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards.permissions:write",
+					Scope:      "folders:uid:other",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "other",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}, {UID: "other"}},
+			check: checkRequest{
+				Action:       "dashboards.permissions:write",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbSetPermissions,
+			},
+			expected: false,
+		},
+		{
+			name: "should keep capabilities semantics for any check with a folder on a non folder-supporting resource",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "teams:read",
+					Scope:      "teams:uid:some_team",
+					Kind:       "teams",
+					Attribute:  "uid",
+					Identifier: "some_team",
+				},
+			},
+			check: checkRequest{
+				Action:       "teams:read",
+				Group:        "iam.grafana.app",
+				Resource:     "teams",
+				Name:         "",
+				ParentFolder: "some_folder",
 				Verb:         utils.VerbList,
 			},
 			expected: true,
@@ -402,7 +630,7 @@ func TestService_checkPermission(t *testing.T) {
 			s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
 			tc.check.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
 			ns := types.NamespaceInfo{Value: "default", OrgID: 1}
-			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), &tc.check, s.newFolderTreeGetter(context.Background(), ns, false))
+			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), nil, &tc.check, s.newFolderTreeGetter(context.Background(), ns, false))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		})
@@ -537,7 +765,7 @@ func TestService_checkPermission_folderCacheMissRecovery(t *testing.T) {
 	}
 
 	ns := types.NamespaceInfo{Value: "default", OrgID: 1}
-	got, err := s.checkPermission(ctx, userPermissions, &check, s.newFolderTreeGetter(ctx, ns, false))
+	got, err := s.checkPermission(ctx, userPermissions, nil, &check, s.newFolderTreeGetter(ctx, ns, false))
 	require.NoError(t, err)
 	assert.True(t, got)
 
@@ -1457,6 +1685,189 @@ func TestService_Check(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "should allow datasources get with datasources:read scoped to uid",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "get",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny datasources get without matching scope",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "get",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:uid:ds2"},
+			},
+			expected: false,
+		},
+		{
+			name: "should allow datasources get via datasources:query action set",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "get",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:query", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow datasources create with unscoped datasources:create (create skips scope)",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "create",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:create", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow datasources update via datasources:edit action set scoped to uid",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "update",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:edit", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny datasources update without matching scope",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "update",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:edit", Scope: "datasources:uid:other"},
+			},
+			expected: false,
+		},
+		{
+			name: "should allow datasources delete with datasources:delete scoped to uid",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "delete",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:delete", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny datasources delete when only holding read permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "delete",
+				Name:      "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:uid:ds1"},
+			},
+			expected: false,
+		},
+		{
+			// Coarse by design: a list request carries no name, so holding the
+			// action on any single datasource authorizes the call. Narrowing the
+			// results to the readable subset is the datasource service's job, not
+			// this check's.
+			name: "should allow datasources list when user can read at least one datasource",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "list",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:read", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny datasources list when user holds no read permission",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "loki.datasource.grafana.app",
+				Resource:  "datasources",
+				Verb:      "list",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:write", Scope: "datasources:uid:ds1"},
+			},
+			expected: false,
+		},
+		{
+			name: "should allow datasources query subresource with datasources:query scoped to uid",
+			req: &authzv1.CheckRequest{
+				Namespace:   "org-12",
+				Subject:     "user:test-uid",
+				Group:       "loki.datasource.grafana.app",
+				Resource:    "datasources",
+				Subresource: "query",
+				Verb:        "create",
+				Name:        "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:query", Scope: "datasources:uid:ds1"},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny datasources query subresource without matching scope",
+			req: &authzv1.CheckRequest{
+				Namespace:   "org-12",
+				Subject:     "user:test-uid",
+				Group:       "loki.datasource.grafana.app",
+				Resource:    "datasources",
+				Subresource: "query",
+				Verb:        "create",
+				Name:        "ds1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "datasources:query", Scope: "datasources:uid:ds2"},
+			},
+			expected: false,
+		},
 	}
 	t.Run("User permission check", func(t *testing.T) {
 		for _, tc := range testCases {
@@ -1489,6 +1900,20 @@ func TestService_Check(t *testing.T) {
 				}
 				if tc.req.Resource == "folders" {
 					expAction = "folders:delete"
+				}
+				if tc.req.Resource == "datasources" && tc.req.Subresource == "query" {
+					expAction = "datasources:query"
+				} else if tc.req.Resource == "datasources" {
+					switch tc.req.Verb {
+					case "get", "list", "watch":
+						expAction = "datasources:read"
+					case "create":
+						expAction = "datasources:create"
+					case "update", "patch":
+						expAction = "datasources:write"
+					case "delete", "deletecollection":
+						expAction = "datasources:delete"
+					}
 				}
 				if tc.req.Subresource == "annotations" {
 					switch tc.req.Verb {
@@ -1580,6 +2005,17 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should allow rendering to list plugin metas",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "plugins.grafana.app",
+				Resource:  "metas",
+				Verb:      "list",
+			},
+			expected: true,
+		},
+		{
 			// Unregistered groups fall back to the K8s-native mapping. The renderer has no
 			// permissions for K8s-native actions, so the check is denied without an error.
 			name: "should deny rendering access to unregistered app resources",
@@ -1647,7 +2083,7 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		assert.False(t, resp.Allowed)
 	})
 
-	t.Run("Check: unregistered group denied with stack-role grant and no folder (wildcard access)", func(t *testing.T) {
+	t.Run("Check: unregistered group allowed with stack-role grant and no folder (folder verification is on storage layer)", func(t *testing.T) {
 		s := setup([]accesscontrol.Permission{
 			{Action: "unregistered.grafana.app/widgets:get", Scope: ""},
 			{Action: "folders:read", Scope: "folders:*"},
@@ -1660,8 +2096,8 @@ func TestService_K8sNativeFallback(t *testing.T) {
 			Verb:      "get",
 			Name:      "w1",
 		})
-		require.Error(t, err)
-		assert.False(t, resp.Allowed)
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
 	})
 
 	t.Run("Check: unregistered group denied with resource-scoped grant but no stack role", func(t *testing.T) {
@@ -2298,6 +2734,19 @@ func TestService_List(t *testing.T) {
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 				Verb:      "get",
+			},
+			expected: &authzv1.ListResponse{
+				All: true,
+			},
+		},
+		{
+			name: "should list plugin metas for rendering",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "plugins.grafana.app",
+				Resource:  "metas",
+				Verb:      "list",
 			},
 			expected: &authzv1.ListResponse{
 				All: true,
@@ -3448,6 +3897,196 @@ func TestService_BatchCheck(t *testing.T) {
 		assert.Equal(t, 1, ts.listFoldersCalls,
 			"ListFolders should be called once (single shared getter), not once per group")
 	})
+
+	const extGroup = "widget.ext.grafana.app"
+
+	extCheck := func(id, name, folder string) *authzv1.BatchCheckItem {
+		return &authzv1.BatchCheckItem{
+			CorrelationId: id, Group: extGroup,
+			Resource: "widgets", Verb: "get", Name: name, Folder: folder,
+		}
+	}
+
+	stackRole := func(action string) accesscontrol.Permission {
+		return accesscontrol.Permission{Action: action, Scope: ""}
+	}
+	folderPerm := func(action, folderUID string) accesscontrol.Permission {
+		return accesscontrol.Permission{
+			Action:     action,
+			Scope:      "folders:uid:" + folderUID,
+			Kind:       "folders",
+			Attribute:  "uid",
+			Identifier: folderUID,
+		}
+	}
+
+	setupExtBatchCheck := func(t *testing.T, perms []accesscontrol.Permission, folders []store.Folder) (*Service, *trackingPermissionStore, context.Context) {
+		t.Helper()
+		s := setupService()
+		s.folderCache = newCacheWrap[folderTree](nil, log.New("test"), tracing.NewNoopTracerService(), 0)
+		fStore := &fakeStore{
+			disableNsCheck:  true,
+			userID:          &store.UserIdentifiers{UID: "test-uid", ID: 1},
+			basicRole:       &store.BasicRole{Role: "Viewer", IsAdmin: false},
+			userPermissions: perms,
+			folders:         folders,
+		}
+		s.store = fStore
+		ts := &trackingPermissionStore{inner: fStore}
+		s.permissionStore = ts
+		s.folderStore = fStore
+		s.identityStore = &fakeIdentityStore{disableNsCheck: true}
+		return s, ts, types.WithAuthInfo(context.Background(), callingService)
+	}
+
+	t.Run("folder authz batch: mixed allowed and denied items", func(t *testing.T) {
+		s, _, ctx := setupExtBatchCheck(t, []accesscontrol.Permission{
+			stackRole("widget.ext.grafana.app/widgets:get"),
+			folderPerm("folders:read", "f1"),
+		}, []store.Folder{{UID: "f1"}, {UID: "f2"}})
+
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "org-12", Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				extCheck("allowed", "widget1", "f1"),
+				extCheck("denied", "widget2", "f2"),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Results["allowed"].Allowed)
+		assert.False(t, resp.Results["denied"].Allowed)
+	})
+
+	t.Run("folder authz batch: one folder permission lookup per group", func(t *testing.T) {
+		s, ts, ctx := setupExtBatchCheck(t, []accesscontrol.Permission{
+			stackRole("widget.ext.grafana.app/widgets:get"),
+			folderPerm("folders:read", "f1"),
+		}, []store.Folder{{UID: "f1"}})
+
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "org-12", Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				extCheck("w1", "widget1", "f1"),
+				extCheck("w2", "widget2", "f1"),
+				extCheck("w3", "widget3", "f1"),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Results["w1"].Allowed)
+		assert.True(t, resp.Results["w2"].Allowed)
+		assert.True(t, resp.Results["w3"].Allowed)
+		assert.Equal(t, 1, ts.folderPermCalls,
+			"folder permission lookup should happen once per group, not once per item")
+	})
+}
+
+func TestGetScopeMap_Settings(t *testing.T) {
+	s := setupService()
+
+	t.Run("section wildcard is not promoted to global grant", func(t *testing.T) {
+		// settings:auth.saml:* splits to Kind=settings, Attribute=auth.saml, Identifier=*
+		// Without the settings-aware branch this would trigger the generic Identifier=="*"
+		// wildcard collapse and return {"*": true} — an over-grant.
+		perms := []accesscontrol.Permission{
+			{
+				Action:     accesscontrol.ActionSettingsRead,
+				Scope:      "settings:auth.saml:*",
+				Kind:       "settings",
+				Attribute:  "auth.saml",
+				Identifier: "*",
+			},
+		}
+		scopeMap := s.getScopeMap(perms)
+		assert.True(t, scopeMap["settings:uid:auth.saml"], "section grant must collapse to settings:uid:auth.saml")
+		assert.False(t, scopeMap["*"], "section wildcard must not produce a global grant")
+	})
+
+	t.Run("per-key grant is not widened to the section (no up-grant)", func(t *testing.T) {
+		// settings:smtp:host splits to Kind=settings, Attribute=smtp, Identifier=host.
+		// A per-key grant must NOT authorize the whole section — widening it would be a
+		// privilege escalation. It is left as its literal scope, which never matches a
+		// section-level check (settings:uid:smtp).
+		perms := []accesscontrol.Permission{
+			{
+				Action:     accesscontrol.ActionSettingsRead,
+				Scope:      "settings:smtp:host",
+				Kind:       "settings",
+				Attribute:  "smtp",
+				Identifier: "host",
+			},
+		}
+		scopeMap := s.getScopeMap(perms)
+		assert.False(t, scopeMap["settings:uid:smtp"], "per-key grant must not be widened to the section")
+		assert.False(t, scopeMap["*"], "per-key grant must not produce a global grant")
+		assert.False(t, scopeMap["settings:smtp:host"], "per-key grant is kept as its literal scope")
+	})
+
+	t.Run("global settings grant produces wildcard", func(t *testing.T) {
+		// settings:* splits to Kind=settings, Attribute=*, Identifier=*
+		perms := []accesscontrol.Permission{
+			{
+				Action:    accesscontrol.ActionSettingsRead,
+				Scope:     "settings:*",
+				Kind:      "settings",
+				Attribute: "*",
+			},
+		}
+		scopeMap := s.getScopeMap(perms)
+		assert.True(t, scopeMap["*"], "global settings grant must produce wildcard")
+	})
+
+	t.Run("Check allows auth.saml section and denies smtp section", func(t *testing.T) {
+		callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Claims: jwt.Claims{
+				Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+				Audience: []string{"authzservice"},
+			},
+			Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		})
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+		fakeStr := &fakeStore{
+			userID: userID,
+			userPermissions: []accesscontrol.Permission{
+				{
+					Action:     accesscontrol.ActionSettingsRead,
+					Scope:      "settings:auth.saml:*",
+					Kind:       "settings",
+					Attribute:  "auth.saml",
+					Identifier: "*",
+				},
+			},
+		}
+
+		svc := setupService()
+		svc.store = fakeStr
+		svc.permissionStore = fakeStr
+
+		// auth.saml section is granted
+		resp, err := svc.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "setting.grafana.app",
+			Resource:  "settings",
+			Verb:      "get",
+			Name:      "auth.saml",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed, "user with settings:auth.saml:* should be allowed to get auth.saml")
+
+		// smtp section is not granted
+		resp, err = svc.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "setting.grafana.app",
+			Resource:  "settings",
+			Verb:      "get",
+			Name:      "smtp",
+		})
+		require.NoError(t, err)
+		assert.False(t, resp.Allowed, "user with settings:auth.saml:* should not be allowed to get smtp")
+	})
 }
 
 // trackingFolderStore wraps a folder store and counts ListFolders calls.
@@ -3459,4 +4098,18 @@ type trackingFolderStore struct {
 func (t *trackingFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]store.Folder, error) {
 	t.listFoldersCalls++
 	return t.inner.ListFolders(ctx, ns)
+}
+
+// trackingPermissionStore wraps a permission store and counts folder-action lookups.
+type trackingPermissionStore struct {
+	inner           store.PermissionStore
+	folderPermCalls int
+}
+
+func (t *trackingPermissionStore) GetUserPermissions(ctx context.Context, ns types.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
+	switch query.Action {
+	case "folders:read", "folders:write", "folders.permissions:write":
+		t.folderPermCalls++
+	}
+	return t.inner.GetUserPermissions(ctx, ns, query)
 }

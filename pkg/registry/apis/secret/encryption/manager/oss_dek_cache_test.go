@@ -9,17 +9,19 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestOSSDataKeyCache(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
+	tracer := noop.NewTracerProvider().Tracer("test")
 
 	settings := setting.NewCfg()
 	settings.SecretsManagement = setting.SecretsManagerSettings{
 		DataKeysCacheTTL: 999 * time.Hour, // avoid expiration for testing
 	}
-	cache := ProvideOSSDataKeyCache(settings)
+	cache := ProvideOSSDataKeyCache(tracer, settings)
 
 	namespace := "test-namespace"
 	entry := encryption.DataKeyCacheEntry{
@@ -58,12 +60,13 @@ func TestOSSDataKeyCache(t *testing.T) {
 func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
+	tracer := noop.NewTracerProvider().Tracer("test")
 
 	settings := setting.NewCfg()
 	settings.SecretsManagement = setting.SecretsManagerSettings{
 		DataKeysCacheTTL: 999 * time.Hour,
 	}
-	cache := ProvideOSSDataKeyCache(settings)
+	cache := ProvideOSSDataKeyCache(tracer, settings)
 
 	namespace := "test-namespace"
 	entry := encryption.DataKeyCacheEntry{
@@ -101,7 +104,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 		shortTTLSettings.SecretsManagement = setting.SecretsManagerSettings{
 			DataKeysCacheTTL: 1 * time.Millisecond,
 		}
-		shortCache := ProvideOSSDataKeyCache(shortTTLSettings)
+		shortCache := ProvideOSSDataKeyCache(tracer, shortTTLSettings)
 
 		namespace := "test-ns"
 		expiredEntry := encryption.DataKeyCacheEntry{
@@ -124,7 +127,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 	})
 
 	t.Run("GetById and GetByLabel return false when entry namespace doesn't match", func(t *testing.T) {
-		testCache := ProvideOSSDataKeyCache(settings).(*ossDataKeyCache)
+		testCache := ProvideOSSDataKeyCache(tracer, settings).(*ossDataKeyCache)
 
 		mismatchedEntry := encryption.DataKeyCacheEntry{
 			Id:               "test-id",
@@ -153,12 +156,13 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 func TestOSSDataKeyCache_NamespaceIsolation(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
+	tracer := noop.NewTracerProvider().Tracer("test")
 
 	settings := setting.NewCfg()
 	settings.SecretsManagement = setting.SecretsManagerSettings{
 		DataKeysCacheTTL: 999 * time.Hour,
 	}
-	cache := ProvideOSSDataKeyCache(settings)
+	cache := ProvideOSSDataKeyCache(tracer, settings)
 
 	namespace1 := "namespace-1"
 	namespace2 := "namespace-2"
@@ -232,12 +236,13 @@ func TestOSSDataKeyCache_NamespaceIsolation(t *testing.T) {
 func TestOSSDataKeyCache_Expiration(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
+	tracer := noop.NewTracerProvider().Tracer("test")
 	t.Run("entries expire after TTL", func(t *testing.T) {
 		settings := setting.NewCfg()
 		settings.SecretsManagement = setting.SecretsManagerSettings{
 			DataKeysCacheTTL: 50 * time.Millisecond,
 		}
-		cache := ProvideOSSDataKeyCache(settings)
+		cache := ProvideOSSDataKeyCache(tracer, settings)
 
 		namespace := "test-ns"
 		entry := encryption.DataKeyCacheEntry{
@@ -276,7 +281,7 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 		settings.SecretsManagement = setting.SecretsManagerSettings{
 			DataKeysCacheTTL: 50 * time.Millisecond,
 		}
-		cache := ProvideOSSDataKeyCache(settings)
+		cache := ProvideOSSDataKeyCache(tracer, settings)
 
 		namespace := "test-ns"
 
@@ -332,7 +337,7 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 		settings.SecretsManagement = setting.SecretsManagerSettings{
 			DataKeysCacheTTL: 50 * time.Millisecond,
 		}
-		cache := ProvideOSSDataKeyCache(settings)
+		cache := ProvideOSSDataKeyCache(tracer, settings)
 
 		ns1 := "namespace-1"
 		ns2 := "namespace-2"
@@ -410,12 +415,13 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 func TestOSSDataKeyCache_Flush(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
+	tracer := noop.NewTracerProvider().Tracer("test")
 
 	settings := setting.NewCfg()
 	settings.SecretsManagement = setting.SecretsManagerSettings{
 		DataKeysCacheTTL: 999 * time.Hour,
 	}
-	cache := ProvideOSSDataKeyCache(settings)
+	cache := ProvideOSSDataKeyCache(tracer, settings)
 
 	namespace1 := "namespace-1"
 	namespace2 := "namespace-2"
@@ -522,7 +528,9 @@ func TestOSSDataKeyCache_Set_NamespaceValidation(t *testing.T) {
 	settings.SecretsManagement = setting.SecretsManagerSettings{
 		DataKeysCacheTTL: 999 * time.Hour,
 	}
-	cache := ProvideOSSDataKeyCache(settings)
+	tracer := noop.NewTracerProvider().Tracer("test")
+	cache := ProvideOSSDataKeyCache(tracer, settings)
+
 	namespace := "expected-ns"
 
 	t.Run("missing namespace returns ErrDataKeyCacheUnexpectedNamespace", func(t *testing.T) {

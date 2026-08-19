@@ -4,11 +4,13 @@ import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
 
-import { config, setBackendSrv } from '@grafana/runtime';
+import { selectors } from '@grafana/e2e-selectors';
+import { config, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { KioskMode } from 'app/types/dashboard';
 
 import { backendSrv } from '../../services/backend_srv';
 import { Page } from '../Page/Page';
@@ -22,6 +24,7 @@ import {
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+  useScopes: jest.fn(),
 }));
 
 jest.mock('app/core/hooks/useMediaQueryMinWidth');
@@ -38,6 +41,7 @@ jest.mock('./ExtensionSidebar/ExtensionSidebarProvider', () => ({
 
 const mockUseMediaQueryMinWidth = jest.mocked(useMediaQueryMinWidth);
 const mockUseExtensionSidebarContext = jest.mocked(useExtensionSidebarContext);
+const mockUseScopes = jest.mocked(useScopes);
 
 const closedSidebarContext: ExtensionSidebarContextType = {
   isOpen: false,
@@ -62,6 +66,7 @@ const setup = (children: ReactNode) => {
     {
       id: HOME_NAV_ID,
       text: 'Home',
+      url: '/',
     },
     {
       text: 'Section name',
@@ -98,6 +103,7 @@ describe('AppChrome', () => {
     server.use(getCustomSearchHandler([]));
     mockUseMediaQueryMinWidth.mockReturnValue(false);
     mockUseExtensionSidebarContext.mockReturnValue(closedSidebarContext);
+    mockUseScopes.mockReturnValue(undefined);
   });
 
   afterEach(() => {
@@ -115,7 +121,7 @@ describe('AppChrome', () => {
     const skipLink = await screen.findByRole('link', { name: 'Skip to main content' });
     expect(skipLink).toHaveFocus();
     await userEvent.keyboard('{tab}');
-    expect(await screen.findByRole('button', { name: 'Main menu' })).toHaveFocus();
+    expect(await screen.findByTestId(selectors.components.Breadcrumbs.breadcrumb('Home'))).toHaveFocus();
   });
 
   it('should move focus to main content on every skip link activation', async () => {
@@ -143,6 +149,40 @@ describe('AppChrome', () => {
     });
     waitFor(() => {
       expect(screen.queryByRole('link', { name: 'Skip to main content' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('scopes dashboard drawer padding', () => {
+    beforeEach(() => {
+      mockUseScopes.mockReturnValue({
+        state: { enabled: true, drawerOpened: true, readOnly: false },
+      } as ReturnType<typeof useScopes>);
+    });
+
+    it('should apply left padding when scopes drawer is open', async () => {
+      setup(<Page navId="child1">Children</Page>);
+
+      const mainContent = document.getElementById('pageContent')!;
+      await waitFor(() => {
+        expect(parseFloat(getComputedStyle(mainContent).paddingLeft)).toBeGreaterThan(0);
+      });
+    });
+
+    it('should not apply left padding in kiosk mode when scopes drawer is open', async () => {
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      const mainContent = document.getElementById('pageContent')!;
+      await waitFor(() => {
+        expect(parseFloat(getComputedStyle(mainContent).paddingLeft)).toBeGreaterThan(0);
+      });
+
+      act(() => {
+        context.chrome.update({ kioskMode: KioskMode.Full });
+      });
+
+      await waitFor(() => {
+        expect(parseFloat(getComputedStyle(mainContent).paddingLeft) || 0).toBe(0);
+      });
     });
   });
 

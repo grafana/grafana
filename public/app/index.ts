@@ -2,7 +2,10 @@
 // Since much of Grafana depends on it in includes side effects at import time,
 // we delay loading the rest of the app using import() until the boot data is ready.
 
+import 'vendor/css/font_awesome.css';
+
 import { initPreferences } from './initPreferences';
+import { patchFetchForLegacyAPIMode } from './legacyAPIHandling';
 
 // Check if we are hosting files on cdn and set webpack public path
 if (window.public_cdn_path) {
@@ -27,13 +30,14 @@ async function bootstrapWindowData() {
   // Must be first because initPreferences depends on bootdata
   await window.__grafana_boot_data_promise;
 
-  if (window.__grafanaNewPreferencesPage) {
-    await initPreferences();
-  }
+  patchFetchForLegacyAPIMode();
+
+  const mergedPreferences = await initPreferences();
 
   // Use eager to ensure the app is included in the initial chunk and does not
   // require additional network requests to load.
-  await import(/* webpackMode: "eager" */ './initApp');
+  const { initApp } = await import(/* webpackMode: "eager" */ './initApp');
+  initApp({ mergedPreferences });
 }
 
 bootstrapWindowData().catch((error) => {

@@ -107,7 +107,11 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 	}
 
 	fid = t.folders[folder]
-	fid.Path = fid.Title
+	// Derive the path from titles, normalizing each title into a safe segment so
+	// a folder named with characters outside the allowed path set (e.g. "»") is
+	// exported under a sanitized path instead of failing the write. The UID is
+	// used as a fallback so the segment is always non-empty.
+	fid.Path = safepath.SanitizeSegment(fid.Title, folder)
 	ok = baseFolder == ""
 
 	parent := t.tree[folder]
@@ -116,8 +120,13 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 			ok = true
 			break
 		}
-		// FIXME: missing slash here
-		fid.Path = safepath.Join(t.folders[parent].Title, fid.Path)
+		// Only prepend ancestors that are actually part of the tree. A parent that
+		// was skipped (e.g. a managed-folder boundary during a partial export) is
+		// absent from t.folders; using its UID as a segment here would wrongly root
+		// the child under that UID instead of at the highest exported ancestor.
+		if pf, found := t.folders[parent]; found {
+			fid.Path = safepath.Join(safepath.SanitizeSegment(pf.Title, parent), fid.Path)
+		}
 		parent = t.tree[parent]
 	}
 	return fid, ok

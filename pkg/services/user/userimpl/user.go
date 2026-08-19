@@ -2,14 +2,15 @@ package userimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userk8s"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type Service struct {
@@ -36,14 +38,14 @@ type Service struct {
 
 var _ user.Service = (*Service)(nil)
 
-func ProvideService(db db.DB,
+func ProvideService(sql legacysql.LegacyDatabaseProvider,
 	orgService org.Service,
 	cfg *setting.Cfg,
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
 	configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
-	legacyService, err := NewLegacyService(db, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry)
+	legacyService, err := NewLegacyService(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +89,7 @@ func (s *Service) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*use
 	defer span.End()
 
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		return s.k8sService.GetByID(s.k8sCtxWithIdentity(ctx), cmd)
+		return s.k8sService.GetByID(s.k8sCtxForSelfRead(ctx, cmd.ID, ""), cmd)
 	}
 
 	return s.legacyService.GetByID(ctx, cmd)
@@ -161,17 +163,32 @@ func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUser
 	ctxLogger := s.logger.FromContext(ctx)
 
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		k8sCmd := *cmd
-		if !hasOrgID(ctx) && k8sCmd.OrgID == 0 {
-			k8sCmd.OrgID = s.cfg.DefaultOrgID()
+		orgID := cmd.OrgID
+		if orgID == 0 {
+			if requester, err := identity.GetRequester(ctx); err == nil && requester.GetOrgID() != 0 {
+				orgID = requester.GetOrgID()
+			} else {
+				orgID = s.cfg.DefaultOrgID()
+			}
 		}
 
-		result, err := s.k8sService.GetSignedInUser(s.k8sCtxWithIdentity(ctx), &k8sCmd)
+		k8sCmd := *cmd
+		k8sCmd.OrgID = orgID
+
+		// GetSignedInUser resolves a user's identity for the system (sign-in sync,
+		// internal validation such as permission assignment), not a user-facing
+		// RBAC-gated read, so run the lookup as the service identity.
+		result, err := s.k8sService.GetSignedInUser(identity.WithServiceIdentityContext(ctx, orgID), &k8sCmd)
 		if err == nil {
 			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
 			return result, nil
 		}
-		ctxLogger.Warn("k8s GetSignedInUser failed, falling back to legacy", "userID", cmd.UserID, "err", err)
+		if !isNotFoundError(err) || s.isFallbackDisabled(ctx) {
+			span.RecordError(err)
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return nil, err
+		}
+		ctxLogger.Warn("k8s GetSignedInUser not found, falling back to legacy", "userID", cmd.UserID, "err", err)
 	}
 
 	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
@@ -192,7 +209,7 @@ func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableU
 
 func (s *Service) GetProfile(ctx context.Context, cmd *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		return s.k8sService.GetProfile(s.k8sCtxWithIdentity(ctx), cmd)
+		return s.k8sService.GetProfile(s.k8sCtxForSelfRead(ctx, cmd.UserID, cmd.UID), cmd)
 	}
 
 	return s.legacyService.GetProfile(ctx, cmd)
@@ -209,8 +226,33 @@ func (s *Service) k8sCtxWithIdentity(ctx context.Context) context.Context {
 	if id, ok := identity.OrgIDFrom(ctx); ok && id != 0 {
 		orgID = id
 	}
-	ctx, _ = identity.WithServiceIdentity(ctx, orgID)
-	return ctx
+	return identity.WithServiceIdentityContext(ctx, orgID)
+}
+
+// k8sCtxForSelfRead elevates ctx to the service identity when the caller is a
+// user reading their own profile.
+func (s *Service) k8sCtxForSelfRead(ctx context.Context, targetID int64, targetUID string) context.Context {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil || requester == nil || requester.GetIdentityType() != claims.TypeUser {
+		return s.k8sCtxWithIdentity(ctx)
+	}
+	if !isSelfUser(requester, targetID, targetUID) {
+		return s.k8sCtxWithIdentity(ctx)
+	}
+	return identity.WithServiceIdentityContext(ctx, requester.GetOrgID())
+}
+
+// isSelfUser reports whether targetID/targetUID identify the requester itself.
+func isSelfUser(requester identity.Requester, targetID int64, targetUID string) bool {
+	if targetUID != "" {
+		return targetUID == requester.GetRawIdentifier()
+	}
+	if targetID != 0 {
+		if internalID, err := requester.GetInternalID(); err == nil {
+			return internalID == targetID
+		}
+	}
+	return false
 }
 
 func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
@@ -225,21 +267,28 @@ func (s *Service) isKubernetesUserServiceEnabled(ctx context.Context) bool {
 	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
 }
 
+func (s *Service) isFallbackDisabled(ctx context.Context) bool {
+	if s.openFeatureClient == nil {
+		return false
+	}
+
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirectNoFallback, false, openfeature.TransactionContext(ctx))
+}
+
 // shouldFallbackToLegacy determines whether to fall back to the legacy service
 // for a given request. The k8s redirect path builds its rest.Config from the
 // request context's *contextmodel.ReqContext so that the K8s apiserver sees
 // the original end-user identity; non-HTTP callers (authn sign-in sync,
 // grafana-cli) run as a service identity with no ReqContext on the context
-// and must keep working via the legacy path.
+// and must keep working via the legacy path, unless fallback has been
+// explicitly disabled.
 func (s *Service) shouldFallbackToLegacy(ctx context.Context) bool {
+	if s.isFallbackDisabled(ctx) {
+		return false
+	}
 	return identity.IsServiceIdentity(ctx) && contexthandler.FromContext(ctx) == nil
 }
 
-func hasOrgID(ctx context.Context) bool {
-	if requester, err := identity.GetRequester(ctx); err == nil {
-		return requester.GetOrgID() != 0
-	}
-
-	orgID, ok := identity.OrgIDFrom(ctx)
-	return ok && orgID != 0
+func isNotFoundError(err error) bool {
+	return errors.Is(err, user.ErrUserNotFound) || apierrors.IsNotFound(err)
 }

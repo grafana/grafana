@@ -36,11 +36,14 @@ interface Props<T extends FieldValues> {
   messageTemplateName: Path<T>;
   enforceTemplateName: Path<T>;
   type: RepoType;
+  authorNameName: Path<T>;
+  authorEmailName: Path<T>;
   signingMethodName: Path<T>;
   signingKeyName: Path<T>;
   smimeCertificateName: Path<T>;
   signerNameName: Path<T>;
   signerEmailName: Path<T>;
+  signerIsAuthorName: Path<T>;
   defaultSigningKeyConfigured?: boolean;
 }
 
@@ -57,11 +60,14 @@ export function CommitOptionsSection<T extends FieldValues>({
   messageTemplateName,
   enforceTemplateName,
   type,
+  authorNameName,
+  authorEmailName,
   signingMethodName,
   signingKeyName,
   smimeCertificateName,
   signerNameName,
   signerEmailName,
+  signerIsAuthorName,
   defaultSigningKeyConfigured,
 }: Props<T>) {
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
@@ -77,8 +83,12 @@ export function CommitOptionsSection<T extends FieldValues>({
     const empty = '' as PathValue<T, Path<T>>;
     setValue(signingKeyName, empty);
     setValue(smimeCertificateName, empty);
+    setValue(authorNameName, empty);
+    setValue(authorEmailName, empty);
     setValue(signerNameName, empty);
     setValue(signerEmailName, empty);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    setValue(signerIsAuthorName, false as PathValue<T, Path<T>>);
     setSigningKeyConfigured(false);
   };
 
@@ -105,7 +115,7 @@ export function CommitOptionsSection<T extends FieldValues>({
             }
           )}
         >
-          <Input
+          <TextArea
             id="commit-message-template"
             {...register(messageTemplateName)}
             placeholder={t(
@@ -113,6 +123,7 @@ export function CommitOptionsSection<T extends FieldValues>({
               'feat(dashboards): {{actionVar}} {{titleVar}}',
               { actionVar: '{{action}}', titleVar: '{{title}}' }
             )}
+            rows={3}
           />
         </Field>
 
@@ -125,6 +136,36 @@ export function CommitOptionsSection<T extends FieldValues>({
                 'provisioning.commit-options.description-enforce-template',
                 'Pre-fill the commit message in save dialogs from the template above and make it read-only.'
               )}
+            />
+          </Field>
+        )}
+
+        {!signingEnabled && gitFields?.commitAuthorNameConfig && (
+          <Field
+            noMargin
+            htmlFor="commit-author-name"
+            label={gitFields.commitAuthorNameConfig.label}
+            description={gitFields.commitAuthorNameConfig.description}
+          >
+            <Input
+              {...register(authorNameName)}
+              id="commit-author-name"
+              placeholder={gitFields.commitAuthorNameConfig.placeholder}
+            />
+          </Field>
+        )}
+        {!signingEnabled && gitFields?.commitAuthorEmailConfig && (
+          <Field
+            noMargin
+            htmlFor="commit-author-email"
+            label={gitFields.commitAuthorEmailConfig.label}
+            description={gitFields.commitAuthorEmailConfig.description}
+          >
+            <Input
+              {...register(authorEmailName)}
+              id="commit-author-email"
+              type="email"
+              placeholder={gitFields.commitAuthorEmailConfig.placeholder}
             />
           </Field>
         )}
@@ -267,6 +308,15 @@ export function CommitOptionsSection<T extends FieldValues>({
                   </Field>
                 )}
               />
+            )}
+            {gitFields.signerIsAuthorConfig && (
+              <Field noMargin>
+                <Checkbox
+                  {...register(signerIsAuthorName)}
+                  label={gitFields.signerIsAuthorConfig.label}
+                  description={gitFields.signerIsAuthorConfig.description}
+                />
+              </Field>
             )}
           </>
         )}

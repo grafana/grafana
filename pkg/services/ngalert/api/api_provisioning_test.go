@@ -2084,9 +2084,8 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 }
 
 func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
-	// These tests are focused on exports using featuremgmt.FlagAlertingMultiplePolicies.
+	// These tests are focused on exports of named notification policies.
 	env := createTestEnv(t, testConfig) // testConfig should be unused here, we're overriding the policy service.
-	env.features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 
 	sut := createProvisioningSrvSutFromEnv(t, &env)
 	rev := legacy_storage.ConfigRevision{
@@ -2209,34 +2208,16 @@ func TestApiGetSnapshots(t *testing.T) {
 			Location: &timeinterval.Location{Location: location},
 		}
 	}
-	cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals,
-		v1.MuteTimeInterval{
-			Name: "MuteTimeIntervalA",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-		v1.MuteTimeInterval{
-			Name: "MuteTimeIntervalB",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-	)
-	cfg.AlertmanagerConfig.TimeIntervals = append(cfg.AlertmanagerConfig.TimeIntervals,
-		v1.TimeInterval{
-			Name: "TimeIntervalA",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-		v1.TimeInterval{
-			Name: "TimeIntervalB",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-	)
+	// Add to the intervals already present in the base config (referenced by routes) rather than
+	// replacing the map, otherwise the route references become dangling and validation fails.
+	for _, interval := range []v1.TimeInterval{
+		v1.NewTimeInterval("MuteTimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval("MuteTimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval("TimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval("TimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+	} {
+		cfg.TimeIntervals[interval.UID] = interval
+	}
 
 	amConfig, err := legacy_storage.SerializeAlertmanagerConfig(*cfg)
 	require.NoError(t, err)
@@ -2316,7 +2297,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	require.NoError(t, err)
 
 	log := log.NewNopLogger()
-	sqlStore, _ := db.InitTestDBWithCfg(t)
+	sqlStore, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -2472,7 +2453,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService(), nil, &notifier.NoopOrgEmailValidator{}),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, validation.ValidateProvenanceRelaxed),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs, validation.ValidateProvenanceRelaxed),
-		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz),
+		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz, provisioning.NoopRuleMutationValidator{}),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
 	}

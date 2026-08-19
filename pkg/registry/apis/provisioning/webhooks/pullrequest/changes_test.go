@@ -13,8 +13,11 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -63,6 +66,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -137,6 +141,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "org-2",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -216,6 +221,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -290,6 +296,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -367,6 +374,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -444,6 +452,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -516,6 +525,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "org-2",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -588,6 +598,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -837,6 +848,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -1184,6 +1196,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -1257,6 +1270,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -1327,6 +1341,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -1419,6 +1434,378 @@ func TestCalculateChanges(t *testing.T) {
 			}
 		})
 	}
+}
+
+// readerWithURLs composes a MockReader with the RepositoryWithURLs methods so
+// the evaluator's optional type assertion succeeds in tests.
+type readerWithURLs struct {
+	*repository.MockReader
+	sourceURL string
+}
+
+func (r *readerWithURLs) ResourceURLs(_ context.Context, _ *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
+	return &provisioning.RepositoryURLs{SourceURL: r.sourceURL}, nil
+}
+
+func (r *readerWithURLs) RefURLs(_ context.Context, _ string) (*provisioning.RepositoryURLs, error) {
+	return nil, nil
+}
+
+func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
+	finfo := &repository.FileInfo{
+		Path: "path/to/file.json",
+		Ref:  "ref",
+		Data: []byte("xxxx"),
+	}
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": resources.DashboardResource.GroupVersion().String(),
+			"kind":       dashboardKind,
+			"metadata": map[string]interface{}{
+				"name": "the-uid",
+			},
+			"spec": map[string]interface{}{
+				"title": "hello world",
+			},
+		},
+	}
+	meta, _ := utils.MetaAccessor(obj)
+
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
+		Spec: provisioning.RepositorySpec{
+			Type:   provisioning.GitHubRepositoryType,
+			GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://github.com/example/repo"},
+		},
+	})
+	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+
+	parser := resources.NewMockParser(t)
+	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+		Info:           finfo,
+		Repo:           provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
+		GVK:            schema.GroupVersionKind{Kind: dashboardKind},
+		Obj:            obj,
+		Meta:           meta,
+		DryRunResponse: obj,
+	}, nil)
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything).Return(false)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	repo := &readerWithURLs{
+		MockReader: reader,
+		sourceURL:  "https://github.com/example/repo/blob/ref/path/to/file.json",
+	}
+
+	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
+		Action: repository.FileActionCreated,
+		Path:   "path/to/file.json",
+		Ref:    "ref",
+	}}, progress)
+
+	require.NoError(t, err)
+	require.Equal(t, "http://host/admin/provisioning/test-repo", info.RepositoryAdminURL)
+	require.Len(t, info.Changes, 1)
+	require.Equal(t, "https://github.com/example/repo/blob/ref/path/to/file.json", info.Changes[0].SourceURL)
+}
+
+func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
+	finfo := &repository.FileInfo{Path: "path/to/file.json", Ref: "ref", Data: []byte("xxxx")}
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": resources.DashboardResource.GroupVersion().String(),
+			"kind":       dashboardKind,
+			"metadata":   map[string]interface{}{"name": "the-uid"},
+			"spec":       map[string]interface{}{"title": "hello world"},
+		},
+	}
+	meta, _ := utils.MetaAccessor(obj)
+
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "creds-repo", Namespace: "x"},
+		Spec: provisioning.RepositorySpec{
+			Type:   provisioning.GitHubRepositoryType,
+			GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://user:token@github.com/example/repo"}, // trufflehog:ignore
+		},
+	})
+	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+
+	parser := resources.NewMockParser(t)
+	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+		Info:           finfo,
+		Repo:           provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
+		GVK:            schema.GroupVersionKind{Kind: dashboardKind},
+		Obj:            obj,
+		Meta:           meta,
+		DryRunResponse: obj,
+	}, nil)
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything).Return(false)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	repo := &readerWithURLs{
+		MockReader: reader,
+		sourceURL:  "https://user:token@github.com/example/repo/blob/ref/path/to/file.json", // trufflehog:ignore
+	}
+
+	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
+		Action: repository.FileActionCreated,
+		Path:   "path/to/file.json",
+		Ref:    "ref",
+	}}, progress)
+
+	require.NoError(t, err)
+	// The repository admin link is derived from the Grafana base URL, so it never
+	// carries git credentials regardless of what the repo is configured with.
+	require.Equal(t, "http://host/admin/provisioning/creds-repo", info.RepositoryAdminURL)
+	require.Len(t, info.Changes, 1)
+	require.Equal(t, "https://github.com/example/repo/blob/ref/path/to/file.json", info.Changes[0].SourceURL)
+	require.NotContains(t, info.Changes[0].SourceURL, "token")
+}
+
+// A folder (_folder.json) that already exists in Grafana should link back to
+// its folder view, just like a dashboard links to /d/..., and its file should
+// render as a source link.
+func TestEvaluate_FolderGetsGrafanaAndSourceURL(t *testing.T) {
+	finfo := &repository.FileInfo{
+		Path: "team/_folder.json",
+		Ref:  "ref",
+		Data: []byte("xxxx"),
+	}
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": folder.FolderResourceInfo.GroupVersion().String(),
+			"kind":       folderKind,
+			"metadata":   map[string]interface{}{"name": "the-uid"},
+			"spec":       map[string]interface{}{"title": "My Team"},
+		},
+	}
+	meta, _ := utils.MetaAccessor(obj)
+
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
+		Spec: provisioning.RepositorySpec{
+			Type:   provisioning.GitHubRepositoryType,
+			GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://github.com/example/repo"},
+		},
+	})
+	reader.On("Read", mock.Anything, "team/_folder.json", "ref").Return(finfo, nil)
+	// Updated files read the base branch to detect stripped metadata; not found is fine.
+	reader.On("Read", mock.Anything, "team/_folder.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
+
+	parser := resources.NewMockParser(t)
+	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+		Info:           finfo,
+		Repo:           provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
+		GVK:            schema.GroupVersionKind{Kind: folderKind},
+		Obj:            obj,
+		Existing:       obj,
+		Meta:           meta,
+		DryRunResponse: obj,
+	}, nil)
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything).Return(false)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "process team/_folder.json").Return()
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	repo := &readerWithURLs{
+		MockReader: reader,
+		sourceURL:  "https://github.com/example/repo/blob/ref/team/_folder.json",
+	}
+
+	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
+		Action: repository.FileActionUpdated,
+		Path:   "team/_folder.json",
+		Ref:    "ref",
+	}}, progress)
+
+	require.NoError(t, err)
+	require.Len(t, info.Changes, 1)
+	require.Equal(t, "http://host/dashboards/f/the-uid/my-team", info.Changes[0].GrafanaURL)
+	require.Equal(t, "https://github.com/example/repo/blob/ref/team/_folder.json", info.Changes[0].SourceURL)
+	// Dashboard-only surfaces stay empty for folders.
+	require.Empty(t, info.Changes[0].PreviewURL)
+}
+
+// A deleted file (e.g. a removed folder metadata file) no longer exists on the
+// PR branch, but the source link should still point at the previous ref so
+// reviewers can see what was removed. The folder still exists in Grafana until
+// the sync runs, so the Resource column should link to it — which requires
+// fetching the live object, since Parse (unlike DryRun) never sets Existing.
+func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
+	finfo := &repository.FileInfo{
+		Path: "team/_folder.json",
+		Ref:  "base-ref",
+		Data: []byte("xxxx"),
+	}
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": folder.FolderResourceInfo.GroupVersion().String(),
+			"kind":       folderKind,
+			"metadata":   map[string]interface{}{"name": "the-uid", "namespace": "x"},
+			"spec":       map[string]interface{}{"title": "My Team"},
+		},
+	}
+	meta, _ := utils.MetaAccessor(obj)
+
+	// A fake client that returns the live folder object, standing in for the
+	// resource that still exists in Grafana at comment time.
+	folderGVR := schema.GroupVersionResource{Group: folder.GROUP, Version: folder.VERSION, Resource: "folders"}
+	scheme := runtime.NewScheme()
+	require.NoError(t, metav1.AddMetaToScheme(scheme))
+	fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
+		folderGVR: "FolderList",
+	}, obj)
+
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
+		Spec: provisioning.RepositorySpec{
+			Type:   provisioning.GitHubRepositoryType,
+			GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://github.com/example/repo"},
+		},
+	})
+	reader.On("Read", mock.Anything, "team/_folder.json", "base-ref").Return(finfo, nil)
+
+	parser := resources.NewMockParser(t)
+	// Existing is intentionally nil: the real parser only populates it during
+	// DryRun/Run, which deletions skip. The evaluator must fetch it via Client.
+	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+		Info:   finfo,
+		Repo:   provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
+		GVK:    schema.GroupVersionKind{Kind: folderKind},
+		Obj:    obj,
+		Client: fakeDynamicClient.Resource(folderGVR).Namespace("x"),
+		Meta:   meta,
+	}, nil)
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything).Return(false)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "process team/_folder.json").Return()
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	repo := &readerWithURLs{
+		MockReader: reader,
+		sourceURL:  "https://github.com/example/repo/blob/base-ref/team/_folder.json",
+	}
+
+	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.PullRequestJobOptions{}, []repository.VersionedFileChange{{
+		Action:      repository.FileActionDeleted,
+		Path:        "team/_folder.json",
+		Ref:         "ref",
+		PreviousRef: "base-ref",
+	}}, progress)
+
+	require.NoError(t, err)
+	require.Len(t, info.Changes, 1)
+	require.Equal(t, "https://github.com/example/repo/blob/base-ref/team/_folder.json", info.Changes[0].SourceURL)
+	require.Equal(t, "http://host/dashboards/f/the-uid/my-team", info.Changes[0].GrafanaURL)
+}
+
+func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
+	// A GitHub Enterprise repo has Spec.GitHubEnterprise set and Spec.GitHub nil;
+	// reading GenerateDashboardPreviews off Spec.GitHub would panic. Renderer is
+	// available and there is a single change, so the preview branch is reached.
+	finfo := &repository.FileInfo{Path: "playlist.json", Ref: "ref", Data: []byte("xxxx")}
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind":       "Playlist",
+			"metadata":   map[string]interface{}{"name": "the-uid"},
+			"spec":       map[string]interface{}{"title": "My Playlist"},
+		},
+	}
+	meta, _ := utils.MetaAccessor(obj)
+
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "ghes-repo", Namespace: "x"},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitHubEnterpriseRepositoryType,
+			PullRequest: &provisioning.PullRequestOptions{
+				GenerateDashboardPreviews: true,
+			},
+		},
+	})
+	reader.On("Read", mock.Anything, "playlist.json", "ref").Return(finfo, nil)
+
+	parser := resources.NewMockParser(t)
+	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+		Info:           finfo,
+		Repo:           provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
+		GVK:            schema.GroupVersionKind{Kind: "Playlist"},
+		Obj:            obj,
+		Meta:           meta,
+		DryRunResponse: obj,
+	}, nil)
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything).Return(true)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "process playlist.json").Return()
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	info, err := evaluator.Evaluate(context.Background(), reader, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
+		Action: repository.FileActionCreated,
+		Path:   "playlist.json",
+		Ref:    "ref",
+	}}, progress)
+
+	require.NoError(t, err)
+	require.Len(t, info.Changes, 1)
 }
 
 func TestDummyImageURL(t *testing.T) {

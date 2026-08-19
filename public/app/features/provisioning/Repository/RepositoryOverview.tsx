@@ -3,6 +3,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import {
   Box,
@@ -23,6 +24,7 @@ import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
+import { isGitHubBased } from '../utils/repositoryTypes';
 import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
@@ -102,7 +104,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         )}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
           <div className={styles.cardContainer}>
-            <Card noMargin className={styles.card}>
+            <Card
+              noMargin
+              className={styles.card}
+              data-testid={selectors.pages.Provisioning.RepositoryOverview.resourcesCard}
+            >
               <Card.Heading>
                 <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
               </Card.Heading>
@@ -132,7 +138,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           {/* Webhook */}
           {status?.webhook && (
             <div className={styles.cardContainer}>
-              <Card noMargin className={styles.card}>
+              <Card
+                noMargin
+                className={styles.card}
+                data-testid={selectors.pages.Provisioning.RepositoryOverview.webhookCard}
+              >
                 <Card.Heading>
                   <Trans i18nKey="provisioning.repository-overview.webhook">Webhook</Trans>
                 </Card.Heading>
@@ -144,7 +154,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                       </Text>
                     </div>
                     <div className={styles.valueColumn}>
-                      <Text variant="body">{status?.webhook?.id ?? 'N/A'}</Text>
+                      <Text variant="body">
+                        {status?.webhook?.id ?? status?.webhook?.uuid?.replace(/[{}]/g, '') ?? 'N/A'}
+                      </Text>
                     </div>
                     <div className={styles.labelColumn}>
                       <Text color="secondary">
@@ -166,7 +178,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                 </Card.Description>
                 {webhookURL && (
                   <Card.Actions className={styles.actions}>
-                    <LinkButton fill="outline" href={webhookURL} icon="external-link-alt">
+                    <LinkButton fill="outline" href={webhookURL} icon="external-link-alt" target="_blank">
                       <Trans i18nKey="provisioning.repository-overview.webhook-url">View Webhook</Trans>
                     </LinkButton>
                   </Card.Actions>
@@ -238,8 +250,15 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 function getWebhookURL(repo: Repository) {
   const { status, spec } = repo;
-  if (spec?.type === 'github' && status?.webhook?.url && spec.github?.url) {
-    return textUtil.sanitizeUrl(`${spec.github.url}/settings/hooks/${status.webhook?.id}`);
+  const repoUrl = spec?.github?.url ?? spec?.githubEnterprise?.url ?? spec?.gitlab?.url;
+  if (isGitHubBased(spec?.type) && status?.webhook?.url && repoUrl) {
+    return textUtil.sanitizeUrl(`${repoUrl}/settings/hooks/${status.webhook?.id}`);
+  }
+  if (spec?.type === 'gitlab' && status?.webhook?.url && repoUrl) {
+    return textUtil.sanitizeUrl(`${repoUrl}/-/hooks/${status.webhook?.id}/edit`);
+  }
+  if (spec?.type === 'bitbucket' && status?.webhook?.uuid && spec.bitbucket?.url) {
+    return textUtil.sanitizeUrl(`${spec.bitbucket.url}/admin/webhooks/${encodeURIComponent(status.webhook.uuid)}/edit`);
   }
   return undefined;
 }

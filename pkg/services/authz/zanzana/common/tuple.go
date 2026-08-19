@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -42,6 +43,7 @@ const (
 )
 
 var (
+	KindNotebooks       string = dashv2beta1.NotebookResourceInfo.GroupResource().Resource
 	KindTeams           string = iamv0.TeamKind().GroupVersionResource().Resource
 	KindUsers           string = iamv0.UserKind().GroupVersionResource().Resource
 	KindServiceAccounts string = iamv0.ServiceAccountKind().GroupVersionResource().Resource
@@ -120,8 +122,9 @@ var RelationsSubresource = []string{
 	RelationSubresourceSetPermissions,
 }
 
-// RelationsTyped are relations that can be added to typed resources (folders, teams, users, etc).
-var RelationsTyped = append(
+// RelationsFolder are the relations valid on type "folder" (schema_folder.fga). Folders are the
+// one typed object with a full per-object relation set; the flat IAM types use the vars below.
+var RelationsFolder = append(
 	RelationsSubresource,
 	RelationGet,
 	RelationUpdate,
@@ -129,6 +132,44 @@ var RelationsTyped = append(
 	RelationDelete,
 	RelationGetPermissions,
 	RelationSetPermissions,
+)
+
+// RelationsSubresourceTyped are the subresource relations valid on the flat IAM types.
+// Unlike folders, these types have no resource_get_permissions / resource_set_permissions.
+var RelationsSubresourceTyped = []string{
+	RelationSubresourceGet,
+	RelationSubresourceUpdate,
+	RelationSubresourceCreate,
+	RelationSubresourceDelete,
+}
+
+// RelationsTeam are the relations valid on type "team". Like user / service-account, teams
+// have no per-object `create`: creation is governed by the group_resource (the team does not
+// exist yet, so a `create` tuple can't target a specific team object).
+var RelationsTeam = append(append([]string{}, RelationsSubresourceTyped...),
+	RelationGet,
+	RelationUpdate,
+	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
+)
+
+// RelationsUser are the relations valid on type "user": no per-object `create`
+// (governed by the group_resource), but get_permissions / set_permissions exist.
+var RelationsUser = append(append([]string{}, RelationsSubresourceTyped...),
+	RelationGet,
+	RelationUpdate,
+	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
+)
+
+// RelationsServiceAccount are the relations valid on type "service-account":
+// no per-object `create`, and no get_permissions / set_permissions.
+var RelationsServiceAccount = append(append([]string{}, RelationsSubresourceTyped...),
+	RelationGet,
+	RelationUpdate,
+	RelationDelete,
 )
 
 // VerbMapping is mapping a k8s verb to a zanzana relation.

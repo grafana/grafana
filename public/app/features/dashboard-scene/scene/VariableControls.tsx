@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -17,10 +17,15 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { dashboardEditActions } from '../edit-pane/shared';
+import { duplicateVariable } from '../actions/variable/duplicateVariable';
+import { removeVariable } from '../actions/variable/removeVariable';
+import { SourceIcon } from '../settings/ProvisionedControlsSection';
+import { VariableEditorModal } from '../settings/variables/editors/VariableEditorModal';
+import { isVariableEditable } from '../settings/variables/utils';
+import { getPredefinedOrigin } from '../utils/predefinedVariables';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
-import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
+import { ControlActionsPopover, VariableEditActions } from './ControlActionsPopover';
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
@@ -70,26 +75,48 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
+  const canEditControl = Boolean(isSelectable) && isVariableEditable(variable);
+  const isReadOnlyControl = Boolean(isEditingNewLayouts) && !isVariableEditable(variable);
   const { markUserInitiated } = useTrackDashboardVariableValueChange(variable);
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
-    dashboard.state.editPane.selectObject(variable);
+    dashboard.state.sidebar.selectObject(variable);
   }, [variable]);
+
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+  const onClickEditVariableQuery = useCallback(() => {
+    setIsEditorOpen(true);
+  }, []);
 
   const onClickDeleteVariable = useCallback(() => {
     const set = variable.parent;
     if (set instanceof SceneVariableSet) {
-      dashboardEditActions.removeVariable({ source: set, removedObject: variable });
+      removeVariable({ source: set, removedObject: variable });
     }
+  }, [variable]);
+
+  const onClickDuplicateVariable = useCallback(() => {
+    duplicateVariable(variable);
   }, [variable]);
 
   const editActions = useMemo(
     () => (
-      <ControlEditActions element={variable} onClickEdit={onClickEditVariable} onClickDelete={onClickDeleteVariable} />
+      <VariableEditActions
+        variable={variable}
+        onClickEdit={onClickEditVariable}
+        onClickEditQuery={onClickEditVariableQuery}
+        onClickDuplicate={onClickDuplicateVariable}
+        onClickDelete={onClickDeleteVariable}
+      />
     ),
-    [variable, onClickDeleteVariable, onClickEditVariable]
+    [variable, onClickDeleteVariable, onClickDuplicateVariable, onClickEditVariableQuery, onClickEditVariable]
   );
+
+  const editorModal = isEditorOpen ? (
+    <VariableEditorModal variable={variable} onClose={() => setIsEditorOpen(false)} />
+  ) : null;
 
   // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
   if (isHidden && variable.UNSAFE_renderAsHidden) {
@@ -103,67 +130,85 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   // For switch variables in menu, we want to show the switch on the left and the label on the right
   if (inMenu && sceneUtils.isSwitchVariable(variable)) {
     return (
-      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
-        <div
-          className={cx(
-            styles.switchMenuContainer,
-            isSelected && 'dashboard-selected-element',
-            isSelectable && !isSelected && 'dashboard-selectable-element'
-          )}
-          data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
-          onPointerDown={markUserInitiated}
-        >
-          <div className={styles.switchControl}>
-            <variable.Component model={variable} />
+      <>
+        {editorModal}
+        <ControlActionsPopover isEditable={canEditControl} content={editActions}>
+          <div
+            className={cx(
+              styles.switchMenuContainer,
+              isSelected && 'dashboard-selected-element',
+              isSelectable && !isSelected && 'dashboard-selectable-element',
+              isReadOnlyControl && styles.readOnlyControl
+            )}
+            data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+            data-dashboard-element-key={variable.state.key}
+            data-dashboard-element-type="variable"
+            onPointerDown={markUserInitiated}
+          >
+            <div className={styles.switchControl}>
+              <variable.Component model={variable} />
+            </div>
+            <VariableLabel
+              variable={variable}
+              layout={'vertical'}
+              className={cx(isSelectable && styles.labelSelectable, styles.switchLabel)}
+            />
           </div>
-          <VariableLabel
-            variable={variable}
-            layout={'vertical'}
-            className={cx(isSelectable && styles.labelSelectable, styles.switchLabel)}
-          />
-        </div>
-      </ControlActionsPopover>
+        </ControlActionsPopover>
+      </>
     );
   }
 
   if (inMenu) {
     return (
-      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
-        <div
-          className={cx(
-            styles.verticalContainer,
-            isSelected && 'dashboard-selected-element',
-            isSelectable && !isSelected && 'dashboard-selectable-element'
-          )}
-          data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
-          onPointerDown={markUserInitiated}
-        >
-          <VariableLabel
-            variable={variable}
-            layout={'vertical'}
-            className={cx(isSelectable && styles.labelSelectable)}
-          />
-          <variable.Component model={variable} />
-        </div>
-      </ControlActionsPopover>
+      <>
+        {editorModal}
+        <ControlActionsPopover isEditable={canEditControl} content={editActions}>
+          <div
+            className={cx(
+              styles.verticalContainer,
+              isSelected && 'dashboard-selected-element',
+              isSelectable && !isSelected && 'dashboard-selectable-element',
+              isReadOnlyControl && styles.readOnlyControl
+            )}
+            data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+            data-dashboard-element-key={variable.state.key}
+            data-dashboard-element-type="variable"
+            onPointerDown={markUserInitiated}
+          >
+            <VariableLabel
+              variable={variable}
+              layout={'vertical'}
+              className={cx(isSelectable && styles.labelSelectable)}
+            />
+            <variable.Component model={variable} />
+          </div>
+        </ControlActionsPopover>
+      </>
     );
   }
 
   return (
-    <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
-      <div
-        className={cx(
-          styles.container,
-          isSelected && 'dashboard-selected-element',
-          isSelectable && !isSelected && 'dashboard-selectable-element'
-        )}
-        data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
-        onPointerDown={markUserInitiated}
-      >
-        <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
-        <variable.Component model={variable} />
-      </div>
-    </ControlActionsPopover>
+    <>
+      {editorModal}
+      <ControlActionsPopover isEditable={canEditControl} content={editActions}>
+        <div
+          className={cx(
+            styles.container,
+            isSelected && 'dashboard-selected-element',
+            isSelectable && !isSelected && 'dashboard-selectable-element',
+            isReadOnlyControl && styles.readOnlyControl
+          )}
+          data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          data-dashboard-element-key={variable.state.key}
+          data-dashboard-element-type="variable"
+          onPointerDown={markUserInitiated}
+        >
+          <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
+          <variable.Component model={variable} />
+        </div>
+      </ControlActionsPopover>
+    </>
   );
 }
 
@@ -185,12 +230,15 @@ function VariableLabel({
 
   const labelOrName = state.label || state.name;
   const controlsLayout = layout ?? 'horizontal';
-  const descriptionSuffix =
-    state.description != null && state.description !== '' ? (
-      <VariableDescriptionTooltip
-        description={state.description}
-        placement={controlsLayout === 'vertical' ? 'top' : 'bottom'}
-      />
+  const placement = controlsLayout === 'vertical' ? 'top' : 'bottom';
+  const hasDescription = state.description != null && state.description !== '';
+  const predefinedOrigin = getPredefinedOrigin(state.origin);
+  const suffix =
+    hasDescription || predefinedOrigin ? (
+      <>
+        {predefinedOrigin && <SourceIcon origin={state.origin} />}
+        {hasDescription && <VariableDescriptionTooltip description={state.description!} placement={placement} />}
+      </>
     ) : undefined;
 
   return (
@@ -202,7 +250,7 @@ function VariableLabel({
       error={state.error}
       layout={controlsLayout}
       description={undefined}
-      suffix={descriptionSuffix}
+      suffix={suffix}
       className={className}
     />
   );
@@ -287,5 +335,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     alignItems: 'center',
+  }),
+  readOnlyControl: css({
+    opacity: 0.65,
+    cursor: 'default',
+    '&:hover': {
+      color: 'inherit',
+    },
   }),
 });

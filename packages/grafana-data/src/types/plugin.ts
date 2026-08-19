@@ -72,6 +72,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   info: PluginMetaInfo;
   includes?: PluginInclude[];
   state?: PluginState;
+  category?: string;
   aliasIDs?: string[];
 
   // System.load & relative URLS
@@ -178,6 +179,10 @@ export interface PluginInclude {
 
   // Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
   addToNav?: boolean;
+
+  // Marks the app's default page: the one the app root URL resolves to. Serialized by the
+  // plugin settings endpoints; at most one include should set it.
+  defaultNav?: boolean;
 
   // Angular app pages
   component?: string;

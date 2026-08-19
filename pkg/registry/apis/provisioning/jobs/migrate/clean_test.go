@@ -39,8 +39,8 @@ func (m *mockClients) ForKind(ctx context.Context, gvk schema.GroupVersionKind) 
 	return ri, args.Get(1).(schema.GroupVersionResource), args.Error(2)
 }
 
-func (m *mockClients) Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
-	args := m.Called(ctx, folderAPIVersion)
+func (m *mockClients) Folder(ctx context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	args := m.Called(ctx)
 	var ri dynamic.ResourceInterface
 	if args.Get(0) != nil {
 		ri = args.Get(0).(dynamic.ResourceInterface)
@@ -282,6 +282,59 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 			return result.Action() == repository.FileActionIgnored &&
 				result.Name() == "file-provisioned-folder" &&
+				result.Error() == nil
+		})).Return()
+
+		err := cleaner.Clean(context.Background(), "test-namespace", progress)
+		require.NoError(t, err)
+
+		mockClientFactory.AssertExpectations(t)
+		clients.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+
+	t.Run("should skip classic-managed resources without an identity", func(t *testing.T) {
+		// A classic shim kind is reported as managed even though it has no manager
+		// identity. It must be ignored, not deleted as an orphan. Under the previous
+		// "identity != empty" check this resource would have been deleted.
+		mockDynamicClient := &mockDynamicInterface{
+			items: []unstructured.Unstructured{
+				{
+					Object: map[string]interface{}{
+						"apiVersion": "dashboard.grafana.app/v1alpha1",
+						"kind":       "Dashboard",
+						"metadata": map[string]interface{}{
+							"name": "classic-managed-dashboard",
+							"annotations": map[string]interface{}{
+								// Manager kind is set, but there is no manager identity.
+								"grafana.app/managedBy": "classic-converted-prometheus",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		clients := &mockClients{}
+		clients.On("ForKind", mock.Anything, schema.GroupVersionKind{Group: resources.DashboardResource.Group, Kind: resources.DashboardKind.Kind}).
+			Return(mockDynamicClient, resources.DashboardResource, nil)
+		clients.On("ForKind", mock.Anything, schema.GroupVersionKind{Group: resources.FolderResource.Group, Kind: resources.FolderKind.Kind}).
+			Return(mockDynamicClient, resources.FolderResource, nil)
+
+		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
+			Return(clients, nil)
+
+		cleaner := NewNamespaceCleaner(mockClientFactory)
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, "remove unprovisioned folders").Return()
+		progress.On("SetMessage", mock.Anything, "remove unprovisioned dashboards").Return()
+
+		// The classic-managed resource must be ignored; a FileActionDeleted result
+		// would be an unexpected call and fail the test.
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action() == repository.FileActionIgnored &&
+				result.Name() == "classic-managed-dashboard" &&
 				result.Error() == nil
 		})).Return()
 

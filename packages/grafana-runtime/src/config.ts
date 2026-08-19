@@ -8,6 +8,7 @@ import {
   type BuildInfo,
   type DataSourceInstanceSettings,
   type FeatureToggles,
+  type GrafanaJavascriptAgentConfig,
   type GrafanaTheme,
   type GrafanaTheme2,
   type LicenseInfo,
@@ -15,6 +16,7 @@ import {
   type OAuthSettings,
   type PanelPluginMeta,
   type PreinstalledPlugin as PreinstalledPluginGrafanaData,
+  store,
   systemDateFormats,
   type SystemDateFormatSettings,
   getThemeById,
@@ -155,7 +157,7 @@ export class GrafanaBootConfig {
   supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
-  grafanaJavascriptAgent = {
+  grafanaJavascriptAgent: GrafanaJavascriptAgentConfig = {
     enabled: false,
     apiKey: '',
     customEndpoint: '',
@@ -238,6 +240,7 @@ export class GrafanaBootConfig {
   analyticsConsoleReporting = false;
   dashboardPerformanceMetrics: string[] = [];
   panelSeriesLimit = 0;
+  dashboardDefaultPreload = false;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,
@@ -250,6 +253,7 @@ export class GrafanaBootConfig {
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
   localFileSystemAvailable?: boolean;
+  provisioningEnabled = true;
   cloudMigrationEnabled?: boolean;
   cloudMigrationIsTarget?: boolean;
   cloudMigrationPollIntervalMs = 2000;
@@ -301,7 +305,7 @@ export class GrafanaBootConfig {
 function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
   const featureToggles = config.featureToggles;
   const localStorageKey = 'grafana.featureToggles';
-  const localStorageValue = window.localStorage.getItem(localStorageKey);
+  const localStorageValue = store.get(localStorageKey);
   if (localStorageValue) {
     const features = localStorageValue.split(',');
     for (const feature of features) {

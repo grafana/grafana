@@ -45,12 +45,11 @@ test.describe(
       // markers after the v2 angular->timeseries migration, so the marker assertion is omitted
       // here. The panels below use explicit from/to times and still assert their markers.
 
-      // Scroll to bottom
-      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-
       // Check 05:00 panel
       const timePanel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('05:00'));
+      await timePanel.scrollIntoViewIfNeeded();
       await expect(timePanel).toBeVisible();
+
       const timeMarker = timePanel.getByTestId(ANNOTATION_MARKER_SELECTOR).first();
       await expect(timeMarker).toBeVisible();
 
@@ -58,7 +57,9 @@ test.describe(
       const midnightPanel = dashboardPage.getByGrafanaSelector(
         selectors.components.Panels.Panel.title('From 22:00 to 00:30 (crossing midnight)')
       );
+      await midnightPanel.scrollIntoViewIfNeeded();
       await expect(midnightPanel).toBeVisible();
+
       const midnightMarker = midnightPanel.getByTestId(ANNOTATION_MARKER_SELECTOR).first();
       await expect(midnightMarker).toBeVisible();
     });

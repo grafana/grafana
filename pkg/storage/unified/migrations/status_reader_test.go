@@ -66,6 +66,65 @@ func TestMigrationStatusReader_FindDefinition(t *testing.T) {
 	}
 }
 
+func TestMigrationStatusReader_GetFloorVersion(t *testing.T) {
+	staticGR := schema.GroupResource{Resource: "preferences", Group: "preferences.grafana.app"}
+	floorGR := schema.GroupResource{Resource: "dashboards", Group: "dashboard.grafana.app"}
+	emptyGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
+	unknownGR := schema.GroupResource{Resource: "unknown", Group: "unknown.grafana.app"}
+	// datasource migration registers a single primary group; dual writing addresses
+	// each plugin under its own subgroup (e.g. "prometheus.datasource.grafana.app").
+	dsGR := schema.GroupResource{Resource: "datasources", Group: "datasource.grafana.app"}
+	dsPluginGR := schema.GroupResource{Resource: "datasources", Group: "prometheus.datasource.grafana.app"}
+	dsWrongResourceGR := schema.GroupResource{Resource: "other", Group: "prometheus.datasource.grafana.app"}
+
+	registry := NewMigrationRegistry()
+	registry.Register(MigrationDefinition{
+		ID:          "preferences",
+		MigrationID: "preferences migration",
+		Resources:   []ResourceInfo{{GroupResource: staticGR, FloorVersion: "v1"}},
+	})
+	registry.Register(MigrationDefinition{
+		ID:          "dashboards",
+		MigrationID: "dashboards migration",
+		Resources:   []ResourceInfo{{GroupResource: floorGR, FloorVersion: "v0alpha1"}},
+	})
+	registry.Register(MigrationDefinition{
+		ID:          "playlists",
+		MigrationID: "playlists migration",
+		Resources:   []ResourceInfo{{GroupResource: emptyGR}},
+	})
+	registry.Register(MigrationDefinition{
+		ID:          "datasources",
+		MigrationID: "datasources migration",
+		Resources:   []ResourceInfo{{GroupResource: dsGR, FloorVersion: "v0alpha1"}},
+	})
+
+	reader := newTestStatusReader(t, &setting.Cfg{}, registry)
+
+	tests := []struct {
+		name        string
+		gr          schema.GroupResource
+		wantVersion string
+		wantOK      bool
+	}{
+		{name: "static version returned", gr: staticGR, wantVersion: "v1", wantOK: true},
+		{name: "floor version returned", gr: floorGR, wantVersion: "v0alpha1", wantOK: true},
+		{name: "empty floor version skipped", gr: emptyGR, wantOK: false},
+		{name: "unregistered resource skipped", gr: unknownGR, wantOK: false},
+		{name: "primary datasource group returned", gr: dsGR, wantVersion: "v0alpha1", wantOK: true},
+		{name: "plugin datasource subgroup returned", gr: dsPluginGR, wantVersion: "v0alpha1", wantOK: true},
+		{name: "plugin subgroup with mismatched resource skipped", gr: dsWrongResourceGR, wantOK: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			version, ok := reader.GetFloorVersion(tt.gr)
+			require.Equal(t, tt.wantOK, ok)
+			require.Equal(t, tt.wantVersion, version)
+		})
+	}
+}
+
 func TestMigrationStatusReader_GetStorageMode_ConfigResolution(t *testing.T) {
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 	unknownGR := schema.GroupResource{Resource: "unknown", Group: "unknown.grafana.app"}
@@ -139,7 +198,7 @@ func TestMigrationStatusReader_GetStorageMode_ConfigResolution(t *testing.T) {
 }
 
 func TestMigrationStatusReader_GetStorageMode_MigrationLogOverridesConfig(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 	registry := newPlaylistRegistry()
 
@@ -160,7 +219,7 @@ func TestMigrationStatusReader_GetStorageMode_MigrationLogOverridesConfig(t *tes
 }
 
 func TestMigrationStatusReader_GetStorageMode_IgnoresFailedMigrationLogRows(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 	registry := newPlaylistRegistry()
 
@@ -181,7 +240,7 @@ func TestMigrationStatusReader_GetStorageMode_IgnoresFailedMigrationLogRows(t *t
 }
 
 func TestMigrationStatusReader_GetStorageMode_ConfigFallbackWhenLogMissing(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 
 	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
@@ -197,7 +256,7 @@ func TestMigrationStatusReader_GetStorageMode_ConfigFallbackWhenLogMissing(t *te
 }
 
 func TestMigrationStatusReader_OnlyCfgRecoveryWhenTableAppears(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 
 	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
@@ -223,7 +282,7 @@ func TestMigrationStatusReader_OnlyCfgRecoveryWhenTableAppears(t *testing.T) {
 }
 
 func TestMigrationStatusReader_OnlyCfgPersistsWhenTableMissing(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 
 	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
@@ -249,7 +308,7 @@ func TestMigrationStatusReader_OnlyCfgPersistsWhenTableMissing(t *testing.T) {
 }
 
 func TestMigrationStatusReader_GetStorageMode_DBErrorFallsBackToConfig(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 	registry := newPlaylistRegistry()
 
@@ -279,7 +338,7 @@ func TestMigrationStatusReader_GetStorageMode_DBErrorFallsBackToConfig(t *testin
 }
 
 func TestMigrationStatusReader_GetStorageMode_NoErrorWhenBootstrapSucceeds(t *testing.T) {
-	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 
 	require.NoError(t, EnsureMigrationLogTable(context.Background(), sqlStore, cfg))
@@ -329,7 +388,7 @@ func newPlaylistRegistry() *MigrationRegistry {
 func newTestStatusReader(t *testing.T, cfg *setting.Cfg, registry *MigrationRegistry) *migrationStatusReader {
 	t.Helper()
 
-	sqlStore, testCfg := infraDB.InitTestDBWithCfg(t)
+	sqlStore, testCfg := infraDB.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	testCfg.UnifiedStorage = cfg.UnifiedStorage
 	testCfg.StorageModeCacheTTL = cfg.StorageModeCacheTTL
 	reader, err := ProvideMigrationStatusReader(sqlStore, testCfg, registry, prometheus.NewRegistry())

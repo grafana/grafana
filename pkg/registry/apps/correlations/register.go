@@ -38,7 +38,7 @@ type AppInstaller struct {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	service correlations.Service,
+	legacyService *correlations.CorrelationsService,
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{}
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, correlationsapp.New)
@@ -53,9 +53,9 @@ func RegisterAppInstaller(
 	}
 	installer.AppInstaller = i
 
-	if service != nil {
+	if legacyService != nil {
 		installer.legacy = &legacyStorage{
-			service:    service,
+			service:    legacyService,
 			namespacer: request.GetNamespaceMapper(cfg),
 		}
 	}

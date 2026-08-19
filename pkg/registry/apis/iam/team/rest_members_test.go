@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,14 +21,15 @@ import (
 )
 
 func TestTeamMembersREST_Connect(t *testing.T) {
-	features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesTeamsApi)
+	teamsApiEnabled := true
+	setTeamsApiFlag(t, teamsApiEnabled)
 
 	t.Run("returns members from team spec", func(t *testing.T) {
 		g := &mockGetter{team: teamWithMembers("team1",
 			member("user1", "admin", true),
 			member("user2", "member", false),
 		)}
-		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService(), features)
+		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
@@ -51,8 +54,15 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 	})
 
 	t.Run("returns 403 when feature flag disabled", func(t *testing.T) {
+		teamsApiEnabled := false
+		setTeamsApiFlag(t, teamsApiEnabled)
+		t.Cleanup(func() {
+			teamsApiEnabled = true
+			setTeamsApiFlag(t, teamsApiEnabled)
+		})
+
 		g := &mockGetter{team: teamWithMembers("team1")}
-		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService(), featuremgmt.WithFeatures())
+		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
@@ -69,7 +79,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 	t.Run("propagates getter error", func(t *testing.T) {
 		g := &mockGetter{err: errors.New("boom")}
-		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService(), features)
+		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
@@ -88,7 +98,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 			member("u3", "member", false),
 			member("u4", "member", false),
 		)}
-		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService(), features)
+		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
@@ -110,7 +120,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 			member("u3", "member", false),
 			member("u4", "member", false),
 		)}
-		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService(), features)
+		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
@@ -130,7 +140,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 			member("u1", "member", false),
 			member("u2", "member", false),
 		)}
-		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService(), features)
+		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
@@ -152,7 +162,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 			member("u1", "member", false),
 			member("u2", "member", false),
 		)}
-		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService(), features)
+		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
 		responder := &mockResponder{}
@@ -171,7 +181,7 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 	t.Run("rejects limit above max", func(t *testing.T) {
 		g := &mockGetter{team: teamWithMembers("team1")}
-		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService(), features)
+		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
 		h, _ := handler.Connect(ctx, "team1", nil, &mockResponder{})
@@ -226,4 +236,16 @@ func (m *mockGetter) Get(_ context.Context, _ string, _ *metav1.GetOptions) (run
 		return nil, m.err
 	}
 	return m.team, nil
+}
+
+func setTeamsApiFlag(t *testing.T, enabled bool) {
+	t.Helper()
+	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesTeamsApi: {
+			Key:            featuremgmt.FlagKubernetesTeamsApi,
+			DefaultVariant: "default",
+			Variants:       map[string]any{"default": enabled},
+		},
+	})
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
 }

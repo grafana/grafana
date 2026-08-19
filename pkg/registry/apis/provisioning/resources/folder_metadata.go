@@ -160,9 +160,11 @@ func NewFolderManifest(uid, title string, gvk schema.GroupVersionKind) *folders.
 	return f
 }
 
-// marshalFolderManifest serializes a Folder resource to JSON.
+// marshalFolderManifest serializes a Folder resource to pretty-printed JSON so
+// the _folder.json written to the repository matches the formatting of other
+// resource files (see ParsedResource.ToSaveBytes).
 func marshalFolderManifest(folder *folders.Folder) ([]byte, error) {
-	data, err := json.Marshal(folder)
+	data, err := json.MarshalIndent(folder, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("marshal folder manifest: %w", err)
 	}

@@ -49,8 +49,10 @@ const (
 
 var (
 	// RelationsFolder is used by reconciliation to list tuples for folder objects.
-	// It must include both verb relations (get/update/delete/...) and the permission-set relations (view/edit/admin)
-	RelationsFolder = append(append([]string{}, common.RelationsTyped...),
+	// NOTE: this is NOT common.RelationsFolder. It is a superset: common.RelationsFolder (the
+	// relations the authz path validates) PLUS the permission-set relations (view/edit/admin),
+	// which are stored on folder objects and so must be enumerated when syncing/deleting tuples.
+	RelationsFolder = append(append([]string{}, common.RelationsFolder...),
 		common.RelationSetView, common.RelationSetEdit, common.RelationSetAdmin,
 	)
 	// RelationsResouce is used by reconciliation to list tuples for resource objects.
@@ -67,6 +69,10 @@ const (
 )
 
 var (
+	// KindNotebooks is a var (not const) because common.KindNotebooks is derived from
+	// NotebookResourceInfo at init rather than a string constant.
+	KindNotebooks = common.KindNotebooks
+
 	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
 	ToAuthzExtTupleKeys                 = common.ToAuthzExtTupleKeys
 	ToAuthzExtTupleKeyWithoutCondition  = common.ToAuthzExtTupleKeyWithoutCondition

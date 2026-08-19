@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Box, IconButton, Stack, useStyles2, Text } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { useSelector } from 'app/types/store';
+import { useHomeNav } from 'app/core/hooks/useHomeNav';
 
-import { HomeLink } from '../../Branding/Branding';
+import { HomeLogo, HomeTitle } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 
@@ -24,28 +23,30 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
+  const homeNav = useHomeNav();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
+
+  // When undocked we do not show a header, but just the org switcher (which only renders when there are multiple orgs)
+  if (!state.megaMenuDocked) {
+    return <OrganizationSwitcher undocked={true} />;
+  }
 
   return (
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={1}>
-        <HomeLink homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
-        <OrganizationSwitcher />
+        {state.megaMenuDocked && <HomeLogo homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />}
+        <OrganizationSwitcher>
+          {state.megaMenuDocked && <HomeTitle homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />}
+          {!state.megaMenuDocked && (
+            <Box paddingLeft={2}>
+              <Text color="secondary">
+                <Trans i18nKey="navigation.megamenu.header-title">Navigation</Trans>
+              </Text>
+            </Box>
+          )}
+        </OrganizationSwitcher>
       </Stack>
       <div className={styles.flexGrow} />
-      <IconButton
-        id={DOCK_MENU_BUTTON_ID}
-        className={styles.dockMenuButton}
-        tooltip={
-          state.megaMenuDocked
-            ? t('navigation.megamenu.undock', 'Undock menu')
-            : t('navigation.megamenu.dock', 'Dock menu')
-        }
-        name="web-section-alt"
-        onClick={handleDockedMenu}
-        variant="secondary"
-      />
       <IconButton
         aria-label={t('navigation.megamenu.close', 'Close menu')}
         tooltip={t('navigation.megamenu.close', 'Close menu')}

@@ -165,6 +165,36 @@ func TestCheck_Run(t *testing.T) {
 		assert.Empty(t, failures)
 	})
 
+	t.Run("should skip health check when datasource uses Forward OAuth Identity", func(t *testing.T) {
+		jsonData := simplejson.New()
+		jsonData.Set("oauthPassThru", true)
+		datasources := []*datasources.DataSource{
+			{UID: "valid-uid-1", Type: "prometheus", Name: "Prometheus", JsonData: jsonData},
+		}
+
+		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
+		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
+		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: "should not run"}}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
+		mockPluginStore := &MockPluginStore{exists: true}
+
+		check := &check{
+			DatasourceSvc: mockDatasourceSvc,
+			PluginRepo:    mockPluginRepo,
+			PluginStore:   mockPluginStore,
+			healthChecker: &checks.HealthCheckerImpl{
+				PluginContextProvider: mockPluginContextProvider,
+				PluginClient:          mockPluginClient,
+			},
+		}
+
+		failures, err := runChecks(check)
+		assert.NoError(t, err)
+		assert.Empty(t, failures)
+	})
+
 	t.Run("should skip health check when plugin does not support backend health checks", func(t *testing.T) {
 		datasources := []*datasources.DataSource{
 			{UID: "valid-uid-1", Type: "prometheus", Name: "Prometheus"},
@@ -305,10 +335,7 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, failures, 1)
 		assert.Equal(t, PromDepAuthStepID, failures[0].StepID)
-		assert.Contains(t, failures[0].Links, advisor.CheckErrorLink{
-			Message: "View SigV4 docs",
-			Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/",
-		})
+		assert.Contains(t, failures[0].Links, checks.NewErrorLink("view-sigv4-docs", "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/"))
 	})
 
 	t.Run("should return failure when prometheus datasource uses Azure auth", func(t *testing.T) {
@@ -341,10 +368,7 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, failures, 1)
 		assert.Equal(t, PromDepAuthStepID, failures[0].StepID)
-		assert.Contains(t, failures[0].Links, advisor.CheckErrorLink{
-			Message: "View Azure auth docs",
-			Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/",
-		})
+		assert.Contains(t, failures[0].Links, checks.NewErrorLink("view-azure-auth-docs", "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/"))
 	})
 
 	t.Run("should not return failure when prometheus datasource does not use deprecated auth", func(t *testing.T) {

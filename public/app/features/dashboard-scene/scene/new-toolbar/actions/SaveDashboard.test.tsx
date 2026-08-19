@@ -10,6 +10,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { registerSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { DashboardScene } from '../../DashboardScene';
 import { DashboardGridItem } from '../../layout-default/DashboardGridItem';
@@ -77,16 +78,22 @@ function buildTestScene(opts: BuildSceneOpts = {}) {
 
 describe('SaveDashboard (toolbar)', () => {
   let originalHasEditPermissionInFolders: boolean;
+  let originalPermissions: typeof contextSrv.user.permissions;
 
   beforeEach(() => {
     registerSaveAsTemplateForm(null as unknown as Parameters<typeof registerSaveAsTemplateForm>[0]);
     originalHasEditPermissionInFolders = contextSrv.hasEditPermissionInFolders;
     contextSrv.hasEditPermissionInFolders = true;
+    originalPermissions = contextSrv.user.permissions;
+    // "Save as template" is gated on the dashboardtemplates:write RBAC action; grant it by
+    // default so the visibility tests pass, and revoke it explicitly in the hidden cases.
+    contextSrv.user.permissions = { [AccessControlAction.DashboardTemplatesWrite]: true };
   });
 
   afterEach(async () => {
     registerSaveAsTemplateForm(null as unknown as Parameters<typeof registerSaveAsTemplateForm>[0]);
     contextSrv.hasEditPermissionInFolders = originalHasEditPermissionInFolders;
+    contextSrv.user.permissions = originalPermissions;
     jest.clearAllMocks();
   });
 
@@ -164,6 +171,34 @@ describe('SaveDashboard (toolbar)', () => {
 
       await user.click(await screen.findByRole('button', { name: /More save options/i }));
       expect(screen.queryByRole('menuitem', { name: /Save as template/i })).not.toBeInTheDocument();
+    });
+
+    it('is hidden without dashboardtemplates:write', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
+      });
+      registerSaveAsTemplateForm(() => null);
+      contextSrv.user.permissions = {};
+
+      const scene = buildTestScene({ canSave: true });
+      const { user } = render(<SaveDashboard dashboard={scene} />);
+
+      await user.click(await screen.findByRole('button', { name: /More save options/i }));
+      expect(screen.queryByRole('menuitem', { name: /Save as template/i })).not.toBeInTheDocument();
+    });
+
+    it('is visible with dashboardtemplates:write', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
+      });
+      registerSaveAsTemplateForm(() => null);
+      contextSrv.user.permissions = { [AccessControlAction.DashboardTemplatesWrite]: true };
+
+      const scene = buildTestScene({ canSave: true });
+      const { user } = render(<SaveDashboard dashboard={scene} />);
+
+      await user.click(await screen.findByRole('button', { name: /More save options/i }));
+      expect(await screen.findByRole('menuitem', { name: /Save as template/i })).toBeInTheDocument();
     });
 
     it('is visible and triggers openSaveDrawer when flag is on, canSave is true, and an extension form is registered', async () => {

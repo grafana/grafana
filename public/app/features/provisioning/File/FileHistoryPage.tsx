@@ -13,6 +13,7 @@ import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
 import { PROVISIONING_URL } from '../constants';
 import { type HistoryListResponse } from '../types';
+import { getRemoteConfig } from '../utils/git';
 import { formatTimestamp } from '../utils/time';
 
 import { isFileHistorySupported } from './utils';
@@ -25,6 +26,7 @@ export default function FileHistoryPage() {
   const repoType = urlParams.get('repo_type');
   const historyNotSupported = !isFileHistorySupported(repoType);
   const query = useGetRepositoryStatusQuery({ name });
+  const repoUrl = getRemoteConfig(query.data?.spec)?.url;
   const history = useGetRepositoryHistoryWithPathQuery(historyNotSupported ? skipToken : { name, path });
   const notFound = (query.isError && isNotFoundError(query.error)) || historyNotSupported;
 
@@ -58,8 +60,14 @@ export default function FileHistoryPage() {
         ) : (
           <div>
             {history.data ? (
-              //@ts-expect-error TODO fix history response types
-              <HistoryView history={history.data} path={path} repo={name} repoType={repoType ?? undefined} />
+              <HistoryView
+                //@ts-expect-error OpenAPI generated response type is `string`; actual payload is HistoryList - causing type discrepancy error
+                history={history.data}
+                path={path}
+                repo={name}
+                repoType={repoType ?? undefined}
+                repoUrl={repoUrl}
+              />
             ) : (
               <Spinner />
             )}
@@ -75,9 +83,10 @@ interface Props {
   path: string;
   repo: string;
   repoType?: string;
+  repoUrl?: string;
 }
 
-function HistoryView({ history, path, repo, repoType }: Props) {
+function HistoryView({ history, path, repo, repoType, repoUrl }: Props) {
   if (!history.items) {
     return <Trans i18nKey="provisioning.history-view.not-found">Not found</Trans>;
   }
@@ -97,7 +106,7 @@ function HistoryView({ history, path, repo, repoType }: Props) {
           <Card.Description>
             <Stack>
               {item.authors.map((a) => {
-                const profileUrl = getAuthorProfileUrl(repoType, a.username);
+                const profileUrl = getAuthorProfileUrl(repoType, a.username, repoUrl);
                 return (
                   <span key={a.username} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     {a.avatarURL && (
@@ -127,17 +136,17 @@ function HistoryView({ history, path, repo, repoType }: Props) {
   );
 }
 
-export function getAuthorProfileUrl(repoType: string | undefined, username: string): string | undefined {
-  const encoded = encodeURIComponent(username);
-  switch (repoType) {
-    case 'github':
-    case 'githubEnterprise':
-      return `https://github.com/${encoded}`;
-    case 'gitlab':
-      return `https://gitlab.com/${encoded}`;
-    case 'bitbucket':
-      return `https://bitbucket.org/${encoded}`;
-    default:
-      return undefined;
+export function getAuthorProfileUrl(
+  repoType: string | undefined,
+  username: string,
+  repoUrl?: string
+): string | undefined {
+  if (!repoUrl || !isFileHistorySupported(repoType)) {
+    return undefined;
+  }
+  try {
+    return `${new URL(repoUrl).origin}/${encodeURIComponent(username)}`;
+  } catch {
+    return undefined;
   }
 }

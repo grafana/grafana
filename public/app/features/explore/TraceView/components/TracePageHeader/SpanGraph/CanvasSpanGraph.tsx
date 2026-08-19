@@ -21,7 +21,7 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 import { autoColor } from '../../Theme';
 import { getRgbColorByKey } from '../../utils/color-generator';
 
-import renderIntoCanvas from './render-into-canvas';
+import renderIntoCanvas, { type SpanGraphItem } from './render-into-canvas';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -37,7 +37,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 type CanvasSpanGraphProps = {
-  items: Array<{ valueWidth: number; valueOffset: number; serviceName: string }>;
+  items: SpanGraphItem[];
   valueWidth: number;
 };
 

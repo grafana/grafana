@@ -1,10 +1,9 @@
 import Feature from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import * as style from 'ol/style';
 
-import { type MapLayerRegistryItem, type MapLayerOptions, type PanelData, type GrafanaTheme2, PluginState, type EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem, type PanelData, PluginState } from '@grafana/data';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
 export interface LastPointConfig {
@@ -29,7 +28,7 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<LastPointConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (_map, options) => {
     const point = new Feature({});
     const config = { ...defaultOptions, ...options.config };
 

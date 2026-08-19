@@ -45,6 +45,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		if len(r.Finalizers) == 0 {
 			r.Finalizers = []string{
 				RemoveOrphanResourcesFinalizer,
+				RemovePendingJobsFinalizer,
 				CleanFinalizer,
 			}
 		}

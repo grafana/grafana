@@ -42,7 +42,7 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
 
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   DashboardInteractions.editButtonClicked({
-    outlineExpanded: !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', false),
+    outlineExpanded: !store.getBool('grafana.dashboard.sidebar.outline.collapsed', false),
     dashboardUid,
   });
 };
@@ -95,7 +95,7 @@ export async function trackDashboardSceneCreatedOrSaved(
         }),
   });
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) && isNew) {
     const { pathname, search } = locationService.getLocation();
     const isOnTemplateRoute = pathname === DASHBOARD_LIBRARY_ROUTES.Template;
     const templateUid = new URLSearchParams(search).get('dashboardTemplateUid');

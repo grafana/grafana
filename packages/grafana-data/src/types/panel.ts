@@ -96,6 +96,14 @@ export interface PanelProps<T = any> {
   /** Current height of the panel in pixels */
   height: number;
 
+  /**
+   * When true the panel is rendered in a content-fit layout: it has no fixed
+   * height and should size to its content (the cell enforces min/max via CSS).
+   * Only set for plugins that opt in via {@link PanelPlugin.setFitContentSupport}.
+   * Fit-aware panels must not rely on `height` in this mode.
+   */
+  fitContent?: boolean;
+
   /** Field options configuration. Controls how field values are displayed (e.g., units, min, max, decimals, thresholds) */
   fieldConfig: FieldConfigSource;
 
@@ -111,8 +119,12 @@ export interface PanelProps<T = any> {
   /** Handler for options change. Invoke it to update the panel custom options. */
   onOptionsChange: (options: T) => void;
 
-  /** Field config change handler. Invoke it to update the panel field config. */
-  onFieldConfigChange: (config: FieldConfigSource) => void;
+  /**
+   * Field config change handler. Invoke it to update the panel field config.
+   * By default, the given config is deep-merged into the current field config;
+   * Pass `replace: true` to replace the field config entirely.
+   */
+  onFieldConfigChange: (config: FieldConfigSource, replace?: boolean) => void;
 
   /** Template variables interpolation function. Given a string containing template variables, it returns the string with interpolated values. */
   replaceVariables: InterpolateFunction;

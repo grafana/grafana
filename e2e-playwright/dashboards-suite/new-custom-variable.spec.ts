@@ -54,6 +54,11 @@ test.use({
   featureToggles: {
     dashboardNewLayouts: true,
   },
+  openFeature: {
+    flags: {
+      'grafana.dashboardSettingsRedesign': false,
+    },
+  },
 });
 
 test.describe(

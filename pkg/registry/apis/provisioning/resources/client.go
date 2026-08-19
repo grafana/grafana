@@ -143,21 +143,14 @@ func supportsFolderAnnotation(supported []SupportedResource, gvk schema.GroupVer
 	return false
 }
 
-// folderGVR builds the GVR for the folder API at the given version.
-func folderGVR(folderAPIVersion string) schema.GroupVersionResource {
+// folderVersionlessGVR builds a versionless GVR for the folder API. The concrete
+// version is resolved at runtime via API discovery (the server's preferred version),
+// so provisioning works on any instance regardless of which folder versions are enabled.
+func folderVersionlessGVR() schema.GroupVersionResource {
 	return schema.GroupVersionResource{
 		Group:    FolderResource.Group,
-		Version:  folderAPIVersion,
 		Resource: FolderResource.Resource,
-	}
-}
-
-// FolderGVKForVersion returns a GVK for the folder API at the given version.
-func FolderGVKForVersion(version string) schema.GroupVersionKind {
-	return schema.GroupVersionKind{
-		Group:   FolderKind.Group,
-		Version: version,
-		Kind:    FolderKind.Kind,
+		// Version intentionally empty: resolved via discovery.
 	}
 }
 
@@ -181,8 +174,9 @@ type clientFactory struct {
 type ResourceClients interface {
 	ForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error)
 	ForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
-	// Folder returns a dynamic client for the folder API at the given version.
-	Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
+	// Folder returns a dynamic client for the folder API. The version is resolved
+	// via discovery (the server's preferred version); the resolved GVK is returned.
+	Folder(ctx context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
 	User(ctx context.Context) (dynamic.ResourceInterface, error)
 	// SupportedResources returns the resources that can be fully managed from the UI:
 	// the static base set plus any extra resources registered with the client factory.
@@ -456,8 +450,8 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	return info.client, info.gvk, nil
 }
 
-func (c *resourceClients) Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
-	return c.ForResource(ctx, folderGVR(folderAPIVersion))
+func (c *resourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	return c.ForResource(ctx, folderVersionlessGVR())
 }
 
 func (c *resourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {
@@ -506,8 +500,8 @@ func (c *multiResourceClients) ForResource(ctx context.Context, gvr schema.Group
 	return resourceClients.ForResource(ctx, gvr)
 }
 
-func (c *multiResourceClients) Folder(ctx context.Context, folderAPIVersion string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
-	return c.ForResource(ctx, folderGVR(folderAPIVersion))
+func (c *multiResourceClients) Folder(ctx context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+	return c.ForResource(ctx, folderVersionlessGVR())
 }
 
 func (c *multiResourceClients) User(ctx context.Context) (dynamic.ResourceInterface, error) {

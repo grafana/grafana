@@ -2,6 +2,8 @@ import { type CommitOptions, type InlineSecureValue, type RepositorySpec } from 
 
 import { type RepositoryFormData } from '../types';
 
+import { isGitHubBased } from './repositoryTypes';
+
 // Template field names across the git-convention option groups.
 type TemplateFieldKey = 'singleResourceMessageTemplate' | 'nameTemplate' | 'titleTemplate';
 
@@ -19,15 +21,24 @@ const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined
     data.commit?.singleResourceMessageTemplate,
     data.commit?.enforceTemplate
   );
-  const signerName = data.commit?.signerName?.trim();
-  const signerEmail = data.commit?.signerEmail?.trim();
   const signingMethod = data.signingMethod;
+  const authorName = signingMethod ? undefined : data.commit?.authorName?.trim();
+  const authorEmail = signingMethod ? undefined : data.commit?.authorEmail?.trim();
+  const signerName = signingMethod ? data.commit?.signerName?.trim() : undefined;
+  const signerEmail = signingMethod ? data.commit?.signerEmail?.trim() : undefined;
+  const signerIsAuthor = Boolean(signingMethod) && Boolean(data.commit?.signerIsAuthor);
 
-  if (!base && !signerName && !signerEmail && !signingMethod) {
+  if (!base && !authorName && !authorEmail && !signerName && !signerEmail && !signingMethod) {
     return undefined;
   }
 
   const commit: CommitOptions = { ...base };
+  if (authorName) {
+    commit.authorName = authorName;
+  }
+  if (authorEmail) {
+    commit.authorEmail = authorEmail;
+  }
   if (signerName) {
     commit.signerName = signerName;
   }
@@ -36,6 +47,9 @@ const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined
   }
   if (signingMethod) {
     commit.signingMethod = signingMethod;
+  }
+  if (signerIsAuthor) {
+    commit.signerIsAuthor = true;
   }
   if (data.smimeCertificate) {
     commit.smimeCertificate = data.smimeCertificate;
@@ -105,8 +119,14 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     data.pullRequest?.titleTemplate,
     data.pullRequest?.enforceTemplate
   );
-  if (pullRequest) {
-    spec.pullRequest = pullRequest;
+  // GitHub keeps generateDashboardPreviews on its own config until existing repositories are
+  // backfilled; every other provider stores it on pullRequest options (matches the backend).
+  const generatePreviewsOnPullRequest = data.type !== 'github' && Boolean(data.generateDashboardPreviews);
+  if (pullRequest || generatePreviewsOnPullRequest) {
+    spec.pullRequest = {
+      ...pullRequest,
+      ...(generatePreviewsOnPullRequest ? { generateDashboardPreviews: data.generateDashboardPreviews } : {}),
+    };
   }
 
   if (data.webhook?.disabled) {
@@ -127,13 +147,11 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
         ...baseConfig,
         generateDashboardPreviews: data.generateDashboardPreviews,
       };
-      // Add connection reference at spec level if using GitHub App
-      // connection name is only available for the app flow
-      // Prefer data.connectionName over the parameter for consistency
-      const finalConnectionName = data.connectionName || connectionName;
-      if (finalConnectionName) {
-        spec.connection = { name: finalConnectionName };
-      }
+      break;
+    case 'githubEnterprise':
+      spec.githubEnterprise = {
+        ...baseConfig,
+      };
       break;
     case 'gitlab':
       spec.gitlab = baseConfig;
@@ -142,6 +160,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       spec.bitbucket = {
         ...baseConfig,
         tokenUser: data.tokenUser,
+        email: data.email?.trim() || undefined,
       };
       break;
     case 'git':
@@ -153,6 +172,16 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       };
       spec.workflows = spec.workflows.filter((v) => v !== 'branch'); // branch only supported by github
       break;
+  }
+
+  // Add connection reference at spec level when using GitHub App (github and
+  // githubEnterprise). The connection name is only available for the app flow;
+  // prefer data.connectionName over the parameter for consistency.
+  if (isGitHubBased(data.type)) {
+    const finalConnectionName = data.connectionName || connectionName;
+    if (finalConnectionName) {
+      spec.connection = { name: finalConnectionName };
+    }
   }
 
   // We need to deep clone the data, so it doesn't become immutable
@@ -178,7 +207,7 @@ export const deriveSigningKeySecret = (
 };
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
-  const remoteConfig = spec.github || spec.gitlab || spec.bitbucket || spec.git;
+  const remoteConfig = spec.github || spec.githubEnterprise || spec.gitlab || spec.bitbucket || spec.git;
   // tokenUser is only available for bitbucket and pure git
   const tokenUser = spec.bitbucket?.tokenUser ?? spec.git?.tokenUser;
 
@@ -190,7 +219,9 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     branchOptions: spec.branch,
     url: remoteConfig?.url || '',
     tokenUser: tokenUser || '',
-    generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
+    generateDashboardPreviews: spec.github
+      ? (spec.github?.generateDashboardPreviews ?? false)
+      : (spec.pullRequest?.generateDashboardPreviews ?? false),
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
@@ -198,13 +229,21 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     signingMethod: spec.commit?.signingMethod ?? '',
     smimeCertificate: spec.commit?.smimeCertificate ?? '',
     commitSigningKey: '',
-    commit: { ...spec.commit, signerName: spec.commit?.signerName ?? '', signerEmail: spec.commit?.signerEmail ?? '' },
+    commit: {
+      ...spec.commit,
+      authorName: spec.commit?.authorName ?? '',
+      authorEmail: spec.commit?.authorEmail ?? '',
+      signerName: spec.commit?.signerName ?? '',
+      signerEmail: spec.commit?.signerEmail ?? '',
+      signerIsAuthor: spec.commit?.signerIsAuthor ?? false,
+    },
   });
 };
 
 export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'type' | 'url' | 'path'>): string => {
   switch (repository.type) {
     case 'github':
+    case 'githubEnterprise':
     case 'gitlab':
     case 'bitbucket':
     case 'git': {

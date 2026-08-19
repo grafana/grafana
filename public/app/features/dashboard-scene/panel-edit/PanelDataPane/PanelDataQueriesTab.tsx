@@ -17,7 +17,6 @@ import {
 } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
@@ -31,17 +30,18 @@ import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
-import { AccessControlAction } from 'app/types/accessControl';
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/MixedDataSource';
 import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
+import { hasSavedQueryReadPermissions } from '../../../explore/QueryLibrary/utils/identity';
 import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
+import { trackAddQuery } from '../PanelEditNext/tracking';
 
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 import { hasBackendDatasource } from './utils';
@@ -50,6 +50,8 @@ interface PanelDataQueriesTabState extends SceneObjectState {
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   panelRef: SceneObjectRef<VizPanel>;
+  /** refId of a query row to scroll into view once it renders; cleared after the scroll happens. */
+  scrollToRefId?: string;
 }
 export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabState> implements PanelDataPaneTab {
   static Component = PanelDataQueriesTabRendered;
@@ -248,9 +250,11 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     const timeFrom = options.timeRange?.from ?? undefined;
     const timeShift = options.timeRange?.shift ?? undefined;
     const hideTimeOverride = options.timeRange?.hide;
+    const compareWith =
+      panel.state.$timeRange instanceof PanelTimeRange ? panel.state.$timeRange.state.compareWith : undefined;
 
-    if (timeFrom !== undefined || timeShift !== undefined) {
-      panelStateUpdate.$timeRange = new PanelTimeRange({ timeFrom, timeShift, hideTimeOverride });
+    if (timeFrom !== undefined || timeShift !== undefined || compareWith) {
+      panelStateUpdate.$timeRange = new PanelTimeRange({ timeFrom, timeShift, hideTimeOverride, compareWith });
       panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange?.state);
     } else {
       panelStateUpdate.$timeRange = undefined;
@@ -305,6 +309,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   public addQueryClick = () => {
     const queries = this.getQueries();
+    trackAddQuery('new_query', 'legacy', { silent: true });
     this.onQueriesChange(addQuery(queries, this.newQuery()));
   };
 
@@ -321,7 +326,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     return (dsSettings.meta.backend || dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
   }
 
-  public onAddExpressionOfType = (type: ExpressionQueryType) => {
+  public onAddExpressionOfType = (type: ExpressionQueryType): string => {
     const queries = this.getQueries();
     // Create base expression query with the specified type
     const baseQuery = expressionDatasource.newQuery();
@@ -329,7 +334,10 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     // Apply defaults specific to the expression type
     const queryWithDefaults = getDefaults(queryWithType);
 
-    this.onQueriesChange(addQuery(queries, queryWithDefaults));
+    const newQueries = addQuery(queries, queryWithDefaults);
+    this.onQueriesChange(newQueries);
+
+    return newQueries[newQueries.length - 1].refId;
   };
 
   public renderExtraActions() {
@@ -365,12 +373,10 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 }
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
-  const { datasource, dsSettings } = model.useState();
+  const { datasource, dsSettings, scrollToRefId } = model.useState();
   const { data, queries, datasource: datasourceState } = model.queryRunner.useState();
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
-  const canReadQueries = config.featureToggles.savedQueriesRBAC
-    ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
-    : contextSrv.isSignedIn;
+  const canReadQueries = hasSavedQueryReadPermissions();
 
   const handleAddExpression = useCallback(
     (type: ExpressionQueryType) => {
@@ -383,6 +389,10 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     },
     [model]
   );
+
+  const handleScrollIntoView = useCallback(() => {
+    model.setState({ scrollToRefId: undefined });
+  }, [model]);
 
   // Determine which expressions should be disabled (for frontend-only datasources)
   const disabledExpressions = useMemo(() => {
@@ -450,6 +460,8 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
         app={CoreApp.PanelEditor}
         panelRef={model.state.panelRef}
+        scrollToRefId={scrollToRefId}
+        onScrollIntoView={handleScrollIntoView}
       />
 
       <Stack gap={2}>

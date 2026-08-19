@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Field, IconButton, Input, useStyles2, Text } from '@grafana/ui';
@@ -89,6 +90,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           size="lg"
           tooltip={t('page.editable-title.edit-tooltip', 'Edit title')}
           onClick={() => setIsEditing(true)}
+          data-testid={selectors.components.EditableTitle.editButton}
         />
       </div>
     </div>
@@ -120,6 +122,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           onBlur={onBlur}
           onChange={(event) => setLocalValue(event.currentTarget.value)}
           onFocus={() => setIsEditing(true)}
+          data-testid={selectors.components.EditableTitle.titleInput}
         />
       </Field>
       <div className={styles.buttons}>

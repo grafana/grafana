@@ -130,7 +130,7 @@ func (b *APIBuilder) storageForVersion(
 			return nil, err
 		}
 	}
-	wrappedStorage := &preferencesStorage{store}
+	wrappedStorage := &preferencesStorage{Storage: store, gvk: prefs.GroupVersionKind()}
 	storage[prefs.StoragePath()] = wrappedStorage
 
 	apiGroupInfo.VersionedResourcesStorageMap[prefs.GroupVersion().Version] = storage

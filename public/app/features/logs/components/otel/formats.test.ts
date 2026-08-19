@@ -277,4 +277,18 @@ describe('getSuggestedFieldsForLogs', () => {
     const result = getSuggestedFieldsForLogs(logs);
     expect(result).toEqual([]);
   });
+
+  test('matches suggested fields against labels case-insensitively', () => {
+    const logs = [
+      createLogLine({
+        labels: { Service_Name: 'svc', MSG: 'hello', APP: 'web', TraceID: 'abc' },
+        entry: 'log',
+      }),
+    ];
+    const result = getSuggestedFieldsForLogs(logs);
+    expect(result).toContain('service_name');
+    expect(result).toContain('msg');
+    expect(result).toContain('app');
+    expect(result).toContain('traceid');
+  });
 });

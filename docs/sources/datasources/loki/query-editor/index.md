@@ -238,7 +238,7 @@ For more information about metric queries, refer to the [Loki metric queries doc
 ## Apply annotations
 
 [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs.
-You can add annotation queries in the Dashboard menu's Annotations view.
+You can add annotation queries by clicking the **Add new element** icon (blue plus sign) in the dashboard toolbar and selecting **Annotation query**.
 
 You can only use log queries as a source for annotations.
 Grafana automatically uses log content as annotation text and your log stream labels as tags.

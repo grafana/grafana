@@ -35,8 +35,10 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
     closeDetails,
     enableLogDetails,
     logs,
+    prettifyDetailsJSON,
     replaceDetails,
     setCurrentLog,
+    setPrettifyDetailsJSON,
     showDetails,
     toggleDetails,
   } = useLogDetailsContext();
@@ -47,17 +49,23 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
 
+  const handleCloseDetails = useCallback(() => {
+    inputRef.current = '';
+    setSearch('');
+    closeDetails();
+  }, [closeDetails]);
+
   useEffect(() => {
     function handleClose(event: KeyboardEvent) {
       if (event.key === 'Escape' && showDetails.length > 0) {
-        closeDetails();
+        handleCloseDetails();
       }
     }
     document.addEventListener('keyup', handleClose);
     return () => {
       document.removeEventListener('keyup', handleClose);
     };
-  }, [closeDetails, showDetails.length]);
+  }, [handleCloseDetails, showDetails.length]);
 
   useEffect(() => {
     function handleKeydown(e: KeyboardEvent) {
@@ -192,7 +200,7 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
             wrapLogMessage
           >
             <LogLineDetailsHeader
-              closeDetails={closeDetails}
+              closeDetails={handleCloseDetails}
               detailsMode="sidebar"
               log={currentLog}
               search={search}
@@ -202,7 +210,9 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
               <LogLineDetailsComponent
                 log={currentLog}
                 logs={logs}
+                prettifyDetailsJSON={prettifyDetailsJSON}
                 search={search}
+                setPrettifyDetailsJSON={setPrettifyDetailsJSON}
                 timeRange={timeRange}
                 timeZone={timeZone}
               />
@@ -229,6 +239,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z3,
+    // position is required for zIndex to take effect and establish a stacking
+    // context, otherwise the tabs render behind elements in the table below.
+    position: 'relative',
     zIndex: theme.zIndex.navbarFixed,
     height: '100%',
     display: 'flex',

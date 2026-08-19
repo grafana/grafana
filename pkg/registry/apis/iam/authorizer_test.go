@@ -240,6 +240,71 @@ func TestAuthorizerDecisionMatrix(t *testing.T) {
 	}
 }
 
+// TestAuthorizerListDefersToStorage verifies that a nameless collection list
+// (no subresource, no name) is allowed at the authorizer layer without a
+// per-request RBAC Check, so unified storage can filter results per-item.
+// Zanzana maps a nameless list to a group_resource (wildcard) check, so routing
+// it through the ResourceAuthorizer would 403 any user who cannot read every
+// item. Named get and named list stay strict.
+func TestAuthorizerListDefersToStorage(t *testing.T) {
+	ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+
+	for _, sc := range authorizerScenarios {
+		t.Run(sc.name, func(t *testing.T) {
+			attr := func(verb, name string) authorizer.AttributesRecord {
+				return authorizer.AttributesRecord{
+					ResourceRequest: true,
+					APIGroup:        sc.group,
+					Resource:        sc.resource,
+					Name:            name,
+					Verb:            verb,
+					Namespace:       "org-1",
+				}
+			}
+			newAuth := func(checkCalled *bool) authorizer.Authorizer {
+				return sc.newAuthorizer(&fakeAccessClient{
+					checkFunc: func(_ context.Context, _ types.AuthInfo, _ types.CheckRequest, _ string) (types.CheckResponse, error) {
+						*checkCalled = true
+						return types.CheckResponse{Allowed: false}, nil
+					},
+				})
+			}
+
+			t.Run("nameless list denied without identity", func(t *testing.T) {
+				checkCalled := false
+				decision, _, err := newAuth(&checkCalled).Authorize(context.Background(), attr("list", ""))
+				require.NoError(t, err)
+				assert.Equal(t, authorizer.DecisionDeny, decision)
+				assert.False(t, checkCalled)
+			})
+
+			t.Run("nameless list is allowed without calling Check", func(t *testing.T) {
+				checkCalled := false
+				decision, _, err := newAuth(&checkCalled).Authorize(ctx, attr("list", ""))
+				require.NoError(t, err)
+				assert.Equal(t, authorizer.DecisionAllow, decision)
+				assert.False(t, checkCalled, "nameless list must not perform a group-resource Check; storage filters per-item")
+			})
+
+			t.Run("named list still delegates to Check", func(t *testing.T) {
+				checkCalled := false
+				decision, _, err := newAuth(&checkCalled).Authorize(ctx, attr("list", sc.resourceName))
+				require.NoError(t, err)
+				assert.Equal(t, authorizer.DecisionDeny, decision)
+				assert.True(t, checkCalled, "named list must still be authorized")
+			})
+
+			t.Run("named get still delegates to Check", func(t *testing.T) {
+				checkCalled := false
+				decision, _, err := newAuth(&checkCalled).Authorize(ctx, attr("get", sc.resourceName))
+				require.NoError(t, err)
+				assert.Equal(t, authorizer.DecisionDeny, decision)
+				assert.True(t, checkCalled, "named get must still be authorized per-item")
+			})
+		})
+	}
+}
+
 // TestUserAuthorizerStatusVerbMapping verifies that the user/status subresource
 // maps request verbs to the correct RBAC check verbs (GET→get, UPDATE→update, PATCH→update).
 func TestUserAuthorizerStatusVerbMapping(t *testing.T) {

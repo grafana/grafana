@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
@@ -154,8 +155,15 @@ func (c *JobCleanupController) cleanUpExpiredJob(ctx context.Context, job *provi
 
 	jobLogger := logging.FromContext(ctx).With("namespace", jobCopy.GetNamespace(), "job", jobCopy.GetName(), "action", jobCopy.Spec.Action)
 
-	// Delete from active job store first
+	// Delete from active job store first.
+	// With multiple cleanup instances running (no leader election), another instance
+	// may have already reaped this job between our list and delete. A NotFound then
+	// means the job is already cleaned up and archived, so treat it as success.
 	if err := c.store.Complete(ctx, jobCopy); err != nil {
+		if apierrors.IsNotFound(err) {
+			jobLogger.Info("expired job already cleaned up by another instance")
+			return nil
+		}
 		span.RecordError(err)
 		return apifmt.Errorf("failed to complete expired job: %w", err)
 	}

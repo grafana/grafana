@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 type mockConnectionWithToken struct {
@@ -237,12 +239,8 @@ func TestConnectionController_process(t *testing.T) {
 
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
-				// Token is valid
-				mockTokenConnection.EXPECT().TokenValid(mock.Anything).Return(true)
-				// 'old' token - created more than 10 seconds ago
-				mockTokenConnection.EXPECT().TokenCreationTime(mock.Anything).Return(time.Now().Add(-15*time.Second), nil)
 				// Token expires in 2 minutes - should trigger regeneration
-				mockTokenConnection.EXPECT().TokenExpiration(mock.Anything).Return(time.Now().Add(2*time.Minute), nil)
+				mockTokenConnection.EXPECT().ValidateToken().Return(time.Now().Add(2*time.Minute), nil)
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
@@ -253,7 +251,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Return(nil)
 
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
@@ -335,9 +333,9 @@ func TestConnectionController_process(t *testing.T) {
 
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
-				// Token is valid
-				mockTokenConnection.EXPECT().TokenValid(mock.Anything).Return(true)
-				mockTokenConnection.EXPECT().TokenCreationTime(mock.Anything).Return(time.Now().Add(-8*time.Second), nil)
+				// Token was written very recently (see the fixture's status), so no
+				// refresh should happen.
+				mockTokenConnection.EXPECT().ValidateToken().Return(time.Now().Add(2*time.Hour), nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
@@ -375,6 +373,9 @@ func TestConnectionController_process(t *testing.T) {
 					Health: provisioning.HealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
+					},
+					Token: provisioning.TokenStatus{
+						LastUpdated: time.Now().Add(-8 * time.Second).UnixMilli(),
 					},
 				},
 				Spec: provisioning.ConnectionSpec{
@@ -436,11 +437,8 @@ func TestConnectionController_process(t *testing.T) {
 
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
-				// Token is valid
-				mockTokenConnection.EXPECT().TokenValid(mock.Anything).Return(true)
-				mockTokenConnection.EXPECT().TokenCreationTime(mock.Anything).Return(time.Now().Add(-15*time.Second), nil)
 				// Token expires in 15 minutes - with buffer of 10m10s (2*5m + 10s), this will NOT trigger regeneration
-				mockTokenConnection.EXPECT().TokenExpiration(mock.Anything).Return(time.Now().Add(15*time.Minute), nil)
+				mockTokenConnection.EXPECT().ValidateToken().Return(time.Now().Add(15*time.Minute), nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
 						TestResults:  testResults,
@@ -539,11 +537,8 @@ func TestConnectionController_process(t *testing.T) {
 
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
-				// Token is valid
-				mockTokenConnection.EXPECT().TokenValid(mock.Anything).Return(true)
-				mockTokenConnection.EXPECT().TokenCreationTime(mock.Anything).Return(time.Now().Add(-15*time.Second), nil)
 				// Token expires in 9 minutes - with buffer of 10m10s (2*5m + 10s), this WILL trigger regeneration
-				mockTokenConnection.EXPECT().TokenExpiration(mock.Anything).Return(time.Now().Add(9*time.Minute), nil)
+				mockTokenConnection.EXPECT().ValidateToken().Return(time.Now().Add(9*time.Minute), nil)
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return("someToken", nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
@@ -554,7 +549,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
 					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
 						found := false
@@ -644,11 +639,8 @@ func TestConnectionController_process(t *testing.T) {
 				// Health check is NOT needed (recently checked)
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(false)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
-				// Token is valid
-				mockTokenConnection.EXPECT().TokenValid(mock.Anything).Return(true)
-				mockTokenConnection.EXPECT().TokenCreationTime(mock.Anything).Return(time.Now().Add(-15*time.Second), nil)
 				// Token expires in 9 minutes - with buffer of 10m10s (2*5m + 10s), this WILL trigger regeneration
-				mockTokenConnection.EXPECT().TokenExpiration(mock.Anything).Return(time.Now().Add(9*time.Minute), nil)
+				mockTokenConnection.EXPECT().ValidateToken().Return(time.Now().Add(9*time.Minute), nil)
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
 				// Health check is still performed as part of reconciliation even though ShouldCheckHealth returned false
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
@@ -660,7 +652,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
 					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
 						// Verify token regeneration patch operation exists
@@ -915,7 +907,7 @@ func TestConnectionController_process(t *testing.T) {
 
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
-				// Token is missing, so controller should generate it without checking TokenCreationTime
+				// Token is missing, so controller should generate it without checking its state
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
 				// Health check should be performed after token generation
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).Return(
@@ -928,7 +920,7 @@ func TestConnectionController_process(t *testing.T) {
 				)
 
 				mockPatcher := NewMockConnectionStatusPatcher(t)
-				mockPatcher.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				mockPatcher.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				return mockLister, mockHealthChecker, mockPatcher, mockFactory
 			},
@@ -1002,9 +994,8 @@ func TestConnectionController_process(t *testing.T) {
 
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
-				// Token is invalid - should trigger immediate regeneration
-				mockTokenConnection.EXPECT().TokenValid(mock.Anything).Return(false)
-				// TokenCreationTime and TokenExpiration should NOT be called when token is invalid
+				// Token is not usable - should trigger immediate regeneration
+				mockTokenConnection.EXPECT().ValidateToken().Return(time.Time{}, errors.New("invalid token"))
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
 					Return(ConnectionHealthResultWithPatchOps{
@@ -1015,7 +1006,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
 					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
 						found := false
@@ -1055,76 +1046,6 @@ func TestConnectionController_process(t *testing.T) {
 				},
 			},
 			expectError: false,
-		},
-		{
-			name: "token expiration check error",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
-				mockLister := &mockConnectionLister{
-					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
-						Status: provisioning.ConnectionStatus{
-							ObservedGeneration: 1,
-							Health: provisioning.HealthStatus{
-								Healthy: true,
-								Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
-							},
-						},
-						Spec: provisioning.ConnectionSpec{
-							Type: provisioning.GithubConnectionType,
-						},
-						Secure: provisioning.ConnectionSecure{
-							Token: common.InlineSecureValue{
-								Name: "existing-token",
-							},
-						},
-					},
-				}
-				mockHealthChecker := NewMockConnectionHealthChecker(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
-				mockTokenConnection := connection.NewMockTokenConnection(t)
-				mockConnWithToken := &mockConnectionWithToken{
-					Connection:      mockConnection,
-					TokenConnection: mockTokenConnection,
-				}
-
-				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
-				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
-				// Token is valid
-				mockTokenConnection.EXPECT().TokenValid(mock.Anything).Return(true)
-				mockTokenConnection.EXPECT().TokenCreationTime(mock.Anything).Return(time.Now().Add(-15*time.Second), nil)
-				// TokenExpiration returns error (e.g., token is corrupted and can't be parsed)
-				mockTokenConnection.EXPECT().TokenExpiration(mock.Anything).Return(time.Time{}, errors.New("failed to check token expiration"))
-
-				return mockLister, mockHealthChecker, nil, mockFactory
-			},
-			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
-				Status: provisioning.ConnectionStatus{
-					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
-						Healthy: true,
-						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
-					},
-				},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-				},
-				Secure: provisioning.ConnectionSecure{
-					Token: common.InlineSecureValue{
-						Name: "existing-token",
-					},
-				},
-			},
-			expectError: true,
 		},
 		{
 			name: "token generation error - continues with health check",
@@ -1174,11 +1095,8 @@ func TestConnectionController_process(t *testing.T) {
 
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
-				// Token is valid
-				mockTokenConnection.EXPECT().TokenValid(mock.Anything).Return(true)
-				mockTokenConnection.EXPECT().TokenCreationTime(mock.Anything).Return(time.Now().Add(-15*time.Second), nil)
 				// Token expires in 2 minutes - should trigger regeneration attempt (within 5-minute window)
-				mockTokenConnection.EXPECT().TokenExpiration(mock.Anything).Return(time.Now().Add(2*time.Minute), nil)
+				mockTokenConnection.EXPECT().ValidateToken().Return(time.Now().Add(2*time.Minute), nil)
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).
 					Return("", errors.New("token generation failed"))
 				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
@@ -1190,7 +1108,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Return(nil)
 
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
@@ -1219,13 +1137,86 @@ func TestConnectionController_process(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "token secret not found - rebuilds and regenerates",
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+				mockLister := &mockConnectionLister{
+					conn: &provisioning.Connection{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:       "test-conn",
+							Namespace:  "default",
+							Generation: 1,
+						},
+						Status: provisioning.ConnectionStatus{
+							ObservedGeneration: 1,
+							Health: provisioning.HealthStatus{
+								Healthy: true,
+								Checked: time.Now().UnixMilli(),
+							},
+						},
+						Spec: provisioning.ConnectionSpec{
+							Type: provisioning.GithubConnectionType,
+							GitHub: &provisioning.GitHubConnectionConfig{
+								AppID:          "123",
+								InstallationID: "456",
+							},
+						},
+						// Orphaned reference: name is set but the secret can't be decrypted.
+						Secure: provisioning.ConnectionSecure{
+							Token: common.InlineSecureValue{Name: "orphaned-token"},
+						},
+					},
+				}
+				mockHealthChecker := NewMockConnectionHealthChecker(t)
+				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
+				mockFactory := connection.NewMockFactory(t)
+				mockConnection := connection.NewMockConnection(t)
+				mockTokenConnection := connection.NewMockTokenConnection(t)
+				mockConnWithToken := &mockConnectionWithToken{
+					Connection:      mockConnection,
+					TokenConnection: mockTokenConnection,
+				}
+
+				// No spec change and health is fresh, so only the token path drives reconcile.
+				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(false)
+
+				// First build fails because the token secret is missing; after the reference
+				// is cleared the rebuild succeeds.
+				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).
+					Return(nil, fmt.Errorf("unable to decrypt token: %w", connection.ErrTokenNotFound)).Once()
+				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).
+					Return(mockConnWithToken, nil).Once()
+
+				// Token is now zero (cleared), so it is regenerated without validity checks.
+				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).
+					Return(common.RawSecureValue("new-token"), nil)
+
+				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).
+					Return(ConnectionHealthResultWithPatchOps{
+						TestResults:  &provisioning.TestResults{Success: true},
+						HealthStatus: provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					}, nil)
+				mockStatusPatcher.EXPECT().Patch(
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+				).Return(nil)
+
+				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
+			},
+			conn: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-conn",
+					Namespace: "default",
+				},
+			},
+			expectError: false,
+		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			mockLister, mockHealthChecker, mockStatusPatcher, mockFactory := tt.setupMocks()
 			cc := &ConnectionController{
-				connLister:        mockLister,
+				conns:             informer.NewCachedConnectionGetter(mockLister),
 				healthChecker:     mockHealthChecker,
 				statusPatcher:     mockStatusPatcher,
 				connectionFactory: mockFactory,
@@ -1234,7 +1225,7 @@ func TestConnectionController_process(t *testing.T) {
 			}
 
 			item := &connectionQueueItem{key: tt.conn.Namespace + "/" + tt.conn.Name}
-			err := cc.process(context.Background(), item)
+			err := cc.process(t.Context(), item)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1322,7 +1313,7 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 
 			// Create connection
 			conn := &provisioning.Connection{
@@ -1390,10 +1381,9 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 
 			// Create controller
 			cc := &ConnectionController{
-				connLister:        mockLister,
+				conns:             informer.NewCachedConnectionGetter(mockLister),
 				connectionFactory: mockFactory,
 				healthChecker:     mockHealthChecker,
-				connSynced:        func() bool { return true },
 				statusPatcher:     mockPatcher,
 				logger:            logging.DefaultLogger,
 			}

@@ -148,6 +148,103 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
+			// Classic kinds have an unstable or absent identity (a file-provisioning
+			// reader name, or empty for API/converted-Prometheus), so identity changes
+			// within the same classic kind are allowed rather than blocked.
+			name: "classic file-provisioning: identity change is allowed",
+			auth: provisioner,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "reader-b",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "reader-a",
+					},
+				},
+			},
+		},
+		{
+			name: "classic converted-prometheus: identity change is allowed",
+			auth: user,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicConvertedPrometheus), //nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "b",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicConvertedPrometheus), //nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "a",
+					},
+				},
+			},
+		},
+		{
+			// The classic exemption must not open a bypass: switching an existing
+			// non-classic manager to a classic kind is still a kind change and is
+			// blocked by the kind guard before the identity check is reached.
+			name: "changing a repo manager to a classic kind is blocked",
+			auth: provisioner,
+			err:  "Cannot change resource manager kind",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+						utils.AnnoKeyManagerIdentity: "reader-a",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "reader-a",
+					},
+				},
+			},
+		},
+		{
+			// Non-classic managers keep the identity-immutability guarantee.
+			name: "kubectl: identity change is still blocked",
+			auth: provisioner,
+			err:  "Cannot change resource manager identity",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+						utils.AnnoKeyManagerIdentity: "b",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+						utils.AnnoKeyManagerIdentity: "a",
+					},
+				},
+			},
+		},
+		{
 			name: "changing manager kind is blocked",
 			auth: provisioner,
 			err:  "Cannot change resource manager",
@@ -565,7 +662,7 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 				},
 			}
 
-			err := s.handleManagedResourceRouting(
+			cleanupSafe, err := s.handleManagedResourceRouting(
 				context.Background(),
 				errResourceIsManagedInRepository,
 				tt.action,
@@ -573,8 +670,10 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 				obj,
 				&dashboard.Dashboard{},
 			)
-			// The test server returns 500; surface that as a non-nil error.
+			// The test server returns an error; surface that as a non-nil error.
 			require.Error(t, err)
+			// Once the request is sent the write may have applied, so cleanup is never safe.
+			require.False(t, cleanupSafe, "a sent request must not report cleanupSafe")
 
 			require.Equal(t, tt.wantMethod, captured.method, "HTTP method")
 			require.Contains(t, captured.path, "/namespaces/default/repositories/my-repo/files/dashboards/dash.json",

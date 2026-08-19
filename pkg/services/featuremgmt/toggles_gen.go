@@ -67,21 +67,17 @@ const (
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
 
+	// FlagAwsAssumeRolePerDatasourceExternalId
+	// Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID.
+	FlagAwsAssumeRolePerDatasourceExternalId = "awsAssumeRolePerDatasourceExternalId"
+
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
 
-	// FlagDatasourceAPIServers
-	// Expose some datasources as apiservers.
-	FlagDatasourceAPIServers = "datasourceAPIServers"
-
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
-
-	// FlagProvisioning
-	// Enables Git Sync and as-code provisioning for Grafana resources
-	FlagProvisioning = "provisioning"
 
 	// FlagProvisioningFolderMetadata
 	// Allow setting folder metadata for provisioned folders
@@ -95,9 +91,13 @@ const (
 	// Enable configurable commit message, branch name, and pull request title conventions for Git Sync
 	FlagProvisioningGitConventions = "provisioning.gitConventions"
 
-	// FlagGrafanaAPIServerEnsureKubectlAccess
-	// Start an additional https handler and write kubectl options
-	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
+	// FlagProvisioningUserAttribution
+	// Author Git Sync commits as the acting Grafana user
+	FlagProvisioningUserAttribution = "provisioning.userAttribution"
+
+	// FlagProvisioningPerformance
+	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
+	FlagProvisioningPerformance = "provisioning.performance"
 
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
@@ -123,10 +123,6 @@ const (
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
 
-	// FlagKubernetesSnapshots
-	// Routes snapshot requests from /api to the /apis endpoint
-	FlagKubernetesSnapshots = "kubernetesSnapshots"
-
 	// FlagExternalSnapshotsK8SAPIPush
 	// When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
 	FlagExternalSnapshotsK8SAPIPush = "externalSnapshotsK8SAPIPush"
@@ -135,9 +131,13 @@ const (
 	// On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
 	FlagExternalSnapshotsSupportLegacyAPI = "externalSnapshotsSupportLegacyAPI"
 
-	// FlagKubernetesLibraryPanels
+	// FlagSnapshotsKubernetesSnapshots
+	// Routes snapshot requests from /api to the /apis endpoint
+	FlagSnapshotsKubernetesSnapshots = "snapshots.kubernetesSnapshots"
+
+	// FlagLibraryelementsKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
-	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
+	FlagLibraryelementsKubernetesLibraryPanels = "libraryelements.kubernetesLibraryPanels"
 
 	// FlagKubernetesFolderCascadeDelete
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
@@ -223,6 +223,10 @@ const (
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
+	// FlagDashboardNotebooks
+	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
+	FlagDashboardNotebooks = "dashboard.notebooks"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
@@ -262,10 +266,6 @@ const (
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
-
-	// FlagAlertingSaveStateCompressed
-	// Enables the compressed protobuf-based alert state storage. Default is enabled.
-	FlagAlertingSaveStateCompressed = "alertingSaveStateCompressed"
 
 	// FlagScopeApi
 	// In-development feature flag for the scope api using the app platform.
@@ -323,6 +323,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagGrafanaSavedQueriesPage
+	// Enables the dedicated Saved queries page and its navigation entry
+	FlagGrafanaSavedQueriesPage = "grafana.savedQueriesPage"
+
 	// FlagPlaylistsRBAC
 	// Enables RBAC for playlists
 	FlagPlaylistsRBAC = "playlistsRBAC"
@@ -362,10 +366,6 @@ const (
 	// FlagPreserveDashboardStateWhenNavigating
 	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
 	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
-
-	// FlagAlertingCentralAlertHistory
-	// Enables the new central alert history.
-	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
 
 	// FlagPluginProxyPreserveTrailingSlash
 	// Preserve plugin proxy trailing slash.
@@ -415,10 +415,6 @@ const (
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
 
-	// FlagGroupToNestedTableV2
-	// Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
-	FlagGroupToNestedTableV2 = "groupToNestedTableV2"
-
 	// FlagImprovedExternalSessionHandling
 	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
 	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
@@ -442,10 +438,6 @@ const (
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
-
-	// FlagPlaylistsReconciler
-	// Enables experimental reconciler for playlists
-	FlagPlaylistsReconciler = "playlistsReconciler"
 
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
@@ -487,9 +479,9 @@ const (
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
 
-	// FlagElasticsearchCrossClusterSearch
-	// Enables cross cluster search in the Elasticsearch data source
-	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
+	// FlagAlertingRuleQuality
+	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
+	FlagAlertingRuleQuality = "alerting.ruleQuality"
 
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
@@ -514,10 +506,6 @@ const (
 	// FlagTeamLBACApiWriteFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
 	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
-
-	// FlagGrafanaAdvisor
-	// Enables Advisor app
-	FlagGrafanaAdvisor = "grafanaAdvisor"
 
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
@@ -557,6 +545,10 @@ const (
 	// FlagAzureMonitorLogsBuilderEditor
 	// Enables the logs builder mode for the Azure Monitor data source
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
+
+	// FlagDatasourcesAzureMonitorBatchAPI
+	// Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+	FlagDatasourcesAzureMonitorBatchAPI = "datasources.azureMonitorBatchAPI"
 
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
@@ -658,10 +650,6 @@ const (
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
 
-	// FlagTeamFolders
-	// Enables team folders functionality
-	FlagTeamFolders = "teamFolders"
-
 	// FlagInteractiveLearning
 	// Enables the interactive learning app
 	FlagInteractiveLearning = "interactiveLearning"
@@ -677,10 +665,6 @@ const (
 	// FlagPrometheusTypeMigration
 	// Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
 	FlagPrometheusTypeMigration = "prometheusTypeMigration"
-
-	// FlagPluginContainers
-	// Enables running plugins in containers
-	FlagPluginContainers = "pluginContainers"
 
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
@@ -714,6 +698,10 @@ const (
 	// When storing service account resource permissions, only store action sets and not the full list of underlying permissions
 	FlagOnlyStoreServiceAccountActionSets = "onlyStoreServiceAccountActionSets"
 
+	// FlagIamOnlyStoreDatasourceActionSets
+	// When storing datasource resource permissions, only store action sets and not the full list of underlying permissions
+	FlagIamOnlyStoreDatasourceActionSets = "iam.onlyStoreDatasourceActionSets"
+
 	// FlagExcludeRedundantManagedPermissions
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
@@ -721,14 +709,6 @@ const (
 	// FlagPanelTimeSettings
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
-
-	// FlagElasticsearchRawDSLQuery
-	// Enables the raw DSL query editor in the Elasticsearch data source
-	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
-
-	// FlagElasticsearchESQLQuery
-	// Enables the ES|QL query editor in the Elasticsearch data source
-	FlagElasticsearchESQLQuery = "elasticsearchESQLQuery"
 
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
@@ -738,9 +718,17 @@ const (
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
 
+	// FlagPluginsUseMTPlugins
+	// Enables plugins decoupling from bootdata
+	FlagPluginsUseMTPlugins = "plugins.useMTPlugins"
+
 	// FlagGlobalDashboardVariables
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
 	FlagGlobalDashboardVariables = "globalDashboardVariables"
+
+	// FlagGrafanaDashboardGlobalVariables
+	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+	FlagGrafanaDashboardGlobalVariables = "grafana.dashboardGlobalVariables"
 
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
@@ -782,6 +770,10 @@ const (
 	// Enables SSO settings APIs in the app platform
 	FlagKubernetesSsoSettingsApi = "kubernetesSsoSettingsApi"
 
+	// FlagGrafanaSsoSettingsToMTSettings
+	// Enables reading and writing SSO settings through the MT-Settings service
+	FlagGrafanaSsoSettingsToMTSettings = "grafana.ssoSettingsToMTSettings"
+
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform
 	FlagKubernetesExternalGroupMappingsApi = "kubernetesExternalGroupMappingsApi"
@@ -798,9 +790,13 @@ const (
 	// Redirects the requests of the user service to the app platform APIs
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
 
-	// FlagAlertingMultiplePolicies
-	// Enables the ability to create multiple notification policies in alerting
-	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
+	// FlagKubernetesUsersRedirectNoFallback
+	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
+	FlagKubernetesUsersRedirectNoFallback = "kubernetesUsersRedirectNoFallback"
+
+	// FlagApppluginsLoadAppManifest
+	// Load app manifest when loading plugin definitions
+	FlagApppluginsLoadAppManifest = "appplugins.loadAppManifest"
 
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
@@ -830,13 +826,17 @@ const (
 	// Enables the notification history detail page
 	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
 
+	// FlagDeletedFolderResourceCleanup
+	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair
+	FlagDeletedFolderResourceCleanup = "deletedFolderResourceCleanup"
+
+	// FlagLibraryElementFolderUIDRepair
+	// Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup
+	FlagLibraryElementFolderUIDRepair = "libraryElementFolderUIDRepair"
+
 	// FlagReact19
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
-
-	// FlagFrontendServiceSettingsSourceFilter
-	// Adds a label filter for source=us when fetching settings from the settings service in the frontend service
-	FlagFrontendServiceSettingsSourceFilter = "frontendService.settingsSourceFilter"
 
 	// FlagManagedPluginsV2
 	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
@@ -846,10 +846,6 @@ const (
 	// Remember the last viewed organization for users using SSO
 	FlagRememberUserOrgForSso = "rememberUserOrgForSso"
 
-	// FlagDsAbstractionApp
-	// Registers the dsabstraction app for querying datasources via unified SQL
-	FlagDsAbstractionApp = "dsAbstractionApp"
-
 	// FlagDatasourcesApiServerEnableHealthEndpoint
 	// Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableHealthEndpoint = "datasourcesApiServerEnableHealthEndpoint"
@@ -857,14 +853,6 @@ const (
 	// FlagDatasourcesApiServerEnableHealthEndpointRedirect
 	// Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
 	FlagDatasourcesApiServerEnableHealthEndpointRedirect = "datasourcesApiServerEnableHealthEndpointRedirect"
-
-	// FlagAdvisorDatasourceIntegration
-	// Enables the advisor report integration with datasource pages
-	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
-
-	// FlagFrontendServiceSSOAutoLogin
-	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
-	FlagFrontendServiceSSOAutoLogin = "frontendServiceSSOAutoLogin"
 
 	// FlagStreamingForwardTeamHeadersTempo
 	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
@@ -905,10 +893,6 @@ const (
 	// FlagClickHouseConfigValidation
 	// Enables validation on the ClickHouse data source configuration page
 	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
-
-	// FlagGrafanaNewPreferencesPage
-	// Whether to use the new SharedPreferences functional component
-	FlagGrafanaNewPreferencesPage = "grafana.newPreferencesPage"
 
 	// FlagDatasourceUseNewCRUDAPIs
 	// Use the new datasource API groups for datasource CRUD requests, backend flag
@@ -957,4 +941,68 @@ const (
 	// FlagSplunkUseLegacyResultsApi
 	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
 	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
+
+	// FlagDatetimeUseLuxon
+	// Uses the Luxon-backed compatibility implementation for Grafana date and time APIs
+	FlagDatetimeUseLuxon = "datetime.useLuxon"
+
+	// FlagAuthTokenRotationGracePeriod
+	// Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts
+	FlagAuthTokenRotationGracePeriod = "auth.tokenRotationGracePeriod"
+
+	// FlagKubernetesReporting
+	// Add support for Kubernetes reporting new APIs
+	FlagKubernetesReporting = "kubernetesReporting"
+
+	// FlagReportingRedirectReportsToK8SApi
+	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API
+	FlagReportingRedirectReportsToK8SApi = "reporting.redirectReportsToK8SApi"
+
+	// FlagGrafanaOnDemandDiagnostics
+	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
+	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"
+
+	// FlagGrafanaFrontendLegacyAPIHandling
+	// Controls whether the frontend blocks calls to legacy /api/ endpoints
+	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
+
+	// FlagGrafanaOfrepRootUrl
+	// Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route
+	FlagGrafanaOfrepRootUrl = "grafana.ofrepRootUrl"
+
+	// FlagFeaturesBulkFlagEvalFiltering
+	// Filters bulk OFREP flag evaluations to public-metadata flags only
+	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
+
+	// FlagGrafanaMultiTenantNavTree
+	// Builds the navigation tree client-side instead of reading it from /bootdata
+	FlagGrafanaMultiTenantNavTree = "grafana.multiTenantNavTree"
+
+	// FlagAuthzListFoldersViaSearch
+	// Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.
+	FlagAuthzListFoldersViaSearch = "authz.listFoldersViaSearch"
+
+	// FlagLibraryElementsFolderTreeViaSearch
+	// Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.
+	FlagLibraryElementsFolderTreeViaSearch = "libraryElements.folderTreeViaSearch"
+
+	// FlagAlertingStateManagerRequireWarm
+	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
+	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"
+
+	// FlagGrafanaPluginPathNesting
+	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
+	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
+
+	// FlagGrafanaRspackBuild
+	// Switches the backend to load frontend assets built with rspack instead of webpack
+	FlagGrafanaRspackBuild = "grafana.rspackBuild"
+
+	// FlagPluginsForceTls13
+	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client
+	FlagPluginsForceTls13 = "pluginsForceTls13"
+
+	// FlagDatasourcesQueryGateway
+	// Data source query gateway
+	FlagDatasourcesQueryGateway = "datasources.queryGateway"
 )

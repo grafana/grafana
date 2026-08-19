@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -129,6 +130,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 		const uid = "my-stable-uid"
 		manifest := NewFolderManifest(uid, "myfolder", FolderKind)
 
+		var written []byte
 		rw.On("Create", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
 			var f folders.Folder
 			if err := json.Unmarshal(b, &f); err != nil {
@@ -138,12 +140,20 @@ func TestWriteFolderMetadata(t *testing.T) {
 				f.Kind == "Folder" &&
 				f.Name == uid &&
 				f.Spec.Title == "myfolder"
-		}), "").Return(nil)
+		}), "").Run(func(args mock.Arguments) {
+			written = args.Get(3).([]byte)
+		}).Return(nil)
 
 		returnedUID, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", manifest, "", "")
 
 		require.NoError(t, err)
 		assert.Equal(t, uid, returnedUID)
+
+		// The written _folder.json must be pretty-printed with two-space
+		// indentation to match the formatting of other resource files.
+		var indented bytes.Buffer
+		require.NoError(t, json.Indent(&indented, written, "", "  "))
+		assert.Equal(t, indented.String(), string(written), "_folder.json should be pretty-printed with two-space indentation")
 	})
 
 	t.Run("returns error when repo.Create fails", func(t *testing.T) {

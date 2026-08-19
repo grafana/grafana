@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/metadata"
 )
 
 func init() {
@@ -281,7 +282,7 @@ func TestRunner_Run_Pagination(t *testing.T) {
 	})
 }
 
-// Helper functions
+// Shared test helpers and mocks
 
 // runAndTimeout runs a runner with a short timeout for testing purposes.
 // This is used to terminate the runner's infinite loop in tests that don't specifically test timeout behavior.
@@ -291,12 +292,13 @@ func runAndTimeout(runner *Runner) error {
 	return runner.Run(ctx)
 }
 
-// createTestRunner creates a test runner with mock clients
+// createTestRunner returns a single-tenant Runner with mock clients.
 func createTestRunner(checkClient, typesClient *MockClient) *Runner {
 	return createTestRunnerWithRegistry(checkClient, typesClient, &MockCheckService{checks: []checks.Check{}})
 }
 
-// createTestRunnerWithRegistry creates a test runner with mock clients and custom registry
+// createTestRunnerWithRegistry returns a single-tenant Runner with mock
+// clients and a caller-supplied check registry.
 func createTestRunnerWithRegistry(checkClient, typesClient *MockClient, checkRegistry checkregistry.CheckService) *Runner {
 	// Ensure mock clients have default implementations
 	if checkClient.listFunc == nil {
@@ -330,6 +332,7 @@ func createTestRunnerWithRegistry(checkClient, typesClient *MockClient, checkReg
 	return &Runner{
 		checkRegistry:       checkRegistry,
 		checksClient:        checkClient,
+		checksMetadata:      metadataGetterFromClient(checkClient),
 		typesClient:         typesClient,
 		defaultEvalInterval: 5 * time.Millisecond,
 		maxHistory:          defaultMaxHistory,
@@ -363,6 +366,59 @@ func (m *MockClient) Delete(ctx context.Context, identifier resource.Identifier,
 
 func (m *MockClient) PatchInto(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
 	return m.patchFunc(ctx, identifier, patch, options, into)
+}
+
+// fakeMetadataGetter is a function-backed metadata.Getter for tests. Only the
+// namespace-scoped List path used by Runner.listChecksMetadata is implemented;
+// other methods fall through to the embedded nil interface and would panic if
+// called.
+type fakeMetadataGetter struct {
+	metadata.Getter
+	listFunc func(ctx context.Context, namespace string, opts metav1.ListOptions) (*metav1.PartialObjectMetadataList, error)
+}
+
+func (f *fakeMetadataGetter) Namespace(ns string) metadata.ResourceInterface {
+	return &fakeMetadataResource{namespace: ns, listFunc: f.listFunc}
+}
+
+type fakeMetadataResource struct {
+	metadata.ResourceInterface
+	namespace string
+	listFunc  func(ctx context.Context, namespace string, opts metav1.ListOptions) (*metav1.PartialObjectMetadataList, error)
+}
+
+func (f *fakeMetadataResource) List(ctx context.Context, opts metav1.ListOptions) (*metav1.PartialObjectMetadataList, error) {
+	return f.listFunc(ctx, f.namespace, opts)
+}
+
+// metadataGetterFromClient adapts a MockClient's List into a metadata.Getter,
+// so existing fixtures used for full Check lists also drive the metadata
+// listing both schedulers now use (PartialObjectMetadataList).
+func metadataGetterFromClient(c *MockClient) metadata.Getter {
+	return &fakeMetadataGetter{
+		listFunc: func(ctx context.Context, namespace string, opts metav1.ListOptions) (*metav1.PartialObjectMetadataList, error) {
+			list, err := c.listFunc(ctx, namespace, resource.ListOptions{
+				Limit:    int(opts.Limit),
+				Continue: opts.Continue,
+			})
+			if err != nil {
+				return nil, err
+			}
+			out := &metav1.PartialObjectMetadataList{
+				ListMeta: metav1.ListMeta{Continue: list.GetContinue()},
+			}
+			for _, item := range list.GetItems() {
+				out.Items = append(out.Items, metav1.PartialObjectMetadata{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace:         item.GetNamespace(),
+						Name:              item.GetName(),
+						CreationTimestamp: item.GetCreationTimestamp(),
+					},
+				})
+			}
+			return out, nil
+		},
+	}
 }
 
 type MockCheckService struct {

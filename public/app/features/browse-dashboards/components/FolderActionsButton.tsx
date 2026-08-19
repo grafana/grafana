@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
@@ -147,10 +147,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
 
   // If user can set permissions for the folder and read teams, they can manage folder owners
   const showManageOwners =
-    config.featureToggles.teamFolders &&
-    canSetPermissions &&
-    contextSrv.hasPermission(AccessControlAction.ActionTeamsRead) &&
-    !isProvisionedFolder;
+    canSetPermissions && contextSrv.hasPermission(AccessControlAction.ActionTeamsRead) && !isProvisionedFolder;
 
   const menu = (
     <Menu>

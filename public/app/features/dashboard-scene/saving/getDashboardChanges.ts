@@ -3,11 +3,13 @@ import { config } from '@grafana/runtime';
 import { type Dashboard, type VariableOption } from '@grafana/schema';
 import {
   type AdHocFilterWithLabels,
+  type CustomVariableKind,
   type Spec as DashboardV2Spec,
   type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { validateFiltersOrigin } from '../serialization/sceneVariablesSetToVariables';
@@ -149,6 +151,96 @@ export function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], fi
   return true;
 }
 
+function escapeCsvValue(value: string) {
+  return value.replace(/\\/g, '\\\\').replace(/,/g, '\\,');
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function formatCsvOptionEntry(text: string, value: string) {
+  // Runtime CustomVariable CSV parsing requires spaces around `:` for label/value pairs.
+  if (text !== value) {
+    return `${escapeCsvValue(text)} : ${escapeCsvValue(value)}`;
+  }
+  return escapeCsvValue(value);
+}
+
+function customVariableQueryWithCurrent(variable: CustomVariableKind): string | undefined {
+  const current = variable.spec.current;
+  if (!current) {
+    return undefined;
+  }
+
+  const currentValues = (Array.isArray(current.value) ? current.value : [current.value]).map((v) => String(v));
+  const currentTexts = (Array.isArray(current.text) ? current.text : [current.text]).map((t) => String(t));
+
+  // Skip the synthetic All token — it is injected at runtime when includeAll is enabled,
+  // and must not be persisted as a literal option in the query string.
+  const currentOptions = currentValues
+    .map((value, i) => ({
+      value,
+      text: currentTexts[i] ?? value,
+    }))
+    .filter((option) => option.value !== ALL_VARIABLE_VALUE);
+
+  if (currentOptions.length === 0) {
+    return variable.spec.query;
+  }
+
+  if (variable.spec.valuesFormat === 'json') {
+    let existingOptions: Array<{ value: string; text: string }> = [];
+    if (variable.spec.query) {
+      try {
+        const parsed = JSON.parse(variable.spec.query);
+        if (Array.isArray(parsed)) {
+          existingOptions = parsed.filter(isObjectRecord).map((o) => ({
+            value: String(o.value ?? ''),
+            text: String(o.text ?? o.value ?? ''),
+          }));
+        }
+      } catch {
+        // Preserve broken-but-recoverable JSON rather than overwriting with just the current selection.
+        return variable.spec.query;
+      }
+    }
+
+    const existingValues = new Set(existingOptions.map((o) => o.value));
+    const appendedOptions = currentOptions.filter((option) => !existingValues.has(option.value));
+
+    // Match CSV: when the selection is already represented in query, keep the original
+    // string so property order, spacing, and fields dropped during parse/map are preserved.
+    if (!appendedOptions.length) {
+      return variable.spec.query;
+    }
+
+    return JSON.stringify([...existingOptions, ...appendedOptions]);
+  }
+
+  const existingValues = new Set(
+    (variable.spec.query.match(/(?:\\,|[^,])+/g) ?? []).map((entry) => {
+      const unescaped = entry.replace(/\\,/g, ',');
+      // Same greedy regex as CustomVariable runtime parsing: for `a : b : c` the first
+      // capture takes `a : b` and the value is `c`. Keep this in sync with scenes/legacy.
+      const keyValueMatch = /^\s*(.+)\s:\s(.+)$/.exec(unescaped);
+      return keyValueMatch ? keyValueMatch[2].trim() : unescaped.trim();
+    })
+  );
+
+  const appendedValues = currentOptions
+    .filter((option) => !existingValues.has(option.value))
+    .map((option) => formatCsvOptionEntry(option.text, option.value))
+    .join(',');
+  if (!variable.spec.query) {
+    return appendedValues;
+  }
+  if (!appendedValues) {
+    return variable.spec.query;
+  }
+  return `${variable.spec.query},${appendedValues}`;
+}
+
 function applyVariableChangesV2(
   saveModel: DashboardV2Spec,
   originalSaveModel: DashboardV2Spec,
@@ -210,10 +302,10 @@ function applyVariableKindListChanges(
       variable.kind === 'AdhocVariable' &&
       original.kind === 'AdhocVariable' &&
       !adHocVariableFiltersEqual(
-        config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls
+        config.featureToggles.dashboardUnifiedDrilldownControls
           ? variable.spec.filters.filter((f) => !f.origin)
           : variable.spec.filters,
-        config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls
+        config.featureToggles.dashboardUnifiedDrilldownControls
           ? original.spec.filters.filter((f) => !f.origin)
           : original.spec.filters
       )
@@ -221,9 +313,17 @@ function applyVariableKindListChanges(
       hasChanges = true;
     }
 
+    if (saveVariables && variable.kind === 'CustomVariable' && original.kind === 'CustomVariable') {
+      // CustomVariable runtime options are derived from query, so include the saved selection in query.
+      const currentAsQuery = customVariableQueryWithCurrent(variable);
+      if (currentAsQuery !== undefined) {
+        variable.spec.query = currentAsQuery;
+      }
+    }
+
     if (!saveVariables) {
       if (variable.kind === 'AdhocVariable' && original.kind === 'AdhocVariable') {
-        if (config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls) {
+        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
           const originFilters = (variable.spec.filters ?? []).filter((f) => f.origin);
           const originalRuntimeFilters = (original.spec.filters ?? []).filter((f) => !f.origin);
           variable.spec.filters = [...originFilters, ...originalRuntimeFilters];
@@ -330,7 +430,7 @@ function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard
       const typed = variable as TypedVariableModel;
 
       if (typed.type === 'adhoc') {
-        if (config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls) {
+        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const changedFilters = (typed as AdHocVariableModel).filters ?? [];
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

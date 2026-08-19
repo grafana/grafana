@@ -21,7 +21,6 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -62,34 +61,7 @@ func TestMain(m *testing.M) {
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
-	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingMultiplePolicies,
-		},
-	})
-}
-
-func TestIntegrationNotAllowedMethods(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableFeatureToggles: []string{featuremgmt.FlagAlertingMultiplePolicies},
-	})
-
-	client, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-	require.NoError(t, err)
-
-	route := &v1beta1.RoutingTree{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
-		Spec: v1beta1.RoutingTreeSpec{},
-	}
-	_, err = client.Create(ctx, route, resource.CreateOptions{})
-	var statusErr *errors.StatusError
-	assert.ErrorAs(t, err, &statusErr)
-	require.Equalf(t, int32(501), statusErr.Status().Code, "Expected NotImplemented (501) but got %s (%d)", statusErr.Status().Status, statusErr.Status().Code)
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
@@ -846,7 +818,7 @@ func TestIntegrationExtraConfigsConflicts(t *testing.T) {
 
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{"alertingMultiplePolicies", "alertingImportAlertmanagerAPI"},
+		EnableFeatureToggles: []string{"alertingImportAlertmanagerAPI"},
 	})
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -920,7 +892,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
 	createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
-	createTimeIntervalStubs(t, admin, cfg.AlertmanagerConfig.TimeIntervals)
+	createTimeIntervalStubs(t, admin, cfg.SortedTimeIntervals())
 
 	// Sanity check there aren't any existing managed routes other than the default.
 	list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
@@ -1447,12 +1419,13 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
 	receivers := createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
-	timeIntervals := createTimeIntervalStubs(t, admin, cfg.AlertmanagerConfig.TimeIntervals)
+	sortedIntervals := cfg.SortedTimeIntervals()
+	timeIntervals := createTimeIntervalStubs(t, admin, sortedIntervals)
 
 	recv0 := cfg.AlertmanagerConfig.Receivers[0].Name
 	recv1 := cfg.AlertmanagerConfig.Receivers[1].Name
-	ti0 := cfg.AlertmanagerConfig.TimeIntervals[0].Name
-	ti1 := cfg.AlertmanagerConfig.TimeIntervals[1].Name
+	ti0 := sortedIntervals[0].Title
+	ti1 := sortedIntervals[1].Title
 
 	// Create routes that reference the receivers and time intervals.
 	routeDef := v1model.Route{
@@ -1578,10 +1551,10 @@ func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []v1mod
 	for _, ti := range timeIntervals {
 		created, err := timeIntervalClient.Create(context.Background(), &v1beta1.TimeInterval{
 			ObjectMeta: v1.ObjectMeta{Namespace: apis.DefaultNamespace},
-			Spec:       v1beta1.TimeIntervalSpec{Name: ti.Name},
+			Spec:       v1beta1.TimeIntervalSpec{Name: ti.Title},
 		}, resource.CreateOptions{})
 		require.NoError(t, err)
-		res[ti.Name] = created
+		res[ti.Title] = created
 	}
 	return res
 }

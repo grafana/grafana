@@ -22,26 +22,27 @@ func (auth namespaceAuthorizer) Authorize(ctx context.Context, a authorizer.Attr
 		return authorizer.DecisionDeny, "missing auth info", fmt.Errorf("missing auth info: %w", err)
 	}
 
-	if ident.GetIsGrafanaAdmin() {
-		return authorizer.DecisionNoOpinion, "", nil
-	}
-
 	if !a.IsResourceRequest() {
-		return authorizer.DecisionNoOpinion, "", nil
-	}
-
-	// If we have an anonymous user, let the next authorizers decide.
-	if types.IsIdentityType(ident.GetIdentityType(), types.TypeAnonymous) {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
 	ns, err := types.ParseNamespace(a.GetNamespace())
 	if err != nil {
-		return authorizer.DecisionDeny, "invalid namespace", err
+		// Do not propagate parse errors: the apiserver treats authorizer errors as 500s.
+		return authorizer.DecisionDeny, "invalid namespace", nil
 	}
 
 	// If we call a cluster resource we delegate to the next authorizer
 	if ns.Value == "" {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
+	// Anonymous users and Grafana Admins can access any valid namespace; skip org scoping.
+	if types.IsIdentityType(ident.GetIdentityType(), types.TypeAnonymous) {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
+	if ident.GetIsGrafanaAdmin() {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 

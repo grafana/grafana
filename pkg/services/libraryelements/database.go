@@ -803,20 +803,26 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		}
 		return err
 	}
+	return l.deleteLibraryElementsInFolderUIDUnchecked(c, signedInUser.GetOrgID(), folderUID)
+}
 
+// deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without
+// checking folder permissions; callers must have already confirmed the folder is gone. Elements
+// still connected to a dashboard are kept and block the delete (as in the permission-checked path).
+func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c context.Context, orgID int64, folderUID string) error {
 	var elements []struct {
 		UID string `xorm:"uid"`
 	}
 	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		return session.SQL("SELECT uid FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()).Find(&elements)
+		return session.SQL("SELECT uid FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, orgID).Find(&elements)
 	})
 	if err != nil {
 		return err
 	}
 
-	serviceCtx, _ := identity.WithServiceIdentity(c, signedInUser.GetOrgID())
+	serviceCtx, _ := identity.WithServiceIdentity(c, orgID)
 	for _, elem := range elements {
-		connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, signedInUser.GetOrgID())
+		connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, orgID)
 		if err != nil {
 			return err
 		}
@@ -826,12 +832,18 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 	}
 
 	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		if _, err := session.Exec("DELETE FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, signedInUser.GetOrgID()); err != nil {
-			return err
-		}
-
-		return nil
+		_, err := session.Exec("DELETE FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, orgID)
+		return err
 	})
+}
+
+// folderUIDsInUse returns the distinct folder UIDs that contain library elements in the org.
+func (l *LibraryElementService) folderUIDsInUse(c context.Context, orgID int64) ([]string, error) {
+	var uids []string
+	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
+		return session.SQL("SELECT DISTINCT folder_uid FROM library_element WHERE org_id=?", orgID).Find(&uids)
+	})
+	return uids, err
 }
 
 func getFoldersWithMatchingTitles(c context.Context, l *LibraryElementService, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) ([]string, error) {

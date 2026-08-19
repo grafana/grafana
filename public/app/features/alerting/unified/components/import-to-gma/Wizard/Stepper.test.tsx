@@ -12,12 +12,8 @@ const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey) => {
 describe('Stepper', () => {
   const user = userEvent.setup();
 
-  it('should render all steps with correct numbers and names', () => {
+  it('should render the three-step rail', () => {
     renderWithProvider(<Stepper />);
-
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
 
     expect(screen.getByText(/notification resources/i)).toBeInTheDocument();
     expect(screen.getByText(/alert rules/i)).toBeInTheDocument();

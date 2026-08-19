@@ -582,6 +582,31 @@ describe('v1 dashboard API', () => {
     });
   });
 
+  describe('getDeletedDashboard', () => {
+    it('should query the recently-deleted listing by name and return the matching item', async () => {
+      const deletedItem = { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' } };
+      mockGet.mockResolvedValueOnce({ metadata: { resourceVersion: '1' }, items: [deletedItem] });
+
+      const api = new K8sDashboardAPI();
+      const result = await api.getDeletedDashboard('deleted-dash-1');
+
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('/dashboards'), {
+        labelSelector: 'grafana.app/get-trash=true',
+        fieldSelector: 'metadata.name=deleted-dash-1',
+      });
+      expect(result).toBe(deletedItem);
+    });
+
+    it('should return undefined when the recently-deleted listing is empty', async () => {
+      mockGet.mockResolvedValueOnce({ metadata: { resourceVersion: '1' }, items: [] });
+
+      const api = new K8sDashboardAPI();
+      const result = await api.getDeletedDashboard('deleted-dash-1');
+
+      expect(result).toBeUndefined();
+    });
+  });
+
   describe('restoreDashboardVersion', () => {
     it('should use current folder, not the historical version folder', async () => {
       // History list: version 3 was in 'old-folder'

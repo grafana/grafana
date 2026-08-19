@@ -60,16 +60,16 @@ export const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'defa
 
 const getStyles = (theme: GrafanaTheme2) => ({
   matcher: (label: string) => {
-    const { color, borderColor } = getTagColorsFromName(label);
+    const { background, text } = getTagColorsFromName(label, theme);
 
     return {
       wrapper: css({
         color: '#fff',
-        background: color,
+        background,
         padding: `${theme.spacing(0.33)} ${theme.spacing(0.66)}`,
         fontSize: theme.typography.bodySmall.fontSize,
 
-        border: `solid 1px ${borderColor}`,
+        border: `solid 1px ${text}`,
         borderRadius: theme.shape.borderRadius(2),
 
         // Ensure we preserve whitespace, as otherwise it's not noticeable _at all_

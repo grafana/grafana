@@ -1,7 +1,7 @@
 import { type MutableRefObject, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import {
@@ -27,7 +27,7 @@ import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
 interface GrafanaTemplatesTabProps {
   /** Raw `source` search param value, mapped to a known entry point when fired. */
   entryPoint: string;
-  testDataSource: DataSourceInstanceSettings | undefined;
+  testDataSource: DataSourceInstanceListItem | undefined;
   onClose: () => void;
   /**
    * Once-per-open guard owned by the parent modal. It lives in the parent because this
@@ -110,6 +110,7 @@ export const GrafanaTemplatesTab = ({
 
     const templateUrl = getTemplateDashboardUrl(
       dashboard,
+      testDataSource,
       sourceEntryPoint,
       customizeWithAssistant ? TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON : undefined
     );

@@ -33,9 +33,10 @@ import { type SpanLinkFunc } from '../types/links';
 import { type TraceSpan, type Trace, type TraceSpanReference, type CriticalPathSection } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
 import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
+import { countSummarySpans } from '../utils/summary-span';
 
 import ListView from './ListView';
-import SpanBarRow from './SpanBarRow';
+import { SpanBarRow } from './SpanBarRow';
 import { type TraceFlameGraphs } from './SpanDetail';
 import type DetailState from './SpanDetail/DetailState';
 import SpanDetailRow from './SpanDetailRow';
@@ -91,6 +92,7 @@ type TVirtualizedTraceViewOwnProps = {
   detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
+  detailSummaryAttributesToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
   setSpanNameColumnWidth: (width: number) => void;
   hoverIndentGuideIds: Set<string>;
@@ -534,6 +536,7 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
       detailStackTracesToggle,
       detailStates,
       detailTagsToggle,
+      detailSummaryAttributesToggle,
       detailToggle,
       spanNameColumnWidth,
       trace,
@@ -579,6 +582,7 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
           traceToProfilesOptions={traceToProfilesOptions}
           timeZone={timeZone}
           tagsToggle={detailTagsToggle}
+          summaryAttributesToggle={detailSummaryAttributesToggle}
           traceStartTime={trace.startTime}
           traceDuration={trace.duration}
           traceName={trace.traceName}
@@ -604,11 +608,16 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
   scrollToTop = () => {
     const { topOfViewRef, datasourceType, trace } = this.props;
     topOfViewRef?.current?.scrollIntoView({ behavior: 'smooth' });
+    // trace can be unset (button still renders); skip analytics rather than dereference it.
+    if (!trace) {
+      return;
+    }
     reportInteraction('grafana_traces_trace_view_scroll_to_top_clicked', {
       datasourceType: datasourceType,
       grafana_version: config.buildInfo.version,
       numServices: trace.services.length,
       numSpans: trace.spans.length,
+      numSummarySpans: countSummarySpans(trace.spans),
     });
   };
 

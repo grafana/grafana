@@ -88,12 +88,14 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 		interceptors.UnaryPanicRecoveryInterceptor(),
 		interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
 		middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
+		interceptors.InnermostServiceIdentityUnaryServerInterceptor(),
 	}
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		interceptors.StreamPanicRecoveryInterceptor(),
 		interceptors.TracingStreamInterceptor(tracer),
 		interceptors.LoggingStreamInterceptor(s.logger, s.cfg.EnableLogging),
 		middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
+		interceptors.InnermostServiceIdentityStreamServerInterceptor(),
 	}
 
 	if authenticator != nil {

@@ -30,7 +30,12 @@ export {
   computeInheritedTree,
 } from './grafana/notificationPolicies/utils';
 
-export { USER_DEFINED_TREE_NAME, isDefaultRoutingTree } from './grafana/notificationPolicies/consts';
+export {
+  USER_DEFINED_TREE_NAME,
+  DEFAULT_ROUTING_TREE_NAME_ALIAS,
+  isDefaultRoutingTreeName,
+  isDefaultRoutingTree,
+} from './grafana/notificationPolicies/routingTrees';
 export * from './grafana/notificationPolicies/types';
 
 /**

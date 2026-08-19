@@ -4,7 +4,7 @@ import { type FC, type JSX } from 'react';
 import { colorManipulator, type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Text, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import g8LoginDarkSvg from 'img/g8_login_dark.svg';
 import g8LoginLightSvg from 'img/g8_login_light.svg';
 import grafanaIconSvg from 'img/grafana_icon.svg';
@@ -54,8 +54,8 @@ const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
   return <img className={className} src={grafanaIconSvg} alt="Grafana" />;
 };
 
-export function HomeLink({ homeNav, onClick }: { homeNav?: NavModelItem; onClick?: () => void }) {
-  const styles = useStyles2(homeLinkStyles);
+export function HomeLogo({ homeNav, onClick }: { homeNav?: NavModelItem; onClick?: () => void }) {
+  const styles = useStyles2(homeLogoStyles);
 
   const onHomeClicked = () => {
     reportInteraction('grafana_home_clicked');
@@ -67,7 +67,7 @@ export function HomeLink({ homeNav, onClick }: { homeNav?: NavModelItem; onClick
       <a
         onClick={onHomeClicked}
         data-testid={selectors.components.Breadcrumbs.breadcrumb('Home')}
-        className={styles.homeLink}
+        className={styles.homeLogo}
         title={homeNav?.text || 'Home'}
         href={homeNav?.url}
       >
@@ -77,9 +77,9 @@ export function HomeLink({ homeNav, onClick }: { homeNav?: NavModelItem; onClick
   );
 }
 
-function homeLinkStyles(theme: GrafanaTheme2) {
+function homeLogoStyles(theme: GrafanaTheme2) {
   return {
-    homeLink: css({
+    homeLogo: css({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -89,6 +89,45 @@ function homeLinkStyles(theme: GrafanaTheme2) {
       img: {
         maxHeight: '100%',
         maxWidth: '100%',
+      },
+    }),
+  };
+}
+
+export function HomeTitle({ homeNav, onClick }: { homeNav?: NavModelItem; onClick?: () => void }) {
+  const styles = useStyles2(homeTitleStyles);
+
+  const onHomeClicked = () => {
+    reportInteraction('grafana_home_clicked');
+    onClick?.();
+  };
+
+  return (
+    <a onClick={onHomeClicked} className={styles.homeTitle} title={homeNav?.text || 'Home'} href={homeNav?.url}>
+      <Text variant="body" truncate>
+        {Branding.AppTitle}
+      </Text>
+    </a>
+  );
+}
+
+function homeTitleStyles(theme: GrafanaTheme2) {
+  return {
+    homeTitle: css({
+      borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.primary,
+      padding: theme.spacing(0.25, 0.75),
+      margin: theme.spacing(0, -0.75),
+      textDecoration: 'none',
+
+      '&:hover, &:focus': {
+        backgroundColor: theme.colors.secondary.transparent,
+      },
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color'], {
+          duration: theme.transitions.duration.short,
+        }),
       },
     }),
   };

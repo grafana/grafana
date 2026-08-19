@@ -188,6 +188,23 @@ func (api *API) authorize(method, path string) web.Handler {
 			)).(func(*contextmodel.ReqContext))(c)
 		}
 
+	case http.MethodPost + "/api/convert/api/v1/alerts/{Identifier}/promote":
+		// Always-required permissions (routes and receivers exist in every imported config).
+		// The handler performs an additional content-aware check for templates and
+		// inhibition rules based on what the specific import actually contains.
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+			ac.EvalPermission(ac.ActionAlertingManagedRoutesCreate),
+			ac.EvalPermission(
+				ac.ActionAlertingAlertmanagerImportsRead,
+				models.ScopeAlertmanagerImportsProvider.GetResourceScopeUID(ac.Parameter(":Identifier")),
+			),
+			ac.EvalPermission(
+				ac.ActionAlertingAlertmanagerImportsDelete,
+				models.ScopeAlertmanagerImportsProvider.GetResourceScopeUID(ac.Parameter(":Identifier")),
+			),
+		)
+
 	// Alert Instances and Silences
 
 	// Silences for Grafana paths.

@@ -25,13 +25,8 @@ func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 		}
 	}
 
-	// Ref may be the configured branch for github repositories
-	if ref != "" && repo.Spec.GitHub != nil && repo.Spec.GitHub.Branch == ref {
-		ref = ""
-	}
-
-	// Ref may be the configured branch for git repositories
-	if ref != "" && repo.Spec.Git != nil && repo.Spec.Git.Branch == ref {
+	// A ref matching the configured branch is a direct write, not a branch workflow
+	if ref != "" && repo.Branch() == ref {
 		ref = ""
 	}
 

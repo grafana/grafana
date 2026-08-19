@@ -1,12 +1,10 @@
 package navtreeimpl
 
 import (
-	"sort"
-
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	playlistregistry "github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -25,8 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/search/model"
-	starapi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -40,9 +36,7 @@ type ServiceImpl struct {
 	authnService         authn.Service
 	pluginStore          pluginstore.Store
 	pluginSettings       pluginsettings.Service
-	starClient           starapi.K8sClients
 	features             featuremgmt.FeatureToggles
-	dashboardService     dashboards.DashboardService
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
 	apiKeyService        apikey.Service
@@ -62,8 +56,8 @@ type NavigationAppConfig struct {
 	IsNew      bool
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starClient starapi.K8sClients,
-	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service,
+	features featuremgmt.FeatureToggles, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
 	license licensing.Licensing, authnService authn.Service,
 ) navtree.Service {
 	service := &ServiceImpl{
@@ -73,9 +67,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		authnService:         authnService,
 		pluginStore:          pluginStore,
 		pluginSettings:       pluginSettings,
-		starClient:           starClient,
 		features:             features,
-		dashboardService:     dashboardService,
 		accesscontrolService: accesscontrolService,
 		kvStore:              kvStore,
 		apiKeyService:        apiKeyService,
@@ -102,17 +94,14 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	treeRoot.AddSection(s.getHomeNode(c, prefs))
 
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsRead)) {
-		starredItemsLinks, err := s.buildStarredItemsNavLinks(c)
-		if err != nil {
-			return nil, err
-		}
-
+		// Starred dashboards are populated client-side (useSyncStarredItemsInNav).
+		// The backend only emits the empty section as a container for the client to fill.
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Starred",
 			Id:             "starred",
 			Icon:           "star",
 			SortWeight:     navtree.WeightSavedItems,
-			Children:       starredItemsLinks,
+			Children:       []*navtree.NavLink{},
 			EmptyMessageId: "starred-empty",
 			Url:            s.cfg.AppSubURL + "/dashboards?starred",
 		})
@@ -157,6 +146,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			SortWeight: navtree.WeightDrilldown,
 			Url:        s.cfg.AppSubURL + "/drilldown",
 		})
+	}
+
+	if notebooksSection := s.buildNotebooksNavLink(c); notebooksSection != nil {
+		treeRoot.AddSection(notebooksSection)
 	}
 
 	if s.cfg.ProfileEnabled && c.IsSignedIn {
@@ -219,28 +212,13 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		}
 	}
 
-	homeNode := &navtree.NavLink{
+	return &navtree.NavLink{
 		Text:       "Home",
 		Id:         "home",
 		Url:        homeUrl,
 		Icon:       "home-alt",
 		SortWeight: navtree.WeightHome,
 	}
-	if c.IsSignedIn && c.HasRole(org.RoleAdmin) {
-		ctx := c.Req.Context()
-		if _, exists := s.pluginStore.Plugin(ctx, "grafana-setupguide-app"); exists {
-			children := make([]*navtree.NavLink, 0, 1)
-			// setup guide (a submenu item under Home)
-			children = append(children, &navtree.NavLink{
-				Id:         "home-setup-guide",
-				Text:       "Getting started guide",
-				Url:        "/a/grafana-setupguide-app/getting-started",
-				SortWeight: navtree.WeightHome,
-			})
-			homeNode.Children = children
-		}
-	}
-	return homeNode
 }
 
 func isSupportBundlesEnabled(s *ServiceImpl) bool {
@@ -328,54 +306,36 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	}
 }
 
-func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
-	starredItemsChildNavs := []*navtree.NavLink{}
-
-	// Read stars via the collections API so this works in both dual-writer
-	// mode 0 (legacy SQL `star` table) and mode 5 (stars stored as a
-	// `stars.collections.grafana.app` resource in unified storage). The legacy
-	// `starService.GetByUser` only reads the SQL table and would return
-	// nothing in mode 5, leaving this section empty.
-	uids, err := s.starClient.GetStars(c)
-	if err != nil {
-		return nil, err
+// buildNotebooksNavLink returns the top-level Notebooks section, or nil when the feature is off
+// or the user cannot read dashboards. Notebooks reuse dashboard RBAC actions, so an unscoped
+// dashboards:read is what grants access to the list page; the apiserver then filters the list
+// down to the notebooks the user may actually see.
+func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree.NavLink {
+	if !c.IsSignedIn {
+		return nil
 	}
 
-	if len(uids) > 0 {
-		// Use a service identity for the dashboard search: the legacy RBAC
-		// gate at the caller already authorised the user to see the Starred
-		// section, and the UIDs come from the user's own star rows. The
-		// search-side authz filter would otherwise drop dashboards whose
-		// authlib check doesn't mirror the legacy permission, leaving the
-		// menu empty even though the stars are present.
-		serviceCtx, serviceIdent := identity.WithServiceIdentity(c.Req.Context(), c.GetOrgID())
-		starredDashboards, err := s.dashboardService.SearchDashboards(serviceCtx, &dashboards.FindPersistedDashboardsQuery{
-			DashboardUIDs: uids,
-			Type:          model.TypeDashboard,
-			OrgId:         c.GetOrgID(),
-			SignedInUser:  serviceIdent,
-		})
-		if err != nil {
-			return nil, err
-		}
-		// Set a loose limit to the first 50 starred dashboards found
-		if len(starredDashboards) > 50 {
-			starredDashboards = starredDashboards[:50]
-		}
-
-		sort.Slice(starredDashboards, func(i, j int) bool {
-			return starredDashboards[i].Title < starredDashboards[j].Title
-		})
-		for _, starredItem := range starredDashboards {
-			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
-				Id:   "starred/" + starredItem.UID,
-				Text: starredItem.Title,
-				Url:  starredItem.URL,
-			})
-		}
+	if !ac.HasAccess(s.accessControl, c)(ac.EvalPermission(dashboards.ActionDashboardsRead)) {
+		return nil
 	}
 
-	return starredItemsChildNavs, nil
+	if !openfeature.NewDefaultClient().Boolean(
+		c.Req.Context(),
+		featuremgmt.FlagDashboardNotebooks,
+		false,
+		openfeature.TransactionContext(c.Req.Context()),
+	) {
+		return nil
+	}
+
+	return &navtree.NavLink{
+		Text:       "Notebooks",
+		Id:         navtree.NavIDNotebooks,
+		SubTitle:   "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+		Icon:       "book",
+		SortWeight: navtree.WeightNotebooks,
+		Url:        s.cfg.AppSubURL + "/notebooks",
+	}
 }
 
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
@@ -383,7 +343,9 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 
 	dashboardChildNavs := []*navtree.NavLink{}
 
-	if c.IsSignedIn {
+	// Playlists are visible to anonymous users too, so the nav stays consistent
+	// with the playlist page and API which both serve anonymous Viewers.
+	if c.IsSignedIn || c.IsAnonymous {
 		showPlaylist := c.HasRole(org.RoleViewer)
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
@@ -394,7 +356,9 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 			})
 		}
+	}
 
+	if c.IsSignedIn {
 		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
@@ -412,6 +376,20 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Url:      s.cfg.AppSubURL + "/library-panels",
 			Icon:     "library-panel",
 		})
+
+		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagGrafanaDashboardGlobalVariables, false, openfeature.TransactionContext(c.Req.Context())) &&
+			hasAccess(ac.EvalAny(
+				ac.EvalPermission(dashboards.ActionDashboardsCreate),
+				ac.EvalPermission(dashboards.ActionDashboardsWrite),
+			)) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Variables",
+				SubTitle: "Template variables shared across dashboards, globally or per folder",
+				Id:       "dashboards/variables",
+				Url:      s.cfg.AppSubURL + "/dashboards/variables",
+				Icon:     "gf-variable",
+			})
+		}
 
 		if s.cfg.PublicDashboardsEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
@@ -463,14 +441,13 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 					Id:       "alert-activity",
 					Url:      s.cfg.AppSubURL + "/alerting/alerts",
 					Icon:     "bell",
-					IsNew:    true,
 				})
 			}
 		} else {
 			// Legacy: Show Alert activity as standalone
 			if alertRulesAccess {
 				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-					Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell", IsNew: true,
+					Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell",
 				})
 			}
 		}
@@ -566,8 +543,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory) {
+	if s.cfg.UnifiedAlerting.StateHistory.QueriesServedByLoki() {
 		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead))) {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 				Text: "History",

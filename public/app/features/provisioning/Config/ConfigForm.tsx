@@ -36,7 +36,7 @@ import { type RepositoryFormData } from '../types';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
-import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
+import { getRepositoryTypeConfig, isGitHubBased, isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
@@ -93,16 +93,17 @@ export function ConfigForm({ data }: ConfigFormProps) {
   // Repositories using GitHub App have a connection reference in their spec,
   // whereas PAT-based repositories store credentials directly
   const connectionName = data?.spec?.connection?.name;
-  const usesGitHubApp = Boolean(connectionName && type === 'github');
+  const usesGitHubApp = Boolean(connectionName && isGitHubBased(type));
 
   const {
     options: connectionOptions,
     isLoading: connectionsLoading,
     connections,
-  } = useConnectionOptions(usesGitHubApp);
+  } = useConnectionOptions(usesGitHubApp, isGitHubBased(type) ? type : undefined);
 
   const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
   const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
+  const emailWebhookDisabled = type === 'bitbucket' && !watch('email')?.trim();
 
   useEffect(() => {
     if (connectionWebhookDisabled) {
@@ -264,6 +265,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                         id={'token'}
                         placeholder={gitFields.tokenConfig.placeholder}
                         isConfigured={tokenConfigured}
+                        revealable
                         onReset={() => {
                           setValue('token', '');
                           setTokenConfigured(false);
@@ -291,7 +293,26 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
-            {hasTokenInstructions && <TokenPermissionsInfo type={type} />}
+            {gitFields.emailConfig && (
+              <Field
+                noMargin
+                label={gitFields.emailConfig.label}
+                required={gitFields.emailConfig.required}
+                error={errors?.email?.message}
+                invalid={!!errors?.email}
+                description={gitFields.emailConfig.description}
+              >
+                <Input
+                  {...register('email', {
+                    required: gitFields.emailConfig.validation?.required,
+                    pattern: gitFields.emailConfig.validation?.pattern,
+                  })}
+                  type="email"
+                  placeholder={gitFields.emailConfig.placeholder}
+                />
+              </Field>
+            )}
+            {hasTokenInstructions && <TokenPermissionsInfo type={type} url={watch('url')} />}
             <Field
               noMargin
               label={gitFields.urlConfig.label}
@@ -412,8 +433,11 @@ export function ConfigForm({ data }: ConfigFormProps) {
               signingMethodName="signingMethod"
               signingKeyName="commitSigningKey"
               smimeCertificateName="smimeCertificate"
+              authorNameName="commit.authorName"
+              authorEmailName="commit.authorEmail"
               signerNameName="commit.signerName"
               signerEmailName="commit.signerEmail"
+              signerIsAuthorName="commit.signerIsAuthor"
               defaultSigningKeyConfigured={Boolean(data?.secure?.commitSigningKey?.name)}
             />
             {/* Pull requests are not supported by the pure git type. */}
@@ -428,13 +452,21 @@ export function ConfigForm({ data }: ConfigFormProps) {
             )}
           </>
         )}
-        {type === 'github' && (
+        {supportsWebhooks(type) && (
           <WebhookSection<RepositoryFormData>
             register={register}
             control={control}
             name="webhook.baseUrl"
             disabledName="webhook.disabled"
             connectionWebhookDisabled={connectionWebhookDisabled}
+            disabledReason={
+              emailWebhookDisabled
+                ? t(
+                    'provisioning.webhook-section.description-webhook-disabled-email',
+                    'Webhook integration is disabled because the Atlassian account email is not set. Set it above to enable webhooks.'
+                  )
+                : undefined
+            }
             disabledError={errors?.webhook?.disabled?.message}
           />
         )}
@@ -450,7 +482,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 label={t('provisioning.config-form.label-enabled', 'Enabled')}
                 description={t(
                   'provisioning.config-form.description-enabled',
-                  'Once automatic pulling is enabled, the target cannot be changed.'
+                  'Once automatic pulling is enabled, the target type below cannot be changed.'
                 )}
               >
                 <Switch {...register('sync.enabled')} id={'sync.enabled'} />

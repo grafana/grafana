@@ -1,9 +1,9 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { Stack, Text, Button, Alert, Field, Input, Box } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { type DashboardInput, type DataSourceInput } from 'app/features/manage-dashboards/types';
@@ -46,6 +46,18 @@ export const CommunityDashboardMappingForm = ({
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
 
   const { sourceEntryPoint, eventLocation } = useTrackingContext();
+
+  // Auto-mapped datasources (`existingMappings`) only carry the uid; we resolve them to a
+  // friendly name for the alert below. Building a uid→name map from the full list keeps
+  // this to a single async lookup regardless of how many mappings exist.
+  const { items: allDatasources } = useDataSourceInstanceList();
+  const datasourceNameByUid = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const ds of allDatasources) {
+      map.set(ds.uid, ds.name);
+    }
+    return map;
+  }, [allDatasources]);
 
   // Track mapping form shown on mount
   useEffect(() => {
@@ -180,10 +192,7 @@ export const CommunityDashboardMappingForm = ({
               </Text>
               <Text color="secondary">
                 {existingMappings
-                  .map((mapping) => {
-                    const ds = getDataSourceSrv().getInstanceSettings(mapping.value);
-                    return `${mapping.pluginId} → ${ds?.name || mapping.value}`;
-                  })
+                  .map((mapping) => `${mapping.pluginId} → ${datasourceNameByUid.get(mapping.value) || mapping.value}`)
                   .join(' | ')}
               </Text>
             </Stack>

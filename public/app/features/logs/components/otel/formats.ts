@@ -73,16 +73,73 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
 
   const fields = [...new Set([...suggestedFields, ...otelFields])];
 
+  const availableLabels = new Set<string>();
+  logs.forEach((log) => {
+    for (const label in log.labels) {
+      availableLabels.add(label.toLowerCase());
+    }
+  });
+
   return fields.filter(
     (field) =>
       field === LOG_LINE_BODY_FIELD_NAME ||
       field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME ||
-      logs.some((log) => log.labels[field] !== undefined)
+      availableLabels.has(field.toLowerCase())
   );
 }
 
 function getSuggestedFieldsForAnyLogs() {
-  return ['app', 'service_name', 'message', 'msg', 'traceID', 'trace_id', 'environment', 'error'];
+  return [
+    'app',
+    'app_kubernetes_io_name',
+    'body',
+    'cluster',
+    'container',
+    'deployment_environment',
+    'duration',
+    'env',
+    'environment',
+    'err',
+    'error',
+    'error_message',
+    'exception',
+    'exception_message',
+    'exception_stacktrace',
+    'exception_type',
+    'filename',
+    'host',
+    'host_name',
+    'hostname',
+    'instance',
+    'job',
+    'k8s_cluster_name',
+    'k8s_pod_name',
+    'log',
+    'logger',
+    'message',
+    'method',
+    'msg',
+    'name',
+    'namespace',
+    'path',
+    'pod',
+    'scope_name',
+    'service',
+    'service_instance_id',
+    'service_name',
+    'service_namespace',
+    'service_version',
+    'severity_text',
+    'source',
+    'span_id',
+    'stack_trace',
+    'status',
+    'stream',
+    'thread',
+    'thread_name',
+    'trace_id',
+    'traceid',
+  ];
 }
 
 function getSuggestedOTelDisplayFormat() {

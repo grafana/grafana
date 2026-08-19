@@ -153,6 +153,12 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				"iam.grafana.app":    cfg.ZanzanaReconciler.IAMAPIServerURL,
 			}
 
+			// The setting apiserver is optional: only wire it when configured. When set,
+			// the reconciler reads per-namespace anonymous-access config from it.
+			if cfg.ZanzanaReconciler.SettingAPIServerURL != "" {
+				apiServerURLs["setting.grafana.app"] = cfg.ZanzanaReconciler.SettingAPIServerURL
+			}
+
 			for group, url := range apiServerURLs {
 				// Each API group gets its own audience for proper token scoping
 				audienceProvider := clientauth.NewStaticAudienceProvider(group)

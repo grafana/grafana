@@ -6,12 +6,16 @@ import {
   useStarDashboardByUidMutation as useLegacyStarDashboardMutation,
   useUnstarDashboardByUidMutation as useLegacyUnstarDashboardMutation,
 } from '@grafana/api-clients/internal/rtkq/legacy/user';
-import { locationUtil } from '@grafana/data';
+import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { type IconName, locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { setStarred, setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getFolderURL, starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { getIconForKind } from 'app/features/search/service/utils';
 import { dispatch } from 'app/store/store';
 
 import { findStarredNames, userStarsFieldSelector } from './utils';
@@ -22,6 +26,29 @@ type StarItemArgs = {
   title: string;
 };
 
+// Positive sortWeight pushes starred folders below dashboards in the nav; dashboards carry none
+const STARRED_FOLDER_SORT_WEIGHT = 1;
+
+/** Nav Starred entry (url + icon + sort rank) for a starred item, or undefined when this kind isn't shown in the nav. */
+function starredNavEntry(
+  group: string,
+  kind: string,
+  id: string
+): { url: string; icon?: IconName; sortWeight?: number } | undefined {
+  const foldersEnabled = starredFoldersEnabled();
+  if (group === DASHBOARD_API_GROUP && kind === 'Dashboard') {
+    // Icon only when folders can be starred too — that's when kinds need distinguishing
+    return {
+      url: locationUtil.assureBaseUrl(`/d/${id}`),
+      icon: foldersEnabled ? getIconForKind('dashboard') : undefined,
+    };
+  }
+  if (group === FOLDER_API_GROUP && kind === 'Folder' && foldersEnabled) {
+    return { url: getFolderURL(id), icon: getIconForKind('folder'), sortWeight: STARRED_FOLDER_SORT_WEIGHT };
+  }
+  return undefined;
+}
+
 /** Star or unstar an item */
 export const useStarItem = (group: string, kind: string) => {
   const [addStar] = useAddStarMutation();
@@ -30,21 +57,33 @@ export const useStarItem = (group: string, kind: string) => {
   const [addStarLegacy] = useLegacyStarDashboardMutation();
   const [removeStarLegacy] = useLegacyUnstarDashboardMutation();
 
-  const updateStarred = useUpdateNavStarredItems();
-
   if (config.featureToggles.starsFromAPIServer) {
     return async ({ id, title }: StarItemArgs, newStarredState: boolean) => {
       const name = `user-${contextSrv.user.uid}`;
       const mutationArgs = { id, name, group, kind };
-      if (newStarredState) {
-        await addStar(mutationArgs);
-      } else {
-        await removeStar(mutationArgs);
+      try {
+        if (newStarredState) {
+          await addStar(mutationArgs).unwrap();
+        } else {
+          await removeStar(mutationArgs).unwrap();
+        }
+      } catch {
+        // Server rejected the change — leave the nav as-is rather than showing state that didn't persist
+        return;
       }
 
-      // The nav "Starred" section is dashboard-only; folders must not be added to it.
-      if (group === 'dashboard.grafana.app' && kind === 'Dashboard') {
-        updateStarred({ id, title }, newStarredState);
+      const entry = starredNavEntry(group, kind, id);
+      if (entry) {
+        dispatch(
+          setStarred({
+            id,
+            title,
+            url: entry.url,
+            icon: entry.icon,
+            sortWeight: entry.sortWeight,
+            isStarred: newStarredState,
+          })
+        );
       }
     };
   }
@@ -56,7 +95,14 @@ export const useStarItem = (group: string, kind: string) => {
       await removeStarLegacy({ dashboardUid: id });
     }
 
-    updateStarred({ id, title }, newStarredState);
+    dispatch(
+      setStarred({
+        id,
+        title,
+        url: locationUtil.assureBaseUrl(`/d/${id}`),
+        isStarred: newStarredState,
+      })
+    );
   };
 };
 
@@ -103,16 +149,6 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
   };
 };
 
-/**
- * Hook to update the nav menu with starred items
- */
-const useUpdateNavStarredItems = () => {
-  return ({ id, title }: { id: string; title: string }, isStarred: boolean) => {
-    const url = locationUtil.assureBaseUrl(`/d/${id}`);
-    return dispatch(setStarred({ id, title, url, isStarred }));
-  };
-};
-
 // Matches the backend cap on starred nav children in bootData (buildStarredItemsNavLinks)
 const STARRED_NAV_CAP = 50;
 
@@ -121,37 +157,64 @@ const STARRED_NAV_CAP = 50;
  * Replaces whatever the backend shipped in bootData (which is empty in dual-writer mode 5).
  */
 export const useSyncStarredItemsInNav = () => {
-  const { data: uids, isLoading, isError } = useStarredItems('dashboard.grafana.app', 'Dashboard');
+  const foldersEnabled = starredFoldersEnabled();
+  const {
+    data: dashboardUids,
+    isLoading: dashboardsLoading,
+    isError: dashboardsError,
+  } = useStarredItems(DASHBOARD_API_GROUP, 'Dashboard');
+  const {
+    data: folderUids,
+    isLoading: folderLoadingRaw,
+    isError: folderError,
+  } = useStarredItems(FOLDER_API_GROUP, 'Folder', { skip: !foldersEnabled });
+
+  // A skipped useStarredItems reports isLoading:true indefinitely, so only honor
+  // the folder query's loading/error when the feature is actually on.
+  const folderLoading = foldersEnabled ? folderLoadingRaw : false;
+  const isLoading = dashboardsLoading || folderLoading;
+  const isError = dashboardsError || (foldersEnabled && folderError);
+
   // Initialized from the stars query so a remount with a warm RTK cache doesn't
   // flash a loading state — the nav tree is already correct from the prior sync
   const [hasSynced, setHasSynced] = useState(!isLoading);
   const [searchFailed, setSearchFailed] = useState(false);
 
-  // Stable identity so the effect doesn't re-fire when the array ref changes but content is identical
-  const uidKey = useMemo(() => {
-    if (!uids) {
-      return undefined;
-    }
-    return [...uids].sort().join(',');
-  }, [uids]);
+  // Stable identities so the effect doesn't re-fire when an array ref changes but content is identical
+  const dashboardKey = useMemo(() => dashboardUids && [...dashboardUids].sort().join(','), [dashboardUids]);
+  const folderKey = useMemo(
+    () => (foldersEnabled ? folderUids && [...folderUids].sort().join(',') : ''),
+    [folderUids, foldersEnabled]
+  );
 
   useEffect(() => {
-    if (isLoading || uidKey === undefined) {
+    if (isLoading || dashboardKey === undefined || folderKey === undefined) {
       return;
     }
 
-    if (uidKey === '') {
+    const dashboardNames = dashboardKey === '' ? [] : dashboardKey.split(',');
+    const folderNames = folderKey === '' ? [] : folderKey.split(',');
+    // Dedupe so a uid starred as both kinds can't occupy two cap slots or render twice
+    const names = [...new Set([...dashboardNames, ...folderNames])].sort().slice(0, STARRED_NAV_CAP);
+
+    if (names.length === 0) {
       dispatch(setStarredItems({ uids: [], items: [] }));
       setHasSynced(true);
       setSearchFailed(false);
       return;
     }
 
-    const names = uidKey.split(',').slice(0, STARRED_NAV_CAP);
+    const kinds = foldersEnabled ? ['dashboard', 'folder'] : ['dashboard'];
+    // The search matches the uid union against both kinds, so a cross-kind uid collision can
+    // return an item that was never starred as that kind — keep only kind-matching hits.
+    const starredUidsByKind: Record<string, Set<string> | undefined> = {
+      dashboard: new Set(dashboardNames),
+      folder: new Set(folderNames),
+    };
     let cancelled = false;
 
     getGrafanaSearcher()
-      .search({ name: names, kind: ['dashboard'] })
+      .search({ name: names, kind: kinds })
       .then((response) => {
         if (cancelled) {
           return;
@@ -159,7 +222,16 @@ export const useSyncStarredItemsInNav = () => {
         const items: StarredNavItem[] = [];
         for (let i = 0; i < response.view.length; i++) {
           const row = response.view.get(i);
-          items.push({ id: row.uid, title: row.name, url: row.url });
+          if (!starredUidsByKind[row.kind]?.has(row.uid)) {
+            continue;
+          }
+          items.push({
+            id: row.uid,
+            title: row.name,
+            url: row.url,
+            icon: foldersEnabled ? getIconForKind(row.kind) : undefined,
+            sortWeight: row.kind === 'folder' ? STARRED_FOLDER_SORT_WEIGHT : undefined,
+          });
         }
         dispatch(setStarredItems({ uids: names, items }));
         setHasSynced(true);
@@ -175,7 +247,7 @@ export const useSyncStarredItemsInNav = () => {
     return () => {
       cancelled = true;
     };
-  }, [uidKey, isLoading]);
+  }, [dashboardKey, folderKey, isLoading, foldersEnabled]);
 
   return { isLoading: isLoading || !hasSynced, isError: isError || searchFailed };
 };

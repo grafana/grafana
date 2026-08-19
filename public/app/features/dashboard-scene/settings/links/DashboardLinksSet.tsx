@@ -1,10 +1,6 @@
-import { useId, useMemo } from 'react';
-
 import { t } from '@grafana/i18n';
 import { type SceneObject, SceneObjectBase, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
 import type { DashboardLink } from '@grafana/schema';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import {
@@ -13,31 +9,9 @@ import {
 } from '../../scene/types/EditableDashboardElement';
 
 import { LinkEdit, linkSelectionId } from './LinkAddEditableElement';
-import { LinkList } from './LinkList';
 
 export interface DashboardLinksSetState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
-}
-
-function useEditPaneOptions(
-  this: DashboardLinksSet,
-  dashboardRef: SceneObjectRef<DashboardScene>
-): OptionsPaneCategoryDescriptor[] {
-  const linkListId = useId();
-  const dashboard = dashboardRef.resolve();
-
-  const options = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({ title: '', id: 'links' }).addItem(
-      new OptionsPaneItemDescriptor({
-        title: '',
-        id: linkListId,
-        skipField: true,
-        render: () => <LinkList dashboard={dashboard} />,
-      })
-    );
-  }, [linkListId, dashboard]);
-
-  return [options];
 }
 
 export class DashboardLinksSet extends SceneObjectBase<DashboardLinksSetState> implements EditableDashboardElement {
@@ -52,9 +26,9 @@ export class DashboardLinksSet extends SceneObjectBase<DashboardLinksSetState> i
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.link-set', 'Links'),
+      typeName: t('dashboard.sidebar.elements.link-set', 'Links'),
       icon: 'link',
-      instanceName: t('dashboard.edit-pane.elements.link-set', 'Links'),
+      instanceName: t('dashboard.sidebar.elements.link-set', 'Links'),
     };
   }
 
@@ -72,6 +46,4 @@ export class DashboardLinksSet extends SceneObjectBase<DashboardLinksSetState> i
 
     return this._linkEditItems;
   }
-
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.state.dashboardRef);
 }

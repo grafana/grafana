@@ -216,11 +216,11 @@ describe('LogListControls', () => {
     assertExpandedOptionsCopyVisible();
   });
 
-  test('Expands options shown by default with container width > 1200', async () => {
+  test('Expands options shown by default with container width >= 1900', async () => {
     const div = document.createElement('div');
     const divSpy = jest.spyOn(div, 'clientWidth', 'get');
     //@ts-expect-error
-    divSpy['clientWidth'] = 1201;
+    divSpy['clientWidth'] = 1900;
     render(
       //@ts-expect-error
       <LogListContextProvider {...contextProps} sortOrder={LogsSortOrder.Ascending} containerElement={divSpy}>

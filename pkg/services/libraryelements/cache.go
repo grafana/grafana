@@ -7,7 +7,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 )
 
 // cacheKey is the context key for knowing if it should use cache or not.
@@ -24,16 +26,51 @@ func hasCache(ctx context.Context) bool {
 	return ok
 }
 
+// panelFoldersKey is the context key carrying a request-scoped map of library
+// panel UID -> folder UID.
+type panelFoldersKey struct{}
+
+// withPanelFolders returns a context carrying the folder UID of each given
+// library element. The permission scope resolver uses this to skip re-querying
+// the database for a panel's folder when the caller already has it (e.g. the
+// list endpoint, which has just loaded the elements). The map is request-scoped,
+// so it never goes stale and needs no invalidation.
+func withPanelFolders(ctx context.Context, elements []model.LibraryElementDTO) context.Context {
+	folders := make(map[string]string, len(elements))
+	for _, e := range elements {
+		folders[e.UID] = e.FolderUID
+	}
+	return context.WithValue(ctx, panelFoldersKey{}, folders)
+}
+
+// panelFolderFromContext returns the folder UID for a library panel UID if it
+// was recorded by withPanelFolders for this request.
+func panelFolderFromContext(ctx context.Context, panelUID string) (string, bool) {
+	folders, ok := ctx.Value(panelFoldersKey{}).(map[string]string)
+	if !ok {
+		return "", false
+	}
+	folderUID, ok := folders[panelUID]
+	return folderUID, ok
+}
+
 // folderTreeCache provides caching for folder trees.
 type folderTreeCache struct {
 	cache     *localcache.CacheService
 	folderSvc folder.Service
+	log       log.Logger
+	// useSearch builds the tree from the search index (lightweight UID+parent
+	// refs) instead of a full folder object list, avoiding the paged object-list
+	// round-trips that dominate large instances. Feature-flag controlled.
+	useSearch bool
 }
 
-func newFolderTreeCache(folderSvc folder.Service) *folderTreeCache {
+func newFolderTreeCache(folderSvc folder.Service, useSearch bool) *folderTreeCache {
 	return &folderTreeCache{
 		cache:     localcache.New(30*time.Second, 1*time.Minute),
 		folderSvc: folderSvc,
+		log:       log.New("library-elements.folder-tree-cache"),
+		useSearch: useSearch,
 	}
 }
 
@@ -45,11 +82,7 @@ func (c *folderTreeCache) get(ctx context.Context, user identity.Requester) (*fo
 		return cached.(*folder.FolderTree), nil
 	}
 
-	// Get folders accessible to this user
-	folders, err := c.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
-		OrgID:        user.GetOrgID(),
-		SignedInUser: user,
-	})
+	folders, err := c.listFolders(ctx, user)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list accessible folders: %w", err)
 	}
@@ -60,4 +93,57 @@ func (c *folderTreeCache) get(ctx context.Context, user identity.Requester) (*fo
 	c.cache.Set(cacheKey, tree, 0)
 
 	return tree, nil
+}
+
+// listFolders returns the folders accessible to the user. When useSearch is set
+// it queries the search index (lightweight refs), otherwise it lists full folder
+// objects. Both paths return the data NewFolderTree needs (ID, UID, parent, title).
+//
+// If the requester has no ID token, fall back to GetFolders. SearchFolders scopes
+// hits server-side via the ID token; without one, unified search classifies the
+// call as a service call and returns every folder in the org, which would leak
+// library elements from folders the user can't read.
+func (c *folderTreeCache) listFolders(ctx context.Context, user identity.Requester) ([]*folder.Folder, error) {
+	getFolders := func() ([]*folder.Folder, error) {
+		return c.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
+			OrgID:        user.GetOrgID(),
+			SignedInUser: user,
+		})
+	}
+
+	if !c.useSearch || user.GetIDToken() == "" {
+		return getFolders()
+	}
+
+	// Unlike GetFolders, folderimpl.SearchFolders authorizes off the requester in
+	// the context (not the query), so install it — callers may pass a bare context
+	// with the identity supplied only via SignedInUser (e.g. async snapshot builds).
+	ctx = identity.WithRequester(ctx, user)
+	hits, err := c.folderSvc.SearchFolders(ctx, folder.SearchFoldersQuery{
+		OrgID:        user.GetOrgID(),
+		SignedInUser: user,
+	})
+	// Fall back to GetFolders when the search index errors or returns no hits.
+	// Both happen during a search-index rebuild or cold start; caching an empty
+	// tree from search would make GET /api/library-elements filter out
+	// non-admin users' folder-based elements until the TTL expires. GetFolders
+	// hits the source of truth directly and stays correct through those windows.
+	if err != nil {
+		c.log.FromContext(ctx).Warn("folder search failed, falling back to GetFolders", "error", err, "orgID", user.GetOrgID())
+		return getFolders()
+	}
+	if len(hits) == 0 {
+		return getFolders()
+	}
+	folders := make([]*folder.Folder, 0, len(hits))
+	for _, hit := range hits {
+		folders = append(folders, &folder.Folder{
+			ID:        hit.ID, // nolint:staticcheck
+			UID:       hit.UID,
+			Title:     hit.Title,
+			ParentUID: hit.FolderUID,
+			OrgID:     user.GetOrgID(),
+		})
+	}
+	return folders, nil
 }

@@ -28,3 +28,9 @@ export const setupMockStarredFolders = () => {
 };
 
 export const mockStarredFoldersMap = new Map<string, boolean>();
+
+/** Seed the starred folders for a test (replaces the current set). The stars endpoints read from it. */
+export const setMockStarredFolders = (uids: string[]) => {
+  mockStarredFoldersMap.clear();
+  uids.forEach((uid) => mockStarredFoldersMap.set(uid, true));
+};

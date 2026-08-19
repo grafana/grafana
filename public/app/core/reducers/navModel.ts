@@ -112,17 +112,21 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
     return { ...state, ...newPages };
   } else if (updateConfigurationSubtitle.match(action)) {
     const subTitle = `Organization: ${action.payload}`;
+    const next = { ...state };
 
-    return {
-      ...state,
-      cfg: { ...state.cfg, subTitle },
-      datasources: getItemWithNewSubTitle(state.datasources, subTitle),
-      correlations: getItemWithNewSubTitle(state.correlations, subTitle),
-      users: getItemWithNewSubTitle(state.users, subTitle),
-      teams: getItemWithNewSubTitle(state.teams, subTitle),
-      plugins: getItemWithNewSubTitle(state.plugins, subTitle),
-      'org-settings': getItemWithNewSubTitle(state['org-settings'], subTitle),
-    };
+    if (next.cfg) {
+      next.cfg = { ...next.cfg, subTitle };
+    }
+
+    // Which of these entries exist varies by permissions, features and deployment;
+    // a missing one must not crash the dispatch (it would abort the org-switch reload).
+    for (const id of ['datasources', 'correlations', 'users', 'teams', 'plugins', 'org-settings']) {
+      if (next[id]) {
+        next[id] = getItemWithNewSubTitle(next[id], subTitle);
+      }
+    }
+
+    return next;
   } else if (removeNavIndex.match(action)) {
     delete state[action.payload];
   }

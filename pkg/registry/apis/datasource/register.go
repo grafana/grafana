@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +18,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -29,8 +29,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -50,6 +50,10 @@ type DataSourceAPIBuilderConfig struct {
 	EnableResourceEndpoint      bool
 	EnableHealthEndpoint        bool
 	EnableChunkedQueryStreaming bool
+
+	// HandlerOrigin, when non-empty, is written as the X-Grafana-DS-Apiserver
+	// response header on every subresource request. Set to "remote" when MultiTenancy is enabled.
+	HandlerOrigin string
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
@@ -95,6 +99,7 @@ func RegisterAPIService(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	flags := DataSourceAPIBuilderConfig{
+		HandlerOrigin:               "local",
 		LoadQueryTypes:              features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes),
 		LoadOpenAPISpec:             features.IsEnabledGlobally(featuremgmt.FlagDatasourcesLoadOpenAPI),
 		UseDualWriter:               features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs),
@@ -116,16 +121,19 @@ func RegisterAPIService(
 		return nil, regErr
 	}
 
-	pluginInfos, err := pluginspec.LoadPlugins(context.Background(), pluginSources,
-		func(jsonData plugins.JSONData) bool {
+	pluginDefs, err := definition.LoadPluginDefinition(context.Background(), pluginSources, definition.Options{
+		Filter: func(jsonData plugins.JSONData) bool {
 			return jsonData.Type == plugins.TypeDataSource
-		}, flags.LoadOpenAPISpec || flags.LoadQueryTypes)
+		},
+		Schemas:     flags.LoadOpenAPISpec || flags.LoadQueryTypes,
+		AppManifest: false, // not yet
+	})
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of datasource plugins: %s", err)
 	}
 
-	for _, plugin := range pluginInfos {
+	for _, plugin := range pluginDefs {
 		client, ok := pluginClient.(PluginClient)
 		if !ok {
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)

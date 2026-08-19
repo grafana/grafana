@@ -19,7 +19,7 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 		{
 			Name:         SEARCH_FIELD_NAME,
 			Type:         SearchFieldTypeString,
-			Capabilities: []SearchCapability{SearchCapabilityFilter},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort},
 			Description:  "Kubernetes name. Unique identifier within a namespace+group+resource.",
 		},
 		{
@@ -50,7 +50,7 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Name:         SEARCH_FIELD_TAGS,
 			Type:         SearchFieldTypeString,
 			Array:        true,
-			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityFacet, SearchCapabilityRetrieve},
 			Description:  "Unique tags.",
 		},
 		{
@@ -82,33 +82,76 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Capabilities: []SearchCapability{SearchCapabilityFacet},
 			Description:  "Manager identity in format {kind}:{id}; used for faceting.",
 		},
-		// created and updated are advertised in the proto column list but were
-		// never indexed before this declaration. Capabilities here are a
-		// compromise:
-		//
-		//   - retrieve: the actual intent — surface the timestamp in search
-		//     results so clients can display it.
-		//   - filter: required only because the bleve capability mapper does
-		//     not currently emit a mapping for retrieve-only fields. Filter
-		//     gives us a keyword mapping with Store: true. Exact-ms equality
-		//     filters are not a useful query and we expect no consumer to rely
-		//     on them.
-		//   - sort: omitted because the mapper emits a keyword mapping
-		//     regardless of Type, so int64 values would sort lexically.
-		//
-		// The end state is store-only with proper numeric semantics; both
-		// require a type-aware mapper, tracked as a follow-up.
+		// created and updated are unix-millis timestamps, mapped as numeric bleve
+		// fields and stored so retrieve returns the value in search results. They
+		// are retrieve-only: filtering would need range queries, which the search
+		// API does not support (and exact-millisecond equality is not a useful
+		// query), and sort would first require every index to carry the numeric
+		// mapping.
 		{
 			Name:         SEARCH_FIELD_CREATED,
 			Type:         SearchFieldTypeInt64,
-			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
 			Description:  "Creation timestamp (unix millis).",
 		},
 		{
 			Name:         SEARCH_FIELD_UPDATED,
 			Type:         SearchFieldTypeInt64,
-			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
 			Description:  "Update timestamp (unix millis).",
 		},
 	}
+}
+
+// TrashSearchFieldDefinitions returns the fields only a deleted document carries.
+// Kept out of the standard set, which is hashed into IndexAffectingHash (adding to
+// it rebuilds every index with a search fields provider) and is what the /search
+// field set is built from.
+//
+// Capabilities mirror trashFieldSet() in the search API layer: if the two
+// disagree, a request the API layer accepts misbehaves here.
+//
+// title and folder are absent on purpose, so trash serves them from the standard
+// declarations and analyzes them exactly as live search does.
+func TrashSearchFieldDefinitions() []SearchFieldDefinition {
+	return []SearchFieldDefinition{
+		{
+			Name:         SEARCH_FIELD_DELETED_BY,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort, SearchCapabilityRetrieve},
+			Description:  "Who deleted the resource (format: user:<uid>).",
+		},
+		// Numeric so it sorts in time order rather than lexically, and so a retention
+		// window can be a range query later. Milliseconds are exact as a float64, which
+		// is how bleve stores numbers.
+		{
+			Name:         SEARCH_FIELD_DELETION_TIME,
+			Type:         SearchFieldTypeInt64,
+			Capabilities: []SearchCapability{SearchCapabilitySort, SearchCapabilityRetrieve},
+			Description:  "Deletion timestamp (unix millis).",
+		},
+		// A string, unlike deletion_time: resource versions are snowflake ids around
+		// 1.8e18, where a float64 can only represent multiples of 256, so a number
+		// would come back rounded. Restore submits this value, so it has to be exact.
+		{
+			Name:         SEARCH_FIELD_DELETED_RV,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Description:  "Resource version of the delete.",
+		},
+	}
+}
+
+// Derived once: fixed at build time, read on every search request.
+var trashSearchFieldNames = func() map[string]bool {
+	names := map[string]bool{}
+	for _, def := range TrashSearchFieldDefinitions() {
+		names[def.Name] = true
+	}
+	return names
+}()
+
+// IsTrashSearchField reports whether name is a field only deleted documents carry.
+func IsTrashSearchField(name string) bool {
+	return trashSearchFieldNames[name]
 }

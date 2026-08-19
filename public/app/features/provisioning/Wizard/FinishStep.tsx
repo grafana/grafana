@@ -11,7 +11,7 @@ import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfig
 import { PullRequestOptionsSection } from '../Config/PullRequestOptionsSection';
 import { WebhookSection } from '../Config/WebhookSection';
 import { useConnectionList } from '../hooks/useConnectionList';
-import { isGitProvider } from '../utils/repositoryTypes';
+import { isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { getGitProviderFields } from './fields';
@@ -27,17 +27,19 @@ export const FinishStep = memo(function FinishStep() {
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const [type, readOnly, wizardConnectionName, githubAuthType] = watch([
+  const [type, readOnly, wizardConnectionName, githubAuthType, email] = watch([
     'repository.type',
     'repository.readOnly',
     'githubApp.connectionName',
     'githubAuthType',
+    'repository.email',
   ]);
 
-  const isGithub = type === 'github';
+  const emailWebhookDisabled = type === 'bitbucket' && !email?.trim();
+
   const isGitBased = isGitProvider(type);
 
-  const [connections] = useConnectionList(isGithub && githubAuthType === 'github-app' ? {} : skipToken);
+  const [connections] = useConnectionList(githubAuthType === 'github-app' ? {} : skipToken);
   const connectionWebhookDisabled = useMemo(() => {
     if (githubAuthType !== 'github-app' || !wizardConnectionName || !connections) {
       return false;
@@ -153,8 +155,11 @@ export const FinishStep = memo(function FinishStep() {
             signingMethodName="repository.signingMethod"
             signingKeyName="repository.commitSigningKey"
             smimeCertificateName="repository.smimeCertificate"
+            authorNameName="repository.commit.authorName"
+            authorEmailName="repository.commit.authorEmail"
             signerNameName="repository.commit.signerName"
             signerEmailName="repository.commit.signerEmail"
+            signerIsAuthorName="repository.commit.signerIsAuthor"
           />
           {/* Pull requests are not supported by the pure git type. */}
           {type !== 'git' && (
@@ -169,13 +174,21 @@ export const FinishStep = memo(function FinishStep() {
         </>
       )}
 
-      {isGithub && (
+      {supportsWebhooks(type) && (
         <WebhookSection<WizardFormData>
           register={register}
           control={control}
           name="repository.webhook.baseUrl"
           disabledName="repository.webhook.disabled"
           connectionWebhookDisabled={connectionWebhookDisabled}
+          disabledReason={
+            emailWebhookDisabled
+              ? t(
+                  'provisioning.webhook-section.description-webhook-disabled-email-step',
+                  'Webhook integration is disabled because the Atlassian account email is not set. Set it in the Connect step to enable webhooks.'
+                )
+              : undefined
+          }
           disabledError={errors?.repository?.webhook?.disabled?.message}
         />
       )}

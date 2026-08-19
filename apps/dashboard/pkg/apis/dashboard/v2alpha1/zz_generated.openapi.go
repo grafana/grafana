@@ -692,8 +692,8 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardAnnotationPanelFilter(ref commo
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: 0,
-										Type:    []string{"integer"},
-										Format:  "int64",
+										Type:    []string{"number"},
+										Format:  "double",
 									},
 								},
 							},
@@ -2103,6 +2103,13 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardFieldColor(ref common.Reference
 							Format:      "",
 						},
 					},
+					"gradientColorTo": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"seriesBy": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Some visualizations need to know how to assign a series color from by value color schemes.",
@@ -3236,9 +3243,16 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardPanelSpec(ref common.ReferenceC
 					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Shown in a info icon tooltip next to panel title",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"subtitle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Shown in a sub header below the title.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"links": {
@@ -3273,7 +3287,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardPanelSpec(ref common.ReferenceC
 						},
 					},
 				},
-				Required: []string{"id", "title", "description", "links", "data", "vizConfig"},
+				Required: []string{"id", "title", "links", "data", "vizConfig"},
 			},
 		},
 		Dependencies: []string{
@@ -3375,6 +3389,12 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardQueryOptionsSpec(ref common.Ref
 						},
 					},
 					"timeShift": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"timeCompare": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -4522,6 +4542,13 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardThreshold(ref common.ReferenceC
 							Description: "Value null means -Infinity",
 							Type:        []string{"number"},
 							Format:      "double",
+						},
+					},
+					"valueExpr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"color": {

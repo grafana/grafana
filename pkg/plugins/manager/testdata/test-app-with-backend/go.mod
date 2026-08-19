@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/plugins/manager/testdata/test-app-with-backend
 
-go 1.26.4
+go 1.26.6
 
 require github.com/grafana/grafana-plugin-sdk-go v0.292.0
 
@@ -32,7 +32,7 @@ require (
 	github.com/hashicorp/yamux v0.1.2 // indirect
 	github.com/jaegertracing/jaeger-idl v0.6.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/klauspost/compress v1.18.7 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect

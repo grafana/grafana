@@ -165,7 +165,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 			Limit:   10,
 			Page:    1,
 			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "default"}},
-			Fields:  []string{legacyIDField, fieldCreated, fieldDisabled},
+			Fields:  []string{legacyIDField, res.SEARCH_FIELD_CREATED, fieldDisabled},
 		}
 
 		mockOrgService.On("SearchOrgUsers", mock.Anything, mock.Anything).Return(&org.SearchOrgUsersQueryResult{
@@ -178,7 +178,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 		require.Len(t, resp.Results.Rows, 1)
 
 		require.Equal(t,
-			[]string{legacyIDField, builders.USER_CREATED, builders.USER_DISABLED},
+			[]string{legacyIDField, res.SEARCH_FIELD_CREATED, builders.USER_DISABLED},
 			[]string{resp.Results.Columns[0].Name, resp.Results.Columns[1].Name, resp.Results.Columns[2].Name})
 
 		cells := resp.Results.Rows[0].Cells

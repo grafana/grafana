@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/backoff"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	dashboard "github.com/grafana/grafana/pkg/registry/apis/dashboard"
@@ -46,6 +47,7 @@ func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 		testcases.NewShortURLsTestCase(),
 		testcases.NewStarsTestCase(),
 		testcases.NewPreferencesTestCase(),
+		testcases.NewSnapshotsTestCase(),
 	}
 	// TODO: fix datasource migration tests on sqlite, see:
 	// https://github.com/grafana/grafana-enterprise/issues/11313
@@ -351,15 +353,23 @@ const (
 	starsID                = "stars migration"
 	preferencesID          = "preferences migration"
 	datasourceID           = "datasources migration"
+	snapshotsID            = "snapshots migration"
 )
+
+var fastRebuildBackoff = backoff.Config{
+	MinBackoff: time.Millisecond,
+	MaxBackoff: 2 * time.Millisecond,
+	MaxRetries: 5,
+}
 
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
-	shorturlsID:            false,
+	shorturlsID:            true,
 	datasourceID:           false,
 	starsID:                false,
 	preferencesID:          false,
+	snapshotsID:            false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool, extraMigrationIDs map[string]bool) {
@@ -649,9 +659,10 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 			registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
 			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
-			migrator := migrations.ProvideUnifiedMigrator(
+			migrator := migrations.NewUnifiedMigrator(
 				mockClient,
 				registry,
+				migrations.WithRebuildBackoff(fastRebuildBackoff),
 			)
 
 			// Create test data
@@ -705,9 +716,10 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 	registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
 	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
-	migrator := migrations.ProvideUnifiedMigrator(
+	migrator := migrations.NewUnifiedMigrator(
 		mockClient,
 		registry,
+		migrations.WithRebuildBackoff(fastRebuildBackoff),
 	)
 
 	// Create test data
@@ -729,6 +741,72 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 
 	// Should succeed after retry
 	require.NoError(t, err)
+}
+
+func TestUnifiedMigration_RebuildIndexes_ContextCanceledDuringBackoff(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	mockClient := resource.NewMockResourceClient(t)
+	mockClient.EXPECT().
+		RebuildIndexes(mock.Anything, mock.Anything).
+		RunAndReturn(func(context.Context, *resourcepb.RebuildIndexesRequest, ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+			cancel()
+			return nil, fmt.Errorf("temporary failure")
+		}).
+		Once()
+
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+	migrator := migrations.NewUnifiedMigrator(
+		mockClient,
+		registry,
+		migrations.WithRebuildBackoff(backoff.Config{
+			MinBackoff: time.Minute,
+			MaxBackoff: time.Minute,
+			MaxRetries: 5,
+		}),
+	)
+
+	err := migrator.RebuildIndexes(ctx, migrations.RebuildIndexOptions{
+		NamespaceInfo:       authlib.NamespaceInfo{OrgID: 1, Value: "stack-123"},
+		Resources:           []schema.GroupResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}},
+		MigrationFinishedAt: time.Now(),
+	})
+
+	require.ErrorIs(t, err, context.Canceled)
+	require.ErrorContains(t, err, "temporary failure")
+}
+
+func TestUnifiedMigration_RebuildIndexes_ContextDeadlineExceeded(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	t.Cleanup(cancel)
+
+	mockClient := resource.NewMockResourceClient(t)
+	mockClient.EXPECT().
+		RebuildIndexes(mock.Anything, mock.Anything).
+		Return(nil, fmt.Errorf("temporary failure")).
+		Maybe()
+
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+	migrator := migrations.NewUnifiedMigrator(
+		mockClient,
+		registry,
+		migrations.WithRebuildBackoff(backoff.Config{
+			MinBackoff: 5 * time.Millisecond,
+			MaxBackoff: 10 * time.Millisecond,
+			MaxRetries: 0,
+		}),
+	)
+
+	err := migrator.RebuildIndexes(ctx, migrations.RebuildIndexOptions{
+		NamespaceInfo:       authlib.NamespaceInfo{OrgID: 1, Value: "stack-123"},
+		Resources:           []schema.GroupResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}},
+		MigrationFinishedAt: time.Now(),
+	})
+
+	require.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
 func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
@@ -893,9 +971,10 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
 			registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 			registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
-			migrator := migrations.ProvideUnifiedMigrator(
+			migrator := migrations.NewUnifiedMigrator(
 				mockClient,
 				registry,
+				migrations.WithRebuildBackoff(fastRebuildBackoff),
 			)
 
 			// Create test data
@@ -965,9 +1044,10 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 	registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
 	registry.Register(playlist.PlaylistMigration(playlistmigrator.ProvidePlaylistMigrator(nil)))
 	registry.Register(shorturl.ShortURLMigration(shorturlmigrator.ProvideShortURLMigrator(nil)))
-	migrator := migrations.ProvideUnifiedMigrator(
+	migrator := migrations.NewUnifiedMigrator(
 		mockClient,
 		registry,
+		migrations.WithRebuildBackoff(fastRebuildBackoff),
 	)
 
 	// Create test data

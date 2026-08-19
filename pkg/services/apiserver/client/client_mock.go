@@ -10,6 +10,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 )
 
@@ -47,6 +48,14 @@ func (m *MockK8sHandler) Create(ctx context.Context, obj *unstructured.Unstructu
 
 func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.UpdateOptions) (*unstructured.Unstructured, error) {
 	args := m.Called(ctx, obj, orgID, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockK8sHandler) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, orgID int64, opts v1.PatchOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, pt, data, orgID, opts)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

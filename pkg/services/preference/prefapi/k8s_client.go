@@ -29,6 +29,7 @@ import (
 // be mocked in tests of the legacy handlers.
 type K8sClient interface {
 	Get(ctx context.Context, owner prefutils.OwnerReference) (*preferences.PreferencesSpec, error)
+	GetMerged(ctx context.Context) (*preferences.PreferencesSpec, error)
 	Update(ctx context.Context, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error
 	Patch(ctx context.Context, owner prefutils.OwnerReference, spec *preferences.PreferencesSpec) error
 }
@@ -61,6 +62,21 @@ func (k *k8sClient) Get(ctx context.Context, owner prefutils.OwnerReference) (*p
 		if errors.IsNotFound(err) {
 			return &preferences.PreferencesSpec{}, nil
 		}
+		return nil, err
+	}
+	return unstructuredToSpec(out)
+}
+
+// GetMerged fetches the merged preferences for the requester: user, team and
+// namespace preferences combined with the configured defaults, in that
+// priority order.
+func (k *k8sClient) GetMerged(ctx context.Context) (*preferences.PreferencesSpec, error) {
+	client, err := k.getClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out, err := client.Get(ctx, "merged", v1.GetOptions{})
+	if err != nil {
 		return nil, err
 	}
 	return unstructuredToSpec(out)

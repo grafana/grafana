@@ -7,7 +7,7 @@ import {
   matchPluginId,
 } from '@grafana/data';
 
-import { isExpressionReference } from '../../utils/DataSourceWithBackend';
+import { isExpressionReference } from '../../utils/expressionRef';
 import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
@@ -49,6 +49,7 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
 /**
  * Populate the instance-settings cache from boot data. Intended to be called
  * exactly once at application startup via the `@grafana/runtime/internal` export.
+ * In tests, use {@link setDataSourceInstanceSettings} instead.
  *
  * @internal
  */
@@ -58,6 +59,28 @@ export function initDataSourceInstanceSettings(
 ): void {
   defaultName = defaultDsName;
   populateMaps(settings);
+}
+
+/**
+ * Test helper — the sanctioned way to seed the instance-settings cache in tests.
+ * Fully resets all module state (including runtime and expression data sources),
+ * then populates the cache from a clone of `settings` so test fixtures are never
+ * mutated. When `defaultDatasourceName` is omitted, the entry flagged with
+ * `isDefault: true` becomes the default. Should only be called from tests.
+ *
+ * @internal
+ */
+export function setDataSourceInstanceSettings(
+  settings: Record<string, DataSourceInstanceSettings>,
+  defaultDatasourceName?: string
+): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('setDataSourceInstanceSettings() function can only be called from tests.');
+  }
+
+  _resetForTests();
+  populateMaps(structuredClone(settings));
+  defaultName = defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '';
 }
 
 /**
@@ -185,6 +208,44 @@ function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceLis
   };
 }
 
+// getDataSourceInstanceList appends the built-in -- Grafana -- data source to most results.
+// It is suppressed when pluginId or alerting filters are set, when tracing is set, or when
+// a custom filter callback returns false for it. Callers that want only true instances of a
+// given type must re-check the type to guard against a false positive from that appended
+// built-in. Mirrors the type predicate used inside applyFilters (exact type or aliasID match).
+function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
+  return item.type === type || (item.meta.aliasIDs?.includes(type) ?? false);
+}
+
+/**
+ * Resolve the default data source instance of a given type. Returns the instance flagged
+ * as default, otherwise the first instance of that type, or `undefined` when none exist.
+ *
+ * Covers the common "get my data source" pattern (`list.find(ds => ds.isDefault) ?? list[0]`)
+ * without exposing the full list. The heavy per-instance settings are not included — fetch
+ * them on demand via {@link getDataSourceInstanceSettings}.
+ *
+ * @public
+ */
+export async function getDefaultDataSourceInstance(type: string): Promise<DataSourceInstanceListItem | undefined> {
+  const allOfType = await getDataSourceInstanceList({ type, all: true });
+  const list = allOfType.filter((item) => matchesType(item, type));
+  const defaultInstance = list.find((item) => item.isDefault);
+  return defaultInstance ?? list[0];
+}
+
+/**
+ * Check whether at least one data source instance of the given type is installed.
+ *
+ * Covers presence checks (`getList({ type }).length > 0`) without returning a list.
+ *
+ * @public
+ */
+export async function hasDataSourceInstance(type: string): Promise<boolean> {
+  const list = await getDataSourceInstanceList({ type, all: true });
+  return list.some((item) => matchesType(item, type));
+}
+
 /**
  * Register the instance settings for a runtime data source so it is returned
  * by future lookups. Throws if the uid is already in use.
@@ -219,20 +280,25 @@ function lookupFromMaps(
     return byUid[defaultName] ?? byName[defaultName];
   }
 
-  // Template variable reference — interpolate and preserve the raw ref.
-  if (nameOrUid[0] === '$') {
+  // Template variable reference — interpolate and preserve the raw ref. The variable can
+  // sit anywhere in the string (e.g. `logs-${stage}-loki`), not only at the start; legacy
+  // DataSourceSrv.get() interpolates unconditionally. When interpolation changes nothing
+  // (a datasource name that merely contains `$`), fall through to the plain lookup.
+  if (nameOrUid.includes('$')) {
     const interpolated = getTemplateSrv().replace(nameOrUid, scopedVars, variableInterpolation);
-    const resolved = interpolated === 'default' ? byName[defaultName] : (byUid[interpolated] ?? byName[interpolated]);
-    if (!resolved) {
-      return undefined;
+    if (interpolated !== nameOrUid) {
+      const resolved = interpolated === 'default' ? byName[defaultName] : (byUid[interpolated] ?? byName[interpolated]);
+      if (!resolved) {
+        return undefined;
+      }
+      return {
+        ...resolved,
+        isDefault: false,
+        name: nameOrUid,
+        uid: nameOrUid,
+        rawRef: { type: resolved.type, uid: resolved.uid },
+      };
     }
-    return {
-      ...resolved,
-      isDefault: false,
-      name: nameOrUid,
-      uid: nameOrUid,
-      rawRef: { type: resolved.type, uid: resolved.uid },
-    };
   }
 
   return byUid[nameOrUid] ?? byName[nameOrUid] ?? byId[nameOrUid];

@@ -14,11 +14,11 @@ import {
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { type LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -209,6 +209,7 @@ export interface OptionPaneRenderProps2 {
   instanceState: unknown;
   currentOptions: Record<string, unknown>;
   currentFieldConfig: FieldConfigSource;
+  reportInteractionUI: 'panel-edit' | 'view-panel';
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
@@ -233,16 +234,17 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(currentOptions, path),
     onChange: (path, value) => {
-      if (path === 'timeCompare') {
-        reportInteraction('panel_setting_interaction', {
-          viz_type: plugin.meta.id,
-          feature_type: 'time_comparison',
-          option_type: value ? 'toggle_enabled' : 'toggle_disabled',
-        });
-      }
-
       const newOptions = setOptionImmutably(currentOptions, path, value);
+      // Merged rather than replaced, so an editor that drops a key from an object value keeps the old
+      // key — clearing requires setting it to undefined. Documented on StandardEditorProps.onChange.
+      // Switching to replace here would break editors that emit partial values for their own path.
       panel.onOptionsChange(newOptions);
+      // Record interaction for analytics
+      DashboardInteractions.setVisualOption({
+        ui: props.reportInteractionUI,
+        option: path,
+        value: JSON.stringify(value),
+      });
     },
   };
 
@@ -297,6 +299,13 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
               updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom),
               true
             );
+
+            // Record interaction for analytics
+            DashboardInteractions.setVisualOption({
+              ui: props.reportInteractionUI,
+              option: `?${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`,
+              value: JSON.stringify(value),
+            });
           };
 
           return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;

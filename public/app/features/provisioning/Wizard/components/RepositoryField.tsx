@@ -6,11 +6,12 @@ import {
   type GetConnectionRepositoriesApiResponse,
   useGetConnectionRepositoriesQuery,
 } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Combobox, Field, Input } from '@grafana/ui';
 
 import { type ExternalRepository } from '../../types';
-import { isGitProvider } from '../../utils/repositoryTypes';
+import { isGitHubBased, isGitProvider } from '../../utils/repositoryTypes';
 import { getGitProviderFields } from '../fields';
 import { type WizardFormData } from '../types';
 
@@ -34,7 +35,7 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
   ]);
 
   const isGitBased = isGitProvider(type);
-  const isGitHubAppAuth = type === 'github' && githubAuthType === 'github-app';
+  const isGitHubAppAuth = isGitHubBased(type) && githubAuthType === 'github-app';
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const {
     data: connectionRepositories,
@@ -79,6 +80,7 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
           <>
             {isGitHubAppAuth ? (
               <Combobox
+                data-testid={selectors.pages.Provisioning.Wizard.repositoryUrlInput}
                 invalid={Boolean(errors?.repository?.url?.message || repositoriesError)}
                 onChange={(option) => onChange(option?.value || '')}
                 placeholder={gitFields.urlConfig.placeholder}
@@ -90,7 +92,13 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
                 {...field}
               />
             ) : (
-              <Input {...field} id="repository-url" placeholder={gitFields.urlConfig.placeholder} onChange={onChange} />
+              <Input
+                {...field}
+                id="repository-url"
+                data-testid={selectors.pages.Provisioning.Wizard.repositoryUrlInput}
+                placeholder={gitFields.urlConfig.placeholder}
+                onChange={onChange}
+              />
             )}
           </>
         )}

@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
@@ -13,7 +15,12 @@ import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { validateUid } from 'app/features/manage-dashboards/import/utils/validation';
-import { type DashboardInputs, DashboardSource, LibraryPanelInputState } from 'app/features/manage-dashboards/types';
+import {
+  type DashboardInputs,
+  DashboardSource,
+  InputType,
+  LibraryPanelInputState,
+} from 'app/features/manage-dashboards/types';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { setupProvisioningMswServer } from '../../mocks/server';
@@ -43,7 +50,27 @@ jest.mock('app/features/manage-dashboards/import/utils/validation', () => ({
   validateUid: jest.fn().mockResolvedValue(true),
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn(),
+}));
+
+// Render the datasource picker as a button that selects a fixed datasource, so a
+// V1 import with datasource inputs can be exercised without the real picker.
+jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => ({
+  DataSourcePicker: ({ onChange }: { onChange: (ds: { uid: string; type: string; name: string }) => void }) => (
+    <button
+      type="button"
+      data-testid="mock-datasource-picker"
+      onClick={() => onChange({ uid: 'prom-uid', type: 'prometheus', name: 'Prometheus' })}
+    >
+      Datasource picker
+    </button>
+  ),
+}));
+
 const mockValidateUid = jest.mocked(validateUid);
+const mockGetDataSourceInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
 
 const repository: RepositoryView = {
   name: 'test-repo',
@@ -188,6 +215,40 @@ describe('ProvisionedImportOverview', () => {
       expect(call.apiVersion).toBe('v1');
       expect(call.folderUid).toBe('folder-1');
       expect(call.title).toBe('V1 Dashboard');
+    });
+
+    it('resolves selected datasource instance settings before saving', async () => {
+      const promSettings = {
+        uid: 'prom-uid',
+        type: 'prometheus',
+        name: 'Prometheus',
+      } as DataSourceInstanceSettings;
+      mockGetDataSourceInstanceSettings.mockResolvedValue(promSettings);
+
+      const inputsWithDataSource: DashboardInputs = {
+        ...emptyInputs,
+        dataSources: [
+          {
+            name: 'DS_PROM',
+            label: 'Prometheus',
+            info: 'Select a Prometheus data source',
+            value: '',
+            type: InputType.DataSource,
+            pluginId: 'prometheus',
+          },
+        ],
+      };
+
+      await setup({ inputs: inputsWithDataSource });
+
+      await userEvent.click(screen.getByTestId('mock-datasource-picker'));
+
+      const submitBtn = screen.getByTestId(selectors.components.ImportDashboardForm.submit);
+      await waitFor(() => expect(submitBtn).not.toBeDisabled());
+      await userEvent.click(submitBtn);
+
+      await waitFor(() => expect(mockSave).toHaveBeenCalledTimes(1));
+      expect(mockGetDataSourceInstanceSettings).toHaveBeenCalledWith('prom-uid');
     });
 
     it('disables submit synchronously and stays disabled while save is pending', async () => {

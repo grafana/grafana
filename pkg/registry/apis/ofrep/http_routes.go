@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -85,14 +86,6 @@ func (b *APIBuilder) rootOneFlagHandler(w http.ResponseWriter, r *http.Request) 
 	isAuthedReq := b.isAuthenticatedRequest(r)
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
-	if !isAuthedReq && !isPublicFlag(flagKey) {
-		_ = tracing.Errorf(span, "unauthorized to evaluate flag: %s", flagKey)
-		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-		b.logger.Error("Unauthorized to evaluate flag", "flagKey", flagKey)
-		http.Error(w, "unauthorized to evaluate flag", http.StatusUnauthorized)
-		return
-	}
-
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
 		evalCtx, err := b.readEvalContext(w, r)
 		if err != nil {
@@ -151,7 +144,7 @@ func (b *APIBuilder) rootAllFlagsHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	b.evalAllFlagsStatic(ctx, isAuthedReq, w)
+	b.evalAllFlagsStatic(ctx, w)
 }
 
 // validateNamespaceIfPresent checks if the namespace in the evaluation context matches the authenticated user's
@@ -163,34 +156,42 @@ func (b *APIBuilder) validateNamespaceIfPresent(r *http.Request, evalCtx evalCon
 	_, span := tracing.Start(r.Context(), "ofrep.validateNamespaceIfPresent")
 	defer span.End()
 
-	if evalCtx.namespace == "" {
-		// No namespace in eval context -- nothing to validate
-		span.SetAttributes(attribute.Bool("validation.success", true))
-		return "", true
+	authNamespace := ""
+	if user, ok := types.AuthInfoFrom(r.Context()); ok {
+		authNamespace = user.GetNamespace()
 	}
 
-	user, ok := types.AuthInfoFrom(r.Context())
-	if !ok {
-		// No auth info -- can't validate, but that's fine; unauthed requests are
-		// gated on public flags by the caller
-		span.SetAttributes(attribute.Bool("validation.success", true))
-		return "", true
-	}
-
-	authNamespace := user.GetNamespace()
-	if authNamespace == "" {
-		// Unauthenticated user has no namespace -- skip validation
-		span.SetAttributes(attribute.Bool("validation.success", true))
-		return "", true
-	}
-
+	resolvedNamespace := resolveTargetNamespace(authNamespace, evalCtx.namespace)
 	span.SetAttributes(
 		attribute.String("auth_namespace", authNamespace),
 		attribute.String("eval_ctx_namespace", evalCtx.namespace),
 	)
 
+	// Nothing to check: caller claimed no target namespace, or we have no
+	// concrete identity to validate against (unauthed request -- gated on
+	// public flags elsewhere).
+	if evalCtx.namespace == "" || authNamespace == "" {
+		span.SetAttributes(attribute.Bool("validation.success", true))
+		return resolvedNamespace, true
+	}
+
 	// Wildcard auth namespace grants cluster-wide access — valid for any specific namespace.
 	valid := evalCtx.namespace == authNamespace || authNamespace == "*"
 	span.SetAttributes(attribute.Bool("validation.success", valid))
-	return authNamespace, valid
+	return resolvedNamespace, valid
+}
+
+// resolveTargetNamespace picks the namespace MTFF uses in the User-Agent when
+// proxying downstream. A concrete authNamespace wins; otherwise (empty, or
+// wildcard "*" for callers acting across tenants) fall back to the per-request
+// namespace from the eval context body, so calls don't all collapse into one
+// shared bucket.
+func resolveTargetNamespace(authNamespace, evalCtxNamespace string) string {
+	if authNamespace != "" && authNamespace != "*" {
+		return authNamespace
+	}
+	if evalCtxNamespace != "" && len(validation.IsValidNamespace(evalCtxNamespace)) == 0 {
+		return evalCtxNamespace
+	}
+	return authNamespace
 }

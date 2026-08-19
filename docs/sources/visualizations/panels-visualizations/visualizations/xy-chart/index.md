@@ -183,6 +183,8 @@ Tooltip options control the information overlay that appears when you hover over
 
 <!-- prettier-ignore-end -->
 
+The **All**, **Values sort order**, **Hover proximity**, and **Max height** tooltip options aren't available for XY charts.
+
 ### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}

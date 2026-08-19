@@ -136,16 +136,16 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 	})
 
 	fields := SelectableFieldsForManifests([]app.Manifest{m1, m2, m3, m4})
-	expected := map[string][]string{
+	expected := map[LowerGroupResource][]string{
 		// Nothing for test1.grafana.app, as there were no selectable fields.
-		"test2.grafana.app/testkind":  {"spec.field1", "spec.field2"},
-		"test2.grafana.app/testkinds": {"spec.field1", "spec.field2"},
-		"test3.grafana.app/testkind":  {"spec.field1", "spec.field2", "spec.field3", "spec.field4"},
-		"test3.grafana.app/testkinds": {"spec.field1", "spec.field2", "spec.field3", "spec.field4"},
-		"test4.grafana.app/kinda":     {"spec.fieldA"},
-		"test4.grafana.app/kindas":    {"spec.fieldA"},
-		"test4.grafana.app/kindb":     {"spec.fieldB"},
-		"test4.grafana.app/kindbs":    {"spec.fieldB"},
+		NewLowerGroupResource("test2.grafana.app", "testkind"):  {"spec.field1", "spec.field2"},
+		NewLowerGroupResource("test2.grafana.app", "testkinds"): {"spec.field1", "spec.field2"},
+		NewLowerGroupResource("test3.grafana.app", "testkind"):  {"spec.field1", "spec.field2", "spec.field3", "spec.field4"},
+		NewLowerGroupResource("test3.grafana.app", "testkinds"): {"spec.field1", "spec.field2", "spec.field3", "spec.field4"},
+		NewLowerGroupResource("test4.grafana.app", "kinda"):     {"spec.fieldA"},
+		NewLowerGroupResource("test4.grafana.app", "kindas"):    {"spec.fieldA"},
+		NewLowerGroupResource("test4.grafana.app", "kindb"):     {"spec.fieldB"},
+		NewLowerGroupResource("test4.grafana.app", "kindbs"):    {"spec.fieldB"},
 	}
 	require.Equal(t, expected, fields)
 }
@@ -155,12 +155,12 @@ func TestSelectableFields(t *testing.T) {
 	result := SelectableFields()
 
 	// We know IAM manifest should have TeamBinding with selectable fields
-	assert.Contains(t, result, "iam.grafana.app/teambinding")
-	assert.Contains(t, result["iam.grafana.app/teambinding"], "spec.subject.name")
-	assert.Contains(t, result["iam.grafana.app/teambinding"], "spec.teamRef.name")
+	assert.Contains(t, result, NewLowerGroupResource("iam.grafana.app", "teambinding"))
+	assert.Contains(t, result[NewLowerGroupResource("iam.grafana.app", "teambinding")], "spec.subject.name")
+	assert.Contains(t, result[NewLowerGroupResource("iam.grafana.app", "teambinding")], "spec.teamRef.name")
 
 	// Check the plural version too.
-	assert.Contains(t, result, "iam.grafana.app/teambinding")
-	assert.Contains(t, result["iam.grafana.app/teambindings"], "spec.subject.name")
-	assert.Contains(t, result["iam.grafana.app/teambindings"], "spec.teamRef.name")
+	assert.Contains(t, result, NewLowerGroupResource("iam.grafana.app", "teambindings"))
+	assert.Contains(t, result[NewLowerGroupResource("iam.grafana.app", "teambindings")], "spec.subject.name")
+	assert.Contains(t, result[NewLowerGroupResource("iam.grafana.app", "teambindings")], "spec.teamRef.name")
 }

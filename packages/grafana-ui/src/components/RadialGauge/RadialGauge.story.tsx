@@ -289,6 +289,37 @@ export const Examples: StoryFn<StoryProps> = (args) => {
           neutral={0}
         />
       </Stack>
+      <div>
+        Overflow with neutral <em>(range -5 to 5, neutral = 0, value = 10 / -10 — #130075)</em>
+      </div>
+      <Stack direction={'row'} gap={3}>
+        <RadialGaugeExample
+          min={-5}
+          max={5}
+          value={10}
+          colorScheme={FieldColorModeId.Thresholds}
+          gradient
+          shape="gauge"
+          glowCenter={true}
+          roundedBars={false}
+          barWidthFactor={0.7}
+          neutral={0}
+          showScaleLabels
+        />
+        <RadialGaugeExample
+          min={-5}
+          max={5}
+          value={-10}
+          colorScheme={FieldColorModeId.Thresholds}
+          gradient
+          shape="gauge"
+          glowCenter={true}
+          roundedBars={false}
+          barWidthFactor={0.7}
+          neutral={0}
+          showScaleLabels
+        />
+      </Stack>
     </Stack>
   );
 };
@@ -349,6 +380,7 @@ interface ExampleProps {
   colorScheme?: FieldColorModeId;
   endpointMarker?: RadialGaugeProps['endpointMarker'];
   decimals?: number;
+  unit?: string;
   showScaleLabels?: boolean;
   neutral?: number;
 }
@@ -387,6 +419,7 @@ export function RadialGaugeExample({
   colorScheme = FieldColorModeId.Thresholds,
   endpointMarker = 'glow',
   decimals = 0,
+  unit = 'percent',
   showScaleLabels,
   neutral,
 }: ExampleProps) {
@@ -416,7 +449,7 @@ export function RadialGaugeExample({
         config: {
           min: min,
           max: max,
-          unit: 'percent',
+          unit,
           decimals: decimals,
           color: { mode: colorScheme, fixedColor: color ? theme.visualization.getColorByName(color) : undefined },
           thresholds,

@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 func (l *LibraryElementService) registerAPIEndpoints() {
@@ -44,7 +45,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 		entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))                    // TODO: add wrapper for k8s - requires search
 		entities.Get("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getHandler))
 		entities.Get("/:uid/connections/", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
-		entities.Get("/name/:name", routing.Wrap(l.getByNameHandler))                                                           // TODO: add wrapper for k8s - requires search
+		entities.Get("/name/:name", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getByNameHandler))    // TODO: add wrapper for k8s - requires search
 		entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler)) // TODO: add wrapper for k8s
 	})
 }
@@ -147,13 +148,13 @@ func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+	ctx := c.Req.Context()
+	shouldUseKubeApi := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagLibraryelementsKubernetesLibraryPanels, false, openfeature.TransactionContext(ctx))
+	if shouldUseKubeApi {
 		l.k8sHandler.getK8sLibraryElement(c)
 		return nil // already handled in the k8s handler
 	}
 
-	ctx := c.Req.Context()
 	element, err := l.getLibraryElementByUid(ctx, c.SignedInUser,
 		model.GetLibraryElementCommand{
 			UID:        web.Params(c.Req)[":uid"],
@@ -373,8 +374,11 @@ func (l *LibraryElementService) getByNameHandler(c *contextmodel.ReqContext) res
 
 func (l *LibraryElementService) filterLibraryPanelsByPermission(c *contextmodel.ReqContext, elements []model.LibraryElementDTO) ([]model.LibraryElementDTO, error) {
 	filteredPanels := make([]model.LibraryElementDTO, 0)
+	// Record each panel's folder so the permission scope resolver can skip the
+	// per-panel database lookup it would otherwise do to rediscover the folder.
+	ctx := withPanelFolders(c.Req.Context(), elements)
 	for _, p := range elements {
-		allowed, err := l.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ac.EvalPermission(ActionLibraryPanelsRead, ScopeLibraryPanelsProvider.GetResourceScopeUID(p.UID)))
+		allowed, err := l.AccessControl.Evaluate(ctx, c.SignedInUser, ac.EvalPermission(ActionLibraryPanelsRead, ScopeLibraryPanelsProvider.GetResourceScopeUID(p.UID)))
 		if err != nil {
 			// This could fail because the folder that contains the library panel does not exist or the user doesn't have permissions to read it.
 			// We skip it instead of breaking the library panel list rendering flow and log the error.

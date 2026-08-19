@@ -41,12 +41,23 @@ Keep the following limitations in mind when using annotations:
 
 To add an annotation query to a dashboard:
 
-1. Open the dashboard where you want to add annotations.
-1. Click **Dashboard settings** (gear icon).
-1. Select **Annotations** in the left menu.
-1. Click **Add annotation query**.
-1. Select your Google Cloud Monitoring data source.
-1. Configure the annotation query using the query editor.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Annotation query**.
+1. Enter a name for the annotation query.
+1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox.
+1. Select a color for the annotation event markers.
+1. Select an option in the **Show annotation controls in** drop-down list to control where on the dashboard the annotation is displayed.
+1. Select an option in the **Show in** drop-down list to control the panels in which the annotation is displayed.
+1. Click **Open query editor** to open the **Annotation Query** dialog box.
+1. Select your Google Cloud Monitoring data source from the **Data source** drop-down list.
+1. Configure the annotation query and field mappings.
+1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
+1. Click **Close** when you've completed the query setup.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 ## Configure the annotation query
 

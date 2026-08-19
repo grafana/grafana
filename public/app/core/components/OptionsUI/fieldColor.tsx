@@ -15,6 +15,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2, Field, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
 import { ColorValueEditor } from './color';
@@ -33,10 +34,22 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
 
+  const experimentalColorSchemesEnabled = getFeatureFlagClient().getBooleanValue(
+    FlagKeys.DatavizExperimentalColorSchemes,
+    false
+  );
+
+  const experimentalColorSchemeModes: string[] = [
+    FieldColorModeId.PaletteCategoricalNext,
+    FieldColorModeId.PaletteCategoricalNext2,
+    FieldColorModeId.PaletteCategoricalNext3,
+  ];
+
   const filteredOptions = availableOptions.filter(
     (option) =>
       !option.excludeFromPicker &&
       (option.id !== FieldColorModeId.PaletteColorblind || config.featureToggles.enableColorblindSafePanelOptions) &&
+      (!experimentalColorSchemeModes.includes(option.id) || experimentalColorSchemesEnabled) &&
       (option.id !== FieldColorModeId.Gradient ||
         (item.settings?.gradientSupport && config.featureToggles.pieChartGradientColorScheme))
   );
