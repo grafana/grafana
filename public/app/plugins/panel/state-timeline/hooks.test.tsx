@@ -26,6 +26,32 @@ describe('StateTimelinePanel hooks', () => {
           paginationHeight: 0,
         });
       });
+
+      it('renders no pagination when there are no frames to paginate', () => {
+        const { result } = renderHook(() => usePagination([], 5));
+
+        expect(result.current.paginatedFrames).toEqual([]);
+        expect(result.current.paginationRev).toBe('0/5');
+
+        render(result.current.paginationElement);
+
+        expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+        expect(screen.queryByText('0')).not.toBeInTheDocument();
+      });
+
+      it('renders no pagination when the frames hold no series', () => {
+        const timeOnly = createDataFrame({
+          fields: [{ name: 'time', type: FieldType.time, values: [100, 200, 300] }],
+        });
+
+        const { result } = renderHook(() => usePagination([timeOnly], 5));
+
+        expect(result.current.paginatedFrames).toEqual([]);
+
+        render(result.current.paginationElement);
+
+        expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+      });
     });
 
     it('returns the React element to be rendered for pagination', () => {
@@ -59,6 +85,8 @@ describe('StateTimelinePanel hooks', () => {
       it('renders nothing while every series fits on one page', () => {
         const { result } = renderHook(() => usePagination([buildFrame(3)], 3));
 
+        expect(result.current.paginatedFrames).toHaveLength(3);
+
         render(result.current.paginationElement);
 
         expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
@@ -68,9 +96,12 @@ describe('StateTimelinePanel hooks', () => {
       it('renders as soon as one series does not fit', () => {
         const { result } = renderHook(() => usePagination([buildFrame(4)], 3));
 
+        expect(result.current.paginatedFrames).toHaveLength(3); // 4 series, page 1 of 2
+
         render(result.current.paginationElement);
 
         expect(screen.getByRole('navigation')).toBeInTheDocument();
+        expect(screen.getByText('2')).toBeInTheDocument(); // last page
         expect(screen.getByLabelText('next page')).not.toBeDisabled();
       });
     });
