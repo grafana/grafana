@@ -208,9 +208,6 @@ export const getFieldDisplayItems = (
 
     let displayText = display.text;
 
-    //field.state?.displayName === series.fields[compareFieldIdx].state?.displayName ||
-    //(seriesIdx !== undefined && seriesIdx !== null && series.fields[seriesIdx].name === field.name);
-
     if (
       compareFieldIdx != null &&
       seriesIdx != null &&

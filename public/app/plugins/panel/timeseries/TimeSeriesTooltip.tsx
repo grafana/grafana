@@ -55,7 +55,7 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
-  comparisonPairingPairs?: Map<number, number>;
+  comparisonFieldPairs?: Map<number, number>;
   /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
   assistantContext?: AssistantTooltipContext;
 }
@@ -78,7 +78,7 @@ export const TimeSeriesTooltip = ({
   compareDiffMs,
   filterByGroupedLabels,
   assistantContext,
-  comparisonPairingPairs,
+  comparisonFieldPairs,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -91,7 +91,7 @@ export const TimeSeriesTooltip = ({
 
   const xDisp = formattedValueToString(xField.display!(xVal));
 
-  const compareFieldIdx = seriesIdx == null ? undefined : comparisonPairingPairs?.get(seriesIdx);
+  const compareFieldIdx = seriesIdx == null ? undefined : comparisonFieldPairs?.get(seriesIdx);
 
   // if there is no compare, use mode.
   // if there is a compare but mode is set to not multi, use mode.

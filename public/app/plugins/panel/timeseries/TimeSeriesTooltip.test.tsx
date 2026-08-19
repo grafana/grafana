@@ -151,7 +151,7 @@ describe('TimeSeriesTooltip comparison pairing', () => {
         isPinned={false}
         dataLinks={[]}
         compareDiffMs={[0, 0, -ONE_DAY_MS]}
-        comparisonPairingPairs={pairs}
+        comparisonFieldPairs={pairs}
       />
     );
   }
@@ -202,7 +202,7 @@ describe('TimeSeriesTooltip comparison pairing', () => {
         isPinned={false}
         dataLinks={[]}
         compareDiffMs={[0, 0, -ONE_DAY_MS, 0]}
-        comparisonPairingPairs={PAIRS}
+        comparisonFieldPairs={PAIRS}
       />
     );
 

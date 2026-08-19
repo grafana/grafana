@@ -218,7 +218,7 @@ export const TimeSeriesPanel = ({
                       filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
-                      comparisonPairingPairs={compFieldPairs}
+                      comparisonFieldPairs={compFieldPairs}
                       assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );
