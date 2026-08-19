@@ -221,8 +221,11 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     padding: 0,
     cursor: 'pointer',
     color: theme.colors.text.secondary,
+    // A border or filled background reads as its own interactive element (like it's focused or
+    // selectable), which isn't what pinned means here — just a stronger tint of the same icon,
+    // using the same warning/orange accent the rest of the table uses for this kind of highlight.
     '&[aria-pressed="true"]': {
-      color: theme.colors.primary.text,
+      color: theme.colors.warning.text,
     },
   }),
   dragImage: css({
