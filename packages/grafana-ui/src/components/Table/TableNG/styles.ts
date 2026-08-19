@@ -42,6 +42,14 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].textAlign === key[1].textAlign &&
   cacheKey[1].textWrap === key[1].textWrap;
 
+const buildHeaderColors = (theme: GrafanaTheme2, transparent?: boolean, tableRefreshEnabled?: boolean) => {
+  const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
+  const headerCellBackgroundColor = tableRefreshEnabled ? theme.colors.background.elevated : bgColor;
+  const headerCellDraggingBackgroundColor = theme.colors.emphasize(headerCellBackgroundColor, 0.1);
+  const headerCellDragTargetBackgroundColor = theme.colors.emphasize(headerCellBackgroundColor, 0.05);
+  return { headerCellBackgroundColor, headerCellDraggingBackgroundColor, headerCellDragTargetBackgroundColor };
+};
+
 export const getGridStyles = memoize(
   (theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean, tableRefreshEnabled?: boolean) => {
     const visualRefreshEnabled = theme.flags.visualDesignRefresh;
@@ -58,11 +66,17 @@ export const getGridStyles = memoize(
 
     const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
 
+    // `--rdg-header-background-color` needs to match the solid colors dragging/drag-over/settle use
+    // below — they're all derived from the same base color via buildHeaderColors rather than each
+    // computing it separately, so a themed header can't fall out of sync with its own drag states.
+    const { headerCellBackgroundColor, headerCellDraggingBackgroundColor, headerCellDragTargetBackgroundColor } =
+      buildHeaderColors(theme, transparent, tableRefreshEnabled);
+
     return {
       grid: css({
         '--rdg-background-color': bgColor,
         // `table.refresh` gives the header its own surface distinct from the body rows.
-        '--rdg-header-background-color': tableRefreshEnabled ? theme.colors.background.elevated : bgColor,
+        '--rdg-header-background-color': headerCellBackgroundColor,
         '--rdg-border-color': borderColor,
         '--rdg-color': theme.colors.text.primary,
         '--rdg-summary-border-color': borderColor,
@@ -213,14 +227,13 @@ export const getGridStyles = memoize(
         // progress — only the visual treatment lives here, gated so a column can only look
         // draggable once `enableColumnReorder` actually makes it so.
         ...(tableRefreshEnabled && {
-          '& .rdg-cell-draggable': { cursor: 'grab' },
           '& .rdg-cell-dragging': {
             cursor: 'grabbing',
-            opacity: 0.45,
+            backgroundColor: headerCellDraggingBackgroundColor,
             boxShadow: `inset 0 0 0 1px ${theme.colors.border.medium}`,
           },
           '& .rdg-cell-drag-over': {
-            backgroundColor: theme.colors.primary.transparent,
+            backgroundColor: headerCellDragTargetBackgroundColor,
             boxShadow: `inset 3px 0 0 0 ${theme.colors.primary.main}`,
           },
         }),
@@ -259,19 +272,24 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
 
 // `table.refresh`: a brief highlight applied to a column's header after it's reordered or pinned,
 // so the change is noticeable even though the column itself doesn't move far.
-export const getColumnSettleStyles = memoize((theme: GrafanaTheme2) =>
-  css({
+export const getColumnSettleStyles = memoize((theme: GrafanaTheme2, tableRefreshEnabled?: boolean) => {
+  const { headerCellBackgroundColor, headerCellDragTargetBackgroundColor } = buildHeaderColors(
+    theme,
+    false,
+    tableRefreshEnabled
+  );
+  return css({
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       animationName: 'table-ng-column-settle',
       animationDuration: `${COLUMN_SETTLE_MS}ms`,
       animationTimingFunction: 'ease-out',
     },
     '@keyframes table-ng-column-settle': {
-      from: { backgroundColor: theme.colors.primary.transparent },
-      to: { backgroundColor: 'transparent' },
+      from: { backgroundColor: headerCellDragTargetBackgroundColor },
+      to: { backgroundColor: headerCellBackgroundColor },
     },
-  })
-);
+  });
+});
 
 export const getDefaultCellStyles: TableCellStyles = memoize(
   (theme, { textAlign, shouldOverflow, maxHeight }) =>

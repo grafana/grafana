@@ -312,7 +312,7 @@ function buildColumnsFromFields(
     // so the column menu has a stable trailing edge to sit against
     const headerCellClass = clsx(
       getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent),
-      settlingColumnKeys?.has(displayName) && getColumnSettleStyles(theme)
+      settlingColumnKeys?.has(displayName) && getColumnSettleStyles(theme, tableRefreshEnabled)
     );
     const CellType = getCellRenderer(field, cellOptions);
 
