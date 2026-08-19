@@ -948,6 +948,7 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 
 	for _, tt := range []struct {
 		name           string
+		cfg            *setting.Cfg
 		jsonData       map[string]any
 		wantChildPaths []string
 	}{
@@ -967,6 +968,18 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			wantChildPaths: cloudChildPaths,
 		},
 		{
+			name:           "Enterprise includes all entries when ossMode is false",
+			cfg:            &setting.Cfg{IsEnterprise: true},
+			jsonData:       map[string]any{"ossMode": false},
+			wantChildPaths: cloudChildPaths,
+		},
+		{
+			name:           "Enterprise ossMode only includes supported OSS entries",
+			cfg:            &setting.Cfg{IsEnterprise: true},
+			jsonData:       map[string]any{"ossMode": true},
+			wantChildPaths: ossChildPaths,
+		},
+		{
 			name: "Trial mode only includes the homepage and workspace",
 			jsonData: map[string]any{
 				"trialMode": true,
@@ -978,8 +991,12 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
+			cfg := tt.cfg
+			if cfg == nil {
+				cfg = setting.NewCfg()
+			}
 			service := ServiceImpl{
-				cfg: setting.NewCfg(),
+				cfg: cfg,
 				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
 					assistantAppID: {OrgID: 1, PluginID: assistantAppID, JSONData: tt.jsonData},
 				}},
