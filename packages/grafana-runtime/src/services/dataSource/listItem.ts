@@ -5,26 +5,21 @@ import { getDatasourcePluginMeta, getPluginIdFromDatasourceInstanceType } from '
 import { lookupByUid, toListItem } from './settings';
 
 /**
- * Resolve a data source **by uid** to the slim {@link DataSourceInstanceListItem} shape — the
- * singular counterpart of {@link getDataSourceInstanceList}. Accepts a uid string or any
+ * Look up a data source **by uid** and return the slim {@link DataSourceInstanceListItem} —
+ * the singular counterpart of `getDataSourceInstanceList`. Takes a uid string or any
  * {@link DataSourceRef} carrying one.
  *
- * This is a plain uid lookup and nothing else. Unlike {@link getDataSourceInstanceSettings} —
- * which mirrors the legacy `DataSourceSrv.getInstanceSettings` — it does **not** fall back to
- * matching on name or numeric id, does not resolve `'default'`/`undefined` to the default data
- * source, does not resolve a type-only ref to the default of that type, and does not interpolate
- * template variables. Anything without a usable uid returns `undefined`; interpolate `${ds}`
- * refs before calling.
+ * Prefer it over `getDataSourceInstanceSettings` when `type`, `name`, `meta`, `readOnly` and
+ * `isDefault` are all you need: the settings it leaves out (`jsonData`, `url`, `access`,
+ * `apiVersion`) will eventually cost a request per uid.
  *
- * Prefer this over {@link getDataSourceInstanceSettings} whenever only identity or plugin
- * metadata is needed (`type`, `name`, `meta`, `readOnly`, `isDefault`). The per-instance
- * settings — `jsonData`, `url`, `access`, `apiVersion` — will eventually be fetched on demand
- * per uid, so callers that avoid them keep working without a request.
- *
- * `meta` is read from the plugin meta cache (one entry per plugin) rather than the copy embedded
- * on the instance settings, which is duplicated per instance in boot data and is meant to go
- * away. The instance copy is used only as a fallback, for runtime-registered data sources that
- * have no entry in that cache.
+ * - **uid or nothing.** No name or numeric-id fallback, no `'default'`, no type-only refs, no
+ *   `${ds}` interpolation — interpolate first. Anything else returns `undefined`.
+ *   `getDataSourceInstanceSettings` coerces all of those; it mirrors the legacy
+ *   `DataSourceSrv.getInstanceSettings`. This does not.
+ * - **`meta` is the plugin's, not the instance's** — one cached entry per plugin. The copy on
+ *   instance settings is duplicated per instance in boot data and is going away, so it serves
+ *   only as a fallback for runtime-registered data sources.
  *
  * @public
  */
