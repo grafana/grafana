@@ -259,10 +259,17 @@ export function TableFlat(props: TableNGProps) {
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(false);
   const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
-  const handlePanelResize = useCallback(
-    (_flexFraction: number, sidebarPixels: number) => setColumnVisibilityPanelWidth(sidebarPixels),
-    []
-  );
+  const handlePanelResize = useCallback((_flexFraction: number, sidebarPixels: number) => {
+    if (sidebarPixels < COLUMN_VISIBILITY_PANEL_MIN_WIDTH) {
+      // Dragged past the point of usefulness — close it, same as the "Manage columns" trigger
+      // would, and reset its width so reopening starts back at a comfortable default rather than
+      // wherever it was dragged down to.
+      setIsColumnVisibilityPanelOpen(false);
+      setColumnVisibilityPanelWidth(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
+      return;
+    }
+    setColumnVisibilityPanelWidth(sidebarPixels);
+  }, []);
   // The sidebar is the *primary* pane so it sits on the left and the drag math works the intuitive
   // way (drag right → sidebar grows) — `useSplitter`'s `usePixels` mode always makes the pixel-sized
   // pane secondary/on-the-right, which would put the sidebar on the wrong side. Plain flex-fraction
@@ -558,7 +565,11 @@ export function TableFlat(props: TableNGProps) {
         {...primaryProps}
         style={{
           ...primaryProps.style,
-          minWidth: COLUMN_VISIBILITY_PANEL_MIN_WIDTH,
+          // Deliberately no CSS minWidth: useSplitter measures this element's own min/max (by
+          // temporarily zeroing its flexGrow and reading the resulting rect) to clamp the drag
+          // itself, so a CSS floor here would stop it from ever reporting a width below
+          // COLUMN_VISIBILITY_PANEL_MIN_WIDTH — which is exactly the value handlePanelResize needs
+          // to see in order to close the panel. The JS-side check is the only floor now.
           maxWidth: COLUMN_VISIBILITY_PANEL_MAX_WIDTH,
         }}
       >
