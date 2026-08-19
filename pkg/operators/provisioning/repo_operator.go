@@ -117,18 +117,26 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 	if err != nil {
 		return fmt.Errorf("failed to add repository event handler: %w", err)
 	}
-	go repoSource.Run(ctx.Done())
 
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		return fmt.Errorf("failed to sync repository informer cache")
+	elector, err := newControllerElector(controllerCfg, repoControllerLeaseName)
+	if err != nil {
+		return fmt.Errorf("failed to create leader elector: %w", err)
 	}
 
-	controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
-		logger.Info("repository operator is ready")
-		deps.HealthNotifier.SetReady()
-	}, func() {
-		logger.Info("repository operator shutting down")
-		deps.HealthNotifier.SetNotReady()
+	// The operator is healthy as soon as it is up and contending for leadership; only
+	// the elected leader runs the controller and its informer source, so non-leaders
+	// neither reconcile nor fill a work queue.
+	deps.HealthNotifier.SetReady()
+
+	return elector.Run(ctx, func(leaderCtx context.Context) {
+		go repoSource.Run(leaderCtx.Done())
+		if !cache.WaitForCacheSync(leaderCtx.Done(), reg.HasSynced) {
+			return
+		}
+		controller.Run(leaderCtx, controllerCfg.NumberOfWorkers(), func() {
+			logger.Info("repository controller acquired leadership and started")
+		}, func() {
+			logger.Info("repository controller stopping (leadership lost or shutdown)")
+		})
 	})
-	return nil
 }

@@ -70,50 +70,60 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		jobCleanupController := jobs.NewJobCleanupController(
-			jobStore,
-			jobHistoryWriter,
-			controllerCfg.cleanupInterval,
-		)
-		if err := jobCleanupController.Run(ctx); err != nil {
-			logger.Error("job cleanup controller failed", "error", err)
-		}
-		logger.Info("job cleanup controller stopped")
-	}()
-
-	// Start the historic-job source when history cleanup is enabled; cleanup runs
-	// off its re-lists.
-	if historySource != nil {
-		go historySource.Run(ctx.Done())
+	elector, err := newControllerElector(&controllerCfg.ControllerConfig, jobControllerLeaseName)
+	if err != nil {
+		return fmt.Errorf("failed to create leader elector: %w", err)
 	}
 
+	// The operator is healthy as soon as it is up and contending for leadership; only
+	// the elected leader runs the cleanup reaper and historic-job cleanup, so
+	// non-leaders do not double-process. (The job queue driver — a separate operator —
+	// stays multi-replica via per-job claiming and is not gated.)
 	logger.Info("jobs operator is ready")
 	deps.HealthNotifier.SetReady()
 
-	<-ctx.Done()
+	runErr := elector.Run(ctx, func(leaderCtx context.Context) {
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			jobCleanupController := jobs.NewJobCleanupController(
+				jobStore,
+				jobHistoryWriter,
+				controllerCfg.cleanupInterval,
+			)
+			if err := jobCleanupController.Run(leaderCtx); err != nil {
+				logger.Error("job cleanup controller failed", "error", err)
+			}
+			logger.Info("job cleanup controller stopped")
+		}()
+
+		// Start the historic-job source when history cleanup is enabled; cleanup runs
+		// off its re-lists.
+		if historySource != nil {
+			go historySource.Run(leaderCtx.Done())
+		}
+
+		<-leaderCtx.Done()
+		logger.Info("leadership lost or shutdown, waiting for goroutines to finish")
+
+		shutdownTimeout := 30 * time.Second
+		done := make(chan struct{})
+		go func() {
+			wg.Wait()
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			logger.Info("jobs controller shutdown complete")
+		case <-time.After(shutdownTimeout):
+			logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
+		}
+	})
+
 	deps.HealthNotifier.SetNotReady()
-	logger.Info("shutdown signal received, waiting for goroutines to finish")
-
-	shutdownTimeout := 30 * time.Second
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		logger.Info("jobs operator shutdown complete")
-	case <-time.After(shutdownTimeout):
-		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
-	}
-
-	return nil
+	return runErr
 }
 
 type jobsControllerConfig struct {

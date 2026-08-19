@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
+	coordinationv0alpha1 "github.com/grafana/grafana/apps/coordination/pkg/apis/coordination/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -338,6 +339,40 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 	c.provisioningClient = provisioningClient
 
 	return provisioningClient, nil
+}
+
+// CoordinationRestConfig builds a rest.Config for talking to the
+// coordination.grafana.app API on the same apiserver as provisioning. It mints
+// tokens scoped to the coordination group audience (not provisioning's), so the
+// leader elector's ClusterLease reads/writes are authorized correctly.
+func (c *ControllerConfig) CoordinationRestConfig() (*rest.Config, error) {
+	tokenExchangeClient, err := c.TokenExchangeClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+	}
+
+	tlsConfig, err := c.TLSConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get TLS configuration: %w", err)
+	}
+
+	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
+	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
+	if provisioningServerURL == "" {
+		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
+	}
+
+	return &rest.Config{
+		APIPath: "/apis",
+		Host:    provisioningServerURL,
+		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
+			tokenExchangeClient,
+			coordinationv0alpha1.APIGroup,
+			clientauth.WildcardNamespace,
+		),
+		TLSClientConfig: tlsConfig,
+		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
+	}, nil
 }
 
 func (c *ControllerConfig) ResyncInterval() time.Duration {
