@@ -1474,7 +1474,7 @@ func createTestPlaylist(ctx context.Context, srv *server) error {
 	}
 	created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
 	if err != nil {
-		resErr := ErrorResultFromGRPCDetails(err)
+		resErr := errorResultFromGRPCDetails(err)
 		if resErr != nil {
 			return fmt.Errorf("creating playlist %q: %v", name, resErr)
 		}
