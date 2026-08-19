@@ -242,6 +242,15 @@ describe('Table', () => {
       expect(getTable()).toBeInTheDocument();
       expect(getFooter()).toBeInTheDocument();
     });
+
+    it('then the footer row is included in aria-rowcount and has its own aria-rowindex', () => {
+      const footerValues = ['a', 'b', 'c'];
+      getTestContext({ footerValues });
+
+      // 1 header row + 4 data rows + 1 footer row
+      expect(getTable()).toHaveAttribute('aria-rowcount', '6');
+      expect(getFooter()).toHaveAttribute('aria-rowindex', '6');
+    });
   });
 
   describe('when sorting with column header', () => {

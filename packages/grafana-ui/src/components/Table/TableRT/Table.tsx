@@ -285,8 +285,8 @@ export const Table = memo((props: Props) => {
   const itemCount = enablePagination ? page.length : rows.length;
 
   // Virtualization means only the visible rows exist in the DOM, so we announce the real
-  // row count to screen readers. ARIA row counts are 1-based and include the header row.
-  const ariaRowCount = (noHeader ? 0 : 1) + rows.length;
+  // row count to screen readers. ARIA row counts are 1-based and include the header and footer rows.
+  const ariaRowCount = (noHeader ? 0 : 1) + rows.length + (footerItems ? 1 : 0);
   let paginationEl = null;
   if (enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;
@@ -408,6 +408,7 @@ export const Table = memo((props: Props) => {
                     footerGroups={footerGroups}
                     totalColumnsWidth={totalColumnsWidth}
                     tableStyles={tableStyles}
+                    ariaRowIndex={ariaRowCount}
                   />
                 )}
               </div>
