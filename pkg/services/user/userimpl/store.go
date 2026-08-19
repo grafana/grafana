@@ -203,7 +203,7 @@ func (ss *sqlStore) ListByIdOrUID(ctx context.Context, uids []string, ids []int6
 	return users, err
 }
 
-type getUserByLoginOrEmailQuery struct {
+type getUserByIdentifierQuery struct {
 	sqltemplate.SQLTemplate
 	UserTable        string
 	Identifier       string
@@ -215,7 +215,7 @@ const (
 	userLoginColumn = "login"
 )
 
-func (q getUserByLoginOrEmailQuery) Validate() error {
+func (q getUserByIdentifierQuery) Validate() error {
 	switch q.IdentifierColumn {
 	case userEmailColumn, userLoginColumn:
 		return nil
@@ -224,12 +224,26 @@ func (q getUserByLoginOrEmailQuery) Validate() error {
 	}
 }
 
-func getUserByLoginOrEmail(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, identifier, identifierColumn string, usr *user.User) (bool, error) {
-	query := getUserByLoginOrEmailQuery{
+func getUserByLogin(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, identifier string, usr *user.User) (bool, error) {
+	query := getUserByIdentifierQuery{
 		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
 		UserTable:        dbHelper.Table("user"),
 		Identifier:       identifier,
-		IdentifierColumn: identifierColumn,
+		IdentifierColumn: userLoginColumn,
+	}
+	rawSQL, err := renderUserQuery(getUserByLoginOrEmailTemplate, query)
+	if err != nil {
+		return false, err
+	}
+	return sess.SQL(rawSQL, query.GetArgs()...).Get(usr)
+}
+
+func getUserByEmail(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, identifier string, usr *user.User) (bool, error) {
+	query := getUserByIdentifierQuery{
+		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
+		UserTable:        dbHelper.Table("user"),
+		Identifier:       identifier,
+		IdentifierColumn: userEmailColumn,
 	}
 	rawSQL, err := renderUserQuery(getUserByLoginOrEmailTemplate, query)
 	if err != nil {
@@ -259,7 +273,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 		// Since username can be an email address, attempt login with email address
 		// first if the login field has the "@" symbol.
 		if strings.Contains(query.LoginOrEmail, "@") {
-			has, err = getUserByLoginOrEmail(dbHelper, sess, query.LoginOrEmail, userEmailColumn, usr)
+			has, err = getUserByEmail(dbHelper, sess, query.LoginOrEmail, usr)
 			if err != nil {
 				return err
 			}
@@ -267,7 +281,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 
 		// Look for the login field instead of email
 		if !has {
-			has, err = getUserByLoginOrEmail(dbHelper, sess, query.LoginOrEmail, userLoginColumn, usr)
+			has, err = getUserByLogin(dbHelper, sess, query.LoginOrEmail, usr)
 		}
 
 		if err != nil {
@@ -300,7 +314,7 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 			return user.ErrUserNotFound
 		}
 
-		has, err := getUserByLoginOrEmail(dbHelper, sess, query.Email, userEmailColumn, usr)
+		has, err := getUserByEmail(dbHelper, sess, query.Email, usr)
 
 		if err != nil {
 			return err
