@@ -171,7 +171,7 @@ describe('compare-coverage-by-codeowner', () => {
       expect(result.status).toBe('pass');
     });
 
-    it('includes decreased and increased file details, and the run-locally command', () => {
+    it('includes decreased and increased file details', () => {
       const main = coverage(
         { branches: 64.58 },
         {
