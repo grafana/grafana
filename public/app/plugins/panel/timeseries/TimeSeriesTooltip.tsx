@@ -93,9 +93,9 @@ export const TimeSeriesTooltip = ({
 
   const compareFieldIdx = seriesIdx == null ? undefined : comparisonFieldPairs?.get(seriesIdx);
 
-  // if there is no compare, use mode.
-  // if there is a compare but mode is set to not multi, use mode.
-  // if there is a compare and mode is set to single, use multi to show compare field (we filter out only relevant fields)
+  // if there is no compare pair, use mode.
+  // if there is a compare but mode is set to not single, use mode.
+  // if there is a compare and mode is set to single, use multi to show compare field as well (we filter out only relevant fields)
   const modeWithCompare =
     compareFieldIdx === undefined || mode !== TooltipDisplayMode.Single ? mode : TooltipDisplayMode.Multi;
 
@@ -108,10 +108,11 @@ export const TimeSeriesTooltip = ({
     sortOrder,
     (field, i) => {
       const isRightType = field.type === FieldType.number || field.type === FieldType.enum;
-      if (compareFieldIdx === undefined) {
+      // Any mode other than Single shows whatever it normally would, comparison series included.
+      if (mode !== TooltipDisplayMode.Single || compareFieldIdx === undefined) {
         return isRightType;
       }
-      // narrow Multi back down to just the hovered series and its counterpart
+      // otherwise, keep only the hovered series and its counterpart.
       return isRightType && (i === seriesIdx || i === compareFieldIdx);
     },
     hideZeros,

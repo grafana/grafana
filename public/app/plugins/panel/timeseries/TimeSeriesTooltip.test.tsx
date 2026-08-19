@@ -48,7 +48,7 @@ function makeSeries(...valueFields: ValueFieldOpts[]): DataFrame {
   return frame;
 }
 
-describe('TimeSeriesTooltip time comparison (#126189)', () => {
+describe('TimeSeriesTooltip time comparison', () => {
   it('shows the (comparison) suffix for a compare series entry', () => {
     render(
       <TimeSeriesTooltip
@@ -187,7 +187,7 @@ describe('TimeSeriesTooltip comparison pairing', () => {
     expect(screen.queryByText('CPU (comparison)')).not.toBeInTheDocument();
   });
 
-  it('narrows multi mode down to just the hovered series and its counterpart', () => {
+  it('shows all series in multi mode, even series unrelated to a comparison', () => {
     render(
       <TimeSeriesTooltip
         series={makeSeries(
@@ -208,7 +208,11 @@ describe('TimeSeriesTooltip comparison pairing', () => {
 
     expect(screen.getByText('CPU')).toBeInTheDocument();
     expect(screen.getByText('CPU (comparison)')).toBeInTheDocument();
-    // an unrelated series is filtered out so the pair reads as one comparison
-    expect(screen.queryByText('Memory')).not.toBeInTheDocument();
+    expect(screen.getByText('Memory')).toBeInTheDocument();
+
+    // Showing every series does not spread the delta around: only the hovered series'
+    // counterpart is annotated, and an unrelated series keeps its plain value.
+    expect(screen.getByText('25 (+5)')).toBeInTheDocument();
+    expect(screen.getByText('99')).toBeInTheDocument();
   });
 });

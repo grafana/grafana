@@ -787,7 +787,11 @@ describe('utils', () => {
     const CURRENT_IDX = 1;
     const COMPARE_IDX = 2;
 
-    function rowsFor(dataIdxs: Array<number | null>, seriesIdx: number | null, compareFieldIdx?: number) {
+    function getFieldDisplayItemsWrapper(
+      dataIdxs: Array<number | null>,
+      seriesIdx: number | null,
+      compareFieldIdx?: number
+    ) {
       return getFieldDisplayItems(
         fields,
         xField,
@@ -804,7 +808,7 @@ describe('utils', () => {
 
     it('annotates the compare row with the signed difference from the hovered series', () => {
       // hovering current (20) with compare (25) -> compare is 5 higher
-      const rows = rowsFor([1, 1, 1], CURRENT_IDX, COMPARE_IDX);
+      const rows = getFieldDisplayItemsWrapper([1, 1, 1], CURRENT_IDX, COMPARE_IDX);
 
       expect(rows[0].value).toBe('20');
       expect(rows[1].value).toBe('25 (+5)');
@@ -812,41 +816,41 @@ describe('utils', () => {
 
     it('renders a negative difference without a plus sign', () => {
       // hovering current (10) with compare (8) -> compare is 2 lower
-      const rows = rowsFor([0, 0, 0], CURRENT_IDX, COMPARE_IDX);
+      const rows = getFieldDisplayItemsWrapper([0, 0, 0], CURRENT_IDX, COMPARE_IDX);
 
       expect(rows[1].value).toBe('8 (-2)');
     });
 
     it('renders a zero difference unsigned', () => {
-      const rows = rowsFor([2, 2, 2], CURRENT_IDX, COMPARE_IDX);
+      const rows = getFieldDisplayItemsWrapper([2, 2, 2], CURRENT_IDX, COMPARE_IDX);
 
       expect(rows[1].value).toBe('30 (0)');
     });
 
     it('annotates the current row when the comparison series is the hovered one', () => {
       // hovering compare (25), so the delta lands on the current row (20): 20 - 25 = -5
-      const rows = rowsFor([1, 1, 1], COMPARE_IDX, CURRENT_IDX);
+      const rows = getFieldDisplayItemsWrapper([1, 1, 1], COMPARE_IDX, CURRENT_IDX);
 
       expect(rows[0].value).toBe('20 (-5)');
       expect(rows[1].value).toBe('25');
     });
 
     it('leaves values untouched when there is no comparison pair', () => {
-      const rows = rowsFor([1, 1, 1], CURRENT_IDX, undefined);
+      const rows = getFieldDisplayItemsWrapper([1, 1, 1], CURRENT_IDX, undefined);
 
       expect(rows[0].value).toBe('20');
       expect(rows[1].value).toBe('25');
     });
 
     it('omits the compare row entirely when it has no value at the hovered index', () => {
-      const rows = rowsFor([1, 1, null], CURRENT_IDX, COMPARE_IDX);
+      const rows = getFieldDisplayItemsWrapper([1, 1, null], CURRENT_IDX, COMPARE_IDX);
 
       expect(rows.map((row) => row.value)).toEqual(['20']);
     });
 
     it('leaves the compare row un-annotated when no series is hovered', () => {
       // xAll / synced hovers report no closest series, so there is nothing to diff against
-      const rows = rowsFor([1, 1, 1], null, COMPARE_IDX);
+      const rows = getFieldDisplayItemsWrapper([1, 1, 1], null, COMPARE_IDX);
 
       expect(rows.map((row) => row.value)).toEqual(['20', '25']);
     });
