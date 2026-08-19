@@ -2891,7 +2891,12 @@
             "type": "string"
           },
           "type": {
-            "$ref": "#/components/schemas/AlertRuleNotificationSettingsType"
+            "default": "NamedRoutingTree",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlertRuleNotificationSettingsType"
+              }
+            ]
           }
         },
         "additionalProperties": false
@@ -3014,7 +3019,12 @@
             "$ref": "#/components/schemas/AlertRulePromDuration"
           },
           "type": {
-            "$ref": "#/components/schemas/AlertRuleNotificationSettingsType"
+            "default": "SimplifiedRouting",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlertRuleNotificationSettingsType"
+              }
+            ]
           }
         },
         "additionalProperties": false
