@@ -875,16 +875,15 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			return err
 		}
 
-		countQuery := searchQuery
-		countQuery.SQLTemplate = sqltemplate.New(dbHelper.DialectForDriver())
-		countSQL, err := renderUserQuery(countSearchUsersTemplate, countQuery)
+		searchQuery.Reset()
+		countSQL, err := renderUserQuery(countSearchUsersTemplate, searchQuery)
 		if err != nil {
 			return err
 		}
 		var countResult struct {
 			Count int64
 		}
-		if _, err := dbSess.SQL(countSQL, countQuery.GetArgs()...).Get(&countResult); err != nil {
+		if _, err := dbSess.SQL(countSQL, searchQuery.GetArgs()...).Get(&countResult); err != nil {
 			return err
 		}
 		result.TotalCount = countResult.Count
