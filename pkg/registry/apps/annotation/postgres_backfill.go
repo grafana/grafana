@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand/v2"
+
+	// Retry jitter only, never a secret or a token.
+	"math/rand/v2" // #nosec G404 nosemgrep: go.lang.security.audit.crypto.math_random.math-random-used
 	"strings"
 	"time"
 
