@@ -2,12 +2,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { type Props, TextNGPanel } from './TextNGPanel';
 import { createData, createProps, renderPanel } from './test-utils';
+
+mockComboboxRect();
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
@@ -18,16 +21,19 @@ jest.mock('@grafana/ui/unstable', () => ({
   CodeMirrorEditor: ({
     value,
     basicSetup,
+    height,
     'aria-label': ariaLabel,
   }: {
     value: string;
     basicSetup?: { lineNumbers?: boolean };
+    height?: string;
     'aria-label'?: string;
   }) => (
     <textarea
       aria-label={ariaLabel}
       value={value}
       data-line-numbers={String(Boolean(basicSetup?.lineNumbers))}
+      data-height={height}
       readOnly
     />
   ),
@@ -183,6 +189,23 @@ describe('TextNGPanel', () => {
     expect(screen.getByTestId('TextNGPanel-code')).toBeInTheDocument();
     expect(await screen.findByRole('textbox')).toHaveValue('{\n  "a": 1\n}');
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+  });
+
+  // The format has to follow the mode, not just code.language, which lingers after
+  // switching out of code mode.
+  it.each([
+    [TextMode.Code, CodeLanguage.Yaml, 'raw'],
+    [TextMode.Code, CodeLanguage.Json, 'json'],
+    [TextMode.Markdown, CodeLanguage.Json, 'html'],
+  ] as const)('interpolates %s mode with the %s language using the %s format', (mode, language, format) => {
+    replaceVariablesMock.mockReturnValueOnce('a: 1');
+    setup(
+      Object.assign({}, defaultProps, {
+        options: { content: 'a: ${var}', mode, code: { language, showLineNumbers: false } },
+      })
+    );
+
+    expect(replaceVariablesMock).toHaveBeenCalledWith('a: ${var}', {}, format);
   });
 
   it('passes showLineNumbers to the code view', async () => {
@@ -348,6 +371,164 @@ describe('TextNGPanel', () => {
       ['an unset render mode', undefined],
     ])('renders once with no row context in %s', (_name, renderMode) => {
       expect(setupWithData(renderMode)).toContain('no row context');
+    });
+
+    it('renders rows from only the selected frame when multiple frames are returned', () => {
+      const frames = [
+        toDataFrame({ refId: 'A', fields: [{ name: 'host', values: ['web-1'] }] }),
+        toDataFrame({ refId: 'B', fields: [{ name: 'host', values: ['web-2', 'web-3'] }] }),
+      ];
+      const props = createProps(reportRowContext, {
+        data: createData(frames),
+        options: { content: 'no row context', mode: TextMode.Markdown, renderMode: RenderMode.PerRow, frameIndex: 1 },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      const html = screen.getByTestId('TextNGPanel-converted-content').innerHTML;
+      expect(html).toContain('row-0');
+      expect(html).toContain('row-1');
+      expect(html.match(/row-\d/g)).toHaveLength(2);
+    });
+  });
+
+  describe('frame selector', () => {
+    const frameA = toDataFrame({ name: 'Frame A', fields: [{ name: 'host', values: ['web-1'] }] });
+    const frameB = toDataFrame({ name: 'Frame B', fields: [{ name: 'host', values: ['web-2'] }] });
+
+    it('does not show a frame picker for a single frame', () => {
+      setup(createProps(replaceVariablesMock, { data: createData([frameA]) }), CoreApp.Dashboard);
+
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    });
+
+    it('lets the user pick which frame to render', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const onOptionsChange = jest.fn();
+      const props = createProps(replaceVariablesMock, {
+        data: createData([frameA, frameB]),
+        options: { content: 'hello', mode: TextMode.Markdown },
+        onOptionsChange,
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      const picker = screen.getByRole('combobox');
+      await userEvent.click(picker);
+      await userEvent.click(await screen.findByRole('option', { name: 'Frame B' }));
+
+      expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ frameIndex: 1 }));
+    });
+
+    it('does not make the rendered content a row flex item', () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const props = createProps(replaceVariablesMock, {
+        data: createData([frameA, frameB]),
+        options: { content: 'hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      let view: HTMLElement | null = screen.getByTestId('TextNGPanel-converted-content');
+      while (view && getComputedStyle(view).contain !== 'strict') {
+        view = view.parentElement;
+      }
+
+      expect(view).not.toBeNull();
+      expect(getComputedStyle(view!.parentElement!).flexDirection).toBe('column');
+    });
+
+    // Crossing one frame adds or removes the picker, which changes the tree shape
+    // and remounts the editor. The view mode lives in the panel so it survives.
+    describe('keeps the editor view mode when the query count changes', () => {
+      const frames = (count: number) =>
+        Array.from({ length: count }, (_, i) =>
+          toDataFrame({ name: `Frame ${i}`, fields: [{ name: 'host', values: [`web-${i}`] }] })
+        );
+
+      const editing = (props: Props) => (
+        <PanelContextProvider value={{ app: CoreApp.PanelEditor } as PanelContext}>
+          <TextNGPanel {...props} />
+        </PanelContextProvider>
+      );
+
+      it.each([
+        ['a query is added', 1, 2],
+        ['a query is removed', 2, 1],
+        ['the picker stays visible', 2, 3],
+      ])('when %s', async (_name, from, to) => {
+        replaceVariablesMock.mockImplementation((str: string) => str);
+        const props = createProps(replaceVariablesMock, {
+          data: createData(frames(from)),
+          options: { content: 'hello', mode: TextMode.Markdown },
+        });
+
+        const { rerender } = render(editing(props));
+        expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+        expect(screen.getByRole('radio', { name: 'Split' })).toBeChecked();
+
+        rerender(editing(Object.assign({}, props, { data: createData(frames(to)) })));
+
+        expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: 'Split' })).toBeChecked();
+      });
+    });
+  });
+
+  describe('fit content', () => {
+    it('does not apply size containment to markdown content when fitContent is set', () => {
+      replaceVariablesMock.mockReturnValueOnce('hello');
+      const props = Object.assign({}, defaultProps, {
+        fitContent: true,
+        options: { content: 'hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      let view: HTMLElement | null = screen.getByTestId('TextNGPanel-converted-content');
+      while (view) {
+        expect(getComputedStyle(view).contain).not.toBe('strict');
+        view = view.parentElement;
+      }
+    });
+
+    it.each([
+      ['auto', 'line 1\nline 2\nline 3', true],
+      ['100%', 'line 1\nline 2\nline 3', false],
+    ])('gives the code view a height of %s when fitContent is %s', async (expectedHeight, contentTest, fitContent) => {
+      replaceVariablesMock.mockReturnValueOnce(contentTest);
+      const props = Object.assign({}, defaultProps, {
+        fitContent,
+        options: { content: contentTest, mode: TextMode.Code },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      expect(await screen.findByRole('textbox')).toHaveAttribute('data-height', expectedHeight);
+    });
+
+    it('ignores fitContent while the panel is being edited', async () => {
+      const frames = [
+        toDataFrame({ name: 'Frame A', fields: [{ name: 'host', values: ['web-1'] }] }),
+        toDataFrame({ name: 'Frame B', fields: [{ name: 'host', values: ['web-2'] }] }),
+      ];
+      const props = createProps(replaceVariablesMock, {
+        fitContent: true,
+        data: createData(frames),
+        options: { content: '# Hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.PanelEditor);
+
+      // The editing surface keeps its bounded, scrollable layout: some ancestor
+      // is still stretched to fill the panel instead of sizing to content.
+      let ancestor: HTMLElement | null = await screen.findByTestId('TextNGEditor');
+      while (ancestor && getComputedStyle(ancestor).height !== '100%') {
+        ancestor = ancestor.parentElement;
+      }
+      expect(ancestor).not.toBeNull();
     });
   });
 });

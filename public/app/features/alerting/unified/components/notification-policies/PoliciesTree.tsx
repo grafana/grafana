@@ -200,12 +200,12 @@ export const PoliciesTree = ({
 
   async function handleUpdate(partialRoute: Partial<FormAmRoute>) {
     await updateExistingNotificationPolicy.execute(partialRoute);
-    handleActionResult({ error: updateExistingNotificationPolicyState.error });
+    handleActionSuccess();
   }
 
   async function handleDelete(route: RouteWithID) {
     await deleteNotificationPolicy.execute(route);
-    handleActionResult({ error: deleteNotificationPolicyState.error });
+    handleActionSuccess();
   }
 
   async function handleAdd(
@@ -218,7 +218,7 @@ export const PoliciesTree = ({
       referenceRoute: referenceRoute,
       insertPosition,
     });
-    handleActionResult({ error: addNotificationPolicyState.error });
+    handleActionSuccess();
   }
 
   function handleResetPolicy(route: RouteWithID) {
@@ -226,18 +226,16 @@ export const PoliciesTree = ({
     setIsResetModalOpen(true);
   }
 
-  function handleActionResult({ error }: { error?: Error }) {
-    if (!error) {
+  function handleActionSuccess() {
+    try {
       appNotification.success('Updated notification policies');
+      refetchAlertGroups?.();
+    } finally {
+      // close all modals
+      closeEditModal();
+      closeAddModal();
+      closeDeleteModal();
     }
-    if (selectedAlertmanager && refetchAlertGroups) {
-      refetchAlertGroups();
-    }
-
-    // close all modals
-    closeEditModal();
-    closeAddModal();
-    closeDeleteModal();
   }
 
   const updatingTree = anyOfRequestState(

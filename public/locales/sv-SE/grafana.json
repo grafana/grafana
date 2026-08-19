@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} misslyckades med {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1617,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Är du säker på att du vill starta importen? Denna åtgärd skapar nya resurser i Grafana Alerting.",
         "confirm": "Starta import",
@@ -1675,26 +1665,6 @@
       "info-description": "Denna guide hjälper dig att importera larmregler och aviseringresurser från externa källor till Grafana Alerting. Mer information ges i <2>dokumentationen</2>.",
       "info-title": "Importguide",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Skriv för att söka efter ett befintligt namnområde",
         "label": "Namnområde"
@@ -1718,10 +1688,6 @@
         "filter": "Filtrera",
         "folder": "Målmapp",
         "heading": "Granska import",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Namnområde",
         "nothing": "Inget att importera",
         "nothing-desc": "Båda stegen hoppades över. Gå tillbaka och konfigurera minst en importkälla.",
@@ -1748,14 +1714,6 @@
         "validation-warning": "Vissa resurser kommer att döpas om för att undvika konflikter.",
         "will-import-config": "Kommer att importera denna konfiguration",
         "will-import-rules": "Kommer att importera regler",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Kommer att importera {{count}} regler för",
         "will-import-rules-count_other": "Kommer att importera {{count}} regler för"
       },
@@ -1867,14 +1825,10 @@
         "cancel-confirm-title": "Vill du avbryta importen?",
         "cancel-confirm-yes": "Ignorera ändringar",
         "skip": "Hoppa över",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Aviseringsresurser",
         "step-notifications-desc": "Kontaktpunkter, policyer, mallar",
         "step-review": "Granska och importera",
         "step-review-desc": "Förhandsgranska och bekräfta import",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Varningsregler",
         "step-rules-desc": "Regler för varningar och registrering"
       },
@@ -2661,7 +2615,7 @@
     "provisioning": {
       "badge-tooltip-provenance": "Den här resursen har etablerats via {{provenance}} och kan inte redigeras via användargränssnittet",
       "badge-tooltip-standard": "Denna resurs har etablerats och kan inte redigeras via användargränssnittet",
-      "body-imported": "Denna {{resource}} innehåller integrationer som importerades från en extern Alertmanager och är för närvarande skrivskyddad. Integrationerna kommer att kunna redigeras när migreringsprocessen är klar.",
+      "body-imported": "Denna {{resource}} innehåller integrationer som importerats från en extern Alertmanager och är för närvarande skrivskyddad. Integrationerna blir redigerbara när migreringsprocessen har slutförts.",
       "body-imported-time-interval": "Detta tidsintervall importerades från en extern Alertmanager och är för närvarande skrivskyddat. Tidsintervallet kommer att kunna redigeras när migreringsprocessen är klar.",
       "body-provisioned": "Denna {{resource}} har provisionerats, vilket betyder att den skapades genom konfigurering. Kontakta serveradministratören om du vill uppdatera denna {{resource}}.",
       "title-imported": "Denna {{resource}} importerades och kan inte redigeras via användargränssnittet",
@@ -3282,8 +3236,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3258,54 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3316,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3611,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Ett unikt namn för tidsintervallet",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Laddar tidsintervall",
       "title-no-matching-time-interval-found": "Inget matchande tidsintervall hittades"
     },
@@ -3669,7 +3675,7 @@
         "back": "",
         "declare-incident": "Deklarera incident",
         "declare-incident-no-permission": "Du saknar behörighet att komma åt incidenten",
-        "instance-details": "Instansdetaljer",
+        "instance-details": "Instansinformation",
         "investigation-checking": "",
         "investigation-lookup-failed": "",
         "investigation-lookup-retry": "",
@@ -3850,6 +3856,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Det gick inte att importera resurser",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Resurserna har importerats till Grafana Alerting."
     },
     "yaml-content-info": {
@@ -6047,6 +6055,7 @@
       "new-row-title": "Ny rad",
       "row": {
         "collapse": "Dölj rad {{title}}",
+        "copy-link": "",
         "expand": "Expandera rad {{title}}",
         "new": "Ny rad",
         "repeat": {
@@ -7507,7 +7516,7 @@
       "classic-v2-warning": "Denna instrumentpanel använder V2-schemat. Funktioner som flikar och villkorlig rendering kan inte återges i det klassiska formatet och kan gå förlorade.",
       "label": {
         "advanced-options": "Avancerade alternativ",
-        "classic": "Classic",
+        "classic": "Klassisk",
         "json": "JSON",
         "v2-resource": "V2-resurs",
         "yaml": "YAML"
@@ -8918,11 +8927,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -11734,6 +11746,7 @@
       "no-details": "Fält som ska visas.",
       "open-assistant": "",
       "pin-line": "Fäst logg",
+      "prettify": "",
       "remove-displayed-field": "Ta bort fält",
       "remove-log": "Ta bort logg",
       "scroll-to-logline": "Skrolla till loggrad",
@@ -11890,7 +11903,7 @@
     },
     "name-enable-field-selector": "Aktivera fältväljare",
     "name-enable-infinite-scrolling": "Aktivera oändlig rullning",
-    "name-enable-log-details": "Aktivera loggdetaljer",
+    "name-enable-log-details": "Aktivera logginformation",
     "name-enable-logs-highlighting": "Aktivera loggmarkering",
     "name-font-size": "Teckenstorlek",
     "name-order": "Beställning",
@@ -12447,7 +12460,7 @@
     },
     "machine-learning": {
       "subtitle": "Utforska AI- och maskininlärningsfunktioner",
-      "title": "AI och maskininlärning"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Hantera instrumentpaneler och behörigheter för mappar"
@@ -12768,6 +12781,29 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12775,6 +12811,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -12805,8 +12850,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14353,6 +14398,12 @@
     "shared": {
       "branch-description": "Grenen som ska användas för provisionering",
       "branch-label": "Gren",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16103,6 +16154,9 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
     },
     "options": {
       "render-mode": ""

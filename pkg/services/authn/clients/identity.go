@@ -20,7 +20,7 @@ func (i *IdentityClient) Name() string {
 	return "identity"
 }
 
-func (i *IdentityClient) IsEnabled() bool {
+func (i *IdentityClient) IsEnabled(context.Context) bool {
 	return true
 }
 

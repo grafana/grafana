@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 
-import { type DataSourceSettings } from '@grafana/data';
+import { type DataSourceSettings, OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
@@ -52,11 +54,19 @@ export function isOperatorManaged(state: AutoSyncState): state is Extract<AutoSy
 }
 
 export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
+  // Both endpoints require Org Admin (admin_config) or are only meaningful behind the sync toggle;
+  // skip them for everyone else so callers that mount this unconditionally (e.g. the Import wizard)
+  // don't fire a guaranteed-403 request on every page load. Must match Step1AlertmanagerResources's
+  // `isAutoSyncSegmentEnabled` gate for the Auto-sync checkbox itself.
+  const canAccess =
+    Boolean(config.featureToggles['alerting.syncExternalAlertmanager']) && contextSrv.hasRole(OrgRole.Admin);
+
   const { currentData: configuration, isLoading: isLoadingConfig } =
-    alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery();
+    alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery(undefined, { skip: !canAccess });
   const { currentData: allDatasources, isLoading: isLoadingDatasources } =
     dataSourcesApi.endpoints.getAllDataSourceSettings.useQuery(undefined, {
       refetchOnMountOrArgChange: true,
+      skip: !canAccess,
     });
   const [updateConfiguration, updateConfigurationState] =
     alertmanagerApi.endpoints.updateGrafanaAlertingConfiguration.useMutation();

@@ -83,6 +83,8 @@ func (session *Session) Query(sqlOrArgs ...interface{}) ([]map[string][]byte, er
 		defer session.Close()
 	}
 
+	defer session.resetStatement()
+
 	sqlStr, args, err := session.genQuerySQL(sqlOrArgs...)
 	if err != nil {
 		return nil, err
@@ -238,6 +240,8 @@ func (session *Session) QueryString(sqlOrArgs ...interface{}) ([]map[string]stri
 		defer session.Close()
 	}
 
+	defer session.resetStatement()
+
 	sqlStr, args, err := session.genQuerySQL(sqlOrArgs...)
 	if err != nil {
 		return nil, err
@@ -257,6 +261,8 @@ func (session *Session) QuerySliceString(sqlOrArgs ...interface{}) ([][]string, 
 	if session.isAutoClose {
 		defer session.Close()
 	}
+
+	defer session.resetStatement()
 
 	sqlStr, args, err := session.genQuerySQL(sqlOrArgs...)
 	if err != nil {
@@ -313,6 +319,8 @@ func (session *Session) QueryInterface(sqlOrArgs ...interface{}) ([]map[string]i
 	if session.isAutoClose {
 		defer session.Close()
 	}
+
+	defer session.resetStatement()
 
 	sqlStr, args, err := session.genQuerySQL(sqlOrArgs...)
 	if err != nil {
