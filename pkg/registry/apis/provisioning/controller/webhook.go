@@ -96,7 +96,7 @@ func createWebhook(ctx context.Context, repo repository.WebhookRepository) (repo
 		// Repo is either legitimately deleted or the token no longer has access and this is a private
 		// repo. GitHub only returns 403 for public repos.
 		if errors.Is(err, repository.ErrFileNotFound) {
-			err = repository.ErrUnauthorized
+			err = repository.ErrPermissionDenied
 		}
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func updateWebhook(ctx context.Context, repo repository.WebhookRepository) (repo
 		// Repo is either legitimately deleted or the token no longer has access and this is a private
 		// repo. GitHub only returns 403 for public repos.
 		if errors.Is(err, repository.ErrFileNotFound) {
-			err = repository.ErrUnauthorized
+			err = repository.ErrPermissionDenied
 		}
 		return nil, false, fmt.Errorf("edit webhook: %w", err)
 	}
