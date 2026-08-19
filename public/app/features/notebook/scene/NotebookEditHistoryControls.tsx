@@ -70,10 +70,11 @@ export function NotebookEditHistoryControls({ history, enabled }: { history: Not
 }
 
 function isNativeEditingTarget(target: EventTarget | null): boolean {
-  return (
-    target instanceof Element &&
-    Boolean(target.closest('input, textarea, select, [contenteditable="true"], .cm-editor'))
-  );
+  if (!(target instanceof Element) || target.closest('.cm-editor')) {
+    return false;
+  }
+
+  return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
 }
 
 const redoClass = css({

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { mockComboboxRect } from '@grafana/test-utils';
 import { type CellContentKind } from 'app/features/notebook/types';
@@ -23,12 +23,14 @@ jest.mock('@grafana/ui/unstable', () => {
     CodeMirrorEditor: ({
       value,
       readOnly,
+      basicSetup,
       extensions,
       onChange,
       'aria-label': ariaLabel,
     }: {
       value: string;
       readOnly?: boolean;
+      basicSetup?: { history?: boolean };
       extensions?: unknown[];
       onChange: (value: string) => void;
       'aria-label'?: string;
@@ -50,6 +52,7 @@ jest.mock('@grafana/ui/unstable', () => {
           aria-label={ariaLabel}
           value={value}
           readOnly={readOnly}
+          data-native-history={basicSetup?.history === false ? 'disabled' : 'enabled'}
           onChange={(e) => onChange(e.target.value)}
         />
       );
@@ -79,25 +82,10 @@ describe('CodeCell', () => {
     expect(screen.getByLabelText('Code')).not.toHaveAttribute('readonly');
   });
 
-  it('marks the editor focus session so notebook history can commit it once', () => {
-    const onEditStart = jest.fn();
-    const onEditEnd = jest.fn();
-    render(
-      <CodeCell
-        content={content}
-        isEditing={true}
-        onChange={jest.fn()}
-        onEditStart={onEditStart}
-        onEditEnd={onEditEnd}
-      />
-    );
+  it('uses notebook history instead of a separate CodeMirror history', () => {
+    render(<CodeCell content={content} isEditing={true} onChange={jest.fn()} />);
 
-    const editor = screen.getByLabelText('Code');
-    fireEvent.focus(editor);
-    fireEvent.blur(editor);
-
-    expect(onEditStart).toHaveBeenCalledTimes(1);
-    expect(onEditEnd).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText('Code')).toHaveAttribute('data-native-history', 'disabled');
   });
 
   it('labels the cell with its language while reading, without offering the picker', () => {

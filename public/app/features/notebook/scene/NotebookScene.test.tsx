@@ -157,7 +157,6 @@ describe('NotebookScene', () => {
       const scene = buildScene(false);
       const cell = scene.state.body.state.cells[0];
       scene.onEnterEditMode();
-      scene.state.body.beginCellContentEdit(cell);
       scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } });
 
       scene.onExitEditMode();

@@ -694,7 +694,7 @@ describe('NotebookLayoutManager', () => {
       expect(panel.state.content).toBeUndefined();
     });
 
-    it('commits one undo action for an editor focus session', async () => {
+    it('coalesces rapid editor changes into one undo action', async () => {
       const first = codeCell('query');
       const second = codeCell('query');
       const manager = new NotebookLayoutManager({
@@ -713,14 +713,13 @@ describe('NotebookLayoutManager', () => {
       expect(history.state.canUndo).toBe(true);
       expect(history.state.undoLabel).toBe('Edit block');
 
-      await user.tab();
-
       expect(first.state.content).toEqual(edited);
       expect(second.state.content).toEqual(edited);
 
       act(() => history.undo());
       expect(first.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
       expect(second.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+      expect(history.state.canRedo).toBe(true);
 
       act(() => history.redo());
       expect(first.state.content).toEqual(edited);
@@ -733,12 +732,31 @@ describe('NotebookLayoutManager', () => {
       const history = new NotebookEditHistory();
       manager.setEditHistory(history);
 
-      manager.beginCellContentEdit(cell);
       manager.setCellContent(cell, edited);
       manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
-      manager.endCellContentEdit(cell);
 
       expect(history.state.canUndo).toBe(false);
+    });
+
+    it('starts a new undo step after the coalescing window', () => {
+      jest.useFakeTimers();
+      try {
+        const cell = codeCell('query');
+        const manager = new NotebookLayoutManager({ cells: [cell] });
+        const history = new NotebookEditHistory();
+        manager.setEditHistory(history);
+
+        manager.setCellContent(cell, edited);
+        jest.advanceTimersByTime(801);
+        manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 3', language: 'sql' } });
+
+        history.undo();
+        expect(cell.state.content).toEqual(edited);
+        history.undo();
+        expect(cell.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 

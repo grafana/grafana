@@ -51,6 +51,17 @@ interface NotebookLayoutManagerState extends SceneObjectState {
   isEditing?: boolean;
 }
 
+// Keep typing useful to undo without storing every keystroke as a separate action.
+const CONTENT_EDIT_COALESCE_MS = 800;
+
+interface PendingContentEdit {
+  elementName: string;
+  before: CellContentKind;
+  after: CellContentKind;
+  action?: NotebookEditAction;
+  timer?: ReturnType<typeof setTimeout>;
+}
+
 export class NotebookLayoutManager
   extends SceneObjectBase<NotebookLayoutManagerState>
   implements DashboardLayoutManager<{}, NotebookLayoutKind>
@@ -77,10 +88,7 @@ export class NotebookLayoutManager
   public readonly descriptor = NotebookLayoutManager.descriptor;
 
   private editHistory?: NotebookEditHistory;
-  private contentEditStarts = new Map<
-    string,
-    { cell: NotebookCellItem; before: CellContentKind; after: CellContentKind; action?: NotebookEditAction }
-  >();
+  private pendingContentEdit?: PendingContentEdit;
 
   public setEditHistory(editHistory: NotebookEditHistory): void {
     this.editHistory = editHistory;
@@ -133,62 +141,64 @@ export class NotebookLayoutManager
       return;
     }
 
-    const activeEdit = this.contentEditStarts.get(target.state.elementName);
-    if (activeEdit) {
+    const activeEdit = this.pendingContentEdit;
+    if (activeEdit?.elementName === target.state.elementName) {
       this.applyCellContent(target.state.elementName, content);
-      activeEdit.after = content;
-      if (!activeEdit.action && this.editHistory) {
-        activeEdit.action = {
-          label: t('notebooks.history.edit-block', 'Edit block'),
-          perform: () => this.applyCellContent(target.state.elementName, activeEdit.after),
-          undo: () => this.applyCellContent(target.state.elementName, activeEdit.before),
-        };
-        this.editHistory.record(activeEdit.action);
+      activeEdit.after = structuredClone(content);
+      if (isEqual(activeEdit.before, activeEdit.after)) {
+        if (activeEdit.action) {
+          this.editHistory?.discard(activeEdit.action);
+        }
+        this.finishContentEdit(activeEdit);
+      } else {
+        this.scheduleContentEditCommit(activeEdit);
       }
       return;
     }
 
+    this.commitContentEdits();
     const before = structuredClone(previous);
     const after = structuredClone(content);
-    this.executeEdit({
+    if (!this.editHistory) {
+      this.applyCellContent(target.state.elementName, after);
+      return;
+    }
+
+    const edit: PendingContentEdit = { elementName: target.state.elementName, before, after };
+    const action: NotebookEditAction = {
       label: t('notebooks.history.edit-block', 'Edit block'),
-      perform: () => this.applyCellContent(target.state.elementName, after),
-      undo: () => this.applyCellContent(target.state.elementName, before),
-    });
-  };
+      perform: () => {
+        this.finishContentEdit(edit);
+        this.applyCellContent(edit.elementName, edit.after);
+      },
+      undo: () => {
+        this.finishContentEdit(edit);
+        this.applyCellContent(edit.elementName, edit.before);
+      },
+    };
+    edit.action = action;
 
-  public beginCellContentEdit = (target: NotebookCellItem): void => {
-    if (target.state.content && !this.contentEditStarts.has(target.state.elementName)) {
-      const content = structuredClone(target.state.content);
-      this.contentEditStarts.set(target.state.elementName, {
-        cell: target,
-        before: content,
-        after: content,
-      });
-    }
-  };
-
-  public endCellContentEdit = (target: NotebookCellItem): void => {
-    const edit = this.contentEditStarts.get(target.state.elementName);
-    if (!edit) {
-      return;
-    }
-
-    this.contentEditStarts.delete(target.state.elementName);
-    const current = target.state.content;
-    if (!current || !this.state.cells.includes(edit.cell)) {
-      return;
-    }
-
-    edit.after = current;
-    if (edit.action && isEqual(edit.before, current)) {
-      this.editHistory?.discard(edit.action);
-    }
+    this.pendingContentEdit = edit;
+    this.applyCellContent(edit.elementName, edit.after);
+    this.editHistory.record(action);
+    this.scheduleContentEditCommit(edit);
   };
 
   public commitContentEdits(): void {
-    for (const { cell } of [...this.contentEditStarts.values()]) {
-      this.endCellContentEdit(cell);
+    if (this.pendingContentEdit) {
+      this.finishContentEdit(this.pendingContentEdit);
+    }
+  }
+
+  private scheduleContentEditCommit(edit: PendingContentEdit): void {
+    clearTimeout(edit.timer);
+    edit.timer = setTimeout(() => this.finishContentEdit(edit), CONTENT_EDIT_COALESCE_MS);
+  }
+
+  private finishContentEdit(edit: PendingContentEdit): void {
+    clearTimeout(edit.timer);
+    if (this.pendingContentEdit === edit) {
+      this.pendingContentEdit = undefined;
     }
   }
 
@@ -286,9 +296,6 @@ export class NotebookLayoutManager
       return;
     }
 
-    if (this.contentEditStarts.get(cell.state.elementName)?.cell === cell) {
-      this.endCellContentEdit(cell);
-    }
     this.executeEdit({
       label: t('notebooks.history.delete-block', 'Delete block'),
       perform: () => this.removeCellInstance(cell),
@@ -297,6 +304,7 @@ export class NotebookLayoutManager
   }
 
   private executeEdit(action: NotebookEditAction): void {
+    this.commitContentEdits();
     if (this.editHistory) {
       this.editHistory.execute(action);
     } else {

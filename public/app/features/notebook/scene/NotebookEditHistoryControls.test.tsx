@@ -55,6 +55,24 @@ describe('NotebookEditHistoryControls', () => {
     input.remove();
   });
 
+  it('routes CodeMirror shortcuts through notebook history', () => {
+    const { value } = setup();
+    const editor = document.createElement('div');
+    editor.className = 'cm-editor';
+    const content = document.createElement('div');
+    content.contentEditable = 'true';
+    editor.appendChild(content);
+    document.body.appendChild(editor);
+
+    fireEvent.keyDown(content, { key: 'z', metaKey: true });
+    expect(value.current).toBe(0);
+    expect(screen.getByRole('button', { name: 'Redo: Edit block' })).toBeEnabled();
+
+    fireEvent.keyDown(content, { key: 'z', metaKey: true, shiftKey: true });
+    expect(value.current).toBe(1);
+    editor.remove();
+  });
+
   it('does not register shortcuts outside edit mode', () => {
     const { value } = setup(false);
 

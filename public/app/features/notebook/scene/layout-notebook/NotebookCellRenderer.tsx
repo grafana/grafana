@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
@@ -71,9 +70,6 @@ function NarrativeCell({
   autoFocus?: boolean;
 }) {
   const styles = useStyles2(getStyles);
-  const handleEditStart = useCallback(() => cell.onContentEditStart(), [cell]);
-  const handleEditEnd = useCallback(() => cell.onContentEditEnd(), [cell]);
-
   const registered = cellTypeRegistry.getIfExists(content.kind);
   if (!registered) {
     return null;
@@ -87,8 +83,6 @@ function NarrativeCell({
         isEditing={isEditing}
         autoFocus={autoFocus}
         onChange={(updated) => cell.onContentChange(updated)}
-        onEditStart={handleEditStart}
-        onEditEnd={handleEditEnd}
       />
     </div>
   );
