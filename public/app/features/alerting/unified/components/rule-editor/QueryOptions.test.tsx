@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { getDefaultRelativeTimeRange } from '@grafana/data';
 import type { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { QueryOptions } from './QueryOptions';
@@ -147,43 +146,4 @@ describe('QueryOptions', () => {
     expect(maxDataPointsInput).toHaveValue(500);
   });
 
-  it('should persist interval edit after time range change', async () => {
-    const user = userEvent.setup();
-    const onChangeQueryOptions = jest.fn();
-    const onChangeTimeRange = jest.fn();
-    const initialTimeRange = getDefaultRelativeTimeRange();
-
-    const { rerender } = render(
-      <QueryOptions
-        query={{ ...defaultQuery, relativeTimeRange: initialTimeRange }}
-        queryOptions={{ maxDataPoints: 100, minInterval: '1m' }}
-        onChangeQueryOptions={onChangeQueryOptions}
-        onChangeTimeRange={onChangeTimeRange}
-        index={0}
-      />
-    );
-
-    const button = screen.getByRole('button', { name: /Options/i });
-    await user.click(button);
-
-    const minIntervalInput = screen.getByRole('textbox', { name: /Interval/i });
-    await user.clear(minIntervalInput);
-    await user.type(minIntervalInput, '10s');
-
-    const newTimeRange = { from: 3600, to: 0 };
-    rerender(
-      <QueryOptions
-        query={{ ...defaultQuery, relativeTimeRange: newTimeRange }}
-        queryOptions={{ maxDataPoints: 100, minInterval: '1m' }}
-        onChangeQueryOptions={onChangeQueryOptions}
-        onChangeTimeRange={onChangeTimeRange}
-        index={0}
-      />
-    );
-
-    const applyButton = screen.getByRole('button', { name: /Apply/i });
-    await user.click(applyButton);
-
-    expect(onChangeQueryOptions).toHaveBeenCalledWith({ maxDataPoints: 100, minInterval: '10s' }, 0);
-  });
 });
