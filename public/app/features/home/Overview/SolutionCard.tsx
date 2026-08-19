@@ -22,6 +22,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
     [needsAttention, solution]
   );
   const { value: cta = null, loading: ctaLoading } = useAsync(() => solution.cta(), [solution]);
+  const { value: datasource = null } = useAsync(() => solution.datasource(), [solution]);
   const styles = useStyles2(getStyles, needsAttention);
   const isAttentionCta = cta?.action === 'view_alerts';
   const status = needsAttention
@@ -44,6 +45,13 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
               <Text variant="bodySmall" color="secondary">
                 {status}
               </Text>
+              {datasource && (
+                <span className={styles.viaDatasource}>
+                  <Text variant="bodySmall" color="secondary" truncate>
+                    {t('home.solutions.via-datasource', 'via {{name}}', { name: datasource.name })}
+                  </Text>
+                </span>
+              )}
             </Stack>
           </Stack>
         </Stack>
@@ -234,6 +242,17 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     borderRadius: theme.shape.radius.circle,
     background: needsAttention ? theme.colors.warning.main : theme.colors.success.main,
     flexShrink: 0,
+  }),
+  viaDatasource: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    minWidth: 0,
+
+    '&::before': {
+      content: '"·"',
+      color: theme.colors.text.secondary,
+    },
   }),
   content: css({
     display: 'flex',
