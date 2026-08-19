@@ -1102,7 +1102,7 @@
     },
     "dma-route-guard": {
       "data-source-managed-unavailable": "Data source-managed alerting is unavailable",
-      "install-plugin": "<0>Install the Prometheus Alerting plugin</0> to manage it."
+      "install-or-enable-plugin": "<0>Install or enable the Prometheus Alerting plugin</0> to manage it."
     },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluations to start alerting",

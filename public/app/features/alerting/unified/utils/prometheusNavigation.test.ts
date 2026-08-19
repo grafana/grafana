@@ -22,6 +22,14 @@ describe('prometheusAlertingPlugin', () => {
     expect(prometheusAlertingPlugin.newRule('recording')).toBe(
       '/a/grafana-prometheusalerting-app/rules/new?type=recording'
     );
+    expect(
+      prometheusAlertingPlugin.newRule('recording', {
+        defaults: '{"type":"cloud-recording"}',
+        returnTo: '/dashboard/test',
+      })
+    ).toBe(
+      '/a/grafana-prometheusalerting-app/rules/new?type=recording&defaults=%7B%22type%22%3A%22cloud-recording%22%7D&returnTo=%2Fdashboard%2Ftest'
+    );
   });
 
   it('uses the data source UID in Prometheus rule identifiers', () => {

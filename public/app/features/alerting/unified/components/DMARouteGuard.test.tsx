@@ -61,13 +61,13 @@ describe('DMARouteGuard', () => {
     expect(screen.getByText('Plugin page')).toBeInTheDocument();
   });
 
-  it('offers plugin installation when DMA is unavailable', () => {
+  it('offers plugin installation or enablement when DMA is unavailable', () => {
     useDMAStatusMock.mockReturnValue({ status: DMAStatus.NotAvailable });
 
     renderGuard();
 
     expect(screen.getByRole('alert')).toHaveTextContent('This resource is unavailable in Grafana.');
-    expect(screen.getByRole('link', { name: 'Install the Prometheus Alerting plugin' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Install or enable the Prometheus Alerting plugin' })).toHaveAttribute(
       'href',
       '/plugins/grafana-prometheusalerting-app'
     );

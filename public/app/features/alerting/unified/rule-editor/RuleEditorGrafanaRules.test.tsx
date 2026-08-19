@@ -277,6 +277,20 @@ describe('RuleEditor grafana managed rules', () => {
       );
       expect(locationService.getLocation().search).toBe('?type=alerting');
     });
+
+    it('preserves prefilled recording-rule state when redirecting creation to the plugin', async () => {
+      const defaults = JSON.stringify({ type: 'cloud-recording', name: 'CPU usage' });
+
+      renderRuleEditor(undefined, undefined, undefined, { defaults, returnTo: '/dashboard/test' });
+
+      await waitFor(() =>
+        expect(locationService.getLocation().pathname).toBe('/a/grafana-prometheusalerting-app/rules/new')
+      );
+      const searchParams = new URLSearchParams(locationService.getLocation().search);
+      expect(searchParams.get('type')).toBe('recording');
+      expect(searchParams.get('defaults')).toBe(defaults);
+      expect(searchParams.get('returnTo')).toBe('/dashboard/test');
+    });
   });
 });
 
@@ -344,12 +358,22 @@ describe('RuleEditor with alertingDisableDMAinUI feature toggle', () => {
     expect(removeExpressionsButtons.length).toBeGreaterThan(0);
   });
 
-  it('offers plugin installation for a data source-managed rule', async () => {
+  it('offers plugin installation or enablement for a data source-managed rule', async () => {
     renderRuleEditor(undefined, 'recording');
 
-    expect(await screen.findByRole('link', { name: 'Install the Prometheus Alerting plugin' })).toHaveAttribute(
-      'href',
-      '/plugins/grafana-prometheusalerting-app'
-    );
+    expect(
+      await screen.findByRole('link', { name: 'Install or enable the Prometheus Alerting plugin' })
+    ).toHaveAttribute('href', '/plugins/grafana-prometheusalerting-app');
+  });
+
+  it('shows DMA as unavailable when an external-only user creates an alert rule', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+    renderRuleEditor();
+
+    expect(
+      await screen.findByRole('link', { name: 'Install or enable the Prometheus Alerting plugin' })
+    ).toHaveAttribute('href', '/plugins/grafana-prometheusalerting-app');
+    expect(screen.queryByRole('textbox', { name: 'name' })).not.toBeInTheDocument();
   });
 });

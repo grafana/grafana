@@ -51,9 +51,11 @@ export function DMARouteGuard({
           )}
         >
           {unavailableDescription}{' '}
-          <Trans i18nKey="alerting.dma-route-guard.install-plugin">
-            <TextLink href={prometheusAlertingPlugin.install}>Install the Prometheus Alerting plugin</TextLink> to
-            manage it.
+          <Trans i18nKey="alerting.dma-route-guard.install-or-enable-plugin">
+            <TextLink href={prometheusAlertingPlugin.install}>
+              Install or enable the Prometheus Alerting plugin
+            </TextLink>{' '}
+            to manage it.
           </Trans>
         </AlertWarning>
       </AlertingPageWrapper>

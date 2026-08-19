@@ -9,10 +9,26 @@ const baseUrl = `/a/${PROMETHEUS_ALERTING_APP_ID}`;
 
 type PrometheusAlertingRuleIdentifier = CloudRuleIdentifier | PrometheusRuleIdentifier;
 
+interface NewRuleOptions {
+  defaults?: string;
+  returnTo?: string;
+}
+
 export const prometheusAlertingPlugin = {
   install: `/plugins/${PROMETHEUS_ALERTING_APP_ID}`,
   rules: `${baseUrl}/rules`,
-  newRule: (type: 'alerting' | 'recording') => `${baseUrl}/rules/new?type=${type}`,
+  newRule: (type: 'alerting' | 'recording', options: NewRuleOptions = {}) => {
+    const searchParams = new URLSearchParams({ type });
+
+    if (options.defaults) {
+      searchParams.set('defaults', options.defaults);
+    }
+    if (options.returnTo) {
+      searchParams.set('returnTo', options.returnTo);
+    }
+
+    return `${baseUrl}/rules/new?${searchParams.toString()}`;
+  },
   viewRule: (identifier: PrometheusAlertingRuleIdentifier) =>
     `${baseUrl}/rules/${stringifyPluginRuleIdentifier(identifier)}`,
   editRule: (identifier: PrometheusAlertingRuleIdentifier) =>

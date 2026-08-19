@@ -61,13 +61,16 @@ export const ui = {
 export function renderRuleEditor(
   identifier?: string,
   recording?: 'recording' | 'grafana-recording',
-  restoreFrom?: string
+  restoreFrom?: string,
+  queryParams?: Record<string, string>
 ) {
-  const isManualRestore = Boolean(restoreFrom);
-  const restoreFromEncoded = restoreFrom ? encodeURIComponent(restoreFrom) : '';
-  const newAlertRuleRoute =
-    `/alerting/new/${recording ?? 'alerting'}` +
-    (isManualRestore ? `?isManualRestore=true&defaults=${restoreFromEncoded}` : '');
+  const searchParams = new URLSearchParams(queryParams);
+  if (restoreFrom) {
+    searchParams.set('isManualRestore', 'true');
+    searchParams.set('defaults', restoreFrom);
+  }
+  const queryString = searchParams.toString();
+  const newAlertRuleRoute = `/alerting/new/${recording ?? 'alerting'}${queryString ? `?${queryString}` : ''}`;
   const initialEntries = [identifier ? `/alerting/${identifier}/edit` : newAlertRuleRoute];
   return render(
     <>

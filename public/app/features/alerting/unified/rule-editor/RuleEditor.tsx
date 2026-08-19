@@ -14,7 +14,7 @@ import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { useRulesAccess } from '../utils/accessControlHooks';
 import { prometheusAlertingPlugin } from '../utils/prometheusNavigation';
 import * as ruleId from '../utils/rule-id';
-import { isDataSourceManagedRuleByType, isGrafanaRuleIdentifier } from '../utils/rules';
+import { isDataSourceManagedRuleByType, isGrafanaRuleIdentifier, isRecordingRuleByType } from '../utils/rules';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import { ExistingRuleEditor } from './ExistingRuleEditor';
@@ -34,6 +34,7 @@ const RuleEditor = () => {
   const cloneIdentifier = useIdentifierFromCopy();
   const isManualRestore = useManualRestore();
   const prefill = useDefaultsFromQuery();
+  const [searchParams] = useURLSearchParams();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
   const externalIdentifier = identifier && !isGrafanaRuleIdentifier(identifier) ? identifier : undefined;
@@ -43,7 +44,7 @@ const RuleEditor = () => {
   const isCreatingNewRule = !identifier && !cloneIdentifier;
   const shouldCreateInPlugin = isCreatingDataSourceRule || (isCreatingNewRule && !canCreateGrafanaRules);
   const isDataSourceManagedRoute =
-    Boolean(externalIdentifier) || Boolean(externalCloneIdentifier) || isCreatingDataSourceRule;
+    Boolean(externalIdentifier) || Boolean(externalCloneIdentifier) || shouldCreateInPlugin;
   let pluginPage: ReactNode;
 
   if (externalIdentifier) {
@@ -51,8 +52,15 @@ const RuleEditor = () => {
   } else if (externalCloneIdentifier) {
     pluginPage = <PluginRuleRedirect identifier={externalCloneIdentifier} action="clone" />;
   } else if (shouldCreateInPlugin) {
+    const pluginRuleType = type === 'recording' || isRecordingRuleByType(prefill?.type) ? 'recording' : 'alerting';
     pluginPage = (
-      <Navigate replace to={prometheusAlertingPlugin.newRule(type === 'recording' ? 'recording' : 'alerting')} />
+      <Navigate
+        replace
+        to={prometheusAlertingPlugin.newRule(pluginRuleType, {
+          defaults: searchParams.get('defaults') ?? undefined,
+          returnTo: searchParams.get('returnTo') ?? undefined,
+        })}
+      />
     );
   }
 
