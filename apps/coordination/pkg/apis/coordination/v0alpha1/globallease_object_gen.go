@@ -15,29 +15,29 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type ClusterLease struct {
+type GlobalLease struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
 
-	// Spec is the spec of the ClusterLease
-	Spec ClusterLeaseSpec `json:"spec" yaml:"spec"`
+	// Spec is the spec of the GlobalLease
+	Spec GlobalLeaseSpec `json:"spec" yaml:"spec"`
 
-	Status ClusterLeaseStatus `json:"status" yaml:"status"`
+	Status GlobalLeaseStatus `json:"status" yaml:"status"`
 }
 
-func NewClusterLease() *ClusterLease {
-	return &ClusterLease{
-		Spec:   *NewClusterLeaseSpec(),
-		Status: *NewClusterLeaseStatus(),
+func NewGlobalLease() *GlobalLease {
+	return &GlobalLease{
+		Spec:   *NewGlobalLeaseSpec(),
+		Status: *NewGlobalLeaseStatus(),
 	}
 }
 
-func (o *ClusterLease) GetSpec() any {
+func (o *GlobalLease) GetSpec() any {
 	return o.Spec
 }
 
-func (o *ClusterLease) SetSpec(spec any) error {
-	cast, ok := spec.(ClusterLeaseSpec)
+func (o *GlobalLease) SetSpec(spec any) error {
+	cast, ok := spec.(GlobalLeaseSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -45,13 +45,13 @@ func (o *ClusterLease) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *ClusterLease) GetSubresources() map[string]any {
+func (o *GlobalLease) GetSubresources() map[string]any {
 	return map[string]any{
 		"status": o.Status,
 	}
 }
 
-func (o *ClusterLease) GetSubresource(name string) (any, bool) {
+func (o *GlobalLease) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
 		return o.Status, true
@@ -60,12 +60,12 @@ func (o *ClusterLease) GetSubresource(name string) (any, bool) {
 	}
 }
 
-func (o *ClusterLease) SetSubresource(name string, value any) error {
+func (o *GlobalLease) SetSubresource(name string, value any) error {
 	switch name {
 	case "status":
-		cast, ok := value.(ClusterLeaseStatus)
+		cast, ok := value.(GlobalLeaseStatus)
 		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type ClusterLeaseStatus", value)
+			return fmt.Errorf("cannot set status type %#v, not of type GlobalLeaseStatus", value)
 		}
 		o.Status = cast
 		return nil
@@ -74,7 +74,7 @@ func (o *ClusterLease) SetSubresource(name string, value any) error {
 	}
 }
 
-func (o *ClusterLease) GetStaticMetadata() resource.StaticMetadata {
+func (o *GlobalLease) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -85,7 +85,7 @@ func (o *ClusterLease) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *ClusterLease) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *GlobalLease) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -95,7 +95,7 @@ func (o *ClusterLease) SetStaticMetadata(metadata resource.StaticMetadata) {
 	})
 }
 
-func (o *ClusterLease) GetCommonMetadata() resource.CommonMetadata {
+func (o *GlobalLease) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -127,7 +127,7 @@ func (o *ClusterLease) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *ClusterLease) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *GlobalLease) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -172,7 +172,7 @@ func (o *ClusterLease) SetCommonMetadata(metadata resource.CommonMetadata) {
 	}
 }
 
-func (o *ClusterLease) GetCreatedBy() string {
+func (o *GlobalLease) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -180,7 +180,7 @@ func (o *ClusterLease) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *ClusterLease) SetCreatedBy(createdBy string) {
+func (o *GlobalLease) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -188,7 +188,7 @@ func (o *ClusterLease) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *ClusterLease) GetUpdateTimestamp() time.Time {
+func (o *GlobalLease) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -197,7 +197,7 @@ func (o *ClusterLease) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *ClusterLease) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *GlobalLease) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -205,7 +205,7 @@ func (o *ClusterLease) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *ClusterLease) GetUpdatedBy() string {
+func (o *GlobalLease) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -213,7 +213,7 @@ func (o *ClusterLease) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *ClusterLease) SetUpdatedBy(updatedBy string) {
+func (o *GlobalLease) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -221,21 +221,21 @@ func (o *ClusterLease) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *ClusterLease) Copy() resource.Object {
+func (o *GlobalLease) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *ClusterLease) DeepCopyObject() runtime.Object {
+func (o *GlobalLease) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *ClusterLease) DeepCopy() *ClusterLease {
-	cpy := &ClusterLease{}
+func (o *GlobalLease) DeepCopy() *GlobalLease {
+	cpy := &GlobalLease{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *ClusterLease) DeepCopyInto(dst *ClusterLease) {
+func (o *GlobalLease) DeepCopyInto(dst *GlobalLease) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
@@ -243,39 +243,39 @@ func (o *ClusterLease) DeepCopyInto(dst *ClusterLease) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
-func (ClusterLease) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+func (GlobalLease) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &ClusterLease{}
+var _ resource.Object = &GlobalLease{}
 
 // +k8s:openapi-gen=true
-type ClusterLeaseList struct {
+type GlobalLeaseList struct {
 	metav1.TypeMeta `json:",inline" yaml:",inline"`
 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []ClusterLease `json:"items" yaml:"items"`
+	Items           []GlobalLease `json:"items" yaml:"items"`
 }
 
-func (o *ClusterLeaseList) DeepCopyObject() runtime.Object {
+func (o *GlobalLeaseList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *ClusterLeaseList) Copy() resource.ListObject {
-	cpy := &ClusterLeaseList{
+func (o *GlobalLeaseList) Copy() resource.ListObject {
+	cpy := &GlobalLeaseList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]ClusterLease, len(o.Items)),
+		Items:    make([]GlobalLease, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*ClusterLease); ok {
+		if item, ok := o.Items[i].Copy().(*GlobalLease); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *ClusterLeaseList) GetItems() []resource.Object {
+func (o *GlobalLeaseList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -283,52 +283,52 @@ func (o *ClusterLeaseList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *ClusterLeaseList) SetItems(items []resource.Object) {
-	o.Items = make([]ClusterLease, len(items))
+func (o *GlobalLeaseList) SetItems(items []resource.Object) {
+	o.Items = make([]GlobalLease, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*ClusterLease)
+		o.Items[i] = *items[i].(*GlobalLease)
 	}
 }
 
-func (o *ClusterLeaseList) DeepCopy() *ClusterLeaseList {
-	cpy := &ClusterLeaseList{}
+func (o *GlobalLeaseList) DeepCopy() *GlobalLeaseList {
+	cpy := &GlobalLeaseList{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *ClusterLeaseList) DeepCopyInto(dst *ClusterLeaseList) {
+func (o *GlobalLeaseList) DeepCopyInto(dst *GlobalLeaseList) {
 	resource.CopyObjectInto(dst, o)
 }
 
-func (ClusterLeaseList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseList"
+func (GlobalLeaseList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLeaseList"
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &ClusterLeaseList{}
+var _ resource.ListObject = &GlobalLeaseList{}
 
 // Copy methods for all subresource types
 
 // DeepCopy creates a full deep copy of Spec
-func (s *ClusterLeaseSpec) DeepCopy() *ClusterLeaseSpec {
-	cpy := &ClusterLeaseSpec{}
+func (s *GlobalLeaseSpec) DeepCopy() *GlobalLeaseSpec {
+	cpy := &GlobalLeaseSpec{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
 // DeepCopyInto deep copies Spec into another Spec object
-func (s *ClusterLeaseSpec) DeepCopyInto(dst *ClusterLeaseSpec) {
+func (s *GlobalLeaseSpec) DeepCopyInto(dst *GlobalLeaseSpec) {
 	resource.CopyObjectInto(dst, s)
 }
 
-// DeepCopy creates a full deep copy of ClusterLeaseStatus
-func (s *ClusterLeaseStatus) DeepCopy() *ClusterLeaseStatus {
-	cpy := &ClusterLeaseStatus{}
+// DeepCopy creates a full deep copy of GlobalLeaseStatus
+func (s *GlobalLeaseStatus) DeepCopy() *GlobalLeaseStatus {
+	cpy := &GlobalLeaseStatus{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
-// DeepCopyInto deep copies ClusterLeaseStatus into another ClusterLeaseStatus object
-func (s *ClusterLeaseStatus) DeepCopyInto(dst *ClusterLeaseStatus) {
+// DeepCopyInto deep copies GlobalLeaseStatus into another GlobalLeaseStatus object
+func (s *GlobalLeaseStatus) DeepCopyInto(dst *GlobalLeaseStatus) {
 	resource.CopyObjectInto(dst, s)
 }

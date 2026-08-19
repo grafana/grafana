@@ -10,7 +10,7 @@ const defaultGCGracePeriod = 24 * time.Hour
 // CoordinationConfig is the app-specific configuration for the coordination app.
 type CoordinationConfig struct {
 	// EnableGarbageCollector runs the lease GC reconciler, which watches Leases and
-	// ClusterLeases and deletes those whose expiry lies more than GracePeriod in the past.
+	// GlobalLeases and deletes those whose expiry lies more than GracePeriod in the past.
 	EnableGarbageCollector bool
 	// GracePeriod overrides the default grace period before an expired lease is
 	// collected. Zero uses defaultGCGracePeriod.

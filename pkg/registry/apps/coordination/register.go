@@ -31,7 +31,7 @@ var (
 
 // AppInstaller installs the coordination app, which serves two coordination.grafana.app
 // kinds: a namespaced Lease for tenant-scoped coordination, and a cluster-scoped
-// ClusterLease for fleet-level coordination (leader election and shard ownership
+// GlobalLease for fleet-level coordination (leader election and shard ownership
 // across a multi-tenant operator's replicas) that is owned by no tenant.
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
@@ -54,7 +54,7 @@ func RegisterAppInstaller(
 		accessControl: ac,
 	}
 	// Run the lease garbage collector on the served app: it watches Leases and
-	// ClusterLeases and deletes those abandoned past the grace period. The grace
+	// GlobalLeases and deletes those abandoned past the grace period. The grace
 	// period is configurable via [coordination] gc_grace_period; zero uses the
 	// app's default (24h).
 	specificConfig := &coordinationapp.CoordinationConfig{
@@ -83,7 +83,7 @@ func RegisterAppInstaller(
 // is what makes access "not admin-only" — a custom role can grant lease read/write
 // to specific users, teams, or service accounts. For the namespaced Lease the
 // caller's namespace-scoped token additionally confines it to its own tenant; for
-// the cluster-scoped ClusterLease the storage authorizer (below) is the fail-closed
+// the cluster-scoped GlobalLease the storage authorizer (below) is the fail-closed
 // backstop and adds per-service owner scoping.
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
@@ -120,14 +120,14 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 }
 
 // GetClusterScopedStorageAuthorizer returns the storage-level authorizer for the
-// cluster-scoped ClusterLease. Implementing this is the mandatory opt-in for
+// cluster-scoped GlobalLease. Implementing this is the mandatory opt-in for
 // cluster-scoped storage; it gates create/update/delete/get/list AND watch, so a
 // tenant token can neither mutate nor observe fleet leases, and it scopes each
 // service to the leases it owns. Returning nil for any other resource keeps the
 // default deny authorizer (fail-closed). The namespaced Lease does not reach here —
 // it uses ordinary namespace-scoped storage.
 func (a *AppInstaller) GetClusterScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer {
-	if gr.Resource != coordinationv0alpha1.ClusterLeaseKind().Plural() {
+	if gr.Resource != coordinationv0alpha1.GlobalLeaseKind().Plural() {
 		return nil
 	}
 	return &leaseStorageAuthorizer{logger: a.logger, accessControl: a.accessControl}

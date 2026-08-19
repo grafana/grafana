@@ -35,9 +35,9 @@ func newGarbageCollector(cfg app.Config) (operator.Reconciler, app.Runnable, err
 	if err != nil {
 		return nil, nil, fmt.Errorf("coordination GC: unable to create Lease client: %w", err)
 	}
-	clusterLeaseClient, err := clients.ClientFor(coordinationv0alpha1.ClusterLeaseKind())
+	globalLeaseClient, err := clients.ClientFor(coordinationv0alpha1.GlobalLeaseKind())
 	if err != nil {
-		return nil, nil, fmt.Errorf("coordination GC: unable to create ClusterLease client: %w", err)
+		return nil, nil, fmt.Errorf("coordination GC: unable to create GlobalLease client: %w", err)
 	}
 
 	grace := ccfg.GracePeriod
@@ -48,15 +48,15 @@ func newGarbageCollector(cfg app.Config) (operator.Reconciler, app.Runnable, err
 	// leader is toggled by the election runnable and read by the reconciler.
 	leader := &atomic.Bool{}
 	reconciler := &leaseGCReconciler{
-		leaseClient:        leaseClient,
-		clusterLeaseClient: clusterLeaseClient,
-		gracePeriod:        grace,
-		now:                time.Now,
-		isLeader:           leader.Load,
+		leaseClient:       leaseClient,
+		globalLeaseClient: globalLeaseClient,
+		gracePeriod:       grace,
+		now:               time.Now,
+		isLeader:          leader.Load,
 	}
 	identity := coordle.DefaultIdentity()
 	runnable := &gcLeaderRunnable{
-		lock:      coordle.NewLock(clusterLeaseClient, gcLeaseName, identity),
+		lock:      coordle.NewGlobalLock(globalLeaseClient, gcLeaseName, identity),
 		setLeader: leader.Store,
 		identity:  identity,
 	}
@@ -67,7 +67,7 @@ func newGarbageCollector(cfg app.Config) (operator.Reconciler, app.Runnable, err
 // lies more than gracePeriod in the past. It is informer-driven: on each lease event
 // it computes when the lease becomes GC-eligible and requeues itself for that moment,
 // so a lease is swept shortly after it goes stale rather than on a fixed poll. It
-// serves both the namespaced Lease and the cluster-scoped ClusterLease.
+// serves both the namespaced Lease and the cluster-scoped GlobalLease.
 //
 // Deleting a lease is always safe: a returning holder's renewal hits 404 and re-enters
 // acquisition, the same path as any lost lease — election correctness never depends on
@@ -75,9 +75,9 @@ func newGarbageCollector(cfg app.Config) (operator.Reconciler, app.Runnable, err
 // observation and deletion is left alone (the renewal fires a fresh event that
 // reschedules). GC is hygiene only; it introduces no server-side election semantics.
 type leaseGCReconciler struct {
-	leaseClient        resource.Client
-	clusterLeaseClient resource.Client
-	gracePeriod        time.Duration
+	leaseClient       resource.Client
+	globalLeaseClient resource.Client
+	gracePeriod       time.Duration
 	// now is injectable for tests; defaults to time.Now.
 	now func() time.Time
 	// isLeader reports whether this replica is the elected GC leader. Only the leader
@@ -146,8 +146,8 @@ func (r *leaseGCReconciler) leaseInfo(obj resource.Object) (renewTime *string, d
 	switch o := obj.(type) {
 	case *coordinationv0alpha1.Lease:
 		return o.Spec.RenewTime, o.Spec.LeaseDurationSeconds, r.leaseClient
-	case *coordinationv0alpha1.ClusterLease:
-		return o.Spec.RenewTime, o.Spec.LeaseDurationSeconds, r.clusterLeaseClient
+	case *coordinationv0alpha1.GlobalLease:
+		return o.Spec.RenewTime, o.Spec.LeaseDurationSeconds, r.globalLeaseClient
 	}
 	return nil, nil, nil
 }

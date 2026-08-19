@@ -1,4 +1,4 @@
-package clusterlease
+package globallease
 
 import (
 	"testing"

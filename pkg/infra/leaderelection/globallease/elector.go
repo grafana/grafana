@@ -1,5 +1,5 @@
-// Package clusterlease provides a leaderelection.Elector backed by a cluster-scoped
-// coordination.grafana.app ClusterLease served by the Grafana apiserver. It lives
+// Package globallease provides a leaderelection.Elector backed by a cluster-scoped
+// coordination.grafana.app GlobalLease served by the Grafana apiserver. It lives
 // outside the parent leaderelection package (mirroring the kvlease sub-package) so
 // that consumers of leaderelection.Config — notably pkg/setting — don't transitively
 // pull the coordination app / grafana-app-sdk dependency tree.
@@ -8,7 +8,7 @@
 // a coordination.k8s.io Lease (which requires a real Kubernetes cluster to be
 // reachable). The election machinery is shared with the coordination app's own
 // garbage collector via apps/coordination/pkg/leaderelection.
-package clusterlease
+package globallease
 
 import (
 	"context"
@@ -32,14 +32,14 @@ const (
 	defaultRenewDeadline = 40 * time.Second
 	defaultRetryPeriod   = 15 * time.Second
 
-	// The ClusterLease admission validator bounds leaseDurationSeconds to [10, 600].
+	// The GlobalLease admission validator bounds leaseDurationSeconds to [10, 600].
 	minLeaseDurationSeconds = 10
 	maxLeaseDurationSeconds = 600
 )
 
 var _ leaderelection.Elector = (*Elector)(nil)
 
-// Elector implements leaderelection.Elector over a coordination ClusterLease.
+// Elector implements leaderelection.Elector over a coordination GlobalLease.
 type Elector struct {
 	client   resource.Client
 	name     string
@@ -48,11 +48,11 @@ type Elector struct {
 	logger   log.Logger
 }
 
-// New builds an Elector that elects a leader on the ClusterLease named
-// cfg.LeaseName. It creates a ClusterLease client from restCfg (which must point at
-// the Grafana apiserver). cfg.Namespace is ignored — ClusterLease is cluster-scoped.
+// New builds an Elector that elects a leader on the GlobalLease named
+// cfg.LeaseName. It creates a GlobalLease client from restCfg (which must point at
+// the Grafana apiserver). cfg.Namespace is ignored — GlobalLease is cluster-scoped.
 // Empty cfg.Identity defaults to "<hostname>_<pid>". Zero-valued timings fall back to
-// 60s/40s/15s. LeaseDuration must resolve within the ClusterLease admission bounds.
+// 60s/40s/15s. LeaseDuration must resolve within the GlobalLease admission bounds.
 func New(restCfg *clientrest.Config, cfg leaderelection.Config, logger log.Logger) (*Elector, error) {
 	if cfg.LeaseName == "" {
 		return nil, fmt.Errorf("leader election lease name must be set")
@@ -70,7 +70,7 @@ func New(restCfg *clientrest.Config, cfg leaderelection.Config, logger log.Logge
 
 	kc := *restCfg
 	kc.APIPath = "/apis"
-	client, err := k8s.NewClientRegistry(kc, k8s.DefaultClientConfig()).ClientFor(coordinationv0alpha1.ClusterLeaseKind())
+	client, err := k8s.NewClientRegistry(kc, k8s.DefaultClientConfig()).ClientFor(coordinationv0alpha1.GlobalLeaseKind())
 	if err != nil {
 		return nil, fmt.Errorf("create cluster lease client: %w", err)
 	}
@@ -108,7 +108,7 @@ func (e *Elector) Run(ctx context.Context, fn func(ctx context.Context), opts ..
 		}),
 	}, opts)
 
-	lock := coordle.NewLock(e.client, e.name, e.identity)
+	lock := coordle.NewGlobalLock(e.client, e.name, e.identity)
 	coordle.Run(ctx, lock, e.name, e.timings, k8sle.LeaderCallbacks{
 		OnStartedLeading: func(leaderCtx context.Context) {
 			o.OnStartedLeading(leaderCtx)

@@ -34,15 +34,15 @@ var gcNow = time.Date(2026, 8, 18, 12, 0, 0, 0, time.UTC)
 
 func newReconciler(lease, cluster *fakeClient) *leaseGCReconciler {
 	return &leaseGCReconciler{
-		leaseClient:        lease,
-		clusterLeaseClient: cluster,
-		gracePeriod:        24 * time.Hour,
-		now:                func() time.Time { return gcNow },
+		leaseClient:       lease,
+		globalLeaseClient: cluster,
+		gracePeriod:       24 * time.Hour,
+		now:               func() time.Time { return gcNow },
 	}
 }
 
-func clusterLeaseAt(name, renewOffset string, durationSeconds int32, rv string, renew time.Duration) *coordinationv0alpha1.ClusterLease {
-	l := &coordinationv0alpha1.ClusterLease{}
+func globalLeaseAt(name, renewOffset string, durationSeconds int32, rv string, renew time.Duration) *coordinationv0alpha1.GlobalLease {
+	l := &coordinationv0alpha1.GlobalLease{}
 	l.Name = name
 	l.ResourceVersion = rv
 	d := durationSeconds
@@ -66,7 +66,7 @@ func TestGC_FreshLeaseRequeuesNotDeleted(t *testing.T) {
 	r := newReconciler(&fakeClient{}, cluster)
 
 	// renewed now, duration 30s, grace 24h → eligible in ~24h0m30s.
-	res := reconcile(t, r, clusterLeaseAt("x", "", 30, "10", 0), operator.ReconcileActionCreated)
+	res := reconcile(t, r, globalLeaseAt("x", "", 30, "10", 0), operator.ReconcileActionCreated)
 
 	require.Empty(t, cluster.deleted, "a fresh lease must not be deleted")
 	require.NotNil(t, res.RequeueAfter)
@@ -78,7 +78,7 @@ func TestGC_ExpiredWithinGraceRequeues(t *testing.T) {
 	r := newReconciler(&fakeClient{}, cluster)
 
 	// renewed 1h ago, duration 30s → expired, but only ~1h into the 24h grace.
-	res := reconcile(t, r, clusterLeaseAt("x", "", 30, "10", -time.Hour), operator.ReconcileActionUpdated)
+	res := reconcile(t, r, globalLeaseAt("x", "", 30, "10", -time.Hour), operator.ReconcileActionUpdated)
 
 	require.Empty(t, cluster.deleted, "expired-but-within-grace must not be deleted")
 	require.NotNil(t, res.RequeueAfter)
@@ -90,7 +90,7 @@ func TestGC_ExpiredPastGraceDeletedWithRVPrecondition(t *testing.T) {
 	r := newReconciler(&fakeClient{}, cluster)
 
 	// renewed 25h ago, duration 30s, grace 24h → past the grace period.
-	res := reconcile(t, r, clusterLeaseAt("x", "", 30, "42", -25*time.Hour), operator.ReconcileActionUpdated)
+	res := reconcile(t, r, globalLeaseAt("x", "", 30, "42", -25*time.Hour), operator.ReconcileActionUpdated)
 
 	require.Nil(t, res.RequeueAfter)
 	require.Equal(t, []resource.Identifier{{Namespace: "", Name: "x"}}, cluster.deleted)
@@ -114,7 +114,7 @@ func TestGC_RoutesNamespacedLeaseToLeaseClient(t *testing.T) {
 	reconcile(t, r, l, operator.ReconcileActionUpdated)
 
 	require.Equal(t, []resource.Identifier{{Namespace: "stacks-1", Name: "n"}}, lease.deleted)
-	require.Empty(t, cluster.deleted, "namespaced Lease must not go to the ClusterLease client")
+	require.Empty(t, cluster.deleted, "namespaced Lease must not go to the GlobalLease client")
 }
 
 func TestGC_SkipsDeleteAndMalformed(t *testing.T) {
@@ -122,15 +122,15 @@ func TestGC_SkipsDeleteAndMalformed(t *testing.T) {
 	r := newReconciler(&fakeClient{}, cluster)
 
 	// Delete action is a no-op.
-	reconcile(t, r, clusterLeaseAt("x", "", 30, "1", -25*time.Hour), operator.ReconcileActionDeleted)
+	reconcile(t, r, globalLeaseAt("x", "", 30, "1", -25*time.Hour), operator.ReconcileActionDeleted)
 	require.Empty(t, cluster.deleted)
 
 	// Missing renewTime: not enough info to expire.
-	reconcile(t, r, clusterLeaseAt("x", "skip", 30, "1", 0), operator.ReconcileActionUpdated)
+	reconcile(t, r, globalLeaseAt("x", "skip", 30, "1", 0), operator.ReconcileActionUpdated)
 	require.Empty(t, cluster.deleted)
 
 	// Malformed renewTime: left for a human.
-	bad := &coordinationv0alpha1.ClusterLease{}
+	bad := &coordinationv0alpha1.GlobalLease{}
 	bad.Name = "x"
 	d := int32(30)
 	bad.Spec.LeaseDurationSeconds = &d
@@ -146,7 +146,7 @@ func TestGC_NonLeaderDoesNotDelete(t *testing.T) {
 	r.isLeader = func() bool { return false }
 
 	// Expired past grace, but this replica isn't the elected leader.
-	res := reconcile(t, r, clusterLeaseAt("x", "", 30, "1", -25*time.Hour), operator.ReconcileActionUpdated)
+	res := reconcile(t, r, globalLeaseAt("x", "", 30, "1", -25*time.Hour), operator.ReconcileActionUpdated)
 
 	require.Empty(t, cluster.deleted, "only the elected GC leader may delete")
 	require.Nil(t, res.RequeueAfter)
@@ -157,13 +157,13 @@ func TestGC_LeaderDeletes(t *testing.T) {
 	r := newReconciler(&fakeClient{}, cluster)
 	r.isLeader = func() bool { return true }
 
-	reconcile(t, r, clusterLeaseAt("x", "", 30, "1", -25*time.Hour), operator.ReconcileActionUpdated)
+	reconcile(t, r, globalLeaseAt("x", "", 30, "1", -25*time.Hour), operator.ReconcileActionUpdated)
 
 	require.Len(t, cluster.deleted, 1, "the leader collects expired leases")
 }
 
 func TestGC_ToleratesNotFoundAndConflict(t *testing.T) {
-	gr := schema.GroupResource{Group: "coordination.grafana.app", Resource: "clusterleases"}
+	gr := schema.GroupResource{Group: "coordination.grafana.app", Resource: "globalleases"}
 	for _, tc := range []struct {
 		name string
 		err  error
@@ -176,7 +176,7 @@ func TestGC_ToleratesNotFoundAndConflict(t *testing.T) {
 			r := newReconciler(&fakeClient{}, cluster)
 			_, err := r.Reconcile(context.Background(), operator.ReconcileRequest{
 				Action: operator.ReconcileActionUpdated,
-				Object: clusterLeaseAt("x", "", 30, "1", -25*time.Hour),
+				Object: globalLeaseAt("x", "", 30, "1", -25*time.Hour),
 			})
 			require.NoError(t, err, "%s must not surface as a reconcile error", tc.name)
 		})

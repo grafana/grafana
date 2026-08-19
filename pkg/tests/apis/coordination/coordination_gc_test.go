@@ -30,10 +30,10 @@ func TestIntegrationCoordinationGarbageCollector(t *testing.T) {
 		CoordinationGCGracePeriod: 2 * time.Second,
 	})
 	ctx := context.Background()
-	client := helper.Org1.Admin.ResourceClient(t, clusterLeaseGVR)
+	client := helper.Org1.Admin.ResourceClient(t, globalLeaseGVR)
 
 	// The GC operator dogfoods the primitive: it leader-elects on its own
-	// ClusterLease. Wait for that lease to exist with a holder before creating test
+	// GlobalLease. Wait for that lease to exist with a holder before creating test
 	// leases, so the create can't race the operator acquiring leadership.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		gc, err := client.Get(ctx, "coordination-gc", metav1.GetOptions{})
@@ -46,7 +46,7 @@ func TestIntegrationCoordinationGarbageCollector(t *testing.T) {
 
 	t.Run("collects an expired lease", func(t *testing.T) {
 		past := time.Now().Add(-time.Hour).UTC().Format(time.RFC3339)
-		_, err := client.Create(ctx, clusterLease("gc-expired", "dead_1", past, 10), metav1.CreateOptions{})
+		_, err := client.Create(ctx, globalLease("gc-expired", "dead_1", past, 10), metav1.CreateOptions{})
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = client.Delete(ctx, "gc-expired", metav1.DeleteOptions{}) })
 
@@ -73,7 +73,7 @@ func TestIntegrationCoordinationGarbageCollector(t *testing.T) {
 
 	t.Run("leaves a fresh lease alone", func(t *testing.T) {
 		now := time.Now().UTC().Format(time.RFC3339)
-		_, err := client.Create(ctx, clusterLease("gc-fresh", "alive_1", now, 30), metav1.CreateOptions{})
+		_, err := client.Create(ctx, globalLease("gc-fresh", "alive_1", now, 30), metav1.CreateOptions{})
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = client.Delete(ctx, "gc-fresh", metav1.DeleteOptions{}) })
 

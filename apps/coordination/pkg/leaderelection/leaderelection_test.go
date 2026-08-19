@@ -25,13 +25,13 @@ func TestRecordRoundTrip(t *testing.T) {
 		RenewTime:            metav1.NewTime(renew),
 	}
 
-	var spec coordinationv0alpha1.ClusterLeaseSpec
+	var spec coordinationv0alpha1.GlobalLeaseSpec
 	fromRecord(&spec, in)
 
 	require.Equal(t, "host_1", *spec.HolderIdentity)
 	require.Equal(t, int32(15), *spec.LeaseDurationSeconds)
 	require.Equal(t, int32(3), *spec.LeaseTransitions)
-	// The election lease duration must satisfy the ClusterLease admission bounds.
+	// The election lease duration must satisfy the GlobalLease admission bounds.
 	require.GreaterOrEqual(t, *spec.LeaseDurationSeconds, int32(10))
 	require.LessOrEqual(t, *spec.LeaseDurationSeconds, int32(600))
 
@@ -47,7 +47,7 @@ func TestRecordRoundTrip(t *testing.T) {
 // the resourceVersion the lock supplies as an update precondition.
 type fakeLockClient struct {
 	resource.Client
-	obj      *coordinationv0alpha1.ClusterLease
+	obj      *coordinationv0alpha1.GlobalLease
 	updateRV []string
 }
 
@@ -56,7 +56,7 @@ func (f *fakeLockClient) Get(_ context.Context, _ resource.Identifier) (resource
 }
 
 func (f *fakeLockClient) Create(_ context.Context, _ resource.Identifier, obj resource.Object, _ resource.CreateOptions) (resource.Object, error) {
-	cl := obj.(*coordinationv0alpha1.ClusterLease)
+	cl := obj.(*coordinationv0alpha1.GlobalLease)
 	cl.ResourceVersion = "1"
 	f.obj = cl
 	return cl, nil
@@ -64,7 +64,7 @@ func (f *fakeLockClient) Create(_ context.Context, _ resource.Identifier, obj re
 
 func (f *fakeLockClient) Update(_ context.Context, _ resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
 	f.updateRV = append(f.updateRV, opts.ResourceVersion)
-	cl := obj.(*coordinationv0alpha1.ClusterLease)
+	cl := obj.(*coordinationv0alpha1.GlobalLease)
 	cl.ResourceVersion = "2"
 	f.obj = cl
 	return cl, nil
@@ -72,7 +72,7 @@ func (f *fakeLockClient) Update(_ context.Context, _ resource.Identifier, obj re
 
 func TestLockCASThreadsResourceVersion(t *testing.T) {
 	client := &fakeLockClient{}
-	lock := NewLock(client, "coordination-gc", "me_1")
+	lock := NewGlobalLock(client, "coordination-gc", "me_1")
 
 	require.Equal(t, "me_1", lock.Identity())
 
@@ -95,7 +95,7 @@ func TestLockCASThreadsResourceVersion(t *testing.T) {
 }
 
 func TestLockUpdateBeforeGetFails(t *testing.T) {
-	lock := NewLock(&fakeLockClient{}, "coordination-gc", "me_1")
+	lock := NewGlobalLock(&fakeLockClient{}, "coordination-gc", "me_1")
 	err := lock.Update(context.Background(), resourcelock.LeaderElectionRecord{HolderIdentity: "me_1"})
 	require.Error(t, err, "update without a prior get/create has no resourceVersion to CAS against")
 }

@@ -11,18 +11,18 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
-// ClusterLeaseJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
-type ClusterLeaseJSONCodec struct{}
+// GlobalLeaseJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
+type GlobalLeaseJSONCodec struct{}
 
 // Read reads JSON-encoded bytes from `reader` and unmarshals them into `into`
-func (*ClusterLeaseJSONCodec) Read(reader io.Reader, into resource.Object) error {
+func (*GlobalLeaseJSONCodec) Read(reader io.Reader, into resource.Object) error {
 	return json.NewDecoder(reader).Decode(into)
 }
 
 // Write writes JSON-encoded bytes into `writer` marshaled from `from`
-func (*ClusterLeaseJSONCodec) Write(writer io.Writer, from resource.Object) error {
+func (*GlobalLeaseJSONCodec) Write(writer io.Writer, from resource.Object) error {
 	return json.NewEncoder(writer).Encode(from)
 }
 
 // Interface compliance checks
-var _ resource.Codec = &ClusterLeaseJSONCodec{}
+var _ resource.Codec = &GlobalLeaseJSONCodec{}

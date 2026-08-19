@@ -10,10 +10,10 @@ import (
 // the Grafana-admin / service-identity fast path: a custom role can grant read or
 // write on leases and cluster leases to specific users, teams, or service accounts.
 const (
-	ActionLeasesRead         = "coordination.leases:read"
-	ActionLeasesWrite        = "coordination.leases:write"
-	ActionClusterLeasesRead  = "coordination.clusterleases:read"
-	ActionClusterLeasesWrite = "coordination.clusterleases:write"
+	ActionLeasesRead        = "coordination.leases:read"
+	ActionLeasesWrite       = "coordination.leases:write"
+	ActionGlobalLeasesRead  = "coordination.globalleases:read"
+	ActionGlobalLeasesWrite = "coordination.globalleases:write"
 )
 
 // FixedRoleRegistrations returns the coordination reader/writer fixed roles. Both are
@@ -24,12 +24,12 @@ func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "coordination.leases:reader",
 			DisplayName: "Coordination leases reader",
-			Description: "Read and list coordination Leases and ClusterLeases.",
+			Description: "Read and list coordination Leases and GlobalLeases.",
 			Group:       "Coordination",
 			Version:     1,
 			Permissions: []accesscontrol.Permission{
 				{Action: ActionLeasesRead},
-				{Action: ActionClusterLeasesRead},
+				{Action: ActionGlobalLeasesRead},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -39,12 +39,12 @@ func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "coordination.leases:writer",
 			DisplayName: "Coordination leases writer",
-			Description: "Create, update, and delete coordination Leases and ClusterLeases.",
+			Description: "Create, update, and delete coordination Leases and GlobalLeases.",
 			Group:       "Coordination",
 			Version:     1,
 			Permissions: accesscontrol.ConcatPermissions(reader.Role.Permissions, []accesscontrol.Permission{
 				{Action: ActionLeasesWrite},
-				{Action: ActionClusterLeasesWrite},
+				{Action: ActionGlobalLeasesWrite},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -65,8 +65,8 @@ func actionForVerb(resource, verb string) string {
 	switch resource {
 	case coordinationv0alpha1.LeaseKind().Plural():
 		read, write = ActionLeasesRead, ActionLeasesWrite
-	case coordinationv0alpha1.ClusterLeaseKind().Plural():
-		read, write = ActionClusterLeasesRead, ActionClusterLeasesWrite
+	case coordinationv0alpha1.GlobalLeaseKind().Plural():
+		read, write = ActionGlobalLeasesRead, ActionGlobalLeasesWrite
 	default:
 		return ""
 	}

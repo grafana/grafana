@@ -1,7 +1,7 @@
 package kinds
 
 // leaseSpecFields mirrors coordination.k8s.io/v1 LeaseSpec and is shared, via CUE
-// unification, by both the namespaced Lease and the cluster-scoped ClusterLease.
+// unification, by both the namespaced Lease and the cluster-scoped GlobalLease.
 // A lease is a dumb record: all election logic is client-side, the server only
 // stores the object and enforces atomicity via create-conflict (409) and
 // resourceVersion CAS on update. Timestamps are RFC3339 strings (sub-second
@@ -45,14 +45,14 @@ lease: {
 	}
 }
 
-// ClusterLease coordinates fleet-level work owned by no tenant — replica leader
+// GlobalLease coordinates fleet-level work owned by no tenant — replica leader
 // election and shard ownership across a multi-tenant operator's replicas. It lives
 // in the cluster (global) scope rather than any tenant namespace, is watchable like
 // any Kubernetes resource, and every read/write is gated by the cluster-scoped
 // storage authorizer (service/admin identities only; owner-scoped per service).
-clusterLease: {
-	kind:       "ClusterLease"
-	pluralName: "ClusterLeases"
+globalLease: {
+	kind:       "GlobalLease"
+	pluralName: "GlobalLeases"
 	scope:      "Cluster"
 	validation: {
 		operations: [

@@ -346,7 +346,7 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 // coordination is served by the aggregated API server, so this targets
 // aggregated_server_url — not provisioning_server_url. It mints tokens whose
 // audiences include the coordination group (and provisioning, matching the
-// aggregated-group convention), so the leader elector's ClusterLease reads/writes
+// aggregated-group convention), so the leader elector's GlobalLease reads/writes
 // are authorized correctly.
 func (c *ControllerConfig) CoordinationRestConfig() (*rest.Config, error) {
 	tokenExchangeClient, err := c.TokenExchangeClient()

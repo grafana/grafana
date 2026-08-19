@@ -1,12 +1,12 @@
 // Package lease provides a leaderelection.Elector backed by a namespaced
 // coordination.grafana.app Lease served by the Grafana apiserver — the tenant-scoped
-// counterpart of the clusterlease elector. Use it to elect a leader for work whose
+// counterpart of the globallease elector. Use it to elect a leader for work whose
 // domain is a single tenant (org/stack): the lease lives in that tenant's namespace.
 //
 // It lives outside the parent leaderelection package (mirroring the kvlease and
-// clusterlease sub-packages) so consumers of leaderelection.Config don't
+// globallease sub-packages) so consumers of leaderelection.Config don't
 // transitively pull the coordination app / grafana-app-sdk dependency tree. The
-// election machinery is shared with the ClusterLease elector via
+// election machinery is shared with the GlobalLease elector via
 // apps/coordination/pkg/leaderelection.
 package lease
 

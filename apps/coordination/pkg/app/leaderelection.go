@@ -13,14 +13,14 @@ import (
 )
 
 const (
-	// gcLeaseName is the ClusterLease the garbage collector elects its leader on. The
+	// gcLeaseName is the GlobalLease the garbage collector elects its leader on. The
 	// controller dogfoods the very primitive it maintains: its own leader lease is a
-	// ClusterLease served by this app, and self-hosting is sound because GC only
+	// GlobalLease served by this app, and self-hosting is sound because GC only
 	// deletes leases dead for hours while this lease is renewed well within its term.
 	gcLeaseName = "coordination-gc"
 
 	// Election timings are deliberately coarse. Every renewal is a served, validated
-	// UPDATE to the ClusterLease, so a tight renew loop would generate constant
+	// UPDATE to the GlobalLease, so a tight renew loop would generate constant
 	// admission traffic (and log noise) for no benefit: GC only ever deletes leases
 	// abandoned for hours, so a multi-minute failover is immaterial. Renewing roughly
 	// once a minute keeps that traffic negligible. LeaseDuration stays within the
@@ -31,7 +31,7 @@ const (
 	gcRetryPeriod   = 60 * time.Second
 )
 
-// gcLeaderRunnable runs leader election on the GC ClusterLease and toggles the shared
+// gcLeaderRunnable runs leader election on the GC GlobalLease and toggles the shared
 // leader flag the reconciler consults before it deletes anything. Only the elected
 // replica performs deletions; the others keep watching and stay ready to take over.
 type gcLeaderRunnable struct {

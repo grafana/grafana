@@ -17,7 +17,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// jobControllerLeaseName is the coordination ClusterLease the jobs operator (cleanup
+// jobControllerLeaseName is the coordination GlobalLease the jobs operator (cleanup
 // reaper + historic-job cleanup) elects its single active replica on.
 const jobControllerLeaseName = "provisioning-job-controller"
 

@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 )
 
-// repoControllerLeaseName is the coordination ClusterLease the repository operator
+// repoControllerLeaseName is the coordination GlobalLease the repository operator
 // elects its single active replica on.
 const repoControllerLeaseName = "provisioning-repo-controller"
 

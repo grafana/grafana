@@ -30,13 +30,13 @@
         }
       }
     },
-    "/apis/coordination.grafana.app/v0alpha1/clusterleases": {
+    "/apis/coordination.grafana.app/v0alpha1/globalleases": {
       "get": {
         "tags": [
-          "ClusterLease"
+          "GlobalLease"
         ],
-        "description": "list or watch objects of kind ClusterLease",
-        "operationId": "listClusterLease",
+        "description": "list or watch objects of kind GlobalLease",
+        "operationId": "listGlobalLease",
         "parameters": [
           {
             "name": "continue",
@@ -108,17 +108,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLeaseList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLeaseList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLeaseList"
                 }
               }
             }
@@ -128,15 +128,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "coordination.grafana.app",
           "version": "v0alpha1",
-          "kind": "ClusterLease"
+          "kind": "GlobalLease"
         }
       },
       "post": {
         "tags": [
-          "ClusterLease"
+          "GlobalLease"
         ],
-        "description": "create a ClusterLease",
-        "operationId": "createClusterLease",
+        "description": "create a GlobalLease",
+        "operationId": "createGlobalLease",
         "parameters": [
           {
             "name": "dryRun",
@@ -170,12 +170,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
               }
             }
           },
@@ -187,12 +187,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -202,12 +202,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -217,12 +217,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -232,7 +232,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "coordination.grafana.app",
           "version": "v0alpha1",
-          "kind": "ClusterLease"
+          "kind": "GlobalLease"
         }
       },
       "parameters": [
@@ -247,25 +247,25 @@
         }
       ]
     },
-    "/apis/coordination.grafana.app/v0alpha1/clusterleases/{name}": {
+    "/apis/coordination.grafana.app/v0alpha1/globalleases/{name}": {
       "get": {
         "tags": [
-          "ClusterLease"
+          "GlobalLease"
         ],
-        "description": "read the specified ClusterLease",
-        "operationId": "getClusterLease",
+        "description": "read the specified GlobalLease",
+        "operationId": "getGlobalLease",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -275,15 +275,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "coordination.grafana.app",
           "version": "v0alpha1",
-          "kind": "ClusterLease"
+          "kind": "GlobalLease"
         }
       },
       "put": {
         "tags": [
-          "ClusterLease"
+          "GlobalLease"
         ],
-        "description": "replace the specified ClusterLease",
-        "operationId": "replaceClusterLease",
+        "description": "replace the specified GlobalLease",
+        "operationId": "replaceGlobalLease",
         "parameters": [
           {
             "name": "dryRun",
@@ -317,12 +317,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
               }
             }
           },
@@ -334,12 +334,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -349,12 +349,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -364,15 +364,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "coordination.grafana.app",
           "version": "v0alpha1",
-          "kind": "ClusterLease"
+          "kind": "GlobalLease"
         }
       },
       "delete": {
         "tags": [
-          "ClusterLease"
+          "GlobalLease"
         ],
-        "description": "delete a ClusterLease",
-        "operationId": "deleteClusterLease",
+        "description": "delete a GlobalLease",
+        "operationId": "deleteGlobalLease",
         "parameters": [
           {
             "name": "dryRun",
@@ -456,15 +456,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "coordination.grafana.app",
           "version": "v0alpha1",
-          "kind": "ClusterLease"
+          "kind": "GlobalLease"
         }
       },
       "patch": {
         "tags": [
-          "ClusterLease"
+          "GlobalLease"
         ],
-        "description": "partially update the specified ClusterLease",
-        "operationId": "updateClusterLease",
+        "description": "partially update the specified GlobalLease",
+        "operationId": "updateGlobalLease",
         "parameters": [
           {
             "name": "dryRun",
@@ -534,12 +534,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -549,12 +549,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -564,14 +564,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "coordination.grafana.app",
           "version": "v0alpha1",
-          "kind": "ClusterLease"
+          "kind": "GlobalLease"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ClusterLease",
+          "description": "name of the GlobalLease",
           "required": true,
           "schema": {
             "type": "string",
@@ -589,25 +589,25 @@
         }
       ]
     },
-    "/apis/coordination.grafana.app/v0alpha1/clusterleases/{name}/status": {
+    "/apis/coordination.grafana.app/v0alpha1/globalleases/{name}/status": {
       "get": {
         "tags": [
-          "ClusterLease"
+          "GlobalLease"
         ],
-        "description": "read status of the specified ClusterLease",
-        "operationId": "getClusterLeaseStatus",
+        "description": "read status of the specified GlobalLease",
+        "operationId": "getGlobalLeaseStatus",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -617,15 +617,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "coordination.grafana.app",
           "version": "v0alpha1",
-          "kind": "ClusterLease"
+          "kind": "GlobalLease"
         }
       },
       "put": {
         "tags": [
-          "ClusterLease"
+          "GlobalLease"
         ],
-        "description": "replace status of the specified ClusterLease",
-        "operationId": "replaceClusterLeaseStatus",
+        "description": "replace status of the specified GlobalLease",
+        "operationId": "replaceGlobalLeaseStatus",
         "parameters": [
           {
             "name": "dryRun",
@@ -659,12 +659,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
               }
             }
           },
@@ -676,12 +676,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -691,12 +691,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -706,15 +706,15 @@
         "x-kubernetes-group-version-kind": {
           "group": "coordination.grafana.app",
           "version": "v0alpha1",
-          "kind": "ClusterLease"
+          "kind": "GlobalLease"
         }
       },
       "patch": {
         "tags": [
-          "ClusterLease"
+          "GlobalLease"
         ],
-        "description": "partially update status of the specified ClusterLease",
-        "operationId": "updateClusterLeaseStatus",
+        "description": "partially update status of the specified GlobalLease",
+        "operationId": "updateGlobalLeaseStatus",
         "parameters": [
           {
             "name": "dryRun",
@@ -784,12 +784,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -799,12 +799,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               }
             }
@@ -814,14 +814,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "coordination.grafana.app",
           "version": "v0alpha1",
-          "kind": "ClusterLease"
+          "kind": "GlobalLease"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ClusterLease",
+          "description": "name of the GlobalLease",
           "required": true,
           "schema": {
             "type": "string",
@@ -1839,7 +1839,7 @@
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease": {
+      "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease": {
         "type": "object",
         "required": [
           "kind",
@@ -1865,21 +1865,21 @@
             ]
           },
           "spec": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseSpec"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLeaseSpec"
           },
           "status": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseStatus"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLeaseStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
           {
             "group": "coordination.grafana.app",
-            "kind": "ClusterLease",
+            "kind": "GlobalLease",
             "version": "v0alpha1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseList": {
+      "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLeaseList": {
         "type": "object",
         "required": [
           "metadata",
@@ -1896,7 +1896,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLease"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLease"
                 }
               ]
             }
@@ -1917,12 +1917,12 @@
         "x-kubernetes-group-version-kind": [
           {
             "group": "coordination.grafana.app",
-            "kind": "ClusterLeaseList",
+            "kind": "GlobalLeaseList",
             "version": "v0alpha1"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseOperatorState": {
+      "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLeaseOperatorState": {
         "type": "object",
         "required": [
           "lastEvaluation",
@@ -1954,7 +1954,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseSpec": {
+      "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLeaseSpec": {
         "type": "object",
         "properties": {
           "acquireTime": {
@@ -1980,7 +1980,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseStatus": {
+      "com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLeaseStatus": {
         "type": "object",
         "properties": {
           "additionalFields": {
@@ -1992,7 +1992,7 @@
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.ClusterLeaseOperatorState"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.coordination.pkg.apis.coordination.v0alpha1.GlobalLeaseOperatorState"
             }
           }
         },

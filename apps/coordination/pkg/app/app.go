@@ -15,12 +15,12 @@ import (
 )
 
 // New creates the coordination app. The app serves two kinds sharing one spec: a
-// namespaced Lease (tenant-scoped coordination) and a cluster-scoped ClusterLease
+// namespaced Lease (tenant-scoped coordination) and a cluster-scoped GlobalLease
 // (fleet coordination owned by no tenant). A lease is a dumb record and all election
 // logic lives client-side, so the app only enforces admission policy (see
 // validation.go) and — when enabled — runs the lease garbage collector (see gc.go),
 // which watches both kinds and deletes leases abandoned past a grace period.
-// Read/write authorization for the cluster-scoped ClusterLease is enforced by the
+// Read/write authorization for the cluster-scoped GlobalLease is enforced by the
 // storage authorizer wired in the registry installer, while the namespaced Lease
 // relies on ordinary namespace authz.
 func New(cfg app.Config) (app.App, error) {
@@ -35,17 +35,17 @@ func New(cfg app.Config) (app.App, error) {
 		Kind:      coordinationv0alpha1.LeaseKind(),
 		Validator: &simple.Validator{ValidateFunc: validateLease},
 	}
-	clusterLeaseKind := simple.AppManagedKind{
-		Kind:      coordinationv0alpha1.ClusterLeaseKind(),
-		Validator: &simple.Validator{ValidateFunc: validateClusterLease},
+	globalLeaseKind := simple.AppManagedKind{
+		Kind:      coordinationv0alpha1.GlobalLeaseKind(),
+		Validator: &simple.Validator{ValidateFunc: validateGlobalLease},
 	}
 	if reconciler != nil {
 		// UsePlain avoids the OpinionatedReconciler's finalizer management: GC deletes
 		// leases outright, so it must not add finalizers that would block deletion.
 		leaseKind.Reconciler = reconciler
 		leaseKind.ReconcileOptions = simple.BasicReconcileOptions{UsePlain: true}
-		clusterLeaseKind.Reconciler = reconciler
-		clusterLeaseKind.ReconcileOptions = simple.BasicReconcileOptions{UsePlain: true}
+		globalLeaseKind.Reconciler = reconciler
+		globalLeaseKind.ReconcileOptions = simple.BasicReconcileOptions{UsePlain: true}
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -58,7 +58,7 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: []simple.AppManagedKind{leaseKind, clusterLeaseKind},
+		ManagedKinds: []simple.AppManagedKind{leaseKind, globalLeaseKind},
 	}
 
 	a, err := simple.NewApp(simpleConfig)
@@ -85,6 +85,6 @@ func GetKinds() map[schema.GroupVersion][]resource.Kind {
 		Version: coordinationv0alpha1.LeaseKind().Version(),
 	}
 	return map[schema.GroupVersion][]resource.Kind{
-		gv: {coordinationv0alpha1.LeaseKind(), coordinationv0alpha1.ClusterLeaseKind()},
+		gv: {coordinationv0alpha1.LeaseKind(), coordinationv0alpha1.GlobalLeaseKind()},
 	}
 }

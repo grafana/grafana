@@ -1,13 +1,13 @@
 // Package objectlease provides a leaderelection.Elector that stores the
 // leader-election record in the annotations of an existing object — an "object
-// lease" — instead of a dedicated coordination.grafana.app Lease/ClusterLease. The
+// lease" — instead of a dedicated coordination.grafana.app Lease/GlobalLease. The
 // target object's own resourceVersion provides the compare-and-swap, so no separate
 // lease resource is created.
 //
 // It lives outside the parent leaderelection package (mirroring the kvlease and
-// clusterlease sub-packages) so that consumers of leaderelection.Config don't
+// globallease sub-packages) so that consumers of leaderelection.Config don't
 // transitively pull the coordination app / grafana-app-sdk dependency tree. The
-// election machinery is shared with the ClusterLease elector via
+// election machinery is shared with the GlobalLease elector via
 // apps/coordination/pkg/leaderelection.
 //
 // Use it to lease an existing object in place. Because each renewal writes the
@@ -53,7 +53,7 @@ type Elector struct {
 // identified by id, of the given kind. It builds a client for kind from restCfg
 // (which must point at the Grafana apiserver). Empty cfg.Identity defaults to
 // "<hostname>_<pid>". Zero-valued timings fall back to 60s/40s/15s. cfg.LeaseName is
-// ignored — the lease target is the object id. Unlike a ClusterLease there is no
+// ignored — the lease target is the object id. Unlike a GlobalLease there is no
 // admission bound on the duration; it is a plain annotation.
 func New(restCfg *clientrest.Config, kind resource.Kind, id resource.Identifier, cfg leaderelection.Config, logger log.Logger) (*Elector, error) {
 	kc := *restCfg

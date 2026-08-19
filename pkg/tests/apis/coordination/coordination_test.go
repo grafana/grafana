@@ -27,8 +27,8 @@ func TestMain(m *testing.M) {
 }
 
 var (
-	leaseGVR        = coordinationv0alpha1.LeaseKind().GroupVersionResource()
-	clusterLeaseGVR = coordinationv0alpha1.ClusterLeaseKind().GroupVersionResource()
+	leaseGVR       = coordinationv0alpha1.LeaseKind().GroupVersionResource()
+	globalLeaseGVR = coordinationv0alpha1.GlobalLeaseKind().GroupVersionResource()
 )
 
 const (
@@ -51,9 +51,9 @@ func lease(name, holder, renewTime string, durationSeconds int64) *unstructured.
 	return leaseOfKind("Lease", name, holder, renewTime, durationSeconds)
 }
 
-// clusterLease builds a cluster-scoped ClusterLease payload.
-func clusterLease(name, holder, renewTime string, durationSeconds int64) *unstructured.Unstructured {
-	return leaseOfKind("ClusterLease", name, holder, renewTime, durationSeconds)
+// globalLease builds a cluster-scoped GlobalLease payload.
+func globalLease(name, holder, renewTime string, durationSeconds int64) *unstructured.Unstructured {
+	return leaseOfKind("GlobalLease", name, holder, renewTime, durationSeconds)
 }
 
 func leaseOfKind(kind, name, holder, renewTime string, durationSeconds int64) *unstructured.Unstructured {
@@ -83,7 +83,7 @@ func clusterClientForToken(t *testing.T, helper *apis.K8sTestHelper, token strin
 	}
 	dc, err := dynamic.NewForConfig(cfg)
 	require.NoError(t, err)
-	return dc.Resource(clusterLeaseGVR)
+	return dc.Resource(globalLeaseGVR)
 }
 
 func TestIntegrationCoordination(t *testing.T) {
@@ -161,14 +161,15 @@ func TestIntegrationCoordination(t *testing.T) {
 		require.Contains(t, err.Error(), "holderIdentity changed without advancing renewTime")
 	})
 
-	t.Run("authz denies non-service, non-admin identities", func(t *testing.T) {
+	t.Run("authz denies identities without the coordination role", func(t *testing.T) {
+		// Viewers and editors are not service identities and hold no coordination
+		// action, so fine-grained RBAC denies them.
 		for _, u := range []struct {
 			name string
 			args apis.ResourceClientArgs
 		}{
 			{"org1 viewer", apis.ResourceClientArgs{User: helper.Org1.Viewer, GVR: leaseGVR}},
 			{"org1 editor", apis.ResourceClientArgs{User: helper.Org1.Editor, GVR: leaseGVR}},
-			{"orgB admin (not a grafana admin)", apis.ResourceClientArgs{User: helper.OrgB.Admin, GVR: leaseGVR}},
 		} {
 			t.Run(u.name, func(t *testing.T) {
 				client := helper.GetResourceClient(u.args)
@@ -184,6 +185,17 @@ func TestIntegrationCoordination(t *testing.T) {
 		}
 	})
 
+	t.Run("authz allows a non-grafana-admin via the fixed coordination role", func(t *testing.T) {
+		// OrgB's admin is an org admin but NOT a Grafana server admin. Fine-grained
+		// RBAC still grants it access: the coordination reader/writer fixed roles are
+		// granted to org Admins — so access is not limited to Grafana admins.
+		client := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.OrgB.Admin, GVR: leaseGVR})
+		created, err := client.Resource.Create(ctx, lease("rbac-role", "x_1", "2026-08-18T12:00:00Z", 30), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "rbac-role", created.GetName())
+		require.NoError(t, client.Resource.Delete(ctx, "rbac-role", metav1.DeleteOptions{}))
+	})
+
 	t.Run("authz allows a service-account identity", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			ServiceAccountToken: helper.Org1.AdminServiceAccountToken,
@@ -196,13 +208,13 @@ func TestIntegrationCoordination(t *testing.T) {
 		require.NoError(t, client.Resource.Delete(ctx, "sa-owned", metav1.DeleteOptions{}))
 	})
 
-	t.Run("cluster-scoped ClusterLease CRUD as grafana admin", func(t *testing.T) {
-		client := helper.Org1.Admin.ResourceClient(t, clusterLeaseGVR)
+	t.Run("cluster-scoped GlobalLease CRUD as grafana admin", func(t *testing.T) {
+		client := helper.Org1.Admin.ResourceClient(t, globalLeaseGVR)
 
-		created, err := client.Create(ctx, clusterLease("fleet", "pod-a_1", "2026-08-18T12:00:00Z", 30), metav1.CreateOptions{})
+		created, err := client.Create(ctx, globalLease("fleet", "pod-a_1", "2026-08-18T12:00:00Z", 30), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "fleet", created.GetName())
-		require.Empty(t, created.GetNamespace(), "ClusterLease is cluster-scoped")
+		require.Empty(t, created.GetNamespace(), "GlobalLease is cluster-scoped")
 
 		got, err := client.Get(ctx, "fleet", metav1.GetOptions{})
 		require.NoError(t, err)
@@ -211,13 +223,13 @@ func TestIntegrationCoordination(t *testing.T) {
 		require.NoError(t, client.Delete(ctx, "fleet", metav1.DeleteOptions{}))
 	})
 
-	t.Run("ClusterLease is owner-scoped per service identity", func(t *testing.T) {
+	t.Run("GlobalLease is owner-scoped per service identity", func(t *testing.T) {
 		saA := clusterClientForToken(t, helper, helper.Org1.AdminServiceAccountToken)
 		saB := clusterClientForToken(t, helper, helper.Org1.EditorServiceAccountToken)
-		adminClient := helper.Org1.Admin.ResourceClient(t, clusterLeaseGVR)
+		adminClient := helper.Org1.Admin.ResourceClient(t, globalLeaseGVR)
 
-		// Service A creates a ClusterLease; the server stamps its identity as owner.
-		created, err := saA.Create(ctx, clusterLease("owned-by-a", "a_1", "2026-08-18T12:00:00Z", 30), metav1.CreateOptions{})
+		// Service A creates a GlobalLease; the server stamps its identity as owner.
+		created, err := saA.Create(ctx, globalLease("owned-by-a", "a_1", "2026-08-18T12:00:00Z", 30), metav1.CreateOptions{})
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = adminClient.Delete(ctx, "owned-by-a", metav1.DeleteOptions{}) })
 		require.NotEmpty(t, created.GetAnnotations()[ownerAnnotation], "owner annotation must be stamped on create")

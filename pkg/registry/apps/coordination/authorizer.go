@@ -28,12 +28,12 @@ const (
 )
 
 // leaseStorageAuthorizer is the storage-level authorizer for the cluster-scoped
-// ClusterLease. Cluster scope is a single global keyspace shared across every stack,
+// GlobalLease. Cluster scope is a single global keyspace shared across every stack,
 // so this authorizer does two things:
 //
 //  1. Access gate (fail-closed) — Grafana admins and service identities are allowed
 //     on the fast path; any other identity needs a fine-grained RBAC action
-//     (coordination.clusterleases:read / :write) granted by a role. It gates read,
+//     (coordination.globalleases:read / :write) granted by a role. It gates read,
 //     write, and watch.
 //  2. Owner scoping — each lease is owned by the service that created it. A service
 //     identity may only get/update/delete its own leases, and list/watch return only
@@ -74,7 +74,7 @@ func (a *leaseStorageAuthorizer) authorize(ctx context.Context, action string) (
 }
 
 func (a *leaseStorageAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
-	owner, _, err := a.authorize(ctx, ActionClusterLeasesWrite)
+	owner, _, err := a.authorize(ctx, ActionGlobalLeasesWrite)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (a *leaseStorageAuthorizer) BeforeCreate(ctx context.Context, obj runtime.O
 }
 
 func (a *leaseStorageAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
-	owner, ownerScoped, err := a.authorize(ctx, ActionClusterLeasesWrite)
+	owner, ownerScoped, err := a.authorize(ctx, ActionGlobalLeasesWrite)
 	if err != nil {
 		return err
 	}
@@ -102,11 +102,11 @@ func (a *leaseStorageAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj r
 }
 
 func (a *leaseStorageAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
-	return a.checkOwned(ctx, ActionClusterLeasesWrite, obj)
+	return a.checkOwned(ctx, ActionGlobalLeasesWrite, obj)
 }
 
 func (a *leaseStorageAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
-	return a.checkOwned(ctx, ActionClusterLeasesRead, obj)
+	return a.checkOwned(ctx, ActionGlobalLeasesRead, obj)
 }
 
 // checkOwned allows the operation only if the caller is authorized and, when
@@ -123,7 +123,7 @@ func (a *leaseStorageAuthorizer) checkOwned(ctx context.Context, action string, 
 }
 
 func (a *leaseStorageAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
-	owner, ownerScoped, err := a.authorize(ctx, ActionClusterLeasesRead)
+	owner, ownerScoped, err := a.authorize(ctx, ActionGlobalLeasesRead)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (a *leaseStorageAuthorizer) FilterList(ctx context.Context, list runtime.Ob
 }
 
 func (a *leaseStorageAuthorizer) WatchFilter(ctx context.Context) (storewrapper.WatchEventFilter, error) {
-	owner, ownerScoped, err := a.authorize(ctx, ActionClusterLeasesRead)
+	owner, ownerScoped, err := a.authorize(ctx, ActionGlobalLeasesRead)
 	if err != nil {
 		// Fail-closed: the wrapper refuses to start the watch on a nil filter.
 		return storewrapper.RejectAllWatchFilter, err

@@ -34,20 +34,20 @@ func validateLease(_ context.Context, req *app.AdmissionRequest) error {
 	return validateLeaseSpec(req.Action, old, &obj.Spec)
 }
 
-// validateClusterLease enforces the admission policy for the cluster-scoped
-// ClusterLease kind. The rules are identical to Lease; only the Go type differs.
-func validateClusterLease(_ context.Context, req *app.AdmissionRequest) error {
-	obj, ok := req.Object.(*coordinationv0alpha1.ClusterLease)
+// validateGlobalLease enforces the admission policy for the cluster-scoped
+// GlobalLease kind. The rules are identical to Lease; only the Go type differs.
+func validateGlobalLease(_ context.Context, req *app.AdmissionRequest) error {
+	obj, ok := req.Object.(*coordinationv0alpha1.GlobalLease)
 	if !ok {
-		return fmt.Errorf("expected ClusterLease object, got %T", req.Object)
+		return fmt.Errorf("expected GlobalLease object, got %T", req.Object)
 	}
-	var old *coordinationv0alpha1.ClusterLeaseSpec
+	var old *coordinationv0alpha1.GlobalLeaseSpec
 	if req.Action == resource.AdmissionActionUpdate {
-		if oldObj, ok := req.OldObject.(*coordinationv0alpha1.ClusterLease); ok {
+		if oldObj, ok := req.OldObject.(*coordinationv0alpha1.GlobalLease); ok {
 			old = &oldObj.Spec
 		}
 	}
-	// ClusterLeaseSpec and LeaseSpec are generated from the same CUE fields, so we
+	// GlobalLeaseSpec and LeaseSpec are generated from the same CUE fields, so we
 	// map onto the shared primitive check.
 	var oldFields *leaseSpecView
 	if old != nil {

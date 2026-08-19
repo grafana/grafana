@@ -46,7 +46,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
-	"github.com/grafana/grafana/pkg/infra/leaderelection/clusterlease"
+	"github.com/grafana/grafana/pkg/infra/leaderelection/globallease"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -163,7 +163,7 @@ type APIBuilder struct {
 	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
-	// leaderElection enables single-leader election (on a coordination ClusterLease)
+	// leaderElection enables single-leader election (on a coordination GlobalLease)
 	// for the repository, connection, and job history/cleanup controllers, via the
 	// [provisioning] leader_election setting. When false they run on every replica.
 	leaderElection bool
@@ -368,7 +368,7 @@ func RegisterAPIService(
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 	// leader_election opts the repository, connection, and job history/cleanup
-	// controllers into single-leader election on a coordination ClusterLease.
+	// controllers into single-leader election on a coordination GlobalLease.
 	leaderElection := provisioningSec.Key("leader_election").MustBool(false)
 
 	// allowed_git_urls contain an allowlist of Git URLs that are allowed to be used for Git repositories.
@@ -986,14 +986,14 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	return b.admissionHandler.Validate(ctx, a, o)
 }
 
-// controllerLeaseName is the ClusterLease the provisioning controllers elect a
+// controllerLeaseName is the GlobalLease the provisioning controllers elect a
 // single leader on when coordination leases are enabled.
 const controllerLeaseName = "provisioning-controller"
 
 // newControllerElector returns the leader elector that gates the repository,
 // connection, and job history/cleanup controllers. When [provisioning]
 // leader_election is enabled it elects a single leader across replicas on a shared
-// coordination ClusterLease (which requires the coordination.grafana.app API to be
+// coordination GlobalLease (which requires the coordination.grafana.app API to be
 // served); otherwise it falls back to always-leader, preserving the historical
 // behavior of running these controllers on every replica. The job queue driver is
 // deliberately not gated — it distributes work across all replicas via per-job
@@ -1002,7 +1002,7 @@ func (b *APIBuilder) newControllerElector(restCfg *clientrest.Config) (leaderele
 	if !b.leaderElection {
 		return leaderelection.NewDefaultElector(), nil
 	}
-	return clusterlease.New(restCfg, leaderelection.Config{
+	return globallease.New(restCfg, leaderelection.Config{
 		LeaseName: controllerLeaseName,
 	}, log.New("provisioning-leaderelection"))
 }

@@ -30,8 +30,8 @@ func ctxFor(r identity.Requester) context.Context {
 	return identity.WithRequester(context.Background(), r)
 }
 
-func clusterLease(name, owner string) *coordinationv0alpha1.ClusterLease {
-	l := &coordinationv0alpha1.ClusterLease{}
+func globalLease(name, owner string) *coordinationv0alpha1.GlobalLease {
+	l := &coordinationv0alpha1.GlobalLease{}
 	l.Name = name
 	if owner != "" {
 		l.Annotations = map[string]string{annotationOwner: owner}
@@ -39,21 +39,21 @@ func clusterLease(name, owner string) *coordinationv0alpha1.ClusterLease {
 	return l
 }
 
-func TestClusterLeaseAuthorizer_ServiceGate(t *testing.T) {
+func TestGlobalLeaseAuthorizer_ServiceGate(t *testing.T) {
 	a := &leaseStorageAuthorizer{}
 
 	// A regular tenant user is not a service identity: denied outright.
-	err := a.BeforeCreate(ctxFor(tenantUser()), clusterLease("x", ""))
+	err := a.BeforeCreate(ctxFor(tenantUser()), globalLease("x", ""))
 	require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
 
 	// No identity in context: denied.
-	err = a.AfterGet(context.Background(), clusterLease("x", "access-policy:a"))
+	err = a.AfterGet(context.Background(), globalLease("x", "access-policy:a"))
 	require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
 }
 
-func TestClusterLeaseAuthorizer_CreateStampsOwner(t *testing.T) {
+func TestGlobalLeaseAuthorizer_CreateStampsOwner(t *testing.T) {
 	a := &leaseStorageAuthorizer{}
-	obj := clusterLease("x", "")
+	obj := globalLease("x", "")
 
 	require.NoError(t, a.BeforeCreate(ctxFor(svc("a")), obj))
 
@@ -61,17 +61,17 @@ func TestClusterLeaseAuthorizer_CreateStampsOwner(t *testing.T) {
 	require.Equal(t, "access-policy-a", obj.Labels[labelOwner], "colon sanitized for label selection")
 }
 
-func TestClusterLeaseAuthorizer_OwnerScopedMutation(t *testing.T) {
+func TestGlobalLeaseAuthorizer_OwnerScopedMutation(t *testing.T) {
 	a := &leaseStorageAuthorizer{}
-	owned := clusterLease("x", "access-policy:a")
+	owned := globalLease("x", "access-policy:a")
 
 	// Owner may renew/delete/get its own lease.
-	require.NoError(t, a.BeforeUpdate(ctxFor(svc("a")), owned, clusterLease("x", "access-policy:a")))
+	require.NoError(t, a.BeforeUpdate(ctxFor(svc("a")), owned, globalLease("x", "access-policy:a")))
 	require.NoError(t, a.BeforeDelete(ctxFor(svc("a")), owned))
 	require.NoError(t, a.AfterGet(ctxFor(svc("a")), owned))
 
 	// A different service cannot touch it.
-	require.ErrorIs(t, a.BeforeUpdate(ctxFor(svc("b")), owned, clusterLease("x", "access-policy:a")), storewrapper.ErrUnauthorized)
+	require.ErrorIs(t, a.BeforeUpdate(ctxFor(svc("b")), owned, globalLease("x", "access-policy:a")), storewrapper.ErrUnauthorized)
 	require.ErrorIs(t, a.BeforeDelete(ctxFor(svc("b")), owned), storewrapper.ErrUnauthorized)
 	require.ErrorIs(t, a.AfterGet(ctxFor(svc("b")), owned), storewrapper.ErrUnauthorized)
 
@@ -80,27 +80,27 @@ func TestClusterLeaseAuthorizer_OwnerScopedMutation(t *testing.T) {
 	require.NoError(t, a.AfterGet(ctxFor(admin()), owned))
 }
 
-func TestClusterLeaseAuthorizer_UpdateCannotReassignOwner(t *testing.T) {
+func TestGlobalLeaseAuthorizer_UpdateCannotReassignOwner(t *testing.T) {
 	a := &leaseStorageAuthorizer{}
-	owned := clusterLease("x", "access-policy:a")
+	owned := globalLease("x", "access-policy:a")
 	// Caller a tries to hand the lease to b via the update payload.
-	incoming := clusterLease("x", "access-policy:b")
+	incoming := globalLease("x", "access-policy:b")
 
 	require.NoError(t, a.BeforeUpdate(ctxFor(svc("a")), owned, incoming))
 	require.Equal(t, "access-policy:a", incoming.Annotations[annotationOwner], "owner is preserved from the stored object")
 }
 
-func TestClusterLeaseAuthorizer_FilterListScopesToOwner(t *testing.T) {
+func TestGlobalLeaseAuthorizer_FilterListScopesToOwner(t *testing.T) {
 	a := &leaseStorageAuthorizer{}
-	list := &coordinationv0alpha1.ClusterLeaseList{Items: []coordinationv0alpha1.ClusterLease{
-		*clusterLease("a1", "access-policy:a"),
-		*clusterLease("b1", "access-policy:b"),
-		*clusterLease("a2", "access-policy:a"),
+	list := &coordinationv0alpha1.GlobalLeaseList{Items: []coordinationv0alpha1.GlobalLease{
+		*globalLease("a1", "access-policy:a"),
+		*globalLease("b1", "access-policy:b"),
+		*globalLease("a2", "access-policy:a"),
 	}}
 
 	out, err := a.FilterList(ctxFor(svc("a")), list.Copy())
 	require.NoError(t, err)
-	filtered := out.(*coordinationv0alpha1.ClusterLeaseList)
+	filtered := out.(*coordinationv0alpha1.GlobalLeaseList)
 	require.Len(t, filtered.Items, 2)
 	for _, item := range filtered.Items {
 		require.Equal(t, "access-policy:a", item.Annotations[annotationOwner])
@@ -109,51 +109,51 @@ func TestClusterLeaseAuthorizer_FilterListScopesToOwner(t *testing.T) {
 	// Admin sees everything.
 	out, err = a.FilterList(ctxFor(admin()), list.Copy())
 	require.NoError(t, err)
-	require.Len(t, out.(*coordinationv0alpha1.ClusterLeaseList).Items, 3)
+	require.Len(t, out.(*coordinationv0alpha1.GlobalLeaseList).Items, 3)
 }
 
-func TestClusterLeaseAuthorizer_WatchFilterScopesToOwner(t *testing.T) {
+func TestGlobalLeaseAuthorizer_WatchFilterScopesToOwner(t *testing.T) {
 	a := &leaseStorageAuthorizer{}
 	filter, err := a.WatchFilter(ctxFor(svc("a")))
 	require.NoError(t, err)
 
 	keep, err := filter([]watch.Event{
-		{Type: watch.Added, Object: clusterLease("a1", "access-policy:a")},
-		{Type: watch.Added, Object: clusterLease("b1", "access-policy:b")},
+		{Type: watch.Added, Object: globalLease("a1", "access-policy:a")},
+		{Type: watch.Added, Object: globalLease("b1", "access-policy:b")},
 	})
 	require.NoError(t, err)
 	require.Equal(t, []bool{true, false}, keep)
 }
 
-func TestClusterLeaseAuthorizer_RBACGrantedUserSeesAll(t *testing.T) {
+func TestGlobalLeaseAuthorizer_RBACGrantedUserSeesAll(t *testing.T) {
 	// A non-admin, non-service user granted the RBAC action is allowed and is NOT
 	// owner-scoped (it never owns leases, so scoping would hide everything).
 	a := &leaseStorageAuthorizer{accessControl: actest.FakeAccessControl{ExpectedEvaluate: true}}
 	ctx := ctxFor(tenantUser())
 
-	require.NoError(t, a.AfterGet(ctx, clusterLease("owned-by-a", "access-policy:a")))
+	require.NoError(t, a.AfterGet(ctx, globalLease("owned-by-a", "access-policy:a")))
 
-	list := &coordinationv0alpha1.ClusterLeaseList{Items: []coordinationv0alpha1.ClusterLease{
-		*clusterLease("a1", "access-policy:a"),
-		*clusterLease("b1", "access-policy:b"),
+	list := &coordinationv0alpha1.GlobalLeaseList{Items: []coordinationv0alpha1.GlobalLease{
+		*globalLease("a1", "access-policy:a"),
+		*globalLease("b1", "access-policy:b"),
 	}}
 	out, err := a.FilterList(ctx, list.Copy())
 	require.NoError(t, err)
-	require.Len(t, out.(*coordinationv0alpha1.ClusterLeaseList).Items, 2, "granted user sees the whole keyspace")
+	require.Len(t, out.(*coordinationv0alpha1.GlobalLeaseList).Items, 2, "granted user sees the whole keyspace")
 
 	filter, err := a.WatchFilter(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, filter)
 }
 
-func TestClusterLeaseAuthorizer_RBACDeniedUser(t *testing.T) {
+func TestGlobalLeaseAuthorizer_RBACDeniedUser(t *testing.T) {
 	// A non-admin, non-service user without the RBAC action is denied everywhere.
 	a := &leaseStorageAuthorizer{accessControl: actest.FakeAccessControl{ExpectedEvaluate: false}}
 	ctx := ctxFor(tenantUser())
 
-	require.ErrorIs(t, a.BeforeCreate(ctx, clusterLease("x", "")), storewrapper.ErrUnauthorized)
-	require.ErrorIs(t, a.AfterGet(ctx, clusterLease("x", "access-policy:a")), storewrapper.ErrUnauthorized)
-	_, err := a.FilterList(ctx, (&coordinationv0alpha1.ClusterLeaseList{}).Copy())
+	require.ErrorIs(t, a.BeforeCreate(ctx, globalLease("x", "")), storewrapper.ErrUnauthorized)
+	require.ErrorIs(t, a.AfterGet(ctx, globalLease("x", "access-policy:a")), storewrapper.ErrUnauthorized)
+	_, err := a.FilterList(ctx, (&coordinationv0alpha1.GlobalLeaseList{}).Copy())
 	require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
 	_, err = a.WatchFilter(ctx)
 	require.ErrorIs(t, err, storewrapper.ErrUnauthorized)

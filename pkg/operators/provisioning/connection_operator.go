@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 )
 
-// connectionControllerLeaseName is the coordination ClusterLease the connection
+// connectionControllerLeaseName is the coordination GlobalLease the connection
 // operator elects its single active replica on.
 const connectionControllerLeaseName = "provisioning-connection-controller"
 

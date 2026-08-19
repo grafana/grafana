@@ -1,9 +1,9 @@
 // Package leaderelection provides the reusable pieces for running leader
-// election on a coordination.grafana.app ClusterLease: a client-go
-// resourcelock.Interface backed by the served ClusterLease API, and a
+// election on a coordination.grafana.app GlobalLease: a client-go
+// resourcelock.Interface backed by the served GlobalLease API, and a
 // re-contending election loop. It lives in the coordination module so both the
 // coordination app's own garbage collector and main-module consumers (via
-// pkg/infra/leaderelection/clusterlease) share one implementation.
+// pkg/infra/leaderelection/globallease) share one implementation.
 package leaderelection
 
 import (
@@ -24,7 +24,7 @@ import (
 )
 
 // Timings configures the election cadence. All three are written to the
-// ClusterLease's leaseDurationSeconds (as LeaseDuration) so LeaseDuration must
+// GlobalLease's leaseDurationSeconds (as LeaseDuration) so LeaseDuration must
 // stay within the admission bounds ([10, 600]s).
 type Timings struct {
 	LeaseDuration time.Duration
@@ -32,11 +32,11 @@ type Timings struct {
 	RetryPeriod   time.Duration
 }
 
-// NewLock returns a resourcelock.Interface backed by the coordination
-// ClusterLease named `name`, using `client` (a client for the ClusterLease kind)
+// NewGlobalLock returns a resourcelock.Interface backed by the coordination
+// GlobalLease named `name`, using `client` (a client for the GlobalLease kind)
 // and holder `identity`.
-func NewLock(client resource.Client, name, identity string) resourcelock.Interface {
-	return &clusterLeaseLock{client: client, name: name, identity: identity}
+func NewGlobalLock(client resource.Client, name, identity string) resourcelock.Interface {
+	return &globalLeaseLock{client: client, name: name, identity: identity}
 }
 
 // DefaultIdentity returns a per-process holder identity of the form
@@ -72,25 +72,25 @@ func Run(ctx context.Context, lock resourcelock.Interface, name string, t Timing
 	}
 }
 
-// clusterLeaseLock adapts a coordination ClusterLease to client-go's
+// globalLeaseLock adapts a coordination GlobalLease to client-go's
 // resourcelock.Interface. The lock stores the resourceVersion of the last
 // observed lease and uses it as an update precondition, giving the same
 // compare-and-swap acquisition client-go expects from a native Lease.
-type clusterLeaseLock struct {
+type globalLeaseLock struct {
 	client   resource.Client
 	name     string
 	identity string
 	lastRV   string
 }
 
-var _ resourcelock.Interface = (*clusterLeaseLock)(nil)
+var _ resourcelock.Interface = (*globalLeaseLock)(nil)
 
-func (l *clusterLeaseLock) Get(ctx context.Context) (*resourcelock.LeaderElectionRecord, []byte, error) {
+func (l *globalLeaseLock) Get(ctx context.Context) (*resourcelock.LeaderElectionRecord, []byte, error) {
 	obj, err := l.client.Get(ctx, resource.Identifier{Name: l.name})
 	if err != nil {
 		return nil, nil, err
 	}
-	cl, ok := obj.(*coordinationv0alpha1.ClusterLease)
+	cl, ok := obj.(*coordinationv0alpha1.GlobalLease)
 	if !ok {
 		return nil, nil, fmt.Errorf("unexpected object type %T for cluster lease %q", obj, l.name)
 	}
@@ -103,8 +103,8 @@ func (l *clusterLeaseLock) Get(ctx context.Context) (*resourcelock.LeaderElectio
 	return &record, recordBytes, nil
 }
 
-func (l *clusterLeaseLock) Create(ctx context.Context, ler resourcelock.LeaderElectionRecord) error {
-	cl := &coordinationv0alpha1.ClusterLease{}
+func (l *globalLeaseLock) Create(ctx context.Context, ler resourcelock.LeaderElectionRecord) error {
+	cl := &coordinationv0alpha1.GlobalLease{}
 	cl.SetName(l.name)
 	fromRecord(&cl.Spec, ler)
 	created, err := l.client.Create(ctx, resource.Identifier{Name: l.name}, cl, resource.CreateOptions{})
@@ -115,11 +115,11 @@ func (l *clusterLeaseLock) Create(ctx context.Context, ler resourcelock.LeaderEl
 	return nil
 }
 
-func (l *clusterLeaseLock) Update(ctx context.Context, ler resourcelock.LeaderElectionRecord) error {
+func (l *globalLeaseLock) Update(ctx context.Context, ler resourcelock.LeaderElectionRecord) error {
 	if l.lastRV == "" {
 		return fmt.Errorf("cluster lease %q not fetched before update", l.name)
 	}
-	cl := &coordinationv0alpha1.ClusterLease{}
+	cl := &coordinationv0alpha1.GlobalLease{}
 	cl.SetName(l.name)
 	fromRecord(&cl.Spec, ler)
 	updated, err := l.client.Update(ctx, resource.Identifier{Name: l.name}, cl, resource.UpdateOptions{
@@ -132,10 +132,10 @@ func (l *clusterLeaseLock) Update(ctx context.Context, ler resourcelock.LeaderEl
 	return nil
 }
 
-func (l *clusterLeaseLock) RecordEvent(string) {}
-func (l *clusterLeaseLock) Identity() string   { return l.identity }
-func (l *clusterLeaseLock) Describe() string {
-	return "clusterleases.coordination.grafana.app/" + l.name
+func (l *globalLeaseLock) RecordEvent(string) {}
+func (l *globalLeaseLock) Identity() string   { return l.identity }
+func (l *globalLeaseLock) Describe() string {
+	return "globalleases.coordination.grafana.app/" + l.name
 }
 
 // NewNamespacedLock returns a resourcelock.Interface backed by the namespaced
@@ -146,7 +146,7 @@ func NewNamespacedLock(client resource.Client, namespace, name, identity string)
 	return &namespacedLeaseLock{client: client, id: resource.Identifier{Namespace: namespace, Name: name}, identity: identity}
 }
 
-// namespacedLeaseLock is the namespaced Lease counterpart of clusterLeaseLock.
+// namespacedLeaseLock is the namespaced Lease counterpart of globalLeaseLock.
 type namespacedLeaseLock struct {
 	client   resource.Client
 	id       resource.Identifier
@@ -222,10 +222,10 @@ const (
 
 // NewObjectLock returns a resourcelock.Interface that stores the leader-election
 // record in the annotations of an existing object (identified by id), using client
-// (a client for that object's kind) and holder identity. Unlike NewLock it never
+// (a client for that object's kind) and holder identity. Unlike NewGlobalLock it never
 // creates a dedicated lease object: the target must already exist and its
 // resourceVersion provides the compare-and-swap. Use it to lease an object in place
-// rather than parking a separate ClusterLease.
+// rather than parking a separate GlobalLease.
 //
 // Note: each renewal writes the target object's annotations, bumping its
 // resourceVersion — so a controller watching that object will observe the renewals.
@@ -335,7 +335,7 @@ func setLeaseAnnotations(obj resource.Object, r resourcelock.LeaderElectionRecor
 }
 
 // recordFromLeaseFields builds an election record from the shared lease spec fields
-// (Lease and ClusterLease have the same field set).
+// (Lease and GlobalLease have the same field set).
 func recordFromLeaseFields(holder *string, durationSeconds, transitions *int32, acquire, renew *string) resourcelock.LeaderElectionRecord {
 	r := resourcelock.LeaderElectionRecord{}
 	if holder != nil {
@@ -380,12 +380,12 @@ func leaseFieldsFromRecord(r resourcelock.LeaderElectionRecord) (holder *string,
 	return holder, durationSeconds, transitions, acquire, renew
 }
 
-// toRecord / fromRecord map a ClusterLease spec.
-func toRecord(spec coordinationv0alpha1.ClusterLeaseSpec) resourcelock.LeaderElectionRecord {
+// toRecord / fromRecord map a GlobalLease spec.
+func toRecord(spec coordinationv0alpha1.GlobalLeaseSpec) resourcelock.LeaderElectionRecord {
 	return recordFromLeaseFields(spec.HolderIdentity, spec.LeaseDurationSeconds, spec.LeaseTransitions, spec.AcquireTime, spec.RenewTime)
 }
 
-func fromRecord(spec *coordinationv0alpha1.ClusterLeaseSpec, r resourcelock.LeaderElectionRecord) {
+func fromRecord(spec *coordinationv0alpha1.GlobalLeaseSpec, r resourcelock.LeaderElectionRecord) {
 	spec.HolderIdentity, spec.LeaseDurationSeconds, spec.LeaseTransitions, spec.AcquireTime, spec.RenewTime = leaseFieldsFromRecord(r)
 }
 
