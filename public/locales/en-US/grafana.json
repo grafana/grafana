@@ -1624,6 +1624,10 @@
         "autosync-error-title": "Auto-sync Failed",
         "autosync-importing-body": "Enabling Auto-sync. Please wait...",
         "autosync-importing-title": "Enabling auto-sync...",
+        "autosync-rules-error-body": "Auto-sync was enabled, but importing alert rules failed. Please check the error details and try again.",
+        "autosync-rules-error-title": "Rules Import Failed",
+        "autosync-rules-imported-note": "Your selected alert rules were also imported.",
+        "autosync-rules-note": "Your selected alert rules will also be imported.",
         "autosync-success-body": "Auto-sync enabled. Redirecting...",
         "autosync-success-title": "Auto-sync Enabled",
         "autosync-title": "Confirm Auto-sync",
@@ -3878,6 +3882,8 @@
       "title-notification-policies": "Notification policies"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "Auto-sync was enabled, but importing alert rules failed.",
+      "autosync-rules-imported-note": "Your alert rules were also imported.",
       "autosync-success-body": "Grafana will keep syncing alert configuration from this data source.",
       "autosync-success-title": "Auto-sync enabled",
       "error": "Failed to import resources",

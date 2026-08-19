@@ -314,6 +314,33 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
 
     await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: 'mimir-uid' }));
     expect(rulesImportCalled).toBe(true);
+    await waitFor(() => expect(within(dialog).getByText(/alert rules were also imported/i)).toBeInTheDocument());
+  });
+
+  it('reports a Rules-specific failure — not an Auto-sync failure — when Rules import fails after Auto-sync already succeeded', async () => {
+    const postState: AdminConfigPostState = { lastPayload: null };
+    setupAdminConfigPost(server, postState, 200);
+    server.use(http.post('/api/convert/prometheus/config/v1/rules', () => new HttpResponse(null, { status: 500 })));
+
+    const { user } = render(<ImportWizardGate />);
+    await advanceToRules(user);
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByText(/review import/i);
+
+    await user.click(screen.getByRole('button', { name: /enable auto-sync/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
+
+    // Auto-sync's own save call succeeded even though the overall submit errors out below.
+    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: 'mimir-uid' }));
+    await waitFor(() => expect(within(dialog).getByText(/rules import failed/i)).toBeInTheDocument());
+    expect(within(dialog).queryByText(/failed to enable auto-sync/i)).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(mockReportInteraction).toHaveBeenCalledWith(
+        'grafana_alerting_import_to_gma_error',
+        expect.objectContaining({ notificationsSource: 'datasource' })
+      )
+    );
   });
 
   it('tracks an error and does not fall through to the staging import path when saveAutoSync fails', async () => {
