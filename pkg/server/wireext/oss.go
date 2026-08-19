@@ -153,7 +153,6 @@ var BasicSet = wire.NewSet(
 	wire.Struct(new(unified.Options), "*"),
 	resource.NewGCGate,
 	unified.ProvideUnifiedStorageClient,
-	sql.ProvideStorageBackend,
 	sql.ProvideExperimentalKV,
 	sql.ProvideKV,
 	sql.ProvideResourceDB,

@@ -61,7 +61,7 @@ func ProvideFolderPermissions(
 	cache := localcache.ProvideService()
 
 	userSvc, err := userimpl.ProvideService(
-		sqlStore,
+		legacysql.NewDatabaseProvider(sqlStore),
 		orgService,
 		cfg,
 		teamSvc,

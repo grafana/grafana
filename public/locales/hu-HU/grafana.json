@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} sikertelen {{status}} állapottal: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1617,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Biztosan elindítja az importálást? Ez a művelet új erőforrásokat hoz létre a Grafana Alertingben.",
         "confirm": "Importálás indítása",
@@ -1675,26 +1665,6 @@
       "info-description": "Ez a varázsló segít a riasztási szabályok és az értesítési erőforrások külső forrásokból a Grafana Alertingbe történő importálásában. További információkért tekintse meg a <2>dokumentációt</2>.",
       "info-title": "Importálási varázsló",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Írjon be szöveget egy meglévő névtér kereséséhez",
         "label": "Névtér"
@@ -1718,10 +1688,6 @@
         "filter": "Szűrő",
         "folder": "Célmappa",
         "heading": "Importálás áttekintése",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Névtér",
         "nothing": "Nincs importálandó elem",
         "nothing-desc": "Mindkét lépés kihagyva. Lépjen vissza, és konfiguráljon legalább egy importálási forrást.",
@@ -1748,14 +1714,6 @@
         "validation-warning": "Az ütközések elkerülése érdekében bizonyos erőforrások át lesznek nevezve.",
         "will-import-config": "Ezt a konfigurációt fogja importálni",
         "will-import-rules": "Szabályokat fog importálni",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "{{count}} szabályt fog importálni",
         "will-import-rules-count_other": "{{count}} szabályt fog importálni"
       },
@@ -1867,14 +1825,10 @@
         "cancel-confirm-title": "Megszakítja az importálást?",
         "cancel-confirm-yes": "Módosítások elvetése",
         "skip": "Kihagyás",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Értesítési erőforrások",
         "step-notifications-desc": "Kapcsolattartási pontok, házirendek, sablonok",
         "step-review": "Áttekintés és importálás",
         "step-review-desc": "Importálás előnézete és megerősítése",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Riasztási szabályok",
         "step-rules-desc": "Riasztási és felvételkészítési szabályok"
       },
@@ -3282,8 +3236,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3258,54 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3316,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3611,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Az időintervallum egyedi neve",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Időintervallum betöltése",
       "title-no-matching-time-interval-found": "Nem található egyező időintervallum"
     },
@@ -3669,7 +3675,7 @@
         "back": "",
         "declare-incident": "Incidens deklarálása",
         "declare-incident-no-permission": "Nincs engedélye az incidenshez való hozzáférésre",
-        "instance-details": "Példány részletei",
+        "instance-details": "A példány részletei",
         "investigation-checking": "",
         "investigation-lookup-failed": "",
         "investigation-lookup-retry": "",
@@ -3850,6 +3856,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Az erőforrások importálása nem sikerült",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Az erőforrások importálása a Grafana Alertingbe sikeresen megtörtént."
     },
     "yaml-content-info": {
@@ -6047,6 +6055,7 @@
       "new-row-title": "Új sor",
       "row": {
         "collapse": "A(z) {{title}} sor összecsukása",
+        "copy-link": "",
         "expand": "A(z) {{title}} sor kibontása",
         "new": "Új sor",
         "repeat": {
@@ -8918,11 +8927,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -11734,6 +11746,7 @@
       "no-details": "Nincs megjeleníthető mező.",
       "open-assistant": "",
       "pin-line": "Napló kitűzése",
+      "prettify": "",
       "remove-displayed-field": "Mező eltávolítása",
       "remove-log": "Napló eltávolítása",
       "scroll-to-logline": "Görgetés a naplósorhoz",
@@ -11890,7 +11903,7 @@
     },
     "name-enable-field-selector": "Mezőválasztó engedélyezése",
     "name-enable-infinite-scrolling": "Végtelen görgetés engedélyezése",
-    "name-enable-log-details": "Napló részleteinek engedélyezése",
+    "name-enable-log-details": "A napló részleteinek engedélyezése",
     "name-enable-logs-highlighting": "Naplókiemelés engedélyezése",
     "name-font-size": "Betűméret",
     "name-order": "Sorrend",
@@ -12447,7 +12460,7 @@
     },
     "machine-learning": {
       "subtitle": "Fedezze fel az MI- és a gépi tanulásos funkciókat",
-      "title": "MI és gépi tanulás"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Mappa-irányítópultok és engedélyek kezelése"
@@ -12768,6 +12781,29 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12775,6 +12811,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -12805,8 +12850,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14353,6 +14398,12 @@
     "shared": {
       "branch-description": "A kiépítéshez használandó ág",
       "branch-label": "Ág",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16103,6 +16154,9 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
     },
     "options": {
       "render-mode": ""

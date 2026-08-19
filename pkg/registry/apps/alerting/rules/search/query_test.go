@@ -351,6 +351,34 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 	t.Run("paused accepts boolean", func(t *testing.T) {
 		require.NoError(t, build(filterLeaf(fieldPaused, opIn, "true")))
 	})
+
+	// Both backends parse these values again themselves and disagree on the forms
+	// they accept, so the request carries one spelling of each.
+	t.Run("scalar values are normalized", func(t *testing.T) {
+		for _, tc := range []struct {
+			field, value, want string
+		}{
+			{fieldPaused, "TRUE", "true"},
+			{fieldPaused, "True", "true"},
+			{fieldPaused, "1", "true"},
+			{fieldPaused, "t", "true"},
+			{fieldPaused, "0", "false"},
+			{fieldPanelID, "+10", "10"},
+			{fieldPanelID, "010", "10"},
+		} {
+			body := model.CreateSearchRulesRequestBody{Where: andNode(filterLeaf(tc.field, opIn, tc.value))}
+			req, _, err := buildSearchRequest(body, "default", alertrule.ResourceInfo.GroupResource(), nil)
+			require.NoError(t, err, "%s=%s", tc.field, tc.value)
+
+			var got []string
+			for _, r := range req.Options.Fields {
+				if r.Key == tc.field {
+					got = r.Values
+				}
+			}
+			require.Equal(t, []string{tc.want}, got, "%s=%s", tc.field, tc.value)
+		}
+	})
 	t.Run("type rejects NotIn", func(t *testing.T) {
 		require.Error(t, build(filterLeaf(fieldType, model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn, "alertrule")))
 	})

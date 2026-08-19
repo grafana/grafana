@@ -182,6 +182,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
+	cfg.SearchEnforceSortCapability = section.Key("search_enforce_sort_capability").MustBool(false)
 	cfg.SearchPostRankAuthz = section.Key("search_post_rank_authz").MustBool(false)
 	// Zero values keep the search.PostRankAuthzConfig.effective() defaults.
 	cfg.SearchPostRankAuthzOverFetchFactor = section.Key("search_post_rank_authz_over_fetch_factor").MustInt(0)
@@ -427,6 +428,17 @@ func (cfg *Cfg) shouldProxySearchRemotely() bool {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	return apiserverCfg.Key("search_server_address").MustString("") != "" &&
 		!slices.Contains(cfg.Target, "search-server")
+}
+
+// StorageServicesEnabled reports whether this process should run the unified
+// storage background jobs that write, such as garbage collection and event
+// pruning. Only the process that runs the storage server may run them,
+// otherwise every replica would delete data on its own. A process with no
+// module targets, or with the "all" target, does everything itself.
+func (cfg *Cfg) StorageServicesEnabled() bool {
+	return len(cfg.Target) == 0 ||
+		slices.Contains(cfg.Target, "all") ||
+		slices.Contains(cfg.Target, "storage-server")
 }
 
 // ShouldRunMigrations reports whether data migrations to unified storage should run.

@@ -105,7 +105,11 @@
       "load-subscriptions": "Abonelikleri Yükle"
     },
     "dimension-fields": {
-      "aria-label-remove": "Kaldır",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Boyutlar",
       "placeholder-field": "Alan",
       "placeholder-operation": "Çalıştırma",

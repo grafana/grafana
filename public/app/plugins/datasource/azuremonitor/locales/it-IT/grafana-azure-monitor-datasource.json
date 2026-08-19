@@ -105,7 +105,11 @@
       "load-subscriptions": "Carica abbonamenti"
     },
     "dimension-fields": {
-      "aria-label-remove": "Rimuovi",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensioni",
       "placeholder-field": "Campo",
       "placeholder-operation": "Operazione",
