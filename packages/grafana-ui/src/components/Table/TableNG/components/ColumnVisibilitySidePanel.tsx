@@ -19,6 +19,11 @@ interface ColumnVisibilitySidePanelProps {
   onTogglePin: (displayName: string) => void;
   onColumnsReorder: (sourceColumnKey: string, targetColumnKey: string) => void;
   onClose: () => void;
+  /**
+   * The splitter is currently dragged narrow enough that letting go will close the panel. Dims the
+   * contents so that outcome is visible before the user commits to it.
+   */
+  willCloseOnRelease?: boolean;
 }
 
 /**
@@ -36,6 +41,7 @@ export function ColumnVisibilitySidePanel({
   onTogglePin,
   onColumnsReorder,
   onClose,
+  willCloseOnRelease = false,
 }: ColumnVisibilitySidePanelProps) {
   const styles = useStyles2(getStyles);
   const visibleCount = fields.length - hiddenColumns.size;
@@ -46,7 +52,10 @@ export function ColumnVisibilitySidePanel({
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
   return (
-    <aside className={styles.container} aria-label={t('grafana-ui.table.column-visibility', 'Column visibility')}>
+    <aside
+      className={css(styles.container, willCloseOnRelease && styles.containerWillClose)}
+      aria-label={t('grafana-ui.table.column-visibility', 'Column visibility')}
+    >
       <div className={styles.header}>
         <span className={styles.heading}>
           <Trans i18nKey="grafana-ui.table.columns">Columns</Trans>
@@ -153,9 +162,24 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     height: '100%',
     width: '100%',
-    minWidth: 0,
+    // Holds its narrowest legible layout instead of compressing further, so dragging the splitter
+    // in past that point slides the panel out under the grid (the pane clips the overflow) rather
+    // than crushing the rows.
+    minWidth: 'min-content',
     overflow: 'hidden',
     borderInlineEnd: `1px solid ${theme.colors.border.weak}`,
+    '> *': {
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create('opacity', { duration: theme.transitions.duration.shortest }),
+      },
+    },
+  }),
+  // Dims the contents rather than the `aside` itself, so the divider against the grid stays put
+  // while the panel signals that releasing here will close it.
+  containerWillClose: css({
+    '> *': {
+      opacity: 0.5,
+    },
   }),
   header: css({
     display: 'flex',

@@ -284,9 +284,13 @@ export function TableFlat(props: TableNGProps) {
   // pane secondary/on-the-right, which would put the sidebar on the wrong side. Plain flex-fraction
   // mode instead, with an initial fraction chosen to land close to the sidebar's default pixel
   // width; `minWidth`/`maxWidth` below clamp the actual rendered width regardless of that fraction.
+  //
+  // `useSplitter` re-derives `primaryProps.style.flexGrow` from this on every render, and tracking
+  // the live drag width re-renders us mid-drag — so this fraction has to be able to reach 0, or it
+  // reasserts itself as a floor and the sidebar stops short of closing.
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
-    initialSize: clamp(columnVisibilityPanelWidth / Math.max(width, 1), 0.05, 0.5),
+    initialSize: clamp(columnVisibilityPanelWidth / Math.max(width, 1), 0, 0.5),
     dragPosition: 'middle',
     handleSize: 'sm',
     onResizing: handlePanelResizing,
@@ -578,12 +582,16 @@ export function TableFlat(props: TableNGProps) {
         {...primaryProps}
         style={{
           ...primaryProps.style,
-          // Deliberately no CSS minWidth: useSplitter measures this element's own min/max (by
-          // temporarily zeroing its flexGrow and reading the resulting rect) to clamp the drag
-          // itself, so a CSS floor here would stop it from ever reporting a width below
-          // COLUMN_VISIBILITY_PANEL_MIN_WIDTH — which is exactly the value handlePanelResize needs
-          // to see in order to close the panel. The JS-side check is the only floor now.
+          // `minWidth: 0` rather than no min-width at all: useSplitter clamps the drag to this
+          // element's own measured min/max (it zeroes the flexGrow and reads the resulting rect),
+          // and a flex item's automatic minimum is its min-content size — which would stop the drag
+          // dead at the sidebar's narrowest legible layout. Zero lets the pane keep closing all the
+          // way while the sidebar itself holds at min-content and is clipped by the overflow below,
+          // and it's what lets the width reach COLUMN_VISIBILITY_PANEL_MIN_WIDTH so the panel can
+          // close on release at all.
+          minWidth: 0,
           maxWidth: COLUMN_VISIBILITY_PANEL_MAX_WIDTH,
+          overflow: 'hidden',
         }}
       >
         <ColumnVisibilitySidePanel
@@ -594,6 +602,7 @@ export function TableFlat(props: TableNGProps) {
           onTogglePin={handleTogglePin}
           onColumnsReorder={handleColumnsReorder}
           onClose={() => setIsColumnVisibilityPanelOpen(false)}
+          willCloseOnRelease={columnVisibilityPanelWidth < COLUMN_VISIBILITY_PANEL_MIN_WIDTH}
         />
       </div>
       <div {...splitterProps} />

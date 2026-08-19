@@ -123,6 +123,26 @@ describe('ColumnVisibilitySidePanel', () => {
     expect(onColumnsReorder).not.toHaveBeenCalled();
   });
 
+  it('dims its contents while the splitter is dragged narrow enough to close it', () => {
+    const props = {
+      fields,
+      hiddenColumns: new Set<string>(),
+      pinnedColumns: new Set<string>(),
+      onToggleColumn: jest.fn(),
+      onTogglePin: jest.fn(),
+      onColumnsReorder: jest.fn(),
+      onClose: jest.fn(),
+    };
+
+    const { rerender } = render(<ColumnVisibilitySidePanel {...props} />);
+    const panel = screen.getByRole('complementary', { name: 'Column visibility' });
+    const contents = panel.firstElementChild!;
+    expect(window.getComputedStyle(contents).opacity).toBe('');
+
+    rerender(<ColumnVisibilitySidePanel {...props} willCloseOnRelease />);
+    expect(window.getComputedStyle(contents).opacity).toBe('0.5');
+  });
+
   it('calls onClose when the close button is clicked', async () => {
     const onClose = jest.fn();
     render(
