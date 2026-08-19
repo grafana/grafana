@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"maps"
 	"strconv"
+	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1344,29 +1346,113 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 			}
 		}
 
-		// Fix legacyOptions schema for v2alpha1, v2beta1, and v2 to allow any value type
-		// The generated schema incorrectly restricts values to objects, but map[string]interface{} can hold any type
-		// This fix must be applied here so structured-merge-diff uses the correct schema
-		// For some reason this issue occurs with both the kubernetes-generated openAPI sourced from go, _and_ the OpenAPI from the AppManifest
-		// TODO: @IfSentient this should really be addressed in the app-sdk's generation, or work out what about this particular CUE value is broken
-		for _, defKey := range []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardAnnotationQuerySpec",
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardAnnotationQuerySpec",
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2.DashboardAnnotationQuerySpec",
-		} {
-			if def, ok := defs[defKey]; ok {
-				if legacyOptions, ok := def.Schema.Properties["legacyOptions"]; ok {
-					// Fix: Use additionalProperties: true to allow any value type (string, number, boolean, array, object, etc.)
-					// instead of restricting to objects only. This must match map[string]interface{} semantics.
-					legacyOptions.AdditionalProperties = &spec.SchemaOrBool{Allows: true}
-					def.Schema.Properties["legacyOptions"] = legacyOptions
-					defs[defKey] = def
-				}
-			}
-		}
+		// Relax the v2* dashboard schemas that structured-merge-diff cannot type-convert.
+		// Without this, managedFields updates fail (logged as "[SHOULD NOT HAPPEN] failed
+		// to update managedFields") and the apiserver strips Server-Side-Apply field
+		// ownership from the stored object.
+		relaxDashboardSchemasForSMD(defs)
 
 		return defs
 	}
+}
+
+// relaxDashboardSchemasForSMD works around app-sdk OpenAPI generation that
+// structured-merge-diff (SMD) cannot convert against the object's on-the-wire
+// shape. When ObjectToTyped fails, the field manager can't build managedFields,
+// so it logs "[SHOULD NOT HAPPEN] failed to update managedFields" and drops SSA
+// field ownership for the object.
+//
+// Two generated shapes are relaxed on the dashboard v2, v2alpha1 and v2beta1
+// schemas (v0/v1 use an untyped spec and are unaffected):
+//
+//  1. Discriminated-union wrappers ("…KindOr…Kind" — elements, layout, variables,
+//     preferences.layout, …). The app-sdk models these as objects with one property
+//     per Go variant field (PanelKind, LibraryPanelKind, GridLayoutKind, …), but the
+//     types marshal to the flattened {kind, spec} shape on the wire, so SMD rejects
+//     the real kind/spec fields as "field not declared in schema". These are detected
+//     structurally: a generated wrapper's property names are all PascalCase Go type
+//     names, whereas real kinds use camelCase JSON fields. Marked preserve-unknown so
+//     SMD treats the value as free-form.
+//
+//  2. Opaque object maps (DataQueryKind.spec, AnnotationQuerySpec.legacyOptions, …)
+//     modeled as additionalProperties:{type:object}, which forces every value to be a
+//     map — but query params are scalars, so SMD fails with "expected map, got …".
+//     Relaxed to additionalProperties:true so SMD deduces each value's type.
+//
+// TODO: this should be fixed in the app-sdk's OpenAPI generation.
+func relaxDashboardSchemasForSMD(defs map[string]common.OpenAPIDefinition) {
+	for key, def := range defs {
+		// Match both the Go-generated model names ("…apis.dashboard.v2.Dashboard…")
+		// and the app-sdk manifest names ("…apis/dashboard/v2.Dashboard…"). The
+		// substring also covers v2alpha1/v2beta1 while excluding v0/v1.
+		if !strings.Contains(key, "apis/dashboard/v2") && !strings.Contains(key, "apis.dashboard.v2") {
+			continue
+		}
+		def.Schema = relaxSchemaForSMD(def.Schema)
+		defs[key] = def
+	}
+}
+
+func relaxSchemaForSMD(s spec.Schema) spec.Schema {
+	// Rule 1: a generated discriminated-union wrapper becomes a preserve-unknown
+	// free-form object so SMD accepts the flattened {kind, spec} wire form.
+	if isGeneratedUnionSchema(s) {
+		s.Properties = nil
+		s.AdditionalProperties = nil
+		s.Type = spec.StringOrArray{"object"}
+		s.AddExtension("x-kubernetes-preserve-unknown-fields", true)
+		return s
+	}
+
+	// Rule 2: an opaque object map is relaxed to allow any value type.
+	if ap := s.AdditionalProperties; ap != nil && isBareObjectSchema(ap.Schema) {
+		s.AdditionalProperties = &spec.SchemaOrBool{Allows: true}
+	}
+
+	for name, prop := range s.Properties {
+		s.Properties[name] = relaxSchemaForSMD(prop)
+	}
+	if s.AdditionalProperties != nil && s.AdditionalProperties.Schema != nil {
+		relaxed := relaxSchemaForSMD(*s.AdditionalProperties.Schema)
+		s.AdditionalProperties.Schema = &relaxed
+	}
+	if s.Items != nil {
+		if s.Items.Schema != nil {
+			relaxed := relaxSchemaForSMD(*s.Items.Schema)
+			s.Items.Schema = &relaxed
+		}
+		for i := range s.Items.Schemas {
+			s.Items.Schemas[i] = relaxSchemaForSMD(s.Items.Schemas[i])
+		}
+	}
+	return s
+}
+
+// isGeneratedUnionSchema reports whether s is an app-sdk union wrapper, identified
+// by every property being a PascalCase Go variant name rather than a camelCase JSON
+// field. Real kinds always expose at least one camelCase field (kind, spec, …).
+func isGeneratedUnionSchema(s spec.Schema) bool {
+	if len(s.Properties) == 0 {
+		return false
+	}
+	for name := range s.Properties {
+		if name == "" || !unicode.IsUpper([]rune(name)[0]) {
+			return false
+		}
+	}
+	return true
+}
+
+// isBareObjectSchema reports whether s is an untyped free-form object
+// (additionalProperties:{type:object}) — a map that must accept any value type.
+func isBareObjectSchema(s *spec.Schema) bool {
+	if s == nil {
+		return false
+	}
+	return len(s.Type) == 1 && s.Type[0] == "object" &&
+		len(s.Properties) == 0 &&
+		s.Ref.String() == "" &&
+		s.AdditionalProperties == nil
 }
 
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
