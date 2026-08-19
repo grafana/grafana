@@ -1076,7 +1076,6 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		if errors.As(err, &quotaErr) {
 			msg = quotaErr.Message()
 		}
-
 		return &resourcepb.CreateResponse{
 			Error: &resourcepb.ErrorResult{
 				Message: msg,
