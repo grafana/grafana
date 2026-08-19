@@ -1611,17 +1611,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "確定要開始匯入嗎？此動作將在 Grafana 警示中建立新資源。",
         "confirm": "開始匯入",
@@ -1669,26 +1658,6 @@
       "info-description": "此精靈可協助您將警示規則和通知資源從外部來源匯入 Grafana 警示。如需更多資訊，請參閱<2>文件</2>。",
       "info-title": "匯入精靈",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "輸入以搜尋現有的命名空間",
         "label": "命名空間"
@@ -1712,10 +1681,6 @@
         "filter": "篩選",
         "folder": "目標資料夾",
         "heading": "檢查匯入",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "命名空間",
         "nothing": "沒有要匯入的內容",
         "nothing-desc": "兩個步驟均已跳過。請返回並設定至少一個匯入來源。",
@@ -1742,10 +1707,6 @@
         "validation-warning": "為避免衝突，某些資源將重新命名。",
         "will-import-config": "將匯入此設定",
         "will-import-rules": "將匯入規則",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_other": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_other": "將匯入 {{count}} 個規則"
       },
       "routing-tree": {
@@ -1856,14 +1817,10 @@
         "cancel-confirm-title": "要取消匯入嗎？",
         "cancel-confirm-yes": "捨棄變更",
         "skip": "跳過",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "通知資源",
         "step-notifications-desc": "聯絡點、政策、範本",
         "step-review": "檢查並匯入",
         "step-review-desc": "預覽並確認匯入",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "警示規則",
         "step-rules-desc": "警示和錄製規則"
       },
@@ -3283,6 +3240,35 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3841,6 +3827,8 @@
     },
     "wizard-import-to-gma": {
       "error": "無法匯入資源",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "已成功將資源匯入 Grafana 警示。"
     },
     "yaml-content-info": {
@@ -6026,6 +6014,7 @@
       "new-row-title": "新的列",
       "row": {
         "collapse": "收合列 {{title}}",
+        "copy-link": "",
         "expand": "展開列 {{title}}",
         "new": "新的列",
         "repeat": {
@@ -8876,11 +8865,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -12701,6 +12693,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -12715,6 +12713,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
