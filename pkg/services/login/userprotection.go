@@ -7,6 +7,6 @@ import (
 )
 
 type UserProtectionService interface {
-	AllowUserMapping(user *user.User, authModule string) error
+	AllowUserMapping(ctx context.Context, user *user.User, authModule string) error
 	ShouldProtect(ctx context.Context, user *user.User) (bool, error)
 }

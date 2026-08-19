@@ -67,4 +67,40 @@ describe('WithContextMenu', () => {
     await user.keyboard('{Enter}');
     expect(screen.getByTestId('menu-item')).toBeInTheDocument();
   });
+
+  it('anchors the menu to the trigger element when a click carries no pointer position (keyboard activation of legacy onClick consumers)', async () => {
+    const user = userEvent.setup();
+    render(
+      <WithContextMenu renderMenuItems={renderMenuItems}>
+        {({ openMenu }) => (
+          <button data-testid="trigger" onClick={openMenu}>
+            keyboard click
+          </button>
+        )}
+      </WithContextMenu>
+    );
+
+    const trigger = screen.getByTestId('trigger');
+    jest.spyOn(trigger, 'getBoundingClientRect').mockReturnValue({
+      left: 100,
+      top: 200,
+      width: 50,
+      height: 20,
+      right: 150,
+      bottom: 220,
+      x: 100,
+      y: 200,
+      toJSON: () => {},
+    } as DOMRect);
+
+    // Enter on the focused button dispatches a click with `detail` 0 and no
+    // pointer coordinates — without element anchoring the menu would be
+    // positioned at the viewport origin.
+    trigger.focus();
+    await user.keyboard('{Enter}');
+
+    // Anchored at the trigger rect's center (x: 100 + 25, y: 200 + 10),
+    // with ContextMenu's own ±5px offset applied.
+    expect(screen.getByRole('menu')).toHaveStyle({ left: '120px', top: '215px' });
+  });
 });

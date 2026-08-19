@@ -1280,6 +1280,80 @@ func (_c *MockResourceClient_Search_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
+// HybridSearch provides a mock function with given fields: ctx, in, opts
+func (_m *MockResourceClient) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HybridSearch")
+	}
+
+	var r0 *resourcepb.HybridSearchResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *resourcepb.HybridSearchRequest, ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *resourcepb.HybridSearchRequest, ...grpc.CallOption) *resourcepb.HybridSearchResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*resourcepb.HybridSearchResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *resourcepb.HybridSearchRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockResourceClient_HybridSearch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HybridSearch'
+type MockResourceClient_HybridSearch_Call struct {
+	*mock.Call
+}
+
+// HybridSearch is a helper method to define mock.On call
+//   - ctx context.Context
+//   - in *resourcepb.HybridSearchRequest
+//   - opts ...grpc.CallOption
+func (_e *MockResourceClient_Expecter) HybridSearch(ctx interface{}, in interface{}, opts ...interface{}) *MockResourceClient_HybridSearch_Call {
+	return &MockResourceClient_HybridSearch_Call{Call: _e.mock.On("HybridSearch",
+		append([]interface{}{ctx, in}, opts...)...)}
+}
+
+func (_c *MockResourceClient_HybridSearch_Call) Run(run func(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption)) *MockResourceClient_HybridSearch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]grpc.CallOption, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(grpc.CallOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(*resourcepb.HybridSearchRequest), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *MockResourceClient_HybridSearch_Call) Return(_a0 *resourcepb.HybridSearchResponse, _a1 error) *MockResourceClient_HybridSearch_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockResourceClient_HybridSearch_Call) RunAndReturn(run func(context.Context, *resourcepb.HybridSearchRequest, ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error)) *MockResourceClient_HybridSearch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function with given fields: ctx, in, opts
 func (_m *MockResourceClient) Update(ctx context.Context, in *resourcepb.UpdateRequest, opts ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
 	_va := make([]interface{}, len(opts))

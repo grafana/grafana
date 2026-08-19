@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panel, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -18,17 +16,12 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can edit panel title and description', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panel = new Panel({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+    test('can edit panel title and description', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await controls.enterEditMode();
 
       const oldTitle = /^No Data Points Warning$/;
-      await panel.selectByTitle(oldTitle);
+      await panels.selectByTitle(oldTitle);
 
       const titleInput = sidebar.panelOptions.getTitleInput();
       await expect(titleInput).toHaveValue(oldTitle);
@@ -39,9 +32,9 @@ test.describe(
       const newDescription = `New panel description (${Date.now()})`;
       await sidebar.panelOptions.getDescriptionTextarea().fill(newDescription);
 
-      await expect(panel.getHeaderByTitle(oldTitle)).toBeHidden();
+      await expect(panels.getHeader(oldTitle)).toBeHidden();
 
-      const header = panel.getHeaderByTitle(newTitle);
+      const header = panels.getHeader(newTitle);
       await expect(header).toBeVisible();
 
       // Reveal description tooltip and check that its value is as expected

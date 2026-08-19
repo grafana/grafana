@@ -143,18 +143,19 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => {
 
         '&:checked': {
           '~ label': {
-            background: theme.colors.accent.main,
-            borderColor: theme.colors.accent.main,
+            background: theme.components.switch.activeBackground,
+            borderColor: theme.components.switch.activeBackground,
 
             '&:hover': {
-              background: theme.colors.accent.shade,
+              background: theme.components.switch.activeBackgroundHover,
+              borderColor: theme.components.switch.activeBackgroundHover,
             },
           },
 
           '~ svg': {
             transform: `translate3d(${theme.spacing(2.25)}, -50%, 0)`,
             background: theme.colors.accent.contrastText,
-            color: theme.colors.accent.main,
+            color: theme.components.switch.activeBackground,
           },
         },
 

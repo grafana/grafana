@@ -40,6 +40,11 @@ type Display struct {
 	// InternalID is the legacy numeric id for identity,
 	// Deprecated: use the identityRef where possible
 	InternalID int64 `json:"internalId,omitempty"`
+
+	// Role is the org role of the identity in the active organization
+	// (Admin/Editor/Viewer/None). Only populated for the current-user
+	// ("users/~") endpoint.
+	Role string `json:"role,omitempty"`
 }
 
 func (Display) OpenAPIModelName() string {

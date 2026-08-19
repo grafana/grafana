@@ -1,17 +1,11 @@
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
-
 const cloudwatchPlugin = async () =>
   await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
 const dashboardDSPlugin = async () =>
   await import(/* webpackChunkName "dashboardDSPlugin" */ 'app/plugins/datasource/dashboard/module');
 const grafanaPlugin = async () =>
   await import(/* webpackChunkName: "grafanaPlugin" */ 'app/plugins/datasource/grafana/module');
-const influxdbPlugin = async () =>
-  await import(/* webpackChunkName: "influxdbPlugin" */ 'app/plugins/datasource/influxdb/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
-const prometheusPlugin = async () =>
-  await import(/* webpackChunkName: "prometheusPlugin" */ 'app/plugins/datasource/prometheus/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
@@ -32,8 +26,6 @@ const debugPanel = async () => await import(/* webpackChunkName: "debugPanel" */
 const flamegraphPanel = async () =>
   await import(/* webpackChunkName: "flamegraphPanel" */ 'app/plugins/panel/flamegraph/module');
 const gaugePanel = async () => await import(/* webpackChunkName: "gaugePanel" */ 'app/plugins/panel/gauge/module');
-const gettingStartedPanel = async () =>
-  await import(/* webpackChunkName: "gettingStartedPanel" */ 'app/plugins/panel/gettingstarted/module');
 const histogramPanel = async () =>
   await import(/* webpackChunkName: "histogramPanel" */ 'app/plugins/panel/histogram/module');
 const livePanel = async () => await import(/* webpackChunkName: "livePanel" */ 'app/plugins/panel/live/module');
@@ -50,14 +42,10 @@ const statusHistoryPanel = async () =>
   await import(/* webpackChunkName: "statusHistoryPanel" */ 'app/plugins/panel/status-history/module');
 const tablePanel = async () => await import(/* webpackChunkName: "tablePanel" */ 'app/plugins/panel/table/module');
 const textPanel = async () => await import(/* webpackChunkName: "textPanel" */ 'app/plugins/panel/text/module');
-const textNGPanel = async () => await import(/* webpackChunkName: "textNGPanel" */ 'app/plugins/panel/textng/module');
 const timeseriesPanel = async () =>
   await import(/* webpackChunkName: "timeseriesPanel" */ 'app/plugins/panel/timeseries/module');
 const tracesPanel = async () => await import(/* webpackChunkName: "tracesPanel" */ 'app/plugins/panel/traces/module');
 const trendPanel = async () => await import(/* webpackChunkName: "trendPanel" */ 'app/plugins/panel/trend/module');
-const welcomeBanner = async () =>
-  await import(/* webpackChunkName: "welcomeBanner" */ 'app/plugins/panel/welcome/module');
-
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
 const xychartPanel = async () => await import(/* webpackChunkName: "xychart" */ 'app/plugins/panel/xychart/module');
@@ -72,13 +60,10 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/cloudwatch': cloudwatchPlugin,
   'core:plugin/dashboard': dashboardDSPlugin,
   'core:plugin/grafana': grafanaPlugin,
-  'core:plugin/influxdb': influxdbPlugin,
   'core:plugin/mixed': mixedPlugin,
-  'core:plugin/prometheus': prometheusPlugin,
   'core:plugin/alertmanager': alertmanagerPlugin,
   // panels
-  'core:plugin/text': () =>
-    getFeatureFlagClient().getBooleanValue('grafana.newTextPanel', false) ? textNGPanel() : textPanel(),
+  'core:plugin/text': textPanel,
   'core:plugin/timeseries': timeseriesPanel,
   'core:plugin/trend': trendPanel,
   'core:plugin/state-timeline': stateTimelinePanel,
@@ -97,7 +82,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/stat': statPanel,
   'core:plugin/debug': debugPanel,
   'core:plugin/flamegraph': flamegraphPanel,
-  'core:plugin/gettingstarted': gettingStartedPanel,
   'core:plugin/gauge': gaugePanel,
   'core:plugin/piechart': pieChartPanel,
   'core:plugin/bargauge': barGaugePanel,
@@ -105,7 +89,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/logs': logsPanel,
   'core:plugin/logstable': logsTablePanel,
   'core:plugin/traces': tracesPanel,
-  'core:plugin/welcome': welcomeBanner,
   'core:plugin/nodeGraph': nodeGraph,
   'core:plugin/histogram': histogramPanel,
 };

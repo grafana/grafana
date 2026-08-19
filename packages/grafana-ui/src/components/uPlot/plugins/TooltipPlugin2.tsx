@@ -780,7 +780,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
     left: 0,
     zIndex: theme.zIndex.tooltip,
     whiteSpace: 'pre',
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     position: 'fixed',
     background: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,

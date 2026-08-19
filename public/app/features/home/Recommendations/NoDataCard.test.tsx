@@ -4,12 +4,12 @@ import { type AppPluginConfig } from '@grafana/runtime';
 import { useAppPluginMetas } from '@grafana/runtime/internal';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
-import { noDataCtaClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { NoDataCard } from './NoDataCard';
 
 jest.mock('../analytics/main', () => ({
-  noDataCtaClicked: jest.fn(),
+  ctaClicked: jest.fn(),
 }));
 
 jest.mock('@grafana/runtime/internal', () => ({
@@ -39,6 +39,22 @@ describe('NoDataCard', () => {
     expect(screen.getByRole('heading', { name: 'No data flowing yet', level: 3 })).toBeInTheDocument();
     expect(screen.getByText(/Connect a data source to light up your dashboards and alerts/)).toBeInTheDocument();
     expect(screen.getByText('Popular solutions')).toBeInTheDocument();
+  });
+
+  it('renders the softened copy for the partial variant, keeping the connect CTA', () => {
+    render(<NoDataCard variant="partial" />);
+
+    expect(screen.getByRole('heading', { name: 'Add more telemetry', level: 3 })).toBeInTheDocument();
+    expect(screen.getByText(/Some signals are already flowing/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Connect a data source/ })).toBeInTheDocument();
+  });
+
+  it('renders neutral copy for the unknown variant, never claiming data flows', () => {
+    render(<NoDataCard variant="unknown" />);
+
+    expect(screen.getByRole('heading', { name: 'Add more telemetry', level: 3 })).toBeInTheDocument();
+    expect(screen.getByText(/We couldn't confirm live data yet/)).toBeInTheDocument();
+    expect(screen.queryByText(/Some signals are already flowing/)).not.toBeInTheDocument();
   });
 
   it('links the popular solutions to a prefilled catalog search when the apps are not available', () => {
@@ -115,9 +131,11 @@ describe('NoDataCard', () => {
 
       await user.click(screen.getByRole('link', { name: 'Kubernetes Monitoring' }));
 
-      expect(jest.mocked(noDataCtaClicked)).toHaveBeenCalledWith({
-        cta: 'solution',
-        solution_id: 'kubernetes-monitoring',
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'no_data_card',
+        action: 'open_solution',
+        placement: 'pill',
+        solution: 'kubernetes-monitoring',
       });
     });
 
@@ -126,9 +144,11 @@ describe('NoDataCard', () => {
 
       await user.click(screen.getByRole('link', { name: 'Synthetic Monitoring' }));
 
-      expect(jest.mocked(noDataCtaClicked)).toHaveBeenCalledWith({
-        cta: 'solution',
-        solution_id: 'synthetic-monitoring',
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'no_data_card',
+        action: 'open_solution',
+        placement: 'pill',
+        solution: 'synthetic-monitoring',
       });
     });
 
@@ -136,7 +156,11 @@ describe('NoDataCard', () => {
       const { user } = render(<NoDataCard />);
 
       await user.click(screen.getByRole('link', { name: 'Connect a data source' }));
-      expect(jest.mocked(noDataCtaClicked)).toHaveBeenCalledWith({ cta: 'connect_data_source' });
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'no_data_card',
+        action: 'connect_data_source',
+        placement: 'card',
+      });
     });
   });
 });

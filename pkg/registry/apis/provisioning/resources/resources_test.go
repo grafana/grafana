@@ -17,6 +17,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	grafanautils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
@@ -68,6 +69,33 @@ func newWritableParsedResource(name string) (*ParsedResource, *MockDynamicResour
 		}}, nil)
 
 	return mustBuildParsedResource(name, client), client
+}
+
+func TestWriteResourceFileFromObject_RejectsPathTraversal(t *testing.T) {
+	repo := repository.NewMockReaderWriter(t)
+	// No Sync target → root folder is "", so the folder path is built straight
+	// from the (unsanitized) folder title. repo.Write must never be called; the
+	// mock fails the test if it is.
+	repo.On("Config").Return(replaceRepoConfig())
+
+	// Folder tree with a folder whose title traverses out of the repository.
+	tree := NewMockFolderTree(t)
+	tree.EXPECT().DirPath("evil", "").Return(Folder{ID: "evil", Title: "../../etc", Path: "../../etc"}, true)
+	folderMgr := NewFolderManager(repo, nil, tree, FolderKind)
+	mgr := NewResourcesManager(repo, folderMgr, nil, NewMockResourceClients(t))
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "dashboard.grafana.app/v1beta1",
+		"kind":       "Dashboard",
+		"metadata":   map[string]any{"name": "dash-1"},
+	}}
+	meta, err := grafanautils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetFolder("evil")
+
+	_, err = mgr.WriteResourceFileFromObject(context.Background(), obj, WriteOptions{})
+	require.Error(t, err)
+	require.ErrorIs(t, err, safepath.ErrPathTraversalAttempt)
 }
 
 func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
@@ -527,6 +555,11 @@ func TestDeleteOldResource(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "skipping delete of old resource old-uid")
 		require.Contains(t, err.Error(), "alerts/other-file.json")
+		// Must be the typed error so jobs.classifyWarning demotes it to a warning
+		// instead of failing the whole sync job.
+		var managedByOtherErr *ResourceManagedByOtherFileError
+		require.ErrorAs(t, err, &managedByOtherErr)
+		require.ErrorIs(t, err, ErrResourceManagedByOtherFile)
 		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 

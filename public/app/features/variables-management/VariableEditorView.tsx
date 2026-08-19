@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -11,6 +12,7 @@ import {
   useUpdateVariableMutation,
   type Variable,
 } from 'app/api/clients/dashboard/v2beta1';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -27,6 +29,8 @@ import { invalidatePredefinedVariableCaches, recreateVariable } from './api';
 import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
 import {
   buildVariableResource,
+  canManageGlobalVariables,
+  canManageVariableScope,
   getNextAvailableVariableName,
   getVariableFolderPickerExcludeUIDs,
   getVariableFolderUid,
@@ -53,9 +57,22 @@ export interface VariableEditorViewProps {
 export function VariableEditorView({ source, existingNames = [], onBack }: VariableEditorViewProps) {
   const styles = useStyles2(getStyles);
   const isNew = !source;
-  // '' represents the root Dashboards folder (global scope), matching the
-  // FolderPicker's uid for its root item so it renders as selected.
-  const [folderUid, setFolderUid] = useState<string>(source ? (getVariableFolderUid(source) ?? '') : '');
+  const allowGlobalScope = canManageGlobalVariables();
+  const [searchParams] = useSearchParams();
+  // '' is the FolderPicker root/global uid. For non-editors root is hidden, so start
+  // with undefined (empty selection) — NestedFolderPicker labels '' as "Dashboards"
+  // even when showRootFolder is false. New variables may preselect a folder via
+  // ?folderUid= from the folder Variables tab.
+  const [folderUid, setFolderUid] = useState<string | undefined>(() => {
+    if (source) {
+      return getVariableFolderUid(source) ?? '';
+    }
+    const folderFromUrl = searchParams.get('folderUid');
+    if (folderFromUrl) {
+      return folderFromUrl;
+    }
+    return allowGlobalScope ? '' : undefined;
+  });
   const [sceneVariable, setSceneVariable] = useState<SceneVariable>(() =>
     source
       ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -80,7 +97,47 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     source?.metadata.name,
     hasNameError
   );
-  const canSave = !isBusy && !hasNameError && !collisionError && !isCheckingName;
+
+  const sourceFolderUid = source ? getVariableFolderUid(source) : undefined;
+  // Folder CanEdit gates mutations the same way admission does. Skip the root/global
+  // uid ('' / undefined) — those use allowGlobalScope instead.
+  const { data: selectedFolder } = useGetFolderQueryFacade(folderUid ? folderUid : undefined);
+  // Reuse the selected-folder query when the source is still in that folder.
+  const needsSeparateSourceFolder = Boolean(sourceFolderUid && sourceFolderUid !== folderUid);
+  const { data: sourceFolder } = useGetFolderQueryFacade(needsSeparateSourceFolder ? sourceFolderUid : undefined);
+  // Trust canEdit only when the response matches the requested UID — isLoading alone
+  // can stay false while data still reflects the previous folder after a switch.
+  const selectedFolderMatches = Boolean(folderUid && selectedFolder?.uid === folderUid);
+  const sourceFolderMatches = Boolean(sourceFolderUid && sourceFolder?.uid === sourceFolderUid);
+  const selectedFolderCanEdit = selectedFolderMatches ? selectedFolder?.canEdit : undefined;
+  const sourceFolderCanEdit = needsSeparateSourceFolder
+    ? sourceFolderMatches
+      ? sourceFolder?.canEdit
+      : undefined
+    : selectedFolderCanEdit;
+  const selectedScopeReady = !folderUid || selectedFolderMatches;
+  const sourceScopeReady =
+    !sourceFolderUid || (needsSeparateSourceFolder ? sourceFolderMatches : selectedFolderMatches);
+
+  // Non-editors may only save folder-scoped variables (root/global requires Editor/Admin),
+  // and only into folders they can edit. Edit also requires source-scope rights so rename/move
+  // (create-then-delete) cannot leave a duplicate when the original cannot be deleted.
+  const hasValidFolderScope = allowGlobalScope || Boolean(folderUid);
+  const canManageSelectedScope = canManageVariableScope(folderUid, selectedFolderCanEdit, allowGlobalScope);
+  const canManageSourceScope =
+    sourceScopeReady && canManageVariableScope(sourceFolderUid ?? '', sourceFolderCanEdit, allowGlobalScope);
+  const canSave =
+    !isBusy &&
+    !hasNameError &&
+    !collisionError &&
+    !isCheckingName &&
+    hasValidFolderScope &&
+    selectedScopeReady &&
+    canManageSelectedScope &&
+    (isNew || canManageSourceScope);
+  const canDelete = !isBusy && Boolean(source) && canManageSourceScope;
+  // Viewers can open unmanageable scopes to inspect them, but must not relocate (copy-as-move).
+  const canChangeFolder = isNew || canManageSourceScope;
 
   const scene = useMemo(
     () =>
@@ -184,15 +241,27 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
         noMargin
         className={styles.folderField}
         label={t('variables-management.editor.folder-label', 'Folder')}
-        description={t(
-          'variables-management.editor.folder-description',
-          'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
-        )}
+        description={
+          allowGlobalScope || !isNew
+            ? t(
+                'variables-management.editor.folder-description',
+                'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
+              )
+            : t(
+                'variables-management.editor.folder-description-folder-only',
+                'Scope the variable to a folder you can edit'
+              )
+        }
       >
         <FolderPicker
-          showRootFolder
+          // When the picker is usable (create, or edit of a manageable scope), only list
+          // folders the user can edit — same as create. View-only / root listing is only
+          // needed to display an unmanageable current scope with the picker disabled.
+          showRootFolder={allowGlobalScope || !canChangeFolder}
+          permission={canChangeFolder ? 'edit' : 'view'}
           value={folderUid}
-          onChange={(uid) => setFolderUid(uid ?? '')}
+          disabled={!canChangeFolder}
+          onChange={(uid) => setFolderUid(allowGlobalScope || !isNew ? (uid ?? '') : uid)}
           excludeUIDs={getVariableFolderPickerExcludeUIDs()}
         />
       </Field>
@@ -220,7 +289,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
           <Trans i18nKey="variables-management.editor.cancel">Cancel</Trans>
         </Button>
         {!isNew && (
-          <Button variant="destructive" fill="outline" onClick={() => setShowDeleteModal(true)} disabled={isBusy}>
+          <Button variant="destructive" fill="outline" onClick={() => setShowDeleteModal(true)} disabled={!canDelete}>
             <Trans i18nKey="variables-management.editor.delete">Delete</Trans>
           </Button>
         )}

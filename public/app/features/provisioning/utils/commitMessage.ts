@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type ResourceKindKey } from './resourceKinds';
@@ -150,6 +151,9 @@ function buildSavedByTrailer({ userName, userLogin }: SavedByVars): string | und
  * spell it out themselves don't end up with a duplicate).
  */
 export function appendSavedByTrailer(message: string, vars: SavedByVars): string {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.ProvisioningUserAttribution, false)) {
+    return message;
+  }
   const trailer = buildSavedByTrailer(vars);
   if (!trailer) {
     return message;

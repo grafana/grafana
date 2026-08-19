@@ -219,12 +219,14 @@ export enum PluginExtensionPoints {
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DashboardEmpty = 'grafana/dashboard/empty',
+  DashboardSidebar = 'grafana/dashboard/sidebar/v1',
   DataSourceConfig = 'grafana/datasources/config',
   DataSourceConfigActions = 'grafana/datasources/config/actions',
   DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
   DataSourceConfigStatus = 'grafana/datasources/config/status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
+  UserProfileMenu = 'grafana/user/profile/menu/v1',
   TraceViewDetails = 'grafana/traceview/details',
   TraceViewHeaderActions = 'grafana/traceview/header/actions',
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
@@ -241,6 +243,7 @@ export enum PluginExtensionPoints {
   HomepageTabs = 'grafana/homepage/tabs/v1',
   HomepageAssistant = 'grafana/homepage/assistant/v1',
   HomepageExtra = 'grafana/homepage/extra/v1',
+  UserListTab = 'grafana/admin/user-list/tab/v1',
 }
 
 // Don't use directly in a plugin!

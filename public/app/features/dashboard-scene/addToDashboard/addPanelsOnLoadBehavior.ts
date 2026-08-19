@@ -43,10 +43,10 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
     return;
   }
 
-  if (scene.state.editPane.isActive) {
+  if (scene.state.sidebar.isActive) {
     addPanels();
   } else {
-    scene.state.editPane.addActivationHandler(() => {
+    scene.state.sidebar.addActivationHandler(() => {
       addPanels();
     });
   }

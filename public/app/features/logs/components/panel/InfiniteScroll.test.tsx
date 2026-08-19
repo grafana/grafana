@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { VariableSizeList } from 'react-window';
 
-import { createTheme, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
+import { createTheme, dateTimeForTimeZone, LoadingState, rangeUtil } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
 
 import { ScrollDirection, SCROLLING_THRESHOLD } from '../infiniteScrollUtils';
@@ -309,6 +309,229 @@ describe('InfiniteScroll', () => {
       });
     }
   );
+});
+
+// Regression tests for https://github.com/grafana/grafana/issues/129033 (infinite scroll stopping early).
+describe('InfiniteScroll consecutive loads (regression #129033)', () => {
+  // Page 1 sits early in the range so canScrollBottom returns a valid next window.
+  const pageFrom = absoluteRange.from + 2 * SCROLLING_THRESHOLD;
+  const pageTo = absoluteRange.from + 50 * SCROLLING_THRESHOLD;
+
+  // n log lines spread across [pageFrom, pageTo] (oldest first), a fresh array each call.
+  function makeLogs(n: number): LogListModel[] {
+    return Array.from({ length: n }, (_, i) => {
+      const ts = pageFrom + Math.round(((pageTo - pageFrom) * i) / Math.max(n - 1, 1));
+      return createLogLine({ entry: `line ${i}`, uid: `log-${i}`, timeEpochMs: ts });
+    });
+  }
+
+  function ui(
+    currentLogs: LogListModel[],
+    element: ReturnType<typeof getMockElement>['element'],
+    loadMore: jest.Mock,
+    loadingState: LoadingState = LoadingState.Done
+  ) {
+    return (
+      <InfiniteScroll
+        {...defaultProps}
+        sortOrder={LogsSortOrder.Ascending}
+        logs={currentLogs}
+        scrollElement={element as unknown as HTMLDivElement}
+        loadMore={loadMore}
+        loadingState={loadingState}
+        infiniteScrollMode="interval"
+      >
+        {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+          <VariableSizeList
+            height={100}
+            itemCount={itemCount}
+            itemSize={() => virtualization.getLineHeight()}
+            itemKey={getItemKey}
+            layout="vertical"
+            onItemsRendered={onItemsRendered}
+            style={{ overflow: 'scroll' }}
+            width="100%"
+          >
+            {Renderer}
+          </VariableSizeList>
+        )}
+      </InfiniteScroll>
+    );
+  }
+
+  function scroll(
+    element: { scrollTop: number },
+    events: Record<string, (e: Event | WheelEvent) => void>,
+    position: number,
+    timeStamp: number
+  ) {
+    element.scrollTop = position;
+    act(() => {
+      const event = new Event('scroll');
+      jest.spyOn(event, 'timeStamp', 'get').mockReturnValue(timeStamp);
+      events['scroll'](event);
+    });
+  }
+
+  test('resolves to idle when a settled load-more returns new rows (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const page1 = createLogs(pageFrom, pageTo);
+    const { rerender } = render(ui(page1, element, loadMoreMock, LoadingState.Done));
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+    // First scroll to the bottom triggers the first load-more.
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    // In flight: an intermediate same-length emission must not latch 'out-of-bounds'.
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Loading));
+    });
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+
+    // Settles with new rows -> idle, not end-of-range.
+    const grown = [...page1, createLogLine({ entry: 'log line 3', uid: 'log-3', timeEpochMs: pageTo })];
+    act(() => {
+      rerender(ui(grown, element, loadMoreMock, LoadingState.Done));
+    });
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+  });
+
+  test('flags out-of-bounds only when a settled load-more returns no new rows (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const page1 = createLogs(pageFrom, pageTo);
+    const { rerender } = render(ui(page1, element, loadMoreMock, LoadingState.Done));
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    // Settles with the same row count -> genuine end of range (fresh array each emission).
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Loading));
+    });
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Done));
+    });
+
+    expect(await screen.findByText('End of the selected time range.')).toBeInTheDocument();
+  });
+
+  test('does not flag end-of-range when query splitting grows rows across in-flight emissions (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const { rerender } = render(ui(makeLogs(2), element, loadMoreMock, LoadingState.Done));
+    expect(await screen.findByText('line 0')).toBeInTheDocument();
+
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    // Query splitting grows the rows across in-flight emissions...
+    act(() => {
+      rerender(ui(makeLogs(4), element, loadMoreMock, LoadingState.Loading));
+    });
+    act(() => {
+      rerender(ui(makeLogs(6), element, loadMoreMock, LoadingState.Loading));
+    });
+    // ...and Done carries the same rows as the last emission; comparing against the start count (2 -> 6) -> idle.
+    act(() => {
+      rerender(ui(makeLogs(6), element, loadMoreMock, LoadingState.Done));
+    });
+
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+  });
+
+  test('treats Streaming emissions as in flight, settling only on Done (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const page1 = createLogs(pageFrom, pageTo);
+    const { rerender } = render(ui(page1, element, loadMoreMock, LoadingState.Done));
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    // Streaming emissions must count as in flight — no settle or end-of-range mid-stream.
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Streaming));
+    });
+    expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+
+    // Settles on Done with new rows -> idle.
+    const grown = [...page1, createLogLine({ entry: 'log line 3', uid: 'log-3', timeEpochMs: pageTo })];
+    act(() => {
+      rerender(ui(grown, element, loadMoreMock, LoadingState.Done));
+    });
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+  });
+
+  test('recovers to idle (not stuck) when a load-more errors (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const page1 = createLogs(pageFrom, pageTo);
+    const { rerender } = render(ui(page1, element, loadMoreMock, LoadingState.Done));
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    // In flight: the loading spinner is shown.
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Loading));
+    });
+    expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+
+    // Errors (no new rows) must return to idle, not stick on the spinner or latch end-of-range.
+    act(() => {
+      rerender(ui(page1, element, loadMoreMock, LoadingState.Error));
+    });
+    expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+  });
+
+  test('re-running the query clears a stale out-of-bounds (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(50);
+
+    const page1 = createLogs(pageFrom, pageTo);
+    const { rerender } = render(ui(page1, element, loadMoreMock, LoadingState.Done));
+
+    expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+    // Reach out-of-bounds: a settled load-more returns no new rows.
+    scroll(element, events, 59, 1);
+    scroll(element, events, 60, 600);
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Loading));
+    });
+    act(() => {
+      rerender(ui(createLogs(pageFrom, pageTo), element, loadMoreMock, LoadingState.Done));
+    });
+    expect(await screen.findByText('End of the selected time range.')).toBeInTheDocument();
+
+    // Re-running the query replaces the logs (not a load-more); the stale out-of-bounds must clear.
+    act(() => {
+      rerender(ui(makeLogs(3), element, loadMoreMock, LoadingState.Done));
+    });
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+  });
 });
 
 function createLogs(from: number, to: number) {

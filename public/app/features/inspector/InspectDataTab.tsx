@@ -17,6 +17,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
+import { TableNG } from '@grafana/ui/unstable';
 import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { dataFrameToLogsModel } from '../logs/logsModel';
@@ -38,6 +39,8 @@ interface Props {
   hasTransformations?: boolean;
   formattedDataDescription?: string;
   onOptionsChange?: (options: GetDataOptions) => void;
+  /** Renders the data with TableNG instead of the legacy Table (TableRT), gated by the table.inspectDataTableNG feature toggle */
+  useTableNG?: boolean;
 }
 
 interface State {
@@ -96,14 +99,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
   }
 
-  exportCsv(dataFrames: DataFrame[], hasLogs: boolean) {
+  exportCsv(dataFrames: DataFrame[]) {
     const { dataName } = this.props;
     const { transformId } = this.state;
     const dataFrame = dataFrames[this.state.dataFrameIndex];
-
-    if (hasLogs) {
-      reportInteraction('grafana_logs_download_clicked', { app: this.props.app, format: 'csv' });
-    }
 
     downloadDataFrameAsCsv(dataFrame, dataName, {}, transformId, this.state.excelCompatibilityMode);
   }
@@ -223,7 +222,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   renderActions(dataFrames: DataFrame[], hasLogs: boolean, hasTraces: boolean, hasServiceGraph: boolean) {
     return (
       <>
-        <Button variant="primary" onClick={() => this.exportCsv(dataFrames, hasLogs)} size="sm">
+        <Button variant="primary" onClick={() => this.exportCsv(dataFrames)} size="sm">
           <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
         </Button>
         {hasLogs && !config.exploreHideLogsDownload && (
@@ -246,7 +245,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isLoading, options, data, formattedDataDescription, onOptionsChange, hasTransformations } = this.props;
+    const { isLoading, options, data, formattedDataDescription, onOptionsChange, hasTransformations, useTableNG } =
+      this.props;
     const { dataFrameIndex, transformationOptions, selectedDataFrame, excelCompatibilityMode } = this.state;
     const styles = getPanelInspectorStyles();
 
@@ -298,6 +298,16 @@ export class InspectDataTab extends PureComponent<Props, State> {
             {({ width, height }: Size) => {
               if (width === 0) {
                 return null;
+              }
+
+              if (useTableNG) {
+                // TableNG sizes its grid to its DOM container rather than to these props,
+                // so it needs an explicitly-sized wrapper here (unlike the legacy Table).
+                return (
+                  <div style={{ width, height }}>
+                    <TableNG width={width} height={height} data={dataFrame} showTypeIcons={true} />
+                  </div>
+                );
               }
 
               return <Table width={width} height={height} data={dataFrame} showTypeIcons={true} />;

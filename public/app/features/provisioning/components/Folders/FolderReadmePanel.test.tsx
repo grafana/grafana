@@ -1,24 +1,26 @@
-import mermaid from 'mermaid';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
+import { renderMermaidDiagrams } from '../../utils/mermaid';
 
 import { FOLDER_README_ANCHOR_ID, FolderReadmePanel } from './FolderReadmePanel';
 import { FolderReadmeEvents } from './analytics/main';
 
 jest.mock('../../hooks/useFolderReadme');
 
-jest.mock('mermaid', () => ({
-  __esModule: true,
-  default: {
-    initialize: jest.fn(),
-    render: jest.fn(),
-  },
+// The renderer's behavior is unit-tested in utils/mermaid.test.ts; here we only
+// verify the panel wires it to the rendered README. (Mocking the util also avoids
+// a jsdom HTML-parser quirk that drops `<pre>` preceded by a text node, so the
+// real markdown pipeline can't surface a mermaid code block in the test DOM.)
+jest.mock('../../utils/mermaid', () => ({
+  renderMermaidDiagrams: jest.fn(),
+  MERMAID_DIAGRAM_CLASS: 'markdown-mermaid',
+  MERMAID_ERROR_CLASS: 'markdown-mermaid-error',
 }));
 
-const mockMermaidRender = mermaid.render as jest.MockedFunction<typeof mermaid.render>;
+const mockRenderMermaidDiagrams = renderMermaidDiagrams as jest.MockedFunction<typeof renderMermaidDiagrams>;
 
 const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
 const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
@@ -228,39 +230,23 @@ describe('FolderReadmePanel', () => {
   });
 
   describe('mermaid diagrams', () => {
-    const mermaidReadme = ['# Diagram', '', '```mermaid', 'graph TD; A-->B;', '```', ''].join('\n');
-
-    it('renders ```mermaid fenced blocks as diagrams', async () => {
-      mockMermaidRender.mockResolvedValue({ svg: '<svg data-testid="mermaid-svg"></svg>' } as never);
-      setReadmeResult({ markdownContent: mermaidReadme });
+    it('runs the mermaid renderer over the rendered README content', async () => {
+      setReadmeResult({ markdownContent: '# Diagram\n\nBody text.' });
 
       const { container } = setup();
 
-      expect(await screen.findByTestId('mermaid-svg')).toBeInTheDocument();
-      // The original code block is replaced by the rendered diagram.
-      expect(container.querySelector('code.language-mermaid')).toBeNull();
-      expect(mockMermaidRender).toHaveBeenCalledWith(expect.any(String), 'graph TD; A-->B;\n');
+      await waitFor(() => expect(mockRenderMermaidDiagrams).toHaveBeenCalled());
+      const [element, options] = mockRenderMermaidDiagrams.mock.calls[0];
+      expect(element).toBe(container.querySelector('.markdown-html'));
+      expect(options).toEqual(expect.objectContaining({ isDark: expect.any(Boolean) }));
     });
 
-    it('keeps the source and flags the block when a diagram fails to render', async () => {
-      mockMermaidRender.mockRejectedValue(new Error('parse error'));
-      setReadmeResult({ markdownContent: mermaidReadme });
-
-      const { container } = setup();
-
-      await waitFor(() => expect(container.querySelector('.markdown-mermaid-error')).not.toBeNull());
-      // A broken diagram doesn't hide the rest of the README or its own source.
-      expect(screen.getByText(/graph TD/)).toBeInTheDocument();
-      expect(screen.getByText('Diagram')).toBeInTheDocument();
-    });
-
-    it('does not load mermaid for READMEs without diagrams', async () => {
-      setReadmeResult({ markdownContent: '# Hello\n\nNo diagrams here.' });
+    it('does not run the mermaid renderer when there is no README to render', () => {
+      setReadmeResult({ status: 'missing', markdownContent: undefined });
 
       setup();
 
-      await screen.findByText('Hello');
-      expect(mockMermaidRender).not.toHaveBeenCalled();
+      expect(mockRenderMermaidDiagrams).not.toHaveBeenCalled();
     });
   });
 

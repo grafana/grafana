@@ -165,8 +165,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: 'initial',
     }),
     switchLabel: css({
-      fontFamily: theme.typography.fontFamilyMonospace,
-      fontSize: theme.typography.bodySmall.fontSize,
+      ...theme.typography.bodySmall,
     }),
   };
 }
