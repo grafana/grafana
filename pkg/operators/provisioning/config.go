@@ -342,9 +342,12 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 }
 
 // CoordinationRestConfig builds a rest.Config for talking to the
-// coordination.grafana.app API on the same apiserver as provisioning. It mints
-// tokens scoped to the coordination group audience (not provisioning's), so the
-// leader elector's ClusterLease reads/writes are authorized correctly.
+// coordination.grafana.app API. Like other groups without a dedicated server URL,
+// coordination is served by the aggregated API server, so this targets
+// aggregated_server_url — not provisioning_server_url. It mints tokens whose
+// audiences include the coordination group (and provisioning, matching the
+// aggregated-group convention), so the leader elector's ClusterLease reads/writes
+// are authorized correctly.
 func (c *ControllerConfig) CoordinationRestConfig() (*rest.Config, error) {
 	tokenExchangeClient, err := c.TokenExchangeClient()
 	if err != nil {
@@ -357,18 +360,18 @@ func (c *ControllerConfig) CoordinationRestConfig() (*rest.Config, error) {
 	}
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
-	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
-	if provisioningServerURL == "" {
-		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
+	aggregatedServerURL := operatorSec.Key("aggregated_server_url").String()
+	if aggregatedServerURL == "" {
+		return nil, fmt.Errorf("aggregated_server_url is required in [operator] section for the coordination API")
 	}
 
 	return &rest.Config{
 		APIPath: "/apis",
-		Host:    provisioningServerURL,
-		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
+		Host:    aggregatedServerURL,
+		WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
 			tokenExchangeClient,
-			coordinationv0alpha1.APIGroup,
-			clientauth.WildcardNamespace,
+			clientauth.NewStaticAudienceProvider(coordinationv0alpha1.APIGroup, provisioning.GROUP),
+			clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
 		),
 		TLSClientConfig: tlsConfig,
 		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
