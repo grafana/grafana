@@ -198,6 +198,9 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     if (effectiveDropTarget instanceof TabsLayoutManager) {
       this._clearDropPosition();
       this._lastDropTarget?.setIsDropTarget?.(false);
+      if (sourceDropTarget instanceof AutoGridLayoutManager) {
+        sourceDropTarget.state.layout.endExternalDrag();
+      }
     } else if (gridItem && sourceDropTarget && effectiveDropTarget && sourceDropTarget !== effectiveDropTarget) {
       setTimeout(() => {
         moveGridItem({
