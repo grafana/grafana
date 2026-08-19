@@ -10,6 +10,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	coordinationv0alpha1 "github.com/grafana/grafana/apps/coordination/pkg/apis/coordination/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
 
@@ -122,4 +123,38 @@ func TestClusterLeaseAuthorizer_WatchFilterScopesToOwner(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, []bool{true, false}, keep)
+}
+
+func TestClusterLeaseAuthorizer_RBACGrantedUserSeesAll(t *testing.T) {
+	// A non-admin, non-service user granted the RBAC action is allowed and is NOT
+	// owner-scoped (it never owns leases, so scoping would hide everything).
+	a := &leaseStorageAuthorizer{accessControl: actest.FakeAccessControl{ExpectedEvaluate: true}}
+	ctx := ctxFor(tenantUser())
+
+	require.NoError(t, a.AfterGet(ctx, clusterLease("owned-by-a", "access-policy:a")))
+
+	list := &coordinationv0alpha1.ClusterLeaseList{Items: []coordinationv0alpha1.ClusterLease{
+		*clusterLease("a1", "access-policy:a"),
+		*clusterLease("b1", "access-policy:b"),
+	}}
+	out, err := a.FilterList(ctx, list.Copy())
+	require.NoError(t, err)
+	require.Len(t, out.(*coordinationv0alpha1.ClusterLeaseList).Items, 2, "granted user sees the whole keyspace")
+
+	filter, err := a.WatchFilter(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, filter)
+}
+
+func TestClusterLeaseAuthorizer_RBACDeniedUser(t *testing.T) {
+	// A non-admin, non-service user without the RBAC action is denied everywhere.
+	a := &leaseStorageAuthorizer{accessControl: actest.FakeAccessControl{ExpectedEvaluate: false}}
+	ctx := ctxFor(tenantUser())
+
+	require.ErrorIs(t, a.BeforeCreate(ctx, clusterLease("x", "")), storewrapper.ErrUnauthorized)
+	require.ErrorIs(t, a.AfterGet(ctx, clusterLease("x", "access-policy:a")), storewrapper.ErrUnauthorized)
+	_, err := a.FilterList(ctx, (&coordinationv0alpha1.ClusterLeaseList{}).Copy())
+	require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
+	_, err = a.WatchFilter(ctx)
+	require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
 }

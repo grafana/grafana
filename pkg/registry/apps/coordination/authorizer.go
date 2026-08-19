@@ -9,8 +9,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
 
@@ -26,36 +28,53 @@ const (
 )
 
 // leaseStorageAuthorizer is the storage-level authorizer for the cluster-scoped
-// Lease kind. Cluster scope is a single global keyspace shared across every stack,
+// ClusterLease. Cluster scope is a single global keyspace shared across every stack,
 // so this authorizer does two things:
 //
-//  1. Fleet gate — only Grafana admins and service identities (service accounts /
-//     access policies) may touch the kind at all; tenant tokens are denied for
-//     read, write, and watch. Fail-closed.
-//  2. Owner scoping — among service identities, each lease is owned by the service
-//     that created it. A service may only get/update/delete its own leases, and
-//     list/watch return only its own. Grafana admins bypass owner scoping so they
-//     can inspect and administer the whole keyspace.
+//  1. Access gate (fail-closed) — Grafana admins and service identities are allowed
+//     on the fast path; any other identity needs a fine-grained RBAC action
+//     (coordination.clusterleases:read / :write) granted by a role. It gates read,
+//     write, and watch.
+//  2. Owner scoping — each lease is owned by the service that created it. A service
+//     identity may only get/update/delete its own leases, and list/watch return only
+//     its own. Grafana admins and RBAC-granted (non-service) identities bypass owner
+//     scoping so they can inspect and administer the whole keyspace.
 type leaseStorageAuthorizer struct {
-	logger log.Logger
+	logger        log.Logger
+	accessControl accesscontrol.AccessControl
 }
 
 var _ storewrapper.ResourceStorageAuthorizer = (*leaseStorageAuthorizer)(nil)
 
-// caller returns the requester and its owner key, after enforcing the fleet gate.
-func (a *leaseStorageAuthorizer) caller(ctx context.Context) (identity.Requester, string, error) {
+// authorize enforces access for an operation needing `action` and returns the
+// caller's owner key and whether results must be owner-scoped.
+func (a *leaseStorageAuthorizer) authorize(ctx context.Context, action string) (owner string, ownerScoped bool, err error) {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		return nil, "", storewrapper.ErrUnauthorized
+		return "", false, storewrapper.ErrUnauthorized
 	}
-	if !isServiceIdentity(requester) {
-		return nil, "", storewrapper.ErrUnauthorized
+	// Grafana admins have unscoped access.
+	if requester.GetIsGrafanaAdmin() {
+		return requester.GetUID(), false, nil
 	}
-	return requester, requester.GetUID(), nil
+	// Service identities (operators) are allowed and owner-scoped, so one service
+	// never sees or touches another's leases.
+	if requester.IsIdentityType(claims.TypeServiceAccount, claims.TypeAccessPolicy) {
+		return requester.GetUID(), true, nil
+	}
+	// Everyone else needs the fine-grained RBAC action; a granted identity is not
+	// owner-scoped (it never owns leases and is trusted to see the whole keyspace).
+	if a.accessControl != nil {
+		hasAccess, evalErr := a.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action))
+		if evalErr == nil && hasAccess {
+			return requester.GetUID(), false, nil
+		}
+	}
+	return "", false, storewrapper.ErrUnauthorized
 }
 
 func (a *leaseStorageAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
-	_, owner, err := a.caller(ctx)
+	owner, _, err := a.authorize(ctx, ActionClusterLeasesWrite)
 	if err != nil {
 		return err
 	}
@@ -65,12 +84,12 @@ func (a *leaseStorageAuthorizer) BeforeCreate(ctx context.Context, obj runtime.O
 }
 
 func (a *leaseStorageAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
-	requester, owner, err := a.caller(ctx)
+	owner, ownerScoped, err := a.authorize(ctx, ActionClusterLeasesWrite)
 	if err != nil {
 		return err
 	}
 	existing := getOwner(oldObj)
-	if !requester.GetIsGrafanaAdmin() && existing != "" && existing != owner {
+	if ownerScoped && existing != "" && existing != owner {
 		// A different service cannot renew or steal another service's lease.
 		return storewrapper.ErrUnauthorized
 	}
@@ -83,35 +102,32 @@ func (a *leaseStorageAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj r
 }
 
 func (a *leaseStorageAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
-	return a.checkOwned(ctx, obj)
+	return a.checkOwned(ctx, ActionClusterLeasesWrite, obj)
 }
 
 func (a *leaseStorageAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
-	return a.checkOwned(ctx, obj)
+	return a.checkOwned(ctx, ActionClusterLeasesRead, obj)
 }
 
-// checkOwned allows the operation only if the caller is a Grafana admin or the
-// object's owner.
-func (a *leaseStorageAuthorizer) checkOwned(ctx context.Context, obj runtime.Object) error {
-	requester, owner, err := a.caller(ctx)
+// checkOwned allows the operation only if the caller is authorized and, when
+// owner-scoped, owns the object.
+func (a *leaseStorageAuthorizer) checkOwned(ctx context.Context, action string, obj runtime.Object) error {
+	owner, ownerScoped, err := a.authorize(ctx, action)
 	if err != nil {
 		return err
 	}
-	if requester.GetIsGrafanaAdmin() {
-		return nil
-	}
-	if getOwner(obj) != owner {
+	if ownerScoped && getOwner(obj) != owner {
 		return storewrapper.ErrUnauthorized
 	}
 	return nil
 }
 
 func (a *leaseStorageAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
-	requester, owner, err := a.caller(ctx)
+	owner, ownerScoped, err := a.authorize(ctx, ActionClusterLeasesRead)
 	if err != nil {
 		return nil, err
 	}
-	if requester.GetIsGrafanaAdmin() {
+	if !ownerScoped {
 		return list, nil
 	}
 	items, err := meta.ExtractList(list)
@@ -131,12 +147,12 @@ func (a *leaseStorageAuthorizer) FilterList(ctx context.Context, list runtime.Ob
 }
 
 func (a *leaseStorageAuthorizer) WatchFilter(ctx context.Context) (storewrapper.WatchEventFilter, error) {
-	requester, owner, err := a.caller(ctx)
+	owner, ownerScoped, err := a.authorize(ctx, ActionClusterLeasesRead)
 	if err != nil {
 		// Fail-closed: the wrapper refuses to start the watch on a nil filter.
 		return storewrapper.RejectAllWatchFilter, err
 	}
-	if requester.GetIsGrafanaAdmin() {
+	if !ownerScoped {
 		return storewrapper.PassThroughWatchFilter, nil
 	}
 	// Per-event filter: a service only observes changes to leases it owns.

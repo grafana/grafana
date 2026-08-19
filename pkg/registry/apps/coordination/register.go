@@ -17,6 +17,7 @@ import (
 	coordinationapp "github.com/grafana/grafana/apps/coordination/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,13 +35,23 @@ var (
 // across a multi-tenant operator's replicas) that is owned by no tenant.
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	logger log.Logger
+	logger        log.Logger
+	accessControl accesscontrol.AccessControl
 }
 
 // RegisterAppInstaller builds the coordination app installer.
-func RegisterAppInstaller(cfg *setting.Cfg) (*AppInstaller, error) {
+func RegisterAppInstaller(
+	cfg *setting.Cfg,
+	accessControlService accesscontrol.Service,
+	ac accesscontrol.AccessControl,
+) (*AppInstaller, error) {
+	if err := DeclareFixedRoles(accessControlService); err != nil {
+		return nil, err
+	}
+
 	installer := &AppInstaller{
-		logger: log.New("coordination.api"),
+		logger:        log.New("coordination.api"),
+		accessControl: ac,
 	}
 	// Run the lease garbage collector on the served app: it watches Leases and
 	// ClusterLeases and deletes those abandoned past the grace period. The grace
@@ -65,12 +76,15 @@ func RegisterAppInstaller(cfg *setting.Cfg) (*AppInstaller, error) {
 	return installer, nil
 }
 
-// GetAuthorizer is the API-level authorizer for both kinds. Coordination leases are
-// default-deny to regular users: only Grafana admins (on-prem) and service identities
-// (service accounts / access policies, in Cloud) may reach them. For the namespaced
-// Lease, the caller's namespace-scoped token additionally confines it to its own
-// tenant; for the cluster-scoped ClusterLease, the storage authorizer (below) is the
-// fail-closed backstop and adds per-service owner scoping.
+// GetAuthorizer is the API-level authorizer for both kinds. Grafana admins and
+// service identities (service accounts / access policies — i.e. operators) are
+// allowed on the fast path. Every other identity is subject to fine-grained RBAC:
+// the verb maps to a coordination read/write action, which a role must grant. This
+// is what makes access "not admin-only" — a custom role can grant lease read/write
+// to specific users, teams, or service accounts. For the namespaced Lease the
+// caller's namespace-scoped token additionally confines it to its own tenant; for
+// the cluster-scoped ClusterLease the storage authorizer (below) is the fail-closed
+// backstop and adds per-service owner scoping.
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -84,7 +98,23 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			if isServiceIdentity(requester) {
 				return authorizer.DecisionAllow, "", nil
 			}
-			return authorizer.DecisionDeny, "coordination leases are restricted to service identities", nil
+
+			action := actionForVerb(attr.GetResource(), attr.GetVerb())
+			if action == "" {
+				return authorizer.DecisionDeny, "unsupported verb: " + attr.GetVerb(), nil
+			}
+			if a.accessControl == nil {
+				return authorizer.DecisionDeny, "coordination leases are restricted to service identities", nil
+			}
+			hasAccess, err := a.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action))
+			if err != nil {
+				a.logger.Error("failed to evaluate coordination permission", "action", action, "error", err)
+				return authorizer.DecisionDeny, "permission evaluation failed", err
+			}
+			if hasAccess {
+				return authorizer.DecisionAllow, "", nil
+			}
+			return authorizer.DecisionDeny, "insufficient permissions", nil
 		},
 	)
 }
@@ -100,7 +130,7 @@ func (a *AppInstaller) GetClusterScopedStorageAuthorizer(gr schema.GroupResource
 	if gr.Resource != coordinationv0alpha1.ClusterLeaseKind().Plural() {
 		return nil
 	}
-	return &leaseStorageAuthorizer{logger: a.logger}
+	return &leaseStorageAuthorizer{logger: a.logger, accessControl: a.accessControl}
 }
 
 // isServiceIdentity reports whether the requester may act on coordination leases:
