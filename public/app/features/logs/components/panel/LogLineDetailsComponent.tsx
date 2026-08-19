@@ -62,8 +62,8 @@ export const LogLineDetailsComponent = memo(
 
     const fieldsWithLinks = useMemo(() => {
       const fieldsWithLinks = log.fields.filter((f) => f.links?.length);
-      const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== log.entryFieldIndex).sort();
-      const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === log.entryFieldIndex).sort();
+      const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== log.entryFieldIndex);
+      const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === log.entryFieldIndex);
       const fieldsWithLinksFromVariableMap = createLogLineLinks(hiddenFieldsWithLinks);
       return {
         links: displayedFieldsWithLinks,
