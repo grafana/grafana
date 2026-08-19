@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { AppEvents } from '@grafana/data';
@@ -228,7 +228,10 @@ describe('PromoteConfirmModal', () => {
 
     // backendSrv schedules its global toast 50ms after a failed request settles, so give it a
     // chance to fire before asserting it didn't.
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+
     expect(appEventsEmitSpy).not.toHaveBeenCalledWith(AppEvents.alertWarning, expect.anything());
     expect(appEventsEmitSpy).not.toHaveBeenCalledWith(AppEvents.alertError, expect.anything());
 
