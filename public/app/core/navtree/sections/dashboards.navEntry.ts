@@ -55,14 +55,14 @@ const DASHBOARD_CHILDREN: NavEntryBuilder[] = [
   {
     when: () =>
       isSignedIn() &&
-      getFeatureFlagClient().getBooleanValue(FlagKeys.GlobalDashboardVariables, false) &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false) &&
       dashboardVariablesAccess(),
     build: () => ({
       text: 'Variables',
       subTitle: 'Template variables shared across dashboards, globally or per folder',
       id: 'dashboards/variables',
       url: '/dashboards/variables',
-      icon: 'brackets-curly',
+      icon: 'gf-variable',
     }),
   },
   {

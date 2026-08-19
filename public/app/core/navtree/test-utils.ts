@@ -1,12 +1,15 @@
-import { type NavModelItem } from '@grafana/data';
+import type { NavModelItem, OrgRole } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
+/** The role names tests pass, kept in sync with the OrgRole enum values. */
+type OrgRoleName = `${OrgRole}`;
+
 export interface NavTestState {
   permissions?: string[];
-  orgRole?: string;
+  orgRole?: OrgRoleName;
   isSignedIn?: boolean;
   isGrafanaAdmin?: boolean;
   featureToggles?: typeof config.featureToggles;
@@ -32,7 +35,7 @@ export function setupNavTestState({
   contextSrv.user = {
     ...contextSrv.user,
     permissions: Object.fromEntries(permissions.map((action) => [action, true])),
-    orgRole: orgRoleOf(orgRole),
+    orgRole: orgRole as OrgRole,
     isSignedIn,
     name: 'Test User',
     login: 'testuser',
@@ -64,11 +67,6 @@ export function setupNavTestState({
     featureToggles,
     ...configOverrides,
   });
-}
-
-function orgRoleOf(role: string): (typeof contextSrv.user)['orgRole'] {
-  // The builders treat orgRole as a plain string; tests exercise real role names
-  return role as (typeof contextSrv.user)['orgRole'];
 }
 
 export const navIds = (nodes: NavModelItem[]) => nodes.map((node) => node.id);

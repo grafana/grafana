@@ -75,3 +75,6 @@ export const NavID = {
   help: 'help',
   profile: 'profile',
 } as const;
+
+/** The set of known nav ids (the literal values of NavID). */
+export type NavId = (typeof NavID)[keyof typeof NavID];

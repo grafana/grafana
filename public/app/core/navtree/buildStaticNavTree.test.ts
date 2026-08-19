@@ -36,10 +36,10 @@ describe('buildStaticNavTree', () => {
     });
 
     it('shows global variables under dashboards with the toggle and write access', () => {
-      // globalDashboardVariables is an OpenFeature flag, not a config toggle
+      // grafana.dashboardGlobalVariables is an OpenFeature flag, not a config toggle
       setup({
         permissions: [AccessControlAction.DashboardsRead, AccessControlAction.DashboardsWrite],
-        openFeatureFlags: { globalDashboardVariables: true },
+        openFeatureFlags: { 'grafana.dashboardGlobalVariables': true },
       });
 
       const children = ids(findById(buildStaticNavTree(), NavID.dashboards)?.children ?? []);

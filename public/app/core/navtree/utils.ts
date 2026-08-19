@@ -1,10 +1,10 @@
-import { type NavModelItem } from '@grafana/data';
+import { type NavModelItem, userHasAnyPermission } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { NavID } from './constants';
+import { NavID, type NavId } from './constants';
 
-export const hasAny = (...actions: string[]) => actions.some((action) => contextSrv.hasPermission(action));
+export const hasAny = (...actions: string[]) => userHasAnyPermission(actions, contextSrv.user);
 export const isSignedIn = () => contextSrv.isSignedIn;
 
 export interface NavEntryBuilder {
@@ -23,7 +23,7 @@ export const buildEntries = (entries: NavEntryBuilder[]): NavModelItem[] =>
 
 // Admin subsections that exist as attachment targets for plugin pages and
 // registered enterprise items, pruned when nothing attached
-const PRUNABLE_ADMIN_SECTIONS: string[] = [NavID.cfgGeneral, NavID.cfgPlugins, NavID.cfgAccess];
+const PRUNABLE_ADMIN_SECTIONS: NavId[] = [NavID.cfgGeneral, NavID.cfgPlugins, NavID.cfgAccess];
 
 /** Depth-first search of a nav tree by item id */
 export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | undefined {
@@ -44,7 +44,12 @@ export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | u
  * items are declared sub-url agnostic. Anchor-only and relative urls (Help's
  * `#`) are left alone. Keying off the leading slash is safe because the
  * prefix is applied exactly once per build pipeline, before any
- * already-prefixed runtime content is copied in. Returns a new tree.
+ * already-prefixed runtime content is copied in.
+ *
+ * Reads config.appSubUrl directly rather than locationUtil.assureBaseUrl:
+ * getInitialNavTree runs during configureStore, before app.ts calls
+ * locationUtil.initialize, so locationUtil's config is still empty here.
+ * Returns a new tree.
  */
 export function applyAppSubUrl(tree: NavModelItem[]): NavModelItem[] {
   if (!config.appSubUrl) {
@@ -87,7 +92,7 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
       return {
         ...node,
         children: node.children.filter(
-          (child) => !(child.id && PRUNABLE_ADMIN_SECTIONS.includes(child.id) && isEmpty(child))
+          (child) => !(child.id && PRUNABLE_ADMIN_SECTIONS.some((id) => id === child.id) && isEmpty(child))
         ),
       };
     })
