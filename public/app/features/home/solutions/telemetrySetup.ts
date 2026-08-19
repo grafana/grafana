@@ -23,6 +23,8 @@ export const TELEMETRY_SETUP_DOCS = {
   traces: 'https://grafana.com/docs/tempo/latest/set-up-for-tracing/',
 } satisfies Record<TelemetryType, string>;
 
+const GRAFANA_CLOUD_DOCS_BASE_URL = 'https://grafana.com/docs/grafana-cloud';
+
 const setup: Record<
   TelemetryType,
   { action: () => string; guidePath?: string; cloudDocsHref: string; docsHref: string }
@@ -30,18 +32,18 @@ const setup: Record<
   metrics: {
     action: () => t('home.overview.available.metrics.action', 'Connect metrics'),
     guidePath: `/a/${SETUPGUIDE_PLUGIN_ID}/getting-started/prometheus`,
-    cloudDocsHref: 'https://grafana.com/docs/grafana-cloud/send-data/metrics/',
+    cloudDocsHref: `${GRAFANA_CLOUD_DOCS_BASE_URL}/send-data/metrics/`,
     docsHref: TELEMETRY_SETUP_DOCS.metrics,
   },
   logs: {
     action: () => t('home.overview.available.logs.action', 'Add logs'),
     guidePath: `/a/${SETUPGUIDE_PLUGIN_ID}/getting-started/logs-onboarding`,
-    cloudDocsHref: 'https://grafana.com/docs/grafana-cloud/send-data/logs/',
+    cloudDocsHref: `${GRAFANA_CLOUD_DOCS_BASE_URL}/send-data/logs/`,
     docsHref: TELEMETRY_SETUP_DOCS.logs,
   },
   traces: {
     action: () => t('home.overview.available.traces.action', 'Instrument traces'),
-    cloudDocsHref: 'https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/instrument-apps/',
+    cloudDocsHref: `${GRAFANA_CLOUD_DOCS_BASE_URL}/send-data/traces/set-up/instrument-apps/`,
     docsHref: TELEMETRY_SETUP_DOCS.traces,
   },
 };
