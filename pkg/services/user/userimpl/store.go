@@ -694,36 +694,34 @@ type searchUserJoin struct {
 	Condition string
 }
 
-type searchUserConditionPart struct {
-	SQL      string
-	Value    any
-	HasValue bool
-}
-
 type searchUserFilter struct {
-	Kind      string
 	Condition string
 	Values    []any
-	Parts     []searchUserConditionPart
+	Prefix    string
+	Suffix    string
+	Value     any
+	HasValue  bool
+}
+
+func (q searchUserFilter) IsIn() bool {
+	return q.Values != nil
 }
 
 type searchUsersQuery struct {
 	sqltemplate.SQLTemplate
-	UserTable       string
-	UserAuthTable   string
-	Joins           []searchUserJoin
-	OrgID           int64
-	AccessAll       bool
-	AccessUserIDs   []any
-	QueryPattern    string
-	IsDisabled      *bool
-	AuthModule      string
-	Filters         []searchUserFilter
-	Sorts           []string
-	UseDefaultSort  bool
-	Limit           int
-	Offset          int
-	IncludeAuthJoin bool
+	UserTable     string
+	UserAuthTable string
+	Joins         []searchUserJoin
+	OrgID         int64
+	AccessAll     bool
+	AccessUserIDs []any
+	QueryPattern  string
+	IsDisabled    *bool
+	AuthModule    string
+	Filters       []searchUserFilter
+	Sorts         []string
+	Limit         int
+	Offset        int
 }
 
 func (q searchUsersQuery) IsDisabledValue() bool {
@@ -732,14 +730,11 @@ func (q searchUsersQuery) IsDisabledValue() bool {
 
 func (q searchUsersQuery) Validate() error {
 	for _, filter := range q.Filters {
-		switch filter.Kind {
-		case "in":
-		case "where":
-			if len(filter.Parts) == 0 {
-				return fmt.Errorf("search filter condition must not be empty")
-			}
-		default:
-			return fmt.Errorf("unknown search filter kind %q", filter.Kind)
+		if filter.IsIn() {
+			continue
+		}
+		if filter.Prefix == "" && filter.Suffix == "" && !filter.HasValue {
+			return fmt.Errorf("search filter condition must not be empty")
 		}
 	}
 	return nil
@@ -768,18 +763,17 @@ func newSearchUserWhereFilter(condition string, params any) (searchUserFilter, e
 		if params != nil {
 			return searchUserFilter{}, fmt.Errorf("search filter condition has no placeholder for its value")
 		}
-		return searchUserFilter{Kind: "where", Parts: []searchUserConditionPart{{SQL: condition}}}, nil
+		return searchUserFilter{Prefix: condition}, nil
 	}
 	if len(parts) != 2 {
 		return searchUserFilter{}, fmt.Errorf("search filter condition must have one placeholder")
 	}
 
 	return searchUserFilter{
-		Kind: "where",
-		Parts: []searchUserConditionPart{
-			{SQL: parts[0]},
-			{SQL: parts[1], Value: params, HasValue: true},
-		},
+		Prefix:   parts[0],
+		Suffix:   parts[1],
+		Value:    params,
+		HasValue: true,
 	}, nil
 }
 
@@ -800,7 +794,6 @@ func buildSearchUserFilters(dbHelper *legacysql.LegacyDatabaseHelper, filters []
 		if in := filter.InCondition(); in != nil {
 			values := searchInFilterArgs(in.Params)
 			queryFilters = append(queryFilters, searchUserFilter{
-				Kind:      "in",
 				Condition: in.Condition,
 				Values:    values,
 			})
@@ -841,29 +834,25 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		}
 
 		sorts := make([]string, 0)
-		if len(query.SortOpts) > 0 {
-			for i := range query.SortOpts {
-				for j := range query.SortOpts[i].Filter {
-					sorts = append(sorts, query.SortOpts[i].Filter[j].OrderBy())
-				}
+		for i := range query.SortOpts {
+			for j := range query.SortOpts[i].Filter {
+				sorts = append(sorts, query.SortOpts[i].Filter[j].OrderBy())
 			}
 		}
 
 		searchQuery := searchUsersQuery{
-			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
-			UserTable:       dbHelper.Table("user"),
-			UserAuthTable:   dbHelper.Table("user_auth"),
-			Joins:           joins,
-			OrgID:           query.OrgID,
-			AccessAll:       accessAll,
-			AccessUserIDs:   acFilter.Args,
-			QueryPattern:    searchQueryPattern(query.Query),
-			IsDisabled:      query.IsDisabled,
-			Filters:         queryFilters,
-			Sorts:           sorts,
-			UseDefaultSort:  len(sorts) == 0,
-			IncludeAuthJoin: true,
-			AuthModule:      query.AuthModule,
+			SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+			UserTable:     dbHelper.Table("user"),
+			UserAuthTable: dbHelper.Table("user_auth"),
+			Joins:         joins,
+			OrgID:         query.OrgID,
+			AccessAll:     accessAll,
+			AccessUserIDs: acFilter.Args,
+			QueryPattern:  searchQueryPattern(query.Query),
+			IsDisabled:    query.IsDisabled,
+			Filters:       queryFilters,
+			Sorts:         sorts,
+			AuthModule:    query.AuthModule,
 		}
 		if query.Limit > 0 {
 			searchQuery.Limit = query.Limit
@@ -883,10 +872,6 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 
 		countQuery := searchQuery
 		countQuery.SQLTemplate = sqltemplate.New(dbHelper.DialectForDriver())
-		countQuery.IncludeAuthJoin = query.AuthModule != ""
-		countQuery.Sorts = nil
-		countQuery.Limit = 0
-		countQuery.Offset = 0
 		countSQL, err := renderUserQuery(countSearchUsersTemplate, countQuery)
 		if err != nil {
 			return err
