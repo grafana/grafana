@@ -92,7 +92,7 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   const defaultLayout = getDefaultLayoutForEmptyGrid(layout);
   const rowsLayout = defaultLayout
     ? createRowsLayoutContaining(defaultLayout)
-    : RowsLayoutManager.createFromLayout(layoutParent.getLayout());
+    : RowsLayoutManager.createFromLayout(layout);
   layoutParent.switchLayout(rowsLayout);
 
   const row = rowsLayout.state.rows[0];

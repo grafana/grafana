@@ -63,6 +63,22 @@ describe('addNewTabTo', () => {
       expect(newBody.state.tabs[0].getLayout()).toBeInstanceOf(DefaultGridLayoutManager);
     });
 
+    it('should not use the dashboard default layout when the existing grid has panels', () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
+      const grid = DefaultGridLayoutManager.fromVizPanels([panel]);
+      new DashboardScene({
+        body: grid,
+        preferences: { defaultLayoutTemplate: AutoGridLayoutManager.createEmpty() },
+      });
+
+      addNewTabTo(grid);
+
+      const newBody = (grid.parent as DashboardScene).state.body as TabsLayoutManager;
+      const tabLayout = newBody.state.tabs[0].getLayout();
+      expect(tabLayout).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(tabLayout.getVizPanels()).toHaveLength(1);
+    });
+
     it('should keep an existing rows layout that has no panels', () => {
       const rowsLayout = new RowsLayoutManager({
         rows: [new RowItem({ title: 'Row 1' }), new RowItem({ title: 'Row 2' })],
@@ -172,6 +188,23 @@ describe('addNewRowTo', () => {
       const newBody = (grid.parent as DashboardScene).state.body as RowsLayoutManager;
       expect(newBody).toBeInstanceOf(RowsLayoutManager);
       expect(newBody.state.rows[0].getLayout()).toBeInstanceOf(DefaultGridLayoutManager);
+    });
+
+    it('should not use the dashboard default layout when the existing grid has panels', () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
+      const grid = DefaultGridLayoutManager.fromVizPanels([panel]);
+      new DashboardScene({
+        body: grid,
+        preferences: { defaultLayoutTemplate: AutoGridLayoutManager.createEmpty() },
+      });
+
+      addNewRowTo(grid);
+
+      const newBody = (grid.parent as DashboardScene).state.body as RowsLayoutManager;
+      expect(newBody).toBeInstanceOf(RowsLayoutManager);
+      const rowLayout = newBody.state.rows[0].getLayout();
+      expect(rowLayout).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(rowLayout.getVizPanels()).toHaveLength(1);
     });
   });
 
