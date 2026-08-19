@@ -50,3 +50,10 @@ export const HEADER_ICON_SPACE = HEADER_ICON_WIDTH + HEADER_ICON_GAP;
 // so this reserves the same space whether or not it happens to be visible.
 const HEADER_MENU_BUTTON_WIDTH = 14 + 4;
 export const HEADER_MENU_SPACE = HEADER_MENU_BUTTON_WIDTH + HEADER_ICON_GAP;
+
+// Space the `table.refresh` reorder drag handle reserves before the label. It's a bare `Icon` at
+// default size="md" (16px) rather than an IconButton, so unlike the menu button it has no
+// component-level trailing margin of its own — just the header's own flex gap. Reserved whenever
+// reorder is enabled, not conditionally like the sort/filter icons: the handle is always in flow.
+const HEADER_DRAG_HANDLE_WIDTH = 16;
+export const HEADER_DRAG_HANDLE_SPACE = HEADER_DRAG_HANDLE_WIDTH + HEADER_ICON_GAP;

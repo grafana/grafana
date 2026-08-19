@@ -733,9 +733,10 @@ export interface ContentAwareWidths {
   sortColumns?: SortColumn[];
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  enableColumnReorder?: boolean;
 }
 
-const pickColWidths =(fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
+const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
   contentAware ? computeContentAwareColWidths(fields, availWidth, contentAware) : computeColWidths(fields, availWidth);
 
 /**
@@ -762,6 +763,7 @@ interface UseContentAwareWidthsOptions {
   sortColumns?: SortColumn[];
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
+  enableColumnReorder?: boolean;
 }
 
 /**
@@ -777,6 +779,7 @@ export function useContentAwareWidths({
   sortColumns,
   tableRefreshEnabled = false,
   filter,
+  enableColumnReorder = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
   const headerTypographyCtx = useMemo(
@@ -800,9 +803,20 @@ export function useContentAwareWidths({
             sortColumns,
             tableRefreshEnabled,
             filter,
+            enableColumnReorder,
           }
         : undefined,
-    [enabled, typographyCtx, headerTypographyCtx, showTypeIcons, getActions, sortColumns, filter, tableRefreshEnabled]
+    [
+      enabled,
+      typographyCtx,
+      headerTypographyCtx,
+      showTypeIcons,
+      getActions,
+      sortColumns,
+      filter,
+      tableRefreshEnabled,
+      enableColumnReorder,
+    ]
   );
 }
 

@@ -36,6 +36,8 @@ interface HeaderCellProps {
   crossFilterTailRows: TableRow[];
   /** `table.refresh`: left-align the label and move the filter into a hover-revealed column menu. */
   tableRefreshEnabled?: boolean;
+  /** `table.refresh`: whether this column can be reordered by dragging its header cell. */
+  enableColumnReorder?: boolean;
   /** `table.refresh`: hides this column via the column menu. Omitted when hiding isn't available. */
   onHideColumn?: () => void;
   /** `table.refresh`: whether hiding this column is currently allowed (e.g. not the last visible column). */
@@ -60,6 +62,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   crossFilterRows,
   crossFilterTailRows,
   tableRefreshEnabled,
+  enableColumnReorder,
   onHideColumn,
   canHideColumn,
   isPinned,
@@ -188,6 +191,17 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       // menu at once. `table-ng-header-cell` gives HeaderCellMenu something to scope to that's
       // unique per column, regardless of how deep it sits in a nested table.
       <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
+        {enableColumnReorder && (
+          // Chrome only recognizes a mousedown as the start of a native drag when it lands on an
+          // interactive element (a <button> works, a bare <svg>/<div> doesn't, even though
+          // `column.draggable` sits on the whole header cell and both have real painted content).
+          // This button gives the gesture a dependable anchor instead of relying on wherever the
+          // label text happens to be. It's not independently focusable or operable — reordering is
+          // drag-only — so it's out of the tab order and hidden from assistive tech.
+          <button type="button" tabIndex={-1} aria-hidden="true" className={styles.headerCellDragHandle}>
+            <Icon name="draggabledots" aria-hidden="true" />
+          </button>
+        )}
         <div className={styles.headerCellLabelGroup}>{label}</div>
 
         {(filterable || onHideColumn || onTogglePin) && (
@@ -262,6 +276,17 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
     // column-reorder drag `column.draggable` is there for. This column reorder needs the mouse
     // gesture to be unambiguous.
     userSelect: 'none',
+  }),
+  headerCellDragHandle: css({
+    label: 'headerCellDragHandle',
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    color: theme.colors.text.secondary,
+    cursor: 'grab',
   }),
   headerCellLabelGroup: css({
     label: 'headerCellLabelGroup',

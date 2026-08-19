@@ -35,7 +35,14 @@ import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
-import { CELL_HORIZONTAL_CHROME, COLUMN, HEADER_ICON_SPACE, HEADER_MENU_SPACE, TABLE } from './constants';
+import {
+  CELL_HORIZONTAL_CHROME,
+  COLUMN,
+  HEADER_DRAG_HANDLE_SPACE,
+  HEADER_ICON_SPACE,
+  HEADER_MENU_SPACE,
+  TABLE,
+} from './constants';
 import { type TextAlign } from './styles';
 import {
   type TableRow,
@@ -1300,6 +1307,8 @@ export interface ContentAwareColWidthsOptions {
    * filter icon that marks it, the same way a sorted column reserves space for its arrow.
    */
   filter?: FilterType;
+  /** `table.refresh`: a reorderable column reserves space for its drag handle. */
+  enableColumnReorder?: boolean;
   /** overridable for testing; otherwise derived from the auto-column count */
   sampleSize?: number;
 }
@@ -1410,12 +1419,16 @@ function measureHeaderWidth(
   isSorted: boolean,
   tableRefreshEnabled: boolean,
   isFilterable: boolean,
-  isFiltered: boolean
+  isFiltered: boolean,
+  enableColumnReorder: boolean
 ): number {
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
   headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
   headerWidth += isSorted ? HEADER_ICON_SPACE : 0;
+  // the drag handle is always in flow once reorder is enabled, unlike the sort arrow/filter icons
+  // which only reserve space while that state is active.
+  headerWidth += enableColumnReorder ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
     // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
     // stays in flow (opacity-faded, not unmounted) whenever the column is filterable at all.
@@ -1619,6 +1632,7 @@ export function computeContentAwareColWidths(
     tableRefreshEnabled = false,
     filter,
     sampleSize,
+    enableColumnReorder = false,
   }: ContentAwareColWidthsOptions
 ): number[] {
   const autoIdxs: number[] = [];
@@ -1664,7 +1678,8 @@ export function computeContentAwareColWidths(
       sortedKeys.has(getDisplayName(field)),
       tableRefreshEnabled,
       field.config.custom?.filterable ?? false,
-      filteredKeys.has(getDisplayName(field))
+      filteredKeys.has(getDisplayName(field)),
+      enableColumnReorder
     );
 
     // Wrapped columns are measured like any other: a content-based width keeps a content-heavy

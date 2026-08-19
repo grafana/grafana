@@ -2126,6 +2126,19 @@ describe('TableNG utils', () => {
       expect(compute(fields, 50)).toEqual([50]);
     });
 
+    it('reserves header space for the drag handle when column reorder is enabled', () => {
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 4*8 = 32, + drag-handle space 20 + chrome 13 = 65; content "a" is tiny.
+      const widths = computeContentAwareColWidths(fields, 65, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+        enableColumnReorder: true,
+      });
+      expect(widths).toEqual([65]);
+      // the same column with reorder disabled floors to MIN_WIDTH 50 (no handle reserved).
+      expect(compute(fields, 50)).toEqual([50]);
+    });
+
     it('reserves the wider column menu instead of the filter icon when table.refresh is on', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },

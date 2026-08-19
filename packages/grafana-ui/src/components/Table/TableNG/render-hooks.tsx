@@ -551,6 +551,7 @@ function buildColumnsFromFields(
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
+          enableColumnReorder={enableColumnReorder}
           onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
           canHideColumn={fields.length > 1}
           isPinned={pinnedColumns?.has(displayName)}
