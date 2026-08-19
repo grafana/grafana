@@ -204,7 +204,7 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
     <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
       <div className={styles.controls}>
-        <NotebookEditHistoryControls history={model.editHistory} enabled={Boolean(isEditing)} />
+        {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
         <NotebookEditToggle notebook={model} />
         {!hideTimeControls && (
           <>

@@ -6,41 +6,37 @@ import { IconButton, Stack } from '@grafana/ui';
 
 import { type NotebookEditHistory } from './NotebookEditHistory';
 
-export function NotebookEditHistoryControls({ history, enabled }: { history: NotebookEditHistory; enabled: boolean }) {
+export function NotebookEditHistoryControls({ history }: { history: NotebookEditHistory }) {
   const { canUndo, canRedo, undoLabel, redoLabel } = history.useState();
 
   useEffect(() => {
-    if (!enabled) {
-      return;
-    }
-
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.altKey || (!event.metaKey && !event.ctrlKey) || isNativeEditingTarget(event.target)) {
+      if (event.altKey || (!event.metaKey && !event.ctrlKey) || browserOwnsUndo(event.target)) {
         return;
       }
 
       const key = event.key.toLowerCase();
-      const handled =
-        key === 'z'
-          ? event.shiftKey
-            ? history.redo()
-            : history.undo()
-          : key === 'y' && !event.shiftKey
-            ? history.redo()
-            : false;
+      const isUndo = key === 'z' && !event.shiftKey;
+      const isRedo = (key === 'z' && event.shiftKey) || (key === 'y' && !event.shiftKey);
+      if (!isUndo && !isRedo) {
+        return;
+      }
 
-      if (handled) {
-        event.preventDefault();
+      // Always stop the key press here, even when there is nothing to undo. Code cells turn off
+      // CodeMirror's undo, so a key press that gets through reaches the browser instead. The browser
+      // would change the text in the cell, and that change would come back as a new notebook edit.
+      event.preventDefault();
+
+      if (isUndo) {
+        history.undo();
+      } else {
+        history.redo();
       }
     };
 
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [enabled, history]);
-
-  if (!enabled) {
-    return null;
-  }
+  }, [history]);
 
   return (
     <Stack gap={0.5}>
@@ -69,8 +65,15 @@ export function NotebookEditHistoryControls({ history, enabled }: { history: Not
   );
 }
 
-function isNativeEditingTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof Element) || target.closest('.cm-editor')) {
+/** Whether the keystroke belongs to the browser's own undo rather than the notebook's. */
+function browserOwnsUndo(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  // A code cell is contenteditable and so would match the check below, but CodeMirror is built with
+  // its own history off, which leaves undo in there to the notebook.
+  if (target.closest('.cm-editor')) {
     return false;
   }
 

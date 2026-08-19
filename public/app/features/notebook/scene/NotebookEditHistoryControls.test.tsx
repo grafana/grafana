@@ -4,10 +4,16 @@ import { NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 
 describe('NotebookEditHistoryControls', () => {
-  function setup(enabled = true) {
+  const appended: Element[] = [];
+
+  afterEach(() => {
+    appended.splice(0).forEach((element) => element.remove());
+  });
+
+  function setup() {
     const history = new NotebookEditHistory();
     const value = { current: 0 };
-    const rendered = render(<NotebookEditHistoryControls history={history} enabled={enabled} />);
+    const rendered = render(<NotebookEditHistoryControls history={history} />);
 
     act(() => {
       history.execute({
@@ -22,6 +28,19 @@ describe('NotebookEditHistoryControls', () => {
     });
 
     return { history, value, ...rendered };
+  }
+
+  /** The shape CodeMirror renders: a contenteditable node inside a `.cm-editor` wrapper. */
+  function appendCodeEditor() {
+    const editor = document.createElement('div');
+    editor.className = 'cm-editor';
+    const content = document.createElement('div');
+    content.contentEditable = 'true';
+    editor.appendChild(content);
+    document.body.appendChild(editor);
+    appended.push(editor);
+
+    return content;
   }
 
   it('offers the next undo and redo actions', async () => {
@@ -48,21 +67,16 @@ describe('NotebookEditHistoryControls', () => {
     const { value } = setup();
     const input = document.createElement('textarea');
     document.body.appendChild(input);
+    appended.push(input);
 
     fireEvent.keyDown(input, { key: 'z', metaKey: true });
 
     expect(value.current).toBe(1);
-    input.remove();
   });
 
   it('routes CodeMirror shortcuts through notebook history', () => {
     const { value } = setup();
-    const editor = document.createElement('div');
-    editor.className = 'cm-editor';
-    const content = document.createElement('div');
-    content.contentEditable = 'true';
-    editor.appendChild(content);
-    document.body.appendChild(editor);
+    const content = appendCodeEditor();
 
     fireEvent.keyDown(content, { key: 'z', metaKey: true });
     expect(value.current).toBe(0);
@@ -70,15 +84,21 @@ describe('NotebookEditHistoryControls', () => {
 
     fireEvent.keyDown(content, { key: 'z', metaKey: true, shiftKey: true });
     expect(value.current).toBe(1);
-    editor.remove();
   });
 
-  it('does not register shortcuts outside edit mode', () => {
-    const { value } = setup(false);
+  // Code cells have CodeMirror's own history off, so an undo the notebook cannot serve must still not
+  // reach the browser: its contenteditable undo would rewrite the cell behind the notebook's back.
+  it('keeps the browser out of undo inside a code cell when nothing is left to undo', () => {
+    const { history } = setup();
+    const content = appendCodeEditor();
+    act(() => {
+      history.undo();
+    });
 
-    fireEvent.keyDown(document, { key: 'z', metaKey: true });
+    const event = new KeyboardEvent('keydown', { key: 'z', metaKey: true, bubbles: true, cancelable: true });
+    content.dispatchEvent(event);
 
-    expect(value.current).toBe(1);
-    expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
+    expect(history.state.canUndo).toBe(false);
+    expect(event.defaultPrevented).toBe(true);
   });
 });

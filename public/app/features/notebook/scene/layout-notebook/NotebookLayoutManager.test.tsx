@@ -738,6 +738,25 @@ describe('NotebookLayoutManager', () => {
       expect(history.state.canUndo).toBe(false);
     });
 
+    // The scene clears the history on every activation, so a pending edit that outlived the previous
+    // one would swallow the next keystroke into an action the history no longer holds.
+    it('closes a pending edit when the notebook is deactivated', () => {
+      const cell = codeCell('query');
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = new NotebookEditHistory();
+      manager.setEditHistory(history);
+      const deactivate = manager.activate();
+
+      manager.setCellContent(cell, edited);
+      deactivate();
+      history.clear();
+      manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 3', language: 'sql' } });
+
+      expect(history.state.canUndo).toBe(true);
+      history.undo();
+      expect(cell.state.content).toEqual(edited);
+    });
+
     it('starts a new undo step after the coalescing window', () => {
       jest.useFakeTimers();
       try {

@@ -58,7 +58,7 @@ interface PendingContentEdit {
   elementName: string;
   before: CellContentKind;
   after: CellContentKind;
-  action?: NotebookEditAction;
+  action: NotebookEditAction;
   timer?: ReturnType<typeof setTimeout>;
 }
 
@@ -90,20 +90,31 @@ export class NotebookLayoutManager
   private editHistory?: NotebookEditHistory;
   private pendingContentEdit?: PendingContentEdit;
 
+  public constructor(state: NotebookLayoutManagerState) {
+    super(state);
+
+    // Finish an edit that is still being typed when the notebook goes away. The pending edit lives in a
+    // plain field, so it would otherwise still be here when the notebook comes back, but the scene
+    // clears the history on the way in, and the next key press would join an edit nothing can undo.
+    this.addActivationHandler(() => {
+      return () => this.commitContentEdits();
+    });
+  }
+
   public setEditHistory(editHistory: NotebookEditHistory): void {
     this.editHistory = editHistory;
   }
 
-  // Serialization lives here (not in a standalone helper) so the manager doesn't import the
-  // serializer module — that mutual import is what forms a dependency cycle. The serializer
-  // still imports this manager to construct it in deserialize, which stays one-directional.
+  // Serialization lives here instead of in a helper file, so that this file never has to import the
+  // serializer. If both files imported each other they would form a cycle, which is what this layout
+  // avoids. The serializer still imports this class to build it when reading a notebook, one way only.
   public serialize(): NotebookLayoutKind {
     const cells: NotebookLayoutItemKind[] = this.state.cells.map((cell) => ({
       kind: 'NotebookLayoutItem',
       spec: {
         element: { kind: 'ElementReference', name: cell.state.elementName },
         source: cell.state.source,
-        // Emit collapsed only when it was set, so an omitted value stays omitted on round-trip.
+        // Only write `collapsed` when it has a value, so a notebook that never had it does not gain it.
         ...(cell.state.collapsed !== undefined ? { collapsed: cell.state.collapsed } : {}),
       },
     }));
@@ -111,8 +122,8 @@ export class NotebookLayoutManager
     return { kind: 'NotebookLayout', spec: { cells } };
   }
 
-  // Only panel cells are viz panels; markdown/code cells are narrative content and are
-  // intentionally invisible to the rest of the scene (query runner, edit tooling).
+  // Only panel cells hold a viz panel. Text and code cells are just content, and the rest of the
+  // scene (the query runner, the edit tools) is meant not to see them.
   public getVizPanels(): VizPanel[] {
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
   }
@@ -141,48 +152,67 @@ export class NotebookLayoutManager
       return;
     }
 
-    const activeEdit = this.pendingContentEdit;
-    if (activeEdit?.elementName === target.state.elementName) {
-      this.applyCellContent(target.state.elementName, content);
-      activeEdit.after = structuredClone(content);
-      if (isEqual(activeEdit.before, activeEdit.after)) {
-        if (activeEdit.action) {
-          this.editHistory?.discard(activeEdit.action);
-        }
-        this.finishContentEdit(activeEdit);
-      } else {
-        this.scheduleContentEditCommit(activeEdit);
-      }
+    const pending = this.pendingContentEdit;
+    if (pending?.elementName === target.state.elementName) {
+      this.extendContentEdit(pending, content);
       return;
     }
 
     this.commitContentEdits();
-    const before = structuredClone(previous);
-    const after = structuredClone(content);
-    if (!this.editHistory) {
-      this.applyCellContent(target.state.elementName, after);
+    this.startContentEdit(target.state.elementName, previous, content);
+  };
+
+  /**
+   * Adds a change to the edit already being typed, so a run of key presses is one undo step.
+   *
+   * Typing back to where the edit started leaves nothing to undo, so the action is taken off the
+   * history rather than left there doing nothing.
+   */
+  private extendContentEdit(edit: PendingContentEdit, content: CellContentKind): void {
+    this.applyCellContent(edit.elementName, content);
+    edit.after = structuredClone(content);
+
+    if (isEqual(edit.before, edit.after)) {
+      this.editHistory?.discard(edit.action);
+      this.finishContentEdit(edit);
       return;
     }
 
-    const edit: PendingContentEdit = { elementName: target.state.elementName, before, after };
-    const action: NotebookEditAction = {
-      label: t('notebooks.history.edit-block', 'Edit block'),
-      perform: () => {
-        this.finishContentEdit(edit);
-        this.applyCellContent(edit.elementName, edit.after);
-      },
-      undo: () => {
-        this.finishContentEdit(edit);
-        this.applyCellContent(edit.elementName, edit.before);
+    this.scheduleContentEditCommit(edit);
+  }
+
+  private startContentEdit(elementName: string, previous: CellContentKind, content: CellContentKind): void {
+    const after = structuredClone(content);
+    if (!this.editHistory) {
+      this.applyCellContent(elementName, after);
+      return;
+    }
+
+    // perform and undo read `edit` when they run, not now: extendContentEdit keeps changing `after`
+    // while typing continues, and the last value is the one to redo. Both stop the grouping first, so
+    // undoing while typing also ends the edit it undoes.
+    const edit: PendingContentEdit = {
+      elementName,
+      before: structuredClone(previous),
+      after,
+      action: {
+        label: t('notebooks.history.edit-block', 'Edit block'),
+        perform: () => {
+          this.finishContentEdit(edit);
+          this.applyCellContent(edit.elementName, edit.after);
+        },
+        undo: () => {
+          this.finishContentEdit(edit);
+          this.applyCellContent(edit.elementName, edit.before);
+        },
       },
     };
-    edit.action = action;
 
     this.pendingContentEdit = edit;
     this.applyCellContent(edit.elementName, edit.after);
-    this.editHistory.record(action);
+    this.editHistory.record(edit.action);
     this.scheduleContentEditCommit(edit);
-  };
+  }
 
   public commitContentEdits(): void {
     if (this.pendingContentEdit) {

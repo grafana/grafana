@@ -1,6 +1,6 @@
 import { createMemoryHistory } from 'history';
 import { BehaviorSubject } from 'rxjs';
-import { act, render } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { CoreApp, type Scope } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -176,6 +176,18 @@ describe('NotebookScene', () => {
       expect(scene.editHistory.state.canUndo).toBe(false);
       replacement.addCell('code', 0);
       expect(scene.editHistory.state.canUndo).toBe(true);
+    });
+
+    it('offers the history controls only in edit mode', () => {
+      const scene = buildScene(false);
+      activate(scene);
+      render(<scene.Component model={scene} />);
+
+      expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
+
+      act(() => scene.onEnterEditMode());
+
+      expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
     });
 
     it('attaches history to a body replaced before activation', () => {
