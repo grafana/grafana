@@ -2,6 +2,7 @@ import { config } from '@grafana/runtime';
 import { behaviors, performanceUtils } from '@grafana/scenes';
 
 import { ReportRenderReadinessObserver } from './ReportRenderReadinessObserver';
+import { SCENES_POST_STORM_WINDOW_MS } from './performanceConstants';
 
 /**
  * Verifies the fix for blank repeat panels on the report render page (`/d-report/`).
@@ -27,9 +28,6 @@ import { ReportRenderReadinessObserver } from './ReportRenderReadinessObserver';
  * The fix is gated behind the `reportRenderQueryDebounce` feature toggle (default off) so it can be
  * enabled selectively rather than changing behavior for every report render by default.
  */
-
-// Keep in sync with POST_STORM_WINDOW in @grafana/scenes.
-const POST_STORM_WINDOW = 2000;
 
 type QueryEntry = Parameters<behaviors.SceneQueryController['queryStarted']>[0];
 
@@ -84,7 +82,7 @@ describe('ReportRenderReadinessObserver — repeat panel render readiness', () =
 
     // Scenes' own post-storm tail elapses with nothing else registered — the exact gap the bug lived
     // in. The profiler declares dashboard_view complete internally, but the observer now withholds.
-    jest.advanceTimersByTime(POST_STORM_WINDOW + 500);
+    jest.advanceTimersByTime(SCENES_POST_STORM_WINDOW_MS + 500);
     expect(channel).not.toHaveBeenCalled();
 
     // A repeat panel materializes late and registers its query, well after the profiler's own tail.
@@ -115,7 +113,7 @@ describe('ReportRenderReadinessObserver — repeat panel render readiness', () =
     queryController.queryStarted(variableQuery);
     queryController.queryCompleted(variableQuery);
 
-    jest.advanceTimersByTime(POST_STORM_WINDOW + 500);
+    jest.advanceTimersByTime(SCENES_POST_STORM_WINDOW_MS + 500);
     expect(channel).not.toHaveBeenCalled();
 
     jest.advanceTimersByTime(config.reportRenderQueryGracePeriodMs);
@@ -130,7 +128,7 @@ describe('ReportRenderReadinessObserver — repeat panel render readiness', () =
     queryController.queryStarted(variableQuery);
     queryController.queryCompleted(variableQuery);
 
-    jest.advanceTimersByTime(POST_STORM_WINDOW + 500);
+    jest.advanceTimersByTime(SCENES_POST_STORM_WINDOW_MS + 500);
     expect(channel).not.toHaveBeenCalled();
 
     // Would still be pending at this point under the 3s default, but the configured 500ms grace
@@ -150,7 +148,7 @@ describe('ReportRenderReadinessObserver — repeat panel render readiness', () =
     queryController.queryCompleted(variableQuery);
     expect(queryController.runningQueriesCount()).toBe(0);
 
-    jest.advanceTimersByTime(POST_STORM_WINDOW + 500);
+    jest.advanceTimersByTime(SCENES_POST_STORM_WINDOW_MS + 500);
 
     // With the toggle off, the observer never subscribes to the query controller at all — it sends
     // the moment the profiler's own (racy) signal fires, exactly like the pre-fix behavior.
