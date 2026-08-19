@@ -102,13 +102,22 @@ export function NotebooksListPage() {
    */
   const isPartialFailure = Boolean(error) && rows.length > 0;
 
+  /**
+   * A failure takes over the page only when the reader has nothing to act on. Once filters are
+   * engaged they have to stay mounted even with nothing loaded, because the filter that provoked
+   * the failure is the one thing worth changing — unmounting it leaves reloading the page as the
+   * only way to clear it.
+   */
+  const isBlockingFailure = Boolean(error) && rows.length === 0 && !isFiltered;
+
   return (
     // When nothing exists the empty state carries the create button, so drop it from the header.
     <Page navId="notebooks" actions={hasNoNotebooks ? undefined : createButton}>
       <Page.Contents isLoading={isLoading}>
         <Stack direction="column" gap={2}>
-          {/* With nothing loaded the alert is the whole story — filters over nothing would just add noise. */}
-          {error && !isPartialFailure ? (
+          {/* With nothing loaded and nothing filtered the alert is the whole story — filters over
+              nothing would just add noise. */}
+          {isBlockingFailure ? (
             // Carry the detail through, so a permissions problem reads differently from an outage.
             <Alert severity="error" title={t('notebooks.list.load-error', 'Failed to load notebooks')}>
               {extractErrorMessage(error)}
@@ -134,11 +143,17 @@ export function NotebooksListPage() {
             </EmptyState>
           ) : (
             <>
-              {/* Warning, not error: what loaded is still usable and still on screen below. */}
-              {isPartialFailure && (
+              {/* Above the filters rather than in place of them, so the query that failed stays
+                  editable. A warning when some rows loaded — they are still usable, still on
+                  screen below — and an error when none did. */}
+              {error && (
                 <Alert
-                  severity="warning"
-                  title={t('notebooks.list.partial-load-error', 'Some notebooks could not be loaded')}
+                  severity={isPartialFailure ? 'warning' : 'error'}
+                  title={
+                    isPartialFailure
+                      ? t('notebooks.list.partial-load-error', 'Some notebooks could not be loaded')
+                      : t('notebooks.list.load-error', 'Failed to load notebooks')
+                  }
                 >
                   {extractErrorMessage(error)}
                 </Alert>
@@ -189,14 +204,18 @@ export function NotebooksListPage() {
                   them, mid-typing. */}
               {isReloading ? (
                 <NotebooksTableSkeleton />
-              ) : rows.length === 0 ? (
-                <Box paddingTop={2}>
-                  <EmptyState variant="not-found" message={t('notebooks.list.no-results', 'No notebooks found')} />
-                </Box>
-              ) : (
+              ) : rows.length > 0 ? (
                 // Keyed by the filters so narrowing the set drops the page index the reader was on,
                 // which is the one case the table itself no longer resets for.
                 <NotebooksTable key={filterKey} notebooks={rows} />
+              ) : (
+                // Only when the request answered: after a failure the alert above explains the
+                // empty table, and "No notebooks found" would report a result nobody returned.
+                !error && (
+                  <Box paddingTop={2}>
+                    <EmptyState variant="not-found" message={t('notebooks.list.no-results', 'No notebooks found')} />
+                  </Box>
+                )
               )}
             </>
           )}

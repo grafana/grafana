@@ -103,25 +103,32 @@ function setNotebooks(
      * reports the previous answer as `data`, but not as `currentData`.
      */
     isReloading?: boolean;
+    /**
+     * Fails only the requests that carry a predicate, leaving the unfiltered one to succeed. That
+     * is the case where the reader has a filter to clear.
+     */
+    errorWhenFiltered?: unknown;
   } = {}
 ) {
   mockUseSearchNotebooksQuery.mockImplementation((arg) => {
-    if (arg === skipToken || extra.error) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the hook only ever passes a body or skipToken
+    const query = arg === skipToken ? undefined : (arg as NotebookSearchQuery);
+    const failure = extra.error ?? (query?.where ? extra.errorWhenFiltered : undefined);
+
+    if (!query || failure) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
       return {
         data: undefined,
         currentData: undefined,
         isLoading: extra.isLoading ?? false,
         isFetching: false,
-        isError: Boolean(extra.error),
+        isError: Boolean(failure),
         hasNextPage: false,
         fetchNextPage: jest.fn(),
-        error: arg === skipToken ? undefined : extra.error,
+        error: failure,
       } as unknown as ReturnType<typeof useSearchNotebooksInfiniteQuery>;
     }
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the hook only ever passes a body or skipToken
-    const query = arg as NotebookSearchQuery;
     const leaves = leavesOf(query.where);
     const needle = leaves.find((leaf) => leaf.text)?.text?.value.toLowerCase();
     const authors = leaves.find((leaf) => leaf.filter?.field === 'createdBy')?.filter?.values;
@@ -313,6 +320,30 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Search notebooks by title...')).not.toBeInTheDocument();
     expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
+  });
+
+  // A failure must not take the filters with it. The query that provoked it is the one thing worth
+  // changing, and unmounting the input leaves a page reload as the only way to clear it.
+  it('keeps the filters usable when a filtered request fails', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')], { errorWhenFiltered: { status: 500 } });
+
+    render(<NotebooksListPage />);
+
+    const input = await screen.findByPlaceholderText('Search notebooks by title...');
+    await userEvent.type(input, 'zzz');
+
+    expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
+    expect(input).toBeInTheDocument();
+    expect(input).toHaveValue('zzz');
+    // Not a no-results state: nothing answered, so nothing can be said about matches.
+    expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
+
+    await userEvent.clear(input);
+
+    // Recovered without reloading the page, which is the point of keeping the input mounted.
+    expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
+    expect(screen.queryByText('Failed to load notebooks')).not.toBeInTheDocument();
   });
 
   it('surfaces the error detail, so a permissions problem reads differently from an outage', async () => {
