@@ -1,7 +1,7 @@
 import { Trans } from '@grafana/i18n';
-import { LinkButton, Stack } from '@grafana/ui';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 
+import { FooterAction, FooterActions } from '../FooterActions';
 import { ctaClicked } from '../analytics/main';
 
 interface Props {
@@ -13,30 +13,24 @@ interface Props {
 
 export const DeclareAndViewIncidentsButtons = ({ pluginId, hasIncidents, canDeclare, canAccess }: Props) => {
   return (
-    <Stack justifyContent="flex-end" wrap="wrap">
+    <FooterActions>
       {hasIncidents && canDeclare && (
-        <LinkButton
-          variant="secondary"
-          size="sm"
-          fill="text"
+        <FooterAction
           icon="fire"
           href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
           onClick={() => ctaClicked({ surface: 'incidents_card', action: 'declare_incident', placement: 'footer' })}
         >
           <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
-        </LinkButton>
+        </FooterAction>
       )}
       {canAccess && (
-        <LinkButton
-          variant="secondary"
-          size="sm"
-          fill="text"
+        <FooterAction
           href={createBridgeURL(pluginId, '/incidents')}
           onClick={() => ctaClicked({ surface: 'incidents_card', action: 'view_all_incidents', placement: 'footer' })}
         >
           <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
-        </LinkButton>
+        </FooterAction>
       )}
-    </Stack>
+    </FooterActions>
   );
 };

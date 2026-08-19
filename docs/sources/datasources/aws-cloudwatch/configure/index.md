@@ -214,6 +214,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
       "Effect": "Allow",
       "Action": [
         "logs:DescribeLogGroups",
+        "logs:ListAggregateLogGroupSummaries",
         "logs:GetLogGroupFields",
         "logs:StartQuery",
         "logs:StopQuery",
@@ -268,6 +269,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
       "Effect": "Allow",
       "Action": [
         "logs:DescribeLogGroups",
+        "logs:ListAggregateLogGroupSummaries",
         "logs:GetLogGroupFields",
         "logs:StartQuery",
         "logs:StopQuery",

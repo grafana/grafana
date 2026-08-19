@@ -9,9 +9,12 @@ import type { RecommendationItem } from './types';
 
 interface RecommendationCardProps {
   recommendation: RecommendationItem;
+  startingState: string;
+  /** Solution view active when the card was clicked; absent when no solution is selected. */
+  solution?: string;
 }
 
-export function RecommendationCard({ recommendation }: RecommendationCardProps) {
+export function RecommendationCard({ recommendation, startingState, solution }: RecommendationCardProps) {
   const styles = useStyles2(getStyles, recommendation.color);
 
   return (
@@ -42,9 +45,11 @@ export function RecommendationCard({ recommendation }: RecommendationCardProps) 
           onClick={() =>
             ctaClicked({
               surface: 'recommendations',
-              action: 'enable',
+              action: recommendation.cta ?? 'enable',
               placement: 'card',
               recommendation_id: recommendation.id,
+              starting_state: startingState,
+              solution,
             })
           }
         >

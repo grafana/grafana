@@ -157,8 +157,8 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/dashboards-suite'),
     }),
     withAuth({
-      name: 'loki',
-      testDir: path.join(testDirRoot, '/loki'),
+      name: 'diagnostics',
+      testDir: path.join(testDirRoot, '/diagnostics-suite'),
     }),
     withAuth({
       name: 'cloud-plugins',

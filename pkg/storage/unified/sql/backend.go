@@ -54,6 +54,7 @@ const defaultGarbageCollectionBatchWait = 1 * time.Second
 
 type GarbageCollectionConfig struct {
 	Enabled          bool
+	DryRun           bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
 	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
@@ -61,12 +62,18 @@ type GarbageCollectionConfig struct {
 	DashboardsMaxAge time.Duration // dashboard retention
 }
 
-func ProvideStorageBackend(
-	cfg *setting.Cfg,
-) (resource.StorageBackend, error) {
-	// TODO: make this the central place to provide SQL backend
-	// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
-	return nil, nil
+// NewGarbageCollectionConfig keeps the mapping from settings in one place, so callers
+// building the SQL backend themselves cannot miss a field.
+func NewGarbageCollectionConfig(cfg *setting.Cfg) GarbageCollectionConfig {
+	return GarbageCollectionConfig{
+		Enabled:          cfg.EnableGarbageCollection,
+		DryRun:           cfg.GarbageCollectionDryRun,
+		Interval:         cfg.GarbageCollectionInterval,
+		BatchSize:        cfg.GarbageCollectionBatchSize,
+		BatchWait:        cfg.GarbageCollectionBatchWait,
+		MaxAge:           cfg.GarbageCollectionMaxAge,
+		DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+	}
 }
 
 type Backend interface {
@@ -124,6 +131,12 @@ func WithNatsNotifier(s resource.EventSubscriber) StorageBackendOption {
 	}
 }
 
+// WithExperimentalKV routes flagged experimental use-cases to an alternative
+// KV. Nil preserves existing behavior. KV backend only.
+func WithExperimentalKV(e *resource.ExperimentalKVOptions) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) { o.ExperimentalKV = e }
+}
+
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
 // It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
 // Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
@@ -145,6 +158,8 @@ func NewStorageBackend(
 		return NewFileBackend(cfg, kvStore)
 	case options.StorageTypeUnifiedGrpc:
 		return nil, nil
+	case options.StorageTypeUnifiedKVGrpc:
+		return newKVGrpcBackend(cfg, reg, disableStorageServices, kvStore, gcGate, opts...)
 	default: // fall back to SQL backend
 	}
 
@@ -153,20 +168,13 @@ func NewStorageBackend(
 
 	if !cfg.EnableSQLKVBackend {
 		return NewBackend(BackendOptions{
-			DBProvider:           eDB,
-			Reg:                  reg,
-			IsHA:                 isHA,
-			storageMetrics:       storageMetrics,
-			LastImportTimeMaxAge: cfg.MaxFileIndexAge,
-			GCGate:               gcGate,
-			GarbageCollection: GarbageCollectionConfig{
-				Enabled:          cfg.EnableGarbageCollection,
-				Interval:         cfg.GarbageCollectionInterval,
-				BatchSize:        cfg.GarbageCollectionBatchSize,
-				BatchWait:        cfg.GarbageCollectionBatchWait,
-				MaxAge:           cfg.GarbageCollectionMaxAge,
-				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
-			},
+			DBProvider:              eDB,
+			Reg:                     reg,
+			IsHA:                    isHA,
+			storageMetrics:          storageMetrics,
+			LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
+			GCGate:                  gcGate,
+			GarbageCollection:       NewGarbageCollectionConfig(cfg),
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
 			MigrationChunkedWrites:  cfg.MigrationChunkedWrites,
@@ -195,31 +203,16 @@ func NewStorageBackend(
 		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 	}
 
-	kvBackendOpts := resource.KVBackendOptions{
-		KvStore:              kvStore,
-		Reg:                  reg,
-		UseChannelNotifier:   !isHA,
-		Log:                  log.New("storage-backend"),
-		DBKeepAlive:          eDB,
-		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
-		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
-		TenantDeleterConfig:  resource.NewTenantDeleterConfig(cfg),
-		GCGate:               gcGate,
-		GarbageCollection: resource.GarbageCollectionConfig{
-			Enabled:          cfg.EnableGarbageCollection,
-			DryRun:           cfg.GarbageCollectionDryRun,
-			Interval:         cfg.GarbageCollectionInterval,
-			BatchSize:        cfg.GarbageCollectionBatchSize,
-			BatchWait:        cfg.GarbageCollectionBatchWait,
-			MaxAge:           cfg.GarbageCollectionMaxAge,
-			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
-		},
-		EventRetentionPeriod:    cfg.EventRetentionPeriod,
-		EventPruningInterval:    cfg.EventPruningInterval,
-		SearchLookback:          cfg.SearchLookback,
-		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
-		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
-	}
+	kvBackendOpts := resource.NewKVBackendOptions(cfg)
+	kvBackendOpts.KvStore = kvStore
+	kvBackendOpts.Reg = reg
+	kvBackendOpts.UseChannelNotifier = !isHA
+	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.DBKeepAlive = eDB
+	kvBackendOpts.GCGate = gcGate
+	// The KV backend has one switch for all background write jobs, so the older
+	// pruner-only setting maps onto it.
+	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
 
 	for _, opt := range opts {
 		opt(&kvBackendOpts)
@@ -246,6 +239,35 @@ func NewStorageBackend(
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
+}
+
+func newKVGrpcBackend(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, gcGate *resource.GCGate, opts ...StorageBackendOption) (resource.StorageBackend, error) {
+	if kvStore == nil {
+		return nil, fmt.Errorf("storage_type=%s needs a kv client dialed by the wiring, and this build provides none (enterprise only)", options.StorageTypeUnifiedKVGrpc)
+	}
+	return resource.NewKVStorageBackend(newKVGrpcBackendOptions(cfg, reg, disableStorageServices, kvStore, gcGate, opts...))
+}
+
+func newKVGrpcBackendOptions(cfg *setting.Cfg, reg prometheus.Registerer, disableStorageServices bool, kvStore kv.KV, gcGate *resource.GCGate, opts ...StorageBackendOption) resource.KVBackendOptions {
+	kvBackendOpts := resource.NewKVBackendOptions(cfg)
+	kvBackendOpts.KvStore = kvStore
+	kvBackendOpts.Reg = reg
+	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.GCGate = gcGate
+	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
+
+	if cfg.EnableKVLeases {
+		kvBackendOpts.EnableKVLeases = true
+		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
+		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
+		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
+	}
+
+	for _, opt := range opts {
+		opt(&kvBackendOpts)
+	}
+
+	return kvBackendOpts
 }
 
 func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, error) {
@@ -595,7 +617,7 @@ func (b *backend) initPruner(ctx context.Context) error {
 }
 
 func (b *backend) initGarbageCollection(ctx context.Context) error {
-	b.log.Info("starting garbage collection loop")
+	b.log.Info("starting garbage collection loop", "dry_run", b.garbageCollection.DryRun)
 
 	go func() {
 		// Wait for the migration gate so GC never prunes rows an in-process
@@ -661,6 +683,11 @@ func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int6
 					break
 				}
 				totalDeleted += deleted
+				// A dry run deletes nothing, so the next batch would return the same
+				// candidates forever. Stop after the first batch.
+				if b.garbageCollection.DryRun {
+					break
+				}
 				if deleted < int64(b.garbageCollection.BatchSize) {
 					break
 				}
@@ -671,7 +698,13 @@ func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int6
 				}
 			}
 			if totalDeleted > 0 {
-				b.log.Info("garbage collection deleted history",
+				message := "garbage collection deleted history"
+				if b.garbageCollection.DryRun {
+					// The count is one batch, not the whole backlog, so the message must not
+					// read like a total.
+					message = "garbage collection dry run, first batch only"
+				}
+				b.log.Info(message,
 					"group", group,
 					"resource", resourceName,
 					"rows", totalDeleted,
@@ -715,6 +748,13 @@ func (b *backend) garbageCollectBatch(ctx context.Context, group, resourceName s
 			return nil
 		}
 		span.AddEvent("candidates", trace.WithAttributes(attribute.Int("candidates", len(candidates))))
+		if b.garbageCollection.DryRun {
+			// Report the candidates instead of deleting them. This counts resources, not
+			// history rows, because each candidate can have several rows.
+			rowsAffected = int64(len(candidates))
+			span.AddEvent("dry run", trace.WithAttributes(attribute.Int64("candidates", rowsAffected)))
+			return nil
+		}
 		res, err := dbutil.Exec(ctx, tx, sqlResourceHistoryGCDeleteByNames, &sqlGarbageCollectDeleteByNamesRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Group:       group,
@@ -791,6 +831,13 @@ func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedR
 	})
 
 	return res, err
+}
+
+// GetResourceStatsWithLimit ignores countLimit and returns exact counts. The SQL
+// backend's stats query is not a history scan, so early exit is not needed here;
+// exact counts are valid for callers that only compare against thresholds.
+func (b *backend) GetResourceStatsWithLimit(ctx context.Context, nsr resource.NamespacedResource, minCount, _ int) ([]resource.ResourceStats, error) {
+	return b.GetResourceStats(ctx, nsr, minCount)
 }
 
 // ListStoredResources implements Backend.

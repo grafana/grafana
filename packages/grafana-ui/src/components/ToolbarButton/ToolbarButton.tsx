@@ -150,11 +150,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     '&:hover, &:focus': {
       color: theme.colors.text.primary,
       background: theme.colors.secondary.shade,
-      border: `1px solid ${theme.colors.border.medium}`,
+      border: `1px solid ${theme.colors.secondary.borderEmphasis}`,
     },
 
     '&:active': {
-      ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
+      ...getActiveButtonStyles(theme.colors.secondary, 'solid', theme.flags.visualDesignRefresh),
     },
   });
 
@@ -212,7 +212,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:active': {
-        ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
+        ...getActiveButtonStyles(theme.colors.secondary, 'solid', theme.flags.visualDesignRefresh),
       },
     }),
     canvas: defaultOld,

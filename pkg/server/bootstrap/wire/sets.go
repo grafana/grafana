@@ -126,6 +126,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
@@ -190,10 +191,6 @@ import (
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/loki"
-	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
 var withOTelSet = wire.NewSet(
@@ -242,7 +239,6 @@ var Basic = wire.NewSet(
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
 	cloudwatch.ProvideService,
 	azuremonitor.ProvideService,
-	mysql.ProvideService,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
@@ -286,6 +282,7 @@ var Basic = wire.NewSet(
 	libraryelements.ProvideFolderConsumer,
 	ngalert.ProvideAlertRuleFolderConsumer,
 	folderreconcile.ProvideReconciler,
+	libraryelements.ProvideFolderUIDRepair,
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	github.ProvideFactory,
@@ -303,11 +300,8 @@ var Basic = wire.NewSet(
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
 	socialimpl.ProvideService,
-	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
-	loki.ProvideService,
 	graphite.ProvideService,
-	prometheus.ProvideService,
 	datasourceservice.ProvideCacheService,
 	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
 	encryptionservice.ProvideEncryptionService,
@@ -381,6 +375,8 @@ var Basic = wire.NewSet(
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
 	orgimpl.ProvideService,
 	orgimpl.ProvideDeletionService,
+	orgimpl.ProvideDeleteRegistrar,
+	wire.Bind(new(org.DeletionService), new(*orgimpl.DeletionService)),
 	statsimpl.ProvideService,
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideHealthService,
@@ -467,6 +463,7 @@ var Basic = wire.NewSet(
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
 	resource.ProvideVectorMetrics,
+	resource.ProvideEventualClient,
 	unifiedmigrations.ProvideUnifiedStorageMigrationService,
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server

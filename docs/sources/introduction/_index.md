@@ -97,3 +97,25 @@ For more information about Grafana Alloy, refer to the [Grafana Alloy documentat
 {{< docs/shared lookup="communicate.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 For more information, refer to [Contribute to Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/contribute).
+
+## Frequently asked questions
+
+{{< qa-list >}}
+{{< qa question="What is Grafana and what is it used for?" >}}
+Grafana is open source software for querying, visualizing, and alerting on your metrics, logs, and traces, wherever they're stored.
+It's used for infrastructure and application monitoring, observability, and operational dashboards.
+Grafana turns time-series data into graphs, with a plugin framework that connects to many data sources so you can bring metrics, logs, and traces into one place.
+{{< /qa >}}
+{{< qa question="Is Grafana open source and free to use?" >}}
+Yes, Grafana is open source and free to use.
+You can download Grafana OSS and self-host it at no cost.
+Grafana Labs also offers two commercial editions built on the same core: Grafana Enterprise, a self-managed edition that adds enterprise features, plugins, and support; and Grafana Cloud, a fully managed service that includes a free tier.
+You can start with Grafana OSS and move to Enterprise or Cloud as your needs grow.
+{{< /qa >}}
+{{< qa question="What's the difference between Grafana OSS, Grafana Enterprise, and Grafana Cloud?" >}}
+Grafana OSS, Grafana Enterprise, and Grafana Cloud share the same Grafana core but differ in how they're hosted and what they include.
+Grafana OSS is the free, self-managed open source edition that you run and maintain yourself.
+Grafana Enterprise is also self-managed, but adds commercial features such as enterprise data source plugins, reporting, enhanced access control, and official support.
+Grafana Cloud is a fully managed platform hosted by Grafana Labs that bundles Grafana with metrics, logs, and traces backends and includes a free tier, so you don't have to run the stack yourself.
+{{< /qa >}}
+{{< /qa-list >}}

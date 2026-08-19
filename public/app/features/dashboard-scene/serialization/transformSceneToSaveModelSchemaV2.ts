@@ -6,10 +6,12 @@ import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
   dataLayers,
+  LocalValueVariable,
   type QueryVariable,
   sceneGraph,
   type SceneDataQuery,
   SceneDataTransformer,
+  type SceneObject,
   type SceneQueryRunner,
   type SceneVariables,
   SceneVariableSet,
@@ -50,7 +52,6 @@ import {
   defaultFieldConfig,
   defaultDataQueryKind,
   type SwitchVariableKind,
-  defaultTimeSettingsSpec,
   defaultDashboardLinkType,
   defaultDashboardLink,
   type Preferences,
@@ -67,6 +68,7 @@ import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLi
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
+import { buildTimeSettingsSpec } from './shared/timeSettings';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -82,18 +84,13 @@ type DeepPartial<T> = T extends object
  */
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
   const sceneDash = scene.state;
-  const timeRange = sceneDash.$timeRange!.state;
-
   const controlsState = sceneDash.controls?.state;
-  const refreshPicker = controlsState?.refreshPicker;
 
   const dsReferencesMapping = scene.serializer.getDSReferencesMapping();
 
-  const timeSettingsDefaults = defaultTimeSettingsSpec();
-
   let preferences: Preferences | undefined = undefined;
 
-  if (config.featureToggles.dashboardDefaultLayoutSelector && sceneDash.preferences?.defaultLayoutTemplate) {
+  if (sceneDash.preferences?.defaultLayoutTemplate) {
     const template = sceneDash.preferences.defaultLayoutTemplate;
     const serialized = template.serialize();
     if (serialized.kind === 'AutoGridLayout' || serialized.kind === 'GridLayout') {
@@ -133,18 +130,11 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF dashboard settings
 
     // time settings
-    timeSettings: {
-      timezone: timeRange.timeZone || timeSettingsDefaults.timezone,
-      from: timeRange.from,
-      to: timeRange.to,
-      autoRefresh: refreshPicker?.state.refresh || timeSettingsDefaults.autoRefresh,
-      autoRefreshIntervals: refreshPicker?.state.intervals || timeSettingsDefaults.autoRefreshIntervals,
-      hideTimepicker: controlsState?.hideTimeControls || timeSettingsDefaults.hideTimepicker,
-      weekStart: timeRange.weekStart,
-      fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
-      nowDelay: timeRange.UNSAFE_nowDelay,
-      quickRanges: controlsState?.timePicker.state.quickRanges,
-    },
+    timeSettings: buildTimeSettingsSpec(sceneDash.$timeRange!, {
+      timePicker: controlsState?.timePicker,
+      refreshPicker: controlsState?.refreshPicker,
+      hideTimeControls: controlsState?.hideTimeControls,
+    }),
     // EOF time settings
 
     // variables
@@ -160,6 +150,10 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF annotations
 
     // layout
+    // Not type-checked: body is AnyDashboardLayoutManager, so serialize() is typed `any` and any
+    // layout kind assigns here. validateDashboardSchemaV2 only dispatches on GridLayout and
+    // RowsLayout, so a sibling kind like the notebook layout passes and is written out silently.
+    // A save path for a sibling resource should narrow to its own manager instead of reusing this.
     layout: sceneDash.body.serialize(isSnapshot),
     // EOF layout
   };
@@ -200,29 +194,61 @@ function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMa
   const panels = scene.state.body.getVizPanels() ?? [];
 
   // For snapshot serialization we must also include repeated panel clones (panel repeaters store clones in state,
-  // not as layout children), otherwise the snapshot layout will reference elements that are missing.
+  // not as layout children) and the panels inside repeated row clones, otherwise the snapshot layout will
+  // reference elements that are missing.
   if (isSnapshot) {
     panels.push(...getRepeatedPanelsForSnapshot(scene));
+    panels.push(...getRepeatedSectionPanelsForSnapshot(scene));
   }
 
   return panels.reduce<Record<string, Element>>((elements, vizPanel) => {
     const element = vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
 
-    // Snapshot layout expands repeaters into explicit panels and references repeat clones by their `key`.
-    // Non-clone panels should keep their stable element identifier.
-    const elementKey =
-      isSnapshot && vizPanel.state.repeatSourceKey
-        ? (() => {
-            if (!vizPanel.state.key) {
-              throw new Error('Snapshot serialization expected repeat clone to have a key');
-            }
-            return vizPanel.state.key;
-          })()
-        : dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
+    // Snapshot layout expands repeaters into explicit panels and references clones by a disambiguated key
+    // (panel clones by their own `key`, panels inside a repeated row clone additionally prefixed with the
+    // enclosing clone's key). Non-clone panels keep their stable element identifier.
+    const elementKey = isSnapshot
+      ? dashboardSceneGraph.getSnapshotElementIdentifierForVizPanel(vizPanel)
+      : dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
 
     elements[elementKey] = element;
     return elements;
   }, {});
+}
+
+// A repeated row/tab clone: duck-typed (rather than importing RowItem/TabItem, which would create a circular
+// dependency through the layout serializers). Sections expose `dashboardLayoutItemType` and `getLayout()`;
+// VizPanels also carry `repeatSourceKey` but have no `getLayout`, so they're excluded.
+type RepeatCloneSection = SceneObject & {
+  dashboardLayoutItemType: 'row' | 'tab';
+  getLayout: () => { getVizPanels: () => VizPanel[] };
+};
+
+function isRepeatCloneSection(obj: SceneObject): obj is RepeatCloneSection {
+  const layoutItemType = 'dashboardLayoutItemType' in obj ? obj.dashboardLayoutItemType : undefined;
+  const repeatSourceKey = 'repeatSourceKey' in obj.state ? obj.state.repeatSourceKey : undefined;
+  return (
+    (layoutItemType === 'row' || layoutItemType === 'tab') &&
+    Boolean(repeatSourceKey) &&
+    'getLayout' in obj &&
+    typeof obj.getLayout === 'function'
+  );
+}
+
+// Panels inside a repeated row/tab clone are not returned by the layout's getVizPanels() (which only walks
+// source sections), so collect them explicitly for snapshot serialization.
+function getRepeatedSectionPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
+  const panels: VizPanel[] = [];
+
+  const cloneSections = sceneGraph.findAllObjects(scene.getRoot(), isRepeatCloneSection);
+
+  for (const section of cloneSections) {
+    if (isRepeatCloneSection(section)) {
+      panels.push(...section.getLayout().getVizPanels());
+    }
+  }
+
+  return panels;
 }
 
 function getRepeatedPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
@@ -259,6 +285,24 @@ function getRepeatedPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
   return panels;
 }
 
+// A panel is in a repeat context when it (or an ancestor) carries a repeat's LocalValueVariable. Such
+// values are not persisted in the snapshot, so titles referencing them (e.g. "server = $server") must be
+// interpolated at serialization time or they would fall back to the global variable value (e.g. "All").
+function panelHasRepeatLocalVariable(vizPanel: VizPanel): boolean {
+  let current: SceneObject | undefined = vizPanel;
+  while (current) {
+    const variables = current.state.$variables;
+    if (
+      variables instanceof SceneVariableSet &&
+      variables.state.variables.some((variable) => variable instanceof LocalValueVariable)
+    ) {
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
+}
+
 export function vizPanelToSchemaV2(
   vizPanel: VizPanel,
   dsReferencesMapping?: DSReferencesMapping,
@@ -287,18 +331,41 @@ export function vizPanelToSchemaV2(
     overrides: vizPanel.state.fieldConfig?.overrides ?? [],
   };
 
+  // Repeat clones share the same numeric panel id (parsed from `panel-<id>-clone-<n>`), and panels inside
+  // repeated row clones reuse the source panels' keys/ids, so snapshots must assign a stable unique id
+  // derived from the disambiguated element identifier.
+  const isDisambiguatedSnapshotPanel =
+    isSnapshot &&
+    (Boolean(vizPanel.state.repeatSourceKey && vizPanel.state.key) ||
+      dashboardSceneGraph.getEnclosingRepeatCloneKeys(vizPanel).length > 0);
+
+  // Bake the interpolated title/description for repeated panels so per-repeat values survive in the
+  // snapshot. Match the panel renderer's formats so the snapshot matches the live dashboard: the title
+  // uses the 'text' format (display label, e.g. "Bob") while the description uses the default format
+  // (raw value, e.g. "1").
+  const bakeRepeatValues = isSnapshot && panelHasRepeatLocalVariable(vizPanel);
+  const title = bakeRepeatValues
+    ? sceneGraph.interpolate(vizPanel, vizPanel.state.title, undefined, 'text')
+    : vizPanel.state.title;
+  const description =
+    bakeRepeatValues && vizPanel.state.description
+      ? sceneGraph.interpolate(vizPanel, vizPanel.state.description)
+      : (vizPanel.state.description ?? '');
+
+  const subtitle =
+    bakeRepeatValues && vizPanel.state.subtitle
+      ? sceneGraph.interpolate(vizPanel, vizPanel.state.subtitle, undefined, 'text')
+      : undefined;
+
   const elementSpec: PanelKind = {
     kind: 'Panel',
     spec: {
-      // Repeat clones share the same numeric panel id (parsed from `panel-<id>-clone-<n>`),
-      // so snapshots must assign a stable unique id per clone.
-      id:
-        isSnapshot && vizPanel.state.repeatSourceKey && vizPanel.state.key
-          ? djb2Hash(vizPanel.state.key)
-          : getPanelIdForVizPanel(vizPanel),
-      title: vizPanel.state.title,
-      description: vizPanel.state.description,
-      subtitle: vizPanel.state.subtitle,
+      id: isDisambiguatedSnapshotPanel
+        ? djb2Hash(dashboardSceneGraph.getSnapshotElementIdentifierForVizPanel(vizPanel))
+        : getPanelIdForVizPanel(vizPanel),
+      title,
+      description,
+      subtitle,
       links: getPanelLinks(vizPanel),
       transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
       data: {

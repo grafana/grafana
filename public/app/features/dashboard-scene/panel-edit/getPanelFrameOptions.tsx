@@ -11,9 +11,9 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { dashboardEditActions } from '../edit-pane/shared';
+import { edit } from '../actions/utils/edit';
 import { type VizPanelLinks } from '../scene/PanelLinks';
-import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
+import { useSidebarInputAutoFocus } from '../scene/layouts-shared/utils';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -24,7 +24,7 @@ import { PanelStylesSection } from './PanelStylesSection';
 export function createPresetApplyHandler(panel: VizPanel) {
   return function onApplyPreset(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) {
     const prevOptions = panel.state.options;
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
       source: panel,
       perform: () => {
@@ -179,7 +179,7 @@ export function PanelFrameTitleInput({
   const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
   const [prevTitle, setPrevTitle] = React.useState(panel.state.title);
 
-  let ref = useEditPaneInputAutoFocus({
+  let ref = useSidebarInputAutoFocus({
     autoFocus: notInPanelEdit && isNewElement,
   });
 
@@ -204,7 +204,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
   let propName: 'description' | 'subtitle' = description ? 'description' : 'subtitle';
 
   const onCommitDescriptionChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.edit-actions.panel-description', 'panel description change'),
       source: panel,
       perform: () => panel.setState({ [propName]: description }),
@@ -213,7 +213,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
   };
 
   const onToggleSubtitle = (evt: React.ChangeEvent<HTMLInputElement>) => {
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.edit-actions.panel-description', 'panel description change'),
       source: panel,
       perform: () => {
@@ -284,7 +284,7 @@ export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: str
   const onChange = () => {
     const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
 
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.edit-actions.panel-background', 'panel background change'),
       source: panel,
       perform: () => panel.setState({ displayMode: newDisplayMode }),
@@ -304,7 +304,7 @@ export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: 
     return;
   }
 
-  dashboardEditActions.edit({
+  edit({
     description: t('dashboard.edit-actions.panel-title', 'panel title change'),
     source: panel,
     perform: () => updatePanelTitleState(panel, title),

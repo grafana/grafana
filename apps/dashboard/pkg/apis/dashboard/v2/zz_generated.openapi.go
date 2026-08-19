@@ -3500,6 +3500,12 @@ func schema_pkg_apis_dashboard_v2_DashboardQueryOptionsSpec(ref common.Reference
 							Format: "",
 						},
 					},
+					"timeTo": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"maxDataPoints": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
@@ -4700,6 +4706,13 @@ func schema_pkg_apis_dashboard_v2_DashboardThreshold(ref common.ReferenceCallbac
 							Description: "Value null means -Infinity",
 							Type:        []string{"number"},
 							Format:      "double",
+						},
+					},
+					"valueExpr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"color": {

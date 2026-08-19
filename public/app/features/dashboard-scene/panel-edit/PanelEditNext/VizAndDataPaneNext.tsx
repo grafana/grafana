@@ -3,7 +3,7 @@ import { useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { getDragStyles, useStyles2 } from '@grafana/ui';
 
 import { PanelEditPanelWrapper } from '../PanelEditPanelWrapper';
 import { type PanelEditor } from '../PanelEditor';
@@ -16,30 +16,24 @@ import { SidebarSize } from './constants';
 import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const { showBanner, dismissBanner } = useQueryEditorBanner();
   const { scene, layout } = useVizAndDataPaneLayout(model, containerRef, showBanner);
   const styles = useStyles2(getStyles, layout.sidebarSize);
+  const dragStyles = useStyles2(getDragStyles);
 
   const nextDataPane = scene.dataPane instanceof PanelDataPaneNext ? scene.dataPane : null;
 
   return (
     <div ref={containerRef} className={styles.pageContainer} style={layout.gridStyles}>
-      {scene.controls && (
-        <div className={styles.controlsWrapper}>
-          <scene.controls.Component model={scene.controls} />
-        </div>
-      )}
       <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
         <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
         {nextDataPane && (
-          <div className={styles.vizResizeHandle}>
-            <div
-              ref={layout.vizResizeHandle.ref}
-              className={layout.vizResizeHandle.className}
-              data-testid="viz-resizer"
-            />
-          </div>
+          <div
+            className={cx(styles.vizResizeHandle, dragStyles.dragHandleHorizontal)}
+            ref={layout.vizResizeHandle.ref}
+            data-testid="viz-resizer"
+          />
         )}
       </div>
       {nextDataPane && (
@@ -60,13 +54,11 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
             <div className={styles.sidebarContent}>
               <Sidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
             </div>
-            <div className={styles.sidebarResizeHandle}>
-              <div
-                ref={layout.sidebarResizeHandle.ref}
-                className={cx(layout.sidebarResizeHandle.className, styles.resizeHandlePill)}
-                data-testid="sidebar-resizer"
-              />
-            </div>
+            <div
+              ref={layout.sidebarResizeHandle.ref}
+              className={cx(dragStyles.dragHandleVertical, styles.sidebarResizeHandle)}
+              data-testid="sidebar-resizer"
+            />
           </div>
           <div className={styles.dataPane}>
             <nextDataPane.Component model={nextDataPane} />
@@ -81,9 +73,10 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
   return {
     pageContainer: css({
       display: 'grid',
+      width: '100%',
       gap: theme.spacing(2),
       overflow: 'hidden',
-      paddingBottom: theme.spacing(2),
+      paddingBottom: theme.spacing(1),
     }),
     versionToggle: css({
       gridArea: 'version-toggle',
@@ -119,14 +112,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       overflow: 'hidden',
       minHeight: 0,
     }),
-    controlsWrapper: css({
-      gridArea: 'controls',
-      display: 'flex',
-      flexDirection: 'column',
-      ...(sidebarSize === SidebarSize.Mini && {
-        paddingLeft: theme.spacing(2),
-      }),
-    }),
     fixedSizeViz: css({
       height: '100vh',
     }),
@@ -135,6 +120,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       bottom: 0,
       left: 0,
       right: 0,
+      top: theme.spacing(0.5),
     }),
     sidebarResizeHandle: css({
       position: 'absolute',
@@ -145,15 +131,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       // which renders at the inner right edge of the sidebar box.
       right: `-${theme.spacing(2)}`,
       width: theme.spacing(2),
-    }),
-    resizeHandlePill: css({
-      height: '100%',
-      // Pill (::after) is 200px by default. Shrink to half when sidebar is tight.
-      '@container (max-height: 250px)': {
-        '&::after': {
-          height: 100,
-        },
-      },
     }),
   };
 }

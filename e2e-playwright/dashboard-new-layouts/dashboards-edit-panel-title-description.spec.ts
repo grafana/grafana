@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panel, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -18,6 +16,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
+<<<<<<< HEAD
     test('can edit panel title', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
@@ -25,10 +24,22 @@ test.describe(
       const panel = new Panel({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
+||||||| 0b66c76e462
+    test('can edit panel title and description', async ({ gotoDashboardPage, selectors, page, components }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+
+=======
+    test('can edit panel title and description', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+>>>>>>> 113d219ea2edf6a168e4c7081d086ea1038f6f1e
       await controls.enterEditMode();
 
       const oldTitle = /^No Data Points Warning$/;
-      await panel.selectByTitle(oldTitle);
+      await panels.selectByTitle(oldTitle);
 
       const titleInput = sidebar.panelOptions.getTitleInput();
       await expect(titleInput).toHaveValue(oldTitle);
@@ -36,9 +47,21 @@ test.describe(
       const newTitle = `New panel title (${Date.now()})`;
       await titleInput.fill(newTitle);
 
+<<<<<<< HEAD
       await expect(panel.getHeaderByTitle(oldTitle)).toBeHidden();
+||||||| 0b66c76e462
+      const newDescription = `New panel description (${Date.now()})`;
+      await sidebar.panelOptions.getDescriptionTextarea().fill(newDescription);
 
-      const header = panel.getHeaderByTitle(newTitle);
+      await expect(panel.getHeaderByTitle(oldTitle)).toBeHidden();
+=======
+      const newDescription = `New panel description (${Date.now()})`;
+      await sidebar.panelOptions.getDescriptionTextarea().fill(newDescription);
+
+      await expect(panels.getHeader(oldTitle)).toBeHidden();
+>>>>>>> 113d219ea2edf6a168e4c7081d086ea1038f6f1e
+
+      const header = panels.getHeader(newTitle);
       await expect(header).toBeVisible();
     });
 

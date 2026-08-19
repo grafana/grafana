@@ -28,6 +28,4 @@ export interface HomeDashboardChanged extends EventProperty {
   preferenceType: 'org' | 'team' | 'user';
   /** Whether a custom home dashboard was set, or the preference was cleared back to the default homepage. */
   action: 'set' | 'cleared';
-  /** Whether the unified homepage (grafana.unifiedHomepage) is enabled for this user. */
-  unifiedHomepageEnabled: boolean;
 }

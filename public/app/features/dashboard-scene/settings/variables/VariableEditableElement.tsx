@@ -21,9 +21,14 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
+import { changeVariableDescription } from '../../actions/variable/changeVariableDescription';
+import { changeVariableHideValue } from '../../actions/variable/changeVariableHideValue';
+import { changeVariableLabel } from '../../actions/variable/changeVariableLabel';
+import { changeVariableName } from '../../actions/variable/changeVariableName';
+import { duplicateVariable } from '../../actions/variable/duplicateVariable';
+import { removeVariable } from '../../actions/variable/removeVariable';
 import { DashboardScene } from '../../scene/DashboardScene';
-import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
+import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type BulkActionElement } from '../../scene/types/BulkActionElement';
 import {
   type EditableDashboardElement,
@@ -39,13 +44,12 @@ import {
 } from '../../settings/variables/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
-import { DashboardInteractions } from '../../utils/interactions';
 
 import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
 
 // TODO fix conditional hook usage here...
-function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: VariableEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const variable = this.variable;
   const variableOptionsCategoryId = useId();
   const variableNameId = useId();
@@ -74,15 +78,15 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.edit-pane.variable.label', 'Label'),
+          title: t('dashboard.sidebar.variable.label', 'Label'),
           id: labelId,
-          description: t('dashboard.edit-pane.variable.label-description', 'Optional display name'),
+          description: t('dashboard.sidebar.variable.label-description', 'Optional display name'),
           render: () => <VariableLabelInput variable={variable} />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.edit-pane.variable.description', 'Description'),
+          title: t('dashboard.sidebar.variable.description', 'Description'),
           id: descriptionId,
           render: () => <VariableDescriptionTextArea variable={variable} />,
         })
@@ -117,8 +121,8 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public getEditableElementInfo(): EditableDashboardElementInfo {
     if (this.variable instanceof LocalValueVariable) {
       return {
-        typeName: t('dashboard.edit-pane.elements.local-variable', 'Local variable'),
-        icon: 'dollar-alt',
+        typeName: t('dashboard.sidebar.elements.local-variable', 'Local variable'),
+        icon: 'gf-variable',
         instanceName: this.variable.state.name,
         isHidden: true,
       };
@@ -132,7 +136,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
     if (sceneUtils.isAdHocVariable(this.variable)) {
       return {
-        typeName: t('dashboard.edit-pane.elements.filter', 'Filter'),
+        typeName: t('dashboard.sidebar.elements.filter', 'Filter'),
         icon: 'filter',
         instanceName,
         tooltip,
@@ -141,34 +145,22 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     }
 
     return {
-      typeName: t('dashboard.edit-pane.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
-      icon: 'dollar-alt',
+      typeName: t('dashboard.sidebar.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
+      icon: 'gf-variable',
       instanceName,
       tooltip,
       isHidden: this.variable.state.hide === VariableHide.hideVariable,
     };
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 
   public renderActions() {
     return <ChangeVariableTypeButton variable={this.variable} />;
   }
 
   public onDuplicate() {
-    const set = this.variable.parent!;
-    if (!(set instanceof SceneVariableSet)) {
-      return;
-    }
-
-    dashboardEditActions.addVariable({
-      source: set,
-      addedObject: this.variable.clone({
-        key: undefined,
-        name: `${this.variable.state.name}_copy${set.state.variables.length}`,
-      }),
-    });
-    DashboardInteractions.variableActionButtonClicked('duplicate', { type: this.variable.state.type });
+    duplicateVariable(this.variable);
   }
 
   public onConfirmDelete() {
@@ -193,9 +185,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       return;
     }
 
-    DashboardInteractions.variableActionButtonClicked('delete', { type: this.variable.state.type });
-
-    dashboardEditActions.removeVariable({
+    removeVariable({
       source: set,
       removedObject: this.variable,
     });
@@ -250,17 +240,17 @@ function ChangeVariableTypeButton({ variable }: { variable: SceneVariable }) {
       size="sm"
       onClick={() => openChangeVariableTypePane(variable)}
       data-testid={selectors.components.PanelEditor.ElementEditPane.changeVariableType}
-      aria-label={t('dashboard.edit-pane.variable.change-type-aria-label', 'Change variable type')}
+      aria-label={t('dashboard.sidebar.variable.change-type-aria-label', 'Change variable type')}
       variant="secondary"
     >
-      <Trans i18nKey="dashboard.edit-pane.variable.change-type">Change type</Trans>
+      <Trans i18nKey="dashboard.sidebar.variable.change-type">Change type</Trans>
     </Button>
   );
 }
 
 function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; autoFocus: boolean }) {
   const { name } = variable.useState();
-  const ref = useEditPaneInputAutoFocus({ autoFocus });
+  const ref = useSidebarInputAutoFocus({ autoFocus });
   const [nameError, setNameError] = useState<string>();
   const [nameWarning, setNameWarning] = useState<string>();
   const id = useId();
@@ -285,7 +275,7 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
   return (
     <>
       <Field
-        label={t('dashboard.edit-pane.variable.name', 'Name')}
+        label={t('dashboard.sidebar.variable.name', 'Name')}
         invalid={!!nameError}
         error={nameError}
         noMargin={false}
@@ -312,7 +302,7 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
               return;
             }
 
-            dashboardEditActions.changeVariableName({
+            changeVariableName({
               source: variable,
               oldValue: oldName.current,
               newValue: name,
@@ -350,7 +340,7 @@ function VariableLabelInput({ variable, id }: VariableInputProps) {
           return;
         }
 
-        dashboardEditActions.changeVariableLabel({
+        changeVariableLabel({
           source: variable,
           oldValue: oldLabel.current,
           newValue: e.currentTarget.value,
@@ -369,7 +359,7 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
     <TextArea
       id={id}
       value={description ?? ''}
-      placeholder={t('dashboard.edit-pane.variable.description-placeholder', 'Descriptive text')}
+      placeholder={t('dashboard.sidebar.variable.description-placeholder', 'Descriptive text')}
       onFocus={() => {
         oldDescription.current = description ?? '';
       }}
@@ -382,7 +372,7 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
           return;
         }
 
-        dashboardEditActions.changeVariableDescription({
+        changeVariableDescription({
           source: variable,
           oldValue: oldDescription.current,
           newValue: e.currentTarget.value,
@@ -398,7 +388,7 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
   const topPlacementLabel = sectionOwner ? getTopPlacementLabel(sectionOwner) : undefined;
 
   const onChange = (option: VariableHide) => {
-    dashboardEditActions.changeVariableHideValue({
+    changeVariableHideValue({
       source: variable,
       oldValue: display,
       newValue: option,
@@ -431,7 +421,7 @@ function useVariableTypeCategory(variable: SceneVariable) {
     const variableEditorDef = getEditableVariableDefinition(variable.state.type);
 
     const category = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.edit-pane.variable.type-category', '{{type}} options', {
+      title: t('dashboard.sidebar.variable.type-category', '{{type}} options', {
         type: variableEditorDef.name,
       }),
       id: 'variable-type',
@@ -510,15 +500,12 @@ function OpenOldVariableEditButton({ variable }: VariableInputProps) {
   return (
     <Box display={'flex'} direction={'column'} paddingBottom={1}>
       <Button
-        tooltip={t(
-          'dashboard.edit-pane.variable.open-editor-tooltip',
-          'For more variable options open variable editor'
-        )}
+        tooltip={t('dashboard.sidebar.variable.open-editor-tooltip', 'For more variable options open variable editor')}
         onClick={onOpenVariableEdior}
         size="sm"
         fullWidth
       >
-        <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
+        <Trans i18nKey="dashboard.sidebar.variable.open-editor">Open variable editor</Trans>
       </Button>
     </Box>
   );

@@ -10,7 +10,9 @@ import (
 	"net/http/httputil"
 	"path"
 	"strconv"
+	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
@@ -21,9 +23,11 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalAllFlags")
 	defer span.End()
 
+	b.logger.Debug("Proxying bulk flag eval request", "namespace", namespace, "isAuthedUser", isAuthedUser)
+
 	r = r.WithContext(ctx)
 
-	proxy, err := b.newProxy(ofrepPath, namespace)
+	proxy, err := b.newProxy(ofrepPath, namespace, r.Header.Get("User-Agent"))
 	if err != nil {
 		err = tracing.Error(span, err)
 		b.logger.Error("Failed to create proxy", "error", err)
@@ -37,7 +41,7 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 		}
 
 		// Unauth is always filtered to public flags. Authed is filtered only when the flag is on.
-		if isAuthedUser && !bulkFlagEvalFilteringEnabled(ctx) {
+		if isAuthedUser && !bulkFlagEvalFilteringEnabled(ctx, b.logger) {
 			return nil
 		}
 
@@ -73,9 +77,11 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalFlag")
 	defer span.End()
 
+	b.logger.Debug("Proxying single flag eval request", "namespace", namespace, "key", flagKey, "isAuthedUser", isAuthedUser)
+
 	r = r.WithContext(ctx)
 
-	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey), namespace)
+	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey), namespace, r.Header.Get("User-Agent"))
 	if err != nil {
 		err = tracing.Error(span, err)
 		b.logger.Error("Failed to create proxy", "key", flagKey, "error", err)
@@ -110,7 +116,7 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 		// Not public -> respond as if the flag doesn't exist, so an unauthed
 		// caller can't use the 404-vs-401 distinction to probe which private
 		// flags exist.
-		b.logger.Debug("Unauthed request for non-public flag, responding as not-found", "key", flagKey)
+		b.logger.Debug("Unauthed request for non-public flag, responding as not-found", "namespace", namespace, "key", flagKey)
 		notFoundBody, err := json.Marshal(goffmodel.OFREPEvaluateErrorResponse{
 			OFREPCommonErrorResponse: goffmodel.OFREPCommonErrorResponse{
 				ErrorCode:    "FLAG_NOT_FOUND",
@@ -128,7 +134,7 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	proxy.ServeHTTP(w, r)
 }
 
-func (b *APIBuilder) newProxy(proxyPath, namespace string) (*httputil.ReverseProxy, error) {
+func (b *APIBuilder) newProxy(proxyPath, namespace, incomingUserAgent string) (*httputil.ReverseProxy, error) {
 	if proxyPath == "" {
 		return nil, fmt.Errorf("proxy path is required")
 	}
@@ -141,7 +147,7 @@ func (b *APIBuilder) newProxy(proxyPath, namespace string) (*httputil.ReversePro
 		req.URL.Scheme = b.url.Scheme
 		req.URL.Host = b.url.Host
 		req.URL.Path = proxyPath
-		req.Header.Set("User-Agent", namespaceUserAgent(namespace))
+		req.Header.Set("User-Agent", withStackTag(incomingUserAgent, namespace))
 	}
 
 	proxy := proxyutil.NewReverseProxy(b.logger, director)
@@ -149,11 +155,29 @@ func (b *APIBuilder) newProxy(proxyPath, namespace string) (*httputil.ReversePro
 	return proxy, nil
 }
 
-func namespaceUserAgent(namespace string) string {
-	if namespace == "" {
-		return "features-grafana-app"
+// maxUserAgentLen bounds a caller-supplied User-Agent before it's forwarded downstream.
+const maxUserAgentLen = 150
+
+func withStackTag(ua, ns string) string {
+	if len(ua) > maxUserAgentLen {
+		ua = ua[:maxUserAgentLen]
 	}
-	return "features-grafana-app/" + namespace
+
+	if strings.HasPrefix(ua, features.ClientUserAgentPrefix) {
+		// Known format from our own HTTP client
+		if ns == "" || strings.Contains(ua, " ns/"+ns) {
+			return ua
+		}
+		return ua + " ns/" + ns
+	}
+
+	if ua == "" {
+		ua = "unknown"
+	}
+	if ns == "" {
+		return ua
+	}
+	return ua + " ns/" + ns
 }
 
 // rewriteResponse swaps a proxied response for a new one, so the reverse proxy

@@ -251,7 +251,16 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 			continue
 		}
 		for _, tag := range anno.Spec.Tags {
-			if opts.Prefix == "" || strings.HasPrefix(tag, opts.Prefix) {
+			switch {
+			case opts.Prefix != "":
+				if strings.HasPrefix(tag, opts.Prefix) {
+					tagCounts[tag]++
+				}
+			case opts.Contains != "":
+				if strings.Contains(strings.ToLower(tag), strings.ToLower(opts.Contains)) {
+					tagCounts[tag]++
+				}
+			default:
 				tagCounts[tag]++
 			}
 		}
@@ -261,6 +270,9 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 	for name, count := range tagCounts {
 		tags = append(tags, Tag{Name: name, Count: count})
 	}
+	slices.SortFunc(tags, func(a, b Tag) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
 
 	if opts.Limit > 0 && len(tags) > opts.Limit {
 		tags = tags[:opts.Limit]

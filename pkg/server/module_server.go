@@ -35,9 +35,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcekv "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
+	rerankprovider "github.com/grafana/grafana/pkg/storage/unified/search/rerank/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"go.opentelemetry.io/otel"
@@ -65,12 +68,13 @@ func NewModule(opts Options,
 	tracer tracing.Tracer, // Ensures tracing is initialized
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
-	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
+	kvStore resourcekv.KV,
+	experimentalKV *resource.ExperimentalKVOptions, // Optional alternative KV for flagged use-cases; nil in OSS
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, storageBackend, hooksService, storeProvider, reconcileCRDs)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, kvStore, experimentalKV, hooksService, storeProvider, reconcileCRDs)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +98,8 @@ func newModuleServer(opts Options,
 	tracer tracing.Tracer,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
-	storageBackend resource.StorageBackend,
+	kvStore resourcekv.KV,
+	experimentalKV *resource.ExperimentalKVOptions,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
@@ -128,7 +133,8 @@ func newModuleServer(opts Options,
 		tracer:           tracer,
 		license:          license,
 		moduleRegisterer: moduleRegisterer,
-		storageBackend:   storageBackend,
+		kvStore:          kvStore,
+		experimentalKV:   experimentalKV,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
 		healthNotifier:   NewHealthNotifier(),
@@ -156,10 +162,13 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
+	kvStore          resourcekv.KV
+	experimentalKV   *resource.ExperimentalKVOptions
 	natsPublisher    nats.Publisher
 	natsSubscriber   nats.Subscriber
 	vectorBackend    vector.VectorBackend
 	embedder         *embedder.Embedder
+	reranker         *rerank.Reranker
 	searchClient     resourcepb.ResourceIndexClient
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
@@ -253,7 +262,9 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterInvisibleModule(modules.NATS, s.initNATSModule)
 
-	m.RegisterInvisibleModule(modules.UnifiedBackend, s.initUnifiedBackendModule(m.IsModuleEnabled(modules.StorageServer)))
+	// Same decision as resource.NewKVBackendOptions makes for wirings that do not
+	// pass it in, so both agree on which process runs the background write jobs.
+	m.RegisterInvisibleModule(modules.UnifiedBackend, s.initUnifiedBackendModule(s.cfg.StorageServicesEnabled()))
 
 	m.RegisterInvisibleModule(modules.UnifiedVectorBackend, s.initUnifiedVectorBackend(m.IsModuleEnabled(modules.StorageServer)))
 
@@ -347,24 +358,26 @@ func (s *ModuleServer) initNATSModule() (services.Service, error) {
 	).WithName(modules.NATS), nil
 }
 
-func (s *ModuleServer) initUnifiedBackendModule(storageServerEnabled bool) func() (services.Service, error) {
+func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) func() (services.Service, error) {
 	return func() (services.Service, error) {
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
-			disableStorageServices := !storageServerEnabled
+			disableStorageServices := !storageServicesEnabled
 			eDB, err := sql.ProvideResourceDB(s.cfg, nil)
 			if err != nil {
 				return nil, err
 			}
-			kvStore, err := sql.ProvideKV(s.cfg, eDB)
-			if err != nil {
-				return nil, err
+			kvStore := s.kvStore
+			if kvStore == nil {
+				kvStore, err = sql.ProvideKV(s.cfg, eDB)
+				if err != nil {
+					return nil, err
+				}
 			}
-			opts := []sql.StorageBackendOption{sql.WithEventPublisher(s.natsPublisher), sql.WithVectorBackend(s.vectorBackend)}
-			if s.cfg.NATS.Notifier && s.natsSubscriber != nil {
-				opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{s.natsSubscriber}))
-			} else if s.cfg.NATS.NotifierShadow && s.natsSubscriber != nil {
-				opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{s.natsSubscriber}))
+			opts := append([]sql.StorageBackendOption{sql.WithVectorBackend(s.vectorBackend)},
+				unified.NatsStorageBackendOptions(s.cfg, s.natsPublisher, s.natsSubscriber)...)
+			if s.experimentalKV != nil {
+				opts = append(opts, sql.WithExperimentalKV(s.experimentalKV))
 			}
 			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, opts...)
 			if err != nil {
@@ -407,7 +420,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 	if dashboardStats != nil {
 		serviceOptions = append(serviceOptions, sql.WithDashboardStats(dashboardStats))
 	}
-	svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.searchClient, s.grpcService, serviceOptions...)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.searchClient, s.grpcService, serviceOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -438,7 +451,7 @@ func (s *ModuleServer) initSearchServerModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.grpcService, s.StorageServiceOptions...)
+	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.grpcService, s.StorageServiceOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -476,6 +489,13 @@ func (s *ModuleServer) initUnifiedVectorBackend(storageServerEnabled bool) func(
 				return nil, err
 			}
 			s.embedder = e
+		}
+		if s.reranker == nil {
+			r, err := rerankprovider.ProvideReranker(s.cfg, s.vectorMetrics)
+			if err != nil {
+				return nil, err
+			}
+			s.reranker = r
 		}
 		return services.NewIdleService(nil, nil).WithName(modules.UnifiedVectorBackend), nil
 	}

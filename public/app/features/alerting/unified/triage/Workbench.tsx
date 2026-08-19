@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { type SceneQueryRunner } from '@grafana/scenes';
 import {
@@ -240,7 +241,10 @@ export function Workbench({
             </div>
           </div>
           {/* content goes here */}
-          <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
+          <div
+            data-testid={selectors.pages.Alerting.Triage.groupsContainer}
+            className={cx(splitter.containerProps.className, styles.groupsContainer)}
+          >
             {groupBy && groupBy.length > 0 && (
               <div className={styles.expandCollapseToolbar}>
                 <Button

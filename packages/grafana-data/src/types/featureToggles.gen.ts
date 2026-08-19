@@ -124,21 +124,6 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
-  * Enables Git Sync and as-code provisioning for Grafana resources
-  * @default true
-  */
-  provisioning?: boolean;
-  /**
-  * Enable export functionality for provisioned resources
-  * @default false
-  */
-  provisioningExport?: boolean;
-  /**
-  * Start an additional https handler and write kubectl options
-  * @default false
-  */
-  grafanaAPIServerEnsureKubectlAccess?: boolean;
-  /**
   * Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
   * @default true
   */
@@ -179,11 +164,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Routes snapshot requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesSnapshots?: boolean;
-  /**
   * When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
   * @default false
   */
@@ -193,11 +173,6 @@ export interface FeatureToggles {
   * @default false
   */
   externalSnapshotsSupportLegacyAPI?: boolean;
-  /**
-  * Routes library panel requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesLibraryPanels?: boolean;
   /**
   * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
   * @default true
@@ -309,15 +284,11 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
-  * Enables default layout selector in dashboard settings
+  * Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.
+  * @deprecated
   * @default true
   */
-  dashboardDefaultLayoutSelector?: boolean;
-  /**
-  * Enables the assistant prompt popover on panel click in dashboard view mode
-  * @default false
-  */
-  dashboardAssistantPopover?: boolean;
+  disableScriptedDashboards?: boolean;
   /**
   * Enables undo/redo in dynamic dashboards
   * @default false
@@ -404,11 +375,6 @@ export interface FeatureToggles {
   */
   alertingSaveStatePeriodic?: boolean;
   /**
-  * Enables the compressed protobuf-based alert state storage. Default is enabled.
-  * @default true
-  */
-  alertingSaveStateCompressed?: boolean;
-  /**
   * In-development feature flag for the scope api using the app platform.
   * @default false
   */
@@ -490,7 +456,7 @@ export interface FeatureToggles {
   grafanaManagedRecordingRules?: boolean;
   /**
   * Enables Saved queries (query library) feature
-  * @default false
+  * @default true
   */
   queryLibrary?: boolean;
   /**
@@ -500,12 +466,12 @@ export interface FeatureToggles {
   playlistsRBAC?: boolean;
   /**
   * Enables Saved queries (query library) RBAC permissions
-  * @default false
+  * @default true
   */
   savedQueriesRBAC?: boolean;
   /**
   * Enables the new Saved queries (query library) modal experience
-  * @default false
+  * @default true
   */
   newSavedQueriesExperience?: boolean;
   /**
@@ -568,11 +534,6 @@ export interface FeatureToggles {
   * @default false
   */
   preserveDashboardStateWhenNavigating?: boolean;
-  /**
-  * Enables the new central alert history.
-  * @default false
-  */
-  alertingCentralAlertHistory?: boolean;
   /**
   * Preserve plugin proxy trailing slash.
   * @default false
@@ -689,11 +650,6 @@ export interface FeatureToggles {
   * @default false
   */
   azureMonitorDisableLogLimit?: boolean;
-  /**
-  * Enables experimental reconciler for playlists
-  * @default false
-  */
-  playlistsReconciler?: boolean;
   /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   * @default false
@@ -884,6 +840,11 @@ export interface FeatureToggles {
   * @default false
   */
   azureMonitorLogsBuilderEditor?: boolean;
+  /**
+  * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+  * @default true
+  */
+  ['datasources.azureMonitorBatchAPI']?: boolean;
   /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
@@ -1095,11 +1056,6 @@ export interface FeatureToggles {
   */
   alertingTriage?: boolean;
   /**
-  * Shows a promotional banner for the Alerts Activity feature on the Rule List page
-  * @default false
-  */
-  alertingAlertsActivityBanner?: boolean;
-  /**
   * Enables the Graphite data source full backend mode
   * @default false
   */
@@ -1115,11 +1071,6 @@ export interface FeatureToggles {
   * @default true
   */
   prometheusTypeMigration?: boolean;
-  /**
-  * Enables running plugins in containers
-  * @default false
-  */
-  pluginContainers?: boolean;
   /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
@@ -1201,16 +1152,6 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables support for section level variables (rows and tabs)
-  * @default true
-  */
-  dashboardSectionVariables?: boolean;
-  /**
-  * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
-  * @default false
-  */
-  globalDashboardVariables?: boolean;
-  /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
   */
@@ -1291,6 +1232,11 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
+  * Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
+  * @default false
+  */
+  kubernetesUsersRedirectNoFallback?: boolean;
+  /**
   * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false
   */
@@ -1335,11 +1281,6 @@ export interface FeatureToggles {
   * @default true
   */
   rememberUserOrgForSso?: boolean;
-  /**
-  * Registers the dsabstraction app for querying datasources via unified SQL
-  * @default false
-  */
-  dsAbstractionApp?: boolean;
   /**
   * Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
   * @default false

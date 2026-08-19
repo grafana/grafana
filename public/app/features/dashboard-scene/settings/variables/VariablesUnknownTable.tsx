@@ -12,8 +12,6 @@ import { CollapsableSection, Icon, Spinner, Stack, Text, Tooltip, useStyles2 } f
 import { VariableUsagesButton } from '../../variables/VariableUsagesButton';
 import { getUnknownsNetwork, type UsagesToNetwork } from '../../variables/utils';
 
-export const SLOW_VARIABLES_EXPANSION_THRESHOLD = 1000;
-
 export interface VariablesUnknownTableProps {
   variables: Array<SceneVariable<SceneVariableState>>;
   dashboard: Dashboard | null;
@@ -27,13 +25,7 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
   useEffect(() => setChanged((prevState) => prevState + 1), [variables, dashboard]);
 
   const [{ loading, value: usages }, getUnknowns] = useAsyncFn(async () => {
-    const start = Date.now();
     const unknownsNetwork = await getUnknownsNetwork(variables, dashboard);
-    const stop = Date.now();
-    const elapsed = stop - start;
-    if (elapsed >= SLOW_VARIABLES_EXPANSION_THRESHOLD) {
-      reportInteraction('Slow unknown variables expansion', { elapsed });
-    }
     setChanged(0);
 
     return unknownsNetwork;

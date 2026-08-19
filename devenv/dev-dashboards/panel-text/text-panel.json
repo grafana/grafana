@@ -1,0 +1,284 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "adssfc8"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Markdown",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Markdown syntax guide\n---\n\n## Headers\n\n# This is a Heading h1\n## This is a Heading h2\n###### This is a Heading h6\n\n---\n\n## Emphasis\n\n*This text will be italic*  \n_This will also be italic_\n\n**This text will be bold**  \n__This will also be bold__\n\n_You **can** combine them_\n\n---\n\n### Strikethrough\n\n~~The world is flat.~~\n\n---\n\n## Lists\n\n#### Unordered\n\n* Item 1\n* Item 2\n* Item 2a\n* Item 2b\n    * Item 3a\n    * Item 3b\n\n#### Ordered\n\n1. Item 1\n2. Item 2\n3. Item 3\n    1. Item 3a\n    2. Item 3b\n\n---\n\n## Images\n\n![alt text](https://grafana.com/static/img/menu/grafana2.svg)\n\n---\n\n## Links\n\n[Technical documentation](https://grafana.com/docs/)\n\n---\n\n## Blockquotes\n\n> Markdown is a lightweight markup language with plain-text-formatting syntax, created in 2004 by John Gruber with Aaron Swartz.\n>\n>> Markdown is often used to format readme files, for writing messages in online discussion forums, and to create rich text using a plain text editor.\n\n---\n\n## Tables\n\n| Left columns  | Right columns |\n| ------------- |:-------------:|\n| left foo      | right foo     |\n| left bar      | right bar     |\n| left baz      | right baz     |\n\n\n---\n\n## Blocks of code\n\n```\nlet message = 'Hello world';\nalert(message);\n```\n\n---\n\n## Inline code\n\nThis web site is using `code`.\n\n---\n\n### Task List\n\n- [x] Write the press release\n- [ ] Update the website\n- [ ] Contact the media\n      ",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "HTML",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "<h2>HTML</h2>\n<p>\n  This paragraph has <strong>bold</strong>, <em>italic</em>,\n  <u>underline</u>, <s>strikethrough</s>, and <code>inline code</code>.\n</p>\n<hr />\n<h3>Lists</h3>\n<ul>\n  <li>Unordered item one</li>\n  <li>Unordered item two\n    <ul>\n      <li>Nested item</li>\n    </ul>\n  </li>\n</ul>\n<ol>\n  <li>Ordered item one</li>\n  <li>Ordered item two</li>\n</ol>\n<hr />\n<h3>Links</h3>\n<p><a href=\"https://grafana.com\" target=\"_blank\" rel=\"noreferrer\">Grafana.com</a></p>\n<hr />\n<h3>Images</h3>\n<img src=\"https://grafana.com/static/img/menu/grafana2.svg\" alt=\"Grafana logo\" width=\"120\" />\n<hr />\n<h3>Table</h3>\n<table>\n  <thead>\n    <tr><th>Service</th><th>Status</th></tr>\n  </thead>\n  <tbody>\n    <tr><td>API</td><td>Healthy</td></tr>\n    <tr><td>Web</td><td>Degraded</td></tr>\n  </tbody>\n</table>\n<hr />\n<h3>Blockquote and rule</h3>\n<blockquote>OSS is in our DNA.</blockquote>\n<hr />\n<h3>Inline styling</h3>\n<p style=\"color: #ff7043; font-weight: bold;\">Styled orange text</p>\n<pre>preformatted\n  block\n    of text</pre>",
+                "mode": "html"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Code Support with Language Syntax Highlighting",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "typescript",
+                  "showLineNumbers": true,
+                  "showMiniMap": true
+                },
+                "content": "interface User {\n  name: string;\n  id: number;\n}\n \nclass UserAccount {\n  name: string;\n  id: number;\n \n  constructor(name: string, id: number) {\n    this.name = name;\n    this.id = id;\n  }\n}\n \nconst user: User = new UserAccount(\"Murphy\", 1);",
+                "mode": "code"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Render mode: Per row",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "Id,first_name,last_name,login,last_login_date,status,role,email,photo\n1,John,Smith,j.smith,2022-11-02,active,admin,j.smith@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n2,Jessica,Johnson,j.johnson,2022-10-31,not active,analyst,j.johnson@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n3,Wei,Zhang,w.zhang,2026-08-10,Active,editor,w.zhang@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n4,Priya,Raman,p.raman,2026-08-09,pending,viewer,p.raman@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n5,\"Anne-Marie \"\"Annie\"\"\",\"van der Berg, Johannes\",a.vdberg,2026-07-04,active,admin,a.vdberg+test@example.co.uk,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "mode": "html",
+                "content": "<style>\n  .user-card {\n    display: grid;\n    grid-template-columns: minmax(0, 1fr) 96px;\n    gap: 20px;\n    align-items: center;\n    margin-bottom: 12px;\n    padding: 20px;\n    overflow: hidden;\n    color: var(--theme-colors-text-primary, #d8d9da);\n    background: var(--theme-colors-background-primary, #181b1f);\n    border: 1px solid var(--theme-colors-border-weak, #2c3235);\n    border-radius: 8px;\n    box-shadow: 0 1px 2px rgb(0 0 0 / 18%);\n\n    font-family: inherit;\n  }\n\n  .user-card__header {\n    display: flex;\n    gap: 12px;\n    align-items: flex-start;\n    justify-content: space-between;\n    margin-bottom: 18px;\n  }\n\n  .user-card__name {\n    margin: 0;\n    color: var(--theme-colors-text-primary, #d8d9da);\n    font-size: 18px;\n    font-weight: 500;\n    line-height: 1.3;\n  }\n\n  .user-card__email {\n    margin-top: 4px;\n    overflow: hidden;\n    color: var(--theme-colors-text-secondary, #9fa7af);\n    font-size: 13px;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n  }\n\n  .user-card__status {\n    display: inline-flex;\n    flex: 0 0 auto;\n    gap: 6px;\n    align-items: center;\n    min-height: 24px;\n    padding: 2px 9px;\n    border-radius: 999px;\n    font-size: 12px;\n    font-weight: 500;\n  }\n\n  .user-card__status::before {\n    width: 7px;\n    height: 7px;\n    border-radius: 50%;\n    content: \"\";\n  }\n\n  .user-card__status--active {\n    color: var(--theme-colors-success-text, #73bf69);\n    background: rgb(115 191 105 / 12%);\n    border: 1px solid rgb(115 191 105 / 28%);\n  }\n\n  .user-card__status--active::before {\n    background: var(--theme-colors-success-text, #73bf69);\n  }\n\n  .user-card__status--inactive {\n    color: var(--theme-colors-error-text, #f2495c);\n    background: rgb(242 73 92 / 12%);\n    border: 1px solid rgb(242 73 92 / 28%);\n  }\n\n  .user-card__status--inactive::before {\n    background: var(--theme-colors-error-text, #f2495c);\n  }\n\n  .user-card__metadata {\n    display: grid;\n    grid-template-columns: repeat(3, minmax(90px, 1fr));\n    gap: 16px;\n  }\n\n  .user-card__label {\n    margin-bottom: 4px;\n    color: var(--theme-colors-text-secondary, #9fa7af);\n    font-size: 11px;\n    font-weight: 500;\n    letter-spacing: 0.03em;\n    line-height: 1.2;\n    text-transform: uppercase;\n  }\n\n  .user-card__value {\n    overflow: hidden;\n    color: var(--theme-colors-text-primary, #d8d9da);\n    font-size: 14px;\n    font-weight: 500;\n    line-height: 1.4;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n  }\n\n  .user-card__avatar {\n    width: 80px;\n    height: 80px;\n    object-fit: cover;\n    border: 1px solid var(--theme-colors-border-medium, #3d4449);\n    border-radius: 50%;\n    background: var(--theme-colors-background-secondary, #111217);\n  }\n\n  @media (max-width: 600px) {\n    .user-card {\n      grid-template-columns: minmax(0, 1fr) 64px;\n      gap: 12px;\n      padding: 16px;\n    }\n\n    .user-card__avatar {\n      width: 56px;\n      height: 56px;\n    }\n\n    .user-card__metadata {\n      grid-template-columns: 1fr;\n      gap: 12px;\n    }\n\n    .user-card__header {\n      flex-direction: column;\n    }\n  }\n</style>\n\n<article class=\"user-card\">\n  <div>\n    <header class=\"user-card__header\">\n      <div style=\"min-width: 0;\">\n        <h3 class=\"user-card__name\">\n          ${__data.fields.Id}\n          ${__data.fields.first_name} ${__data.fields.last_name}\n        </h3>\n\n        <div class=\"user-card__email\">\n          ${__data.fields.email}\n        </div>\n      </div>\n    </header>\n\n    <div class=\"user-card__metadata\">\n      <div>\n        <div class=\"user-card__label\">Username</div>\n        <div class=\"user-card__value\">${__data.fields.login}</div>\n      </div>\n\n      <div>\n        <div class=\"user-card__label\">Role</div>\n        <div class=\"user-card__value\">${__data.fields.role}</div>\n      </div>\n\n      <div>\n        <div class=\"user-card__label\">Last login</div>\n        <div class=\"user-card__value\">\n          ${__data.fields.last_login_date}\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <img\n    class=\"user-card__avatar\"\n    src=\"${__data.fields.photo}\" \n    alt=\"placeholder\"\n  />\n</article>",
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false
+                },
+                "renderMode": "perRow"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 8,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 8,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": ["gdev", "panel-tests"],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Text panel",
+    "variables": [],
+    "preferences": {
+      "layout": {
+        "kind": "GridLayout",
+        "spec": {
+          "items": []
+        }
+      }
+    }
+  }
+}

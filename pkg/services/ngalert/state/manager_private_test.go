@@ -327,7 +327,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			results := resultsAtTime[ts]
 			clk.Set(ts)
 			var statesToSend StateTransitions
-			actual := st.ProcessEvalResults(context.Background(), ts, alertRule, results, systemLabels, func(_ context.Context, states StateTransitions) {
+			actual, _ := st.ProcessEvalResults(context.Background(), ts, alertRule, results, systemLabels, func(_ context.Context, states StateTransitions) {
 				statesToSend = states
 			})
 
@@ -5575,7 +5575,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 				for idx := range results {
 					results[idx].EvaluatedAt = tx
 				}
-				transitions := mgr.ProcessEvalResults(ctx, t1, &baseRule, results, nil, nil)
+				transitions, _ := mgr.ProcessEvalResults(ctx, t1, &baseRule, results, nil, nil)
 
 				for _, transition := range transitions {
 					assert.Equalf(t, tc.imageService.Image, transition.Image, "Transition %s does not have image but should", transition.Labels.String())

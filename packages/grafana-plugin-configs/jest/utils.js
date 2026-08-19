@@ -31,4 +31,5 @@ export const grafanaESModules = [
   'uuid',
   '@react-hookz/web',
   '@ver0/deep-equal',
+  '@marcbachmann/cel-js',
 ];

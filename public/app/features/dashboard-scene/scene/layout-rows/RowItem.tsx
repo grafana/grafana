@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { store } from '@grafana/data';
+import { locationUtil, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, logWarning } from '@grafana/runtime';
+import { config, locationService, logWarning } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   sceneGraph,
@@ -18,8 +18,8 @@ import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { edit } from '../../actions/utils/edit';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
@@ -40,10 +40,11 @@ import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { type LayoutParent } from '../types/LayoutParent';
 
-import { useEditOptions } from './RowItemEditor';
+import { useSidebarOptions } from './RowItemEditor';
 import { RowItemRenderer } from './RowItemRenderer';
 import { RowItems } from './RowItems';
 import { RowsLayoutManager } from './RowsLayoutManager';
+import { getRowSlugPath } from './scrollToRow';
 
 export interface RowItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
@@ -99,7 +100,7 @@ export class RowItem
   public getEditableElementInfo(): EditableDashboardElementInfo {
     const isHidden = !this.state.conditionalRendering?.state.result;
     return {
-      typeName: t('dashboard.edit-pane.elements.row', 'Row'),
+      typeName: t('dashboard.sidebar.elements.row', 'Row'),
       instanceName: interpolateSectionTitle(this, this.state.title),
       icon: 'list-ul',
       isHidden,
@@ -138,16 +139,32 @@ export class RowItem
     return getSlugForRowOrTab(this, siblings);
   }
 
-  public switchLayout(layout: DashboardLayoutManager) {
+  /** Returns an absolute url that scrolls this row into view when the dashboard is opened */
+  public getUrl(): string {
+    const urlWithRowParam = locationUtil.getUrlForPartial(locationService.getLocation(), {
+      drow: getRowSlugPath(this),
+    });
+
+    return new URL(urlWithRowParam, window.location.origin).toString();
+  }
+
+  public switchLayout(layout: DashboardLayoutManager, skipUndo?: boolean) {
     const currentLayout = this.state.layout;
 
-    dashboardEditActions.edit({
+    const perform = () => {
+      this.setState({ layout });
+      this.publishEvent(new NewSceneObjectAddedEvent(this), true);
+    };
+
+    if (skipUndo) {
+      perform();
+      return;
+    }
+
+    edit({
       description: t('dashboard.edit-actions.switch-layout-row', 'Switch layout'),
       source: this,
-      perform: () => {
-        this.setState({ layout });
-        this.publishEvent(new NewSceneObjectAddedEvent(this), true);
-      },
+      perform,
       undo: () => {
         this.setState({ layout: currentLayout });
         this.publishEvent(new NewSceneObjectAddedEvent(this), true);
@@ -155,7 +172,7 @@ export class RowItem
     });
   }
 
-  public useEditPaneOptions = useEditOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 
   public onDelete() {
     this.getParentLayout().removeRow(this);

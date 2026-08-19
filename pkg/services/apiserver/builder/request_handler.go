@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	klog "k8s.io/klog/v2"
@@ -45,11 +46,14 @@ func convertHandlerToRouteFunction(handler http.HandlerFunc) restful.RouteFuncti
 
 // AugmentWebServicesWithCustomRoutes adds custom routes from builders to existing WebServices
 // in the container.
+//
+// extra is variadic to leave existing callers untouched.
 func AugmentWebServicesWithCustomRoutes(
 	container *restful.Container,
 	builders []APIGroupBuilder,
 	metricsRegistry prometheus.Registerer,
 	apiResourceConfig *serverstorage.ResourceConfig,
+	extra ...GroupVersionRoutes,
 ) error {
 	if container == nil {
 		return fmt.Errorf("container cannot be nil")
@@ -70,10 +74,9 @@ func AugmentWebServicesWithCustomRoutes(
 		}
 
 		for _, gv := range GetGroupVersions(b) {
-			// Filter out disabled API groups
-			gvr := gv.WithResource("")
-			if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gvr) {
-				klog.InfoS("Skipping custom routes for disabled group version", "gv", gv.String())
+			// Checked before GetAPIRoutes, which for some builders builds OpenAPI
+			// definitions.
+			if !customRoutesEnabled(apiResourceConfig, gv) {
 				continue
 			}
 
@@ -82,52 +85,73 @@ func AugmentWebServicesWithCustomRoutes(
 				continue
 			}
 
-			// Find or create WebService for this group version
-			rootPath := "/apis/" + gv.String()
-			ws, exists := existingWebServices[rootPath]
-			if !exists {
-				// Create a new WebService if one doesn't exist
-				ws = new(restful.WebService)
-				ws.Path(rootPath)
-				container.Add(ws)
-				existingWebServices[rootPath] = ws
-			}
-
-			// Add root handlers using OpenAPI specs
-			for _, route := range routes.Root {
-				instrumentedHandler := metrics.InstrumentHandler(
-					gv.Group,
-					gv.Version,
-					route.Path,
-					route.Handler,
-				)
-				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
-
-				// Use OpenAPI spec to configure routes properly
-				if err := addRouteFromSpec(ws, route.Path, route.Spec, routeFunction, false); err != nil {
-					return fmt.Errorf("failed to add root route %s: %w", route.Path, err)
-				}
-			}
-
-			// Add namespace handlers using OpenAPI specs
-			for _, route := range routes.Namespace {
-				instrumentedHandler := metrics.InstrumentHandler(
-					gv.Group,
-					gv.Version,
-					route.Path,
-					route.Handler,
-				)
-				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
-
-				// Use OpenAPI spec to configure routes properly
-				if err := addRouteFromSpec(ws, route.Path, route.Spec, routeFunction, true); err != nil {
-					return fmt.Errorf("failed to add namespace route %s: %w", route.Path, err)
-				}
+			if err := addRoutesToWebService(container, existingWebServices, metrics, gv, routes); err != nil {
+				return err
 			}
 		}
 	}
 
+	for _, e := range extra {
+		if e.Routes == nil || !customRoutesEnabled(apiResourceConfig, e.GroupVersion) {
+			continue
+		}
+		if err := addRoutesToWebService(container, existingWebServices, metrics, e.GroupVersion, e.Routes); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func customRoutesEnabled(apiResourceConfig *serverstorage.ResourceConfig, gv schema.GroupVersion) bool {
+	if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gv.WithResource("")) {
+		klog.InfoS("Skipping custom routes for disabled group version", "gv", gv.String())
+		return false
+	}
+	return true
+}
+
+// addRoutesToWebService mounts routes for gv, creating the WebService if it is
+// missing. existingWebServices is updated on creation because a second
+// WebService on the same root path would shadow the first.
+func addRoutesToWebService(
+	container *restful.Container,
+	existingWebServices map[string]*restful.WebService,
+	metrics *CustomRouteMetrics,
+	gv schema.GroupVersion,
+	routes *APIRoutes,
+) error {
+	rootPath := "/apis/" + gv.String()
+	ws, exists := existingWebServices[rootPath]
+	if !exists {
+		ws = new(restful.WebService)
+		ws.Path(rootPath)
+		container.Add(ws)
+		existingWebServices[rootPath] = ws
+	}
+
+	for _, route := range routes.Root {
+		if err := addInstrumentedRoute(ws, metrics, gv, route, false); err != nil {
+			return fmt.Errorf("failed to add root route %s: %w", route.Path, err)
+		}
+	}
+	for _, route := range routes.Namespace {
+		if err := addInstrumentedRoute(ws, metrics, gv, route, true); err != nil {
+			return fmt.Errorf("failed to add namespace route %s: %w", route.Path, err)
+		}
+	}
+	return nil
+}
+
+func addInstrumentedRoute(
+	ws *restful.WebService,
+	metrics *CustomRouteMetrics,
+	gv schema.GroupVersion,
+	route APIRouteHandler,
+	isNamespaced bool,
+) error {
+	instrumented := metrics.InstrumentHandler(gv.Group, gv.Version, route.Path, route.Handler)
+	return addRouteFromSpec(ws, route.Path, route.Spec, convertHandlerToRouteFunction(instrumented), isNamespaced)
 }
 
 // addRouteFromSpec adds routes to a WebService using OpenAPI specs

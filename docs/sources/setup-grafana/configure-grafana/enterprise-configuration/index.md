@@ -237,6 +237,10 @@ Set to false to only log requests with 2xx, 3xx, 401, 403, 500 responses.
 
 Maximum response body (in bytes) to be recorded. May help reducing the memory footprint caused by auditing.
 
+### `snapshot_timeout`
+
+Grafana uses `snapshot_timeout` as a cooperative deadline when resolving resource names before serving a request that may delete resources. Grafana currently uses this setting for `DELETE /api/admin/users/{id}`. Because the backing store must honor context cancellation, the value isn't a strict upper bound on request latency. Use a duration such as `500ms` or `2s`. If you configure zero or a negative duration, Grafana logs a warning and uses the default of `500ms`.
+
 ## [auditing.logs.file]
 
 ### path

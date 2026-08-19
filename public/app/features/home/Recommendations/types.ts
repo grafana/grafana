@@ -1,6 +1,7 @@
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 
 import { type SolutionSparklineData } from './SolutionSparkline';
+import { type ExistingSolutionId } from './solutionsMatrix';
 
 export interface RecommendationItem {
   id: string; // stable telemetry id (recommendation_id)
@@ -11,10 +12,12 @@ export interface RecommendationItem {
   description: string;
   action: string; // CTA label, e.g. "Enable Hosted Traces"
   href: string;
+  /** CTA intent for analytics: enable a disabled app (default) or set up an enabled-but-silent one. */
+  cta?: 'enable' | 'setup';
 }
 
 export interface ExistingItem {
-  id: string; // stable telemetry id (solution)
+  id: ExistingSolutionId; // stable telemetry id (solution)
   title: string;
   icon: IconName;
   subtitle?: string;

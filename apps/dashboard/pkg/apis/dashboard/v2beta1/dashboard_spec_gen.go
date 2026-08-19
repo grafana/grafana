@@ -407,6 +407,7 @@ func (DashboardDataTopic) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type DashboardQueryOptionsSpec struct {
 	TimeFrom         *string `json:"timeFrom,omitempty"`
+	TimeTo           *string `json:"timeTo,omitempty"`
 	MaxDataPoints    *int64  `json:"maxDataPoints,omitempty"`
 	TimeShift        *string `json:"timeShift,omitempty"`
 	QueryCachingTTL  *int64  `json:"queryCachingTTL,omitempty"`
@@ -758,7 +759,9 @@ func (DashboardThresholdsMode) OpenAPIModelName() string {
 type DashboardThreshold struct {
 	// Value null means -Infinity
 	Value *float64 `json:"value"`
-	Color string   `json:"color"`
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	ValueExpr *string `json:"valueExpr,omitempty"`
+	Color     string  `json:"color"`
 }
 
 // NewDashboardThreshold creates a new DashboardThreshold object.

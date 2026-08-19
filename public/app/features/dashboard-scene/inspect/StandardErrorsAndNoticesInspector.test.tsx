@@ -86,6 +86,19 @@ describe('StandardErrorsAndNoticesInspector', () => {
     expect(screen.getByText(/detailed upstream error/)).toBeInTheDocument();
   });
 
+  it('renders the error message above the raw payload', () => {
+    setup([], [{ message: 'Query failed', data: { message: 'detailed upstream error' } }]);
+
+    const message = screen.getByText('Query failed');
+    const payload = screen.getByText(/detailed upstream error/);
+    expect(message.compareDocumentPosition(payload) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('falls back to the data message when the error has no top-level message', () => {
+    setup([], [{ data: { message: 'only in data' } }]);
+    expect(screen.getAllByText(/only in data/).length).toBeGreaterThanOrEqual(1);
+  });
+
   it('provides a copy-to-clipboard button per card', () => {
     setup([
       frameWithNotices([

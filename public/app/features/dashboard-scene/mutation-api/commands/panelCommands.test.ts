@@ -31,24 +31,23 @@ jest.mock('@grafana/data', () => {
   };
 });
 
-jest.mock('../../edit-pane/shared', () => {
-  const actual = jest.requireActual('../../edit-pane/shared');
-  return {
-    ...actual,
-    dashboardEditActions: {
-      ...actual.dashboardEditActions,
-      edit(props: { perform: () => void }) {
-        props.perform();
-      },
-      addElement(props: { perform: () => void }) {
-        props.perform();
-      },
-      removeElement(props: { perform: () => void }) {
-        props.perform();
-      },
-    },
-  };
-});
+jest.mock('../../actions/utils/edit', () => ({
+  edit(props: { perform: () => void }) {
+    props.perform();
+  },
+}));
+
+jest.mock('../../actions/element/addElement', () => ({
+  addElement(props: { perform: () => void }) {
+    props.perform();
+  },
+}));
+
+jest.mock('../../actions/element/removeElement', () => ({
+  removeElement(props: { perform: () => void }) {
+    props.perform();
+  },
+}));
 
 let currentTestScene: unknown;
 
@@ -102,7 +101,7 @@ function buildPanelScene(panels: VizPanel[] = [], elementMap: Record<string, num
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -134,7 +133,7 @@ function buildAutoGridPanelScene(panels: VizPanel[] = [], elementMap: Record<str
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);

@@ -16,7 +16,7 @@ interface SummaryCardProps<T> {
   title: string;
   // Header count badge: red when count > 0. When countLimit is set and count >= countLimit the badge
   // reads `${countLimit}+` (server-capped data); otherwise the exact count.
-  count: number;
+  count?: number;
   countLimit?: number;
   // Right-aligned header content (e.g. a severity breakdown). Hidden while loading.
   headerExtra?: ReactNode;
@@ -35,7 +35,7 @@ interface SummaryCardProps<T> {
 
 export function SummaryCard<T>({
   title,
-  count,
+  count = 0,
   countLimit,
   headerExtra,
   loading,
@@ -68,14 +68,14 @@ export function SummaryCard<T>({
         )}
 
         {loading && (
-          <Stack direction="column">
+          <Stack direction="column" data-testid="summary-card-skeleton">
             {Array.from({ length: 3 }, (_, i) => (
               <Skeleton key={i} height={20} />
             ))}
           </Stack>
         )}
 
-        {error && (
+        {!loading && error && (
           <Alert
             severity="warning"
             title={error.title}
@@ -89,7 +89,8 @@ export function SummaryCard<T>({
 
         {!loading && !error && items.length === 0 && (
           <Stack direction="column" grow={1} alignItems="center" justifyContent="center">
-            {emptyAction ?? <Text color="secondary">{emptyMessage}</Text>}
+            <Text color="secondary">{emptyMessage}</Text>
+            {emptyAction}
           </Stack>
         )}
 

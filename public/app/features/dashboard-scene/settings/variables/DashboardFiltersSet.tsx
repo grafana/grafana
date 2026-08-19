@@ -1,5 +1,3 @@
-import { useId, useMemo } from 'react';
-
 import { t } from '@grafana/i18n';
 import {
   type SceneObject,
@@ -11,57 +9,16 @@ import {
   sceneGraph,
   sceneUtils,
 } from '@grafana/scenes';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { AddFilterButton, DashboardFiltersList } from '../../edit-pane/dashboard/DashboardFiltersList';
-import { partitionVariablesByDisplay } from '../../edit-pane/dashboard/DashboardVariablesList';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
+import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
 
 export interface DashboardFiltersSetState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
-}
-
-function useEditPaneOptions(
-  this: DashboardFiltersSet,
-  dashboardRef: SceneObjectRef<DashboardScene>
-): OptionsPaneCategoryDescriptor[] {
-  const filterListId = useId();
-  const addFilterButtonId = useId();
-  const dashboard = dashboardRef.resolve();
-  const variableSet = sceneGraph.getVariables(dashboard);
-
-  const options = useMemo(() => {
-    const category = new OptionsPaneCategoryDescriptor({ title: '', id: 'filters' });
-
-    if (variableSet instanceof SceneVariableSet) {
-      category.addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          id: filterListId,
-          skipField: true,
-          render: () => <DashboardFiltersList variableSet={variableSet} />,
-        })
-      );
-    }
-
-    category.addItem(
-      new OptionsPaneItemDescriptor({
-        title: '',
-        id: addFilterButtonId,
-        skipField: true,
-        render: () => <AddFilterButton dashboard={dashboard} />,
-      })
-    );
-
-    return category;
-  }, [filterListId, addFilterButtonId, dashboard, variableSet]);
-
-  return [options];
 }
 
 export class DashboardFiltersSet extends SceneObjectBase<DashboardFiltersSetState> implements EditableDashboardElement {
@@ -73,9 +30,9 @@ export class DashboardFiltersSet extends SceneObjectBase<DashboardFiltersSetStat
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.filters-set', 'Filters'),
+      typeName: t('dashboard.sidebar.elements.filters-set', 'Filters'),
       icon: 'filter',
-      instanceName: t('dashboard.edit-pane.elements.filters-set', 'Filters'),
+      instanceName: t('dashboard.sidebar.elements.filters-set', 'Filters'),
     };
   }
 
@@ -92,6 +49,4 @@ export class DashboardFiltersSet extends SceneObjectBase<DashboardFiltersSetStat
     }
     return variableSet.state.variables.filter(sceneUtils.isAdHocVariable);
   }
-
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.state.dashboardRef);
 }

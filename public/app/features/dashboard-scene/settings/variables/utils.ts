@@ -53,7 +53,7 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
 }
 
 export const getDefaultTopPlacementLabel = () =>
-  t('dashboard-scene.variables-list.top-placement.default', 'Above dashboard');
+  t('dashboard.sidebar.variables.top-placement-default', 'Above dashboard');
 
 export const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => ({
   custom: {
@@ -180,7 +180,7 @@ export function getVariableTypeLabel(
   { standalone }: VariableTypeSelectOptionsArgs = {}
 ): string {
   if (variableType === 'adhoc' && standalone && config.featureToggles.dashboardUnifiedDrilldownControls) {
-    return t('dashboard-scene.add-filters.label', 'Filter and Group by');
+    return t('dashboard.sidebar.add.filters.label', 'Filter and Group by');
   }
   return getEditableVariables()[variableType].name;
 }

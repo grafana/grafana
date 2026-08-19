@@ -21,7 +21,7 @@ interface Props extends NestedFolderPickerProps {
 
 export function ProvisioningAwareFolderPicker({ repositoryName, showAllFolders, ...props }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance();
-  const provisioningEnabled = config.featureToggles.provisioning;
+  const provisioningEnabled = config.provisioningEnabled;
   const { data: settingsData } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
   const isNonProvisionedResource = !repositoryName;
 

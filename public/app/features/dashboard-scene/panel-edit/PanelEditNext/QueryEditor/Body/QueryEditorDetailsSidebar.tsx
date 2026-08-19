@@ -196,7 +196,7 @@ function getStyles(theme: GrafanaTheme2) {
       bottom: 0,
       display: 'flex',
       flexDirection: 'column',
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.colors.background.elevated,
       borderRight: `1px solid ${theme.colors.border.weak}`,
     }),
     content: css({
