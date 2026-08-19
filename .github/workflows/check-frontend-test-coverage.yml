@@ -210,20 +210,33 @@ jobs:
       # earlier step (install, tests, HTML upload) failed before writing
       # coverage-comparison.json, synthesize an "error" result instead of letting
       # this team silently disappear from the summary.
+      #
+      # `coverage-dir` can itself be skipped by an earlier failure (checkout, install,
+      # manifest generation), leaving its slug output empty. Every matrix leg would then
+      # upload the same artifact name "coverage-result-" and collide, so fall back to a
+      # slug derived straight from matrix.codeowner — not identical to createCodeownerSlug,
+      # but guaranteed unique per leg, which is all an artifact name needs.
       - name: Rename coverage result for fan-in
         if: always()
         run: |
+          SLUG="${{ steps.coverage-dir.outputs.slug }}"
+          if [ -z "$SLUG" ]; then
+            SLUG=$(echo "${{ matrix.codeowner }}" | tr -c 'a-zA-Z0-9' '-' | sed 's/^-*//;s/-*$//')
+          fi
+          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+
           if [ ! -f ./coverage-comparison.json ]; then
             echo '{"team": "${{ matrix.codeowner }}", "affected": true, "status": "error", "runLocallyCommand": "yarn test:coverage:by-codeowner ${{ matrix.codeowner }}"}' > ./coverage-comparison.json
           fi
-          mv ./coverage-comparison.json ./coverage-result-${{ steps.coverage-dir.outputs.slug }}.json
+          mv ./coverage-comparison.json "./coverage-result-${SLUG}.json"
+        id: fan-in-slug
 
       - name: Upload coverage result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-result-${{ steps.coverage-dir.outputs.slug }}
-          path: ./coverage-result-${{ steps.coverage-dir.outputs.slug }}.json
+          name: coverage-result-${{ steps.fan-in-slug.outputs.slug }}
+          path: ./coverage-result-${{ steps.fan-in-slug.outputs.slug }}.json
           retention-days: 7
 
       - name: Fail if coverage decreased
