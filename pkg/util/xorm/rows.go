@@ -16,11 +16,14 @@ import (
 type Rows struct {
 	session   *Session
 	rows      *core.Rows
+	table     *core.Table
 	beanType  reflect.Type
 	lastError error
 }
 
 func newRows(session *Session, bean any) (*Rows, error) {
+	defer session.resetStatement()
+
 	rows := new(Rows)
 	rows.session = session
 	rows.beanType = reflect.Indirect(reflect.ValueOf(bean)).Type()
@@ -32,6 +35,7 @@ func newRows(session *Session, bean any) (*Rows, error) {
 	if err = rows.session.statement.setRefBean(bean); err != nil {
 		return nil, err
 	}
+	rows.table = rows.session.statement.RefTable
 
 	if len(session.statement.TableName()) <= 0 {
 		return nil, ErrTableNotFound
@@ -84,10 +88,6 @@ func (rows *Rows) Scan(bean any) error {
 		return fmt.Errorf("scan arg is incompatible type to [%v]", rows.beanType)
 	}
 
-	if err := rows.session.statement.setRefBean(bean); err != nil {
-		return err
-	}
-
 	fields, err := rows.rows.Columns()
 	if err != nil {
 		return err
@@ -99,7 +99,7 @@ func (rows *Rows) Scan(bean any) error {
 	}
 
 	dataStruct := rValue(bean)
-	_, err = rows.session.slice2Bean(scanResults, fields, bean, &dataStruct, rows.session.statement.RefTable)
+	_, err = rows.session.slice2Bean(scanResults, fields, bean, &dataStruct, rows.table)
 	if err != nil {
 		return err
 	}

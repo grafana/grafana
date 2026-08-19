@@ -304,12 +304,10 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		assert.Equal(t, folderBTitle, updatedRule.FolderFullpath, "FolderFullpath should be updated to Folder B")
 	})
 
-	t.Run("should preserve guid and use correct table when called inside an outer transaction", func(t *testing.T) {
-		// Regression test for the ORM table inference bug where UpdateAlertRules was
-		// called from callers (UpdateRuleGroup, UpdateAlertRule) that already hold an
-		// outer InTransaction session on the context. A prior query on that shared
-		// session could leave xorm's table state pointing at the wrong model,
-		// causing "SELECT alert_rule columns FROM user" on PostgreSQL.
+	t.Run("should not leak streamed rule mapping and should preserve guid inside an outer transaction", func(t *testing.T) {
+		// Regression test for a streamed alert-rule read leaving xorm's table state
+		// on the shared transaction session. The next string-table lookup could then
+		// select alert_rule columns from user, aborting the transaction on PostgreSQL.
 		rule := createRule(t, store, gen)
 		require.NotEmpty(t, rule.GUID, "rule must have a guid after insert")
 		originalGUID := rule.GUID
@@ -318,13 +316,28 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		newRule.Title = util.GenerateShortUID()
 
 		err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
-			// Simulate a prior query on the shared session using a different table,
-			// as would happen when the folder service or provenance store runs on
-			// the same transaction context before UpdateAlertRules is called.
-			_ = sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-				_, _ = sess.Table("alert_rule_version").Where("1=0").Count()
-				return nil
+			listed, err := store.ListAlertRules(ctx, &models.ListAlertRulesQuery{
+				OrgID:    rule.OrgID,
+				RuleUIDs: []string{rule.UID},
 			})
+			if err != nil {
+				return fmt.Errorf("stream alert rules: %w", err)
+			}
+			if len(listed) != 1 {
+				return fmt.Errorf("stream alert rules: got %d rules, want 1", len(listed))
+			}
+
+			err = sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+				var users []struct {
+					ID  int64  `xorm:"id"`
+					UID string `xorm:"uid"`
+				}
+				return sess.Table("user").Where("1=0").Find(&users)
+			})
+			if err != nil {
+				return fmt.Errorf("query user table after streamed alert rules: %w", err)
+			}
+
 			return store.UpdateAlertRules(ctx, &usr, []models.UpdateRule{{
 				Existing: rule,
 				New:      *newRule,
