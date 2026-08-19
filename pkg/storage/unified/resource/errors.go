@@ -83,13 +83,13 @@ func IsResourceVersionExpired(err error) bool {
 	if apierrors.IsResourceExpired(err) || apierrors.IsGone(err) {
 		return true
 	}
-	if res := errorResultFromGRPCDetails(err); res != nil {
+	if res := ErrorResultFromGRPCDetails(err); res != nil {
 		return res.Code == http.StatusGone || res.Reason == string(metav1.StatusReasonExpired)
 	}
 	return false
 }
 
-func errorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
+func ErrorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
 	st, ok := grpcstatus.FromError(err)
 	if !ok || st == nil {
 		return nil
@@ -179,7 +179,7 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 
 	// Structured results attached to a gRPC error keep their reason/code across
 	// the wire, so prefer them over the generic mapping below.
-	if res := errorResultFromGRPCDetails(err); res != nil {
+	if res := ErrorResultFromGRPCDetails(err); res != nil {
 		return res
 	}
 
@@ -220,6 +220,59 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 	return &resourcepb.ErrorResult{
 		Message: err.Error(),
 		Code:    int32(code),
+	}
+}
+
+// grpcCodeFromHTTPStatus is lossy in a way runtime.HTTPStatusFromCode is not:
+// several gRPC codes collapse onto the same HTTP status going out
+// (AlreadyExists and Aborted both become 409, InvalidArgument /
+// FailedPrecondition / OutOfRange all become 400), so coming back we pick the
+// code that unified storage actually produces for that status.
+func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
+	switch httpCode {
+	case http.StatusOK:
+		return grpccodes.OK
+	case http.StatusBadRequest:
+		return grpccodes.InvalidArgument
+	case http.StatusUnauthorized:
+		return grpccodes.Unauthenticated
+	case http.StatusForbidden:
+		return grpccodes.PermissionDenied
+	case http.StatusNotFound:
+		return grpccodes.NotFound
+	case http.StatusRequestTimeout:
+		return grpccodes.DeadlineExceeded
+	case http.StatusConflict:
+		return grpccodes.AlreadyExists
+	case http.StatusPreconditionFailed:
+		return grpccodes.FailedPrecondition
+	case http.StatusRequestedRangeNotSatisfiable:
+		return grpccodes.OutOfRange
+	case http.StatusUnprocessableEntity:
+		return grpccodes.InvalidArgument
+	case http.StatusTooManyRequests:
+		return grpccodes.ResourceExhausted
+	case http.StatusInternalServerError:
+		return grpccodes.Internal
+	case http.StatusNotImplemented:
+		return grpccodes.Unimplemented
+	case http.StatusServiceUnavailable:
+		return grpccodes.Unavailable
+	case http.StatusGatewayTimeout:
+		return grpccodes.DeadlineExceeded
+	case 499:
+		return grpccodes.Canceled
+	}
+
+	switch {
+	case httpCode >= 500:
+		return grpccodes.Internal
+	case httpCode >= 400:
+		return grpccodes.InvalidArgument
+	default:
+		// An ErrorResult carrying a non-error status is a caller bug, not a
+		// success: codes.OK here would silently turn it into a nil error.
+		return grpccodes.Unknown
 	}
 }
 
