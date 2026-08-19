@@ -212,6 +212,10 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
+    // Explicit rather than relying solely on inheriting it from `row`: this is the actual
+    // text-bearing node, and the header cell's equivalent bug (its label losing the inherited
+    // value via its own `all: 'unset'`) makes it worth not leaving to inheritance alone here too.
+    userSelect: 'none',
   }),
   pinButton: css({
     display: 'flex',
