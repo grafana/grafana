@@ -153,7 +153,8 @@ export const getFieldDisplayItems = (
   sortOrder: SortOrder,
   fieldFilter = (field: Field, i?: number) => true,
   hideZeros = false,
-  extraFields?: Field[]
+  extraFields?: Field[],
+  compareFieldIdx?: number
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
@@ -205,9 +206,34 @@ export const getFieldDisplayItems = (
 
     const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
 
+    console.log('wat', i, compareFieldIdx);
+
+    let displayText = display.text;
+
+    //field.state?.displayName === series.fields[compareFieldIdx].state?.displayName ||
+    //(seriesIdx !== undefined && seriesIdx !== null && series.fields[seriesIdx].name === field.name);
+
+    if (
+      compareFieldIdx != undefined &&
+      seriesIdx != null &&
+      dataIdxs[compareFieldIdx] != null &&
+      dataIdxs[seriesIdx] != null &&
+      i === compareFieldIdx
+    ) {
+      const compData = fields[compareFieldIdx].values[dataIdxs[compareFieldIdx]];
+      const normalData = fields[seriesIdx].values[dataIdxs[seriesIdx]];
+      let diffVal;
+      if (seriesIdx === compareFieldIdx) {
+        diffVal = getTooltipDisplayValue(normalData - compData, field);
+      } else {
+        diffVal = getTooltipDisplayValue(compData - normalData, field);
+      }
+      displayText = `${displayText} (${diffVal.numeric > 0 ? '+' : ''}${diffVal.text})`;
+    }
+
     rows.push({
       label: field.state?.displayName ?? field.name,
-      value: display.text,
+      value: displayText,
       color: display.color ?? FALLBACK_COLOR,
       colorIndicator,
       colorPlacement,

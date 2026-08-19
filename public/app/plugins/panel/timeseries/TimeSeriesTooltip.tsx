@@ -92,6 +92,7 @@ export const TimeSeriesTooltip = ({
   const xDisp = formattedValueToString(xField.display!(xVal));
 
   let compareFieldIdx: number | undefined = undefined;
+  let isForCompareField = false;
   if (seriesIdx !== null && seriesIdx !== undefined) {
     const hoveredFrameIdx = series.fields[seriesIdx].state?.origin?.frameIndex;
     const hoveredFieldIdx = series.fields[seriesIdx].state?.origin?.fieldIndex;
@@ -127,17 +128,20 @@ export const TimeSeriesTooltip = ({
     modeWithCompare,
     sortOrder,
     (field, i) => {
+      const isRightType = field.type === FieldType.number || field.type === FieldType.enum;
       if (compareFieldIdx === undefined) {
-        return field.type === FieldType.number || field.type === FieldType.enum;
+        return isRightType;
       } else {
         return (
-          field.state?.displayName === series.fields[compareFieldIdx].state?.displayName ||
-          (i !== undefined && field.state?.displayName === series.fields[i].state?.displayName)
+          isRightType &&
+          (field.state?.displayName === series.fields[compareFieldIdx].state?.displayName ||
+            (seriesIdx !== undefined && seriesIdx !== null && series.fields[seriesIdx].name === field.name))
         );
       }
     },
     hideZeros,
-    _rest
+    _rest,
+    compareFieldIdx
   );
 
   let footer: ReactNode;
