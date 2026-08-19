@@ -82,15 +82,19 @@ export function getButtonFocusStyles(theme: GrafanaTheme2) {
 }
 
 // max-width is set up based on .grafana-tooltip class that's used in dashboard
-export const getTooltipContainerStyles = (theme: GrafanaTheme2) => ({
-  overflow: 'hidden',
-  background: theme.colors.background.elevated,
-  boxShadow: theme.shadows.z2,
-  maxWidth: '800px',
-  padding: theme.spacing(1),
-  borderRadius: theme.shape.radius.lg,
-  zIndex: theme.zIndex.tooltip,
-});
+export const getTooltipContainerStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  return {
+    overflow: 'hidden',
+    background: visualRefreshEnabled ? theme.components.tooltip.background : theme.colors.background.elevated,
+    border: visualRefreshEnabled ? `1px solid ${theme.colors.border.weak}` : 'none',
+    boxShadow: theme.shadows.z2,
+    maxWidth: '800px',
+    padding: theme.spacing(1),
+    borderRadius: theme.shape.radius.lg,
+    zIndex: theme.zIndex.tooltip,
+  };
+};
 
 /**
  * `pill`/`circle` are excluded as they aren't meaningful inside the relative radius calculations.

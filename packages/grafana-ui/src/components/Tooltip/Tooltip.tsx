@@ -115,16 +115,18 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
               className={style.container}
               {...getFloatingProps()}
             >
-              <FloatingArrow
-                strokeWidth={0.3}
-                stroke={style.borderColor}
-                width={8}
-                height={4}
-                tipRadius={2}
-                className={style.arrow}
-                ref={arrowRef}
-                context={context}
-              />
+              {!style.hideArrow && (
+                <FloatingArrow
+                  strokeWidth={0.3}
+                  stroke={style.borderColor}
+                  width={8}
+                  height={4}
+                  tipRadius={2}
+                  className={style.arrow}
+                  ref={arrowRef}
+                  context={context}
+                />
+              )}
               {typeof content === 'string' && content}
               {isValidElement(content) && cloneElement(content)}
               {contentIsFunction && content({})}
@@ -140,24 +142,25 @@ Tooltip.displayName = 'Tooltip';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const padding = visualRefreshEnabled ? { topBottom: 0.75, rightLeft: 1.5 } : { topBottom: 0.5, rightLeft: 1 };
   const info = buildTooltipTheme(
     theme,
     theme.components.tooltip.background,
-    theme.components.tooltip.background,
+    visualRefreshEnabled ? theme.colors.border.weak : theme.components.tooltip.background,
     theme.components.tooltip.text,
-    { topBottom: 0.5, rightLeft: 1 }
+    padding
   );
   const error = buildTooltipTheme(
     theme,
     theme.colors.error[visualRefreshEnabled ? 'background' : 'main'],
     theme.colors.error[visualRefreshEnabled ? 'border' : 'main'],
     theme.colors.error[visualRefreshEnabled ? 'text' : 'contrastText'],
-    { topBottom: 0.5, rightLeft: 1 }
+    padding
   );
 
   return {
-    info,
-    ['info-alt']: info,
-    error,
+    info: { ...info, hideArrow: visualRefreshEnabled },
+    ['info-alt']: { ...info, hideArrow: visualRefreshEnabled },
+    error: { ...error, hideArrow: visualRefreshEnabled },
   };
 };

@@ -175,6 +175,9 @@
         "right": "palette.orange800",
         "left": "palette.blue800"
       }
+    },
+    "tooltip": {
+      "background": "palette.ink900"
     }
   }
 }

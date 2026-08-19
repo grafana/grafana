@@ -133,16 +133,18 @@ export const Toggletip = memo(
                 style={floatingStyles}
                 {...getFloatingProps()}
               >
-                <FloatingArrow
-                  strokeWidth={0.3}
-                  stroke={style.borderColor}
-                  width={8}
-                  height={4}
-                  tipRadius={2}
-                  className={style.arrow}
-                  ref={arrowRef}
-                  context={context}
-                />
+                {!style.hideArrow && (
+                  <FloatingArrow
+                    strokeWidth={0.3}
+                    stroke={style.borderColor}
+                    width={8}
+                    height={4}
+                    tipRadius={2}
+                    className={style.arrow}
+                    ref={arrowRef}
+                    context={context}
+                  />
+                )}
                 {Boolean(title) && <div className={style.header}>{title}</div>}
                 {closeButton && (
                   <div className={style.headerClose}>
@@ -191,8 +193,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   );
 
   return {
-    info,
-    error,
+    info: { ...info, hideArrow: visualRefreshEnabled },
+    error: { ...error, hideArrow: visualRefreshEnabled },
     fitContent: css({
       maxWidth: 'fit-content',
     }),
