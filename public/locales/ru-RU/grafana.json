@@ -1632,17 +1632,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Начать импорт? Это действие приведет к созданию новых ресурсов в Grafana Alerting.",
         "confirm": "Начать импорт",
@@ -1690,26 +1679,6 @@
       "info-description": "Этот мастер помогает импортировать правила оповещения и ресурсы уведомлений из внешних источников в Grafana Alerting. Подробнее см. в <2>документации</2>.",
       "info-title": "Мастер импорта",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Введите текст для поиска существующего пространства имен.",
         "label": "Пространство имен"
@@ -1733,10 +1702,6 @@
         "filter": "Фильтр",
         "folder": "Целевая папка",
         "heading": "Проверка импорта",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Пространство имен",
         "nothing": "Нет данных для импорта",
         "nothing-desc": "Оба шага были пропущены. Вернитесь назад и задайте хотя бы один источник импорта.",
@@ -1763,22 +1728,6 @@
         "validation-warning": "Во избежание конфликтов некоторые ресурсы будут переименованы.",
         "will-import-config": "Будет импортирована эта конфигурация",
         "will-import-rules": "Будут импортированы правила",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_few": "",
-        "merge-inhibition-rules_many": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_few": "",
-        "merge-receivers_many": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_few": "",
-        "merge-templates_many": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_few": "",
-        "merge-time-intervals_many": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Будет импортировано {{count}} правило",
         "will-import-rules-count_few": "Будет импортировано {{count}} правила",
         "will-import-rules-count_many": "Будет импортировано {{count}} правил",
@@ -1892,14 +1841,10 @@
         "cancel-confirm-title": "Отменить импорт?",
         "cancel-confirm-yes": "Отменить изменения",
         "skip": "Пропустить",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Ресурсы уведомлений",
         "step-notifications-desc": "Точки контакта, политики, шаблоны",
         "step-review": "Проверка и импорт",
         "step-review-desc": "Предварительный просмотр и подтверждение импорта",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Правила оповещения",
         "step-rules-desc": "Правила оповещения и записи"
       },
@@ -3358,6 +3303,47 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_few": "",
+          "merge-contact-points_many": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_few": "",
+          "merge-inhibition-rules_many": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_few": "",
+          "merge-templates_many": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_few": "",
+          "merge-time-intervals_many": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3928,6 +3914,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Не удалось импортировать ресурсы",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Ресурсы импортированы в Grafana Alerting."
     },
     "yaml-content-info": {
@@ -6149,6 +6137,7 @@
       "new-row-title": "Новая строка",
       "row": {
         "collapse": "Свернуть строку {{title}}",
+        "copy-link": "",
         "expand": "Развернуть строку {{title}}",
         "new": "Новая строка",
         "repeat": {
@@ -9062,11 +9051,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -12995,6 +12987,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -13009,6 +13007,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",

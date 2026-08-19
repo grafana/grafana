@@ -3,6 +3,7 @@ package ossaccesscontrol
 import (
 	"context"
 	"errors"
+	"slices"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/notebooks"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -33,6 +35,7 @@ var FolderEditActions = append(FolderViewActions, []string{
 	folder.ActionFoldersWrite,
 	folder.ActionFoldersDelete,
 	dashboards.ActionDashboardsCreate,
+	notebooks.ActionNotebooksCreate,
 	accesscontrol.ActionAlertingRuleCreate,
 	accesscontrol.ActionAlertingRuleUpdate,
 	accesscontrol.ActionAlertingRuleDelete,
@@ -58,7 +61,7 @@ func FolderFixedRoleRegistrations(wildcardSeed bool) []accesscontrol.RoleRegistr
 			DisplayName: "Viewer",
 			Description: "View all folders and dashboards.",
 			Group:       "Folders",
-			Permissions: accesscontrol.PermissionsForActions(append(DashboardViewActions, FolderViewActions...), folder.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(slices.Concat(DashboardViewActions, NotebookViewActions, FolderViewActions), folder.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Viewer"},
@@ -70,7 +73,7 @@ func FolderFixedRoleRegistrations(wildcardSeed bool) []accesscontrol.RoleRegistr
 			DisplayName: "Editor",
 			Description: "Edit all folders and dashboards.",
 			Group:       "Folders",
-			Permissions: accesscontrol.PermissionsForActions(append(DashboardEditActions, FolderEditActions...), folder.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(slices.Concat(DashboardEditActions, NotebookEditActions, FolderEditActions), folder.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Editor"},
@@ -82,7 +85,7 @@ func FolderFixedRoleRegistrations(wildcardSeed bool) []accesscontrol.RoleRegistr
 			DisplayName: "Admin",
 			Description: "Administer all folders and dashboards",
 			Group:       "folders",
-			Permissions: accesscontrol.PermissionsForActions(append(DashboardAdminActions, FolderAdminActions...), folder.ScopeFoldersAll),
+			Permissions: accesscontrol.PermissionsForActions(slices.Concat(DashboardAdminActions, NotebookAdminActions, FolderAdminActions), folder.ScopeFoldersAll),
 			Hidden:      true,
 		},
 		Grants: []string{"Admin"},
@@ -161,9 +164,9 @@ func ProvideFolderPermissions(
 			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  append(DashboardViewActions, FolderViewActions...),
-			"Edit":  append(DashboardEditActions, FolderEditActions...),
-			"Admin": append(DashboardAdminActions, FolderAdminActions...),
+			"View":  slices.Concat(DashboardViewActions, NotebookViewActions, FolderViewActions),
+			"Edit":  slices.Concat(DashboardEditActions, NotebookEditActions, FolderEditActions),
+			"Admin": slices.Concat(DashboardAdminActions, NotebookAdminActions, FolderAdminActions),
 		},
 		ReaderRoleName:     permissionReaderRoleName,
 		WriterRoleName:     permissionWriterRoleName,

@@ -422,14 +422,16 @@
     {
       "metadata": {
         "name": "alertingImportAlertmanagerAPI",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-06-10T08:32:50Z"
+        "resourceVersion": "1787011639452",
+        "creationTimestamp": "2025-06-10T08:32:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 00:07:19.452226979 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the API to import Alertmanager configuration",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -522,12 +524,15 @@
     {
       "metadata": {
         "name": "alertingMigrationWizardUI",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787011590700",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 00:06:30.700704022 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "expression": "false"
@@ -1041,6 +1046,24 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "appplugins.loadAppManifest",
+        "resourceVersion": "1787026732819",
+        "creationTimestamp": "2026-08-18T03:50:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 04:18:52.819374 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Load app manifest when loading plugin definitions",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2901,6 +2924,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardsAutoHeightPanels",
+        "resourceVersion": "1787048864683",
+        "creationTimestamp": "2026-08-18T10:27:44Z"
+      },
+      "spec": {
+        "description": "Enables the auto-height feature for dashboard panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dedicatedGrafanaComProxyAPIToken",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -3106,6 +3144,7 @@
         "name": "grafana.newPreferencesPage",
         "resourceVersion": "1783676521307",
         "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-17T12:25:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
         }

@@ -37,8 +37,11 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { options, onOptionsChange, replaceVariables, data, renderCounter } = props;
+  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent } = props;
   const isEditing = app === CoreApp.PanelEditor;
+  // Fit-content only applies to the rendered view: the inline editor keeps its
+  // bounded, scrollable layout since active editing needs stable interactive space.
+  const fitContentOn = fitContent && !isEditing;
   const content = options.content ?? defaultOptions.content ?? '';
 
   const frames = data.series;
@@ -119,7 +122,7 @@ export function TextNGPanel(props: Props) {
       />
     </Suspense>
   ) : (
-    <TextNGView mode={processed.mode} content={processed.content} code={options.code} />
+    <TextNGView mode={processed.mode} content={processed.content} code={options.code} fitContent={fitContentOn} />
   );
 
   if (frames.length <= 1) {
@@ -131,19 +134,35 @@ export function TextNGPanel(props: Props) {
     value: index,
   }));
 
+  const framePicker = (
+    <Field noMargin>
+      <Combobox
+        aria-label={t('textng.frame-picker.label', 'Query')}
+        options={frameOptions}
+        value={frameOptions[currentFrameIndex]}
+        onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
+      />
+    </Field>
+  );
+
+  // Fit-content: no fixed-height flex wrapper — the picker sits below the panel
+  // in normal flow so the stack's natural height, not a forced 100%, is what
+  // the layout measures.
+  if (fitContentOn) {
+    return (
+      <Stack direction="column" gap={1}>
+        {panel}
+        {framePicker}
+      </Stack>
+    );
+  }
+
   return (
     <Stack direction="column" gap={1} height="100%">
       <Stack direction="column" grow={1} minHeight={0}>
         {panel}
       </Stack>
-      <Field noMargin>
-        <Combobox
-          aria-label={t('textng.frame-picker.label', 'Query')}
-          options={frameOptions}
-          value={frameOptions[currentFrameIndex]}
-          onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
-        />
-      </Field>
+      {framePicker}
     </Stack>
   );
 }
@@ -152,34 +171,50 @@ interface TextNGViewProps {
   mode: TextMode;
   content: string;
   code: Options['code'];
+  fitContent?: boolean;
 }
 
-function TextNGView({ mode, content, code }: TextNGViewProps) {
+function TextNGView({ mode, content, code, fitContent }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
 
   if (mode === TextMode.Code) {
     const codeOptions = code ?? defaultCodeOptions;
+    // CodeMirror always wraps lines here, so a line-count estimate (as v1 uses
+    // for Monaco, which doesn't wrap) would undercount soft-wrapped lines. Use
+    // 'auto' instead: CodeMirror's own .cm-scroller is forced to a CSS height
+    // of 100%, which resolves to auto against an auto-height .cm-editor, so it
+    // grows to fit exactly what's rendered, wraps included.
+    const codeHeight = fitContent ? 'auto' : '100%';
     return (
-      <div className={styles.codeContainer} data-testid="TextNGPanel-code">
+      <div className={cx(styles.codeContainer, fitContent && styles.codeContainerFit)} data-testid="TextNGPanel-code">
         <TextNGCodeView
           content={content}
           language={codeOptions.language}
           showLineNumbers={codeOptions.showLineNumbers ?? false}
+          height={codeHeight}
         />
       </div>
     );
   }
 
+  const rendered = (
+    <DangerouslySetHtmlContent
+      allowRerender
+      html={content}
+      className={cx('markdown-html', fitContent ? styles.markdownHtmlFit : styles.markdownHtml)}
+      data-testid="TextNGPanel-converted-content"
+    />
+  );
+
+  // Fit-content: render in normal flow so the markdown/HTML defines the height.
+  // No size containment and no inner scroll — the cell's CSS bounds the result.
+  if (fitContent) {
+    return rendered;
+  }
+
   return (
     <div className={styles.containStrict}>
-      <ScrollContainer minHeight="100%">
-        <DangerouslySetHtmlContent
-          allowRerender
-          html={content}
-          className={cx('markdown-html', styles.markdownHtml)}
-          data-testid="TextNGPanel-converted-content"
-        />
-      </ScrollContainer>
+      <ScrollContainer minHeight="100%">{rendered}</ScrollContainer>
     </div>
   );
 }
@@ -256,6 +291,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   markdownHtml: css({
     height: '100%',
   }),
+  // Flow layout for fit-content mode: no size containment, no fixed height, so
+  // the content defines the panel's height.
+  markdownHtmlFit: css({
+    height: 'auto',
+  }),
   codeContainer: css({
     height: '100%',
     overflow: 'hidden',
@@ -263,6 +303,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // editor grows past the panel instead of scrolling internally
     'div:has(> .cm-editor)': {
       height: '100%',
+    },
+  }),
+  // Fit-content: let CodeMirror's explicit pixel height (see estimateCodeHeight)
+  // define the container instead of forcing it to fill the panel.
+  codeContainerFit: css({
+    height: 'auto',
+    overflow: 'visible',
+    'div:has(> .cm-editor)': {
+      height: 'auto',
     },
   }),
 });

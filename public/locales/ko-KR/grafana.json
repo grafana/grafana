@@ -1611,17 +1611,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "정말 가져오기를 시작하시겠어요? 이 작업을 수행하면 Grafana Alerting에 새로운 리소스가 생성됩니다.",
         "confirm": "가져오기 시작",
@@ -1669,26 +1658,6 @@
       "info-description": "이 마법사는 외부 소스에서 경고 규칙과 알림 리소스를 가져와 Grafana Alerting에 적용할 수 있도록 도와줍니다. 자세한 내용은 <2>문서</2>를 참고해 주세요.",
       "info-title": "가져오기 마법사",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "기존 네임스페이스를 검색하려면 입력하세요",
         "label": "네임스페이스"
@@ -1712,10 +1681,6 @@
         "filter": "필터",
         "folder": "대상 폴더",
         "heading": "가져오기 검토",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "네임스페이스",
         "nothing": "가져올 항목 없음",
         "nothing-desc": "두 단계 모두 건너뛰었습니다. 뒤로 돌아가서 하나 이상의 가져오기 소스를 구성하세요.",
@@ -1742,10 +1707,6 @@
         "validation-warning": "충돌을 방지하기 위해 일부 리소스의 이름이 변경됩니다.",
         "will-import-config": "이 구성 가져올 예정",
         "will-import-rules": "규칙 가져올 예정",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_other": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_other": "규칙 {{count}}개 가져올 예정"
       },
       "routing-tree": {
@@ -1856,14 +1817,10 @@
         "cancel-confirm-title": "가져오기를 취소하시겠어요?",
         "cancel-confirm-yes": "변경 사항 삭제",
         "skip": "건너뛰기",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "알림 리소스",
         "step-notifications-desc": "연락처, 정책, 템플릿",
         "step-review": "검토 및 가져오기",
         "step-review-desc": "가져오기 미리 보기 및 확인",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "경고 규칙",
         "step-rules-desc": "경고 및 기록 규칙"
       },
@@ -3283,6 +3240,35 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3841,6 +3827,8 @@
     },
     "wizard-import-to-gma": {
       "error": "리소스 가져오기 실패",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Grafana Alerting으로 리소스를 성공적으로 가져왔습니다."
     },
     "yaml-content-info": {
@@ -6026,6 +6014,7 @@
       "new-row-title": "새 행",
       "row": {
         "collapse": "{{title}} 행 접기",
+        "copy-link": "",
         "expand": "{{title}} 행 펼치기",
         "new": "새 행",
         "repeat": {
@@ -8876,11 +8865,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -12701,6 +12693,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -12715,6 +12713,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
