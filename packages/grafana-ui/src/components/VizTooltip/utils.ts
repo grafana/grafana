@@ -206,15 +206,13 @@ export const getFieldDisplayItems = (
 
     const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
 
-    console.log('wat', i, compareFieldIdx);
-
     let displayText = display.text;
 
     //field.state?.displayName === series.fields[compareFieldIdx].state?.displayName ||
     //(seriesIdx !== undefined && seriesIdx !== null && series.fields[seriesIdx].name === field.name);
 
     if (
-      compareFieldIdx != undefined &&
+      compareFieldIdx != null &&
       seriesIdx != null &&
       dataIdxs[compareFieldIdx] != null &&
       dataIdxs[seriesIdx] != null &&

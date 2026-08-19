@@ -788,14 +788,33 @@ function resolvePointOpt<T>(
 }
 
 /**
+ * Size and color for a cursor point on the given series, read from the cursor point callbacks
+ * uPlot resolved at init so this stays in step with whatever UPlotConfigBuilder configured.
+ */
+function getCursorPointStyles(u: uPlot, seriesIdx: number): Record<string, string> {
+  const points = u.cursor.points!;
+  const size = resolvePointOpt(points.size, u, seriesIdx) ?? 0;
+  const width = resolvePointOpt(points.width, u, seriesIdx, size) ?? 0;
+  const fill = resolvePointOpt(points.fill, u, seriesIdx);
+  const stroke = resolvePointOpt(points.stroke, u, seriesIdx);
+
+  return {
+    width: `${size}px`,
+    height: `${size}px`,
+    // center the point on the datapoint rather than hanging it off the corner
+    marginLeft: `${-size / 2}px`,
+    marginTop: `${-size / 2}px`,
+    borderWidth: `${width}px`,
+    // Non-string fills (CanvasGradient) only arise for canvas-drawn series points, never for
+    // the DOM cursor point, but skip them rather than assume that.
+    ...(typeof fill === 'string' && { background: fill }),
+    ...(typeof stroke === 'string' && { borderColor: stroke }),
+  };
+}
+
+/**
  * Renders a second cursor point on the time-comparison counterpart of the hovered series,
  * so a comparison pair highlights together the same way it appears together in the tooltip.
- *
- * uPlot can't do this natively: `cursor.points.one` (set below) makes it create exactly one
- * point element and move it to whichever series is closest, so there is no second element to
- * light up. Turning `one` off instead draws a point on *every* series, gated on legend updates
- * rather than cursor proximity. So we add one element of our own and drive it off the same
- * cursor state uPlot uses for its own.
  */
 function addComparisonCursorPoint(builder: UPlotConfigBuilder, pairs: Map<number, number>) {
   if (pairs.size === 0) {
@@ -856,26 +875,9 @@ function addComparisonCursorPoint(builder: UPlotConfigBuilder, pairs: Map<number
     const left = u.valToPos(u.data[0][dataIdx]!, 'x');
     const top = u.valToPos(yVal, u.series[pairIdx].scale!);
 
-    // Read the resolved cursor point styling off the instance so this stays in step with
-    // whatever UPlotConfigBuilder configured (size, ring width, per-series colors).
-    // These are typed as value-or-function; uPlot normalizes them to functions at init,
-    // but resolve both shapes rather than assume the normalization.
-    const points = u.cursor.points!;
-    const size = resolvePointOpt(points.size, u, pairIdx) ?? 0;
-    const width = resolvePointOpt(points.width, u, pairIdx, size) ?? 0;
-    // Non-string fills (CanvasGradient) only arise for canvas-drawn series points, never for
-    // the DOM cursor point, but fall back to the series stroke rather than assume that.
-    const fill = resolvePointOpt(points.fill, u, pairIdx);
-    const stroke = resolvePointOpt(points.stroke, u, pairIdx);
-
-    point.style.width = `${size}px`;
-    point.style.height = `${size}px`;
-    point.style.marginLeft = `${-size / 2}px`;
-    point.style.marginTop = `${-size / 2}px`;
-    width && (point.style.borderWidth = `${width}px`);
-    typeof fill === 'string' && (point.style.background = fill);
-    typeof stroke === 'string' && (point.style.borderColor = stroke);
-    point.style.transform = `translate(${Math.ceil(left)}px, ${Math.ceil(top)}px)`;
+    Object.assign(point.style, getCursorPointStyles(u, pairIdx), {
+      transform: `translate(${Math.ceil(left)}px, ${Math.ceil(top)}px)`,
+    });
   });
 }
 
