@@ -2442,6 +2442,7 @@ __metadata:
     "@types/node": "npm:24.10.1"
     "@types/semver": "npm:7.7.1"
     "@typescript/native": "npm:typescript@^7.0.2"
+    acorn: "npm:8.15.0"
     esbuild: "npm:0.25.8"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.60.1"
@@ -13100,7 +13101,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"acorn@npm:^8.0.4, acorn@npm:^8.1.0, acorn@npm:^8.10.0, acorn@npm:^8.11.0, acorn@npm:^8.14.1, acorn@npm:^8.15.0, acorn@npm:^8.4.1, acorn@npm:^8.8.0, acorn@npm:^8.8.2":
+"acorn@npm:8.15.0, acorn@npm:^8.0.4, acorn@npm:^8.1.0, acorn@npm:^8.10.0, acorn@npm:^8.11.0, acorn@npm:^8.14.1, acorn@npm:^8.15.0, acorn@npm:^8.4.1, acorn@npm:^8.8.0, acorn@npm:^8.8.2":
   version: 8.15.0
   resolution: "acorn@npm:8.15.0"
   bin:
