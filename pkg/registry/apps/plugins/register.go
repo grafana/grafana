@@ -57,11 +57,7 @@ func ProvideAppInstaller(
 	logger := logging.DefaultLogger.With("app", "plugins.app")
 
 	localProvider := meta.NewLocalProvider(pluginStore, moduleHashCalc)
-	coreProvider, err := meta.NewCoreProvider(logger, meta.CoreProviderOpts{
-		StaticRootPath: func() (string, error) {
-			return getStaticRootPath(cfgProvider, logger)
-		},
-	})
+	coreProvider, err := meta.NewCoreProvider(logger, coreProviderOpts(cfgProvider, logger))
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +81,35 @@ func ProvideAppInstaller(
 		restConfigProvider: restConfigProvider,
 		PluginAppInstaller: i,
 	}, nil
+}
+
+func coreProviderOpts(cfgProvider configprovider.ConfigProvider, logger logging.Logger) meta.CoreProviderOpts {
+	return meta.CoreProviderOpts{
+		StaticRootPath: func() (string, error) {
+			return getStaticRootPath(cfgProvider, logger)
+		},
+		CDNAssets: cdnAssetsEnabled(cfgProvider, logger),
+	}
+}
+
+func cdnAssetsEnabled(cfgProvider configprovider.ConfigProvider, logger logging.Logger) bool {
+	cfg, err := cfgProvider.Get(context.Background())
+	if err != nil {
+		logger.Warn("Could not read config to detect a content delivery URL, serving core plugin assets from Grafana", "error", err)
+		return false
+	}
+	if cfg == nil {
+		logger.Warn("Config provider returned no config, serving core plugin assets from Grafana")
+		return false
+	}
+
+	cdnURL, err := cfg.GetContentDeliveryURL("")
+	if err != nil {
+		logger.Warn("Could not resolve content delivery URL, serving core plugin assets from Grafana", "error", err)
+		return false
+	}
+
+	return cdnURL != ""
 }
 
 func getStaticRootPath(cfgProvider configprovider.ConfigProvider, logger logging.Logger) (string, error) {

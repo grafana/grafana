@@ -380,6 +380,46 @@ func TestAssetProvider(t *testing.T) {
 	})
 }
 
+func TestCoreProvider_decoupledCoreAssetPaths(t *testing.T) {
+	const pluginID = "graphite"
+
+	newStaticRoot := func(t *testing.T) string {
+		t.Helper()
+		staticRootPath := filepath.Join(t.TempDir(), "public")
+		distDir := filepath.Join(staticRootPath, "app", "plugins", "datasource", pluginID, "dist")
+		require.NoError(t, os.MkdirAll(distDir, 0750))
+
+		pluginJSON := `{"id":"graphite","name":"Graphite","type":"datasource","info":{"version":"1.0.0"}}`
+		require.NoError(t, os.WriteFile(filepath.Join(distDir, "plugin.json"), []byte(pluginJSON), 0644))
+
+		return staticRootPath
+	}
+
+	loadMeta := func(t *testing.T, cdnAssets bool) pluginsv0alpha1.MetaSpec {
+		t.Helper()
+		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, newStaticRoot(t), cdnAssets, defaultCoreTTL)
+		require.NoError(t, provider.loadPlugins(context.Background()))
+
+		meta, found := provider.loadedPlugins[pluginID]
+		require.True(t, found, "decoupled core plugin should be discovered under the static root")
+		return meta
+	}
+
+	t.Run("cdn assets", func(t *testing.T) {
+		meta := loadMeta(t, true)
+
+		assert.Equal(t, "app/plugins/datasource/graphite/dist/module.js", meta.Module.Path)
+		assert.Equal(t, "app/plugins/datasource/graphite/dist", meta.BaseURL)
+	})
+
+	t.Run("non-cdn assets", func(t *testing.T) {
+		meta := loadMeta(t, false)
+
+		assert.Equal(t, "plugins/graphite/module.js", meta.Module.Path)
+		assert.Equal(t, "plugins/graphite", meta.BaseURL)
+	})
+}
+
 func TestJsonDataToMeta(t *testing.T) {
 	t.Run("converts basic plugin JSON data", func(t *testing.T) {
 		jsonData := plugins.JSONData{
