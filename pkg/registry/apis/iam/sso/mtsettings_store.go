@@ -179,6 +179,20 @@ func (s *MTSettingsStore) Update(ctx context.Context, name string, objInfo rest.
 	section := sectionFor(name)
 	desired := ssoSetting.Spec.Settings.UnstructuredContent()
 
+	// A read redacts secrets to a placeholder, so a read-then-write round-trip
+	// would persist the placeholder as the secret. Restore the stored value for
+	// any secret the client sent back unchanged (mirrors the legacy mergeSecrets).
+	if !created {
+		stored := current.Spec.Settings.Object
+		for key, val := range desired {
+			if str, ok := val.(string); ok && str == setting.RedactedPassword && isSecretField(key) {
+				if prev, ok := stored[key]; ok {
+					desired[key] = prev
+				}
+			}
+		}
+	}
+
 	// Upsert every desired key first — a required value is never removed before
 	// its replacement is durable.
 	for key, val := range desired {
@@ -337,11 +351,34 @@ func isSecretField(key string) bool {
 func redactSecrets(obj *iamv0.SSOSetting) *iamv0.SSOSetting {
 	out := obj.DeepCopy()
 	settings := out.Spec.Settings.UnstructuredContent()
-	for k, v := range settings {
-		if str, ok := v.(string); ok && str != "" && isSecretField(k) {
-			settings[k] = setting.RedactedPassword
+	for _, m := range secretMaps(settings) {
+		for k, v := range m {
+			if str, ok := v.(string); ok && str != "" && isSecretField(k) {
+				m[k] = setting.RedactedPassword
+			}
 		}
 	}
 	out.Spec.Settings = common.Unstructured{Object: settings}
 	return out
+}
+
+// secretMaps returns every map that may hold secret fields. LDAP nests secrets
+// (e.g. bind_password) under config.servers[], so scanning only the top level
+// would leak them (mirrors the legacy getConfigMaps).
+func secretMaps(settings map[string]any) []map[string]any {
+	maps := []map[string]any{settings}
+	config, ok := settings["config"].(map[string]any)
+	if !ok {
+		return maps
+	}
+	servers, ok := config["servers"].([]any)
+	if !ok {
+		return maps
+	}
+	for _, srv := range servers {
+		if m, ok := srv.(map[string]any); ok {
+			maps = append(maps, m)
+		}
+	}
+	return maps
 }

@@ -529,8 +529,8 @@
       "label-metric": "Métrica",
       "label-name": "Nome",
       "message": {
-        "must-enter-a-metric-name": "Deve inserir um nome de métrica",
-        "must-enter-a-name": "Deve inserir um nome",
+        "must-enter-a-metric-name": "Tem de introduzir um nome de métrica",
+        "must-enter-a-name": "Tem de introduzir um nome",
         "please-select-a-data-source": "Selecione uma origem de dados"
       },
       "metric-aria-label-metric": "métrica",
@@ -559,7 +559,7 @@
       "unprocessed-the-alert-is-received": "Não processado: o alerta foi recebido, mas a sua notificação ainda não foi processada."
     },
     "alert-state-tag": {
-      "content-alert-evaluation-is-currently-paused": "A avaliação de alerta está pausada atualmente",
+      "content-alert-evaluation-is-currently-paused": "A avaliação de alerta está em pausa atualmente",
       "paused": "Em pausa"
     },
     "alert-warning": {
@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} falhou com {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1617,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Tem a certeza de que pretende iniciar a importação? Esta ação criará novos recursos na Grafana Alerting.",
         "confirm": "Iniciar importação",
@@ -1675,26 +1665,6 @@
       "info-description": "Este assistente ajuda a importar regras de alertas e recursos de notificação de origens externas para a Grafana Alerting. Para obter mais informações, consulte a <2>documentação</2>.",
       "info-title": "Assistente de importação",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Escreva para pesquisar um espaço de nomes existente",
         "label": "Espaço de nome"
@@ -1718,10 +1688,6 @@
         "filter": "Filtrar",
         "folder": "Pasta de destino",
         "heading": "Rever importação",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Espaço de nome",
         "nothing": "Nada para importar",
         "nothing-desc": "Ambos os passos foram ignorados. Volte atrás e configure pelo menos uma origem de importação.",
@@ -1748,14 +1714,6 @@
         "validation-warning": "Alguns recursos serão renomeados para evitar conflitos.",
         "will-import-config": "Importará esta configuração",
         "will-import-rules": "Importará regras de",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Importará {{count}} regras",
         "will-import-rules-count_other": "Importará {{count}} regras"
       },
@@ -1867,14 +1825,10 @@
         "cancel-confirm-title": "Cancelar importação?",
         "cancel-confirm-yes": "Descartar alterações",
         "skip": "Ignorar",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Recursos de notificação",
         "step-notifications-desc": "Pontos de contacto, políticas, modelos",
         "step-review": "Rever e importar",
         "step-review-desc": "Pré-visualizar e confirmar importação",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "regras de alertas",
         "step-rules-desc": "regras de alertas e gravação"
       },
@@ -2191,7 +2145,7 @@
     },
     "mute-timing-time-interval": {
       "add-another-time-interval-item": "Adicionar outro item de intervalo de tempo",
-      "description": "Um item de intervalo de tempo é uma definição para um momento no tempo. Todos os campos são listas e pelo menos um elemento da lista deve ser satisfeito para corresponder ao campo. Se um campo for deixado em branco, qualquer momento corresponderá ao campo. Para que um instante de tempo corresponda a um intervalo de tempo completo, todos os campos devem corresponder. Um intervalo de tempo pode conter diversos elementos de intervalo de tempo.",
+      "description": "Um elemento de intervalo de tempo é uma definição para um momento no tempo. Todos os campos são listas e pelo menos um elemento da lista tem de ser satisfeito para corresponder ao campo. Se um campo for deixado em branco, qualquer momento corresponderá ao campo. Para que um instante de tempo corresponda a um intervalo de tempo completo, todos os campos devem corresponder. Um intervalo de tempo pode conter diversos elementos de intervalo de tempo.",
       "description-dats-of-the-month": "Os dias do mês, 1:31, de um mês. Os valores negativos podem ser utilizados para representar dias que começam no final do mês",
       "description-months": "Os meses do ano em formato numérico ou o mês completo do calendário",
       "label-days-of-the-month": "Dias do mês",
@@ -2656,7 +2610,7 @@
       "title-unable-to-check-the-rule-status": "Não foi possível verificar o estado da regra"
     },
     "provisioned-tooltip": {
-      "content-provisioned-items-cannot-edited": "Os itens fornecidos não podem ser editados na interface do utilizador"
+      "content-provisioned-items-cannot-edited": "Os elementos fornecidos não podem ser editados na interface do utilizador"
     },
     "provisioning": {
       "badge-tooltip-provenance": "Este recurso foi provisionado através de {{provenance}} e não pode ser editado através da interface do utilizador",
@@ -3282,8 +3236,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3258,54 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3316,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3611,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Um nome exclusivo para o intervalo de tempo",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "A carregar intervalo de tempo",
       "title-no-matching-time-interval-found": "Nenhum intervalo de tempo correspondente encontrado"
     },
@@ -3850,6 +3856,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Falha ao importar recursos",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Recursos importados com sucesso para a Grafana Alerting."
     },
     "yaml-content-info": {
@@ -4507,7 +4515,7 @@
       "non-folder-item": "Não pasta {{itemKind}} {{itemUID}}",
       "root-title": "Painéis de controlo",
       "search-placeholder": "Pesquisar pastas",
-      "shared-with-me": "Partilhado comigo",
+      "shared-with-me": "Partilhadas comigo",
       "starred-folders": "",
       "team-folders": "Pastas da equipa",
       "team-folders-error-title": "",
@@ -4723,7 +4731,7 @@
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4774,7 +4782,7 @@
     "ellipse-item": {
       "category-ellipse": "Elipse",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4828,7 +4836,7 @@
     },
     "metric-value-item": {
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4862,7 +4870,7 @@
     "parallelogram-item": {
       "category-parallelogram": "Paralelogramo",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4896,7 +4904,7 @@
       "label-position": "Cargo",
       "loading": "A carregar...",
       "vertical-options": {
-        "label-bottom": "Inferior",
+        "label-bottom": "Fundo",
         "label-center": "Centro",
         "label-scale": "Escala",
         "label-top": "Topo",
@@ -4914,7 +4922,7 @@
     "rectangle-item": {
       "category-rectangle": "Retângulo",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4949,7 +4957,7 @@
     "text-item": {
       "category-text": "Texto",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -4992,7 +5000,7 @@
     "triangle-item": {
       "category-triangle": "Triângulo",
       "label": {
-        "bottom": "Inferior",
+        "bottom": "Fundo",
         "center": "Centro",
         "left": "Esquerda",
         "middle": "Meio",
@@ -6047,6 +6055,7 @@
       "new-row-title": "Nova linha",
       "row": {
         "collapse": "Recolher linha {{title}}",
+        "copy-link": "",
         "expand": "Expandir linha {{title}}",
         "new": "Nova linha",
         "repeat": {
@@ -8918,11 +8927,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -9453,7 +9465,7 @@
       "placeholderText-select-symbol": "Selecionar um símbolo",
       "placeholderText-select-symbol-or-add-text": "Selecione um símbolo ou adicione uma etiqueta de texto",
       "vertical-align-options": {
-        "label-bottom": "Inferior",
+        "label-bottom": "Fundo",
         "label-center": "Centro",
         "label-top": "Topo"
       }
@@ -10163,7 +10175,7 @@
         },
         "placeholder-width": "",
         "placement-options": {
-          "label-bottom": "Inferior",
+          "label-bottom": "Fundo",
           "label-right": "Direita"
         }
       },
@@ -11734,6 +11746,7 @@
       "no-details": "Nenhum campo a mostrar.",
       "open-assistant": "",
       "pin-line": "Afixar registo",
+      "prettify": "",
       "remove-displayed-field": "Remover o campo",
       "remove-log": "Remover registo",
       "scroll-to-logline": "Deslizar para a linha de registo",
@@ -12447,7 +12460,7 @@
     },
     "machine-learning": {
       "subtitle": "Explorar funcionalidades de IA e aprendizagem automática",
-      "title": "IA e aprendizagem automática"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gerir painéis de controlo e permissões de pastas"
@@ -12768,6 +12781,29 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12775,6 +12811,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -12805,8 +12850,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14353,6 +14398,12 @@
     "shared": {
       "branch-description": "O ramo a utilizar para o aprovisionamento",
       "branch-label": "Ramo",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16103,6 +16154,9 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
     },
     "options": {
       "render-mode": ""

@@ -9,6 +9,7 @@
 // file: every notebook module takes its schema types from here, so that is the only seam.
 
 import {
+  defaultCodeCellContentKind as generatedDefaultCodeCellContentKind,
   defaultLibraryPanelKind as generatedDefaultLibraryPanelKind,
   defaultSpec as generatedDefaultSpec,
   defaultV2PanelKind,
@@ -45,5 +46,6 @@ export type NotebookLayoutItemKind = GeneratedNotebookLayoutItemKind;
 export type NotebookLayoutKind = GeneratedNotebookLayoutKind;
 export type Spec = GeneratedSpec;
 
+export const defaultCodeCellContentKind = generatedDefaultCodeCellContentKind;
 export const defaultLibraryPanelKind = generatedDefaultLibraryPanelKind;
 export const defaultSpec = generatedDefaultSpec;

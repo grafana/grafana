@@ -106,10 +106,10 @@ export const {
   // creating or replacing a notebook refetches the list without any extra enhancement here.
   useListNotebookQuery,
   useCreateNotebookMutation,
-  // Lazy, because the only reader fetches one notebook's full spec on submit — subscribing would
-  // pull a whole library of specs just to render a picker. The trigger defaults to
-  // preferCacheValue: false, which is what a read-modify-write needs: a stale spec here would be
-  // written straight back, dropping whatever changed in between.
+  // Lazy for two independent reasons. Exporting a list row has to fetch that one notebook's spec on
+  // demand rather than every row's up front; and the add-panel read-modify-write relies on the
+  // trigger defaulting to preferCacheValue: false, since a stale spec here would be written straight
+  // back, dropping whatever changed in between.
   useLazyGetNotebookQuery,
   useReplaceNotebookMutation,
 } = dashboardAPIv2beta1;

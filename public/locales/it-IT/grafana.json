@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} non riuscita con {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1617,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Vuoi davvero avviare l'importazione? Questa operazione creerà nuove risorse in Grafana Alerting.",
         "confirm": "Avvia importazione",
@@ -1675,26 +1665,6 @@
       "info-description": "Questa procedura guidata consente di importare regole di avviso e risorse di notifica da origini esterne in Grafana Alerting. Per ulteriori informazioni, consulta la <2>documentazione</2>.",
       "info-title": "Procedura guidata per l'importazione",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Digita per cercare uno spazio dei nomi esistente",
         "label": "Namespace"
@@ -1718,10 +1688,6 @@
         "filter": "Filtra",
         "folder": "Cartella di destinazione",
         "heading": "Rivedi importazione",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Spazio di nomi",
         "nothing": "Niente da importare",
         "nothing-desc": "Entrambi i passaggi sono stati saltati. Torna indietro e configura almeno un'origine di importazione.",
@@ -1748,14 +1714,6 @@
         "validation-warning": "Alcune risorse verranno rinominate per evitare conflitti.",
         "will-import-config": "Importazione di questa configurazione",
         "will-import-rules": "Importazione delle regole",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Importazione di {{count}} regola",
         "will-import-rules-count_other": "Importazione di {{count}} regole"
       },
@@ -1867,14 +1825,10 @@
         "cancel-confirm-title": "Annullare l'importazione?",
         "cancel-confirm-yes": "Ignora modifiche",
         "skip": "Salta",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Risorse di notifica",
         "step-notifications-desc": "Punti di contatto, criteri, modelli",
         "step-review": "Rivedi e importa",
         "step-review-desc": "Visualizza in anteprima e conferma l'importazione",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Regole di avviso",
         "step-rules-desc": "Regole di avviso e registrazione"
       },
@@ -2581,7 +2535,7 @@
         "error-code": "Messaggio di errore: \"{{error}}\"",
         "routes": {
           "conflictingMatchers": "Impossibile aggiungere o aggiornare il percorso: i matcher sono in conflitto con una struttura di routing esterna se abbiamo unito i matcher {{-matchers}}. Ciò renderebbe il percorso irraggiungibile.",
-          "unknownMatchers": "<corrispondenze sconosciute>"
+          "unknownMatchers": "<elementi di corrispondenza sconosciuti>"
         },
         "suffix": "Aggiorna la pagina e riprova.",
         "title": "Impossibile aggiungere o aggiornare i criteri di notifica"
@@ -3282,8 +3236,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3258,54 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3316,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3611,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Un nome univoco per l'intervallo di tempo",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Caricamento dell'intervallo di tempo",
       "title-no-matching-time-interval-found": "Nessun intervallo di tempo corrispondente trovato"
     },
@@ -3850,6 +3856,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Impossibile importare le risorse",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Risorse importate correttamente in Grafana Alerting."
     },
     "yaml-content-info": {
@@ -6047,6 +6055,7 @@
       "new-row-title": "Nuova riga",
       "row": {
         "collapse": "Riduci riga {{title}}",
+        "copy-link": "",
         "expand": "Espandi riga {{title}}",
         "new": "Nuova riga",
         "repeat": {
@@ -8918,11 +8927,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -11734,6 +11746,7 @@
       "no-details": "Nessun campo da visualizzare.",
       "open-assistant": "",
       "pin-line": "Fissa registro",
+      "prettify": "",
       "remove-displayed-field": "Rimuovi campo",
       "remove-log": "Rimuovi registro",
       "scroll-to-logline": "Scorri fino alla riga del registro",
@@ -12447,7 +12460,7 @@
     },
     "machine-learning": {
       "subtitle": "Esplora le funzionalità di IA e di apprendimento automatico",
-      "title": "IA e apprendimento automatico"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gestisci dashboard e autorizzazioni delle cartelle"
@@ -12768,6 +12781,29 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12775,6 +12811,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -12805,8 +12850,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14353,6 +14398,12 @@
     "shared": {
       "branch-description": "Il ramo da utilizzare per il provisioning",
       "branch-label": "Ramo",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16103,6 +16154,9 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
     },
     "options": {
       "render-mode": ""

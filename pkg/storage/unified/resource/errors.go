@@ -41,6 +41,16 @@ func NewBadRequestError(msg string) *resourcepb.ErrorResult {
 	}
 }
 
+// NewServiceUnavailableError reports that the server cannot answer yet, as
+// opposed to the request being wrong.
+func NewServiceUnavailableError(msg string) *resourcepb.ErrorResult {
+	return &resourcepb.ErrorResult{
+		Message: msg,
+		Code:    http.StatusServiceUnavailable,
+		Reason:  string(metav1.StatusReasonServiceUnavailable),
+	}
+}
+
 func NewNotFoundError(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	return &resourcepb.ErrorResult{
 		Code:   http.StatusNotFound,

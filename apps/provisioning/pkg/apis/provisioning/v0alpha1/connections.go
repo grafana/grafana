@@ -117,8 +117,8 @@ func (ConnectionType) OpenAPIModelName() string {
 const (
 	GithubConnectionType           ConnectionType = "github"
 	GithubEnterpriseConnectionType ConnectionType = "githubEnterprise"
-	GitlabConnectionType           ConnectionType = "gitlab"
-	BitbucketConnectionType        ConnectionType = "bitbucket"
+	GitlabOAuthConnectionType      ConnectionType = "gitlabOAuth"
+	BitbucketOAuthConnectionType   ConnectionType = "bitbucketOAuth"
 )
 
 type ConnectionSpec struct {
@@ -138,7 +138,7 @@ type ConnectionSpec struct {
 	// Only applicable when provider is "githubEnterprise"
 	GitHubEnterprise *GitHubEnterpriseConnectionConfig `json:"githubEnterprise,omitempty"`
 	// Bitbucket connection configuration
-	// Only applicable when provider is "bitbucket"
+	// Only applicable when provider is "bitbucketOAuth"
 	Bitbucket *BitbucketConnectionConfig `json:"bitbucket,omitempty"`
 
 	// OAuth app configuration shared by all OAuth app providers

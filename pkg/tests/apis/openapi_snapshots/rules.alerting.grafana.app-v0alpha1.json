@@ -3072,7 +3072,12 @@
             "type": "string"
           },
           "type": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettingsType"
+            "default": "NamedRoutingTree",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettingsType"
+              }
+            ]
           }
         },
         "additionalProperties": false
@@ -3219,7 +3224,12 @@
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulePromDuration"
           },
           "type": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettingsType"
+            "default": "SimplifiedRouting",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleNotificationSettingsType"
+              }
+            ]
           }
         },
         "additionalProperties": false

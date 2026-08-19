@@ -122,7 +122,7 @@ To create a dashboard, follow these steps:
 1. Click **Refresh** to query the data source.
 1. Select a suggested visualization or click **All visualizations** and select one from the full list.
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-viz-suggestion-2-v13.0.png" max-width="300px" alt="Visualization selector" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-viz-suggestions-v13.2.png" max-width="300px" alt="Visualization selector" >}}
 
    Grafana displays a preview of your query results with the visualization applied.
 
@@ -146,7 +146,7 @@ To create a dashboard, follow these steps:
 1. Enter a title and description for the dashboard or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 1. Select a folder, if applicable.
 1. Click **Save**
-1. Click **Back to dashboard**.
+1. Click **Back**.
 1. Click **Exit edit**.
 
 {{< /docs/list >}}
@@ -243,7 +243,7 @@ To edit a dashboard, follow these steps:
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Back to dashboard**, if needed.
+1. Click **Back**, if needed.
 1. Click **Exit edit**
 
 ## Panel layouts
@@ -266,6 +266,17 @@ There are default parameters to constrain the layout, and you can update these t
 - **Max columns**: Set a number up to 10.
 - **Row height**: Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels.
 - **Fill screen**: Toggle the switch on to have the panel fill the entire height of the screen. If the panel is in a row, the **Fill screen** toggle for the row must also be enabled (refer to [grouping configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/#grouping-configuration-options).
+
+If you try to resize a panel in auto grid layout, a dialog box opens with the following options:
+
+- **Edit auto layout**: Adjust the layout configuration.
+- **Switch to custom layout**: Resize and position panels manually.
+
+If you're working in a tab, the layout type indicator is automatically displayed. To see which layout type is active for a row, hover your cursor over that row to display the indicator.
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-auto-layout-indicators-v13.2.png" max-width="750px" alt="Dashboard showing auto layout indicators" >}}
+
+For repeated panels, this interaction is available on the last panel in the group.
 
 ### Update panel layout
 

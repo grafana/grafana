@@ -699,52 +699,6 @@
     "angularDetected": false
   },
   {
-    "name": "Getting Started",
-    "type": "panel",
-    "id": "gettingstarted",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "",
-      "links": [
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/gettingstarted/img/icn-dashlist-panel.svg",
-        "large": "public/plugins/gettingstarted/img/icn-dashlist-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/gettingstarted/",
-    "category": "",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Graphite",
     "type": "datasource",
     "id": "graphite",
@@ -1601,52 +1555,6 @@
     "defaultNavUrl": "/plugins/trend/",
     "category": "",
     "state": "beta",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
-    "name": "Welcome",
-    "type": "panel",
-    "id": "welcome",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "",
-      "links": [
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/welcome/img/icn-dashlist-panel.svg",
-        "large": "public/plugins/welcome/img/icn-dashlist-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/welcome/",
-    "category": "",
-    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
