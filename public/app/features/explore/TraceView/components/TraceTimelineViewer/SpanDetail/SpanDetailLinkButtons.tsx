@@ -103,7 +103,7 @@ export const SpanDetailLinkButtons = ({
           return createLinkModel(
             link,
             SpanLinkType.Logs,
-            getLogsButtonCTA(settings),
+            getLogsButtonCTA(settings, 'span'),
             'gf-logs',
             datasourceType,
             datasourceUid
@@ -170,7 +170,11 @@ export const SpanDetailLinkButtons = ({
       ) : (
         links.map((spanLinkModel, index) =>
           spanLinkModel.type === SpanLinkType.Logs ? (
-            <LogsLinkButton spanLinkModel={spanLinkModel} key={index} />
+            <LogsLinkButton
+              linkModel={spanLinkModel.linkModel}
+              traceDatasourceUid={spanLinkModel.traceDatasourceUid}
+              key={index}
+            />
           ) : (
             <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
           )
@@ -219,7 +223,11 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
       <Menu>
         {links.map((spanLinkModel, index) =>
           spanLinkModel.type === SpanLinkType.Logs ? (
-            <LogsLinkMenuItem spanLinkModel={spanLinkModel} key={index} />
+            <LogsLinkMenuItem
+              linkModel={spanLinkModel.linkModel}
+              traceDatasourceUid={spanLinkModel.traceDatasourceUid}
+              key={index}
+            />
           ) : (
             <Menu.Item
               key={index}

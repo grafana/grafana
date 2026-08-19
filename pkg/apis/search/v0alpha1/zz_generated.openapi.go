@@ -85,7 +85,7 @@ func schema_pkg_apis_search_v0alpha1_FilterPredicate(ref common.ReferenceCallbac
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "FilterPredicate is an exact / set-based predicate against a single field.",
+				Description: "FilterPredicate is an exact / set-based predicate against a single field. Values are strings whatever the field's declared type, so a boolean field takes \"true\" or \"false\" and a numeric field takes the number written out.\n\nNumbers are held as float64, so only integers up to 2^53 are compared exactly. Past that, values a whole number apart share one representation, and a filter can both match a neighbour and miss the value asked for.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"field": {
@@ -128,7 +128,7 @@ func schema_pkg_apis_search_v0alpha1_RangePredicate(ref common.ReferenceCallback
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "RangePredicate is a future numeric/date range predicate. Modelled for schema stability; always rejected in v1.",
+				Description: "RangePredicate compares a numeric field against one or two bounds. At least one bound is required, gt cannot be combined with gte, and lt cannot be combined with lte. Boolean and string fields are rejected: only numbers have the order a range asks about. On an integer field a bound must be whole.\n\nBounds are held as float64, so only integers up to 2^53 are compared exactly. Past that, values a whole number apart share one representation, and a bound can both admit a neighbour and exclude the value asked for.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"field": {
@@ -651,7 +651,7 @@ func schema_pkg_apis_search_v0alpha1_WhereNode(ref common.ReferenceCallback) com
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text and filter leaves; In/NotIn filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. range and exists are sketched for future versions and always rejected today.",
+				Description: "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"and": {
@@ -704,8 +704,7 @@ func schema_pkg_apis_search_v0alpha1_WhereNode(ref common.ReferenceCallback) com
 					},
 					"exists": {
 						SchemaProps: spec.SchemaProps{
-							Description: "future, rejected in v1",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ExistsPredicate"),
+							Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ExistsPredicate"),
 						},
 					},
 				},

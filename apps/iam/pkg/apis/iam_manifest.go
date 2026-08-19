@@ -77,14 +77,14 @@ var appManifestData = app.ManifestData{
 							Name:         "email",
 							Path:         "spec.email",
 							Type:         "string",
-							Capabilities: []string{"filter", "retrieve"},
+							Capabilities: []string{"filter", "sort", "retrieve"},
 							Description:  "The email address of the user",
 						},
 						{
 							Name:         "login",
 							Path:         "spec.login",
 							Type:         "string",
-							Capabilities: []string{"filter", "retrieve"},
+							Capabilities: []string{"filter", "sort", "retrieve"},
 							Description:  "The login of the user",
 						},
 						{

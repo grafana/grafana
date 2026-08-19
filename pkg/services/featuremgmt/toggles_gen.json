@@ -1046,6 +1046,24 @@
     },
     {
       "metadata": {
+        "name": "appplugins.loadAppManifest",
+        "resourceVersion": "1787026732819",
+        "creationTimestamp": "2026-08-18T03:50:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 04:18:52.819374 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Load app manifest when loading plugin definitions",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appplugins.registerAPIServer",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -1998,14 +2016,17 @@
     {
       "metadata": {
         "name": "datasources.azureMonitorBatchAPI",
-        "resourceVersion": "1786542896418",
-        "creationTimestamp": "2026-08-12T13:54:56Z"
+        "resourceVersion": "1786999851247",
+        "creationTimestamp": "2026-08-12T13:54:56Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-17 20:50:51.247936 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/data-sources-plugins",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2279,7 +2300,8 @@
       "metadata": {
         "name": "dsAbstractionApp",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-18T13:19:09Z"
       },
       "spec": {
         "description": "Registers the dsabstraction app for querying datasources via unified SQL",
@@ -3102,6 +3124,7 @@
         "name": "grafana.newPreferencesPage",
         "resourceVersion": "1783676521307",
         "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-17T12:25:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
         }
@@ -3189,6 +3212,23 @@
         "codeowner": "@grafana/datapro",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.panelPluginTransformations",
+        "resourceVersion": "1787070031960",
+        "creationTimestamp": "2026-08-17T16:38:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 16:20:31.960083 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Let panel plugins register system transformations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -6288,6 +6328,21 @@
       },
       "spec": {
         "description": "Enables the refactored TableNG nested-table implementation",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.refresh",
+        "resourceVersion": "1786399613696",
+        "creationTimestamp": "2026-08-10T22:06:53Z"
+      },
+      "spec": {
+        "description": "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
