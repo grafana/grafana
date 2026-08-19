@@ -158,9 +158,17 @@ export interface HeatmapTooltip {
  */
 export interface HeatmapLegend {
   /**
+   * Controls where the legend is shown
+   */
+  placement?: ui.LegendPlacement;
+  /**
    * Controls if the legend is shown
    */
   show: boolean;
+  /**
+   * Controls legend width when shown on the right
+   */
+  width?: (number | string);
 }
 
 /**
@@ -282,6 +290,7 @@ export const defaultOptions: Partial<Options> = {
   },
   legend: {
     show: true,
+    placement: 'bottom',
   },
   selectionMode: HeatmapSelectionMode.X,
   showValue: ui.VisibilityMode.Auto,

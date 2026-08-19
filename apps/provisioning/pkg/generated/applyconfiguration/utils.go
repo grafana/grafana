@@ -30,6 +30,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.ConnectionApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionInfo"):
 		return &provisioningv0alpha1.ConnectionInfoApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionOAuthConfig"):
+		return &provisioningv0alpha1.ConnectionOAuthConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionSecure"):
 		return &provisioningv0alpha1.ConnectionSecureApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionSpec"):
@@ -54,8 +56,6 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.GitHubEnterpriseRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubRepositoryConfigApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("GitlabConnectionConfig"):
-		return &provisioningv0alpha1.GitlabConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitLabRepositoryConfig"):
 		return &provisioningv0alpha1.GitLabRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitRepositoryConfig"):
@@ -104,6 +104,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.SyncOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SyncStatus"):
 		return &provisioningv0alpha1.SyncStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("TestJobOptions"):
+		return &provisioningv0alpha1.TestJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TokenStatus"):
 		return &provisioningv0alpha1.TokenStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("WebhookConfig"):

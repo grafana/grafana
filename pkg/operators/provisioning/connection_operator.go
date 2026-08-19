@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/server"
@@ -59,6 +60,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		controllerCfg.ResyncInterval(),
 		controllerCfg.DrainTimeout(),
 		controllerCfg.Registry(),
+		nats.Enabled(controllerCfg.natsSubscriber),
 	)
 
 	reg, err := connSource.AddEventHandler(connController.EventHandler())

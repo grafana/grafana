@@ -1,11 +1,11 @@
 import { supportsWebhooks } from './repositoryTypes';
 
 describe('supportsWebhooks', () => {
-  it.each(['github', 'githubEnterprise', 'gitlab'] as const)('should return true for %s', (type) => {
+  it.each(['github', 'githubEnterprise', 'gitlab', 'bitbucket'] as const)('should return true for %s', (type) => {
     expect(supportsWebhooks(type)).toBe(true);
   });
 
-  it.each(['bitbucket', 'git', 'local'] as const)('should return false for %s', (type) => {
+  it.each(['git', 'local'] as const)('should return false for %s', (type) => {
     expect(supportsWebhooks(type)).toBe(false);
   });
 

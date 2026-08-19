@@ -8,7 +8,7 @@ import 'jquery';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 import {
   locationUtil,
   monacoLanguageRegistry,
@@ -22,6 +22,7 @@ import {
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
+  HistoryWrapper,
   locationService,
   setBackendSrv,
   setDataSourceSrv,
@@ -52,6 +53,7 @@ import {
   setDataSourcePluginImporter,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
+  setDataSourcePicker,
   setJourneyRegistry,
   setJourneyTracker,
   setPanelDataErrorView,
@@ -99,6 +101,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
+import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -203,7 +206,14 @@ export class GrafanaApp {
 
         // Eagerly import journey wirings - these only use onInteraction,
         // no heavy feature-level imports
-        await Promise.all([import('./core/journeys/searchToResource')]);
+        await Promise.all([
+          import('./core/journeys/searchToResource'),
+          import('./core/journeys/browseToResource'),
+          import('./core/journeys/dashboardEdit'),
+          import('./core/journeys/panelEdit'),
+          import('./core/journeys/datasourceConfigure'),
+          import('./core/journeys/exploreToDashboard'),
+        ]);
 
         // Warn about registry entries that have no start trigger wired up
         registry.warnUnregistered();
@@ -214,6 +224,7 @@ export class GrafanaApp {
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
       setFolderPicker(LazyFolderPicker);
+      setDataSourcePicker(RuntimeDataSourcePickerShim);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
@@ -272,6 +283,14 @@ export class GrafanaApp {
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
         getVariablesUrlParams: getVariablesUrlParams,
       });
+
+      // For multi-org users, ensure every SPA navigation carries ?orgId so
+      // dashboard / alert URLs are shareable across orgs. Single-org users
+      // (the OSS / Cloud majority) skip this, no URL pollution. Registered
+      // before handleRedirectTo() so the post-login redirect gets orgId too.
+      if (locationService instanceof HistoryWrapper && contextSrv.user.orgCount > 1) {
+        locationService.setOrgIdGetter(() => contextSrv.user.orgId);
+      }
 
       if (config.featureToggles.useSessionStorageForRedirection) {
         handleRedirectTo();

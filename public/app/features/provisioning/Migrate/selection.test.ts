@@ -13,6 +13,7 @@ function folder(uid: string, dashboardUids: string[]): FolderRow {
   return {
     uid,
     title: uid,
+    path: [],
     resourceCount: directResources.length,
     directResources,
   };
@@ -25,6 +26,7 @@ function playlistFolder(uid: string, playlistUids: string[]): FolderRow {
   return {
     uid,
     title: 'Playlists',
+    path: [],
     resourceCount: directResources.length,
     directResources,
   };

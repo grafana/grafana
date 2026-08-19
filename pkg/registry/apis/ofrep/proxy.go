@@ -10,7 +10,9 @@ import (
 	"net/http/httputil"
 	"path"
 	"strconv"
+	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
@@ -21,9 +23,11 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalAllFlags")
 	defer span.End()
 
+	b.logger.Debug("Proxying bulk flag eval request", "namespace", namespace, "isAuthedUser", isAuthedUser)
+
 	r = r.WithContext(ctx)
 
-	proxy, err := b.newProxy(ofrepPath, namespace)
+	proxy, err := b.newProxy(ofrepPath, namespace, r.Header.Get("User-Agent"))
 	if err != nil {
 		err = tracing.Error(span, err)
 		b.logger.Error("Failed to create proxy", "error", err)
@@ -32,34 +36,37 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 	}
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
-		if resp.StatusCode == http.StatusOK && !isAuthedUser {
-			var result goffmodel.OFREPBulkEvaluateSuccessResponse
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				return err
-			}
-			_ = resp.Body.Close()
-
-			var filteredFlags []goffmodel.OFREPFlagBulkEvaluateSuccessResponse
-			for _, f := range result.Flags {
-				if isPublicFlag(f.Key) {
-					filteredFlags = append(filteredFlags, f)
-				}
-			}
-
-			result.Flags = filteredFlags
-			newBodyBytes, err := json.Marshal(result)
-			if err != nil {
-				b.logger.Error("Failed to encode filtered result", "error", err)
-				return err
-			}
-
-			// Replace the body
-			resp.Body = io.NopCloser(bytes.NewReader(newBodyBytes))
-			resp.ContentLength = int64(len(newBodyBytes))
-			resp.Header.Set("Content-Length", strconv.Itoa(len(newBodyBytes)))
-			resp.Header.Set("Content-Type", "application/json")
+		if resp.StatusCode != http.StatusOK {
+			return nil
 		}
 
+		// Unauth is always filtered to public flags. Authed is filtered only when the flag is on.
+		if isAuthedUser && !bulkFlagEvalFilteringEnabled(ctx, b.logger) {
+			return nil
+		}
+
+		var result goffmodel.OFREPBulkEvaluateSuccessResponse
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			b.logger.Error("Failed to decode bulk eval response", "error", err)
+			return err
+		}
+		_ = resp.Body.Close()
+
+		filteredFlags := make([]goffmodel.OFREPFlagBulkEvaluateSuccessResponse, 0, len(result.Flags))
+		for _, f := range result.Flags {
+			if isPublic(f.Metadata) {
+				filteredFlags = append(filteredFlags, f)
+			}
+		}
+
+		result.Flags = filteredFlags
+		newBodyBytes, err := json.Marshal(result)
+		if err != nil {
+			b.logger.Error("Failed to encode filtered result", "error", err)
+			return err
+		}
+
+		rewriteResponse(resp, resp.StatusCode, newBodyBytes, "application/json")
 		return nil
 	}
 
@@ -70,9 +77,11 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalFlag")
 	defer span.End()
 
+	b.logger.Debug("Proxying single flag eval request", "namespace", namespace, "key", flagKey, "isAuthedUser", isAuthedUser)
+
 	r = r.WithContext(ctx)
 
-	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey), namespace)
+	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey), namespace, r.Header.Get("User-Agent"))
 	if err != nil {
 		err = tracing.Error(span, err)
 		b.logger.Error("Failed to create proxy", "key", flagKey, "error", err)
@@ -81,16 +90,51 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	}
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
-		if resp.StatusCode == http.StatusOK && !isAuthedUser && !isPublicFlag(flagKey) {
-			writeResponse(http.StatusUnauthorized, struct{}{}, b.logger, w)
+		// Unauth may only see public flags. Checked here since metadata is only known after eval.
+		if resp.StatusCode != http.StatusOK || isAuthedUser {
+			return nil
 		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			b.logger.Error("Failed to read flag eval response", "key", flagKey, "error", err)
+			return err
+		}
+		_ = resp.Body.Close()
+
+		var result goffmodel.OFREPEvaluateSuccessResponse
+		if err := json.Unmarshal(body, &result); err != nil {
+			b.logger.Error("Failed to decode flag eval response", "key", flagKey, "error", err)
+			return err
+		}
+
+		if isPublic(result.Metadata) {
+			resp.Body = io.NopCloser(bytes.NewReader(body))
+			return nil
+		}
+
+		// Not public -> respond as if the flag doesn't exist, so an unauthed
+		// caller can't use the 404-vs-401 distinction to probe which private
+		// flags exist.
+		b.logger.Debug("Unauthed request for non-public flag, responding as not-found", "namespace", namespace, "key", flagKey)
+		notFoundBody, err := json.Marshal(goffmodel.OFREPEvaluateErrorResponse{
+			OFREPCommonErrorResponse: goffmodel.OFREPCommonErrorResponse{
+				ErrorCode:    "FLAG_NOT_FOUND",
+				ErrorDetails: fmt.Sprintf("Flag %q was not found", flagKey),
+			},
+			Key: flagKey,
+		})
+		if err != nil {
+			return err
+		}
+		rewriteResponse(resp, http.StatusNotFound, notFoundBody, "application/json")
 		return nil
 	}
 
 	proxy.ServeHTTP(w, r)
 }
 
-func (b *APIBuilder) newProxy(proxyPath, namespace string) (*httputil.ReverseProxy, error) {
+func (b *APIBuilder) newProxy(proxyPath, namespace, incomingUserAgent string) (*httputil.ReverseProxy, error) {
 	if proxyPath == "" {
 		return nil, fmt.Errorf("proxy path is required")
 	}
@@ -103,7 +147,7 @@ func (b *APIBuilder) newProxy(proxyPath, namespace string) (*httputil.ReversePro
 		req.URL.Scheme = b.url.Scheme
 		req.URL.Host = b.url.Host
 		req.URL.Path = proxyPath
-		req.Header.Set("User-Agent", namespaceUserAgent(namespace))
+		req.Header.Set("User-Agent", withStackTag(incomingUserAgent, namespace))
 	}
 
 	proxy := proxyutil.NewReverseProxy(b.logger, director)
@@ -111,9 +155,38 @@ func (b *APIBuilder) newProxy(proxyPath, namespace string) (*httputil.ReversePro
 	return proxy, nil
 }
 
-func namespaceUserAgent(namespace string) string {
-	if namespace == "" {
-		return "features-grafana-app"
+// maxUserAgentLen bounds a caller-supplied User-Agent before it's forwarded downstream.
+const maxUserAgentLen = 150
+
+func withStackTag(ua, ns string) string {
+	if len(ua) > maxUserAgentLen {
+		ua = ua[:maxUserAgentLen]
 	}
-	return "features-grafana-app/" + namespace
+
+	if strings.HasPrefix(ua, features.ClientUserAgentPrefix) {
+		// Known format from our own HTTP client
+		if ns == "" || strings.Contains(ua, " ns/"+ns) {
+			return ua
+		}
+		return ua + " ns/" + ns
+	}
+
+	if ua == "" {
+		ua = "unknown"
+	}
+	if ns == "" {
+		return ua
+	}
+	return ua + " ns/" + ns
+}
+
+// rewriteResponse swaps a proxied response for a new one, so the reverse proxy
+// forwards our content instead of the original upstream response.
+func rewriteResponse(resp *http.Response, statusCode int, body []byte, contentType string) {
+	resp.StatusCode = statusCode
+	resp.Status = fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode))
+	resp.Body = io.NopCloser(bytes.NewReader(body))
+	resp.ContentLength = int64(len(body))
+	resp.Header.Set("Content-Length", strconv.Itoa(len(body)))
+	resp.Header.Set("Content-Type", contentType)
 }

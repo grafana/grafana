@@ -17,6 +17,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	foldersV1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -274,7 +275,7 @@ func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, op
 	// Now send each dashboard
 	for i := 1; rows.Next(); i++ {
 		dash := rows.row.Dash
-		dash.APIVersion = "folder.grafana.app/v1beta1"
+		dash.APIVersion = foldersV1beta1.APIVERSION
 		dash.Kind = "Folder"
 		dash.SetNamespace(opts.Namespace)
 		dash.SetResourceVersion("") // it will be filled in by the backend

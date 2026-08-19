@@ -6,6 +6,6 @@ describe('ThemePicker', () => {
   it('should have an accessible label on the radiogroup', () => {
     render(<ThemePicker selectedTheme="current" onChange={jest.fn()} />);
 
-    expect(screen.getByRole('radiogroup', { name: 'Theme' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
   });
 });

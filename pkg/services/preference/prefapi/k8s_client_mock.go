@@ -5,7 +5,7 @@ package prefapi
 import (
 	"context"
 
-	v1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	utils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -24,23 +24,23 @@ func (_m *MockK8sClient) EXPECT() *MockK8sClient_Expecter {
 }
 
 // Get provides a mock function with given fields: c, owner
-func (_m *MockK8sClient) Get(c context.Context, owner utils.OwnerReference) (*v1alpha1.PreferencesSpec, error) {
+func (_m *MockK8sClient) Get(c context.Context, owner utils.OwnerReference) (*preferences.PreferencesSpec, error) {
 	ret := _m.Called(c, owner)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 *v1alpha1.PreferencesSpec
+	var r0 *preferences.PreferencesSpec
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference) (*v1alpha1.PreferencesSpec, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference) (*preferences.PreferencesSpec, error)); ok {
 		return rf(c, owner)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference) *v1alpha1.PreferencesSpec); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference) *preferences.PreferencesSpec); ok {
 		r0 = rf(c, owner)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v1alpha1.PreferencesSpec)
+			r0 = ret.Get(0).(*preferences.PreferencesSpec)
 		}
 	}
 
@@ -72,34 +72,34 @@ func (_c *MockK8sClient_Get_Call) Run(run func(c context.Context, owner utils.Ow
 	return _c
 }
 
-func (_c *MockK8sClient_Get_Call) Return(_a0 *v1alpha1.PreferencesSpec, _a1 error) *MockK8sClient_Get_Call {
+func (_c *MockK8sClient_Get_Call) Return(_a0 *preferences.PreferencesSpec, _a1 error) *MockK8sClient_Get_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockK8sClient_Get_Call) RunAndReturn(run func(context.Context, utils.OwnerReference) (*v1alpha1.PreferencesSpec, error)) *MockK8sClient_Get_Call {
+func (_c *MockK8sClient_Get_Call) RunAndReturn(run func(context.Context, utils.OwnerReference) (*preferences.PreferencesSpec, error)) *MockK8sClient_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetMerged provides a mock function with given fields: ctx
-func (_m *MockK8sClient) GetMerged(ctx context.Context) (*v1alpha1.PreferencesSpec, error) {
+func (_m *MockK8sClient) GetMerged(ctx context.Context) (*preferences.PreferencesSpec, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetMerged")
 	}
 
-	var r0 *v1alpha1.PreferencesSpec
+	var r0 *preferences.PreferencesSpec
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*v1alpha1.PreferencesSpec, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (*preferences.PreferencesSpec, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) *v1alpha1.PreferencesSpec); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) *preferences.PreferencesSpec); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v1alpha1.PreferencesSpec)
+			r0 = ret.Get(0).(*preferences.PreferencesSpec)
 		}
 	}
 
@@ -130,18 +130,18 @@ func (_c *MockK8sClient_GetMerged_Call) Run(run func(ctx context.Context)) *Mock
 	return _c
 }
 
-func (_c *MockK8sClient_GetMerged_Call) Return(_a0 *v1alpha1.PreferencesSpec, _a1 error) *MockK8sClient_GetMerged_Call {
+func (_c *MockK8sClient_GetMerged_Call) Return(_a0 *preferences.PreferencesSpec, _a1 error) *MockK8sClient_GetMerged_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockK8sClient_GetMerged_Call) RunAndReturn(run func(context.Context) (*v1alpha1.PreferencesSpec, error)) *MockK8sClient_GetMerged_Call {
+func (_c *MockK8sClient_GetMerged_Call) RunAndReturn(run func(context.Context) (*preferences.PreferencesSpec, error)) *MockK8sClient_GetMerged_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Patch provides a mock function with given fields: c, owner, spec
-func (_m *MockK8sClient) Patch(c context.Context, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec) error {
+func (_m *MockK8sClient) Patch(c context.Context, owner utils.OwnerReference, spec *preferences.PreferencesSpec) error {
 	ret := _m.Called(c, owner, spec)
 
 	if len(ret) == 0 {
@@ -149,7 +149,7 @@ func (_m *MockK8sClient) Patch(c context.Context, owner utils.OwnerReference, sp
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference, *v1alpha1.PreferencesSpec) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference, *preferences.PreferencesSpec) error); ok {
 		r0 = rf(c, owner, spec)
 	} else {
 		r0 = ret.Error(0)
@@ -171,9 +171,9 @@ func (_e *MockK8sClient_Expecter) Patch(c interface{}, owner interface{}, spec i
 	return &MockK8sClient_Patch_Call{Call: _e.mock.On("Patch", c, owner, spec)}
 }
 
-func (_c *MockK8sClient_Patch_Call) Run(run func(c context.Context, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec)) *MockK8sClient_Patch_Call {
+func (_c *MockK8sClient_Patch_Call) Run(run func(c context.Context, owner utils.OwnerReference, spec *preferences.PreferencesSpec)) *MockK8sClient_Patch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(utils.OwnerReference), args[2].(*v1alpha1.PreferencesSpec))
+		run(args[0].(context.Context), args[1].(utils.OwnerReference), args[2].(*preferences.PreferencesSpec))
 	})
 	return _c
 }
@@ -183,13 +183,13 @@ func (_c *MockK8sClient_Patch_Call) Return(_a0 error) *MockK8sClient_Patch_Call 
 	return _c
 }
 
-func (_c *MockK8sClient_Patch_Call) RunAndReturn(run func(context.Context, utils.OwnerReference, *v1alpha1.PreferencesSpec) error) *MockK8sClient_Patch_Call {
+func (_c *MockK8sClient_Patch_Call) RunAndReturn(run func(context.Context, utils.OwnerReference, *preferences.PreferencesSpec) error) *MockK8sClient_Patch_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function with given fields: c, owner, spec
-func (_m *MockK8sClient) Update(c context.Context, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec) error {
+func (_m *MockK8sClient) Update(c context.Context, owner utils.OwnerReference, spec *preferences.PreferencesSpec) error {
 	ret := _m.Called(c, owner, spec)
 
 	if len(ret) == 0 {
@@ -197,7 +197,7 @@ func (_m *MockK8sClient) Update(c context.Context, owner utils.OwnerReference, s
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference, *v1alpha1.PreferencesSpec) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, utils.OwnerReference, *preferences.PreferencesSpec) error); ok {
 		r0 = rf(c, owner, spec)
 	} else {
 		r0 = ret.Error(0)
@@ -219,9 +219,9 @@ func (_e *MockK8sClient_Expecter) Update(c interface{}, owner interface{}, spec 
 	return &MockK8sClient_Update_Call{Call: _e.mock.On("Update", c, owner, spec)}
 }
 
-func (_c *MockK8sClient_Update_Call) Run(run func(c context.Context, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec)) *MockK8sClient_Update_Call {
+func (_c *MockK8sClient_Update_Call) Run(run func(c context.Context, owner utils.OwnerReference, spec *preferences.PreferencesSpec)) *MockK8sClient_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(utils.OwnerReference), args[2].(*v1alpha1.PreferencesSpec))
+		run(args[0].(context.Context), args[1].(utils.OwnerReference), args[2].(*preferences.PreferencesSpec))
 	})
 	return _c
 }
@@ -231,7 +231,7 @@ func (_c *MockK8sClient_Update_Call) Return(_a0 error) *MockK8sClient_Update_Cal
 	return _c
 }
 
-func (_c *MockK8sClient_Update_Call) RunAndReturn(run func(context.Context, utils.OwnerReference, *v1alpha1.PreferencesSpec) error) *MockK8sClient_Update_Call {
+func (_c *MockK8sClient_Update_Call) RunAndReturn(run func(context.Context, utils.OwnerReference, *preferences.PreferencesSpec) error) *MockK8sClient_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

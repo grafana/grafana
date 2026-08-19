@@ -25,7 +25,7 @@ import * as path from 'node:path';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..');
 const JOURNEYS_DIR = path.join(REPO_ROOT, 'public', 'app', 'core', 'journeys');
-const REGISTRY_PATH = path.join(REPO_ROOT, 'public', 'app', 'core', 'services', 'journeyRegistry.ts');
+const REGISTRY_PATH = path.join(REPO_ROOT, 'public', 'app', 'core', 'services', 'journey', 'journeyRegistry.ts');
 const APP_TS_PATH = path.join(REPO_ROOT, 'public', 'app', 'app.ts');
 const SMOKE_RUNNER_PATH = path.join(REPO_ROOT, 'scripts', 'cuj-smoke.ts');
 
@@ -68,7 +68,7 @@ function printHelp(): void {
       '  public/app/core/journeys/<camelCase>.test.ts',
       '  public/app/core/journeys/<camelCase>.smoke.ts   (only with --with-smoke)',
       'Modifies:',
-      '  public/app/core/services/journeyRegistry.ts',
+      '  public/app/core/services/journey/journeyRegistry.ts',
       '  public/app/app.ts',
       '  scripts/cuj-smoke.ts                             (only with --with-smoke)',
     ].join('\n')

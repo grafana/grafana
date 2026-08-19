@@ -6,6 +6,8 @@ import { bulkDeleteVariables, bulkMoveVariables, recreateVariable } from './api'
 
 const postMock = jest.fn();
 const deleteMock = jest.fn();
+const clearPredefinedVariablesCacheMock = jest.fn();
+const clearSceneCacheMock = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -17,6 +19,16 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
+}));
+
+jest.mock('app/features/dashboard-scene/utils/predefinedVariables', () => ({
+  clearPredefinedVariablesCache: (...args: unknown[]) => clearPredefinedVariablesCacheMock(...args),
+}));
+
+jest.mock('app/features/dashboard-scene/pages/DashboardScenePageStateManager', () => ({
+  getDashboardScenePageStateManager: () => ({
+    clearSceneCache: (...args: unknown[]) => clearSceneCacheMock(...args),
+  }),
 }));
 
 function makeVariable(specName: string, folderUid?: string): Variable {
@@ -36,7 +48,19 @@ function makeVariable(specName: string, folderUid?: string): Variable {
 beforeEach(() => {
   postMock.mockReset().mockResolvedValue({});
   deleteMock.mockReset().mockResolvedValue({});
+  clearPredefinedVariablesCacheMock.mockReset();
+  clearSceneCacheMock.mockReset();
 });
+
+function expectCachesInvalidated() {
+  expect(clearPredefinedVariablesCacheMock).toHaveBeenCalledTimes(1);
+  expect(clearSceneCacheMock).toHaveBeenCalledTimes(1);
+}
+
+function expectCachesNotInvalidated() {
+  expect(clearPredefinedVariablesCacheMock).not.toHaveBeenCalled();
+  expect(clearSceneCacheMock).not.toHaveBeenCalled();
+}
 
 describe('bulkDeleteVariables', () => {
   it('deletes each variable and reports the count', async () => {
@@ -46,6 +70,7 @@ describe('bulkDeleteVariables', () => {
     expect(deleteMock.mock.calls[0][0]).toContain('/variables/a');
     expect(deleteMock.mock.calls[1][0]).toContain('/variables/b--folder-1');
     expect(result).toEqual({ succeeded: 2, skipped: 0, failed: [] });
+    expectCachesInvalidated();
   });
 
   it('reports partial failures and continues', async () => {
@@ -136,6 +161,7 @@ describe('recreateVariable', () => {
 
     expect(calls).toEqual(['create', 'delete']);
     expect(result).toEqual({ deletedOriginal: true });
+    expectCachesInvalidated();
   });
 
   it('propagates a create failure without deleting the original', async () => {
@@ -143,6 +169,7 @@ describe('recreateVariable', () => {
 
     await expect(recreateVariable('a', kind, 'folder-1')).rejects.toThrow('conflict');
     expect(deleteMock).not.toHaveBeenCalled();
+    expectCachesNotInvalidated();
   });
 
   it('reports a delete failure without throwing, since the copy already exists', async () => {
@@ -152,5 +179,7 @@ describe('recreateVariable', () => {
 
     expect(postMock).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ deletedOriginal: false });
+    // Copy exists — caches must refresh even when the original could not be removed.
+    expectCachesInvalidated();
   });
 });

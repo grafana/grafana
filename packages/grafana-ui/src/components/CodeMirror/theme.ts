@@ -102,31 +102,41 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
   );
 
   const syntaxTheme = HighlightStyle.define([
-    { tag: [tags.keyword, tags.operatorKeyword, tags.modifier], color: theme.colors.primary.text },
-    { tag: [tags.controlKeyword, tags.moduleKeyword], color: theme.colors.tertiary.text },
+    { tag: [tags.keyword, tags.operatorKeyword, tags.modifier], color: theme.components.codeEditor.keyword },
+    { tag: [tags.controlKeyword, tags.moduleKeyword], color: theme.components.codeEditor.controlKeyword },
     {
       tag: [tags.name, tags.propertyName, tags.variableName, tags.labelName, tags.definition(tags.name)],
-      color: theme.colors.text.primary,
+      color: theme.components.codeEditor.variable,
     },
     {
       tag: [tags.typeName, tags.className, tags.tagName, tags.annotation, tags.namespace],
-      color: theme.colors.tertiary.text,
+      color: theme.components.codeEditor.type,
     },
     {
       tag: [tags.function(tags.variableName), tags.function(tags.propertyName)],
-      color: theme.colors.primary.text,
+      color: theme.components.codeEditor.function,
     },
-    { tag: [tags.number, tags.bool, tags.atom], color: theme.colors.warning.text },
-    { tag: [tags.string, tags.special(tags.string), tags.character, tags.inserted], color: theme.colors.success.text },
-    { tag: [tags.operator, tags.punctuation, tags.separator, tags.brace], color: theme.colors.text.secondary },
-    { tag: [tags.regexp, tags.escape], color: theme.colors.warning.text },
-    { tag: [tags.meta, tags.comment], color: theme.colors.text.secondary, fontStyle: 'italic' },
-    { tag: tags.heading, color: theme.colors.primary.text, fontWeight: `${theme.typography.fontWeightBold}` },
+    { tag: [tags.number, tags.bool, tags.atom], color: theme.components.codeEditor.number },
+    {
+      tag: [tags.string, tags.special(tags.string), tags.character, tags.inserted],
+      color: theme.components.codeEditor.string,
+    },
+    {
+      tag: [tags.operator, tags.punctuation, tags.separator, tags.brace],
+      color: theme.components.codeEditor.operator,
+    },
+    { tag: [tags.regexp, tags.escape], color: theme.components.codeEditor.regexp },
+    { tag: [tags.meta, tags.comment], color: theme.components.codeEditor.comment, fontStyle: 'italic' },
+    {
+      tag: tags.heading,
+      color: theme.components.codeEditor.heading,
+      fontWeight: `${theme.typography.fontWeightBold}`,
+    },
     { tag: tags.strong, fontWeight: `${theme.typography.fontWeightBold}` },
     { tag: tags.emphasis, fontStyle: 'italic' },
     { tag: tags.strikethrough, textDecoration: 'line-through' },
-    { tag: [tags.link, tags.url], color: theme.colors.text.link, textDecoration: 'underline' },
-    { tag: [tags.invalid, tags.deleted], color: theme.colors.error.text },
+    { tag: [tags.link, tags.url], color: theme.components.codeEditor.link, textDecoration: 'underline' },
+    { tag: [tags.invalid, tags.deleted], color: theme.components.codeEditor.invalid },
   ]);
 
   return [selectionState, editorTheme, syntaxHighlighting(syntaxTheme)];

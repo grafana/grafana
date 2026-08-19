@@ -1,26 +1,20 @@
-import { css } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
-
-import {
-  DashboardCursorSync,
-  type DataFrame,
-  getFrameDisplayName,
-  type PanelProps,
-  type SelectableValue,
-  type Field,
-  cacheFieldDisplayNames,
-} from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
-import { useFlagTableProtoRowParser, useFlagTableRefactorNested } from '@grafana/runtime/internal';
-import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
+import { type DataFrame, getFrameDisplayName, type PanelProps, type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { TableCellHeight, type TableOptions } from '@grafana/schema';
+import { Combobox, Field, Stack, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
-import { getConfig } from 'app/core/config';
-import { getCellActions, getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
+import {
+  useCacheFieldDisplayNames,
+  useCellActions,
+  useCommonTableProps,
+  useTableSharedCrosshair,
+} from 'app/features/table/hooks';
+import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
-import { type Options } from './panelcfg.gen';
 
-interface Props extends PanelProps<Options> {
+interface Props extends PanelProps<TableOptions> {
   initialRowIndex?: number;
   sortByBehavior?: 'initial' | 'managed';
 }
@@ -38,22 +32,16 @@ export function TablePanel(props: Props) {
     transparent,
     initialRowIndex,
     sortByBehavior = 'initial',
+    fitContent,
   } = props;
 
-  useMemo(() => {
-    cacheFieldDisplayNames(data.series);
-  }, [data.series]);
+  useCacheFieldDisplayNames(data.series);
 
-  const tableProtoParserEnabled = useFlagTableProtoRowParser();
-  const nestedRefactorEnabled = useFlagTableRefactorNested();
   const theme = useTheme2();
   const panelContext = usePanelContext();
-  const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
-  const _getActions = useCallback(
-    (frame: DataFrame, field: Field, rowIndex: number) =>
-      userCanExecuteActions ? getCellActions(frame, field, rowIndex, replaceVariables) : [],
-    [replaceVariables, userCanExecuteActions]
-  );
+  const getActions = useCellActions(replaceVariables);
+  const commonTableProps = useCommonTableProps(options, fieldConfig);
+  const enableSharedCrosshair = useTableSharedCrosshair();
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
     : data.series;
@@ -62,54 +50,40 @@ export function TablePanel(props: Props) {
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
 
-  let tableHeight = height;
+  // Fit-content: the panel has no fixed height, so self-size from the row count.
+  // The cell's CSS min/max bounds (and scrolls) the result.
+  let tableHeight = fitContent ? getNaturalTableHeight(main, options) : height;
 
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
-  if (count > 1) {
+  if (count > 1 && !fitContent) {
     const inputHeight = theme.spacing.gridSize * theme.components.height.md;
     const padding = theme.spacing.gridSize;
 
     tableHeight = height - inputHeight - padding;
   }
 
-  const enableSharedCrosshair = panelContext.sync && panelContext.sync() !== DashboardCursorSync.Off;
-
-  const disableSanitizeHtml = getConfig().disableSanitizeHtml;
-
   const tableElement = (
     <TableNG
+      {...commonTableProps}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}
       data={main}
-      noHeader={!options.showHeader}
-      noValue={fieldConfig.defaults.noValue}
-      showTypeIcons={options.showTypeIcons}
-      resizable={true}
       sortByBehavior={sortByBehavior}
-      sortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth, fieldScope) =>
         onColumnResize(displayName, resizedWidth, fieldScope, props)
       }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
-      frozenColumns={options.frozenColumns?.left}
-      enablePagination={options.enablePagination}
-      cellHeight={options.cellHeight}
-      maxRowHeight={options.maxRowHeight}
       timeRange={timeRange}
-      enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
+      enableSharedCrosshair={enableSharedCrosshair}
       fieldConfig={fieldConfig}
-      getActions={_getActions}
+      getActions={getActions}
       structureRev={data.structureRev}
       transparent={transparent}
-      disableSanitizeHtml={disableSanitizeHtml}
-      disableKeyboardEvents={options.disableKeyboardEvents}
-      protoParserEnabled={tableProtoParserEnabled}
-      nestedRefactorEnabled={nestedRefactorEnabled}
     />
   );
 
@@ -125,30 +99,48 @@ export function TablePanel(props: Props) {
   });
 
   return (
-    <div className={tableStyles.wrapper}>
+    <Stack direction="column" gap={1.5} justifyContent="space-between" height="100%">
       {tableElement}
-      <div className={tableStyles.selectWrapper}>
-        <Combobox options={names} value={names[currentIndex]} onChange={(val) => onChangeTableSelection(val, props)} />
-      </div>
-    </div>
+      <Field noMargin>
+        <Combobox
+          aria-label={t('table.frame-picker.label', 'Query')}
+          options={names}
+          value={names[currentIndex]}
+          onChange={(val) => onChangeTableSelection(val, props)}
+        />
+      </Field>
+    </Stack>
   );
 }
 
+// Approximate row/header pixel sizes used to self-size in fit-content mode.
+// Mirrors getDefaultRowHeight in TableNG; exact pixels are not critical because
+// the cell's CSS max-height ultimately bounds the panel.
+const TABLE_ROW_HEIGHT_SM = 36;
+const TABLE_ROW_HEIGHT_MD = 42;
+const TABLE_ROW_HEIGHT_LG = 60;
+const TABLE_HEADER_HEIGHT = 36;
+
+function getRowPixelHeight(cellHeight: TableCellHeight | undefined): number {
+  switch (cellHeight) {
+    case TableCellHeight.Sm:
+      return TABLE_ROW_HEIGHT_SM;
+    case TableCellHeight.Lg:
+      return TABLE_ROW_HEIGHT_LG;
+    case TableCellHeight.Md:
+    default:
+      return TABLE_ROW_HEIGHT_MD;
+  }
+}
+
+function getNaturalTableHeight(frame: DataFrame | undefined, options: TableOptions): number {
+  const rowCount = frame?.length ?? 0;
+  const headerHeight = options.showHeader === false ? 0 : TABLE_HEADER_HEIGHT;
+  return headerHeight + rowCount * getRowPixelHeight(options.cellHeight);
+}
 function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
   props.onOptionsChange({
     ...props.options,
     frameIndex: val.value || 0,
   });
 }
-
-const tableStyles = {
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    height: '100%',
-  }),
-  selectWrapper: css({
-    padding: '8px 8px 0px 8px',
-  }),
-};

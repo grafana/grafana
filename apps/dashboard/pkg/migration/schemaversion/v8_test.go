@@ -9,6 +9,55 @@ import (
 func TestV8(t *testing.T) {
 	tests := []migrationTestCase{
 		{
+			name: "InfluxDB query in a panel nested inside a row is migrated",
+			input: map[string]interface{}{
+				"title":         "V8 Nested Row InfluxDB Test Dashboard",
+				"schemaVersion": 7,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id": 1,
+								"targets": []interface{}{
+									map[string]interface{}{
+										"rawQuery": true,
+										"query":    "select value from cpu",
+										"fields": []interface{}{
+											map[string]interface{}{"name": "value"},
+										},
+										"tags":    []interface{}{},
+										"groupBy": []interface{}{},
+										"fill":    "null",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V8 Nested Row InfluxDB Test Dashboard",
+				"schemaVersion": 8,
+				"rows": []interface{}{
+					map[string]interface{}{
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id": 1,
+								"targets": []interface{}{
+									map[string]interface{}{
+										"rawQuery": true,
+										"query":    "select value from cpu",
+										"tags":     []interface{}{},
+										"groupBy":  []interface{}{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "InfluxDB structured query should be converted to new select format",
 			input: map[string]interface{}{
 				"title":         "V8 InfluxDB Query Migration Test Dashboard",

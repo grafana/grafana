@@ -1,6 +1,8 @@
 package permreg
 
 import (
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -242,6 +244,81 @@ func Test_permissionRegistry_GetScopePrefixes(t *testing.T) {
 				require.Equal(t, v, tt.want[k])
 			}
 		})
+	}
+}
+
+func Test_permissionRegistry_GetScopePrefixesReturnsCopy(t *testing.T) {
+	pr := newPermissionRegistry()
+	require.NoError(t, pr.RegisterPermission("folders:read", "folders:uid:"))
+
+	prefixes, ok := pr.GetScopePrefixes("folders:read")
+	require.True(t, ok)
+	prefixes["dashboards:uid:"] = true
+	delete(prefixes, "folders:uid:")
+
+	prefixes, ok = pr.GetScopePrefixes("folders:read")
+	require.True(t, ok)
+	require.Equal(t, PrefixSet{"folders:uid:": true}, prefixes)
+}
+
+func Test_permissionRegistry_ConcurrentPluginAndFixedRoleRegistration(t *testing.T) {
+	pr := newPermissionRegistry()
+
+	const (
+		workers    = 32
+		iterations = 100
+	)
+	start := make(chan struct{})
+	errs := make(chan error, workers*iterations*2)
+	var wg sync.WaitGroup
+
+	for worker := range workers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+
+			for iteration := range iterations {
+				if worker%2 != 0 {
+					action := fmt.Sprintf("fixed-role-%d:read", iteration%8)
+					if err := pr.RegisterPermission(action, ""); err != nil {
+						errs <- err
+						continue
+					}
+					if err := pr.IsPermissionValid(action, ""); err != nil {
+						errs <- err
+					}
+					if _, ok := pr.GetScopePrefixes(action); !ok {
+						errs <- fmt.Errorf("scope prefixes not found for %s", action)
+					}
+					continue
+				}
+
+				kind := fmt.Sprintf("plugin-%d", iteration%8)
+				scope := kind + ":uid:value"
+				action := kind + ":read"
+
+				pr.RegisterPluginScope(scope)
+				if err := pr.RegisterPermission(action, scope); err != nil {
+					errs <- err
+					continue
+				}
+				if err := pr.IsPermissionValid(action, scope); err != nil {
+					errs <- err
+				}
+				if _, ok := pr.GetScopePrefixes(action); !ok {
+					errs <- fmt.Errorf("scope prefixes not found for %s", action)
+				}
+			}
+		}()
+	}
+
+	close(start)
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		require.NoError(t, err)
 	}
 }
 

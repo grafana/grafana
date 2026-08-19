@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { memo, useId } from 'react';
 
 import { type GrafanaTheme2, type TimeOption } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
@@ -65,7 +66,10 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
   const id = useId();
 
   return (
-    <li className={styles.container}>
+    <li
+      className={styles.container}
+      data-testid={selectors.components.TimePicker.timeRangeOption(value.from, value.to)}
+    >
       <input
         className={styles.radio}
         checked={selected}

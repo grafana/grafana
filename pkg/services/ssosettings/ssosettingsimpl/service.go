@@ -11,11 +11,18 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -32,6 +39,8 @@ import (
 
 var _ ssosettings.Service = (*Service)(nil)
 
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl")
+
 type Service struct {
 	logger           log.Logger
 	cfg              *setting.Cfg
@@ -47,22 +56,51 @@ type Service struct {
 	reloadables           map[string]ssosettings.Reloadable
 	cachedSSOSettings     []*models.SSOSettings
 	cacheMutex            sync.RWMutex
+
+	// mtReadAuthoritative drops the legacy DB read when the storage mode reaches
+	// mode 4, leaving MT-Settings as the sole read source.
+	mtReadAuthoritative bool
 }
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
+func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	usageStats usagestats.Service, registerer prometheus.Registerer,
 	settingsProvider setting.Provider, licensing licensing.Licensing,
 ) *Service {
+	logger := log.New("ssosettings.service")
+
+	// ProvideService cannot return an error: a broken MT-Settings client
+	// configuration leaves the strategies without a client, and they fail
+	// loudly on read while the legacy strategies keep serving when the
+	// ssoSettingsToMTSettings toggle is off.
+	mtSettingsClient, err := newMTSettingsClient(cfg, registerer)
+	if err != nil {
+		logger.Error("Failed to initialize the MT-Settings client", "error", err)
+	}
+
+	// The SSOSetting kind's dual-writer storage mode is the read-behavior lever.
+	// serveReads flips MT-Settings on at mode 3; mtReadAuthoritative drops the
+	// legacy DB read at mode 4. Below mode 3 the MT adapters match nothing.
+	ssoMode := grafanarest.Mode0
+	if resCfg, ok := cfg.UnifiedStorage[legacyiamv0.SSOSettingResourceInfo.GroupResource().String()]; ok {
+		ssoMode = resCfg.DualWriterMode
+	} else {
+		// No storage mode configured for the kind (also the on-prem default, and
+		// where a mistyped config section lands): stay on the legacy read path.
+		logger.Debug("No storage mode configured for the SSOSetting kind, using legacy reads", "mode", ssoMode)
+	}
+	serveReads := ssoMode >= grafanarest.Mode3
+	mtReadAuthoritative := ssoMode >= grafanarest.Mode4
+
 	// Each provider family pairs an MT-Settings adapter with its legacy
 	// strategy. The adapter sits first: while the ssoSettingsToMTSettings
 	// feature toggle is enabled it wins the match for its family, otherwise
 	// it matches nothing and the legacy strategy behaves as before.
 	fbStrategies := []ssosettings.FallbackStrategy{
-		strategies.NewMTSettingsOAuthStrategy(),
-		strategies.NewOAuthStrategy(cfg),
-		strategies.NewMTSettingsLDAPStrategy(),
+		strategies.NewMTSettingsOAuthStrategy(mtSettingsClient, serveReads),
+		strategies.NewOAuthStrategy(cfgProvider),
+		strategies.NewMTSettingsLDAPStrategy(mtSettingsClient, serveReads),
 		strategies.NewLDAPStrategy(cfg),
 	}
 
@@ -76,7 +114,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	configurableProviders[social.LDAPProviderName] = true
 
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
-		fbStrategies = append(fbStrategies, strategies.NewMTSettingsSAMLStrategy(), strategies.NewSAMLStrategy(settingsProvider))
+		fbStrategies = append(fbStrategies, strategies.NewMTSettingsSAMLStrategy(mtSettingsClient, serveReads), strategies.NewSAMLStrategy(settingsProvider))
 		providersList = append(providersList, social.SAMLProviderName)
 		configurableProviders[social.SAMLProviderName] = true
 	}
@@ -84,7 +122,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	store := database.ProvideStore(sqlStore)
 
 	svc := &Service{
-		logger:                log.New("ssosettings.service"),
+		logger:                logger,
 		cfg:                   cfg,
 		store:                 store,
 		ac:                    ac,
@@ -96,6 +134,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		reloadables:           make(map[string]ssosettings.Reloadable),
 		settingsProvider:      settingsProvider,
 		cachedSSOSettings:     make([]*models.SSOSettings, 0),
+		mtReadAuthoritative:   mtReadAuthoritative,
 	}
 
 	usageStats.RegisterMetricsFunc(svc.getUsageStats)
@@ -106,9 +145,43 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	return svc
 }
 
+// ProvideReadOnlyService provides the SSO settings read path without the
+// management API, background reload loop, or MT-Settings client. It is used by
+// request-scoped consumers that need current OAuth settings from the tenant
+// database with the tenant configuration as fallback.
+//
+//nolint:staticcheck // SA1019: legacy tenant databases still use the deprecated secrets service
+func ProvideReadOnlyService(cfgProvider configprovider.ConfigProvider, sqlStore db.DB, secretsSvc secrets.Service) *Service {
+	configurableProviders := make(map[string]bool, len(ssosettings.AllOAuthProviders))
+	for _, provider := range ssosettings.AllOAuthProviders {
+		configurableProviders[provider] = true
+	}
+
+	return &Service{
+		logger:                log.New("ssosettings.service"),
+		store:                 database.ProvideStore(sqlStore),
+		secrets:               secretsSvc,
+		fbStrategies:          []ssosettings.FallbackStrategy{strategies.NewOAuthStrategy(cfgProvider)},
+		providersList:         slices.Clone(ssosettings.AllOAuthProviders),
+		configurableProviders: configurableProviders,
+		reloadables:           make(map[string]ssosettings.Reloadable),
+		cachedSSOSettings:     make([]*models.SSOSettings, 0),
+	}
+}
+
 var _ ssosettings.Service = (*Service)(nil)
 
 func (s *Service) GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	systemSettings, servedByMT, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+	if err != nil {
+		return nil, err
+	}
+
+	// Mode 4+: MT-Settings is the sole read source, the legacy DB read is dropped.
+	if servedByMT && s.mtReadAuthoritative {
+		return systemSettings, nil
+	}
+
 	dbSettings, err := s.store.Get(ctx, provider)
 	if err != nil && !errors.Is(err, ssosettings.ErrNotFound) {
 		return nil, err
@@ -122,9 +195,9 @@ func (s *Service) GetForProvider(ctx context.Context, provider string) (*models.
 		}
 	}
 
-	systemSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
-	if err != nil {
-		return nil, err
+	// Mode 3: MT-Settings wins the merge, the DB fills gaps (rollback window).
+	if servedByMT {
+		return s.mergeSSOSettingsMTAuthoritative(dbSettings, systemSettings), nil
 	}
 
 	return s.mergeSSOSettings(dbSettings, systemSettings), nil
@@ -176,6 +249,17 @@ func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
 	}
 
 	for _, provider := range s.providersList {
+		fallbackSettings, servedByMT, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
+		if err != nil {
+			return nil, err
+		}
+
+		// Mode 4+: MT-Settings is the sole read source, the DB is ignored.
+		if servedByMT && s.mtReadAuthoritative {
+			result = append(result, fallbackSettings)
+			continue
+		}
+
 		dbSettings := getSettingByProvider(provider, storedSettings)
 		if dbSettings != nil {
 			// Settings are coming from the database thus secrets are encrypted
@@ -184,9 +268,11 @@ func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
 				return nil, err
 			}
 		}
-		fallbackSettings, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
-		if err != nil {
-			return nil, err
+
+		// Mode 3: MT-Settings wins the merge, the DB fills gaps (rollback window).
+		if servedByMT {
+			result = append(result, s.mergeSSOSettingsMTAuthoritative(dbSettings, fallbackSettings))
+			continue
 		}
 
 		result = append(result, s.mergeSSOSettings(dbSettings, fallbackSettings))
@@ -383,22 +469,36 @@ func (s *Service) RegisterFallbackStrategy(providerRegex string, strategy ssoset
 	s.fbStrategies = append(s.fbStrategies, strategy)
 }
 
-func (s *Service) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettings, error) {
+// loadSettingsUsingFallbackStrategy returns the system settings and whether an
+// MT-Settings adapter served them, which selects the read precedence downstream.
+func (s *Service) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettings, bool, error) {
+	ctx, span := tracer.Start(ctx, "ssosettings.Service.loadSettingsUsingFallbackStrategy",
+		trace.WithAttributes(attribute.String("provider", provider)))
+	defer span.End()
+
 	loadStrategy, ok := s.getFallbackStrategyFor(ctx, provider)
 	if !ok {
-		return nil, errors.New("no fallback strategy found for provider: " + provider)
+		return nil, false, tracing.Errorf(span, "no fallback strategy found for provider: %s", provider)
 	}
+	span.SetAttributes(attribute.String("strategy", fmt.Sprintf("%T", loadStrategy)))
 
 	settingsFromSystem, err := loadStrategy.GetProviderConfig(ctx, provider)
 	if err != nil {
-		return nil, err
+		return nil, false, tracing.Error(span, err)
 	}
 
 	return &models.SSOSettings{
 		Provider: provider,
 		Source:   models.System,
 		Settings: settingsFromSystem,
-	}, nil
+	}, isMTSettingsFallback(loadStrategy), nil
+}
+
+// isMTSettingsFallback reports whether an MT-Settings adapter served the read.
+// It is true only past the storage read-flip, so it selects MT-wins precedence.
+func isMTSettingsFallback(strategy ssosettings.FallbackStrategy) bool {
+	mt, ok := strategy.(ssosettings.MTSettingsFallback)
+	return ok && mt.ServesMTSettings()
 }
 
 func getSettingByProvider(provider string, settings []*models.SSOSettings) *models.SSOSettings {
@@ -510,6 +610,36 @@ func (s *Service) mergeSSOSettings(dbSettings, systemSettings *models.SSOSetting
 	}
 
 	return result
+}
+
+// mergeSSOSettingsMTAuthoritative merges with MT-Settings winning and the DB
+// filling gaps (absent or empty values) — the mode-3 read precedence. Unlike
+// mergeSettings it filters nothing: the merge routes values, validation owns
+// the combined result.
+func (s *Service) mergeSSOSettingsMTAuthoritative(dbSettings, systemSettings *models.SSOSettings) *models.SSOSettings {
+	if dbSettings == nil {
+		return systemSettings
+	}
+
+	s.logger.Debug("Merging SSO Settings, MT-Settings authoritative", "systemSettings", removeSecrets(systemSettings.Settings), "dbSettings", removeSecrets(dbSettings.Settings))
+
+	settings := make(map[string]any, len(systemSettings.Settings))
+	for k, v := range systemSettings.Settings {
+		settings[k] = v
+	}
+	for k, v := range dbSettings.Settings {
+		if existing, ok := settings[k]; !ok || isEmptyString(existing) {
+			settings[k] = v
+		}
+	}
+
+	return &models.SSOSettings{
+		Provider: systemSettings.Provider,
+		Source:   systemSettings.Source,
+		Settings: settings,
+		Created:  dbSettings.Created,
+		Updated:  dbSettings.Updated,
+	}
 }
 
 func (s *Service) decryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
@@ -660,7 +790,9 @@ func overrideMaps(maps ...map[string]any) map[string]any {
 	return result
 }
 
-// IsSecretField returns true if the SSO settings field provided is a secret
+// IsSecretField returns true if the SSO settings field provided is a secret.
+// A copy of this classification lives in pkg/registry/apis/iam/sso
+// (secretFieldPatterns/redactSecrets). Keep the two in sync until this mechanism is removed.
 func IsSecretField(fieldName string) bool {
 	secretFieldPatterns := []string{"secret", "private", "certificate", "password", "client_key"}
 

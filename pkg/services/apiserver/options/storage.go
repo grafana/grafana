@@ -25,10 +25,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type StorageType string
@@ -39,9 +41,6 @@ const (
 	StorageTypeUnified       StorageType = "unified"
 	StorageTypeUnifiedGrpc   StorageType = "unified-grpc"
 	StorageTypeUnifiedKVGrpc StorageType = "unified-kv-grpc"
-
-	// Deprecated: legacy is a shim that is no longer necessary
-	StorageTypeLegacy StorageType = "legacy"
 
 	BlobThresholdDefault int = 0
 
@@ -90,11 +89,23 @@ type StorageOptions struct {
 	// Support writing secrets inline
 	InlineSecrets secret.InlineSecureValueSupport
 
+	// SearchIndexClient is the search half of the client ApplyTo built, kept so
+	// the search endpoints do not build a second client with the same
+	// credentials. Deliberately the narrow interface: this is not a general back
+	// door to unified storage. Nil until ApplyTo runs, and for storage types that
+	// have no client.
+	SearchIndexClient resourcepb.ResourceIndexClient
+
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
 
 	// Access to the other clients
 	ConfigProvider RestConfigProvider
+
+	// VersionPolicy caps the version each resource may persist. Built by the caller, which is where
+	// the scheme's natural version order and the configured cap are both available; nil disables
+	// enforcement.
+	VersionPolicy *versionpolicy.VersionPolicyRegistry
 }
 
 // unifiedStorageConfigValue implements pflag.Value for parsing unified storage config
@@ -190,15 +201,13 @@ func (o *StorageOptions) Validate() []error {
 	errs := []error{}
 	switch o.StorageType {
 	// nolint:staticcheck
-	case StorageTypeLegacy:
-		// no-op
 	case StorageTypeUnifiedKVGrpc:
 		// no-op (enterprise only)
 	case StorageTypeFile, StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc:
 		// no-op
 	default:
 		// nolint:staticcheck
-		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc))
+		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc))
 	}
 
 	if _, _, err := net.SplitHostPort(o.Address); err != nil {
@@ -292,8 +301,9 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 		o.InlineSecrets = inlineSecureValueService
 	}
 
-	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider)
-	serverConfig.RESTOptionsGetter = getter
+	o.SearchIndexClient = unified
+
+	serverConfig.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider, o.VersionPolicy)
 	return nil
 }
 

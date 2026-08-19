@@ -7,7 +7,7 @@ import {
   useGetCheckTypeQuery,
 } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { PluginExtensionPoints } from '@grafana/data';
-import { config, usePluginFunctions } from '@grafana/runtime';
+import { usePluginFunctions } from '@grafana/runtime';
 
 export type FailureSeverity = 'high' | 'low';
 
@@ -36,19 +36,20 @@ type CreateChecksFn = () => {
   };
 };
 
-export function isAdvisorEnabled(): boolean {
-  return Boolean(config.featureToggles.grafanaAdvisor && config.featureToggles.advisorDatasourceIntegration);
-}
-
 interface AdvisorCheckContextValue {
   check?: Check;
   isLoading: boolean;
+  isAvailable: boolean;
   retryCheck?: (checkName: string, itemID: string) => void;
   createChecks?: () => void;
   isCreatingChecks?: boolean;
 }
 
-const AdvisorCheckContext = createContext<AdvisorCheckContextValue>({ isLoading: false });
+// Data produced by the bridge from the plugin's hook functions; availability is
+// derived by the provider, not the bridge, so it's excluded here.
+type AdvisorCheckData = Omit<AdvisorCheckContextValue, 'isAvailable'>;
+
+const AdvisorCheckContext = createContext<AdvisorCheckContextValue>({ isLoading: false, isAvailable: false });
 
 /**
  * Provides advisor check data to descendant hooks via context.
@@ -56,8 +57,7 @@ const AdvisorCheckContext = createContext<AdvisorCheckContextValue>({ isLoading:
  * only after they are loaded, avoiding React hook ordering violations.
  */
 export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
-  const enabled = isAdvisorEnabled();
-  const [advisorData, setAdvisorData] = useState<AdvisorCheckContextValue | null>(null);
+  const [advisorData, setAdvisorData] = useState<AdvisorCheckData | null>(null);
 
   const { functions: completedChecksFns, isLoading: isLoadingCompletedChecks } = usePluginFunctions<CompletedChecksFn>({
     extensionPointId: PluginExtensionPoints.AdvisorCompletedChecks,
@@ -72,23 +72,18 @@ export function AdvisorCheckProvider({ children }: { children: ReactNode }) {
   const completedChecksFn = completedChecksFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
   const retryCheckFn = retryCheckFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
   const createChecksFn = createChecksFns.find((f) => f.pluginId === ADVISOR_PLUGIN_ID)?.fn;
-  const isPluginReady =
-    enabled &&
-    !isLoadingCompletedChecks &&
-    !isLoadingRetryChecks &&
-    !isLoadingCreateChecks &&
-    !!completedChecksFn &&
-    !!retryCheckFn;
+  const isLoadingPlugins = isLoadingCompletedChecks || isLoadingRetryChecks || isLoadingCreateChecks;
+  const isPluginReady = !isLoadingPlugins && !!completedChecksFn && !!retryCheckFn;
 
   const contextValue = useMemo<AdvisorCheckContextValue>(() => {
-    if (!enabled) {
-      return { isLoading: false };
+    if (!isPluginReady) {
+      return { isLoading: isLoadingPlugins, isAvailable: false };
     }
-    if (!isPluginReady || !advisorData) {
-      return { isLoading: true };
+    if (!advisorData) {
+      return { isLoading: true, isAvailable: true };
     }
-    return advisorData;
-  }, [enabled, isPluginReady, advisorData]);
+    return { ...advisorData, isAvailable: true };
+  }, [isPluginReady, isLoadingPlugins, advisorData]);
 
   return (
     <AdvisorCheckContext.Provider value={contextValue}>
@@ -119,7 +114,7 @@ function AdvisorCheckBridge({
   completedChecksFn: CompletedChecksFn;
   retryCheckFn: RetryCheckFn;
   createChecksFn?: CreateChecksFn;
-  onChange: (value: AdvisorCheckContextValue) => void;
+  onChange: (value: AdvisorCheckData) => void;
 }) {
   const completedChecks = completedChecksFn({ checkType: 'datasource' });
   const retryCheckResult = retryCheckFn();
@@ -156,6 +151,10 @@ export type DatasourceFailuresResult = {
   /** Map of datasource UID to the highest severity among its failures. Only datasources with at least one failure are included. */
   datasourceFailureByUID: Map<string, DatasourceFailureDetails>;
   isLoading: boolean;
+  /** Whether the advisor plugin is available to evaluate datasources. */
+  isAvailable: boolean;
+  /** Whether advisor has produced a completed datasource check. When false, no datasource has been evaluated yet. */
+  hasCheck: boolean;
 };
 
 /**
@@ -163,11 +162,10 @@ export type DatasourceFailuresResult = {
  * advisor check, to the highest severity among their failures.
  */
 export function useDatasourceFailureByUID(): DatasourceFailuresResult {
-  const enabled = isAdvisorEnabled();
-  const { check, isLoading } = useLatestDatasourceCheck();
+  const { check, isLoading, isAvailable } = useContext(AdvisorCheckContext);
   const { data: checkType, isLoading: isCheckTypeLoading } = useGetCheckTypeQuery(
     { name: 'datasource' },
-    { skip: !enabled }
+    { skip: !isAvailable }
   );
 
   const datasourceFailureByUID = useMemo(() => {
@@ -191,7 +189,11 @@ export function useDatasourceFailureByUID(): DatasourceFailuresResult {
     return byUID;
   }, [check, checkType]);
 
-  return { datasourceFailureByUID, isLoading: isLoading || isCheckTypeLoading };
+  // A check object can exist before it has produced a report (created but not
+  // yet completed); only treat it as evaluated once the report is present.
+  const hasCheck = Boolean(check?.status?.report);
+
+  return { datasourceFailureByUID, isLoading: isLoading || isCheckTypeLoading, isAvailable, hasCheck };
 }
 
 /**
@@ -228,7 +230,7 @@ export function useRetryDatasourceAdvisorCheck(): (datasourceUID: string) => Pro
   return useCallback(
     async (datasourceUID: string) => {
       const checkName = check?.metadata.name;
-      if (!isAdvisorEnabled() || !checkName || !retryCheck) {
+      if (!checkName || !retryCheck) {
         return;
       }
 
@@ -248,7 +250,7 @@ export function useCreateDatasourceAdvisorChecks(): {
   isAvailable: boolean;
 } {
   const { createChecks, isCreatingChecks } = useContext(AdvisorCheckContext);
-  const isAvailable = isAdvisorEnabled() && Boolean(createChecks);
+  const isAvailable = Boolean(createChecks);
 
   const runCreateChecks = useCallback(() => {
     if (!isAvailable || !createChecks) {

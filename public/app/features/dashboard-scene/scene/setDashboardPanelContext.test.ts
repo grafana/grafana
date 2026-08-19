@@ -1,5 +1,6 @@
 import {
   type AdHocVariableModel,
+  CoreApp,
   EventBusSrv,
   type GroupByVariableModel,
   type Scope,
@@ -11,6 +12,7 @@ import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
@@ -61,6 +63,38 @@ beforeEach(() => {
 });
 
 describe('setDashboardPanelContext', () => {
+  describe('app', () => {
+    it('Is PanelEditor while the panel edit pane is open', () => {
+      const { scene, vizPanel, context } = buildTestScene({});
+
+      expect(context.app).toBe(CoreApp.Dashboard);
+
+      scene.onEnterEditMode();
+      scene.setState({ editPanel: buildPanelEditScene(vizPanel) });
+
+      expect(context.app).toBe(CoreApp.PanelEditor);
+    });
+
+    it('Still tracks the panel edit pane after the scene is deactivated and reactivated', async () => {
+      // Activating the scene resolves the panel datasource, which this suite does not register.
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const { scene, vizPanel, context } = buildTestScene({});
+
+      // Navigating away leaves the scene in the page cache, so the same context object is reused.
+      scene.activate()();
+      const deactivate = scene.activate();
+
+      scene.onEnterEditMode();
+      scene.setState({ editPanel: buildPanelEditScene(vizPanel) });
+
+      expect(context.app).toBe(CoreApp.PanelEditor);
+
+      deactivate();
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      warnSpy.mockRestore();
+    });
+  });
+
   describe('canAddAnnotations', () => {
     it('Can add when builtIn is enabled and permissions allow', () => {
       const { context } = buildTestScene({ builtInAnnotationsEnabled: true, dashboardCanEdit: true, canAdd: true });
@@ -457,6 +491,43 @@ describe('setDashboardPanelContext', () => {
         { key: 'cpu', value: 'cpu', operator: '=' },
         { key: 'id', value: 'id', operator: '=' },
       ]);
+    });
+
+    it('should not add a filter that already exists with the same key, value and operator', () => {
+      const { scene, context } = buildTestScene({
+        existingFilterVariable: true,
+      });
+
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+
+      variable.setState({ filters: [{ key: 'existing', value: 'val', operator: '=' }] });
+
+      const filters: AdHocFilterItem[] = [
+        { key: 'existing', value: 'val', operator: '=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+      ];
+
+      context.onAddAdHocFilters?.(filters);
+      expect(variable.state.filters).toEqual([
+        { key: 'existing', value: 'val', operator: '=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+      ]);
+    });
+
+    it('should not update the filters when all new filters are duplicates', () => {
+      const { scene, context } = buildTestScene({
+        existingFilterVariable: true,
+      });
+
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+
+      variable.setState({ filters: [{ key: 'existing', value: 'val', operator: '=' }] });
+      const updateFiltersSpy = jest.spyOn(variable, 'updateFilters');
+
+      context.onAddAdHocFilters?.([{ key: 'existing', value: 'val', operator: '=' }]);
+
+      expect(updateFiltersSpy).not.toHaveBeenCalled();
+      expect(variable.state.filters).toEqual([{ key: 'existing', value: 'val', operator: '=' }]);
     });
 
     it('should not do anything if filters empty', () => {

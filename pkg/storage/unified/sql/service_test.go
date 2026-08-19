@@ -47,6 +47,7 @@ var _ resource.SearchServer = (*mockSearchServer)(nil)
 type mockResourceServer struct {
 	mockSearchServer
 	resourcepb.UnimplementedResourceStoreServer
+	resourcepb.UnimplementedResourceStatsServer
 	resourcepb.UnimplementedBulkStoreServer
 	resourcepb.UnimplementedBlobStoreServer
 	resourcepb.UnimplementedQuotasServer
@@ -150,8 +151,8 @@ func TestRegisterSearchServerWithAuth(t *testing.T) {
 }
 
 // TestRegisterUnifiedResourceServerWithAuth verifies that registerUnifiedResourceServer
-// wraps all registered services (ResourceStore, BulkStore, BlobStore, Quotas,
-// ResourceIndex, ManagedObjectIndex, Diagnostics) with per-service auth.
+// wraps all registered services (ResourceStore, ResourceStats, BulkStore, BlobStore,
+// Quotas, ResourceIndex, ManagedObjectIndex, Diagnostics, VectorStore) with per-service auth.
 func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	var authCalled atomic.Int32
 	testAuth := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
@@ -162,7 +163,8 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	s := &service{authenticator: testAuth}
 	provider := newDenyAllProvider(t)
 
-	s.registerUnifiedResourceServer(provider, &mockResourceServer{})
+	vs := resource.NewVectorStoreServer(nil, nil, nil, nil, nil)
+	s.registerUnifiedResourceServer(provider, &mockResourceServer{}, vs)
 
 	conn := startAndConnect(t, provider.GetServer())
 	ctx := context.Background()
@@ -172,6 +174,14 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 		client := resourcepb.NewResourceStoreClient(conn)
 		_, err := client.Read(ctx, &resourcepb.ReadRequest{})
 		requireAuthPassed(t, err, "Read should pass per-service auth")
+		require.Greater(t, authCalled.Load(), int32(0))
+	})
+
+	t.Run("ResourceStats/RecordEvent", func(t *testing.T) {
+		authCalled.Store(0)
+		client := resourcepb.NewResourceStatsClient(conn)
+		_, err := client.RecordEvent(ctx, &resourcepb.RecordEventRequest{})
+		requireAuthPassed(t, err, "RecordEvent should pass per-service auth")
 		require.Greater(t, authCalled.Load(), int32(0))
 	})
 
@@ -205,6 +215,18 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 		resp, err := client.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 		require.NoError(t, err, "IsHealthy should pass per-service auth")
 		require.Equal(t, resourcepb.HealthCheckResponse_SERVING, resp.Status)
+		require.Greater(t, authCalled.Load(), int32(0))
+	})
+
+	t.Run("VectorStore/Upsert", func(t *testing.T) {
+		authCalled.Store(0)
+		client := resourcepb.NewVectorStoreClient(conn)
+		// Empty request: the real handler fails request validation (InvalidArgument)
+		// before touching identity or storage, which is enough to prove the call
+		// reached the handler instead of being blocked by the global deny-all auth.
+		_, err := client.Upsert(ctx, &resourcepb.VectorUpsertRequest{})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err), "Upsert should pass per-service auth and reach handler validation")
 		require.Greater(t, authCalled.Load(), int32(0))
 	})
 }

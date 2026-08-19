@@ -17,13 +17,14 @@ interface Props {
 
 function DataSourceTabPage({ uid, pageId }: Props) {
   const { navId, pageNav, dataSourceHeader } = useDataSourceSettingsNav(pageId ?? undefined);
-  const { datasourceFailureByUID } = useDatasourceFailureByUID();
+  const { datasourceFailureByUID, hasCheck: advisorChecked } = useDatasourceFailureByUID();
 
   const info = useDataSourceInfo({
     dataSourcePluginName: pageNav.dataSourcePluginName,
     alertingSupported: dataSourceHeader.alertingSupported,
     alertingLoading: dataSourceHeader.alertingLoading,
     failure: datasourceFailureByUID.get(uid),
+    advisorChecked,
   });
 
   const dataSource = useDataSource(uid);

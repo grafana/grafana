@@ -32,6 +32,10 @@ type ResourceInfo struct {
 	// LockTables are the legacy database tables to lock during migration.
 	// This must include every table the migrator reads from.
 	LockTables []string
+	// FloorVersion is the oldest apiVersion (version part only, e.g. "v1beta1") that may
+	// exist in unified storage for this resource. The served-version guard requires it to
+	// stay registered in the scheme, else migrated data still carrying it becomes unservable.
+	FloorVersion string
 }
 
 // MigrationDefinition defines a resource migration.

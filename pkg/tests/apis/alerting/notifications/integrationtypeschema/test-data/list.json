@@ -10505,9 +10505,9 @@
                 "description": "Sends the message silently. Users will receive a notification with no sound.",
                 "element": "checkbox",
                 "inputType": "",
-                "label": "Disable Notification",
+                "label": "Disable Notifications",
                 "placeholder": "",
-                "propertyName": "disable_notification",
+                "propertyName": "disable_notifications",
                 "required": false,
                 "secure": false,
                 "showWhen": {

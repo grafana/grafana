@@ -1,3 +1,4 @@
+import { sceneGraph } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec, type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
@@ -14,24 +15,46 @@ export function serializeTabsLayout(layoutManager: TabsLayoutManager, isSnapshot
     spec: {
       tabs: layoutManager.state.tabs
         .filter((tab) => !tab.state.repeatSourceKey)
-        .map((tab) => serializeTab(tab, isSnapshot)),
+        .flatMap((tab) => {
+          // Snapshots cannot re-run the repeat on the viewer (there is no live datasource to query),
+          // so materialize each repeated tab clone into a concrete tab with its own baked data.
+          if (isSnapshot && tab.state.repeatedTabs?.length) {
+            return [tab, ...tab.state.repeatedTabs].map((repeatedTab) => serializeTab(repeatedTab, isSnapshot));
+          }
+          return [serializeTab(tab, isSnapshot)];
+        }),
     },
   };
 }
 
 export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabKind {
   const layout = tab.state.layout.serialize(isSnapshot);
+
+  // A repeated tab is "materialized" when it is a clone or the repeat has already run. `repeatedTabs` is
+  // `undefined` only while the repeat hasn't run yet; an empty array means it ran with a single value. When
+  // serializing a snapshot of a materialized repeat we bake the interpolated title (matching the tab renderer)
+  // and strip the repeat directive below. If it hasn't run, leave both untouched so it isn't silently dropped.
+  // The 'text' format matches the tab renderer; the repeat-local value is read from the tab's own $variables.
+  const isMaterializedRepeat = Boolean(tab.state.repeatSourceKey) || tab.state.repeatedTabs !== undefined;
+  const title =
+    isSnapshot && isMaterializedRepeat && tab.state.title
+      ? sceneGraph.interpolate(tab, tab.state.title, undefined, 'text')
+      : tab.state.title;
+
   const tabKind: TabsLayoutTabKind = {
     kind: 'TabsLayoutTab',
     spec: {
-      title: tab.state.title,
+      title,
       layout: layout,
-      ...(tab.state.repeatByVariable && {
-        repeat: {
-          mode: 'variable',
-          value: tab.state.repeatByVariable,
-        },
-      }),
+      // Once materialized into concrete tabs for a snapshot we must not emit the repeat directive (it would
+      // make the viewer re-expand and collapse back to a single tab). Otherwise keep it.
+      ...(tab.state.repeatByVariable &&
+        !(isSnapshot && isMaterializedRepeat) && {
+          repeat: {
+            mode: 'variable',
+            value: tab.state.repeatByVariable,
+          },
+        }),
     },
   };
 

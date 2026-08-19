@@ -20,6 +20,7 @@ import {
 } from 'app/features/dashboard/containers/types';
 import { TemplateDashboardModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
+import { SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Dashboards/OrphanedDashboardBanner';
@@ -29,6 +30,8 @@ import { DashboardConversionWarningBanner } from '../components/DashboardConvers
 import { DashboardTemplateEditBanner } from '../components/DashboardTemplateEditBanner';
 import { DashboardTemplateSavedBanner } from '../components/DashboardTemplateSavedBanner';
 import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBanner';
+import { ScriptedDashboardDeprecationBanner } from '../components/ScriptedDashboardDeprecationBanner';
+import { ScriptedDashboardsDisabledPage } from '../components/ScriptedDashboardsDisabledPage';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
@@ -121,6 +124,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   }, [route, slug, type, uid]);
 
   if (!dashboard) {
+    if (loadError?.messageId === SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID) {
+      return <ScriptedDashboardsDisabledPage />;
+    }
+
     return loadError ? (
       <DashboardPageError
         error={loadError}
@@ -152,6 +159,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
       <DashboardConversionWarningBanner dashboard={dashboard} />
+      <ScriptedDashboardDeprecationBanner isScripted={type === 'script'} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
       <DashboardTemplateSavedBanner />

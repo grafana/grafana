@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import React, { type ComponentProps, useCallback, useId, useMemo } from 'react';
+import React, { type ComponentProps, useCallback, useId, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -15,11 +15,16 @@ import { Portal } from '../Portal/Portal';
 import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
-import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
+import {
+  getComboboxStyles,
+  MENU_OPTION_HEIGHT,
+  MENU_OPTION_HEIGHT_DESCRIPTION,
+  MENU_PADDING,
+} from './getComboboxStyles';
 import { type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
-import { isNewGroup } from './utils';
+import { isNewGroup, isKeyboardEvent } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -27,7 +32,7 @@ import { isNewGroup } from './utils';
 interface ComboboxStaticProps<T extends string | number>
   extends Pick<
     InputProps,
-    'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
+    'placeholder' | 'autoFocus' | 'id' | 'aria-label' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
   > {
   /**
    * Allows the user to set a value which is not in the list of options.
@@ -158,6 +163,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     minWidth,
     maxWidth,
     'aria-labelledby': ariaLabelledBy,
+    'aria-label': ariaLabel,
     'data-testid': dataTestId,
     autoFocus,
     onBlur,
@@ -223,6 +229,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const styles = useStyles2(getComboboxStyles);
 
+  const [showFocusRing, setShowFocusRing] = useState(false);
+
   const onIsOpenChangeHandler = useCallback(
     (changes: { isOpen: boolean; inputValue?: string }) => {
       onIsOpenChangeProp?.(changes.isOpen);
@@ -281,6 +289,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
     rangeExtractor,
+    paddingStart: MENU_PADDING,
+    paddingEnd: MENU_PADDING,
   });
 
   const {
@@ -337,6 +347,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
     },
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
+      setShowFocusRing(isKeyboardEvent(type));
+
       switch (type) {
         case useCombobox.stateChangeTypes.InputChange:
           updateOptions(newInputValue ?? '');
@@ -436,6 +448,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           ref: inputRef,
           onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
+          'aria-label': ariaLabel,
           placeholder,
           'data-testid': dataTestId,
           onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -465,6 +478,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               loading={loading}
               options={filteredOptions}
               highlightedIndex={highlightedIndex}
+              showFocusRing={showFocusRing}
               selectedItems={selectedItem ? [selectedItem] : []}
               scrollRef={scrollRef}
               getItemProps={getItemProps}

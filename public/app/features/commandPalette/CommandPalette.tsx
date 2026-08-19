@@ -7,7 +7,6 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useFlagDashboardVectorSearch, useFlagGrafanaVectorSearchCmdk } from '@grafana/runtime/internal';
@@ -43,8 +42,7 @@ export function CommandPalette() {
  * @constructor
  */
 function CommandPaletteContents() {
-  const lateralSpace = getCommandPalettePosition();
-  const styles = useStyles2(getSearchStyles, lateralSpace);
+  const styles = useStyles2(getSearchStyles);
 
   const { query, searchQuery, currentRootActionId } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
@@ -114,6 +112,14 @@ function CommandPaletteContents() {
     return () => clearTimeout(handle);
   }, [searchQuery]);
 
+  useDeepSearchResultsShownReporting(
+    isFetchingDeepSearchResults,
+    showDeepSearch,
+    deepSearchResults.length,
+    deepSearchEnabled,
+    searchQuery.length
+  );
+
   // Track input modality so onSelectAction (which doesn't see the originating
   // event) can report whether the activation came from keyboard or mouse.
   const onPointerDownCapture = useCallback(() => setCommandPaletteInputMode('mouse'), []);
@@ -170,8 +176,7 @@ function CommandPaletteContents() {
  * @constructor
  */
 function AncestorBreadcrumbs() {
-  const lateralSpace = getCommandPalettePosition();
-  const styles = useStyles2(getSearchStyles, lateralSpace);
+  const styles = useStyles2(getSearchStyles);
 
   const { actions, currentRootActionId } = useKBar((state) => ({
     actions: state.actions,
@@ -219,8 +224,7 @@ const RenderResults = ({
   const { results: kbarResults, rootActionId } = useMatches();
   const { query, activeIndex } = useKBar((state) => ({ activeIndex: state.activeIndex }));
   const { isAvailable: isAssistantAvailable } = useAssistant();
-  const lateralSpace = getCommandPalettePosition();
-  const styles = useStyles2(getSearchStyles, lateralSpace);
+  const styles = useStyles2(getSearchStyles);
 
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
@@ -257,7 +261,14 @@ const RenderResults = ({
   // Analytics: single place to assemble the command_palette_action_selected payload,
   // shared by the keyword list and the deep search column.
   const reportActionSelected = useCallback(
-    (params: { actionId?: string; actionName?: string; index: number; section?: string; deepSearch: boolean }) => {
+    (params: {
+      actionId?: string;
+      actionName?: string;
+      index: number;
+      section?: string;
+      deepSearch: boolean;
+      url?: string;
+    }) => {
       reportInteraction('command_palette_action_selected', {
         actionId: params.actionId,
         actionName: params.actionName,
@@ -266,6 +277,8 @@ const RenderResults = ({
         // Stable, language-agnostic section slug from the action's sectionId, e.g.
         // "recent-dashboards" / "pages" / "deep-search"
         section: params.section,
+        // Destination URL of the dashboard/page, unset for actions that don't navigate
+        target: params.url,
         isDeepSearchEnabled: deepSearchEnabled,
         isDeepSearchAction: params.deepSearch,
         // Whether the deep search column had finished loading at selection time
@@ -485,13 +498,14 @@ const RenderResults = ({
             maxHeight={650}
             scrollRef={keywordListRef}
             legacyKeyboard={!deepSearchEnabled}
-            onItemSelected={(item, rawIndex) =>
+            onItemSelected={(item, rawIndex, url) =>
               reportActionSelected({
                 actionId: item.id,
                 actionName: item.name,
                 index: items.slice(0, rawIndex).filter((entry) => typeof entry !== 'string').length,
                 section: getActionSectionId(item),
                 deepSearch: false,
+                url,
               })
             }
             onRender={({ item, active }) => {
@@ -522,6 +536,7 @@ const RenderResults = ({
                 index,
                 section: SECTION_DEEP_SEARCH,
                 deepSearch: true,
+                url: deepSearchResults[index]?.url,
               })
             }
             navRef={deepSearchNavRef}
@@ -532,15 +547,33 @@ const RenderResults = ({
   );
 };
 
-const getCommandPalettePosition = () => {
-  const input = document.querySelector(`[data-testid="${selectors.components.NavToolbar.commandPaletteTrigger}"]`);
-  const inputRightPosition = input?.getBoundingClientRect().right ?? 0;
-  const screenWidth = document.body.clientWidth;
-  const lateralSpace = screenWidth - inputRightPosition;
-  return lateralSpace;
-};
+// Denominator for Deep Search Discovery/Adoption: fire once per settled deep
+// search render. useDeepSearchResults already debounces the fetch, so keying
+// off its fetching flag settling to false gives one event per result set
+// rather than one per keystroke.
+function useDeepSearchResultsShownReporting(
+  isFetchingDeepSearchResults: boolean,
+  showDeepSearch: boolean,
+  deepSearchResultsLength: number,
+  deepSearchEnabled: boolean,
+  searchQueryLength: number
+) {
+  const deepSearchWasFetchingRef = useRef(false);
+  useEffect(() => {
+    const settled = deepSearchWasFetchingRef.current && !isFetchingDeepSearchResults;
+    deepSearchWasFetchingRef.current = isFetchingDeepSearchResults;
+    if (settled && showDeepSearch) {
+      reportInteraction('command_palette_deep_search_results_shown', {
+        isDeepSearchEnabled: deepSearchEnabled,
+        isDeepSearchLoaded: showDeepSearch && !isFetchingDeepSearchResults,
+        deepSearchItemsCount: deepSearchResultsLength,
+        queryLength: searchQueryLength,
+      });
+    }
+  }, [isFetchingDeepSearchResults, showDeepSearch, deepSearchResultsLength, deepSearchEnabled, searchQueryLength]);
+}
 
-const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
+const getSearchStyles = (theme: GrafanaTheme2) => {
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -558,20 +591,13 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     }),
     animator: css({
       width: '100%',
-      maxWidth: theme.breakpoints.values.md,
+      maxWidth: theme.breakpoints.values.lg,
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
       borderRadius: theme.shape.radius.lg,
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
-      [theme.breakpoints.up('lg')]: {
-        position: 'fixed',
-        right: lateralSpace,
-        left: lateralSpace,
-        maxWidth: 'unset',
-        width: 'unset',
-      },
     }),
     loadingBarContainer: css({
       position: 'absolute',

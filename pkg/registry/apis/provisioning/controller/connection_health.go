@@ -68,6 +68,12 @@ func (hc *ConnectionHealthChecker) ShouldCheckHealth(conn *provisioning.Connecti
 		return true
 	}
 
+	// A token written after the last health check (e.g. by the authorize endpoint)
+	// invalidates it; recheck instead of waiting out the unhealthy cooldown.
+	if conn.Status.Token.LastUpdated > conn.Status.Health.Checked {
+		return true
+	}
+
 	// Check general timing for health checks
 	return !hc.hasRecentHealthCheck(conn.Status.Health)
 }

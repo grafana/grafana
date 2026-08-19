@@ -1,7 +1,7 @@
 import { configureStore, type Middleware, isAnyOf } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
-import { testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { waitFor } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import * as quotasAPI from '@grafana/api-clients/rtkq/quotas/v0alpha1';
@@ -107,12 +107,18 @@ describe('browseDashboardsAPI', () => {
     return { store: makeRecorderStore(recorder), updateNamePayloads };
   };
 
-  testWithFeatureToggles({ disable: ['provisioning'] });
+  let originalProvisioningEnabled: boolean;
 
   beforeEach(() => {
+    originalProvisioningEnabled = config.provisioningEnabled;
+    config.provisioningEnabled = false;
     getDashboardAPIMock.mockReset();
     folderAPIVersionResolver.set('v1beta1');
     server.use(http.get('/api/access-control/user/actions', () => HttpResponse.json({})));
+  });
+
+  afterEach(() => {
+    config.provisioningEnabled = originalProvisioningEnabled;
   });
 
   const createMockDashboardAPI = (saveDashboard: jest.Mock) =>
@@ -211,7 +217,7 @@ describe('browseDashboardsAPI', () => {
 
   it('does not check whether a single delete target is provisioned before deleting it', async () => {
     const store = createTestStore();
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
 
     const getProvisionedFolderSpy = jest.fn();
     const deleteFolderSpy = jest.fn();
@@ -273,12 +279,14 @@ describe('browseDashboardsAPI', () => {
                   dashboards: 3,
                   library_elements: 4,
                   alertrules: 5,
+                  recordingrules: 6,
                 }
               : {
                   folders: 1,
                   dashboards: 2,
                   library_elements: 3,
                   alertrules: 4,
+                  recordingrules: 1,
                 }
           )
         )
@@ -296,6 +304,7 @@ describe('browseDashboardsAPI', () => {
         dashboards: 6,
         librarypanels: 7,
         alertrules: 9,
+        recordingrules: 7,
       });
     });
 
@@ -325,6 +334,32 @@ describe('browseDashboardsAPI', () => {
         dashboards: 3,
         librarypanels: 4,
         alertrules: 5,
+        recordingrules: 0,
+      });
+    });
+
+    it('includes recording rule counts', async () => {
+      const store = createTestStore();
+
+      server.use(
+        customFolderCountsHandler(() =>
+          HttpResponse.json({ folders: 1, dashboards: 2, library_elements: 3, alertrules: 4, recordingrules: 5 })
+        )
+      );
+
+      const result = await store.dispatch(
+        browseDashboardsAPI.endpoints.getAffectedItems.initiate({
+          folderUIDs: ['folder-1'],
+          dashboardUIDs: [],
+        })
+      );
+
+      expect(result.data).toEqual({
+        folders: 2,
+        dashboards: 2,
+        librarypanels: 3,
+        alertrules: 4,
+        recordingrules: 5,
       });
     });
 
@@ -345,6 +380,7 @@ describe('browseDashboardsAPI', () => {
         dashboards: 5,
         librarypanels: 0,
         alertrules: 0,
+        recordingrules: 0,
       });
       expect(result.data && Object.values(result.data).every(Number.isFinite)).toBe(true);
     });
@@ -458,7 +494,7 @@ describe('browseDashboardsAPI', () => {
 
     it('does not delete provisioned folders during bulk delete', async () => {
       const store = createTestStore();
-      config.featureToggles.provisioning = true;
+      config.provisioningEnabled = true;
 
       const deleteSpy = jest.fn();
 
@@ -506,7 +542,7 @@ describe('browseDashboardsAPI', () => {
     });
 
     it('only un-stars folders that were actually deleted when some are provisioned', async () => {
-      config.featureToggles.provisioning = true;
+      config.provisioningEnabled = true;
       const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
 
       const deletedUids: string[] = [];

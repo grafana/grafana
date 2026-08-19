@@ -319,6 +319,7 @@ This transformation has the following options:
     - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
       You must multiply your input by 1000 if it's in seconds.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
+    - The **Timezone** option determines how Grafana interprets input strings without timezone information. If not set, Grafana uses the browser timezone or your configured default timezone.
   - **Boolean** - will make the values booleans
   - **Enum** - will make the values enums
     - Will show a table to manage the enums
@@ -898,6 +899,8 @@ The result after applying the inner join transformation looks like the following
 | 3         | Michael | Physics          | PHYS101  | B     |
 
 The inner join only includes rows where there is a match between the "StudentID" in both tables. In this case, the result does not include "Jennifer" from the "Students" table because there are no matching enrollments for her in the "Enrollments" table.
+
+If a query returns data that doesn't contain the join field, then no row can match in every query, so the result is empty. To join only some of your queries, add a [Filter data by query refId](#filter-data-by-query-refid) transformation before the join.
 
 #### Outer join (for Time Series data)
 

@@ -887,7 +887,7 @@ func (rs *ReceiverService) validateReceiver(ctx context.Context, orgID int64, re
 		if integration == nil || integration.Config.Type() != schema.EmailType {
 			continue
 		}
-		if err := rs.emailValidator.ValidateIntegration(ctx, orgID, *integration, l); err != nil {
+		if err := rs.emailValidator.ValidateIntegration(ctx, orgID, *integration, rs.decryptor(ctx), l); err != nil {
 			return fmt.Errorf("invalid email integration[%d]: %w", idx, err)
 		}
 	}

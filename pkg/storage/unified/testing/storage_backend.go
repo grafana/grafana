@@ -107,7 +107,14 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 				t.Skip()
 			}
 
-			tc.fn(t, newBackend(context.Background()), opts.NSPrefix)
+			backend := newBackend(context.Background())
+			// Stop background goroutines when the case ends so they don't keep
+			// writing to the (SQLite) DB and contend with later cases.
+			if s, ok := backend.(resource.ResourceServerStopper); ok {
+				t.Cleanup(func() { _ = s.Stop(context.Background()) })
+			}
+
+			tc.fn(t, backend, opts.NSPrefix)
 		})
 	}
 }
@@ -2113,10 +2120,10 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 	kind := "ErrorResource"
 
 	makeValue := func(name string) []byte {
-		return []byte(fmt.Sprintf(
+		return fmt.Appendf(nil,
 			`{"apiVersion":"%s/v0alpha1","kind":"%s","metadata":{"name":"%s","namespace":"%s","uid":"%s"}}`,
 			group, kind, name, ns, uuid.New().String(),
-		))
+		)
 	}
 
 	t.Run("read nonexistent resource returns 404", func(t *testing.T) {

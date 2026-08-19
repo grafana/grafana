@@ -52,6 +52,7 @@ import (
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -71,7 +72,6 @@ const MaxConcurrentZanzanaWrites = 20
 func RegisterAPIService(
 	cfg *setting.Cfg,
 	cfgProvider configprovider.ConfigProvider,
-	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
 	sql db.DB,
@@ -129,11 +129,16 @@ func RegisterAPIService(
 	}
 
 	// Mode lever for the SSO settings migration: any configured storage mode
-	// above 0 hands the SSOSetting kind to the MT-Settings store.
-	ssoUseMTSettings := false
+	// above 0 builds the MT-Settings client so the SSOSetting kind can ride the
+	// dual-writer; the storage mode then routes reads and writes between stores.
+	var ssoSettingsClient settingsvc.Service
 	if cfg != nil {
 		if resCfg, ok := cfg.UnifiedStorage[legacyiamv0.SSOSettingResourceInfo.GroupResource().String()]; ok && resCfg.DualWriterMode > grafanarest.Mode0 {
-			ssoUseMTSettings = true
+			c, err := sso.NewSettingsClient(cfg)
+			if err != nil {
+				log.New("iam.apis").Error("failed to build MT-Settings client for SSOSetting store", "error", err)
+			}
+			ssoSettingsClient = c
 		}
 	}
 
@@ -145,7 +150,7 @@ func RegisterAPIService(
 		externalGroupReconciler:           externalGroupReconciler,
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
-		ssoUseMTSettings:                  ssoUseMTSettings,
+		ssoSettingsClient:                 ssoSettingsClient,
 		roleApiInstaller:                  roleApiInstaller,
 		globalRoleApiInstaller:            globalRoleApiInstaller,
 		teamLBACApiInstaller:              teamLBACApiInstaller,
@@ -164,7 +169,6 @@ func RegisterAPIService(
 		zTickets:                          make(chan bool, MaxConcurrentZanzanaWrites),
 		reg:                               reg,
 		logger:                            log.New("iam.apis"),
-		features:                          features,
 		dual:                              dual,
 		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
@@ -181,9 +185,10 @@ func RegisterAPIService(
 			display.NewLegacyDisplayProvider(store),   // Do legacy first
 			display.NewSearchDisplayProvider(unified), // then use search index
 		),
+		ofClient: openfeature.NewDefaultClient(),
 	}
-	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg, accessClient)
-	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, features, accessClient)
+	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, cfg, accessClient)
+	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, accessClient)
 
 	apiregistration.RegisterAPI(builder)
 
@@ -197,7 +202,6 @@ func NewAPIService(
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
 	teamLBACApiInstaller TeamLBACApiInstaller,
-	features featuremgmt.FeatureToggles,
 	zClient zanzana.Client,
 	reg prometheus.Registerer,
 	tokenExchanger authn.TokenExchanger,
@@ -216,6 +220,7 @@ func NewAPIService(
 	serviceAccountAuthorizer := newServiceAccountAuthorizer(accessClient)
 	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
+	userAuthorizer := newUserAuthorizer(accessClient)
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -223,6 +228,7 @@ func NewAPIService(
 	)
 
 	return &IdentityAccessManagementAPIBuilder{
+		ofClient:               openfeature.NewDefaultClient(),
 		store:                  store,
 		userLegacyStore:        user.NewLegacyStore(store, accessClient, tracingService),
 		saLegacyStore:          serviceaccount.NewLegacyStore(store, accessClient, tracingService),
@@ -236,7 +242,6 @@ func NewAPIService(
 		mappers:                    mappers,
 		roleBindingsApiInstaller:   roleBindingsApiInstaller,
 		logger:                     log.New("iam.apis"),
-		features:                   features,
 		accessClient:               accessClient,
 		resourceParentProvider:     resourceParentProvider,
 		zClient:                    zClient,
@@ -300,10 +305,7 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == "users" {
-					if user.GetIdentityType() != types.TypeAccessPolicy {
-						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
-					}
-					return resourceAuthorizer.Authorize(ctx, a)
+					return userAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == iamv0.ServiceAccountResourceInfo.GetName() {
@@ -323,7 +325,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	client := openfeature.NewDefaultClient()
+	client := b.ofClient
 	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelFn()
 
@@ -332,6 +334,7 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
 	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
 	enableTeamLBACRuleApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, false, openfeature.TransactionContext(ctx))
+	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
 
 	if enableRolesApi || enableRoleBindingsApi {
 		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
@@ -351,8 +354,7 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
+	if enableResourcePermissionsApi {
 		if err := iamv0.AddResourcePermissionKnownTypes(scheme, iamv0.SchemeGroupVersion); err != nil {
 			return err
 		}
@@ -380,12 +382,11 @@ func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string
 func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	client := openfeature.NewDefaultClient()
+	client := b.ofClient
 	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelFn()
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	enableZanzanaSync := b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzZanzanaSync)
+	enableZanzanaSync := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzZanzanaSync, false, openfeature.TransactionContext(ctx))
 
 	enableRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, false, openfeature.TransactionContext(ctx))
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
@@ -397,6 +398,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
 	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
 	enableSaResourcePermissions := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, false, openfeature.TransactionContext(ctx))
+	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
@@ -447,16 +449,30 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	// SSO settings apis
 	if enableSsoSettingsApi && b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
-		// The storage mode of [unified_storage.ssosettings.iam.grafana.app]
-		// decides which store serves the kind: at mode 0 (the default) the
-		// legacy store behaves as before; any higher mode engages the
-		// MT-Settings store, which fails loudly until it is implemented.
-		// The standard dual-writer cannot wrap this kind yet: it requires
-		// rest.CreaterUpdater and SSO settings are update-only.
-		if b.ssoUseMTSettings {
-			storage[ssoResource.StoragePath()] = sso.NewMTSettingsStore()
+		// With an MT-Settings client the SSOSetting kind rides the dual-writer (mode-gated
+		// reads/writes); without it (on-prem) the legacy store serves alone.
+		if b.ssoSettingsClient != nil && opts.DualWriteBuilder != nil {
+			writer, _ := b.ssoSettingsClient.(settingsvc.Writer)
+			mtStore := sso.NewMTSettingsStore(b.ssoSettingsClient, writer)
+			dw, err := opts.DualWriteBuilder(ssoResource.GroupResource(), b.ssoLegacyStore, mtStore)
+			if err != nil {
+				return err
+			}
+			// The legacy adapter returns the raw secret on Create so the dual-writer
+			// forwards it to MT-Settings; redact it back out of the client response.
+			redacted, err := sso.NewRedactingStore(dw)
+			if err != nil {
+				return err
+			}
+			storage[ssoResource.StoragePath()] = redacted
 		} else {
-			storage[ssoResource.StoragePath()] = b.ssoLegacyStore
+			// Legacy serves alone, but its Create still returns the raw input, so
+			// redact the response here too.
+			redacted, err := sso.NewRedactingStore(b.ssoLegacyStore)
+			if err != nil {
+				return err
+			}
+			storage[ssoResource.StoragePath()] = redacted
 		}
 	}
 
@@ -486,8 +502,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
+	if enableResourcePermissionsApi {
 		if enableSaResourcePermissions {
 			// BasicRole is excluded: built-in roles already cover all service accounts globally,
 			// so granting a ResourcePermission to a BasicRole on a specific SA is not permitted.
@@ -543,7 +558,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 	}
 
-	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing, b.features)
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
 
 	if b.teamSearchHandler != nil {
 		b.teamSearchHandler.SetTeamGetter(b.teamGetter)
@@ -662,7 +677,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 				b.store,
 			)
 		}
-		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing, b.features)
+		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing)
 	}
 
 	return nil
@@ -931,7 +946,7 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
-	client := openfeature.NewDefaultClient()
+	client := b.ofClient
 	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelFn()
 
@@ -1065,6 +1080,8 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 
 func (b *IdentityAccessManagementAPIBuilder) validateDelete(ctx context.Context, a admission.Attributes) error {
 	switch oldObj := a.GetOldObject().(type) {
+	case *iamv0.Team:
+		return team.ValidateOnDelete(ctx, b.unified, oldObj)
 	case *iamv0.Role:
 		return b.roleApiInstaller.ValidateOnDelete(ctx, oldObj)
 	case *iamv0.GlobalRole:
@@ -1105,6 +1122,8 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 			return b.globalRoleApiInstaller.MutateOnCreate(ctx, typedObj)
 		case *iamv0.RoleBinding:
 			return b.roleBindingsApiInstaller.MutateOnCreate(ctx, typedObj)
+		case *iamv0.TeamLBACRule:
+			return b.teamLBACApiInstaller.MutateOnCreate(ctx, typedObj)
 		}
 	case admission.Update:
 		switch typedObj := a.GetObject().(type) {
@@ -1134,6 +1153,12 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 				return fmt.Errorf("old object is not a RoleBinding")
 			}
 			return b.roleBindingsApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
+		case *iamv0.TeamLBACRule:
+			oldObj, ok := a.GetOldObject().(*iamv0.TeamLBACRule)
+			if !ok {
+				return fmt.Errorf("old object is not a TeamLBACRule")
+			}
+			return b.teamLBACApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
 		}
 	case admission.Delete:
 		switch oldObj := a.GetOldObject().(type) {
@@ -1173,8 +1198,13 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 		return nil, err
 	}
 
+	var vp *versionpolicy.VersionPolicyRegistry
+	if g, ok := defaultOptsGetter.(*apistore.RESTOptionsGetter); ok {
+		vp = g.VersionPolicy()
+	}
+
 	client := resource.NewLocalResourceClient(server)
-	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil)
+	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil, vp)
 
 	store, err := grafanaregistry.NewRegistryStoreWithSelectableFields(scheme, resourceInfo, optsGetter, selectableFieldsOpts)
 	return store, err

@@ -12,9 +12,10 @@ import (
 const (
 	// cleanupInterval is how often the background cleanup runs
 	cleanupInterval = 24 * time.Hour
-	// defaultRetentionTTL is the default retention period for annotations
-	// TODO: determine appropriate default TTL
-	defaultRetentionTTL = 90 * 24 * time.Hour
+	// defaultRetentionTTL is the default retention period for annotations.
+	// 0 disables cleanup and retention-based write validation; a positive
+	// value opts in to both.
+	defaultRetentionTTL = 0
 	// defaultMaxScopeCount caps how many scopes can be attached to a single
 	// annotation. 0 means no scopes are allowed.
 	defaultMaxScopeCount = 5
@@ -81,14 +82,9 @@ func (c *Config) AddFlags(flags *pflag.FlagSet) {
 }
 
 func newConfigFromSettings(cfg *setting.Cfg) Config {
-	retentionTTL := cfg.AnnotationAppPlatform.RetentionTTL
-	if retentionTTL == 0 {
-		retentionTTL = defaultRetentionTTL
-	}
-
 	return Config{
 		StoreBackend:   cfg.AnnotationAppPlatform.StoreBackend,
-		RetentionTTL:   retentionTTL,
+		RetentionTTL:   cfg.AnnotationAppPlatform.RetentionTTL,
 		EnableLegacyID: cfg.AnnotationAppPlatform.EnableLegacyID,
 		MaxScopeCount:  cfg.AnnotationAppPlatform.MaxScopeCount,
 

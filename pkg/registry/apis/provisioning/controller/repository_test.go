@@ -1553,7 +1553,7 @@ func (s *hookRepoStub) CreateWebhook(context.Context, string, []string, string) 
 	return nil, s.hookResult()
 }
 
-func (s *hookRepoStub) GetWebhook(context.Context, int64) (repository.WebhookConfig, error) {
+func (s *hookRepoStub) GetWebhook(context.Context, repository.WebhookID) (repository.WebhookConfig, error) {
 	return nil, s.hookResult()
 }
 
@@ -1562,7 +1562,7 @@ func (s *hookRepoStub) EditWebhook(context.Context, repository.WebhookConfig) er
 	return s.hookResult()
 }
 
-func (s *hookRepoStub) DeleteWebhook(context.Context, int64) error {
+func (s *hookRepoStub) DeleteWebhook(context.Context, repository.WebhookID) error {
 	return s.hookResult()
 }
 
@@ -1649,6 +1649,95 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 	_, healthPatched := patcher.findPatchOp("/status/health")
 	assert.False(t, healthPatched,
 		"existing HealthFailureHook status must not be overwritten during cooldown")
+}
+
+// TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError
+// verifies that a webhook call failing with repository.ErrUnauthorized is a
+// user-facing state, not a controller error: process() must return nil (no
+// Error-level log, no queue retry) even though the hook attempt failed, while
+// still recording the failure on /status/health so it's visible to the user.
+func TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> webhookOnCreate runs
+		},
+	}
+
+	stub := &hookRepoStub{
+		cfg:        repo,
+		hookErr:    repository.ErrUnauthorized,
+		hookErrSet: true,
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err, "an unauthorized hook failure must not surface as a controller error")
+
+	assert.Equal(t, int32(1), stub.onCreateCalls.Load(), "the hook attempt should still have run")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the failure must still be recorded on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy)
+	assert.Equal(t, provisioning.HealthFailureHook, healthStatus.Error)
+	require.Len(t, healthStatus.Message, 1)
+	assert.Contains(t, healthStatus.Message[0], repository.ErrUnauthorized.Error())
+}
+
+// TestRepositoryController_process_HookFailureNonAuthErrorStillReturnsError
+// a hook failure that is
+// NOT repository.ErrUnauthorized must still surface as a controller error
+// (Error-level log, eligible for retry), so only the specific user-fixable
+// auth case is silenced.
+func TestRepositoryController_process_HookFailureNonAuthErrorStillReturnsError(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> webhookOnCreate runs
+		},
+	}
+
+	stub := &hookRepoStub{cfg: repo} // hookErrSet is false -> hookResult() returns assert.AnError
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.Error(t, err, "a non-auth hook failure must still surface as a controller error")
+	assert.ErrorIs(t, err, assert.AnError)
+
+	assert.Equal(t, int32(1), stub.onCreateCalls.Load(), "the hook attempt should still have run")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the failure must still be recorded on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy)
+	assert.Equal(t, provisioning.HealthFailureHook, healthStatus.Error)
 }
 
 // newRecoveryController is a small helper that wires up the minimal set of

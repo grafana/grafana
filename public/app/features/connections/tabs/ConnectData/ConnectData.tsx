@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   LoadingPlaceholder,
   EmptyState,
@@ -192,11 +192,6 @@ function AddNewConnectionWithSidebar() {
         e.preventDefault();
         e.stopPropagation();
         setSelectedItem(item);
-        reportInteraction('connections_plugin_card_clicked', {
-          plugin_id: item.id,
-          creator_team: 'grafana_plugins_catalog',
-          schema_version: '1.0.0',
-        });
       }
     },
     [canCreateDataSources]

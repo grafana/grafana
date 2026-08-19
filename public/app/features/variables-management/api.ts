@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { t } from '@grafana/i18n';
@@ -9,6 +9,8 @@ import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { extractErrorMessage } from 'app/api/utils';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import { clearPredefinedVariablesCache } from 'app/features/dashboard-scene/utils/predefinedVariables';
 import { dispatch } from 'app/store/store';
 
 import { buildVariableResource, getVariableFolderUid, getVariableKind, getVariableSpecName } from './utils';
@@ -16,6 +18,20 @@ import { buildVariableResource, getVariableFolderUid, getVariableKind, getVariab
 const LIST_PAGE_SIZE = 500;
 
 const variableListTag = { type: 'Variable' as const, id: 'LIST' };
+
+/**
+ * Clears caches so dashboards pick up Variable CRUD without a hard refresh.
+ * Owned by variables-management (mutation sites), not the API client veneer.
+ */
+export function invalidatePredefinedVariableCaches() {
+  clearPredefinedVariablesCache();
+  getDashboardScenePageStateManager().clearSceneCache();
+}
+
+function invalidateAfterVariableMutation() {
+  dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
+  invalidatePredefinedVariableCaches();
+}
 
 /**
  * Lists every Variable resource by paging through the k8s-style list endpoint with
@@ -100,15 +116,56 @@ export function useFolderTitles(folderUids: string[]): Record<string, string> {
   return titles;
 }
 
+/**
+ * Resolves folder CanEdit for the given UIDs (via the folder access subresource).
+ * Missing entries mean the lookup has not completed yet — treat as not editable.
+ */
+export function useFolderCanEdit(folderUids: string[]): Record<string, boolean> {
+  const [canEditByUid, setCanEditByUid] = useState<Record<string, boolean>>({});
+  // Read latest map inside the effect without listing it as a dep (avoids re-init
+  // loops while still skipping UIDs already resolved).
+  const canEditByUidRef = useRef(canEditByUid);
+  canEditByUidRef.current = canEditByUid;
+  // Sort so [a,b] and [b,a] share one effect key.
+  const key = [...folderUids].sort().join(',');
+
+  useEffect(() => {
+    let cancelled = false;
+    const uids = key ? key.split(',') : [];
+    const missing = uids.filter((uid) => !(uid in canEditByUidRef.current));
+    if (missing.length === 0) {
+      return;
+    }
+
+    Promise.all(
+      missing.map(async (uid) => {
+        const subscription = dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate({ name: uid }));
+        try {
+          const result = await subscription;
+          return [uid, Boolean(result.data?.canEdit)] as const;
+        } finally {
+          subscription.unsubscribe();
+        }
+      })
+    ).then((entries) => {
+      if (!cancelled) {
+        setCanEditByUid((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [key]);
+
+  return canEditByUid;
+}
+
 export interface BulkOperationResult {
   succeeded: number;
   /** Variables that were already in the requested state, so no calls were made. */
   skipped: number;
   failed: Array<{ name: string; metadataName: string; error: unknown }>;
-}
-
-function invalidateVariablesList() {
-  dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
 }
 
 export interface RecreateVariableResult {
@@ -134,17 +191,18 @@ export async function recreateVariable(
   targetFolderUid?: string
 ): Promise<RecreateVariableResult> {
   await getBackendSrv().post(`${BASE_URL}/variables`, buildVariableResource(kind, targetFolderUid));
+  let deletedOriginal = true;
   try {
     await getBackendSrv().delete(`${BASE_URL}/variables/${encodeURIComponent(sourceMetadataName)}`, undefined, {
       showErrorAlert: false,
     });
   } catch (error) {
     notifyDeleteAfterCreateFailed(error);
-    invalidateVariablesList();
-    return { deletedOriginal: false };
+    deletedOriginal = false;
   }
-  invalidateVariablesList();
-  return { deletedOriginal: true };
+  // Always invalidate: the copy exists whether or not the original was removed.
+  invalidateAfterVariableMutation();
+  return { deletedOriginal };
 }
 
 /**
@@ -170,7 +228,7 @@ export async function bulkDeleteVariables(variables: Variable[]): Promise<BulkOp
     }
   }
 
-  invalidateVariablesList();
+  invalidateAfterVariableMutation();
   return result;
 }
 
@@ -218,7 +276,7 @@ export async function bulkMoveVariables(variables: Variable[], targetFolderUid?:
     }
   }
 
-  invalidateVariablesList();
+  invalidateAfterVariableMutation();
   return result;
 }
 

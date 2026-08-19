@@ -20,7 +20,7 @@ describe('TimeRangeInput', () => {
         timeZone="utc"
         onChange={(payload) => {
           const { from, to } = payload;
-          onChange({ from: from.toString(), to: to.toString() });
+          onChange({ from: from.toISOString(), to: to.toISOString() });
         }}
         value={{
           from,
@@ -48,8 +48,8 @@ describe('TimeRangeInput', () => {
     await user.click(await screen.findByText(/apply time range/i));
 
     expect(onChange).toHaveBeenCalledWith({
-      from: 'Mon Jan 01 2024 00:00:00 GMT+0000',
-      to: 'Wed Feb 28 2024 23:59:59 GMT+0000',
+      from: '2024-01-01T00:00:00.000Z',
+      to: '2024-02-28T23:59:59.000Z',
     });
   });
 });

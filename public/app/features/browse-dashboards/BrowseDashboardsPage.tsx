@@ -5,6 +5,7 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
@@ -55,6 +56,11 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
+
+  // CUJ-only signal: silent so it doesn't create analytics noise
+  useEffect(() => {
+    reportInteraction('grafana_browse_dashboards_page_view', { folderUID: folderUID ?? '' }, { silent: true });
+  }, [folderUID]);
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -179,6 +185,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>
           <FilterInput
+            data-testid={selectors.pages.BrowseDashboards.searchInput}
             placeholder={getSearchPlaceholder(searchState.includePanels)}
             value={searchState.query}
             escapeRegex={false}

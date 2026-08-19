@@ -1351,17 +1351,42 @@ func userTeamsResponse(rows []iamv0alpha1.GetUserTeamsUserTeam) iamv0alpha1.GetU
 	}
 }
 
+func TestTeamK8sService_ListUserTeamsReturnsAllPages(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := userTeamsResponse([]iamv0alpha1.GetUserTeamsUserTeam{{User: "user-1", Team: "team-1"}})
+		if r.URL.Query().Get("continue") == "next+/=" {
+			response.Items[0].Team = "team-2"
+		} else {
+			response.Continue = "next+/="
+		}
+		require.NoError(t, json.NewEncoder(w).Encode(response))
+	}))
+	defer server.Close()
+
+	provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: server.URL}}
+	service := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
+
+	rows, err := service.listUserTeams(contextWithReqContext(), "org-1", "user-1")
+	require.NoError(t, err)
+	require.Equal(t, []iamv0alpha1.GetUserTeamsUserTeam{
+		{User: "user-1", Team: "team-1"},
+		{User: "user-1", Team: "team-2"},
+	}, rows)
+}
+
 func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 	tests := []struct {
-		name           string
-		query          *team.GetTeamsByUserQuery
-		requesterOrgID int64
-		serverResponse func(w http.ResponseWriter, r *http.Request)
-		nilProvider    bool
-		noReqContext   bool
-		expectErr      bool
-		expectTeams    int
-		expectUID      string
+		name                   string
+		query                  *team.GetTeamsByUserQuery
+		requesterOrgID         int64
+		serverResponse         func(w http.ResponseWriter, r *http.Request)
+		nilProvider            bool
+		noReqContext           bool
+		enforceServiceIdentity bool
+		expectErr              bool
+		expectTeams            int
+		expectUID              string
 	}{
 		{
 			name:           "returns teams for user",
@@ -1370,6 +1395,15 @@ func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 			serverResponse: membershipServerHandler(t),
 			expectTeams:    1,
 			expectUID:      "team-uid-1",
+		},
+		{
+			name:                   "lists memberships under a service identity",
+			requesterOrgID:         1,
+			query:                  &team.GetTeamsByUserQuery{OrgID: 1, UserID: 42},
+			serverResponse:         membershipServerHandler(t),
+			enforceServiceIdentity: true,
+			expectTeams:            1,
+			expectUID:              "team-uid-1",
 		},
 		{
 			name:           "returns empty list when user has no bindings",
@@ -1414,7 +1448,11 @@ func TestTeamK8sService_GetTeamsByUser(t *testing.T) {
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
-				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
+				cfg := &clientrest.Config{Host: ts.URL}
+				if tt.enforceServiceIdentity {
+					cfg.Transport = serviceIdentityRBAC{base: http.DefaultTransport}
+				}
+				provider := &mockDirectRestConfigProvider{restConfig: cfg}
 				svc = NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
 			}
 

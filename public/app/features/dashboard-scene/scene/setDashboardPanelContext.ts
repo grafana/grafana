@@ -21,14 +21,13 @@ import { type DashboardScene } from './DashboardScene';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
-  context.app = dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard;
 
-  dashboard.subscribeToState((state) => {
-    if (state.editPanel) {
-      context.app = CoreApp.PanelEditor;
-    } else {
-      context.app = CoreApp.Dashboard;
-    }
+  // Read on access. The panel context is built once and cached on the VizPanel, but deactivating the
+  // dashboard clears its event bus, so a subscription here would be dropped and never re-established.
+  Object.defineProperty(context, 'app', {
+    enumerable: true,
+    configurable: true,
+    get: () => (dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard),
   });
 
   context.canAddAnnotations = () => {
@@ -318,14 +317,17 @@ function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilt
   let hasChanges = false;
 
   for (const newFilter of newFilters) {
-    const filterToReplaceIndex = updatedFilters.findIndex(
-      (filter) =>
-        filter.key === newFilter.key && filter.value === newFilter.value && filter.operator !== newFilter.operator
+    const existingFilterIndex = updatedFilters.findIndex(
+      (filter) => filter.key === newFilter.key && filter.value === newFilter.value
     );
 
-    if (filterToReplaceIndex >= 0) {
-      updatedFilters.splice(filterToReplaceIndex, 1, newFilter);
-      hasChanges = true;
+    if (existingFilterIndex >= 0) {
+      // An identical filter is already applied, adding it again would duplicate it in the filter bar.
+      // Update is only required when the operator changed (key1 = value1 -> key1 != value1).
+      if (updatedFilters[existingFilterIndex].operator !== newFilter.operator) {
+        updatedFilters.splice(existingFilterIndex, 1, newFilter);
+        hasChanges = true;
+      }
       continue;
     }
 

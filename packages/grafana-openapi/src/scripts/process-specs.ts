@@ -2,6 +2,8 @@ import fs from 'fs';
 import { type OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
+import { escapeJsonPointer, simplifySchemaName } from './schema-name.ts';
+
 /**
  * Process an OpenAPI spec to remove k8s metadata from names and paths:
  * - Remove paths containing "/watch/" as they're deprecated.
@@ -105,7 +107,10 @@ function updateRefs(obj: unknown) {
       const refParts = obj.$ref.split('/');
       const lastRefPart = refParts[refParts.length - 1];
       const newRefName = simplifySchemaName(lastRefPart);
-      obj.$ref = `#/components/schemas/${newRefName}`;
+      // The components.schemas key is the plain (unescaped) name, but a '/' inside
+      // a $ref token is always a JSON Pointer path separator, so it must be
+      // re-escaped here or the ref won't resolve back to that key.
+      obj.$ref = `#/components/schemas/${escapeJsonPointer(newRefName)}`;
     }
     for (const key in obj) {
       if (key !== '$ref') {
@@ -113,24 +118,6 @@ function updateRefs(obj: unknown) {
         updateRefs(obj[key as keyof typeof obj]);
       }
     }
-  }
-}
-
-/**
- * Simplify a schema name by removing the version prefix if present.
- * For example, 'io.k8s.apimachinery.pkg.apis.meta.v1.Time' becomes 'Time'.
- */
-function simplifySchemaName(schemaName: string) {
-  const parts = schemaName.split('.');
-
-  // Regex to match version segments like 'v1', 'v1beta1', 'v0alpha1', etc.
-  const versionRegex = /^v\d+[a-zA-Z0-9]*$/;
-  const versionIndex = parts.findIndex((part) => versionRegex.test(part));
-
-  if (versionIndex !== -1 && versionIndex + 1 < parts.length) {
-    return parts.slice(versionIndex + 1).join('.');
-  } else {
-    return schemaName;
   }
 }
 

@@ -3,12 +3,17 @@ import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, useAppPluginInstalled } from '@grafana/runtime';
+import { useAppPluginInstalled } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  alert: css({
+    // Alert defaults to flexGrow: 1, which makes the notice absorb free space
+    // when the page content is a flex column (e.g. the plugins catalog)
+    flexGrow: 0,
+  }),
   alertContent: css({
     display: 'flex',
     flexDirection: 'row',
@@ -29,7 +34,7 @@ export function AdvisorRedirectNotice() {
   const [showNotice, setShowNotice] = useState(false);
   const { value: isAdvisorInstalled } = useAppPluginInstalled('grafana-advisor-app');
 
-  const canUseAdvisor = hasAdminRights && config.featureToggles.grafanaAdvisor && Boolean(isAdvisorInstalled);
+  const canUseAdvisor = hasAdminRights && Boolean(isAdvisorInstalled);
 
   useEffect(() => {
     if (!canUseAdvisor) {
@@ -51,6 +56,7 @@ export function AdvisorRedirectNotice() {
     <Alert
       severity="info"
       title=""
+      className={styles.alert}
       onRemove={() => {
         userStorage.setItem('showNotice', 'false');
         setShowNotice(false);

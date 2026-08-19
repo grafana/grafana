@@ -125,6 +125,10 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 	} else {
 		log.Debug("Item to retry found", "check", obj.GetName(), "item", itemToRetry)
 	}
+	// Wait for the retry annotation to be persisted before processing the object
+	if err := waitForRetryAnnotation(ctx, log, client, obj, itemToRetry); err != nil {
+		return err
+	}
 	c, ok := obj.(*advisorv0alpha1.Check)
 	if !ok {
 		return fmt.Errorf("invalid object type")
@@ -172,11 +176,6 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		return f.ItemID == itemToRetry
 	})
 	c.Status.Report.Failures = append(currentFailures, failures...)
-	// Wait for the retry annotation to be persisted before patching the object
-	err = waitForRetryAnnotation(ctx, log, client, obj, itemToRetry)
-	if err != nil {
-		return err
-	}
 	// Set the status
 	err = checks.SetStatus(ctx, client, obj, c.Status)
 	log.Debug("Status set", "check", obj.GetName(), "status.count", c.Status.Report.Count)

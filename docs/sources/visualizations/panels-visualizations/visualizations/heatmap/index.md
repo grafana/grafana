@@ -209,7 +209,14 @@ When you set the **Tooltip mode** to **Single**, this option is displayed. This 
 
 ### Legend options
 
-Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
+Legend options control how the color scale legend is displayed on the visualization.
+For more information about the legend, refer to [Configure a legend](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-legend/).
+
+| Option      | Description                                                                                                                                                                                                                                                                                                                                        |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Show legend | Toggle the switch to turn the legend on or off.                                                                                                                                                                                                                                                                                                    |
+| Placement   | Choose where to display the legend. **Bottom** places the legend below the graph. **Right** places the legend to the right of the graph.                                                                                                                                                                                                           |
+| Width       | Control how wide the legend is when placed on the right side of the visualization. The value may be a basic pixel width or a more complex [CSS width property](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/width) such as `max(200px, 20%)`. This option is only displayed if you set the legend placement to **Right**. |
 
 ### Annotation options
 

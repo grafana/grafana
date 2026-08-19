@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -31,6 +32,7 @@ type AppInstaller struct {
 }
 
 func RegisterAppInstaller(
+	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	accessControlService accesscontrol.Service,
 	ac accesscontrol.AccessControl,
@@ -45,8 +47,7 @@ func RegisterAppInstaller(
 		logger:        log.New("playlist.api"),
 	}
 	specificConfig := any(&playlistapp.PlaylistConfig{
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
+		EnableReconcilers: cfg.EnablePlaylistsReconciler,
 	})
 	provider := simple.NewAppProvider(manifestdata.LocalManifest(), specificConfig, playlistapp.New)
 

@@ -203,6 +203,13 @@ func (r ResourceInfo) Context() *structpb.Struct {
 }
 
 func (r ResourceInfo) IsValidRelation(relation string) bool {
+	// Generic subresources are represented as resource objects whose identity includes
+	// the subresource path. They use the schema's plain `create` relation rather than
+	// the `resource_create` relation used by typed resources.
+	if r.IsGeneric() && r.HasSubresource() && relation == RelationCreate {
+		return true
+	}
+
 	return isValidRelation(relation, r.relations)
 }
 
