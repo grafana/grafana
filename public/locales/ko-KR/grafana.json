@@ -112,7 +112,7 @@
     },
     "feature-listing": {
       "title-auditing": "감사",
-      "title-custom-branding": "사용자 지정 브랜딩",
+      "title-custom-branding": "맞춤형 브랜딩",
       "title-dashboard-presence-indicators": "대시보드 실시간 사용자 표시기",
       "title-dashboard-usage-stats-drawer": "대시보드 사용 통계 드로어",
       "title-data-source-permissions": "데이터 소스 권한",
@@ -145,8 +145,8 @@
     },
     "ldap-connection-status": {
       "columns": {
-        "content-connection-is-available": "연결 이용 가능",
-        "content-connection-is-not-available": "연결 이용 불가"
+        "content-connection-is-available": "연결할 수 있습니다",
+        "content-connection-is-not-available": "연결할 수 없습니다"
       }
     },
     "ldap-error-box": {
@@ -243,7 +243,7 @@
     "user-admin-page": {
       "page-nav": {
         "subTitle": {
-          "manage-settings-for-an-individual-user": "개별 사용자에 대한 설정을 관리합니다."
+          "manage-settings-for-an-individual-user": "개별 사용자의 설정을 관리합니다"
         }
       }
     },
@@ -258,14 +258,14 @@
     },
     "user-list-admin-page-un-connected": {
       "label": {
-        "active-last-days": "최근 30일간 활성 상태",
+        "active-last-days": "최근 30일간 활동함",
         "all-users": "모든 사용자"
       },
       "placeholder-search-login-email": "로그인, 이메일 또는 이름으로 사용자를 검색합니다."
     },
     "user-list-anonymous-devices-page-un-connected": {
       "label": {
-        "active-last-days": "최근 30일간 활성 상태"
+        "active-last-days": "최근 30일간 활동함"
       },
       "placeholder-search-devices-by-ip-address": "IP 주소로 장치를 검색합니다."
     },
@@ -342,7 +342,7 @@
       "edit-tooltip": "사용자 편집",
       "last-seen-never": "기록 없음",
       "no-licensed-roles": "할당되지 않음",
-      "tooltip-assigned-role": "이 사용자가 로그인하면 라이선스가 부여된 역할이 할당됩니다"
+      "tooltip-assigned-role": "이 사용자가 로그인하면 라이선스 역할이 할당됩니다"
     }
   },
   "alerting": {
@@ -369,7 +369,7 @@
     "alert": {
       "alert-state": "경고 상태",
       "annotations": "주석",
-      "description-missing-series-evaluations": "차원이 누락된 평가 간격이 몇 번 연속 발생해야 경고 인스턴스가 오래된 것으로 간주되어 자동으로 해결 및 제거되는지를 규정하는 횟수. 비어 있는 경우 기본값은 2입니다.",
+      "description-missing-series-evaluations": "차원이 누락된 평가 간격이 몇 회 연속 발생하면 알림 인스턴스가 오래된 것으로 간주되어 자동으로 해결되고 제거되는지를 나타내는 횟수입니다. 비어 있는 경우 기본값은 2입니다.",
       "evaluation": "평가",
       "evaluation-paused": "현재 경고 평가가 일시 중지됨",
       "evaluation-paused-description": "이 규칙에 대한 알림이 실행되지 않으며 규칙의 일시 중지 상태가 해제될 때까지 경고 인스턴스가 생성되지 않습니다.",
@@ -554,7 +554,7 @@
       "unprocessed-the-alert-is-received": "미처리: 경고를 수신했지만 알림이 아직 처리되지 않았습니다."
     },
     "alert-state-tag": {
-      "content-alert-evaluation-is-currently-paused": "현재 경고 평가가 일시 중지됨",
+      "content-alert-evaluation-is-currently-paused": "현재 알림 평가가 일시 중지되었습니다.",
       "paused": "일시 중지됨"
     },
     "alert-warning": {
@@ -741,13 +741,13 @@
     },
     "bulk-actions": {
       "delete": {
-        "success": "폴더에서 규칙이 성공적으로 삭제되었습니다"
+        "success": "규칙이 폴더에서 성공적으로 삭제되었습니다."
       },
       "pause": {
-        "success": "폴더에 대한 규칙 평가가 성공적으로 일시 중지되었습니다"
+        "success": "폴더에 대한 규칙 평가가 성공적으로 일시 중지되었습니다."
       },
       "unpause": {
-        "success": "이 폴더에 대한 규칙 일시 중지가 성공적으로 해제되었습니다"
+        "success": "이 폴더의 규칙 일시 중지가 성공적으로 해제되었습니다."
       }
     },
     "central-alert-history": {
@@ -984,11 +984,11 @@
     },
     "contactPoints": {
       "validation": {
-        "notFound": "'연락처({{contactPoint}})'를 찾을 수 없습니다."
+        "notFound": "{{contactPoint}} 연락처 를 찾을 수 없습니다."
       }
     },
     "continue-matching-indicator": {
-      "content-route-continue-matching-other-policies": "이 경로는 계속 다른 정책과 비교 후 적용 여부가 결정됩니다"
+      "content-route-continue-matching-other-policies": "이 경로는 계속해서 다른 정책과 일치하는지 확인합니다."
     },
     "copy-to-clipboard": "'{{label}}'을(를) 클립보드로 복사",
     "create-alert-from-panel": {
@@ -1000,7 +1000,7 @@
     },
     "create-metadata": {
       "label": {
-        "contact-point": "알림 전송처:",
+        "contact-point": "알림이 전송되는 곳:",
         "dashboard": "대시보드",
         "dashboard-and-panel": "대시보드 및 패널",
         "evaluation-interval": "평가 간격",
@@ -1154,8 +1154,9 @@
       "api-machinery": {
         "with-causes": ""
       },
-      "failedWith": "{{status}}(으)로 인해 {{-config}} 실패: {{-message}}",
-      "time-interval-in-use": ""
+      "failedWith": "{{-config}}{{status}}{{-message}}으)로 인해 에 실패했습니다: ",
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1164,7 +1165,7 @@
       }
     },
     "evaluation-behavior-summary": {
-      "evaluate": "모든 {{interval}}",
+      "evaluate": "{{interval}}매",
       "label-evaluate": "평가",
       "label-evaluation-time": "평가 시간",
       "label-last-evaluation": "마지막 평가",
@@ -1195,7 +1196,7 @@
     "existing-silence-editor-page": {
       "page-nav": {
         "text": {
-          "edit-silence": "알림 끄기 편집"
+          "edit-silence": "무음 편집"
         }
       }
     },
@@ -1279,9 +1280,9 @@
       "delete-modal-confirmation-text": "삭제",
       "delete-modal-delete-button": "삭제",
       "delete-modal-deleting": "삭제 중…",
-      "delete-modal-text": "계속하면 <1>{{folderName}}</1> 폴더의 모든 경고 규칙이 삭제됩니다. 중첩된 폴더는 영향을 받지 않습니다.",
+      "delete-modal-text": "{{folderName}}이 작업을 수행하면 폴더의 모든 알림 규칙이 삭제됩니다. 중첩된 폴더에는 영향을 미치지 않습니다.",
       "delete-modal-title": "삭제",
-      "error": "폴더에 대한 작업 실행 실패: {{error}}",
+      "error": "{{error}} 폴더 작업 실행 실패:",
       "pause": {
         "button": {
           "label": "모든 규칙 일시 중지"
@@ -1322,7 +1323,7 @@
       "add-alert-data-to-payload": "페이로드에 경고 데이터 추가",
       "alert-options": {
         "label": {
-          "firing": "발생 중",
+          "firing": "발사 중",
           "resolved": "해결됨"
         }
       },
@@ -1384,7 +1385,7 @@
       "text": {
         "alerting": "경고 중",
         "error": "오류",
-        "firing": "발생 중",
+        "firing": "발사",
         "inactive": "비활성",
         "no-data": "데이터 없음",
         "ok": "확인",
@@ -1610,17 +1611,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "정말 가져오기를 시작하시겠어요? 이 작업을 수행하면 Grafana Alerting에 새로운 리소스가 생성됩니다.",
         "confirm": "가져오기 시작",
@@ -1640,7 +1630,7 @@
         "no-rules-body-yaml": "가져올 규칙이 없습니다. 다른 yaml 파일을 선택해 주세요.",
         "no-rules-title": "가져올 규칙 없음",
         "not-using-rules-managed-by-integrations-or-plugins": {
-          "text": "통합이나 플러그인으로 관리되는 규칙을 Grafana 관리 규칙으로 가져와서는 안 됩니다.",
+          "text": "통합이나 플러그인에서 관리하는 규칙은 Grafana에서 관리하는 규칙으로 가져오면 안 됩니다.",
           "title": "정보"
         },
         "plugin-rules-warning": {
@@ -1668,26 +1658,6 @@
       "info-description": "이 마법사는 외부 소스에서 경고 규칙과 알림 리소스를 가져와 Grafana Alerting에 적용할 수 있도록 도와줍니다. 자세한 내용은 <2>문서</2>를 참고해 주세요.",
       "info-title": "가져오기 마법사",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "기존 네임스페이스를 검색하려면 입력하세요",
         "label": "네임스페이스"
@@ -1711,10 +1681,6 @@
         "filter": "필터",
         "folder": "대상 폴더",
         "heading": "가져오기 검토",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "네임스페이스",
         "nothing": "가져올 항목 없음",
         "nothing-desc": "두 단계 모두 건너뛰었습니다. 뒤로 돌아가서 하나 이상의 가져오기 소스를 구성하세요.",
@@ -1741,10 +1707,6 @@
         "validation-warning": "충돌을 방지하기 위해 일부 리소스의 이름이 변경됩니다.",
         "will-import-config": "이 구성 가져올 예정",
         "will-import-rules": "규칙 가져올 예정",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_other": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_other": "규칙 {{count}}개 가져올 예정"
       },
       "routing-tree": {
@@ -1855,23 +1817,19 @@
         "cancel-confirm-title": "가져오기를 취소하시겠어요?",
         "cancel-confirm-yes": "변경 사항 삭제",
         "skip": "건너뛰기",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "알림 리소스",
         "step-notifications-desc": "연락처, 정책, 템플릿",
         "step-review": "검토 및 가져오기",
         "step-review-desc": "가져오기 미리 보기 및 확인",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "경고 규칙",
         "step-rules-desc": "경고 및 기록 규칙"
       },
       "yaml": {
-        "description": "가져올 Prometheus 호환 YAML 파일을 선택합니다.",
+        "description": "가져올 Prometheus 호환 YAML 파일을 선택하세요.",
         "label": "Prometheus YAML 파일",
         "required-message": "파일을 선택해 주세요.",
         "target-datasource": "대상 데이터 소스",
-        "target-datasource-description": "가져온 규칙으로 쿼리할 데이터 소스를 선택합니다. 가져온 규칙에 사용된 메트릭을 이 데이터 소스에서 사용할 수 있는지 확인하세요.",
+        "target-datasource-description": "가져온 규칙에서 쿼리할 데이터 소스를 선택합니다. 가져온 규칙에 사용되는 메트릭을 이 데이터 소스에서 사용할 수 있는지 확인하세요.",
         "target-datasource-required": "대상 데이터 소스를 선택하세요."
       },
       "yaml-error": "YAML 파일 파싱에 실패: {{error}}",
@@ -2015,7 +1973,7 @@
         "new-alert-rule": "새 경고 규칙",
         "new-ds-managed-recording-rule": "새 데이터 소스 관리 기록 규칙",
         "new-grafana-alerting-rule": "새 경고 규칙",
-        "new-grafana-recording-rule": "새 기록 규칙",
+        "new-grafana-recording-rule": "새로운 녹음 규칙",
         "new-recording-rule": "새 기록 규칙",
         "no-rules-created": "아직 생성한 규칙이 없습니다",
         "provisioning": "파일 프로비저닝 또는 Terraform을 통해 규칙을 정의할 수도 있습니다"
@@ -2051,7 +2009,7 @@
     },
     "log-timeline-viewer": {
       "label": {
-        "firing": "발생 중",
+        "firing": "발사 중",
         "mixed": "혼합",
         "no-data": "데이터 없음",
         "normal": "정상",
@@ -2073,7 +2031,7 @@
       "start-state": "시작 상태",
       "timeline-hidden": "상태 필터가 활성화되어 있을 때 타임라인이 숨겨져 있습니다.",
       "title-error-fetching-the-state-history": "상태 이력을 가져오는 중에 오류 발생",
-      "tooltip-common-labels": "일반 라벨은 모든 경고 인스턴스에 첨부되는 라벨입니다"
+      "tooltip-common-labels": "공통 라벨은 모든 알림 인스턴스에 연결되는 라벨입니다."
     },
     "manage-permissions": {
       "button": "권한 관리",
@@ -2175,7 +2133,7 @@
     },
     "mute-timing-time-interval": {
       "add-another-time-interval-item": "다른 시간 간격 항목 추가",
-      "description": "시간 간격 항목은 시간의 특정 시점을 정의합니다. 모든 필드는 목록이며, 필드와 일치하려면 하나 이상의 목록 요소를 충족해야 합니다. 필드를 비워두면 시간의 모든 시점이 필드와 일치하게 됩니다. 시간의 시점이 시간 간격과 완전히 일치하려면 모든 필드가 일치해야 합니다. 시간 간격에는 여러 개의 시간 간격 항목이 포함될 수 있습니다.",
+      "description": "시간 간격 항목은 특정 시점을 정의합니다. 모든 필드는 목록이며, 필드와 일치하려면 목록 요소 중 하나 이상을 충족해야 합니다. 필드를 비워 두면 시간의 모든 시점이 해당 필드와 일치합니다. 특정 시점이 전체 시간 간격과 일치하려면 모든 필드가 일치해야 합니다. 하나의 시간 간격에는 여러 개의 시간 간격 항목이 포함될 수 있습니다.",
       "description-dats-of-the-month": "매달 특정 날짜, 특정 달의 1:31. 음수 값을 사용하여 월말에 시작되는 날을 나타낼 수 있습니다",
       "description-months": "1년의 달을 숫자 또는 달 이름으로 나타냅니다",
       "label-days-of-the-month": "매달 특정 날짜",
@@ -2192,7 +2150,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "다른 시간 범위 추가",
-      "content-this-time-interval-is-disabled": "이 시간 간격은 비활성화되었습니다",
+      "content-this-time-interval-is-disabled": "이 시간 간격은 사용할 수 없습니다.",
       "description-time-range": "시작 시간을 포함하고 종료 시간을 제외한 시간(위치를 선택하지 않은 경우 UTC, 그렇지 않은 경우 현지 시간)",
       "label-end-time": "종료 시간",
       "label-start-time": "시작 시간",
@@ -2639,7 +2597,7 @@
     "provisioning": {
       "badge-tooltip-provenance": "이 리소스는 {{provenance}}을(를) 통해 프로비저닝되었으며 UI를 통해 편집할 수 없습니다.",
       "badge-tooltip-standard": "이 리소스는 프로비저닝되었으며 UI를 통해 편집할 수 없습니다.",
-      "body-imported": "{{resource}}는 외부 Alertmanager에서 온 통합이 포함되었고 현재 읽기 전용입니다. 마이그레이션 프로세스가 완료된 후에 통합을 편집할 수 있습니다.",
+      "body-imported": "{{resource}}에는 외부 Alertmanager에서 가져온 통합이 포함되어 있으며 현재 읽기 전용입니다. 마이그레이션 프로세스가 완료되면 통합을 편집할 수 있습니다.",
       "body-imported-time-interval": "이 시간 간격은 외부 Alertmanager에서 가져온 것이며 현재 읽기 전용입니다. 마이그레이션 프로세스가 완료된 후 시간 간격을 편집할 수 있습니다.",
       "body-provisioned": "이 {{resource}}이(가) 프로비저닝되었으며, 이는 구성에 의해 생성되었음을 의미합니다. 이 {{resource}}을(를) 업데이트하려면 서버 관리자에게 문의하세요.",
       "title-imported": "이 {{resource}}은(는) 가져온 항목으로 UI에서 편집할 수 없습니다",
@@ -2691,7 +2649,7 @@
       "testRule": "테스트 규칙"
     },
     "receiver-filter": {
-      "aria-label-contact-points": "연락처로 필터링",
+      "aria-label-contact-points": "연락처 지점으로 필터링",
       "contact-point": "연락처",
       "no-grouping": "그룹화 없음",
       "placeholder-contact-point": "연락처로 필터링",
@@ -2914,13 +2872,13 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "다음 값을 초과할 때 경고(또는 보류 상태) 중지",
+          "stop-alerting-above": "다음 값을 초과하면 알림(또는 보류 상태)을 중지합니다.",
           "stop-alerting-bellow": "다음 값 미만일 때 경고(또는 보류 상태) 중지",
-          "stop-alerting-equal": "다음 값과 같을 때 경고(또는 보류 상태) 중지",
-          "stop-alerting-inside-range": "다음 범위 내에 있을 때 경고(또는 보류 상태) 중지",
-          "stop-alerting-less": "다음 값보다 적을 때 경고(또는 보류 상태) 중지",
+          "stop-alerting-equal": "다음 값과 같으면 알림(또는 보류 상태) 중지",
+          "stop-alerting-inside-range": "범위 내에 있을 때 알림(또는 보류 상태) 중지",
+          "stop-alerting-less": "다음 값 미만일 때 경고(또는 보류 상태) 중지",
           "stop-alerting-more": "다음 값보다 클 때 경고(또는 보류 상태) 중지",
-          "stop-alerting-outside-range": "다음 범위를 벗어날 때 경고(또는 보류 상태) 중지",
+          "stop-alerting-outside-range": "범위를 벗어나면 알림(또는 보류 상태) 중지",
           "title": "사용자 지정 복구 임계값"
         }
       }
@@ -2954,7 +2912,7 @@
     "rule-list": {
       "configure-datasource": "구성",
       "ds-error": {
-        "title": "이 데이터 소스에 대한 규칙을 불러올 수 없음"
+        "title": "이 데이터 소스의 규칙을 불러올 수 없습니다"
       },
       "ds-error-boundary": {
         "description": "데이터 소스 구성을 확인하세요. 데이터 소스가 Prometheus API를 지원하나요?",
@@ -3092,7 +3050,7 @@
         "success": "규칙 평가 재개됨"
       },
       "state": {
-        "firing": "발생 중",
+        "firing": "발사 중",
         "normal": "일반",
         "pending": "대기 중",
         "recovering": "복구 중"
@@ -3257,8 +3215,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3275,9 +3237,50 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3288,6 +3291,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_other": ""
       },
@@ -3579,8 +3584,9 @@
       "saving": "시간 간격 저장 중"
     },
     "time-interval-form": {
-      "description-unique-time-interval": "시간 간격에 대한 고유한 이름",
-      "text-loading-time-interval": "시간 간격 불러오는 중",
+      "description-unique-time-interval": "시간 간격의 고유한 이름",
+      "error-save-time-interval": "",
+      "text-loading-time-interval": "로딩 시간 간격",
       "title-no-matching-time-interval-found": "일치하는 시간 간격을 찾을 수 없음"
     },
     "time-intervals": {
@@ -3598,8 +3604,8 @@
     },
     "time-intervals-table": {
       "text-havent-created-time-intervals": "아직 시간 간격을 생성하지 않았습니다",
-      "text-loading-time-intervals": "시간 간격 불러오는 중...",
-      "text-no-time-intervals-configured": "구성된 시간 간격이 없음"
+      "text-loading-time-intervals": "로딩 시간 간격을 불러오는 중...",
+      "text-no-time-intervals-configured": "구성된 시간 간격이 없습니다"
     },
     "timeseries-row": {
       "time-series-data": "시계열 데이터",
@@ -3698,8 +3704,8 @@
       "add-expression": "표현식 추가"
     },
     "unknown-contact-point-details": {
-      "unknown-contact-point": "알 수 없는 연락처",
-      "unknown-contact-point-tooltip": "세부 정보를 찾을 수 없습니다. 연락처에 대한 액세스 권한이 없기 때문일 수 있습니다"
+      "unknown-contact-point": "알 수 없는 연락 지점",
+      "unknown-contact-point-tooltip": "세부 정보를 찾을 수 없습니다. 연락처에 액세스할 권한이 없기 때문일 수 있습니다."
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": "알 수 없는 규칙 유형"
@@ -3821,6 +3827,8 @@
     },
     "wizard-import-to-gma": {
       "error": "리소스 가져오기 실패",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Grafana Alerting으로 리소스를 성공적으로 가져왔습니다."
     },
     "yaml-content-info": {
@@ -3863,7 +3871,7 @@
     "name-folder": "폴더",
     "name-group-by": "그룹화 기준",
     "name-group-mode": "그룹 모드",
-    "name-max-items": "항목 최대 한도",
+    "name-max-items": "항목 최대 수",
     "name-no-data": "데이터 없음",
     "name-normal": "일반",
     "name-pending": "대기 중",
@@ -3930,8 +3938,8 @@
     "name-show-time": "시간 표시",
     "name-show-user": "사용자 표시",
     "name-tags": "태그",
-    "name-time-after": "다음 이후 시간:",
-    "name-time-before": "다음 이전 시간:",
+    "name-time-after": "이후 시간",
+    "name-time-before": "이전 시간",
     "name-time-range": "시간 범위",
     "query-filter-options": {
       "label-all-dashboards": "모든 대시보드",
@@ -6006,6 +6014,7 @@
       "new-row-title": "새 행",
       "row": {
         "collapse": "{{title}} 행 접기",
+        "copy-link": "",
         "expand": "{{title}} 행 펼치기",
         "new": "새 행",
         "repeat": {
@@ -6674,7 +6683,7 @@
       "datasources-title": "데이터 소스 구성",
       "description": "이 대시보드에는 데이터 소스 구성이 필요합니다. 아래의 각 입력에 대한 데이터 소스를 선택합니다.",
       "preview": "대시보드 미리보기",
-      "auto-mapped_other": "{{count}}개 데이터 소스가 자동으로 구성되었습니다."
+      "auto-mapped_other": "{{count}}개 데이터 소스가 자동으로 구성되었습니다:"
     },
     "community-mapping-select-datasource": "데이터 소스 선택",
     "compatibility-auto-map-failed": "이 대시보드의 모든 데이터 소스 입력을 자동으로 매핑할 수 없습니다. 호환성 검사를 위해 모든 데이터 소스 변수를 확인해야 합니다.",
@@ -7884,7 +7893,7 @@
     "name-folder": "폴더",
     "name-include-current-template-variables": "현재 템플릿 변수 값 포함",
     "name-include-current-time-range": "현재 시간 범위 포함",
-    "name-max-items": "항목 최대 한도",
+    "name-max-items": "항목 최대 수",
     "name-query": "쿼리",
     "name-recently-viewed": "최근 뷰",
     "name-search": "검색",
@@ -8856,11 +8865,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -11639,6 +11651,7 @@
       "no-details": "표시할 필드가 없습니다.",
       "open-assistant": "",
       "pin-line": "로그 고정",
+      "prettify": "",
       "remove-displayed-field": "필드 제거",
       "remove-log": "로그 제거",
       "scroll-to-logline": "로그 라인으로 스크롤",
@@ -12352,7 +12365,7 @@
     },
     "machine-learning": {
       "subtitle": "AI 및 머신 러닝 기능 탐색",
-      "title": "AI 및 머신 러닝"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "폴더 대시보드 및 권한 관리"
@@ -12670,6 +12683,29 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12677,6 +12713,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -12705,8 +12750,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14235,6 +14280,12 @@
     "shared": {
       "branch-description": "프로비저닝에 사용할 브랜치",
       "branch-label": "브랜치",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -15973,6 +16024,9 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
     },
     "options": {
       "render-mode": ""

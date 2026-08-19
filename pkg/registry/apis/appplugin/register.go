@@ -25,8 +25,8 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -87,8 +87,7 @@ type AppPluginAPIBuilder struct {
 }
 
 func NewAppPluginAPIBuilder(
-	plugin pluginspec.PluginInfo,
-	apiVersion string,
+	plugin definition.PluginDefinition,
 	client PluginClient, // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
@@ -124,16 +123,16 @@ func RegisterAPIService(
 	cfg *setting.Cfg,
 ) (*AppPluginAPIBuilder, error) {
 	ctx := context.Background()
-	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsRegisterAPIServer, false, openfeature.TransactionContext(ctx)) {
+	getflag := func(f string) bool {
+		return openfeature.NewDefaultClient().Boolean(ctx, f, false, openfeature.TransactionContext(ctx))
+	}
+	if !getflag(featuremgmt.FlagApppluginsRegisterAPIServer) {
 		return nil, nil
 	}
-	registerProxy := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx))
-
-	loadAppManifest := true // always check for app manifest file (use feature toggle)
 
 	// Find all local plugins
-	pluginInfos, err := pluginspec.LoadPlugins(ctx, pluginSources,
-		func(jsonData plugins.JSONData) bool {
+	pluginDefs, err := definition.LoadPluginDefinition(ctx, pluginSources, definition.Options{
+		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
 				// TODO? should we fail more loudly
 				if !strings.Contains(jsonData.ID, "-") || strings.Contains(jsonData.ID, ".") || jsonData.ID == "v1" {
@@ -143,22 +142,24 @@ func RegisterAPIService(
 				return true
 			}
 			return false
-		}, true, loadAppManifest)
+		},
+		Schemas:     true,
+		AppManifest: getflag(featuremgmt.FlagApppluginsLoadAppManifest),
+	})
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
 	}
 
 	var last *AppPluginAPIBuilder
-	for _, plugin := range pluginInfos {
+	for _, plugin := range pluginDefs {
 		b, err := NewAppPluginAPIBuilder(plugin,
-			apppluginV0.VERSION, // v0alpha1
-			pluginClient,        // scoped to a single plugin!
+			pluginClient, // scoped to a single plugin!
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
 			AppPluginRunnerOptions{
-				RegisterProxy: registerProxy, // FROM feature toggles
+				RegisterProxy: getflag(featuremgmt.FlagApppluginsHandleProxyRequests),
 				LegacyStore:   NewLegacySettingsStore(plugin.JSONData.ID, pluginSettings),
 				AccessControl: accessControl,
 
