@@ -30,16 +30,15 @@ WHERE u.is_service_account = FALSE
 {{ if .AuthModule -}}
   AND user_auth.auth_module = {{ .Arg .AuthModule }}
 {{ end -}}
-{{ range .Filters -}}
-{{ if .IsIn -}}
+{{ range .InFilters -}}
 {{ if .Values -}}
   AND {{ $.Ident .Condition }} IN ({{ $.ArgList .Values }})
 {{ else -}}
   AND 0 = 1
 {{ end -}}
-{{ else -}}
-  AND {{ .Prefix }}{{ if .HasValue }}{{ $.Arg .Value }}{{ end }}{{ .Suffix }}
 {{ end -}}
+{{ range .WhereFilters -}}
+  AND {{ .Prefix }}{{ if .HasValue }}{{ $.Arg .Value }}{{ end }}{{ .Suffix }}
 {{ end -}}
 {{ end -}}
 SELECT

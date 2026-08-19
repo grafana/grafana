@@ -694,17 +694,16 @@ type searchUserJoin struct {
 	Condition string
 }
 
-type searchUserFilter struct {
+type searchUserInFilter struct {
 	Condition string
 	Values    []any
-	Prefix    string
-	Suffix    string
-	Value     any
-	HasValue  bool
 }
 
-func (q searchUserFilter) IsIn() bool {
-	return q.Values != nil
+type searchUserWhereFilter struct {
+	Prefix   string
+	Suffix   string
+	Value    any
+	HasValue bool
 }
 
 type searchUsersQuery struct {
@@ -718,7 +717,8 @@ type searchUsersQuery struct {
 	QueryPattern  string
 	IsDisabled    *bool
 	AuthModule    string
-	Filters       []searchUserFilter
+	InFilters     []searchUserInFilter
+	WhereFilters  []searchUserWhereFilter
 	Sorts         []string
 	Limit         int
 	Offset        int
@@ -729,10 +729,7 @@ func (q searchUsersQuery) IsDisabledValue() bool {
 }
 
 func (q searchUsersQuery) Validate() error {
-	for _, filter := range q.Filters {
-		if filter.IsIn() {
-			continue
-		}
+	for _, filter := range q.WhereFilters {
 		if filter.Prefix == "" && filter.Suffix == "" && !filter.HasValue {
 			return fmt.Errorf("search filter condition must not be empty")
 		}
@@ -757,19 +754,19 @@ func searchInFilterArgs(params any) []any {
 	return args
 }
 
-func newSearchUserWhereFilter(condition string, params any) (searchUserFilter, error) {
+func newSearchUserWhereFilter(condition string, params any) (searchUserWhereFilter, error) {
 	parts := strings.Split(condition, "?")
 	if len(parts) == 1 {
 		if params != nil {
-			return searchUserFilter{}, fmt.Errorf("search filter condition has no placeholder for its value")
+			return searchUserWhereFilter{}, fmt.Errorf("search filter condition has no placeholder for its value")
 		}
-		return searchUserFilter{Prefix: condition}, nil
+		return searchUserWhereFilter{Prefix: condition}, nil
 	}
 	if len(parts) != 2 {
-		return searchUserFilter{}, fmt.Errorf("search filter condition must have one placeholder")
+		return searchUserWhereFilter{}, fmt.Errorf("search filter condition must have one placeholder")
 	}
 
-	return searchUserFilter{
+	return searchUserWhereFilter{
 		Prefix:   parts[0],
 		Suffix:   parts[1],
 		Value:    params,
@@ -777,9 +774,10 @@ func newSearchUserWhereFilter(condition string, params any) (searchUserFilter, e
 	}, nil
 }
 
-func buildSearchUserFilters(dbHelper *legacysql.LegacyDatabaseHelper, filters []user.Filter) ([]searchUserJoin, []searchUserFilter, error) {
+func buildSearchUserFilters(dbHelper *legacysql.LegacyDatabaseHelper, filters []user.Filter) ([]searchUserJoin, []searchUserInFilter, []searchUserWhereFilter, error) {
 	joins := make([]searchUserJoin, 0)
-	queryFilters := make([]searchUserFilter, 0)
+	inFilters := make([]searchUserInFilter, 0)
+	whereFilters := make([]searchUserWhereFilter, 0)
 
 	for _, filter := range filters {
 		if join := filter.JoinCondition(); join != nil {
@@ -793,7 +791,7 @@ func buildSearchUserFilters(dbHelper *legacysql.LegacyDatabaseHelper, filters []
 
 		if in := filter.InCondition(); in != nil {
 			values := searchInFilterArgs(in.Params)
-			queryFilters = append(queryFilters, searchUserFilter{
+			inFilters = append(inFilters, searchUserInFilter{
 				Condition: in.Condition,
 				Values:    values,
 			})
@@ -802,13 +800,13 @@ func buildSearchUserFilters(dbHelper *legacysql.LegacyDatabaseHelper, filters []
 		if where := filter.WhereCondition(); where != nil {
 			queryFilter, err := newSearchUserWhereFilter(where.Condition, where.Params)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
-			queryFilters = append(queryFilters, queryFilter)
+			whereFilters = append(whereFilters, queryFilter)
 		}
 	}
 
-	return joins, queryFilters, nil
+	return joins, inFilters, whereFilters, nil
 }
 
 func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
@@ -828,7 +826,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		}
 
 		accessAll := strings.TrimSpace(acFilter.Where) == "1 = 1"
-		joins, queryFilters, err := buildSearchUserFilters(dbHelper, query.Filters)
+		joins, inFilters, whereFilters, err := buildSearchUserFilters(dbHelper, query.Filters)
 		if err != nil {
 			return err
 		}
@@ -850,7 +848,8 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			AccessUserIDs: acFilter.Args,
 			QueryPattern:  searchQueryPattern(query.Query),
 			IsDisabled:    query.IsDisabled,
-			Filters:       queryFilters,
+			InFilters:     inFilters,
+			WhereFilters:  whereFilters,
 			Sorts:         sorts,
 			AuthModule:    query.AuthModule,
 		}

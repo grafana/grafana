@@ -43,11 +43,13 @@ func TestTemplates(t *testing.T) {
 				Alias:     "user_stats",
 				Condition: "user_stats.user_id = u.id",
 			}}
-			query.Filters = []searchUserFilter{
+			query.InFilters = []searchUserInFilter{
 				{
 					Condition: "user_stats.billing_role",
 					Values:    []any{"admin", "editor"},
 				},
+			}
+			query.WhereFilters = []searchUserWhereFilter{
 				{
 					Prefix:   "is_admin = ",
 					Value:    true,
@@ -61,9 +63,9 @@ func TestTemplates(t *testing.T) {
 		return query
 	}
 	emptyInSearchQuery := searchQuery(false)
-	emptyInSearchQuery.Filters = []searchUserFilter{{Condition: "user_stats.billing_role", Values: []any{}}}
+	emptyInSearchQuery.InFilters = []searchUserInFilter{{Condition: "user_stats.billing_role", Values: []any{}}}
 	emptyInCountSearchQuery := searchQuery(false)
-	emptyInCountSearchQuery.Filters = []searchUserFilter{{Condition: "user_stats.billing_role", Values: []any{}}}
+	emptyInCountSearchQuery.InFilters = []searchUserInFilter{{Condition: "user_stats.billing_role", Values: []any{}}}
 
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
@@ -226,11 +228,13 @@ func TestSearchUsersQueryArguments(t *testing.T) {
 		QueryPattern:  "%ops%",
 		IsDisabled:    new(true),
 		AuthModule:    "oauth",
-		Filters: []searchUserFilter{
+		InFilters: []searchUserInFilter{
 			{
 				Condition: "user_stats.billing_role",
 				Values:    []any{"admin", "editor"},
 			},
+		},
+		WhereFilters: []searchUserWhereFilter{
 			{
 				Prefix:   "is_admin = ",
 				Value:    true,
@@ -316,7 +320,7 @@ func TestSearchUserWhereFilterRendersTrailingSQLAfterValue(t *testing.T) {
 		UserTable:     "test_schema.user",
 		UserAuthTable: "test_schema.user_auth",
 		AccessAll:     true,
-		Filters:       []searchUserFilter{filter},
+		WhereFilters:  []searchUserWhereFilter{filter},
 	}
 	rawSQL, err := renderUserQuery(searchUsersTemplate, query)
 	require.NoError(t, err)
@@ -349,7 +353,7 @@ func TestBuildSearchUserFilters(t *testing.T) {
 		},
 	}
 
-	joins, filters, err := buildSearchUserFilters(dbHelper, []user.Filter{
+	joins, inFilters, whereFilters, err := buildSearchUserFilters(dbHelper, []user.Filter{
 		testSearchUserFilter{
 			join: &user.JoinCondition{
 				Operator: "INNER",
@@ -374,21 +378,23 @@ func TestBuildSearchUserFilters(t *testing.T) {
 		Alias:     "user_stats",
 		Condition: "user_stats.user_id = u.id",
 	}}, joins)
-	require.Equal(t, []searchUserFilter{
+	require.Equal(t, []searchUserInFilter{
 		{
 			Condition: "user_stats.billing_role",
 			Values:    []any{"admin", "editor"},
 		},
+	}, inFilters)
+	require.Equal(t, []searchUserWhereFilter{
 		{
 			Prefix:   "is_admin = ",
 			Value:    true,
 			HasValue: true,
 		},
-	}, filters)
+	}, whereFilters)
 }
 
 func TestBuildSearchUserFiltersRejectsMalformedWhereCondition(t *testing.T) {
-	_, _, err := buildSearchUserFilters(&legacysql.LegacyDatabaseHelper{}, []user.Filter{
+	_, _, _, err := buildSearchUserFilters(&legacysql.LegacyDatabaseHelper{}, []user.Filter{
 		testSearchUserFilter{where: &user.WhereCondition{
 			Condition: "is_admin = ? AND is_disabled = ?",
 			Params:    true,
@@ -402,5 +408,5 @@ func TestQueryValidation(t *testing.T) {
 	require.ErrorIs(t, (&signedInUserQuery{}).Validate(), user.ErrNoUniqueID)
 	require.ErrorContains(t, (&batchDisableUsersQuery{}).Validate(), "user IDs must not be empty")
 	require.ErrorContains(t, (&getUserQuery{}).Validate(), "invalid user identifier column")
-	require.NoError(t, (&searchUsersQuery{Filters: []searchUserFilter{{Condition: "user_id", Values: []any{}}}}).Validate())
+	require.NoError(t, (&searchUsersQuery{InFilters: []searchUserInFilter{{Condition: "user_id", Values: []any{}}}}).Validate())
 }
