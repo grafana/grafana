@@ -37,7 +37,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
             <Icon name={solution.icon} size="lg" />
           </div>
           <Stack direction="column" gap={0}>
-            <Text element="h3" variant="h5">
+            <Text element="h3" variant="h6">
               {solution.title}
             </Text>
             <Stack direction="row" gap={1} alignItems="center">
@@ -62,6 +62,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           stats={solution.stats}
           refinedStats={solution.refinedStats}
           sparkline={solution.sparkline}
+          compact
           gap={3}
         />
 
@@ -81,6 +82,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         ) : cta ? (
           <LinkButton
             href={cta.href}
+
             fill="text"
             size="sm"
             icon="angle-right"
@@ -124,7 +126,7 @@ export function AvailableSolutionCard({ solution, offer }: AvailableSolutionCard
             <Icon name={solution.icon} size="lg" />
           </div>
           <Stack direction="column" gap={0}>
-            <Text element="h3" variant="h5">
+            <Text element="h3" variant="h6">
               {solution.title}
             </Text>
             <Text variant="bodySmall" color="secondary">
@@ -183,13 +185,13 @@ export function SolutionCardSkeleton() {
         <Stack direction="row" gap={1.5} alignItems="center">
           <Skeleton width={32} height={32} />
           <Stack direction="column" gap={0}>
-            <Skeleton width={180} height={20} />
+            <Skeleton width={180} height={18} />
             <Skeleton width={80} />
           </Stack>
         </Stack>
       </Card.Heading>
       <Card.Description className={styles.content}>
-        <Skeleton width={130} height={32} />
+        <Skeleton width={130} height={24} />
         <Skeleton width="100%" height={20} />
       </Card.Description>
       <Card.Actions>
@@ -202,7 +204,7 @@ export function SolutionCardSkeleton() {
 const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
   card: css({
     height: '100%',
-    minHeight: theme.spacing(30),
+    minHeight: theme.spacing(22),
     background: theme.colors.background.canvas,
     border: `1px solid ${theme.colors.border.weak}`,
     ...(needsAttention && {
