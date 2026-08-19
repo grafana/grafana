@@ -310,7 +310,11 @@ jobs:
         if: steps.check-skip.outputs.skipped == 'false'
         run: |
           if [[ "${{ needs.coverage.result }}" != "success" ]]; then
-            echo "❌ Coverage checks failed for one or more teams — see the job summary above for details."
+            # Job summaries render on the *run's* summary page, never on this job's own
+            # log page (which is where the failed check's "Details" link lands) — so
+            # print the run URL directly; GitHub autolinks it in the log.
+            echo "❌ Coverage checks failed for one or more teams."
+            echo "👉 ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for the full report."
             exit 1
           fi
           echo "✅ All coverage metrics were maintained, improved, or within tolerance."
