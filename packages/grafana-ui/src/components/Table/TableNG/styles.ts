@@ -173,6 +173,17 @@ export const getGridStyles = memoize(
             // rounded corners) doesn't clip this: it governs the cell's own content, not a
             // box-shadow painted at its border edge.
             boxShadow: '0 -1px 0 0 var(--rdg-header-background-color)',
+            // Backs the settle highlight (see getColumnSettleStyles): a plain transition rather than
+            // a @keyframes animation, so a background-color change mid-transition (the settle class
+            // toggling off, or a theme switch changing the color itself) blends smoothly from
+            // whatever's currently rendered instead of a keyframe animation restarting from a fixed
+            // "from" color computed under the old theme.
+            [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+              transition: theme.transitions.create('background-color', {
+                duration: COLUMN_SETTLE_MS,
+                easing: 'ease-out',
+              }),
+            },
           },
           // The `.rdg-cell.rdg-cell-frozen` rule above (for solid, occluding frozen body cells)
           // also matches frozen *header* cells, at higher specificity than the plain `.rdg-cell`
@@ -271,23 +282,16 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
 );
 
 // `table.refresh`: a brief highlight applied to a column's header after it's reordered or pinned,
-// so the change is noticeable even though the column itself doesn't move far.
+// so the change is noticeable even though the column itself doesn't move far. A plain background
+// color rather than a @keyframes animation: the header cell's own `background-color` transition
+// (see the `.rdg-header-row > .rdg-cell` rule above) picks this up and animates both in and back
+// out on its own, and — unlike a keyframe animation, which restarts from a fixed "from" color
+// whenever this class's underlying CSS regenerates under a new theme — a transition just retargets
+// smoothly from whatever's currently rendered, so switching themes mid-highlight doesn't jump.
 export const getColumnSettleStyles = memoize((theme: GrafanaTheme2, tableRefreshEnabled?: boolean) => {
-  const { headerCellBackgroundColor, headerCellDragTargetBackgroundColor } = buildHeaderColors(
-    theme,
-    false,
-    tableRefreshEnabled
-  );
+  const { headerCellDragTargetBackgroundColor } = buildHeaderColors(theme, false, tableRefreshEnabled);
   return css({
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      animationName: 'table-ng-column-settle',
-      animationDuration: `${COLUMN_SETTLE_MS}ms`,
-      animationTimingFunction: 'ease-out',
-    },
-    '@keyframes table-ng-column-settle': {
-      from: { backgroundColor: headerCellDragTargetBackgroundColor },
-      to: { backgroundColor: headerCellBackgroundColor },
-    },
+    backgroundColor: headerCellDragTargetBackgroundColor,
   });
 });
 
