@@ -63,10 +63,12 @@ describe('ReportRenderReadinessObserver — repeat panel render readiness', () =
     jest.useRealTimers();
   });
 
-  function setupProfiledDashboard() {
+  function setupProfiledDashboard(withQueryController = true) {
     const profiler = new performanceUtils.SceneRenderProfiler();
     const queryController = new behaviors.SceneQueryController({ enableProfiling: true }, profiler);
-    performanceUtils.getScenePerformanceTracker().addObserver(new ReportRenderReadinessObserver(queryController));
+    performanceUtils
+      .getScenePerformanceTracker()
+      .addObserver(new ReportRenderReadinessObserver(withQueryController ? queryController : undefined));
     queryController.startProfile('dashboard_view');
     return queryController;
   }
@@ -142,6 +144,20 @@ describe('ReportRenderReadinessObserver — repeat panel render readiness', () =
     // Would still be pending at this point under the 3s default, but the configured 500ms grace
     // period has already elapsed.
     jest.advanceTimersByTime(500);
+    expect(channel).toHaveBeenCalledWith(JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: true } }));
+  });
+
+  it('sends REPORT_RENDER_COMPLETE immediately when constructed without a query controller, even with the toggle on', () => {
+    const queryController = setupProfiledDashboard(false);
+
+    // With no query controller to debounce against, the observer falls back to sending as soon as
+    // the profiler's own dashboard_view completion fires — the branch a controller-less load
+    // relies on to avoid hanging the renderer.
+    const variableQuery = makeQueryEntry('variable');
+    queryController.queryStarted(variableQuery);
+    queryController.queryCompleted(variableQuery);
+    jest.advanceTimersByTime(SCENES_POST_STORM_WINDOW_MS + 500);
+
     expect(channel).toHaveBeenCalledWith(JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: true } }));
   });
 
