@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSet } from 'react-use';
@@ -149,10 +150,11 @@ function PolicyTreeTab() {
 
   // Single worker + alert groups query shared by all PoliciesTree instances
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
-  const { currentData: alertGroups, refetch: refetchAlertGroups } = alertmanagerApi.useGetAlertmanagerAlertGroupsQuery(
-    { amSourceName: selectedAlertmanager },
-    { skip: !canSeeAlertGroups || !selectedAlertmanager }
+  const skipAlertGroups = !canSeeAlertGroups || !selectedAlertmanager;
+  const { currentData: alertGroups, refetch } = alertmanagerApi.useGetAlertmanagerAlertGroupsQuery(
+    skipAlertGroups ? skipToken : { amSourceName: selectedAlertmanager }
   );
+  const refetchAlertGroups = skipAlertGroups ? undefined : refetch;
 
   const useMultiplePolicies = isGrafanaAlertmanager;
 
