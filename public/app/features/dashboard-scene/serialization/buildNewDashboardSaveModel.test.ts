@@ -65,6 +65,21 @@ describe('buildNewDashboardSaveModelV1', () => {
     expect(result.dashboard.templating).toBeUndefined();
   });
 
+  describe('preload', () => {
+    const originalDefault = config.dashboardDefaultPreload;
+    afterEach(() => {
+      config.dashboardDefaultPreload = originalDefault;
+    });
+
+    it('seeds preload from the instance default', async () => {
+      config.dashboardDefaultPreload = true;
+      expect((await buildNewDashboardSaveModel()).dashboard.preload).toBe(true);
+
+      config.dashboardDefaultPreload = false;
+      expect((await buildNewDashboardSaveModel()).dashboard.preload).toBe(false);
+    });
+  });
+
   describe('when featureToggles.newDashboardWithFiltersAndGroupBy is true', () => {
     beforeAll(() => {
       config.featureToggles.newDashboardWithFiltersAndGroupBy = true;
@@ -91,6 +106,22 @@ describe('buildNewDashboardSaveModelV2', () => {
   it('should not have template variables defined by default', async () => {
     const result = await buildNewDashboardSaveModelV2();
     expect(result.spec.variables).toEqual([]);
+  });
+
+  describe('preload', () => {
+    const originalDefault = config.dashboardDefaultPreload;
+    afterEach(() => {
+      config.dashboardDefaultPreload = originalDefault;
+    });
+
+    // The v2 schema default is a hardcoded false, so this has to win over the spread.
+    it('seeds preload from the instance default', async () => {
+      config.dashboardDefaultPreload = true;
+      expect((await buildNewDashboardSaveModelV2()).spec.preload).toBe(true);
+
+      config.dashboardDefaultPreload = false;
+      expect((await buildNewDashboardSaveModelV2()).spec.preload).toBe(false);
+    });
   });
 
   describe('when featureToggles.newDashboardWithFiltersAndGroupBy is true', () => {
