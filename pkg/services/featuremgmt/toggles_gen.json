@@ -5778,11 +5778,14 @@
     {
       "metadata": {
         "name": "reportRenderQueryDebounce",
-        "resourceVersion": "1786652038666",
-        "creationTimestamp": "2026-08-13T20:13:58Z"
+        "resourceVersion": "1787159881978",
+        "creationTimestamp": "2026-08-13T20:13:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 17:18:01.978063 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "On the report render page, wait for panel queries to settle (including late-registering repeat panel queries) before signaling the image renderer that the dashboard is done",
+        "description": "On the report render page, wait for panel queries to settle (including late-registering repeat panel queries) before signaling the image renderer that the dashboard is done. Uses the legacy config-based toggle rather than OpenFeature since the render page authenticates via the image-renderer's signed render key rather than a normal user session, and OpenFeature evaluation isn't verified to work reliably in that context.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
