@@ -345,16 +345,25 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 }
 
 func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
-	return s.assistantPluginJSONDataBool(plugin, c, "trialMode")
+	value, ok := s.assistantPluginJSONDataBool(plugin, c, "trialMode")
+	return ok && value
 }
 
 func (s *ServiceImpl) isAssistantOSSMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
-	return s.assistantPluginJSONDataBool(plugin, c, "ossMode")
-}
-
-func (s *ServiceImpl) assistantPluginJSONDataBool(plugin pluginstore.Plugin, c *contextmodel.ReqContext, key string) bool {
 	if plugin.ID != assistantAppID {
 		return false
+	}
+	value, ok := s.assistantPluginJSONDataBool(plugin, c, "ossMode")
+	if !ok {
+		// Match the plugin: unset ossMode means OSS.
+		return true
+	}
+	return value
+}
+
+func (s *ServiceImpl) assistantPluginJSONDataBool(plugin pluginstore.Plugin, c *contextmodel.ReqContext, key string) (bool, bool) {
+	if plugin.ID != assistantAppID {
+		return false, false
 	}
 
 	ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
@@ -362,11 +371,11 @@ func (s *ServiceImpl) assistantPluginJSONDataBool(plugin pluginstore.Plugin, c *
 		OrgID:    c.GetOrgID(),
 	})
 	if err != nil || ps.JSONData == nil {
-		return false
+		return false, false
 	}
 
 	value, ok := ps.JSONData[key].(bool)
-	return ok && value
+	return value, ok
 }
 
 func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes, trialMode, ossMode bool) bool {
@@ -377,7 +386,7 @@ func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin
 		_, allowed := assistantTrialNavigationPaths[include.Path]
 		return allowed
 	}
-	if ossMode || !(s.cfg.IsEnterprise || s.cfg.StackID != "") {
+	if ossMode {
 		_, allowed := assistantOSSNavigationPaths[include.Path]
 		return allowed
 	}

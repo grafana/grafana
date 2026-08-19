@@ -948,55 +948,40 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 
 	for _, tt := range []struct {
 		name           string
-		cfg            *setting.Cfg
-		trialMode      bool
-		ossMode        bool
+		jsonData       map[string]any
 		wantChildPaths []string
 	}{
 		{
-			name:           "OSS only includes supported entries",
-			cfg:            setting.NewCfg(),
+			name:           "unset ossMode defaults to supported OSS entries",
+			jsonData:       map[string]any{},
 			wantChildPaths: ossChildPaths,
 		},
 		{
-			name:           "Enterprise includes all entries",
-			cfg:            &setting.Cfg{IsEnterprise: true},
+			name:           "ossMode only includes supported OSS entries",
+			jsonData:       map[string]any{"ossMode": true},
+			wantChildPaths: ossChildPaths,
+		},
+		{
+			name:           "ossMode false includes all entries",
+			jsonData:       map[string]any{"ossMode": false},
 			wantChildPaths: cloudChildPaths,
 		},
 		{
-			name:           "Cloud includes all entries",
-			cfg:            &setting.Cfg{StackID: "1"},
-			wantChildPaths: cloudChildPaths,
-		},
-		{
-			name:      "Trial mode only includes the homepage and workspace",
-			cfg:       setting.NewCfg(),
-			trialMode: true,
+			name: "Trial mode only includes the homepage and workspace",
+			jsonData: map[string]any{
+				"trialMode": true,
+				"ossMode":   true,
+			},
 			wantChildPaths: []string{
 				"/a/grafana-assistant-app/workspace",
 			},
 		},
-		{
-			name:           "Enterprise ossMode only includes supported OSS entries",
-			cfg:            &setting.Cfg{IsEnterprise: true},
-			ossMode:        true,
-			wantChildPaths: ossChildPaths,
-		},
-		{
-			name:           "Cloud ossMode only includes supported OSS entries",
-			cfg:            &setting.Cfg{StackID: "1"},
-			ossMode:        true,
-			wantChildPaths: ossChildPaths,
-		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			service := ServiceImpl{
-				cfg: tt.cfg,
+				cfg: setting.NewCfg(),
 				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-					assistantAppID: {OrgID: 1, PluginID: assistantAppID, JSONData: map[string]any{
-						"trialMode": tt.trialMode,
-						"ossMode":   tt.ossMode,
-					}},
+					assistantAppID: {OrgID: 1, PluginID: assistantAppID, JSONData: tt.jsonData},
 				}},
 			}
 			treeRoot := navtree.NavTreeRoot{}
