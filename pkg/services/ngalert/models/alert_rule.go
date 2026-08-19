@@ -1127,8 +1127,9 @@ type ListAlertRulesQuery struct {
 	// DataSourceUIDs allows searching for alert rules using data sources
 	// that match any of the given UIDs exactly (case sensitive).
 	DataSourceUIDs []string
-	// SearchTitle allows searching for alert rules that contain
-	// the given string in their title (case insensitive)
+	// SearchTitle allows searching for alert rules whose title contains every
+	// whitespace-separated term of the given string, in any order (case
+	// insensitive).
 	SearchTitle string
 	// SearchRuleGroup allows searching for alert rules in groups that contain
 	// the given string in their name (case insensitive)

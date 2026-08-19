@@ -1511,6 +1511,12 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 	}
 }
 
+func WithConnectionTypes(types []string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningConnectionTypes = types
+	}
+}
+
 func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningPublicRootURL = url
@@ -1628,7 +1634,6 @@ func WithoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
 func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 	return testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagProvisioningExport,
 			featuremgmt.FlagProvisioningUserAttribution,
 			// Lets CleanupAllResources force-delete folders (gracePeriodSeconds=0),

@@ -1,28 +1,30 @@
-import { test } from '@playwright/test';
+import { type Locator, test } from '@playwright/test';
 
 import { PageObject, type PageObjectArgs } from '../PageObject';
 
 import { ConditionalRenderingOptions } from './shared/ConditionalRenderingOptions';
 import { RepeatOptions } from './shared/RepeatOptions';
 
-// The "Panel options" pane in the sidebar — title/description inputs, transparent
-// background toggle, plus the shared repeat and conditional rendering option groups
+/**
+ * The "Panel options" pane in the sidebar — title/description inputs, transparent
+ * background toggle, plus the shared repeat and conditional rendering option groups
+ */
 export class PanelOptions extends PageObject {
-  public conditionalRenderingOptions: ConditionalRenderingOptions;
-  public repeatOptions: RepeatOptions;
+  readonly conditionalRenderingOptions: ConditionalRenderingOptions;
+  readonly repeatOptions: RepeatOptions;
 
   constructor(args: PageObjectArgs) {
     super(args);
     this.conditionalRenderingOptions = new ConditionalRenderingOptions(args);
-    this.repeatOptions = new RepeatOptions(args);
+    this.repeatOptions = new RepeatOptions(args, 'repeat-options');
   }
 
-  getTitleInput() {
-    return this.dashboardPage.getByGrafanaSelector(
-      this.selectors.components.PanelEditor.OptionsPane.fieldInput('Title')
-    );
+  /** Returns the panel title input */
+  getTitleInput(): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
   }
 
+  /** Sets the panel title */
   async setTitle(title: string) {
     await test.step(`Set panel title to "${title}"`, async () => {
       const titleInput = this.getTitleInput();
@@ -31,15 +33,19 @@ export class PanelOptions extends PageObject {
     });
   }
 
-  getDescriptionTextarea() {
-    return this.dashboardPage
-      .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description'))
-      .locator('textarea');
+  /** Returns the panel description textarea */
+  getDescriptionTextarea(): Locator {
+    return this.getByGrafanaSelector(
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description')
+    ).locator('textarea');
   }
 
+  /** Toggles the panel's transparent background switch */
   async toggleTransparentBackground() {
     await test.step('Toggle transparent background', async () => {
-      await this.page.getByRole('switch', { name: 'Transparent background' }).click({ force: true });
+      await this.getByGrafanaSelector(this.selectors.components.Sidebar.container)
+        .getByRole('switch', { name: 'Transparent background' })
+        .click({ force: true });
     });
   }
 }

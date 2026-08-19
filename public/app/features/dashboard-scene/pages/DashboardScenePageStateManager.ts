@@ -1,7 +1,8 @@
 import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, UserStorage } from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { sceneGraph } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
@@ -70,8 +71,12 @@ import {
 } from '../serialization/transformSaveModelToScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
+import { DashboardInteractions } from '../utils/interactions';
 import {
+  countPredefinedVariableOrigins,
+  getGlobalVariablesMode,
   mayInjectAnyPredefinedVariables,
+  parseIgnorePredefinedVariables,
   resolvePredefinedVariablesForDashboard,
 } from '../utils/predefinedVariableDenyList';
 import { fetchPredefinedVariables } from '../utils/predefinedVariables';
@@ -718,7 +723,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       throw new Error('Missing required parameters for template dashboard');
     }
 
-    const ds = getDataSourceSrv().getInstanceSettings(datasource);
+    const ds = await getDataSourceInstanceSettings(datasource);
     if (!ds) {
       throw new Error(`Datasource "${datasource}" not found. Please check your datasource configuration.`);
     }
@@ -753,7 +758,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const dashboardJson = gnetDashboard.json;
 
     // Interpolate in the frontend — no backend round-trip needed
-    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, [
+    const interpolatedDashboard = await interpolateV1Dashboard(dashboardJson, [
       {
         name: '*',
         type: 'datasource',
@@ -789,7 +794,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const dashboardJson = gnetDashboard.json;
 
     // Interpolate in the frontend — no backend round-trip needed
-    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, mappings);
+    const interpolatedDashboard = await interpolateV1Dashboard(dashboardJson, mappings);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }
@@ -1036,7 +1041,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     // fetchPredefinedVariables is a no-op when the feature flag is off.
-    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GlobalDashboardVariables, false)) {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false)) {
       return options;
     }
 
@@ -1049,7 +1054,15 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         typeof denylistAnnotation === 'string' ? { [AnnoKeyIgnorePredefinedVariables]: denylistAnnotation } : undefined,
     };
 
+    const mode = getGlobalVariablesMode(parseIgnorePredefinedVariables(resolutionInput.annotations));
+
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
+      DashboardInteractions.globalVariablesLoaded({
+        global_count: 0,
+        folder_count: 0,
+        total_count: 0,
+        mode,
+      });
       return {
         ...options,
         defaultVariables: [...(options.defaultVariables ?? [])],
@@ -1059,6 +1072,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // Fail open on initial load: a null fetch (error) is treated as no predefined variables.
     const candidates = (await fetchPredefinedVariables(folderUid)) ?? [];
     const predefinedVariables = resolvePredefinedVariablesForDashboard(candidates, resolutionInput);
+    const counts = countPredefinedVariableOrigins(predefinedVariables);
+
+    DashboardInteractions.globalVariablesLoaded({
+      ...counts,
+      mode,
+    });
 
     // Always attach (including []) so scene-cache hits can sync — including clearing
     // variables that were deleted after the scene was cached.

@@ -16,6 +16,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -2610,6 +2611,7 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 
 	svc := ProvideService(
 		cfg,
+		mustConfigProvider(t, cfg),
 		&dbtest.FakeDB{},
 		accessControl,
 		routing.NewRouteRegister(),
@@ -2640,6 +2642,13 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 		secrets:          secrets,
 		reloadables:      reloadables,
 	}
+}
+
+func mustConfigProvider(t *testing.T, cfg *setting.Cfg) configprovider.ConfigProvider {
+	t.Helper()
+	provider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	return provider
 }
 
 type testEnv struct {

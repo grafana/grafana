@@ -798,6 +798,9 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 			field.Set("subresource", resultChunks[0].GetSubresource())
 			field.Set("snippet", resultChunks[0].GetContent())
 		}
+		if r.GetFolderTitle() != "" {
+			field.Set("folderTitle", r.GetFolderTitle())
+		}
 
 		hits = append(hits, dashboardv0alpha1.DashboardHit{
 			Resource: dashboardv0alpha1.DASHBOARD_RESOURCE,
@@ -885,8 +888,8 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 
 	// Add sorting. Dashboard-specific fields live under the fields.*
 	// sub-document inside bleve; clients pass the bare name (e.g.
-	// ?sort=panel_types) and the search backend needs the prefixed form
-	// (fields.panel_types) to find them. The leading "-" descending marker
+	// ?sort=views_total) and the search backend needs the prefixed form
+	// (fields.views_total) to find them. The leading "-" descending marker
 	// is stripped first so the dashboard-field lookup sees the bare name
 	// regardless of direction.
 	if queryParams.Has("sort") {

@@ -2,17 +2,22 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
+import { type InterpolateFunction, toDataFrame } from '@grafana/data';
 import config from 'app/core/config';
 
-import { CodeLanguage, TextMode } from '../../panelcfg.gen';
+import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
 
-import { PREVIEW_TEST_ID, TextNGEditor } from './TextNGEditor';
+import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange, type ViewMode } from './TextNGEditor';
+import { FOOTER_TEST_ID } from './TextNGEditorFooter';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
+  // The stubbed editor never runs completions; the source itself is covered by
+  // variableCompletion.test.ts.
+  createVariableCompletionSource: () => () => null,
   CodeMirrorEditor: ({
     value,
     onChange,
@@ -35,9 +40,9 @@ jest.mock('@grafana/ui/unstable', () => ({
 
 function ControlledEditor({
   initialValue,
-  mode,
-  showLineNumbers = false,
-  codeLanguage,
+  mode: initialMode,
+  showLineNumbers: initialShowLineNumbers = false,
+  codeLanguage: initialLanguage,
   replaceVariables = (value: string) => value,
   onChange,
 }: {
@@ -46,9 +51,14 @@ function ControlledEditor({
   showLineNumbers?: boolean;
   codeLanguage?: CodeLanguage;
   replaceVariables?: (value: string) => string;
-  onChange: (value: string) => void;
+  onChange: (change: TextNGEditorChange) => void;
 }) {
   const [value, setValue] = useState(initialValue);
+  const [mode, setMode] = useState(initialMode);
+  const [codeLanguage, setCodeLanguage] = useState(initialLanguage);
+  const [showLineNumbers, setShowLineNumbers] = useState(initialShowLineNumbers);
+  // The panel owns this in production; mirror that here so the view radios work.
+  const [view, setView] = useState<ViewMode>(() => (initialValue.trim().length === 0 ? 'write' : 'preview'));
   return (
     <TextNGEditor
       content={value}
@@ -56,9 +66,20 @@ function ControlledEditor({
       showLineNumbers={showLineNumbers}
       codeLanguage={codeLanguage}
       replaceVariables={replaceVariables}
-      onChange={(next) => {
-        setValue(next);
-        onChange(next);
+      view={view}
+      onViewChange={setView}
+      onChange={(change) => {
+        setValue(change.content);
+        if (change.mode !== undefined) {
+          setMode(change.mode);
+        }
+        if (change.codeLanguage !== undefined) {
+          setCodeLanguage(change.codeLanguage);
+        }
+        if (change.showLineNumbers !== undefined) {
+          setShowLineNumbers(change.showLineNumbers);
+        }
+        onChange(change);
       }}
     />
   );
@@ -86,6 +107,19 @@ const setup = (
 };
 
 const enterWriteMode = () => userEvent.click(screen.getByRole('radio', { name: 'Write' }));
+
+const openModeMenu = () => userEvent.click(screen.getByRole('button', { name: /^Text mode/ }));
+
+const selectMode = async (name: string) => {
+  await openModeMenu();
+  await userEvent.click(await screen.findByRole('menuitemradio', { name }));
+};
+
+const selectLanguage = async (name: string) => {
+  await openModeMenu();
+  await userEvent.hover(screen.getByRole('menuitem', { name: 'Code' }));
+  await userEvent.click(await screen.findByRole('menuitemradio', { name }));
+};
 
 describe('TextNGEditor', () => {
   describe('default (view-first) state', () => {
@@ -186,7 +220,7 @@ describe('TextNGEditor', () => {
       await userEvent.type(editor, 'updated');
 
       // The commit is debounced so the dashboard is not re-rendered per keystroke.
-      await waitFor(() => expect(onChange).toHaveBeenLastCalledWith('updated'));
+      await waitFor(() => expect(onChange).toHaveBeenLastCalledWith({ content: 'updated' }));
     });
 
     it('commits a pending draft when the editor loses focus', async () => {
@@ -201,7 +235,7 @@ describe('TextNGEditor', () => {
       // synchronously instead of waiting out the commit debounce.
       await userEvent.tab();
 
-      expect(onChange).toHaveBeenLastCalledWith('updated');
+      expect(onChange).toHaveBeenLastCalledWith({ content: 'updated' });
     });
 
     it('commits the latest draft when the last change and the blur happen in the same event turn', async () => {
@@ -215,7 +249,7 @@ describe('TextNGEditor', () => {
         fireEvent.blur(editor);
       });
 
-      expect(onChange).toHaveBeenCalledWith('updated');
+      expect(onChange).toHaveBeenCalledWith({ content: 'updated' });
     });
 
     it('does not commit a pending draft on unmount, so Discard is not overwritten', async () => {
@@ -232,16 +266,19 @@ describe('TextNGEditor', () => {
       unmount();
 
       // A flush here could overwrite a Discard.
-      expect(onChange).not.toHaveBeenCalledWith('updated');
+      expect(onChange).not.toHaveBeenCalledWith({ content: 'updated' });
     });
 
-    it('interpolates with the json format when code language is json, regardless of mode', () => {
+    // Must match the panel, which keys the format off the mode rather than code.language alone.
+    it.each([
+      [TextMode.Code, CodeLanguage.Yaml, 'raw'],
+      [TextMode.Code, CodeLanguage.Json, 'json'],
+      [TextMode.Markdown, CodeLanguage.Json, 'html'],
+    ] as const)('interpolates %s mode with the %s language using the %s format', (mode, language, format) => {
       const replaceVariables = jest.fn((value: string) => value);
-      setup('# Hello', TextMode.Markdown, jest.fn(), false, CodeLanguage.Json, replaceVariables);
+      setup('a: ${var}', mode, jest.fn(), false, language, replaceVariables);
 
-      // Matches the panel render path, which keys the interpolation format off
-      // code.language alone.
-      expect(replaceVariables).toHaveBeenCalledWith('# Hello', {}, 'json');
+      expect(replaceVariables).toHaveBeenCalledWith('a: ${var}', {}, format);
     });
   });
 
@@ -295,6 +332,8 @@ describe('TextNGEditor', () => {
           showLineNumbers={false}
           replaceVariables={(value: string) => value}
           onChange={jest.fn()}
+          view="preview"
+          onViewChange={jest.fn()}
         />
       );
 
@@ -305,6 +344,8 @@ describe('TextNGEditor', () => {
           showLineNumbers={false}
           replaceVariables={(value: string) => value}
           onChange={jest.fn()}
+          view="preview"
+          onViewChange={jest.fn()}
         />
       );
 
@@ -342,6 +383,88 @@ describe('TextNGEditor', () => {
     });
   });
 
+  describe('mode picker', () => {
+    it('shows the current mode in the toolbar, in every view', async () => {
+      setup('<p>Hello</p>', TextMode.HTML);
+
+      expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
+
+      await enterWriteMode();
+      expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
+    });
+
+    it('shows the language alongside the mode in Code mode', () => {
+      setup('{}', TextMode.Code, jest.fn(), false, CodeLanguage.Json);
+
+      expect(screen.getByRole('button', { name: 'Text mode: Code · JSON' })).toBeInTheDocument();
+    });
+
+    it('changes the mode and re-renders the preview with it', async () => {
+      const { onChange } = setup('# Hello', TextMode.Markdown);
+
+      await selectMode('HTML');
+
+      expect(onChange).toHaveBeenCalledWith({ mode: TextMode.HTML, content: '# Hello' });
+      // HTML mode does not turn '#' into a heading, it renders the text as-is.
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML.trim()).toBe('# Hello');
+    });
+
+    it('carries a pending draft with the mode change, so typing is not lost', async () => {
+      const { onChange } = setup('initial', TextMode.Markdown);
+      await enterWriteMode();
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'draft' } });
+      await selectMode('HTML');
+
+      expect(onChange).toHaveBeenLastCalledWith({ mode: TextMode.HTML, content: 'draft' });
+      expect(screen.getByRole('textbox')).toHaveValue('draft');
+    });
+  });
+
+  describe('language submenu', () => {
+    it('only hangs off the Code option', async () => {
+      setup('# Hello', TextMode.Markdown);
+
+      await openModeMenu();
+
+      expect(screen.getByRole('menuitem', { name: 'Code' })).toHaveAttribute('aria-haspopup', 'menu');
+      expect(screen.getByRole('menuitemradio', { name: 'Markdown' })).not.toHaveAttribute('aria-haspopup');
+    });
+
+    it('falls back to the default language when none is set', () => {
+      setup('hello', TextMode.Code);
+
+      expect(screen.getByRole('button', { name: 'Text mode: Code · Plain text' })).toBeInTheDocument();
+    });
+
+    it('switches to Code mode and the picked language in one change', async () => {
+      const { onChange } = setup('# Hello', TextMode.Markdown);
+
+      await selectLanguage('SQL');
+
+      // A second, mode-only change from the parent item would drop the language.
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith({
+        mode: TextMode.Code,
+        codeLanguage: CodeLanguage.Sql,
+        content: '# Hello',
+      });
+      expect(screen.getByRole('button', { name: 'Text mode: Code · SQL' })).toBeInTheDocument();
+    });
+
+    it('changes the language while already in Code mode', async () => {
+      const { onChange } = setup('{}', TextMode.Code, jest.fn(), false, CodeLanguage.Plaintext);
+
+      await selectLanguage('JSON');
+
+      expect(onChange).toHaveBeenCalledWith({ mode: TextMode.Code, codeLanguage: CodeLanguage.Json, content: '{}' });
+      expect(screen.getByRole('button', { name: 'Text mode: Code · JSON' })).toBeInTheDocument();
+    });
+  });
+
   describe('line numbers', () => {
     it('never shows line numbers in Markdown mode', async () => {
       setup('# Hello', TextMode.Markdown, jest.fn(), true);
@@ -370,5 +493,103 @@ describe('TextNGEditor', () => {
 
       expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'false');
     });
+  });
+
+  describe('footer', () => {
+    const lineNumbersToggle = () => screen.getByRole('switch', { name: 'Line numbers' });
+
+    it('only shows the footer in Code mode', async () => {
+      setup('# Hello', TextMode.Markdown);
+
+      expect(screen.queryByTestId(FOOTER_TEST_ID)).not.toBeInTheDocument();
+
+      await selectLanguage('JSON');
+      expect(screen.getByTestId(FOOTER_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('keeps the footer in Preview view, where the editor is hidden', () => {
+      setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+
+      expect(screen.getByRole('radio', { name: 'Preview' })).toBeChecked();
+      expect(screen.getByTestId(FOOTER_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('turns line numbers on and applies them to the editor', async () => {
+      const { onChange } = setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      await userEvent.click(lineNumbersToggle());
+
+      expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const a = 1;' });
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'true');
+    });
+
+    it('sends the pending draft with the line numbers change, so typing is not lost', async () => {
+      const { onChange } = setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'const b = 2;' } });
+      await userEvent.click(lineNumbersToggle());
+
+      expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const b = 2;' });
+      expect(screen.getByRole('textbox')).toHaveValue('const b = 2;');
+    });
+  });
+});
+
+describe('TextNGEditor render mode preview', () => {
+  const series = [
+    toDataFrame({
+      fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+    }),
+  ];
+
+  // Reports the row context it was handed, so these assert the preview wiring
+  // rather than re-testing macro resolution (covered in renderContent.test.ts).
+  const reportRowContext: InterpolateFunction = (target, scopedVars) => {
+    const context = scopedVars?.__dataContext?.value;
+    return context ? `row-${context.rowIndex}` : target;
+  };
+
+  const previewFor = (renderMode?: RenderMode) => (
+    <TextNGEditor
+      content="no row context"
+      mode={TextMode.Markdown}
+      showLineNumbers={false}
+      renderMode={renderMode}
+      series={series}
+      replaceVariables={reportRowContext}
+      onChange={jest.fn()}
+      view="preview"
+      onViewChange={jest.fn()}
+    />
+  );
+
+  const previewHtml = () => screen.getByTestId(PREVIEW_TEST_ID).innerHTML;
+
+  it('previews one block per row in every row mode, matching the panel', () => {
+    render(previewFor(RenderMode.PerRow));
+
+    expect(previewHtml()).toContain('row-0');
+    expect(previewHtml()).toContain('row-1');
+  });
+
+  it.each([
+    ['once mode', RenderMode.Once],
+    ['an unset render mode', undefined],
+  ])('previews a single render with no row context in %s', (_name, renderMode) => {
+    render(previewFor(renderMode));
+
+    expect(previewHtml()).toContain('no row context');
+  });
+
+  it('updates the preview when the pane changes the render mode', () => {
+    const { rerender } = render(previewFor(RenderMode.Once));
+    expect(previewHtml()).toContain('no row context');
+
+    rerender(previewFor(RenderMode.PerRow));
+
+    expect(previewHtml()).toContain('row-0');
+    expect(previewHtml()).toContain('row-1');
   });
 });
