@@ -91,9 +91,11 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `secretsManagementAppPlatformUI`   | Enable the secrets management app platform UI                                                                                  |
 | `dashboardTemplates`               | Enables a flow to get started with a new dashboard from a template                                                             |
 | `alertRuleRestore`                 | Enables the alert rule restore feature                                                                                         |
+| `alertingMigrationWizardUI`        | Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting    |
 | `azureMonitorLogsBuilderEditor`    | Enables the logs builder mode for the Azure Monitor data source                                                                |
 | `datasources.azureMonitorBatchAPI` | Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request |
 | `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
+| `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
 | `panelTimeSettings`                | Enables a new panel time settings drawer                                                                                       |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
