@@ -360,12 +360,6 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
 
 /**
  * Single-entry cache for {@link getComparisonFieldPairs}.
- *
- * The pairing is needed twice per panel: once when the uPlot config is built (for the comparison
- * cursor point) and once per render (for the tooltip). Both derive from the same aligned frame
- * instance, which GraphNG only recreates when it re-joins the data, so caching on that identity
- * collapses the two into one computation without any risk of the two consumers disagreeing about
- * field indices - a stale entry is impossible, because a new frame is a new key.
  */
 let cachedPairs: { alignedFrame: DataFrame; allFrames: DataFrame[]; pairs: Map<number, number> } | undefined;
 
@@ -404,8 +398,7 @@ function computeComparisonFieldPairs(alignedFrame: DataFrame, allFrames: DataFra
   };
 
   for (const group of bySeriesIndex.values()) {
-    // A shared seriesIndex only means "same color". Require exactly one compare and one
-    // current-period member so an unrelated palette collision can't masquerade as a pair.
+    // Only create pairs of two, in case a custom palette makes series with unrelated series on an index
     if (group.length !== 2) {
       continue;
     }
