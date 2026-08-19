@@ -82,7 +82,7 @@ func (r *Factory) New(owner, repo string, ghToken common.RawSecureValue, opts ..
 	}
 
 	ghClient := github.NewClient(httpClient)
-	if options.customServerURL != "" {
+	if options.customServerURL != "" && r.Client == nil {
 		enterprise, err := ghClient.WithEnterpriseURLs(options.customServerURL, options.customServerURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to configure GitHub Enterprise URLs for %q: %w", options.customServerURL, err)
