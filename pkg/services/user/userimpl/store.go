@@ -864,10 +864,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		}
 		if query.Limit > 0 {
 			searchQuery.Limit = query.Limit
-			searchQuery.Offset = query.Limit * (query.Page - 1)
-			if searchQuery.Offset < 0 {
-				searchQuery.Offset = 0
-			}
+			searchQuery.Offset = searchUserOffset(query.Limit, query.Page)
 		}
 
 		rawSQL, err := renderUserQuery(searchUsersTemplate, searchQuery)
@@ -898,6 +895,13 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		return nil
 	})
 	return &result, err
+}
+
+func searchUserOffset(limit, page int) int {
+	if limit > 0 && page > 0 {
+		return limit * (page - 1)
+	}
+	return 0
 }
 
 func searchQueryPattern(query string) string {

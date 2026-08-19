@@ -412,3 +412,10 @@ func TestQueryValidation(t *testing.T) {
 	require.ErrorContains(t, (&getUserQuery{}).Validate(), "invalid user identifier column")
 	require.NoError(t, (&searchUsersQuery{WhereFilters: []searchUserWhereFilter{{Condition: "is_admin = FALSE"}}}).Validate())
 }
+
+func TestSearchUserOffset(t *testing.T) {
+	require.Equal(t, 0, searchUserOffset(25, 0))
+	require.Equal(t, 25, searchUserOffset(25, 2))
+	require.Equal(t, 0, searchUserOffset(0, 2))
+	require.Equal(t, 0, searchUserOffset(25, -1))
+}

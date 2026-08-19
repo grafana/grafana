@@ -64,5 +64,5 @@ FROM {{ .Ident .UserTable }} AS u
 {{ template "search_users_where" . }}
 ORDER BY {{ .OrderBy }}
 {{ if gt .Limit 0 -}}
-LIMIT {{ .Arg .Limit }}{{ if gt .Offset 0 }} OFFSET {{ .Arg .Offset }}{{ end }}
+LIMIT {{ .Arg .Limit }} OFFSET {{ .Arg .Offset }}
 {{ end -}}
