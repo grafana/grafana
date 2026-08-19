@@ -115,6 +115,7 @@ export function TableNGWrap({
 
       <TableNG
         {...commonTableProps}
+        tableRefreshEnabled={false} // hard disable refresh until integrated with Logs Table directly
         sortByBehavior="managed"
         initialRowIndex={initialRowIndex}
         data={data.series[getCurrentFrameIndex(data.series, options)]}
