@@ -85,8 +85,6 @@ export const FlagKeys = {
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Enables a new UI for query errors and notices */
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
-  /** Whether to use the new SharedPreferences functional component */
-  GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables the new text panel */
   GrafanaNewTextPanel: "grafana.newTextPanel",
   /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
@@ -583,17 +581,6 @@ export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPanelQueryErrorsUI", false, options).value;
-};
-
-/**
- * Whether to use the new SharedPreferences functional component
- *
- * **Details:**
- * - flag key: `grafana.newPreferencesPage`
- * - default value: `true`
- */
-export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.newPreferencesPage", true, options).value;
 };
 
 /**

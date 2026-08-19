@@ -2756,14 +2756,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "grafana.newPreferencesPage",
-			Description: "Whether to use the new SharedPreferences functional component",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{React: true, Go: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "datasource.useNewCRUDAPIs",
 			Description: "Use the new datasource API groups for datasource CRUD requests, backend flag",
 			Stage:       FeatureStageExperimental,
