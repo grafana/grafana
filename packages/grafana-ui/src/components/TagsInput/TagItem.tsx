@@ -79,7 +79,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       textShadow: 'none',
       fontWeight: 500,
       fontSize: 10,
-      fontFamily: theme.typography.fontFamilyMonospace,
       color: '#fff',
     }),
     defaultTagColor: css({

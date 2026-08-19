@@ -360,6 +360,20 @@ export const ThemeDemo = () => {
                   <TagItem key={`removable-${name}`} name={name} onRemove={() => {}} />
                 ))}
               </ul>
+              <ul
+                className={css({
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: t.spacing(0.5),
+                  margin: 0,
+                  padding: 0,
+                  listStyle: 'none',
+                })}
+              >
+                {exampleTagNames.map((name) => (
+                  <TagItem key={`disabled-${name}`} name={name} onRemove={() => {}} disabled />
+                ))}
+              </ul>
             </Stack>
           </DemoBox>
         </CollapsableSection>
