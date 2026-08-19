@@ -15,6 +15,8 @@ interface MenuComponentTokens {
 interface TagColors {
   background: string;
   text: string;
+  /** Optional text/icon color used when a removable tag is disabled */
+  disabledText?: string;
 }
 
 const DEFAULT_TAG_TEXT_COLOR = '#f7f8fa';
@@ -134,7 +136,9 @@ export const ThemeComponentsInputSchema = z
       padding: z.number().optional(),
     }),
     tag: z.object({
-      colors: z.array(z.object({ background: z.string(), text: z.string() })).optional(),
+      colors: z
+        .array(z.object({ background: z.string(), text: z.string(), disabledText: z.string().optional() }))
+        .optional(),
     }),
     home: z.object({
       background: z

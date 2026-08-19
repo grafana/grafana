@@ -144,17 +144,17 @@
     },
     "tag": {
       "colors": [
-        { "background": "palette.red950", "text": "palette.red300" },
-        { "background": "palette.orange950", "text": "palette.orange300" },
-        { "background": "palette.amber950", "text": "palette.amber300" },
-        { "background": "palette.lime950", "text": "palette.lime300" },
-        { "background": "palette.sage950", "text": "palette.sage300" },
-        { "background": "palette.teal950", "text": "palette.teal300" },
-        { "background": "palette.sky950", "text": "palette.sky300" },
-        { "background": "palette.blue950", "text": "palette.blue300" },
-        { "background": "palette.violet950", "text": "palette.violet300" },
-        { "background": "palette.lavender950", "text": "palette.lavender300" },
-        { "background": "palette.rose950", "text": "palette.rose300" }
+        { "background": "palette.red950", "text": "palette.red300", "disabledText": "palette.red400" },
+        { "background": "palette.orange950", "text": "palette.orange300", "disabledText": "palette.orange400" },
+        { "background": "palette.amber950", "text": "palette.amber300", "disabledText": "palette.amber400" },
+        { "background": "palette.lime950", "text": "palette.lime300", "disabledText": "palette.lime400" },
+        { "background": "palette.sage950", "text": "palette.sage300", "disabledText": "palette.sage400" },
+        { "background": "palette.teal950", "text": "palette.teal300", "disabledText": "palette.teal400" },
+        { "background": "palette.sky950", "text": "palette.sky300", "disabledText": "palette.sky400" },
+        { "background": "palette.blue950", "text": "palette.blue300", "disabledText": "palette.blue400" },
+        { "background": "palette.violet950", "text": "palette.violet300", "disabledText": "palette.violet400" },
+        { "background": "palette.lavender950", "text": "palette.lavender300", "disabledText": "palette.lavender400" },
+        { "background": "palette.rose950", "text": "palette.rose300", "disabledText": "palette.rose400" }
       ]
     },
     "home": {

@@ -1220,6 +1220,9 @@
                   },
                   "text": {
                     "type": "string"
+                  },
+                  "disabledText": {
+                    "type": "string"
                   }
                 },
                 "required": [

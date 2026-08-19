@@ -30,11 +30,13 @@ export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) 
   // Otherwise, a default class name will be applied to the tag.
   const tagColors = useMemo(() => {
     if (autoColors) {
-      const { background, text } = getTagColorsFromName(name, theme);
-      return { background, text };
+      return getTagColorsFromName(name, theme);
     }
     return undefined;
   }, [name, autoColors, theme]);
+
+  const textColor =
+    disabled && tagColors?.disabledText ? tagColors.disabledText : tagColors?.text;
 
   return (
     <li
@@ -42,7 +44,7 @@ export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) 
       style={
         tagColors
           ? visualRefreshEnabled
-            ? { backgroundColor: tagColors.background, color: tagColors.text }
+            ? { backgroundColor: tagColors.background, color: textColor }
             : { backgroundColor: tagColors.background, borderColor: theme.colors.emphasize(tagColors.background, 0.2) }
           : undefined
       }
@@ -96,6 +98,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: 'inherit',
       '&:hover::before': {
         display: 'none',
+      },
+      // Keep the close icon on the tag's text/disabledText color instead of the global disabled token
+      '&:disabled, &[disabled]': {
+        color: 'inherit',
+        opacity: 1,
       },
     }),
   };

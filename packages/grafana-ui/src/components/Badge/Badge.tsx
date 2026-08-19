@@ -34,14 +34,14 @@ const darkBadgeColors: Record<Exclude<BadgeColor, 'brand'>, BadgeToneColors> = {
   darkgrey: { border: palette.ink800, text: palette.ink300, background: palette.ink950 },
 };
 
-/** Light-mode badge colors: text = 800, border = 200, background = 100 */
+/** Light-mode badge colors: text = 800, border = 200, background = 50 */
 const lightBadgeColors: Record<Exclude<BadgeColor, 'brand'>, BadgeToneColors> = {
-  blue: { border: palette.blue200, text: palette.blue800, background: palette.blue100 },
-  red: { border: palette.red200, text: palette.red800, background: palette.red100 },
-  green: { border: palette.sage200, text: palette.sage800, background: palette.sage100 },
-  orange: { border: palette.orange200, text: palette.orange800, background: palette.orange100 },
-  purple: { border: palette.violet200, text: palette.violet800, background: palette.violet100 },
-  darkgrey: { border: palette.neutral200, text: palette.neutral800, background: palette.neutral100 },
+  blue: { border: palette.blue200, text: palette.blue800, background: palette.blue50 },
+  red: { border: palette.red200, text: palette.red800, background: palette.red50 },
+  green: { border: palette.sage200, text: palette.sage800, background: palette.sage50 },
+  orange: { border: palette.orange200, text: palette.orange800, background: palette.orange50 },
+  purple: { border: palette.violet200, text: palette.violet800, background: palette.violet50 },
+  darkgrey: { border: palette.neutral200, text: palette.neutral800, background: palette.neutral50 },
 };
 
 const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {

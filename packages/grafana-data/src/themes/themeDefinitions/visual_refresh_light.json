@@ -136,17 +136,17 @@
     },
     "tag": {
       "colors": [
-        { "background": "palette.red100", "text": "palette.red800" },
-        { "background": "palette.orange100", "text": "palette.orange800" },
-        { "background": "palette.amber100", "text": "palette.amber800" },
-        { "background": "palette.lime100", "text": "palette.lime800" },
-        { "background": "palette.sage100", "text": "palette.sage800" },
-        { "background": "palette.teal100", "text": "palette.teal800" },
-        { "background": "palette.sky100", "text": "palette.sky800" },
-        { "background": "palette.blue100", "text": "palette.blue800" },
-        { "background": "palette.violet100", "text": "palette.violet800" },
-        { "background": "palette.lavender100", "text": "palette.lavender800" },
-        { "background": "palette.rose100", "text": "palette.rose800" }
+        { "background": "palette.red50", "text": "palette.red800", "disabledText": "palette.red700" },
+        { "background": "palette.orange50", "text": "palette.orange800", "disabledText": "palette.orange700" },
+        { "background": "palette.amber50", "text": "palette.amber800", "disabledText": "palette.amber700" },
+        { "background": "palette.lime50", "text": "palette.lime800", "disabledText": "palette.lime700" },
+        { "background": "palette.sage50", "text": "palette.sage800", "disabledText": "palette.sage700" },
+        { "background": "palette.teal50", "text": "palette.teal800", "disabledText": "palette.teal700" },
+        { "background": "palette.sky50", "text": "palette.sky800", "disabledText": "palette.sky700" },
+        { "background": "palette.blue50", "text": "palette.blue800", "disabledText": "palette.blue700" },
+        { "background": "palette.violet50", "text": "palette.violet800", "disabledText": "palette.violet700" },
+        { "background": "palette.lavender50", "text": "palette.lavender800", "disabledText": "palette.lavender700" },
+        { "background": "palette.rose50", "text": "palette.rose800", "disabledText": "palette.rose700" }
       ]
     },
     "input": {

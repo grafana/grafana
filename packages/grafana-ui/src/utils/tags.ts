@@ -26,9 +26,9 @@ export function getTagColorsFromName(name = '', theme?: GrafanaTheme2) {
  */
 export function getTagColor(index: number, theme?: GrafanaTheme2) {
   const colors = theme?.components.tag.colors ?? DEFAULT_TAG_COLORS;
-  const { background, text } = colors[Math.abs(index % colors.length)];
+  const { background, text, disabledText } = colors[Math.abs(index % colors.length)];
 
-  const result = { background, text };
+  const result = { background, text, disabledText };
 
   // this maintains backwards runtime compatibility for a little bit
   // TODO remove in Grafana 14
