@@ -364,6 +364,9 @@ func TestLockBackendSeparatesHeldFromNotOwned(t *testing.T) {
 			backend := newBackend(t)
 			key := testKey(t)
 			require.NoError(t, backend.Create(ctx, key, newLockInfo("owner-1", time.Minute)))
+			// Nothing below releases it: the key is derived from the test name, so against
+			// a real bucket a rerun inside the TTL would fail the Create above.
+			t.Cleanup(func() { _ = backend.Delete(context.Background(), key, "owner-1") })
 
 			// Someone else got there first.
 			require.ErrorIs(t, backend.Create(ctx, key, newLockInfo("owner-2", time.Minute)), errLockHeld)
@@ -371,6 +374,9 @@ func TestLockBackendSeparatesHeldFromNotOwned(t *testing.T) {
 			// Ours to begin with, no longer.
 			require.ErrorIs(t, backend.Update(ctx, key, newLockInfo("owner-2", time.Minute)), errLockNotOwned)
 			require.ErrorIs(t, backend.Delete(ctx, key, "owner-2"), errLockNotOwned)
+
+			// Still owner-1's after those refusals, so it can release it.
+			require.NoError(t, backend.Delete(ctx, key, "owner-1"))
 		})
 	}
 }

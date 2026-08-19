@@ -1618,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Tem certeza de que deseja iniciar a importação? Esta ação criará novos recursos no Grafana Alerting.",
         "confirm": "Iniciar importação",
@@ -1676,26 +1665,6 @@
       "info-description": "Este assistente ajuda você a importar regras de alerta e recursos de notificação de fontes externas para o Grafana Alerting. Para mais informações, consulte a <2>documentação</2>.",
       "info-title": "Assistente de importação",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Digite para pesquisar uma nomenclatura existente",
         "label": "Nomenclatura"
@@ -1719,10 +1688,6 @@
         "filter": "Filtro",
         "folder": "Pasta de destino",
         "heading": "Revisar importação",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Nomenclatura",
         "nothing": "Nada para importar",
         "nothing-desc": "Ambas as etapas foram ignoradas. Volte e configure pelo menos uma fonte de importação.",
@@ -1749,14 +1714,6 @@
         "validation-warning": "Alguns recursos serão renomeados para evitar conflitos.",
         "will-import-config": "Importará esta configuração",
         "will-import-rules": "Importará regras",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Importará {{count}} regra",
         "will-import-rules-count_other": "Importará {{count}} regras"
       },
@@ -1868,14 +1825,10 @@
         "cancel-confirm-title": "Cancelar importação?",
         "cancel-confirm-yes": "Descartar alterações",
         "skip": "Pular",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Fontes de notificação",
         "step-notifications-desc": "Pontos de contato, políticas, modelos",
         "step-review": "Revisar e importar",
         "step-review-desc": "Pré-visualizar e confirmar importação",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Regras de alerta",
         "step-rules-desc": "Regras de alerta e registro"
       },
@@ -3308,6 +3261,39 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3870,6 +3856,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Falha ao importar recursos",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Recursos importados com sucesso para o Grafana Alerting."
     },
     "yaml-content-info": {
@@ -6067,6 +6055,7 @@
       "new-row-title": "Nova linha",
       "row": {
         "collapse": "Recolher linha {{title}}",
+        "copy-link": "",
         "expand": "Expandir linha {{title}}",
         "new": "Nova linha",
         "repeat": {
@@ -8938,11 +8927,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -12799,6 +12791,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -12813,6 +12811,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",

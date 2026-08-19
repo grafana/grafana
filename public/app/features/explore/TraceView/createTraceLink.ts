@@ -148,7 +148,7 @@ function getTimeRangeFromTrace(
   return getTimeRangeFromTimestamps(trace.startTime, trace.duration, timeShift, isSplunkDS);
 }
 
-function getTimeRangeFromTimestamps(
+export function getTimeRangeFromTimestamps(
   startTimeUs: number,
   durationUs: number,
   timeShift: { startMs: number; endMs: number } = { startMs: 0, endMs: 0 },
@@ -165,10 +165,10 @@ function getTimeRangeFromTimestamps(
   } else if (shouldCreatePyroscopeLink) {
     adjustedStartTime = adjustedStartTime - 60000;
     adjustedEndTime = adjustedEndTime + 60000;
-  } else if (adjustedStartTime === adjustedEndTime) {
-    // Because we can only pass milliseconds in the url we need to check if they equal.
+  } else if (adjustedStartTime >= adjustedEndTime) {
+    // Because we can only pass milliseconds in the url we need to check if they are greater or equal.
     // We need end time to be later than start time
-    adjustedEndTime++;
+    adjustedEndTime = adjustedStartTime + 1;
   }
 
   const to = dateTime(adjustedEndTime);
