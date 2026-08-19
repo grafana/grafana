@@ -16,6 +16,11 @@ labels:
 title: View notification history
 weight: 445
 refs:
+  view-alert-state-history:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state-history/
   view-active-notifications:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-active-notifications/
@@ -47,6 +52,8 @@ View notifications that Grafana Alerting sent for your Grafana-managed alert rul
 Grafana records a notification event each time it attempts to send a notification to a contact point for a group of alerts. Both firing and resolved notifications are recorded, so you'll see a complete delivery history even when an alert has already recovered.
 
 Notification history is different from [active notifications](ref:view-active-notifications). Active notifications show alerts that are currently grouped and waiting to be sent. Notification history shows notifications that were already sent.
+
+The **History** page also includes an **Alert events** tab for [alert state history](ref:view-alert-state-history).
 
 {{< admonition type="note" >}}
 Notification history is experimental. To use it, store notification history in Loki, set `enabled = true` in `[unified_alerting.notification_history]`, and enable these [feature toggles](ref:feature-toggles):
@@ -140,5 +147,6 @@ Because notification history is stored in Loki, you can query it directly in Lok
 
 ## Next steps
 
+- Refer to [View alert state history](ref:view-alert-state-history) to review alert state changes on the **Alert events** tab of the **History** page.
 - Refer to [View active notifications](ref:view-active-notifications) to inspect alerts that are currently grouped and waiting to be sent.
 - Refer to [Manage contact points](ref:contact-points) to configure where notifications are delivered.
