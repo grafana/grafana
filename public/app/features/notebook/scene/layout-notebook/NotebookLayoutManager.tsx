@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropResult } from '@hello-pangea/dnd';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -31,7 +31,6 @@ import {
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 import { NotebookAddBlockDivider } from './edit/NotebookAddBlockDivider';
-import { NotebookAddBlockPrompt } from './edit/NotebookAddBlockPrompt';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
 
@@ -115,15 +114,40 @@ export class NotebookLayoutManager
    * outright whenever an unedited duplicate follows it.
    *
    * It lives on the manager because that is what owns `cells`; a cell cannot see its siblings.
+   *
+   * Also maintains the "always one more empty block ready" invariant (Notion/Datadog's own feel):
+   * the moment the trailing cell — and only the trailing cell — stops being empty, a fresh empty one
+   * takes its place at the tail, so the reader never has to explicitly ask for the next block just to
+   * keep typing. Gated on the *transition* (was empty, now isn't), not merely "is non-empty", so this
+   * doesn't append again on every subsequent keystroke into what is now a real, settled cell.
    */
   public setCellContent = (target: NotebookCellItem, content: CellContentKind): void => {
+    const wasEmpty = isEmptyMarkdown(target.state.content);
+    const index = this.state.cells.indexOf(target);
+
     for (const cell of this.state.cells) {
       // Panel cells carry no content and must not gain any.
       if (cell.state.content && cell.state.elementName === target.state.elementName) {
         cell.setState({ content });
       }
     }
+
+    if (wasEmpty && !isEmptyMarkdown(content) && index === this.state.cells.length - 1) {
+      this.addCell('paragraph', this.state.cells.length);
+    }
   };
+
+  /**
+   * Converts `cell`'s content to `type` in place — the trailing-slot markdown cell's "/" menu (see
+   * NotebookCellRenderer) uses this rather than inserting a separate new cell the way the add-block
+   * menu does, since the cell picking from that menu already exists and is already empty.
+   */
+  public convertCell(cell: NotebookCellItem, type: NotebookBlockType): void {
+    const content = contentForBlockType(type);
+    if (content) {
+      this.setCellContent(cell, content);
+    }
+  }
 
   /**
    * Reorders a cell, mirroring RowsLayoutManager.moveRow. The cell objects move rather than being
@@ -137,7 +161,7 @@ export class NotebookLayoutManager
   }
 
   /**
-   * Inserts a new empty cell at `index`, the position the add-block affordance was offering.
+   * Inserts a new cell at `index`, the position the add-block affordance was offering.
    *
    * Visualization stays inert rather than inserting a cell with no content kind behind it, which the
    * renderer would draw as a blank gap — the menu's "Coming soon" submenu is the only thing it offers.
@@ -192,6 +216,35 @@ export class NotebookLayoutManager
     const cells = [...this.state.cells];
     cells.splice(index + 1, 0, copy);
     this.setState({ cells });
+  }
+
+  /**
+   * Inserts a brand-new cell directly below `target`, with explicit content rather than a clone of an
+   * existing one — Enter's own "split into a new block" gesture (see NotebookLayoutManagerRenderer's
+   * onAdvance): the reader's cursor sits inside `target`, so the new block belongs immediately after
+   * it, not wherever the document's own trailing empty cell happens to be. Defaults to an empty
+   * paragraph when no content is given.
+   *
+   * Returns the new cell so the caller can hand it the caret; undefined when `target` isn't (or is no
+   * longer) part of this notebook.
+   */
+  public insertCellAfter(target: NotebookCellItem, content?: CellContentKind): NotebookCellItem | undefined {
+    const index = this.state.cells.indexOf(target);
+    if (index === -1) {
+      return undefined;
+    }
+
+    const cell = new NotebookCellItem({
+      elementName: this.nextElementName('paragraph'),
+      source: 'user',
+      content: content ?? defaultMarkdownCellContentKind(),
+    });
+
+    const cells = [...this.state.cells];
+    cells.splice(index + 1, 0, cell);
+    this.setState({ cells });
+
+    return cell;
   }
 
   public removeCell(cell: NotebookCellItem): void {
@@ -268,14 +321,58 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   // notebook, so it has no business on the model or in what gets serialized. It survives until the
   // next insertion, which is harmless — the cell it names already has the caret, and the extension
   // that placed it there only runs when the editor is built.
-  const [focusedCellKey, setFocusedCellKey] = useState<string | null>(null);
+  //
+  // `id` is a monotonic nonce, not just the cell's `key`: a focus *request* can target a cell that is
+  // already the target — e.g. picking "Paragraph" or "Heading" from a markdown cell's own "/" menu
+  // (see NotebookCellRenderer's handlePick) converts the same cell in place, so its key never changes.
+  // The menu click already moved DOM focus to the button it clicked, but setting state to the key it
+  // already held would be a no-op React bails out of, and MarkdownCell would never see a reason to
+  // call `.focus()` again. Bumping `id` on every request, even a same-key one, gives it something
+  // that always changes.
+  const [focusRequest, setFocusRequest] = useState<{ key: string; id: number } | null>(null);
+  const nextFocusId = useRef(0);
+  const requestFocus = useCallback((key: string | null | undefined) => {
+    if (!key) {
+      setFocusRequest(null);
+      return;
+    }
+    nextFocusId.current += 1;
+    setFocusRequest({ key, id: nextFocusId.current });
+  }, []);
+
+  // Bootstraps and maintains the other half of the "always one more empty block ready" invariant —
+  // setCellContent (on the model) handles the reactive half, appending as soon as the trailing cell
+  // stops being empty, but that only ever fires from an edit already in flight. This covers the two
+  // cases with no edit to react to: a brand-new empty notebook, and entering edit mode on a notebook
+  // whose last cell already has content (e.g. loaded from a save). Re-running on every `cells` change
+  // is deliberately cheap and self-terminating — once the trailing cell is the required empty one, the
+  // condition is false and this is a no-op.
+  //
+  // Only the brand-new-notebook case also takes the caret: a reader creating a notebook should be able
+  // to start typing immediately, with no extra click, the same way the very first cell of any fresh
+  // document would. Entering edit mode on a notebook that already has content doesn't get this — the
+  // reader hasn't clicked anywhere yet, and stealing focus to a cell at the very end they may not even
+  // be looking at would be a worse first move than leaving the caret alone.
+  useEffect(() => {
+    if (!isEditing) {
+      return;
+    }
+    if (cells.length === 0) {
+      requestFocus(model.addCell('paragraph', 0)?.state.key);
+      return;
+    }
+    const last = cells[cells.length - 1];
+    if (!isEmptyMarkdown(last.state.content)) {
+      model.addCell('paragraph', cells.length);
+    }
+  }, [isEditing, cells, model, requestFocus]);
 
   const onAdd = useCallback(
     (type: NotebookBlockType, index: number) => {
       // The reader asked for a block, so the caret belongs in it rather than one click away.
-      setFocusedCellKey(model.addCell(type, index)?.state.key ?? null);
+      requestFocus(model.addCell(type, index)?.state.key);
     },
-    [model]
+    [model, requestFocus]
   );
 
   const onDragStart = useCallback((start: DragStart) => {
@@ -319,13 +416,26 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
               >
                 {cells.map((cell, index) => (
                   // Each frame is one Draggable and owns the divider below it, so a reorder moves a cell
-                  // together with its insertion point and nothing has to be re-indexed.
+                  // together with its insertion point and nothing has to be re-indexed. The trailing
+                  // slot's own placeholder/"/" menu (see NotebookCellRenderer) key off whether a cell's
+                  // own content is empty, not its position — the invariant above just guarantees the
+                  // last cell always qualifies, with the same drag handle, hover actions, and
+                  // "Add block" divider spacing every other cell already has, since it's a real cell
+                  // rendered through the exact same path.
+                  //
+                  // onAdvance is wired for every cell, not just the one before the trailing slot: Enter
+                  // splits into a genuinely new cell right after wherever the reader's cursor actually
+                  // is (matching Notion's own "Enter always makes a new block here" gesture), not a
+                  // jump to whatever the document's trailing slot happens to be — even when one already
+                  // exists a few cells away. `insertCellAfter` (not the trailing-slot invariant) owns
+                  // this; the two are independent, so both can fire from the same keystroke.
                   <NotebookCellFrame
                     key={cell.state.key}
                     cell={cell}
                     index={index}
                     isEditing={isEditing}
-                    autoFocus={cell.state.key === focusedCellKey}
+                    autoFocus={cell.state.key === focusRequest?.key}
+                    focusRequestId={focusRequest && cell.state.key === focusRequest.key ? focusRequest.id : undefined}
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
                     // Bound here rather than resolved inside the frame: the cells list belongs to the
@@ -333,6 +443,22 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     onAdd={onAdd}
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}
+                    onAdvance={(marker) => {
+                      const created = model.insertCellAfter(
+                        cell,
+                        marker !== undefined ? { kind: 'Markdown', spec: { text: marker } } : undefined
+                      );
+                      requestFocus(created?.state.key);
+                    }}
+                    // The "/" menu converts this same cell in place (see NotebookCellRenderer's
+                    // handlePick) rather than inserting a new one — clicking a menu item moves DOM
+                    // focus to the button, and a picked type that changes content.kind (e.g. "Code")
+                    // unmounts this cell's editor for a different one entirely. A picked type that
+                    // *doesn't* change content.kind (Paragraph, Heading — both stay "Markdown") is the
+                    // trickier case: this cell's own key never changes, so requestFocus's nonce (see
+                    // focusRequest's own doc comment above) is what actually gets the caret back, not
+                    // the key comparison alone.
+                    onFocusRequest={() => requestFocus(cell.state.key)}
                   />
                 ))}
                 {dropProvided.placeholder}
@@ -340,22 +466,17 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
             )}
           </Droppable>
         </DragDropContext>
-
-        {/* The end of the document. Outside the droppable, like the leading divider, and always visible
-            rather than hover-revealed. cells.length is the append position — the same one the last cell's
-            divider offers */}
-        {isEditing && <NotebookAddBlockPrompt index={cells.length} onAdd={onAdd} />}
       </div>
     </div>
   );
 }
 
 /**
- * The content a freshly added block starts with. Heading and paragraph are both markdown cells —
- * the menu offers them as separate entries because that is how a reader thinks about what they're
- * adding, but the editor underneath is the same one. A heading starts with its marker already typed
- * so the live-preview cell opens straight into "type your heading text" rather than a blank block the
- * reader has to know to prefix themselves.
+ * The content a freshly added or converted block starts with. Heading and paragraph are both markdown
+ * cells — the menu offers them as separate entries because that is how a reader thinks about what
+ * they're adding, but the editor underneath is the same one. A heading starts with its marker already
+ * typed so the live-preview cell opens straight into "type your heading text" rather than a blank
+ * block the reader has to know to prefix themselves.
  */
 function contentForBlockType(type: NotebookBlockType): CellContentKind | undefined {
   switch (type) {
@@ -368,6 +489,17 @@ function contentForBlockType(type: NotebookBlockType): CellContentKind | undefin
     case 'visualization':
       return undefined;
   }
+}
+
+/**
+ * Whether `content` is an untouched, empty markdown cell — the shape the trailing-slot invariant (see
+ * setCellContent and the renderer's own bootstrap effect) watches for. `undefined` (a panel or
+ * collapsed cell, which carries no `content` at all) deliberately does *not* count: it isn't a
+ * typeable markdown slot either, so a panel ending up last must still get a fresh empty cell appended
+ * after it, exactly like any other non-empty trailing content would.
+ */
+function isEmptyMarkdown(content: CellContentKind | undefined): boolean {
+  return content?.kind === 'Markdown' && content.spec.text === '';
 }
 
 function confirmRemoveCell(model: NotebookLayoutManager, cell: NotebookCellItem) {

@@ -12807,10 +12807,14 @@
         "aria-label-editor": "Markdown",
         "format-bold": "B",
         "format-italic": "I",
+        "format-strikethrough": "S",
         "tooltip-bold": "Bold",
+        "tooltip-bulleted-list": "Bulleted list",
         "tooltip-code": "Code",
         "tooltip-italic": "Italic",
-        "tooltip-link": "Link"
+        "tooltip-link": "Link",
+        "tooltip-numbered-list": "Numbered list",
+        "tooltip-strikethrough": "Strikethrough"
       }
     },
     "errors": {

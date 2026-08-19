@@ -43,6 +43,15 @@ interface Props {
    * takes the caret, and which one is a fact about the list, not about any cell in it.
    */
   autoFocus?: boolean;
+  /**
+   * A nonce, defined exactly when `autoFocus` is true and bumped on every fresh focus request for
+   * this cell — including a repeat request naming a cell that was already the target (see
+   * NotebookLayoutManagerRenderer's `focusRequest` state). `autoFocus` alone can't signal "focus me
+   * again": converting a markdown cell in place (Paragraph/Heading, via the "/" menu) leaves its key
+   * unchanged, so a plain boolean would already read `true` and never flip. Passed through to
+   * MarkdownCell, the one cell type that can be re-targeted without remounting.
+   */
+  focusRequestId?: number;
   /** True while any cell in the notebook is being dragged, not only this one. */
   isDragActive?: boolean;
   dropIndicator?: NotebookCellDropIndicator;
@@ -54,6 +63,23 @@ interface Props {
    */
   onDuplicate?: () => void;
   onDelete?: () => void;
+  /**
+   * Enter's "split into a new block" gesture — a genuinely new cell is inserted right after this one
+   * and takes the caret, wherever in the document this cell happens to be (see
+   * NotebookLayoutManagerRenderer's own doc comment on why this isn't just "jump to the trailing
+   * slot"). A marker argument (`'- '`, or the next number) means Enter was pressed on a non-empty list
+   * item — the caller seeds it into the new cell so the list continues there.
+   */
+  onAdvance?: (marker?: string) => void;
+  /**
+   * Re-requests the caret for this same cell after something else moved it away without meaning to —
+   * currently just the "/" menu any empty markdown cell offers (see NotebookCellRenderer's
+   * handlePick): picking a menu item is a mouse click, which moves DOM focus to the button, and a pick
+   * that changes content.kind (e.g. "Code") unmounts this cell's editor for a different one entirely,
+   * so neither a mousedown guard nor MarkdownCell's own autoFocus-transition handling alone would
+   * bring the caret back on their own.
+   */
+  onFocusRequest?: () => void;
 }
 
 /**
@@ -66,11 +92,14 @@ export function NotebookCellFrame({
   index,
   isEditing,
   autoFocus,
+  focusRequestId,
   isDragActive,
   dropIndicator,
   onAdd,
   onDuplicate,
   onDelete,
+  onAdvance,
+  onFocusRequest,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -109,7 +138,14 @@ export function NotebookCellFrame({
             />
           )}
 
-          <NotebookCellRenderer cell={cell} isEditing={Boolean(isEditing)} autoFocus={autoFocus} />
+          <NotebookCellRenderer
+            cell={cell}
+            isEditing={Boolean(isEditing)}
+            autoFocus={autoFocus}
+            focusRequestId={focusRequestId}
+            onAdvance={onAdvance}
+            onFocusRequest={onFocusRequest}
+          />
 
           {/* index + 1: this divider inserts *after* the cell it belongs to. */}
           {isEditing && (

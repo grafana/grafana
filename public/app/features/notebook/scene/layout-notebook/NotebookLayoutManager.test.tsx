@@ -11,11 +11,34 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 // manager -> frame -> renderer -> cell wiring observable here.
 //
 // CodeCell passes only its (optional) focus request as `extensions`, so any non-empty array means one
-// was made. MarkdownCell always adds its live-preview extension on top of that, so `extensions` there
-// is never empty — the threshold for "a focus request is in there" is one entry higher.
+// was made. MarkdownCell always adds its live-preview extension on top of that, so a Markdown
+// `extensions` array is never empty even unfocused — the threshold for "a focus request is in there"
+// is one entry higher than that baseline (regular cells never get an Enter keymap at all; only
+// NotebookAddBlockPrompt's onSubmit adds one, see below).
+//
+// Real CodeMirrorEditor never sees a raw re-render-fresh `extensions` array either: CodeEditor.tsx
+// wraps it in useShallowStable precisely because callers pass inline literals on every render (its own
+// doc comment says so). Without reproducing that here, the prompt's own MarkdownCell — always at the
+// three-item threshold once it has livePreview, a placeholder and its Enter keymap, even though it
+// never actually requests focus through MarkdownCell's own autoFocus prop (it asks CodeMirror directly
+// instead — see NotebookAddBlockPrompt's own autoFocus doc comment) — would re-fire this stub's fake
+// focus effect on every keystroke, stealing focus back from whatever cell the reader just inserted. A
+// fresh prompt slot is excluded outright below rather than folded into the threshold math, since its
+// baseline is higher than a regular cell's ever is regardless.
 jest.mock('@grafana/ui/unstable', () => {
   // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');
+
+  function useStableExtensions(extensions: unknown[] | undefined) {
+    const ref = useRef(extensions);
+    const previous = ref.current;
+    const sameLength = Array.isArray(previous) && Array.isArray(extensions) && previous.length === extensions.length;
+    const shallowEqual = previous === extensions || (sameLength && previous.every((v, i) => v === extensions[i]));
+    if (!shallowEqual) {
+      ref.current = extensions;
+    }
+    return ref.current;
+  }
 
   return {
     ...jest.requireActual('@grafana/ui/unstable'),
@@ -33,22 +56,31 @@ jest.mock('@grafana/ui/unstable', () => {
       'aria-label'?: string;
     }) => {
       const ref = useRef(null);
+      const stableExtensions = useStableExtensions(extensions);
       const focusThreshold = ariaLabel === 'Markdown' ? 2 : 1;
 
       useEffect(() => {
-        if (!extensions || extensions.length < focusThreshold) {
+        if (!stableExtensions || stableExtensions.length < focusThreshold) {
+          return;
+        }
+        // See the file-header comment: a prompt's own editor is excluded regardless of threshold.
+        if (ref.current?.closest('[data-testid="notebook-add-block-prompt"]')) {
           return;
         }
 
         const frame = requestAnimationFrame(() => ref.current?.focus());
         return () => cancelAnimationFrame(frame);
-      }, [extensions, focusThreshold]);
+      }, [stableExtensions, focusThreshold]);
 
       return (
         <textarea
           ref={ref}
           aria-label={ariaLabel}
-          defaultValue={value}
+          // Controlled, unlike CodeCell.test.tsx's own stub: the prompt resets its buffer to empty
+          // after every commit (see NotebookAddBlockPrompt), and a real CodeMirrorEditor's `value` is
+          // genuinely controlled too — an uncontrolled stub would leave stale text in the DOM across
+          // that reset, which nothing in a real browser would ever do.
+          value={value}
           readOnly={readOnly}
           onChange={(event) => onChange?.(event.currentTarget.value)}
         />
@@ -188,13 +220,14 @@ describe('NotebookLayoutManager', () => {
   });
 
   describe('add block prompt', () => {
-    // Matched loosely: the exact wording is the designer's, and no test should break on punctuation.
-    const PROMPT = /type to start writing/i;
+    function promptTextbox() {
+      return within(screen.getByTestId('notebook-add-block-prompt')).getByRole('textbox', { name: 'Markdown' });
+    }
 
     it('does not offer the prompt outside edit mode', () => {
       renderNotebook();
 
-      expect(screen.queryByRole('button', { name: PROMPT })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('notebook-add-block-prompt')).not.toBeInTheDocument();
     });
 
     // Unlike the dividers it is not hover-revealed, so it is queryable with no interaction at all —
@@ -202,27 +235,29 @@ describe('NotebookLayoutManager', () => {
     it('renders one prompt at the end of the document in edit mode', () => {
       renderNotebook(true);
 
-      expect(screen.getAllByRole('button', { name: PROMPT })).toHaveLength(1);
+      expect(screen.getAllByTestId('notebook-add-block-prompt')).toHaveLength(1);
     });
 
     // Pairs with 'renders no insertion points in an empty notebook' above.
     it('is the only affordance in an empty notebook', () => {
       renderManager(buildManager([], true));
 
-      expect(screen.getByRole('button', { name: PROMPT })).toBeInTheDocument();
+      expect(screen.getByTestId('notebook-add-block-prompt')).toBeInTheDocument();
     });
 
     // It appends, so unlike a divider it must not be swept along by a cell reorder.
     it('sits outside every cell frame', () => {
       renderNotebook(true);
 
-      expect(screen.getByRole('button', { name: PROMPT }).closest('[data-rfd-draggable-id]')).toBeNull();
+      expect(screen.getByTestId('notebook-add-block-prompt').closest('[data-rfd-draggable-id]')).toBeNull();
     });
 
-    it('opens the same block type menu as the dividers', async () => {
+    // The prompt is a markdown cell in its own right, not a button — typing "/" is what opens the menu
+    // dividers open by clicking "Add block".
+    it('opens the same block type menu as the dividers on a lone "/"', async () => {
       const { user } = renderNotebook(true);
 
-      await user.click(screen.getByRole('button', { name: PROMPT }));
+      await user.type(promptTextbox(), '/');
 
       expect(screen.getByRole('menu')).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
@@ -231,15 +266,54 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Visualization' })).toHaveAttribute('aria-haspopup', 'menu');
     });
 
-    // The printable-key guard is the whole mechanism, and widening it would hijack navigation keys.
-    it('leaves navigation keys alone', () => {
-      renderNotebook(true);
+    // Regular typing (anything but a lone "/") never opens the menu — it is just markdown text.
+    it('leaves plain typing alone', async () => {
+      const { user } = renderNotebook(true);
 
-      const prompt = screen.getByRole('button', { name: PROMPT });
-      prompt.focus();
-      fireEvent.keyDown(prompt, { key: 'ArrowDown' });
+      await user.type(promptTextbox(), 'Hello');
 
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    // Datadog's "type ahead" affordance: the reader should not have to finish or commit a paragraph
+    // before starting the next one. An empty notebook, so the prompt is the only markdown editor on
+    // screen and the two slots aren't lost among any other cells' own editors.
+    it('reveals a second, empty prompt as soon as the first has content', async () => {
+      const { user } = renderManager(buildManager([], true));
+
+      await user.type(promptTextbox(), 'Hello');
+
+      expect(screen.getAllByTestId('notebook-add-block-prompt')).toHaveLength(2);
+      const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
+      expect(editors).toHaveLength(2);
+      expect(editors[1]).toHaveValue('');
+    });
+
+    it('does not reveal a further prompt from a lone "/"', async () => {
+      const { user } = renderManager(buildManager([], true));
+
+      await user.type(promptTextbox(), '/');
+
+      expect(screen.getAllByTestId('notebook-add-block-prompt')).toHaveLength(1);
+    });
+
+    // Moving on to type in the revealed sibling retires the original (via its own existing blur-commit)
+    // rather than leaving a stack of former prompts behind, and must not disturb the sibling's own
+    // content or focus in the process — the exact bug a position-based (rather than stable-id) key
+    // would have.
+    it('retires the original prompt and keeps exactly two once the reader moves on to the next one', async () => {
+      const { manager, user } = renderManager(buildManager([], true));
+
+      await user.type(promptTextbox(), 'Hello');
+      const sibling = screen.getAllByRole('textbox', { name: 'Markdown' })[1];
+      await user.type(sibling, 'World');
+
+      expect(cellNames(manager)).toEqual(['paragraph-1']);
+      expect(manager.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+      expect(screen.getAllByTestId('notebook-add-block-prompt')).toHaveLength(2);
+      const remaining = screen.getAllByRole('textbox', { name: 'Markdown' });
+      const worldEditor = remaining.find((editor) => (editor as HTMLTextAreaElement).value === 'World');
+      expect(worldEditor).toHaveFocus();
     });
   });
 
@@ -363,8 +437,6 @@ describe('NotebookLayoutManager', () => {
   });
 
   describe('addCell', () => {
-    const PROMPT = /type to start writing/i;
-
     async function pickCode(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement) {
       await user.click(trigger);
       await user.click(screen.getByRole('menuitem', { name: 'Code' }));
@@ -378,6 +450,16 @@ describe('NotebookLayoutManager', () => {
     async function pickHeading(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement) {
       await user.click(trigger);
       await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
+    }
+
+    // The end-of-document prompt is a markdown cell, not a button — typing "/" opens the same menu the
+    // dividers open by clicking "Add block".
+    async function pickFromPromptMenu(user: ReturnType<typeof userEvent.setup>, itemName: string) {
+      const prompt = within(screen.getByTestId('notebook-add-block-prompt')).getByRole('textbox', {
+        name: 'Markdown',
+      });
+      await user.type(prompt, '/');
+      await user.click(screen.getByRole('menuitem', { name: itemName }));
     }
 
     // A divider belongs to the cell above it, so the one inside cell 'a' inserts between 'a' and 'b'.
@@ -404,7 +486,7 @@ describe('NotebookLayoutManager', () => {
     it('appends from the end-of-document prompt', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+      await pickFromPromptMenu(user, 'Code');
 
       expect(cellNames(manager)).toEqual(['a', 'b', 'code-1']);
     });
@@ -413,7 +495,7 @@ describe('NotebookLayoutManager', () => {
     it('gives an empty notebook its first cell', async () => {
       const { manager, user } = renderManager(buildManager([], true));
 
-      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+      await pickFromPromptMenu(user, 'Code');
 
       expect(cellNames(manager)).toEqual(['code-1']);
     });
@@ -434,7 +516,7 @@ describe('NotebookLayoutManager', () => {
     it('renders the new cell as an editable code editor', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+      await pickFromPromptMenu(user, 'Code');
 
       expect(await screen.findByRole('textbox', { name: 'Code' })).not.toHaveAttribute('readonly');
       expect(screen.getByRole('combobox', { name: 'Code language' })).toBeInTheDocument();
@@ -446,7 +528,7 @@ describe('NotebookLayoutManager', () => {
     it('hands the caret to the new cell', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+      await pickFromPromptMenu(user, 'Code');
 
       await waitFor(() => expect(screen.getByRole('textbox', { name: 'Code' })).toHaveFocus());
     });
@@ -456,8 +538,12 @@ describe('NotebookLayoutManager', () => {
     it('moves the caret on to the next cell it inserts', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
-      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+      // Waits for the first cell's own (frame-deferred) focus request to land before the second
+      // insertion starts — otherwise both requests are in flight at once and can settle in either order.
+      await pickFromPromptMenu(user, 'Code');
+      await waitFor(() => expect(screen.getByRole('textbox', { name: 'Code' })).toHaveFocus());
+
+      await pickFromPromptMenu(user, 'Code');
 
       await waitFor(() => {
         const editors = screen.getAllByRole('textbox', { name: 'Code' });
@@ -503,13 +589,19 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
     });
 
-    // The cell arrives editable and focused, same as a freshly inserted code cell.
+    // The cell arrives editable and focused, same as a freshly inserted code cell. There are two
+    // "Markdown" textboxes once it lands — the new cell and the prompt itself, reset to empty and
+    // still present for the next block — so this checks that one of them has the caret, not a specific
+    // one by role name alone.
     it('renders a freshly inserted paragraph cell as an editable, focused markdown editor', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await pickParagraph(user, screen.getByRole('button', { name: PROMPT }));
+      await pickFromPromptMenu(user, 'Paragraph');
 
-      await waitFor(() => expect(screen.getByRole('textbox', { name: 'Markdown' })).toHaveFocus());
+      await waitFor(() => {
+        const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
+        expect(editors.some((editor) => editor === document.activeElement)).toBe(true);
+      });
     });
 
     // Visualization is not buildable yet — its menu entry is a "Coming soon" submenu, not a pick.

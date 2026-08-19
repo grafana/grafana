@@ -1,12 +1,17 @@
 import { css } from '@emotion/css';
+import { offset, useFloating } from '@floating-ui/react';
+import { useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { floatingUtils, Portal, useStyles2 } from '@grafana/ui';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
+import { NotebookBlockTypeMenu, type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 
 // A lone VizPanel fills its parent, so the parent needs a resolved height (not just
 // min-height) or PanelChrome measures 0 and nothing shows.
@@ -19,10 +24,16 @@ export function NotebookCellRenderer({
   cell,
   isEditing,
   autoFocus,
+  focusRequestId,
+  onAdvance,
+  onFocusRequest,
 }: {
   cell: NotebookCellItem;
   isEditing: boolean;
   autoFocus?: boolean;
+  focusRequestId?: number;
+  onAdvance?: (marker?: string) => void;
+  onFocusRequest?: () => void;
 }) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
 
@@ -35,7 +46,17 @@ export function NotebookCellRenderer({
   }
 
   if (narrative) {
-    return <NarrativeCell cell={cell} content={narrative} isEditing={isEditing} autoFocus={autoFocus} />;
+    return (
+      <NarrativeCell
+        cell={cell}
+        content={narrative}
+        isEditing={isEditing}
+        autoFocus={autoFocus}
+        focusRequestId={focusRequestId}
+        onAdvance={onAdvance}
+        onFocusRequest={onFocusRequest}
+      />
+    );
   }
 
   return null;
@@ -58,18 +79,44 @@ function PanelCell({ panel }: { panel: VizPanel }) {
 // cannot see the siblings that may reference the same element. They end up on cell state, which is
 // where transformNotebookSceneToSaveModel reads content from — so an export (and, later, a save)
 // serializes what the reader actually sees. Nothing is persisted to the API yet.
+//
+// onAdvance bypasses the generic cellTypeRegistry path — pushing placeholder text, the "/" block
+// menu, or onSubmit into the shared registry contract would mean every other renderer (CodeCell
+// included) has to explicitly opt out of behavior that only ever applies to markdown cells.
 function NarrativeCell({
   cell,
   content,
   isEditing,
   autoFocus,
+  focusRequestId,
+  onAdvance,
+  onFocusRequest,
 }: {
   cell: NotebookCellItem;
   content: CellContentKind;
   isEditing: boolean;
   autoFocus?: boolean;
+  focusRequestId?: number;
+  onAdvance?: (marker?: string) => void;
+  onFocusRequest?: () => void;
 }) {
   const styles = useStyles2(getStyles);
+
+  if (content.kind === 'Markdown') {
+    return (
+      <div className={styles.content}>
+        <SpecialMarkdownCell
+          cell={cell}
+          content={content}
+          isEditing={isEditing}
+          autoFocus={autoFocus}
+          focusRequestId={focusRequestId}
+          onAdvance={onAdvance}
+          onFocusRequest={onFocusRequest}
+        />
+      </div>
+    );
+  }
 
   const registered = cellTypeRegistry.getIfExists(content.kind);
   if (!registered) {
@@ -85,6 +132,146 @@ function NarrativeCell({
         autoFocus={autoFocus}
         onChange={(updated) => cell.onContentChange(updated)}
       />
+    </div>
+  );
+}
+
+/**
+ * The markdown-only behaviors no other cell needs:
+ * - Placeholder text and the "/" block-type menu (the same one NotebookAddBlockDivider uses) — keyed
+ *   off whether *this cell's own content* is currently empty, not its position in the document. Any
+ *   empty markdown cell gets these, and loses them again the moment it has real content — including a
+ *   cell the reader typed into, then deleted everything from. The placeholder itself needs no extra
+ *   gating here at all: CM6's own placeholder extension already only renders while the document is
+ *   empty (see MarkdownCell's `placeholder` prop), so passing the text unconditionally is enough.
+ * - `onAdvance` hands the caret to a fresh cell inserted right after this one on Enter — see
+ *   MarkdownCell's own onSubmit doc comment.
+ * - `focusRequestId` re-asserts the caret on *this* cell even when it was already the target — see
+ *   NotebookCellFrame's own doc comment. Needed because picking Paragraph/Heading from the "/" menu
+ *   below converts this cell in place rather than swapping it for a different one.
+ */
+function SpecialMarkdownCell({
+  cell,
+  content,
+  isEditing,
+  autoFocus,
+  focusRequestId,
+  onAdvance,
+  onFocusRequest,
+}: {
+  cell: NotebookCellItem;
+  content: Extract<CellContentKind, { kind: 'Markdown' }>;
+  isEditing: boolean;
+  autoFocus?: boolean;
+  focusRequestId?: number;
+  onAdvance?: (marker?: string) => void;
+  onFocusRequest?: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const { refs, floatingStyles } = useFloating({
+    open: menuOpen,
+    placement: 'bottom-start',
+    strategy: 'fixed',
+    middleware: [offset(4), ...floatingUtils.getPositioningMiddleware('bottom-start')],
+  });
+
+  useEffect(() => {
+    if (containerRef.current) {
+      refs.setReference(containerRef.current);
+    }
+  }, [refs]);
+
+  // Dismiss the menu on an outside click or Escape, same shape as MarkdownFormatToolbar's dismissal —
+  // leaves the (already-cleared) buffer as is, since the reader may still want to keep typing plain
+  // text after deciding against the menu.
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const onMouseDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+      if (containerRef.current?.contains(target) || refs.floating.current?.contains(target)) {
+        return;
+      }
+      setMenuOpen(false);
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menuOpen, refs.floating]);
+
+  const handleChange = (updated: CellContentKind) => {
+    if (updated.kind !== 'Markdown') {
+      return;
+    }
+    // Persisted like any other keystroke, deliberately including the "/" itself — picking a type
+    // below hands `contentForBlockType`'s starter text to the *same* cell (see NotebookLayoutManager's
+    // convertCell), and the underlying CodeMirror editor only clears the "/" still sitting in its live
+    // document because that starter text genuinely differs from what's already committed here. Skipping
+    // this write when the text was exactly "/" left the "/" uncommitted but *also* unreconciled: the
+    // editor's own document still showed it, with nothing left to force it back out.
+    cell.onContentChange(updated);
+
+    // A lone "/" is a command as much as it is a character: the menu opens alongside it. Any empty
+    // markdown cell offers this, not just a specific position — typing "/" as the very first character
+    // is what matters, wherever it happens.
+    if (updated.spec.text === '/') {
+      setMenuOpen(true);
+      return;
+    }
+    // Any other edit — typing past the "/", backspacing it away, pasting over it — means the reader
+    // is no longer asking for the menu, even if they never explicitly dismissed it (clicking away or
+    // Escape). Without this, backspacing the "/" back to empty left the menu open and disconnected
+    // from what the editor actually shows.
+    if (menuOpen) {
+      setMenuOpen(false);
+    }
+  };
+
+  const handlePick = (type: NotebookBlockType) => {
+    cell.onConvert(type);
+    setMenuOpen(false);
+    // Picking a type is a mouse click, which moves DOM focus to the button that was clicked, and a
+    // pick that changes content.kind (e.g. "Code") unmounts this cell's editor for a different one
+    // entirely — neither a mousedown guard nor MarkdownCell's own autoFocus-transition handling alone
+    // would bring the caret back on their own. See NotebookCellFrame's own onFocusRequest doc comment.
+    onFocusRequest?.();
+  };
+
+  return (
+    <div ref={containerRef}>
+      <MarkdownCell
+        content={content}
+        isEditing={isEditing}
+        autoFocus={autoFocus}
+        focusRequestId={focusRequestId}
+        placeholder={t('notebook.add-block.prompt', 'Type to start writing — press / for blocks')}
+        onChange={handleChange}
+        onSubmit={onAdvance}
+      />
+      {menuOpen && (
+        <Portal>
+          <div ref={refs.setFloating} style={floatingStyles}>
+            <NotebookBlockTypeMenu onPick={handlePick} />
+          </div>
+        </Portal>
+      )}
     </div>
   );
 }

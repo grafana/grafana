@@ -2,14 +2,23 @@ import { syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { css } from '@emotion/css';
 import { offset, useFloating, type VirtualElement } from '@floating-ui/react';
+import { type Tree } from '@lezer/common';
 import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { floatingUtils, Portal, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
+import { toggleLinePrefix, toggleOrderedList, toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
 
-import { BOLD_NODE, findEnclosingMarkNode, INLINE_CODE_NODE, ITALIC_NODE, LINK_NODE } from './markdownLivePreview';
+import {
+  BOLD_NODE,
+  enclosingListKind,
+  findEnclosingMarkNode,
+  INLINE_CODE_NODE,
+  ITALIC_NODE,
+  LINK_NODE,
+  STRIKETHROUGH_NODE,
+} from './markdownLivePreview';
 
 export const MARKDOWN_FORMAT_TOOLBAR_TEST_ID = 'notebook-markdown-format-toolbar';
 
@@ -27,8 +36,13 @@ interface FormatAction {
   tooltip: string;
   icon?: IconName;
   label?: ReactNode;
-  /** Syntax node types that mean "this formatting already applies here" — drives the active state. */
-  nodeTypes: readonly string[];
+  /**
+   * Whether this formatting already applies at `pos` — drives the solid-background active state.
+   * A function rather than a fixed node-type list: the inline marks all reduce to "is there an
+   * enclosing node of this type" (findEnclosingMarkNode), but the list buttons don't — bullet and
+   * numbered items share the same ListItem node, so the answer depends on its parent (enclosingListKind).
+   */
+  isActive: (tree: Tree, pos: number) => boolean;
   run: (view: EditorView) => void;
 }
 
@@ -38,29 +52,50 @@ function actions(): FormatAction[] {
       key: 'bold',
       tooltip: t('notebook.cell.markdown.tooltip-bold', 'Bold'),
       label: <strong>{t('notebook.cell.markdown.format-bold', 'B')}</strong>,
-      nodeTypes: [BOLD_NODE],
+      isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [BOLD_NODE])),
       run: (view) => toggleSurround(view, '**'),
     },
     {
       key: 'italic',
       tooltip: t('notebook.cell.markdown.tooltip-italic', 'Italic'),
       label: <em>{t('notebook.cell.markdown.format-italic', 'I')}</em>,
-      nodeTypes: [ITALIC_NODE],
+      isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [ITALIC_NODE])),
       run: (view) => toggleSurround(view, '*'),
+    },
+    {
+      key: 'strikethrough',
+      tooltip: t('notebook.cell.markdown.tooltip-strikethrough', 'Strikethrough'),
+      label: <s>{t('notebook.cell.markdown.format-strikethrough', 'S')}</s>,
+      isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [STRIKETHROUGH_NODE])),
+      run: (view) => toggleSurround(view, '~~'),
     },
     {
       key: 'code',
       tooltip: t('notebook.cell.markdown.tooltip-code', 'Code'),
       icon: 'brackets-curly',
-      nodeTypes: [INLINE_CODE_NODE],
+      isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [INLINE_CODE_NODE])),
       run: (view) => toggleSurround(view, '`'),
     },
     {
       key: 'link',
       tooltip: t('notebook.cell.markdown.tooltip-link', 'Link'),
       icon: 'link',
-      nodeTypes: [LINK_NODE],
+      isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [LINK_NODE])),
       run: (view) => toggleSurround(view, '[', '](https://)'),
+    },
+    {
+      key: 'bulleted-list',
+      tooltip: t('notebook.cell.markdown.tooltip-bulleted-list', 'Bulleted list'),
+      icon: 'list-ul',
+      isActive: (tree, pos) => enclosingListKind(tree, pos) === 'bullet',
+      run: (view) => toggleLinePrefix(view, '- '),
+    },
+    {
+      key: 'numbered-list',
+      tooltip: t('notebook.cell.markdown.tooltip-numbered-list', 'Numbered list'),
+      icon: 'list-ol',
+      isActive: (tree, pos) => enclosingListKind(tree, pos) === 'ordered',
+      run: (view) => toggleOrderedList(view),
     },
   ];
 }
@@ -87,7 +122,7 @@ function selectionVirtualElement(view: EditorView): VirtualElement {
 }
 
 /**
- * Floating bold/italic/code/link bar that appears while the reader has text selected inside a
+ * Floating bold/italic/strikethrough/code/link/list bar that appears while the reader has text selected inside a
  * markdown cell's editor, mirroring Notion/Obsidian's selection toolbar. Positioned off the CM6
  * selection's own coordinates (not the DOM selection window.getSelection() would give — CM6 manages
  * its content itself), reusing floating-ui the same way Typeahead.tsx anchors to a text selection.
@@ -182,6 +217,16 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
         style={floatingStyles}
         className={styles.panel}
         data-testid={MARKDOWN_FORMAT_TOOLBAR_TEST_ID}
+        // A group of controls, same as the always-visible TextNGFormatToolbar — the buttons inside
+        // carry their own focus/keyboard handling, this just names the group for assistive tech.
+        role="toolbar"
+        // A click's mousedown fires — and, by default, moves focus to the clicked button — before its
+        // own click event does. Since this panel is portaled outside the editor's own DOM subtree,
+        // that default focus change would move the caret away from the CM6 view before the
+        // toggleSurround click ever runs, losing the very selection the button was about to format.
+        // Suppressing the default here keeps focus (and the CM6 selection) exactly where it was; the
+        // click still fires normally afterward.
+        onMouseDown={(event) => event.preventDefault()}
       >
         <Stack direction="row" gap={0.5} alignItems="center">
           {actions().map((action) => (
@@ -189,7 +234,10 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
               key={action.key}
               icon={action.icon}
               tooltip={action.tooltip}
-              isHighlighted={Boolean(findEnclosingMarkNode(tree, pos, action.nodeTypes))}
+              // A solid background fill for "this already applies here," not ToolbarButton's own
+              // isHighlighted (a small corner dot) — matches the reference toolbars (Datadog, the
+              // internal Grafana prototype) this bar is modelled on.
+              variant={action.isActive(tree, pos) ? 'primary' : 'default'}
               onClick={() => runAction(action)}
             >
               {action.label}

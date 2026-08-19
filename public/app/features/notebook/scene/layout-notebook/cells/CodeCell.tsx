@@ -1,3 +1,4 @@
+import { EditorSelection } from '@codemirror/state';
 import { ViewPlugin } from '@codemirror/view';
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
@@ -54,11 +55,20 @@ const EDIT_SETUP = {
  *
  * A fresh plugin per request, because CodeMirror rebuilds its plugins exactly when the extensions
  * array stops being shallow-equal. That makes a new one the way to ask for the caret again.
+ *
+ * Also moves the selection to the end of the document, not just the focus: `CodeMirrorEditor` never
+ * passes an initial `selection`, so a freshly created view otherwise defaults to position 0 — fine for
+ * every caller that seeds empty content, but wrong the moment a cell arrives with text already in it
+ * (e.g. a list continuation's `"- "` marker, or a heading's `"# "`), where position 0 sits *before*
+ * that text instead of ready to continue it.
  */
 export function buildFocusExtension() {
   return [
     ViewPlugin.define((view) => {
-      requestAnimationFrame(() => view.focus());
+      requestAnimationFrame(() => {
+        view.focus();
+        view.dispatch({ selection: EditorSelection.cursor(view.state.doc.length) });
+      });
       return {};
     }),
   ];

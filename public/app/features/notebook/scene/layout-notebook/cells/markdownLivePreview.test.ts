@@ -1,26 +1,30 @@
-import { markdown } from '@codemirror/lang-markdown';
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import { EditorSelection, EditorState } from '@codemirror/state';
+import { type DecorationSet } from '@codemirror/view';
 
 import {
   BOLD_NODE,
   buildDecorations,
+  enclosingListKind,
   findEnclosingMarkNode,
   INLINE_CODE_NODE,
   ITALIC_NODE,
   LINK_NODE,
+  markdownLanguageSupport,
   overlapsSelection,
+  STRIKETHROUGH_NODE,
   type MarkdownEditorStyles,
 } from './markdownLivePreview';
 
 // CodeMirror's own state/parsing layer (unlike the React-wrapped, lazily loaded editor component) runs
 // fine outside a browser, so the syntax-tree-driven logic here is tested directly against a real
-// EditorState rather than through a jsdom-mocked textarea.
+// EditorState rather than through a jsdom-mocked textarea. Uses the same markdownLanguageSupport the
+// real component does (rather than a bare markdown() call) so Strikethrough parses the same way here.
 function createState(doc: string, selection?: { anchor: number; head?: number }) {
   const state = EditorState.create({
     doc,
     selection: selection ? EditorSelection.single(selection.anchor, selection.head ?? selection.anchor) : undefined,
-    extensions: [markdown()],
+    extensions: [markdownLanguageSupport],
   });
 
   // Without a live EditorView driving background parsing, the tree only exists once forced — this is
@@ -38,22 +42,31 @@ const STYLES: MarkdownEditorStyles = {
   bold: 'bold',
   italic: 'italic',
   inlineCode: 'inline-code',
+  strikethrough: 'strikethrough',
   link: 'link',
   blockquoteLine: 'blockquote-line',
   listItemLine: 'list-item-line',
 };
 
-/** Every decoration in the set as a plain, order-independent, easy-to-assert-on record. */
-function decorationsIn(state: EditorState, styles: MarkdownEditorStyles) {
-  const decorations = buildDecorations(state, styles);
+/** Every decoration in the given set as a plain, order-independent, easy-to-assert-on record. */
+function recordsIn(decorations: DecorationSet, docLength: number) {
   const out: Array<{ from: number; to: number; class?: string; hidden: boolean }> = [];
 
-  decorations.between(0, state.doc.length, (from, to, deco) => {
+  decorations.between(0, docLength, (from, to, deco) => {
     const spec = deco.spec as { class?: string };
     out.push({ from, to, class: spec.class, hidden: spec.class === undefined });
   });
 
   return out;
+}
+
+function decorationsIn(state: EditorState, styles: MarkdownEditorStyles) {
+  return recordsIn(buildDecorations(state, styles).decorations, state.doc.length);
+}
+
+/** The atomic-ranges set fed to EditorView.atomicRanges — should mirror every hidden marker. */
+function hiddenRangesIn(state: EditorState, styles: MarkdownEditorStyles) {
+  return recordsIn(buildDecorations(state, styles).hidden, state.doc.length);
 }
 
 function isHidden(decorations: ReturnType<typeof decorationsIn>, from: number, to: number) {
@@ -134,6 +147,15 @@ describe('findEnclosingMarkNode', () => {
     expect(node?.name).toBe(LINK_NODE);
   });
 
+  it('finds the strikethrough node a cursor sits inside', () => {
+    const state = createState('a ~~strike~~ b');
+    const tree = syntaxTree(state);
+
+    const node = findEnclosingMarkNode(tree, 6, [STRIKETHROUGH_NODE]);
+
+    expect(node?.name).toBe(STRIKETHROUGH_NODE);
+  });
+
   it('finds nothing at a position with none of the requested marks', () => {
     const state = createState('plain text');
     const tree = syntaxTree(state);
@@ -155,24 +177,41 @@ describe('buildDecorations', () => {
     expect(hasClass(decorations, 4, 8, STYLES.bold)).toBe(true);
   });
 
-  it('reveals bold markers when the cursor is inside the run', () => {
+  // Unlike links, bold/italic/code/headings/blockquotes never reveal their raw markup: there is no
+  // "raw source" mode for them to fall back to editing, so the toolbar/Cmd+B are the only way to
+  // change them — deliberately different from Obsidian's per-element reveal, see markdownLivePreview.ts.
+  it('keeps bold markers hidden even when the cursor is inside the run', () => {
     // Caret between the two `*`s that open the marker, i.e. inside "**bold**"'s range.
     const state = createState('a **bold** b', { anchor: 5 });
     const decorations = decorationsIn(state, STYLES);
 
-    expect(isHidden(decorations, 2, 4)).toBe(false);
-    expect(isHidden(decorations, 8, 10)).toBe(false);
-    // The style still applies while revealed — matches Obsidian, per the design.
+    expect(isHidden(decorations, 2, 4)).toBe(true);
+    expect(isHidden(decorations, 8, 10)).toBe(true);
     expect(hasClass(decorations, 4, 8, STYLES.bold)).toBe(true);
   });
 
-  it('hides the heading marker and its trailing space, and styles the whole line', () => {
-    const state = createState('# Heading', { anchor: 9 }); // caret at the end of the doc, outside the heading
+  it('keeps italic markers hidden even when the cursor is inside the run', () => {
+    const state = createState('a *italic* b', { anchor: 5 });
+    const decorations = decorationsIn(state, STYLES);
+
+    expect(isHidden(decorations, 2, 3)).toBe(true);
+    expect(isHidden(decorations, 9, 10)).toBe(true);
+  });
+
+  it('hides the heading marker and its trailing space, and styles the whole line, regardless of the cursor', () => {
+    const state = createState('# Heading', { anchor: 3 }); // caret inside "Heading" itself
     const decorations = decorationsIn(state, STYLES);
 
     // "# " (marker plus the space after it) is hidden; "Heading" is left alone.
     expect(isHidden(decorations, 0, 2)).toBe(true);
     expect(decorations.some((d) => d.class?.includes(STYLES.heading1) && d.from === 0)).toBe(true);
+  });
+
+  it('keeps the blockquote marker hidden even when the cursor is inside it', () => {
+    const state = createState('> quoted', { anchor: 4 });
+    const decorations = decorationsIn(state, STYLES);
+
+    expect(isHidden(decorations, 0, 2)).toBe(true); // `> `
   });
 
   it('never hides list markers, even when the cursor is elsewhere', () => {
@@ -193,5 +232,69 @@ describe('buildDecorations', () => {
     expect(isHidden(decorations, 9, 10)).toBe(true); // `(`
     expect(isHidden(decorations, 29, 30)).toBe(true); // `)`
     expect(isHidden(decorations, 10, 29)).toBe(true); // the URL itself
+  });
+
+  // Links keep the Obsidian-style reveal-on-cursor behavior other constructs no longer have, because
+  // there's no other way yet to see or edit an existing link's target.
+  it('reveals link markup when the cursor is inside the link', () => {
+    const state = createState('[grafana](https://grafana.com)', { anchor: 4 }); // inside "grafana"
+    const decorations = decorationsIn(state, STYLES);
+
+    expect(isHidden(decorations, 0, 1)).toBe(false); // `[`
+    expect(isHidden(decorations, 9, 10)).toBe(false); // `(`
+  });
+
+  describe('atomic ranges (hidden)', () => {
+    it('mirrors every hidden marker, so the cursor cannot land inside one', () => {
+      const state = createState('a **bold** b');
+      const hidden = hiddenRangesIn(state, STYLES);
+
+      expect(isHidden(hidden, 2, 4)).toBe(true);
+      expect(isHidden(hidden, 8, 10)).toBe(true);
+    });
+
+    it('excludes styled (non-hidden) ranges, so normal text inside a bold run stays navigable', () => {
+      const state = createState('a **bold** b');
+      const hidden = hiddenRangesIn(state, STYLES);
+
+      expect(hidden.some((d) => d.class === STYLES.bold)).toBe(false);
+    });
+
+    it('excludes a revealed link’s markup, since it is not hidden while the cursor is inside it', () => {
+      const state = createState('[grafana](https://grafana.com)', { anchor: 4 });
+      const hidden = hiddenRangesIn(state, STYLES);
+
+      expect(hidden).toHaveLength(0);
+    });
+  });
+
+  it('hides strikethrough markers and styles the content, same as bold', () => {
+    const state = createState('a ~~strike~~ b', { anchor: 0 });
+    const decorations = decorationsIn(state, STYLES);
+
+    // "~~strike~~" spans [2, 12); the markers are the first and last two characters.
+    expect(isHidden(decorations, 2, 4)).toBe(true);
+    expect(isHidden(decorations, 10, 12)).toBe(true);
+    expect(hasClass(decorations, 4, 10, STYLES.strikethrough)).toBe(true);
+  });
+});
+
+describe('enclosingListKind', () => {
+  it('identifies a bulleted list', () => {
+    const state = createState('- one\n- two');
+
+    expect(enclosingListKind(syntaxTree(state), 2)).toBe('bullet');
+  });
+
+  it('identifies an ordered list', () => {
+    const state = createState('1. one\n2. two');
+
+    expect(enclosingListKind(syntaxTree(state), 3)).toBe('ordered');
+  });
+
+  it('finds nothing outside a list', () => {
+    const state = createState('plain text');
+
+    expect(enclosingListKind(syntaxTree(state), 3)).toBeUndefined();
   });
 });

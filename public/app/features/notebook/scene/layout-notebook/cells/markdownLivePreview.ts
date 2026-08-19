@@ -1,3 +1,4 @@
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { syntaxTree } from '@codemirror/language';
 import { type EditorState, type Extension, type Range, type SelectionRange } from '@codemirror/state';
 import {
@@ -10,6 +11,7 @@ import {
   type ViewUpdate,
 } from '@codemirror/view';
 import { type SyntaxNode, type SyntaxNodeRef, type Tree } from '@lezer/common';
+import { Strikethrough } from '@lezer/markdown';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 // toggleSurround/toggleLinePrefix already exist, pure and CM6-only, in the Text panel's own markdown
@@ -26,21 +28,121 @@ export const BOLD_NODE = 'StrongEmphasis';
 export const ITALIC_NODE = 'Emphasis';
 export const INLINE_CODE_NODE = 'InlineCode';
 export const LINK_NODE = 'Link';
+export const STRIKETHROUGH_NODE = 'Strikethrough';
+
+/**
+ * The base `language="markdown"` string prop (used elsewhere via CodeCell's `language` selector)
+ * resolves to a shared, lazily-loaded `markdown()` call with no GFM extensions — fine for a generic
+ * code editor, but it means the syntax tree never produces a `Strikethrough` node for `~~text~~`.
+ * Rather than widen that shared loader (used by every "Markdown" code-language selection, not just
+ * this editor), this builds and owns its own LanguageSupport with just the one GFM extension this
+ * cell actually needs — passed via `extensions`, not the `language` prop.
+ */
+export const markdownLanguageSupport = markdown({ base: markdownLanguage, extensions: [Strikethrough] });
 
 /**
  * Walks from `pos` up through its ancestor nodes, returning the first one whose type is in
  * `typeNames` — e.g. "is the cursor inside bold text, and if so, which node is that." Exported for
  * reuse by the selection format toolbar, which needs the same answer to show a button as active.
+ *
+ * Tries both of Lezer's `resolve` sides, not just one: `side: 1` finds the node *starting* at `pos`,
+ * `side: -1` finds the node *ending* at `pos` — at a node's own trailing edge (most commonly, the
+ * cursor at the very end of a cell's last line, e.g. right after typing a fresh list item) there is
+ * nothing to its right to descend into, so `side: 1` alone resolves to an ancestor instead and misses
+ * the node entirely, even though the cursor is unambiguously "in" it from every other perspective
+ * (the decorations covering that same line, drawn by iterating the whole tree rather than resolving a
+ * position, don't have this blind spot — that's what made this so easy to miss).
  */
 export function findEnclosingMarkNode(tree: Tree, pos: number, typeNames: readonly string[]): SyntaxNode | undefined {
-  let node: SyntaxNode | null = tree.resolve(pos, 1);
-  while (node) {
-    if (typeNames.includes(node.name)) {
-      return node;
+  for (const side of [-1, 1] as const) {
+    let node: SyntaxNode | null = tree.resolve(pos, side);
+    while (node) {
+      if (typeNames.includes(node.name)) {
+        return node;
+      }
+      node = node.parent;
     }
-    node = node.parent;
   }
   return undefined;
+}
+
+/**
+ * Which kind of list `pos` sits inside, if any — drives the Bulleted/Numbered list toolbar buttons'
+ * active state, the same way `findEnclosingMarkNode` drives Bold/Italic/etc. (a plain node-type check
+ * doesn't fit here: both list kinds share the `ListItem` node, so the answer depends on its parent).
+ */
+export function enclosingListKind(tree: Tree, pos: number): 'bullet' | 'ordered' | undefined {
+  const listItem = findEnclosingMarkNode(tree, pos, ['ListItem']);
+  if (listItem?.parent?.name === 'BulletList') {
+    return 'bullet';
+  }
+  if (listItem?.parent?.name === 'OrderedList') {
+    return 'ordered';
+  }
+  return undefined;
+}
+
+/**
+ * The marker a new list item continuing from `pos` should start with — `'- '` for a bullet, the next
+ * number followed by `'. '` for an ordered item — or `undefined` when `pos` isn't on a list line at
+ * all, or is on one with nothing but its own marker. That empty-item case is deliberate: pressing Enter
+ * on a bare, otherwise-empty bullet is the conventional "I'm done with this list" gesture (Word,
+ * Notion, and Google Docs all treat it the same way), not "add another empty bullet."
+ */
+export function nextListContinuation(state: EditorState, pos: number): string | undefined {
+  const listItem = findEnclosingMarkNode(syntaxTree(state), pos, ['ListItem']);
+  const marker = listItem?.getChild('ListMark');
+  if (!listItem || !marker) {
+    return undefined;
+  }
+
+  const hasContent = state.sliceDoc(marker.to, listItem.to).trim().length > 0;
+  if (!hasContent) {
+    return undefined;
+  }
+
+  if (listItem.parent?.name === 'BulletList') {
+    return '- ';
+  }
+  if (listItem.parent?.name === 'OrderedList') {
+    const currentNumber = parseInt(state.sliceDoc(marker.from, marker.to), 10);
+    return Number.isNaN(currentNumber) ? undefined : `${currentNumber + 1}. `;
+  }
+  return undefined;
+}
+
+// The closing-marker child name for each inline mark node Shift+Enter needs to step around — see
+// newlineInsertionPoint. Bold and italic share EmphasisMark (StrongEmphasis vs. Emphasis is what
+// distinguishes them, not the marker's own name).
+const INLINE_MARK_CLOSING_TYPES: Record<string, string> = {
+  [BOLD_NODE]: 'EmphasisMark',
+  [ITALIC_NODE]: 'EmphasisMark',
+  [INLINE_CODE_NODE]: 'CodeMark',
+  [STRIKETHROUGH_NODE]: 'StrikethroughMark',
+};
+
+/**
+ * Where a newline should actually land when the cursor sits at `pos` — `pos` unchanged, unless `pos`
+ * is exactly at the start of an inline mark's own *closing* marker (bold, italic, inline code, or
+ * strikethrough — e.g. right after the last bold letter, immediately before the hidden closing `**`),
+ * in which case the newline moves to just after that marker instead.
+ *
+ * Splitting the line exactly at `pos` would otherwise land the marker on a line of its own, preceded
+ * by whitespace (the inserted newline) — CommonMark's flanking rules require a closing emphasis
+ * delimiter to *not* be preceded by whitespace, so the split silently breaks the very formatting the
+ * reader was typing inside: `**Hello**` followed by Shift+Enter right there reparses as literal,
+ * unformatted `**Hello` on one line and a dangling `**` on the next, not two lines of bold text.
+ */
+export function newlineInsertionPoint(tree: Tree, pos: number): number {
+  const node = findEnclosingMarkNode(tree, pos, Object.keys(INLINE_MARK_CLOSING_TYPES));
+  if (!node) {
+    return pos;
+  }
+
+  const closingType = INLINE_MARK_CLOSING_TYPES[node.name];
+  const markers = node.getChildren(closingType);
+  const closing = markers[markers.length - 1];
+  return closing && pos === closing.from ? closing.to : pos;
 }
 
 /**
@@ -53,24 +155,23 @@ export function overlapsSelection(selection: SelectionRange, from: number, to: n
   return selection.from < to && from < selection.to;
 }
 
+/** Pushes a hidden-marker decoration into both the render set and the atomic-ranges set. See `hide`. */
+type Hide = (from: number, to: number) => void;
+
 function wrappedMarkDecorations(
   node: SyntaxNodeRef,
   markType: string,
   className: string,
-  reveal: boolean,
-  ranges: Array<Range<Decoration>>
+  ranges: Array<Range<Decoration>>,
+  hide: Hide
 ) {
-  // Styled over the node's whole range, markers included — hidden markers make that invisible, and a
-  // revealed marker rendering in the same weight/style as its content is normal (matches Obsidian).
+  // Styled over the node's whole range, markers included — the markers are hidden, so this only ever
+  // paints the visible content, matching how the marker itself just isn't part of the reader's view.
   ranges.push(Decoration.mark({ class: className }).range(node.from, node.to));
-
-  if (reveal) {
-    return;
-  }
 
   for (let child = node.node.firstChild; child; child = child.nextSibling) {
     if (child.name === markType) {
-      ranges.push(Decoration.replace({}).range(child.from, child.to));
+      hide(child.from, child.to);
     }
   }
 }
@@ -95,10 +196,10 @@ function headingLevelClass(styles: MarkdownEditorStyles, level: number): string 
 function headingDecorations(
   node: SyntaxNodeRef,
   level: number,
-  reveal: boolean,
   state: EditorState,
   styles: MarkdownEditorStyles,
-  ranges: Array<Range<Decoration>>
+  ranges: Array<Range<Decoration>>,
+  hide: Hide
 ) {
   const headingClass = headingLevelClass(styles, level);
   ranges.push(
@@ -107,24 +208,24 @@ function headingDecorations(
     )
   );
 
-  if (reveal) {
-    return;
-  }
-
   const marker = node.node.getChild('HeaderMark');
   if (!marker) {
     return;
   }
   // The single space between `#` and the heading text reads as part of the marker, not the content.
   const hideTo = state.sliceDoc(marker.to, marker.to + 1) === ' ' ? marker.to + 1 : marker.to;
-  ranges.push(Decoration.replace({}).range(marker.from, hideTo));
+  hide(marker.from, hideTo);
 }
 
+// Links are the one construct that still reveals its raw markup near the cursor, unlike everything
+// else here: there is no "edit link" UI yet to change an existing URL, so hiding it unconditionally
+// would make an existing link's target permanently invisible and unreachable through this editor.
 function linkDecorations(
   node: SyntaxNodeRef,
   reveal: boolean,
   styles: MarkdownEditorStyles,
-  ranges: Array<Range<Decoration>>
+  ranges: Array<Range<Decoration>>,
+  hide: Hide
 ) {
   const linkMarks: SyntaxNode[] = [];
   let url: SyntaxNode | undefined;
@@ -150,19 +251,19 @@ function linkDecorations(
   }
 
   for (const mark of linkMarks) {
-    ranges.push(Decoration.replace({}).range(mark.from, mark.to));
+    hide(mark.from, mark.to);
   }
   if (url) {
-    ranges.push(Decoration.replace({}).range(url.from, url.to));
+    hide(url.from, url.to);
   }
 }
 
 function blockquoteDecorations(
   node: SyntaxNodeRef,
-  reveal: boolean,
   state: EditorState,
   styles: MarkdownEditorStyles,
-  ranges: Array<Range<Decoration>>
+  ranges: Array<Range<Decoration>>,
+  hide: Hide
 ) {
   const fromLine = state.doc.lineAt(node.from).number;
   const toLine = state.doc.lineAt(node.to).number;
@@ -170,13 +271,12 @@ function blockquoteDecorations(
     ranges.push(Decoration.line({ class: styles.blockquoteLine }).range(state.doc.line(n).from));
   }
 
-  if (reveal) {
-    return;
-  }
-
   for (let child = node.node.firstChild; child; child = child.nextSibling) {
     if (child.name === 'QuoteMark') {
-      ranges.push(Decoration.replace({}).range(child.from, child.to));
+      // Matches headingDecorations: the space after `>` reads as part of the marker, not the quoted
+      // text, so leaving it visible would show up as a stray leading space once `>` itself is hidden.
+      const hideTo = state.sliceDoc(child.to, child.to + 1) === ' ' ? child.to + 1 : child.to;
+      hide(child.from, hideTo);
     }
   }
 }
@@ -199,29 +299,47 @@ function listItemDecorations(
 
 const HEADING_NODE_PATTERN = /^ATXHeading([1-6])$/;
 
+export interface BuiltDecorations {
+  /** Everything rendered: marks, hidden markers, and line decorations. */
+  decorations: DecorationSet;
+  /**
+   * The hidden-marker ranges only, fed into `EditorView.atomicRanges` — without this, the cursor can
+   * still land between the characters of a hidden marker even though nothing is rendered there, which
+   * looks like formatting toggling on its own as the caret is moved or clicked near it.
+   */
+  hidden: DecorationSet;
+}
+
 /** Exported so tests can inspect the resulting DecorationSet directly against a real parsed doc. */
-export function buildDecorations(state: EditorState, styles: MarkdownEditorStyles): DecorationSet {
+export function buildDecorations(state: EditorState, styles: MarkdownEditorStyles): BuiltDecorations {
   const tree = syntaxTree(state);
   const { main } = state.selection;
   const ranges: Array<Range<Decoration>> = [];
+  const hiddenRanges: Array<Range<Decoration>> = [];
+
+  const hide: Hide = (from, to) => {
+    ranges.push(Decoration.replace({}).range(from, to));
+    hiddenRanges.push(Decoration.replace({}).range(from, to));
+  };
 
   tree.iterate({
     enter(node) {
       const headingMatch = HEADING_NODE_PATTERN.exec(node.name);
-      const reveal = overlapsSelection(main, node.from, node.to);
 
       if (headingMatch) {
-        headingDecorations(node, Number(headingMatch[1]), reveal, state, styles, ranges);
+        headingDecorations(node, Number(headingMatch[1]), state, styles, ranges, hide);
       } else if (node.name === BOLD_NODE) {
-        wrappedMarkDecorations(node, 'EmphasisMark', styles.bold, reveal, ranges);
+        wrappedMarkDecorations(node, 'EmphasisMark', styles.bold, ranges, hide);
       } else if (node.name === ITALIC_NODE) {
-        wrappedMarkDecorations(node, 'EmphasisMark', styles.italic, reveal, ranges);
+        wrappedMarkDecorations(node, 'EmphasisMark', styles.italic, ranges, hide);
       } else if (node.name === INLINE_CODE_NODE) {
-        wrappedMarkDecorations(node, 'CodeMark', styles.inlineCode, reveal, ranges);
+        wrappedMarkDecorations(node, 'CodeMark', styles.inlineCode, ranges, hide);
+      } else if (node.name === STRIKETHROUGH_NODE) {
+        wrappedMarkDecorations(node, 'StrikethroughMark', styles.strikethrough, ranges, hide);
       } else if (node.name === LINK_NODE) {
-        linkDecorations(node, reveal, styles, ranges);
+        linkDecorations(node, overlapsSelection(main, node.from, node.to), styles, ranges, hide);
       } else if (node.name === 'Blockquote') {
-        blockquoteDecorations(node, reveal, state, styles, ranges);
+        blockquoteDecorations(node, state, styles, ranges, hide);
       } else if (node.name === 'ListItem') {
         listItemDecorations(node, state, styles, ranges);
       }
@@ -231,7 +349,7 @@ export function buildDecorations(state: EditorState, styles: MarkdownEditorStyle
     },
   });
 
-  return Decoration.set(ranges, true);
+  return { decorations: Decoration.set(ranges, true), hidden: Decoration.set(hiddenRanges, true) };
 }
 
 export interface MarkdownEditorStyles {
@@ -243,6 +361,7 @@ export interface MarkdownEditorStyles {
   bold: string;
   italic: string;
   inlineCode: string;
+  strikethrough: string;
   link: string;
   blockquoteLine: string;
   listItemLine: string;
@@ -263,12 +382,59 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
     bold: 'cm-md-bold',
     italic: 'cm-md-italic',
     inlineCode: 'cm-md-inline-code',
+    strikethrough: 'cm-md-strikethrough',
     link: 'cm-md-link',
     blockquoteLine: 'cm-md-blockquote-line',
     listItemLine: 'cm-md-list-item-line',
   };
 
   const themeExtension = EditorView.theme({
+    // Passed as CodeMirrorEditor's `theme` prop, not layered into `extensions`: a layered theme
+    // cannot reliably override the default VS Code-style theme's background (its style module is
+    // mounted last and wins the cascade — see CodeMirrorEditorProps.theme's own doc comment), and
+    // that default's monospace/boxed-input look is wrong here anyway. A notebook reads like a
+    // document, not a code box, so this replaces the default outright rather than patching it.
+    '&': {
+      backgroundColor: 'transparent',
+      color: theme.colors.text.primary,
+      fontFamily: theme.typography.fontFamily,
+      fontSize: theme.typography.body.fontSize,
+    },
+    '.cm-content': {
+      caretColor: theme.colors.text.primary,
+      padding: 0,
+    },
+    '.cm-cursor, .cm-dropCursor': {
+      borderLeftColor: theme.colors.text.primary,
+    },
+    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
+      backgroundColor: `${theme.colors.action.selected} !important`,
+    },
+    // @codemirror/view's own base theme (bundled unconditionally, independent of this theme entirely)
+    // gives every focused editor a hardcoded `outline: 1px dotted #212121` "so a focused editor is
+    // visually distinct" — reasonable for a bare code editor, wrong here, where a notebook cell reads
+    // as part of a document rather than a boxed input. CodeEditor.tsx's own generic theme overrides
+    // this the same way (with Grafana's focus ring instead); this cell just goes bare.
+    '&.cm-focused': {
+      outline: 'none',
+    },
+    // highlightActiveLine (part of basicSetup) carries no styling of its own — the visible highlight
+    // comes from @codemirror/view's own baseTheme (`&light .cm-activeLine`/`&dark ...`), which sits
+    // beneath this theme and shows through for any selector this theme doesn't itself define. A
+    // notebook cell has nothing that needs to stand out as "the active line" the way a code editor
+    // does, so this is transparent rather than given its own subtler color.
+    '.cm-activeLine, .cm-activeLineGutter': {
+      backgroundColor: 'transparent',
+    },
+    // Shown only once the cell actually has the caret — an unfocused "Type to start writing" reads as
+    // a document's own idle state (Notion, Google Docs, and Datadog all hide theirs the same way),
+    // where a permanently visible one looks like leftover placeholder copy on an inert block.
+    '.cm-placeholder': {
+      visibility: 'hidden',
+    },
+    '&.cm-focused .cm-placeholder': {
+      visibility: 'visible',
+    },
     [`.${classes.heading}`]: {
       fontWeight: theme.typography.fontWeightMedium,
     },
@@ -292,6 +458,9 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
     },
     [`.${classes.italic}`]: {
       fontStyle: 'italic',
+    },
+    [`.${classes.strikethrough}`]: {
+      textDecoration: 'line-through',
     },
     [`.${classes.inlineCode}`]: {
       background: theme.colors.background.secondary,
@@ -337,33 +506,57 @@ function buildKeymap(): readonly KeyBinding[] {
   ];
 }
 
+export interface MarkdownLivePreview {
+  /**
+   * Pass as CodeMirrorEditor's dedicated `theme` prop, not layered into `extensions` — see the
+   * comment inside buildEditorStyles for why a layered theme can't reliably win against the default.
+   */
+  theme: Extension;
+  /** Pass as CodeMirrorEditor's `extensions` prop, alongside anything else (e.g. a focus request). */
+  extensions: Extension;
+}
+
 /**
- * Notion/Obsidian-style live preview for a markdown editor: hides `**`/`#`/etc. markers and applies
- * the corresponding formatting inline, based on the markdown syntax tree and the current selection —
- * a node's markers stay hidden unless the selection currently overlaps it, so editing a styled run
- * shows its raw markdown without disturbing the rest of the document. Storage is unaffected: this is
- * purely a view-layer decoration over the same plain markdown string CodeCell-style editors already
- * use, plus the Cmd+B/Cmd+I keymap for toggling bold/italic.
+ * Live preview for a markdown editor: hides `**`/`#`/etc. markers and applies the corresponding
+ * formatting inline, based on the markdown syntax tree — always, not just when the cursor is
+ * elsewhere. Links are the one exception, revealing their raw `[text](url)` near the cursor, since
+ * there is no dedicated "edit link" UI yet to change an existing URL otherwise. Storage is unaffected:
+ * this is purely a view-layer decoration over the same plain markdown string CodeCell-style editors
+ * already use, plus the Cmd+B/Cmd+I keymap for toggling bold/italic.
  */
-export function markdownLivePreview(theme: GrafanaTheme2): Extension {
+export function markdownLivePreview(theme: GrafanaTheme2): MarkdownLivePreview {
   const { theme: themeExtension, classes } = buildEditorStyles(theme);
 
   const decorationPlugin = ViewPlugin.fromClass(
     class {
       decorations: DecorationSet;
+      hidden: DecorationSet;
 
       constructor(view: EditorView) {
-        this.decorations = buildDecorations(view.state, classes);
+        ({ decorations: this.decorations, hidden: this.hidden } = buildDecorations(view.state, classes));
       }
 
       update(update: ViewUpdate) {
         if (update.docChanged || update.selectionSet || update.viewportChanged) {
-          this.decorations = buildDecorations(update.state, classes);
+          ({ decorations: this.decorations, hidden: this.hidden } = buildDecorations(update.state, classes));
         }
       }
     },
     { decorations: (plugin) => plugin.decorations }
   );
 
-  return [themeExtension, decorationPlugin, keymap.of(buildKeymap())];
+  return {
+    theme: themeExtension,
+    extensions: [
+      // Bundled in here rather than exposed as a second thing MarkdownCell.tsx has to remember to
+      // include — the language and the live preview built on top of its syntax tree are one cohesive
+      // unit, not two independent concerns.
+      markdownLanguageSupport,
+      decorationPlugin,
+      // Makes CM6 skip over a hidden marker in one step (cursor movement, clicks, deletion) rather
+      // than treating its characters as ordinary, just invisible, text — see BuiltDecorations.hidden.
+      EditorView.atomicRanges.of((view) => view.plugin(decorationPlugin)?.hidden ?? Decoration.none),
+      keymap.of(buildKeymap()),
+    ],
+  };
 }
