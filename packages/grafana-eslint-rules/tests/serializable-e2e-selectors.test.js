@@ -81,6 +81,11 @@ ruleTester.run('eslint serializable-e2e-selectors', serializableE2ESelectors, {
       errors: [{ messageId: 'notSerializable' }],
     },
     {
+      name: 'multi-arg conditional (generator only handles single-arg conditionals)',
+      code: `const s = { Comp: { x: { '11.1.0': (a, b) => (a ? \`x \${b}\` : 'y') } } };`,
+      errors: [{ messageId: 'notSerializable' }],
+    },
+    {
       name: 'block body with logic',
       code: `const s = { Comp: { x: { '9.4.0': (n) => { const y = n + 1; return \`item-\${y}\`; } } } };`,
       errors: [{ messageId: 'notSerializable' }],
