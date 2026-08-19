@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
@@ -58,11 +58,23 @@ export interface DataSourceSettingsK8s {
   secure?: Record<string, Record<string, string>>;
 }
 
-// Passing a ref object rather than a bare uid string keeps this a strict uid lookup — a
-// string would also match on name/id and resolve `default` to the default data source.
+// Scans the list rather than calling getDataSourceInstanceSettings, which resolves a ref
+// through uid, then name, then id, and maps `default` to the org default — so a colliding
+// name would yield the wrong group. This lookup has to be uid-exact.
 const getDataSourceK8sGroup = async (uid: string): Promise<string> => {
-  const settings = await getDataSourceInstanceSettings({ uid });
-  return settings ? `${settings.type}.datasource.grafana.app` : '';
+  // `all: true` keeps data sources that expose no query capability, matching the previous
+  // scan over every entry in config.datasources.
+  const instances = await getDataSourceInstanceList({ all: true });
+  for (const ds of instances) {
+    // Built-in data sources (-- Grafana --, -- Mixed --, -- Dashboard --) have no k8s group.
+    if (ds.name.startsWith('--')) {
+      continue;
+    }
+    if (ds.uid === uid) {
+      return ds.type + '.datasource.grafana.app';
+    }
+  }
+  return '';
 };
 
 const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (

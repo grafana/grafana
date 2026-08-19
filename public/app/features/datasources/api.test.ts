@@ -47,6 +47,19 @@ const marvinSettings = {
   meta: { id: 'marvin' },
 } as DataSourceInstanceSettings;
 
+// getDataSourceInstanceList appends -- Grafana -- to most results, so the group
+// lookup has to keep excluding built-ins itself.
+const grafanaSettings = {
+  id: 1,
+  uid: '-- Grafana --',
+  name: '-- Grafana --',
+  type: 'grafana',
+  access: 'proxy',
+  jsonData: {},
+  readOnly: true,
+  meta: { id: 'grafana' },
+} as DataSourceInstanceSettings;
+
 const mockResponse = (response: Partial<FetchResponse>) => {
   (getBackendSrv as jest.Mock).mockReturnValueOnce({
     fetch: (options: BackendSrvRequest) => {
@@ -72,7 +85,7 @@ describe('Datasources / API', () => {
       typeof getFeatureFlagClient
     >);
     stubCRUDApisEnabled(false);
-    setDataSourceInstanceSettings({ Marvin: marvinSettings });
+    setDataSourceInstanceSettings({ Marvin: marvinSettings, '-- Grafana --': grafanaSettings }, 'Marvin');
     config.namespace = 'default';
   });
 
@@ -238,6 +251,22 @@ describe('Datasources / API', () => {
       (getBackendSrv as jest.Mock).mockReturnValueOnce({ delete: deleteFn });
 
       await expect(deleteDataSource('nope')).rejects.toThrow('Could not find data source group with uid: "nope"');
+      expect(deleteFn).not.toHaveBeenCalled();
+    });
+
+    // The group lookup must be uid-exact: matching on name or id, or resolving `default`
+    // to the org default, would build a k8s URL for the wrong data source.
+    it.each([
+      ['a name rather than a uid', 'Marvin'],
+      ['an id rather than a uid', '42'],
+      ['the literal "default"', 'default'],
+      ['a built-in data source', '-- Grafana --'],
+    ])('should reject when given %s', async (_, uid) => {
+      stubCRUDApisEnabled(true);
+      const deleteFn = jest.fn();
+      (getBackendSrv as jest.Mock).mockReturnValueOnce({ delete: deleteFn });
+
+      await expect(deleteDataSource(uid)).rejects.toThrow(`Could not find data source group with uid: "${uid}"`);
       expect(deleteFn).not.toHaveBeenCalled();
     });
   });
