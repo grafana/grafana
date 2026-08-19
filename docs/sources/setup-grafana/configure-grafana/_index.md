@@ -2906,7 +2906,7 @@ Supported types: `local`, `git`, `github`. Grafana Enterprise additionally suppo
 
 #### `connection_types`
 
-List of enabled connection types, separated by `|`. When empty, all registered connection types are enabled.
+List of enabled connection types, separated by `|`. When empty, defaults are applied by each subsystem.
 
 Supported types: `github`. Grafana Enterprise additionally supports `githubEnterprise`, `bitbucketOAuth`, and `gitlabOAuth`.
 

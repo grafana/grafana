@@ -518,10 +518,7 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 
 	types := c.Settings.ProvisioningConnectionTypes
 	if len(types) == 0 {
-		types = make([]string, 0, len(extras))
-		for _, extra := range extras {
-			types = append(types, string(extra.Type()))
-		}
+		types = defaultConnectionTypes(extras)
 	}
 
 	connectionFactory, err := connection.ProvideFactory(connection.ToConnectionTypes(types), extras)
@@ -750,4 +747,14 @@ func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
 
 func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
 	return r.cfg, nil
+}
+
+func defaultConnectionTypes(extras []connection.Extra) []string {
+	types := []string{string(provisioning.GithubConnectionType)}
+	for _, extra := range extras {
+		if extra.Type() == provisioning.GithubEnterpriseConnectionType {
+			types = append(types, string(extra.Type()))
+		}
+	}
+	return types
 }
