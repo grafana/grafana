@@ -104,6 +104,14 @@ describe('ReportRenderReadinessObserver — repeat panel render readiness', () =
 
     jest.advanceTimersByTime(200);
     expect(channel).toHaveBeenCalledWith(JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: true } }));
+
+    // The settling guard should now be off — a further query cycle and grace window must not
+    // produce a second send.
+    const lateQuery = makeQueryEntry();
+    queryController.queryStarted(lateQuery);
+    queryController.queryCompleted(lateQuery);
+    jest.advanceTimersByTime(config.reportRenderQueryGracePeriodMs + 500);
+    expect(channel).toHaveBeenCalledTimes(1);
   });
 
   it('still completes a genuinely idle report once the grace window elapses with nothing further registering', () => {
