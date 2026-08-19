@@ -25,13 +25,13 @@ func TestQuoteETag(t *testing.T) {
 type fakeBackend struct {
 	group    string
 	rv       string
-	manifest *app.ManifestData
+	manifest app.ManifestData
 	handler  http.Handler
 }
 
-func (b *fakeBackend) RV() string                  { return b.rv }
-func (b *fakeBackend) Group() string               { return b.group }
-func (b *fakeBackend) Manifest() *app.ManifestData { return b.manifest }
+func (b *fakeBackend) RV() string                 { return b.rv }
+func (b *fakeBackend) Group() string              { return b.group }
+func (b *fakeBackend) Manifest() app.ManifestData { return b.manifest }
 func (b *fakeBackend) Load(context.Context) (http.Handler, error) {
 	if b.handler != nil {
 		return b.handler, nil
@@ -41,7 +41,7 @@ func (b *fakeBackend) Load(context.Context) (http.Handler, error) {
 
 func TestBuildAPIGroupList(t *testing.T) {
 	backends := []Backend{
-		&fakeBackend{group: "dashboard.grafana.app", rv: "10", manifest: &app.ManifestData{
+		&fakeBackend{group: "dashboard.grafana.app", rv: "10", manifest: app.ManifestData{
 			Group:            "dashboard.grafana.app",
 			PreferredVersion: "v1alpha1",
 			Versions: []app.ManifestVersion{
@@ -50,13 +50,11 @@ func TestBuildAPIGroupList(t *testing.T) {
 				{Name: "v2alpha1", Served: false}, // unserved: must be excluded
 			},
 		}},
-		&fakeBackend{group: "folder.grafana.app", rv: "3", manifest: &app.ManifestData{
+		&fakeBackend{group: "folder.grafana.app", rv: "3", manifest: app.ManifestData{
 			Group:            "folder.grafana.app",
 			PreferredVersion: "v0alpha1",
 			Versions:         []app.ManifestVersion{{Name: "v0alpha1", Served: true}},
 		}},
-		// nil manifest must be skipped, not panic
-		&fakeBackend{group: "broken.grafana.app", rv: "1", manifest: nil},
 	}
 
 	doc := buildAPIGroupList(backends)
@@ -90,7 +88,7 @@ func TestBuildAPIGroupList(t *testing.T) {
 
 func TestBuildAPIGroupListETagChangesWithRV(t *testing.T) {
 	mk := func(rv string) []Backend {
-		return []Backend{&fakeBackend{group: "dashboard.grafana.app", rv: rv, manifest: &app.ManifestData{
+		return []Backend{&fakeBackend{group: "dashboard.grafana.app", rv: rv, manifest: app.ManifestData{
 			Group:    "dashboard.grafana.app",
 			Versions: []app.ManifestVersion{{Name: "v1alpha1", Served: true}},
 		}}}
@@ -104,14 +102,13 @@ func TestBuildAPIGroupListETagChangesWithRV(t *testing.T) {
 
 func TestBuildOpenAPIV3Index(t *testing.T) {
 	backends := []Backend{
-		&fakeBackend{group: "dashboard.grafana.app", rv: "10", manifest: &app.ManifestData{
+		&fakeBackend{group: "dashboard.grafana.app", rv: "10", manifest: app.ManifestData{
 			Group: "dashboard.grafana.app",
 			Versions: []app.ManifestVersion{
 				{Name: "v0alpha1", Served: true},
 				{Name: "v1alpha1", Served: false}, // unserved: excluded
 			},
 		}},
-		&fakeBackend{group: "broken.grafana.app", rv: "1", manifest: nil},
 	}
 
 	doc := buildOpenAPIV3Index(backends)

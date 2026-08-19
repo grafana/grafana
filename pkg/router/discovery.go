@@ -84,10 +84,6 @@ func buildAPIGroupList(backends []Backend) cachedDoc {
 func sortedManifestBackends(backends []Backend, forDoc string) []Backend {
 	out := make([]Backend, 0, len(backends))
 	for _, b := range backends {
-		if b.Manifest() == nil {
-			slog.Warn("router: skipping backend with nil manifest", "group", b.Group(), "doc", forDoc)
-			continue
-		}
 		out = append(out, b)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Group() < out[j].Group() })

@@ -18,7 +18,7 @@ type Backend interface {
 	Load(context.Context) (http.Handler, error)
 
 	// Includes group, versions, resources, and custom route information
-	Manifest() *app.ManifestData
+	Manifest() app.ManifestData
 }
 
 type RoutesLoader interface {

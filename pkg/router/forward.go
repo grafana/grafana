@@ -54,8 +54,8 @@ func NewForwardBackend(manifest app.ManifestData, routeBackend v1alpha2.RouteBac
 	}, nil
 }
 
-func (b *forwardBackend) Manifest() *app.ManifestData {
-	return &b.manifest
+func (b *forwardBackend) Manifest() app.ManifestData {
+	return b.manifest
 }
 
 func (b *forwardBackend) Group() string {
