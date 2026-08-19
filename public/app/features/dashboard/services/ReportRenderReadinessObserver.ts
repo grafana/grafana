@@ -99,6 +99,8 @@ export class ReportRenderReadinessObserver implements performanceUtils.ScenePerf
 
 let instance: ReportRenderReadinessObserver | null = null;
 
+// Keeps the first instance and ignores later queryController args — fine only because a renderer tab
+// never runs a second loadDashboard() today. If that changes, this must rebind to the new controller.
 export function initializeReportRenderReadinessObserver(queryController?: SceneQueryControllerLike): void {
   if (!instance) {
     instance = new ReportRenderReadinessObserver(queryController);
