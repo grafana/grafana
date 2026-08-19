@@ -394,6 +394,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
       height: '100%',
+
+      '& .rdg': {
+        '--rdg-background-color': theme.colors.background.secondary,
+        '--rdg-header-background-color': theme.colors.background.secondary,
+      },
     }),
   };
 };
