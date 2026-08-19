@@ -203,12 +203,6 @@ func (ss *sqlStore) ListByIdOrUID(ctx context.Context, uids []string, ids []int6
 	return users, err
 }
 
-func (ss *sqlStore) notServiceAccountFilter(dbHelper *legacysql.LegacyDatabaseHelper) string {
-	return fmt.Sprintf("%s.is_service_account = %s",
-		quoteTable(dbHelper, "user"),
-		dbHelper.DB.GetDialect().BooleanStr(false))
-}
-
 type getUserByLoginOrEmailQuery struct {
 	sqltemplate.SQLTemplate
 	UserTable        string
