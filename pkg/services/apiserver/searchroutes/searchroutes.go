@@ -6,6 +6,7 @@
 package searchroutes
 
 import (
+	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -24,7 +25,8 @@ const namespacedScope = "Namespaced"
 //
 // Temporary. Every namespaced kind is a candidate, but turning them all on at
 // once would expose endpoints on kinds nobody has looked at yet, so the set is
-// widened deliberately. A manifest opt-out replaces this.
+// widened deliberately. Kinds state their own choice in their manifest; this
+// list holds that choice back until someone has reviewed the kind.
 var allowed = map[groupResource]bool{
 	{group: "dashboard.grafana.app", resource: "dashboards"}: true,
 	{group: "folder.grafana.app", resource: "folders"}:       true,
@@ -61,7 +63,20 @@ func Build(
 
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
-	manifests := resource.AppManifests()
+	return build(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers)
+}
+
+// build takes the manifests as an argument so a test can describe a kind that
+// opts out. No compiled-in manifest does yet.
+func build(
+	manifests []app.Manifest,
+	searchEnabled bool,
+	trashEnabled bool,
+	tracer tracing.Tracer,
+	index resourcepb.ResourceIndexClient,
+	builders []builder.APIGroupBuilder,
+	installers []appsdkapiserver.AppInstaller,
+) []builder.GroupVersionRoutes {
 	handler := searchapi.NewHandler(index, resource.NewManifestBackedProvider(manifests), tracer)
 
 	served := servedGroupVersions(builders, installers)
@@ -87,11 +102,13 @@ func Build(
 				if !allowed[groupResource{group: gv.Group, resource: resourceName}] {
 					continue
 				}
-				if searchEnabled {
+				// The list above and the kind's manifest both have to want the
+				// endpoint. The two endpoints are answered separately.
+				if searchEnabled && kind.HasSearchEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}
-				if trashEnabled {
+				if trashEnabled && kind.HasTrashEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.TrashRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}

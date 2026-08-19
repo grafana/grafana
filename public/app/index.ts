@@ -2,8 +2,6 @@
 // Since much of Grafana depends on it in includes side effects at import time,
 // we delay loading the rest of the app using import() until the boot data is ready.
 
-import type { Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
-
 import 'vendor/css/font_awesome.css';
 
 import { initPreferences } from './initPreferences';
@@ -34,10 +32,7 @@ async function bootstrapWindowData() {
 
   patchFetchForLegacyAPIMode();
 
-  let mergedPreferences: Preferences | undefined;
-  if (window.__grafanaNewPreferencesPage) {
-    mergedPreferences = await initPreferences();
-  }
+  const mergedPreferences = await initPreferences();
 
   // Use eager to ensure the app is included in the initial chunk and does not
   // require additional network requests to load.

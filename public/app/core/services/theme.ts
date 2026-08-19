@@ -1,13 +1,10 @@
 import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1';
 import { getThemeById } from '@grafana/data/internal';
 import { config, ThemeChangedEvent } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { dispatch } from 'app/store/store';
 
 import { appEvents } from '../app_events';
 import { contextSrv } from '../services/context_srv';
-
-import { PreferencesService } from './PreferencesService';
 
 export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
   const oldTheme = config.theme2;
@@ -47,20 +44,13 @@ export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
   }
 
   // Persist new theme
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPreferencesPage, false)) {
-    const resourceName = contextSrv.user.uid ? `user-${contextSrv.user.uid}` : 'user';
-    await dispatch(
-      preferencesAPI.endpoints.updatePreferences.initiate({
-        name: resourceName,
-        patch: { spec: { theme: themeId } },
-      })
-    ).unwrap();
-  } else {
-    const service = new PreferencesService('user');
-    await service.patch({
-      theme: themeId,
-    });
-  }
+  const resourceName = contextSrv.user.uid ? `user-${contextSrv.user.uid}` : 'user';
+  await dispatch(
+    preferencesAPI.endpoints.updatePreferences.initiate({
+      name: resourceName,
+      patch: { spec: { theme: themeId } },
+    })
+  ).unwrap();
 }
 
 export async function toggleTheme(runtimeOnly: boolean) {
