@@ -83,37 +83,6 @@ describe('GrafanaRuleQueryViewer', () => {
     expect(screen.queryByText('Test DS')).not.toBeInTheDocument();
     expect(screen.queryByText(/refId: A/)).not.toBeInTheDocument();
   });
-
-  it('shows a loading bar instead of the queries while the data sources resolve', async () => {
-    const rule = mockCombinedRule();
-
-    // No expressions in this rule, so the only loading bar that can render is the one for the
-    // unresolved data sources.
-    const { rerender } = render(
-      <GrafanaRuleQueryViewer
-        queries={[getDataSourceQuery('A')]}
-        condition="A"
-        rule={rule}
-        dataSourcesByUid={new Map()}
-        dataSourcesLoading
-      />
-    );
-
-    expect(await screen.findByTestId('eval-loading-bar')).toBeInTheDocument();
-    expect(screen.queryByText('Test DS')).not.toBeInTheDocument();
-
-    rerender(
-      <GrafanaRuleQueryViewer
-        queries={[getDataSourceQuery('A')]}
-        condition="A"
-        rule={rule}
-        dataSourcesByUid={dataSources}
-      />
-    );
-
-    expect(await screen.findByText('Test DS')).toBeInTheDocument();
-    expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument();
-  });
 });
 
 function getDataSourceQuery(sourceRefId: string) {

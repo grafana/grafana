@@ -10,7 +10,7 @@ import { getAlertQueriesStatus, useAlertQueryDataSources } from '../../../hooks/
 import { alertRuleToQueries } from '../../../utils/query';
 import { isFederatedRuleGroup, rulerRuleType } from '../../../utils/rules';
 import { useAlertQueryRunner } from '../../rule-editor/query-and-alert-condition/useAlertQueryRunner';
-import { NoQueryToRun } from '../EvalStatus';
+import { EvalLoadingBar, NoQueryToRun } from '../EvalStatus';
 
 interface Props {
   rule: CombinedRule;
@@ -105,9 +105,18 @@ const QueryAndCondition = ({ rule }: Props) => {
   const queryGraphLoading = isDsLoading || activeRuns > 0 || isVisualizationLoading;
   const queryDataLoading = isDsLoading || activeRuns > 0 || isExpressionLoading;
 
+  // The list hook resolves asynchronously even for a rule that references no data sources at all,
+  // so an expression-only rule has nothing to wait for.
+  const isWaitingForDataSources = isDsLoading && visualizationQueries.length > 0;
+
   return (
     <>
-      {rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
+      {/* Both branches render a query preview per query, and a preview without its data source shows
+          neither the query model nor the visualization — not even the visualization's own loading bar.
+          So the wait is held here, once, rather than in each branch. */}
+      {isWaitingForDataSources && <EvalLoadingBar />}
+
+      {!isWaitingForDataSources && rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
         <GrafanaRuleQueryViewer
           rule={rule}
           condition={rule.rulerRule.grafana_alert.condition}
@@ -116,11 +125,10 @@ const QueryAndCondition = ({ rule }: Props) => {
           evalDataByQuery={mergedPreviewData}
           queryGraphLoading={queryGraphLoading}
           queryDataLoading={queryDataLoading}
-          dataSourcesLoading={isDsLoading}
         />
       )}
 
-      {!rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
+      {!isWaitingForDataSources && !rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
         <Stack direction="column" gap={1}>
           {queries.map((query) => {
             return (

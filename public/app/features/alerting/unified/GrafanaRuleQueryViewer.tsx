@@ -43,7 +43,6 @@ interface GrafanaRuleViewerProps {
   evalDataByQuery?: Record<string, PanelData>;
   queryGraphLoading?: boolean;
   queryDataLoading?: boolean;
-  dataSourcesLoading?: boolean;
 }
 
 export function GrafanaRuleQueryViewer({
@@ -54,7 +53,6 @@ export function GrafanaRuleQueryViewer({
   evalDataByQuery = {},
   queryGraphLoading = false,
   queryDataLoading = false,
-  dataSourcesLoading = false,
 }: GrafanaRuleViewerProps) {
   const dataQueries = queries.filter((q) => !isExpressionQuery(q.model));
   const expressions = queries.filter((q) => isExpressionQuery(q.model));
@@ -66,25 +64,23 @@ export function GrafanaRuleQueryViewer({
     <Stack gap={1} direction="column" flex={'1 1 320px'}>
       <div className={styles.maxWidthContainer}>
         <Stack gap={1} wrap="wrap" data-testid="queries-container">
-          {dataSourcesLoading && <EvalLoadingBar />}
-          {!dataSourcesLoading &&
-            dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
-              const dataSource = dataSourcesByUid.get(datasourceUid);
+          {dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
+            const dataSource = dataSourcesByUid.get(datasourceUid);
 
-              return (
-                <QueryPreview
-                  rule={rule}
-                  key={index}
-                  refId={refId}
-                  model={model}
-                  relativeTimeRange={relativeTimeRange}
-                  dataSource={dataSource}
-                  thresholds={thresholds[refId]}
-                  queryData={evalDataByQuery[refId]}
-                  isLoading={queryGraphLoading}
-                />
-              );
-            })}
+            return (
+              <QueryPreview
+                rule={rule}
+                key={index}
+                refId={refId}
+                model={model}
+                relativeTimeRange={relativeTimeRange}
+                dataSource={dataSource}
+                thresholds={thresholds[refId]}
+                queryData={evalDataByQuery[refId]}
+                isLoading={queryGraphLoading}
+              />
+            );
+          })}
         </Stack>
       </div>
       <div className={styles.maxWidthContainer}>
