@@ -75,7 +75,8 @@ export function isDataSourceCompatibleWithPicker(
     return true;
   }
   if (!resolved) {
-    return selected == null || selected === '';
+    // Only null/undefined mean "nothing selected". An empty string is an unresolved uid.
+    return selected == null;
   }
   // Template refs keep the variable string as uid (`$ds`, `${ds}`, `logs-${stage}-loki`)
   // and the concrete datasource in rawRef. Match only the interpolated uid: getList({ variables: true })

@@ -345,6 +345,15 @@ describe('DataSourcePicker', () => {
       );
     });
 
+    it('should mark the input as invalid when the current uid is an empty string that cannot be resolved', () => {
+      mockUseDatasources.mockReturnValue([mockDS1]);
+      getInstanceSettingsMock.mockReturnValue(undefined);
+      render(<DataSourcePicker onChange={jest.fn()} current="" pluginId="prometheus"></DataSourcePicker>);
+      const input = screen.getByTestId(selectors.components.DataSourcePicker.inputV2);
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+      expect(input).toHaveAttribute('placeholder', 'Select data source');
+    });
+
     it('should keep the input invalid when the parent passes invalid even if the type matches', () => {
       mockUseDatasources.mockReturnValue([mockDS1]);
       getInstanceSettingsMock.mockReturnValue(mockDS1);

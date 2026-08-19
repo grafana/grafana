@@ -190,7 +190,10 @@ describe('DataSourcePicker', () => {
     it('allows an empty selection', () => {
       expect(isDataSourceCompatibleWithPicker(null, undefined, [prometheusDs])).toBe(true);
       expect(isDataSourceCompatibleWithPicker(undefined, undefined, [prometheusDs])).toBe(true);
-      expect(isDataSourceCompatibleWithPicker('', undefined, [prometheusDs])).toBe(true);
+    });
+
+    it('rejects an empty string uid that cannot be resolved', () => {
+      expect(isDataSourceCompatibleWithPicker('', undefined, [prometheusDs])).toBe(false);
     });
 
     it('rejects the org default when nothing is selected and the default is not in the filtered list', () => {
@@ -336,6 +339,13 @@ describe('DataSourcePicker', () => {
       render(<DataSourcePicker current={null} noDefault onChange={jest.fn()} />);
 
       expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'false');
+    });
+
+    it('marks the select invalid when the current uid is an empty string that cannot be resolved', () => {
+      mockGetInstanceSettings.mockReturnValue(undefined);
+      render(<DataSourcePicker current="" pluginId="prometheus" onChange={jest.fn()} />);
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
     });
 
     it('marks the select invalid when the org default is used and is not in the filtered list', () => {
