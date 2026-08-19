@@ -904,6 +904,16 @@ func (rc *RepositoryController) process(key string) error {
 		}
 	}
 
+	// Backfill the pinned project ID for repos written before it was resolved
+	// at admission time, so Build doesn't keep re-resolving it on every call.
+	if repoIDHandler, ok := repo.(repository.RepoIDHandler); ok && repoIDHandler.ShouldUpdateRepoID() {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  fmt.Sprintf("/spec/%s/projectID", repo.Config().Spec.Type),
+			"value": repoIDHandler.ResolvedRepoID(),
+		})
+	}
+
 	// Handle health checks using the health checker
 	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
