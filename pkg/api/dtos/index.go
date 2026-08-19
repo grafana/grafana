@@ -45,11 +45,18 @@ type IndexViewData struct {
 }
 
 type EntryPointAssets struct {
-	ContentDeliveryURL string            `json:"cdn,omitempty"`
-	JSFiles            []EntryPointAsset `json:"jsFiles"`
-	CSSFiles           []EntryPointAsset `json:"cssFiles"`
-	Dark               string            `json:"dark"`
-	Light              string            `json:"light"`
+	ContentDeliveryURL string `json:"cdn,omitempty"`
+
+	// PublicPath is the URL prefix the bundler compiled its asset references against,
+	// relative to the server root. The page needs it to rebuild that prefix for a CDN,
+	// because it varies with the bundler: public/build/ for webpack, public/build/rspack/
+	// for rspack.
+	PublicPath string `json:"-"`
+
+	JSFiles  []EntryPointAsset `json:"jsFiles"`
+	CSSFiles []EntryPointAsset `json:"cssFiles"`
+	Dark     string            `json:"dark"`
+	Light    string            `json:"light"`
 }
 
 type EntryPointAsset struct {

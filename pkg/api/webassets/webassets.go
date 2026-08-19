@@ -50,6 +50,12 @@ const (
 //
 // Call this per request, from a handler holding the incoming context. Resolving it once
 // at startup would pin the rollout to process lifetime and defeat percentage rollouts.
+// PublicPathFor returns the URL prefix, relative to the server root, that assets in
+// buildDir are referenced by. It always matches the bundler's output.publicPath.
+func PublicPathFor(buildDir string) string {
+	return path.Join("public", buildDir) + "/"
+}
+
 func ResolveBuildDir(ctx context.Context) string {
 	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRspackBuild, false, openfeature.TransactionContext(ctx)) {
 		return RspackBuildDir
@@ -105,6 +111,7 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 	if result == nil {
 		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, buildDir, AssetsManifestFile))
 		if err == nil {
+			result.PublicPath = PublicPathFor(buildDir)
 			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
 			if cdn != "" {
 				result.SetContentDeliveryURL(cdn)
@@ -153,6 +160,7 @@ func ReadWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) 
 	const maxManifestSize = 10 * 1024 * 1024
 	dto, err := readWebAssets(io.LimitReader(response.Body, maxManifestSize))
 	if err == nil {
+		dto.PublicPath = PublicPathFor(buildDir)
 		dto.SetContentDeliveryURL(baseURL)
 	}
 	return dto, err

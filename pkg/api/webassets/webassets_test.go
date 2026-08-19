@@ -194,3 +194,33 @@ func TestReadWebassetsFromCDN(t *testing.T) {
 		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.e8e11c59b604d62836be.css"
 	  }`, string(dto))
 }
+
+// The page rebuilds the CDN asset prefix from PublicPath, so it has to match the
+// bundler's output.publicPath or every lazy chunk and worker resolves to the wrong
+// directory.
+func TestPublicPathFollowsBuildDir(t *testing.T) {
+	tests := []struct {
+		buildDir string
+		expected string
+	}{
+		{buildDir: WebpackBuildDir, expected: "public/build/"},
+		{buildDir: RspackBuildDir, expected: "public/build/rspack/"},
+		{buildDir: "build-swagger", expected: "public/build-swagger/"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.buildDir, func(t *testing.T) {
+			require.Equal(t, tt.expected, PublicPathFor(tt.buildDir))
+		})
+	}
+
+	t.Run("is set on assets read from disk", func(t *testing.T) {
+		cfg := &setting.Cfg{StaticRootPath: "testdata", Env: setting.Dev}
+		license := licensingtest.NewFakeLicensing()
+		license.On("ContentDeliveryPrefix").Return("grafana")
+
+		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+		require.NoError(t, err)
+		require.Equal(t, "public/build/rspack/", assets.PublicPath)
+	})
+}

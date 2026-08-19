@@ -41,6 +41,8 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 		return dtos.EntryPointAssets{}, err
 	}
 
+	assetsManifest.PublicPath = webassets.PublicPathFor(buildDir)
+
 	cdnRoot := getCDNRoot(cfg, license)
 	if cdnRoot != "" {
 		assetsManifest.SetContentDeliveryURL(cdnRoot)
