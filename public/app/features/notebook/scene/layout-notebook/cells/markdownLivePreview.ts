@@ -14,11 +14,6 @@ import { type SyntaxNode, type SyntaxNodeRef, type Tree } from '@lezer/common';
 import { Strikethrough } from '@lezer/markdown';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-// toggleSurround/toggleLinePrefix already exist, pure and CM6-only, in the Text panel's own markdown
-// editor. That path is owned by @grafana/dataviz-squad; this one is owned by @grafana/sharing-squad
-// (see .github/CODEOWNERS) — different squads, so this is a deliberate cross-import rather than a
-// duplicate of ~140 lines of selection-mutation logic, not an oversight. Extract to a shared
-// @grafana/ui location (e.g. @grafana/ui/unstable) if this dependency needs to be made official.
 import { toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
 
 // Inline marks the toolbar (and, later, other callers) can ask "is the selection already X" about.
@@ -116,14 +111,16 @@ const INLINE_MARK_CLOSING_TYPES: Record<string, string> = {
 /**
  * Where a newline should actually land when the cursor sits at `pos` — `pos` unchanged, unless `pos`
  * is exactly at the start of an inline mark's own *closing* marker (bold, italic, inline code, or
- * strikethrough — e.g. right after the last bold letter, immediately before the hidden closing `**`),
- * in which case the newline moves to just after that marker instead.
+ * strikethrough — e.g. right after the last bold letter, right before the closing `**`), in which case
+ * the newline moves to just after that marker instead.
  *
  * Splitting the line exactly at `pos` would otherwise land the marker on a line of its own, preceded
  * by whitespace (the inserted newline) — CommonMark's flanking rules require a closing emphasis
  * delimiter to *not* be preceded by whitespace, so the split silently breaks the very formatting the
  * reader was typing inside: `**Hello**` followed by Shift+Enter right there reparses as literal,
- * unformatted `**Hello` on one line and a dangling `**` on the next, not two lines of bold text.
+ * unformatted `**Hello` on one line and a dangling `**` on the next, not two lines of bold text. This
+ * applies whether or not the marker happens to be revealed at that instant (see `overlapsSelection`) —
+ * the rule comes from CommonMark's own parsing, not from whether the marker is currently visible.
  */
 export function newlineInsertionPoint(tree: Tree, pos: number): number {
   const node = findEnclosingMarkNode(tree, pos, Object.keys(INLINE_MARK_CLOSING_TYPES));
@@ -154,12 +151,17 @@ function wrappedMarkDecorations(
   node: SyntaxNodeRef,
   markType: string,
   className: string,
+  reveal: boolean,
   ranges: Array<Range<Decoration>>,
   hide: Hide
 ) {
-  // Styled over the node's whole range, markers included — the markers are hidden, so this only ever
-  // paints the visible content, matching how the marker itself just isn't part of the reader's view.
+  // Styled over the node's whole range regardless of `reveal` — markers included when revealed, so
+  // the word still reads as bold/italic/etc. even while its raw `**`/`*` is showing.
   ranges.push(Decoration.mark({ class: className }).range(node.from, node.to));
+
+  if (reveal) {
+    return;
+  }
 
   for (let child = node.node.firstChild; child; child = child.nextSibling) {
     if (child.name === markType) {
@@ -209,9 +211,9 @@ function headingDecorations(
   hide(marker.from, hideTo);
 }
 
-// Links are the one construct that still reveals its raw markup near the cursor, unlike everything
-// else here: there is no "edit link" UI yet to change an existing URL, so hiding it unconditionally
-// would make an existing link's target permanently invisible and unreachable through this editor.
+// Links have no dedicated "edit" UI to change an existing URL, so hiding the markup unconditionally
+// would make the target permanently invisible and unreachable through this editor — the reveal-near-
+// cursor rule below (shared with bold/italic/code/strikethrough) is the only way to get at it.
 function linkDecorations(
   node: SyntaxNodeRef,
   reveal: boolean,
@@ -321,13 +323,41 @@ export function buildDecorations(state: EditorState, styles: MarkdownEditorStyle
       if (headingMatch) {
         headingDecorations(node, Number(headingMatch[1]), state, styles, ranges, hide);
       } else if (node.name === BOLD_NODE) {
-        wrappedMarkDecorations(node, 'EmphasisMark', styles.bold, ranges, hide);
+        wrappedMarkDecorations(
+          node,
+          'EmphasisMark',
+          styles.bold,
+          overlapsSelection(main, node.from, node.to),
+          ranges,
+          hide
+        );
       } else if (node.name === ITALIC_NODE) {
-        wrappedMarkDecorations(node, 'EmphasisMark', styles.italic, ranges, hide);
+        wrappedMarkDecorations(
+          node,
+          'EmphasisMark',
+          styles.italic,
+          overlapsSelection(main, node.from, node.to),
+          ranges,
+          hide
+        );
       } else if (node.name === INLINE_CODE_NODE) {
-        wrappedMarkDecorations(node, 'CodeMark', styles.inlineCode, ranges, hide);
+        wrappedMarkDecorations(
+          node,
+          'CodeMark',
+          styles.inlineCode,
+          overlapsSelection(main, node.from, node.to),
+          ranges,
+          hide
+        );
       } else if (node.name === STRIKETHROUGH_NODE) {
-        wrappedMarkDecorations(node, 'StrikethroughMark', styles.strikethrough, ranges, hide);
+        wrappedMarkDecorations(
+          node,
+          'StrikethroughMark',
+          styles.strikethrough,
+          overlapsSelection(main, node.from, node.to),
+          ranges,
+          hide
+        );
       } else if (node.name === LINK_NODE) {
         linkDecorations(node, overlapsSelection(main, node.from, node.to), styles, ranges, hide);
       } else if (node.name === 'Blockquote') {
@@ -505,11 +535,13 @@ export interface MarkdownLivePreview {
 
 /**
  * Live preview for a markdown editor: hides `**`/`#`/etc. markers and applies the corresponding
- * formatting inline, based on the markdown syntax tree — always, not just when the cursor is
- * elsewhere. Links are the one exception, revealing their raw `[text](url)` near the cursor, since
- * there is no dedicated "edit link" UI yet to change an existing URL otherwise. Storage is unaffected:
- * this is purely a view-layer decoration over the same plain markdown string CodeCell-style editors
- * already use, plus the Cmd+B/Cmd+I keymap for toggling bold/italic.
+ * formatting inline, based on the markdown syntax tree — except where the cursor currently sits.
+ * Bold/italic/code/strikethrough/links all reveal their raw markup while the selection overlaps them
+ * (see `overlapsSelection`), so editing right at a marker's boundary is just normal text editing —
+ * CM6's own Backspace/typing/IME handling, no special-casing needed — rather than fighting a hidden,
+ * atomic marker that renders zero-width but still occupies real document positions. Storage is
+ * unaffected: this is purely a view-layer decoration over the same plain markdown string CodeCell-style
+ * editors already use, plus the Cmd+B/Cmd+I keymap for toggling bold/italic.
  */
 export function markdownLivePreview(theme: GrafanaTheme2): MarkdownLivePreview {
   const { theme: themeExtension, classes } = buildEditorStyles(theme);
@@ -542,6 +574,9 @@ export function markdownLivePreview(theme: GrafanaTheme2): MarkdownLivePreview {
       decorationPlugin,
       // Makes CM6 skip over a hidden marker in one step (cursor movement, clicks, deletion) rather
       // than treating its characters as ordinary, just invisible, text — see BuiltDecorations.hidden.
+      // Only ever applies to markers that are actually hidden: a marker revealed near the cursor (see
+      // this function's own doc comment) isn't in `hidden` at all, so typing/backspacing through it
+      // behaves like plain text with no atomic-range interference.
       EditorView.atomicRanges.of((view) => view.plugin(decorationPlugin)?.hidden ?? Decoration.none),
       keymap.of(buildKeymap()),
     ],

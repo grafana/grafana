@@ -14,7 +14,7 @@ import { useMemo, useRef } from 'react';
  * position 0, which sits before any text a cell already arrives with (a list marker, a heading's "# ")
  * instead of ready to continue it.
  */
-export function buildFocusExtension() {
+function buildFocusExtension() {
   return [
     ViewPlugin.define((view) => {
       requestAnimationFrame(() => {

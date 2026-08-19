@@ -177,25 +177,25 @@ describe('buildDecorations', () => {
     expect(hasClass(decorations, 4, 8, STYLES.bold)).toBe(true);
   });
 
-  // Unlike links, bold/italic/code/headings/blockquotes never reveal their raw markup: there is no
-  // "raw source" mode for them to fall back to editing, so the toolbar/Cmd+B are the only way to
-  // change them — see markdownLivePreview.ts for why links are the one exception.
-  it('keeps bold markers hidden even when the cursor is inside the run', () => {
+  // Reveals near the cursor, same as links (see the reveal tests further down): editing right at a
+  // marker's own boundary then behaves like plain text — normal Backspace, normal typing — instead of
+  // fighting a hidden, atomic marker that renders zero-width but still occupies a real position.
+  it('reveals bold markers when the cursor is inside the run', () => {
     // Caret between the two `*`s that open the marker, i.e. inside "**bold**"'s range.
     const state = createState('a **bold** b', { anchor: 5 });
     const decorations = decorationsIn(state, STYLES);
 
-    expect(isHidden(decorations, 2, 4)).toBe(true);
-    expect(isHidden(decorations, 8, 10)).toBe(true);
+    expect(isHidden(decorations, 2, 4)).toBe(false);
+    expect(isHidden(decorations, 8, 10)).toBe(false);
     expect(hasClass(decorations, 4, 8, STYLES.bold)).toBe(true);
   });
 
-  it('keeps italic markers hidden even when the cursor is inside the run', () => {
+  it('reveals italic markers when the cursor is inside the run', () => {
     const state = createState('a *italic* b', { anchor: 5 });
     const decorations = decorationsIn(state, STYLES);
 
-    expect(isHidden(decorations, 2, 3)).toBe(true);
-    expect(isHidden(decorations, 9, 10)).toBe(true);
+    expect(isHidden(decorations, 2, 3)).toBe(false);
+    expect(isHidden(decorations, 9, 10)).toBe(false);
   });
 
   it('hides the heading marker and its trailing space, and styles the whole line, regardless of the cursor', () => {
@@ -234,8 +234,6 @@ describe('buildDecorations', () => {
     expect(isHidden(decorations, 10, 29)).toBe(true); // the URL itself
   });
 
-  // Links keep a reveal-on-cursor behavior other constructs no longer have, because there's no other
-  // way yet to see or edit an existing link's target.
   it('reveals link markup when the cursor is inside the link', () => {
     const state = createState('[grafana](https://grafana.com)', { anchor: 4 }); // inside "grafana"
     const decorations = decorationsIn(state, STYLES);

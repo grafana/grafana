@@ -3,7 +3,7 @@ import { Prec } from '@codemirror/state';
 import { keymap, placeholder as placeholderExtension, type KeyBinding } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, renderTextPanelMarkdown } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -59,6 +59,22 @@ export function MarkdownCell({
 
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const focusExtension = useFocusExtension({ autoFocus, isEditing, focusRequestId });
+
+  // Drives CodeMirror's `value` locally instead of straight from `content.spec.text`, so the editor
+  // never waits on the round trip back through onChange -> the layout manager -> Scenes state -> a
+  // re-render — that lag is what let `@uiw/react-codemirror`'s own value-reconciliation treat this
+  // cell's own just-typed text as an external change and force a whole-document replace, flashing
+  // hidden markers (e.g. bold's `**`) visible until the replace settled. `lastEmittedText` is what
+  // tells the two apart: only a `content.spec.text` that doesn't match what this cell itself last
+  // reported is a genuine external change (a converted heading marker, a seeded list continuation) —
+  // that's the one case local `text` should resync to.
+  const contentText = content.kind === 'Markdown' ? content.spec.text : '';
+  const [text, setText] = useState(contentText);
+  const lastEmittedText = useRef(contentText);
+  if (contentText !== lastEmittedText.current) {
+    setText(contentText);
+    lastEmittedText.current = contentText;
+  }
 
   const placeholderExt = useMemo(() => (placeholder ? [placeholderExtension(placeholder)] : []), [placeholder]);
 
@@ -168,7 +184,7 @@ export function MarkdownCell({
   return (
     <div ref={editorContainerRef}>
       <CodeMirrorEditor
-        value={content.spec.text}
+        value={text}
         // Grows with its content, like CodeCell: a notebook is a document, so a cell that scrolls
         // internally inside a page that already scrolls is worse than a tall cell.
         height="auto"
@@ -177,7 +193,13 @@ export function MarkdownCell({
         theme={livePreview.theme}
         extensions={[livePreview.extensions, ...placeholderExt, ...enterExt, ...(focusExtension ?? [])]}
         aria-label={t('notebook.cell.markdown.aria-label-editor', 'Markdown')}
-        onChange={(value) => onChange({ kind: 'Markdown', spec: { ...content.spec, text: value } })}
+        onChange={(value) => {
+          // Updated before the external onChange runs, so this render already has `text` matching
+          // what CodeMirror just reported — no waiting on the round trip described above.
+          setText(value);
+          lastEmittedText.current = value;
+          onChange({ kind: 'Markdown', spec: { ...content.spec, text: value } });
+        }}
       />
       <MarkdownFormatToolbar editorContainerRef={editorContainerRef} />
     </div>
