@@ -13,6 +13,7 @@ func TestDefaultConnectionTypes(t *testing.T) {
 	registeredTypes := []apisprovisioning.ConnectionType{
 		apisprovisioning.GithubConnectionType,
 		apisprovisioning.GithubEnterpriseConnectionType,
+		apisprovisioning.GithubOAuthConnectionType,
 		apisprovisioning.BitbucketOAuthConnectionType,
 		apisprovisioning.GitlabOAuthConnectionType,
 	}
