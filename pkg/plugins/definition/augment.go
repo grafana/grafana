@@ -1,4 +1,4 @@
-package openapi
+package definition
 
 import (
 	"fmt"
@@ -13,13 +13,13 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
-
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const app_INSTANCE_NAME = "instance"
 
-type PluginOptions struct {
+// This will eventually be supported via app.ManifestData kinds
+type SettingsResource struct {
 	Schema *pluginschema.PluginSchema
 
 	// The full resource config (spec and secure are children)
@@ -38,7 +38,7 @@ type PluginOptions struct {
 }
 
 // nolint:gocyclo
-func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, error) {
+func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, error) {
 	if opts.Schema.IsZero() {
 		return oas, nil // nothing special
 	}

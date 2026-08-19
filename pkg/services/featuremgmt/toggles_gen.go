@@ -794,6 +794,10 @@ const (
 	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
 	FlagKubernetesUsersRedirectNoFallback = "kubernetesUsersRedirectNoFallback"
 
+	// FlagApppluginsLoadAppManifest
+	// Load app manifest when loading plugin definitions
+	FlagApppluginsLoadAppManifest = "appplugins.loadAppManifest"
+
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
 	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
