@@ -28,16 +28,17 @@ type GRPCServerSettings struct {
 	KeepaliveTimeout      time.Duration
 	KeepaliveMinTime      time.Duration
 	MaxConnectionIdle     time.Duration
+
+	// ReportGRPCCodesInInstrumentationLabelEnabled controls whether gRPC status codes are included in metric labels.
+	// It's a temporary migration flag that should be removed after the full migration to gRPC status codes is done.
+	//
+	// Do not remove / set default to true without consulting unified storage and IAM team for adjusting SLOs.
+	ReportGRPCCodesInInstrumentationLabelEnabled bool
+
 	// Internal fields
 	useTLS   bool
 	certFile string
 	keyFile  string
-
-	// ReportGrpcCodesInInstrumentationLabelEnabled controls whether gRPC status codes are included in metric labels.
-	// It's a temporary migration flag that should be removed after the full migration to gRPC status codes is done.
-	//
-	// Do not remove / set default to true without consulting unified storage and IAM team for adjusting SLOs.
-	ReportGrpcCodesInInstrumentationLabelEnabled bool
 }
 
 func gRPCServerSettingsError(msg string, args ...interface{}) error {
@@ -141,7 +142,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.GRPCServer.KeepaliveTimeout = server.Key("keepalive_timeout").MustDuration(0)
 	cfg.GRPCServer.KeepaliveMinTime = server.Key("keepalive_min_time").MustDuration(0)
 
-	cfg.GRPCServer.ReportGrpcCodesInInstrumentationLabelEnabled = server.Key("report_grpc_codes_in_instrumentation_label_enabled").MustBool(false)
+	cfg.GRPCServer.ReportGRPCCodesInInstrumentationLabelEnabled = server.Key("report_grpc_codes_in_instrumentation_label_enabled").MustBool(false)
 
 	return cfg.GRPCServer.processAddress()
 }
