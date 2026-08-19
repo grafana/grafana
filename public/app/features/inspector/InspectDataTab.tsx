@@ -18,10 +18,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
-import { TableNG } from '@grafana/ui/unstable';
 import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { dataFrameToLogsModel } from '../logs/logsModel';
+import { CommonTableNG } from '../table/CommonTableNG';
 
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
@@ -313,7 +313,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 // so it needs an explicitly-sized wrapper here (unlike the legacy Table).
                 return (
                   <div style={{ width, height }}>
-                    <TableNG width={width} height={height} data={dataFrame} showTypeIcons={true} />
+                    <CommonTableNG width={width} height={height} data={dataFrame} showTypeIcons={true} />
                   </div>
                 );
               }
