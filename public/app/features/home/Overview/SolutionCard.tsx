@@ -145,31 +145,33 @@ export function AvailableSolutionCard({ solution, offer }: AvailableSolutionCard
 
       {(cta || offer.learnMore) && (
         <Card.Actions>
-          {cta && (
-            <LinkButton
-              href={cta.href}
-              variant="secondary"
-              size="sm"
-              onClick={() =>
-                ctaClicked({
-                  surface: 'overview',
-                  action: cta.action,
-                  placement: 'card',
-                  solution: solution.id,
-                })
-              }
-            >
-              {cta.label}
-            </LinkButton>
-          )}
-          {offer.learnMore && (
-            <LearnMoreLink
-              {...offer.learnMore}
-              onClick={() =>
-                ctaClicked({ surface: 'overview', action: 'learn_more', placement: 'card', solution: solution.id })
-              }
-            />
-          )}
+          <Stack gap={2} alignItems="center">
+            {cta && (
+              <LinkButton
+                href={cta.href}
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  ctaClicked({
+                    surface: 'overview',
+                    action: cta.action,
+                    placement: 'card',
+                    solution: solution.id,
+                  })
+                }
+              >
+                {cta.label}
+              </LinkButton>
+            )}
+            {offer.learnMore && (
+              <LearnMoreLink
+                {...offer.learnMore}
+                onClick={() =>
+                  ctaClicked({ surface: 'overview', action: 'learn_more', placement: 'card', solution: solution.id })
+                }
+              />
+            )}
+          </Stack>
         </Card.Actions>
       )}
     </Card>
