@@ -2422,7 +2422,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			wantRepo:   Repository{},
-			wantErr:    repo.ErrPermissionDenied,
+			wantErr:    repo.ErrTooManyRequests,
 		},
 		{
 			name: "internal server error",

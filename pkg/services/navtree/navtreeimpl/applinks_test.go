@@ -924,59 +924,103 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			Includes: []*plugins.Includes{
 				{Name: "Home", Path: "/a/grafana-assistant-app", Type: "page", AddToNav: true, DefaultNav: true},
 				{Name: "Workspace", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
+				{Name: "Automations", Path: "/a/grafana-assistant-app/automations", Type: "page", AddToNav: true},
+				{Name: "Watchers", Path: "/a/grafana-assistant-app/watchers", Type: "page", AddToNav: true},
+				{Name: "Search", Path: "/a/grafana-assistant-app/assistant-search", Type: "page", AddToNav: true},
 				{Name: "Settings", Path: "/a/grafana-assistant-app/settings", Type: "page", AddToNav: true},
 				{Name: "Irrelevant", Path: "/a/grafana-assistant-app/irrelevant", Type: "page", AddToNav: true},
 			},
 		},
 	}
 
+	cloudChildPaths := []string{
+		"/a/grafana-assistant-app/workspace",
+		"/a/grafana-assistant-app/automations",
+		"/a/grafana-assistant-app/watchers",
+		"/a/grafana-assistant-app/assistant-search",
+		"/a/grafana-assistant-app/settings",
+		"/a/grafana-assistant-app/irrelevant",
+	}
+	ossChildPaths := []string{
+		"/a/grafana-assistant-app/workspace",
+		"/a/grafana-assistant-app/settings",
+	}
+
 	for _, tt := range []struct {
 		name           string
 		cfg            *setting.Cfg
-		trialMode      bool
+		jsonData       map[string]any
+		omitSettings   bool
 		wantChildPaths []string
 	}{
 		{
-			name: "OSS only includes supported entries",
-			cfg:  setting.NewCfg(),
-			wantChildPaths: []string{
-				"/a/grafana-assistant-app/workspace",
-				"/a/grafana-assistant-app/settings",
-			},
+			name:           "unset ossMode on OSS Grafana only includes supported OSS entries",
+			jsonData:       map[string]any{},
+			wantChildPaths: ossChildPaths,
 		},
 		{
-			name: "Enterprise includes all entries",
-			cfg:  &setting.Cfg{IsEnterprise: true},
-			wantChildPaths: []string{
-				"/a/grafana-assistant-app/workspace",
-				"/a/grafana-assistant-app/settings",
-				"/a/grafana-assistant-app/irrelevant",
-			},
+			name:           "ossMode only includes supported OSS entries",
+			jsonData:       map[string]any{"ossMode": true},
+			wantChildPaths: ossChildPaths,
 		},
 		{
-			name: "Cloud includes all entries",
-			cfg:  &setting.Cfg{StackID: "1"},
-			wantChildPaths: []string{
-				"/a/grafana-assistant-app/workspace",
-				"/a/grafana-assistant-app/settings",
-				"/a/grafana-assistant-app/irrelevant",
-			},
+			name:           "ossMode false includes all entries",
+			jsonData:       map[string]any{"ossMode": false},
+			wantChildPaths: cloudChildPaths,
 		},
 		{
-			name:      "Trial mode only includes the homepage and workspace",
-			cfg:       setting.NewCfg(),
-			trialMode: true,
+			name:           "Enterprise includes all entries when ossMode is false",
+			cfg:            &setting.Cfg{IsEnterprise: true},
+			jsonData:       map[string]any{"ossMode": false},
+			wantChildPaths: cloudChildPaths,
+		},
+		{
+			name:           "Enterprise ossMode only includes supported OSS entries",
+			cfg:            &setting.Cfg{IsEnterprise: true},
+			jsonData:       map[string]any{"ossMode": true},
+			wantChildPaths: ossChildPaths,
+		},
+		{
+			name:           "unset ossMode on Enterprise includes all entries",
+			cfg:            &setting.Cfg{IsEnterprise: true},
+			jsonData:       map[string]any{},
+			wantChildPaths: cloudChildPaths,
+		},
+		{
+			name:           "unset ossMode on Cloud includes all entries",
+			cfg:            &setting.Cfg{StackID: "1"},
+			jsonData:       map[string]any{},
+			wantChildPaths: cloudChildPaths,
+		},
+		{
+			name:           "missing plugin settings on Enterprise includes all entries",
+			cfg:            &setting.Cfg{IsEnterprise: true},
+			omitSettings:   true,
+			wantChildPaths: cloudChildPaths,
+		},
+		{
+			name: "Trial mode only includes the homepage and workspace",
+			jsonData: map[string]any{
+				"trialMode": true,
+				"ossMode":   true,
+			},
 			wantChildPaths: []string{
 				"/a/grafana-assistant-app/workspace",
 			},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
+			cfg := tt.cfg
+			if cfg == nil {
+				cfg = setting.NewCfg()
+			}
+			plugins := map[string]*pluginsettings.DTO{}
+			if !tt.omitSettings {
+				plugins[assistantAppID] = &pluginsettings.DTO{OrgID: 1, PluginID: assistantAppID, JSONData: tt.jsonData}
+			}
 			service := ServiceImpl{
-				cfg: tt.cfg,
-				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-					assistantAppID: {OrgID: 1, PluginID: assistantAppID, JSONData: map[string]any{"trialMode": tt.trialMode}},
-				}},
+				cfg:            cfg,
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: plugins},
 			}
 			treeRoot := navtree.NavTreeRoot{}
 			service.processAppPlugin(assistantApp, reqCtx, &treeRoot)

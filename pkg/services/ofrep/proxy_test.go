@@ -8,27 +8,76 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 )
 
 func TestProxyUserAgent(t *testing.T) {
+	marked := features.ClientUserAgentPrefix
+
 	tests := []struct {
 		name              string
+		incomingUserAgent string
 		namespace         string
 		expectedUserAgent string
 	}{
 		{
-			name:              "sets namespace-scoped user agent",
+			name:              "appends namespace to our own client's user agent",
+			incomingUserAgent: marked + "grafana-mt-service",
 			namespace:         "stacks-1234",
-			expectedUserAgent: "features-grafana-app/stacks-1234",
+			expectedUserAgent: marked + "grafana-mt-service ns/stacks-1234",
 		},
 		{
-			name:              "falls back to service name when namespace is empty",
+			name:              "does not duplicate namespace already present in our own client's user agent",
+			incomingUserAgent: marked + "grafana ns/stacks-1234",
+			namespace:         "stacks-1234",
+			expectedUserAgent: marked + "grafana ns/stacks-1234",
+		},
+		{
+			name:              "forwards our own client's user agent unchanged when namespace is empty",
+			incomingUserAgent: marked + "grafana-mt-service",
 			namespace:         "",
-			expectedUserAgent: "features-grafana-app",
+			expectedUserAgent: marked + "grafana-mt-service",
+		},
+		{
+			name:              "appends namespace to an unmarked caller (e.g. browser) without dedup",
+			incomingUserAgent: "Mozilla/5.0",
+			namespace:         "stacks-1234",
+			expectedUserAgent: "Mozilla/5.0 ns/stacks-1234",
+		},
+		{
+			name:              "tags a real browser user agent the same way, unmarked and untouched",
+			incomingUserAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+			namespace:         "stacks-1234",
+			expectedUserAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 ns/stacks-1234",
+		},
+		{
+			name:              "does not attempt dedup for an unmarked caller even if it already looks tagged",
+			incomingUserAgent: "grafana ns/stacks-1234",
+			namespace:         "stacks-1234",
+			expectedUserAgent: "grafana ns/stacks-1234 ns/stacks-1234",
+		},
+		{
+			name:              "forwards unmarked caller's user agent unchanged when namespace is empty",
+			incomingUserAgent: "Mozilla/5.0",
+			namespace:         "",
+			expectedUserAgent: "Mozilla/5.0",
+		},
+		{
+			name:              "falls back to placeholder when caller sent no user agent",
+			incomingUserAgent: "",
+			namespace:         "stacks-1234",
+			expectedUserAgent: "unknown ns/stacks-1234",
+		},
+		{
+			name:              "truncates an oversized user agent before tagging",
+			incomingUserAgent: strings.Repeat("A", 300),
+			namespace:         "stacks-1234",
+			expectedUserAgent: strings.Repeat("A", 150) + " ns/stacks-1234",
 		},
 	}
 
@@ -50,6 +99,9 @@ func TestProxyUserAgent(t *testing.T) {
 				b := newTestBuilder(t, upstream.URL)
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest(http.MethodPost, "/ofrep/v1/evaluate/flags/myflag", strings.NewReader(`{}`))
+				if tc.incomingUserAgent != "" {
+					r.Header.Set("User-Agent", tc.incomingUserAgent)
+				}
 				b.proxyFlagReq(r.Context(), "myflag", true, tc.namespace, w, r)
 				assert.Equal(t, tc.expectedUserAgent, *receivedUA)
 			})
@@ -63,6 +115,9 @@ func TestProxyUserAgent(t *testing.T) {
 				b := newTestBuilder(t, upstream.URL)
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest(http.MethodPost, "/ofrep/v1/evaluate/flags", strings.NewReader(`{}`))
+				if tc.incomingUserAgent != "" {
+					r.Header.Set("User-Agent", tc.incomingUserAgent)
+				}
 				b.proxyAllFlagReq(r.Context(), true, tc.namespace, w, r)
 				assert.Equal(t, tc.expectedUserAgent, *receivedUA)
 			})

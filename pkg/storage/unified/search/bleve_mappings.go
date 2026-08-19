@@ -31,6 +31,8 @@ type kindSearchFields struct {
 	// textQueryKinds maps physical index field names to the query their analyzer
 	// needs.
 	textQueryKinds map[string]textQueryKind
+	// sortableFields holds the names a request may sort on.
+	sortableFields map[string]bool
 	// variants drives the index-time copy of per-kind values into the variant
 	// fields this kind's mapping declares.
 	variants []fieldVariant
@@ -42,6 +44,7 @@ func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindReso
 		numberOrBoolFields: numberOrBoolFieldsForMapping(provider, group, kindResource),
 		storedFacetFields:  storedFacetFieldsForMapping(provider, group, kindResource),
 		textQueryKinds:     textQueryKindsForMapping(provider, group, kindResource, selectableFields),
+		sortableFields:     sortableFieldsForMapping(provider, group, kindResource),
 		variants:           fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
 	}
 }
@@ -171,8 +174,10 @@ func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kind
 	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
 		add(resource.SEARCH_FIELD_PREFIX+def.Name, def, resource.SEARCH_FIELD_PREFIX)
 		// Requests may name a per-kind field without the internal fields prefix.
-		// A standard field of the same name wins, matching resolveFieldName.
-		if _, taken := fields[def.Name]; !taken {
+		// A top-level field of the same name wins, matching resolveFieldName. The
+		// name check covers standard fields with no keyword form, which are absent
+		// from the map and so would leave the bare name free to claim.
+		if _, taken := fields[def.Name]; !taken && !isReservedTopLevelField(def.Name) {
 			add(def.Name, def, resource.SEARCH_FIELD_PREFIX)
 		}
 	}
@@ -190,6 +195,43 @@ func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kind
 
 // standardKeywordFields covers an index opened without per-kind declarations.
 var standardKeywordFields = keywordFieldsForMapping(nil, "", "", nil)
+
+// sortableFieldsForMapping derives which field names a request may sort on from
+// the declarations that produced the mapping.
+//
+// Keys are the names sorts arrive with. Labels and selectable fields are absent
+// because they declare no capabilities and exist to be filtered on.
+func sortableFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]bool {
+	fields := map[string]bool{}
+	add := func(key string, def resource.SearchFieldDefinition) {
+		if def.HasCapability(resource.SearchCapabilitySort) {
+			fields[key] = true
+		}
+	}
+
+	for _, def := range resource.StandardSearchFieldDefinitions() {
+		add(def.Name, def)
+		// Callers that name a physical title variant directly still mean title.
+		if def.Name == resource.SEARCH_FIELD_TITLE {
+			add(resource.SEARCH_FIELD_TITLE_PHRASE, def)
+		}
+	}
+	for _, def := range resource.TrashSearchFieldDefinitions() {
+		add(def.Name, def)
+	}
+	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
+		add(resource.SEARCH_FIELD_PREFIX+def.Name, def)
+		// A bare name a standard field already uses resolves to the standard field
+		// (see resolveFieldName), so a per-kind declaration cannot widen it.
+		if !isReservedTopLevelField(def.Name) {
+			add(def.Name, def)
+		}
+	}
+	return fields
+}
+
+// standardSortableFields covers an index opened without per-kind declarations.
+var standardSortableFields = sortableFieldsForMapping(nil, "", "")
 
 // filterable is separate from the type because such a field can be indexed for
 // sorting alone, or only stored.
