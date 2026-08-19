@@ -2291,6 +2291,29 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should allow rendering to list variables",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "variables",
+				Verb:      "list",
+			},
+			expected: true,
+		},
+		{
+			name: "should allow rendering to get a variable",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "variables",
+				Verb:      "get",
+				Name:      "region",
+			},
+			expected: true,
+		},
+		{
 			// Unregistered groups fall back to the K8s-native mapping. The renderer has no
 			// permissions for K8s-native actions, so the check is denied without an error.
 			name: "should deny rendering access to unregistered app resources",
@@ -3021,6 +3044,19 @@ func TestService_List(t *testing.T) {
 				Subject:   "render:0",
 				Group:     "plugins.grafana.app",
 				Resource:  "metas",
+				Verb:      "list",
+			},
+			expected: &authzv1.ListResponse{
+				All: true,
+			},
+		},
+		{
+			name: "should list variables for rendering",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "variables",
 				Verb:      "list",
 			},
 			expected: &authzv1.ListResponse{
