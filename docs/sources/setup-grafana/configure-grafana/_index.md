@@ -904,6 +904,10 @@ The file may contain either a classic dashboard JSON or a Kubernetes-format dash
 
 Instance-wide default for panel preloading, applied only to dashboards that do not explicitly set the `preload` property in their JSON. When `true`, all panels start loading as soon as the dashboard loads instead of lazy loading as they scroll into view. An explicit `preload` value in the dashboard JSON always takes precedence over this default. Default is `false`.
 
+#### `report_render_query_grace_period`
+
+How long the report render page (/d-report/) waits, after all panel queries appear to have settled, before telling the image renderer the dashboard is done. This guards against repeat panels that register their queries late (e.g. after a repeat variable's own query resolves), which can otherwise get captured blank. Only used when the feature flag `reportRenderQueryDebounce` is enabled. Default is `3s`.
+
 ### `[dashboard_cleanup]`
 
 Settings related to cleaning up associated dashboards information if the dashboard was deleted through /apis.
