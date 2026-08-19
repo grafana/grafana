@@ -35,38 +35,13 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const soloPanelContext = useSoloPanelContext();
   const isMultiSelection = useIsMultiSelection();
 
-  const { scrollRef, scrollEl, canScrollLeft, canScrollRight, scrollBy } = useHorizontalOverflow();
+  const { scrollRef, canScrollLeft, canScrollRight, scrollBy } = useHorizontalOverflow();
 
   useEffect(() => {
     if (currentTab && currentTab.getSlug() !== model.state.currentTabSlug) {
       model.setState({ currentTabSlug: currentTab.getSlug() });
     }
   }, [currentTab, model]);
-
-  // Ensure the active tab is visible on switch, reorder, and append.
-  // Append scrolls to the end (no measurement needed); all other cases measure the tab's position.
-  useEffect(() => {
-    if (!scrollEl) {
-      return;
-    }
-
-    let rafId: number;
-
-    const callback = () => {
-      const tabEl = currentTab?.containerRef.current;
-      if (tabEl) {
-        scrollTabIntoView(scrollEl, tabEl);
-      } else {
-        rafId = requestAnimationFrame(callback);
-      }
-    };
-
-    rafId = requestAnimationFrame(callback);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-    };
-  }, [currentTab, scrollEl, tabs]);
 
   if (soloPanelContext) {
     return tabs.map((tab) => <TabWrapper tab={tab} manager={model} key={tab.state.key!} />);
