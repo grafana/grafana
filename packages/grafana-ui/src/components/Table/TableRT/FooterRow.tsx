@@ -14,10 +14,12 @@ export interface FooterRowProps {
   footerValues: FooterItem[];
   isPaginationVisible: boolean;
   tableStyles: TableStyles;
+  /** 1-based ARIA row index for this row, consistent with the header/data rows and `aria-rowcount`. */
+  ariaRowIndex: number;
 }
 
 export function FooterRow(props: FooterRowProps) {
-  const { totalColumnsWidth, footerGroups, isPaginationVisible, tableStyles } = props;
+  const { totalColumnsWidth, footerGroups, isPaginationVisible, tableStyles, ariaRowIndex } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
   return (
@@ -35,6 +37,7 @@ export function FooterRow(props: FooterRowProps) {
             className={tableStyles.tfoot}
             {...footerGroupProps}
             role="row"
+            aria-rowindex={ariaRowIndex}
             key={key}
             data-testid={e2eSelectorsTable.footer}
           >
