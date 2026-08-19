@@ -44,12 +44,9 @@ interface Props {
    */
   autoFocus?: boolean;
   /**
-   * A nonce, defined exactly when `autoFocus` is true and bumped on every fresh focus request for
-   * this cell — including a repeat request naming a cell that was already the target (see
-   * NotebookLayoutManagerRenderer's `focusRequest` state). `autoFocus` alone can't signal "focus me
-   * again": converting a markdown cell in place (Paragraph/Heading, via the "/" menu) leaves its key
-   * unchanged, so a plain boolean would already read `true` and never flip. Passed through to
-   * MarkdownCell, the one cell type that can be re-targeted without remounting.
+   * A nonce, defined exactly when `autoFocus` is true and bumped on every fresh focus request for this
+   * cell (see NotebookLayoutManagerRenderer's `focusRequest` state) — passed through to MarkdownCell's
+   * useFocusExtension, which explains why a nonce and not a boolean is needed here.
    */
   focusRequestId?: number;
   /** True while any cell in the notebook is being dragged, not only this one. */

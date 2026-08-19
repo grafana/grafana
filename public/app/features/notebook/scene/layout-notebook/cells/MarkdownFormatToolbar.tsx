@@ -1,7 +1,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { css } from '@emotion/css';
-import { offset, useFloating, type VirtualElement } from '@floating-ui/react';
+import { offset, useDismiss, useFloating, useInteractions, type VirtualElement } from '@floating-ui/react';
 import { type Tree } from '@lezer/common';
 import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 
@@ -132,12 +132,24 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
   const [view, setView] = useState<EditorView | null>(null);
   const [hasSelection, setHasSelection] = useState(false);
 
-  const { refs, floatingStyles, update } = useFloating({
+  const { refs, floatingStyles, update, context } = useFloating({
     open: hasSelection,
+    onOpenChange: setHasSelection,
     placement: 'top',
     strategy: 'fixed',
     middleware: [offset(8), ...floatingUtils.getPositioningMiddleware('top')],
   });
+
+  // Dismiss on a click outside both the editor and the bar itself — a different cell, or leaving edit
+  // mode entirely. The reference here is a virtual element spanning just the selection (see
+  // selectionVirtualElement below), not a real DOM node covering the whole editor, so the default
+  // outsidePress exclusion (which only skips the reference/floating elements themselves) wouldn't cover
+  // a click elsewhere in the editor — hence the explicit scoping, the same shape ModalBase.tsx uses to
+  // exclude its own backdrop/portal region.
+  const dismiss = useDismiss(context, {
+    outsidePress: (event) => !(event.target instanceof Node && editorContainerRef.current?.contains(event.target)),
+  });
+  const { getFloatingProps } = useInteractions([dismiss]);
 
   // CodeMirrorEditor exposes no selection-change prop, so the container is polled the same way
   // TextNGFormatToolbar recovers its view: found from the DOM node it's mounted into. mouseup/keyup
@@ -172,30 +184,6 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
     };
   }, [editorContainerRef, refs, update]);
 
-  // Dismiss on a click outside both the editor and the bar itself — a different cell, or leaving
-  // edit mode entirely. Modelled on usePopoverMenu.ts's outside-click dismissal in Explore Logs,
-  // which shows the same "select text -> floating action menu -> dismiss outside it" shape for a
-  // different set of actions.
-  useEffect(() => {
-    if (!hasSelection) {
-      return;
-    }
-
-    const onMouseDown = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) {
-        return;
-      }
-      if (editorContainerRef.current?.contains(target) || refs.floating.current?.contains(target)) {
-        return;
-      }
-      setHasSelection(false);
-    };
-
-    document.addEventListener('mousedown', onMouseDown);
-    return () => document.removeEventListener('mousedown', onMouseDown);
-  }, [hasSelection, editorContainerRef, refs.floating]);
-
   if (!hasSelection || !view) {
     return null;
   }
@@ -220,13 +208,15 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
         // A group of controls, same as the always-visible TextNGFormatToolbar — the buttons inside
         // carry their own focus/keyboard handling, this just names the group for assistive tech.
         role="toolbar"
-        // A click's mousedown fires — and, by default, moves focus to the clicked button — before its
-        // own click event does. Since this panel is portaled outside the editor's own DOM subtree,
-        // that default focus change would move the caret away from the CM6 view before the
-        // toggleSurround click ever runs, losing the very selection the button was about to format.
-        // Suppressing the default here keeps focus (and the CM6 selection) exactly where it was; the
-        // click still fires normally afterward.
-        onMouseDown={(event) => event.preventDefault()}
+        {...getFloatingProps({
+          // A click's mousedown fires — and, by default, moves focus to the clicked button — before
+          // its own click event does. Since this panel is portaled outside the editor's own DOM
+          // subtree, that default focus change would move the caret away from the CM6 view before the
+          // toggleSurround click ever runs, losing the very selection the button was about to format.
+          // Suppressing the default here keeps focus (and the CM6 selection) exactly where it was; the
+          // click still fires normally afterward.
+          onMouseDown: (event) => event.preventDefault(),
+        })}
       >
         <Stack direction="row" gap={0.5} alignItems="center">
           {actions().map((action) => (

@@ -10,10 +10,11 @@ import { MarkdownCell } from './MarkdownCell';
 // CodeMirror answers the cell's request for the caret: a new `extensions` identity is what rebuilds
 // the view plugins, so it focuses on exactly that signal, on the next frame, as the real plugin does.
 //
-// Unlike CodeCell, MarkdownCell always includes the live-preview extension alongside an optional focus
-// request, so `extensions` is never empty — the signal here is a *second* entry (the live-preview
-// extension takes exactly one array slot; the focus request, when present, adds one more), not mere
-// non-emptiness.
+// Unlike CodeCell, MarkdownCell's `extensions` is never empty even unfocused: the live-preview
+// extension (always present) and the Enter/Shift-Enter keymap (also always present now — Shift-Enter's
+// list-continuation binding no longer depends on `onSubmit`) each take one array slot, for a baseline
+// of 2. A placeholder (when the `placeholder` prop is set) and a focus request each add one more on
+// top of that baseline, so the signal here is "more than the baseline," not mere non-emptiness.
 jest.mock('@grafana/ui/unstable', () => {
   // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');
@@ -34,7 +35,7 @@ jest.mock('@grafana/ui/unstable', () => {
       const ref = useRef(null);
 
       useEffect(() => {
-        if (!extensions || extensions.length < 2) {
+        if (!extensions || extensions.length < 3) {
           return;
         }
 
@@ -128,6 +129,21 @@ describe('MarkdownCell', () => {
 
       await waitForFrame();
       expect(screen.getByLabelText('Markdown')).not.toHaveFocus();
+    });
+
+    // Converting this cell in place via its own "/" menu (Paragraph, Heading — see
+    // NotebookCellRenderer's handlePick) never changes `autoFocus` from true to true, so `autoFocus`
+    // alone cannot signal "focus me again" — a fresh, distinct `focusRequestId` is what does.
+    it('is focused again when a fresh request names it, even though it was already the target', async () => {
+      const { rerender } = render(
+        <MarkdownCell content={content} isEditing={true} autoFocus focusRequestId={1} onChange={jest.fn()} />
+      );
+      await waitFor(() => expect(screen.getByLabelText('Markdown')).toHaveFocus());
+
+      screen.getByLabelText('Markdown').blur();
+      rerender(<MarkdownCell content={content} isEditing={true} autoFocus focusRequestId={2} onChange={jest.fn()} />);
+
+      await waitFor(() => expect(screen.getByLabelText('Markdown')).toHaveFocus());
     });
   });
 });

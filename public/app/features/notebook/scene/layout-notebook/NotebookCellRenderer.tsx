@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { offset, useFloating } from '@floating-ui/react';
+import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -17,6 +17,20 @@ import { NotebookBlockTypeMenu, type NotebookBlockType } from './edit/NotebookBl
 // min-height) or PanelChrome measures 0 and nothing shows.
 const PANEL_HEIGHT = 300;
 
+/**
+ * The focus/editing props every level between NotebookCellFrame and a cell's actual renderer just
+ * forwards, unread, to the next level down — kept as one shared shape rather than retyped at each of
+ * NotebookCellRenderer, NarrativeCell, and SpecialMarkdownCell. See NotebookCellFrame's own doc
+ * comments on `autoFocus`/`focusRequestId`/`onAdvance`/`onFocusRequest` for what each one means.
+ */
+interface NarrativeCellFocusProps {
+  isEditing: boolean;
+  autoFocus?: boolean;
+  focusRequestId?: number;
+  onAdvance?: (marker?: string) => void;
+  onFocusRequest?: () => void;
+}
+
 // A notebook cell is one of two things: a panel (a chart) or narrative content (a markdown or
 // code block). This chooses the matching renderer, or shows a compact placeholder when the cell
 // is collapsed.
@@ -27,14 +41,7 @@ export function NotebookCellRenderer({
   focusRequestId,
   onAdvance,
   onFocusRequest,
-}: {
-  cell: NotebookCellItem;
-  isEditing: boolean;
-  autoFocus?: boolean;
-  focusRequestId?: number;
-  onAdvance?: (marker?: string) => void;
-  onFocusRequest?: () => void;
-}) {
+}: { cell: NotebookCellItem } & NarrativeCellFocusProps) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
 
   if (collapsed) {
@@ -91,15 +98,7 @@ function NarrativeCell({
   focusRequestId,
   onAdvance,
   onFocusRequest,
-}: {
-  cell: NotebookCellItem;
-  content: CellContentKind;
-  isEditing: boolean;
-  autoFocus?: boolean;
-  focusRequestId?: number;
-  onAdvance?: (marker?: string) => void;
-  onFocusRequest?: () => void;
-}) {
+}: { cell: NotebookCellItem; content: CellContentKind } & NarrativeCellFocusProps) {
   const styles = useStyles2(getStyles);
 
   if (content.kind === 'Markdown') {
@@ -147,7 +146,7 @@ function NarrativeCell({
  * - `onAdvance` hands the caret to a fresh cell inserted right after this one on Enter — see
  *   MarkdownCell's own onSubmit doc comment.
  * - `focusRequestId` re-asserts the caret on *this* cell even when it was already the target — see
- *   NotebookCellFrame's own doc comment. Needed because picking Paragraph/Heading from the "/" menu
+ *   useFocusExtension's own doc comment. Needed because picking Paragraph/Heading from the "/" menu
  *   below converts this cell in place rather than swapping it for a different one.
  */
 function SpecialMarkdownCell({
@@ -161,60 +160,29 @@ function SpecialMarkdownCell({
 }: {
   cell: NotebookCellItem;
   content: Extract<CellContentKind, { kind: 'Markdown' }>;
-  isEditing: boolean;
-  autoFocus?: boolean;
-  focusRequestId?: number;
-  onAdvance?: (marker?: string) => void;
-  onFocusRequest?: () => void;
-}) {
+} & NarrativeCellFocusProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { refs, floatingStyles } = useFloating({
+  const { refs, floatingStyles, context } = useFloating({
     open: menuOpen,
+    onOpenChange: setMenuOpen,
     placement: 'bottom-start',
     strategy: 'fixed',
     middleware: [offset(4), ...floatingUtils.getPositioningMiddleware('bottom-start')],
   });
+
+  // Dismiss the menu on an outside click or Escape — the default useDismiss behavior already skips
+  // presses inside `containerRef` (wired below as the reference element) and inside the floating menu
+  // itself, matching the reference/floating exclusion this used to hand-roll with document listeners.
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([dismiss]);
 
   useEffect(() => {
     if (containerRef.current) {
       refs.setReference(containerRef.current);
     }
   }, [refs]);
-
-  // Dismiss the menu on an outside click or Escape, same shape as MarkdownFormatToolbar's dismissal —
-  // leaves the (already-cleared) buffer as is, since the reader may still want to keep typing plain
-  // text after deciding against the menu.
-  useEffect(() => {
-    if (!menuOpen) {
-      return;
-    }
-
-    const onMouseDown = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) {
-        return;
-      }
-      if (containerRef.current?.contains(target) || refs.floating.current?.contains(target)) {
-        return;
-      }
-      setMenuOpen(false);
-    };
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [menuOpen, refs.floating]);
 
   const handleChange = (updated: CellContentKind) => {
     if (updated.kind !== 'Markdown') {
@@ -267,7 +235,7 @@ function SpecialMarkdownCell({
       />
       {menuOpen && (
         <Portal>
-          <div ref={refs.setFloating} style={floatingStyles}>
+          <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
             <NotebookBlockTypeMenu onPick={handlePick} />
           </div>
         </Portal>

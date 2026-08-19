@@ -11,20 +11,18 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 // manager -> frame -> renderer -> cell wiring observable here.
 //
 // CodeCell passes only its (optional) focus request as `extensions`, so any non-empty array means one
-// was made. MarkdownCell always adds its live-preview extension on top of that, so a Markdown
-// `extensions` array is never empty even unfocused — the threshold for "a focus request is in there"
-// is one entry higher than that baseline (regular cells never get an Enter keymap at all; only
-// NotebookAddBlockPrompt's onSubmit adds one, see below).
+// was made. A markdown cell's baseline is higher and fixed, not merely "non-empty": every markdown
+// cell rendered through this tree gets the live-preview extension, the placeholder (SpecialMarkdownCell
+// passes one to every markdown cell unconditionally — see NotebookCellRenderer), and the Enter/
+// Shift-Enter keymap (also unconditional now — Shift-Enter's list-continuation binding no longer
+// depends on onSubmit), for a baseline of 3. A focus request adds exactly one more on top of that.
 //
 // Real CodeMirrorEditor never sees a raw re-render-fresh `extensions` array either: CodeEditor.tsx
 // wraps it in useShallowStable precisely because callers pass inline literals on every render (its own
-// doc comment says so). Without reproducing that here, the prompt's own MarkdownCell — always at the
-// three-item threshold once it has livePreview, a placeholder and its Enter keymap, even though it
-// never actually requests focus through MarkdownCell's own autoFocus prop (it asks CodeMirror directly
-// instead — see NotebookAddBlockPrompt's own autoFocus doc comment) — would re-fire this stub's fake
-// focus effect on every keystroke, stealing focus back from whatever cell the reader just inserted. A
-// fresh prompt slot is excluded outright below rather than folded into the threshold math, since its
-// baseline is higher than a regular cell's ever is regardless.
+// doc comment says so). Without reproducing that here, every markdown cell's own three-item baseline
+// would re-fire this stub's fake focus effect on every keystroke, stealing focus back from whatever
+// cell the reader is actually typing into — useStableExtensions below is what keeps the identity (and
+// so the effect) stable across a re-render that does not actually change what's requested.
 jest.mock('@grafana/ui/unstable', () => {
   // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');
@@ -57,14 +55,10 @@ jest.mock('@grafana/ui/unstable', () => {
     }) => {
       const ref = useRef(null);
       const stableExtensions = useStableExtensions(extensions);
-      const focusThreshold = ariaLabel === 'Markdown' ? 2 : 1;
+      const focusThreshold = ariaLabel === 'Markdown' ? 4 : 1;
 
       useEffect(() => {
         if (!stableExtensions || stableExtensions.length < focusThreshold) {
-          return;
-        }
-        // See the file-header comment: a prompt's own editor is excluded regardless of threshold.
-        if (ref.current?.closest('[data-testid="notebook-add-block-prompt"]')) {
           return;
         }
 
@@ -76,10 +70,9 @@ jest.mock('@grafana/ui/unstable', () => {
         <textarea
           ref={ref}
           aria-label={ariaLabel}
-          // Controlled, unlike CodeCell.test.tsx's own stub: the prompt resets its buffer to empty
-          // after every commit (see NotebookAddBlockPrompt), and a real CodeMirrorEditor's `value` is
-          // genuinely controlled too — an uncontrolled stub would leave stale text in the DOM across
-          // that reset, which nothing in a real browser would ever do.
+          // Controlled: every markdown cell resets its own buffer via onChange -> setCellContent, and
+          // a real CodeMirrorEditor's `value` is genuinely controlled too — an uncontrolled stub would
+          // leave stale text in the DOM across that reset, which nothing in a real browser would ever do.
           value={value}
           readOnly={readOnly}
           onChange={(event) => onChange?.(event.currentTarget.value)}
@@ -170,11 +163,13 @@ describe('NotebookLayoutManager', () => {
       expect(screen.queryByRole('button', { name: 'Add block' })).not.toBeInTheDocument();
     });
 
-    // One insertion point per gap: above the first cell, between the two, and below the last.
+    // One insertion point per gap: above the first cell, between each pair, and below the last —
+    // three real cells by the time this renders (the trailing empty cell the invariant appends after
+    // renderNotebook's collapsed panel counts as a fourth gap), so four dividers, not three.
     it('renders an insertion point above, between and below the cells in edit mode', () => {
       renderNotebook(true);
 
-      expect(screen.getAllByRole('button', { name: 'Add block' })).toHaveLength(3);
+      expect(screen.getAllByRole('button', { name: 'Add block' })).toHaveLength(4);
     });
 
     // Each divider lives inside the frame of the cell above it, which is what makes it *that cell's*
@@ -188,13 +183,14 @@ describe('NotebookLayoutManager', () => {
       expect(within(frame!).getByRole('button', { name: 'Add block' })).toBeInTheDocument();
     });
 
-    // A divider is a gap between things, so an empty notebook has none: with no cell to hover, the
-    // leading divider would be an invisible strip found only by accident. The prompt takes over — see
-    // the 'add block prompt' describe.
-    it('renders no insertion points in an empty notebook', () => {
+    // A divider is a gap between things, so it would be invisible with no cell to hover — but a
+    // genuinely empty notebook in edit mode does not stay that way: the trailing-invariant bootstrap
+    // gives it a first cell immediately (see 'the trailing empty cell' describe), one cell meaning
+    // two gaps (leading, and below that one cell), not zero.
+    it('renders insertion points once an empty notebook gets its first cell', () => {
       renderManager(buildManager([], true));
 
-      expect(screen.queryByRole('button', { name: 'Add block' })).not.toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: 'Add block' })).toHaveLength(2);
     });
 
     it('opens the block type menu', async () => {
@@ -219,45 +215,50 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
-  describe('add block prompt', () => {
-    function promptTextbox() {
-      return within(screen.getByTestId('notebook-add-block-prompt')).getByRole('textbox', { name: 'Markdown' });
+  // The "always one more empty block ready" invariant: unlike the old dedicated prompt component,
+  // there is no separate affordance any more — the trailing cell in `cells` itself is always an empty,
+  // placeholder-showing markdown editor, and offers the same "/" menu any empty markdown cell does
+  // (see NotebookCellRenderer/NotebookLayoutManager's own setCellContent doc comment).
+  describe('the trailing empty cell', () => {
+    function trailingTextbox() {
+      const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
+      return editors[editors.length - 1];
     }
 
-    it('does not offer the prompt outside edit mode', () => {
-      renderNotebook();
+    it('is not rendered outside edit mode', () => {
+      renderManager(buildManager([], false));
 
-      expect(screen.queryByTestId('notebook-add-block-prompt')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'Markdown' })).not.toBeInTheDocument();
     });
 
-    // Unlike the dividers it is not hover-revealed, so it is queryable with no interaction at all —
-    // which is the whole point of it.
-    it('renders one prompt at the end of the document in edit mode', () => {
-      renderNotebook(true);
-
-      expect(screen.getAllByTestId('notebook-add-block-prompt')).toHaveLength(1);
-    });
-
-    // Pairs with 'renders no insertion points in an empty notebook' above.
-    it('is the only affordance in an empty notebook', () => {
+    // A brand-new notebook gets its first cell for free, so a reader can start typing immediately.
+    it('gives an empty notebook its first cell', () => {
       renderManager(buildManager([], true));
 
-      expect(screen.getByTestId('notebook-add-block-prompt')).toBeInTheDocument();
+      expect(screen.getAllByRole('textbox', { name: 'Markdown' })).toHaveLength(1);
     });
 
-    // It appends, so unlike a divider it must not be swept along by a cell reorder.
-    it('sits outside every cell frame', () => {
-      renderNotebook(true);
+    // A notebook whose last cell already has content — including a non-markdown or collapsed one —
+    // still gets a fresh empty cell appended after it.
+    it('appends a fresh empty cell after a notebook that already ends with content', () => {
+      const { manager } = renderNotebook(true);
 
-      expect(screen.getByTestId('notebook-add-block-prompt').closest('[data-rfd-draggable-id]')).toBeNull();
+      expect(cellNames(manager)).toEqual(['md1', 'hidden-panel', 'paragraph-1']);
+      expect(manager.state.cells[2].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
     });
 
-    // The prompt is a markdown cell in its own right, not a button — typing "/" is what opens the menu
-    // dividers open by clicking "Add block".
-    it('opens the same block type menu as the dividers on a lone "/"', async () => {
-      const { user } = renderNotebook(true);
+    // A markdown cell is a real cell rendered through the exact same path as any other — it isn't
+    // excluded from the notebook's own drag-and-drop wiring the way the old dedicated prompt was.
+    it('renders like any other cell, inside its own draggable frame', () => {
+      renderManager(buildManager([], true));
 
-      await user.type(promptTextbox(), '/');
+      expect(trailingTextbox().closest('[data-rfd-draggable-id]')).not.toBeNull();
+    });
+
+    it('opens the block type menu on a lone "/"', async () => {
+      const { user } = renderManager(buildManager([], true));
+
+      await user.type(trailingTextbox(), '/');
 
       expect(screen.getByRole('menu')).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
@@ -268,52 +269,78 @@ describe('NotebookLayoutManager', () => {
 
     // Regular typing (anything but a lone "/") never opens the menu — it is just markdown text.
     it('leaves plain typing alone', async () => {
-      const { user } = renderNotebook(true);
+      const { user } = renderManager(buildManager([], true));
 
-      await user.type(promptTextbox(), 'Hello');
+      await user.type(trailingTextbox(), 'Hello');
 
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
 
-    // Datadog's "type ahead" affordance: the reader should not have to finish or commit a paragraph
-    // before starting the next one. An empty notebook, so the prompt is the only markdown editor on
-    // screen and the two slots aren't lost among any other cells' own editors.
-    it('reveals a second, empty prompt as soon as the first has content', async () => {
+    // The bug fixed earlier this session: the menu opening but never closing again once the "/" it
+    // was keyed off was gone.
+    it('closes the menu once the "/" is backspaced away', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await user.type(promptTextbox(), 'Hello');
+      await user.type(trailingTextbox(), '/');
+      expect(screen.getByRole('menu')).toBeInTheDocument();
 
-      expect(screen.getAllByTestId('notebook-add-block-prompt')).toHaveLength(2);
+      await user.type(trailingTextbox(), '{Backspace}');
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    // Datadog's "type ahead" affordance: the reader should not have to finish or commit a paragraph
+    // before starting the next one.
+    it('reveals a second, empty trailing cell as soon as the first has content', async () => {
+      const { user } = renderManager(buildManager([], true));
+
+      await user.type(trailingTextbox(), 'Hello');
+
       const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
       expect(editors).toHaveLength(2);
       expect(editors[1]).toHaveValue('');
     });
 
-    it('does not reveal a further prompt from a lone "/"', async () => {
+    // Pins the fix from earlier this session: the "/" itself is committed to the cell like any other
+    // keystroke (so the underlying editor can reconcile it away again once a type is picked, rather
+    // than leaving a stray "/" behind) — which means it reveals a further trailing cell exactly the
+    // same way any other first keystroke does. That's a deliberate side effect, not a special case.
+    it('reveals a further cell from a lone "/" the same way any other keystroke does', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await user.type(promptTextbox(), '/');
+      await user.type(trailingTextbox(), '/');
 
-      expect(screen.getAllByTestId('notebook-add-block-prompt')).toHaveLength(1);
+      expect(screen.getAllByRole('textbox', { name: 'Markdown' })).toHaveLength(2);
     });
 
-    // Moving on to type in the revealed sibling retires the original (via its own existing blur-commit)
-    // rather than leaving a stack of former prompts behind, and must not disturb the sibling's own
-    // content or focus in the process — the exact bug a position-based (rather than stable-id) key
-    // would have.
-    it('retires the original prompt and keeps exactly two once the reader moves on to the next one', async () => {
+    // Moving on to type in the revealed sibling must not disturb its own content or focus — and, since
+    // that sibling is now itself the trailing cell, typing into it reveals a third one in turn.
+    it('keeps typing into each newly revealed trailing cell without disturbing the others', async () => {
       const { manager, user } = renderManager(buildManager([], true));
 
-      await user.type(promptTextbox(), 'Hello');
+      await user.type(trailingTextbox(), 'Hello');
       const sibling = screen.getAllByRole('textbox', { name: 'Markdown' })[1];
       await user.type(sibling, 'World');
 
-      expect(cellNames(manager)).toEqual(['paragraph-1']);
+      expect(cellNames(manager)).toEqual(['paragraph-1', 'paragraph-2', 'paragraph-3']);
       expect(manager.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
-      expect(screen.getAllByTestId('notebook-add-block-prompt')).toHaveLength(2);
-      const remaining = screen.getAllByRole('textbox', { name: 'Markdown' });
-      const worldEditor = remaining.find((editor) => (editor as HTMLTextAreaElement).value === 'World');
+      const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
+      expect(editors).toHaveLength(3);
+      const worldEditor = editors.find((editor) => (editor as HTMLTextAreaElement).value === 'World');
       expect(worldEditor).toHaveFocus();
+    });
+
+    // Picking a type that keeps content.kind the same (Paragraph, Heading) converts the trailing cell
+    // in place and returns focus to it — the focusRequestId nonce-refire fix from earlier this session.
+    // Typing the "/" already revealed a second trailing cell (see the previous test), so there are two
+    // by the time the pick happens — the caret belongs on the first, the one that was actually picked.
+    it('converts the trailing cell in place and keeps the caret on it', async () => {
+      const { manager, user } = renderManager(buildManager([], true));
+
+      await user.type(trailingTextbox(), '/');
+      await user.click(screen.getByRole('menuitem', { name: 'Paragraph' }));
+
+      expect(cellNames(manager)).toEqual(['paragraph-1', 'paragraph-2']);
+      await waitFor(() => expect(screen.getAllByRole('textbox', { name: 'Markdown' })[0]).toHaveFocus());
     });
   });
 
@@ -331,11 +358,13 @@ describe('NotebookLayoutManager', () => {
       expect(screen.queryByRole('button', { name: 'Delete block' })).not.toBeInTheDocument();
     });
 
+    // renderNotebook's two given cells plus the trailing-invariant cell the bootstrap effect appends
+    // after them (its last cell — the collapsed panel — is not an empty markdown cell either).
     it('offers duplicate and delete on every cell in edit mode', () => {
       renderNotebook(true);
 
-      expect(screen.getAllByRole('button', { name: 'Duplicate block' })).toHaveLength(2);
-      expect(screen.getAllByRole('button', { name: 'Delete block' })).toHaveLength(2);
+      expect(screen.getAllByRole('button', { name: 'Duplicate block' })).toHaveLength(3);
+      expect(screen.getAllByRole('button', { name: 'Delete block' })).toHaveLength(3);
     });
 
     // Inside the frame, so the existing hover rule reveals them with the rest of the cell's affordances
@@ -358,7 +387,8 @@ describe('NotebookLayoutManager', () => {
 
       expect(publish).toHaveBeenCalledTimes(1);
       expect(publish.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
-      expect(cellNames(manager)).toEqual(['a', 'b', 'c']);
+      // Plus the trailing-invariant cell appended after 'c' (not an empty markdown cell itself).
+      expect(cellNames(manager)).toEqual(['a', 'b', 'c', 'paragraph-1']);
     });
 
     it('deletes the cell it belongs to once confirmed', async () => {
@@ -371,7 +401,7 @@ describe('NotebookLayoutManager', () => {
         (publish.mock.calls[0][0] as ShowConfirmModalEvent).payload.onConfirm?.();
       });
 
-      expect(cellNames(manager)).toEqual(['a', 'c']);
+      expect(cellNames(manager)).toEqual(['a', 'c', 'paragraph-1']);
     });
 
     it('duplicates the cell directly below itself', async () => {
@@ -379,7 +409,8 @@ describe('NotebookLayoutManager', () => {
 
       await reachActions().click(screen.getAllByRole('button', { name: 'Duplicate block' })[0]);
 
-      expect(cellNames(manager)).toEqual(['a', 'a-copy-1', 'b']);
+      // Plus the trailing-invariant cell appended after 'b'.
+      expect(cellNames(manager)).toEqual(['a', 'a-copy-1', 'b', 'paragraph-1']);
     });
   });
 
@@ -452,24 +483,27 @@ describe('NotebookLayoutManager', () => {
       await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
     }
 
-    // The end-of-document prompt is a markdown cell, not a button — typing "/" opens the same menu the
-    // dividers open by clicking "Add block".
-    async function pickFromPromptMenu(user: ReturnType<typeof userEvent.setup>, itemName: string) {
-      const prompt = within(screen.getByTestId('notebook-add-block-prompt')).getByRole('textbox', {
-        name: 'Markdown',
-      });
-      await user.type(prompt, '/');
+    // The trailing empty cell every notebook always has is a markdown cell in its own right, not a
+    // button — typing "/" into it opens the same menu the dividers open by clicking "Add block", but
+    // picking a type from it converts *that* cell in place (see NotebookCellRenderer's handlePick)
+    // rather than inserting a fresh one alongside it the way a divider does. Always re-queries the
+    // *current* last "Markdown" textbox rather than caching one, since the trailing-invariant may have
+    // already appended a new one by the time this runs.
+    async function pickFromTrailingCellMenu(user: ReturnType<typeof userEvent.setup>, itemName: string) {
+      const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
+      await user.type(editors[editors.length - 1], '/');
       await user.click(screen.getByRole('menuitem', { name: itemName }));
     }
 
     // A divider belongs to the cell above it, so the one inside cell 'a' inserts between 'a' and 'b'.
-    // The leading divider comes first in the DOM, so index 1 is cell 'a' s own divider.
+    // The leading divider comes first in the DOM, so index 1 is cell 'a' s own divider. 'paragraph-1'
+    // is the trailing-invariant cell the bootstrap effect appends after 'b' before any of this happens.
     it('inserts an empty code cell where the divider offered it', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
       await pickCode(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
 
-      expect(cellNames(manager)).toEqual(['a', 'code-1', 'b']);
+      expect(cellNames(manager)).toEqual(['a', 'code-1', 'b', 'paragraph-1']);
       expect(manager.state.cells[1].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
       // Inserted because a person asked for it, not because the assistant proposed it.
       expect(manager.state.cells[1].state.source).toBe('user');
@@ -480,24 +514,31 @@ describe('NotebookLayoutManager', () => {
 
       await pickCode(user, screen.getAllByRole('button', { name: 'Add block' })[0]);
 
-      expect(cellNames(manager)).toEqual(['code-1', 'a', 'b']);
+      expect(cellNames(manager)).toEqual(['code-1', 'a', 'b', 'paragraph-1']);
     });
 
-    it('appends from the end-of-document prompt', async () => {
+    // Typing the "/" is itself a real keystroke now (see the "trailing empty cell" describe above), so
+    // it reveals a second trailing cell before the pick ever happens — the conversion lands on the
+    // first one, which keeps the name ('paragraph-1') the invariant already gave it rather than a
+    // fresh 'code-1' a divider-triggered insert would use.
+    it('converts the trailing cell in place from its own menu, rather than inserting a fresh one', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickFromPromptMenu(user, 'Code');
+      await pickFromTrailingCellMenu(user, 'Code');
 
-      expect(cellNames(manager)).toEqual(['a', 'b', 'code-1']);
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1', 'paragraph-2']);
+      expect(manager.state.cells[2].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
     });
 
-    // The prompt is the only affordance an empty notebook has, so this is the sole path to a first cell.
+    // The trailing-invariant bootstrap is the only affordance an empty notebook has, so this is the
+    // sole path to a first cell.
     it('gives an empty notebook its first cell', async () => {
       const { manager, user } = renderManager(buildManager([], true));
 
-      await pickFromPromptMenu(user, 'Code');
+      await pickFromTrailingCellMenu(user, 'Code');
 
-      expect(cellNames(manager)).toEqual(['code-1']);
+      expect(cellNames(manager)).toEqual(['paragraph-1', 'paragraph-2']);
+      expect(manager.state.cells[0].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
     });
 
     // serialize() writes elementName as the key into the notebook's `elements` map, so a repeat would
@@ -516,7 +557,7 @@ describe('NotebookLayoutManager', () => {
     it('renders the new cell as an editable code editor', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await pickFromPromptMenu(user, 'Code');
+      await pickFromTrailingCellMenu(user, 'Code');
 
       expect(await screen.findByRole('textbox', { name: 'Code' })).not.toHaveAttribute('readonly');
       expect(screen.getByRole('combobox', { name: 'Code language' })).toBeInTheDocument();
@@ -528,7 +569,7 @@ describe('NotebookLayoutManager', () => {
     it('hands the caret to the new cell', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await pickFromPromptMenu(user, 'Code');
+      await pickFromTrailingCellMenu(user, 'Code');
 
       await waitFor(() => expect(screen.getByRole('textbox', { name: 'Code' })).toHaveFocus());
     });
@@ -540,10 +581,10 @@ describe('NotebookLayoutManager', () => {
 
       // Waits for the first cell's own (frame-deferred) focus request to land before the second
       // insertion starts — otherwise both requests are in flight at once and can settle in either order.
-      await pickFromPromptMenu(user, 'Code');
+      await pickFromTrailingCellMenu(user, 'Code');
       await waitFor(() => expect(screen.getByRole('textbox', { name: 'Code' })).toHaveFocus());
 
-      await pickFromPromptMenu(user, 'Code');
+      await pickFromTrailingCellMenu(user, 'Code');
 
       await waitFor(() => {
         const editors = screen.getAllByRole('textbox', { name: 'Code' });
@@ -570,22 +611,26 @@ describe('NotebookLayoutManager', () => {
     });
 
     // Heading and paragraph are both markdown cells under the hood — the menu offers them separately
-    // because that's how a reader thinks about what they're adding.
+    // because that's how a reader thinks about what they're adding. 'paragraph-1' at the end is the
+    // trailing-invariant cell the bootstrap effect already appended after 'b'.
     it('inserts a heading cell seeded with a heading marker', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
       await pickHeading(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
 
-      expect(cellNames(manager)).toEqual(['a', 'heading-1', 'b']);
+      expect(cellNames(manager)).toEqual(['a', 'heading-1', 'b', 'paragraph-1']);
       expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '# ' } });
     });
 
+    // Unlike 'heading-1' above, this insert's own default name collides with the trailing-invariant
+    // cell's — 'paragraph-1' is already taken by the time this happens, so nextElementName gives the
+    // newly-inserted cell 'paragraph-2' instead, even though it lands earlier in the list.
     it('inserts an empty paragraph cell', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
       await pickParagraph(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
 
-      expect(cellNames(manager)).toEqual(['a', 'paragraph-1', 'b']);
+      expect(cellNames(manager)).toEqual(['a', 'paragraph-2', 'b', 'paragraph-1']);
       expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
     });
 
@@ -596,7 +641,7 @@ describe('NotebookLayoutManager', () => {
     it('renders a freshly inserted paragraph cell as an editable, focused markdown editor', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await pickFromPromptMenu(user, 'Paragraph');
+      await pickFromTrailingCellMenu(user, 'Paragraph');
 
       await waitFor(() => {
         const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
@@ -628,11 +673,12 @@ describe('NotebookLayoutManager', () => {
     });
 
     // dragHandleProps sets role="button" but supplies no name, so the aria-label is what makes the
-    // handle announceable at all.
+    // handle announceable at all. Three, not two: the trailing-invariant cell the bootstrap effect
+    // appends after renderNotebook's two given cells is a real cell, with its own handle.
     it('renders a named drag handle per cell in edit mode', () => {
       renderNotebook(true);
 
-      expect(screen.getAllByRole('button', { name: 'Drag to reorder' })).toHaveLength(2);
+      expect(screen.getAllByRole('button', { name: 'Drag to reorder' })).toHaveLength(3);
     });
 
     // The handle is a tab stop, which is what gives keyboard users the reorder for free — and the
@@ -708,7 +754,8 @@ describe('NotebookLayoutManager', () => {
     fireEvent.keyDown(handle, { keyCode: 32 });
     await findByText(/you have dropped the item/i);
 
-    expect(cellNames(manager)).toEqual(['b', 'a', 'c']);
+    // Plus the trailing-invariant cell the bootstrap effect appends after 'c'.
+    expect(cellNames(manager)).toEqual(['b', 'a', 'c', 'paragraph-1']);
   });
 
   describe('editModeChanged', () => {

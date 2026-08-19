@@ -11,8 +11,8 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type CellContentKind } from 'app/features/notebook/types';
 
-import { buildFocusExtension } from './CodeCell';
 import { MarkdownFormatToolbar } from './MarkdownFormatToolbar';
+import { useFocusExtension } from './focusExtension';
 import {
   enclosingListKind,
   markdownLivePreview,
@@ -33,14 +33,7 @@ interface Props {
   isEditing: boolean;
   /** Set on a cell the reader just inserted, so they can type into it without clicking it first. */
   autoFocus?: boolean;
-  /**
-   * A nonce that changes on every fresh request to focus this cell, including a repeat request that
-   * names a cell already holding `autoFocus`. Plain `autoFocus` can't signal "focus me again": picking
-   * Paragraph or Heading from this cell's own "/" menu converts it in place (still "Markdown", same
-   * cell, same key) rather than mounting a different cell, so `autoFocus` was already `true` before the
-   * click and never flips — yet the click itself moved DOM focus to the menu button. See
-   * NotebookCellFrame's own doc comment for where this comes from.
-   */
+  /** A nonce that changes on every fresh request to focus this cell — see useFocusExtension. */
   focusRequestId?: number;
   onChange: (content: CellContentKind) => void;
   /**
@@ -92,48 +85,15 @@ export function MarkdownCell({
   const theme = useTheme2();
   const livePreview = useMemo(() => markdownLivePreview(theme), [theme]);
 
-  // Unlike CodeCell, this editor unmounts and remounts every time `isEditing` toggles (see below) —
-  // it isn't kept alive with a `readOnly` flip. CodeMirror builds a fresh view on every mount, and a
-  // fresh view runs every plugin's constructor regardless of whether the `extensions` array handed to
-  // it is one it has seen before, so a memoized-but-stale focus extension would still steal focus on
-  // every re-entry into edit mode, not just on insertion. `pendingAutoFocus` is a one-shot flag instead:
-  // it captures `autoFocus && isEditing` at this component's own first render (autoFocus is only ever
-  // true for the cell the reader just inserted, and insertion only happens while already editing, so
-  // that first render already carries the final values) and is cleared the one time it's spent, so
-  // later remounts of the editor never see it again.
   // Wraps the editor so MarkdownFormatToolbar can recover its EditorView via EditorView.findFromDOM —
-  // CodeMirrorEditor exposes no ref, same reason CodeCell needs buildFocusExtension for the caret.
+  // CodeMirrorEditor exposes no ref, same reason useFocusExtension needs buildFocusExtension for the
+  // caret rather than a plain `.focus()` call here.
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
-  const pendingAutoFocus = useRef(autoFocus && isEditing);
-  // A second, independent signal on top of pendingAutoFocus's one-shot: onAdvance/onFocusRequest (see
-  // NotebookCellRenderer) move the caret to a cell that already exists and is already mounted — e.g.
-  // pressing Enter to advance into the trailing slot, which was sitting there unfocused already — so
-  // there is no fresh mount for pendingAutoFocus to catch. This tracks `focusRequestId` changing while
-  // already editing, regardless of whether isEditing ever changed — a nonce rather than `autoFocus`
-  // itself, because a request can retarget a cell that was *already* the focus target (converting this
-  // cell in place via its own "/" menu never changes `autoFocus` from true to true, but the click that
-  // picked the menu item still needs to be overridden with a fresh `.focus()`). Deliberately not folded
-  // into pendingAutoFocus's own check: isEditing toggling off and back on with the same request still
-  // active must NOT look like a fresh request (see "is not asked for again when edit mode comes back")
-  // — this ref is only ever written from inside the `isEditing` branch below, so a round trip through
-  // isEditing=false leaves it untouched.
-  const previousFocusRequestId = useRef(focusRequestId);
-  const focusExtension = useMemo(() => {
-    if (!isEditing) {
-      return undefined;
-    }
-
-    if (pendingAutoFocus.current) {
-      pendingAutoFocus.current = false;
-      previousFocusRequestId.current = focusRequestId;
-      return buildFocusExtension();
-    }
-
-    const isFreshRequest = focusRequestId !== undefined && focusRequestId !== previousFocusRequestId.current;
-    previousFocusRequestId.current = focusRequestId;
-    return isFreshRequest ? buildFocusExtension() : undefined;
-  }, [isEditing, focusRequestId]);
+  // Unlike CodeCell, this editor unmounts and remounts every time `isEditing` toggles rather than being
+  // kept alive with a `readOnly` flip — see useFocusExtension's own doc comment for why that still
+  // works out correctly with the same shared hook.
+  const focusExtension = useFocusExtension({ autoFocus, isEditing, focusRequestId });
 
   const placeholderExt = useMemo(() => (placeholder ? [placeholderExtension(placeholder)] : []), [placeholder]);
 
