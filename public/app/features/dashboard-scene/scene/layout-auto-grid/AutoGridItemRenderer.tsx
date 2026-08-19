@@ -2,6 +2,8 @@ import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
 import { LazyLoader, sceneGraph, type SceneComponentProps, VizPanelFitScope, type VizPanel } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
@@ -40,28 +42,31 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   // Subscribe so we re-render once the plugin loads and its capability is known.
   body.useState();
 
+  const autoHeightPanelsEnabled = useFlagGrafanaDashboardsAutoHeightPanels();
+
   // Content-fit only applies to panels whose plugin supports it. A per-panel
   // override (opt-in/opt-out) wins over the layout default.
   const pluginSupportsFit = body.getPlugin()?.supportsFitContent === true;
-  const fitContentOn = pluginSupportsFit && (itemFitContent ?? layoutFitContent) === true;
-  const matchRowHeightsOn = matchRowHeights !== false;
+  const fitContentOn = autoHeightPanelsEnabled && pluginSupportsFit && (itemFitContent ?? layoutFitContent) === true;
+  const matchRowHeightsOn = !autoHeightPanelsEnabled || matchRowHeights !== false;
   const rowHeightPx = getNamedHeightInPixels(rowHeight);
   const fitMinHeightPx = getNamedHeightInPixels(minHeight ?? rowHeight);
 
-  // Fit-content sizing is pure CSS: the cell caps the height and the browser
-  // sizes the row to content. The min-height floor is applied to the panel
-  // chrome (via the fit context) so the chrome itself fills it — a min-height on
-  // this cell would leave the chrome floating at the top.
+  // Fit-content sizing is pure CSS: the browser sizes the row to content. The
+  // min-height floor is applied to the panel chrome (via the fit context) so
+  // the chrome itself fills it — a min-height on this cell would leave the
+  // chrome floating at the top.
   // Non-fit panels stay at the row height; when row heights aren't matched they
   // must pin to it explicitly so a tall fit sibling doesn't stretch them.
-  // The scroll clip is only created when a max height actually bounds the cell —
-  // an unconditional `overflow: auto` would clip the selection/hover outlines
-  // drawn at the chrome's edges (see styles.itemMaxHeightClip for the bounded case).
+  // When a max height bounds the cell, the cap is applied to the panel chrome
+  // and the scroll lives on the chrome's content area — not on this cell — so
+  // the panel header stays fixed while the body scrolls (see
+  // styles.itemMaxHeightClip). The value travels down via a CSS variable.
   const maxHeightCss = getMaxHeightCssValue(maxHeightMode, maxHeight);
   const isMaxHeightBounded = maxHeightCss !== 'none';
-  const itemStyle: React.CSSProperties | undefined = fitContentOn
+  const itemStyle = fitContentOn
     ? isMaxHeightBounded
-      ? { maxHeight: maxHeightCss, overflow: 'auto' }
+      ? { '--auto-grid-item-max-height': maxHeightCss }
       : undefined
     : matchRowHeightsOn
       ? undefined
@@ -108,9 +113,13 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
           const wrapperContent = (
             <>
-              <VizPanelFitScope enabled={fitContentOn} minHeight={fitMinHeightPx}>
+              {autoHeightPanelsEnabled ? (
+                <VizPanelFitScope enabled={fitContentOn} minHeight={fitMinHeightPx}>
+                  <item.Component model={item} />
+                </VizPanelFitScope>
+              ) : (
                 <item.Component model={item} />
-              </VizPanelFitScope>
+              )}
               {conditionalRenderingOverlay}
               {showResizeIntercept && <AutoGridResizeIntercept item={model} />}
             </>
@@ -143,7 +152,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           );
         }
       ),
-    [model, isLazy, key, styles, isEditing, fitContentOn, isMaxHeightBounded, fitMinHeightPx]
+    [model, isLazy, key, styles, isEditing, fitContentOn, isMaxHeightBounded, fitMinHeightPx, autoHeightPanelsEnabled]
   );
 
   const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
@@ -218,12 +227,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
   itemFitContent: css({
     width: '100%',
   }),
-  // A bounded max height turns the cell into a scroll container, which clips
-  // outlines drawn at the chrome's box edge. Pull them one pixel inward so
-  // selection/hover feedback stays visible.
+  // Cap the panel chrome itself (not the cell) and scroll inside its content
+  // area, so the panel header stays fixed while the body scrolls. The chrome is
+  // a flex column (header, then content); `minHeight: 0` lets the content flex
+  // item shrink to the remaining space instead of overflowing the chrome.
+  // Because nothing overflows the cell, selection/hover outlines at the
+  // chrome's edges stay unclipped.
   itemMaxHeightClip: css({
-    '& .dashboard-selected-element, & .dashboard-selectable-element:hover': {
-      outlineOffset: '-1px',
+    '& [data-viz-panel-key] > div > section': {
+      maxHeight: 'var(--auto-grid-item-max-height)',
+    },
+    [`& [data-viz-panel-key] > div > section > [data-testid="${selectors.components.Panels.Panel.content}"]`]: {
+      minHeight: 0,
+      overflowY: 'auto',
     },
   }),
 });

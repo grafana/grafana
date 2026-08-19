@@ -8,6 +8,7 @@ import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 
 import { type AutoGridItem } from './AutoGridItem';
+import { isAutoHeightPanelsEnabled } from './AutoGridLayoutManager';
 
 type FitContentOverride = 'default' | 'on' | 'off';
 
@@ -15,7 +16,7 @@ export function getOptions(model: AutoGridItem): OptionsPaneCategoryDescriptor[]
   const categories: OptionsPaneCategoryDescriptor[] = [];
 
   // Only panels whose plugin supports content-fit can override the layout default.
-  if (model.state.body.getPlugin()?.supportsFitContent === true) {
+  if (isAutoHeightPanelsEnabled() && model.state.body.getPlugin()?.supportsFitContent === true) {
     categories.push(
       new OptionsPaneCategoryDescriptor({
         title: t('dashboard.auto-grid.item-options.fit-content.title', 'Auto fit'),
@@ -73,7 +74,7 @@ function FitContentOption({ item }: { item: AutoGridItem }) {
       onChange={(next) => {
         const prev = item.state.fitContent;
         const nextValue = next === 'default' ? undefined : next === 'on';
-        dashboardEditActions.edit({
+        edit({
           description: t('dashboard.edit-actions.panel-fit-content', 'Panel auto fit content'),
           source: item,
           perform: () => item.setFitContent(nextValue),

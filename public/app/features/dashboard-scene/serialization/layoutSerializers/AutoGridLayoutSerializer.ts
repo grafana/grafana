@@ -13,6 +13,7 @@ import {
   type AutoGridRowHeight,
   getAutoRowsTemplate,
   getTemplateColumnsTemplate,
+  isAutoHeightPanelsEnabled,
   AutoGridLayoutManager,
 } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
@@ -180,7 +181,7 @@ export function deserializeAutoGridLayout(
         rowHeightCombined ?? AUTO_GRID_DEFAULT_ROW_HEIGHT,
         fillScreenResolved,
         // Rows must be able to grow if the layout default OR any panel opts into fit-content.
-        fitContentResolved || children.some((child) => child.state.fitContent === true)
+        isAutoHeightPanelsEnabled() && (fitContentResolved || children.some((child) => child.state.fitContent === true))
       ),
       children,
     }),

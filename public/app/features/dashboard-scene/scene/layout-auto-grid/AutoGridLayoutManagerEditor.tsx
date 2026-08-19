@@ -5,6 +5,7 @@ import React, { useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
 import { Button, Combobox, type ComboboxOption, Field, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -173,6 +174,9 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
 function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManager }) {
   const { rowHeight, fillScreen, fitContent, minHeight, maxHeightMode, maxHeight, matchRowHeights } =
     layoutManager.useState();
+  const autoHeightPanelsEnabled = useFlagGrafanaDashboardsAutoHeightPanels();
+  // Persisted fit state is ignored (not offered) while the feature toggle is off.
+  const fitContentOn = autoHeightPanelsEnabled && !!fitContent;
   const matchRowHeightsOn = matchRowHeights !== false;
   const styles = useStyles2(getStyles);
 
@@ -221,7 +225,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
           inputTestId={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight}
           clearTestId={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomRowHeight}
         />
-        {!fitContent && (
+        {!fitContentOn && (
           <Field
             label={t('dashboard.auto-grid.options.height-fill', 'Fill screen')}
             className={styles.narrowSelector}
@@ -235,7 +239,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
             />
           </Field>
         )}
-        {!fillScreen && (
+        {autoHeightPanelsEnabled && !fillScreen && (
           <Field
             label={t('dashboard.auto-grid.options.fit-content', 'Auto fit')}
             className={styles.narrowSelector}
@@ -243,14 +247,14 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
           >
             <InlineSwitch
               id="fit-content-toggle"
-              value={!!fitContent}
+              value={fitContentOn}
               onChange={() => layoutManager.onFitContentChanged(!fitContent)}
             />
           </Field>
         )}
       </Stack>
       {/* Content-fit bounds, only relevant while fit is on. */}
-      {fitContent && (
+      {fitContentOn && (
         <Stack columnGap={2} rowGap={2} wrap>
           <NamedOrCustomSizeField
             id="fit-min-height"

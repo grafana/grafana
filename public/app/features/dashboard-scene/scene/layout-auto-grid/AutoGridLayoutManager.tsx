@@ -1,6 +1,7 @@
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   type SceneObject,
@@ -64,6 +65,15 @@ export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | nu
 export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
 export type AutoGridMaxHeightMode = 'unlimited' | 'short' | 'standard' | 'tall' | 'custom';
 
+/**
+ * Feature toggle for the whole auto-height (content-fit) panels feature.
+ * Persisted `fitContent` state is kept intact when disabled — only the UI entry
+ * points and the runtime sizing behavior are turned off.
+ */
+export function isAutoHeightPanelsEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardsAutoHeightPanels, false);
+}
+
 const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
 export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
@@ -115,7 +125,7 @@ export class AutoGridLayoutManager
         new AutoGridLayout({
           isDraggable: true,
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
-          autoRows: getAutoRowsTemplate(rowHeight, fillScreen, fitContent),
+          autoRows: getAutoRowsTemplate(rowHeight, fillScreen, fitContent && isAutoHeightPanelsEnabled()),
         }),
     });
 
@@ -413,6 +423,9 @@ export class AutoGridLayoutManager
    * in-flow height, so the row stays at its floor.
    */
   public hasFitContent(): boolean {
+    if (!isAutoHeightPanelsEnabled()) {
+      return false;
+    }
     if (this.state.fitContent) {
       return true;
     }

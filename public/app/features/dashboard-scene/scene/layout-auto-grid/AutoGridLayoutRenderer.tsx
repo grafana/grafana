@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
 import { type SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
@@ -27,8 +28,9 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen, matchRowHeights, dropPosition } = layoutManager.useState();
   const soloPanelContext = useSoloPanelContext();
+  const autoHeightPanelsEnabled = useFlagGrafanaDashboardsAutoHeightPanels();
   // Off => align items to the top so a tall fit panel doesn't stretch its row siblings.
-  const noStretchSiblings = matchRowHeights === false;
+  const noStretchSiblings = autoHeightPanelsEnabled && matchRowHeights === false;
 
   if (isHidden || !layoutOrchestrator) {
     return null;
