@@ -114,6 +114,28 @@ func (ss *sqlStore) Delete(ctx context.Context, userID int64) error {
 	return nil
 }
 
+type getUserQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable        string
+	Identifier       any
+	IdentifierColumn string
+}
+
+const (
+	userEmailColumn = "email"
+	userIDColumn    = "id"
+	userLoginColumn = "login"
+)
+
+func (q getUserQuery) Validate() error {
+	switch q.IdentifierColumn {
+	case userEmailColumn, userIDColumn, userLoginColumn:
+		return nil
+	default:
+		return fmt.Errorf("invalid user identifier column %q", q.IdentifierColumn)
+	}
+}
+
 func getUserByID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID int64) (user.User, bool, error) {
 	query := getUserQuery{
 		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
@@ -194,28 +216,6 @@ func (ss *sqlStore) ListByIdOrUID(ctx context.Context, uids []string, ids []int6
 	}
 
 	return users, err
-}
-
-type getUserQuery struct {
-	sqltemplate.SQLTemplate
-	UserTable        string
-	Identifier       any
-	IdentifierColumn string
-}
-
-const (
-	userEmailColumn = "email"
-	userIDColumn    = "id"
-	userLoginColumn = "login"
-)
-
-func (q getUserQuery) Validate() error {
-	switch q.IdentifierColumn {
-	case userEmailColumn, userIDColumn, userLoginColumn:
-		return nil
-	default:
-		return fmt.Errorf("invalid user identifier column %q", q.IdentifierColumn)
-	}
 }
 
 func getUserByLogin(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, identifier string, usr *user.User) (bool, error) {
