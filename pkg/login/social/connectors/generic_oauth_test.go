@@ -512,8 +512,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 		if tc.Setup != nil {
 			tc.Setup(orgSvc)
 		}
-		orgRoleMapper := ProvideOrgRoleMapper(cfg, orgSvc)
-		provider := NewGenericOAuthProvider(&social.OAuthInfo{
+		orgRoleMapper := mustProvideOrgRoleMapper(t, cfg, orgSvc)
+		provider := mustNewGenericOAuthProvider(t, &social.OAuthInfo{
 			EmailAttributePath: "email",
 		}, cfg,
 			orgRoleMapper,
@@ -563,8 +563,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 
 	t.Run("Generic OAuth with empty API URL shouldn't call fetchPrivateEmail function", func(t *testing.T) {
 		orgSvc := &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}}
-		orgRoleMapper := ProvideOrgRoleMapper(cfg, orgSvc)
-		provider := NewGenericOAuthProvider(&social.OAuthInfo{
+		orgRoleMapper := mustProvideOrgRoleMapper(t, cfg, orgSvc)
+		provider := mustNewGenericOAuthProvider(t, &social.OAuthInfo{
 			EmailAttributePath: "email",
 		}, cfg,
 			orgRoleMapper,
@@ -656,12 +656,12 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 		},
 	}
 
-	provider := NewGenericOAuthProvider(&social.OAuthInfo{
+	provider := mustNewGenericOAuthProvider(t, &social.OAuthInfo{
 		Extra: map[string]string{
 			"login_attribute_path": "login",
 		},
 	}, setting.NewCfg(),
-		ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
+		mustProvideOrgRoleMapper(t, setting.NewCfg(), orgtest.NewOrgServiceFake()),
 		ssosettingstests.NewFakeService(),
 		featuremgmt.WithFeatures(),
 		nil)
@@ -756,13 +756,13 @@ func TestUserInfoSearchesForName(t *testing.T) {
 		},
 	}
 
-	provider := NewGenericOAuthProvider(&social.OAuthInfo{
+	provider := mustNewGenericOAuthProvider(t, &social.OAuthInfo{
 		Extra: map[string]string{
 			"name_attribute_path": "name",
 		},
 	},
 		setting.NewCfg(),
-		ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
+		mustProvideOrgRoleMapper(t, setting.NewCfg(), orgtest.NewOrgServiceFake()),
 		ssosettingstests.NewFakeService(),
 		featuremgmt.WithFeatures(),
 		nil)
@@ -841,11 +841,11 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 				require.NoError(t, err)
 			}))
 
-			provider := NewGenericOAuthProvider(&social.OAuthInfo{
+			provider := mustNewGenericOAuthProvider(t, &social.OAuthInfo{
 				GroupsAttributePath: test.groupsAttributePath,
 				ApiUrl:              ts.URL,
 			}, setting.NewCfg(),
-				ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
+				mustProvideOrgRoleMapper(t, setting.NewCfg(), orgtest.NewOrgServiceFake()),
 				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures(),
 				nil)
@@ -865,7 +865,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 }
 
 func TestPayloadCompression(t *testing.T) {
-	provider := NewGenericOAuthProvider(&social.OAuthInfo{
+	provider := mustNewGenericOAuthProvider(t, &social.OAuthInfo{
 		EmailAttributePath: "email",
 	}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
@@ -1024,7 +1024,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGenericOAuthProvider(t, tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			require.Equal(t, tc.want.nameAttributePath, s.nameAttributePath)
 			require.Equal(t, tc.want.loginAttributePath, s.loginAttributePath)
@@ -1309,7 +1309,7 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGenericOAuthProvider(t, &social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -1391,7 +1391,7 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGenericOAuthProvider(t, tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -1492,7 +1492,7 @@ func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGenericOAuthProvider(t, tc.info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)
@@ -1585,7 +1585,7 @@ func TestSocialGenericOAuth_extractFromIDToken_WithIDTokenValidation(t *testing.
 				info.JwkSetURL = tc.jwkSetURL
 			}
 
-			provider := NewGenericOAuthProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			provider := mustNewGenericOAuthProvider(t, info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			// Sign the token
 			idToken := signJWT(t, tc.tokenKey, tc.tokenKeyID, claims)

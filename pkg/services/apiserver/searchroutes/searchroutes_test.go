@@ -1,8 +1,10 @@
 package searchroutes
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -164,7 +166,7 @@ func TestBuild_MountsNotebooksOnDeclaringVersionOnly(t *testing.T) {
 	}
 	require.NotEmpty(t, dashboardGVs)
 
-	got := paths(Build(true, nil, fakeClient{},
+	got := paths(Build(true, false, nil, fakeClient{},
 		[]builder.APIGroupBuilder{&fakeBuilder{gvs: dashboardGVs}}, nil))
 
 	for _, gv := range dashboardGVs {
@@ -174,6 +176,111 @@ func TestBuild_MountsNotebooksOnDeclaringVersionOnly(t *testing.T) {
 		}
 		assert.NotContains(t, got[gv.String()], "notebooks/search", "unexpected notebooks route on %s", gv)
 	}
+}
+
+// allServedGroupVersions lets a test ask for everything at once and see what
+// comes back.
+func allServedGroupVersions(t *testing.T) []schema.GroupVersion {
+	t.Helper()
+
+	var gvs []schema.GroupVersion
+	for _, m := range resource.AppManifests() {
+		if m.ManifestData == nil {
+			continue
+		}
+		for _, v := range m.ManifestData.Versions {
+			if v.Served {
+				gvs = append(gvs, schema.GroupVersion{Group: m.ManifestData.Group, Version: v.Name})
+			}
+		}
+	}
+	require.NotEmpty(t, gvs)
+	return gvs
+}
+
+// Reading the manifest must not widen what is served. Adding a kind here should
+// be a decision, not a side effect of a manifest default.
+func TestBuild_ServedKindsAreOnlyTheAllowedOnes(t *testing.T) {
+	got := paths(Build(true, true, nil, fakeClient{},
+		[]builder.APIGroupBuilder{&fakeBuilder{gvs: allServedGroupVersions(t)}}, nil))
+
+	resources := map[string]bool{}
+	for _, ps := range got {
+		for _, p := range ps {
+			resources[strings.SplitN(p, "/", 2)[0]] = true
+		}
+	}
+
+	assert.Equal(t, map[string]bool{
+		"dashboards": true,
+		"folders":    true,
+		"notebooks":  true,
+	}, resources)
+}
+
+// Declining one endpoint must leave the other alone.
+func TestBuild_ManifestOptOutIsHonoured(t *testing.T) {
+	gv := schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v1"}
+	builders := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{gv}}}
+
+	dashboards := func(search *app.ManifestVersionKindSearch) []app.Manifest {
+		return []app.Manifest{{ManifestData: &app.ManifestData{
+			Group: gv.Group,
+			Versions: []app.ManifestVersion{{
+				Name:   gv.Version,
+				Served: true,
+				Kinds: []app.ManifestVersionKind{{
+					Kind:   "Dashboard",
+					Plural: "dashboards",
+					Scope:  namespacedScope,
+					Search: search,
+				}},
+			}},
+		}}}
+	}
+	optOut := func(v bool) *bool { return &v }
+
+	t.Run("says nothing, so gets both", func(t *testing.T) {
+		got := paths(build(dashboards(nil), true, true, nil, fakeClient{}, builders, nil))
+		assert.ElementsMatch(t, []string{"dashboards/search", "dashboards/trash"}, got[gv.String()])
+	})
+
+	t.Run("declines search, keeps trash", func(t *testing.T) {
+		search := &app.ManifestVersionKindSearch{Endpoint: optOut(false)}
+		got := paths(build(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
+		assert.Equal(t, []string{"dashboards/trash"}, got[gv.String()])
+	})
+
+	t.Run("declines trash, keeps search", func(t *testing.T) {
+		search := &app.ManifestVersionKindSearch{Trash: optOut(false)}
+		got := paths(build(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
+		assert.Equal(t, []string{"dashboards/search"}, got[gv.String()])
+	})
+
+	t.Run("declines both", func(t *testing.T) {
+		search := &app.ManifestVersionKindSearch{Endpoint: optOut(false), Trash: optOut(false)}
+		assert.Empty(t, paths(build(dashboards(search), true, true, nil, fakeClient{}, builders, nil)))
+	})
+}
+
+// Until the allowlist goes away, it still gates a kind that wants the endpoint.
+func TestBuild_AllowlistStillGatesAKindThatWantsIt(t *testing.T) {
+	gv := schema.GroupVersion{Group: "playlist.grafana.app", Version: "v0alpha1"}
+	manifests := []app.Manifest{{ManifestData: &app.ManifestData{
+		Group: gv.Group,
+		Versions: []app.ManifestVersion{{
+			Name:   gv.Version,
+			Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind:   "Playlist",
+				Plural: "playlists",
+				Scope:  namespacedScope,
+			}},
+		}},
+	}}}
+	builders := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{gv}}}
+
+	assert.Empty(t, paths(build(manifests, true, true, nil, fakeClient{}, builders, nil)))
 }
 
 func TestServedGroupVersions_CoversBothRegistrationPaths(t *testing.T) {

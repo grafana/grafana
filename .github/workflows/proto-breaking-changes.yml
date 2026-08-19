@@ -1,0 +1,63 @@
+# Fails a PR that breaks backwards compatibility of a protobuf module.
+name: Protobuf breaking changes
+
+on:
+  pull_request:
+    paths:
+      - 'pkg/registry/apps/annotation/proto/**'
+      - '.github/workflows/proto-breaking-changes.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  breaking:
+    name: ${{ matrix.module }}
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          # To enforce compatibility for another buf module, add its path here
+          # and to the `paths:` filter above. The breaking-change policy itself
+          # lives in each module's buf.yaml under `breaking.use`.
+          - pkg/registry/apps/annotation/proto
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # buf compares against history, so the full log is required
+          filter: blob:none
+
+      - name: Export merge base tree
+        id: base
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          MODULE: ${{ matrix.module }}
+        run: |
+          git fetch --no-tags --filter=blob:none origin "$BASE_REF"
+          base_sha="$(git merge-base HEAD FETCH_HEAD)"
+          dir="$RUNNER_TEMP/buf-base"
+          mkdir -p "$dir"
+          # The checkout above is a partial clone, so it can't act as a git remote for
+          # buf to read the base ref's tree from directly. Exporting just the module's
+          # tree to a plain directory sidesteps that and only fetches the blobs it needs.
+          git archive "$base_sha" -- "$MODULE" | tar -x -C "$dir"
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+
+      - uses: bufbuild/buf-action@8c6a16e16f12ba20b6470afa9c2ba9b5ba8c97c3 # v1.5.0
+        with:
+          version: 1.65.0
+          input: ${{ matrix.module }}
+          breaking: true # The action bundles several other buf commands, but we only need breaking for this workflow.
+          breaking_against: ${{ steps.base.outputs.dir }}/${{ matrix.module }}
+          lint: false
+          format: false
+          push: false
+          archive: false
+          pr_comment: false

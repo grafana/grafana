@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -327,12 +326,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			auth, err := cfg.Raw.NewSection("auth")
-			assert.NoError(t, err)
-			_, err = auth.NewKey("oauth_allow_insecure_email_lookup", strconv.FormatBool(tt.allowInsecureTakeover))
-			assert.NoError(t, err)
-
-			settingsProvider := &setting.OSSImpl{Cfg: cfg}
+			cfg.OAuthAllowInsecureEmailLookup = tt.allowInsecureTakeover
 
 			if tt.addStateCookie {
 				v := tt.stateCookieValue
@@ -356,7 +350,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				},
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, settingsProvider, featuremgmt.WithFeatures(tt.features...), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, cfg), nil, fakeSocialSvc, featuremgmt.WithFeatures(tt.features...), tracing.InitializeTracerForTest())
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -437,7 +431,7 @@ func TestOAuth_RedirectURL(t *testing.T) {
 
 			cfg := setting.NewCfg()
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, &setting.OSSImpl{Cfg: cfg}, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, cfg), nil, fakeSocialSvc, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
 
 			redirect, err := c.RedirectURL(context.Background(), nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -550,7 +544,7 @@ func TestOAuth_Logout(t *testing.T) {
 			fakeSocialSvc := &socialtest.FakeSocialService{
 				ExpectedAuthInfoProvider: tt.oauthCfg,
 			}
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, tt.cfg), mockService, fakeSocialSvc, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
 
 			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser}, &usertoken.UserToken{})
 
@@ -606,15 +600,41 @@ func TestIsEnabled(t *testing.T) {
 			cfg := setting.NewCfg()
 			c := ProvideOAuth(
 				social.GitHubProviderName,
-				cfg,
+				testConfigProvider(t, cfg),
 				nil,
 				fakeSocialSvc,
-				&setting.OSSImpl{Cfg: cfg},
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest())
-			assert.Equal(t, tt.expected, c.IsEnabled())
+			assert.Equal(t, tt.expected, c.IsEnabled(t.Context()))
 		})
 	}
+}
+
+func TestOAuthProviderLookupUsesCallerContext(t *testing.T) {
+	type contextKey struct{}
+
+	ctx := context.WithValue(t.Context(), contextKey{}, "request-tenant")
+	lookupCount := 0
+	fakeSocialSvc := &socialtest.FakeSocialService{
+		GetOAuthInfoProviderFunc: func(gotCtx context.Context, provider string) (*social.OAuthInfo, error) {
+			assert.Equal(t, "request-tenant", gotCtx.Value(contextKey{}))
+			assert.Equal(t, social.GitHubProviderName, provider)
+			lookupCount++
+			return &social.OAuthInfo{Enabled: true}, nil
+		},
+	}
+	c := ProvideOAuth(
+		social.GitHubProviderName,
+		testConfigProvider(t, setting.NewCfg()),
+		nil,
+		fakeSocialSvc,
+		featuremgmt.WithFeatures(),
+		tracing.InitializeTracerForTest(),
+	)
+
+	assert.True(t, c.IsEnabled(ctx))
+	assert.NotNil(t, c.GetConfig(ctx))
+	assert.Equal(t, 2, lookupCount)
 }
 
 type mockConnector struct {

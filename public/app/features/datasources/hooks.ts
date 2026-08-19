@@ -1,15 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type * as React from 'react';
-import { useAsync, useLocalStorage } from 'react-use';
+import { useLocalStorage } from 'react-use';
 import { type Observable } from 'rxjs';
 
 import { type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
 import { type GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
-import {
-  type GetDataSourceInstanceListFilters,
-  getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
-} from '@grafana/runtime/unstable';
 
 const LOCAL_STORAGE_KEY = 'grafana.features.datasources.components.picker.DataSourceDropDown.history';
 
@@ -47,10 +42,6 @@ export function useRecentlyUsedDataSources(): [string[], (ds: DataSourceInstance
   return [value, pushRecentlyUsedDataSource];
 }
 
-/**
- * @deprecated Use {@link useDatasourcesAsync} instead — call sites are being migrated to it
- * one by one, and once all are done it takes over this hook's name.
- */
 export function useDatasources(filters: GetDataSourceListFilters, datasources?: DataSourceInstanceSettings[]) {
   if (datasources) {
     return datasources;
@@ -59,44 +50,6 @@ export function useDatasources(filters: GetDataSourceListFilters, datasources?: 
   const dataSources = dataSourceSrv.getList(filters);
 
   return dataSources;
-}
-
-export interface UseDatasourcesAsyncResult {
-  isLoading: boolean;
-  error?: Error;
-  dataSources: DataSourceInstanceSettings[];
-}
-
-/**
- * Async replacement for {@link useDatasources}, resolving the data sources matching `filters`
- * from the in-memory cache with explicit loading and error state. While a re-fetch is pending,
- * the previous list is kept with `isLoading: true`.
- *
- * Known limitation: the result is only re-fetched when `filters` change, so a mounted consumer
- * does not pick up data sources added or removed via reloadDataSourceInstanceSettings() until
- * it remounts or its filters change.
- */
-export function useDatasourcesAsync(filters: GetDataSourceInstanceListFilters = {}): UseDatasourcesAsyncResult {
-  // Consumers pass `filters` as an inline object literal — a new reference on every render.
-  // Serialize it for the useAsync() deps so the fetch only re-runs when a filter value
-  // actually changes. The `filter` callback can't be serialized; it is compared by reference.
-  const { filter: filterFunc, ...serializableFilters } = filters;
-  const filtersKey = JSON.stringify(serializableFilters);
-
-  const { loading, error, value } = useAsync(
-    async () => {
-      const items = await getDataSourceInstanceList(filters);
-      // getDataSourceInstanceList() returns slim list items, but the pickers built on this
-      // hook pass full DataSourceInstanceSettings to their public onChange/filter props, so
-      // fetch the full settings for each item. Both calls read the same in-memory cache.
-      const settings = await Promise.all(items.map((item) => getDataSourceInstanceSettings(item.uid)));
-      return settings.filter((s) => s !== undefined);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filtersKey, filterFunc]
-  );
-
-  return { isLoading: loading, error, dataSources: value ?? [] };
 }
 
 export function useDatasource(
