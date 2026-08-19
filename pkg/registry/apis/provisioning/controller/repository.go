@@ -743,7 +743,9 @@ func (rc *RepositoryController) process(key string) (err error) {
 		if len(patchOperations) == 0 {
 			return err
 		}
-		if patchErr := rc.statusPatcher.Patch(ctx, obj, patchOperations...); patchErr != nil {
+		ops := patchOperations
+		patchOperations = nil
+		if patchErr := rc.statusPatcher.Patch(ctx, obj, ops...); patchErr != nil {
 			patchErr = fmt.Errorf("status patch operations failed: %w", patchErr)
 			if err == nil {
 				err = patchErr
@@ -752,7 +754,6 @@ func (rc *RepositoryController) process(key string) (err error) {
 			}
 			return err
 		}
-		patchOperations = nil
 		return err
 	}
 	defer func() {
