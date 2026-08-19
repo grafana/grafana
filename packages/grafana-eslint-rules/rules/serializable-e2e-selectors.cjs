@@ -82,8 +82,12 @@ function isSerializableBody(node, params) {
   if (isPlainStringExpression(node, params)) {
     return true;
   }
+  // the generator only emits the two-branch present/absent template for single-arg selectors, so a
+  // conditional is only serializable with exactly one parameter. a multi-arg ternary would otherwise
+  // pass lint but serialize as a single always-present branch.
   if (node.type === 'ConditionalExpression') {
     return (
+      params.size === 1 &&
       node.test.type === 'Identifier' &&
       params.has(node.test.name) &&
       isPlainStringExpression(node.consequent, params) &&
