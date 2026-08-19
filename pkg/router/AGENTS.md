@@ -81,14 +81,15 @@ recreate unrelated backends. Recreating a backend throws away its connection poo
 reconnect + TLS re-handshake; doing that for *every* backend on *any* GitOps change causes a
 latency blip across all traffic when only one route changed.
 
-Implementation: `GrafanaRouter.entries` is a persistent `map[group]*handlerEntry`, keyed by group.
-Each entry holds a resolved `http.Handler` plus `lastRV`, the fingerprint last applied. On reconcile,
-groups whose `lastRV` is unchanged are left untouched, changed/new groups are rebuilt, and removed
-groups are dropped; then a fresh immutable `map[group]Backend` snapshot is published via one atomic
-store. **Connection-pool survival comes from the shared transport cache, not the Backend identity**
-(`transportFor`, keyed by `tlsCacheKey`): rebuilding a group's Backend reuses the cached transport,
-so its pool survives. Because reconcile only rebuilds the *changed* group, unrelated backends are
-never touched.
+Implementation: `GrafanaRouter.served` is a persistent `map[group]*handlerEntry`, keyed by group.
+Each entry holds the live `Backend` (kept so discovery synthesis reflects what's actually served,
+not the raw `Load()` result — see Discovery endpoints below), its resolved `http.Handler`, and
+`lastRV`, the fingerprint last applied. On reconcile, groups whose `lastRV` is unchanged are left
+untouched, changed/new groups are rebuilt, and removed groups are dropped; then a fresh immutable
+`map[group]Backend` snapshot is published via one atomic store. **Connection-pool survival comes
+from the shared transport cache, not the Backend identity** (`transportFor`, keyed by
+`tlsCacheKey`): rebuilding a group's Backend reuses the cached transport, so its pool survives.
+Because reconcile only rebuilds the *changed* group, unrelated backends are never touched.
 
 ## Routing table (group-keyed snapshot)
 
@@ -150,7 +151,8 @@ TBD. Possibly inspect a manifest. Use a gRPC client to translate http calls via 
 | `/openapi/v3/apis/{group}/{version}`           | single backend | proxy, cached and RV-busted (see below)       |
 
 **Decision: one backend owns ALL versions of a given group.** A group is never split across
-backends (reconcile keys `entries` by group; a duplicate group is last-wins). Consequences:
+backends (reconcile keys `served` by group; a duplicate group is last-wins, and discovery is
+synthesized from `served`, so it never advertises both). Consequences:
 
 - `/apis/{group}` (group discovery, `APIGroup` — lists a group's versions) can be **proxied
   directly to the single owning backend**. No cross-backend merge is needed at group level.

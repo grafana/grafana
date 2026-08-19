@@ -20,14 +20,14 @@ func withGroups(groups ...string) *GrafanaRouter {
 	s := NewGrafanaRouter(stubLoader{})
 	for _, g := range groups {
 		g := g
-		s.entries[g] = &handlerEntry{
+		s.served[g] = &handlerEntry{
 			handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				_, _ = w.Write([]byte(g))
 			}),
 			lastRV: "1",
 		}
 	}
-	s.publish(nil)
+	s.publish()
 	return s
 }
 

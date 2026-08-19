@@ -17,17 +17,21 @@ const (
 )
 
 // handlerEntry is the router's persistent, reconcile-only record for one group:
-// the live Backend plus lastRV, the RouteConfig fingerprint last applied. lastRV
-// lets reconcile skip rebuilding a group whose config has not changed. Touched
-// only by reconcile (single goroutine), so it needs no lock.
+// the live Backend (kept so discovery synthesis reflects whatever is actually
+// being served — see publish — even when a later reload fails and the old
+// handler stays live), the built handler, and lastRV, the RouteConfig
+// fingerprint last applied. lastRV lets reconcile skip rebuilding a group
+// whose config has not changed. Touched only by reconcile (single goroutine),
+// so it needs no lock.
 type handlerEntry struct {
+	backend Backend
 	handler http.Handler
 	lastRV  string
 }
 
 // servingEntry is the immutable per-group record published into snapshot: the
 // proxy handler plus the RV. RV is needed at serve time to validate/label the
-// per-group-version openapi cache; entries (reconcile-goroutine-owned) isn't
+// per-group-version openapi cache; served (reconcile-goroutine-owned) isn't
 // safe to read from serving goroutines, so RV is duplicated here.
 type servingEntry struct {
 	handler http.Handler
@@ -55,18 +59,22 @@ type GrafanaRouter struct {
 
 	loader RoutesLoader
 
-	// entries is the desired-state map, keyed by group. Owned by reconcile
-	// (single goroutine); never read from the serving path.
-	entries map[string]*handlerEntry
+	// served is the desired-state map, keyed by group: the groups actually
+	// installed into the last reconcile's snapshot. Owned by reconcile (single
+	// goroutine); never read from the serving path.
+	served map[string]*handlerEntry
 
 	// snapshot is the immutable group -> servingEntry map used to serve
 	// requests. reconcile rebuilds and atomically stores it; serving loads it.
 	snapshot atomic.Pointer[map[string]servingEntry]
 
 	// apiGroupList and openapiIndex are the router-synthesized root documents
-	// for /apis and /openapi/v3, rebuilt from backends' Manifest() on every
-	// reconcile and stored atomically alongside snapshot. Never a
-	// cross-group OpenAPI schema merge — see AGENTS.md / the design spec.
+	// for /apis and /openapi/v3, rebuilt from served's Backend.Manifest() on
+	// every reconcile and stored atomically alongside snapshot — never from the
+	// raw Load() result, so a group that failed to (re)load or a duplicate in a
+	// single Load never gets advertised inconsistently with what's actually
+	// served. Never a cross-group OpenAPI schema merge — see AGENTS.md / the
+	// design spec.
 	apiGroupList atomic.Pointer[cachedDoc]
 	openapiIndex atomic.Pointer[cachedDoc]
 
@@ -81,8 +89,8 @@ type GrafanaRouter struct {
 
 func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
 	r := &GrafanaRouter{
-		loader:  loader,
-		entries: map[string]*handlerEntry{},
+		loader: loader,
+		served: map[string]*handlerEntry{},
 	}
 	empty := map[string]servingEntry{}
 	r.snapshot.Store(&empty)
@@ -308,30 +316,32 @@ func (r *GrafanaRouter) Alive(context.Context) error {
 	return nil
 }
 
-// reconcile re-reads the full desired route set and converges entries to it:
+// reconcile re-reads the full desired route set and converges served to it:
 // rebuild changed/new groups, leave unchanged ones (RV match) untouched, drop
 // groups that disappeared, then publish a fresh snapshot. Level-triggered, so
 // it is safe to run on any wake.
 func (r *GrafanaRouter) reconcile(ctx context.Context) error {
-	backends, err := r.loader.Load(ctx)
+	rawBackends, err := r.loader.Load(ctx)
 	if err != nil {
 		// Keep serving last-known-good; a later wake retries.
 		return fmt.Errorf("router: load failed, keeping current routes: %w", err)
 	}
 
 	var errs []error
-	seen := make(map[string]struct{}, len(backends))
-	for _, b := range backends {
+	seen := make(map[string]struct{}, len(rawBackends))
+	for _, b := range rawBackends {
 		group := b.Group()
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group; a duplicate group in a
 			// single load is a config error. Last-wins, warn — do not crash the
-			// router on bad GitOps config.
+			// router on bad GitOps config. r.served is keyed by group, so the
+			// later duplicate simply overwrites the earlier one here too —
+			// discovery (sourced from r.served in publish) never sees both.
 			slog.Warn("router: duplicate group in route set, overwriting", "group", group)
 		}
 		seen[group] = struct{}{}
 
-		e, ok := r.entries[group]
+		e, ok := r.served[group]
 		if ok && e.lastRV == b.RV() {
 			continue // unchanged: keep the live Backend (and its pool)
 		}
@@ -340,40 +350,52 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		if err != nil {
 			// Load failed: keep last-known-good for this group (leave the
 			// existing entry, if any, untouched) and don't publish a nil
-			// handler. lastRV is not advanced, so a later wake retries.
+			// handler. lastRV is not advanced, so a later wake retries. Because
+			// the old entry (old backend, old manifest) is left untouched,
+			// publish's discovery synthesis stays consistent with what's
+			// actually being served, not with this failed reload's manifest.
 			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err))
 			continue
 		}
 
 		if !ok {
 			// New group: create the entry.
-			r.entries[group] = &handlerEntry{handler: handler, lastRV: b.RV()}
+			r.served[group] = &handlerEntry{backend: b, handler: handler, lastRV: b.RV()}
 			continue
 		}
-		// Changed: swap the handler in place. The transport (and its pool) is
-		// reused from the shared cache when the TLS key is unchanged, so the
-		// pool survives.
+		// Changed: swap the backend/handler in place. The transport (and its
+		// pool) is reused from the shared cache when the TLS key is unchanged,
+		// so the pool survives.
+		e.backend = b
 		e.handler = handler
 		e.lastRV = b.RV()
 	}
 
-	for group := range r.entries {
+	for group := range r.served {
 		if _, ok := seen[group]; !ok {
-			delete(r.entries, group)
+			delete(r.served, group)
 		}
 	}
 
-	r.publish(backends)
+	r.publish()
 	return errors.Join(errs...)
 }
 
-// publish builds fresh immutable artifacts from entries/backends and stores
-// them atomically for the serving path: the per-group handler snapshot, the
+// publish builds fresh immutable artifacts from r.served and stores them
+// atomically for the serving path: the per-group handler snapshot, the
 // synthesized APIGroupList, and the synthesized OpenAPI v3 discovery index.
-func (r *GrafanaRouter) publish(backends []Backend) {
-	snap := make(map[string]servingEntry, len(r.entries))
-	for group, e := range r.entries {
+// Deliberately sourced from r.served (what reconcile actually installed), not
+// the raw Load() result — a group whose reload failed or a duplicate group in
+// a single Load must not be advertised in discovery when it isn't (or isn't
+// consistently) being served.
+func (r *GrafanaRouter) publish() {
+	snap := make(map[string]servingEntry, len(r.served))
+	backends := make([]Backend, 0, len(r.served))
+	for group, e := range r.served {
 		snap[group] = servingEntry{handler: e.handler, rv: e.lastRV}
+		if e.backend != nil {
+			backends = append(backends, e.backend)
+		}
 	}
 	r.snapshot.Store(&snap)
 
@@ -384,10 +406,16 @@ func (r *GrafanaRouter) publish(backends []Backend) {
 	r.openapiIndex.Store(&index)
 }
 
+// rejectBackendRedirects is a ReverseProxy ModifyResponse hook: a redirect
+// from the backend must never reach the client verbatim (an attacker-
+// influenced backend could redirect a caller anywhere), so it must become a
+// 502 instead. Returning a non-nil error is what does that — ReverseProxy
+// closes resp.Body itself and calls its ErrorHandler (whose default writes
+// 502) rather than copying the response through; returning nil here would
+// forward the 3xx/Location as-is.
 func rejectBackendRedirects(resp *http.Response) error {
 	if resp.StatusCode >= 300 && resp.StatusCode <= 399 && resp.Header.Get("Location") != "" {
-		_ = resp.Body.Close()
-		// replace with 502 — don't forward the redirect
+		return fmt.Errorf("router: rejecting redirect from backend (status %d, location %q)", resp.StatusCode, resp.Header.Get("Location"))
 	}
 	return nil
 }

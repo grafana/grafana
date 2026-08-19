@@ -26,8 +26,8 @@ func (h *countingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // unlike withGroups' fixed lastRV:"1", these tests need to bump RV mid-test.
 func buildRouterWithBackend(group, rv string, upstream http.Handler) *GrafanaRouter {
 	s := NewGrafanaRouter(stubLoader{})
-	s.entries[group] = &handlerEntry{handler: upstream, lastRV: rv}
-	s.publish(nil)
+	s.served[group] = &handlerEntry{handler: upstream, lastRV: rv}
+	s.publish()
 	return s
 }
 
@@ -61,8 +61,8 @@ func TestOpenAPIGroupVersionCachesUntilRVChanges(t *testing.T) {
 
 	// Bump RV (simulates reconcile picking up a manifest change) and re-request:
 	// cache must be treated as stale, upstream hit again.
-	s.entries["dashboard.grafana.app"] = &handlerEntry{handler: upstream, lastRV: "6"}
-	s.publish(nil)
+	s.served["dashboard.grafana.app"] = &handlerEntry{handler: upstream, lastRV: "6"}
+	s.publish()
 	rec3 := httptest.NewRecorder()
 	h.ServeHTTP(rec3, httptest.NewRequest(http.MethodGet, path, nil))
 	if rec3.Code != http.StatusOK {
