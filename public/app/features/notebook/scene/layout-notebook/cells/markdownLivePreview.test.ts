@@ -179,7 +179,7 @@ describe('buildDecorations', () => {
 
   // Unlike links, bold/italic/code/headings/blockquotes never reveal their raw markup: there is no
   // "raw source" mode for them to fall back to editing, so the toolbar/Cmd+B are the only way to
-  // change them — deliberately different from Obsidian's per-element reveal, see markdownLivePreview.ts.
+  // change them — see markdownLivePreview.ts for why links are the one exception.
   it('keeps bold markers hidden even when the cursor is inside the run', () => {
     // Caret between the two `*`s that open the marker, i.e. inside "**bold**"'s range.
     const state = createState('a **bold** b', { anchor: 5 });
@@ -234,8 +234,8 @@ describe('buildDecorations', () => {
     expect(isHidden(decorations, 10, 29)).toBe(true); // the URL itself
   });
 
-  // Links keep the Obsidian-style reveal-on-cursor behavior other constructs no longer have, because
-  // there's no other way yet to see or edit an existing link's target.
+  // Links keep a reveal-on-cursor behavior other constructs no longer have, because there's no other
+  // way yet to see or edit an existing link's target.
   it('reveals link markup when the cursor is inside the link', () => {
     const state = createState('[grafana](https://grafana.com)', { anchor: 4 }); // inside "grafana"
     const decorations = decorationsIn(state, STYLES);

@@ -288,8 +288,7 @@ describe('NotebookLayoutManager', () => {
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
 
-    // Datadog's "type ahead" affordance: the reader should not have to finish or commit a paragraph
-    // before starting the next one.
+    // The reader should not have to finish or commit a paragraph before starting the next one.
     it('reveals a second, empty trailing cell as soon as the first has content', async () => {
       const { user } = renderManager(buildManager([], true));
 

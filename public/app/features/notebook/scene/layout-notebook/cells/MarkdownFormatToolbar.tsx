@@ -203,9 +203,6 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
               key={action.key}
               icon={action.icon}
               tooltip={action.tooltip}
-              // A solid background fill for "this already applies here," not ToolbarButton's own
-              // isHighlighted (a small corner dot) — matches the reference toolbars (Datadog, the
-              // internal Grafana prototype) this bar is modelled on.
               variant={action.isActive(tree, pos) ? 'primary' : 'default'}
               onClick={() => runAction(action)}
             >

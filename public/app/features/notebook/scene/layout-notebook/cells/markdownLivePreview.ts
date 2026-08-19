@@ -78,8 +78,8 @@ export function enclosingListKind(tree: Tree, pos: number): 'bullet' | 'ordered'
  * The marker a new list item continuing from `pos` should start with — `'- '` for a bullet, the next
  * number followed by `'. '` for an ordered item — or `undefined` when `pos` isn't on a list line at
  * all, or is on one with nothing but its own marker. That empty-item case is deliberate: pressing Enter
- * on a bare, otherwise-empty bullet is the conventional "I'm done with this list" gesture (Word,
- * Notion, and Google Docs all treat it the same way), not "add another empty bullet."
+ * on a bare, otherwise-empty bullet is the conventional "I'm done with this list" gesture in most text
+ * editors, not "add another empty bullet."
  */
 export function nextListContinuation(state: EditorState, pos: number): string | undefined {
   const listItem = findEnclosingMarkNode(syntaxTree(state), pos, ['ListItem']);
@@ -414,8 +414,8 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
       backgroundColor: 'transparent',
     },
     // Shown only once the cell actually has the caret — an unfocused "Type to start writing" reads as
-    // a document's own idle state (Notion, Google Docs, and Datadog all hide theirs the same way),
-    // where a permanently visible one looks like leftover placeholder copy on an inert block.
+    // a document's own idle state, where a permanently visible one looks like leftover placeholder
+    // copy on an inert block.
     '.cm-placeholder': {
       visibility: 'hidden',
     },
