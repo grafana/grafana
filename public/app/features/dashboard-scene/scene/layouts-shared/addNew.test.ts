@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -77,6 +77,30 @@ describe('addNewTabTo', () => {
       const tabLayout = newBody.state.tabs[0].getLayout();
       expect(tabLayout).toBeInstanceOf(DefaultGridLayoutManager);
       expect(tabLayout.getVizPanels()).toHaveLength(1);
+    });
+
+    it('should enable dragging and resizing on the default layout when the dashboard is being edited', () => {
+      jest.useFakeTimers();
+      try {
+        const grid = AutoGridLayoutManager.createEmpty();
+        // Mimic a template deserialized from preferences, where edit-mode flags are unset
+        const template = new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) });
+        new DashboardScene({
+          body: grid,
+          isEditing: true,
+          preferences: { defaultLayoutTemplate: template },
+        });
+
+        addNewTabTo(grid);
+        jest.runAllTimers();
+
+        const newBody = (grid.parent as DashboardScene).state.body as TabsLayoutManager;
+        const tabLayout = newBody.state.tabs[0].getLayout() as DefaultGridLayoutManager;
+        expect(tabLayout.state.grid.state.isDraggable).toBe(true);
+        expect(tabLayout.state.grid.state.isResizable).toBe(true);
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it('should keep an existing rows layout that has no panels', () => {
@@ -205,6 +229,30 @@ describe('addNewRowTo', () => {
       const rowLayout = newBody.state.rows[0].getLayout();
       expect(rowLayout).toBeInstanceOf(DefaultGridLayoutManager);
       expect(rowLayout.getVizPanels()).toHaveLength(1);
+    });
+
+    it('should enable dragging and resizing on the default layout when the dashboard is being edited', () => {
+      jest.useFakeTimers();
+      try {
+        const grid = AutoGridLayoutManager.createEmpty();
+        // Mimic a template deserialized from preferences, where edit-mode flags are unset
+        const template = new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) });
+        new DashboardScene({
+          body: grid,
+          isEditing: true,
+          preferences: { defaultLayoutTemplate: template },
+        });
+
+        addNewRowTo(grid);
+        jest.runAllTimers();
+
+        const newBody = (grid.parent as DashboardScene).state.body as RowsLayoutManager;
+        const rowLayout = newBody.state.rows[0].getLayout() as DefaultGridLayoutManager;
+        expect(rowLayout.state.grid.state.isDraggable).toBe(true);
+        expect(rowLayout.state.grid.state.isResizable).toBe(true);
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 

@@ -20,7 +20,16 @@ function getDefaultLayoutForEmptyGrid(layout: DashboardLayoutManager): Dashboard
     return undefined;
   }
 
-  return getDashboardSceneLike(layout).getDefaultLayout();
+  const dashboard = getDashboardSceneLike(layout);
+  const defaultLayout = dashboard.getDefaultLayout();
+
+  // A template deserialized from preferences carries no edit-mode flags, so without this
+  // panels in the new group would not be draggable/resizable until edit mode is re-entered
+  if (dashboard.state.isEditing) {
+    defaultLayout?.editModeChanged?.(true);
+  }
+
+  return defaultLayout;
 }
 
 function createTabsLayoutContaining(layout: DashboardLayoutManager): TabsLayoutManager {
