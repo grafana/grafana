@@ -44,8 +44,6 @@ interface HeaderCellProps {
   isPinned?: boolean;
   /** `table.refresh`: pins/unpins this column via the column menu. Omitted when pinning isn't available. */
   onTogglePin?: () => void;
-  /** `table.refresh`: opens the column-visibility sidebar. Omitted when the sidebar isn't available. */
-  onOpenColumnPanel?: () => void;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -66,7 +64,6 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   canHideColumn,
   isPinned,
   onTogglePin,
-  onOpenColumnPanel,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -193,7 +190,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
         <div className={styles.headerCellLabelGroup}>{label}</div>
 
-        {(filterable || onHideColumn || onTogglePin || onOpenColumnPanel) && (
+        {(filterable || onHideColumn || onTogglePin) && (
           <div className={styles.headerCellActions}>
             <HeaderCellMenu
               displayName={displayName}
@@ -204,7 +201,6 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               canHideColumn={canHideColumn}
               isPinned={isPinned}
               onTogglePin={onTogglePin}
-              onOpenColumnPanel={onOpenColumnPanel}
             />
           </div>
         )}

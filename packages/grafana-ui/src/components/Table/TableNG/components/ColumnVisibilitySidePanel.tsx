@@ -97,7 +97,10 @@ export function ColumnVisibilitySidePanel({
                 })}
                 onDragStart={(ev) => {
                   ev.dataTransfer.effectAllowed = 'move';
-                  ev.dataTransfer.setData('text/plain', displayName);
+                  // No `setData` call — the reorder is entirely internal (`draggedColumn` state
+                  // above), so there's no payload for an external drop target to read. Setting one
+                  // anyway (e.g. `text/plain`) would let the column name be dropped as plain text
+                  // into other apps, which isn't what this handle is for.
                   if (dragImageRef.current) {
                     ev.dataTransfer.setDragImage(dragImageRef.current, 0, 0);
                   }
@@ -180,6 +183,10 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
     padding: theme.spacing(0.75, 1),
+    // Selectable text under the drag handle competes with the native drag gesture — a mousedown
+    // that lands on selectable text starts a text selection instead, same issue as the header
+    // cell's own reorder drag.
+    userSelect: 'none',
     '&:hover': {
       backgroundColor: theme.colors.action.hover,
     },

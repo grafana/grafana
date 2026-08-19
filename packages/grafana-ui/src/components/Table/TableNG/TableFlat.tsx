@@ -5,6 +5,7 @@ import { type Field } from '@grafana/data';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
+import { clamp } from '../../../utils/clamp';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { usePanelContext } from '../../PanelChrome';
 import { useSplitter } from '../../Splitter/useSplitter';
@@ -256,19 +257,24 @@ export function TableFlat(props: TableNGProps) {
     ? filterFieldsByHiddenColumns(pinnedOrderedVisibleFields, hiddenColumns)
     : orderedVisibleFields;
 
+  // No UI currently opens this — "Manage columns" was pulled from the per-column menu (it doesn't
+  // belong there; a proper trigger needs the dashboard's own panel menu, which panel-plugin code
+  // can't add to). Left wired up so it's ready once that trigger exists.
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(false);
   const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
-  const onOpenColumnPanel = useCallback(() => setIsColumnVisibilityPanelOpen(true), []);
   const handlePanelResize = useCallback(
-    (_flexSize: number, _firstPanePixels: number, secondPanePixels: number) =>
-      setColumnVisibilityPanelWidth(secondPanePixels),
+    (_flexFraction: number, sidebarPixels: number) => setColumnVisibilityPanelWidth(sidebarPixels),
     []
   );
+  // The sidebar is the *primary* pane so it sits on the left and the drag math works the intuitive
+  // way (drag right → sidebar grows) — `useSplitter`'s `usePixels` mode always makes the pixel-sized
+  // pane secondary/on-the-right, which would put the sidebar on the wrong side. Plain flex-fraction
+  // mode instead, with an initial fraction chosen to land close to the sidebar's default pixel
+  // width; `minWidth`/`maxWidth` below clamp the actual rendered width regardless of that fraction.
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
-    usePixels: true,
-    initialSize: columnVisibilityPanelWidth,
-    dragPosition: 'end',
+    initialSize: clamp(columnVisibilityPanelWidth / Math.max(width, 1), 0.05, 0.5),
+    dragPosition: 'middle',
     handleSize: 'sm',
     onResizing: handlePanelResize,
     onSizeChanged: handlePanelResize,
@@ -441,7 +447,6 @@ export function TableFlat(props: TableNGProps) {
       onHideColumn: tableRefreshEnabled ? handleHideColumn : undefined,
       onTogglePin: tableRefreshEnabled ? handleTogglePin : undefined,
       pinnedColumns: tableRefreshEnabled ? pinnedColumnSet : undefined,
-      onOpenColumnPanel: tableRefreshEnabled ? onOpenColumnPanel : undefined,
     }),
     [
       theme,
@@ -466,7 +471,6 @@ export function TableFlat(props: TableNGProps) {
       handleHideColumn,
       handleTogglePin,
       pinnedColumnSet,
-      onOpenColumnPanel,
     ]
   );
 
@@ -545,14 +549,10 @@ export function TableFlat(props: TableNGProps) {
 
   return (
     <div {...containerProps}>
-      <div {...primaryProps} style={{ ...primaryProps.style, minWidth: 0 }}>
-        {dataGrid}
-      </div>
-      <div {...splitterProps} />
       <div
-        {...secondaryProps}
+        {...primaryProps}
         style={{
-          ...secondaryProps.style,
+          ...primaryProps.style,
           minWidth: COLUMN_VISIBILITY_PANEL_MIN_WIDTH,
           maxWidth: COLUMN_VISIBILITY_PANEL_MAX_WIDTH,
         }}
@@ -566,6 +566,10 @@ export function TableFlat(props: TableNGProps) {
           onColumnsReorder={handleColumnsReorder}
           onClose={() => setIsColumnVisibilityPanelOpen(false)}
         />
+      </div>
+      <div {...splitterProps} />
+      <div {...secondaryProps} style={{ ...secondaryProps.style, minWidth: 0 }}>
+        {dataGrid}
       </div>
     </div>
   );
