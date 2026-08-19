@@ -23,6 +23,54 @@ func TestTemplates(t *testing.T) {
 		return mocks.NewTestingSQLTemplate()
 	}
 
+	searchQuery := func(includeAuthJoin bool, withFilters bool) *searchUsersQuery {
+		query := &searchUsersQuery{
+			SQLTemplate:     queryTemplate(),
+			UserTable:       dbHelper.Table("user"),
+			UserAuthTable:   dbHelper.Table("user_auth"),
+			AccessAll:       true,
+			UseDefaultSort:  true,
+			IncludeAuthJoin: includeAuthJoin,
+		}
+		if withFilters {
+			query.OrgID = 7
+			query.AccessAll = false
+			query.AccessUserIDs = []any{11, 12}
+			query.QueryPattern = "%ops%"
+			query.IsDisabled = new(true)
+			query.AuthModule = "oauth"
+			query.Joins = []searchUserJoin{{
+				Operator:  "INNER",
+				Table:     dbHelper.Table("user_stats"),
+				Alias:     "user_stats",
+				Condition: "user_stats.user_id = u.id",
+			}}
+			query.Filters = []searchUserFilter{
+				{
+					Kind:      "in",
+					Condition: "user_stats.billing_role",
+					Values:    []any{"admin", "editor"},
+				},
+				{
+					Kind: "where",
+					Parts: []searchUserConditionPart{
+						{SQL: "is_admin = "},
+						{Value: true, HasValue: true},
+					},
+				},
+			}
+			query.Sorts = []string{"u.login DESC", "u.email ASC"}
+			query.UseDefaultSort = false
+			query.Limit = 25
+			query.Offset = 50
+		}
+		return query
+	}
+	emptyInSearchQuery := searchQuery(true, false)
+	emptyInSearchQuery.Filters = []searchUserFilter{{Kind: "in", Condition: "user_stats.billing_role"}}
+	emptyInCountSearchQuery := searchQuery(true, false)
+	emptyInCountSearchQuery.Filters = []searchUserFilter{{Kind: "in", Condition: "user_stats.billing_role"}}
+
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
 		SQLTemplatesFS: sqlTemplatesFS,
@@ -139,6 +187,16 @@ func TestTemplates(t *testing.T) {
 					},
 				},
 			},
+			searchUsersTemplate: {
+				{Name: "all_filters", Data: searchQuery(true, true)},
+				{Name: "default", Data: searchQuery(true, false)},
+				{Name: "empty_in", Data: emptyInSearchQuery},
+			},
+			countSearchUsersTemplate: {
+				{Name: "with_auth_filter", Data: searchQuery(true, true)},
+				{Name: "without_auth_filter", Data: searchQuery(false, false)},
+				{Name: "empty_in", Data: emptyInCountSearchQuery},
+			},
 			updateUserTemplate: {
 				{
 					Name: "all_fields",
@@ -162,6 +220,54 @@ func TestTemplates(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestSearchUsersQueryArguments(t *testing.T) {
+	query := searchUsersQuery{
+		SQLTemplate:   sqltemplate.New(sqltemplate.PostgreSQL),
+		UserTable:     "test_schema.user",
+		UserAuthTable: "test_schema.user_auth",
+		OrgID:         7,
+		AccessUserIDs: []any{11, 12},
+		QueryPattern:  "%ops%",
+		IsDisabled:    new(true),
+		AuthModule:    "oauth",
+		Filters: []searchUserFilter{
+			{
+				Kind:      "in",
+				Condition: "user_stats.billing_role",
+				Values:    []any{"admin", "editor"},
+			},
+			{
+				Kind: "where",
+				Parts: []searchUserConditionPart{
+					{SQL: "is_admin = "},
+					{Value: true, HasValue: true},
+				},
+			},
+		},
+		Limit:           25,
+		Offset:          50,
+		IncludeAuthJoin: true,
+	}
+
+	_, err := renderUserQuery(searchUsersTemplate, query)
+	require.NoError(t, err)
+	require.Equal(t, []any{
+		int64(7),
+		11,
+		12,
+		"%ops%",
+		"%ops%",
+		"%ops%",
+		true,
+		"oauth",
+		"admin",
+		"editor",
+		true,
+		25,
+		50,
+	}, query.GetArgs())
 }
 
 func TestUpdateUserQueryArguments(t *testing.T) {
@@ -199,4 +305,96 @@ func TestUpdateUserQueryArguments(t *testing.T) {
 		updated,
 		int64(42),
 	}, query.GetArgs())
+}
+
+func TestSearchUserWhereFilterPreservesSliceValue(t *testing.T) {
+	value := []int{1, 2}
+	filter, err := newSearchUserWhereFilter("user_id = ?", value)
+	require.NoError(t, err)
+	require.Len(t, filter.Parts, 2)
+	require.Equal(t, value, filter.Parts[1].Value)
+}
+
+type testSearchUserFilter struct {
+	where *user.WhereCondition
+	in    *user.InCondition
+	join  *user.JoinCondition
+}
+
+func (f testSearchUserFilter) WhereCondition() *user.WhereCondition {
+	return f.where
+}
+
+func (f testSearchUserFilter) InCondition() *user.InCondition {
+	return f.in
+}
+
+func (f testSearchUserFilter) JoinCondition() *user.JoinCondition {
+	return f.join
+}
+
+func TestBuildSearchUserFilters(t *testing.T) {
+	dbHelper := &legacysql.LegacyDatabaseHelper{
+		Table: func(name string) string {
+			return "test_schema." + name
+		},
+	}
+
+	joins, filters, err := buildSearchUserFilters(dbHelper, []user.Filter{
+		testSearchUserFilter{
+			join: &user.JoinCondition{
+				Operator: "INNER",
+				Table:    "user_stats",
+				Params:   "user_stats.user_id = u.id",
+			},
+			in: &user.InCondition{
+				Condition: "user_stats.billing_role",
+				Params:    []string{"admin", "editor"},
+			},
+			where: &user.WhereCondition{
+				Condition: "is_admin = ?",
+				Params:    true,
+			},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, []searchUserJoin{{
+		Operator:  "INNER",
+		Table:     "test_schema.user_stats",
+		Alias:     "user_stats",
+		Condition: "user_stats.user_id = u.id",
+	}}, joins)
+	require.Equal(t, []searchUserFilter{
+		{
+			Kind:      "in",
+			Condition: "user_stats.billing_role",
+			Values:    []any{"admin", "editor"},
+		},
+		{
+			Kind: "where",
+			Parts: []searchUserConditionPart{
+				{SQL: "is_admin = "},
+				{Value: true, HasValue: true},
+			},
+		},
+	}, filters)
+}
+
+func TestBuildSearchUserFiltersRejectsMalformedWhereCondition(t *testing.T) {
+	_, _, err := buildSearchUserFilters(&legacysql.LegacyDatabaseHelper{}, []user.Filter{
+		testSearchUserFilter{where: &user.WhereCondition{
+			Condition: "is_admin = ? AND is_disabled = ?",
+			Params:    true,
+		}},
+	})
+
+	require.ErrorContains(t, err, "search filter condition must have one placeholder")
+}
+
+func TestQueryValidation(t *testing.T) {
+	require.ErrorIs(t, (&signedInUserQuery{}).Validate(), user.ErrNoUniqueID)
+	require.ErrorContains(t, (&batchDisableUsersQuery{}).Validate(), "user IDs must not be empty")
+	require.ErrorContains(t, (&getUserQuery{}).Validate(), "invalid user identifier column")
+	require.NoError(t, (&searchUsersQuery{Filters: []searchUserFilter{{Kind: "in"}}}).Validate())
 }
