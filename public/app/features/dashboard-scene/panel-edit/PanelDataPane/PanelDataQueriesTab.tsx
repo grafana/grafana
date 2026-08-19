@@ -410,8 +410,14 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
     return {
       [ExpressionQueryType.sql]:
         hasBackendDs === false
-          ? 'SQL expressions can only evaluate results from backend datasources. This panel only contains frontend datasources.'
-          : 'SQL expressions can only evaluate results from backend datasources.',
+          ? t(
+              'dashboard-scene.panel-data-queries-tab-rendered.sql-expressions-frontend-only',
+              'SQL expressions can only evaluate results from backend datasources. This panel only contains frontend datasources.'
+            )
+          : t(
+              'dashboard-scene.panel-data-queries-tab-rendered.sql-expressions-pending',
+              'SQL expressions can only evaluate results from backend datasources.'
+            ),
     };
   }, [hasBackendDs]);
 

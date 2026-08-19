@@ -7377,7 +7377,9 @@
     },
     "panel-data-queries-tab-rendered": {
       "add-query": "Add query",
-      "expression": "Expression "
+      "expression": "Expression ",
+      "sql-expressions-frontend-only": "SQL expressions can only evaluate results from backend datasources. This panel only contains frontend datasources.",
+      "sql-expressions-pending": "SQL expressions can only evaluate results from backend datasources."
     },
     "panel-data-transformations-tab": {
       "tab-label": "Transformations"

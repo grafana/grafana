@@ -285,6 +285,12 @@ function getAdHocGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | n
 }
 
 export async function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+  // Resolve plugin meta before scanning so no await sits between the read and the
+  // setState write. Overlapping "Filter for value" actions would otherwise both
+  // miss the existing-variable scan and append a second Filters variable.
+  const pluginId = ds?.type ?? (await getDataSourceInstanceSettings(ds))?.type ?? '';
+  const supportsMultiValueOperators = Boolean((await getDatasourcePluginMeta(pluginId))?.multiValueFilterOperators);
+
   const variables = sceneGraph.getVariables(scene);
 
   for (const variable of variables.state.variables) {
@@ -296,11 +302,10 @@ export async function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataS
     }
   }
 
-  const pluginId = ds?.type ?? (await getDataSourceInstanceSettings(ds))?.type ?? '';
   const newVariable = new AdHocFiltersVariable({
     name: 'Filters',
     datasource: ds,
-    supportsMultiValueOperators: Boolean((await getDatasourcePluginMeta(pluginId))?.multiValueFilterOperators),
+    supportsMultiValueOperators,
     useQueriesAsFilterForOptions: true,
   });
 

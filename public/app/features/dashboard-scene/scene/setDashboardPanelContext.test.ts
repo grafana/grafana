@@ -340,6 +340,21 @@ describe('setDashboardPanelContext', () => {
     });
   });
 
+  describe('getAdHocFilterVariableFor', () => {
+    it('does not create duplicate Filters variables when called concurrently', async () => {
+      const { scene } = buildTestScene({});
+
+      const [first, second] = await Promise.all([
+        getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' }),
+        getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' }),
+      ]);
+
+      const adhocVars = sceneGraph.getVariables(scene).state.variables.filter((v) => v.state.type === 'adhoc');
+      expect(adhocVars).toHaveLength(1);
+      expect(first).toBe(second);
+    });
+  });
+
   describe('getFiltersBasedOnGrouping', () => {
     beforeAll(() => {
       config.featureToggles.groupByVariable = true;
