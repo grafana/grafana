@@ -37,6 +37,14 @@ var assistantTrialNavigationPaths = map[string]struct{}{
 	"/a/grafana-assistant-app/workspace": {},
 }
 
+// Cloud-only assistant pages that must stay hidden when the plugin is running
+// in ossMode, including on Grafana Enterprise / Cloud.
+var assistantOSSHiddenNavigationPaths = map[string]struct{}{
+	"/a/grafana-assistant-app/automations":      {},
+	"/a/grafana-assistant-app/watchers":         {},
+	"/a/grafana-assistant-app/assistant-search": {},
+}
+
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
@@ -197,6 +205,7 @@ type pendingInclude struct {
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	assistantTrialMode := s.isAssistantTrialMode(plugin, c)
+	assistantOSSMode := s.isAssistantOSSMode(plugin, c)
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -223,7 +232,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			continue
 		}
 
-		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode) {
+		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode, assistantOSSMode) {
 			continue
 		}
 
@@ -344,6 +353,14 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 }
 
 func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
+	return s.assistantPluginJSONDataBool(plugin, c, "trialMode")
+}
+
+func (s *ServiceImpl) isAssistantOSSMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
+	return s.assistantPluginJSONDataBool(plugin, c, "ossMode")
+}
+
+func (s *ServiceImpl) assistantPluginJSONDataBool(plugin pluginstore.Plugin, c *contextmodel.ReqContext, key string) bool {
 	if plugin.ID != assistantAppID {
 		return false
 	}
@@ -352,21 +369,26 @@ func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *context
 		PluginID: plugin.ID,
 		OrgID:    c.GetOrgID(),
 	})
-	if err != nil {
+	if err != nil || ps.JSONData == nil {
 		return false
 	}
 
-	trialMode, ok := ps.JSONData["trialMode"].(bool)
-	return ok && trialMode
+	value, ok := ps.JSONData[key].(bool)
+	return ok && value
 }
 
-func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes, trialMode bool) bool {
+func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes, trialMode, ossMode bool) bool {
 	if plugin.ID != assistantAppID {
 		return true
 	}
 	if trialMode {
 		_, allowed := assistantTrialNavigationPaths[include.Path]
 		return allowed
+	}
+	if ossMode {
+		if _, hidden := assistantOSSHiddenNavigationPaths[include.Path]; hidden {
+			return false
+		}
 	}
 	if s.cfg.IsEnterprise || s.cfg.StackID != "" {
 		return true
