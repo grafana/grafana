@@ -62,19 +62,14 @@ interface Props {
   onDelete?: () => void;
   /**
    * Enter's "split into a new block" gesture — a genuinely new cell is inserted right after this one
-   * and takes the caret, wherever in the document this cell happens to be (see
-   * NotebookLayoutManagerRenderer's own doc comment on why this isn't just "jump to the trailing
-   * slot"). A marker argument (`'- '`, or the next number) means Enter was pressed on a non-empty list
+   * and takes the caret, wherever in the document this cell happens to be.
+   * A marker argument (`'- '`, or the next number) means Enter was pressed on a non-empty list
    * item — the caller seeds it into the new cell so the list continues there.
    */
   onAdvance?: (marker?: string) => void;
   /**
    * Re-requests the caret for this same cell after something else moved it away without meaning to —
-   * currently just the "/" menu any empty markdown cell offers (see NotebookCellRenderer's
-   * handlePick): picking a menu item is a mouse click, which moves DOM focus to the button, and a pick
-   * that changes content.kind (e.g. "Code") unmounts this cell's editor for a different one entirely,
-   * so neither a mousedown guard nor MarkdownCell's own autoFocus-transition handling alone would
-   * bring the caret back on their own.
+   * currently just the "/" menu any empty markdown cell offers.
    */
   onFocusRequest?: () => void;
 }

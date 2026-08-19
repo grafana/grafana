@@ -36,42 +36,14 @@ interface Props {
   /** A nonce that changes on every fresh request to focus this cell — see useFocusExtension. */
   focusRequestId?: number;
   onChange: (content: CellContentKind) => void;
-  /**
-   * Shown via CM6's own placeholder extension while the cell is empty, then disappears on the first
-   * keystroke — and hidden again (see markdownLivePreview's `.cm-placeholder` rule) until the cell
-   * actually has the caret, so an unfocused empty block doesn't read as leftover copy. Only the
-   * trailing empty cell every document always has (see NotebookLayoutManager's own invariant comment)
-   * gets one — see NotebookCellRenderer.
-   */
   placeholder?: string;
   /**
    * Intercepts a plain Enter keypress (Shift+Enter still inserts a literal newline) instead of it
-   * inserting one, moving on to whatever this means for the caller — Notion/Jupyter/Datadog all use
-   * this as the "advance to the next block" gesture. Wired for every markdown cell (see
-   * NotebookCellRenderer/NotebookLayoutManager) — Enter always splits into a new cell inserted right
-   * after this one, wherever in the document this cell happens to be.
-   *
-   * Called with a marker (`'- '`, or the next number) when Enter was pressed on a non-empty list
-   * item — the caller is expected to seed the marker into whatever cell it advances to, continuing the
-   * list there instead of leaving a plain empty block. Called with no argument for a plain paragraph.
+   * inserting one, moving on to whatever this means for the caller — which could be advancing to the next block, or inserting a new block.
    */
   onSubmit?: (marker?: string) => void;
 }
 
-/**
- * Not editing: mirrors the text panel — renderTextPanelMarkdown sanitizes its output (XSS-safe) and
- * the result is rendered via DangerouslySetHtmlContent with the shared `markdown-html` class. The
- * global `.markdown-html` styles cover lists/tables/links but not headings, blockquotes or code —
- * which notebook cells rely on — so getStyles below adds those to read like a document. This is the
- * cheap path and the common one (notebooks are read far more than edited), so it stays free of the
- * CodeMirror bundle entirely.
- *
- * Editing: a CodeMirror text editor over the same markdown string, with markdownLivePreview layered
- * on top — live formatting that hides `**`/`#`/etc. markers and applies the corresponding styling
- * inline, based on the syntax tree. Markers stay hidden unconditionally (links are the one exception,
- * revealing near the cursor — see markdownLivePreview.ts). The stored text is unaffected either way:
- * this is a view-layer decoration, not a different representation.
- */
 export function MarkdownCell({
   content,
   isEditing,
@@ -85,14 +57,7 @@ export function MarkdownCell({
   const theme = useTheme2();
   const livePreview = useMemo(() => markdownLivePreview(theme), [theme]);
 
-  // Wraps the editor so MarkdownFormatToolbar can recover its EditorView via EditorView.findFromDOM —
-  // CodeMirrorEditor exposes no ref, same reason useFocusExtension needs buildFocusExtension for the
-  // caret rather than a plain `.focus()` call here.
   const editorContainerRef = useRef<HTMLDivElement>(null);
-
-  // Unlike CodeCell, this editor unmounts and remounts every time `isEditing` toggles rather than being
-  // kept alive with a `readOnly` flip — see useFocusExtension's own doc comment for why that still
-  // works out correctly with the same shared hook.
   const focusExtension = useFocusExtension({ autoFocus, isEditing, focusRequestId });
 
   const placeholderExt = useMemo(() => (placeholder ? [placeholderExtension(placeholder)] : []), [placeholder]);
@@ -204,9 +169,6 @@ export function MarkdownCell({
     <div ref={editorContainerRef}>
       <CodeMirrorEditor
         value={content.spec.text}
-        // No `language` prop: livePreview.extensions already bundles markdownLanguageSupport (with the
-        // Strikethrough GFM extension enabled) — see markdownLivePreview.ts for why the shared
-        // `language="markdown"` loader isn't used here.
         // Grows with its content, like CodeCell: a notebook is a document, so a cell that scrolls
         // internally inside a page that already scrolls is worse than a tall cell.
         height="auto"
@@ -215,8 +177,6 @@ export function MarkdownCell({
         theme={livePreview.theme}
         extensions={[livePreview.extensions, ...placeholderExt, ...enterExt, ...(focusExtension ?? [])]}
         aria-label={t('notebook.cell.markdown.aria-label-editor', 'Markdown')}
-        // The spread is defensive: MarkdownCellContentSpec only has `text` today, but this keeps any
-        // future schema field from being silently dropped on the first keystroke, matching CodeCell.
         onChange={(value) => onChange({ kind: 'Markdown', spec: { ...content.spec, text: value } })}
       />
       <MarkdownFormatToolbar editorContainerRef={editorContainerRef} />

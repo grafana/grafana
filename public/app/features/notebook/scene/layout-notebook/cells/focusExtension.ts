@@ -3,25 +3,16 @@ import { ViewPlugin } from '@codemirror/view';
 import { useMemo, useRef } from 'react';
 
 /**
- * An extension that puts the caret in the editor.
+ * An extension that puts the caret in the editor. Deferred a frame because a plugin is constructed
+ * before its view is attached to the DOM (focusing a detached node does nothing), and because things
+ * like the block-type menu hand focus back as they close, in a microtask.
  *
- * CodeMirrorEditor exposes no ref, no autoFocus and no onCreateEditor, so a view plugin is the only
- * hook into an editor that arrives with a lazily loaded chunk — it runs whenever CodeMirror builds
- * the view, however many frames later that is.
+ * A fresh call is how a caller asks for the caret again — CodeMirror rebuilds its plugins whenever the
+ * `extensions` array identity changes.
  *
- * The focus is deferred a frame for two reasons, both races it would otherwise lose: a plugin is
- * constructed before the view's DOM is appended to its parent, and focusing a detached node does
- * nothing; and the controls that ask for this — the add-block menu, the language picker — hand focus
- * back to themselves as they close, which floating-ui does in a microtask.
- *
- * A fresh plugin per request, because CodeMirror rebuilds its plugins exactly when the extensions
- * array stops being shallow-equal. That makes a new one the way to ask for the caret again.
- *
- * Also moves the selection to the end of the document, not just the focus: `CodeMirrorEditor` never
- * passes an initial `selection`, so a freshly created view otherwise defaults to position 0 — fine for
- * every caller that seeds empty content, but wrong the moment a cell arrives with text already in it
- * (e.g. a list continuation's `"- "` marker, or a heading's `"# "`), where position 0 sits *before*
- * that text instead of ready to continue it.
+ * Also moves the selection to the end of the document: a freshly created view otherwise defaults to
+ * position 0, which sits before any text a cell already arrives with (a list marker, a heading's "# ")
+ * instead of ready to continue it.
  */
 export function buildFocusExtension() {
   return [
@@ -36,27 +27,18 @@ export function buildFocusExtension() {
 }
 
 /**
- * Builds a focus extension exactly when this cell should take the caret — once at mount if it's
- * already the reader's target, and again on demand afterward. Shared by CodeCell and MarkdownCell,
- * the two cell types that mount a CodeMirror editor and can be asked for focus more than once in
- * their lifetime.
+ * Builds a focus extension when this cell should take the caret — once at mount if it's already the
+ * target, and again whenever `focusRequestId` changes afterward. Shared by CodeCell and MarkdownCell.
  *
- * `focusRequestId` is a nonce, not a boolean, because a focus *request* can retarget a cell that is
- * already the target — e.g. converting a markdown cell in place via its own "/" menu (Paragraph,
- * Heading — both stay "Markdown", same cell, same key) never flips `autoFocus` from false to true,
- * yet the click that opened the menu just moved DOM focus away from it. A plain boolean has no way to
- * signal "again"; a value that changes on every request does. Each caller is free to source its own
- * nonce — CodeCell keeps an internal counter it bumps itself, while MarkdownCell is handed one from
- * outside (see NotebookLayoutManager's own `focusRequest` state) — this hook only cares that the value
- * changes when a fresh request arrives.
+ * `focusRequestId` is a nonce rather than a boolean because a request can retarget a cell that's
+ * already the target — e.g. picking "Paragraph" from a markdown cell's own "/" menu converts it in
+ * place, so `autoFocus` never flips even though the click just moved DOM focus away. Each caller
+ * supplies its own nonce: CodeCell bumps an internal counter, MarkdownCell gets one from the layout
+ * manager (see its `focusRequest` state).
  *
- * `pendingAutoFocus` is a one-shot, mount-time-only check: it captures `autoFocus && isEditing` at
- * this hook's own first render (autoFocus is only ever true for a cell just inserted or just made the
- * target, and insertion only happens while already editing, so that first render already carries the
- * final values) and never reconsiders it — later remounts of the editor (e.g. MarkdownCell's own
- * unmount/remount on every `isEditing` toggle) start a fresh call to this hook and get their own fresh
- * one-shot, so a cell that already had its turn doesn't get autofocus back just for re-entering edit
- * mode.
+ * `pendingAutoFocus` only fires once, at mount: it captures `autoFocus && isEditing` on first render
+ * and never reconsiders it, so a cell that already had its turn doesn't get refocused just for
+ * remounting (MarkdownCell remounts its editor on every `isEditing` toggle).
  */
 export function useFocusExtension({
   autoFocus,

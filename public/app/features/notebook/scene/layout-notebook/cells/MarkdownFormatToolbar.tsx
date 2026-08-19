@@ -23,11 +23,6 @@ import {
 export const MARKDOWN_FORMAT_TOOLBAR_TEST_ID = 'notebook-markdown-format-toolbar';
 
 interface Props {
-  /**
-   * Wrapper the CodeMirror editor is mounted into. The lazily-loaded bundle does not expose its
-   * `EditorView`, so it is looked up from this container's DOM — the same trick
-   * TextNGFormatToolbar.tsx uses for the Text panel's own (always-visible) formatting toolbar.
-   */
   editorContainerRef: RefObject<HTMLDivElement | null>;
 }
 
@@ -36,12 +31,6 @@ interface FormatAction {
   tooltip: string;
   icon?: IconName;
   label?: ReactNode;
-  /**
-   * Whether this formatting already applies at `pos` — drives the solid-background active state.
-   * A function rather than a fixed node-type list: the inline marks all reduce to "is there an
-   * enclosing node of this type" (findEnclosingMarkNode), but the list buttons don't — bullet and
-   * numbered items share the same ListItem node, so the answer depends on its parent (enclosingListKind).
-   */
   isActive: (tree: Tree, pos: number) => boolean;
   run: (view: EditorView) => void;
 }
@@ -123,9 +112,8 @@ function selectionVirtualElement(view: EditorView): VirtualElement {
 
 /**
  * Floating bold/italic/strikethrough/code/link/list bar that appears while the reader has text selected inside a
- * markdown cell's editor, mirroring Notion/Obsidian's selection toolbar. Positioned off the CM6
- * selection's own coordinates (not the DOM selection window.getSelection() would give — CM6 manages
- * its content itself), reusing floating-ui the same way Typeahead.tsx anchors to a text selection.
+ * markdown cell's editor. Positioned off the CodeMirror
+ * selection's own coordinates.
  */
 export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
   const styles = useStyles2(getStyles);
@@ -140,20 +128,11 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
     middleware: [offset(8), ...floatingUtils.getPositioningMiddleware('top')],
   });
 
-  // Dismiss on a click outside both the editor and the bar itself — a different cell, or leaving edit
-  // mode entirely. The reference here is a virtual element spanning just the selection (see
-  // selectionVirtualElement below), not a real DOM node covering the whole editor, so the default
-  // outsidePress exclusion (which only skips the reference/floating elements themselves) wouldn't cover
-  // a click elsewhere in the editor — hence the explicit scoping, the same shape ModalBase.tsx uses to
-  // exclude its own backdrop/portal region.
   const dismiss = useDismiss(context, {
     outsidePress: (event) => !(event.target instanceof Node && editorContainerRef.current?.contains(event.target)),
   });
   const { getFloatingProps } = useInteractions([dismiss]);
 
-  // CodeMirrorEditor exposes no selection-change prop, so the container is polled the same way
-  // TextNGFormatToolbar recovers its view: found from the DOM node it's mounted into. mouseup/keyup
-  // catch pointer and keyboard selection; selectionchange catches everything else (e.g. select-all).
   useEffect(() => {
     const container = editorContainerRef.current;
     if (!container) {

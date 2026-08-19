@@ -30,14 +30,6 @@ export const INLINE_CODE_NODE = 'InlineCode';
 export const LINK_NODE = 'Link';
 export const STRIKETHROUGH_NODE = 'Strikethrough';
 
-/**
- * The base `language="markdown"` string prop (used elsewhere via CodeCell's `language` selector)
- * resolves to a shared, lazily-loaded `markdown()` call with no GFM extensions — fine for a generic
- * code editor, but it means the syntax tree never produces a `Strikethrough` node for `~~text~~`.
- * Rather than widen that shared loader (used by every "Markdown" code-language selection, not just
- * this editor), this builds and owns its own LanguageSupport with just the one GFM extension this
- * cell actually needs — passed via `extensions`, not the `language` prop.
- */
 export const markdownLanguageSupport = markdown({ base: markdownLanguage, extensions: [Strikethrough] });
 
 /**
@@ -389,11 +381,6 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
   };
 
   const themeExtension = EditorView.theme({
-    // Passed as CodeMirrorEditor's `theme` prop, not layered into `extensions`: a layered theme
-    // cannot reliably override the default VS Code-style theme's background (its style module is
-    // mounted last and wins the cascade — see CodeMirrorEditorProps.theme's own doc comment), and
-    // that default's monospace/boxed-input look is wrong here anyway. A notebook reads like a
-    // document, not a code box, so this replaces the default outright rather than patching it.
     '&': {
       backgroundColor: 'transparent',
       color: theme.colors.text.primary,

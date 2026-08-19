@@ -4,17 +4,6 @@ import { type CellContentKind } from 'app/features/notebook/types';
 
 import { MarkdownCell } from './MarkdownCell';
 
-// The real CodeMirrorEditor is a heavy, lazily loaded bundle that does not run in jsdom. A textarea
-// carries readOnly into the DOM, so the assertions are on rendered output rather than on props
-// handed to a stub. See CodeCell.test.tsx for the identical rationale — the stub stands in for how
-// CodeMirror answers the cell's request for the caret: a new `extensions` identity is what rebuilds
-// the view plugins, so it focuses on exactly that signal, on the next frame, as the real plugin does.
-//
-// Unlike CodeCell, MarkdownCell's `extensions` is never empty even unfocused: the live-preview
-// extension (always present) and the Enter/Shift-Enter keymap (also always present now — Shift-Enter's
-// list-continuation binding no longer depends on `onSubmit`) each take one array slot, for a baseline
-// of 2. A placeholder (when the `placeholder` prop is set) and a focus request each add one more on
-// top of that baseline, so the signal here is "more than the baseline," not mere non-emptiness.
 jest.mock('@grafana/ui/unstable', () => {
   // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');

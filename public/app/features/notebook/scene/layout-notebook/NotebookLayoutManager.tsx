@@ -115,7 +115,7 @@ export class NotebookLayoutManager
    *
    * It lives on the manager because that is what owns `cells`; a cell cannot see its siblings.
    *
-   * Also maintains the "always one more empty block ready" invariant (Notion/Datadog's own feel):
+   * Also maintains the "always one more empty block ready" invariant:
    * the moment the trailing cell — and only the trailing cell — stops being empty, a fresh empty one
    * takes its place at the tail, so the reader never has to explicitly ask for the next block just to
    * keep typing. Gated on the *transition* (was empty, now isn't), not merely "is non-empty", so this
@@ -317,18 +317,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   // handful of times per drag.
   const [drag, setDrag] = useState<NotebookDragState | null>(null);
 
-  // Which cell holds the caret, for the same reason: an insertion is a moment, not part of the
-  // notebook, so it has no business on the model or in what gets serialized. It survives until the
-  // next insertion, which is harmless — the cell it names already has the caret, and the extension
-  // that placed it there only runs when the editor is built.
-  //
-  // `id` is a monotonic nonce, not just the cell's `key`: a focus *request* can target a cell that is
-  // already the target — e.g. picking "Paragraph" or "Heading" from a markdown cell's own "/" menu
-  // (see NotebookCellRenderer's handlePick) converts the same cell in place, so its key never changes.
-  // The menu click already moved DOM focus to the button it clicked, but setting state to the key it
-  // already held would be a no-op React bails out of, and MarkdownCell would never see a reason to
-  // call `.focus()` again. Bumping `id` on every request, even a same-key one, gives it something
-  // that always changes.
   const [focusRequest, setFocusRequest] = useState<{ key: string; id: number } | null>(null);
   const nextFocusId = useRef(0);
   const requestFocus = useCallback((key: string | null | undefined) => {
@@ -340,19 +328,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
     setFocusRequest({ key, id: nextFocusId.current });
   }, []);
 
-  // Bootstraps and maintains the other half of the "always one more empty block ready" invariant —
-  // setCellContent (on the model) handles the reactive half, appending as soon as the trailing cell
-  // stops being empty, but that only ever fires from an edit already in flight. This covers the two
-  // cases with no edit to react to: a brand-new empty notebook, and entering edit mode on a notebook
-  // whose last cell already has content (e.g. loaded from a save). Re-running on every `cells` change
-  // is deliberately cheap and self-terminating — once the trailing cell is the required empty one, the
-  // condition is false and this is a no-op.
-  //
-  // Only the brand-new-notebook case also takes the caret: a reader creating a notebook should be able
-  // to start typing immediately, with no extra click, the same way the very first cell of any fresh
-  // document would. Entering edit mode on a notebook that already has content doesn't get this — the
-  // reader hasn't clicked anywhere yet, and stealing focus to a cell at the very end they may not even
-  // be looking at would be a worse first move than leaving the caret alone.
   useEffect(() => {
     if (!isEditing) {
       return;
@@ -422,13 +397,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                   // last cell always qualifies, with the same drag handle, hover actions, and
                   // "Add block" divider spacing every other cell already has, since it's a real cell
                   // rendered through the exact same path.
-                  //
-                  // onAdvance is wired for every cell, not just the one before the trailing slot: Enter
-                  // splits into a genuinely new cell right after wherever the reader's cursor actually
-                  // is (matching Notion's own "Enter always makes a new block here" gesture), not a
-                  // jump to whatever the document's trailing slot happens to be — even when one already
-                  // exists a few cells away. `insertCellAfter` (not the trailing-slot invariant) owns
-                  // this; the two are independent, so both can fire from the same keystroke.
                   <NotebookCellFrame
                     key={cell.state.key}
                     cell={cell}
@@ -450,14 +418,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                       );
                       requestFocus(created?.state.key);
                     }}
-                    // The "/" menu converts this same cell in place (see NotebookCellRenderer's
-                    // handlePick) rather than inserting a new one — clicking a menu item moves DOM
-                    // focus to the button, and a picked type that changes content.kind (e.g. "Code")
-                    // unmounts this cell's editor for a different one entirely. A picked type that
-                    // *doesn't* change content.kind (Paragraph, Heading — both stay "Markdown") is the
-                    // trickier case: this cell's own key never changes, so requestFocus's nonce (see
-                    // focusRequest's own doc comment above) is what actually gets the caret back, not
-                    // the key comparison alone.
                     onFocusRequest={() => requestFocus(cell.state.key)}
                   />
                 ))}
