@@ -154,6 +154,7 @@ describe('QueryEditorRenderer', () => {
         onRegisterQueryEditorCoauthoring?.({
           getValue: () => query.refId,
           getContext: async () => ({ query: query.refId, focusRanges: [], metricMetadata: [] }),
+          refreshContext: async () => ({ query: query.refId, focusRanges: [], metricMetadata: [] }),
           createQuery: (value) => ({ ...query, refId: value }),
           validateQuery: () => true,
           stagePreview: () => ({ changes: [] }),

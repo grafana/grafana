@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -106,6 +106,7 @@ async function setup(
   const capability: QueryEditorCoauthoringCapability = {
     getValue: jest.fn(() => 'rate(http_requests_total[5m])'),
     getContext: jest.fn().mockResolvedValue(context),
+    refreshContext: jest.fn().mockImplementation(() => capability.getContext()),
     createQuery: (value) => ({ refId: 'A', expr: value }),
     validateQuery: jest.fn(() => true),
     stagePreview,
@@ -389,6 +390,26 @@ describe('QueryCoauthoring', () => {
 
     expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('Use increase');
+  });
+
+  it('refreshes the focus context when continuing after the editor selection changes', async () => {
+    const query = 'rate(http_requests_total[5m])';
+    const { capability, user } = await setup();
+
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Only change rate');
+    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+    jest.mocked(capability.getContext).mockResolvedValue({
+      query,
+      focusRanges: [{ from: 0, to: query.length }],
+      metricMetadata: [{ name: 'http_requests_total', type: 'counter' }],
+    });
+    mockIdentifySelection.mockClear();
+
+    await user.click(screen.getByRole('button', { name: 'Continue coauthoring' }));
+
+    await waitFor(() => expect(mockIdentifySelection).toHaveBeenCalledTimes(1));
+    expect(mockIdentifySelection.mock.calls[0][0].prompt).toBe('Explain this existing PromQL query as a whole.');
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('');
   });
 
   it('explicitly discards a minimized interaction', async () => {

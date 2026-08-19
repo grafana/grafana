@@ -578,6 +578,8 @@ export interface QueryEditorCoauthoringInvocation {
 export interface QueryEditorCoauthoringCapability<TQuery extends DataQuery = DataQuery> {
   getValue: () => string;
   getContext: () => Promise<QueryEditorCoauthoringContext>;
+  /** Re-captures the current query and editor focus as the active invocation baseline. */
+  refreshContext: () => Promise<QueryEditorCoauthoringContext>;
   createQuery: (value: string) => TQuery;
   validateQuery: (value: string) => boolean;
   stagePreview: (value: string) => QueryEditorCoauthoringPreview | undefined;

@@ -135,7 +135,25 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     capability.focus();
   }, [capability]);
 
-  const resume = useCallback(() => {
+  const resume = useCallback(async () => {
+    let refreshedContext: QueryEditorCoauthoringContext;
+    try {
+      refreshedContext = await capability.refreshContext();
+    } catch {
+      setContextError(true);
+      visibilityRef.current = 'expanded';
+      setVisibility('expanded');
+      return;
+    }
+
+    if (!hasSameQueryFocus(context, refreshedContext)) {
+      clearSession();
+      setContext(refreshedContext);
+      visibilityRef.current = 'expanded';
+      setVisibility('expanded');
+      return;
+    }
+
     if (proposal) {
       if (capability.getValue() !== proposal.baseline) {
         setProposal(undefined);
@@ -161,7 +179,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     }
     visibilityRef.current = 'expanded';
     setVisibility('expanded');
-  }, [capability, proposal]);
+  }, [capability, clearSession, context, proposal]);
 
   const loadContext = useCallback(() => {
     setContext(undefined);
@@ -543,7 +561,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
   if (visibility === 'minimized') {
     return createPortal(
       <div className={styles.minimized}>
-        <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={resume}>
+        <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={() => void resume()}>
           {proposal ? (
             <Trans i18nKey="query-editor-coauthoring.resume-suggestion">Resume suggestion</Trans>
           ) : isGenerating ? (
@@ -1070,6 +1088,20 @@ function isWholeQueryFocus(context: QueryEditorCoauthoringContext): boolean {
     context.focusRanges.length === 1 &&
     context.focusRanges[0].from === 0 &&
     context.focusRanges[0].to === context.query.length
+  );
+}
+
+function hasSameQueryFocus(
+  current: QueryEditorCoauthoringContext | undefined,
+  refreshed: QueryEditorCoauthoringContext
+): boolean {
+  return (
+    current?.query === refreshed.query &&
+    current.focusRanges.length === refreshed.focusRanges.length &&
+    current.focusRanges.every((range, index) => {
+      const refreshedRange = refreshed.focusRanges[index];
+      return range.from === refreshedRange.from && range.to === refreshedRange.to;
+    })
   );
 }
 
