@@ -259,6 +259,13 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
     // fill the header cell so the actions can sit against its trailing edge
     flex: 1,
     minWidth: 0,
+    // `headerCellLabel`'s `all: 'unset'` clears the label button's implicit non-selectability
+    // along with everything else. Left selectable, a drag starting on the label text is
+    // ambiguous between "select this text" and "drag this column" — browsers resolve that by
+    // starting a text selection (and, moving further, an OS-level text/link drag) instead of the
+    // column-reorder drag `column.draggable` is there for. This column reorder needs the mouse
+    // gesture to be unambiguous.
+    userSelect: 'none',
   }),
   headerCellLabelGroup: css({
     label: 'headerCellLabelGroup',
