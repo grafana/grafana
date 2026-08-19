@@ -301,6 +301,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	_ "github.com/grafana/grafana/pkg/registry/fieldselectors"
 	_ "github.com/grafana/grafana/pkg/registry/usagestatssvcs"
+	_ "github.com/grafana/grafana/pkg/router"
 	_ "github.com/grafana/grafana/pkg/server"
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol"
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
