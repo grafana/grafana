@@ -55,7 +55,7 @@ import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
-import { getPauseRulesLabel, isRulesForcedSkipped } from './Wizard/steps';
+import { getPauseRulesLabel, isAutoSyncSelected } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
@@ -338,7 +338,7 @@ function ImportWizardContent() {
 
   // Get ruler rules for rules import (needed when importing from datasource)
   const formValues = getValues();
-  const autoSyncActive = isRulesForcedSkipped(
+  const autoSyncActive = isAutoSyncSelected(
     formValues.autoSyncNotificationsEnabled ?? false,
     formValues.notificationsSource
   );
@@ -356,37 +356,27 @@ function ImportWizardContent() {
     setImportStatus('importing');
 
     const values = getValues();
+    const willEnableAutoSync = isAutoSyncSelected(
+      values.autoSyncNotificationsEnabled ?? false,
+      values.notificationsSource
+    );
     const willImportNotifications = values.step1Completed && !values.step1Skipped;
     const willImportRules = values.step2Completed && !values.step2Skipped;
-
-    // Auto-sync replaces staging entirely; `save()` already toasts, so this must not also fall
-    // into the catch below or the user sees two toasts for one outcome.
-    if (isRulesForcedSkipped(values.autoSyncNotificationsEnabled ?? false, values.notificationsSource)) {
-      const enabled = await saveAutoSync(values.notificationsDatasourceUID);
-      if (enabled) {
-        setImportStatus('success');
-        trackImportToGMASuccess({ notificationsSource: values.notificationsSource });
-        setTimeout(() => {
-          setShowConfirmModal(false);
-          notifyApp.success(
-            t('alerting.wizard-import-to-gma.autosync-success-title', 'Auto-sync enabled'),
-            t(
-              'alerting.wizard-import-to-gma.autosync-success-body',
-              'Grafana will keep syncing alert configuration from this data source.'
-            )
-          );
-          locationService.push(ALERTING_IMPORT_SETTINGS_URL);
-        }, 1500);
-      } else {
-        setImportStatus('error');
-        trackImportToGMAError({ notificationsSource: values.notificationsSource });
-      }
-      return;
-    }
+    const trackedNotificationsSource =
+      willEnableAutoSync || willImportNotifications ? values.notificationsSource : undefined;
+    const trackedRulesSource = willImportRules ? values.rulesSource : undefined;
 
     try {
-      // Import notifications first (if step 1 was completed)
-      if (willImportNotifications) {
+      // Mutually exclusive: Auto-sync only applies to the datasource source, so at most one of
+      // these branches runs.
+      if (willEnableAutoSync) {
+        const enabled = await saveAutoSync(values.notificationsDatasourceUID, { silent: true });
+        if (!enabled) {
+          setImportStatus('error');
+          trackImportToGMAError({ notificationsSource: trackedNotificationsSource });
+          return;
+        }
+      } else if (willImportNotifications) {
         await importNotifications({
           source: values.notificationsSource,
           datasourceName: values.notificationsDatasourceName ?? undefined,
@@ -397,7 +387,8 @@ function ImportWizardContent() {
         });
       }
 
-      // Then import rules (if step 2 was completed)
+      // Rules import is independent of Auto-sync — Auto-sync only mirrors Alertmanager config,
+      // never rules.
       if (willImportRules && values.rulesDatasourceUID) {
         // Get the filtered rules payload
         let rulesPayload: RulerRulesConfigDTO = {};
@@ -426,8 +417,8 @@ function ImportWizardContent() {
       const isRootFolder = isEmpty(targetFolder?.uid);
 
       trackImportToGMASuccess({
-        notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
-        rulesSource: willImportRules ? values.rulesSource : undefined,
+        notificationsSource: trackedNotificationsSource,
+        rulesSource: trackedRulesSource,
         isRootFolder,
         namespace: values.namespace,
         ruleGroup: values.ruleGroup,
@@ -444,9 +435,18 @@ function ImportWizardContent() {
       // so without this delay the confirmation would disappear instantly instead of being seen.
       setTimeout(() => {
         setShowConfirmModal(false);
-        // A staged notifications import lands on the Import tab so the user can review the staged
-        // copy and decide to promote or revert it. Everything else keeps the rule-list redirect.
-        if (willImportNotifications) {
+        if (willEnableAutoSync) {
+          notifyApp.success(
+            t('alerting.wizard-import-to-gma.autosync-success-title', 'Auto-sync enabled'),
+            t(
+              'alerting.wizard-import-to-gma.autosync-success-body',
+              'Grafana will keep syncing alert configuration from this data source.'
+            )
+          );
+          locationService.push(ALERTING_IMPORT_SETTINGS_URL);
+        } else if (willImportNotifications) {
+          // A staged notifications import lands on the Import tab so the user can review the staged
+          // copy and decide to promote or revert it. Everything else keeps the rule-list redirect.
           notifyApp.success(
             t('alerting.wizard-import-to-gma.staged-success-title', 'Configuration staged'),
             t(
@@ -464,10 +464,7 @@ function ImportWizardContent() {
       }, 1500);
     } catch (err) {
       setImportStatus('error');
-      trackImportToGMAError({
-        notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
-        rulesSource: willImportRules ? values.rulesSource : undefined,
-      });
+      trackImportToGMAError({ notificationsSource: trackedNotificationsSource, rulesSource: trackedRulesSource });
       notifyApp.error(t('alerting.wizard-import-to-gma.error', 'Failed to import resources'), stringifyErrorLike(err));
     }
   }, [getValues, importNotifications, importRules, rulesFromDatasource, saveAutoSync, notifyApp]);
@@ -586,7 +583,7 @@ function Step1Wrapper({
     'autoSyncNotificationsEnabled',
     'notificationsSource',
   ]);
-  const autoSyncActive = isRulesForcedSkipped(autoSyncNotificationsEnabled ?? false, notificationsSource);
+  const autoSyncActive = isAutoSyncSelected(autoSyncNotificationsEnabled ?? false, notificationsSource);
   // Advance only once dry-run passes; Auto-sync skips it entirely and relies on validity alone.
   const dryRunPassed = dryRunState === 'success' || dryRunState === 'warning';
   const canProceed = autoSyncActive ? isStep1Valid : isStep1Valid && dryRunPassed;
@@ -788,16 +785,11 @@ function NotificationsCardContent({
 
 interface RulesCardContentProps {
   formData: ImportFormValues;
-  autoSyncActive: boolean;
   willImportRules: boolean;
   styles: ReturnType<typeof getStyles>;
 }
 
-function RulesCardContent({ formData, autoSyncActive, willImportRules, styles }: RulesCardContentProps) {
-  if (autoSyncActive) {
-    return null;
-  }
-
+function RulesCardContent({ formData, willImportRules, styles }: RulesCardContentProps) {
   if (!willImportRules) {
     return (
       <Text color="secondary">
@@ -877,14 +869,13 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
   const willImportNotifications = formData.step1Completed && !formData.step1Skipped;
   const willImportRules = formData.step2Completed && !formData.step2Skipped;
   const nothingToImport = !willImportNotifications && !willImportRules;
-  const autoSyncActive = isRulesForcedSkipped(
+  const autoSyncActive = isAutoSyncSelected(
     formData.autoSyncNotificationsEnabled ?? false,
     formData.notificationsSource
   );
 
-  // Rules is unreachable while Auto-sync is active, so Back must land on Notifications instead.
   const handleBack = () => {
-    setActiveStep(autoSyncActive ? StepKey.Notifications : StepKey.Rules);
+    setActiveStep(StepKey.Rules);
   };
 
   // Load notifications preview content
@@ -1014,14 +1005,7 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
               <Text variant="h5" element="h3">
                 {t('alerting.import-to-gma.review.rules-title', 'Alert Rules')}
               </Text>
-              {autoSyncActive && (
-                <Badge
-                  color="green"
-                  icon="sync"
-                  text={t('alerting.import-to-gma.review.rules-autosync-badge', 'Syncs automatically')}
-                />
-              )}
-              {!autoSyncActive && willImportRules && (
+              {willImportRules && (
                 <button type="button" className={styles.badgeWithIcon} onClick={handlePreviewRules}>
                   {rulesCount > 0
                     ? t('alerting.import-to-gma.review.will-import-rules-count', '', {
@@ -1033,17 +1017,12 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                   <Icon name="eye" size="sm" />
                 </button>
               )}
-              {!autoSyncActive && formData.step2Skipped && (
+              {formData.step2Skipped && (
                 <span className={styles.badgeSkipped}>{t('alerting.import-to-gma.review.skipped', 'Skipped')}</span>
               )}
             </div>
             <div className={styles.cardContent}>
-              <RulesCardContent
-                formData={formData}
-                autoSyncActive={autoSyncActive}
-                willImportRules={willImportRules}
-                styles={styles}
-              />
+              <RulesCardContent formData={formData} willImportRules={willImportRules} styles={styles} />
             </div>
           </div>
         </Stack>
@@ -1053,9 +1032,7 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Stack direction="row" gap={1}>
           <Button variant="secondary" icon="arrow-left" onClick={handleBack}>
-            {autoSyncActive
-              ? t('alerting.import-to-gma.review.back-notifications', 'Notification resources')
-              : t('alerting.import-to-gma.review.back', 'Alert rules')}
+            {t('alerting.import-to-gma.review.back', 'Alert rules')}
           </Button>
           <Button
             variant="primary"

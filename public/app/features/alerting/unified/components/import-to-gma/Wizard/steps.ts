@@ -24,31 +24,27 @@ export const getWizardSteps = (): WizardStep[] => [
   },
 ];
 
-/** Whether Auto-sync makes the Alert Rules step redundant. */
-export function isRulesForcedSkipped(
+/** Whether Step 1's notifications will be handled via continuous Auto-sync instead of a one-time import. */
+export function isAutoSyncSelected(
   autoSyncNotificationsEnabled: boolean,
   notificationsSource: 'yaml' | 'datasource'
 ): boolean {
   return autoSyncNotificationsEnabled && notificationsSource === 'datasource';
 }
 
-/** Get the next step in the wizard, skipping Rules when auto-sync force-skips it. */
-export const getNextStep = (currentStep: StepKey, skipRules = false): WizardStep | undefined => {
+export const getNextStep = (currentStep: StepKey): WizardStep | undefined => {
   const steps = getWizardSteps();
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
-  const next = steps[currentIndex + 1];
-  return next?.id === StepKey.Rules && skipRules ? steps[currentIndex + 2] : next;
+  return steps[currentIndex + 1];
 };
 
-/** Get the previous step in the wizard, mirroring `getNextStep`'s Rules skip. */
-export const getPreviousStep = (currentStep: StepKey, skipRules = false): WizardStep | undefined => {
+export const getPreviousStep = (currentStep: StepKey): WizardStep | undefined => {
   const steps = getWizardSteps();
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
   if (currentIndex <= 0) {
     return undefined;
   }
-  const previous = steps[currentIndex - 1];
-  return previous?.id === StepKey.Rules && skipRules ? steps[currentIndex - 2] : previous;
+  return steps[currentIndex - 1];
 };
 
 /**
