@@ -10,7 +10,7 @@ import { type DataSourceWithBackend, isFetchError } from '@grafana/runtime';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
-import { probeProxyGet, PROBE_TIMEOUT_MS, resolveBackendInstance, withTimeout } from './probeUtils';
+import { probeProxyGet, resolveBackendInstance, withTimeout } from './probeUtils';
 import { readLabeledScalar, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 import { DATA_LOOKBACK_HOURS } from './solutionDataProbes';
 
@@ -54,7 +54,7 @@ interface TempoTagValuesResponse {
 
 // Failures are expected (endpoint disabled, 403s) and handled by the caller; never toast.
 function getResource<T>(instance: DataSourceWithBackend, path: string, params: Record<string, unknown>): Promise<T> {
-  return withTimeout(instance.getResource<T>(path, params, { showErrorAlert: false }), PROBE_TIMEOUT_MS);
+  return withTimeout(instance.getResource<T>(path, params, { showErrorAlert: false }), DETAIL_QUERY_TIMEOUT_MS);
 }
 
 // Points are [unix ms, value]; a real trend needs at least two of them.
@@ -285,7 +285,7 @@ export async function fetchMetricsDiskHoursToFull(
       eta: `min((node_filesystem_avail_bytes${selector} / -deriv(node_filesystem_avail_bytes${selector}[6h])) > 0) / 3600`,
     },
     ds,
-    PROBE_TIMEOUT_MS
+    DETAIL_QUERY_TIMEOUT_MS
   )
     .then((frames) => readScalar(frames, 'eta'))
     .catch(() => null);
