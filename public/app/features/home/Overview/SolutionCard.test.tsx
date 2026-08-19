@@ -183,14 +183,13 @@ describe('AvailableSolutionCard', () => {
       learnMore: {
         href: '/connections/add-new-connection',
         label: 'Browse connections',
-        ariaLabel: 'Browse metric connections',
         external: false,
       },
     };
 
     render(<AvailableSolutionCard solution={item} offer={offer} />);
 
-    const link = screen.getByRole('link', { name: 'Browse metric connections' });
+    const link = screen.getByRole('link', { name: 'Browse connections' });
     expect(link).toHaveTextContent('Browse connections');
     expect(link).not.toHaveAttribute('target');
   });

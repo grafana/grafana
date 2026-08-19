@@ -17,7 +17,6 @@ export interface SolutionCta {
 export interface SolutionLearnMore {
   href: string;
   label?: string;
-  ariaLabel?: string;
   /** Learn-more destinations are external unless explicitly marked otherwise. */
   external?: boolean;
 }

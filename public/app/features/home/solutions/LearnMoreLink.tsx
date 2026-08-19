@@ -10,12 +10,11 @@ interface LearnMoreLinkProps extends SolutionLearnMore {
 export function LearnMoreLink({
   href,
   label = t('home.learn-more', 'Learn more'),
-  ariaLabel,
   external = true,
   onClick,
 }: LearnMoreLinkProps) {
   return (
-    <TextLink variant="bodySmall" external={external} href={href} aria-label={ariaLabel} onClick={onClick}>
+    <TextLink variant="bodySmall" external={external} href={href} onClick={onClick}>
       {label}
     </TextLink>
   );
