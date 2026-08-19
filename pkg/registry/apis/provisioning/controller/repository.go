@@ -1057,8 +1057,10 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	}
 
 	// Rotate the webhook secret if due. Skipped if unhealthy since EditWebhook
-	// would be an equally doomed call against an unreachable repository.
-	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && repoHealthy {
+	// would be an equally doomed call against an unreachable repository, and
+	// skipped during the hook-failure cooldown too: repoHealthy alone doesn't
+	// catch this window, since a skipped health check reads as reachable.
+	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && repoHealthy && !rc.healthChecker.inHookFailureCooldown(obj) {
 		rotateOps, rotateErr := rotateWebhookSecret(ctx, webhookRepo)
 		if rotateErr != nil {
 			logging.FromContext(ctx).Warn("webhook secret rotation failed", "error", rotateErr)

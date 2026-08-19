@@ -1763,7 +1763,10 @@ func (c *stubWebhookConfig) SetEvents(events []string) { c.events = events }
 func (c *stubWebhookConfig) SetSecret(secret string)   { c.secret = secret }
 
 func (s *hookRepoStub) GetWebhook(context.Context, repository.WebhookID) (repository.WebhookConfig, error) {
-	return nil, s.hookResult()
+	if err := s.hookResult(); err != nil {
+		return nil, err
+	}
+	return &stubWebhookConfig{id: "1"}, nil
 }
 
 func (s *hookRepoStub) EditWebhook(context.Context, repository.WebhookConfig) error {
@@ -1859,6 +1862,91 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 	_, healthPatched := patcher.findPatchOp("/status/health")
 	assert.False(t, healthPatched,
 		"existing HealthFailureHook status must not be overwritten during cooldown")
+}
+
+// TestRepositoryController_process_RotationSuppressedDuringCooldown verifies
+// that an overdue webhook secret rotation does not retry EditWebhook while
+// the hook-failure cooldown is active, even though a skipped health check
+// during cooldown makes the repository read as "healthy" (no fresh test
+// result to say otherwise).
+func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Health: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHook,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{"failed to create webhook"},
+			},
+			Webhook: &provisioning.WebhookStatus{
+				ID:          123,
+				LastRotated: time.Now().Add(-31 * 24 * time.Hour).UnixMilli(),
+			},
+		},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	patcher := &capturePatcher{}
+
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		Maybe()
+
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
+
+	// hookErrSet+nil hookErr makes GetWebhook/EditWebhook succeed, so that if the
+	// cooldown guard failed to suppress rotation, EditWebhook would actually be
+	// reached and onUpdateCalls would be non-zero.
+	stub := &hookRepoStub{cfg: repo, hookErrSet: true}
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
+
+	mockJobs := &mockJobsQueueStore{
+		MockQueue: jobs.NewMockQueue(t),
+		MockStore: jobs.NewMockStore(t),
+	}
+
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:                         repoGetter,
+		quotaGetter:                   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:                  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker:                 healthChecker,
+		statusPatcher:                 patcher,
+		repoFactory:                   repoFactory,
+		jobs:                          mockJobs,
+		logger:                        logging.DefaultLogger.With("logger", loggerName),
+		tracer:                        tracing.InitializeTracerForTest(),
+		webhookSecretRotationInterval: 30 * 24 * time.Hour,
+	}
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(0), stub.onUpdateCalls.Load(),
+		"an overdue rotation must not call EditWebhook while the hook failure cooldown is active")
 }
 
 // TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError
