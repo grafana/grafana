@@ -73,6 +73,27 @@ export function kubernetesSolution(): Solution {
     const ds = await datasource();
     return ds ? fetchClusterCpuSeries(ds) : null;
   });
+  const alert = memoize(async () => {
+    const status = await health();
+    if (!status || hasHealthProblems(status) !== true) {
+      return null;
+    }
+
+    const healthRows = buildHealthRows(status);
+    const alertsFiring = status.alertsFiring ?? 0;
+    return {
+      primary:
+        alertsFiring > 0
+          ? t('home.solutions.kubernetes.alerts-firing', '', {
+              count: Math.ceil(alertsFiring),
+              value: formattedValueToString(formatUsageNumber(Math.ceil(alertsFiring))),
+              defaultValue_one: '{{value}} alert firing',
+              defaultValue_other: '{{value}} alerts firing',
+            })
+          : healthRows[0],
+      details: alertsFiring > 0 ? healthRows : healthRows.slice(1),
+    };
+  });
 
   const signal = async () => (await detect()).status;
   const needsAttention = async () => {
@@ -98,43 +119,16 @@ export function kubernetesSolution(): Solution {
         // Hide setup when this user cannot open the destination.
         const page = await accessibleAppPage(KUBERNETES_APP_ID, '/configuration/cluster-config');
         return page
-          ? { label: t('home.solutions.cta.set-up', 'Set up'), href: locationUtil.assureBaseUrl(page) }
+          ? {
+              label: t('home.solutions.cta.set-up', 'Set up'),
+              href: locationUtil.assureBaseUrl(page),
+              action: 'setup',
+            }
           : null;
       },
     }),
     refinedStats: async () => null,
-    alert: async () => {
-      const ds = await datasource();
-      if (!ds) {
-        return null;
-      }
-      const status = await health();
-      if (!status || hasHealthProblems(status) !== true) {
-        return null;
-      }
-
-      const healthRows = buildHealthRows(status);
-      const alertsFiring = status.alertsFiring ?? 0;
-      const alertsHref = await accessibleAppHref('/alerts', ds);
-      return {
-        primary:
-          alertsFiring > 0
-            ? t('home.solutions.kubernetes.alerts-firing', '', {
-                count: Math.ceil(alertsFiring),
-                value: formattedValueToString(formatUsageNumber(Math.ceil(alertsFiring))),
-                defaultValue_one: '{{value}} alert firing',
-                defaultValue_other: '{{value}} alerts firing',
-              })
-            : healthRows[0],
-        details: alertsFiring > 0 ? healthRows : healthRows.slice(1),
-        cta: alertsHref
-          ? {
-              label: t('home.solutions.kubernetes.view-alerts', 'View alerts in Kubernetes Monitoring'),
-              href: alertsHref,
-            }
-          : undefined,
-      };
-    },
+    alert,
     stats: async () => {
       const counts = await inventory();
       if (!counts) {
@@ -169,10 +163,24 @@ export function kubernetesSolution(): Solution {
       if (!ds) {
         return null;
       }
+      if (await needsAttention().catch(() => false)) {
+        const alertsHref = await accessibleAppHref('/alerts', ds);
+        if (alertsHref) {
+          return {
+            label: t('home.solutions.kubernetes.view-alerts', 'View alerts in Kubernetes Monitoring'),
+            href: alertsHref,
+            action: 'view_alerts',
+          };
+        }
+      }
       const href = await accessibleAppHref('/home', ds);
       return href
-        ? { label: openAppLabel('Kubernetes Monitoring'), href }
-        : { label: openExploreLabel(), href: constructDataSourceExploreUrl({ name: ds.name }) };
+        ? { label: openAppLabel('Kubernetes Monitoring'), href, action: 'open_solution' }
+        : {
+            label: openExploreLabel(),
+            href: constructDataSourceExploreUrl({ name: ds.name }),
+            action: 'open_solution',
+          };
     },
   };
 }

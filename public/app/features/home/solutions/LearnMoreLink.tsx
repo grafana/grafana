@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { TextLink } from '@grafana/ui';
+import { LinkButton } from '@grafana/ui';
 
 import { type SolutionLearnMore } from './types';
 
@@ -14,8 +14,18 @@ export function LearnMoreLink({
   onClick,
 }: LearnMoreLinkProps) {
   return (
-    <TextLink variant="bodySmall" external={external} href={href} onClick={onClick}>
+    <LinkButton
+      variant="secondary"
+      size="sm"
+      fill="text"
+      icon={external ? 'external-link-alt' : undefined}
+      iconPlacement="right"
+      href={href}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noreferrer' : undefined}
+      onClick={onClick}
+    >
       {label}
-    </TextLink>
+    </LinkButton>
   );
 }

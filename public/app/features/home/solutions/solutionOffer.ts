@@ -10,7 +10,7 @@ export interface SolutionOfferSpec {
   description: string;
   setupHint?: string;
   /** Null when no setup destination is useful for this user. */
-  setupCta: (capabilities: { setupGuideEnabled: boolean }) => Promise<SolutionCta | null>;
+  setupCta: (capabilities: { setupGuideEnabled: boolean }) => Promise<SolutionCta<'setup'> | null>;
   getLearnMore?: (capabilities: { setupGuideEnabled: boolean }) => SolutionLearnMore;
 }
 
@@ -46,6 +46,7 @@ export function solutionOffer(
             ? {
                 label: t('home.solutions.cta.enable', 'Enable'),
                 href: locationUtil.assureBaseUrl(`/plugins/${spec.appId}/`),
+                action: 'enable',
               }
             : null,
           ...(learnMore ? { learnMore } : {}),

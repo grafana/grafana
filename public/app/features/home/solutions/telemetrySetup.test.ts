@@ -58,6 +58,7 @@ describe('getTelemetrySetupCta', () => {
     expect(getTelemetrySetupCta('metrics', { setupGuideEnabled: true })).toEqual({
       label: 'Connect metrics',
       href: '/a/grafana-setupguide-app/getting-started/prometheus',
+      action: 'setup',
     });
   });
 

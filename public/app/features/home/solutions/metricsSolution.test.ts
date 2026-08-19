@@ -57,7 +57,11 @@ beforeEach(() => {
   mockFetchDiskHoursToFull.mockReset();
   mockFetchDiskHoursToFull.mockResolvedValue(null);
   mockDrilldownActiveCta.mockReset();
-  mockDrilldownActiveCta.mockResolvedValue({ label: 'Open Metrics Drilldown', href: '/metrics' });
+  mockDrilldownActiveCta.mockResolvedValue({
+    label: 'Open Metrics Drilldown',
+    href: '/metrics',
+    action: 'open_solution',
+  });
 });
 
 describe('metricsSolution', () => {
@@ -197,7 +201,6 @@ describe('metricsSolution', () => {
       await expect(solution.alert()).resolves.toMatchObject({
         primary: '3 hosts above 90% disk',
         details: ['web-03 at 96%', '~1 h to full'],
-        cta: { label: 'Investigate disk usage in Explore', href: expect.stringMatching(/^\/explore\?left=/) },
       });
       expect(mockFetchDiskPressure).toHaveBeenCalledTimes(1);
       expect(mockFetchDiskHoursToFull).toHaveBeenCalledWith(
@@ -227,11 +230,33 @@ describe('metricsSolution', () => {
     });
   });
 
+  it('builds the attention CTA from classification without waiting for alert details', async () => {
+    mockFetchDiskPressure.mockResolvedValue({
+      hostsAbove: 1,
+      worstInstance: 'web-03:9100',
+      worstMount: '/data',
+      worstRatio: 0.96,
+    });
+    mockFetchDiskHoursToFull.mockRejectedValue(new Error('query failed'));
+
+    await expect(metricsSolution().cta()).resolves.toEqual({
+      label: 'Investigate disk usage in Explore',
+      href: expect.stringMatching(/^\/explore\?left=/),
+      action: 'view_alerts',
+    });
+    expect(mockFetchDiskHoursToFull).not.toHaveBeenCalled();
+    expect(mockDrilldownActiveCta).not.toHaveBeenCalled();
+  });
+
   it('builds the active CTA from the datasource that proved usage', async () => {
     const ds = datasource();
     const solution = metricsSolution();
 
-    await expect(solution.cta()).resolves.toEqual({ label: 'Open Metrics Drilldown', href: '/metrics' });
+    await expect(solution.cta()).resolves.toEqual({
+      label: 'Open Metrics Drilldown',
+      href: '/metrics',
+      action: 'open_solution',
+    });
     expect(mockDrilldownActiveCta).toHaveBeenCalledWith(
       ds,
       METRICS_DRILLDOWN_APP_ID,

@@ -308,7 +308,7 @@ describe('Overview', () => {
       offer: async () => ({
         availability: 'enable',
         description: 'Connect Prometheus-compatible metrics.',
-        cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/' },
+        cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
       }),
     });
     const { user } = render(<Overview solutions={[metrics]} />);

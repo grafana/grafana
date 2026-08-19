@@ -137,7 +137,7 @@ describe('kubernetesSolution alert', () => {
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
   });
 
-  it('leads with firing alerts and links to the alerts page using the proving datasource', async () => {
+  it('leads with firing alerts', async () => {
     mockFetchHealth.mockResolvedValue({ alertsFiring: 3, unhealthyPods: 1, restarts1h: 0, notReadyNodes: 0 });
 
     const solution = kubernetesSolution();
@@ -146,12 +146,8 @@ describe('kubernetesSolution alert', () => {
     await expect(solution.alert()).resolves.toEqual({
       primary: '3 alerts firing',
       details: ['1 pod pending or failed'],
-      cta: {
-        label: 'View alerts in Kubernetes Monitoring',
-        href: '/a/grafana-k8s-app/alerts?var-datasource=k8s-prom',
-      },
     });
-    expect(mockAccessibleAppPage).toHaveBeenCalledWith('grafana-k8s-app', '/alerts');
+    expect(mockAccessibleAppPage).not.toHaveBeenCalled();
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
     expect(mockFetchHealth).toHaveBeenCalledWith(datasource);
   });
@@ -163,15 +159,6 @@ describe('kubernetesSolution alert', () => {
       primary: '2 pods pending or failed',
       details: ['5 restarts in the last hour', '1 node not ready'],
     });
-  });
-
-  it('omits the alert CTA when its app page is inaccessible', async () => {
-    mockAccessibleAppPage.mockResolvedValue(null);
-    mockFetchHealth.mockResolvedValue({ alertsFiring: 1, unhealthyPods: 0, restarts1h: 0, notReadyNodes: 0 });
-
-    const alert = await kubernetesSolution().alert();
-
-    expect(alert?.cta).toBeUndefined();
   });
 });
 
@@ -207,10 +194,33 @@ describe('kubernetesSolution stats and sparkline', () => {
 });
 
 describe('kubernetesSolution CTA and offer', () => {
+  it('opens the alerts page when the solution needs attention', async () => {
+    mockFetchHealth.mockResolvedValue({ alertsFiring: 3, unhealthyPods: 1, restarts1h: 0, notReadyNodes: 0 });
+
+    await expect(kubernetesSolution().cta()).resolves.toEqual({
+      label: 'View alerts in Kubernetes Monitoring',
+      href: '/a/grafana-k8s-app/alerts?var-datasource=k8s-prom',
+      action: 'view_alerts',
+    });
+    expect(mockAccessibleAppPage).toHaveBeenCalledWith('grafana-k8s-app', '/alerts');
+  });
+
+  it('falls back to the solution page when the alerts page is inaccessible', async () => {
+    mockFetchHealth.mockResolvedValue({ alertsFiring: 1, unhealthyPods: 0, restarts1h: 0, notReadyNodes: 0 });
+    mockAccessibleAppPage.mockImplementation(async (appId, path) => (path === '/alerts' ? null : `/a/${appId}${path}`));
+
+    await expect(kubernetesSolution().cta()).resolves.toEqual({
+      label: 'Open Kubernetes Monitoring',
+      href: '/a/grafana-k8s-app/home?var-datasource=k8s-prom',
+      action: 'open_solution',
+    });
+  });
+
   it('opens the app with the proving datasource when accessible', async () => {
     await expect(kubernetesSolution().cta()).resolves.toEqual({
       label: 'Open Kubernetes Monitoring',
       href: '/a/grafana-k8s-app/home?var-datasource=k8s-prom',
+      action: 'open_solution',
     });
     expect(mockAccessibleAppPage).toHaveBeenCalledWith('grafana-k8s-app', '/home');
   });
@@ -222,6 +232,7 @@ describe('kubernetesSolution CTA and offer', () => {
 
     expect(cta?.label).toBe('Open in Explore');
     expect(cta?.href).toMatch(/^\/explore\?left=/);
+    expect(cta?.action).toBe('open_solution');
     expect(decodeURIComponent(cta!.href)).toContain('k8s-prom');
   });
 
@@ -235,6 +246,7 @@ describe('kubernetesSolution CTA and offer', () => {
       cta: {
         label: 'Set up',
         href: '/a/grafana-k8s-app/configuration/cluster-config',
+        action: 'setup',
       },
     });
     expect(mockAccessibleAppPage).toHaveBeenCalledWith('grafana-k8s-app', '/configuration/cluster-config');

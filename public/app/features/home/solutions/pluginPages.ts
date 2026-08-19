@@ -38,10 +38,10 @@ export async function drilldownActiveCta(
   appId: string,
   appName: string,
   appPath: string
-): Promise<SolutionCta> {
+): Promise<SolutionCta<'open_solution'>> {
   return (await isDrilldownAvailable(appId, appPath))
-    ? { label: openAppLabel(appName), href: locationUtil.assureBaseUrl(appPath) }
-    : { label: openExploreLabel(), href: constructDataSourceExploreUrl({ name: ds.name }) };
+    ? { label: openAppLabel(appName), href: locationUtil.assureBaseUrl(appPath), action: 'open_solution' }
+    : { label: openExploreLabel(), href: constructDataSourceExploreUrl({ name: ds.name }), action: 'open_solution' };
 }
 
 // Product names are not translated.

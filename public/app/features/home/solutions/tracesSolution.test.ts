@@ -40,7 +40,11 @@ beforeEach(() => {
   mockFetchServices.mockReset();
   mockFetchServices.mockResolvedValue(34);
   mockDrilldownActiveCta.mockReset();
-  mockDrilldownActiveCta.mockResolvedValue({ label: 'Open Traces Drilldown', href: '/traces' });
+  mockDrilldownActiveCta.mockResolvedValue({
+    label: 'Open Traces Drilldown',
+    href: '/traces',
+    action: 'open_solution',
+  });
 });
 
 describe('tracesSolution', () => {
@@ -154,7 +158,11 @@ describe('tracesSolution', () => {
     const ds = datasource();
     const solution = tracesSolution();
 
-    await expect(solution.cta()).resolves.toEqual({ label: 'Open Traces Drilldown', href: '/traces' });
+    await expect(solution.cta()).resolves.toEqual({
+      label: 'Open Traces Drilldown',
+      href: '/traces',
+      action: 'open_solution',
+    });
     expect(mockDrilldownActiveCta).toHaveBeenCalledWith(
       ds,
       HOSTED_TRACES_APP_ID,

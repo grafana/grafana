@@ -56,7 +56,7 @@ export function getTelemetrySetupLink(
   const definition = setup[type];
   const cta = getTelemetrySetupCta(type, capabilities);
   if (cta) {
-    return { action: cta.label, href: cta.href, cta: 'setup' };
+    return { action: cta.label, href: cta.href, cta: cta.action };
   }
 
   return {
@@ -69,7 +69,7 @@ export function getTelemetrySetupLink(
 export function getTelemetrySetupCta(
   type: TelemetryType,
   capabilities: TelemetrySetupCapabilities
-): SolutionCta | null {
+): SolutionCta<'setup'> | null {
   const definition = setup[type];
   if (
     !definition.guidePath ||
@@ -78,7 +78,7 @@ export function getTelemetrySetupCta(
   ) {
     return null;
   }
-  return { label: definition.action(), href: locationUtil.assureBaseUrl(definition.guidePath) };
+  return { label: definition.action(), href: locationUtil.assureBaseUrl(definition.guidePath), action: 'setup' };
 }
 
 export function getTelemetrySetupLearnMore(

@@ -39,21 +39,21 @@ afterEach(() => {
 });
 
 describe('SolutionCard', () => {
-  it('renders an attention card with separate alert and solution actions', async () => {
+  it('renders and tracks the attention action as the card action', async () => {
     const alert = {
       primary: 'payments-api restarts',
       details: ['14 restarts/hr'],
-      cta: {
-        label: 'Inspect workload in Kubernetes Monitoring',
-        href: '/a/grafana-k8s-app/navigation/cluster',
-      },
     };
     const item = solution('kubernetes', {
       title: 'Kubernetes Monitoring',
       icon: 'kubernetes',
       stats: async () => ({ primary: '247 pods' }),
       alert: async () => alert,
-      cta: async () => ({ label: 'Open Kubernetes Monitoring', href: '/a/grafana-k8s-app' }),
+      cta: async () => ({
+        label: 'Inspect workload in Kubernetes Monitoring',
+        href: '/a/grafana-k8s-app/navigation/cluster',
+        action: 'view_alerts',
+      }),
     });
 
     const { user } = render(<SolutionCard solution={item} needsAttention />);
@@ -61,12 +61,12 @@ describe('SolutionCard', () => {
     expect(screen.getByText('Needs attention')).toBeInTheDocument();
     expect(await screen.findByText('247 pods')).toBeInTheDocument();
     expect(screen.getByText('payments-api restarts · 14 restarts/hr')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: alert.cta.label })).toHaveAttribute('href', alert.cta.href);
+    expect(screen.getAllByRole('link')).toHaveLength(1);
 
-    await user.click(await screen.findByRole('link', { name: 'Open Kubernetes Monitoring' }));
+    await user.click(await screen.findByRole('link', { name: 'Inspect workload in Kubernetes Monitoring' }));
     expect(mockCtaClicked).toHaveBeenCalledWith({
       surface: 'overview',
-      action: 'open_solution',
+      action: 'view_alerts',
       placement: 'card',
       solution: 'kubernetes',
     });
@@ -101,7 +101,7 @@ describe('AvailableSolutionCard', () => {
       availability: 'enable',
       description: 'Diagnose slow queries and connection saturation.',
       setupHint: '~5 min · collector',
-      cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/' },
+      cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
       learnMore: { href: 'https://grafana.com/docs/grafana-cloud/send-data/metrics/' },
     };
 
@@ -148,7 +148,7 @@ describe('AvailableSolutionCard', () => {
     const offer: SolutionOffer = {
       availability: 'setup',
       description: 'See cluster health in one view.',
-      cta: { label: 'Set up', href: '/a/grafana-k8s-app/configuration/cluster-config' },
+      cta: { label: 'Set up', href: '/a/grafana-k8s-app/configuration/cluster-config', action: 'setup' },
     };
 
     render(<AvailableSolutionCard solution={item} offer={offer} />);

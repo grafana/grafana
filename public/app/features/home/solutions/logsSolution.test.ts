@@ -36,7 +36,7 @@ beforeEach(() => {
   mockFetchActivity.mockReset();
   mockFetchActivity.mockResolvedValue({ bytes: null, sources: null, series: null });
   mockDrilldownActiveCta.mockReset();
-  mockDrilldownActiveCta.mockResolvedValue({ label: 'Open Logs Drilldown', href: '/logs' });
+  mockDrilldownActiveCta.mockResolvedValue({ label: 'Open Logs Drilldown', href: '/logs', action: 'open_solution' });
 });
 
 describe('logsSolution', () => {
@@ -116,7 +116,11 @@ describe('logsSolution', () => {
     const ds = datasource();
     const solution = logsSolution();
 
-    await expect(solution.cta()).resolves.toEqual({ label: 'Open Logs Drilldown', href: '/logs' });
+    await expect(solution.cta()).resolves.toEqual({
+      label: 'Open Logs Drilldown',
+      href: '/logs',
+      action: 'open_solution',
+    });
     expect(mockDrilldownActiveCta).toHaveBeenCalledWith(
       ds,
       LOGS_DRILLDOWN_APP_ID,

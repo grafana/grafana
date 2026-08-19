@@ -13,7 +13,7 @@ const spec = (getLearnMore?: () => { href: string }) => ({
   appId: 'example-app',
   description: 'Understand the example signal.',
   setupHint: 'connect an example source',
-  setupCta: jest.fn().mockResolvedValue({ label: 'Set up', href: '/setup' }),
+  setupCta: jest.fn().mockResolvedValue({ label: 'Set up', href: '/setup', action: 'setup' }),
   getLearnMore,
 });
 
@@ -44,7 +44,7 @@ describe('solutionOffer', () => {
       availability: 'setup',
       description: 'Understand the example signal.',
       setupHint: 'connect an example source',
-      cta: { label: 'Set up', href: '/setup' },
+      cta: { label: 'Set up', href: '/setup', action: 'setup' },
     });
     expect(definition.setupCta).toHaveBeenCalledWith({ setupGuideEnabled: true });
   });
@@ -58,7 +58,7 @@ describe('solutionOffer', () => {
       availability: 'setup',
       description: 'Understand the example signal.',
       setupHint: 'connect an example source',
-      cta: { label: 'Set up', href: '/setup' },
+      cta: { label: 'Set up', href: '/setup', action: 'setup' },
       learnMore: { href: 'https://grafana.com/docs/example/' },
     });
   });
@@ -83,7 +83,7 @@ describe('solutionOffer', () => {
     await expect(offer()).resolves.toEqual({
       availability: 'enable',
       description: 'Understand the example signal.',
-      cta: { label: 'Enable', href: '/plugins/example-app/' },
+      cta: { label: 'Enable', href: '/plugins/example-app/', action: 'enable' },
       learnMore: { href: 'https://grafana.com/docs/example/' },
     });
   });

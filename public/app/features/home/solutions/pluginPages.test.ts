@@ -69,6 +69,7 @@ it('opens an accessible drilldown page', async () => {
   await expect(drilldownActiveCta(datasource, 'accessible-app', 'Metrics Drilldown', path)).resolves.toEqual({
     label: 'Open Metrics Drilldown',
     href: path,
+    action: 'open_solution',
   });
 });
 
@@ -78,7 +79,7 @@ it('falls back to Explore with the proving datasource when the deep page is inac
 
   await expect(
     drilldownActiveCta(datasource, 'inaccessible-app', 'Metrics Drilldown', '/a/inaccessible-app/explore')
-  ).resolves.toEqual({ label: 'Open in Explore', href: '/explore?left=prometheus' });
+  ).resolves.toEqual({ label: 'Open in Explore', href: '/explore?left=prometheus', action: 'open_solution' });
   expect(constructDataSourceExploreUrlMock).toHaveBeenCalledWith({ name: 'Prometheus' });
 });
 

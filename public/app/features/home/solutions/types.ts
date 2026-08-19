@@ -9,9 +9,12 @@ export type SolutionId = (typeof SOLUTION_IDS)[number];
 /**
  * The solution owns CTA copy and destination. Each surface owns presentation and analytics.
  */
-export interface SolutionCta {
+type SolutionCtaAction = 'open_solution' | 'view_alerts' | 'enable' | 'setup';
+
+export interface SolutionCta<TAction extends SolutionCtaAction = SolutionCtaAction> {
   label: string;
   href: string;
+  action: TAction;
 }
 
 export interface SolutionLearnMore {
@@ -29,8 +32,6 @@ export interface SolutionStats {
 interface SolutionAlert {
   primary: string;
   details?: string[];
-  /** Omitted when no destination can provide useful context for the alert. */
-  cta?: SolutionCta;
 }
 
 interface SolutionIdentity {
@@ -44,7 +45,7 @@ export interface SolutionOffer {
   description: string;
   setupHint?: string;
   /** Null keeps the offer visible when this user cannot perform the action. */
-  cta: SolutionCta | null;
+  cta: SolutionCta<'enable' | 'setup'> | null;
   learnMore?: SolutionLearnMore;
 }
 
@@ -62,7 +63,7 @@ export type Solution = SolutionIdentity & {
   /** Slower, richer stats for the same card; readers prefer these once they resolve. */
   refinedStats: () => Promise<SolutionStats | null>;
   sparkline: () => Promise<SolutionSparklineData | null>;
-  cta: () => Promise<SolutionCta | null>;
+  cta: () => Promise<SolutionCta<'open_solution' | 'view_alerts'> | null>;
   /** What needs attention about this solution, or null when nothing does. */
   alert: () => Promise<SolutionAlert | null>;
   offer: () => Promise<SolutionOffer | null>;

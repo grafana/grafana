@@ -23,6 +23,7 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
   const { value: cta = null, loading: ctaLoading } = useAsync(() => selected.cta(), [selected]);
   const { value: datasource = null } = useAsync(() => selected.datasource(), [selected]);
   const subtitle = datasource && t('home.solutions.via-datasource', 'via {{name}}', { name: datasource.name });
+  const isAttentionCta = cta?.action === 'view_alerts';
 
   return (
     <Stack direction="column" justifyContent="space-between" gap={2} flex={1}>
@@ -116,27 +117,6 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
                   </span>
                 ))}
               </div>
-
-              {alert.cta && (
-                <LinkButton
-                  variant="secondary"
-                  size="sm"
-                  fill="text"
-                  icon="angle-right"
-                  iconPlacement="right"
-                  href={alert.cta.href}
-                  onClick={() =>
-                    ctaClicked({
-                      surface: 'existing_solution',
-                      action: 'view_alerts',
-                      placement: 'card',
-                      solution: selected.id,
-                    })
-                  }
-                >
-                  {alert.cta.label}
-                </LinkButton>
-              )}
             </Stack>
           </div>
         )}
@@ -148,15 +128,16 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
         ) : cta ? (
           <LinkButton
             variant="secondary"
-            size="md"
-            fill="solid"
-            icon="arrow-right"
+            size={isAttentionCta ? 'sm' : 'md'}
+            fill={isAttentionCta ? 'text' : 'solid'}
+            icon={isAttentionCta ? 'angle-right' : 'arrow-right'}
             iconPlacement="right"
             href={cta.href}
+            className={isAttentionCta ? cx(styles.textAction, styles.attentionAction) : undefined}
             onClick={() =>
               ctaClicked({
                 surface: 'existing_solution',
-                action: 'open_solution',
+                action: cta.action,
                 placement: 'card',
                 solution: selected.id,
               })
@@ -235,5 +216,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   warning: css({
     color: theme.colors.warning.main,
     margin: theme.spacing(0, 0, 0, 0.5),
+  }),
+  textAction: css({
+    paddingLeft: theme.spacing(0.5),
+    paddingRight: theme.spacing(0.5),
+  }),
+  attentionAction: css({
+    color: theme.colors.warning.text,
+
+    '&:hover, &:focus': {
+      background: theme.colors.warning.background,
+      color: theme.colors.warning.textEmphasis,
+    },
   }),
 });

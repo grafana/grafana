@@ -88,6 +88,41 @@ export function metricsSolution(): Solution {
       ? fetchMetricsDiskHoursToFull(disk.worstInstance, disk.worstMount, ds)
       : null;
   });
+  const alert = memoize(async () => {
+    const disk = await diskPressure();
+    if (!disk || disk.hostsAbove < 1) {
+      return null;
+    }
+
+    const details: string[] = [];
+    if (disk.worstInstance && disk.worstRatio != null) {
+      details.push(
+        t('home.solutions.metrics.disk-worst', '{{host}} at {{percent}}%', {
+          host: disk.worstInstance.replace(/:\d+$/, ''),
+          percent: Math.round(disk.worstRatio * 100),
+        })
+      );
+    }
+    const hoursToFull = await diskHoursToFull();
+    if (hoursToFull != null) {
+      details.push(
+        t('home.solutions.metrics.disk-eta', '', {
+          count: Math.max(1, Math.round(hoursToFull)),
+          defaultValue_one: '~{{count}} h to full',
+          defaultValue_other: '~{{count}} h to full',
+        })
+      );
+    }
+
+    return {
+      primary: t('home.solutions.metrics.disk-hosts', '', {
+        count: disk.hostsAbove,
+        defaultValue_one: '{{count}} host above 90% disk',
+        defaultValue_other: '{{count}} hosts above 90% disk',
+      }),
+      details,
+    };
+  });
 
   const signal = async () => (await detect()).status;
   const needsAttention = async () => (await diskPressure()) !== null;
@@ -110,49 +145,7 @@ export function metricsSolution(): Solution {
       getLearnMore: (capabilities) => getTelemetrySetupLearnMore('metrics', capabilities),
     }),
     refinedStats: async () => null,
-    alert: async () => {
-      const ds = await datasource();
-      if (!ds) {
-        return null;
-      }
-      const disk = await diskPressure();
-      if (!disk || disk.hostsAbove < 1) {
-        return null;
-      }
-
-      const details: string[] = [];
-      if (disk.worstInstance && disk.worstRatio != null) {
-        details.push(
-          t('home.solutions.metrics.disk-worst', '{{host}} at {{percent}}%', {
-            host: disk.worstInstance.replace(/:\d+$/, ''),
-            percent: Math.round(disk.worstRatio * 100),
-          })
-        );
-      }
-      const hoursToFull = await diskHoursToFull();
-      if (hoursToFull != null) {
-        details.push(
-          t('home.solutions.metrics.disk-eta', '', {
-            count: Math.max(1, Math.round(hoursToFull)),
-            defaultValue_one: '~{{count}} h to full',
-            defaultValue_other: '~{{count}} h to full',
-          })
-        );
-      }
-
-      return {
-        primary: t('home.solutions.metrics.disk-hosts', '', {
-          count: disk.hostsAbove,
-          defaultValue_one: '{{count}} host above 90% disk',
-          defaultValue_other: '{{count}} hosts above 90% disk',
-        }),
-        details,
-        cta: {
-          label: t('home.solutions.metrics.investigate-disk', 'Investigate disk usage in Explore'),
-          href: diskPressureExploreHref(ds),
-        },
-      };
-    },
+    alert,
     stats: async () => {
       const metrics = await activity();
       if (!metrics) {
@@ -208,6 +201,13 @@ export function metricsSolution(): Solution {
       const ds = await datasource();
       if (!ds) {
         return null;
+      }
+      if (await needsAttention().catch(() => false)) {
+        return {
+          label: t('home.solutions.metrics.investigate-disk', 'Investigate disk usage in Explore'),
+          href: diskPressureExploreHref(ds),
+          action: 'view_alerts',
+        };
       }
       return drilldownActiveCta(
         ds,

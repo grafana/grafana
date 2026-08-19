@@ -23,6 +23,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
   );
   const { value: cta = null, loading: ctaLoading } = useAsync(() => solution.cta(), [solution]);
   const styles = useStyles2(getStyles, needsAttention);
+  const isAttentionCta = cta?.action === 'view_alerts';
   const status = needsAttention
     ? t('home.overview.status.attention', 'Needs attention')
     : t('home.overview.status.enabled', 'Enabled');
@@ -59,32 +60,9 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         {alert && (
           <Stack direction="row" gap={1.5} alignItems="flex-start">
             <Icon name="exclamation-triangle" size="md" className={styles.warning} />
-            <Stack direction="column" gap={0.5} alignItems="flex-start" flex={1}>
-              <Text variant="body" color="secondary">
-                {[alert.primary, ...(alert.details ?? [])].join(' · ')}
-              </Text>
-              {alert.cta && (
-                <LinkButton
-                  href={alert.cta.href}
-                  variant="secondary"
-                  size="sm"
-                  fill="text"
-                  icon="angle-right"
-                  iconPlacement="right"
-                  className={styles.alertAction}
-                  onClick={() =>
-                    ctaClicked({
-                      surface: 'overview',
-                      action: 'view_alerts',
-                      placement: 'card',
-                      solution: solution.id,
-                    })
-                  }
-                >
-                  {alert.cta.label}
-                </LinkButton>
-              )}
-            </Stack>
+            <Text variant="body" color="secondary">
+              {[alert.primary, ...(alert.details ?? [])].join(' · ')}
+            </Text>
           </Stack>
         )}
       </Card.Description>
@@ -95,12 +73,18 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         ) : cta ? (
           <LinkButton
             href={cta.href}
-            variant="secondary"
             fill="text"
+            size="sm"
             icon="angle-right"
             iconPlacement="right"
+            className={cx(styles.textAction, isAttentionCta && styles.attentionAction)}
             onClick={() =>
-              ctaClicked({ surface: 'overview', action: 'open_solution', placement: 'card', solution: solution.id })
+              ctaClicked({
+                surface: 'overview',
+                action: cta.action,
+                placement: 'card',
+                solution: solution.id,
+              })
             }
           >
             {cta.label}
@@ -118,6 +102,7 @@ interface AvailableSolutionCardProps {
 
 export function AvailableSolutionCard({ solution, offer }: AvailableSolutionCardProps) {
   const styles = useStyles2(getStyles, false);
+  const cta = offer.cta;
   const status =
     offer.availability === 'enable'
       ? t('home.overview.status.available', 'Not enabled')
@@ -148,23 +133,23 @@ export function AvailableSolutionCard({ solution, offer }: AvailableSolutionCard
         {offer.setupHint && <Badge color="darkgrey" text={offer.setupHint} className={styles.setupHint} />}
       </Card.Description>
 
-      {(offer.cta || offer.learnMore) && (
+      {(cta || offer.learnMore) && (
         <Card.Actions>
-          {offer.cta && (
+          {cta && (
             <LinkButton
-              href={offer.cta.href}
+              href={cta.href}
               variant="secondary"
               size="sm"
               onClick={() =>
                 ctaClicked({
                   surface: 'overview',
-                  action: offer.availability,
+                  action: cta.action,
                   placement: 'card',
                   solution: solution.id,
                 })
               }
             >
-              {offer.cta.label}
+              {cta.label}
             </LinkButton>
           )}
           {offer.learnMore && (
@@ -277,7 +262,11 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     color: theme.colors.warning.main,
     flexShrink: 0,
   }),
-  alertAction: css({
+  textAction: css({
+    paddingLeft: theme.spacing(0.5),
+    paddingRight: theme.spacing(0.5),
+  }),
+  attentionAction: css({
     color: theme.colors.warning.text,
 
     '&:hover, &:focus': {

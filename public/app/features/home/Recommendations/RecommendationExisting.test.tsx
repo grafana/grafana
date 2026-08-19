@@ -166,7 +166,7 @@ describe('RecommendationExisting', () => {
       data: datasource,
       title: 'Metrics & infrastructure',
       stats: () => stats.promise,
-      cta: async () => ({ label: 'Open Metrics Drilldown', href: '/a/metrics' }),
+      cta: async () => ({ label: 'Open Metrics Drilldown', href: '/a/metrics', action: 'open_solution' }),
     });
 
     render(<RecommendationExisting solutions={[metrics]} />);
@@ -209,12 +209,17 @@ describe('RecommendationExisting', () => {
       alert: async () => ({
         primary: '3 hosts above 90% disk',
         details: ['db-01 at 96%', '~6 h to full'],
-        cta: { label: 'Investigate disk usage', href: '/explore?left=disk' },
+      }),
+      cta: async () => ({
+        label: 'Investigate disk usage',
+        href: '/explore?left=disk',
+        action: 'view_alerts',
       }),
     });
     const { user } = render(<RecommendationExisting solutions={[metrics]} />);
 
     expect(await screen.findByText('db-01 at 96%')).toBeInTheDocument();
+    expect(screen.getAllByRole('link')).toHaveLength(1);
     await user.click(screen.getByRole('link', { name: 'Investigate disk usage' }));
 
     expect(mockCtaClicked).toHaveBeenCalledWith({
@@ -266,7 +271,7 @@ describe('RecommendationExisting', () => {
       status: 'active',
       data: datasource,
       title: 'Metrics & infrastructure',
-      cta: async () => ({ label: 'Open Metrics Drilldown', href: '/a/metrics' }),
+      cta: async () => ({ label: 'Open Metrics Drilldown', href: '/a/metrics', action: 'open_solution' }),
     });
     const { user } = render(<RecommendationExisting solutions={[metrics]} />);
 
