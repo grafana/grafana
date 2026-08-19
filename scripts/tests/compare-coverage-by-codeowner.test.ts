@@ -64,6 +64,10 @@ describe('compare-coverage-by-codeowner', () => {
       // to a 0.02 drop, i.e. tolerated.
       expect(formatDelta(79.951, 79.965)).toBe('-0.02%');
     });
+
+    it('renders an explicit zero delta rather than a bare dash', () => {
+      expect(formatDelta(80, 80)).toBe('± 0.00%');
+    });
   });
 
   describe('getOverallStatus', () => {

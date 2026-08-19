@@ -55,7 +55,7 @@ describe('generate-coverage-run-summary', () => {
 
     expect(summary).not.toContain('## Coverage regressions');
     expect(summary).toContain('## ✅ Passing teams');
-    expect(summary).toContain('| @grafana/dataviz-squad | — | — | — | — |');
+    expect(summary).toContain('| @grafana/dataviz-squad | ± 0.00% | ± 0.00% | ± 0.00% | ± 0.00% |');
   });
 
   it('summarizes coverage increases compactly, after the regressions section', () => {

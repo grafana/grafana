@@ -128,7 +128,7 @@ function formatDelta(prValue, mainValue) {
   } else if (delta < 0) {
     return `${delta.toFixed(2)}%`;
   }
-  return '—';
+  return '± 0.00%';
 }
 
 /**
