@@ -156,10 +156,6 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
         preferenceType: props.preferenceType,
       });
     } else {
-      reportInteraction('grafana_preferences_language_changed', {
-        toLanguage: language,
-        preferenceType: props.preferenceType,
-      });
     }
   };
 

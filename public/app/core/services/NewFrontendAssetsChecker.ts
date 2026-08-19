@@ -53,10 +53,6 @@ export class NewFrontendAssetsChecker {
     }
     // Track potential page change
     else if (this.hasUpdates) {
-      reportInteraction('new_frontend_assets_reload_ignored', {
-        newLocation: location.pathname,
-        prevLocation: this.prevLocationPath,
-      });
     }
 
     this.prevLocationPath = location.pathname;
@@ -96,7 +92,6 @@ export class NewFrontendAssetsChecker {
   public reloadIfUpdateDetected() {
     if (this.hasUpdates) {
       // Report that we detected new assets
-      reportInteraction('new_frontend_assets_reload', {});
       window.location.reload();
     }
 
