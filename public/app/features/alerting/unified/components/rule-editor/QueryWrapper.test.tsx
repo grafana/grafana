@@ -35,4 +35,28 @@ describe('MinIntervalOption', () => {
     expect(onChange).not.toHaveBeenCalledWith({ minInterval: '0' });
     expect(onChange).toHaveBeenCalledWith({ minInterval: '0.5s' });
   });
+
+  it('does not commit a bare-number prefix while typing towards a unit (e.g. "1" on the way to "1m")', async () => {
+    const onChange = jest.fn();
+    render(<MinIntervalOption options={{}} onChange={onChange} />);
+
+    // typing "1m" char-by-char passes through "1", which `describeInterval` treats as a
+    // valid (seconds) interval on its own, but it must not be committed upstream since the
+    // user may still be typing a unit suffix
+    await userEvent.type(screen.getByRole('textbox'), '1m');
+
+    expect(onChange).not.toHaveBeenCalledWith({ minInterval: '1' });
+    expect(onChange).toHaveBeenCalledWith({ minInterval: '1m' });
+  });
+
+  it('commits a bare-number interval on blur', async () => {
+    const onChange = jest.fn();
+    render(<MinIntervalOption options={{}} onChange={onChange} />);
+
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, '30');
+    await userEvent.tab();
+
+    expect(onChange).toHaveBeenCalledWith({ minInterval: '30' });
+  });
 });

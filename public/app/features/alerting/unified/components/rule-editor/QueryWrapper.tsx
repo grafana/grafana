@@ -274,7 +274,7 @@ export function MinIntervalOption({
 }) {
   const value = options.minInterval ?? '';
 
-  const commitMinInterval = (event: ChangeEvent<HTMLInputElement>) => {
+  const commitMinInterval = (event: ChangeEvent<HTMLInputElement>, requireUnit: boolean) => {
     const minInterval = event.target.value;
 
     if (minInterval !== '') {
@@ -282,6 +282,13 @@ export function MinIntervalOption({
         rangeUtil.describeInterval(minInterval);
       } catch {
         // not a valid interval yet (e.g. a partially typed value like "0" on the way to "0.5s") - wait for it to become one
+        return;
+      }
+
+      // A bare number (e.g. "1") is ambiguous while typing: `describeInterval` treats it as
+      // seconds, but it could also be the start of a value with a unit, like "1m" or "30s".
+      // Only commit bare-number values once we know no more characters are coming (on blur).
+      if (requireUnit && /^-?\d+(?:\.\d+)?$/.test(minInterval)) {
         return;
       }
     }
@@ -310,8 +317,8 @@ export function MinIntervalOption({
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
-        onBlur={commitMinInterval}
-        onChange={commitMinInterval}
+        onBlur={(event) => commitMinInterval(event, false)}
+        onChange={(event) => commitMinInterval(event, true)}
         defaultValue={value}
       />
     </InlineField>
