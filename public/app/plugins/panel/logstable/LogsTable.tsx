@@ -93,7 +93,7 @@ export const LogsTable = ({
   const timeColumnHeaderTooltip = isLokiDataSource(data, rawTableFrame)
     ? t(
         'explore.logs-table.loki-time-sort-tooltip',
-        'Sorting this column only changes the order of the displayed results. To update the query’s time-based sort order, use the Sort control on the right.'
+        "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
       )
     : undefined;
 

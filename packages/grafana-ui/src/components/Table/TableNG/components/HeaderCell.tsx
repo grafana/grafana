@@ -119,6 +119,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           name="info-circle"
           size="sm"
           tooltip={headerTooltip}
+          className={styles.headerTooltipIcon}
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
           onPointerDown={(event) => event.stopPropagation()}
@@ -163,5 +164,8 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,
+  }),
+  headerTooltipIcon: css({
+    cursor: 'default',
   }),
 }));
