@@ -574,6 +574,10 @@ const (
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
 
+	// FlagKubernetesUserActionsApi
+	// Registers the IAM userActions /apis endpoint
+	FlagKubernetesUserActionsApi = "kubernetesUserActionsApi"
+
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"

@@ -906,6 +906,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzResourcePermissionApis?: boolean;
   /**
+  * Registers the IAM userActions /apis endpoint
+  * @default false
+  */
+  kubernetesUserActionsApi?: boolean;
+  /**
   * Enable sync of Zanzana authorization store on AuthZ CRD mutations
   * @default false
   */

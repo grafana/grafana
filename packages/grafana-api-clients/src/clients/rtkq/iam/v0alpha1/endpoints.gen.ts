@@ -1,5 +1,13 @@
 import { api } from './baseAPI';
-export const addTagTypes = ['API Discovery', 'Display', 'Search', 'ServiceAccount', 'Team', 'User'] as const;
+export const addTagTypes = [
+  'API Discovery',
+  'Display',
+  'Search',
+  'ServiceAccount',
+  'Team',
+  'UserActions',
+  'User',
+] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
@@ -300,6 +308,15 @@ const injectedRtkApi = api
       createTeamRemovemember: build.mutation<CreateTeamRemovememberApiResponse, CreateTeamRemovememberApiArg>({
         query: (queryArg) => ({ url: `/teams/${queryArg.name}/removemember`, method: 'POST' }),
         invalidatesTags: ['Team'],
+      }),
+      getUserActions: build.query<GetUserActionsApiResponse, GetUserActionsApiArg>({
+        query: (queryArg) => ({
+          url: `/userActions`,
+          params: {
+            reloadcache: queryArg.reloadcache,
+          },
+        }),
+        providesTags: ['UserActions'],
       }),
       listUser: build.query<ListUserApiResponse, ListUserApiArg>({
         query: (queryArg) => ({
@@ -751,6 +768,13 @@ export type CreateTeamRemovememberApiResponse =
 export type CreateTeamRemovememberApiArg = {
   /** name of the TeamMemberList */
   name: string;
+};
+export type GetUserActionsApiResponse = /** status 200 Map of RBAC action to true */ {
+  [key: string]: boolean;
+};
+export type GetUserActionsApiArg = {
+  /** Resolve permissions afresh rather than serving a cached set */
+  reloadcache?: boolean;
 };
 export type ListUserApiResponse = /** status 200 OK */ UserList;
 export type ListUserApiArg = {
@@ -1292,6 +1316,8 @@ export const {
   useGetTeamMembersQuery,
   useLazyGetTeamMembersQuery,
   useCreateTeamRemovememberMutation,
+  useGetUserActionsQuery,
+  useLazyGetUserActionsQuery,
   useListUserQuery,
   useLazyListUserQuery,
   useCreateUserMutation,
