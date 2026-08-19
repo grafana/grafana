@@ -147,7 +147,7 @@ var (
 		"notebooks:write",
 		"notebooks:delete",
 	}...)
-	// No notebook-specific admin actions yet (no permissions management); Admin equals Edit.
+	// No notebook-specific admin actions (no per-notebook permissions management); Admin equals Edit.
 	notebookAdminActions = append([]string{}, notebookEditActions...)
 )
 

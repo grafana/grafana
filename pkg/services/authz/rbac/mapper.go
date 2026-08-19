@@ -181,9 +181,6 @@ func newDashboardTranslation() translation {
 // added later together with the notebook resource-permission service.
 func newNotebookTranslation() translation {
 	nbTranslation := newResourceTranslation("notebooks", "uid", true, nil)
-	// Notebooks have no permissions subresource yet, so drop the inherited permission verbs.
-	delete(nbTranslation.verbMapping, utils.VerbGetPermissions)
-	delete(nbTranslation.verbMapping, utils.VerbSetPermissions)
 
 	actionSetMapping := make(map[string][]string)
 	for verb, rbacAction := range nbTranslation.verbMapping {
@@ -192,6 +189,13 @@ func newNotebookTranslation() translation {
 		// Notebook creation is only part of the folder action sets, so handle it separately.
 		if rbacAction == "notebooks:create" {
 			actionSets = append(actionSets, "folders:edit")
+			actionSets = append(actionSets, "folders:admin")
+		}
+		// The permission verbs come from the default translation. set_permissions is never a granted
+		// notebook action (no per-notebook permissions management) — it's mapped to folders:admin only
+		// so the trash folder-admin check (TrashAuthorizer.FolderAdmin) resolves. get_permissions
+		// falls through with no action set (nothing reads a notebook's permission list), so it's denied.
+		if rbacAction == "notebooks.permissions:write" {
 			actionSets = append(actionSets, "folders:admin")
 		}
 

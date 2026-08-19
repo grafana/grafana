@@ -291,6 +291,13 @@ func TestMapperRegistry_Notebooks(t *testing.T) {
 	assert.ElementsMatch(t, []string{"folders:edit", "folders:admin"}, mapping.ActionSets(utils.VerbDelete))
 	assert.True(t, mapping.HasFolderSupport())
 
+	// set_permissions must resolve (to folders:admin) — the trash folder-admin check authorizes
+	// via this verb, so an unsupported verb here would break trash listing for folder admins.
+	setPerms, ok := mapping.Action(utils.VerbSetPermissions)
+	require.True(t, ok)
+	assert.Equal(t, "notebooks.permissions:write", setPerms)
+	assert.ElementsMatch(t, []string{"folders:admin"}, mapping.ActionSets(utils.VerbSetPermissions))
+
 	// Object scope stays in the notebook's own namespace.
 	assert.Equal(t, "notebooks:uid:", mapping.Prefix())
 	assert.Equal(t, "notebooks:uid:nb1", mapping.Scope("nb1"))
