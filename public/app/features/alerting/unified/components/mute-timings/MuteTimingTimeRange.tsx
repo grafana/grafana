@@ -36,7 +36,7 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   return (
     <div>
       <Field
-        className={styles.field}
+        noMargin
         label={t('alerting.mute-timing-time-range.label-time-range', 'Time range')}
         description={t(
           'alerting.mute-timing-time-range.description-time-range',
@@ -173,9 +173,6 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  field: css({
-    marginBottom: 0,
-  }),
   timeRange: css({
     marginBottom: theme.spacing(1),
   }),

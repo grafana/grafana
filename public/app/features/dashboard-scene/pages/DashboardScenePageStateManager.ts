@@ -1,7 +1,8 @@
 import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, UserStorage } from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { sceneGraph } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
@@ -722,7 +723,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       throw new Error('Missing required parameters for template dashboard');
     }
 
-    const ds = getDataSourceSrv().getInstanceSettings(datasource);
+    const ds = await getDataSourceInstanceSettings(datasource);
     if (!ds) {
       throw new Error(`Datasource "${datasource}" not found. Please check your datasource configuration.`);
     }
@@ -757,7 +758,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const dashboardJson = gnetDashboard.json;
 
     // Interpolate in the frontend — no backend round-trip needed
-    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, [
+    const interpolatedDashboard = await interpolateV1Dashboard(dashboardJson, [
       {
         name: '*',
         type: 'datasource',
@@ -793,7 +794,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const dashboardJson = gnetDashboard.json;
 
     // Interpolate in the frontend — no backend round-trip needed
-    const interpolatedDashboard = interpolateV1Dashboard(dashboardJson, mappings);
+    const interpolatedDashboard = await interpolateV1Dashboard(dashboardJson, mappings);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard as DashboardDataDTO);
   }

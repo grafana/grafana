@@ -1231,6 +1231,25 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "[folder.not-empty]",
 	}, {
+		name: "folder not empty - contains recordingrules",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "rules.alerting.grafana.app",
+						Resource: "recordingrules",
+						Count:    22, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
 		name: "folder can be deleted when it only contains non-validated resource types",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{

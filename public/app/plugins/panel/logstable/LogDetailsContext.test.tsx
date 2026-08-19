@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { type ReactNode } from 'react';
 
+import { store } from '@grafana/data';
 import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 import { type LogListModel } from 'app/features/logs/components/panel/processing';
 
@@ -234,5 +235,44 @@ describe('LogDetailsContextProvider', () => {
       expect(result.current.showDetails.map((l) => l.uid)).toEqual([log1.uid, log2.uid]);
       expect(result.current.currentLog?.uid).toBe(log1.uid);
     });
+  });
+});
+
+describe('prettifyDetailsJSON', () => {
+  const storageKey = 'grafana.logstable.test.prettifyDetailsJSON';
+
+  afterEach(() => {
+    store.delete(`${storageKey}.prettifyDetailsJSON`);
+  });
+
+  function prettifyWrapper() {
+    return function Wrapper({ children }: { children: ReactNode }) {
+      return (
+        <LogDetailsContextProvider enableLogDetails logOptionsStorageKey={storageKey} logs={[log1, log2]}>
+          {children}
+        </LogDetailsContextProvider>
+      );
+    };
+  }
+
+  test('defaults to true', () => {
+    const { result } = renderHook(() => useLogDetailsContext(), {
+      wrapper: prettifyWrapper(),
+    });
+
+    expect(result.current.prettifyDetailsJSON).toBe(true);
+  });
+
+  test('setPrettifyDetailsJSON updates state and local storage', () => {
+    const { result } = renderHook(() => useLogDetailsContext(), {
+      wrapper: prettifyWrapper(),
+    });
+
+    act(() => {
+      result.current.setPrettifyDetailsJSON(false);
+    });
+
+    expect(result.current.prettifyDetailsJSON).toBe(false);
+    expect(store.getBool(`${storageKey}.prettifyDetailsJSON`, true)).toBe(false);
   });
 });

@@ -1046,6 +1046,24 @@
     },
     {
       "metadata": {
+        "name": "appplugins.loadAppManifest",
+        "resourceVersion": "1787026732819",
+        "creationTimestamp": "2026-08-18T03:50:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 04:18:52.819374 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Load app manifest when loading plugin definitions",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appplugins.registerAPIServer",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -1998,14 +2016,17 @@
     {
       "metadata": {
         "name": "datasources.azureMonitorBatchAPI",
-        "resourceVersion": "1786542896418",
-        "creationTimestamp": "2026-08-12T13:54:56Z"
+        "resourceVersion": "1786999851247",
+        "creationTimestamp": "2026-08-12T13:54:56Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-17 20:50:51.247936 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/data-sources-plugins",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2046,6 +2067,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.queryGateway",
+        "resourceVersion": "1786455922969",
+        "creationTimestamp": "2026-08-11T13:45:22Z"
+      },
+      "spec": {
+        "description": "Data source query gateway",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2265,7 +2300,8 @@
       "metadata": {
         "name": "dsAbstractionApp",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-18T13:19:09Z"
       },
       "spec": {
         "description": "Registers the dsabstraction app for querying datasources via unified SQL",
@@ -2684,6 +2720,20 @@
     },
     {
       "metadata": {
+        "name": "flameGraph.tableNg",
+        "resourceVersion": "1786566030661",
+        "creationTimestamp": "2026-08-12T20:20:30Z"
+      },
+      "spec": {
+        "description": "Renders the flame graph's top table using TableNG instead of the legacy Table",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "flameGraphWithCallTree",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -2865,6 +2915,21 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.dashboardsAutoHeightPanels",
+        "resourceVersion": "1787048864683",
+        "creationTimestamp": "2026-08-18T10:27:44Z"
+      },
+      "spec": {
+        "description": "Enables the auto-height feature for dashboard panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -3074,6 +3139,7 @@
         "name": "grafana.newPreferencesPage",
         "resourceVersion": "1783676521307",
         "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-17T12:25:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
         }
@@ -3161,6 +3227,23 @@
         "codeowner": "@grafana/datapro",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.panelPluginTransformations",
+        "resourceVersion": "1787070031960",
+        "creationTimestamp": "2026-08-17T16:38:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 16:20:31.960083 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Let panel plugins register system transformations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -3356,10 +3439,10 @@
     {
       "metadata": {
         "name": "grafana.viewPanelPane",
-        "resourceVersion": "1784896787869",
+        "resourceVersion": "1786705585860",
         "creationTimestamp": "2026-05-14T12:19:55Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-07-24 12:39:47.869351 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-08-14 11:06:25.860376 +0000 UTC"
         }
       },
       "spec": {
@@ -3367,7 +3450,6 @@
         "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "hideFromDocs": true,
         "expression": "true"
       }
     },
@@ -5569,6 +5651,20 @@
     },
     {
       "metadata": {
+        "name": "rawPrometheus.tableNg",
+        "resourceVersion": "1786565901949",
+        "creationTimestamp": "2026-08-12T20:18:21Z"
+      },
+      "spec": {
+        "description": "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "react19",
         "resourceVersion": "1781168092989",
         "creationTimestamp": "2026-05-22T09:03:04Z",
@@ -6270,6 +6366,21 @@
     },
     {
       "metadata": {
+        "name": "table.refresh",
+        "resourceVersion": "1786399613696",
+        "creationTimestamp": "2026-08-10T22:06:53Z"
+      },
+      "spec": {
+        "description": "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tableSharedCrosshair",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-12-13T09:33:14Z"
@@ -6403,6 +6514,21 @@
         "description": "Enables time pickers sync",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "tracesDrilldown.useValueTypeFiltering",
+        "resourceVersion": "1787032167500",
+        "creationTimestamp": "2026-08-18T05:49:27Z"
+      },
+      "spec": {
+        "description": "Enables value type filtering in Traces Drilldown",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

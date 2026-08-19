@@ -765,6 +765,10 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
+	// SearchEnforceSortCapability rejects a sort on a field that does not declare
+	// sorting. Off by default: violations are counted first, so they can be fixed
+	// before requests start failing.
+	SearchEnforceSortCapability bool
 	// SearchPostRankAuthz enables the post-filter authorization search path:
 	// bleve ranks without the in-searcher authz wrapper and authorization runs
 	// app-side in rank order with early exit once the page is filled.
@@ -2117,7 +2121,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	auth := iniFile.Section("auth")
 
-	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
+	readOAuthAllowInsecureEmailLookup(iniFile, cfg)
 
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
@@ -2133,7 +2137,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Default to the translation key used in the frontend
 	cfg.OAuthLoginErrorMessage = valueAsString(auth, "oauth_login_error_message", "oauth.login.error")
 	readOAuthCookieMaxAge(iniFile, cfg)
-	cfg.OAuthRefreshTokenServerLockMinWaitMs = auth.Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(1000)
+	readOAuthRefreshLockSettings(iniFile, cfg)
 	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
 	// Deprecated

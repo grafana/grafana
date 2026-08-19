@@ -35,8 +35,10 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
     closeDetails,
     enableLogDetails,
     logs,
+    prettifyDetailsJSON,
     replaceDetails,
     setCurrentLog,
+    setPrettifyDetailsJSON,
     showDetails,
     toggleDetails,
   } = useLogDetailsContext();
@@ -208,7 +210,9 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
               <LogLineDetailsComponent
                 log={currentLog}
                 logs={logs}
+                prettifyDetailsJSON={prettifyDetailsJSON}
                 search={search}
+                setPrettifyDetailsJSON={setPrettifyDetailsJSON}
                 timeRange={timeRange}
                 timeZone={timeZone}
               />

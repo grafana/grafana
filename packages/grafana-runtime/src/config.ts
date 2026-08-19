@@ -8,6 +8,7 @@ import {
   type BuildInfo,
   type DataSourceInstanceSettings,
   type FeatureToggles,
+  type GrafanaJavascriptAgentConfig,
   type GrafanaTheme,
   type GrafanaTheme2,
   type LicenseInfo,
@@ -156,7 +157,7 @@ export class GrafanaBootConfig {
   supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
-  grafanaJavascriptAgent = {
+  grafanaJavascriptAgent: GrafanaJavascriptAgentConfig = {
     enabled: false,
     apiKey: '',
     customEndpoint: '',

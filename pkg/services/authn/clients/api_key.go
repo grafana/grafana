@@ -85,7 +85,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	return newServiceAccountIdentity(key), nil
 }
 
-func (s *APIKey) IsEnabled() bool {
+func (s *APIKey) IsEnabled(context.Context) bool {
 	return true
 }
 
@@ -156,12 +156,16 @@ func (s *APIKey) Priority() uint {
 }
 
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	ctx, span := s.tracer.Start(ctx, "authn.apikey.Hook") //nolint:ineffassign,staticcheck
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.Hook")
 	defer span.End()
 
 	if r.GetMeta(metaKeySkipLastUsed) != "" {
 		return nil
 	}
+
+	// Detach the write from the request deadline but keep context values, so
+	// stores that resolve their database from the context keep working.
+	updateCtx := context.WithoutCancel(ctx)
 
 	go func(keyID string, logger log.Logger) {
 		defer func() {
@@ -176,7 +180,7 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 			return
 		}
 
-		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
+		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(updateCtx, id); err != nil {
 			logger.Warn("Failed to update last used date for api key", "id", keyID, "err", err)
 			return
 		}
