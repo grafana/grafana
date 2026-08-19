@@ -196,6 +196,7 @@ type Cfg struct {
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
 	ProvisioningRepositoryTypes               []string
+	ProvisioningConnectionTypes               []string
 	ProvisioningLokiURL                       string
 	ProvisioningLokiUser                      string
 	ProvisioningLokiPassword                  string
@@ -2119,7 +2120,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	auth := iniFile.Section("auth")
 
-	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
+	readOAuthAllowInsecureEmailLookup(iniFile, cfg)
 
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
@@ -2543,6 +2544,19 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 			}
 
 			cfg.ProvisioningRepositoryTypes[i] = s
+		}
+	}
+
+	connectionTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "connection_types", ""))
+	if connectionTypes != "|" && connectionTypes != "" {
+		cfg.ProvisioningConnectionTypes = strings.Split(connectionTypes, "|")
+		for i, s := range cfg.ProvisioningConnectionTypes {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning connection type is empty in '%s' (at index %d)", connectionTypes, i)
+			}
+
+			cfg.ProvisioningConnectionTypes[i] = s
 		}
 	}
 

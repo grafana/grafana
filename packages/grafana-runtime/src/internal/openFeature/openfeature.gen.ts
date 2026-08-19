@@ -67,6 +67,8 @@ export const FlagKeys = {
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** Enables the auto-height feature for dashboard panels */
+  GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
   /** Check for the existence of logs when linking from the Trace View */
   GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
@@ -85,14 +87,14 @@ export const FlagKeys = {
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Enables a new UI for query errors and notices */
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
-  /** Whether to use the new SharedPreferences functional component */
-  GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables the new text panel */
   GrafanaNewTextPanel: "grafana.newTextPanel",
   /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Let panel plugins register system transformations */
+  GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -177,6 +179,8 @@ export const FlagKeys = {
   TableInspectDataTableNG: "table.inspectDataTableNG",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
+  /** Enables the refreshed table experience: reworked column headers and ad hoc column interactions */
+  TableRefresh: "table.refresh",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
   /** Enables value type filtering in Traces Drilldown */
@@ -483,6 +487,17 @@ export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvalu
 };
 
 /**
+ * Enables the auto-height feature for dashboard panels
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardsAutoHeightPanels`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardsAutoHeightPanels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardsAutoHeightPanels", false, options).value;
+};
+
+/**
  * Check for the existence of logs when linking from the Trace View
  *
  * **Details:**
@@ -582,17 +597,6 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
 };
 
 /**
- * Whether to use the new SharedPreferences functional component
- *
- * **Details:**
- * - flag key: `grafana.newPreferencesPage`
- * - default value: `true`
- */
-export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.newPreferencesPage", true, options).value;
-};
-
-/**
  * Enables the new text panel
  *
  * **Details:**
@@ -623,6 +627,17 @@ export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Let panel plugins register system transformations
+ *
+ * **Details:**
+ * - flag key: `grafana.panelPluginTransformations`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelPluginTransformations", false, options).value;
 };
 
 /**
@@ -1085,6 +1100,17 @@ export const useFlagTableInspectDataTableNG = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.paginationPageSize", false, options).value;
+};
+
+/**
+ * Enables the refreshed table experience: reworked column headers and ad hoc column interactions
+ *
+ * **Details:**
+ * - flag key: `table.refresh`
+ * - default value: `false`
+ */
+export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refresh", false, options).value;
 };
 
 /**
