@@ -55,7 +55,7 @@ func translateGitHubError(err error) error {
 		// 403 - Permission denied
 		// Special case: rate limit gets additional context
 		if strings.Contains(strings.ToLower(ghMessage), "rate limit") {
-			return fmt.Errorf("API rate limit exceeded: %w", repo.ErrPermissionDenied)
+			return fmt.Errorf("API rate limit exceeded: %w", repo.ErrTooManyRequests)
 		}
 		return repo.ErrPermissionDenied
 

@@ -3,11 +3,12 @@ import { take } from 'lodash';
 import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type DataQueryError, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { type SceneQueryRunner } from '@grafana/scenes';
 import {
+  Alert,
   Box,
   Button,
   EmptyState,
@@ -41,6 +42,7 @@ type WorkbenchProps = {
   isInitialLoading?: boolean;
   isRefreshing?: boolean;
   hasActiveFilters?: boolean;
+  error?: DataQueryError;
 };
 
 const initialSize = 2 / 3;
@@ -125,6 +127,36 @@ function WorkbenchEmptyState({ hasActiveFilters }: { hasActiveFilters: boolean }
   );
 }
 
+function WorkbenchQueryError({ error }: { error: DataQueryError }) {
+  // Not having the "query" permission on the data source holding alert state history is by far the
+  // most common way this query fails, and the message the API returns for it doesn't say how to fix it.
+  const isPermissionError = error.status === 403;
+
+  return (
+    <Box display="flex" grow={1} alignItems="center" justifyContent="center" minHeight="400px">
+      <Alert severity="error" title={t('alerting.triage.query-error-title', 'Unable to load alert instances')}>
+        <Stack direction="column" gap={1}>
+          {isPermissionError ? (
+            <Trans i18nKey="alerting.triage.query-error-forbidden">
+              This page reads alert state history from a Prometheus data source, and you do not have permission to query
+              it. Ask an administrator to grant you the query permission for that data source.
+            </Trans>
+          ) : (
+            <Trans i18nKey="alerting.triage.query-error-generic">
+              The query for alert instances failed, so we cannot tell which alerts are firing or pending.
+            </Trans>
+          )}
+          {error.message && (
+            <Text variant="bodySmall" color="secondary">
+              {error.message}
+            </Text>
+          )}
+        </Stack>
+      </Alert>
+    </Box>
+  );
+}
+
 /**
  * The workbench displays groups of alerts, each group containing metadata and a chart.
  * Alerts can be arbitrarily grouped by any number of labels. By default all instances are grouped by alertname.
@@ -170,6 +202,7 @@ export function Workbench({
   isInitialLoading = false,
   isRefreshing = false,
   hasActiveFilters = false,
+  error,
 }: WorkbenchProps) {
   const styles = useStyles2(getStyles);
 
@@ -190,7 +223,10 @@ export function Workbench({
   // Calculate once: show folder metadata only if not grouping by grafana_folder
   const enableFolderMeta = !groupBy?.includes('grafana_folder');
 
-  const showEmptyState = !isInitialLoading && data.length === 0;
+  const hasNoRows = data.length === 0;
+  // A failed query means we don't know what is firing, so showing "no alerts" here would be a lie.
+  const queryError = hasNoRows ? error : undefined;
+  const showEmptyState = !isInitialLoading && !queryError && hasNoRows;
   const showData = data.length > 0;
   // splitter for template and payload editor
   const splitter = useSplitter({
@@ -209,6 +245,15 @@ export function Workbench({
   const itemsToRender = pageIndex * DEFAULT_PER_PAGE_PAGINATION;
   const dataSlice = take(data, itemsToRender);
   const hasMore = data.length > itemsToRender;
+
+  if (queryError) {
+    return (
+      <Stack gap={0} grow={1} width="100%" height="100%">
+        <LabelsColumn />
+        <WorkbenchQueryError error={queryError} />
+      </Stack>
+    );
+  }
 
   if (showEmptyState) {
     return (

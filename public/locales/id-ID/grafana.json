@@ -1611,17 +1611,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Yakin ingin memulai impor? Tindakan ini akan membuat sumber daya baru di Grafana Alerting.",
         "confirm": "Mulai Impor",
@@ -1669,26 +1658,6 @@
       "info-description": "Panduan ini membantu Anda mengimpor aturan peringatan dan sumber daya notifikasi dari sumber eksternal ke Grafana Alerting. Untuk informasi selengkapnya, lihat <2>dokumentasi</2>.",
       "info-title": "Wizard impor",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Ketik untuk mencari namespace yang ada",
         "label": "Ruang nama"
@@ -1712,10 +1681,6 @@
         "filter": "Filter",
         "folder": "Folder target",
         "heading": "Tinjau Impor",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Ruang nama",
         "nothing": "Tidak ada yang dapat diimpor",
         "nothing-desc": "Kedua langkah dilewati. Kembali dan konfigurasikan setidaknya satu sumber impor.",
@@ -1742,10 +1707,6 @@
         "validation-warning": "Beberapa sumber daya akan diganti namanya untuk menghindari konflik.",
         "will-import-config": "Akan mengimpor konfigurasi ini",
         "will-import-rules": "Akan mengimpor aturan",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_other": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_other": "Akan mengimpor {{count}} aturan"
       },
       "routing-tree": {
@@ -1856,14 +1817,10 @@
         "cancel-confirm-title": "Batalkan impor?",
         "cancel-confirm-yes": "Buang perubahan",
         "skip": "Lewati",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Sumber daya notifikasi",
         "step-notifications-desc": "Titik kontak, kebijakan, templat",
         "step-review": "Tinjau & impor",
         "step-review-desc": "Pratinjau dan konfirmasikan impor",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Aturan peringatan",
         "step-rules-desc": "Aturan peringatan dan perekaman"
       },
@@ -3283,6 +3240,35 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3841,6 +3827,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Gagal mengimpor sumber daya",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Berhasil mengimpor sumber daya ke Grafana Alerting."
     },
     "yaml-content-info": {
@@ -6026,6 +6014,7 @@
       "new-row-title": "Baris baru",
       "row": {
         "collapse": "Ciutkan baris {{title}}",
+        "copy-link": "",
         "expand": "Perluas baris {{title}}",
         "new": "Baris baru",
         "repeat": {
@@ -8876,11 +8865,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -12701,6 +12693,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -12715,6 +12713,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",

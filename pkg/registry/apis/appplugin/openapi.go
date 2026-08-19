@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	kcommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins/openapi"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 )
 
 func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
@@ -82,7 +82,7 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 		schema.SettingsSchema = defaultSchema().SettingsSchema
 	}
 
-	return openapi.AugmentOpenAPI(oas, openapi.PluginOptions{
+	return definition.AugmentOpenAPI(oas, definition.SettingsResource{
 		Schema:   schema,
 		Resource: ps,
 		SpecName: "SettingsSpec",

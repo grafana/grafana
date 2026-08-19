@@ -146,15 +146,10 @@ func TestSubscriber(t *testing.T) {
 
 	t.Run("counts slow-consumer async errors", func(t *testing.T) {
 		m := newSubscriberMetrics()
-		cfg := setting.NATSSettings{Enabled: true}
-		sub := newSubscriber(log.NewNopLogger(), m, newConfig(cfg, nil))
 
-		// Drive the connection's async error hook directly: slow-consumer errors are
-		// counted, unrelated async errors are ignored.
-		sub.onAsyncError(natsclient.ErrSlowConsumer)
-		sub.onAsyncError(context.Canceled)
+		m.recordAsyncError(&natsclient.Subscription{Subject: "us.watch.v1.provisioning.grafana.app.stacks-1.jobs"}, natsclient.ErrSlowConsumer)
 
-		require.Equal(t, float64(1), testutil.ToFloat64(m.slowConsumers))
+		require.Equal(t, float64(1), testutil.ToFloat64(m.asyncErrors.WithLabelValues("provisioning.grafana.app", "jobs", reasonSlowConsumer)))
 	})
 
 	t.Run("subscribe honours a cancelled context", func(t *testing.T) {
