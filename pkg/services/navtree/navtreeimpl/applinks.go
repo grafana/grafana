@@ -197,7 +197,7 @@ type pendingInclude struct {
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	assistantTrialMode := s.isAssistantTrialMode(plugin, c)
-	assistantOSSMode := s.isAssistantOSSMode(plugin, c)
+	assistantOSSMode, assistantOSSModeSet := s.assistantOSSMode(plugin, c)
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -224,7 +224,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			continue
 		}
 
-		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode, assistantOSSMode) {
+		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode, assistantOSSMode, assistantOSSModeSet) {
 			continue
 		}
 
@@ -349,16 +349,11 @@ func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *context
 	return ok && value
 }
 
-func (s *ServiceImpl) isAssistantOSSMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
+func (s *ServiceImpl) assistantOSSMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) (ossMode bool, set bool) {
 	if plugin.ID != assistantAppID {
-		return false
+		return false, false
 	}
-	value, ok := s.assistantPluginJSONDataBool(plugin, c, "ossMode")
-	if !ok {
-		// Match the plugin: unset ossMode means OSS.
-		return true
-	}
-	return value
+	return s.assistantPluginJSONDataBool(plugin, c, "ossMode")
 }
 
 func (s *ServiceImpl) assistantPluginJSONDataBool(plugin pluginstore.Plugin, c *contextmodel.ReqContext, key string) (bool, bool) {
@@ -378,7 +373,7 @@ func (s *ServiceImpl) assistantPluginJSONDataBool(plugin pluginstore.Plugin, c *
 	return value, ok
 }
 
-func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes, trialMode, ossMode bool) bool {
+func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes, trialMode, ossMode, ossModeSet bool) bool {
 	if plugin.ID != assistantAppID {
 		return true
 	}
@@ -386,12 +381,21 @@ func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin
 		_, allowed := assistantTrialNavigationPaths[include.Path]
 		return allowed
 	}
-	if ossMode {
-		_, allowed := assistantOSSNavigationPaths[include.Path]
-		return allowed
+	if ossModeSet {
+		if ossMode {
+			_, allowed := assistantOSSNavigationPaths[include.Path]
+			return allowed
+		}
+		return true
 	}
-
-	return true
+	// ossMode was not persisted or plugin settings could not be read. Keep the
+	// previous Cloud/Enterprise default so unprovisioned stacks still show
+	// Cloud-only pages.
+	if s.cfg.IsEnterprise || s.cfg.StackID != "" {
+		return true
+	}
+	_, allowed := assistantOSSNavigationPaths[include.Path]
+	return allowed
 }
 
 // attachPendingIncludes puts pages under their nearest path ancestor when nesting

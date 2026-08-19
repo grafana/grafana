@@ -950,10 +950,11 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 		name           string
 		cfg            *setting.Cfg
 		jsonData       map[string]any
+		omitSettings   bool
 		wantChildPaths []string
 	}{
 		{
-			name:           "unset ossMode defaults to supported OSS entries",
+			name:           "unset ossMode on OSS Grafana only includes supported OSS entries",
 			jsonData:       map[string]any{},
 			wantChildPaths: ossChildPaths,
 		},
@@ -980,6 +981,24 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			wantChildPaths: ossChildPaths,
 		},
 		{
+			name:           "unset ossMode on Enterprise includes all entries",
+			cfg:            &setting.Cfg{IsEnterprise: true},
+			jsonData:       map[string]any{},
+			wantChildPaths: cloudChildPaths,
+		},
+		{
+			name:           "unset ossMode on Cloud includes all entries",
+			cfg:            &setting.Cfg{StackID: "1"},
+			jsonData:       map[string]any{},
+			wantChildPaths: cloudChildPaths,
+		},
+		{
+			name:           "missing plugin settings on Enterprise includes all entries",
+			cfg:            &setting.Cfg{IsEnterprise: true},
+			omitSettings:   true,
+			wantChildPaths: cloudChildPaths,
+		},
+		{
 			name: "Trial mode only includes the homepage and workspace",
 			jsonData: map[string]any{
 				"trialMode": true,
@@ -995,11 +1014,13 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			if cfg == nil {
 				cfg = setting.NewCfg()
 			}
+			plugins := map[string]*pluginsettings.DTO{}
+			if !tt.omitSettings {
+				plugins[assistantAppID] = &pluginsettings.DTO{OrgID: 1, PluginID: assistantAppID, JSONData: tt.jsonData}
+			}
 			service := ServiceImpl{
-				cfg: cfg,
-				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-					assistantAppID: {OrgID: 1, PluginID: assistantAppID, JSONData: tt.jsonData},
-				}},
+				cfg:            cfg,
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: plugins},
 			}
 			treeRoot := navtree.NavTreeRoot{}
 			service.processAppPlugin(assistantApp, reqCtx, &treeRoot)
