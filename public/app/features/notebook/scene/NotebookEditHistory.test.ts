@@ -64,6 +64,21 @@ describe('NotebookEditHistory', () => {
     expect(history.undo()).toBe(false);
   });
 
+  it('restores redo history when a live transaction is discarded', () => {
+    const history = new NotebookEditHistory();
+    const original = { label: 'add block', perform: jest.fn(), undo: jest.fn() };
+    const transient = { label: 'edit code', perform: jest.fn(), undo: jest.fn() };
+
+    history.execute(original);
+    history.undo();
+    history.record(transient);
+    history.discard(transient);
+
+    expect(history.state).toEqual({ canUndo: false, canRedo: true, undoLabel: undefined, redoLabel: 'add block' });
+    expect(history.redo()).toBe(true);
+    expect(original.perform).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps an action available when undo fails', () => {
     const history = new NotebookEditHistory();
     history.execute({

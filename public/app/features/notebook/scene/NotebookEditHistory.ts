@@ -18,6 +18,7 @@ export interface NotebookEditHistoryState {
 export class NotebookEditHistory extends StateManagerBase<NotebookEditHistoryState> {
   private undoStack: NotebookEditAction[] = [];
   private redoStack: NotebookEditAction[] = [];
+  private redoStackBeforeRecord = new WeakMap<NotebookEditAction, NotebookEditAction[]>();
 
   public constructor() {
     super({ canUndo: false, canRedo: false });
@@ -29,6 +30,7 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
   }
 
   public record(action: NotebookEditAction): void {
+    this.redoStackBeforeRecord.set(action, this.redoStack);
     this.undoStack.push(action);
     if (this.undoStack.length > MAX_HISTORY_LENGTH) {
       this.undoStack.shift();
@@ -43,6 +45,8 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
     }
 
     this.undoStack.pop();
+    this.redoStack = this.redoStackBeforeRecord.get(action) ?? this.redoStack;
+    this.redoStackBeforeRecord.delete(action);
     this.publishState();
   }
 
