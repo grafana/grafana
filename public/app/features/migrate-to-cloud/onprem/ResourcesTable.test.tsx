@@ -1,7 +1,8 @@
 import { render as rtlRender, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { setBackendSrv, config } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
+import { setDataSourceInstanceSettings, setDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import {
@@ -34,24 +35,14 @@ function render(props: Partial<ResourcesTableProps>) {
 describe('ResourcesTable', () => {
   registerMockAPI();
 
-  let originalDatasources: (typeof config)['datasources'];
-
   const datasourceA = wellFormedDatasource(1, {
     uid: 'datasource-a-uid',
     name: 'Datasource A',
   });
 
-  beforeAll(() => {
-    originalDatasources = config.datasources;
-
-    config.datasources = {
-      ...config.datasources,
-      [datasourceA.name]: datasourceA,
-    };
-  });
-
-  afterAll(() => {
-    config.datasources = originalDatasources;
+  beforeEach(() => {
+    setDataSourceInstanceSettings({ [datasourceA.name]: datasourceA });
+    setDatasourcePluginMetas({ [datasourceA.type]: datasourceA.meta });
   });
 
   it('renders data sources', async () => {
@@ -63,16 +54,16 @@ describe('ResourcesTable', () => {
 
     render({ resources });
 
-    expect(screen.getByText('Datasource A')).toBeInTheDocument();
+    expect(await screen.findByText('Datasource A')).toBeInTheDocument();
   });
 
-  it('renders data sources when their data is missing', () => {
+  it('renders data sources when their data is missing', async () => {
     const item = wellFormedDatasourceMigrationItem(2);
     const resources = [item];
 
     render({ resources });
 
-    expect(screen.getByText(`Data source ${item.refId}`)).toBeInTheDocument();
+    expect(await screen.findByText(`Data source ${item.refId}`)).toBeInTheDocument();
     expect(screen.getByText(`Unknown data source`)).toBeInTheDocument();
   });
 
@@ -119,7 +110,7 @@ describe('ResourcesTable', () => {
     expect(await screen.findByText('Library Element library-element-404')).toBeInTheDocument();
   });
 
-  it('renders the success status correctly', () => {
+  it('renders the success status correctly', async () => {
     const resources = [
       wellFormedDatasourceMigrationItem(1, {
         refId: datasourceA.uid,
@@ -128,11 +119,12 @@ describe('ResourcesTable', () => {
     ];
 
     render({ resources });
+    await screen.findByText('Datasource A');
 
     expect(screen.getByText('Uploaded to cloud')).toBeInTheDocument();
   });
 
-  it('renders the error status correctly', () => {
+  it('renders the error status correctly', async () => {
     const resources = [
       wellFormedDatasourceMigrationItem(1, {
         refId: datasourceA.uid,
@@ -141,11 +133,12 @@ describe('ResourcesTable', () => {
     ];
 
     render({ resources });
+    await screen.findByText('Datasource A');
 
     expect(screen.getByText('Error')).toBeInTheDocument();
   });
 
-  it("shows a details button when there's an error message", () => {
+  it("shows a details button when there's an error message", async () => {
     const resources = [
       wellFormedDatasourceMigrationItem(1, {
         refId: datasourceA.uid,
@@ -155,6 +148,7 @@ describe('ResourcesTable', () => {
     ];
 
     render({ resources });
+    await screen.findByText('Datasource A');
 
     expect(
       screen.getByRole('button', {
@@ -163,7 +157,7 @@ describe('ResourcesTable', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the warning status correctly', () => {
+  it('renders the warning status correctly', async () => {
     const resources = [
       wellFormedDatasourceMigrationItem(1, {
         refId: datasourceA.uid,
@@ -172,11 +166,12 @@ describe('ResourcesTable', () => {
     ];
 
     render({ resources });
+    await screen.findByText('Datasource A');
 
     expect(screen.getByText('Uploaded with warning')).toBeInTheDocument();
   });
 
-  it("shows a details button when there's a warning message", () => {
+  it("shows a details button when there's a warning message", async () => {
     const resources = [
       wellFormedDatasourceMigrationItem(1, {
         refId: datasourceA.uid,
@@ -186,6 +181,7 @@ describe('ResourcesTable', () => {
     ];
 
     render({ resources });
+    await screen.findByText('Datasource A');
 
     expect(
       screen.getByRole('button', {
