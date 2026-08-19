@@ -31,12 +31,17 @@ func TestIsConnStateErr(t *testing.T) {
 }
 
 func TestRecordAsyncError(t *testing.T) {
-	// The exact text nats-server sends for a rejected publish, as nats.go wraps it
-	// (see processErr -> processTransientError). Publish has already returned nil
-	// by the time this arrives, and the *Subscription is nil, so the subject is
-	// only available from the message itself.
+	// The exact text nats-server sends for a rejected publish or subscribe, as
+	// nats.go wraps it (see processErr -> processTransientError). Both arrive with
+	// a nil *Subscription, so the subject is only available from the message.
 	publishViolation := func(subject string) error {
 		return fmt.Errorf("%w: Permissions Violation for Publish to %q", natsclient.ErrPermissionViolation, subject)
+	}
+	subscribeViolation := func(subject string) error {
+		return fmt.Errorf("%w: Permissions Violation for Subscription to %q", natsclient.ErrPermissionViolation, subject)
+	}
+	queueSubscribeViolation := func(subject, queue string) error {
+		return fmt.Errorf("%w: Permissions Violation for Subscription to %q using queue %q", natsclient.ErrPermissionViolation, subject, queue)
 	}
 
 	tests := []struct {
@@ -60,12 +65,23 @@ func TestRecordAsyncError(t *testing.T) {
 			wantReason: reasonPermissionsViolation,
 		},
 		{
-			name:         "rejected subscribe is attributed from the subscription",
-			sub:          &natsclient.Subscription{Subject: "us.watch.v1.dashboard.grafana.app.stacks-1.dashboards"},
-			err:          natsclient.ErrPermissionViolation,
+			name:         "rejected subscribe is attributed to its group and resource",
+			err:          subscribeViolation("us.watch.v1.dashboard.grafana.app.stacks-1.dashboards"),
 			wantGroup:    "dashboard.grafana.app",
 			wantResource: "dashboards",
 			wantReason:   reasonPermissionsViolation,
+		},
+		{
+			name:         "rejected queue subscribe is attributed to its group and resource",
+			err:          queueSubscribeViolation("us.watch.v1.dashboard.grafana.app.stacks-1.dashboards", "dashboards-workers"),
+			wantGroup:    "dashboard.grafana.app",
+			wantResource: "dashboards",
+			wantReason:   reasonPermissionsViolation,
+		},
+		{
+			name:       "rejected subscribe on a subject this bus does not own",
+			err:        subscribeViolation("some.other.subject"),
+			wantReason: reasonPermissionsViolation,
 		},
 		{
 			name:         "slow consumer keeps the subscription's attribution",

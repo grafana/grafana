@@ -26,12 +26,14 @@ var connStateErrs = []error{
 	natsclient.ErrConnectionDraining,
 }
 
-// publishPermissionsRe extracts the subject from a publish permissions
-// violation. The server names the rejected subject in the error text only —
-// nats.go passes a nil *Subscription for a publish rejection, since no
-// subscription is involved — so the subject has to be read back out of the
-// message. Mirrors nats.go's own permissionsRe for the subscribe direction.
-var publishPermissionsRe = regexp.MustCompile(`Publish to "(\S+)"`)
+// permissionsSubjectRes extract the rejected subject from a permissions
+// violation. nats.go reports these through processTransientError, which always
+// passes a nil *Subscription — for subscribe rejections as much as publish ones
+// — so the subject is only available from the error text.
+var permissionsSubjectRes = []*regexp.Regexp{
+	regexp.MustCompile(`Publish to "(\S+)"`),
+	regexp.MustCompile(`Subscription to "(\S+)"`),
+}
 
 func isConnStateErr(err error) bool {
 	for _, target := range connStateErrs {
@@ -67,8 +69,11 @@ func asyncErrorSubject(sub *natsclient.Subscription, err error) string {
 	if sub != nil {
 		return sub.Subject
 	}
-	if match := publishPermissionsRe.FindStringSubmatch(err.Error()); len(match) == 2 {
-		return match[1]
+	msg := err.Error()
+	for _, re := range permissionsSubjectRes {
+		if match := re.FindStringSubmatch(msg); len(match) == 2 {
+			return match[1]
+		}
 	}
 	return ""
 }
