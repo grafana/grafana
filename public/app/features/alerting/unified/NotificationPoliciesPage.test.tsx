@@ -448,6 +448,30 @@ describe.each([
       `Muted when ${TIME_INTERVAL_NAME_HAPPY_PATH}, ${TIME_INTERVAL_NAME_FILE_PROVISIONED}`
     );
   });
+
+  it('Can add a child route without permission to read alert instances', async () => {
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+      ...PERMISSIONS_NOTIFICATION_POLICIES,
+    ]);
+
+    const { user } = renderPage();
+
+    const rootRoute = await getRootRoute();
+    await user.click(within(rootRoute).getByRole('button', { name: /add route/i }));
+
+    const addModal = await screen.findByRole('dialog');
+    await user.type(within(addModal).getByPlaceholderText('label'), 'team');
+    await user.type(within(addModal).getByPlaceholderText('value'), 'alerting');
+    await user.click(within(addModal).getByRole('button', { name: /add route/i }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('alert', { name: /failed to add or update notification policy/i })
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe('Non-Grafana alertmanagers', () => {

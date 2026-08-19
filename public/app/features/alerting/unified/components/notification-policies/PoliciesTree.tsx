@@ -227,17 +227,17 @@ export const PoliciesTree = ({
   }
 
   function handleActionResult({ error }: { error?: Error }) {
-    if (!error) {
-      appNotification.success('Updated notification policies');
+    try {
+      if (!error) {
+        appNotification.success('Updated notification policies');
+      }
+      refetchAlertGroups?.();
+    } finally {
+      // close all modals, even if refreshing the instance preview failed
+      closeEditModal();
+      closeAddModal();
+      closeDeleteModal();
     }
-    if (selectedAlertmanager && refetchAlertGroups) {
-      refetchAlertGroups();
-    }
-
-    // close all modals
-    closeEditModal();
-    closeAddModal();
-    closeDeleteModal();
   }
 
   const updatingTree = anyOfRequestState(

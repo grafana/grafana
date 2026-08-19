@@ -149,10 +149,14 @@ function PolicyTreeTab() {
 
   // Single worker + alert groups query shared by all PoliciesTree instances
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
-  const { currentData: alertGroups, refetch: refetchAlertGroups } = alertmanagerApi.useGetAlertmanagerAlertGroupsQuery(
+  const skipAlertGroups = !canSeeAlertGroups || !selectedAlertmanager;
+  const { currentData: alertGroups, refetch } = alertmanagerApi.useGetAlertmanagerAlertGroupsQuery(
     { amSourceName: selectedAlertmanager },
-    { skip: !canSeeAlertGroups || !selectedAlertmanager }
+    { skip: skipAlertGroups }
   );
+  // RTK Query throws when refetch() is called for a query that never started, so only
+  // hand down the refetch callback when the query is actually running.
+  const refetchAlertGroups = skipAlertGroups ? undefined : refetch;
 
   const useMultiplePolicies = isGrafanaAlertmanager;
 
