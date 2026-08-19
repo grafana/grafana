@@ -44,7 +44,6 @@ export function ModalBase({
 }: PropsWithChildren<ModalBaseProps>) {
   const styles = useStyles2(getModalStyles);
   const theme = useTheme2();
-  const modalRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
 
   const { context, refs } = useFloating({
