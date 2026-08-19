@@ -5,16 +5,19 @@ import { byRole, byTestId } from 'testing-library-selector';
 import { OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { DMAStatus, useDMAStatus } from '../hooks/useDMAStatus';
+import type * as useDMAStatusModule from '../hooks/useDMAStatus';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
-import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
+import { addPlugin, setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { setupAutoSyncConfig } from '../mocks/server/handlers/k8s/config.k8s';
 import { type RulesFilter } from '../search/rulesSearchParser';
 import { setupDataSources } from '../testSetup/datasources';
+import { prometheusAlertingPluginMeta } from '../testSetup/plugins';
 
 import RuleListPage, { RuleListActions } from './RuleList.v2';
 import { loadDefaultSavedSearch } from './filter/useSavedSearches';
@@ -29,6 +32,8 @@ jest.mock('./GroupedView', () => ({
   GroupedView: () => <div data-testid="grouped-view">Grouped View</div>,
 }));
 
+// Mocked so most tests can drive DMA status synchronously; the one test that exercises
+// plugin-managed DMA restores the real implementation and drives it through MSW instead.
 jest.mock('../hooks/useDMAStatus', () => {
   const actual = jest.requireActual('../hooks/useDMAStatus');
 
@@ -37,6 +42,8 @@ jest.mock('../hooks/useDMAStatus', () => {
     useDMAStatus: jest.fn(),
   };
 });
+
+const actualUseDMAStatus = jest.requireActual<typeof useDMAStatusModule>('../hooks/useDMAStatus').useDMAStatus;
 
 jest.mock('./filter/useSavedSearches', () => ({
   ...jest.requireActual('./filter/useSavedSearches'),
@@ -101,12 +108,15 @@ describe('RuleListPage v2', () => {
   });
 
   it('hides the data source recording-rule action when the plugin manages DMA', async () => {
-    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByPlugin });
+    useDMAStatusMock.mockImplementation(actualUseDMAStatus);
+    invalidatePluginSettingsCache(prometheusAlertingPluginMeta.id);
+    addPlugin(prometheusAlertingPluginMeta);
     grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
 
     const { user } = render(<RuleListPage />);
 
-    await user.click(byTestId(selectors.pages.Alerting.RuleList.moreMenu.triggerButton).get());
+    const moreButton = await byTestId(selectors.pages.Alerting.RuleList.moreMenu.triggerButton).find();
+    await user.click(moreButton);
     const menu = await byRole('menu').find();
 
     expect(byRole('menuitem', { name: /new data source recording rule/i }).query(menu)).not.toBeInTheDocument();

@@ -82,6 +82,7 @@ function GroupEditPage() {
           This rule group cannot be edited from Grafana.
         </Trans>
       }
+      pageNav={{ text: t('alerting.group-edit.page-title', 'Edit rule group') }}
     >
       <GroupEditPageContent dataSourceUid={dataSourceUid} namespaceId={namespaceId} groupName={groupName} />
     </DMARouteGuard>

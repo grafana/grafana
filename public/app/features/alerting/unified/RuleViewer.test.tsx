@@ -2,24 +2,19 @@ import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
+import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 
 import RuleViewer from './RuleViewer';
-import { DMAStatus, useDMAStatus } from './hooks/useDMAStatus';
+import { setupMswServer } from './mockApi';
+import { addPlugin } from './mocks/server/configure';
 import { alertingFactory } from './mocks/server/db';
+import { prometheusAlertingPluginMeta } from './testSetup/plugins';
 
-jest.mock('./hooks/useDMAStatus', () => ({
-  ...jest.requireActual('./hooks/useDMAStatus'),
-  useDMAStatus: jest.fn(),
-}));
-
-const useDMAStatusMock = jest.mocked(useDMAStatus);
 const prometheusDataSource = alertingFactory.dataSource.vanillaPrometheus().build();
 
-describe('Rule Viewer page', () => {
-  beforeEach(() => {
-    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByGrafana });
-  });
+setupMswServer();
 
+describe('Rule Viewer page', () => {
   it('should throw an error if rule ID cannot be decoded', () => {
     // Assertions must live in the test body, not in the mock implementation — an expect() that
     // throws inside React's error logging path escapes as an uncaught exception and gets attributed
@@ -40,7 +35,8 @@ describe('Rule Viewer page', () => {
   });
 
   it('redirects data source-managed rules to the plugin', async () => {
-    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByPlugin });
+    invalidatePluginSettingsCache(prometheusAlertingPluginMeta.id);
+    addPlugin(prometheusAlertingPluginMeta);
     const identifier = 'pri$Prometheus$namespace$group$rule$hash';
 
     render(

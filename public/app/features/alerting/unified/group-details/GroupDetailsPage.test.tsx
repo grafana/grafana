@@ -6,14 +6,15 @@ import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { locationService, setPluginLinksHook } from '@grafana/runtime';
+import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleGroupDTO, type GrafanaPromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { RULER_CONFIG_API_PROBE_GROUP, RULER_CONFIG_API_PROBE_NAMESPACE } from '../api/ruler';
-import { DMAStatus, useDMAStatus } from '../hooks/useDMAStatus';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockGrafanaPromAlertingRule, mockRulerGrafanaRule, mockRulerRuleGroup } from '../mocks';
 import {
+  addPlugin,
   mimirDataSource,
   setFolderResponse,
   setGrafanaRuleGroupExportResolver,
@@ -22,13 +23,9 @@ import {
   setRulerRuleGroupResolver,
 } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
+import { prometheusAlertingPluginMeta } from '../testSetup/plugins';
 
 import GroupDetailsPage from './GroupDetailsPage';
-
-jest.mock('../hooks/useDMAStatus', () => ({
-  ...jest.requireActual('../hooks/useDMAStatus'),
-  useDMAStatus: jest.fn(),
-}));
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
@@ -64,12 +61,11 @@ const ui = {
 };
 
 const server = setupMswServer();
-const useDMAStatusMock = jest.mocked(useDMAStatus);
 
 describe('GroupDetailsPage', () => {
   beforeEach(() => {
-    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByGrafana });
-    // mock this...
+    // No plugin is registered by default, so useDMAStatus resolves to ManagedByGrafana for every
+    // test unless a test explicitly registers the Prometheus Alerting plugin via MSW below.
     setPluginLinksHook(() => ({
       links: [],
       isLoading: false,
@@ -334,7 +330,8 @@ describe('GroupDetailsPage', () => {
   });
 
   it('redirects data source-managed groups to the plugin', async () => {
-    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByPlugin });
+    invalidatePluginSettingsCache(prometheusAlertingPluginMeta.id);
+    addPlugin(prometheusAlertingPluginMeta);
 
     renderGroupDetailsPage('prometheus', 'test-prom-namespace', 'test-group-cpu');
 

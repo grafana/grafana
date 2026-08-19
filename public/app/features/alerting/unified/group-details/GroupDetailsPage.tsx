@@ -60,6 +60,7 @@ function GroupDetailsPage() {
           This rule group cannot be viewed from Grafana.
         </Trans>
       }
+      pageNav={{ text: groupName }}
     >
       <GroupDetailsPageContent dataSourceUid={dataSourceUid} namespaceId={namespaceId} groupName={groupName} />
     </DMARouteGuard>
