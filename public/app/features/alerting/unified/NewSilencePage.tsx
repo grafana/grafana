@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
@@ -42,8 +43,7 @@ const SilencesEditorComponent = () => {
     isLoading: silencedRuleLoading,
     isError: silencedRuleUnavailable,
   } = alertRuleApi.endpoints.getAlertRule.useQuery(
-    { uid: potentialRuleUid ?? '' },
-    { skip: isGeneralSilence || !isGrafanaAlertmanager }
+    isGeneralSilence || !isGrafanaAlertmanager ? skipToken : { uid: potentialRuleUid }
   );
   const createAbility = useSilenceAbility({
     action: SilenceAction.Create,
