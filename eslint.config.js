@@ -393,6 +393,17 @@ module.exports = [
   },
 
   {
+    name: 'grafana/e2e-selectors-serializable',
+    files: ['packages/grafana-e2e-selectors/src/selectors/**/*.ts'],
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+    rules: {
+      '@grafana/serializable-e2e-selectors': 'error',
+    },
+  },
+
+  {
     name: 'grafana/alerting-overrides',
     plugins: {
       unicorn: unicornPlugin,
