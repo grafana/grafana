@@ -23,6 +23,7 @@ import {
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   type GrafanaTheme2,
+  type LinkModel,
   PluginExtensionPoints,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -54,6 +55,7 @@ import {
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
+import { LogsLinkButton } from '../TraceTimelineViewer/SpanDetail/LogsLink';
 import {
   type ViewRangeTimeUpdate,
   type TUpdateViewRangeTimeFunction,
@@ -88,6 +90,8 @@ export type TracePageHeaderProps = {
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
   hideHeaderDetails?: boolean;
+  /** Trace-level related-logs link (no span id filter). */
+  logsLinkModel?: LinkModel;
 };
 
 export const TracePageHeader = memo((props: TracePageHeaderProps) => {
@@ -109,6 +113,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     updateViewRangeTime,
     viewRange,
     hideHeaderDetails = false,
+    logsLinkModel,
   } = props;
 
   const styles = useStyles2(getStyles);
@@ -259,6 +264,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
                   })
                 : null}
             </div>
+
+            {logsLinkModel && <LogsLinkButton linkModel={logsLinkModel} traceDatasourceUid={datasourceUid} forTrace />}
 
             {config.feedbackLinksEnabled && (
               <Tooltip
