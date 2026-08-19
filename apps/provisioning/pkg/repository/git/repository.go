@@ -242,7 +242,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		}
 
 		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
+			Code:    http.StatusUnauthorized,
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
@@ -268,7 +268,11 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 		}
 
 		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
+			// NotFound (rather than the generic BadRequest other field
+			// validation failures use) so isReachableTestResult correctly
+			// classifies this as unreachable rather than a reachable-but-blocked
+			// failure like branch protection, which also fails Test().
+			Code:    http.StatusNotFound,
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
