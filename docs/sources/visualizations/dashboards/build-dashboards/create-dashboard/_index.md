@@ -221,7 +221,11 @@ To navigate the dashboard using the outline, follow these steps:
 
 1. Navigate to the dashboard you want to view or update.
 1. In the right toolbar, click the **Content outline** icon to open it.
-1. Expand the outline to find the part of the dashboard you want to view or update.
+1. Do one of the following:
+
+   - Expand the outline to find the part of the dashboard you want to view or update.
+   - Enter the name of the element in the outline search bar.
+
 1. Click the tree item to navigate that part of the dashboard.
 
 ### Edit a dashboard
