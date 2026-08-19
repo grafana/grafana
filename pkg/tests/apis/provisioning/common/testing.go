@@ -1511,6 +1511,12 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 	}
 }
 
+func WithConnectionTypes(types []string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningConnectionTypes = types
+	}
+}
+
 func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningPublicRootURL = url

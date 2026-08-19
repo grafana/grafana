@@ -31,7 +31,7 @@ concurrency:
 env:
   # community-triage logic version this repo is pinned to. Bump deliberately;
   # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: b4e1f1626a802465167a9d6003d541a4966c8c6e # trufflehog:ignore
+  TRIAGE_REF: 91bd2f3de830e057768c8bbf7354dfe897937b86 # trufflehog:ignore
 
 jobs:
   digest:
@@ -70,7 +70,7 @@ jobs:
 
       - name: Mint token for community-triage
         id: triage-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@580590a644e82e79bb2598bdaba0be245a14dda0  # create-github-app-token/v0.2.2
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-community-triage
 

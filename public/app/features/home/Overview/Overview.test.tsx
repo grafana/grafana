@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { ctaClicked } from '../analytics/main';
 
@@ -72,6 +72,34 @@ describe('Overview', () => {
     expect(screen.getByText('Start setup')).toBeInTheDocument();
   });
 
+  it('selects the overview option from the hash anchor', async () => {
+    const guide = {
+      id: 'app-monitoring',
+      title: 'Set up app monitoring',
+      description: 'Visualize traces, metrics, and logs from services you build and run.',
+      icon: 'apps' as const,
+      color: '#ff780a',
+      cta: 'Start setup',
+      href: '#',
+    };
+    const scrollIntoView = jest.fn();
+    const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      mockUseGuides.mockReturnValue([guide]);
+
+      render(<Overview />, { historyOptions: { initialEntries: ['/#get-started'] } });
+
+      await waitFor(() => expect(screen.getByRole('button', { name: /get started/i })).toBeInTheDocument());
+      expect(screen.getByText('Recommended getting started guides')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Set up app monitoring' })).toBeInTheDocument();
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' });
+    } finally {
+      window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
   it('tracks overview filter changes from the dropdown', async () => {
     mockUseGuides.mockReturnValue([]);
 
@@ -84,7 +112,7 @@ describe('Overview', () => {
       surface: 'overview',
       action: 'change_overview_filter',
       placement: 'menu',
-      solution: 'attention',
+      solution: 'needs-attention',
     });
   });
 });
