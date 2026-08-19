@@ -139,5 +139,24 @@ test.describe(
       await expectHeightGrewBeyond(panelA, STANDARD_ROW_HEIGHT);
       await expectSameHeight(panelB, panelA);
     });
+
+    test('min height "none" removes the floor so panels shrink to their content', async ({
+      gotoDashboardPage,
+      tabs,
+      panels,
+    }) => {
+      await gotoDashboardPage({ uid: DASHBOARD_UID });
+      await tabs.select('7. No min height');
+
+      // With no floor, a one-line text panel collapses to its natural height —
+      // well below even the smallest custom floor used elsewhere in this suite.
+      const tinyPanel = panels.getPanel('Tiny — shrinks with no floor');
+      await expect(tinyPanel).toBeVisible();
+      await expect.poll(() => panelHeight(tinyPanel)).toBeLessThan(CUSTOM_MIN_HEIGHT);
+      await expect.poll(() => panelHeight(tinyPanel)).toBeGreaterThan(0);
+
+      // Removing the floor must not cap growth: tall content still fits itself.
+      await expectHeightGrewBeyond(panels.getPanel('Long — still grows'), STANDARD_ROW_HEIGHT);
+    });
   }
 );

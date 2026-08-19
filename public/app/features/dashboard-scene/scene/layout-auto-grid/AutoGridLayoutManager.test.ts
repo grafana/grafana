@@ -21,7 +21,12 @@ import { type DashboardSceneState } from '../types/dashboard';
 
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayout } from './AutoGridLayout';
-import { AutoGridLayoutManager, getAutoRowsTemplate, getMaxHeightCssValue } from './AutoGridLayoutManager';
+import {
+  AutoGridLayoutManager,
+  getAutoRowsTemplate,
+  getFitMinHeightInPixels,
+  getMaxHeightCssValue,
+} from './AutoGridLayoutManager';
 
 describe('AutoGridLayoutManager', () => {
   describe('removePanel', () => {
@@ -312,6 +317,23 @@ describe('AutoGridLayoutManager content fit', () => {
       expect(manager.state.minHeight).toBe(100);
     });
 
+    it('onMinHeightChanged stores "none" so panels can shrink to their content', () => {
+      const { manager } = setup();
+
+      manager.onMinHeightChanged('none');
+
+      expect(manager.state.minHeight).toBe('none');
+    });
+
+    it('onMinHeightChanged resolves "custom" to the default pixels when coming from "none"', () => {
+      const { manager } = setup();
+      manager.onMinHeightChanged('none');
+
+      manager.onMinHeightChanged('custom');
+
+      expect(manager.state.minHeight).toBe(320);
+    });
+
     it('onMaxHeightModeChanged seeds a custom max height with the standard pixels', () => {
       const { manager } = setup();
 
@@ -345,6 +367,23 @@ describe('getAutoRowsTemplate', () => {
 
   it('lets rows grow to content when fit content is present', () => {
     expect(getAutoRowsTemplate('tall', false, true)).toBe('minmax(512px, max-content)');
+  });
+});
+
+describe('getFitMinHeightInPixels', () => {
+  it('resolves named and numeric min heights to pixels', () => {
+    expect(getFitMinHeightInPixels('short', 'standard')).toBe(168);
+    expect(getFitMinHeightInPixels(100, 'standard')).toBe(100);
+  });
+
+  it('falls back to the row height when no min height is configured', () => {
+    expect(getFitMinHeightInPixels(undefined, 'tall')).toBe(512);
+    expect(getFitMinHeightInPixels(undefined, 250)).toBe(250);
+  });
+
+  it('removes the floor entirely for "none"', () => {
+    expect(getFitMinHeightInPixels('none', 'standard')).toBe(0);
+    expect(getFitMinHeightInPixels('none', 250)).toBe(0);
   });
 });
 

@@ -959,7 +959,7 @@ export interface AutoGridLayoutSpec {
 	rowHeight?: number;
 	fillScreen?: boolean;
 	fitContent?: boolean;
-	minHeightMode?: "short" | "standard" | "tall" | "custom";
+	minHeightMode?: "none" | "short" | "standard" | "tall" | "custom";
 	minHeight?: number;
 	maxHeightMode?: "unlimited" | "short" | "standard" | "tall" | "custom";
 	maxHeight?: number;

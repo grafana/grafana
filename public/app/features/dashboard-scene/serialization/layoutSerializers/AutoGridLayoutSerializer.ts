@@ -10,6 +10,7 @@ import {
   AUTO_GRID_DEFAULT_COLUMN_WIDTH,
   AUTO_GRID_DEFAULT_ROW_HEIGHT,
   type AutoGridColumnWidth,
+  type AutoGridMinHeight,
   type AutoGridRowHeight,
   getAutoRowsTemplate,
   getTemplateColumnsTemplate,
@@ -202,7 +203,7 @@ function serializeAutoGridRowHeight(rowHeight: AutoGridRowHeight) {
   };
 }
 
-function serializeAutoGridMinHeight(minHeight: AutoGridRowHeight | undefined) {
+function serializeAutoGridMinHeight(minHeight: AutoGridMinHeight | undefined) {
   if (minHeight === undefined) {
     return { minHeightMode: undefined, minHeight: undefined };
   }

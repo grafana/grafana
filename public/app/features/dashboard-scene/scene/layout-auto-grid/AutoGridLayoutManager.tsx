@@ -50,8 +50,12 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
   fillScreen: boolean;
   /** Layout-wide default for content-fit. Per-panel overrides via {@link AutoGridItem} `fitContent`. */
   fitContent?: boolean;
-  /** Floor (px envelope) for content-fit panels. Distinct from `rowHeight`, which sizes non-fit panels. */
-  minHeight?: AutoGridRowHeight;
+  /**
+   * Floor (px envelope) for content-fit panels. Distinct from `rowHeight`,
+   * which sizes non-fit panels. `'none'` removes the floor so panels shrink to
+   * their content; `undefined` falls back to the row height.
+   */
+  minHeight?: AutoGridMinHeight;
   maxHeightMode?: AutoGridMaxHeightMode;
   maxHeight?: number;
   matchRowHeights?: boolean;
@@ -63,6 +67,8 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
 
 export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
 export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
+/** Min height for content-fit panels: `'none'` means no floor (the analog of max height's `'unlimited'`). */
+export type AutoGridMinHeight = 'none' | AutoGridRowHeight;
 export type AutoGridMaxHeightMode = 'unlimited' | 'short' | 'standard' | 'tall' | 'custom';
 
 /**
@@ -383,9 +389,13 @@ export class AutoGridLayoutManager
     this.updateAutoRows();
   }
 
-  public onMinHeightChanged(minHeight: AutoGridRowHeight) {
+  public onMinHeightChanged(minHeight: AutoGridMinHeight) {
     if (minHeight === 'custom') {
-      minHeight = getNamedHeightInPixels(this.state.minHeight ?? AUTO_GRID_DEFAULT_ROW_HEIGHT);
+      const current = this.state.minHeight;
+      // 'none' has no pixel equivalent, so entering custom mode starts from the default height.
+      minHeight = getNamedHeightInPixels(
+        current === undefined || current === 'none' ? AUTO_GRID_DEFAULT_ROW_HEIGHT : current
+      );
     }
     this.setState({ minHeight });
   }
@@ -598,6 +608,17 @@ export function getMaxHeightCssValue(
     default:
       return 'none';
   }
+}
+
+/**
+ * Resolves the content-fit floor to pixels: `'none'` removes the floor (0),
+ * no configured min height falls back to the row height.
+ */
+export function getFitMinHeightInPixels(minHeight: AutoGridMinHeight | undefined, rowHeight: AutoGridRowHeight) {
+  if (minHeight === 'none') {
+    return 0;
+  }
+  return getNamedHeightInPixels(minHeight ?? rowHeight);
 }
 
 export function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {

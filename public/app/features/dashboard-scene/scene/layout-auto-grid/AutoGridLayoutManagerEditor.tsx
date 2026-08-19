@@ -12,6 +12,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import {
   type AutoGridColumnWidth,
   type AutoGridMaxHeightMode,
+  type AutoGridMinHeight,
   type AutoGridRowHeight,
   type AutoGridLayoutManager,
 } from './AutoGridLayoutManager';
@@ -190,6 +191,14 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
     value,
   }));
 
+  const minHeightOptions: Array<ComboboxOption<AutoGridMinHeight>> = [
+    { label: t('dashboard.auto-grid.options.min-height-none', 'None'), value: 'none' as const },
+    { label: t('dashboard.auto-grid.options.min-height-short', 'Short'), value: 'short' as const },
+    { label: t('dashboard.auto-grid.options.min-height-standard', 'Standard'), value: 'standard' as const },
+    { label: t('dashboard.auto-grid.options.min-height-tall', 'Tall'), value: 'tall' as const },
+    { label: t('dashboard.auto-grid.options.min-height-custom-option', 'Custom'), value: 'custom' as const },
+  ];
+
   const maxHeightOptions: Array<ComboboxOption<AutoGridMaxHeightMode>> = [
     { label: t('dashboard.auto-grid.options.max-height-unlimited', 'Unlimited'), value: 'unlimited' as const },
     { label: t('dashboard.auto-grid.options.max-height-short', 'Short'), value: 'short' as const },
@@ -263,7 +272,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
             className={styles.wideSelector}
             isCustom={typeof minHeightValue === 'number'}
             value={minHeightValue}
-            options={namedHeightOptions}
+            options={minHeightOptions}
             onModeChange={(value) => layoutManager.onMinHeightChanged(value)}
             customValue={typeof minHeightValue === 'number' ? minHeightValue : undefined}
             min={50}

@@ -689,6 +689,80 @@
             }
           }
         }
+      },
+      "panel-18": {
+        "kind": "Panel",
+        "spec": {
+          "id": 18,
+          "title": "Tiny — shrinks with no floor",
+          "description": "Min height none: the panel shrinks to its one-line content, below any named floor.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "One line.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-19": {
+        "kind": "Panel",
+        "spec": {
+          "id": 19,
+          "title": "Long — still grows",
+          "description": "Min height none only removes the floor; tall content still grows.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "Paragraph 1: content-fit lets this panel grow to its natural height.\n\nParagraph 2: content-fit lets this panel grow to its natural height.\n\nParagraph 3: content-fit lets this panel grow to its natural height.\n\nParagraph 4: content-fit lets this panel grow to its natural height.\n\nParagraph 5: content-fit lets this panel grow to its natural height.\n\nParagraph 6: content-fit lets this panel grow to its natural height.\n\nParagraph 7: content-fit lets this panel grow to its natural height.\n\nParagraph 8: content-fit lets this panel grow to its natural height.\n\nParagraph 9: content-fit lets this panel grow to its natural height.\n\nParagraph 10: content-fit lets this panel grow to its natural height.\n\nParagraph 11: content-fit lets this panel grow to its natural height.\n\nParagraph 12: content-fit lets this panel grow to its natural height.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -953,6 +1027,43 @@
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-17"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "7. No min height",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 3,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fitContent": true,
+                  "minHeightMode": "none",
+                  "matchRowHeights": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-18"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-19"
                         }
                       }
                     }

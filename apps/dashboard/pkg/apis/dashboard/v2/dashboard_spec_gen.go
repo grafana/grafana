@@ -2841,6 +2841,7 @@ func (DashboardAutoGridLayoutSpecRowHeightMode) OpenAPIModelName() string {
 type DashboardAutoGridLayoutSpecMinHeightMode string
 
 const (
+	DashboardAutoGridLayoutSpecMinHeightModeNone     DashboardAutoGridLayoutSpecMinHeightMode = "none"
 	DashboardAutoGridLayoutSpecMinHeightModeShort    DashboardAutoGridLayoutSpecMinHeightMode = "short"
 	DashboardAutoGridLayoutSpecMinHeightModeStandard DashboardAutoGridLayoutSpecMinHeightMode = "standard"
 	DashboardAutoGridLayoutSpecMinHeightModeTall     DashboardAutoGridLayoutSpecMinHeightMode = "tall"

@@ -16,7 +16,12 @@ import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
 import { type AutoGridItem } from './AutoGridItem';
-import { AutoGridLayoutManager, getMaxHeightCssValue, getNamedHeightInPixels } from './AutoGridLayoutManager';
+import {
+  AutoGridLayoutManager,
+  getFitMinHeightInPixels,
+  getMaxHeightCssValue,
+  getNamedHeightInPixels,
+} from './AutoGridLayoutManager';
 import { AutoGridResizeIntercept } from './AutoGridResizeIntercept';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
@@ -50,7 +55,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const fitContentOn = autoHeightPanelsEnabled && pluginSupportsFit && (itemFitContent ?? layoutFitContent) === true;
   const matchRowHeightsOn = !autoHeightPanelsEnabled || matchRowHeights !== false;
   const rowHeightPx = getNamedHeightInPixels(rowHeight);
-  const fitMinHeightPx = getNamedHeightInPixels(minHeight ?? rowHeight);
+  const fitMinHeightPx = getFitMinHeightInPixels(minHeight, rowHeight);
 
   // Fit-content sizing is pure CSS: the browser sizes the row to content. The
   // min-height floor is applied to the panel chrome (via the fit context) so

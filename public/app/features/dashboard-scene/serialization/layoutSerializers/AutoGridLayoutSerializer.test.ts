@@ -102,6 +102,22 @@ describe('deserialization', () => {
     expect(manager.state.minHeight).toBe('short');
   });
 
+  it('resolves the "none" min height mode so panels can shrink to their content', () => {
+    const layout: DashboardV2Spec['layout'] = {
+      kind: 'AutoGridLayout',
+      spec: {
+        columnWidthMode: 'standard',
+        rowHeightMode: 'standard',
+        minHeightMode: 'none',
+        items: [],
+      },
+    };
+
+    const manager = deserializeAutoGridLayout(layout, elements, false);
+
+    expect(manager.state.minHeight).toBe('none');
+  });
+
   it('keeps per-item fit-content overrides as a tri-state', () => {
     const manager = deserializeAutoGridLayout(itemOverrideLayout, elements, false);
 
@@ -189,6 +205,18 @@ describe('serialization', () => {
 
     expect(serialized.spec.minHeightMode).toBe('custom');
     expect(serialized.spec.minHeight).toBe(100);
+  });
+
+  it('persists a "none" min height as its own mode without pixels', () => {
+    const manager = new AutoGridLayoutManager({
+      minHeight: 'none',
+      layout: new AutoGridLayout({ children: [] }),
+    });
+
+    const serialized = serialize(manager);
+
+    expect(serialized.spec.minHeightMode).toBe('none');
+    expect(serialized.spec.minHeight).toBeUndefined();
   });
 
   it('persists matchRowHeights only when explicitly disabled', () => {

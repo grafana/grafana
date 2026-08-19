@@ -673,7 +673,7 @@ AutoGridLayoutSpec: {
 	rowHeight?:       number
 	fillScreen?:      bool | *false
 	fitContent?:      bool | *false
-	minHeightMode?:   "short" | "standard" | "tall" | "custom"
+	minHeightMode?:   "none" | "short" | "standard" | "tall" | "custom"
 	minHeight?:       number
 	maxHeightMode?:   "unlimited" | "short" | "standard" | "tall" | "custom"
 	maxHeight?:       number
