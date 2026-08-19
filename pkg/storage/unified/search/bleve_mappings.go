@@ -174,8 +174,10 @@ func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kind
 	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
 		add(resource.SEARCH_FIELD_PREFIX+def.Name, def, resource.SEARCH_FIELD_PREFIX)
 		// Requests may name a per-kind field without the internal fields prefix.
-		// A standard field of the same name wins, matching resolveFieldName.
-		if _, taken := fields[def.Name]; !taken {
+		// A top-level field of the same name wins, matching resolveFieldName. The
+		// name check covers standard fields with no keyword form, which are absent
+		// from the map and so would leave the bare name free to claim.
+		if _, taken := fields[def.Name]; !taken && !isReservedTopLevelField(def.Name) {
 			add(def.Name, def, resource.SEARCH_FIELD_PREFIX)
 		}
 	}

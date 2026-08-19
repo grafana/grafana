@@ -842,14 +842,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/SharedPreferences/SharedPreferencesOld.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 5
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/core/components/Signup/SignupPage.tsx": {
     "@grafana/require-no-margin": {
       "count": 6
@@ -1046,11 +1038,6 @@
   "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeInterval.tsx": {
     "@grafana/require-no-margin": {
       "count": 5
-    }
-  },
-  "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeRange.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/components/notification-policies/EditNotificationPolicyForm.tsx": {

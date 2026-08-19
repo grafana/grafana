@@ -282,6 +282,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,kubernetesUsersRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-08-12,kubernetesUsersRedirectNoFallback,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,alertingPolicyRoutingSettings,experimental,@grafana/alerting-squad,false,false,true
+2026-08-18,appplugins.loadAppManifest,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,appplugins.registerAPIServer,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-22,appplugins.handleProxyRequests,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-22,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
@@ -318,7 +319,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,querycaching.useInQueryService,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-05-22,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
-2026-05-22,grafana.newPreferencesPage,GA,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,datasource.useNewCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,datasources.config.ui.useNewDatasourceCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-05-22,datasources.apiserver.useNewAPIsForDatasourceResources,experimental,@grafana/grafana-datasources-core-services,false,false,true
