@@ -4,7 +4,8 @@ import { clickSelectOption, selectOptionInTest } from 'test/helpers/selectOption
 import { screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { setPluginLinksHook } from '@grafana/runtime';
+import { locationService, setPluginLinksHook } from '@grafana/runtime';
+import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
@@ -18,9 +19,10 @@ import {
   grafanaRulerRule,
   mockPreviewApiResponse,
 } from '../mocks/grafanaRulerApi';
-import { setFolderResponse } from '../mocks/server/configure';
+import { addPlugin, setFolderResponse } from '../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { setupDataSources } from '../testSetup/datasources';
+import { prometheusAlertingPluginMeta } from '../testSetup/plugins';
 import { Annotation } from '../utils/constants';
 import { grafanaRuleDtoToFormValues } from '../utils/rule-form';
 
@@ -244,6 +246,37 @@ describe('RuleEditor grafana managed rules', () => {
 
     // The rule type section should be visible in advanced mode
     expect(await screen.findByText('Rule type')).toBeInTheDocument();
+  });
+
+  describe('when the Prometheus Alerting plugin manages DMA', () => {
+    beforeEach(() => {
+      invalidatePluginSettingsCache(prometheusAlertingPluginMeta.id);
+      addPlugin(prometheusAlertingPluginMeta);
+      setupDataSources(dataSources.default);
+    });
+
+    it('redirects editing a data source-managed rule to the plugin', async () => {
+      const identifier = 'pri$Prom$namespace$group$rule$hash';
+
+      renderRuleEditor(identifier);
+
+      await waitFor(() =>
+        expect(locationService.getLocation().pathname).toBe(
+          `/a/grafana-prometheusalerting-app/rules/pri%24${PROMETHEUS_DATASOURCE_UID}%24namespace%24group%24rule%24hash/edit`
+        )
+      );
+    });
+
+    it('redirects external-only users creating alert rules to the plugin', async () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+      renderRuleEditor();
+
+      await waitFor(() =>
+        expect(locationService.getLocation().pathname).toBe('/a/grafana-prometheusalerting-app/rules/new')
+      );
+      expect(locationService.getLocation().search).toBe('?type=alerting');
+    });
   });
 });
 

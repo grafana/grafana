@@ -100,6 +100,18 @@ describe('RuleListPage v2', () => {
     expect(byRole('button', { name: /more/i }).query()).not.toBeInTheDocument();
   });
 
+  it('hides the data source recording-rule action when the plugin manages DMA', async () => {
+    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByPlugin });
+    grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+    const { user } = render(<RuleListPage />);
+
+    await user.click(byTestId(selectors.pages.Alerting.RuleList.moreMenu.triggerButton).get());
+    const menu = await byRole('menu').find();
+
+    expect(byRole('menuitem', { name: /new data source recording rule/i }).query(menu)).not.toBeInTheDocument();
+  });
+
   it('should show grouped view by default', async () => {
     render(<RuleListPage />);
 

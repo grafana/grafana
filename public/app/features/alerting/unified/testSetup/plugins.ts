@@ -206,6 +206,30 @@ export const pluginMeta = {
   } satisfies PluginMeta,
 };
 
+export const prometheusAlertingPluginMeta = {
+  id: 'grafana-prometheusalerting-app',
+  name: 'Prometheus Alerting',
+  type: PluginType.app,
+  enabled: true,
+  info: {
+    author: {
+      name: 'Grafana Labs',
+      url: '',
+    },
+    description: 'Create and manage Prometheus alerting rules',
+    links: [],
+    logos: {
+      small: '',
+      large: '',
+    },
+    screenshots: [],
+    version: 'local-dev',
+    updated: '',
+  },
+  module: 'public/plugins/grafana-prometheusalerting-app/module.js',
+  baseUrl: 'public/plugins/grafana-prometheusalerting-app',
+} satisfies PluginMeta;
+
 export const plugins: PluginMeta[] = [
   pluginMeta[SupportedPlugin.Slo],
   pluginMeta[SupportedPlugin.Incident],
