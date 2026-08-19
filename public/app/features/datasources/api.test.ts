@@ -254,8 +254,7 @@ describe('Datasources / API', () => {
       expect(deleteFn).not.toHaveBeenCalled();
     });
 
-    // The group lookup must be uid-exact: matching on name or id, or resolving `default`
-    // to the org default, would build a k8s URL for the wrong data source.
+    // A non-uid match would build a k8s URL for the wrong data source.
     it.each([
       ['a name rather than a uid', 'Marvin'],
       ['an id rather than a uid', '42'],

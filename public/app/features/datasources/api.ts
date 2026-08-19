@@ -58,12 +58,7 @@ export interface DataSourceSettingsK8s {
   secure?: Record<string, Record<string, string>>;
 }
 
-// Scans the list rather than calling getDataSourceInstanceSettings, which resolves a ref
-// through uid, then name, then id, and maps `default` to the org default — so a colliding
-// name would yield the wrong group. This lookup has to be uid-exact.
 const getDataSourceK8sGroup = async (uid: string): Promise<string> => {
-  // `all: true` keeps data sources that expose no query capability, matching the previous
-  // scan over every entry in config.datasources.
   const instances = await getDataSourceInstanceList({ all: true });
   for (const ds of instances) {
     // Built-in data sources (-- Grafana --, -- Mixed --, -- Dashboard --) have no k8s group.
