@@ -1136,8 +1136,6 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/check-codeowner-affected.js @grafana/dataviz-squad
 /scripts/compare-coverage-by-codeowner.js @grafana/dataviz-squad
 /scripts/tests/compare-coverage-by-codeowner.test.ts @grafana/dataviz-squad
-/scripts/generate-coverage-run-summary.js @grafana/dataviz-squad
-/scripts/tests/generate-coverage-run-summary.test.ts @grafana/dataviz-squad
 /scripts/helpers/ @grafana/grafana-backend-services-squad
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist

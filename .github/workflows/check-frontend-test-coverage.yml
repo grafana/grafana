@@ -129,10 +129,9 @@ jobs:
           ")
           echo "path=${PATH}" >> "$GITHUB_OUTPUT"
 
-      - name: Write not-affected result
+      - name: Write not-affected summary
         if: steps.check-affected.outputs.affected == 'false'
-        run: |
-          echo '{"team": "${{ matrix.codeowner }}", "affected": false}' > ./coverage-comparison.json
+        run: echo "### ⏭️ ${{ matrix.codeowner }} — not affected by this PR's changes" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Checkout main branch
         if: steps.check-affected.outputs.affected == 'true'
@@ -189,62 +188,19 @@ jobs:
           path: ./pr/coverage/by-team/${{ steps.coverage-dir.outputs.path }}/html
           retention-days: 7
 
-      - name: Compare coverage
+      # Writes this leg's block straight to its own job summary and exits non-zero on
+      # a regression — no separate fan-in job or intermediate artifact. Every opted-in
+      # team's block lands on the run's Summary page under its own job, decoupled from
+      # every other team: one team's job crashing here (install, tests, HTML upload)
+      # just fails that job normally, same as any other CI failure — there's no
+      # shared artifact step for it to silently drop out of.
+      - name: Compare coverage and write summary
         if: steps.check-affected.outputs.affected == 'true'
-        id: compare
         env:
           COVERAGE_ARTIFACT_URL: ${{ steps.upload-coverage.outputs.artifact-url }}
           PR_SHA: ${{ github.event.pull_request.head.sha }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          # Run comparison from workspace root where coverage-main/ and coverage-pr/ live.
-          # This writes ./coverage-comparison.json, fanned in by the "coverage-summary"
-          # job below into one detailed report instead of a per-team PR comment.
-          if node ./pr/scripts/compare-coverage-by-codeowner.js; then
-            echo "passed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "passed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      # Uploaded unconditionally (affected or not) so the fan-in summary can report
-      # on every opted-in team, not just the ones with a comparison to show. If an
-      # earlier step (install, tests, HTML upload) failed before writing
-      # coverage-comparison.json, synthesize an "error" result instead of letting
-      # this team silently disappear from the summary.
-      #
-      # `coverage-dir` can itself be skipped by an earlier failure (checkout, install,
-      # manifest generation), leaving its slug output empty. Every matrix leg would then
-      # upload the same artifact name "coverage-result-" and collide, so fall back to a
-      # slug derived straight from matrix.codeowner — not identical to createCodeownerSlug,
-      # but guaranteed unique per leg, which is all an artifact name needs.
-      - name: Rename coverage result for fan-in
-        if: always()
-        run: |
-          SLUG="${{ steps.coverage-dir.outputs.slug }}"
-          if [ -z "$SLUG" ]; then
-            SLUG=$(echo "${{ matrix.codeowner }}" | tr -c 'a-zA-Z0-9' '-' | sed 's/^-*//;s/-*$//')
-          fi
-          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
-
-          if [ ! -f ./coverage-comparison.json ]; then
-            echo '{"team": "${{ matrix.codeowner }}", "affected": true, "status": "error", "runLocallyCommand": "yarn test:coverage:by-codeowner ${{ matrix.codeowner }}"}' > ./coverage-comparison.json
-          fi
-          mv ./coverage-comparison.json "./coverage-result-${SLUG}.json"
-        id: fan-in-slug
-
-      - name: Upload coverage result
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-result-${{ steps.fan-in-slug.outputs.slug }}
-          path: ./coverage-result-${{ steps.fan-in-slug.outputs.slug }}.json
-          retention-days: 7
-
-      - name: Fail if coverage decreased
-        if: steps.check-affected.outputs.affected == 'true' && steps.compare.outputs.passed == 'false'
-        run: |
-          echo "❌ Coverage check failed for ${{ matrix.codeowner }}"
-          exit 1
+        run: node ./pr/scripts/compare-coverage-by-codeowner.js >> "$GITHUB_STEP_SUMMARY"
 
   coverage-summary:
     name: All coverage checks pass
@@ -253,7 +209,6 @@ jobs:
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
-      actions: read
     steps:
       - name: Check if skipped
         id: check-skip
@@ -282,30 +237,6 @@ jobs:
             echo
             echo "🚨 **Skip label:** remove the \`no-check-frontend-test-coverage\` label from this PR to re-enable coverage checks."
           } >> "$GITHUB_STEP_SUMMARY"
-
-      # Checkout runs before downloading artifacts because actions/checkout cleans
-      # the workspace (git clean -ffdx) — doing it after would wipe coverage-results.
-      - name: Checkout for fan-in script
-        if: steps.check-skip.outputs.skipped == 'false'
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-          sparse-checkout: |
-            scripts/generate-coverage-run-summary.js
-            scripts/compare-coverage-by-codeowner.js
-          sparse-checkout-cone-mode: false
-
-      - name: Download coverage results
-        if: steps.check-skip.outputs.skipped == 'false'
-        uses: actions/download-artifact@v4
-        with:
-          pattern: coverage-result-*
-          path: ./coverage-results
-          merge-multiple: true
-
-      - name: Write coverage summary
-        if: steps.check-skip.outputs.skipped == 'false'
-        run: node scripts/generate-coverage-run-summary.js ./coverage-results >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify all checks passed
         if: steps.check-skip.outputs.skipped == 'false'

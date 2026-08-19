@@ -7,6 +7,7 @@ const {
   hasToleratedDrop,
   getFilesWithDecreasedCoverage,
   getFilesWithIncreasedCoverage,
+  renderTeamMarkdown,
 } = require('../compare-coverage-by-codeowner.js');
 
 type Metrics = { lines: number; statements: number; functions: number; branches: number };
@@ -196,6 +197,68 @@ describe('compare-coverage-by-codeowner', () => {
       expect(result.increasedFilesTotal).toBe(1);
       expect(result.artifactUrl).toBe('https://example.test/report');
       expect(result.runLocallyCommand).toBe('yarn test:coverage:by-codeowner @grafana/dataviz-squad');
+    });
+  });
+
+  describe('renderTeamMarkdown', () => {
+    it('places the skip-label reminder right under a failure, ahead of the file-by-file details', () => {
+      const result = buildCoverageResult(coverage({ lines: 80 }), coverage({ lines: 70 }));
+      const markdown = renderTeamMarkdown(result);
+
+      expect(markdown).toContain('### ❌ @grafana/dataviz-squad');
+      const headingIndex = markdown.indexOf('### ❌');
+      const skipLabelIndex = markdown.indexOf('no-check-frontend-test-coverage');
+      const runLocallyIndex = markdown.indexOf('Run locally');
+
+      expect(skipLabelIndex).toBeGreaterThan(headingIndex);
+      expect(skipLabelIndex).toBeLessThan(runLocallyIndex);
+    });
+
+    it('omits the skip-label reminder for a tolerated drop', () => {
+      const result = buildCoverageResult(coverage({ branches: 64.58 }), coverage({ branches: 64.57 }));
+      const markdown = renderTeamMarkdown(result);
+
+      expect(markdown).toContain('### 🟡 @grafana/dataviz-squad');
+      expect(markdown).not.toContain('no-check-frontend-test-coverage');
+      expect(markdown).toContain('tolerated');
+    });
+
+    it('renders a full block for a passing team, not just a compact row', () => {
+      const result = buildCoverageResult(coverage(), coverage());
+      const markdown = renderTeamMarkdown(result);
+
+      expect(markdown).toContain('### ✅ @grafana/dataviz-squad');
+      expect(markdown).toContain('| Metric | Main | PR | Change | Status |');
+      expect(markdown).not.toContain('no-check-frontend-test-coverage');
+    });
+
+    it('includes the HTML report link and the file-by-file breakdown when files decreased', () => {
+      const main = coverage({}, { 'worse.ts': fileMetrics({ lines: 90 }) });
+      const pr = coverage({}, { 'worse.ts': fileMetrics({ lines: 70 }) });
+      const result = buildCoverageResult(main, pr, { artifactUrl: 'https://example.test/report' });
+      const markdown = renderTeamMarkdown(result);
+
+      expect(markdown).toContain('[Full HTML coverage report](https://example.test/report)');
+      expect(markdown).toContain('<details><summary>Files with decreased coverage (1)</summary>');
+      expect(markdown).toContain('worse.ts');
+    });
+
+    it('summarizes increases as a single compact line, separate from any decreases', () => {
+      const main = coverage({}, { 'better.ts': fileMetrics({ lines: 80 }) });
+      const pr = coverage({}, { 'better.ts': fileMetrics({ lines: 95 }) });
+      const result = buildCoverageResult(main, pr);
+      const markdown = renderTeamMarkdown(result);
+
+      expect(markdown).toContain('📈 1 file(s) improved');
+      expect(markdown).toContain('better.ts');
+      expect(markdown).not.toContain('<details>');
+    });
+
+    it('ends with the run-locally command regardless of status', () => {
+      const result = buildCoverageResult(coverage(), coverage());
+      expect(
+        renderTeamMarkdown(result).trim().endsWith('yarn test:coverage:by-codeowner @grafana/dataviz-squad`')
+      ).toBe(true);
     });
   });
 });

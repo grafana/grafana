@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 
+// Compares one codeowner's coverage between main and PR branches, then writes the
+// result straight to this matrix leg's own $GITHUB_STEP_SUMMARY — each of the
+// `coverage` job's legs in check-frontend-test-coverage.yml runs this independently,
+// so every opted-in team's block lands on the run's Summary page under its own job,
+// with no separate fan-in job or intermediate artifact tying them together.
+
 const fs = require('fs');
 
 const COVERAGE_MAIN_PATH = './coverage-main/coverage-summary.json';
 const COVERAGE_PR_PATH = './coverage-pr/coverage-summary.json';
-const RESULT_OUTPUT_PATH = './coverage-comparison.json';
 
 // Drops of this many percentage points or less do not fail the check. A single
 // added branch or line in a large codebase can move the percentage by 0.01-0.02
@@ -14,10 +19,9 @@ const DROP_TOLERANCE_PCT = 0.02;
 const METRICS = ['lines', 'statements', 'functions', 'branches'];
 const METRIC_LABELS = { lines: 'Lines', statements: 'Statements', functions: 'Functions', branches: 'Branches' };
 
-// Bounds on how many files are embedded in the per-codeowner JSON artifact. This is
-// a fan-in artifact read by generate-coverage-run-summary.js, not a PR comment, so
-// there's no hard size pressure — these just guard against a pathological diff
-// blowing up the artifact. The full HTML report link covers anything truncated.
+// Bounds on how many files are embedded in the job summary. There's no hard size
+// pressure (this isn't a PR comment), but a pathological diff could otherwise
+// generate a huge summary — the full HTML report link covers anything truncated.
 const MAX_DECREASED_FILES = 200;
 const MAX_INCREASED_FILES_SHOWN = 5;
 
@@ -233,8 +237,8 @@ function buildMetricRows(mainSummary, prSummary) {
 
 /**
  * Builds the structured comparison result for one codeowner. This is the single
- * source of truth for both the pass/fail decision and the fan-in coverage summary
- * rendered by generate-coverage-run-summary.js.
+ * source of truth for both the pass/fail decision and the job-summary markdown
+ * rendered by renderTeamMarkdown.
  * @param {Object} mainCoverage - Main branch coverage data
  * @param {Object} prCoverage - PR branch coverage data
  * @param {{artifactUrl?: string, prSha?: string, repo?: string}} meta
@@ -278,17 +282,113 @@ function buildCoverageResult(mainCoverage, prCoverage, meta = {}) {
 }
 
 /**
- * Compares coverage between main and PR branches and writes a structured comparison result
+ * Renders the metrics comparison table for one codeowner
+ * @param {Array} metrics - Output of buildMetricRows
+ * @returns {string} Markdown table
+ */
+function renderMetricsTable(metrics) {
+  const lines = ['| Metric | Main | PR | Change | Status |', '|--------|------|----|----|--------|'];
+  for (const row of metrics) {
+    lines.push(
+      `| ${row.metric} | ${formatPercentage(row.main)} | ${formatPercentage(row.pr)} | ${row.delta} | ${row.status} |`
+    );
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Renders the file-by-file decreased coverage table for one codeowner
+ * @param {Object} result - Structured coverage result (see buildCoverageResult)
+ * @returns {string} Markdown table, wrapped in a <details> block
+ */
+function renderDecreasedFilesDetails(result) {
+  const headers = ['File', 'Lines', 'Statements', 'Functions', 'Branches'];
+  const lines = [
+    `<details><summary>Files with decreased coverage (${result.decreasedFilesTotal})</summary>`,
+    '',
+    `| ${headers.join(' | ')} |`,
+    `|------|-------|------------|-----------|----------|`,
+  ];
+
+  for (const file of result.decreasedFiles) {
+    const cells = METRICS.map((metric) => {
+      const cell = file.cells[metric];
+      return cell ? `${formatPercentage(cell.main)} → ${formatPercentage(cell.pr)}` : '—';
+    });
+    lines.push(`| ${file.path} | ${cells.join(' | ')} |`);
+  }
+
+  if (result.decreasedFilesTotal > result.decreasedFiles.length) {
+    lines.push('');
+    lines.push(`_...and ${result.decreasedFilesTotal - result.decreasedFiles.length} more files._`);
+  }
+
+  lines.push('');
+  lines.push('</details>');
+  return lines.join('\n');
+}
+
+/**
+ * Renders one codeowner's coverage-increase note as a single compact line — increases
+ * are a nice-to-have, so they don't get the same file-by-file detail as decreases.
+ * @param {Object} result - Structured coverage result
+ * @returns {string} Markdown line
+ */
+function renderIncreaseNote(result) {
+  const top = result.increasedFilesTop.map((file) => `\`${file.path}\` (+${file.totalIncrease.toFixed(2)}pp)`);
+  const remaining = result.increasedFilesTotal - result.increasedFilesTop.length;
+  const more = remaining > 0 ? `, and ${remaining} more` : '';
+  return `📈 ${result.increasedFilesTotal} file(s) improved: ${top.join(', ')}${more}`;
+}
+
+/**
+ * Renders one codeowner's full job-summary block: status heading, metrics, the
+ * skip-label reminder (placed right under a failure so it's never far from it),
+ * the HTML report link, and the file-by-file breakdown. Each `coverage` matrix leg
+ * writes its own block via this function — there's no separate fan-in step, so
+ * every status (pass, tolerated, fail) needs to be fully self-contained here.
+ * @param {Object} result - Structured coverage result
+ * @returns {string} Markdown for this leg's $GITHUB_STEP_SUMMARY
+ */
+function renderTeamMarkdown(result) {
+  const icon = { fail: '❌', tolerated: '🟡', pass: '✅' }[result.status];
+  const lines = [`### ${icon} ${result.team}`, '', renderMetricsTable(result.metrics), ''];
+
+  if (result.status === 'fail') {
+    lines.push(
+      '🚨 **Skip label:** in an emergency, add the `no-check-frontend-test-coverage` label to this PR to bypass this check.',
+      ''
+    );
+  } else if (result.status === 'tolerated') {
+    lines.push(
+      `_Drops of ${formatPercentage(DROP_TOLERANCE_PCT)} or less are tolerated and do not fail the check._`,
+      ''
+    );
+  }
+
+  if (result.artifactUrl) {
+    lines.push(`📊 [Full HTML coverage report](${result.artifactUrl})`, '');
+  }
+
+  if (result.decreasedFiles.length > 0) {
+    lines.push(renderDecreasedFilesDetails(result), '');
+  }
+
+  if (result.increasedFilesTotal > 0) {
+    lines.push(renderIncreaseNote(result), '');
+  }
+
+  lines.push(`💻 Run locally: \`${result.runLocallyCommand}\``);
+  return lines.join('\n');
+}
+
+/**
+ * Compares coverage between main and PR branches for one codeowner
  * @param {string} mainPath - Path to main branch coverage summary JSON
  * @param {string} prPath - Path to PR branch coverage summary JSON
- * @param {string} outputPath - Path to write the comparison result JSON
- * @returns {boolean} True if coverage check passed
+ * @returns {Object} Structured coverage comparison result
  */
-function compareCoverageByCodeowner(
-  mainPath = COVERAGE_MAIN_PATH,
-  prPath = COVERAGE_PR_PATH,
-  outputPath = RESULT_OUTPUT_PATH
-) {
+function compareCoverageByCodeowner(mainPath = COVERAGE_MAIN_PATH, prPath = COVERAGE_PR_PATH) {
   const mainCoverage = readCoverageFile(mainPath);
   const prCoverage = readCoverageFile(prPath);
 
@@ -297,32 +397,22 @@ function compareCoverageByCodeowner(
     process.exit(1);
   }
 
-  const result = buildCoverageResult(mainCoverage, prCoverage, {
+  return buildCoverageResult(mainCoverage, prCoverage, {
     artifactUrl: process.env.COVERAGE_ARTIFACT_URL || '',
     prSha: process.env.PR_SHA || '',
     repo: process.env.GITHUB_REPOSITORY || '',
   });
-
-  try {
-    fs.writeFileSync(outputPath, JSON.stringify(result, null, 2), 'utf8');
-    console.log(`✅ Coverage comparison written to ${outputPath}`);
-  } catch (err) {
-    console.error(`Error writing output file: ${err.message}`);
-    process.exit(1);
-  }
-
-  return result.status !== 'fail';
 }
 
 if (require.main === module) {
-  const passed = compareCoverageByCodeowner();
-  if (!passed) {
+  const result = compareCoverageByCodeowner();
+  console.log(renderTeamMarkdown(result));
+  if (result.status === 'fail') {
     console.error(
       `❌ Coverage check failed: One or more metrics dropped by more than ${formatPercentage(DROP_TOLERANCE_PCT)}`
     );
     process.exit(1);
   }
-  console.log('✅ Coverage check passed: All metrics maintained, improved, or within tolerance');
 }
 
 module.exports = {
@@ -339,4 +429,8 @@ module.exports = {
   hasToleratedDrop,
   getFilesWithDecreasedCoverage,
   getFilesWithIncreasedCoverage,
+  renderMetricsTable,
+  renderDecreasedFilesDetails,
+  renderIncreaseNote,
+  renderTeamMarkdown,
 };
