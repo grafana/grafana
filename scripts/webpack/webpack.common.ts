@@ -32,7 +32,8 @@ export default (env: Env = {}): Configuration => ({
     asyncWebAssembly: true,
   },
   output: {
-    clean: true,
+    // rspack writes into a subdirectory of this one; without keep, cleaning deletes it.
+    clean: { keep: 'rspack' },
     path: path.resolve(import.meta.dirname, '../../public/build'),
     filename: (pathData) => {
       if (pathData.chunk?.name === 'boot') {

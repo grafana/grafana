@@ -98,11 +98,9 @@ export default (env: Env = {}): Configuration => ({
     asyncWebAssembly: true,
   },
   output: {
-    // `path` and `publicPath` deliberately disagree. Each bundler owns its own output
-    // directory so `clean: true` cannot wipe the webpack build, but everything that
-    // resolves a URL at runtime is written against `public/build/`.
+    // `path` and `publicPath` must agree: disk layout, URL and CDN path are one string.
     clean: true,
-    path: path.resolve(import.meta.dirname, '../../public/build-rspack'),
+    path: path.resolve(import.meta.dirname, '../../public/build/rspack'),
     filename: (pathData) => {
       if (pathData.chunk?.name === 'boot') {
         return '[name].js';
@@ -110,7 +108,7 @@ export default (env: Env = {}): Configuration => ({
       return '[name].[contenthash].js';
     },
     chunkFilename: '[name].[contenthash].js',
-    publicPath: 'public/build/',
+    publicPath: 'public/build/rspack/',
   },
   resolve: {
     conditionNames: ['@grafana-app/source', '...'],

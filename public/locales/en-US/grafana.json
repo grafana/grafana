@@ -7406,7 +7406,9 @@
     },
     "panel-data-queries-tab-rendered": {
       "add-query": "Add query",
-      "expression": "Expression "
+      "expression": "Expression ",
+      "sql-expressions-frontend-only": "SQL expressions can only evaluate results from backend datasources. This panel only contains frontend datasources.",
+      "sql-expressions-pending": "SQL expressions can only evaluate results from backend datasources."
     },
     "panel-data-transformations-tab": {
       "tab-label": "Transformations"
@@ -8682,7 +8684,8 @@
         "inspect-value": "Inspect value",
         "show-details": "Show details",
         "view-log-line": "View log line"
-      }
+      },
+      "loki-time-sort-tooltip": "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
     },
     "logs-table-empty-fields": {
       "no-fields": "No fields"
@@ -11050,6 +11053,7 @@
       "title": "Active incidents",
       "view-all": "View all incidents"
     },
+    "learn-more": "Learn more",
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
       "empty-description": "Once your organization has dashboards and usage data has been collected, dashboards with the most views over the last 30 days will be displayed here.",
@@ -11063,6 +11067,23 @@
       "title": "Latest from the blog"
     },
     "overview": {
+      "available": {
+        "logs": {
+          "action": "Add logs"
+        },
+        "metrics": {
+          "action": "Connect metrics"
+        },
+        "traces": {
+          "action": "Instrument traces"
+        }
+      },
+      "empty": {
+        "all": "No solutions were found.",
+        "attention": "No solutions need attention.",
+        "available": "No available solutions to show yet.",
+        "enabled": "No enabled solutions with recent activity were found."
+      },
       "get-started": {
         "cards": {
           "app-monitoring": {
@@ -11130,12 +11151,23 @@
         "show-more": "More getting started guides",
         "title": "Recommended getting started guides"
       },
+      "groups": {
+        "attention": "Needs attention",
+        "available": "Available",
+        "enabled": "Enabled"
+      },
       "options": {
         "all": "All solutions",
         "attention": "Needs attention",
         "available": "Available solutions",
         "enabled": "Enabled solutions",
         "get-started": "Get started"
+      },
+      "status": {
+        "attention": "Needs attention",
+        "available": "Not enabled",
+        "enabled": "Enabled",
+        "setup": "Ready to configure"
       },
       "title": "Your observability stack overview"
     },
@@ -11179,14 +11211,6 @@
       },
       "existing": "Enabled solution",
       "go-to": "Go to recommendation {{index}}",
-      "health": {
-        "nodes_one": "{{count}} node not ready",
-        "nodes_other": "{{count}} nodes not ready",
-        "pods_one": "{{count}} pod pending or failed",
-        "pods_other": "{{count}} pods pending or failed",
-        "restarts_one": "{{count}} restart in the last hour",
-        "restarts_other": "{{count}} restarts in the last hour"
-      },
       "hide": "Hide",
       "hosted-traces": {
         "action": "Enable Hosted Traces",
@@ -11195,19 +11219,6 @@
         "setup-action": "Set up Hosted Traces",
         "title": "Trace requests across services"
       },
-      "kubernetes": {
-        "action": "Open K8s app",
-        "alerts-firing_one": "{{value}} alert firing",
-        "alerts-firing_other": "{{value}} alerts firing",
-        "cluster-cpu": "Cluster CPU · last 24h",
-        "clusters_one": "{{value}} cluster",
-        "clusters_other": "{{value}} clusters",
-        "datasource": "via {{name}}",
-        "pods_one": "{{value}} pod",
-        "pods_other": "{{value}} pods",
-        "title": "Kubernetes Monitoring",
-        "view": "View"
-      },
       "kubernetes-monitoring": {
         "action": "Enable Kubernetes Monitoring",
         "context": "Cluster health next to your existing telemetry",
@@ -11215,50 +11226,18 @@
         "setup-action": "Set up Kubernetes Monitoring",
         "title": "Monitor your Kubernetes fleet"
       },
-      "logs": {
-        "action": "Open Explore (Logs)",
-        "action-explore": "Open in Explore",
-        "datasource": "via {{name}}",
-        "stats": "ingested · 7d",
-        "stats-sources_one": "ingested · 7d · ~{{count}} source",
-        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
-        "title": "Hosted Logs",
-        "volume": "Ingest volume · last 24h"
-      },
-      "metrics": {
-        "action": "Open Metrics Drilldown",
-        "action-explore": "Open in Explore",
-        "data-points-per-minute": "{{value}} data points/min",
-        "datasource": "via {{name}}",
-        "disk-eta_one": "~{{count}} h to full",
-        "disk-eta_other": "~{{count}} h to full",
-        "disk-hosts_one": "{{count}} host above 90% disk",
-        "disk-hosts_other": "{{count}} hosts above 90% disk",
-        "disk-worst": "{{host}} at {{percent}}%",
-        "names_one": "{{value}} metric",
-        "names_other": "{{value}} metrics",
-        "series_one": "{{value}} series",
-        "series_other": "{{value}} series",
-        "series-trend": "Active series · last 24h",
-        "stats": "active",
-        "stats-hosts_one": "active · {{count}} host",
-        "stats-hosts_other": "active · {{count}} hosts",
-        "title": "Metrics & infrastructure",
-        "view": "View"
-      },
       "next": "Next",
       "no-data": {
         "badge": "Getting started",
         "connect": "Connect a data source",
         "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
-        "description-partial": "Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.",
         "description-unknown": "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here.",
         "popular-solutions": "Popular solutions",
         "solution-k6": "k6",
         "solution-kubernetes": "Kubernetes Monitoring",
         "solution-synthetics": "Synthetic Monitoring",
         "title": "No data flowing yet",
-        "title-partial": "Add more telemetry"
+        "title-unknown": "We couldn't confirm your data"
       },
       "pause": "Pause",
       "previous": "Previous",
@@ -11267,19 +11246,75 @@
       "show": "Show",
       "switch": "Recommendations follow the selected solution",
       "switchSolution": "Switch solution",
-      "title": "Recommendations for your stack",
+      "title": "Recommendations for your stack"
+    },
+    "solutions": {
+      "cta": {
+        "enable": "Enable",
+        "open-app": "Open {{appName}}",
+        "open-explore": "Open in Explore",
+        "set-up": "Set up"
+      },
+      "kubernetes": {
+        "alerts-firing_one": "{{value}} alert firing",
+        "alerts-firing_other": "{{value}} alerts firing",
+        "cluster-cpu": "Cluster CPU · last 24h",
+        "clusters_one": "{{value}} cluster",
+        "clusters_other": "{{value}} clusters",
+        "description": "See cluster health, cost, and right-sizing savings in one view.",
+        "health-nodes_one": "{{count}} node not ready",
+        "health-nodes_other": "{{count}} nodes not ready",
+        "health-pods_one": "{{count}} pod pending or failed",
+        "health-pods_other": "{{count}} pods pending or failed",
+        "health-restarts_one": "{{count}} restart in the last hour",
+        "health-restarts_other": "{{count}} restarts in the last hour",
+        "pods_one": "{{value}} pod",
+        "pods_other": "{{value}} pods",
+        "setup-hint": "~3 min · Helm/Alloy",
+        "title": "Kubernetes Monitoring",
+        "view-alerts": "View alerts in Kubernetes Monitoring"
+      },
+      "logs": {
+        "description": "Aggregate and search logs from your applications and infrastructure.",
+        "setup-hint": "connect a logs source",
+        "stats": "ingested · 7d",
+        "stats-sources_one": "ingested · 7d · ~{{count}} source",
+        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
+        "title": "Logs",
+        "volume": "Ingest volume · last 24h"
+      },
+      "metrics": {
+        "data-points-per-minute": "{{value}} data points/min",
+        "description": "Connect Prometheus-compatible metrics to explore infrastructure health and trends.",
+        "disk-eta_one": "~{{count}} h to full",
+        "disk-eta_other": "~{{count}} h to full",
+        "disk-hosts_one": "{{count}} host above 90% disk",
+        "disk-hosts_other": "{{count}} hosts above 90% disk",
+        "disk-worst": "{{host}} at {{percent}}%",
+        "investigate-disk": "Investigate disk usage in Explore",
+        "names_one": "{{value}} metric",
+        "names_other": "{{value}} metrics",
+        "series_one": "{{value}} series",
+        "series_other": "{{value}} series",
+        "series-trend": "Active series · last 24h",
+        "setup-hint": "connect a metrics source",
+        "stats": "active",
+        "stats-hosts_one": "active · {{count}} host",
+        "stats-hosts_other": "active · {{count}} hosts",
+        "title": "Metrics & infrastructure"
+      },
       "traces": {
-        "action": "Open Traces Drilldown",
-        "action-explore": "Open in Explore",
-        "datasource": "via {{name}}",
+        "description": "See how requests flow across services and where they slow down.",
+        "setup-hint": "requires instrumentation",
         "spans_one": "{{value}} span",
         "spans_other": "{{value}} spans",
-        "stats": "traced · 24h",
-        "stats-services_one": "traced · 24h · {{count}} service",
-        "stats-services_other": "traced · 24h · {{count}} services",
-        "throughput": "Span throughput · last 24h",
-        "title": "Hosted Traces"
-      }
+        "stats": "traced · {{hours}}h",
+        "stats-services_one": "traced · {{hours}}h · {{count}} service",
+        "stats-services_other": "traced · {{hours}}h · {{count}} services",
+        "throughput": "Span throughput · last {{hours}}h",
+        "title": "Traces"
+      },
+      "via-datasource": "via {{name}}"
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
@@ -11855,7 +11890,8 @@
         "disable-highlighting": "Highlight text",
         "enable-highlighting": "Plain text",
         "escape-newlines": "Escape newlines",
-        "expand": "Collapsed"
+        "expand": "Collapsed",
+        "highlighting-unavailable": "Highlighting unavailable"
       },
       "labels": {
         "font-large": "Large font",
@@ -11908,7 +11944,8 @@
         "disable-highlighting": "Disable highlighting",
         "download": "Download",
         "enable-highlighting": "Enable highlighting",
-        "filter-level": "Filter logs result by level"
+        "filter-level": "Filter logs result by level",
+        "highlighting-unavailable": "Highlighting is disabled because these logs are too large and could impact performance"
       },
       "unwrapped-columns": {
         "disable": "Disable columns",
@@ -12844,6 +12881,17 @@
       "label": "Export",
       "open-in-cursor": "Open in Cursor",
       "opening-in-cursor": "Opening in Cursor"
+    },
+    "history": {
+      "add-block": "Add block",
+      "delete-block": "Delete block",
+      "duplicate-block": "Duplicate block",
+      "edit-block": "Edit block",
+      "move-block": "Move block",
+      "redo": "Redo",
+      "redo-action": "Redo: {{action}}",
+      "undo": "Undo",
+      "undo-action": "Undo: {{action}}"
     },
     "list": {
       "all-authors": "All authors",

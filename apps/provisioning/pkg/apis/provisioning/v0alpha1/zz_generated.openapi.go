@@ -601,11 +601,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlabOAuth\"`",
+							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "gitlabOAuth"},
+							Enum:        []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "githubOAuth", "gitlabOAuth"},
 						},
 					},
 					"url": {
@@ -2956,7 +2956,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 										Default: "",
 										Type:    []string{"string"},
 										Format:  "",
-										Enum:    []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "gitlabOAuth"},
+										Enum:    []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "githubOAuth", "gitlabOAuth"},
 									},
 								},
 							},
