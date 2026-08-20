@@ -815,6 +815,26 @@
    },
    "type": "array"
   },
+  "ConvertAlertmanagerResponse": {
+   "properties": {
+    "error": {
+     "type": "string"
+    },
+    "errorType": {
+     "type": "string"
+    },
+    "rename_resources": {
+     "$ref": "#/definitions/RenameResources"
+    },
+    "stats": {
+     "$ref": "#/definitions/MergeStats"
+    },
+    "status": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "ConvertPrometheusResponse": {
    "properties": {
     "error": {
@@ -2474,6 +2494,44 @@
    },
    "type": "array"
   },
+  "MergeStats": {
+   "properties": {
+    "added_inhibition_rules": {
+     "description": "AddedInhibitionRules contains the names of inhibition rules added",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "added_receivers": {
+     "description": "AddedReceivers contains the names of receivers added (post-rename if renamed)",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "added_route": {
+     "description": "AddedRoute is the identifier of the routing sub-tree added to the configuration",
+     "type": "string"
+    },
+    "added_templates": {
+     "description": "AddedTemplates contains the names of templates added",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "added_time_intervals": {
+     "description": "AddedTimeIntervals contains the names of time intervals added (post-rename if renamed)",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "title": "MergeStats describes which resources were added during configuration merge.",
+   "type": "object"
+  },
   "MultiStatus": {
    "type": "object"
   },
@@ -3898,6 +3956,26 @@
    },
    "type": "object"
   },
+  "RenameResources": {
+   "description": "RenameResources describes which resources were renamed to avoid conflicts",
+   "properties": {
+    "receivers": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "Receivers maps old receiver names to new receiver names",
+     "type": "object"
+    },
+    "time_intervals": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "TimeIntervals maps old time interval names to new time interval names",
+     "type": "object"
+    }
+   },
+   "type": "object"
+  },
   "ResponseDetails": {
    "properties": {
     "msg": {
@@ -3915,7 +3993,6 @@
    "type": "object"
   },
   "Route": {
-   "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
     "active_time_intervals": {
      "items": {
@@ -3957,12 +4034,6 @@
      },
      "type": "array"
     },
-    "object_matchers": {
-     "$ref": "#/definitions/ObjectMatchers"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
     "receiver": {
      "type": "string"
     },
@@ -3976,6 +4047,7 @@
      "type": "array"
     }
    },
+   "title": "A Route is a node that contains definitions of how to handle alerts.",
    "type": "object"
   },
   "RouteExport": {
@@ -7082,7 +7154,10 @@
     ],
     "responses": {
      "202": {
-      "$ref": "#/responses/ConvertAlertmanagerResponse"
+      "description": "ConvertAlertmanagerResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertAlertmanagerResponse"
+      }
      },
      "403": {
       "description": "ForbiddenError",
@@ -7932,7 +8007,10 @@
       }
      },
      "404": {
-      "$ref": "#/responses/NotFound."
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
      }
     },
     "tags": [

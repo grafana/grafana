@@ -1451,7 +1451,10 @@
         ],
         "responses": {
           "202": {
-            "$ref": "#/responses/ConvertAlertmanagerResponse"
+            "description": "ConvertAlertmanagerResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertAlertmanagerResponse"
+            }
           },
           "403": {
             "description": "ForbiddenError",
@@ -2348,7 +2351,10 @@
             }
           },
           "404": {
-            "$ref": "#/responses/NotFound."
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
           }
         }
       }
@@ -5409,6 +5415,26 @@
         "$ref": "#/definitions/EmbeddedContactPoint"
       }
     },
+    "ConvertAlertmanagerResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "errorType": {
+          "type": "string"
+        },
+        "rename_resources": {
+          "$ref": "#/definitions/RenameResources"
+        },
+        "stats": {
+          "$ref": "#/definitions/MergeStats"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
     "ConvertPrometheusResponse": {
       "type": "object",
       "properties": {
@@ -7070,6 +7096,44 @@
       },
       "$ref": "#/definitions/Matchers"
     },
+    "MergeStats": {
+      "type": "object",
+      "title": "MergeStats describes which resources were added during configuration merge.",
+      "properties": {
+        "added_inhibition_rules": {
+          "description": "AddedInhibitionRules contains the names of inhibition rules added",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "added_receivers": {
+          "description": "AddedReceivers contains the names of receivers added (post-rename if renamed)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "added_route": {
+          "description": "AddedRoute is the identifier of the routing sub-tree added to the configuration",
+          "type": "string"
+        },
+        "added_templates": {
+          "description": "AddedTemplates contains the names of templates added",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "added_time_intervals": {
+          "description": "AddedTimeIntervals contains the names of time intervals added (post-rename if renamed)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "MultiStatus": {
       "type": "object"
     },
@@ -8494,6 +8558,26 @@
         }
       }
     },
+    "RenameResources": {
+      "description": "RenameResources describes which resources were renamed to avoid conflicts",
+      "type": "object",
+      "properties": {
+        "receivers": {
+          "description": "Receivers maps old receiver names to new receiver names",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "time_intervals": {
+          "description": "TimeIntervals maps old time interval names to new time interval names",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "ResponseDetails": {
       "type": "object",
       "properties": {
@@ -8511,8 +8595,8 @@
       }
     },
     "Route": {
-      "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
+      "title": "A Route is a node that contains definitions of how to handle alerts.",
       "properties": {
         "active_time_intervals": {
           "type": "array",
@@ -8553,12 +8637,6 @@
           "items": {
             "type": "string"
           }
-        },
-        "object_matchers": {
-          "$ref": "#/definitions/ObjectMatchers"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
         },
         "receiver": {
           "type": "string"
