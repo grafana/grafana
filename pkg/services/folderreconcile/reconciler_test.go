@@ -47,9 +47,14 @@ func (c *fakeConsumer) DeleteInFolder(_ context.Context, _ int64, folderUID stri
 	return nil
 }
 
-type fakeOrgs struct{ ids []int64 }
+type fakeOrgs struct {
+	ids      []int64
+	deadline time.Time
+	hasDL    bool
+}
 
-func (o *fakeOrgs) Search(_ context.Context, _ *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
+func (o *fakeOrgs) Search(ctx context.Context, _ *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
+	o.deadline, o.hasDL = ctx.Deadline()
 	dtos := make([]*org.OrgDTO, 0, len(o.ids))
 	for _, id := range o.ids {
 		dtos = append(dtos, &org.OrgDTO{ID: id})
@@ -132,4 +137,29 @@ func TestTick_LockMaxIntervalMatchesTickInterval(t *testing.T) {
 	// maxInterval must equal the tick interval, so LockAndExecute is what caps actual run
 	// frequency to once per interval regardless of how many replicas tick.
 	require.Equal(t, r.interval, lock.maxInterval)
+}
+
+func TestTick_BoundsPassToLockInterval(t *testing.T) {
+	orgs := &fakeOrgs{}
+	lock := &fakeLock{acquired: true}
+	r := newReconciler(&fakeFolders{FakeService: foldertest.NewFakeService()}, orgs, lock, minInterval, nil)
+
+	before := time.Now()
+	r.tick(context.Background())
+
+	require.True(t, orgs.hasDL, "reconcile pass must run under a deadline so it can't outlive the lock")
+	require.WithinDuration(t, before.Add(minInterval), orgs.deadline, time.Second)
+}
+
+func TestReconcile_StopsEarlyWhenContextExpires(t *testing.T) {
+	alerts := &fakeConsumer{name: "alerts", inUse: map[int64][]string{1: {"gone"}, 2: {"gone"}}}
+	folders := &fakeFolders{FakeService: foldertest.NewFakeService()}
+	r := newReconciler(folders, &fakeOrgs{ids: []int64{1, 2}}, nil, minInterval, alerts)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	require.NoError(t, r.reconcile(ctx))
+
+	// The org loop bails at its first boundary check, so no consumer work happens.
+	require.Empty(t, alerts.deleted)
 }

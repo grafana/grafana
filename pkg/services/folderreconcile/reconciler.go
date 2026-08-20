@@ -107,9 +107,12 @@ func (r *Reconciler) Run(ctx context.Context) error {
 
 // tick runs one reconcile pass under the server lock, so only one replica per tenant reconciles per
 // interval regardless of how many replicas tick. maxInterval == r.interval on purpose: LockAndExecute
-// skips work started less than maxInterval ago, which is what caps the actual run frequency.
+// skips work started less than maxInterval ago, which is what caps the actual run frequency. The pass
+// itself is bounded to the same duration, so it can never still be running once the lease goes stale.
 func (r *Reconciler) tick(ctx context.Context) {
 	err := r.lock.LockAndExecute(ctx, lockActionName, r.interval, func(ctx context.Context) {
+		ctx, cancel := context.WithTimeout(ctx, r.interval)
+		defer cancel()
 		if err := r.reconcile(ctx); err != nil {
 			r.log.Error("Folder reconcile failed", "error", err)
 		}
@@ -125,6 +128,12 @@ func (r *Reconciler) reconcile(ctx context.Context) error {
 		return err
 	}
 	for _, o := range orgs {
+		// Stop cleanly at an org boundary rather than letting the deadline cut off mid-org;
+		// the remaining orgs are picked up on the next tick.
+		if ctx.Err() != nil {
+			r.log.Warn("Reconcile pass ran out of time, resuming next tick")
+			break
+		}
 		if err := r.reconcileOrg(ctx, o.ID); err != nil {
 			r.log.Error("Failed to reconcile org", "org_id", o.ID, "error", err)
 		}
