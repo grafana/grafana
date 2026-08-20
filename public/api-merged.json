@@ -10960,6 +10960,12 @@
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
             }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           }
         }
       }
@@ -11078,6 +11084,12 @@
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
             }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           }
         }
       },
@@ -11108,6 +11120,12 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11380,6 +11398,12 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11699,6 +11723,12 @@
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
             }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           }
         }
       },
@@ -11723,6 +11753,12 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
             }
           }
         }

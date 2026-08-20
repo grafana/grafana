@@ -3419,6 +3419,12 @@
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
             }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           }
         }
       }
@@ -3539,6 +3545,12 @@
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
             }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           }
         }
       },
@@ -3570,6 +3582,12 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -3848,6 +3866,12 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -4174,6 +4198,12 @@
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
             }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           }
         }
       },
@@ -4199,6 +4229,12 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -8595,8 +8631,8 @@
       }
     },
     "Route": {
+      "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
-      "title": "A Route is a node that contains definitions of how to handle alerts.",
       "properties": {
         "active_time_intervals": {
           "type": "array",
@@ -8637,6 +8673,12 @@
           "items": {
             "type": "string"
           }
+        },
+        "object_matchers": {
+          "$ref": "#/definitions/ObjectMatchers"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "receiver": {
           "type": "string"
