@@ -8682,7 +8682,8 @@
         "inspect-value": "Inspect value",
         "show-details": "Show details",
         "view-log-line": "View log line"
-      }
+      },
+      "loki-time-sort-tooltip": "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
     },
     "logs-table-empty-fields": {
       "no-fields": "No fields"
