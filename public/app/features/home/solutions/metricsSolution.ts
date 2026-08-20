@@ -13,6 +13,7 @@ import { t } from '@grafana/i18n';
 import { METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { resolveKubernetesDatasource } from './kubernetesData';
 import { drilldownActiveCta } from './pluginPages';
+import { datasourceFact } from './probeUtils';
 import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, probeFound, prometheusHasRecentMetrics } from './solutionDataProbes';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal, type SignalDetection } from './solutionState';
@@ -71,14 +72,8 @@ export function metricsSolution(): Solution {
   });
   const datasource = async () => (await detect()).datasource;
 
-  const activity = memoize(async () => {
-    const ds = await datasource();
-    return ds ? fetchMetricsActivity(ds) : null;
-  });
-  const diskPressure = memoize(async () => {
-    const ds = await datasource();
-    return ds ? fetchMetricsDiskPressure(ds) : null;
-  });
+  const activity = datasourceFact(datasource, fetchMetricsActivity);
+  const diskPressure = datasourceFact(datasource, fetchMetricsDiskPressure);
   const diskHoursToFull = memoize(async () => {
     const ds = await datasource();
     const disk = await diskPressure();

@@ -1,6 +1,32 @@
+import memoize from 'micro-memoize';
+
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
+
+/**
+ * A lazily-started, shared solution fact derived from the solution's datasource: the first read
+ * resolves the datasource and starts `fetch`; every reader shares that one run. No datasource
+ * (solution not live) reads as null without starting the query.
+ */
+export function datasourceFact<T>(
+  datasource: () => Promise<DataSourceInstanceListItem | null>,
+  fetch: (ds: DataSourceInstanceListItem) => Promise<T | null>,
+  {
+    retryOnError = false,
+  }: {
+    /** Evict rejections so a later reader retries instead of sharing the cached failure. */
+    retryOnError?: boolean;
+  } = {}
+): () => Promise<T | null> {
+  return memoize(
+    async () => {
+      const ds = await datasource();
+      return ds ? fetch(ds) : null;
+    },
+    { isPromise: retryOnError }
+  );
+}
 
 /** Cap the probe fan-out: only the first N candidates (in priority order) are probed per page load. */
 export const MAX_PROBED_DATASOURCES = 10;
