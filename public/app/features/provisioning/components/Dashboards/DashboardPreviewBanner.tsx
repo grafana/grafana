@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
+
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types/dashboard';
 
@@ -25,6 +28,18 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
   const { prURL: existingPRUrl } = usePullRequestParam();
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
   const { repository } = useGetResourceRepositoryView({ name: slug });
+
+  // The version currently saved in Grafana, if the dashboard already exists on the configured branch
+  const existingUid = file.data?.resource?.existing?.metadata?.name;
+
+  useEffect(() => {
+    // The scene cache has no TTL and is keyed by uid, so it can still be holding the scene from
+    // before this branch was previewed/merged. Evict it so following the link below (or any other
+    // navigation back to /d/<uid>) always fetches and renders the latest saved dashboard.
+    if (existingUid) {
+      getDashboardScenePageStateManager().removeSceneCache(existingUid);
+    }
+  }, [existingUid]);
 
   // early return if there is an error loading dashboard file from repository
   if (file.data?.errors) {
@@ -54,8 +69,6 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
     repoBaseUrl,
   };
 
-  // The version currently saved in Grafana, if the dashboard already exists on the configured branch
-  const existingUid = file.data?.resource?.existing?.metadata?.name;
   const originalUrl = typeof existingUid === 'string' && existingUid ? `/d/${existingUid}` : undefined;
 
   return (
