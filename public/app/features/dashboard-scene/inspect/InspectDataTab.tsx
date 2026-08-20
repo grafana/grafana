@@ -88,11 +88,11 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
  * than no toggle.
  */
 function hasTransformations(dataProvider: SceneDataProvider) {
-  if (!(dataProvider instanceof SceneDataTransformer)) {
-    return false;
+  if (dataProvider instanceof SceneDataTransformer) {
+    return dataProvider.state.transformations.length > 0;
   }
 
-  return dataProvider.state.transformations.length > 0;
+  return false;
 }
 
 function getDataProviderToSubscribeTo(dataProvider: SceneDataProvider, withTransforms: boolean) {
