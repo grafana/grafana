@@ -48,6 +48,12 @@ describe('toDataQueryError', () => {
       expect(toDataQueryError(err).message).toBe('bad query');
     });
 
+    // Primitives are never extensible, so they take the copy path too.
+    it('does not throw on a thrown primitive', () => {
+      expect(toDataQueryError(500).message).toBe('Query error');
+      expect(toDataQueryError(true).message).toBe('Query error');
+    });
+
     it('keeps the stack of a frozen Error', () => {
       const err = new Error();
       err.stack = 'a stack trace';

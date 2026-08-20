@@ -35,7 +35,8 @@ export function toDataQueryError(err: DataQueryError | string | unknown): DataQu
 
     // The spread above misses stack, since it's not an enumerable property. We keep it here
     // because it's often the only clue about where the error came from.
-    if (copy.stack === undefined && 'stack' in error && typeof error.stack === 'string') {
+    // The typeof check matters: a thrown primitive also lands here, and `in` rejects those.
+    if (copy.stack === undefined && typeof error === 'object' && 'stack' in error && typeof error.stack === 'string') {
       copy.stack = error.stack;
     }
 
