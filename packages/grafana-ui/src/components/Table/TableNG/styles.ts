@@ -166,6 +166,13 @@ export const getGridStyles = memoize(
             // box-shadow painted at its border edge.
             boxShadow: '0 -1px 0 0 var(--rdg-header-background-color)',
           },
+          // The `.rdg-cell.rdg-cell-frozen` rule above (for solid, occluding frozen body cells)
+          // also matches frozen *header* cells, at higher specificity than the plain `.rdg-cell`
+          // inheriting the header's background — so a frozen column's header cell fell back to the
+          // row background instead. Three classes' worth of specificity here beats that rule's two.
+          '.rdg-header-row > .rdg-cell.rdg-cell-frozen': {
+            backgroundColor: 'var(--rdg-header-background-color)',
+          },
           [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
             borderStartStartRadius: theme.shape.radius.default,
             overflow: 'hidden',
