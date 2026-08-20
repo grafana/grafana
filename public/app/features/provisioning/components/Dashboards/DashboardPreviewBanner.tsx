@@ -58,7 +58,9 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
   const existingUid = file.data?.resource?.existing?.metadata?.name;
   const originalUrl = typeof existingUid === 'string' && existingUid ? `/d/${existingUid}` : undefined;
 
-  return <PreviewBannerViewPR prURL={prURL} isNewPr={!hasExistingPr} branchInfo={branchInfo} originalUrl={originalUrl} />;
+  return (
+    <PreviewBannerViewPR prURL={prURL} isNewPr={!hasExistingPr} branchInfo={branchInfo} originalUrl={originalUrl} />
+  );
 }
 
 export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
