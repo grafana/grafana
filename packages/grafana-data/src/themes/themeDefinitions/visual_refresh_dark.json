@@ -114,15 +114,34 @@
     "borderRadius": 8,
     "borderRadiusLg": 12
   },
+  "shadows": {
+    "z1": "0px 1px 2px hsl(from palette.ink900 h s l / 0.75)",
+    "z2": "0px 4px 8px hsl(from palette.ink900 h s l / 0.75)",
+    "z3": "0px 8px 24px hsl(from palette.ink900 h s l)"
+  },
   "components": {
     "checkbox": {
       "activeBackgroundHover": "palette.orange400"
     },
+    "drawer": {
+      "background": "palette.ink900",
+      "borderColor": "palette.ink700"
+    },
+    "modal": {
+      "background": "palette.ink900",
+      "borderColor": "palette.ink700"
+    },
     "overlay": {
       "background": "hsl(from palette.ink700 h s l / 0.6)"
     },
+    "dropdown": {
+      "borderColor": "palette.ink700"
+    },
     "switch": {
       "activeBackgroundHover": "palette.orange400"
+    },
+    "tooltip": {
+      "borderColor": "palette.ink700"
     },
     "input": {
       "background": "palette.ink850"

@@ -1,6 +1,8 @@
 package githuboauth
 
 import (
+	"context"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/oauth"
@@ -13,7 +15,7 @@ func Extra(decrypter connection.Decrypter, factory *github.Factory) connection.E
 		decrypter,
 		provisioning.GithubOAuthConnectionType,
 		provisioning.GitHubRepositoryType,
-		func(spec provisioning.ConnectionSpec, accessToken string) (oauth.Provider, error) {
+		func(ctx context.Context, spec provisioning.ConnectionSpec, accessToken string) (oauth.Provider, error) {
 			return newProvider(factory, spec, accessToken)
 		},
 		nil,
