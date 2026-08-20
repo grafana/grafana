@@ -2200,6 +2200,8 @@
       "title-no-alerting-capable-query-found": "Tidak ada kueri berkemampuan peringatan yang ditemukan"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Konfigurasikan kesenyapan untuk menghentikan notifikasi dari aturan peringatan tertentu"
@@ -2207,7 +2209,10 @@
         "text": {
           "silence-alert-rule": "Senyapkan aturan peringatan"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Kami tidak dapat menemukan Alertmanager eksternal dan Anda mungkin tidak memiliki akses ke Grafana Alertmanager bawaan.",
@@ -3676,6 +3681,9 @@
       "no-matching-instances-with-filters": "Tidak ada instance peringatan yang cocok dengan rangkaian filter Anda saat ini untuk rentang waktu yang dipilih.",
       "open-in-sidebar": "Buka di bilah sisi",
       "open-rule-details": "Buka detail aturan",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Detail dan ketentuan aturan",
         "title": "Detail Aturan"
@@ -5380,6 +5388,16 @@
     "auto-grid": {
       "description": "Ukuran panel diubah agar pas dan membentuk kisi yang seragam",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Ulangi opsi",
           "variable": {
@@ -5397,15 +5415,36 @@
         "custom-min-width": {
           "clear": "Hapus"
         },
+        "fit-content": "",
         "height-fill": "Isi layar",
+        "match-row-heights": "",
         "max-columns": "Kolom maks",
-        "min-height": "Tinggi baris",
-        "min-height-custom": "Tinggi baris kustom",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "Masukkan angka antara 50 dan 2000",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Lebar kolom min",
         "min-width-custom": "Lebar min kustom",
         "min-width-custom-clear": "Kembali ke lebar kolom min standar",
-        "min-width-error": "Masukkan angka antara 50 dan 2000"
+        "min-width-error": "Masukkan angka antara 50 dan 2000",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5638,6 +5677,7 @@
       "panel-background": "Ubah latar belakang panel",
       "panel-description": "Ubah deskripsi panel",
       "panel-edit": "Perubahan panel",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Pengulangan maksimum per baris",
       "panel-preset": "Terapkan preset panel",
       "panel-repeat-direction": "Ulangi arah",
@@ -9434,21 +9474,6 @@
   "get-enterprise": {
     "requires-license": "Membutuhkan lisensi Grafana Enterprise",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "selesai",
-      "learn-how": "Pelajari caranya di dokumen"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Ke tutorial lanjutan",
-      "aria-label-to-basic-tutorials": "Ke tutorial dasar",
-      "checking-completed-setup-steps": "Memeriksa langkah-langkah pengaturan yang telah selesai",
-      "remove-this-panel": "Hapus panel ini"
-    },
-    "tutorial-card": {
-      "complete": "selesai"
-    }
   },
   "global-variables": {
     "details": {
@@ -17391,12 +17416,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Tautan"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Butuh bantuan?",
-      "welcome-to-grafana": "Selamat datang di Grafana"
     }
   },
   "xychart": {
