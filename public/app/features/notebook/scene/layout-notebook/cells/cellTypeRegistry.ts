@@ -1,9 +1,11 @@
-import { type ComponentType } from 'react';
+import { lazy, type ComponentType } from 'react';
 
 import { Registry, type RegistryItem } from '@grafana/data';
 import { type CellContentKind } from 'app/features/notebook/types';
 
-import { CodeCell } from './CodeCell';
+const CodeCell = lazy(() =>
+  import(/* webpackChunkName: "notebook-code-cell" */ './CodeCell').then((m) => ({ default: m.CodeCell }))
+);
 
 // "Markdown" isn't registered here: NotebookCellRenderer's NarrativeCell special-cases
 // content.kind === 'Markdown' and renders SpecialMarkdownCell directly, ahead of this registry, since

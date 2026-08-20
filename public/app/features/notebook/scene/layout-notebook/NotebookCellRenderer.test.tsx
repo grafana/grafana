@@ -60,16 +60,16 @@ describe('NotebookCellRenderer', () => {
     const cell = buildCellInLayout();
     const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-    await user.type(screen.getByLabelText('Code'), '0');
+    await user.type(await screen.findByLabelText('Code'), '0');
 
     expect(cell.state.content).toEqual({ kind: 'Code', spec: { code: 'select 10', language: 'sql' } });
   });
 
-  it('leaves the cell alone while the notebook is being read', () => {
+  it('leaves the cell alone while the notebook is being read', async () => {
     const cell = buildCellInLayout();
     render(<NotebookCellRenderer cell={cell} isEditing={false} />);
 
-    expect(screen.getByLabelText('Code')).toHaveAttribute('readonly');
+    expect(await screen.findByLabelText('Code')).toHaveAttribute('readonly');
     expect(cell.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
   });
 

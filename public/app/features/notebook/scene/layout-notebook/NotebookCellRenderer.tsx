@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -130,12 +130,14 @@ function NarrativeCell({
   const Renderer = registered.render;
   return (
     <div className={styles.content}>
-      <Renderer
-        content={content}
-        isEditing={isEditing}
-        autoFocus={autoFocus}
-        onChange={(updated) => cell.onContentChange(updated)}
-      />
+      <Suspense fallback={content.kind === 'Code' ? <pre>{content.spec.code}</pre> : null}>
+        <Renderer
+          content={content}
+          isEditing={isEditing}
+          autoFocus={autoFocus}
+          onChange={(updated) => cell.onContentChange(updated)}
+        />
+      </Suspense>
     </div>
   );
 }
