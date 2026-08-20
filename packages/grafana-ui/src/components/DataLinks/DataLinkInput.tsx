@@ -34,27 +34,21 @@ const DataLinkInputImplementation = lazy(() =>
 
 export const DataLinkInput = memo(function DataLinkInput(props: DataLinkInputProps) {
   return (
-    <Suspense fallback={<DataLinkInputLoadingFallback {...props} />}>
+    <Suspense
+      fallback={
+        <Input
+          id={`${props.id ?? 'data-link-input'}-loading`}
+          value={props.value}
+          placeholder={props.placeholder ?? 'http://your-grafana.com/d/000000010/annotations'}
+          readOnly
+          tabIndex={-1}
+          aria-label=""
+          aria-labelledby=""
+          aria-hidden
+        />
+      }
+    >
       <DataLinkInputImplementation {...props} />
     </Suspense>
   );
 });
-
-function DataLinkInputLoadingFallback({
-  value,
-  placeholder = 'http://your-grafana.com/d/000000010/annotations',
-  id = 'data-link-input',
-}: DataLinkInputProps) {
-  return (
-    <Input
-      id={`${id}-loading`}
-      value={value}
-      placeholder={placeholder}
-      readOnly
-      tabIndex={-1}
-      aria-label=""
-      aria-labelledby=""
-      aria-hidden
-    />
-  );
-}

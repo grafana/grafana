@@ -3,7 +3,7 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
-import { CodeCellImplementation as CodeCell } from './CodeCellImplementation';
+import { CodeCell } from './CodeCell';
 
 // The real CodeMirrorEditor is a heavy, lazily loaded bundle that does not run in jsdom. A textarea
 // carries readOnly into the DOM, so the assertions are on rendered output rather than on props
