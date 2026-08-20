@@ -4,7 +4,7 @@ import { type VariableSuggestion } from '@grafana/data';
 
 import { Input } from '../Input/Input';
 
-export type DataLinkInterpolationMode = 'url' | 'text';
+import { type DataLinkInterpolationMode } from './codemirrorUtils';
 
 export interface DataLinkInputProps {
   value: string;
