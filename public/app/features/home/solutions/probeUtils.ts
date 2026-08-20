@@ -44,13 +44,10 @@ const HEALTH_CHECK_TIMEOUT_MS = 3000;
 // (billing/ML) carry exact unprefixed names; Loki utilities (query logs, alert history) are
 // provisioned with stack-prefixed names (grafanacloud-<slug>-usage-insights) over stable
 // unprefixed uids, so the name check matches both forms.
-const CLOUD_UTILITY_DATASOURCE_NAMES: Record<string, true> = {
-  'grafanacloud-usage': true,
-  'grafanacloud-ml-metrics': true,
-};
+const CLOUD_UTILITY_DATASOURCE_NAMES: ReadonlySet<string> = new Set(['grafanacloud-usage', 'grafanacloud-ml-metrics']);
 const CLOUD_UTILITY_LOKI_NAME_PATTERN = /^grafanacloud-(.+-)?(usage-insights|alert-state-history)$/;
 function isCloudUtilityDatasourceName(name: string): boolean {
-  return Boolean(CLOUD_UTILITY_DATASOURCE_NAMES[name]) || CLOUD_UTILITY_LOKI_NAME_PATTERN.test(name);
+  return CLOUD_UTILITY_DATASOURCE_NAMES.has(name) || CLOUD_UTILITY_LOKI_NAME_PATTERN.test(name);
 }
 
 /** Backend-capable datasource instance for `uid`, or null when it cannot serve resource calls. */

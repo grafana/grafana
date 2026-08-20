@@ -60,7 +60,7 @@ export function labelRecencyProbe(path: string, toEpoch: (ms: number) => number)
 
 // Rule-evaluation output, not ingested telemetry: Prometheus writes these for its own alert
 // rules, and Grafana's alert-state export can be the only content of an otherwise empty tenant.
-const ALERT_STATE_METRIC_NAMES: Record<string, true> = { ALERTS: true, ALERTS_FOR_STATE: true };
+const ALERT_STATE_METRIC_NAMES: ReadonlySet<string> = new Set(['ALERTS', 'ALERTS_FOR_STATE']);
 
 /**
  * True when the datasource saw a recent metric name beyond alert-state series. Same index-only
@@ -80,7 +80,9 @@ export async function prometheusHasRecentMetrics(ds: DataSourceInstanceListItem)
   const grafanaAlertMetric = config.unifiedAlerting.stateHistory?.prometheusMetricName ?? 'GRAFANA_ALERTS';
   return (
     Array.isArray(res?.data) &&
-    res.data.some((name) => typeof name === 'string' && name !== grafanaAlertMetric && !ALERT_STATE_METRIC_NAMES[name])
+    res.data.some(
+      (name) => typeof name === 'string' && name !== grafanaAlertMetric && !ALERT_STATE_METRIC_NAMES.has(name)
+    )
   );
 }
 
