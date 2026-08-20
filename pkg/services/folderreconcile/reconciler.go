@@ -29,6 +29,10 @@ const lockActionName = "folder-reconciler"
 // across a large multi-tenant fleet.
 const minInterval = 5 * time.Minute
 
+// passTimeoutMargin leaves headroom before the lock's maxInterval elapses, mirroring
+// dashboard_service.go's cleanupTimeout calculation.
+const passTimeoutMargin = 5 * time.Second
+
 // serverLock is the subset of serverlock.ServerLockService used here, so tests can fake it.
 type serverLock interface {
 	LockAndExecute(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
@@ -111,7 +115,7 @@ func (r *Reconciler) Run(ctx context.Context) error {
 // itself is bounded to the same duration, so it can never still be running once the lease goes stale.
 func (r *Reconciler) tick(ctx context.Context) {
 	err := r.lock.LockAndExecute(ctx, lockActionName, r.interval, func(ctx context.Context) {
-		ctx, cancel := context.WithTimeout(ctx, r.interval)
+		ctx, cancel := context.WithTimeout(ctx, r.interval-passTimeoutMargin)
 		defer cancel()
 		if err := r.reconcile(ctx); err != nil {
 			r.log.Error("Folder reconcile failed", "error", err)

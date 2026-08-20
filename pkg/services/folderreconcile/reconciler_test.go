@@ -148,7 +148,7 @@ func TestTick_BoundsPassToLockInterval(t *testing.T) {
 	r.tick(context.Background())
 
 	require.True(t, orgs.hasDL, "reconcile pass must run under a deadline so it can't outlive the lock")
-	require.WithinDuration(t, before.Add(minInterval), orgs.deadline, time.Second)
+	require.WithinDuration(t, before.Add(minInterval-passTimeoutMargin), orgs.deadline, time.Second)
 }
 
 func TestReconcile_StopsEarlyWhenContextExpires(t *testing.T) {
