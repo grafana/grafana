@@ -4,6 +4,7 @@ import { type DataQuery } from '@grafana/data';
 
 export interface QueryCoauthoringHost {
   queryKey: string;
+  surfaceState: 'pending' | 'ready' | 'unavailable' | 'failed';
   preview(query: DataQuery, baselineRevision?: string): void;
   accept(query: DataQuery, baselineRevision?: string): void;
   revert(): void;

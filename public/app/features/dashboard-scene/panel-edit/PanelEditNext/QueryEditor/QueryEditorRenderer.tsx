@@ -143,9 +143,23 @@ export function QueryEditorPanel({
     runQueries();
   }, [runQueries, updateQuery]);
 
+  const runQueryWithCoauthoringSafety = useCallback(() => {
+    const baseline = coauthoringBaselineRef.current;
+    if (baseline) {
+      coauthoringBaselineRef.current = undefined;
+      coauthoringPreviewTransactionRef.current = undefined;
+      setCoauthoringBaseline(undefined);
+      updateQuery(baseline, baseline.refId);
+    }
+    runQueries();
+  }, [runQueries, updateQuery]);
+
   const acceptCoauthoredQuery = useCallback(
     (acceptedQuery: DataQuery, baselineRevision?: string) => {
       const transaction = coauthoringPreviewTransactionRef.current;
+      if (baselineRevision !== undefined && !transaction) {
+        return;
+      }
       if (
         transaction &&
         (transaction.queryKey !== coauthoringIdentity ||
@@ -170,16 +184,27 @@ export function QueryEditorPanel({
   );
   const coauthoringCapability =
     coauthoringRegistration?.identity === coauthoringIdentity ? coauthoringRegistration.capability : undefined;
+  const currentSurfaceState =
+    coauthoringSurface.identity === currentSurfaceIdentity && coauthoringSurface.generation === currentSurfaceGeneration
+      ? coauthoringSurface.state
+      : 'pending';
   const coauthoringHost = useMemo(
     () => ({
       queryKey: coauthoringIdentity,
+      surfaceState: currentSurfaceState,
       preview: (proposedQuery: DataQuery, baselineRevision?: string) =>
         previewCoauthoredQuery(proposedQuery, baselineRevision),
       accept: (acceptedQuery: DataQuery, baselineRevision?: string) =>
         acceptCoauthoredQuery(acceptedQuery, baselineRevision),
       revert: revertCoauthoredQueryPreview,
     }),
-    [acceptCoauthoredQuery, coauthoringIdentity, previewCoauthoredQuery, revertCoauthoredQueryPreview]
+    [
+      acceptCoauthoredQuery,
+      coauthoringIdentity,
+      currentSurfaceState,
+      previewCoauthoredQuery,
+      revertCoauthoredQueryPreview,
+    ]
   );
   const onCoauthoringSurfaceStateChange = useCallback(
     (event: { generation: string; state: 'ready' | 'unavailable' | 'failed' }) => {
@@ -212,22 +237,16 @@ export function QueryEditorPanel({
             componentId: QUERY_EDITOR_COAUTHORING_V1_COMPONENT_ID,
             generation: currentSurfaceGeneration,
             queryKey: coauthoringIdentity,
-            surfaceState:
-              coauthoringSurface.identity === currentSurfaceIdentity &&
-              coauthoringSurface.generation === currentSurfaceGeneration
-                ? coauthoringSurface.state
-                : 'pending',
+            surfaceState: currentSurfaceState,
             onSurfaceStateChange: onCoauthoringSurfaceStateChange,
           }
         : undefined,
     [
       coauthoringEnabled,
       coauthoringIdentity,
-      coauthoringSurface.generation,
-      coauthoringSurface.identity,
-      coauthoringSurface.state,
       currentSurfaceGeneration,
       currentSurfaceIdentity,
+      currentSurfaceState,
       onCoauthoringSurfaceStateChange,
     ]
   );
@@ -290,7 +309,7 @@ export function QueryEditorPanel({
               datasource={datasource}
               onAddQuery={addQuery}
               onChange={handleChange}
-              onRunQuery={runQueries}
+              onRunQuery={runQueryWithCoauthoringSafety}
               queries={editorQueries}
               query={editorQuery}
               range={filteredData?.timeRange}

@@ -47,16 +47,22 @@ describe('QueryCoauthoringExposedComponent', () => {
     document.body.append(portalTarget);
     const firstController = createController(portalTarget);
     const secondController = createController(portalTarget);
+    const lifecycle: string[] = [];
+    firstController.dispose.mockImplementation(() => lifecycle.push('dispose-first'));
     const onSurfaceStateChange = jest.fn();
     const host = {
       queryKey: 'prometheus:A',
+      surfaceState: 'ready' as const,
       preview: jest.fn(),
       accept: jest.fn(),
       revert: jest.fn(),
     };
     const firstProps: QueryEditorCoauthoringV1Props = {
       surfaceGeneration: 'generation-1',
-      createController: () => firstController,
+      createController: () => {
+        lifecycle.push('create-first');
+        return firstController;
+      },
       onSurfaceStateChange,
     };
 
@@ -66,7 +72,9 @@ describe('QueryCoauthoringExposedComponent', () => {
       </QueryCoauthoringHostProvider>
     );
 
-    expect(onSurfaceStateChange).toHaveBeenCalledWith({ generation: 'generation-1', state: 'ready' });
+    await waitFor(() =>
+      expect(onSurfaceStateChange).toHaveBeenCalledWith({ generation: 'generation-1', state: 'ready' })
+    );
     expect(within(portalTarget).getByRole('button', { name: 'Copy' })).toBeVisible();
 
     await userEvent.setup().click(within(portalTarget).getByRole('button', { name: 'Coauthor' }));
@@ -77,13 +85,62 @@ describe('QueryCoauthoringExposedComponent', () => {
     await act(async () => {
       view.rerender(
         <QueryCoauthoringHostProvider value={host}>
-          <QueryCoauthoringExposedComponent {...firstProps} createController={() => secondController} />
+          <QueryCoauthoringExposedComponent
+            {...firstProps}
+            createController={() => {
+              lifecycle.push('create-second');
+              return secondController;
+            }}
+          />
         </QueryCoauthoringHostProvider>
       );
     });
 
+    await waitFor(() => expect(secondController.getPortalTarget).toHaveBeenCalled());
     expect(firstController.dispose).toHaveBeenCalledTimes(1);
-    expect(secondController.getPortalTarget).toHaveBeenCalled();
+    expect(lifecycle).toEqual(['create-first', 'dispose-first', 'create-second']);
+  });
+
+  it('does not render a second interactive surface until the host acknowledges this generation as ready', async () => {
+    const portalTarget = document.createElement('div');
+    document.body.append(portalTarget);
+    const controller = createController(portalTarget);
+    const onSurfaceStateChange = jest.fn();
+    const pendingHost = {
+      queryKey: 'prometheus:A',
+      surfaceState: 'pending' as const,
+      preview: jest.fn(),
+      accept: jest.fn(),
+      revert: jest.fn(),
+    };
+
+    const view = render(
+      <QueryCoauthoringHostProvider value={pendingHost}>
+        <QueryCoauthoringExposedComponent
+          surfaceGeneration="generation-1"
+          createController={() => controller}
+          onSurfaceStateChange={onSurfaceStateChange}
+        />
+      </QueryCoauthoringHostProvider>
+    );
+
+    await waitFor(() =>
+      expect(onSurfaceStateChange).toHaveBeenCalledWith({ generation: 'generation-1', state: 'ready' })
+    );
+    expect(within(portalTarget).queryByRole('button', { name: 'Copy' })).not.toBeInTheDocument();
+
+    const readyHost = { ...pendingHost, surfaceState: 'ready' as const };
+    view.rerender(
+      <QueryCoauthoringHostProvider value={readyHost}>
+        <QueryCoauthoringExposedComponent
+          surfaceGeneration="generation-1"
+          createController={() => controller}
+          onSurfaceStateChange={onSurfaceStateChange}
+        />
+      </QueryCoauthoringHostProvider>
+    );
+
+    expect(within(portalTarget).getByRole('button', { name: 'Copy' })).toBeVisible();
   });
 
   it('fails closed when the exposed surface throws after construction', async () => {
@@ -93,7 +150,13 @@ describe('QueryCoauthoringExposedComponent', () => {
       throw new Error('Portal target disappeared');
     });
     const onSurfaceStateChange = jest.fn();
-    const host = { queryKey: 'prometheus:A', preview: jest.fn(), accept: jest.fn(), revert: jest.fn() };
+    const host = {
+      queryKey: 'prometheus:A',
+      surfaceState: 'ready' as const,
+      preview: jest.fn(),
+      accept: jest.fn(),
+      revert: jest.fn(),
+    };
     const consoleError = jest.spyOn(console, 'error').mockImplementation();
 
     try {

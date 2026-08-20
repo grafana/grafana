@@ -23,4 +23,10 @@ describe('transitionQueryCoauthoringSurface', () => {
       })
     ).toEqual({ identity: 'prometheus:A', generation: '4', state: 'ready' });
   });
+
+  it('requires a new generation before retrying an unavailable or failed surface', () => {
+    const failed = { identity: 'prometheus:A', generation: '4', state: 'failed' as const };
+
+    expect(transitionQueryCoauthoringSurface(failed, 'prometheus:A', { generation: '4', state: 'ready' })).toBe(failed);
+  });
 });

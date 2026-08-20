@@ -295,6 +295,9 @@ describe('QueryEditorRenderer', () => {
     expect(updateQuery).toHaveBeenLastCalledWith(queryA, 'A');
     expect(runQueries).toHaveBeenCalledTimes(2);
 
+    act(() => coauthoringProps.onAccept(proposedQuery, 'revision-1'));
+    expect(updateQuery).toHaveBeenLastCalledWith(queryA, 'A');
+
     rerender(renderPanel(queryA, [queryA, queryB]));
     act(() => coauthoringProps.onPreview(proposedQuery));
     rerender(renderPanel(proposedQuery, [proposedQuery, queryB]));

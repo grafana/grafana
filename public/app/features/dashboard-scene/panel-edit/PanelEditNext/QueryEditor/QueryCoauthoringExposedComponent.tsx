@@ -1,4 +1,13 @@
-import { Component, type ReactNode, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import {
+  Component,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 import {
@@ -19,13 +28,7 @@ export function QueryCoauthoringExposedComponent(props: QueryEditorCoauthoringV1
   const host = useQueryCoauthoringHost();
   const disposedControllers = useRef(new WeakSet<QueryEditorCoauthoringControllerV1>());
   const failedControllers = useRef(new WeakSet<QueryEditorCoauthoringControllerV1>());
-  const { controller, initializationError } = useMemo(() => {
-    try {
-      return { controller: props.createController(), initializationError: undefined };
-    } catch (error) {
-      return { controller: undefined, initializationError: error };
-    }
-  }, [props.createController]);
+  const [controller, setController] = useState<QueryEditorCoauthoringControllerV1>();
   const dispose = useCallback((currentController: QueryEditorCoauthoringControllerV1) => {
     if (disposedControllers.current.has(currentController)) {
       return;
@@ -48,23 +51,30 @@ export function QueryCoauthoringExposedComponent(props: QueryEditorCoauthoringV1
   );
 
   useEffect(() => {
-    if (!controller) {
+    let nextController: QueryEditorCoauthoringControllerV1;
+    try {
+      nextController = props.createController();
+    } catch {
       props.onSurfaceStateChange({ generation: props.surfaceGeneration, state: 'failed' });
       return;
     }
-    if (failedControllers.current.has(controller)) {
-      return;
-    }
+
+    setController(nextController);
     props.onSurfaceStateChange({ generation: props.surfaceGeneration, state: 'ready' });
     return () => {
-      dispose(controller);
-      if (!failedControllers.current.has(controller)) {
+      dispose(nextController);
+      setController((current) => (current === nextController ? undefined : current));
+      if (!failedControllers.current.has(nextController)) {
         props.onSurfaceStateChange({ generation: props.surfaceGeneration, state: 'unavailable' });
       }
     };
-  }, [controller, dispose, props.onSurfaceStateChange, props.surfaceGeneration]);
+  }, [dispose, props.createController, props.onSurfaceStateChange, props.surfaceGeneration]);
 
-  if (!controller || initializationError) {
+  if (!controller) {
+    return null;
+  }
+
+  if (host.surfaceState !== 'ready') {
     return null;
   }
 
@@ -106,6 +116,8 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
   const portalTarget = controller.getPortalTarget();
   const adapter = useMemo(() => createLegacyAdapter(controller), [controller]);
 
+  useEffect(() => adapter.dispose, [adapter]);
+
   const begin = useCallback(async () => {
     await adapter.begin();
   }, [adapter]);
@@ -140,9 +152,24 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
 function createLegacyAdapter(controller: QueryEditorCoauthoringControllerV1) {
   let context: QueryEditorCoauthoringContextV1 | undefined;
   let staged:
-    | { source: string; result: Extract<ReturnType<typeof controller.stageEditorDiff>, { status: 'staged' }> }
+    | {
+        source: string;
+        transactionRevision: string;
+        result: Extract<ReturnType<typeof controller.stageEditorDiff>, { status: 'staged' }>;
+      }
     | undefined;
+  let nextPreviewTransaction = 0;
+  let transactionRevision: string | undefined;
   const listeners = new Set<(invocation: QueryEditorCoauthoringInvocation) => void>();
+  const unsubscribeController = controller.subscribe(() => {
+    const snapshot = controller.getSnapshot();
+    const revision = snapshot.mode === 'hidden' ? undefined : snapshot.revision;
+    if (context && revision !== context.revision) {
+      context = undefined;
+      staged = undefined;
+      transactionRevision = undefined;
+    }
+  });
 
   const loadContext = async (
     load: () => Promise<QueryEditorCoauthoringContextV1>
@@ -168,7 +195,12 @@ function createLegacyAdapter(controller: QueryEditorCoauthoringControllerV1) {
         staged = undefined;
         return undefined;
       }
-      staged = { source: value, result };
+      transactionRevision ??= `${result.baselineRevision}:${++nextPreviewTransaction}`;
+      staged = {
+        source: value,
+        transactionRevision,
+        result,
+      };
       return { changes: result.changes };
     },
     clearPreview: () => {
@@ -184,12 +216,15 @@ function createLegacyAdapter(controller: QueryEditorCoauthoringControllerV1) {
 
   return {
     capability,
-    getBaselineRevision: () => staged?.result.baselineRevision ?? context?.revision ?? '',
+    // This stays private to the Core bridge. A controller revision alone may be reused after a hidden edit;
+    // pairing it with the staged proposal prevents a late callback from accepting a different transaction.
+    getBaselineRevision: () => staged?.transactionRevision ?? context?.revision ?? '',
     begin: async () => {
       context = await controller.begin();
       const invocation = { anchorElement: controller.getPortalTarget(), dismiss: () => controller.dismiss() };
       listeners.forEach((listener) => listener(invocation));
     },
+    dispose: unsubscribeController,
   };
 }
 

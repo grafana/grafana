@@ -15,5 +15,9 @@ export function transitionQueryCoauthoringSurface(
     return current;
   }
 
-  return { ...current, state: event.state };
+  if (current.state === 'pending' || (current.state === 'ready' && event.state !== 'ready')) {
+    return { ...current, state: event.state };
+  }
+
+  return current;
 }
