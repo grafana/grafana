@@ -120,15 +120,6 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
-			Name:         "starsFromAPIServer",
-			Description:  "populate star status from apiserver",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaFrontendNavigation,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -703,6 +694,14 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:        "reportRenderQueryDebounce",
+			Description: "On the report render page, wait for panel queries to settle (including late-registering repeat panel queries) before signaling the image renderer that the dashboard is done. Uses the legacy config-based toggle rather than OpenFeature since the render page authenticates via the image-renderer's signed render key rather than a normal user session, and OpenFeature evaluation isn't verified to work reliably in that context.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
 		},
 		{
 			Name:        "canvasPanelPanZoom",
@@ -2946,6 +2945,14 @@ var (
 		{
 			Name:        "grafana.vectorSearchCmdk",
 			Description: "Enables semantic (vector) dashboard search in the command palette",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "grafana.cmdkHybridSearch",
+			Description: "Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",

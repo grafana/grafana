@@ -1337,7 +1337,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SearchResults"
+                  "$ref": "#/components/schemas/DashboardSearchResults"
                 }
               }
             }
@@ -1877,44 +1877,7 @@
           }
         }
       },
-      "FacetResult": {
-        "type": "object",
-        "properties": {
-          "field": {
-            "type": "string"
-          },
-          "missing": {
-            "description": "The number of documents that do *not* have this field",
-            "type": "integer",
-            "format": "int64"
-          },
-          "terms": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TermFacet"
-            }
-          },
-          "total": {
-            "description": "The distinct terms",
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ManagedBy": {
-        "type": "object",
-        "required": ["kind"],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "SearchResults": {
+      "DashboardSearchResults": {
         "type": "object",
         "required": ["totalHits", "hits"],
         "properties": {
@@ -1961,6 +1924,43 @@
             "type": "integer",
             "format": "int64",
             "default": 0
+          }
+        }
+      },
+      "FacetResult": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "missing": {
+            "description": "The number of documents that do *not* have this field",
+            "type": "integer",
+            "format": "int64"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermFacet"
+            }
+          },
+          "total": {
+            "description": "The distinct terms",
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ManagedBy": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
           }
         }
       },

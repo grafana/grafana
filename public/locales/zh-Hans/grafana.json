@@ -2200,6 +2200,8 @@
       "title-no-alerting-capable-query-found": "未找到支持警报的查询"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "配置静默，用于停止接收来自特定警报规则的通知"
@@ -2207,7 +2209,10 @@
         "text": {
           "silence-alert-rule": "静默警报规则"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "我们找不到任何外部的 Alertmanager，您可能无权访问内置的 Grafana Alertmanager。",
@@ -3676,6 +3681,9 @@
       "no-matching-instances-with-filters": "在所选时间范围内，没有符合您当前筛选条件组的警报实例。",
       "open-in-sidebar": "在侧边栏中打开",
       "open-rule-details": "打开规则详情",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "规则详情和条件",
         "title": "规则详情"
@@ -5380,6 +5388,16 @@
     "auto-grid": {
       "description": "调整面板大小以适应并形成统一的网格",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "重复选项",
           "variable": {
@@ -5397,15 +5415,36 @@
         "custom-min-width": {
           "clear": "清除"
         },
+        "fit-content": "",
         "height-fill": "填充屏幕",
+        "match-row-heights": "",
         "max-columns": "最大列数",
-        "min-height": "行高",
-        "min-height-custom": "自定义行高",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "需要介于 50 和 2000 之间的数字",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "最小列宽",
         "min-width-custom": "自定义最小宽度",
         "min-width-custom-clear": "恢复为标准的最小列宽",
-        "min-width-error": "需要介于 50 和 2000 之间的数字"
+        "min-width-error": "需要介于 50 和 2000 之间的数字",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5638,6 +5677,7 @@
       "panel-background": "更改面板背景",
       "panel-description": "更改面板描述",
       "panel-edit": "面板更改",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "每行最大重复次数",
       "panel-preset": "应用面板预设",
       "panel-repeat-direction": "重复方向",
@@ -9434,21 +9474,6 @@
   "get-enterprise": {
     "requires-license": "需要 Grafana 企业版许可证",
     "title": "企业"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "完成",
-      "learn-how": "在文档中了解如何操作"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "前往高级教程",
-      "aria-label-to-basic-tutorials": "前往基础教程",
-      "checking-completed-setup-steps": "检查已完成的设置步骤",
-      "remove-this-panel": "移除此面板"
-    },
-    "tutorial-card": {
-      "complete": "完成"
-    }
   },
   "global-variables": {
     "details": {
@@ -17391,12 +17416,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "链接"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "需要帮助吗？",
-      "welcome-to-grafana": "欢迎使用 Grafana"
     }
   },
   "xychart": {

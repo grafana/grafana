@@ -2212,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "Ingen larmkapabel fråga hittades"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Konfigurera tystnader för att stoppa aviseringar från en viss larmregel"
@@ -2219,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Tyst larmregel"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Vi kunde inte hitta några externa Alertmanager och du kanske inte har åtkomst till den inbyggda Grafana Alertmanager.",
@@ -3702,6 +3707,9 @@
       "no-matching-instances-with-filters": "Inga larminstanser matchar din nuvarande uppsättning filter för det valda tidsintervallet.",
       "open-in-sidebar": "Öppna i sidofält",
       "open-rule-details": "Öppna regeldetaljer",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Regeldetaljer och villkor",
         "title": "Regeldetaljer"
@@ -5420,6 +5428,16 @@
     "auto-grid": {
       "description": "Paneler ändrar storlek för att passa ihop och bilda enhetliga rutnät",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Upprepningsalternativ",
           "variable": {
@@ -5437,15 +5455,36 @@
         "custom-min-width": {
           "clear": "Rensa"
         },
+        "fit-content": "",
         "height-fill": "Fyll skärmen",
+        "match-row-heights": "",
         "max-columns": "Max kolumner",
-        "min-height": "Radhöjd",
-        "min-height-custom": "Anpassad radhöjd",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "Ett nummer mellan 50 och 2000 krävs",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Minsta kolumnbredd",
         "min-width-custom": "Anpassad minsta bredd",
         "min-width-custom-clear": "Tillbaka till standard för minsta kolumnbredd",
-        "min-width-error": "Ett nummer mellan 50 och 2000 krävs"
+        "min-width-error": "Ett nummer mellan 50 och 2000 krävs",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5678,6 +5717,7 @@
       "panel-background": "Ändra panelbakgrund",
       "panel-description": "Ändra panelbeskrivning",
       "panel-edit": "Paneländringar",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max upprepningar per rad",
       "panel-preset": "Tillämpa panelförinställning",
       "panel-repeat-direction": "Upprepa riktning",
@@ -9496,21 +9536,6 @@
   "get-enterprise": {
     "requires-license": "Kräver en Grafana Enterprise-licens",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "klar",
-      "learn-how": "Läs mer i dokumenten"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Till avancerade handledningar",
-      "aria-label-to-basic-tutorials": "Till grundläggande handledningar",
-      "checking-completed-setup-steps": "Kontrollerar slutförda installationssteg",
-      "remove-this-panel": "Ta bort denna panel"
-    },
-    "tutorial-card": {
-      "complete": "klar"
-    }
   },
   "global-variables": {
     "details": {
@@ -17528,12 +17553,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Länk"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Behöver du hjälp?",
-      "welcome-to-grafana": "Välkommen till Grafana"
     }
   },
   "xychart": {
