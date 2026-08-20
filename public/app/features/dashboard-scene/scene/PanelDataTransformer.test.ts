@@ -463,12 +463,12 @@ describe('PanelDataTransformer', () => {
       const installed = transformer.state.transformations;
       panel.setState({ pluginId: 'reducer' });
 
-      // The operators stay installed across this swap and the resulting array is deep equal, so the
-      // base class bails out of its own reprocess — only the forced one surfaces the new output.
+      // The operators stay installed across this swap, but their keys carry the plugin id, so the base
+      // class sees a real change: it replaces the array and reprocesses on its own.
       await waitFor(() => {
         expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toEqual(['Field', 'Max']);
       });
-      expect(transformer.state.transformations).toBe(installed);
+      expect(transformer.state.transformations).not.toBe(installed);
       expect(transformer.state.transformations).toHaveLength(2);
     });
   });

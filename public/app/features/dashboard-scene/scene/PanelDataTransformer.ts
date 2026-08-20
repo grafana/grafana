@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
+  type CustomTransformerDefinition,
   SceneDataTransformer,
   type SceneDataTransformerState,
   type SceneObject,
@@ -239,8 +240,6 @@ export class PanelDataTransformer extends SceneDataTransformer {
     this._plugin = nextPlugin;
     this._resolved = undefined;
 
-    const before = this.state.transformations;
-
     // Both positions install together: which half is non-empty depends on the frames, so it is not
     // known here. An operator that resolves to nothing is a genuine no-op — `transformDataFrame([])`
     // hands back the same array reference.
@@ -248,17 +247,27 @@ export class PanelDataTransformer extends SceneDataTransformer {
     // Passing no groups clears this origin while preserving any other, which is what lets a second
     // runtime provider be added later without touching this.
     this.setSystemTransformations(
-      shouldInstall ? { prepend: [this._runPrependedTransformations], append: [this._runAppendedTransformations] } : {}
+      shouldInstall
+        ? { prepend: [this._wrapperFor('prepend', plugin)], append: [this._wrapperFor('append', plugin)] }
+        : {}
     );
+  }
 
-    // The base class bails out — and skips its own reprocess — when the resulting array is deep equal
-    // to the current one. Our operators are stable bound references, so swapping between two plugins
-    // that both register produces an equal array even though the operators' output changes, because
-    // what they consult is `this._plugin`. Comparing identity is how the two cases are told apart
-    // without reprocessing twice on a real install.
-    if (this.state.transformations === before) {
-      this.reprocessTransformations();
-    }
+  /**
+   * The wrapper operator for one position, tagged with an identity the base class can compare.
+   *
+   * It skips the update, and its own reprocess, when the new transformations are equal to the current
+   * ones. Operators are functions, so without a key that comparison is by reference — and ours are
+   * stable per instance, which would make a swap between two registering plugins look like no change
+   * at all. The key carries the plugin id because that, not the reference, is what decides the
+   * output: both wrappers resolve against whichever plugin `_plugin` holds when they run.
+   */
+  private _wrapperFor(position: SystemTransformationPosition, plugin: PanelPlugin): CustomTransformerDefinition {
+    return {
+      operator: position === 'prepend' ? this._runPrependedTransformations : this._runAppendedTransformations,
+      topic: DataTopic.Series,
+      key: `panel-plugin:${position}:${plugin.meta.id}`,
+    };
   }
 }
 
