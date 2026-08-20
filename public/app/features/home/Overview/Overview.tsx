@@ -105,7 +105,7 @@ export function Overview({ solutions }: OverviewProps) {
   const location = useLocation();
   // Handle each hash value once: `options` rebuilds as cards and guides settle, and re-running
   // the match would re-scroll the page and override a filter the user picked in the meantime.
-  const handledHash = useRef<string>();
+  const handledHash = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (location.hash === handledHash.current) {
       return;
