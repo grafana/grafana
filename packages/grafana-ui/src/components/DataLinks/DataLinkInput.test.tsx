@@ -31,6 +31,17 @@ const mockSuggestions: VariableSuggestion[] = [
 describe('DataLinkInput', () => {
   const theme = createTheme();
 
+  it('preserves input layout while the editor chunk loads', () => {
+    const { container } = render(
+      <DataLinkInput value="https://grafana.com" onChange={jest.fn()} suggestions={mockSuggestions} />
+    );
+
+    const fallback = container.querySelector('#data-link-input-loading[aria-hidden="true"]');
+    expect(fallback).toHaveValue('https://grafana.com');
+    expect(getComputedStyle(fallback!).height).not.toBe('0px');
+    expect(getComputedStyle(fallback!).marginBottom).toBe('0px');
+  });
+
   it('renders with initial value displayed in editor', async () => {
     render(<DataLinkInput value="https://grafana.com" onChange={jest.fn()} suggestions={mockSuggestions} />);
     await waitFor(() => {
