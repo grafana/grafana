@@ -96,8 +96,9 @@ API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/ap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookCellKindOrV2PanelKindOrLibraryPanelKind,LibraryPanelKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookCellKindOrV2PanelKindOrLibraryPanelKind,V2PanelKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookClient,client
-API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookMarkdownCellContentKindOrCodeCellContentKind,CodeCellContentKind
-API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookMarkdownCellContentKindOrCodeCellContentKind,MarkdownCellContentKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookMarkdownCellContentKindOrCodeCellContentKindOrQueryCellContentKind,CodeCellContentKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookMarkdownCellContentKindOrCodeCellContentKindOrQueryCellContentKind,MarkdownCellContentKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookMarkdownCellContentKindOrCodeCellContentKindOrQueryCellContentKind,QueryCellContentKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookV2beta1FieldConfigSourceOverrides,SystemRef
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap,RangeMap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap,RegexMap

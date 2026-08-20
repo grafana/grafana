@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
@@ -54,6 +54,11 @@ interface Props {
    * MarkdownCell's own `caretOffset` doc comment. Only meaningful together with `focusRequestId`.
    */
   caretOffset?: number;
+  /**
+   * The notebook's own shared time range (see NotebookLayoutManagerRenderer) — forwarded to whichever
+   * cell type actually reads it (currently just the Query cell).
+   */
+  range?: TimeRange;
   /** True while any cell in the notebook is being dragged, not only this one. */
   isDragActive?: boolean;
   dropIndicator?: NotebookCellDropIndicator;
@@ -92,6 +97,7 @@ export function NotebookCellFrame({
   autoFocus,
   focusRequestId,
   caretOffset,
+  range,
   isDragActive,
   dropIndicator,
   onAdd,
@@ -143,6 +149,7 @@ export function NotebookCellFrame({
             autoFocus={autoFocus}
             focusRequestId={focusRequestId}
             caretOffset={caretOffset}
+            range={range}
             onAdvance={onAdvance}
             onFocusRequest={onFocusRequest}
           />

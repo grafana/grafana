@@ -17,6 +17,8 @@ import {
   libraryPanelKindSchema,
   nullableArray,
   panelKindSchema,
+  panelQueryKindSchema,
+  queryOptionsSpecSchema,
   timeSettingsSpecSchema,
 } from 'app/features/dashboard-scene/v2schema/dashboardV2Schema';
 
@@ -28,6 +30,7 @@ import type {
   NotebookElement,
   NotebookLayoutItemKind,
   NotebookLayoutKind,
+  QueryCellContentKind,
   Spec as NotebookSpec,
 } from '../types';
 
@@ -52,9 +55,20 @@ const codeCellContentKindSchema = z.object({
   }),
 }) satisfies z.ZodType<CodeCellContentKind>;
 
+// Query reuses the dashboard-shared query shape (panelQueryKindSchema/queryOptionsSpecSchema) rather
+// than restating it — same rationale as panelKindSchema/libraryPanelKindSchema above.
+const queryCellContentKindSchema = z.object({
+  kind: z.literal('Query'),
+  spec: z.object({
+    query: panelQueryKindSchema,
+    queryOptions: queryOptionsSpecSchema.optional(),
+  }),
+}) satisfies z.ZodType<QueryCellContentKind>;
+
 const cellContentKindSchema = z.discriminatedUnion('kind', [
   markdownCellContentKindSchema,
   codeCellContentKindSchema,
+  queryCellContentKindSchema,
 ]) satisfies z.ZodType<CellContentKind>;
 
 const cellKindSchema = z.object({
