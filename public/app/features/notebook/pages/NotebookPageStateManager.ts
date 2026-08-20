@@ -69,7 +69,11 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
       const notebook = result.data as unknown as Resource<NotebookSpec>;
 
       const cached = this.cache.get(uid);
-      if (cached && cached.generation === notebook.metadata.generation) {
+      // The generation this was loaded at goes stale the moment the page saves, because autosave advances
+      // the server's copy without reloading. Where the scene has saved since, that is the newer number, and
+      // it is what separates this page's own write from somebody else's.
+      const cachedGeneration = cached ? (cached.scene.autosave.state.savedGeneration ?? cached.generation) : undefined;
+      if (cached && isAtLeastAsNew(cachedGeneration, notebook.metadata.generation)) {
         if (this.isSuperseded(seq)) {
           return;
         }
@@ -126,6 +130,19 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
   public clearSceneCache(): void {
     this.cache.clear();
   }
+}
+
+/**
+ * Deliberately not an equality check. `generation` only ever goes up, and the query layer can answer a load
+ * with a response it recorded before this page's own save, which a rebuild would then undo. Only a higher
+ * number means somebody else wrote. Falls back to equality when either side is missing.
+ */
+function isAtLeastAsNew(cached: number | undefined, fetched: number | undefined): boolean {
+  if (cached === undefined || fetched === undefined) {
+    return cached === fetched;
+  }
+
+  return cached >= fetched;
 }
 
 let notebookPageStateManager: NotebookPageStateManager | undefined;

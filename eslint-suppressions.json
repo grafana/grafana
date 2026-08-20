@@ -1467,9 +1467,6 @@
     }
   },
   "public/app/features/dashboard-scene/scene/export/exporters.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 3
     },

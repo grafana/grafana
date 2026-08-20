@@ -158,6 +158,7 @@
 /pkg/middleware/ @grafana/grafana-backend-services-squad
 /pkg/mocks/ @grafanabot
 /pkg/models/ @grafana/identity-squad
+/pkg/router @grafana/grafana-app-platform-squad
 /pkg/server/ @grafana/grafana-backend-services-squad
 /pkg/apiserver @grafana/grafana-app-platform-squad
 /pkg/apimachinery @grafana/grafana-app-platform-squad
