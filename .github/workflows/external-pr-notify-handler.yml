@@ -474,8 +474,10 @@ jobs:
           SLOP_REASON: ${{ needs.triage.outputs.slop_reason }}
         run: node ./community-triage/.github/workflows/scripts/pr-notify.mts notify
 
-      - name: Post fallback comment
-        if: needs.review.outputs.review_line == '' && steps.notify.outputs.notification_sent == 'true'
+      # The script skips the greeting when the review already delivered it, and
+      # comments nothing when there is nothing outstanding.
+      - name: Post welcome comment and contributor checklist
+        if: steps.notify.outputs.notification_sent == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
