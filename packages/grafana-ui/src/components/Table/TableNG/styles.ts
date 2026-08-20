@@ -321,9 +321,12 @@ const ACTIVE_CELL_SELECTORS = {
     nested: '.rdg-cell:hover &',
     normal: '&:hover',
   },
+  // react-data-grid keeps a cell selected after the grid loses focus, and offers no API to clear it
+  // (`selectCell` rejects any out-of-bounds position), so gate on `:focus-within` to release the
+  // expanded state when the user clicks away from the table.
   selected: {
-    nested: '[aria-selected=true] &',
-    normal: '&[aria-selected=true]',
+    nested: '[aria-selected=true]:focus-within &',
+    normal: '&[aria-selected=true]:focus-within',
   },
 } as const;
 

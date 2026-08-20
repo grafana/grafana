@@ -2086,6 +2086,25 @@ describe('TableNG', () => {
       expect(jsonCellStyles.getPropertyValue('max-width')).toBe('600px');
     });
 
+    it('collapses a click-expanded JSON cell once focus leaves the table', async () => {
+      // react-data-grid keeps a cell selected after the grid loses focus and exposes no way to clear
+      // it, so the expanded state hangs off `:focus-within` rather than the selection alone. Without
+      // that, clicking away from the table leaves the cell stuck open over its neighbors.
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      await user.click(cells[1]);
+      expect(window.getComputedStyle(cells[1]).getPropertyValue('max-width')).toBe('600px');
+
+      await user.click(document.body);
+
+      expect(cells[1]).toHaveAttribute('aria-selected', 'true');
+      expect(window.getComputedStyle(cells[1]).getPropertyValue('max-width')).not.toBe('600px');
+    });
+
     it('anchors a hover-expanded JSON cell to its top rather than centering the overflow', async () => {
       // The cell root inherits `align-items: center` from the default cell styles. Left unset here,
       // content taller than the max-height cap gets centered on the box's midpoint instead of pinned
@@ -2125,10 +2144,26 @@ describe('TableNG', () => {
       // With maxRowHeight set, the JSON-specific class lands on an inner wrapper div rather than the
       // cell root itself (see render-hooks: `maxRowHeight != null` wraps cellResult), so the bound has
       // to be read off that child, not the `[role="gridcell"]` element.
-      const jsonCellStyles = window.getComputedStyle(cells[1].firstElementChild!);
-      expect(jsonCellStyles.getPropertyValue('max-width')).toBe('600px');
-      expect(jsonCellStyles.getPropertyValue('max-height')).toBe('40vh');
-      expect(jsonCellStyles.getPropertyValue('align-items')).toBe('flex-start');
+      //
+      // That child is matched through the *cell*, and jsdom's selector engine mis-parses
+      // `:focus-within`: it degrades to `:focus` and drops everything after it, which throws away the
+      // descendant half of the selector. Computed style can't see the rule, so assert its
+      // declarations directly.
+      const wrapper = cells[1].firstElementChild!;
+      const expandedRule = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .filter((rule): rule is CSSStyleRule => 'selectorText' in rule)
+        .find(
+          (rule) =>
+            rule.selectorText.includes('aria-selected') &&
+            Array.from(wrapper.classList).some((className) => rule.selectorText.includes(`.${className}`)) &&
+            rule.style.getPropertyValue('max-width') !== ''
+        );
+
+      expect(expandedRule).toBeDefined();
+      expect(expandedRule!.style.getPropertyValue('max-width')).toBe('600px');
+      expect(expandedRule!.style.getPropertyValue('max-height')).toBe('40vh');
+      expect(expandedRule!.style.getPropertyValue('align-items')).toBe('flex-start');
     });
 
     it('renders an unwrapped JSON cell with the indentation intact in the DOM', () => {
