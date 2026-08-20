@@ -120,15 +120,6 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
-			Name:         "starsFromAPIServer",
-			Description:  "populate star status from apiserver",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaFrontendNavigation,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
