@@ -80,7 +80,7 @@ jobs:
           printf '%s\n' "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
 
       - name: Checkout this repo (config + CODEOWNERS only)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -105,7 +105,7 @@ jobs:
           github_app: grafana-community-triage
 
       - name: Checkout community-triage logic (pinned by SHA)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           repository: grafana/community-triage
           ref: ${{ env.TRIAGE_REF }}
@@ -187,7 +187,7 @@ jobs:
 
     steps:
       - name: Checkout this repo (full — review context mounted as /repo)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
 
@@ -209,7 +209,7 @@ jobs:
           github_app: grafana-community-triage
 
       - name: Checkout community-triage logic (pinned by SHA)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           repository: grafana/community-triage
           ref: ${{ env.TRIAGE_REF }}
@@ -414,7 +414,7 @@ jobs:
 
     steps:
       - name: Checkout this repo (config + CODEOWNERS only)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -440,7 +440,7 @@ jobs:
           github_app: grafana-community-triage
 
       - name: Checkout community-triage logic (pinned by SHA)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           repository: grafana/community-triage
           ref: ${{ env.TRIAGE_REF }}
