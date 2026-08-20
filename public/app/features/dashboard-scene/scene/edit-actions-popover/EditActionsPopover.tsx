@@ -8,6 +8,7 @@ import {
   useFloating,
   useHover,
   useInteractions,
+  useMergeRefs,
 } from '@floating-ui/react';
 import React, { cloneElement, createContext, useContext, useMemo, useState } from 'react';
 
@@ -61,12 +62,14 @@ function HoverPopover({ content, children, placement = 'top-start' }: EditAction
     restMs: WAIT_FOR_MOUSE_REST_DURATION_MS,
   });
   const { getReferenceProps, getFloatingProps } = useInteractions([hover]);
+  // Keep a ref already set on the child (e.g. DashboardGridItem.containerRef).
+  const mergedRef = useMergeRefs([refs.setReference, children.props.ref]);
 
   const popoverContextValue = useMemo(() => ({ closePopover: () => setIsOpen(false) }), []);
 
   return (
     <>
-      {cloneElement(children, { ref: refs.setReference, ...getReferenceProps() })}
+      {cloneElement(children, getReferenceProps({ ref: mergedRef }))}
       {isOpen && content && (
         <Portal>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.popover} {...getFloatingProps()}>

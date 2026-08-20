@@ -15,7 +15,7 @@ import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutMan
 
 import { SHOW_COPIED_DURATION_MS } from './EditActions';
 import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
-import { PanelEditActions, PanelEditWrapper } from './PanelEditActions';
+import { PanelEditActions, PanelEditActionsWrapper } from './PanelEditActions';
 
 jest.mock('app/core/app_events', () => ({
   appEvents: {
@@ -210,19 +210,19 @@ describe('<PanelEditActions />', () => {
   });
 });
 
-describe('<PanelEditWrapper />', () => {
+describe('<PanelEditActionsWrapper />', () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  function renderPanelEditWrapper(panel: VizPanel) {
+  function renderPanelEditActionsWrapper(panel: VizPanel) {
     return render(
       <ElementSelectionContext.Provider
         value={{ enabled: true, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}
       >
-        <PanelEditWrapper panel={panel}>
+        <PanelEditActionsWrapper panel={panel}>
           <div data-testid="reference-child">panel</div>
-        </PanelEditWrapper>
+        </PanelEditActionsWrapper>
       </ElementSelectionContext.Provider>
     );
   }
@@ -235,7 +235,7 @@ describe('<PanelEditWrapper />', () => {
         body: DefaultGridLayoutManager.fromVizPanels([panel]),
       });
 
-      renderPanelEditWrapper(panel);
+      renderPanelEditActionsWrapper(panel);
 
       await hoverAndRest(screen.getByTestId('reference-child'));
       fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
@@ -258,7 +258,7 @@ describe('<PanelEditWrapper />', () => {
         ]),
       });
 
-      renderPanelEditWrapper(clonedPanel);
+      renderPanelEditActionsWrapper(clonedPanel);
 
       await hoverAndRest(screen.getByTestId('reference-child'));
       fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
@@ -271,7 +271,7 @@ describe('<PanelEditWrapper />', () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
-    renderPanelEditWrapper(panel);
+    renderPanelEditActionsWrapper(panel);
 
     await hoverAndRest(screen.getByTestId('reference-child'));
     fireEvent.click(screen.getByRole('button', { name: 'Edit visualization' }));
@@ -294,7 +294,7 @@ describe('<PanelEditWrapper />', () => {
     const copyPanel = jest.spyOn(scene, 'copyPanel').mockImplementation();
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
-    renderPanelEditWrapper(panel);
+    renderPanelEditActionsWrapper(panel);
 
     await hoverAndRest(screen.getByTestId('reference-child'));
     fireEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
@@ -313,7 +313,7 @@ describe('<PanelEditWrapper />', () => {
     const duplicatePanel = jest.spyOn(layoutManager, 'duplicatePanel').mockImplementation();
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
-    renderPanelEditWrapper(panel);
+    renderPanelEditActionsWrapper(panel);
 
     await hoverAndRest(screen.getByTestId('reference-child'));
     fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
@@ -328,7 +328,7 @@ describe('<PanelEditWrapper />', () => {
     const removePanel = jest.spyOn(layoutManager, 'removePanel').mockImplementation();
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
-    renderPanelEditWrapper(panel);
+    renderPanelEditActionsWrapper(panel);
 
     await hoverAndRest(screen.getByTestId('reference-child'));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));

@@ -68,7 +68,7 @@ export function PanelEditActions({
   );
 }
 
-export function PanelEditWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
+export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
   const { isSelectable } = useElementSelection(panel.state.key);
 
   const onClickEdit = useCallback(() => {
