@@ -85,6 +85,22 @@ export class PanelDataTransformer extends SceneDataTransformer {
     return result;
   }
 
+  /**
+   * Whether the plugin's transformations change anything about the data as it stands. Not the same
+   * question as whether the wrappers are installed: those go in for every plugin that registers a
+   * supplier, and a supplier is free to resolve to nothing for a given set of frames.
+   *
+   * Resolves against the source frames itself rather than taking them, because a caller asking this
+   * is asking about the panel, not about frames it holds.
+   *
+   * @internal
+   */
+  public hasResolvedSystemTransformations(): boolean {
+    const { prepend, append } = this.getResolvedSystemTransformations(this._sourceSeries());
+
+    return prepend.length > 0 || append.length > 0;
+  }
+
   private _runPrependedTransformations: CustomTransformOperator = (ctx) => (source) =>
     source.pipe(switchMap((frames) => this._applySystemTransformations('prepend', frames, ctx)));
 
