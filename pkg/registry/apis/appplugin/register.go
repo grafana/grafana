@@ -189,6 +189,8 @@ func RegisterAPIService(
 			manifest := *plugin.Manifest
 			manifest.Group = plugin.JSONData.ID
 			b.manifest = &manifest
+
+			fmt.Printf("MANIFEST %+v\n", plugin.Manifest)
 		}
 
 		apiRegistrar.RegisterAPI(b)
