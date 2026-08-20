@@ -907,11 +907,25 @@ func (rc *RepositoryController) process(key string) error {
 	// Backfill the pinned repo ID for repos written before it was resolved
 	// at admission time, so Build doesn't keep re-resolving it on every call.
 	if repoIDHandler, ok := repo.(repository.RepoIDHandler); ok && repoIDHandler.ShouldUpdateRepoID() {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "add",
-			"path":  fmt.Sprintf("/spec/%s/repoID", repo.Config().Spec.Type),
-			"value": repoIDHandler.ResolvedRepoID(),
-		})
+		repoPath := fmt.Sprintf("/spec/%s", obj.Spec.Type)
+		// Must add the `test` patch on the url to ensure it hasn't changed.
+		// Race condition is:
+		// 1. Read cfg.URL -> urlA, resolving to repoIDA
+		// 2. Concurrently, a successful write happens updating urlA -> urlB, and repoIDA -> repoIDB
+		// 3. We try to patch with repoIDA - without the `test` op, this will succeed and there will be a mismatch
+		// between urlB and repoIDA
+		patchOperations = append(patchOperations,
+			map[string]interface{}{
+				"op":    "test",
+				"path":  repoPath + "/url",
+				"value": obj.URL(),
+			},
+			map[string]interface{}{
+				"op":    "add",
+				"path":  repoPath + "/repoID",
+				"value": repoIDHandler.ResolvedRepoID(),
+			},
+		)
 	}
 
 	// Handle health checks using the health checker
