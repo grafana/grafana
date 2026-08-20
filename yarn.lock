@@ -2390,6 +2390,7 @@ __metadata:
     "@types/d3-interpolate": "npm:^3.0.0"
     "@types/history": "npm:4.7.11"
     "@types/lodash": "npm:4.17.20"
+    "@types/luxon": "npm:^3.0.0"
     "@types/node": "npm:24.10.1"
     "@types/papaparse": "npm:5.3.16"
     "@types/react": "npm:19.2.18"
@@ -2408,7 +2409,6 @@ __metadata:
     lodash: "npm:^4.17.23"
     marked: "npm:^16.3.0"
     marked-mangle: "npm:^1.1.12"
-    moment: "npm:^2.30.1"
     moment-timezone: "npm:^0.5.47"
     ol: "npm:^10.7.0"
     papaparse: "npm:^5.5.3"
@@ -11170,6 +11170,13 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10/ac69ee5c99e074bf3ad31d27f877402b84be59e2c200fc4ecfbf295244505a2b6408db1c377c96f90d0444a18fd253d34f0f0810c162e73f6e82c327022c3008
+  languageName: node
+  linkType: hard
+
+"@types/luxon@npm:^3.0.0":
+  version: 3.7.4
+  resolution: "@types/luxon@npm:3.7.4"
+  checksum: 10/f062cbf6cfac319b88abcedd253308c6dc98e0b76e1ab991fb9fb1573c602097f2d54a95ea874d3678f3963a73478bcce260c621deb6c779c83ff891611e46d7
   languageName: node
   linkType: hard
 

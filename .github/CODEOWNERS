@@ -184,6 +184,7 @@
 /pkg/services/licensing/ @grafana/grafana-operator-experience-squad
 /pkg/services/dsquerierclient/ @grafana/grafana-datasources-core-services
 /pkg/services/navtree/ @grafana/grafana-frontend-navigation
+/pkg/services/notebooks/ @grafana/sharing-squad
 /pkg/services/notifications/ @grafana/grafana-backend-services-squad
 /pkg/services/org/ @grafana/identity-squad
 /pkg/services/preference/ @grafana/grafana-backend-services-squad
@@ -687,7 +688,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/queryResponse* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/rbac.ts @grafana/identity-access-team
 /packages/grafana-runtime/src/utils/returnToPrevious.ts @grafana/grafana-frontend-navigation
-/packages/grafana-runtime/src/utils/toDataQueryError.ts @grafana/grafana-datasources-core-services
+/packages/grafana-runtime/src/utils/toDataQueryError* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/TracedError* @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/userStorage* @grafana/grafana-catalog @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/useFavoriteDatasources* @grafana/grafana-catalog

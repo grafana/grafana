@@ -1,0 +1,27 @@
+package provisioning
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+)
+
+func TestDefaultConnectionTypes(t *testing.T) {
+	registeredTypes := []apisprovisioning.ConnectionType{
+		apisprovisioning.GithubConnectionType,
+		apisprovisioning.GithubEnterpriseConnectionType,
+		apisprovisioning.BitbucketOAuthConnectionType,
+		apisprovisioning.GitlabOAuthConnectionType,
+	}
+	extras := make([]connection.Extra, 0, len(registeredTypes))
+	for _, connectionType := range registeredTypes {
+		extra := connection.NewMockExtra(t)
+		extra.On("Type").Return(connectionType)
+		extras = append(extras, extra)
+	}
+
+	require.ElementsMatch(t, []string{"github", "githubEnterprise"}, defaultConnectionTypes(extras))
+}
