@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useToggle } from 'react-use';
+import { useMeasure, useToggle } from 'react-use';
 
 import {
   type DataFrame,
@@ -59,6 +59,7 @@ export const GraphContainer = ({
 }: Props) => {
   const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
+  const [metaInfoRef, { height: metaInfoHeight }] = useMeasure<HTMLDivElement>();
 
   const onGraphStyleChange = useCallback((graphStyle: ExploreGraphStyle) => {
     storeGraphStyle(graphStyle);
@@ -70,41 +71,41 @@ export const GraphContainer = ({
   }, [data, showAllSeries]);
 
   return (
-    <>
-      <GraphMetaInfo data={data} />
-      <PanelChrome
-        title={t('graph.container.title', 'Graph')}
-        titleItems={[
-          !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
-            <LimitedDataDisclaimer
-              key="disclaimer"
-              toggleShowAllSeries={toggleShowAllSeries}
-              info={
-                <Trans i18nKey={'graph.container.show-only-series'}>
-                  Showing only {{ MAX_NUMBER_OF_TIME_SERIES }} series
-                </Trans>
-              }
-              buttonLabel={
-                <Trans i18nKey={'graph.container.show-all-series'}>Show all {{ length: data.length }}</Trans>
-              }
-              tooltip={t(
-                'graph.container.content',
-                'Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.'
-              )}
-            />
-          ),
-        ].filter(Boolean)}
-        width={width}
-        height={height}
-        loadingState={loadingState}
-        statusMessage={statusMessage}
-        actions={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
-      >
-        {(innerWidth, innerHeight) => (
+    <PanelChrome
+      title={t('graph.container.title', 'Graph')}
+      titleItems={[
+        !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
+          <LimitedDataDisclaimer
+            key="disclaimer"
+            toggleShowAllSeries={toggleShowAllSeries}
+            info={
+              <Trans i18nKey={'graph.container.show-only-series'}>
+                Showing only {{ MAX_NUMBER_OF_TIME_SERIES }} series
+              </Trans>
+            }
+            buttonLabel={<Trans i18nKey={'graph.container.show-all-series'}>Show all {{ length: data.length }}</Trans>}
+            tooltip={t(
+              'graph.container.content',
+              'Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.'
+            )}
+          />
+        ),
+      ].filter(Boolean)}
+      width={width}
+      height={height}
+      loadingState={loadingState}
+      statusMessage={statusMessage}
+      actions={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
+    >
+      {(innerWidth, innerHeight) => (
+        <>
+          <div ref={metaInfoRef}>
+            <GraphMetaInfo data={data} />
+          </div>
           <ExploreGraph
             graphStyle={graphStyle}
             data={slicedData}
-            height={innerHeight}
+            height={innerHeight - metaInfoHeight}
             width={innerWidth}
             timeRange={timeRange}
             onChangeTime={onChangeTime}
@@ -117,8 +118,8 @@ export const GraphContainer = ({
             eventBus={eventBus}
             queriesChangedIndexAtRun={queriesChangedIndexAtRun}
           />
-        )}
-      </PanelChrome>
-    </>
+        </>
+      )}
+    </PanelChrome>
   );
 };
