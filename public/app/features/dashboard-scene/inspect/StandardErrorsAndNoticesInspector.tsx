@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
+import { OpenAssistantButton, createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import {
   type DataFrame,
   type DataQueryError,
@@ -15,6 +16,9 @@ import { ClipboardButton, Icon, type IconName, Stack, TextLink, useStyles2 } fro
 export interface StandardErrorsAndNoticesInspectorProps {
   data?: DataFrame[];
   errors?: DataQueryError[];
+  // Closes the inspect drawer, e.g. so the dashboard and the assistant sidebar are both visible
+  // after "Investigate with Assistant" is clicked.
+  onClose?: () => void;
 }
 
 type Severity = QueryResultMetaNotice['severity'];
@@ -88,7 +92,7 @@ function buildEntries(data: DataFrame[] | undefined, errors: DataQueryError[] | 
   return entries.sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 }
 
-export function StandardErrorsAndNoticesInspector({ data, errors }: StandardErrorsAndNoticesInspectorProps) {
+export function StandardErrorsAndNoticesInspector({ data, errors, onClose }: StandardErrorsAndNoticesInspectorProps) {
   const styles = useStyles2(getStyles);
   const entries = buildEntries(data, errors);
 
@@ -103,15 +107,41 @@ export function StandardErrorsAndNoticesInspector({ data, errors }: StandardErro
   return (
     <Stack direction="column" gap={1}>
       {entries.map((entry, index) => (
-        <EntryCard key={`${entry.severity}-${index}`} entry={entry} />
+        <EntryCard key={`${entry.severity}-${index}`} entry={entry} onClose={onClose} />
       ))}
     </Stack>
   );
 }
 
-function EntryCard({ entry }: { entry: InspectableEntry }) {
+// Prompt text sent to the assistant is intentionally not translated (matching
+// QueryErrorAlert.tsx/AnalizeRuleButton.tsx): it's an instruction to the LLM,
+// not rendered UI copy, so it stays in English regardless of UI locale.
+function buildAssistantPrompt(entry: InspectableEntry): string {
+  return entry.isCode
+    ? 'Investigate this query error and suggest how to fix it.'
+    : `Investigate this ${entry.severity} notice and explain what it means and what I should do about it.`;
+}
+
+function buildAssistantContext(entry: InspectableEntry) {
+  return [
+    createAssistantContextItem('structured', {
+      title: entry.isCode
+        ? t('dashboard-scene.errors-and-notices-inspector.assistant-context-error', 'Query error details')
+        : t('dashboard-scene.errors-and-notices-inspector.assistant-context-notice', 'Notice details'),
+      data: {
+        severity: entry.severity,
+        title: entry.title,
+        content: entry.content,
+        link: entry.link,
+      },
+    }),
+  ];
+}
+
+function EntryCard({ entry, onClose }: { entry: InspectableEntry; onClose?: () => void }) {
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(true);
+  const { isAvailable } = useAssistant();
 
   return (
     <div className={styles.card}>
@@ -127,6 +157,17 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
           <Icon name={getSeverityIcon(entry.severity)} className={styles[entry.severity]} />
           <span className={styles.severityLabel}>{SEVERITY_LABELS[entry.severity]()}</span>
         </button>
+        {isAvailable && (
+          <OpenAssistantButton
+            origin="grafana/errors-and-notices-inspector"
+            prompt={buildAssistantPrompt(entry)}
+            context={buildAssistantContext(entry)}
+            title={t('dashboard-scene.errors-and-notices-inspector.investigate-with-assistant', 'Investigate with Assistant')}
+            size="sm"
+            iconOnlyButton
+            onClick={onClose}
+          />
+        )}
         <ClipboardButton size="sm" variant="secondary" fill="text" icon="clipboard-alt" getText={() => entry.content}>
           {t('dashboard-scene.errors-and-notices-inspector.copy', 'Copy to clipboard')}
         </ClipboardButton>

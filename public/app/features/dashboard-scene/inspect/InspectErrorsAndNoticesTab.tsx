@@ -17,6 +17,7 @@ export interface InspectErrorsAndNoticesTabState extends SceneObjectState {
   // The data source is only set when it provides a custom ErrorsAndNoticesInspector. Otherwise
   // the standard inspector is used, which works for any data source (including mixed).
   dataSource?: DataSourceApi;
+  onClose: () => void;
 }
 
 export class InspectErrorsAndNoticesTab extends SceneObjectBase<InspectErrorsAndNoticesTabState> {
@@ -29,7 +30,7 @@ export class InspectErrorsAndNoticesTab extends SceneObjectBase<InspectErrorsAnd
   }
 
   static Component = ({ model }: SceneComponentProps<InspectErrorsAndNoticesTab>) => {
-    const { panelRef, dataSource } = model.state;
+    const { panelRef, dataSource, onClose } = model.state;
     const data = sceneGraph.getData(panelRef.resolve());
 
     if (!data.state.data) {
@@ -44,6 +45,6 @@ export class InspectErrorsAndNoticesTab extends SceneObjectBase<InspectErrorsAnd
       return <CustomInspector datasource={dataSource} data={panelData.series} errors={errors} />;
     }
 
-    return <StandardErrorsAndNoticesInspector data={panelData.series} errors={errors} />;
+    return <StandardErrorsAndNoticesInspector data={panelData.series} errors={errors} onClose={onClose} />;
   };
 }

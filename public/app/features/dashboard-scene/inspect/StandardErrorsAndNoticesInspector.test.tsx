@@ -1,18 +1,91 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { type DataFrame, type DataQueryError, type QueryResultMetaNotice } from '@grafana/data';
 
 import { StandardErrorsAndNoticesInspector } from './StandardErrorsAndNoticesInspector';
 
+const mockUseAssistant = jest.fn().mockReturnValue({ isLoading: false, isAvailable: true });
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => mockUseAssistant(),
+  OpenAssistantButton: ({ title, onClick }: { title: string; onClick?: () => void }) => (
+    <button onClick={onClick}>{title}</button>
+  ),
+  createAssistantContextItem: jest.fn((type: string, params: { title: string; data: unknown }) => ({
+    type,
+    ...params,
+  })),
+}));
+
 function frameWithNotices(notices: QueryResultMetaNotice[]): DataFrame {
   return { name: 'A', fields: [], length: 0, meta: { notices } } as DataFrame;
 }
 
-function setup(data: DataFrame[] = [], errors: DataQueryError[] = []) {
-  return render(<StandardErrorsAndNoticesInspector data={data} errors={errors} />);
+function setup(data: DataFrame[] = [], errors: DataQueryError[] = [], onClose?: () => void) {
+  return render(<StandardErrorsAndNoticesInspector data={data} errors={errors} onClose={onClose} />);
 }
 
 describe('StandardErrorsAndNoticesInspector', () => {
+  beforeEach(() => {
+    mockUseAssistant.mockReturnValue({ isLoading: false, isAvailable: true });
+  });
+
+  it('does not render an Investigate with Assistant button when the assistant is unavailable', () => {
+    mockUseAssistant.mockReturnValue({ isLoading: false, isAvailable: false });
+
+    setup([], [{ message: 'Query blew up' }]);
+
+    expect(screen.queryByRole('button', { name: 'Investigate with Assistant' })).not.toBeInTheDocument();
+  });
+
+  it('renders an Investigate with Assistant button per card when the assistant is available', () => {
+    setup(
+      [frameWithNotices([{ severity: 'warning', text: 'one' }])],
+      [{ message: 'Query blew up' }]
+    );
+
+    expect(screen.getAllByRole('button', { name: 'Investigate with Assistant' })).toHaveLength(2);
+  });
+
+  it('closes the inspector when Investigate with Assistant is clicked', async () => {
+    const onClose = jest.fn();
+    setup([], [{ message: 'Query blew up' }], onClose);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Investigate with Assistant' }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('builds structured assistant context from the error/notice content', () => {
+    const { createAssistantContextItem } = jest.requireMock('@grafana/assistant');
+    createAssistantContextItem.mockClear();
+
+    setup(
+      [frameWithNotices([{ severity: 'warning', text: 'a cautionary thing', link: 'https://example.com/more' }])],
+      [{ message: 'Query blew up', data: { message: 'upstream 500' } }]
+    );
+
+    expect(createAssistantContextItem).toHaveBeenCalledWith(
+      'structured',
+      expect.objectContaining({
+        title: 'Query error details',
+        data: expect.objectContaining({ severity: 'error' }),
+      })
+    );
+    expect(createAssistantContextItem).toHaveBeenCalledWith(
+      'structured',
+      expect.objectContaining({
+        title: 'Notice details',
+        data: expect.objectContaining({
+          severity: 'warning',
+          content: 'a cautionary thing',
+          link: 'https://example.com/more',
+        }),
+      })
+    );
+  });
+
   it('shows an empty state when there are no errors or notices', () => {
     setup();
     expect(screen.getByText('No errors or notices for this query.')).toBeInTheDocument();
