@@ -132,7 +132,6 @@ describe('DataSourceDropdown', () => {
         onDismiss: () => {},
         current: mockDS1.name,
         ...filters,
-        dataSources: mockDSList,
       };
 
       getListMock.mockClear();
@@ -145,6 +144,15 @@ describe('DataSourceDropdown', () => {
           ...filters,
         })
       );
+    });
+
+    it('should render the provided dataSources instead of fetching a list', async () => {
+      const onlyPassedIn = createDS('only.passed.in', 4, false);
+
+      setup({ dataSources: [onlyPassedIn] });
+
+      expect(await screen.findByText(onlyPassedIn.name, { selector: 'span' })).toBeInTheDocument();
+      expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
     });
   });
 

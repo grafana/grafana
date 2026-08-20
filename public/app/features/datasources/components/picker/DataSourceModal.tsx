@@ -32,6 +32,8 @@ export interface DataSourceModalProps {
   onDismiss: () => void;
   recentlyUsed?: string[];
   reportedInteractionFrom?: string;
+  /** When set, this list is rendered as-is instead of fetching one with the filters below */
+  dataSources?: DataSourceInstanceSettings[];
 
   // DS filters
   filter?: (ds: DataSourceInstanceSettings) => boolean;
@@ -63,6 +65,7 @@ export function DataSourceModal({
   current,
   onDismiss,
   reportedInteractionFrom,
+  dataSources: dataSourcesProp,
 }: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
@@ -85,18 +88,21 @@ export function DataSourceModal({
   };
 
   // Get all datasources to report total_configured count
-  const dataSources = useDatasources({
-    tracing,
-    dashboard,
-    mixed,
-    metrics,
-    type,
-    annotations,
-    variables,
-    alerting,
-    pluginId,
-    logs,
-  });
+  const dataSources = useDatasources(
+    {
+      tracing,
+      dashboard,
+      mixed,
+      metrics,
+      type,
+      annotations,
+      variables,
+      alerting,
+      pluginId,
+      logs,
+    },
+    dataSourcesProp
+  );
 
   // Report interaction when modal is opened
   useEffect(() => {
@@ -178,16 +184,6 @@ export function DataSourceModal({
               })
             }
             filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
-            variables={variables}
-            tracing={tracing}
-            metrics={metrics}
-            type={type}
-            annotations={annotations}
-            alerting={alerting}
-            pluginId={pluginId}
-            logs={logs}
-            dashboard={dashboard}
-            mixed={mixed}
             dataSources={dataSources}
             favoriteDataSources={favoriteDataSources}
             scrollRef={scrollRef}
