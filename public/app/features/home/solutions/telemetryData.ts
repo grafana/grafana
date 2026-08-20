@@ -6,7 +6,7 @@ import {
   FieldType,
   getMinMaxAndDelta,
 } from '@grafana/data';
-import { type DataSourceWithBackend } from '@grafana/runtime';
+import { type DataSourceWithBackend, isFetchError } from '@grafana/runtime';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -32,6 +32,7 @@ export interface LogsActivity {
 export interface TracesActivity {
   spans: number | null;
   series: FieldSparkline | null;
+  lookbackHours: number;
 }
 
 interface LokiVolumeResponse {
@@ -144,21 +145,47 @@ interface TempoQueryRangeResponse {
   series?: Array<{ samples?: Array<{ timestampMs?: string | number; value?: number }> }>;
 }
 
-/**
- * Span throughput over the last 24h via Tempo's TraceQL-metrics HTTP API: the summed series
- * feeds the sparkline, its integral is the span count. Datasource proxy on purpose — the
- * frontend query path rebuilds raw targets on some plugin versions. Needs the
- * metrics-generator; callers fail soft on rejection.
- */
-export async function fetchTracesActivity(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<TracesActivity> {
-  const end = Math.floor(Date.now() / 1000);
-  const start = end - DATA_LOOKBACK_HOURS * 3600;
-  const res = await probeProxyGet<TempoQueryRangeResponse>(ds.uid, 'api/metrics/query_range', {
+const TEMPO_V2_METRICS_LOOKBACK_HOURS = 3;
+const TEMPO_V2_METRICS_DURATION_ERROR = 'maximum allowed duration of 3h0m0s';
+
+function isTempoV2MetricsDurationError(error: unknown): boolean {
+  if (!isFetchError(error) || error.status !== 400) {
+    return false;
+  }
+
+  const message = typeof error.data === 'string' ? error.data : error.data?.message;
+  return typeof message === 'string' && message.includes(TEMPO_V2_METRICS_DURATION_ERROR);
+}
+
+function queryTracesActivity(dsUid: string, end: number, lookbackHours: number): Promise<TempoQueryRangeResponse> {
+  return probeProxyGet<TempoQueryRangeResponse>(dsUid, 'api/metrics/query_range', {
     q: '{} | count_over_time()',
-    start,
+    start: end - lookbackHours * 3600,
     end,
     step: '30m',
   });
+}
+
+/**
+ * Span throughput over the last 24h via Tempo's TraceQL-metrics HTTP API, falling back to the
+ * Tempo 2.x three-hour maximum. The summed series feeds the sparkline, its integral is the span
+ * count. Datasource proxy on purpose — the frontend query path rebuilds raw targets on some
+ * plugin versions. Needs the metrics-generator; callers fail soft on rejection.
+ */
+export async function fetchTracesActivity(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<TracesActivity> {
+  const end = Math.floor(Date.now() / 1000);
+  let lookbackHours = DATA_LOOKBACK_HOURS;
+  let res: TempoQueryRangeResponse;
+  try {
+    res = await queryTracesActivity(ds.uid, end, lookbackHours);
+  } catch (error) {
+    if (!isTempoV2MetricsDurationError(error)) {
+      throw error;
+    }
+    // Tempo 2.x defaults TraceQL metrics queries to a three-hour maximum.
+    lookbackHours = TEMPO_V2_METRICS_LOOKBACK_HOURS;
+    res = await queryTracesActivity(ds.uid, end, lookbackHours);
+  }
   const buckets = new Map<number, number>();
   for (const series of res?.series ?? []) {
     for (const sample of series.samples ?? []) {
@@ -173,6 +200,7 @@ export async function fetchTracesActivity(ds: Pick<DataSourceInstanceListItem, '
   return {
     spans: buckets.size > 0 ? [...buckets.values()].reduce((total, value) => total + value, 0) : null,
     series: toSparkline([...buckets.entries()], 'Span throughput'),
+    lookbackHours,
   };
 }
 
@@ -180,10 +208,9 @@ export interface MetricsDiskPressure {
   /** Hosts whose fullest filesystem exceeds the pressure threshold. */
   hostsAbove: number;
   worstInstance: string | null;
+  worstMount: string | null;
   /** 0..1 fill ratio of the worst host. */
   worstRatio: number | null;
-  /** Linear fill ETA for the shown filesystem; null when it cannot be identified, is not shrinking, or is beyond the clamp. */
-  hoursToFull: number | null;
 }
 
 export interface MetricsActivity {
@@ -197,17 +224,18 @@ export interface MetricsActivity {
   hosts: number | null;
   /** Active-series trend over the last 24h. */
   seriesSparkline: FieldSparkline | null;
-  /** null when below threshold or node metrics absent. */
-  disk: MetricsDiskPressure | null;
 }
 
 // Threshold and ETA clamp for the disk-pressure alert row (design/judgment constants).
 const DISK_PRESSURE_RATIO = 0.9;
 const DISK_ETA_MAX_HOURS = 48;
+const METRICS_ALERT_TIMEOUT_MS = 30_000;
 
 const FS_EXCLUDE = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
 // Per-filesystem fill ratio; pseudo filesystems excluded.
 const FS_USED = `(1 - node_filesystem_avail_bytes{${FS_EXCLUDE}} / node_filesystem_size_bytes{${FS_EXCLUDE}})`;
+/** Counts hosts whose fullest real filesystem exceeds the card threshold. */
+export const METRICS_DISK_PRESSURE_QUERY = `max by (instance) (${FS_USED}) > ${DISK_PRESSURE_RATIO}`;
 
 // Active series, cloud-first: Mimir's cardinality API, then vanilla Prometheus TSDB head stats.
 // Both absent/broken → null and the metric-name count carries the card instead.
@@ -234,7 +262,7 @@ async function fetchActiveSeries(instance: DataSourceWithBackend): Promise<numbe
 
 // Linear ETA until the shown (fullest) filesystem fills. Growing/steady filesystems drop
 // out via `> 0`; past the clamp a linear estimate is noise.
-async function fetchDiskHoursToFull(
+export async function fetchMetricsDiskHoursToFull(
   instanceLabel: string,
   mountpoint: string,
   ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
@@ -245,11 +273,45 @@ async function fetchDiskHoursToFull(
     {
       eta: `min((node_filesystem_avail_bytes${selector} / -deriv(node_filesystem_avail_bytes${selector}[6h])) > 0) / 3600`,
     },
-    ds
+    ds,
+    PROBE_TIMEOUT_MS
   )
     .then((frames) => readScalar(frames, 'eta'))
     .catch(() => null);
   return hours != null && hours > 0 && hours <= DISK_ETA_MAX_HOURS ? hours : null;
+}
+
+export async function fetchMetricsDiskPressure(
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
+): Promise<MetricsDiskPressure | null> {
+  const frames = await runInstantQueries(
+    {
+      diskHosts: `count(${METRICS_DISK_PRESSURE_QUERY})`,
+      diskWorst: `topk(1, ${FS_USED})`,
+    },
+    ds,
+    METRICS_ALERT_TIMEOUT_MS,
+    true
+  ).catch(() => null);
+  if (!frames) {
+    return null;
+  }
+
+  // Empty diskHosts vector (nobody above threshold) reads as null — zero here.
+  const hostsAbove = readScalar(frames, 'diskHosts') ?? 0;
+  if (hostsAbove < 1) {
+    return null;
+  }
+
+  const worst = readLabeledScalar(frames, 'diskWorst', 'instance');
+  const worstMount = readLabeledScalar(frames, 'diskWorst', 'mountpoint')?.label ?? null;
+  const worstInstance = worst?.label ?? null;
+  return {
+    hostsAbove,
+    worstInstance,
+    worstMount,
+    worstRatio: worst?.value ?? null,
+  };
 }
 
 // prometheus_tsdb_head_series is a Prometheus self-monitoring metric. On multi-tenant
@@ -307,10 +369,9 @@ async function resolveUsageQueries(): Promise<UsageQueries | null> {
 }
 
 /**
- * Active-series count, metric-name count, node_exporter host count, the 24h active-series
- * sparkline, and disk pressure for the worst host. Every field fails soft to null; the card
- * drops when nothing renderable remains. Never a matcher-less series query — cardinality on
- * large tenants is prohibitive.
+ * Active-series count, metric-name count, node_exporter host count, and the 24h active-series
+ * sparkline. Every field fails soft to null; the card drops when nothing renderable remains.
+ * Never a matcher-less series query — cardinality on large tenants is prohibitive.
  */
 export async function fetchMetricsActivity(
   ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
@@ -321,7 +382,6 @@ export async function fetchMetricsActivity(
     names: null,
     hosts: null,
     seriesSparkline: null,
-    disk: null,
   };
   const instance = await resolveBackendInstance(ds.uid);
   if (!instance) {
@@ -347,8 +407,6 @@ export async function fetchMetricsActivity(
       {
         ...(mimir ? {} : { dpm: PROM_DPM_QUERY }),
         hosts: 'count(node_uname_info)',
-        diskHosts: `count(max by (instance) (${FS_USED}) > ${DISK_PRESSURE_RATIO})`,
-        diskWorst: `topk(1, ${FS_USED})`,
       },
       ds,
       undefined,
@@ -375,19 +433,5 @@ export async function fetchMetricsActivity(
   const usageDpm = usageStats?.dpm != null && usageStats.dpm > 0 ? usageStats.dpm : null;
   const dataPointsPerMinute = usageDpm ?? (promDpm != null && promDpm > 0 ? promDpm : null);
   const hosts = healthFrames ? readScalar(healthFrames, 'hosts') : null;
-  // Empty diskHosts vector (nobody above threshold) reads as null — zero here.
-  const hostsAbove = healthFrames ? (readScalar(healthFrames, 'diskHosts') ?? 0) : 0;
-  const worst = healthFrames ? readLabeledScalar(healthFrames, 'diskWorst', 'instance') : null;
-  const worstMount = healthFrames ? (readLabeledScalar(healthFrames, 'diskWorst', 'mountpoint')?.label ?? null) : null;
-  let disk: MetricsDiskPressure | null = null;
-  if (hostsAbove >= 1) {
-    const worstInstance = worst?.label ?? null;
-    disk = {
-      hostsAbove,
-      worstInstance,
-      worstRatio: worst?.value ?? null,
-      hoursToFull: worstInstance && worstMount ? await fetchDiskHoursToFull(worstInstance, worstMount, ds) : null,
-    };
-  }
-  return { series: usageSeries ?? series, dataPointsPerMinute, names, hosts, seriesSparkline, disk };
+  return { series: usageSeries ?? series, dataPointsPerMinute, names, hosts, seriesSparkline };
 }
