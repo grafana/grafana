@@ -2,9 +2,12 @@ package router
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 // stubLoader satisfies RoutesLoader; the routing tests seed the snapshot
@@ -168,5 +171,60 @@ func TestOpenAPIV3MalformedSubpathFallsThrough(t *testing.T) {
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/dashboard.grafana.app", nil))
 	if rec.Code != http.StatusTeapot {
 		t.Errorf("got code %d, want 418 (fell through to next)", rec.Code)
+	}
+}
+
+// TestReadyDoesNotFailOnPartialReconcileError pins that Ready reflects
+// whether the router is serving (last-known-good), not whether the last
+// reconcile was fully clean. reconcile keeps serving on a partial
+// Backend.Load failure (see its doc comment) and still publishes -- Ready
+// gating readyz on any non-nil error would drain the whole router over one
+// misconfigured group, even though every other group is still proxying
+// fine.
+func TestReadyDoesNotFailOnPartialReconcileError(t *testing.T) {
+	r := NewGrafanaRouter(stubLoader{})
+	r.state.Store(&routerState{phase: serving, err: errors.New("group x failed to load")})
+
+	if err := r.Ready(context.Background()); err != nil {
+		t.Errorf("Ready() = %v, want nil (serving on last-known-good must still be ready)", err)
+	}
+}
+
+// countingLoader is a RoutesLoader whose Notify channel the test controls
+// directly (so it can be closed) and whose Load call count is observable.
+type countingLoader struct {
+	notifyCh chan struct{}
+	loads    atomic.Int32
+}
+
+func (l *countingLoader) Load(context.Context) ([]Backend, error) {
+	l.loads.Add(1)
+	return nil, nil
+}
+func (l *countingLoader) Notify(context.Context) (<-chan struct{}, error) {
+	return l.notifyCh, nil
+}
+
+// TestRunDoesNotBusyLoopOnClosedNotifyChannel pins that a closed Notify
+// channel doesn't turn the reconcile loop into a hot spin: a closed channel
+// is always immediately ready and yields the zero value forever, so a naive
+// `case <-dirty:` would call reconcile nonstop, hammering Load and burning
+// CPU, until ctx is cancelled.
+func TestRunDoesNotBusyLoopOnClosedNotifyChannel(t *testing.T) {
+	notifyCh := make(chan struct{}, 1)
+	loader := &countingLoader{notifyCh: notifyCh}
+	r := NewGrafanaRouter(loader)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := r.Run(ctx); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	close(notifyCh)
+	time.Sleep(50 * time.Millisecond) // give a buggy implementation time to spin
+
+	if loads := loader.loads.Load(); loads > 5 {
+		t.Errorf("Load called %d times after notify channel closed, want a small bounded number (busy-loop on closed channel)", loads)
 	}
 }

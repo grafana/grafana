@@ -209,6 +209,21 @@ The signal and the state are split; do not conflate them.
 - On backend removal, ideally drain in-flight requests before tearing down its transport; never
   close eagerly on swap, or you cut live requests. (Transports are currently shared per
   `tlsCacheKey` and not closed — revisit when per-backend teardown is added.)
+- **A closed `Notify` channel must not busy-loop the select.** `case <-dirty:` alone is always
+  immediately ready on a closed channel (yielding the zero value forever), so it would call
+  `reconcile` — and therefore `Load` — nonstop, burning CPU until `ctx` is cancelled. `Run`'s loop
+  checks the receive's `ok` and nils the local `dirty` var on close, parking that `select` case
+  permanently (a nil channel is never selected) so only `ctx.Done()` remains live. Found by PR review;
+  regression-tested (`TestRunDoesNotBusyLoopOnClosedNotifyChannel`) by asserting `Load` stays bounded
+  after closing the channel, not just that the process doesn't hang.
+- **`Ready` must not fail on a partial reconcile error.** A non-nil reconcile error (one group's
+  `Backend.Load` failed) does not stop the router serving every other group on last-known-good — that
+  is the whole point of the "keep serving, don't advance `lastRV`" design above. Gating `/readyz` (the
+  enterprise command wires `Ready` there) on any error would drain the whole router from its LB
+  rotation over one misconfigured group, while it's still able to proxy everything else. `Ready`
+  reports not-ready only for `starting`/`stopped`/`crashed`; a serving-with-error state still logs via
+  `storeServing`'s `slog.Error`, so the failure isn't silently lost — it's just not conflated with
+  "can't serve traffic." Found by PR review.
 
 ## Passive circuit breaking
 

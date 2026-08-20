@@ -294,31 +294,56 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 			}
 		}()
 
-		lastErr := r.reconcile(ctx)
-		r.state.Store(&routerState{phase: serving, err: lastErr})
+		r.storeServing(r.reconcile(ctx))
 
 		for {
 			select {
 			case <-ctx.Done():
 				r.state.Store(&routerState{phase: stopped})
 				return
-			case <-dirty:
-				r.state.Store(&routerState{phase: serving, err: r.reconcile(ctx)})
+			case _, ok := <-dirty:
+				if !ok {
+					// Notify's channel closed: it will never signal again. A
+					// closed channel is always immediately ready, so leaving
+					// this case armed would busy-loop reconcile forever. Park
+					// it by nilling the local var -- a nil channel blocks
+					// forever, so this case is never selected again and only
+					// ctx.Done() can still fire.
+					dirty = nil
+					continue
+				}
+				r.storeServing(r.reconcile(ctx))
 			}
 		}
 	}()
 	return nil
 }
 
+// storeServing records a completed reconcile's outcome. A non-nil err (a
+// partial Backend.Load failure -- see reconcile's doc comment) does not stop
+// the router serving last-known-good, so it's logged here rather than
+// surfaced as a readiness failure -- see Ready's doc comment for why.
+func (r *GrafanaRouter) storeServing(err error) {
+	if err != nil {
+		slog.Error("router: reconcile completed with errors, serving last-known-good", "err", err)
+	}
+	r.state.Store(&routerState{phase: serving, err: err})
+}
+
 // Ready reports the router is initialized and serving. The snapshot is
-// populated on the first reconcile in Run.
+// populated on the first reconcile in Run. A non-nil s.err while serving
+// means the last reconcile partially failed (e.g. one group's Backend.Load
+// errored) -- reconcile deliberately keeps serving last-known-good for every
+// other group in that case (see its doc comment), so it must not fail
+// readiness here: the enterprise command wires this to /readyz, and gating
+// it on any error would drain the whole router over one misbehaving group
+// while it's still able to proxy everything else. The error is still worth
+// surfacing (see Run's slog.Error), just not as a readiness failure.
 func (r *GrafanaRouter) Ready(context.Context) error {
 	s := r.state.Load()
 	switch {
 	case s == nil || s.phase == starting:
 		return fmt.Errorf("router: initial reconcile not complete")
-	case s.phase == serving && s.err != nil:
-		return fmt.Errorf("router: last reconcile failed: %w", s.err)
 	case s.phase == serving:
 		return nil
 	default: // stopped / crashed
