@@ -41,24 +41,31 @@ function mockFiles(paths: string[]) {
 }
 
 describe('useFolderDocs', () => {
-  it('discovers recognized convention docs in the folder ordered like GitHub', async () => {
+  it('discovers convention docs first, then other markdown, ordered like GitHub', async () => {
     mockRepo('dashboards/team-a');
     mockFiles([
       'dashboards/team-a/SECURITY.md',
       'dashboards/team-a/README.md',
       'dashboards/team-a/dash.json',
       'dashboards/team-a/CONTRIBUTING.md',
+      'dashboards/team-a/CHANGELOG.md',
       'dashboards/other/README.md',
     ]);
 
     const { result } = renderHook(() => useFolderDocs('test-folder'), { wrapper: getWrapper({}) });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.docs.map((d) => d.convention.key)).toEqual(['readme', 'contributing', 'security']);
+    expect(result.current.docs.map((d) => d.fileName)).toEqual([
+      'README.md',
+      'CONTRIBUTING.md',
+      'SECURITY.md',
+      'CHANGELOG.md',
+    ]);
+    expect(result.current.docs[3].key).toBeUndefined();
     expect(result.current.sourceDir).toBe('dashboards/team-a');
   });
 
-  it('returns no docs when the folder has none', async () => {
+  it('returns no docs when the folder has no markdown', async () => {
     mockRepo('dashboards/team-a');
     mockFiles(['dashboards/team-a/dash.json']);
 

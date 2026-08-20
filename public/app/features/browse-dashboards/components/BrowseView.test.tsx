@@ -190,13 +190,7 @@ describe('browse-dashboards BrowseView', () => {
     }
 
     function mockReadme(markdownContent = '# README\n\nbody') {
-      mockDocs([
-        {
-          convention: { key: 'readme', fileName: 'README.md', matches: ['README.md'] },
-          path: 'README.md',
-          fileName: 'README.md',
-        },
-      ]);
+      mockDocs([{ key: 'readme', path: 'README.md', fileName: 'README.md' }]);
       jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
         repository: mockRepository,
         folder: undefined,

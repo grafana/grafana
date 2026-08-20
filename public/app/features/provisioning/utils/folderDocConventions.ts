@@ -1,10 +1,10 @@
 import { t } from '@grafana/i18n';
 
 /**
- * Folder documentation conventions, ordered the way GitHub surfaces them as
- * tabs above a repository's README: README, Contributing, Security. Grafana
- * recognizes the same community-health filenames inside a provisioned folder
- * and promotes each present file into a tab.
+ * Recognized folder documentation conventions, ordered the way GitHub surfaces
+ * them as tabs above a repository's README: README, Contributing, Security.
+ * These always sort ahead of any other markdown files in the folder and get a
+ * friendly, localized tab label instead of their raw file name.
  */
 export type FolderDocKey = 'readme' | 'contributing' | 'security';
 
@@ -25,9 +25,19 @@ export const FOLDER_DOC_CONVENTIONS: FolderDocConvention[] = [
 /** The README convention is the default tab and drives the empty state. */
 export const README_CONVENTION = FOLDER_DOC_CONVENTIONS[0];
 
+export interface FolderDoc {
+  /** Set when the file is a recognized convention; undefined for other markdown. */
+  key?: FolderDocKey;
+  /** Path relative to the repository's configured root. */
+  path: string;
+  /** Actual file name as it appears in the repository. */
+  fileName: string;
+}
+
 /**
- * Translated tab label for a convention. Uses a switch of literal `t()` calls
- * so the strings are statically extractable — a dynamic `t(key)` would not be.
+ * Localized tab label for a recognized convention. Uses a switch of literal
+ * `t()` calls so the strings are statically extractable — a dynamic `t(key)`
+ * would not be.
  */
 export function getFolderDocLabel(key: FolderDocKey): string {
   switch (key) {
@@ -40,39 +50,63 @@ export function getFolderDocLabel(key: FolderDocKey): string {
   }
 }
 
-export interface FolderDocMatch {
-  convention: FolderDocConvention;
-  /** Path relative to the repository's configured root. */
-  path: string;
-  /** Actual file name as it appears in the repository. */
-  fileName: string;
+/** Tab label for any doc: the convention label, or the file name sans extension. */
+export function getDocTabLabel(doc: FolderDoc): string {
+  return doc.key ? getFolderDocLabel(doc.key) : stripMarkdownExtension(doc.fileName);
 }
 
 /**
- * Finds the convention docs that live directly inside `sourceDir` (the folder's
- * source path, relative to the repository root). Only immediate children match
- * — a `README.md` in a sub-folder belongs to that sub-folder, not this one.
- *
- * Results are ordered by convention priority, not by their order in `filePaths`.
+ * Lists the markdown docs directly inside `sourceDir` (the folder's source path,
+ * relative to the repository root) as tabs. The recognized conventions come
+ * first in their defined order; any other `.md`/`.markdown` files follow,
+ * sorted case-insensitively by file name. Only immediate children match — a
+ * `README.md` in a sub-folder belongs to that sub-folder, not this one.
  */
-export function findFolderDocs(filePaths: string[], sourceDir: string): FolderDocMatch[] {
+export function listFolderDocs(filePaths: string[], sourceDir: string): FolderDoc[] {
   const dir = stripTrailingSlashes(sourceDir);
-  const matches: FolderDocMatch[] = [];
+  const inDir = filePaths
+    .map((path) => {
+      const slash = path.lastIndexOf('/');
+      return {
+        path,
+        dir: slash >= 0 ? path.slice(0, slash) : '',
+        fileName: slash >= 0 ? path.slice(slash + 1) : path,
+      };
+    })
+    .filter((file) => file.dir === dir);
+
+  const docs: FolderDoc[] = [];
+  const usedPaths = new Set<string>();
 
   for (const convention of FOLDER_DOC_CONVENTIONS) {
     const candidates = convention.matches.map((name) => name.toLowerCase());
-    for (const path of filePaths) {
-      const slash = path.lastIndexOf('/');
-      const fileDir = slash >= 0 ? path.slice(0, slash) : '';
-      const fileName = slash >= 0 ? path.slice(slash + 1) : path;
-      if (fileDir === dir && candidates.includes(fileName.toLowerCase())) {
-        matches.push({ convention, path, fileName });
-        break;
-      }
+    const hit = inDir.find((file) => candidates.includes(file.fileName.toLowerCase()));
+    if (hit) {
+      docs.push({ key: convention.key, path: hit.path, fileName: hit.fileName });
+      usedPaths.add(hit.path);
     }
   }
 
-  return matches;
+  const others = inDir
+    .filter((file) => !usedPaths.has(file.path) && isMarkdown(file.fileName))
+    .sort((a, b) => {
+      const an = a.fileName.toLowerCase();
+      const bn = b.fileName.toLowerCase();
+      return an < bn ? -1 : an > bn ? 1 : 0;
+    });
+  for (const file of others) {
+    docs.push({ path: file.path, fileName: file.fileName });
+  }
+
+  return docs;
+}
+
+function isMarkdown(fileName: string): boolean {
+  return /\.(md|markdown)$/i.test(fileName);
+}
+
+function stripMarkdownExtension(fileName: string): string {
+  return fileName.replace(/\.(md|markdown)$/i, '');
 }
 
 function stripTrailingSlashes(value: string): string {

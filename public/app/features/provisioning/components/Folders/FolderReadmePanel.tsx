@@ -1,16 +1,28 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, LinkButton, Spinner, Stack, Tab, Text, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Dropdown,
+  LinkButton,
+  Menu,
+  Spinner,
+  Stack,
+  Tab,
+  Text,
+  ToolbarButton,
+  useStyles2,
+} from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useFolderDocs } from '../../hooks/useFolderDocs';
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
-import { type FolderDocMatch, getFolderDocLabel, README_CONVENTION } from '../../utils/folderDocConventions';
+import { type FolderDoc, getDocTabLabel, getFolderDocLabel, README_CONVENTION } from '../../utils/folderDocConventions';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 
@@ -24,9 +36,9 @@ interface Props {
 
 /**
  * GitHub-style documentation panel rendered inline below the dashboards list.
- * Recognized convention files (README, ARCHITECTURE, RUNBOOK, …) are promoted
- * into tabs, with lower-priority docs collapsed into a "More" menu when the bar
- * gets crowded. The README renders by default; its pencil opens the host editor.
+ * Markdown files in the folder are promoted into tabs — README, Contributing and
+ * Security first, then any other markdown — and tabs that don't fit collapse into
+ * a "More" menu. The README renders by default; its pencil opens the host editor.
  *
  * Returns null when the `provisioning.readmes` toggle is off or a loaded folder
  * isn't provisioned; shows a spinner while loading.
@@ -85,16 +97,16 @@ function FolderReadmePanelContent({ folderUID }: Props) {
     return null;
   }
 
-  const selectDoc = (doc: FolderDocMatch) => {
+  const selectDoc = (doc: FolderDoc) => {
     setActivePath(doc.path);
     if (repository) {
-      FolderReadmeEvents.tabSelected({ repositoryType: repository.type, doc: doc.convention.key });
+      FolderReadmeEvents.tabSelected({ repositoryType: repository.type, doc: doc.key ?? 'other' });
     }
   };
 
-  // The empty "Add README" state only makes sense for the README itself; a
-  // recognized doc that fails to load is a load error, not a missing README.
-  const isReadmeContext = !activeDoc || activeDoc.convention.key === README_CONVENTION.key;
+  // The empty "Add README" state only makes sense for the README itself; another
+  // doc that fails to load is a load error, not a missing README.
+  const isReadmeContext = !activeDoc || activeDoc.key === README_CONVENTION.key;
   const activeFileName = activeDoc?.fileName ?? README_CONVENTION.fileName;
 
   const editUrl = repository
@@ -160,18 +172,22 @@ function FolderReadmePanelContent({ folderUID }: Props) {
 }
 
 interface DocTabsProps {
-  docs: FolderDocMatch[];
+  docs: FolderDoc[];
   activePath: string | undefined;
-  onSelect: (doc: FolderDocMatch) => void;
+  onSelect: (doc: FolderDoc) => void;
 }
 
 /**
- * The GitHub-style tab bar: one tab per recognized convention doc, ordered as
- * GitHub orders them. While discovery is still running (no docs yet) a single
- * static README tab stands in so the panel chrome doesn't jump.
+ * The GitHub-style tab bar: one tab per markdown doc, in priority order. Tabs
+ * that don't fit the available width collapse into a "More" menu, measured
+ * against an off-screen copy of the full set (see {@link useDocTabOverflow}).
+ * While discovery is still running (no docs yet) a single static README tab
+ * stands in so the panel chrome doesn't jump.
  */
 function DocTabs({ docs, activePath, onSelect }: DocTabsProps) {
   const styles = useStyles2(getStyles);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const { containerRef, measureRef, visibleCount } = useDocTabOverflow(docs.length);
 
   if (docs.length === 0) {
     return (
@@ -181,18 +197,114 @@ function DocTabs({ docs, activePath, onSelect }: DocTabsProps) {
     );
   }
 
+  const visible = docs.slice(0, visibleCount);
+  const overflow = docs.slice(visibleCount);
+  const overflowActive = overflow.some((doc) => doc.path === activePath);
+
   return (
-    <div className={styles.tabList} role="tablist">
-      {docs.map((doc) => (
-        <Tab
-          key={doc.path}
-          label={getFolderDocLabel(doc.convention.key)}
-          active={doc.path === activePath}
-          onChangeTab={() => onSelect(doc)}
-        />
-      ))}
-    </div>
+    <>
+      {/* Off-screen copy of every tab (plus a More trigger) used only to measure
+          natural widths. aria-hidden keeps it out of the accessibility tree so
+          it isn't double-counted by tab queries. */}
+      <div ref={measureRef} className={styles.measure} aria-hidden>
+        {docs.map((doc) => (
+          <span data-measure-tab key={doc.path}>
+            <Tab label={getDocTabLabel(doc)} />
+          </span>
+        ))}
+        <span data-measure-more>
+          <ToolbarButton>
+            <Trans i18nKey="browse-dashboards.readme.tab-more">More</Trans>
+          </ToolbarButton>
+        </span>
+      </div>
+
+      <div ref={containerRef} className={styles.tabList} role="tablist">
+        {visible.map((doc) => (
+          <Tab
+            key={doc.path}
+            label={getDocTabLabel(doc)}
+            active={doc.path === activePath}
+            onChangeTab={() => onSelect(doc)}
+          />
+        ))}
+        {overflow.length > 0 && (
+          <Dropdown
+            placement="bottom-start"
+            onVisibleChange={setMoreOpen}
+            overlay={
+              <Menu>
+                {overflow.map((doc) => (
+                  <Menu.Item
+                    key={doc.path}
+                    label={getDocTabLabel(doc)}
+                    active={doc.path === activePath}
+                    onClick={() => onSelect(doc)}
+                  />
+                ))}
+              </Menu>
+            }
+          >
+            <ToolbarButton isOpen={moreOpen} variant={overflowActive ? 'active' : 'default'}>
+              <Trans i18nKey="browse-dashboards.readme.tab-more">More</Trans>
+            </ToolbarButton>
+          </Dropdown>
+        )}
+      </div>
+    </>
   );
+}
+
+/**
+ * Computes how many doc tabs fit in the tab bar. Measures the natural widths of
+ * an off-screen copy of every tab against the visible container's width and,
+ * when they overflow, reserves room for the More trigger. Recomputes on resize.
+ */
+function useDocTabOverflow(docCount: number) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(docCount);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const measure = measureRef.current;
+    if (!container || !measure) {
+      return;
+    }
+
+    const recompute = () => {
+      const available = container.clientWidth;
+      const tabEls = Array.from(measure.querySelectorAll<HTMLElement>('[data-measure-tab]'));
+      const moreEl = measure.querySelector<HTMLElement>('[data-measure-more]');
+      const moreWidth = moreEl?.offsetWidth ?? 0;
+
+      const total = tabEls.reduce((sum, el) => sum + el.offsetWidth, 0);
+      if (total <= available) {
+        setVisibleCount(tabEls.length);
+        return;
+      }
+
+      // Overflowing: reserve space for the More trigger and fit what remains.
+      let used = 0;
+      let count = 0;
+      for (const el of tabEls) {
+        used += el.offsetWidth;
+        if (used + moreWidth <= available) {
+          count++;
+        } else {
+          break;
+        }
+      }
+      setVisibleCount(Math.max(1, count));
+    };
+
+    recompute();
+    const observer = new ResizeObserver(recompute);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [docCount]);
+
+  return { containerRef, measureRef, visibleCount };
 }
 
 interface ReadmeBodyProps {
@@ -370,15 +482,31 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: theme.spacing(1),
     padding: theme.spacing(0, 1),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     backgroundColor: theme.colors.background.secondary,
   }),
   tabList: css({
+    // Take the space left by the edit button so overflow is measured against the
+    // real available width; tabs that don't fit move into the More menu.
+    flex: 1,
     display: 'flex',
     alignItems: 'center',
     minWidth: 0,
-    overflowX: 'auto',
+    overflow: 'hidden',
+  }),
+  // Off-screen measurement row: laid out (so widths are real) but visually hidden
+  // and removed from the accessibility tree.
+  measure: css({
+    position: 'absolute',
+    top: -9999,
+    left: -9999,
+    display: 'flex',
+    alignItems: 'center',
+    visibility: 'hidden',
+    pointerEvents: 'none',
+    whiteSpace: 'nowrap',
   }),
   body: css({
     padding: theme.spacing(2),

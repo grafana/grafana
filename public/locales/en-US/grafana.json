@@ -4588,6 +4588,7 @@
       "panel-label": "Folder documentation",
       "parse-error": "Unable to display README content.",
       "tab-contributing": "Contributing",
+      "tab-more": "More",
       "tab-readme": "README",
       "tab-security": "Security"
     },

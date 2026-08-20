@@ -4,7 +4,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type UseFolderDocsResult, useFolderDocs } from '../../hooks/useFolderDocs';
 import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
-import { type FolderDocMatch } from '../../utils/folderDocConventions';
+import { type FolderDoc, type FolderDocKey } from '../../utils/folderDocConventions';
 
 import { FOLDER_README_ANCHOR_ID, FolderReadmePanel } from './FolderReadmePanel';
 import { FolderReadmeEvents } from './analytics/main';
@@ -39,8 +39,8 @@ const mockFolder = {
   status: {},
 } as never;
 
-function doc(key: FolderDocMatch['convention']['key'], fileName: string): FolderDocMatch {
-  return { convention: { key, fileName, matches: [fileName] }, path: `dashboards/team-a/${fileName}`, fileName };
+function doc(key: FolderDocKey | undefined, fileName: string): FolderDoc {
+  return { key, path: `dashboards/team-a/${fileName}`, fileName };
 }
 
 const readmeDoc = doc('readme', 'README.md');
@@ -133,6 +133,16 @@ describe('FolderReadmePanel', () => {
       expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
     });
 
+    it('renders other markdown files as tabs labeled by file name (no extension)', () => {
+      setDocs({
+        docs: [readmeDoc, doc(undefined, 'CHANGELOG.md')],
+      });
+      setup();
+
+      expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'CHANGELOG' })).toBeInTheDocument();
+    });
+
     it('switches the active doc and reports an interaction when a tab is clicked', async () => {
       const contributing = doc('contributing', 'CONTRIBUTING.md');
       setDocs({ docs: [readmeDoc, contributing] });
@@ -142,6 +152,16 @@ describe('FolderReadmePanel', () => {
 
       expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-folder', contributing.path);
       expect(tabSelectedSpy).toHaveBeenCalledWith({ repositoryType: 'github', doc: 'contributing' });
+    });
+
+    it('reports "other" for a non-convention doc selection', async () => {
+      const changelog = doc(undefined, 'CHANGELOG.md');
+      setDocs({ docs: [readmeDoc, changelog] });
+      const { user } = setup();
+
+      await user.click(screen.getByRole('tab', { name: 'CHANGELOG' }));
+
+      expect(tabSelectedSpy).toHaveBeenCalledWith({ repositoryType: 'github', doc: 'other' });
     });
   });
 
