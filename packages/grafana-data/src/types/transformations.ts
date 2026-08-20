@@ -65,11 +65,11 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
 export type CustomTransformOperator = (context: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]>;
 
 /**
- * Data handed to a {@link PanelDataTransformationsSupplier}.
+ * Data handed to a {@link SystemTransformationsSupplier}.
  *
  * @alpha
  */
-export interface PanelDataTransformationsContext {
+export interface SystemTransformationsContext {
   /** Query result frames, before user transformations and before field overrides */
   series: DataFrame[];
 }
@@ -80,7 +80,7 @@ export interface PanelDataTransformationsContext {
  *
  * @alpha
  */
-export interface PanelDataTransformations {
+export interface SystemTransformations {
   /**
    * Run before every user-configured transformation and before field overrides, so the fields
    * they produce are matchable by overrides and targetable by the user's own transformations.
@@ -94,19 +94,19 @@ export interface PanelDataTransformations {
 }
 
 /**
- * {@link PanelDataTransformations} with both positions filled in: what
- * `PanelPlugin.getDataTransformations` returns, so callers handle neither the array shorthand nor a
+ * {@link SystemTransformations} with both positions filled in: what
+ * `PanelPlugin.getSystemTransformations` returns, so callers handle neither the array shorthand nor a
  * missing group.
  *
  * @alpha
  */
-export type ResolvedPanelDataTransformations = Required<PanelDataTransformations>;
+export type ResolvedSystemTransformations = Required<SystemTransformations>;
 
 /**
  * Returns read-only transformations a dashboard panel requires in order to render its data.
  *
- * Registered via `PanelPlugin.setDataTransformations`. An array result is shorthand for
- * {@link PanelDataTransformations.prepend}.
+ * Registered via `PanelPlugin.setSystemTransformations`. An array result is shorthand for
+ * {@link SystemTransformations.prepend}.
  *
  * Called once per data update that carries frames, so it may branch on frame shape or `meta`. The
  * result is cached against that frames array and shared by both positions and by the
@@ -127,9 +127,9 @@ export type ResolvedPanelDataTransformations = Required<PanelDataTransformations
  *
  * @alpha
  */
-export type PanelDataTransformationsSupplier = (
-  ctx: PanelDataTransformationsContext
-) => Array<DataTransformerConfig | CustomTransformOperator> | PanelDataTransformations | undefined;
+export type SystemTransformationsSupplier = (
+  ctx: SystemTransformationsContext
+) => Array<DataTransformerConfig | CustomTransformOperator> | SystemTransformations | undefined;
 
 /**
  * Many transformations can be called with a simple synchronous function.
