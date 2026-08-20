@@ -1,5 +1,7 @@
 import { act, createEvent, fireEvent, render, screen, userEvent } from 'test/test-utils';
 
+import { LazyLoader } from '@grafana/scenes';
+
 import { EditActionsPopover, WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
 
 jest.mock('app/core/app_events', () => ({
@@ -63,6 +65,22 @@ describe('<EditActionsPopover />', () => {
         render(
           <EditActionsPopover isEditable={true} content={<span>popover-actions</span>}>
             <div data-testid="reference-child">variable control</div>
+          </EditActionsPopover>
+        );
+
+        expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
+
+        await hoverAndRest(screen.getByTestId('reference-child'));
+
+        expect(screen.getByText('popover-actions')).toBeInTheDocument();
+      });
+
+      test('if the reference is a LazyLoader and the pointer rests, then floating content is shown in the document', async () => {
+        render(
+          <EditActionsPopover isEditable={true} content={<span>popover-actions</span>}>
+            <LazyLoader key="panel-1" mode="query" data-testid="reference-child">
+              panel
+            </LazyLoader>
           </EditActionsPopover>
         );
 
