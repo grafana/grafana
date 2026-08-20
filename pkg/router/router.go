@@ -221,6 +221,7 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 
 	etag := quoteETag(entry.rv)
 	if req.Header.Get("If-None-Match") == etag {
+		w.Header().Set("ETag", etag)
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}

@@ -132,6 +132,12 @@ trusted.
 
 K8s REST paths are formulaic — fully determined by group/version. Implemented.
 
+`NewForwardBackend` (`forward.go`) validates the parsed URL has both `Scheme` and `Host` before
+installing the reverse proxy — `url.Parse` alone accepts empty and relative values (`""`,
+`/just/a/path`) without error, so without this check a misconfigured group would get published and
+fail every request at proxy time instead (502, tripping the per-group breaker) rather than being
+rejected when the route is built. Found by PR review.
+
 ### Backend Mode: Operator (BaaS-powered App)
 
 TBD. Possibly inspect OpenAPI. Lift admission, mutation and validation hooks here as appropriate.
@@ -165,7 +171,11 @@ synthesized from `served`, so it never advertises both). Consequences:
   (`openapiDocs` in `router.go`) so repeat requests between manifest changes skip the backend
   round-trip. Cache-miss proxy requests strip `If-None-Match`/`If-Modified-Since` before forwarding,
   so an unrelated backend ETag scheme can't produce a bodyless 304 the router would otherwise have
-  no way to distinguish from "unchanged" (see `stripConditionalHeaders` in `openapi_cache.go`).
+  no way to distinguish from "unchanged" (see `stripConditionalHeaders` in `openapi_cache.go`). A
+  matching `If-None-Match` on this path must set the `ETag` header before writing 304, same as the
+  synthesized root docs (`serveCachedDoc`) already do — RFC 7232 requires it, and a 304 with no `ETag`
+  breaks clients that revalidate from the 304's own headers rather than caching the prior response's.
+  Found by PR review.
 
 If the one-backend-per-group ownership rule is ever relaxed (multiple backends per group),
 `/apis/{group}` must become a synthesized merge as well — update this file and the discovery

@@ -149,3 +149,33 @@ func TestOpenAPIGroupVersionStripsConditionalHeaders(t *testing.T) {
 		t.Errorf("got body %q, want %q", rec.Body.String(), upstream.body)
 	}
 }
+
+// TestOpenAPIGroupVersionIfNoneMatch304SetsETag pins that a 304 from a
+// matching If-None-Match still carries the ETag header -- RFC 7232 requires
+// it, and the router's own root docs (serveCachedDoc) already get this
+// right; this path was missing it.
+func TestOpenAPIGroupVersionIfNoneMatch304SetsETag(t *testing.T) {
+	upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
+	s := buildRouterWithBackend("dashboard.grafana.app", "5", upstream)
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
+	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req, next) })
+	path := "/openapi/v3/apis/dashboard.grafana.app/v1alpha1"
+
+	rec1 := httptest.NewRecorder()
+	h.ServeHTTP(rec1, httptest.NewRequest(http.MethodGet, path, nil))
+	etag := rec1.Header().Get("ETag")
+	if etag == "" {
+		t.Fatal("missing ETag on first response")
+	}
+
+	rec2 := httptest.NewRecorder()
+	req2 := httptest.NewRequest(http.MethodGet, path, nil)
+	req2.Header.Set("If-None-Match", etag)
+	h.ServeHTTP(rec2, req2)
+	if rec2.Code != http.StatusNotModified {
+		t.Fatalf("got code %d, want 304", rec2.Code)
+	}
+	if got := rec2.Header().Get("ETag"); got != etag {
+		t.Errorf("304 response ETag = %q, want %q (RFC 7232 requires it on 304)", got, etag)
+	}
+}

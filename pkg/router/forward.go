@@ -40,6 +40,14 @@ func NewForwardBackend(manifest app.ManifestData, routeBackend v1alpha2.RouteBac
 	if err != nil {
 		return nil, fmt.Errorf("error parsing backend url: group=%s, err=%w", manifest.Group, err)
 	}
+	// url.Parse alone accepts empty and relative values without error (e.g.
+	// "" or "/just/a/path" parse fine with no scheme/host). Reject those here,
+	// at route-build time -- otherwise a misconfigured group gets published
+	// and fails every request at proxy time instead (502, tripping the
+	// per-group breaker) rather than being caught when the route is built.
+	if u.Scheme == "" || u.Host == "" {
+		return nil, fmt.Errorf("backend url must be absolute (scheme and host required): group=%s, url=%q", manifest.Group, routeBackend.Forward.Url)
+	}
 
 	return &forwardBackend{
 		group:        manifest.Group,
