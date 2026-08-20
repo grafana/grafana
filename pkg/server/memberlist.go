@@ -24,7 +24,7 @@ func (ms *ModuleServer) initMemberlistKV() (services.Service, error) {
 			ms.registerer,
 		),
 	)
-	dnsProvider := dns.NewProvider(dns.GolangResolverType, 1, logger, dnsProviderReg)
+	dnsProvider := dns.NewProvider(dns.GolangResolverType, 0, logger, dnsProviderReg)
 
 	KVStore := kv.Config{Store: "memberlist"}
 
