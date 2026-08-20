@@ -91,16 +91,34 @@ func isGrafanaAssumeRole(jsonData *simplejson.Json) bool {
 }
 
 // externalIDKeys selects the per-datasource ID / mode key pair to operate on.
-// Presence of sigV4AuthType (any value) means the SigV4 key namespace — datasources do not
-// switch between native and SigV4 auth on the same instance, so this stays stable when
-// leaving Grafana Assume Role (e.g. sigV4AuthType becomes "keys").
+// A non-empty sigV4AuthType means the SigV4 key namespace — datasources do not switch
+// between native and SigV4 auth on the same instance, so this stays stable when leaving
+// Grafana Assume Role (e.g. sigV4AuthType becomes "keys"). An empty string is ignored so
+// a spoofed `sigV4AuthType: ""` on a native datasource cannot redirect scrub/mint onto
+// the SigV4 keys and leave an unvetted native grafanaExternalId behind.
 func externalIDKeys(jsonData *simplejson.Json) (idKey, modeKey string) {
 	if jsonData != nil {
-		if _, exists := jsonData.CheckGet(sigV4AuthTypeJSONKey); exists {
+		if v, exists := jsonData.CheckGet(sigV4AuthTypeJSONKey); exists && v.MustString() != "" {
 			return sigV4GrafanaExternalIDJSONKey, sigV4UsePerDatasourceExternalIDJSONKey
 		}
 	}
 	return grafanaExternalIDJSONKey, usePerDatasourceExternalIDJSONKey
+}
+
+func otherExternalIDKey(idKey string) string {
+	if idKey == sigV4GrafanaExternalIDJSONKey {
+		return grafanaExternalIDJSONKey
+	}
+	return sigV4GrafanaExternalIDJSONKey
+}
+
+// clearOtherNamespaceExternalID drops the ID key that is not activeIdKey.
+// Prevents a client-supplied ID in the inactive namespace from surviving for STS.
+func clearOtherNamespaceExternalID(jsonData *simplejson.Json, activeIdKey string) {
+	if jsonData == nil {
+		return
+	}
+	jsonData.Del(otherExternalIDKey(activeIdKey))
 }
 
 // usePerDatasourceExternalID reports whether jsonData sets its (native or SigV4-prefixed)
@@ -117,25 +135,26 @@ func usePerDatasourceExternalID(jsonData *simplejson.Json) (set bool, enabled bo
 	return true, v.MustBool()
 }
 
-// clearInvalidGrafanaExternalID removes a client- or store-supplied grafanaExternalId that is
-// not bound to this datasource. Scrub when we can validate so a stolen or mismatched ID cannot
-// be persisted for later STS use when usePerDatasourceExternalId is true. When stack ID or UID
-// is missing we cannot validate, so leave the value alone rather than wiping a previously
-// minted ID during misconfiguration.
+// clearInvalidGrafanaExternalID removes client- or store-supplied external IDs (native and
+// SigV4) that are not bound to this datasource. Scrub when we can validate so a stolen or
+// mismatched ID cannot be persisted for later STS use. When stack ID or UID is missing we
+// cannot validate, so leave the value alone rather than wiping a previously minted ID
+// during misconfiguration.
 func clearInvalidGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.Json) {
 	if jsonData == nil {
-		return
-	}
-	idKey, _ := externalIDKeys(jsonData)
-	id := jsonData.Get(idKey).MustString()
-	if id == "" {
 		return
 	}
 	if stackExternalID == "" || uid == "" {
 		return
 	}
-	if !isValidGrafanaExternalID(id, stackExternalID, uid) {
-		jsonData.Del(idKey)
+	for _, idKey := range []string{grafanaExternalIDJSONKey, sigV4GrafanaExternalIDJSONKey} {
+		id := jsonData.Get(idKey).MustString()
+		if id == "" {
+			continue
+		}
+		if !isValidGrafanaExternalID(id, stackExternalID, uid) {
+			jsonData.Del(idKey)
+		}
 	}
 }
 
@@ -151,21 +170,16 @@ func awsAssumeRolePerDatasourceExternalIDEnabled(ctx context.Context) bool {
 		featuremgmt.FlagAwsAssumeRolePerDatasourceExternalId, false, openfeature.TransactionContext(ctx))
 }
 
-// ensureGrafanaExternalID runs on create. Clients cannot declare grafanaExternalId:
-// any client-supplied ID (native or SigV4) is discarded, then a fresh ID is minted
-// when allowGenerate and per-DS Grafana Assume Role mode apply.
+// ensureGrafanaExternalID runs on create. Clients cannot declare either namespace's
+// external ID: both are discarded, then a fresh ID is minted into the active
+// namespace when allowGenerate and per-DS Grafana Assume Role mode apply.
 func ensureGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.Json, allowGenerate bool) {
 	if jsonData == nil {
 		return
 	}
 
-	idKey, _ := externalIDKeys(jsonData)
-	jsonData.Del(idKey)
-	if idKey == grafanaExternalIDJSONKey {
-		jsonData.Del(sigV4GrafanaExternalIDJSONKey)
-	} else {
-		jsonData.Del(grafanaExternalIDJSONKey)
-	}
+	jsonData.Del(grafanaExternalIDJSONKey)
+	jsonData.Del(sigV4GrafanaExternalIDJSONKey)
 
 	if !allowGenerate {
 		return
@@ -219,10 +233,8 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 	// Clear both namespaces so a partial/malformed payload that omits auth type but still
 	// carries a prefixed (or native) ID cannot leave a stale external ID behind.
 	if allowGenerate && !updatedIsGAR {
-		updated.Del(idKey)
-		if existingIdKey != idKey {
-			updated.Del(existingIdKey)
-		}
+		updated.Del(grafanaExternalIDJSONKey)
+		updated.Del(sigV4GrafanaExternalIDJSONKey)
 		return
 	}
 
@@ -240,6 +252,7 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 			_, restoreModeKey = externalIDKeys(existing)
 		}
 		updated.Set(restoreIdKey, existingID)
+		clearOtherNamespaceExternalID(updated, restoreIdKey)
 		// When the update omits the mode flag in the restore namespace, restore the stored
 		// value so Terraform/API updates that only send partial jsonData do not silently
 		// fall back to stack ID. Check restoreModeKey (not updated's selected namespace) so
@@ -253,8 +266,10 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 		return
 	}
 	// Invalid/empty stored ID is not re-applied. Do not let a client-supplied
-	// value skip minting by looking "already set".
-	updated.Del(idKey)
+	// value skip minting by looking "already set". Drop both namespaces so a
+	// stolen cross-namespace value cannot survive for STS.
+	updated.Del(grafanaExternalIDJSONKey)
+	updated.Del(sigV4GrafanaExternalIDJSONKey)
 
 	if !allowGenerate {
 		return
@@ -266,9 +281,6 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 		return
 	}
 	if stackExternalID == "" || uid == "" {
-		return
-	}
-	if updated.Get(idKey).MustString() != "" {
 		return
 	}
 
