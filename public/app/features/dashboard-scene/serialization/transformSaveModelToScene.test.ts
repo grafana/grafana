@@ -911,22 +911,25 @@ describe('transformSaveModelToScene', () => {
       expect(lastRowPanel.state.pluginId).toBe('text');
     });
 
-    it('should use custom grid as the default layout when migrating an old-schema dashboard', () => {
-      setTestFlags({ 'grafana.dashboardAutoGridDefault': true });
-      const dashboard = {
-        ...defaultDashboard,
-        title: 'Legacy dashboard',
-        uid: 'test-uid',
-        time: { from: 'now-6h', to: 'now' },
-      };
+    it.each([true, false])(
+      'should persist custom grid as the default layout preference when migrating an old-schema dashboard (auto grid flag: %s)',
+      (autoGridDefault) => {
+        setTestFlags({ 'grafana.dashboardAutoGridDefault': autoGridDefault });
+        const dashboard = {
+          ...defaultDashboard,
+          title: 'Legacy dashboard',
+          uid: 'test-uid',
+          time: { from: 'now-6h', to: 'now' },
+        };
 
-      const scene = transformSaveModelToScene({ dashboard, meta: {} }, undefined, {
-        createLayout: createV2RowsLayout,
-        targetVersion: 'v2',
-      });
+        const scene = transformSaveModelToScene({ dashboard, meta: {} }, undefined, {
+          createLayout: createV2RowsLayout,
+          targetVersion: 'v2',
+        });
 
-      expect(scene.state.preferences?.defaultLayoutTemplate).toBeInstanceOf(DefaultGridLayoutManager);
-    });
+        expect(scene.state.preferences?.defaultLayoutTemplate).toBeInstanceOf(DefaultGridLayoutManager);
+      }
+    );
 
     it('Should convert legacy rows to new rows with free panels before first row', () => {
       const scene = transformSaveModelToScene(
