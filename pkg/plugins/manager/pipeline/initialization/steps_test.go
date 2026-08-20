@@ -29,7 +29,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassCore,
 		}
 
-		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p}, pluginfakes.InitializeNoopTracerForTest())
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: pluginfakes.NewFakeBackendPlugin(true)}, pluginfakes.InitializeNoopTracerForTest())
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -53,7 +53,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassExternal,
 		}
 
-		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p}, pluginfakes.InitializeNoopTracerForTest())
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: pluginfakes.NewFakeBackendPlugin(true)}, pluginfakes.InitializeNoopTracerForTest())
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -72,7 +72,7 @@ func TestInitializer_Initialize(t *testing.T) {
 		}
 
 		i := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{
-			plugin: p,
+			plugin: pluginfakes.NewFakeBackendPlugin(true),
 		}, pluginfakes.InitializeNoopTracerForTest())
 
 		var err error
@@ -88,7 +88,7 @@ func TestInitializer_Initialize(t *testing.T) {
 type fakeBackendProvider struct {
 	plugins.BackendFactoryProvider
 
-	plugin *plugins.Plugin
+	plugin backendplugin.Plugin
 }
 
 func (f *fakeBackendProvider) BackendFactory(_ context.Context, _ *plugins.Plugin) backendplugin.PluginFactoryFunc {

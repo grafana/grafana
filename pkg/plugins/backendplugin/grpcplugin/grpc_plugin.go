@@ -151,10 +151,10 @@ func (p *grpcPlugin) Target() backendplugin.Target {
 }
 
 // Getting ClientV3
-func (p *grpcPlugin) GetClientV3(ctx context.Context) (*grpcplugin.ClientV3, bool) {
+func (p *grpcPlugin) ClientV3(ctx context.Context) (*grpcplugin.ClientV3, bool) {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
-	if p.client != nil && !p.client.Exited() && p.pluginClient != nil {
+	if p.client != nil && !p.client.Exited() && p.clientV3 != nil {
 		return p.clientV3, true
 	}
 

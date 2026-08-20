@@ -1,13 +1,12 @@
 package appplugin
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana-app-sdk/plugin-next/httpadapter"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
@@ -15,6 +14,16 @@ func (b *AppPluginAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIR
 	if b.manifest == nil {
 		return nil
 	}
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		c, ok := b.BackendClientV3(r.Context())
+		if !ok {
+			http.Error(w, "no backend configured", 500)
+			return
+		}
+		httpadapter.HandlerFunc(c).ServeHTTP(w, r)
+	}
+
 	for _, version := range b.manifest.Versions {
 		if version.Name != gv.Version {
 			continue
@@ -26,15 +35,7 @@ func (b *AppPluginAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIR
 				Path:    strings.TrimPrefix(path, "/"),
 				Spec:    &props,
 				Schemas: version.Routes.Schemas,
-				Handler: func(w http.ResponseWriter, r *http.Request) {
-					w.Header().Set("Content-Type", "application/json")
-					_ = json.NewEncoder(w).Encode(map[string]any{
-						"note":   "TODO... call the plugin (cluster scope)",
-						"method": r.Method,
-						"path":   r.URL.Path,
-						"query":  r.URL.RawQuery,
-					})
-				},
+				Handler: handler,
 			})
 		}
 
@@ -43,16 +44,7 @@ func (b *AppPluginAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIR
 				Path:    strings.TrimPrefix(path, "/"),
 				Spec:    &props,
 				Schemas: version.Routes.Schemas,
-				Handler: func(w http.ResponseWriter, r *http.Request) {
-					w.Header().Set("Content-Type", "application/json")
-					_ = json.NewEncoder(w).Encode(map[string]any{
-						"note":      "TODO... call the plugin (namespaced)",
-						"namespace": request.NamespaceValue(r.Context()),
-						"method":    r.Method,
-						"path":      r.URL.Path,
-						"query":     r.URL.RawQuery,
-					})
-				},
+				Handler: handler,
 			})
 		}
 

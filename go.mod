@@ -103,7 +103,7 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.57.2-0.20260820121933-8b16d6ada1f0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.57.2-0.20260820142358-60ae43210ffe // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.57.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.5.1 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // @grafana/data-sources-plugins

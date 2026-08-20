@@ -3,6 +3,7 @@ package backendplugin
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/plugin-next/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -19,6 +20,10 @@ type Plugin interface {
 	Decommission() error
 	IsDecommissioned() bool
 	Target() Target
+
+	// Get the V3 plugin if it exists
+	ClientV3(context.Context) (*grpcplugin.ClientV3, bool)
+
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.QueryDataHandler

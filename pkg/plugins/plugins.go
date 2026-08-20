@@ -449,6 +449,13 @@ func (p *Plugin) Client() (PluginClient, bool) {
 	return nil, false
 }
 
+func (p *Plugin) BackendClient() (backendplugin.Plugin, bool) {
+	if p.client != nil {
+		return p.client, true
+	}
+	return nil, false
+}
+
 func (p *Plugin) ExecutablePath() string {
 	if p.IsRenderer() {
 		return p.executablePath("plugin_start")

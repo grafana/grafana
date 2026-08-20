@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/plugin-next/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	pluginregistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -70,6 +72,7 @@ type AppPluginRunnerOptions struct {
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
 type AppPluginAPIBuilder struct {
 	manifest        *app.ManifestData
+	pluginRegistry  pluginregistry.Service
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper
@@ -89,6 +92,7 @@ type AppPluginAPIBuilder struct {
 func NewAppPluginAPIBuilder(
 	plugin definition.PluginDefinition,
 	client PluginClient, // will only ever be called with the same plugin id!
+	pluginRegistry pluginregistry.Service,
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
@@ -99,6 +103,7 @@ func NewAppPluginAPIBuilder(
 	return &AppPluginAPIBuilder{
 		pluginJSON:      plugin.JSONData,
 		client:          client,
+		pluginRegistry:  pluginRegistry,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
 		decrypter:       decrypter,
@@ -113,6 +118,7 @@ func NewAppPluginAPIBuilder(
 func RegisterAPIService(
 	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
+	pluginRegistry pluginregistry.Service,
 	contextProvider PluginContextWrapper,
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
@@ -154,7 +160,8 @@ func RegisterAPIService(
 	var last *AppPluginAPIBuilder
 	for _, plugin := range pluginDefs {
 		b, err := NewAppPluginAPIBuilder(plugin,
-			pluginClient, // scoped to a single plugin!
+			pluginClient,   // scoped to a single plugin!
+			pluginRegistry, // plugins are not loaded yet, so we do not know what capabilities it has
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
@@ -189,14 +196,26 @@ func RegisterAPIService(
 			manifest := *plugin.Manifest
 			manifest.Group = plugin.JSONData.ID
 			b.manifest = &manifest
-
-			fmt.Printf("MANIFEST %+v\n", plugin.Manifest)
 		}
 
 		apiRegistrar.RegisterAPI(b)
 		last = b
 	}
 	return last, nil
+}
+
+// BackendClientV3 returns the currently registered backend for this app plugin.
+// The lookup is deferred because plugin backends may be loaded after the API server starts.
+func (b *AppPluginAPIBuilder) BackendClientV3(ctx context.Context) (*grpcplugin.ClientV3, bool) {
+	p, ok := b.pluginRegistry.Plugin(ctx, b.pluginJSON.ID, "")
+	if !ok || p.IsDecommissioned() {
+		return nil, false
+	}
+	bc, ok := p.BackendClient()
+	if !ok {
+		return nil, ok
+	}
+	return bc.ClientV3(ctx)
 }
 
 // GetGroupVersions returns the served versions, preferred version first.
