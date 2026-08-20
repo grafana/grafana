@@ -31,19 +31,12 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
-  feature-toggles:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/whats-new/feature-and-improvement-status/
   explore:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
-
-{{< docs/public-preview product="Notification history" featureFlag="`alertingNotificationHistory`" >}}
 
 # View notification history
 
@@ -56,14 +49,7 @@ Notification history is different from [active notifications](ref:view-active-no
 The **History** page also includes an **Alert events** tab for [alert state history](ref:view-alert-state-history).
 
 {{< admonition type="note" >}}
-Notification history is experimental. To use it, store notification history in Loki, set `enabled = true` in `[unified_alerting.notification_history]`, and enable these [feature toggles](ref:feature-toggles):
-
-- `alertingNotificationHistory`: stores notification logs in Loki
-- `alertingNotificationHistoryGlobal`: shows the **Notifications** tab on the **History** page
-- `alertingNotificationHistoryDetail`: shows the **View** button and notification detail page
-- `alertingNotificationHistoryRuleViewer`: shows the **Notifications** tab on an alert rule
-
-Availability and behavior may change in future releases.
+Grafana OSS and Grafana Enterprise users must store notification history in Loki. Set `enabled = true` in the `[unified_alerting.notification_history]` section and configure the connection to Loki. Refer to [Before you begin](#before-you-begin).
 {{< /admonition >}}
 
 ## Before you begin
@@ -125,13 +111,13 @@ To view notification history from the **History** page, follow these steps.
 
 ## View the details of a single notification
 
-When the `alertingNotificationHistoryDetail` feature toggle is enabled, select **View** on a notification row to open its detail page.
+Select **View** on a notification row to open its detail page.
 
 The detail page shows the full context of the notification, including the contact point and integration used, the delivery outcome, any error returned, and the complete list of firing and resolved alerts that were included.
 
 ## View notification history for an alert rule
 
-When the `alertingNotificationHistoryRuleViewer` feature toggle is enabled, you can review notifications sent for a specific alert rule without leaving the rule.
+You can review notifications sent for a specific alert rule without leaving the rule.
 
 To view notification history for an alert rule, follow these steps.
 
