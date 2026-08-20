@@ -566,71 +566,81 @@
     {
       "metadata": {
         "name": "alertingNotificationHistory",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-17T13:26:26Z"
+        "resourceVersion": "1787151362205",
+        "creationTimestamp": "2025-07-17T13:26:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:56:02.205169 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification history feature",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "alertingNotificationHistoryDetail",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787151362205",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:56:02.205169 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification history detail page",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "alertingNotificationHistoryGlobal",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787151362205",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:56:02.205169 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification history global menu item viewer",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "alertingNotificationHistoryRuleViewer",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787151362205",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:56:02.205169 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification history tab in the rule viewer",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "alertingNotificationHistoryTriage",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787151362205",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:56:02.205169 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification history timeline in the triage instance details drawer",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3847,15 +3857,18 @@
     {
       "metadata": {
         "name": "kubernetesAlertingHistorian",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-11-27T16:14:16Z"
+        "resourceVersion": "1787151534124",
+        "creationTimestamp": "2025-11-27T16:14:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:58:54.124559 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Adds support for Kubernetes alerting historian APIs",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

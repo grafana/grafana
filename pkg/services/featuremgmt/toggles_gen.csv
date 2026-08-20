@@ -226,7 +226,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-13,enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-03,foldersAppPlatformAPI,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2025-07-16,otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
-2025-07-17,alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,false
+2025-07-17,alertingNotificationHistory,GA,@grafana/alerting-squad,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-25,alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,restrictedPluginApis,GA,@grafana/grafana-catalog,false,false,true
@@ -258,7 +258,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-17,transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 2025-11-18,ttlPluginInstanceManager,experimental,@grafana/grafana-catalog,false,false,true
 2025-11-21,lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
-2025-11-27,kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
+2025-11-27,kubernetesAlertingHistorian,GA,@grafana/alerting-squad,false,true,false
 2026-05-22,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-22,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-07-30,grafana.dashboardGlobalVariables,experimental,@grafana/dashboards-squad,false,false,false
@@ -286,10 +286,10 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,appplugins.registerAPIServer,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-22,appplugins.handleProxyRequests,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-22,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
-2026-05-22,alertingNotificationHistoryRuleViewer,experimental,@grafana/alerting-squad,false,false,false
-2026-05-22,alertingNotificationHistoryGlobal,experimental,@grafana/alerting-squad,false,false,false
-2026-05-22,alertingNotificationHistoryTriage,experimental,@grafana/alerting-squad,false,false,false
-2026-05-22,alertingNotificationHistoryDetail,experimental,@grafana/alerting-squad,false,false,false
+2026-05-22,alertingNotificationHistoryRuleViewer,GA,@grafana/alerting-squad,false,false,false
+2026-05-22,alertingNotificationHistoryGlobal,GA,@grafana/alerting-squad,false,false,false
+2026-05-22,alertingNotificationHistoryTriage,GA,@grafana/alerting-squad,false,false,false
+2026-05-22,alertingNotificationHistoryDetail,GA,@grafana/alerting-squad,false,false,false
 2026-07-14,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,true,false
 2026-08-12,libraryElementFolderUIDRepair,experimental,@grafana/search-and-storage,false,true,false
 2026-05-22,react19,GA,@grafana/grafana-frontend-platform,false,false,false
