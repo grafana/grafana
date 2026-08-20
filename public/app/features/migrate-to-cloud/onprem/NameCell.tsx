@@ -223,8 +223,7 @@ function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
   const pluginLogo = usePluginLogo(resource.type === 'PLUGIN' ? resource.plugin : undefined);
 
   // Handle special cases for icons. The data source lookup lives in its own component so it only
-  // runs for data source resources — the instance APIs resolve the *default* data source when the
-  // ref is missing, which would put its logo on every other resource type.
+  // runs for data source resources.
   if (resource.type === 'DATASOURCE') {
     return <DatasourceIcon uid={resource.refId} />;
   }
