@@ -139,10 +139,11 @@ export function Overview({ solutions }: OverviewProps) {
               label={label}
               onClick={() => {
                 setStored(value);
-                // The hash is a one-shot deep link; an explicit pick supersedes it so a reload
-                // or shared URL does not resurrect the linked filter.
+                // The hash is a one-shot deep link and nothing else on this route reads
+                // fragments, so an explicit pick clears whatever anchor is present — including
+                // typo'd or outdated ones that would otherwise linger looking broken.
                 const current = locationService.getLocation();
-                if (options.some((o) => `#${o.value}` === current.hash)) {
+                if (current.hash) {
                   locationService.replace({ ...current, hash: '' });
                 }
                 ctaClicked({

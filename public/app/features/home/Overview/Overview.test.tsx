@@ -186,6 +186,22 @@ describe('Overview', () => {
     }
   });
 
+  it('clears an unrecognized anchor on an explicit filter pick', async () => {
+    const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
+      historyOptions: { initialEntries: ['/?orgId=1#needs-aattention'] },
+    });
+
+    // The typo'd anchor selects nothing.
+    await screen.findByText('No solutions were found.');
+
+    await user.click(screen.getByRole('button', { name: /all solutions/i }));
+    await user.click(screen.getByRole('menuitem', { name: 'Enabled solutions' }));
+
+    await screen.findByText('No enabled solutions with recent activity were found.');
+    expect(locationService.getLocation().hash).toBe('');
+    expect(locationService.getLocation().search).toContain('orgId=1');
+  });
+
   it('tracks overview filter changes from the dropdown', async () => {
     mockUseGuides.mockReturnValue([]);
 
