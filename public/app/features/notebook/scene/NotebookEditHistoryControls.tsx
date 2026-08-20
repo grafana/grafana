@@ -41,7 +41,8 @@ export function NotebookEditHistoryControls({ history }: { history: NotebookEdit
   return (
     <Stack gap={0.5}>
       <IconButton
-        name="history"
+        name="redo"
+        className={undoClass}
         tooltip={
           undoLabel
             ? t('notebooks.history.undo-action', 'Undo: {{action}}', { action: undoLabel })
@@ -51,8 +52,7 @@ export function NotebookEditHistoryControls({ history }: { history: NotebookEdit
         onClick={() => history.undo()}
       />
       <IconButton
-        name="history"
-        className={redoClass}
+        name="redo"
         tooltip={
           redoLabel
             ? t('notebooks.history.redo-action', 'Redo: {{action}}', { action: redoLabel })
@@ -80,7 +80,7 @@ function browserOwnsUndo(target: EventTarget | null): boolean {
   return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
 }
 
-const redoClass = css({
+const undoClass = css({
   svg: {
     transform: 'scaleX(-1)',
   },
