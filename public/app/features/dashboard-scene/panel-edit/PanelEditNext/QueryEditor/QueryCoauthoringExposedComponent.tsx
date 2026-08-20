@@ -1,85 +1,48 @@
+import { css } from '@emotion/css';
 import {
   Component,
+  type MouseEvent,
   type ReactNode,
   useCallback,
-  useEffect,
+  useLayoutEffect,
   useMemo,
-  useRef,
-  useState,
   useSyncExternalStore,
 } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
-  type QueryEditorCoauthoringCapability,
-  type QueryEditorCoauthoringContext,
-  type QueryEditorCoauthoringInvocation,
-  type QueryEditorCoauthoringPreview,
-  type QueryEditorCoauthoringContextV1,
+  type GrafanaTheme2,
   type QueryEditorCoauthoringControllerV1,
   type QueryEditorCoauthoringV1Props,
 } from '@grafana/data';
-import { Button, ClipboardButton, Stack } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Button, ClipboardButton, useStyles2 } from '@grafana/ui';
 
-import { useQueryCoauthoringHost } from './QueryCoauthoringHostContext';
 import { QueryCoauthoring } from './QueryCoauthoring';
+import { useQueryCoauthoringHost } from './QueryCoauthoringHostContext';
 
 export function QueryCoauthoringExposedComponent(props: QueryEditorCoauthoringV1Props) {
   const host = useQueryCoauthoringHost();
-  const disposedControllers = useRef(new WeakSet<QueryEditorCoauthoringControllerV1>());
-  const failedControllers = useRef(new WeakSet<QueryEditorCoauthoringControllerV1>());
-  const [controller, setController] = useState<QueryEditorCoauthoringControllerV1>();
-  const dispose = useCallback((currentController: QueryEditorCoauthoringControllerV1) => {
-    if (disposedControllers.current.has(currentController)) {
-      return;
-    }
-    disposedControllers.current.add(currentController);
-    currentController.dispose();
-  }, []);
-  const fail = useCallback(
-    (currentController: QueryEditorCoauthoringControllerV1) => {
-      failedControllers.current.add(currentController);
-      try {
-        currentController.clearEditorDiff();
-      } finally {
-        host.revert();
-        dispose(currentController);
-        props.onSurfaceStateChange({ generation: props.surfaceGeneration, state: 'failed' });
-      }
-    },
-    [dispose, host, props]
-  );
-
-  useEffect(() => {
-    let nextController: QueryEditorCoauthoringControllerV1;
-    try {
-      nextController = props.createController();
-    } catch {
-      props.onSurfaceStateChange({ generation: props.surfaceGeneration, state: 'failed' });
-      return;
-    }
-
-    setController(nextController);
-    props.onSurfaceStateChange({ generation: props.surfaceGeneration, state: 'ready' });
-    return () => {
-      dispose(nextController);
-      setController((current) => (current === nextController ? undefined : current));
-      if (!failedControllers.current.has(nextController)) {
-        props.onSurfaceStateChange({ generation: props.surfaceGeneration, state: 'unavailable' });
-      }
-    };
-  }, [dispose, props.createController, props.onSurfaceStateChange, props.surfaceGeneration]);
-
-  if (!controller) {
-    return null;
-  }
-
-  if (host.surfaceState !== 'ready') {
-    return null;
-  }
 
   return (
-    <QueryCoauthoringFailureBoundary resetKey={controller} onFailure={() => fail(controller)}>
+    <QueryCoauthoringFailureBoundary resetKey={props.createController} onFailure={host.revert}>
+      <QueryCoauthoringControllerSurface createController={props.createController} />
+    </QueryCoauthoringFailureBoundary>
+  );
+}
+
+function QueryCoauthoringControllerSurface({
+  createController,
+}: Pick<QueryEditorCoauthoringV1Props, 'createController'>) {
+  const host = useQueryCoauthoringHost();
+  const controller = useMemo(() => createController(), [createController]);
+  const handleFailure = useCallback(() => {
+    controller.clearEditorDiff();
+    host.revert();
+  }, [controller, host]);
+
+  return (
+    <QueryCoauthoringFailureBoundary resetKey={controller} onFailure={handleFailure}>
       <QueryCoauthoringSurface controller={controller} />
     </QueryCoauthoringFailureBoundary>
   );
@@ -112,126 +75,95 @@ class QueryCoauthoringFailureBoundary extends Component<
 
 function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauthoringControllerV1 }) {
   const host = useQueryCoauthoringHost();
+  const styles = useStyles2(getStyles);
   const snapshot = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   const portalTarget = controller.getPortalTarget();
-  const adapter = useMemo(() => createLegacyAdapter(controller), [controller]);
 
-  useEffect(() => adapter.dispose, [adapter]);
+  useLayoutEffect(() => {
+    const updateSurfaceSize = () => {
+      const { height, width } = portalTarget.getBoundingClientRect();
+      controller.reportSurfaceSize({ height, width });
+    };
 
-  const begin = useCallback(async () => {
-    await adapter.begin();
-  }, [adapter]);
+    updateSurfaceSize();
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(updateSurfaceSize);
+    resizeObserver.observe(portalTarget);
+    return () => resizeObserver.disconnect();
+  }, [controller, portalTarget]);
+
+  const begin = useCallback(() => {
+    void controller.begin().catch(() => undefined);
+  }, [controller]);
 
   if (snapshot.mode === 'hidden') {
     return null;
   }
 
-  return createPortal(
-    <Stack direction="column" gap={1}>
-      {snapshot.mode === 'selection' && (
-        <Stack direction="row" gap={0.5}>
-          <ClipboardButton getText={() => snapshot.selectedText} size="sm" variant="secondary">
-            Copy
-          </ClipboardButton>
-          <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={() => void begin()}>
-            Coauthor
-          </Button>
-        </Stack>
-      )}
-      <QueryCoauthoring
-        capability={adapter.capability}
-        onAccept={(query) => host.accept(query, adapter.getBaselineRevision())}
-        onPreview={(query) => host.preview(query, adapter.getBaselineRevision())}
-        onRevertPreview={host.revert}
-      />
-    </Stack>,
-    portalTarget
+  if (snapshot.mode === 'selection') {
+    const preserveSelection = (event: MouseEvent<HTMLButtonElement>) => event.preventDefault();
+    return createPortal(
+      <div className={styles.toolbarSurface} data-testid="query-coauthoring-selection-toolbar">
+        <ClipboardButton
+          fill="text"
+          getText={() => snapshot.selectedText}
+          onMouseDown={preserveSelection}
+          size="sm"
+          variant="secondary"
+        >
+          {t('query-editor-coauthoring.copy', 'Copy')}
+        </ClipboardButton>
+        <span aria-hidden="true" className={styles.divider} />
+        <Button
+          fill="text"
+          icon="ai-sparkle"
+          onClick={begin}
+          onMouseDown={preserveSelection}
+          size="sm"
+          variant="secondary"
+        >
+          {t('query-editor-coauthoring.coauthor', 'Coauthor')}
+        </Button>
+      </div>,
+      portalTarget
+    );
+  }
+
+  return (
+    <QueryCoauthoring
+      controller={controller}
+      datasourceType={host.datasourceType}
+      onAccept={host.accept}
+      onPreview={host.preview}
+      onRevertPreview={host.revert}
+      timeRange={host.timeRange}
+    />
   );
 }
 
-function createLegacyAdapter(controller: QueryEditorCoauthoringControllerV1) {
-  let context: QueryEditorCoauthoringContextV1 | undefined;
-  let staged:
-    | {
-        source: string;
-        transactionRevision: string;
-        result: Extract<ReturnType<typeof controller.stageEditorDiff>, { status: 'staged' }>;
-      }
-    | undefined;
-  let nextPreviewTransaction = 0;
-  let transactionRevision: string | undefined;
-  const listeners = new Set<(invocation: QueryEditorCoauthoringInvocation) => void>();
-  const unsubscribeController = controller.subscribe(() => {
-    const snapshot = controller.getSnapshot();
-    const revision = snapshot.mode === 'hidden' ? undefined : snapshot.revision;
-    if (context && revision !== context.revision) {
-      context = undefined;
-      staged = undefined;
-      transactionRevision = undefined;
-    }
-  });
-
-  const loadContext = async (
-    load: () => Promise<QueryEditorCoauthoringContextV1>
-  ): Promise<QueryEditorCoauthoringContext> => {
-    context = await load();
-    return toLegacyContext(context);
-  };
-
-  const capability: QueryEditorCoauthoringCapability = {
-    getValue: () => context?.query ?? '',
-    getContext: () => (context ? Promise.resolve(toLegacyContext(context)) : loadContext(() => controller.begin())),
-    refreshContext: () => loadContext(() => controller.refreshContext()),
-    createQuery: (value: string) => {
-      if (staged?.source === value) {
-        return staged.result.query;
-      }
-      throw new Error('A query can only be created from a staged coauthoring proposal.');
-    },
-    validateQuery: () => true,
-    stagePreview: (value: string): QueryEditorCoauthoringPreview | undefined => {
-      const result = controller.stageEditorDiff(value);
-      if (result.status !== 'staged') {
-        staged = undefined;
-        return undefined;
-      }
-      transactionRevision ??= `${result.baselineRevision}:${++nextPreviewTransaction}`;
-      staged = {
-        source: value,
-        transactionRevision,
-        result,
-      };
-      return { changes: result.changes };
-    },
-    clearPreview: () => {
-      staged = undefined;
-      controller.clearEditorDiff();
-    },
-    subscribeToInvocation: (listener) => {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    focus: () => controller.focus(),
-  };
-
+function getStyles(theme: GrafanaTheme2) {
   return {
-    capability,
-    // This stays private to the Core bridge. A controller revision alone may be reused after a hidden edit;
-    // pairing it with the staged proposal prevents a late callback from accepting a different transaction.
-    getBaselineRevision: () => staged?.transactionRevision ?? context?.revision ?? '',
-    begin: async () => {
-      context = await controller.begin();
-      const invocation = { anchorElement: controller.getPortalTarget(), dismiss: () => controller.dismiss() };
-      listeners.forEach((listener) => listener(invocation));
-    },
-    dispose: unsubscribeController,
-  };
-}
-
-function toLegacyContext(context: QueryEditorCoauthoringContextV1): QueryEditorCoauthoringContext {
-  return {
-    query: context.query,
-    focusRanges: context.focusRanges,
-    metricMetadata: context.metricMetadata,
+    divider: css({
+      width: 1,
+      alignSelf: 'stretch',
+      background: theme.colors.border.weak,
+    }),
+    toolbarSurface: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      width: 'max-content',
+      maxWidth: 'calc(100vw - 16px)',
+      padding: theme.spacing(0.5),
+      color: theme.colors.text.primary,
+      background: theme.colors.background.secondary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z3,
+      overflow: 'hidden',
+    }),
   };
 }

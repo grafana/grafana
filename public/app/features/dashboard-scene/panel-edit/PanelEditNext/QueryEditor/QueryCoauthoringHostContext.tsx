@@ -3,10 +3,10 @@ import { createContext, type ReactNode, useContext } from 'react';
 import { type DataQuery } from '@grafana/data';
 
 export interface QueryCoauthoringHost {
-  queryKey: string;
-  surfaceState: 'pending' | 'ready' | 'unavailable' | 'failed';
-  preview(query: DataQuery, baselineRevision?: string): void;
-  accept(query: DataQuery, baselineRevision?: string): void;
+  datasourceType: string;
+  timeRange?: { from: number; to: number };
+  preview(query: DataQuery): boolean;
+  accept(query: DataQuery): boolean;
   revert(): void;
 }
 

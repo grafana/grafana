@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
@@ -6,9 +7,6 @@ import {
   type DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
   type PanelData,
-  type QueryEditorCoauthoringCapability,
-  QUERY_EDITOR_COAUTHORING_V1_COMPONENT_ID,
-  type QueryEditorCoauthoringHostDescriptorV1,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
@@ -17,9 +15,7 @@ import { Alert, ErrorBoundaryAlert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
-import { QueryCoauthoring } from './QueryCoauthoring';
 import { QueryCoauthoringHostProvider } from './QueryCoauthoringHostContext';
-import { transitionQueryCoauthoringSurface, type QueryCoauthoringSurface } from './QueryCoauthoringSurfaceState';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 
 interface QueryDatasourceData {
@@ -40,7 +36,6 @@ interface QueryEditorPanelProps {
 
 interface CoauthoringPreviewTransaction {
   baseline: DataQuery;
-  baselineRevision?: string;
   queryKey: string;
 }
 
@@ -56,29 +51,12 @@ export function QueryEditorPanel({
 }: QueryEditorPanelProps) {
   const coauthoringEnabled = useFlagQueryeditorCoauthoringUi();
   const coauthoringIdentity = `${queryDsData?.dsSettings?.uid ?? ''}:${query?.refId ?? ''}`;
+  const coauthoringDatasourceType = queryDsData?.dsSettings?.type ?? '';
   const queryRef = useRef(query);
   queryRef.current = query;
   const coauthoringBaselineRef = useRef<DataQuery>();
   const coauthoringPreviewTransactionRef = useRef<CoauthoringPreviewTransaction>();
-  const surfaceIdentityRef = useRef({ identity: coauthoringIdentity, generation: 0 });
-  if (surfaceIdentityRef.current.identity !== coauthoringIdentity) {
-    surfaceIdentityRef.current = {
-      identity: coauthoringIdentity,
-      generation: surfaceIdentityRef.current.generation + 1,
-    };
-  }
-  const currentSurfaceIdentity = surfaceIdentityRef.current.identity;
-  const currentSurfaceGeneration = String(surfaceIdentityRef.current.generation);
   const [coauthoringBaseline, setCoauthoringBaseline] = useState<DataQuery>();
-  const [coauthoringRegistration, setCoauthoringRegistration] = useState<{
-    identity: string;
-    capability: QueryEditorCoauthoringCapability;
-  }>();
-  const [coauthoringSurface, setCoauthoringSurface] = useState<QueryCoauthoringSurface>({
-    identity: coauthoringIdentity,
-    generation: '0',
-    state: 'pending' as const,
-  });
   const error = data?.errors?.find((e) => e.refId === query?.refId);
   const queryRefId = query?.refId;
   // Filter panel data to only include data for this specific query
@@ -89,7 +67,11 @@ export function QueryEditorPanel({
   // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
   const handleChange = useCallback(
     (updatedQuery: DataQuery) => {
-      if (coauthoringBaselineRef.current?.refId === updatedQuery.refId) {
+      const coauthoringBaseline = coauthoringBaselineRef.current;
+      if (coauthoringBaseline?.refId === updatedQuery.refId) {
+        if (isEqual(coauthoringBaseline, updatedQuery)) {
+          return;
+        }
         coauthoringBaselineRef.current = updatedQuery;
         coauthoringPreviewTransactionRef.current = undefined;
         setCoauthoringBaseline(updatedQuery);
@@ -101,31 +83,27 @@ export function QueryEditorPanel({
   );
 
   const previewCoauthoredQuery = useCallback(
-    (proposedQuery: DataQuery, baselineRevision?: string) => {
+    (proposedQuery: DataQuery): boolean => {
       const currentQuery = queryRef.current;
       if (!currentQuery) {
-        return;
+        return false;
       }
 
       const transaction = coauthoringPreviewTransactionRef.current;
-      if (
-        transaction &&
-        (transaction.queryKey !== coauthoringIdentity ||
-          (baselineRevision !== undefined && transaction.baselineRevision !== baselineRevision))
-      ) {
-        return;
+      if (transaction && transaction.queryKey !== coauthoringIdentity) {
+        return false;
       }
 
       const baseline = transaction?.baseline ?? currentQuery;
       coauthoringPreviewTransactionRef.current = transaction ?? {
         baseline,
-        baselineRevision,
         queryKey: coauthoringIdentity,
       };
       coauthoringBaselineRef.current = baseline;
       setCoauthoringBaseline(baseline);
       updateQuery(proposedQuery, baseline.refId);
       runQueries();
+      return true;
     },
     [coauthoringIdentity, runQueries, updateQuery]
   );
@@ -155,99 +133,37 @@ export function QueryEditorPanel({
   }, [runQueries, updateQuery]);
 
   const acceptCoauthoredQuery = useCallback(
-    (acceptedQuery: DataQuery, baselineRevision?: string) => {
+    (acceptedQuery: DataQuery): boolean => {
       const transaction = coauthoringPreviewTransactionRef.current;
-      if (baselineRevision !== undefined && !transaction) {
-        return;
-      }
-      if (
-        transaction &&
-        (transaction.queryKey !== coauthoringIdentity ||
-          (baselineRevision !== undefined && transaction.baselineRevision !== baselineRevision))
-      ) {
-        return;
+      if (!transaction || transaction.queryKey !== coauthoringIdentity) {
+        return false;
       }
 
       coauthoringPreviewTransactionRef.current = undefined;
       coauthoringBaselineRef.current = undefined;
       setCoauthoringBaseline(undefined);
       updateQuery(acceptedQuery, acceptedQuery.refId);
+      return true;
     },
     [coauthoringIdentity, updateQuery]
   );
 
-  const registerCoauthoringCapability = useCallback(
-    (capability: QueryEditorCoauthoringCapability | undefined) => {
-      setCoauthoringRegistration(capability ? { identity: coauthoringIdentity, capability } : undefined);
-    },
-    [coauthoringIdentity]
-  );
-  const coauthoringCapability =
-    coauthoringRegistration?.identity === coauthoringIdentity ? coauthoringRegistration.capability : undefined;
-  const currentSurfaceState =
-    coauthoringSurface.identity === currentSurfaceIdentity && coauthoringSurface.generation === currentSurfaceGeneration
-      ? coauthoringSurface.state
-      : 'pending';
   const coauthoringHost = useMemo(
     () => ({
-      queryKey: coauthoringIdentity,
-      surfaceState: currentSurfaceState,
-      preview: (proposedQuery: DataQuery, baselineRevision?: string) =>
-        previewCoauthoredQuery(proposedQuery, baselineRevision),
-      accept: (acceptedQuery: DataQuery, baselineRevision?: string) =>
-        acceptCoauthoredQuery(acceptedQuery, baselineRevision),
+      datasourceType: coauthoringDatasourceType,
+      timeRange: filteredData?.timeRange
+        ? { from: filteredData.timeRange.from.valueOf(), to: filteredData.timeRange.to.valueOf() }
+        : undefined,
+      preview: previewCoauthoredQuery,
+      accept: acceptCoauthoredQuery,
       revert: revertCoauthoredQueryPreview,
     }),
     [
       acceptCoauthoredQuery,
-      coauthoringIdentity,
-      currentSurfaceState,
+      coauthoringDatasourceType,
+      filteredData?.timeRange,
       previewCoauthoredQuery,
       revertCoauthoredQueryPreview,
-    ]
-  );
-  const onCoauthoringSurfaceStateChange = useCallback(
-    (event: { generation: string; state: 'ready' | 'unavailable' | 'failed' }) => {
-      if (
-        surfaceIdentityRef.current.identity !== currentSurfaceIdentity ||
-        String(surfaceIdentityRef.current.generation) !== currentSurfaceGeneration ||
-        event.generation !== currentSurfaceGeneration
-      ) {
-        return;
-      }
-      setCoauthoringSurface((current) => {
-        const expected: QueryCoauthoringSurface = {
-          identity: currentSurfaceIdentity,
-          generation: currentSurfaceGeneration,
-          state: 'pending',
-        };
-        return transitionQueryCoauthoringSurface(
-          current.identity === expected.identity && current.generation === expected.generation ? current : expected,
-          currentSurfaceIdentity,
-          event
-        );
-      });
-    },
-    [currentSurfaceGeneration, currentSurfaceIdentity]
-  );
-  const coauthoringHostDescriptor: QueryEditorCoauthoringHostDescriptorV1 | undefined = useMemo(
-    () =>
-      coauthoringEnabled
-        ? {
-            componentId: QUERY_EDITOR_COAUTHORING_V1_COMPONENT_ID,
-            generation: currentSurfaceGeneration,
-            queryKey: coauthoringIdentity,
-            surfaceState: currentSurfaceState,
-            onSurfaceStateChange: onCoauthoringSurfaceStateChange,
-          }
-        : undefined,
-    [
-      coauthoringEnabled,
-      coauthoringIdentity,
-      currentSurfaceGeneration,
-      currentSurfaceIdentity,
-      currentSurfaceState,
-      onCoauthoringSurfaceStateChange,
     ]
   );
 
@@ -303,7 +219,7 @@ export function QueryEditorPanel({
         <DataSourcePluginContextProvider instanceSettings={dsSettings}>
           <ErrorBoundaryAlert boundaryName="query-editor-renderer">
             <QueryEditorComponent
-              key={editorQuery.refId}
+              key={coauthoringIdentity}
               app={CoreApp.PanelEditor}
               data={filteredData}
               datasource={datasource}
@@ -313,20 +229,11 @@ export function QueryEditorPanel({
               queries={editorQueries}
               query={editorQuery}
               range={filteredData?.timeRange}
-              onRegisterQueryEditorCoauthoring={coauthoringEnabled ? registerCoauthoringCapability : undefined}
-              queryEditorCoauthoringHost={coauthoringHostDescriptor}
+              queryEditorCoauthoringEnabled={coauthoringEnabled}
             />
           </ErrorBoundaryAlert>
         </DataSourcePluginContextProvider>
       </QueryCoauthoringHostProvider>
-      {coauthoringEnabled && coauthoringHostDescriptor?.surfaceState !== 'ready' && coauthoringCapability && (
-        <QueryCoauthoring
-          capability={coauthoringCapability}
-          onAccept={acceptCoauthoredQuery}
-          onPreview={previewCoauthoredQuery}
-          onRevertPreview={revertCoauthoredQueryPreview}
-        />
-      )}
       {error && <QueryErrorAlert error={error} />}
     </>
   );

@@ -6,10 +6,9 @@ import { createTool, useAssistant, useInlineAssistant } from '@grafana/assistant
 import {
   type DataQuery,
   type GrafanaTheme2,
-  type QueryEditorCoauthoringCapability,
-  type QueryEditorCoauthoringContext,
-  type QueryEditorCoauthoringInvocation,
-  type QueryEditorCoauthoringPreview,
+  type QueryEditorCoauthoringContextV1,
+  type QueryEditorCoauthoringControllerV1,
+  type QueryEditorCoauthoringProposalResultV1,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
@@ -30,12 +29,12 @@ interface QueryClarification {
 
 interface StagedQueryProposal extends QueryProposal {
   baseline: string;
-  context: QueryEditorCoauthoringContext;
-  preview: QueryEditorCoauthoringPreview;
+  context: QueryEditorCoauthoringContextV1;
+  staged: Extract<QueryEditorCoauthoringProposalResultV1, { status: 'staged' }>;
 }
 
 interface StagedFallback extends QueryFallback {
-  context: QueryEditorCoauthoringContext;
+  context: QueryEditorCoauthoringContextV1;
 }
 
 interface FeedbackState {
@@ -44,18 +43,25 @@ interface FeedbackState {
 }
 
 interface Props {
-  capability: QueryEditorCoauthoringCapability;
-  onAccept: (query: DataQuery) => void;
-  onPreview: (query: DataQuery) => void;
+  controller: QueryEditorCoauthoringControllerV1;
+  datasourceType: string;
+  onAccept: (query: DataQuery) => boolean;
+  onPreview: (query: DataQuery) => boolean;
   onRevertPreview: () => void;
+  timeRange?: { from: number; to: number };
 }
-
-type CoauthoringVisibility = 'expanded' | 'minimized';
 
 const VIEWPORT_MARGIN = 8;
 const ASSISTANT_FEEDBACK_URL = '/api/plugins/grafana-assistant-app/resources/api/v1/feedback';
 
-export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPreview }: Props) {
+export function QueryCoauthoring({
+  controller,
+  datasourceType,
+  onAccept,
+  onPreview,
+  onRevertPreview,
+  timeRange,
+}: Props) {
   const {
     isLoading: isAssistantLoading,
     isAvailable: isAssistantAvailable,
@@ -69,8 +75,7 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
   } = useInlineAssistant();
   const { generate, isGenerating, cancel, reset } = useInlineAssistant();
   const styles = useStyles2(getStyles);
-  const [invocation, setInvocation] = useState<QueryEditorCoauthoringInvocation>();
-  const [context, setContext] = useState<QueryEditorCoauthoringContext>();
+  const [context, setContext] = useState<QueryEditorCoauthoringContextV1>();
   const [contextError, setContextError] = useState(false);
   const [selectionExplanation, setSelectionExplanation] = useState<string>();
   const [intent, setIntent] = useState('');
@@ -83,15 +88,12 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
   const [feedbackError, setFeedbackError] = useState<string>();
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [availableHeight, setAvailableHeight] = useState<number>();
-  const [visibility, setVisibility] = useState<CoauthoringVisibility>('expanded');
   const generationIdRef = useRef(0);
   const identificationIdRef = useRef(0);
-  const invocationRef = useRef<QueryEditorCoauthoringInvocation>();
-  const contextPromiseRef = useRef<Promise<QueryEditorCoauthoringContext>>();
+  const contextPromiseRef = useRef<Promise<QueryEditorCoauthoringContextV1>>();
   const previewActiveRef = useRef(false);
   const onRevertPreviewRef = useRef(onRevertPreview);
   onRevertPreviewRef.current = onRevertPreview;
-  const visibilityRef = useRef<CoauthoringVisibility>('expanded');
 
   const revertQueryPreview = useCallback(() => {
     if (!previewActiveRef.current) {
@@ -108,7 +110,7 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
     resetIdentification();
     cancel();
     reset();
-    capability.clearPreview();
+    controller.clearEditorDiff();
     revertQueryPreview();
     setContext(undefined);
     setContextError(false);
@@ -123,7 +125,7 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
     setFeedbackError(undefined);
     setIsSubmittingFeedback(false);
     contextPromiseRef.current = undefined;
-  }, [cancel, cancelIdentification, capability, reset, resetIdentification, revertQueryPreview]);
+  }, [cancel, cancelIdentification, controller, reset, resetIdentification, revertQueryPreview]);
 
   const closeFeedback = useCallback(() => {
     if (isSubmittingFeedback) {
@@ -136,71 +138,14 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
 
   const dismiss = useCallback(() => {
     clearSession();
-    invocationRef.current?.dismiss();
-    invocationRef.current = undefined;
-    setInvocation(undefined);
-    capability.focus();
-  }, [capability, clearSession]);
-
-  const hide = useCallback(() => {
-    capability.clearPreview();
-    visibilityRef.current = 'minimized';
-    setVisibility('minimized');
-    capability.focus();
-  }, [capability]);
-
-  const resume = useCallback(async () => {
-    let refreshedContext: QueryEditorCoauthoringContext;
-    try {
-      refreshedContext = await capability.refreshContext();
-    } catch {
-      setContextError(true);
-      visibilityRef.current = 'expanded';
-      setVisibility('expanded');
-      return;
-    }
-
-    if (!hasSameQueryFocus(context, refreshedContext)) {
-      clearSession();
-      setContext(refreshedContext);
-      visibilityRef.current = 'expanded';
-      setVisibility('expanded');
-      return;
-    }
-
-    if (proposal) {
-      if (capability.getValue() !== proposal.baseline) {
-        revertQueryPreview();
-        setProposal(undefined);
-        setError(
-          t(
-            'query-editor-coauthoring.error-query-changed-while-hidden',
-            'The query changed while this suggestion was hidden. Select it again and retry.'
-          )
-        );
-        visibilityRef.current = 'expanded';
-        setVisibility('expanded');
-        return;
-      }
-      const preview = capability.stagePreview(proposal.proposedQuery);
-      if (!preview) {
-        revertQueryPreview();
-        setProposal(undefined);
-        setError(
-          t('query-editor-coauthoring.error-preview-failed', 'The query proposal could not be previewed. Try again.')
-        );
-      } else {
-        setProposal({ ...proposal, preview });
-      }
-    }
-    visibilityRef.current = 'expanded';
-    setVisibility('expanded');
-  }, [capability, clearSession, context, proposal, revertQueryPreview]);
+    controller.dismiss();
+    controller.focus();
+  }, [clearSession, controller]);
 
   const loadContext = useCallback(() => {
     setContext(undefined);
     setContextError(false);
-    const contextPromise = capability.getContext();
+    const contextPromise = controller.begin();
     contextPromiseRef.current = contextPromise;
     void contextPromise.then(
       (nextContext) => {
@@ -214,10 +159,10 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
         }
       }
     );
-  }, [capability]);
+  }, [controller]);
 
   useEffect(() => {
-    if (!invocation || !context || !isAssistantAvailable) {
+    if (!context || !isAssistantAvailable) {
       return;
     }
 
@@ -232,7 +177,7 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
       prompt: isWholeQueryFocus(context)
         ? 'Explain this existing PromQL query as a whole.'
         : 'Explain the focused part of this existing PromQL query.',
-      systemPrompt: buildIdentificationSystemPrompt(context),
+      systemPrompt: buildIdentificationSystemPrompt(context, datasourceType, timeRange),
       onComplete: (completionText) => {
         if (identificationId === identificationIdRef.current) {
           setSelectionExplanation(normalizeSelectionExplanation(completionText, fallbackExplanation));
@@ -249,42 +194,32 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
       identificationState.current++;
       cancelIdentification();
     };
-  }, [cancelIdentification, context, identifySelection, invocation, isAssistantAvailable]);
+  }, [cancelIdentification, context, datasourceType, identifySelection, isAssistantAvailable, timeRange]);
 
   useEffect(() => {
+    if (!isAssistantAvailable) {
+      return;
+    }
+
     const generationId = generationIdRef;
     const identificationId = identificationIdRef;
-    const unsubscribe = capability.subscribeToInvocation((nextInvocation) => {
-      invocationRef.current?.dismiss();
-      clearSession();
-      invocationRef.current = nextInvocation;
-      setInvocation(nextInvocation);
-      visibilityRef.current = 'expanded';
-      setVisibility('expanded');
-      loadContext();
-    });
+    loadContext();
 
     return () => {
-      unsubscribe();
       generationId.current++;
       identificationId.current++;
       cancelIdentification();
       cancel();
-      capability.clearPreview();
+      controller.clearEditorDiff();
       revertQueryPreview();
-      invocationRef.current?.dismiss();
-      invocationRef.current = undefined;
     };
-  }, [cancel, cancelIdentification, capability, clearSession, loadContext, revertQueryPreview]);
+  }, [cancel, cancelIdentification, controller, isAssistantAvailable, loadContext, revertQueryPreview]);
 
   useLayoutEffect(() => {
-    if (!invocation) {
-      setAvailableHeight(undefined);
-      return;
-    }
+    const portalTarget = controller.getPortalTarget();
 
     const updateAvailableHeight = () => {
-      const anchorTop = Math.max(invocation.anchorElement.getBoundingClientRect().top, 0);
+      const anchorTop = Math.max(portalTarget.getBoundingClientRect().top, 0);
       setAvailableHeight(Math.max(window.innerHeight - anchorTop - VIEWPORT_MARGIN, 0));
     };
 
@@ -298,7 +233,7 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
     });
 
     updateAvailableHeight();
-    resizeObserver.observe(invocation.anchorElement);
+    resizeObserver.observe(portalTarget);
     window.addEventListener('resize', updateAvailableHeight);
     window.addEventListener('scroll', updateAvailableHeight, true);
     return () => {
@@ -309,12 +244,12 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
       window.removeEventListener('resize', updateAvailableHeight);
       window.removeEventListener('scroll', updateAvailableHeight, true);
     };
-  }, [invocation]);
+  }, [controller]);
 
   const stop = () => {
     generationIdRef.current++;
     cancel();
-    capability.clearPreview();
+    controller.clearEditorDiff();
     revertQueryPreview();
     setProposal(undefined);
     setFallback(undefined);
@@ -331,16 +266,16 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
     identificationIdRef.current++;
     cancelIdentification();
 
-    let submittedContext: QueryEditorCoauthoringContext;
+    let submittedContext: QueryEditorCoauthoringContextV1;
     try {
-      submittedContext = context ?? (await contextPromiseRef.current) ?? (await capability.getContext());
+      submittedContext = context ?? (await contextPromiseRef.current) ?? (await controller.begin());
     } catch {
       setContextError(true);
       return;
     }
 
     const baseline = submittedContext.query;
-    if (capability.getValue() !== baseline) {
+    if (controller.getQueryText() !== baseline) {
       setError(
         t('query-editor-coauthoring.error-query-changed-before-submit', 'The query changed. Select it again and retry.')
       );
@@ -349,12 +284,13 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
 
     const generationId = ++generationIdRef.current;
     let submittedProposal: QueryProposal | undefined;
+    let submittedStaged: Extract<QueryEditorCoauthoringProposalResultV1, { status: 'staged' }> | undefined;
     let submittedFallback: QueryFallback | undefined;
     let acceptedTerminalToolCallCount = 0;
     let rejectedProposalCount = 0;
     let terminalCallbackHandled = false;
 
-    capability.clearPreview();
+    controller.clearEditorDiff();
     setProposal(undefined);
     setFallback(undefined);
     setClarification(undefined);
@@ -363,7 +299,11 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
     const proposalTool = createTool(
       async (input: QueryProposal) => {
         if (generationId === generationIdRef.current) {
-          if (!capability.validateQuery(input.proposedQuery)) {
+          if (controller.getQueryText() !== baseline) {
+            throw new Error('The query changed while Assistant was working. Do not submit another proposal.');
+          }
+          const staged = controller.stageEditorDiff(input.proposedQuery);
+          if (staged.status !== 'staged') {
             rejectedProposalCount++;
             throw new Error(
               'The proposed query is invalid PromQL after Grafana variable interpolation. Correct the syntax, preserve existing selectors and template variables, then call submit_query_proposal again.'
@@ -371,6 +311,7 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
           }
           acceptedTerminalToolCallCount++;
           submittedProposal = input;
+          submittedStaged = staged;
         }
         return 'The query proposal was received.';
       },
@@ -427,14 +368,15 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
       agentName: 'promql-coauthor',
       agentId: 'grafana.query.coauthor.v1',
       prompt: trimmedIntent,
-      systemPrompt: buildSystemPrompt(submittedContext),
+      systemPrompt: buildSystemPrompt(submittedContext, datasourceType, timeRange),
       tools: [proposalTool, fallbackTool],
       onComplete: (completionText) => {
         if (generationId !== generationIdRef.current || terminalCallbackHandled) {
           return;
         }
         terminalCallbackHandled = true;
-        if (capability.getValue() !== baseline) {
+        if (controller.getQueryText() !== baseline) {
+          controller.clearEditorDiff();
           setError(
             t(
               'query-editor-coauthoring.error-query-changed',
@@ -456,6 +398,7 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
           return;
         }
         if (acceptedTerminalToolCallCount !== 1) {
+          controller.clearEditorDiff();
           setError(multipleResponsesMessage());
           return;
         }
@@ -463,28 +406,26 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
           setFallback({ ...submittedFallback, context: submittedContext });
           return;
         }
-        if (!submittedProposal || !capability.validateQuery(submittedProposal.proposedQuery)) {
+        if (!submittedProposal || !submittedStaged) {
+          controller.clearEditorDiff();
           setError(invalidPromQLResponseMessage());
           return;
         }
 
-        const preview = capability.stagePreview(submittedProposal.proposedQuery);
-        if (!preview) {
+        if (!onPreview(submittedStaged.query)) {
+          controller.clearEditorDiff();
           setError(
             t('query-editor-coauthoring.error-preview-failed', 'The query proposal could not be previewed. Try again.')
           );
           return;
         }
-        if (visibilityRef.current === 'minimized') {
-          capability.clearPreview();
-        }
         previewActiveRef.current = true;
-        onPreview(capability.createQuery(submittedProposal.proposedQuery));
-        setProposal({ ...submittedProposal, baseline, context: submittedContext, preview });
+        setProposal({ ...submittedProposal, baseline, context: submittedContext, staged: submittedStaged });
       },
       onError: () => {
         if (generationId === generationIdRef.current && !terminalCallbackHandled) {
           terminalCallbackHandled = true;
+          controller.clearEditorDiff();
           setError(requestFailedMessage());
         }
       },
@@ -519,8 +460,8 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
     if (!proposal) {
       return;
     }
-    if (capability.getValue() !== proposal.baseline || !capability.validateQuery(proposal.proposedQuery)) {
-      capability.clearPreview();
+    if (controller.getQueryText() !== proposal.baseline) {
+      controller.clearEditorDiff();
       revertQueryPreview();
       setProposal(undefined);
       setError(
@@ -532,11 +473,16 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
       return;
     }
 
-    const acceptedQuery = capability.createQuery(proposal.proposedQuery);
+    if (!onAccept(proposal.staged.query)) {
+      setError(
+        t('query-editor-coauthoring.error-accept-failed', 'The query proposal could not be accepted. Try again.')
+      );
+      return;
+    }
+
     previewActiveRef.current = false;
     dismiss();
-    onAccept(acceptedQuery);
-  }, [capability, dismiss, onAccept, proposal, revertQueryPreview]);
+  }, [controller, dismiss, onAccept, proposal, revertQueryPreview]);
 
   const continueInAssistant = (reason?: string) => {
     const activeContext = proposal?.context ?? fallback?.context ?? context;
@@ -547,15 +493,11 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
       origin: 'grafana/panel-edit-next/query-coauthoring',
       mode: 'dashboarding',
       autoSend: false,
-      prompt: buildAssistantHandoffPrompt(intent, activeContext, proposal, reason),
+      prompt: buildAssistantHandoffPrompt(intent, activeContext, datasourceType, timeRange, proposal, reason),
     });
   };
 
   useEffect(() => {
-    if (!invocation) {
-      return;
-    }
-
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -563,9 +505,9 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
         if (feedback) {
           closeFeedback();
         } else {
-          hide();
+          dismiss();
         }
-      } else if (event.key === 'Enter' && proposal && !feedback && visibility === 'expanded') {
+      } else if (event.key === 'Enter' && proposal && !feedback) {
         event.preventDefault();
         accept();
       }
@@ -574,36 +516,7 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
     return () => {
       document.removeEventListener('keydown', onKeyDown, true);
     };
-  }, [accept, closeFeedback, feedback, hide, invocation, proposal, visibility]);
-
-  if (!invocation) {
-    return null;
-  }
-
-  if (visibility === 'minimized') {
-    return createPortal(
-      <div className={styles.minimized}>
-        <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={() => void resume()}>
-          {proposal ? (
-            <Trans i18nKey="query-editor-coauthoring.resume-suggestion">Resume suggestion</Trans>
-          ) : isGenerating ? (
-            <Trans i18nKey="query-editor-coauthoring.working">Working…</Trans>
-          ) : (
-            <Trans i18nKey="query-editor-coauthoring.continue-session">Continue coauthoring</Trans>
-          )}
-        </Button>
-        <IconButton
-          name="trash-alt"
-          size="sm"
-          variant="secondary"
-          tooltip={t('query-editor-coauthoring.discard', 'Discard coauthoring')}
-          aria-label={t('query-editor-coauthoring.discard', 'Discard coauthoring')}
-          onClick={dismiss}
-        />
-      </div>,
-      invocation.anchorElement
-    );
-  }
+  }, [accept, closeFeedback, dismiss, feedback, proposal]);
 
   return createPortal(
     <div
@@ -618,7 +531,7 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
           size="sm"
           tooltip={t('query-editor-coauthoring.close', 'Close coauthoring')}
           aria-label={t('query-editor-coauthoring.close', 'Close coauthoring')}
-          onClick={hide}
+          onClick={dismiss}
         />
       </div>
       {isAssistantAvailable && !proposal && !fallback && !clarification && !error && (
@@ -877,9 +790,9 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
                 </Text>
               ))}
             </Stack>
-            {proposal.preview.changes.length > 0 && (
+            {proposal.staged.changes.length > 0 && (
               <div className={styles.changes}>
-                {proposal.preview.changes.slice(0, 4).map((change) => (
+                {proposal.staged.changes.slice(0, 4).map((change) => (
                   <div className={styles.changePair} key={change.id}>
                     <div className={styles.change}>
                       <Text variant="bodySmall" color="secondary">
@@ -993,7 +906,7 @@ export function QueryCoauthoring({ capability, onAccept, onPreview, onRevertPrev
         </Modal>
       )}
     </div>,
-    invocation.anchorElement
+    controller.getPortalTarget()
   );
 }
 
@@ -1025,7 +938,11 @@ function validateFallback(input: Record<string, unknown>): QueryFallback {
   return { reason: input.reason };
 }
 
-function buildIdentificationSystemPrompt(context: QueryEditorCoauthoringContext): string {
+function buildIdentificationSystemPrompt(
+  context: QueryEditorCoauthoringContextV1,
+  datasourceType: string,
+  timeRange?: { from: number; to: number }
+): string {
   const focusedText = context.focusRanges.map((range) => context.query.slice(range.from, range.to));
   const wholeQueryFocus = isWholeQueryFocus(context);
   return [
@@ -1042,10 +959,16 @@ function buildIdentificationSystemPrompt(context: QueryEditorCoauthoringContext)
     `Current query: ${JSON.stringify(context.query)}`,
     `Focused text: ${JSON.stringify(focusedText)}`,
     `Relevant metric metadata: ${JSON.stringify(context.metricMetadata)}`,
+    `Data source plugin type: ${JSON.stringify(datasourceType)}`,
+    `Panel time range in UTC milliseconds: ${JSON.stringify(timeRange)}`,
   ].join('\n');
 }
 
-function buildSystemPrompt(context: QueryEditorCoauthoringContext): string {
+function buildSystemPrompt(
+  context: QueryEditorCoauthoringContextV1,
+  datasourceType: string,
+  timeRange?: { from: number; to: number }
+): string {
   const focusedText = context.focusRanges.map((range) => context.query.slice(range.from, range.to));
   return [
     'You help PromQL novices make one focused change to an existing query.',
@@ -1063,12 +986,16 @@ function buildSystemPrompt(context: QueryEditorCoauthoringContext): string {
     `Current query: ${JSON.stringify(context.query)}`,
     `Focused text: ${JSON.stringify(focusedText)}`,
     `Relevant metric metadata: ${JSON.stringify(context.metricMetadata)}`,
+    `Data source plugin type: ${JSON.stringify(datasourceType)}`,
+    `Panel time range in UTC milliseconds: ${JSON.stringify(timeRange)}`,
   ].join('\n');
 }
 
 function buildAssistantHandoffPrompt(
   intent: string,
-  context: QueryEditorCoauthoringContext,
+  context: QueryEditorCoauthoringContextV1,
+  datasourceType: string,
+  timeRange?: { from: number; to: number },
   proposal?: StagedQueryProposal,
   reason?: string
 ): string {
@@ -1078,6 +1005,8 @@ function buildAssistantHandoffPrompt(
     `Current query: ${JSON.stringify(context.query)}`,
     `Focused text: ${JSON.stringify(context.focusRanges.map((range) => context.query.slice(range.from, range.to)))}`,
     `Relevant metric metadata: ${JSON.stringify(context.metricMetadata)}`,
+    `Data source plugin type: ${JSON.stringify(datasourceType)}`,
+    `Panel time range in UTC milliseconds: ${JSON.stringify(timeRange)}`,
     proposal ? `Inline proposal: ${JSON.stringify(proposal.proposedQuery)}` : undefined,
     proposal ? `Inline explanation: ${JSON.stringify(proposal.why)}` : undefined,
     reason ? `Why the inline flow handed off: ${JSON.stringify(reason)}` : undefined,
@@ -1086,7 +1015,7 @@ function buildAssistantHandoffPrompt(
     .join('\n');
 }
 
-function selectionSummary(context: QueryEditorCoauthoringContext): string {
+function selectionSummary(context: QueryEditorCoauthoringContextV1): string {
   if (isWholeQueryFocus(context)) {
     return t(
       'query-editor-coauthoring.selection-whole-query',
@@ -1104,26 +1033,12 @@ function selectionSummary(context: QueryEditorCoauthoringContext): string {
   return t('query-editor-coauthoring.selection-ready', 'The selection is part of this PromQL query.');
 }
 
-function isWholeQueryFocus(context: QueryEditorCoauthoringContext): boolean {
+function isWholeQueryFocus(context: QueryEditorCoauthoringContextV1): boolean {
   return (
     context.query.length > 0 &&
     context.focusRanges.length === 1 &&
     context.focusRanges[0].from === 0 &&
     context.focusRanges[0].to === context.query.length
-  );
-}
-
-function hasSameQueryFocus(
-  current: QueryEditorCoauthoringContext | undefined,
-  refreshed: QueryEditorCoauthoringContext
-): boolean {
-  return (
-    current?.query === refreshed.query &&
-    current.focusRanges.length === refreshed.focusRanges.length &&
-    current.focusRanges.every((range, index) => {
-      const refreshedRange = refreshed.focusRanges[index];
-      return range.from === refreshedRange.from && range.to === refreshedRange.to;
-    })
   );
 }
 
@@ -1143,7 +1058,7 @@ function normalizeClarificationMessage(completionText: string): string {
     .trim();
 }
 
-function workingFocusSummary(context: QueryEditorCoauthoringContext): string {
+function workingFocusSummary(context: QueryEditorCoauthoringContextV1): string {
   const focusedText = context.focusRanges
     .slice(0, 3)
     .map(({ from, to }) => context.query.slice(from, to).replace(/\s+/g, ' ').trim())
@@ -1152,7 +1067,7 @@ function workingFocusSummary(context: QueryEditorCoauthoringContext): string {
   return (focusedText || context.query.replace(/\s+/g, ' ').trim()).slice(0, 160);
 }
 
-function workingMetricSummary(context: QueryEditorCoauthoringContext): string {
+function workingMetricSummary(context: QueryEditorCoauthoringContextV1): string {
   const [metric, ...remainingMetrics] = context.metricMetadata;
   if (!metric) {
     return t('query-editor-coauthoring.promql-query', 'PromQL query');
@@ -1188,17 +1103,17 @@ function getStyles(theme: GrafanaTheme2) {
       width: 'min(403px, calc(100vw - 16px))',
       minHeight: 0,
       padding: theme.spacing(1),
+      color: theme.colors.text.primary,
+      background: theme.colors.background.secondary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z3,
       overflow: 'hidden',
     }),
     closeRow: css({
       display: 'flex',
       justifyContent: 'flex-end',
       marginBottom: theme.spacing(-0.5),
-    }),
-    minimized: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
     }),
     promptRow: css({
       display: 'grid',

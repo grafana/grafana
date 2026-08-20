@@ -546,7 +546,6 @@ export interface QueryEditorCoauthoringMetricMetadataV1 {
 
 /** @alpha */
 export interface QueryEditorCoauthoringContextV1 {
-  queryKey: string;
   revision: string;
   query: string;
   focusRanges: QueryEditorCoauthoringRangeV1[];
@@ -560,7 +559,7 @@ export interface QueryEditorCoauthoringChangeV1 {
   original: string;
   proposed: string;
   kind?: string;
-  focus?: 'inside' | 'outside';
+  focus?: 'inside' | 'outside' | 'mixed';
 }
 
 /** @alpha */
@@ -574,8 +573,6 @@ export type QueryEditorCoauthoringProposalResultV1<TQuery extends DataQuery = Da
   | {
       status: 'staged';
       query: TQuery;
-      queryKey: string;
-      baselineRevision: string;
       changes: QueryEditorCoauthoringChangeV1[];
     }
   | { status: 'rejected'; reason: 'invalid' | 'unchanged' | 'stale' };
@@ -585,97 +582,20 @@ export interface QueryEditorCoauthoringControllerV1<TQuery extends DataQuery = D
   getSnapshot(): QueryEditorCoauthoringSnapshotV1;
   subscribe(listener: VoidFunction): VoidFunction;
   getPortalTarget(): HTMLElement;
+  reportSurfaceSize(size: { height: number; width: number }): void;
   begin(): Promise<QueryEditorCoauthoringContextV1>;
   refreshContext(): Promise<QueryEditorCoauthoringContextV1>;
+  getQueryText(): string;
   stageEditorDiff(source: string): QueryEditorCoauthoringProposalResultV1<TQuery>;
   clearEditorDiff(): void;
   focus(): void;
   dismiss(): void;
-  dispose(): void;
 }
 
 /** @alpha */
 export interface QueryEditorCoauthoringV1Props {
-  surfaceGeneration: string;
   createController(): QueryEditorCoauthoringControllerV1;
-  onSurfaceStateChange(event: { generation: string; state: 'ready' | 'unavailable' | 'failed' }): void;
 }
-
-/** @alpha */
-export interface QueryEditorCoauthoringHostDescriptorV1 {
-  componentId: typeof QUERY_EDITOR_COAUTHORING_V1_COMPONENT_ID;
-  generation: string;
-  queryKey: string;
-  surfaceState: 'pending' | 'ready' | 'unavailable' | 'failed';
-  onSurfaceStateChange(event: { generation: string; state: 'ready' | 'unavailable' | 'failed' }): void;
-}
-
-/** @internal */
-export interface QueryEditorCoauthoringRange {
-  from: number;
-  to: number;
-}
-
-/** @internal */
-export interface QueryEditorCoauthoringMetricMetadata {
-  name: string;
-  type?: string;
-  help?: string;
-  unit?: string;
-  labels?: string[];
-}
-
-/** @internal */
-export interface QueryEditorCoauthoringContext {
-  query: string;
-  focusRanges: QueryEditorCoauthoringRange[];
-  metricMetadata: QueryEditorCoauthoringMetricMetadata[];
-}
-
-/** @internal */
-export interface QueryEditorCoauthoringPreviewChange {
-  id: string;
-  original: string;
-  proposed: string;
-  kind?: string;
-}
-
-/** @internal */
-export interface QueryEditorCoauthoringPreview {
-  changes: QueryEditorCoauthoringPreviewChange[];
-}
-
-/** @internal */
-export interface QueryEditorCoauthoringInvocation {
-  anchorElement: HTMLElement;
-  dismiss: () => void;
-}
-
-/**
- * Experimental contract between Grafana and a data source query editor that supports query coauthoring.
- *
- * @remarks
- * This interface is internal to Grafana and can change without notice. It is not a plugin API.
- *
- * @internal
- */
-export interface QueryEditorCoauthoringCapability<TQuery extends DataQuery = DataQuery> {
-  getValue: () => string;
-  getContext: () => Promise<QueryEditorCoauthoringContext>;
-  /** Re-captures the current query and editor focus as the active invocation baseline. */
-  refreshContext: () => Promise<QueryEditorCoauthoringContext>;
-  createQuery: (value: string) => TQuery;
-  validateQuery: (value: string) => boolean;
-  stagePreview: (value: string) => QueryEditorCoauthoringPreview | undefined;
-  clearPreview: () => void;
-  subscribeToInvocation: (listener: (invocation: QueryEditorCoauthoringInvocation) => void) => () => void;
-  focus: () => void;
-}
-
-/** @internal */
-export type QueryEditorCoauthoringRegistrar<TQuery extends DataQuery = DataQuery> = (
-  capability: QueryEditorCoauthoringCapability<TQuery> | undefined
-) => void;
 
 export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -687,7 +607,7 @@ export interface QueryEditorProps<
   query: TVQuery;
   onRunQuery: () => void;
   /** @alpha */
-  queryEditorCoauthoringHost?: QueryEditorCoauthoringHostDescriptorV1;
+  queryEditorCoauthoringEnabled?: boolean;
   onChange: (value: TVQuery) => void;
   onBlur?: () => void;
   onAddQuery?: (query: TQuery) => void;
@@ -699,12 +619,6 @@ export interface QueryEditorProps<
   history?: Array<HistoryItem<TQuery>>;
   queries?: DataQuery[];
   app?: CoreApp;
-  /**
-   * Registers the experimental query coauthoring capability when the editor supports it.
-   *
-   * @internal
-   */
-  onRegisterQueryEditorCoauthoring?: QueryEditorCoauthoringRegistrar<TVQuery>;
 }
 
 // TODO: not really needed but used as type in some data sources and in DataQueryRequest
