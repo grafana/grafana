@@ -1,63 +1,95 @@
+import mermaid from 'mermaid';
+import { HttpResponse, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
-import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
-import { renderMermaidDiagrams } from '../../utils/mermaid';
+import { RepoViewStatus, useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
+import { createRepository } from '../../mocks/factories';
+import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { FOLDER_README_ANCHOR_ID, FolderReadmePanel } from './FolderReadmePanel';
 import { FolderReadmeEvents } from './analytics/main';
 
-jest.mock('../../hooks/useFolderReadme');
-
-// The renderer's behavior is unit-tested in utils/mermaid.test.ts; here we only
-// verify the panel wires it to the rendered README. (Mocking the util also avoids
-// a jsdom HTML-parser quirk that drops `<pre>` preceded by a text node, so the
-// real markdown pipeline can't surface a mermaid code block in the test DOM.)
-jest.mock('../../utils/mermaid', () => ({
-  renderMermaidDiagrams: jest.fn(),
-  MERMAID_DIAGRAM_CLASS: 'markdown-mermaid',
-  MERMAID_ERROR_CLASS: 'markdown-mermaid-error',
+// Repo resolution (frontend settings + folder + manager annotations) is mocked
+// here the same way the sibling useFolderReadme.test.ts does it; the README file
+// itself flows through the real useFolderReadme hook and RTK Query, backed by MSW.
+jest.mock('../../hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('../../hooks/useGetResourceRepositoryView'),
+  useGetResourceRepositoryView: jest.fn(),
 }));
 
-const mockRenderMermaidDiagrams = renderMermaidDiagrams as jest.MockedFunction<typeof renderMermaidDiagrams>;
+// mermaid is a heavy browser-only library; mock the module so tests can assert the
+// rendered diagram wiring without pulling in its full runtime.
+jest.mock('mermaid', () => ({
+  __esModule: true,
+  default: { initialize: jest.fn(), render: jest.fn() },
+}));
 
-const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
+setupProvisioningMswServer();
+
+const mockRepoView = jest.mocked(useGetResourceRepositoryView);
+const mockMermaidRender = mermaid.render as jest.MockedFunction<typeof mermaid.render>;
 const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
 const createClickedSpy = jest.spyOn(FolderReadmeEvents, 'createClicked').mockImplementation();
 
-const mockRepository = {
-  name: 'test-repo',
-  target: 'folder' as const,
+const REPO: RepositoryView = {
+  name: 'test-folder',
+  target: 'folder',
   title: 'Test Repository',
-  type: 'github' as const,
+  type: 'github',
   url: 'https://github.com/owner/repo',
   branch: 'main',
   workflows: [],
 };
 
-const mockFolder = {
+const FOLDER = {
   metadata: {
     name: 'test-folder',
-    annotations: {
-      'grafana.app/sourcePath': 'dashboards/team-a',
-    },
+    annotations: { [AnnoKeySourcePath]: 'dashboards/team-a' },
   },
   spec: { title: 'Test Folder' },
   status: {},
 } as never;
 
-function setReadmeResult(overrides: Partial<UseFolderReadmeResult> = {}) {
-  mockUseFolderReadme.mockReturnValue({
-    repository: mockRepository,
-    folder: mockFolder,
-    readmePath: 'dashboards/team-a/README.md',
-    status: 'ok',
+/** Overrides the resolved repository view returned to useFolderReadme. */
+function setRepoView(overrides: Partial<ReturnType<typeof useGetResourceRepositoryView>> = {}) {
+  mockRepoView.mockReturnValue({
+    repository: REPO,
+    folder: FOLDER,
+    status: RepoViewStatus.Ready,
     isLoading: false,
-    markdownContent: '# Hello\n\nThis is a README.',
-    refetch: jest.fn(),
+    isInstanceManaged: false,
+    isReadOnlyRepo: false,
+    isMissingRepo: false,
     ...overrides,
   });
+}
+
+/**
+ * Registers the README file endpoint and the repositories watch list, returning
+ * a hit counter for the file endpoint (used to assert refetches). Pass a status
+ * to exercise the missing (404) / error (500) branches.
+ */
+function setReadmeFile(content: string, { status = 200 }: { status?: number } = {}) {
+  let fileHits = 0;
+  server.use(
+    http.get(`${BASE}/repositories`, () =>
+      HttpResponse.json({ items: [createRepository()], metadata: { resourceVersion: '1' } })
+    ),
+    http.get(`${BASE}/repositories/:name/files/*`, () => {
+      fileHits++;
+      if (status !== 200) {
+        return new HttpResponse(null, { status });
+      }
+      return HttpResponse.json({ resource: { file: content } });
+    })
+  );
+  return { getFileHits: () => fileHits };
 }
 
 function setup(folderUID = 'test-folder') {
@@ -68,6 +100,8 @@ describe('FolderReadmePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setTestFlags({ 'provisioning.readmes': true });
+    setRepoView();
+    mockMermaidRender.mockResolvedValue({ svg: '<svg data-testid="mermaid-svg"></svg>' } as never);
   });
 
   afterEach(() => {
@@ -76,54 +110,54 @@ describe('FolderReadmePanel', () => {
     });
   });
 
-  it('renders the README markdown inside a panel with an anchor id', () => {
-    setReadmeResult();
+  it('renders the README markdown inside a panel with an anchor id', async () => {
+    setReadmeFile('# Hello\n\nThis is a README.');
 
-    const { container } = render(<FolderReadmePanel folderUID="test-folder" />);
+    const { container } = setup();
 
-    const panel = container.querySelector(`#${FOLDER_README_ANCHOR_ID}`);
-    expect(panel).not.toBeNull();
+    expect(await screen.findByText('Hello')).toBeInTheDocument();
+    expect(container.querySelector(`#${FOLDER_README_ANCHOR_ID}`)).not.toBeNull();
     expect(screen.getByText('README.md')).toBeInTheDocument();
-    expect(screen.getByText('Hello')).toBeInTheDocument();
     expect(screen.getByText('This is a README.')).toBeInTheDocument();
   });
 
-  it('shows an Edit README icon button targeting the host editor when a README exists', () => {
-    setReadmeResult();
+  it('shows an Edit README icon button targeting the host editor when a README exists', async () => {
+    setReadmeFile('# Hello');
 
-    render(<FolderReadmePanel folderUID="test-folder" />);
+    setup();
 
-    const editLink = screen.getByRole('link', { name: /Edit README/i });
+    const editLink = await screen.findByRole('link', { name: /Edit README/i });
     expect(editLink).toHaveAttribute('href', 'https://github.com/owner/repo/edit/main/dashboards/team-a/README.md');
   });
 
-  it('prefixes the edit URL with repository.path when configured', () => {
-    setReadmeResult({ repository: { ...mockRepository, path: 'ops/resources' } });
+  it('prefixes the edit URL with repository.path when configured', async () => {
+    setRepoView({ repository: { ...REPO, path: 'ops/resources' } });
+    setReadmeFile('# Hello');
 
-    render(<FolderReadmePanel folderUID="test-folder" />);
+    setup();
 
-    expect(screen.getByRole('link', { name: /Edit README/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /Edit README/i })).toHaveAttribute(
       'href',
       'https://github.com/owner/repo/edit/main/ops/resources/dashboards/team-a/README.md'
     );
   });
 
   it('reports an interaction when the edit link is clicked', async () => {
-    setReadmeResult();
+    setReadmeFile('# Hello');
 
     const { user } = setup();
-    await user.click(screen.getByRole('link', { name: /Edit README/i }));
+    await user.click(await screen.findByRole('link', { name: /Edit README/i }));
 
     expect(editClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github' });
   });
 
   describe('Add README empty state (status: missing)', () => {
-    it('renders the Add README button when no README exists', () => {
-      setReadmeResult({ status: 'missing', markdownContent: undefined });
+    it('renders the Add README button when no README exists', async () => {
+      setReadmeFile('', { status: 404 });
 
-      render(<FolderReadmePanel folderUID="test-folder" />);
+      setup();
 
-      const addLink = screen.getByRole('link', { name: /Add README/i });
+      const addLink = await screen.findByRole('link', { name: /Add README/i });
       const href = addLink.getAttribute('href') ?? '';
       expect(href).toMatch(/^https:\/\/github\.com\/owner\/repo\/new\/main\?filename=dashboards%2Fteam-a%2FREADME\.md/);
       const value = decodeURIComponent(new URL(href).searchParams.get('value') ?? '');
@@ -131,134 +165,171 @@ describe('FolderReadmePanel', () => {
     });
 
     it('reports an interaction when the Add README button is clicked', async () => {
-      setReadmeResult({ status: 'missing', markdownContent: undefined });
+      setReadmeFile('', { status: 404 });
 
       const { user } = setup();
-      await user.click(screen.getByRole('link', { name: /Add README/i }));
+      await user.click(await screen.findByRole('link', { name: /Add README/i }));
 
       expect(createClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github' });
     });
 
-    it('hides the Edit icon when no README exists', () => {
-      setReadmeResult({ status: 'missing', markdownContent: undefined });
+    it('hides the Edit icon when no README exists', async () => {
+      setReadmeFile('', { status: 404 });
 
-      render(<FolderReadmePanel folderUID="test-folder" />);
+      setup();
+
+      await screen.findByRole('link', { name: /Add README/i });
       expect(screen.queryByRole('link', { name: /Edit README/i })).not.toBeInTheDocument();
     });
   });
 
   describe('error state (status: error)', () => {
-    it('renders a warning alert with a retry button', () => {
-      setReadmeResult({ status: 'error', markdownContent: undefined });
+    it('renders a warning alert with a retry button', async () => {
+      setReadmeFile('', { status: 500 });
 
-      render(<FolderReadmePanel folderUID="test-folder" />);
+      setup();
 
-      expect(screen.getByText(/Couldn.t load README/)).toBeInTheDocument();
+      expect(await screen.findByText(/Couldn.t load README/)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Try again/i })).toBeInTheDocument();
     });
 
-    it('calls refetch when the retry button is clicked', async () => {
-      const refetch = jest.fn();
-      setReadmeResult({ status: 'error', markdownContent: undefined, refetch });
+    it('refetches the README when the retry button is clicked', async () => {
+      const { getFileHits } = setReadmeFile('', { status: 500 });
 
       const { user } = setup();
+
+      await screen.findByRole('button', { name: /Try again/i });
+      const hitsBeforeRetry = getFileHits();
       await user.click(screen.getByRole('button', { name: /Try again/i }));
 
-      expect(refetch).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(getFileHits()).toBeGreaterThan(hitsBeforeRetry));
     });
 
-    it('hides the Edit pencil in error state', () => {
-      setReadmeResult({ status: 'error', markdownContent: undefined });
+    it('hides the Edit pencil in error state', async () => {
+      setReadmeFile('', { status: 500 });
 
-      render(<FolderReadmePanel folderUID="test-folder" />);
+      setup();
+
+      await screen.findByText(/Couldn.t load README/);
       expect(screen.queryByRole('link', { name: /Edit README/i })).not.toBeInTheDocument();
     });
 
-    it('does not show the Add README CTA in error state', () => {
-      setReadmeResult({ status: 'error', markdownContent: undefined });
+    it('does not show the Add README CTA in error state', async () => {
+      setReadmeFile('', { status: 500 });
 
-      render(<FolderReadmePanel folderUID="test-folder" />);
+      setup();
+
+      await screen.findByText(/Couldn.t load README/);
       expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
     });
   });
 
   it('renders nothing when the feature toggle is off', () => {
     setTestFlags({ 'provisioning.readmes': false });
-    setReadmeResult();
 
-    const { container } = render(<FolderReadmePanel folderUID="test-folder" />);
+    const { container } = setup();
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('does not invoke useFolderReadme when the feature toggle is off', () => {
-    setTestFlags({ 'provisioning.readmes': false });
-    setReadmeResult();
-    render(<FolderReadmePanel folderUID="test-folder" />);
-    expect(mockUseFolderReadme).not.toHaveBeenCalled();
-  });
-
   it('renders nothing when the folder is not provisioned', () => {
-    setReadmeResult({ repository: undefined });
+    setRepoView({ repository: undefined, folder: undefined, isMissingRepo: true });
 
-    const { container } = render(<FolderReadmePanel folderUID="test-folder" />);
+    const { container } = setup();
     expect(container).toBeEmptyDOMElement();
   });
 
   it('shows a loading indicator while the repository view is loading', () => {
-    setReadmeResult({ status: 'loading', isLoading: true, repository: undefined });
+    setRepoView({ repository: undefined, folder: undefined, status: RepoViewStatus.Loading, isLoading: true });
 
-    render(<FolderReadmePanel folderUID="test-folder" />);
+    setup();
     expect(screen.getByTestId('Spinner')).toBeInTheDocument();
     expect(screen.getByText('README.md')).toBeInTheDocument();
   });
 
   it('shows a loading indicator while the README file is loading', () => {
-    setReadmeResult({ status: 'loading', isLoading: true, markdownContent: undefined });
+    setReadmeFile('# Hello');
 
-    render(<FolderReadmePanel folderUID="test-folder" />);
+    setup();
+    // The file request is still in flight on first render.
     expect(screen.getByTestId('Spinner')).toBeInTheDocument();
   });
 
-  it('renders an empty README without the parse-error message', () => {
-    setReadmeResult({ markdownContent: '' });
+  it('renders an empty README without the parse-error message', async () => {
+    setReadmeFile('');
 
-    render(<FolderReadmePanel folderUID="test-folder" />);
+    setup();
+
+    expect(await screen.findByRole('link', { name: /Edit README/i })).toBeInTheDocument();
     expect(screen.queryByText(/Unable to display README content/i)).not.toBeInTheDocument();
-    expect(screen.getByText('README.md')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Edit README/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
   });
 
   describe('mermaid diagrams', () => {
-    it('runs the mermaid renderer over the rendered README content', async () => {
-      setReadmeResult({ markdownContent: '# Diagram\n\nBody text.' });
+    it('renders a ```mermaid fenced block as a diagram', async () => {
+      setReadmeFile('## Flow\n\n```mermaid\ngraph TD; A-->B;\n```');
 
       const { container } = setup();
 
-      await waitFor(() => expect(mockRenderMermaidDiagrams).toHaveBeenCalled());
-      const [element, options] = mockRenderMermaidDiagrams.mock.calls[0];
-      expect(element).toBe(container.querySelector('.markdown-html'));
-      expect(options).toEqual(expect.objectContaining({ isDark: expect.any(Boolean) }));
+      expect(await screen.findByTestId('mermaid-svg')).toBeInTheDocument();
+      // The source code block is replaced by the rendered diagram.
+      expect(container.querySelector('code.language-mermaid')).toBeNull();
     });
 
-    it('does not run the mermaid renderer when there is no README to render', () => {
-      setReadmeResult({ status: 'missing', markdownContent: undefined });
+    it('renders multiple mermaid diagrams in the same README', async () => {
+      setReadmeFile(
+        [
+          '## One',
+          '',
+          '```mermaid',
+          'graph TD; A-->B;',
+          '```',
+          '',
+          '## Two',
+          '',
+          '```mermaid',
+          'graph LR; C-->D;',
+          '```',
+        ].join('\n')
+      );
 
-      setup();
+      const { container } = setup();
 
-      expect(mockRenderMermaidDiagrams).not.toHaveBeenCalled();
+      // Both fenced blocks are turned into diagrams. (Render call count isn't asserted:
+      // React StrictMode double-invokes the effect, so it can exceed the diagram count.)
+      await waitFor(() => expect(container.querySelectorAll('.markdown-mermaid')).toHaveLength(2));
+    });
+
+    it('keeps the source and flags the block when a diagram fails to render', async () => {
+      mockMermaidRender.mockRejectedValue(new Error('parse error'));
+      setReadmeFile('## Broken\n\n```mermaid\nnot a real diagram\n```');
+
+      const { container } = setup();
+
+      await waitFor(() => expect(container.querySelector('.markdown-mermaid-error')).not.toBeNull());
+      // A broken diagram leaves its source visible instead of hiding the README.
+      expect(screen.getByText(/not a real diagram/)).toBeInTheDocument();
+      expect(screen.getByText('Broken')).toBeInTheDocument();
+    });
+
+    it('does not render diagrams for READMEs without mermaid blocks', async () => {
+      setReadmeFile('# Hello\n\nNo diagrams here.');
+
+      const { container } = setup();
+
+      await screen.findByText('Hello');
+      expect(mockMermaidRender).not.toHaveBeenCalled();
+      expect(container.querySelector('.markdown-mermaid')).toBeNull();
     });
   });
 
-  it('sanitizes mXSS payloads in README markdown', () => {
-    setReadmeResult({
-      markdownContent: '<div><svg><style><img src=x onerror=alert(1)></style></svg></div>',
-    });
+  it('sanitizes mXSS payloads in README markdown', async () => {
+    setReadmeFile('<div><svg><style><img src=x onerror=alert(1)></style></svg></div>');
 
     const { container } = setup();
+
+    await waitFor(() => expect(container.querySelector('.markdown-html')).not.toBeNull());
     const markdownDiv = container.querySelector('.markdown-html');
-    expect(markdownDiv).not.toBeNull();
-    // DOMPurify strips the dangerous elements
+    // DOMPurify strips the dangerous elements.
     expect(markdownDiv!.querySelector('img[onerror]')).toBeNull();
     expect(markdownDiv!.innerHTML).not.toContain('onerror');
   });
