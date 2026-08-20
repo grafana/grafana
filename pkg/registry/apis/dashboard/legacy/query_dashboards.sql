@@ -7,9 +7,6 @@ SELECT
   dashboard.deleted,
   plugin_id,
   provisioning.name        as repo_name,
-  provisioning.external_id as repo_path,
-  provisioning.check_sum   as repo_hash,
-  provisioning.updated     as repo_ts,
   dashboard.created,
   created_user.uid         as created_by,
   dashboard.created_by     as created_by_id,
@@ -48,6 +45,7 @@ LEFT OUTER JOIN {{ .Ident .ProvisioningTable }} as provisioning ON dashboard.id 
 LEFT OUTER JOIN {{ .Ident .UserTable }} as created_user ON dashboard.created_by = created_user.id
 LEFT OUTER JOIN {{ .Ident .UserTable }} as updated_user ON {{ if .Query.UseHistoryTable }}{{ if and .Query.GetHistory (not .Query.AllowFallback) }}dashboard_version.created_by = updated_user.id{{ else }}COALESCE(dashboard_version.created_by, dashboard.updated_by) = updated_user.id{{ end }}{{ else }}dashboard.updated_by = updated_user.id{{ end }}
 WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
+  AND provisioning.name IS NULL
   AND dashboard.org_id = {{ .Arg .Query.OrgID }}
   {{ if .Query.UseHistoryTable }}
   {{ if .Query.UID }}

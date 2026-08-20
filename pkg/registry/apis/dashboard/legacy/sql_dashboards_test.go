@@ -1,7 +1,6 @@
 package legacy
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -9,17 +8,15 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestScanRow(t *testing.T) {
@@ -27,16 +24,12 @@ func TestScanRow(t *testing.T) {
 	require.NoError(t, err)
 	defer mockDB.Close() // nolint:errcheck
 
-	pathToFile := "path/to/file"
-	provisioner := provisioning.NewProvisioningServiceMock(context.Background())
-	provisioner.GetDashboardProvisionerResolvedPathFunc = func(name string) string { return "provisioner" }
 	store := &dashboardSqlAccess{
-		namespacer:   func(_ int64) string { return "default" },
-		provisioning: provisioner,
-		log:          log.New("test"),
+		namespacer: func(_ int64) string { return "default" },
+		log:        log.New("test"),
 	}
 
-	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
+	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
 	id := int64(100)
 	uid := "someuid"
 	title := "Test Dashboard"
@@ -49,7 +42,7 @@ func TestScanRow(t *testing.T) {
 	updatedUser := "updator"
 
 	t.Run("Should scan a valid row correctly", func(t *testing.T) {
-		rows := sqlmock.NewRows(columns).AddRow(1, id, uid, title, folderUID, nil, "", "", "", "", 0, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`), "vXyz")
+		rows := sqlmock.NewRows(columns).AddRow(1, id, uid, title, folderUID, nil, "", "", timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`), "vXyz")
 		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
 		resultRows, err := mockDB.Query("SELECT *")
 		require.NoError(t, err)
@@ -79,36 +72,20 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "dashboard.grafana.app/vXyz", row.Dash.APIVersion)
 	})
 
-	t.Run("File provisioned dashboard should have annotations", func(t *testing.T) {
-		rows := sqlmock.NewRows(columns).AddRow(1, id, uid, title, folderUID, nil, "", "provisioner", pathToFile, "hashing", 100000, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`), "vXyz")
+	t.Run("File provisioned dashboard should error (provisioning now lives in unified storage)", func(t *testing.T) {
+		rows := sqlmock.NewRows(columns).AddRow(1, id, uid, title, folderUID, nil, "", "provisioner", timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`), "vXyz")
 		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
 		resultRows, err := mockDB.Query("SELECT *")
 		require.NoError(t, err)
 		defer resultRows.Close() // nolint:errcheck
 		resultRows.Next()
 
-		row, err := store.scanRow(resultRows, false)
-		require.NoError(t, err)
-		require.NotNil(t, row)
-
-		meta, err := utils.MetaAccessor(row.Dash)
-		require.NoError(t, err)
-		m, ok := meta.GetManagerProperties()
-		require.True(t, ok)
-
-		s, ok := meta.GetSourceProperties()
-		require.True(t, ok)
-
-		require.Equal(t, utils.ManagerKindClassicFP, m.Kind) // nolint:staticcheck
-		require.Equal(t, "provisioner", m.Identity)
-		require.Equal(t, pathToFile, s.Path)
-		require.Equal(t, "hashing", s.Checksum)
-		require.NoError(t, err)
-		require.Equal(t, int64(100000), s.TimestampMillis)
+		_, err = store.scanRow(resultRows, false)
+		require.ErrorContains(t, err, "unexpected value")
 	})
 
 	t.Run("Plugin provisioned dashboard should have annotations", func(t *testing.T) {
-		rows := sqlmock.NewRows(columns).AddRow(1, id, uid, title, folderUID, nil, "slo", "", "", "", 0, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`), "vXyz")
+		rows := sqlmock.NewRows(columns).AddRow(1, id, uid, title, folderUID, nil, "slo", "", timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, []byte(`{"key": "value"}`), "vXyz")
 		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
 		resultRows, err := mockDB.Query("SELECT *")
 		require.NoError(t, err)
@@ -145,7 +122,7 @@ func TestScanRow(t *testing.T) {
 		// when dashboard_version values are NULL, ensuring all dashboards are migrated
 		rows := sqlmock.NewRows(columns).AddRow(
 			1, id, uid, title, folderUID, nil, "", // basic dashboard fields
-			"", "", "", 0, // origin fields
+			"",                        // origin name
 			timestamp, createdUser, 0, // created fields
 			// These represent COALESCED values from dashboard table (not version table)
 			migrationTimestamp, migrationUpdatedUser, 0, migrationVersion, migrationMessage, migrationData, migrationAPIVersion,
@@ -192,7 +169,7 @@ func TestScanRow(t *testing.T) {
 	t.Run("should follow dashboard template when failing to unmarshal dashboard", func(t *testing.T) {
 		// row with bad data
 		badData := []byte(`{"rows":[{"panels":[{"targets":[{"refId":"A","target":"aliasSub(alias, '^(.{27}).+', '\1...')"}]}]}]}`)
-		rows := sqlmock.NewRows(columns).AddRow(1, id, uid, title, folderUID, nil, "", "", "", "", 0, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, badData, "vXyz")
+		rows := sqlmock.NewRows(columns).AddRow(1, id, uid, title, folderUID, nil, "", "", timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, badData, "vXyz")
 		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
 		resultRows, err := mockDB.Query("SELECT *")
 		require.NoError(t, err)
@@ -202,9 +179,8 @@ func TestScanRow(t *testing.T) {
 		resultRows.Next()
 
 		store = &dashboardSqlAccess{
-			namespacer:   func(_ int64) string { return "default" },
-			provisioning: provisioner,
-			log:          log.New("test"),
+			namespacer: func(_ int64) string { return "default" },
+			log:        log.New("test"),
 		}
 
 		row, err := store.scanRow(resultRows, false)
@@ -391,24 +367,21 @@ func TestRowsWrapper_PropagatesRowsErr(t *testing.T) {
 		_ = mockDB.Close()
 	}()
 
-	provisioner := provisioning.NewProvisioningServiceMock(context.Background())
-	provisioner.GetDashboardProvisionerResolvedPathFunc = func(name string) string { return "provisioner" }
 	store := &dashboardSqlAccess{
-		namespacer:   func(_ int64) string { return "default" },
-		provisioning: provisioner,
-		log:          log.New("test"),
+		namespacer: func(_ int64) string { return "default" },
+		log:        log.New("test"),
 	}
 
-	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
+	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
 	timestamp := time.Now()
 
 	t.Run("rows.Err after partial iteration is surfaced via Error()", func(t *testing.T) {
 		// Simulate: first row succeeds, second row triggers a rows.Err()
 		simulatedErr := fmt.Errorf("connection reset by peer")
 		rows := sqlmock.NewRows(columns).
-			AddRow(1, int64(1), "uid1", "Dashboard 1", "folder1", nil, "", "", "", "", 0, timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1").
+			AddRow(1, int64(1), "uid1", "Dashboard 1", "folder1", nil, "", "", timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1").
 			RowError(1, simulatedErr). // error on second row
-			AddRow(1, int64(2), "uid2", "Dashboard 2", "folder1", nil, "", "", "", "", 0, timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1")
+			AddRow(1, int64(2), "uid2", "Dashboard 2", "folder1", nil, "", "", timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1")
 
 		smock.ExpectQuery("SELECT").WillReturnRows(rows)
 		sqlRows, err := mockDB.Query("SELECT")
@@ -439,7 +412,7 @@ func TestRowsWrapper_PropagatesRowsErr(t *testing.T) {
 		simulatedErr := fmt.Errorf("database is locked")
 		rows := sqlmock.NewRows(columns).
 			RowError(0, simulatedErr).
-			AddRow(1, int64(1), "uid1", "Dashboard 1", "folder1", nil, "", "", "", "", 0, timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1")
+			AddRow(1, int64(1), "uid1", "Dashboard 1", "folder1", nil, "", "", timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1")
 
 		smock.ExpectQuery("SELECT").WillReturnRows(rows)
 		sqlRows, err := mockDB.Query("SELECT")
@@ -463,8 +436,8 @@ func TestRowsWrapper_PropagatesRowsErr(t *testing.T) {
 
 	t.Run("no error when all rows are consumed successfully", func(t *testing.T) {
 		rows := sqlmock.NewRows(columns).
-			AddRow(1, int64(1), "uid1", "Dashboard 1", "folder1", nil, "", "", "", "", 0, timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1").
-			AddRow(1, int64(2), "uid2", "Dashboard 2", "folder1", nil, "", "", "", "", 0, timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1")
+			AddRow(1, int64(1), "uid1", "Dashboard 1", "folder1", nil, "", "", timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1").
+			AddRow(1, int64(2), "uid2", "Dashboard 2", "folder1", nil, "", "", timestamp, "creator", 0, timestamp, "updater", 0, int64(1), "msg", []byte(`{"key":"value"}`), "v0alpha1")
 
 		smock.ExpectQuery("SELECT").WillReturnRows(rows)
 		sqlRows, err := mockDB.Query("SELECT")
