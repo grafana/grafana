@@ -375,6 +375,10 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	}
 
 	frame := e.processResponse(qm, rows, interpolatedQuery, errAppendDebug)
+	if frame == nil {
+		// processResponse failed and handled the query result with errAppendDebug
+		return
+	}
 
 	queryResult.dataResponse.Frames = data.Frames{frame}
 	ch <- queryResult
