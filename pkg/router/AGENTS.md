@@ -210,6 +210,33 @@ The signal and the state are split; do not conflate them.
   close eagerly on swap, or you cut live requests. (Transports are currently shared per
   `tlsCacheKey` and not closed — revisit when per-backend teardown is added.)
 
+## Passive circuit breaking (planned)
+
+**Decision: passive-only, not active health probing.** The router does not run a periodic
+background probe against each backend (the way kube-aggregator's `AvailabilityController` actively
+polls `/apis/<group>/<version>` on a timer to drive `APIService.status.conditions[Available]`).
+Instead, a circuit breaker observes real proxied request outcomes (timeout / connection error / 5xx)
+and trips per group.
+
+Why not copy kube-aggregator's active approach: that controller's probe exists because
+`APIService.status.conditions[Available]` is a first-class, ops-visible object that also gates root
+discovery aggregation — an unavailable APIService is excluded from `/apis`, a decision that must hold
+even for aggregated groups with near-zero real traffic, so it can't rely on traffic to observe
+failure. This router already decoupled discovery from backend liveness on purpose (see Discovery
+endpoints and Core architectural decision above): `publish()` synthesizes `/apis`/`/openapi/v3` from
+`r.served` (config/install state), not backend health — a group whose reload failed still advertises
+via last-known-good. So the reason kube-aggregator needs an independent, traffic-free signal does not
+apply here. Active probing would also require a new health-endpoint convention on `Backend` (none
+exists today — `Load` only returns a proxy handler) and a per-group background goroutine with its own
+start/stop lifecycle tied to group add/remove, which cuts against the "reconcile only touches the
+changed group" invariant. Revisit only if a specific group's real traffic proves too sparse for
+passive signal to trip in a useful time window.
+
+Library: not hand-rolled. Use `sony/gobreaker` (closed/open/half-open state machine per Nygard's
+*Release It!*), one instance per served group, wrapping the proxied request outcome. Do not
+reimplement failure-counting/cooldown/half-open logic from scratch — that's easy to get subtly wrong
+(flapping, thundering-herd on recovery) and gobreaker already gets it right.
+
 ## Lifecycle / ownership
 
 The `GrafanaRouter` runs as its **own process**, the `grafana router` command. It is a pure reverse
