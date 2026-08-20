@@ -9,6 +9,8 @@ interface Props {
   baseUrl: string;
   branch: string;
   repoType?: string;
+  /** Stable e2e selector wired onto the rendered pill (link or text). */
+  dataTestId?: string;
 }
 
 /**
@@ -16,7 +18,7 @@ interface Props {
  * browsable branch URL the pill is a link that opens the branch in a new tab; otherwise it is
  * rendered as plain, non-interactive text.
  */
-export function BranchDisplay({ baseUrl, branch, repoType }: Props) {
+export function BranchDisplay({ baseUrl, branch, repoType, dataTestId }: Props) {
   const styles = useStyles2(getStyles);
   const link = getBranchUrl(baseUrl, branch, repoType);
 
@@ -27,6 +29,7 @@ export function BranchDisplay({ baseUrl, branch, repoType }: Props) {
         target="_blank"
         rel="noopener noreferrer"
         className={cx(styles.branchPill, styles.branchPillLink)}
+        data-testid={dataTestId}
       >
         <Icon name="code-branch" size="xs" className={styles.branchIcon} />
         <span className={styles.branchName}>{branch}</span>
@@ -36,7 +39,7 @@ export function BranchDisplay({ baseUrl, branch, repoType }: Props) {
   }
 
   return (
-    <span className={styles.branchPill}>
+    <span className={styles.branchPill} data-testid={dataTestId}>
       <Icon name="code-branch" size="xs" className={styles.branchIcon} />
       <span className={styles.branchName}>{branch}</span>
     </span>

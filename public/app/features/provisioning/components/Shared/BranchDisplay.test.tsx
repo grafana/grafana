@@ -59,4 +59,18 @@ describe('BranchDisplay', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
     expect(screen.getByText('feature/foo')).toBeInTheDocument();
   });
+
+  it('wires the provided e2e selector onto the link pill', () => {
+    render(
+      <BranchDisplay baseUrl="https://github.com/org/repo" branch="feature/foo" repoType="github" dataTestId="branch-pill" />
+    );
+
+    expect(screen.getByTestId('branch-pill')).toBe(screen.getByRole('link', { name: /feature\/foo/ }));
+  });
+
+  it('wires the provided e2e selector onto the plain-text pill', () => {
+    render(<BranchDisplay baseUrl="https://github.com/org/repo" branch="feature/foo" repoType="local" dataTestId="branch-pill" />);
+
+    expect(screen.getByTestId('branch-pill')).toHaveTextContent('feature/foo');
+  });
 });

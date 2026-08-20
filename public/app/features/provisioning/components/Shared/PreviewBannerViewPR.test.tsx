@@ -1,12 +1,13 @@
 import { render, screen } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { isValidRepoType } from '../../guards';
 import { setupProvisioningMswServer } from '../../mocks/server';
 
-import { PreviewBannerViewPR } from './PreviewBannerViewPR';
+import { PreviewBannerViewPR, type PreviewBranchInfo } from './PreviewBannerViewPR';
 
 jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => ({
   usePullRequestParam: jest.fn(),
@@ -17,7 +18,14 @@ const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
 setupProvisioningMswServer();
 
 function setup(
-  options: { prURL: string; isNewPr?: boolean; repoType?: RepoType; action?: string; prTitle?: string } = {
+  options: {
+    prURL: string;
+    isNewPr?: boolean;
+    repoType?: RepoType;
+    action?: string;
+    prTitle?: string;
+    branchInfo?: PreviewBranchInfo;
+  } = {
     prURL: 'test-url',
     repoType: 'github',
   }
@@ -25,6 +33,7 @@ function setup(
   const componentProps = {
     prURL: options.prURL,
     isNewPr: options.isNewPr || false,
+    branchInfo: options.branchInfo,
   };
 
   mockUsePullRequestParam.mockReturnValue({
@@ -184,6 +193,32 @@ describe('PreviewBannerViewPR', () => {
       setup({ prURL: 'test-url', isNewPr: true, action: 'delete' });
 
       expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+    });
+  });
+
+  describe('Branch information', () => {
+    const branchInfo: PreviewBranchInfo = {
+      repoBaseUrl: 'https://github.com/org/repo',
+      targetBranch: 'dashboard/2026-08-20-abcde',
+      configuredBranch: 'develop',
+    };
+
+    it('renders source and target branch pills with stable selectors', () => {
+      setup({ prURL: 'test-url', isNewPr: true, repoType: 'github', branchInfo });
+
+      const source = screen.getByTestId(selectors.pages.Provisioning.PreviewBanner.sourceBranchLink);
+      const target = screen.getByTestId(selectors.pages.Provisioning.PreviewBanner.targetBranchLink);
+
+      expect(source).toHaveTextContent('dashboard/2026-08-20-abcde');
+      expect(source).toHaveAttribute('href', 'https://github.com/org/repo/tree/dashboard/2026-08-20-abcde');
+      expect(target).toHaveTextContent('develop');
+      expect(target).toHaveAttribute('href', 'https://github.com/org/repo/tree/develop');
+    });
+
+    it('exposes the branch-direction arrow to assistive technology', () => {
+      setup({ prURL: 'test-url', isNewPr: true, repoType: 'github', branchInfo });
+
+      expect(screen.getByLabelText('targets')).toBeInTheDocument();
     });
   });
 

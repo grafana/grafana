@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, textUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
@@ -102,10 +103,25 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
         <Box marginTop={1}>
           <span className={styles.branchRow}>
             {/* branch that changes pushed to */}
-            <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.targetBranch} repoType={repoType} />
-            <Icon name="arrow-right" size="sm" className={styles.arrow} />
+            <BranchDisplay
+              baseUrl={branchInfo.repoBaseUrl}
+              branch={branchInfo.targetBranch}
+              repoType={repoType}
+              dataTestId={selectors.pages.Provisioning.PreviewBanner.sourceBranchLink}
+            />
+            <Icon
+              name="arrow-right"
+              size="sm"
+              className={styles.arrow}
+              aria-label={t('provisioned-resource-preview-banner.preview-banner.branch-targets', 'targets')}
+            />
             {/* Target branch (configured branch) */}
-            <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.configuredBranch} repoType={repoType} />
+            <BranchDisplay
+              baseUrl={branchInfo.repoBaseUrl}
+              branch={branchInfo.configuredBranch}
+              repoType={repoType}
+              dataTestId={selectors.pages.Provisioning.PreviewBanner.targetBranchLink}
+            />
           </span>
         </Box>
       )}
