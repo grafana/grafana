@@ -2000,6 +2000,8 @@ github.com/substrait-io/substrait-go/v7 v7.4.0 h1:I8VRblvZeDCMQV13eAzVTyyzoRACSw
 github.com/substrait-io/substrait-go/v7 v7.4.0/go.mod h1:hWZ349MkCNRPMY0WZ9Mo+a+VGeda/x5bGMOl+rIZI1M=
 github.com/substrait-io/substrait-go/v8 v8.1.0 h1:58nSM6Qsctke4DIHU2y4aR8FN5YC7syo1mk4zFKAo4U=
 github.com/substrait-io/substrait-go/v8 v8.1.0/go.mod h1:6GLz9k21udB64g4lLKq8632TKfQCRAVfhuU3NSXtZWY=
+github.com/substrait-io/substrait-go/v8 v8.1.1 h1:XL7CqVVOQkXP9FRSIm2ylJCjqRASg1yBRcn5nRCRwss=
+github.com/substrait-io/substrait-go/v8 v8.1.1/go.mod h1:6GLz9k21udB64g4lLKq8632TKfQCRAVfhuU3NSXtZWY=
 github.com/substrait-io/substrait-protobuf/go v0.81.0 h1:/qC1XYKuO4oPdTwLYySuVZ6rq7xVS4E7U07Dcgm4+6U=
 github.com/substrait-io/substrait-protobuf/go v0.81.0/go.mod h1:hn+Szm1NmZZc91FwWK9EXD/lmuGBSRTJ5IvHhlG1YnQ=
 github.com/substrait-io/substrait-protobuf/go v0.85.0 h1:zk6MtNWLtDSl8a7qCZRFH0+EIIXVrrd/hsgYK/SQTgM=
