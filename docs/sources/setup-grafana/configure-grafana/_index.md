@@ -931,6 +931,14 @@ Increasing this value allows processing more dashboards in each cleanup cycle bu
 
 <hr />
 
+### `[folder]`
+
+#### `deleted_resource_cleanup_interval`
+
+How often the background job deletes resources (alert rules, library panels) whose folder no longer exists. Requires the `deletedFolderResourceCleanup` feature toggle. Default and minimum: `5m`.
+
+<hr />
+
 ### `[datasources]`
 
 #### `default_manage_alerts_ui_toggle`
