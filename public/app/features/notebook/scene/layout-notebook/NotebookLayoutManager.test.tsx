@@ -1,11 +1,12 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { NotebookEditHistory } from '../NotebookEditHistory';
+import { type NotebookEditHistory } from '../NotebookEditHistory';
+import { NotebookScene } from '../NotebookScene';
 
 // CodeMirror does not run in jsdom; a textarea carries readOnly into the DOM so the edit-mode
 // propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
@@ -69,6 +70,18 @@ function buildManager(cells: NotebookCellItem[], isEditing?: boolean) {
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     isEditing,
   });
+}
+
+function attachHistory(manager: NotebookLayoutManager): NotebookEditHistory {
+  const scene = new NotebookScene({
+    title: 'My notebook',
+    body: manager,
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({}),
+  });
+
+  return scene.editHistory;
 }
 
 function renderManager(manager: NotebookLayoutManager) {
@@ -702,8 +715,7 @@ describe('NotebookLayoutManager', () => {
         isEditing: true,
         $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
       });
-      const history = new NotebookEditHistory();
-      manager.setEditHistory(history);
+      const history = attachHistory(manager);
       const { user } = render(<manager.Component model={manager} />);
 
       const editor = (await screen.findAllByLabelText('Code'))[0];
@@ -729,8 +741,7 @@ describe('NotebookLayoutManager', () => {
     it('drops an editor transaction that returns to its starting content', () => {
       const cell = codeCell('query');
       const manager = new NotebookLayoutManager({ cells: [cell] });
-      const history = new NotebookEditHistory();
-      manager.setEditHistory(history);
+      const history = attachHistory(manager);
 
       manager.setCellContent(cell, edited);
       manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
@@ -738,18 +749,15 @@ describe('NotebookLayoutManager', () => {
       expect(history.state.canUndo).toBe(false);
     });
 
-    // The scene clears the history on every activation, so a pending edit that outlived the previous
-    // one would swallow the next keystroke into an action the history no longer holds.
+    // If the edit is not closed on the way out, typing after coming back is added to the old edit.
     it('closes a pending edit when the notebook is deactivated', () => {
       const cell = codeCell('query');
       const manager = new NotebookLayoutManager({ cells: [cell] });
-      const history = new NotebookEditHistory();
-      manager.setEditHistory(history);
+      const history = attachHistory(manager);
       const deactivate = manager.activate();
 
       manager.setCellContent(cell, edited);
       deactivate();
-      history.clear();
       manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 3', language: 'sql' } });
 
       expect(history.state.canUndo).toBe(true);
@@ -762,8 +770,7 @@ describe('NotebookLayoutManager', () => {
       try {
         const cell = codeCell('query');
         const manager = new NotebookLayoutManager({ cells: [cell] });
-        const history = new NotebookEditHistory();
-        manager.setEditHistory(history);
+        const history = attachHistory(manager);
 
         manager.setCellContent(cell, edited);
         jest.advanceTimersByTime(801);
@@ -782,9 +789,7 @@ describe('NotebookLayoutManager', () => {
   describe('edit history', () => {
     function withHistory(cells: NotebookCellItem[]) {
       const manager = buildManager(cells);
-      const history = new NotebookEditHistory();
-      manager.setEditHistory(history);
-      return { manager, history };
+      return { manager, history: attachHistory(manager) };
     }
 
     it('undoes and redoes adding a block', () => {

@@ -53,6 +53,9 @@ export interface NotebookSceneState extends SceneObjectState {
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
   public static Component = NotebookSceneRenderer;
   public readonly editHistory = new NotebookEditHistory();
+  // The layout manager needs to find the scene it lives in. It cannot use instanceof, because
+  // importing this class would make the two files import each other, so it looks for this field.
+  public readonly isNotebookScene = true;
 
   // Edit mode is reflected in the url by this handler rather than by the methods below, so the url
   // stays a projection of the state instead of a second copy of it.
@@ -71,12 +74,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       ],
     });
 
-    this.state.body.setEditHistory(this.editHistory);
-
     this.addActivationHandler(() => {
-      this.editHistory.clear();
-      this.state.body.setEditHistory(this.editHistory);
-
       // template_srv and TimeSrv resolve variables/time for panel plugins through the global
       // scene context; without this, plugin-side interpolation silently degrades.
       const prevSceneContext = window.__grafanaSceneContext;
@@ -112,9 +110,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         if (newState.body !== prevState.body || newState.isEditing !== prevState.isEditing) {
           newState.body.editModeChanged?.(Boolean(newState.isEditing));
         }
+        // Every undo step puts a cell back into the body that recorded it. That body is gone now, so
+        // the steps cannot run any more.
         if (newState.body !== prevState.body) {
           this.editHistory.clear();
-          newState.body.setEditHistory(this.editHistory);
         }
       });
 

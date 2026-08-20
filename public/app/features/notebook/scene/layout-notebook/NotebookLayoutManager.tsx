@@ -28,6 +28,7 @@ import {
   type NotebookLayoutKind,
 } from '../../types';
 import { type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
+import { isNotebookScene } from '../isNotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
@@ -87,22 +88,34 @@ export class NotebookLayoutManager
 
   public readonly descriptor = NotebookLayoutManager.descriptor;
 
-  private editHistory?: NotebookEditHistory;
   private pendingContentEdit?: PendingContentEdit;
 
   public constructor(state: NotebookLayoutManagerState) {
     super(state);
 
-    // Finish an edit that is still being typed when the notebook goes away. The pending edit lives in a
-    // plain field, so it would otherwise still be here when the notebook comes back, but the scene
-    // clears the history on the way in, and the next key press would join an edit nothing can undo.
+    // Typing is grouped into one undo step that sits in a field until the typing stops. Without this,
+    // closing the notebook mid-word would leave that step behind, and the next typing would join it.
     this.addActivationHandler(() => {
       return () => this.commitContentEdits();
     });
   }
 
-  public setEditHistory(editHistory: NotebookEditHistory): void {
-    this.editHistory = editHistory;
+  /**
+   * The scene above owns the history, so reading it here means nothing has to hand it over again when
+   * the scene swaps its body. duplicate(), the deserializer and tests build a manager with no scene
+   * above it. Editing one of those still works, the changes are just not recorded.
+   */
+  private get editHistory(): NotebookEditHistory | undefined {
+    let parent = this.parent;
+
+    while (parent) {
+      if (isNotebookScene(parent)) {
+        return parent.editHistory;
+      }
+      parent = parent.parent;
+    }
+
+    return undefined;
   }
 
   // Serialization lives here instead of in a helper file, so that this file never has to import the
@@ -183,7 +196,8 @@ export class NotebookLayoutManager
 
   private startContentEdit(elementName: string, previous: CellContentKind, content: CellContentKind): void {
     const after = structuredClone(content);
-    if (!this.editHistory) {
+    const history = this.editHistory;
+    if (!history) {
       this.applyCellContent(elementName, after);
       return;
     }
@@ -210,7 +224,7 @@ export class NotebookLayoutManager
 
     this.pendingContentEdit = edit;
     this.applyCellContent(edit.elementName, edit.after);
-    this.editHistory.record(edit.action);
+    history.record(edit.action);
     this.scheduleContentEditCommit(edit);
   }
 
@@ -335,8 +349,9 @@ export class NotebookLayoutManager
 
   private executeEdit(action: NotebookEditAction): void {
     this.commitContentEdits();
-    if (this.editHistory) {
-      this.editHistory.execute(action);
+    const history = this.editHistory;
+    if (history) {
+      history.execute(action);
     } else {
       action.perform();
     }

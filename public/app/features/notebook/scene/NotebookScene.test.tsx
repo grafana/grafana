@@ -190,7 +190,7 @@ describe('NotebookScene', () => {
       expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
     });
 
-    it('attaches history to a body replaced before activation', () => {
+    it('records history for a body replaced before activation', () => {
       const scene = buildScene(false);
       const replacement = new NotebookLayoutManager({ cells: [] });
       scene.setState({ body: replacement });
@@ -199,6 +199,19 @@ describe('NotebookScene', () => {
       replacement.addCell('code', 0);
 
       expect(scene.editHistory.state.canUndo).toBe(true);
+    });
+
+    it('keeps history across a deactivation and activation', () => {
+      const scene = buildScene(false);
+      const deactivate = scene.activate();
+      scene.state.body.addCell('code', 1);
+
+      deactivate();
+      activate(scene);
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      scene.editHistory.undo();
+      expect(scene.state.body.state.cells).toHaveLength(1);
     });
   });
 
