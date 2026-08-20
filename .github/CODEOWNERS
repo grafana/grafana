@@ -867,6 +867,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/Indent/ @grafana/grafana-frontend-navigation
 /public/app/core/components/Layers/ @grafana/dataviz-squad
 /public/app/core/components/Login/ @grafana/grafana-frontend-navigation
+/public/app/core/components/MonacoDiffEditor/ @grafana/dashboards-squad
 /public/app/core/components/NativeScrollbar.tsx @grafana/grafana-frontend-navigation
 /public/app/core/components/NavLandingPage/ @grafana/grafana-frontend-navigation
 /public/app/core/components/NestedFolderPicker/ @grafana/grafana-frontend-navigation
