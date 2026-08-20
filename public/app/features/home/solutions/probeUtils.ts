@@ -57,8 +57,13 @@ export async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T
   }
 }
 
+export interface TtlCachedPromise<T> {
+  get(): Promise<T>;
+  reset(): void;
+}
+
 /** Owns the cached promise + timestamp in a closure so no module-level binding is mutated. */
-export function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): { get(): Promise<T>; reset(): void } {
+export function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): TtlCachedPromise<T> {
   let cached: Promise<T> | undefined;
   let cachedAt = 0;
   return {
@@ -121,6 +126,32 @@ export async function filterHealthyDatasources(
     const result = results[i];
     return result.status === 'fulfilled' && result.value?.status === 'OK';
   });
+}
+
+const candidateCaches = new Map<string, TtlCachedPromise<DataSourceInstanceListItem[]>>();
+
+/**
+ * Share candidate discovery by type and exclusions. Metrics and App Observability both scan
+ * Prometheus, so separate lists would repeat every health check.
+ */
+export function healthyProbeCandidates(
+  type: string,
+  excludeUids?: ReadonlySet<string>
+): Promise<DataSourceInstanceListItem[]> {
+  const key = `${type}|${excludeUids ? [...excludeUids].sort().join(',') : ''}`;
+  let cache = candidateCaches.get(key);
+  if (!cache) {
+    cache = createTtlCachedPromise(
+      async () => filterHealthyDatasources(await listProbeCandidates(type, undefined, excludeUids)),
+      PROBE_TTL_MS
+    );
+    candidateCaches.set(key, cache);
+  }
+  return cache.get();
+}
+
+export function resetProbeCandidates(): void {
+  candidateCaches.clear();
 }
 
 /** First candidate (in priority order) whose probe confirms data; probe errors read as no data. */

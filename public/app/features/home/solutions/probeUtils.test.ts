@@ -5,8 +5,10 @@ import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import {
   filterHealthyDatasources,
   findDatasourceWithData,
+  healthyProbeCandidates,
   listProbeCandidates,
   MAX_PROBED_DATASOURCES,
+  resetProbeCandidates,
   withTimeout,
 } from './probeUtils';
 
@@ -181,6 +183,38 @@ describe('filterHealthyDatasources', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+});
+
+describe('healthyProbeCandidates', () => {
+  beforeEach(() => {
+    resetProbeCandidates();
+    getDataSourceInstanceListMock.mockReset();
+    healthGetMock.mockReset();
+    healthGetMock.mockResolvedValue({ status: 'OK' });
+    jest.mocked(getBackendSrv).mockReturnValue({ get: healthGetMock } as unknown as BackendSrv);
+  });
+
+  it('shares listing and health checks for equivalent candidate pools', async () => {
+    getDataSourceInstanceListMock.mockResolvedValue([listItem({ uid: 'product', name: 'product' })]);
+
+    const [first, second] = await Promise.all([
+      healthyProbeCandidates('prometheus', new Set(['utility'])),
+      healthyProbeCandidates('prometheus', new Set(['utility'])),
+    ]);
+
+    expect(first).toEqual(second);
+    expect(getDataSourceInstanceListMock).toHaveBeenCalledTimes(1);
+    expect(healthGetMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps differently filtered candidate pools independent', async () => {
+    getDataSourceInstanceListMock.mockResolvedValue([listItem({ uid: 'product', name: 'product' })]);
+
+    await healthyProbeCandidates('prometheus', new Set(['first']));
+    await healthyProbeCandidates('prometheus', new Set(['second']));
+
+    expect(getDataSourceInstanceListMock).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -56,6 +56,12 @@ function setDataSources(list: Array<{ uid: string; name: string; isDefault?: boo
   mockGetDataSourceInstanceList.mockResolvedValue(list.map(createPrometheusListItem));
 }
 
+async function resolveRequiredDatasource(): Promise<DataSourceInstanceListItem> {
+  const datasource = await resolveKubernetesDatasource();
+  expect(datasource).not.toBeNull();
+  return datasource!;
+}
+
 // uid -> namespace/cluster count the datasource reports; absent uid = no Kubernetes data there.
 let dataByUid: Record<string, number>;
 // Probe queries against these uids emit LoadingState.Error (unreachable/erroring datasource).
@@ -165,8 +171,9 @@ describe('Kubernetes Prometheus resolution', () => {
     ]);
     dataByUid = { 'default-uid': 3, 'k8s-uid': 2 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    const inventory = await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     expect(inventoryCalls()[0][0].datasource.uid).toBe('k8s-uid');
     expect(inventory.clusters).toBeGreaterThan(0);
@@ -176,8 +183,9 @@ describe('Kubernetes Prometheus resolution', () => {
     setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
     dataByUid = { 'k8s-uid': 2 };
 
-    await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     const [inventory] = inventoryCalls();
     const inventoryExprs = Object.fromEntries(inventory[0].queries.map((q) => [q.refId, q.expr]));
@@ -205,10 +213,11 @@ describe('Kubernetes Prometheus resolution', () => {
     dataByUid = { 'k8s-uid': 2 };
     valuesByRefId = { restarts1h: 0.0003 };
 
-    expect((await fetchKubernetesHealth()).restarts1h).toBe(0);
+    const datasource = await resolveRequiredDatasource();
+    expect((await fetchKubernetesHealth(datasource)).restarts1h).toBe(0);
 
     valuesByRefId = { restarts1h: 0.98 };
-    expect((await fetchKubernetesHealth()).restarts1h).toBe(1);
+    expect((await fetchKubernetesHealth(datasource)).restarts1h).toBe(1);
   });
 
   it('skips a default datasource without namespace data for a sibling that has it', async () => {
@@ -218,8 +227,9 @@ describe('Kubernetes Prometheus resolution', () => {
     ]);
     dataByUid = { 'team-uid': 1 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    const inventory = await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     expect(inventory.clusters).toBe(1);
     expect(inventoryCalls()[0][0].datasource.uid).toBe('team-uid');
@@ -237,7 +247,8 @@ describe('Kubernetes Prometheus resolution', () => {
       url.includes('default-uid') ? { status: 'ERROR' } : { status: 'OK' }
     );
 
-    const inventory = await fetchKubernetesInventory();
+    const datasource = await resolveRequiredDatasource();
+    const inventory = await fetchKubernetesInventory(datasource);
 
     expect(inventoryCalls()[0][0].datasource.uid).toBe('team-uid');
     expect(inventory.clusters).toBe(1);
@@ -253,8 +264,9 @@ describe('Kubernetes Prometheus resolution', () => {
     ]);
     dataByUid = { 'alpha-uid': 2, 'beta-uid': 7 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    const inventory = await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     expect(inventoryCalls()[0][0].datasource.uid).toBe('alpha-uid');
     expect(inventory.clusters).toBe(2);
@@ -268,20 +280,21 @@ describe('Kubernetes Prometheus resolution', () => {
     ]);
     dataByUid = { 'default-uid': 4 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    const inventory = await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     expect(inventoryCalls()[0][0].datasource.uid).toBe('default-uid');
     expect(inventory.clusters).toBe(4);
   });
 
-  it('rejects when no datasource has Kubernetes data, and never runs inventory or health queries', async () => {
+  it('resolves null when no datasource has Kubernetes data, and never runs inventory or health queries', async () => {
     setDataSources([
       { uid: 'a-uid', name: 'a-prom' },
       { uid: 'b-uid', name: 'b-prom' },
     ]);
 
-    await expect(fetchKubernetesInventory()).rejects.toThrow('No Prometheus datasource with Kubernetes data');
+    await expect(resolveKubernetesDatasource()).resolves.toBeNull();
     expect(inventoryCalls()).toHaveLength(0);
     expect(healthCalls()).toHaveLength(0);
   });
@@ -294,8 +307,9 @@ describe('Kubernetes Prometheus resolution', () => {
     ]);
     dataByUid = { 'usage-uid': 9, 'ml-uid': 9, 'team-uid': 2 };
 
-    await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     expect(inventoryCalls()[0][0].datasource.uid).toBe('team-uid');
     const probedUids = probeCalls().map(([o]) => o.datasource.uid);
@@ -307,7 +321,7 @@ describe('Kubernetes Prometheus resolution', () => {
     setDataSources([{ uid: 'usage-uid', name: 'grafanacloud-usage' }]);
     dataByUid = { 'usage-uid': 1 };
 
-    await expect(fetchKubernetesInventory()).rejects.toThrow('No Prometheus datasource with Kubernetes data');
+    await expect(resolveKubernetesDatasource()).resolves.toBeNull();
     expect(probeCalls()).toHaveLength(0);
   });
 
@@ -318,8 +332,9 @@ describe('Kubernetes Prometheus resolution', () => {
     ]);
     dataByUid = { a: 1, b: 1 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    const inventory = await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     // Substring matching would demote 'cpu-usage-prom'; exact-match leaves this default in place.
     expect(inventoryCalls()[0][0].datasource.uid).toBe('a');
@@ -336,8 +351,9 @@ describe('Kubernetes Prometheus resolution', () => {
     ]);
     dataByUid = { 'default-uid': 2 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    const inventory = await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     expect(inventoryCalls()[0][0].datasource.uid).toBe('default-uid');
     expect(inventory.clusters).toBe(2);
@@ -347,7 +363,7 @@ describe('Kubernetes Prometheus resolution', () => {
   it('rejects and queries nothing when there are no datasources', async () => {
     setDataSources([]);
 
-    await expect(fetchKubernetesInventory()).rejects.toThrow('No Prometheus datasource with Kubernetes data');
+    await expect(resolveKubernetesDatasource()).resolves.toBeNull();
     expect(run).not.toHaveBeenCalled();
   });
 
@@ -355,8 +371,9 @@ describe('Kubernetes Prometheus resolution', () => {
     setDataSources([{ uid: 'only-uid', name: 'only-prom' }]);
     dataByUid = { 'only-uid': 1 };
 
-    await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     const filters = mockGetDataSourceInstanceList.mock.calls[0][0];
     expect(filters?.type).toBe('prometheus');
@@ -384,18 +401,24 @@ describe('Kubernetes Prometheus resolution', () => {
     ).toBe(true);
   });
 
-  it('shares one resolution across concurrent fetchers; a missing cpu metric returns null', async () => {
+  it('shares one resolution across concurrent callers and passes the result to each fetcher', async () => {
     setDataSources([{ uid: 'only-uid', name: 'only-prom' }]);
     dataByUid = { 'only-uid': 1 };
 
-    await Promise.all([
+    const resolved = await Promise.all([
       resolveKubernetesDatasource(),
-      fetchKubernetesInventory(),
-      fetchKubernetesHealth(),
-      fetchClusterCpuSeries(),
+      resolveKubernetesDatasource(),
+      resolveKubernetesDatasource(),
+    ]);
+    const datasource = resolved[0]!;
+    await Promise.all([
+      fetchKubernetesInventory(datasource),
+      fetchKubernetesHealth(datasource),
+      fetchClusterCpuSeries(datasource),
     ]);
 
     expect(probeCalls()).toHaveLength(1);
+    expect(resolved).toEqual([datasource, datasource, datasource]);
     expect(inventoryCalls()).toHaveLength(1);
     expect(healthCalls()).toHaveLength(1);
     expect(cpuCalls()[0][0].datasource.uid).toBe('only-uid');
@@ -408,13 +431,15 @@ describe('Kubernetes Prometheus resolution', () => {
       setDataSources([{ uid: 'only-uid', name: 'only-prom' }]);
       dataByUid = { 'only-uid': 1 };
 
-      await fetchKubernetesInventory();
-      await fetchKubernetesHealth();
+      const first = await resolveRequiredDatasource();
+      await fetchKubernetesInventory(first);
+      await fetchKubernetesHealth(first);
       expect(probeCalls()).toHaveLength(1);
 
       nowSpy.mockReturnValue(61_000); // past RESOLUTION_TTL_MS
-      await fetchKubernetesInventory();
-      await fetchKubernetesHealth();
+      const second = await resolveRequiredDatasource();
+      await fetchKubernetesInventory(second);
+      await fetchKubernetesHealth(second);
 
       expect(probeCalls()).toHaveLength(2);
     } finally {
@@ -426,7 +451,7 @@ describe('Kubernetes Prometheus resolution', () => {
     setDataSources(Array.from({ length: 11 }, (_, i) => ({ uid: `p${i + 1}-uid`, name: `p${i + 1}` })));
     dataByUid = { 'p11-uid': 1 };
 
-    await expect(fetchKubernetesInventory()).rejects.toThrow('No Prometheus datasource with Kubernetes data');
+    await expect(resolveKubernetesDatasource()).resolves.toBeNull();
     expect(probeCalls()).toHaveLength(10);
   });
 
@@ -435,8 +460,9 @@ describe('Kubernetes Prometheus resolution', () => {
     setDataSources(Array.from({ length: 11 }, (_, i) => ({ uid: `p${i + 1}-uid`, name: `p${i + 1}` })));
     dataByUid = { 'p11-uid': 1 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    const inventory = await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     expect(inventoryCalls()[0][0].datasource.uid).toBe('p11-uid');
     expect(inventory.clusters).toBe(1);
@@ -448,8 +474,9 @@ describe('Kubernetes Prometheus resolution', () => {
     );
     dataByUid = { 'p11-uid': 1 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    const inventory = await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     expect(inventoryCalls()[0][0].datasource.uid).toBe('p11-uid');
     expect(inventory.clusters).toBe(1);
@@ -465,11 +492,11 @@ describe('Kubernetes Prometheus resolution', () => {
 
     jest.useFakeTimers();
     try {
-      const inventoryPromise = fetchKubernetesInventory();
-      const healthPromise = fetchKubernetesHealth();
+      const datasourcePromise = resolveRequiredDatasource();
       await jest.advanceTimersByTimeAsync(10_000);
-      const inventory = await inventoryPromise;
-      await healthPromise;
+      const datasource = await datasourcePromise;
+      const inventory = await fetchKubernetesInventory(datasource);
+      await fetchKubernetesHealth(datasource);
 
       expect(inventoryCalls()[0][0].datasource.uid).toBe('team-uid');
       expect(inventory.clusters).toBe(1);
@@ -486,8 +513,9 @@ describe('Kubernetes Prometheus resolution', () => {
     dataByUid = { 'default-uid': 5, 'team-uid': 1 };
     probeFailuresByUid = { 'default-uid': 1 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
+    const datasource = await resolveRequiredDatasource();
+    const inventory = await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
 
     expect(inventoryCalls()[0][0].datasource.uid).toBe('team-uid');
     expect(inventory.clusters).toBe(1);
@@ -495,7 +523,7 @@ describe('Kubernetes Prometheus resolution', () => {
     expect(probeAttempts).toEqual({ 'default-uid': 1, 'team-uid': 1 });
   });
 
-  it('rejects when every probe errors', async () => {
+  it('resolves null when every probe errors', async () => {
     setDataSources([
       { uid: 'a-uid', name: 'a-prom' },
       { uid: 'b-uid', name: 'b-prom' },
@@ -503,7 +531,7 @@ describe('Kubernetes Prometheus resolution', () => {
     dataByUid = { 'a-uid': 3, 'b-uid': 3 };
     probeErrorUids = new Set(['a-uid', 'b-uid']);
 
-    await expect(fetchKubernetesInventory()).rejects.toThrow('No Prometheus datasource with Kubernetes data');
+    await expect(resolveKubernetesDatasource()).resolves.toBeNull();
     expect(inventoryCalls()).toHaveLength(0);
   });
 
@@ -512,16 +540,16 @@ describe('Kubernetes Prometheus resolution', () => {
 
     jest.useFakeTimers();
     try {
-      const failing = fetchKubernetesInventory();
+      const failing = resolveKubernetesDatasource();
       failing.catch(() => {}); // keep the rejection handled while timers advance
       await jest.advanceTimersByTimeAsync(10_000);
       await expect(failing).rejects.toThrow('list down');
 
       setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]); // replaces the rejecting mock impl
       dataByUid = { 'k8s-uid': 2 };
-      const promise = fetchKubernetesInventory();
+      const promise = resolveRequiredDatasource();
       await jest.advanceTimersByTimeAsync(10_000);
-      expect((await promise).clusters).toBe(2);
+      expect((await promise).uid).toBe('k8s-uid');
     } finally {
       jest.useRealTimers();
     }
@@ -532,7 +560,8 @@ describe('Kubernetes Prometheus resolution', () => {
     dataByUid = { 'k8s-uid': 2 };
     queryErrorRefIds = new Set(['clusters']);
 
-    await expect(fetchKubernetesInventory()).rejects.toThrow('Prometheus query failed');
+    const datasource = await resolveRequiredDatasource();
+    await expect(fetchKubernetesInventory(datasource)).rejects.toThrow('Prometheus query failed');
     // Pin the scenario: the pods frame really survived and was discarded — not an empty error.
     expect(lastErrorData?.series.map((f) => f.refId)).toEqual(['pods']);
     expect(inventoryCalls()).toHaveLength(1);
@@ -544,7 +573,8 @@ describe('Kubernetes Prometheus resolution', () => {
     setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
     dataByUid = { 'k8s-uid': 2 };
     try {
-      await fetchKubernetesHealth();
+      const datasource = await resolveRequiredDatasource();
+      await fetchKubernetesHealth(datasource);
       const [health] = healthCalls();
       const alertsExpr = health[0].queries.find((q) => q.refId === 'alertsFiring')?.expr;
       expect(alertsExpr).toBe(
@@ -562,7 +592,8 @@ describe('Kubernetes Prometheus resolution', () => {
     dataByUid = { 'k8s-uid': 2, 'ash-uid': 1 };
     valuesByRefId = { alertsFiring: 1, grafanaAlertsFiring: 2 };
     try {
-      const health = await fetchKubernetesHealth();
+      const datasource = await resolveRequiredDatasource();
+      const health = await fetchKubernetesHealth(datasource);
       const ashCalls = (run.mock.calls as RunCall[]).filter(([o]) => o.datasource.uid === 'ash-uid');
       expect(ashCalls).toHaveLength(1);
       expect(ashCalls[0][0].queries).toEqual([
@@ -592,7 +623,8 @@ describe('Kubernetes Prometheus resolution', () => {
     queryErrorRefIds = new Set(['grafanaAlertsFiring']);
     jest.useFakeTimers();
     try {
-      const promise = fetchKubernetesHealth();
+      const datasource = await resolveRequiredDatasource();
+      const promise = fetchKubernetesHealth(datasource);
       await jest.advanceTimersByTimeAsync(10_000);
       const health = await promise;
       expect(health.alertsFiring).toBe(1);
@@ -612,9 +644,10 @@ describe('Kubernetes Prometheus resolution', () => {
 
     jest.useFakeTimers();
     try {
-      const promise = fetchKubernetesInventory();
+      const datasourcePromise = resolveRequiredDatasource();
       await jest.advanceTimersByTimeAsync(60_000);
-      const inventory = await promise;
+      const datasource = await datasourcePromise;
+      const inventory = await fetchKubernetesInventory(datasource);
       expect(inventory.clusters).toBe(1);
       expect(inventoryCalls()[0][0].datasource.uid).toBe('team-uid');
     } finally {
@@ -622,10 +655,10 @@ describe('Kubernetes Prometheus resolution', () => {
     }
   });
 
-  it('rejects from fetchClusterCpuSeries when no datasource has Kubernetes data', async () => {
+  it('does not run the CPU query when no datasource has Kubernetes data', async () => {
     setDataSources([{ uid: 'only-uid', name: 'only-prom' }]);
 
-    await expect(fetchClusterCpuSeries()).rejects.toThrow('No Prometheus datasource with Kubernetes data');
+    await expect(resolveKubernetesDatasource()).resolves.toBeNull();
     expect(cpuCalls()).toHaveLength(0);
   });
 });
