@@ -1,6 +1,6 @@
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Icon, Stack, TextLink, Text } from '@grafana/ui';
+import { Alert, Box, Icon, LinkButton, Stack, TextLink, Text } from '@grafana/ui';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
@@ -16,7 +16,7 @@ interface Props {
   behindBranch?: boolean;
   repoUrl?: string;
   branchInfo?: PreviewBranchInfo;
-  /* URL of the original version saved in Grafana, if the resource already exists. Shown as a link to go back to it. */
+  /* URL of the version currently saved in Grafana, if the resource already exists. Offered as an action next to the pull request button. */
   originalUrl?: string;
 }
 
@@ -99,13 +99,23 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
     <Alert
       {...commonAlertProps}
       title={actionText.title}
-      buttonContent={
-        <Stack alignItems="center">
-          {actionText.button}
-          <Icon name="external-link-alt" />
+      // Both actions are rendered here rather than through buttonContent/onRemove, because Alert
+      // hardcodes buttonContent to variant="secondary" and the pull request is the primary action.
+      // Links (not buttons with onClick) so either can be opened in a new tab to compare versions.
+      action={
+        <Stack alignItems="center" wrap="wrap">
+          {originalUrl && (
+            <LinkButton href={originalUrl} variant="secondary" icon="arrow-left">
+              {t('provisioned-resource-preview-banner.preview-banner.view-saved-version', 'View saved version')}
+            </LinkButton>
+          )}
+          {linkUrl && (
+            <LinkButton href={linkUrl} target="_blank" variant="primary" icon="external-link-alt" iconPlacement="right">
+              {actionText.button}
+            </LinkButton>
+          )}
         </Stack>
       }
-      onRemove={linkUrl ? () => window.open(textUtil.sanitizeUrl(linkUrl), '_blank') : undefined}
     >
       {actionText.body}
 
@@ -117,18 +127,6 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
           <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.targetBranch} repoType={repoType} />
           {'\u2192'} {/* Target branch (configured branch) */}
           <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.configuredBranch} repoType={repoType} />
-        </Box>
-      )}
-
-      {/* when the resource already exists in Grafana, offer a way back to the original version */}
-      {originalUrl && (
-        <Box marginTop={1}>
-          <TextLink href={originalUrl}>
-            {t(
-              'provisioned-resource-preview-banner.preview-banner.go-back-to-original',
-              'Go back to the original version'
-            )}
-          </TextLink>
         </Box>
       )}
     </Alert>

@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { textUtil } from '@grafana/data';
@@ -60,16 +59,6 @@ function setup(
 }
 
 describe('PreviewBannerViewPR', () => {
-  let windowOpenSpy: jest.SpyInstance;
-
-  beforeAll(() => {
-    Object.defineProperty(window, 'open', {
-      writable: true,
-      value: jest.fn(),
-    });
-    windowOpenSpy = jest.spyOn(window, 'open');
-  });
-
   beforeEach(() => {
     jest.clearAllMocks();
     mockTextUtil.sanitizeUrl.mockImplementation((url) => url);
@@ -77,10 +66,6 @@ describe('PreviewBannerViewPR', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-  });
-
-  afterAll(() => {
-    windowOpenSpy.mockRestore();
   });
 
   describe('Dashboard scenarios', () => {
@@ -147,11 +132,11 @@ describe('PreviewBannerViewPR', () => {
     });
   });
 
-  describe('Original resource link', () => {
-    it('should render a link back to the original version when originalUrl is provided', () => {
+  describe('Saved version action', () => {
+    it('should render a link to the saved version when originalUrl is provided', () => {
       setup({ prURL: 'test-url', isNewPr: false, originalUrl: '/d/original-uid' });
 
-      const link = screen.getByRole('link', { name: 'Go back to the original version' });
+      const link = screen.getByRole('link', { name: 'View saved version' });
       expect(link).toBeInTheDocument();
       expect(link).toHaveAttribute('href', '/d/original-uid');
     });
@@ -159,19 +144,18 @@ describe('PreviewBannerViewPR', () => {
     it('should not render the link when originalUrl is not provided', () => {
       setup({ prURL: 'test-url', isNewPr: false });
 
-      expect(screen.queryByRole('link', { name: 'Go back to the original version' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'View saved version' })).not.toBeInTheDocument();
     });
   });
 
   describe('Button functionality', () => {
-    it('should open URL in new tab when button is clicked', async () => {
+    it('should link to the pull request URL in a new tab', () => {
       const testUrl = 'https://GitHub.com/test/repo/pull/123';
       setup({ prURL: testUrl });
 
-      const button = screen.getByRole('button', { name: /close alert/i });
-      await userEvent.click(button);
-
-      expect(windowOpenSpy).toHaveBeenCalledWith(testUrl, '_blank');
+      const link = screen.getByRole('link', { name: /pull request in GitHub/i });
+      expect(link).toHaveAttribute('href', testUrl);
+      expect(link).toHaveAttribute('target', '_blank');
     });
   });
 
@@ -226,32 +210,29 @@ describe('PreviewBannerViewPR', () => {
   describe('PR title prefill', () => {
     const githubPrURL = 'https://github.com/org/repo/compare/main...feature?quick_pull=1&labels=grafana';
 
-    it('appends an encoded title param to a GitHub PR URL when pr_title is present', async () => {
+    it('appends an encoded title param to a GitHub PR URL when pr_title is present', () => {
       setup({ prURL: githubPrURL, repoType: 'github', prTitle: 'update: My Dashboard' });
 
-      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
-
-      expect(windowOpenSpy).toHaveBeenCalledWith(`${githubPrURL}&title=update%3A%20My%20Dashboard`, '_blank');
-    });
-
-    it('uses merge_request[title] for GitLab', async () => {
-      const gitlabPrURL = 'https://gitlab.com/org/repo/-/merge_requests/new?merge_request[source_branch]=feature';
-      setup({ prURL: gitlabPrURL, repoType: 'gitlab', prTitle: 'update: My Dashboard' });
-
-      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
-
-      expect(windowOpenSpy).toHaveBeenCalledWith(
-        `${gitlabPrURL}&merge_request[title]=update%3A%20My%20Dashboard`,
-        '_blank'
+      expect(screen.getByRole('link', { name: /pull request in GitHub/i })).toHaveAttribute(
+        'href',
+        `${githubPrURL}&title=update%3A%20My%20Dashboard`
       );
     });
 
-    it('leaves the PR URL unchanged when no pr_title is present', async () => {
+    it('uses merge_request[title] for GitLab', () => {
+      const gitlabPrURL = 'https://gitlab.com/org/repo/-/merge_requests/new?merge_request[source_branch]=feature';
+      setup({ prURL: gitlabPrURL, repoType: 'gitlab', prTitle: 'update: My Dashboard' });
+
+      expect(screen.getByRole('link', { name: /pull request in GitLab/i })).toHaveAttribute(
+        'href',
+        `${gitlabPrURL}&merge_request[title]=update%3A%20My%20Dashboard`
+      );
+    });
+
+    it('leaves the PR URL unchanged when no pr_title is present', () => {
       setup({ prURL: githubPrURL, repoType: 'github' });
 
-      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
-
-      expect(windowOpenSpy).toHaveBeenCalledWith(githubPrURL, '_blank');
+      expect(screen.getByRole('link', { name: /pull request in GitHub/i })).toHaveAttribute('href', githubPrURL);
     });
   });
 });
