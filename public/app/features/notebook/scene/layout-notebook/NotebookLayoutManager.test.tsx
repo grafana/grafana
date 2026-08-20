@@ -523,6 +523,19 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1].state.source).toBe('user');
     });
 
+    // The divider after the trailing empty cell is offering to insert *past* it — converting that
+    // cell in place (like its own "/" menu already does) instead of leaving it stranded next to a
+    // fresh cell once the invariant appends a new trailing slot after the conversion.
+    it('converts the trailing cell in place when the divider inserts past it, instead of leaving it behind', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+      const dividers = screen.getAllByRole('button', { name: 'Add block' });
+
+      await pickCode(user, dividers[dividers.length - 1]);
+
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1', 'paragraph-2']);
+      expect(manager.state.cells[2].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
+    });
+
     it('inserts above the first cell from the leading divider', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
@@ -982,6 +995,23 @@ describe('NotebookLayoutManager', () => {
 
       history.redo();
       expect(manager.state.cells[1]).toBe(added);
+    });
+
+    // Enter's "split into a new block" gesture. Undoing only removes the split-off cell here — the
+    // original cell's own text truncation is a separate, earlier "Edit block" step (see setCellContent),
+    // the same way duplicateCell's insert is its own step distinct from any edit before it.
+    it('undoes and redoes a split (insertCellAfter)', () => {
+      const cells = buildNarrativeCells(['a']);
+      const { manager, history } = withHistory(cells);
+
+      const created = manager.insertCellAfter(cells[0]);
+      expect(cellNames(manager)).toEqual(['a', created?.state.elementName]);
+
+      history.undo();
+      expect(cellNames(manager)).toEqual(['a']);
+
+      history.redo();
+      expect(manager.state.cells[1]).toBe(created);
     });
 
     it('undoes and redoes a move', () => {

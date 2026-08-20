@@ -12903,6 +12903,7 @@
       "move-block": "Move block",
       "redo": "Redo",
       "redo-action": "Redo: {{action}}",
+      "split-block": "Split block",
       "undo": "Undo",
       "undo-action": "Undo: {{action}}"
     },

@@ -24,9 +24,12 @@ import {
 // Same rationale as CodeCell's EDIT_SETUP: reading a notebook should look like reading a document,
 // so gutters/line numbers stay off. There is no read-only counterpart here — unlike CodeCell, the
 // not-editing case below never mounts CodeMirror at all, so this is the only setup this cell needs.
+// history: false for the same reason as CodeCell's — Cmd+Z belongs to NotebookEditHistory, not to a
+// second, independent undo stack CodeMirror would otherwise keep of its own.
 const EDIT_SETUP = {
   lineNumbers: false,
   foldGutter: false,
+  history: false,
 };
 
 interface Props {

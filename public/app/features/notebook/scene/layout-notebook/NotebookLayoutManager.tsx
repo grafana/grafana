@@ -332,6 +332,20 @@ export class NotebookLayoutManager
    * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
    */
   public addCell = (type: NotebookBlockType, index: number): NotebookCellItem | undefined => {
+    const content = contentForBlockType(type);
+    if (!content) {
+      return undefined;
+    }
+
+    // Appending past the current last cell while it's still the empty invariant slot: convert it in
+    // place, the same path its own "/" menu already uses, rather than stranding it mid-document next
+    // to a second, freshly built cell once the invariant appends its replacement.
+    const trailing = this.state.cells.at(-1);
+    if (index >= this.state.cells.length && trailing && isEmptyMarkdown(trailing.state.content)) {
+      this.convertCell(trailing, type);
+      return trailing;
+    }
+
     const built = this.buildCellFor(type, index);
     if (!built) {
       return undefined;
@@ -414,9 +428,11 @@ export class NotebookLayoutManager
       content: content ?? defaultMarkdownCellContentKind(),
     });
 
-    const cells = [...this.state.cells];
-    cells.splice(index + 1, 0, cell);
-    this.setState({ cells });
+    this.executeEdit({
+      label: t('notebooks.history.split-block', 'Split block'),
+      perform: () => this.insertCell(cell, index + 1),
+      undo: () => this.removeCellInstance(cell),
+    });
 
     return cell;
   }

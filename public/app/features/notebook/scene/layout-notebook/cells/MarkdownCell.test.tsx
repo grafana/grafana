@@ -12,11 +12,13 @@ jest.mock('@grafana/ui/unstable', () => {
     ...jest.requireActual('@grafana/ui/unstable'),
     CodeMirrorEditor: ({
       value,
+      basicSetup,
       extensions,
       onChange,
       'aria-label': ariaLabel,
     }: {
       value: string;
+      basicSetup?: { history?: boolean };
       extensions?: unknown[];
       onChange: (value: string) => void;
       'aria-label'?: string;
@@ -32,7 +34,15 @@ jest.mock('@grafana/ui/unstable', () => {
         return () => cancelAnimationFrame(frame);
       }, [extensions]);
 
-      return <textarea ref={ref} aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)} />;
+      return (
+        <textarea
+          ref={ref}
+          aria-label={ariaLabel}
+          value={value}
+          data-native-history={basicSetup?.history === false ? 'disabled' : 'enabled'}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      );
     },
   };
 });
@@ -62,6 +72,12 @@ describe('MarkdownCell', () => {
 
     expect(screen.getByLabelText('Markdown')).toBeInTheDocument();
     expect(screen.queryByText('bold')).not.toBeInTheDocument();
+  });
+
+  it('uses notebook history instead of a separate CodeMirror history', () => {
+    render(<MarkdownCell content={content} isEditing={true} onChange={jest.fn()} />);
+
+    expect(screen.getByLabelText('Markdown')).toHaveAttribute('data-native-history', 'disabled');
   });
 
   it('reports edits back as markdown content', async () => {
