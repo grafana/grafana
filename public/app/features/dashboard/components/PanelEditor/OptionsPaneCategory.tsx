@@ -60,9 +60,9 @@ export const OptionsPaneCategory = React.memo(
       isExpanded: isOpenDefault,
     });
 
-    const isSavedAsExpanded = forceOpen || (savedState?.isExpanded ?? isOpenDefault);
+    const isSavedAsExpanded = savedState?.isExpanded ?? isOpenDefault;
     // collapse if there are explicitly no items
-    const isExpandedInitialValue = isSavedAsExpanded && (itemsCount === undefined || itemsCount > 0);
+    const isExpandedInitialValue = forceOpen || (isSavedAsExpanded && (itemsCount === undefined || itemsCount > 0));
 
     const [isExpanded, setIsExpanded] = useState(isExpandedInitialValue);
     const [isHighlighted, setIsHighlighted] = useState(false);
