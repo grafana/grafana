@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/go-github/v82/github"
 	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
@@ -55,7 +56,7 @@ func translateGitHubError(err error) error {
 		// 403 - Permission denied
 		// Special case: rate limit gets additional context
 		if strings.Contains(strings.ToLower(ghMessage), "rate limit") {
-			return fmt.Errorf("API rate limit exceeded: %w", repo.ErrPermissionDenied)
+			return fmt.Errorf("API rate limit exceeded: %w", repo.ErrTooManyRequests)
 		}
 		return repo.ErrPermissionDenied
 
@@ -114,9 +115,10 @@ func formatGitHubErrorDetails(errs []github.Error) string {
 }
 
 const (
-	maxCommits  = 1000 // Maximum number of commits to fetch
-	maxWebhooks = 100  // Maximum number of webhooks allowed per repository
-	maxPRFiles  = 1000 // Maximum number of files allowed in a pull request
+	maxCommits      = 1000 // Maximum number of commits to fetch
+	maxWebhooks     = 100  // Maximum number of webhooks allowed per repository
+	maxPRFiles      = 1000 // Maximum number of files allowed in a pull request
+	maxRepositories = 1000 // Maximum number of repositories returned by a listing
 )
 
 func (r *githubClient) GetBranchProtection(ctx context.Context, branch string) (*BranchProtection, error) {
@@ -267,6 +269,41 @@ func (r *githubClient) GetRepository(ctx context.Context) (Repository, error) {
 		Name:          repo.GetName(),
 		DefaultBranch: repo.GetDefaultBranch(),
 	}, nil
+}
+
+// ListRepositories returns the repositories accessible to the authenticated
+// user, up to maxRepositories.
+func (r *githubClient) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
+	opts := &github.RepositoryListByAuthenticatedUserOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+
+	var result []provisioning.ExternalRepository
+	for {
+		repos, resp, err := r.gh.Repositories.ListByAuthenticatedUser(ctx, opts)
+		if err != nil {
+			return nil, translateGitHubError(err)
+		}
+
+		for _, repo := range repos {
+			result = append(result, provisioning.ExternalRepository{
+				Name:  repo.GetName(),
+				Owner: repo.GetOwner().GetLogin(),
+				URL:   repo.GetHTMLURL(),
+			})
+		}
+
+		if len(result) >= maxRepositories {
+			return result[:maxRepositories], nil
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return result, nil
 }
 
 // Commits returns a list of commits for a given repository and branch.

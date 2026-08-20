@@ -6,6 +6,7 @@ import {
   type DataTransformContext,
   type DataTransformerConfig,
   type PanelPlugin,
+  type ResolvedSystemTransformations,
   transformDataFrame,
 } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -23,11 +24,11 @@ import {
 import { DataTopic } from '@grafana/schema';
 import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
-import { NO_SYSTEM_TRANSFORMATIONS, type ResolvedSystemTransformations } from './systemTransformations';
+import { NO_SYSTEM_TRANSFORMATIONS } from './systemTransformations';
 
 /**
  * A panel's data transformer, which additionally runs the transformations the panel's plugin
- * registered via `PanelPlugin.setDataTransformations`.
+ * registered via `PanelPlugin.setSystemTransformations`.
  *
  * State holds one wrapper operator per position, tagged `origin: 'plugin'`, not the plugin's configs
  * — those are resolved per emission by {@link getResolvedSystemTransformations}.
@@ -74,7 +75,7 @@ export class PanelDataTransformer extends SceneDataTransformer {
       return this._resolved.result;
     }
 
-    const { prepend, append } = plugin.getDataTransformations({ series });
+    const { prepend, append } = plugin.getSystemTransformations({ series });
     const result: ResolvedSystemTransformations =
       prepend.length === 0 && append.length === 0
         ? NO_SYSTEM_TRANSFORMATIONS
@@ -85,6 +86,22 @@ export class PanelDataTransformer extends SceneDataTransformer {
     return result;
   }
 
+  /**
+   * Whether the plugin's transformations change anything about the data as it stands. Not the same
+   * question as whether the wrappers are installed: those go in for every plugin that registers a
+   * supplier, and a supplier is free to resolve to nothing for a given set of frames.
+   *
+   * Resolves against the source frames itself rather than taking them, because a caller asking this
+   * is asking about the panel, not about frames it holds.
+   *
+   * @internal
+   */
+  public hasResolvedSystemTransformations(): boolean {
+    const { prepend, append } = this.getResolvedSystemTransformations(this._sourceSeries());
+
+    return prepend.length > 0 || append.length > 0;
+  }
+
   private _runPrependedTransformations: CustomTransformOperator = (ctx) => (source) =>
     source.pipe(switchMap((frames) => this._applySystemTransformations('prepend', frames, ctx)));
 
@@ -93,7 +110,7 @@ export class PanelDataTransformer extends SceneDataTransformer {
 
   /**
    * Resolves against the *source* frames, not the operator's own input: the appended operator is
-   * handed the user's output, and `PanelDataTransformationsContext.series` is documented as the query
+   * handed the user's output, and `SystemTransformationsContext.series` is documented as the query
    * result. Reading the input would hand the supplier two different views in a single pass.
    */
   private _applySystemTransformations(
@@ -186,7 +203,7 @@ export class PanelDataTransformer extends SceneDataTransformer {
   }
 
   private _installSystemTransformations(plugin: PanelPlugin) {
-    const shouldInstall = pluginTransformationsEnabled() && plugin.hasDataTransformations();
+    const shouldInstall = pluginTransformationsEnabled() && plugin.hasSystemTransformations();
     const nextPlugin = shouldInstall ? plugin : undefined;
     // Scoped to this origin: `isSystemTransformation` matches every runtime entry, and
     // `setSystemTransformations` replaces one origin at a time, so counting another provider's

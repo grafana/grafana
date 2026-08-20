@@ -15,6 +15,8 @@ import { InspectTab } from 'app/features/inspector/types';
 import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { InspectDataTab as InspectDataTabOld } from '../../inspector/InspectDataTab';
+import { PanelDataTransformer } from '../scene/PanelDataTransformer';
+import { getUserTransformations } from '../scene/systemTransformations';
 
 export interface InspectDataTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -77,13 +79,20 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
   );
 }
 
-/** Whether anything transforms this panel's data. */
+/**
+ * Whether anything transforms this panel's data, which is what decides if the toggle between the
+ * query result and the rendered frames is worth offering.
+ */
 function hasTransformations(dataProvider: SceneDataProvider) {
-  if (dataProvider instanceof SceneDataTransformer) {
-    return dataProvider.state.transformations.length > 0;
+  if (!(dataProvider instanceof SceneDataTransformer)) {
+    return false;
   }
 
-  return false;
+  if (getUserTransformations(dataProvider.state.transformations).length > 0) {
+    return true;
+  }
+
+  return dataProvider instanceof PanelDataTransformer && dataProvider.hasResolvedSystemTransformations();
 }
 
 function getDataProviderToSubscribeTo(dataProvider: SceneDataProvider, withTransforms: boolean) {

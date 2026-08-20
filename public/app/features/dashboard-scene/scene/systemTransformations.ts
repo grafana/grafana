@@ -1,23 +1,11 @@
-import { type CustomTransformOperator, type DataTransformerConfig } from '@grafana/data';
+import { type ResolvedSystemTransformations } from '@grafana/data';
 import { isSystemTransformation, type SceneDataTransformation } from '@grafana/scenes';
-
-/**
- * The transformations a panel's plugin requires for a given set of query result frames, in the form
- * `transformDataFrame` accepts and split by where each group runs.
- *
- * These are the resolved configs, not the wrapper operators that carry them through the pipeline:
- * the supplier is data dependent, so they only exist once frames are in hand.
- */
-export interface ResolvedSystemTransformations {
-  prepend: Array<DataTransformerConfig | CustomTransformOperator>;
-  append: Array<DataTransformerConfig | CustomTransformOperator>;
-}
 
 /**
  * Stable identity for "nothing registered", so consumers using these arrays as effect deps do not
  * churn on every render.
  */
-export const NO_SYSTEM_TRANSFORMATIONS: ResolvedSystemTransformations = {
+export const NO_SYSTEM_TRANSFORMATIONS: Readonly<ResolvedSystemTransformations> = {
   prepend: [],
   append: [],
 };

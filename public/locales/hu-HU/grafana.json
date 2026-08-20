@@ -1618,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Biztosan elindítja az importálást? Ez a művelet új erőforrásokat hoz létre a Grafana Alertingben.",
         "confirm": "Importálás indítása",
@@ -1676,26 +1665,6 @@
       "info-description": "Ez a varázsló segít a riasztási szabályok és az értesítési erőforrások külső forrásokból a Grafana Alertingbe történő importálásában. További információkért tekintse meg a <2>dokumentációt</2>.",
       "info-title": "Importálási varázsló",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Írjon be szöveget egy meglévő névtér kereséséhez",
         "label": "Névtér"
@@ -1719,10 +1688,6 @@
         "filter": "Szűrő",
         "folder": "Célmappa",
         "heading": "Importálás áttekintése",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Névtér",
         "nothing": "Nincs importálandó elem",
         "nothing-desc": "Mindkét lépés kihagyva. Lépjen vissza, és konfiguráljon legalább egy importálási forrást.",
@@ -1749,14 +1714,6 @@
         "validation-warning": "Az ütközések elkerülése érdekében bizonyos erőforrások át lesznek nevezve.",
         "will-import-config": "Ezt a konfigurációt fogja importálni",
         "will-import-rules": "Szabályokat fog importálni",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "{{count}} szabályt fog importálni",
         "will-import-rules-count_other": "{{count}} szabályt fog importálni"
       },
@@ -1868,14 +1825,10 @@
         "cancel-confirm-title": "Megszakítja az importálást?",
         "cancel-confirm-yes": "Módosítások elvetése",
         "skip": "Kihagyás",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Értesítési erőforrások",
         "step-notifications-desc": "Kapcsolattartási pontok, házirendek, sablonok",
         "step-review": "Áttekintés és importálás",
         "step-review-desc": "Importálás előnézete és megerősítése",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Riasztási szabályok",
         "step-rules-desc": "Riasztási és felvételkészítési szabályok"
       },
@@ -2259,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "Nem található riasztásképes lekérdezés"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Konfigurálja a némításokat, hogy leállítsa az értesítéseket egy adott riasztási szabályból"
@@ -2266,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Némítási riasztási szabály"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Nem találtunk külső riasztáskezelőket, és előfordulhat, hogy nincs hozzáférése a beépített Grafana riasztáskezelőhöz.",
@@ -3308,6 +3266,39 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3716,6 +3707,9 @@
       "no-matching-instances-with-filters": "Egyetlen riasztáspéldány sem felel meg az Ön aktuális szűrőkészletének a kiválasztott időtartományban.",
       "open-in-sidebar": "Megnyitás az oldalsávon",
       "open-rule-details": "Szabály részleteinek megnyitása",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Szabály részletei és feltételei",
         "title": "Szabály részletei"
@@ -3870,6 +3864,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Az erőforrások importálása nem sikerült",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Az erőforrások importálása a Grafana Alertingbe sikeresen megtörtént."
     },
     "yaml-content-info": {
@@ -5432,6 +5428,16 @@
     "auto-grid": {
       "description": "A panelek átméretezése, hogy illeszkedjenek és egységes rácsokat alkossanak",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Ismétlési beállítások",
           "variable": {
@@ -5449,15 +5455,36 @@
         "custom-min-width": {
           "clear": "Törlés"
         },
+        "fit-content": "",
         "height-fill": "Képernyő kitöltése",
+        "match-row-heights": "",
         "max-columns": "Max. oszlopszám",
-        "min-height": "Sormagasság",
-        "min-height-custom": "Egyéni sormagasság",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "50 és 2000 közötti számot kell megadni",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Min. oszlopszélesség",
         "min-width-custom": "Egyéni minimális szélesség",
         "min-width-custom-clear": "Vissza a szabványos minimális oszlopszélességre",
-        "min-width-error": "50 és 2000 közötti számot kell megadni"
+        "min-width-error": "50 és 2000 közötti számot kell megadni",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5690,6 +5717,7 @@
       "panel-background": "Panel hátterének módosítása",
       "panel-description": "Panel leírásának módosítása",
       "panel-edit": "Panelváltozások",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max. ismétlés soronként",
       "panel-preset": "Panelsablon alkalmazása",
       "panel-repeat-direction": "Ismétlési irány",
@@ -6067,6 +6095,7 @@
       "new-row-title": "Új sor",
       "row": {
         "collapse": "A(z) {{title}} sor összecsukása",
+        "copy-link": "",
         "expand": "A(z) {{title}} sor kibontása",
         "new": "Új sor",
         "repeat": {
@@ -8938,11 +8967,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -9504,21 +9536,6 @@
   "get-enterprise": {
     "requires-license": "Grafana Enterprise-licenc szükséges",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "teljes",
-      "learn-how": "További információ a dokumentációban"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Haladó oktatóanyagokhoz",
-      "aria-label-to-basic-tutorials": "Alap oktatóanyagokhoz",
-      "checking-completed-setup-steps": "Befejezett beállítási lépések ellenőrzése",
-      "remove-this-panel": "Ezen panel eltávolítása"
-    },
-    "tutorial-card": {
-      "complete": "teljes"
-    }
   },
   "global-variables": {
     "details": {
@@ -12799,6 +12816,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -12813,6 +12836,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -17521,12 +17553,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Hivatkozás"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Segítségre van szüksége?",
-      "welcome-to-grafana": "Üdvözli a Grafana"
     }
   },
   "xychart": {

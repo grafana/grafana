@@ -241,6 +241,7 @@ export class GrafanaBootConfig {
   dashboardPerformanceMetrics: string[] = [];
   panelSeriesLimit = 0;
   dashboardDefaultPreload = false;
+  reportRenderQueryGracePeriodMs = 3000;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,

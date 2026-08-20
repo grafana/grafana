@@ -10,6 +10,7 @@ import {
   type DataTransformerConfig,
   type GrafanaTheme2,
   type PanelData,
+  type ResolvedSystemTransformations,
   transformDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -32,7 +33,6 @@ import { ExpressionQueryType } from 'app/features/expressions/types';
 import { PanelDataTransformer } from '../../scene/PanelDataTransformer';
 import {
   NO_SYSTEM_TRANSFORMATIONS,
-  type ResolvedSystemTransformations,
   getUserTransformations,
   splitSystemTransformations,
 } from '../../scene/systemTransformations';

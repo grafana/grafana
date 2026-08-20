@@ -1,6 +1,6 @@
 // add unit test for the DataSourceVariableEditor component
 
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
 
@@ -9,43 +9,48 @@ import { DataSourceVariable } from '@grafana/scenes';
 
 import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 
-//mock getDataSorceSrv.getList() to return a list of datasources
+//mock getDataSourceInstanceList() to return a list of datasources
+const dsList = [
+  {
+    name: 'DataSourceInstance1',
+    uid: 'ds1',
+    meta: {
+      name: 'ds1',
+      id: 'dsTestDataSource',
+    },
+  },
+  {
+    name: 'DataSourceInstance2',
+    uid: 'ds2',
+    meta: {
+      name: 'ds1',
+      id: 'dsTestDataSource',
+    },
+  },
+  {
+    name: 'ABCDataSourceInstance',
+    uid: 'ds3',
+    meta: {
+      name: 'abDS',
+      id: 'ABCDS',
+    },
+  },
+];
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
-    getList: () => {
-      return [
-        {
-          name: 'DataSourceInstance1',
-          uid: 'ds1',
-          meta: {
-            name: 'ds1',
-            id: 'dsTestDataSource',
-          },
-        },
-        {
-          name: 'DataSourceInstance2',
-          uid: 'ds2',
-          meta: {
-            name: 'ds1',
-            id: 'dsTestDataSource',
-          },
-        },
-        {
-          name: 'ABCDataSourceInstance',
-          uid: 'ds3',
-          meta: {
-            name: 'abDS',
-            id: 'ABCDS',
-          },
-        },
-      ];
-    },
+    getList: () => dsList,
   }),
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceList: jest.fn(async () => dsList),
+}));
+
 describe('DataSourceVariableEditor', () => {
-  it('shoud render correctly with multi and all not checked', () => {
+  it('shoud render correctly with multi and all not checked', async () => {
     const variable = new DataSourceVariable({
       name: 'dsVariable',
       type: 'datasource',
@@ -70,7 +75,7 @@ describe('DataSourceVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
     );
     expect(typeSelect).toBeInTheDocument();
-    expect(typeSelect.textContent).toBe('ds1');
+    await waitFor(() => expect(typeSelect.textContent).toBe('ds1'));
     expect(multiCheckbox).toBeInTheDocument();
     expect(multiCheckbox).not.toBeChecked();
     expect(allowCustomValueCheckbox).toBeInTheDocument();
@@ -79,7 +84,7 @@ describe('DataSourceVariableEditor', () => {
     expect(includeAllCheckbox).not.toBeChecked();
   });
 
-  it('shoud render correctly with multi and includeAll checked', () => {
+  it('shoud render correctly with multi and includeAll checked', async () => {
     const variable = new DataSourceVariable({
       name: 'dsVariable',
       type: 'datasource',
@@ -103,7 +108,7 @@ describe('DataSourceVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
     );
     expect(typeSelect).toBeInTheDocument();
-    expect(typeSelect.textContent).toBe('ds1');
+    await waitFor(() => expect(typeSelect.textContent).toBe('ds1'));
     expect(multiCheckbox).toBeInTheDocument();
     expect(multiCheckbox).toBeChecked();
     expect(includeAllCheckbox).toBeInTheDocument();
@@ -126,6 +131,7 @@ describe('DataSourceVariableEditor', () => {
     const typeSelect = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
     );
+    await waitFor(() => expect(typeSelect.textContent).toBe('ds1'));
     // when user change type datasource
     await user.click(typeSelect);
     await user.type(typeSelect, 'abDS');

@@ -1618,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Souhaitez-vous vraiment lancer l’importation ? Cette action créera de nouvelles ressources dans Grafana Alerting.",
         "confirm": "Démarrer l’importation",
@@ -1676,26 +1665,6 @@
       "info-description": "Cet assistant vous aide à importer des règles d’alerte et des ressources de notification dans Grafana Alerting depuis des sources externes. Pour en savoir plus, consultez la <2>documentation</2>.",
       "info-title": "Assistant d’importation",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Saisir le texte pour rechercher un namespace existant",
         "label": "Namespace"
@@ -1719,10 +1688,6 @@
         "filter": "Filtre",
         "folder": "Dossier cible",
         "heading": "Vérifier l’importation",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Espace de noms",
         "nothing": "Aucun élément à importer",
         "nothing-desc": "Les deux étapes ont été ignorées. Veuillez revenir en arrière et configurer au moins une source d’importation.",
@@ -1749,14 +1714,6 @@
         "validation-warning": "Certaines ressources seront renommées afin d’éviter les conflits.",
         "will-import-config": "Importera cette configuration",
         "will-import-rules": "Importera les règles",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Importera {{count}} règle",
         "will-import-rules-count_other": "Importera {{count}} règles"
       },
@@ -1868,14 +1825,10 @@
         "cancel-confirm-title": "Annuler l’importation ?",
         "cancel-confirm-yes": "Abandonner les modifications",
         "skip": "Ignorer",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Ressources de notification",
         "step-notifications-desc": "Points de contact, politiques, modèles",
         "step-review": "Vérifier et importer",
         "step-review-desc": "Prévisualiser et valider l’importation",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Règles d’alerte",
         "step-rules-desc": "Règles d’alerte et d’enregistrement"
       },
@@ -2259,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "Aucune requête capable d’alerter n’a été trouvée"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Configurer les mises en sourdine pour arrêter les notifications d’une règle d’alerte particulière"
@@ -2266,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Mettre en sourdine la règle d’alerte"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Nous n’avons trouvé aucun Alertmanager externe et vous n’avez peut-être pas accès à l’Alertmanager Grafana intégré.",
@@ -3308,6 +3266,39 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3716,6 +3707,9 @@
       "no-matching-instances-with-filters": "Aucune instance d’alerte ne correspond aux filtres actuellement sélectionnés pour la plage temporelle choisie.",
       "open-in-sidebar": "Ouvrir dans la barre latérale",
       "open-rule-details": "Ouvrir les détails de la règle",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Détails et conditions de la règle",
         "title": "Détails de la règle"
@@ -3870,6 +3864,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Échec de l’importation des ressources",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Ressources importées avec succès dans Grafana Alerting."
     },
     "yaml-content-info": {
@@ -5432,6 +5428,16 @@
     "auto-grid": {
       "description": "Les panneaux se redimensionnent pour s'adapter et former des grilles uniformes",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Répéter les options",
           "variable": {
@@ -5449,15 +5455,36 @@
         "custom-min-width": {
           "clear": "Effacer"
         },
+        "fit-content": "",
         "height-fill": "Remplir l’écran",
+        "match-row-heights": "",
         "max-columns": "Colonnes maximales",
-        "min-height": "Hauteur des lignes",
-        "min-height-custom": "Hauteur de ligne personnalisée",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "Un nombre compris entre 50 et 2 000 est requis",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Largeur de colonne minimale",
         "min-width-custom": "Largeur personnalisée minimale",
         "min-width-custom-clear": "Retour à la largeur de colonne minimale standard",
-        "min-width-error": "Un nombre compris entre 50 et 2 000 est requis"
+        "min-width-error": "Un nombre compris entre 50 et 2 000 est requis",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5690,6 +5717,7 @@
       "panel-background": "Modifier l’arrière-plan du panneau",
       "panel-description": "Modifier la description du panneau",
       "panel-edit": "Modifications du panneau",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Nombre maximal de répétitions par ligne",
       "panel-preset": "Appliquer le préréglage du panneau",
       "panel-repeat-direction": "Répéter la direction",
@@ -6067,6 +6095,7 @@
       "new-row-title": "Nouvelle ligne",
       "row": {
         "collapse": "Réduire la ligne {{title}}",
+        "copy-link": "",
         "expand": "Développer la ligne {{title}}",
         "new": "Nouvelle ligne",
         "repeat": {
@@ -8938,11 +8967,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -9504,21 +9536,6 @@
   "get-enterprise": {
     "requires-license": "Nécessite une licence Grafana Enterprise",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "terminé",
-      "learn-how": "Découvrez comment dans les docs"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Vers les tutoriels avancés",
-      "aria-label-to-basic-tutorials": "Vers les tutoriels de base",
-      "checking-completed-setup-steps": "Vérification des étapes de configuration terminées",
-      "remove-this-panel": "Supprimer ce panneau"
-    },
-    "tutorial-card": {
-      "complete": "terminé"
-    }
   },
   "global-variables": {
     "details": {
@@ -12799,6 +12816,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -12813,6 +12836,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -17521,12 +17553,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Lien"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Vous avez besoin d’aide ?",
-      "welcome-to-grafana": "Bienvenue sur Grafana"
     }
   },
   "xychart": {

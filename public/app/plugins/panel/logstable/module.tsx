@@ -15,7 +15,7 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
   // Runs ahead of user transformations and, crucially, ahead of field overrides, so the columns
   // extracted from `labels` are matchable by name in the override editor. Only takes effect where
   // a host runs the panel's registered transformations — see `LogsTable`'s `extractFieldsInPanel`.
-  .setDataTransformations(({ series }) => extractLogsFieldsTransforms(series))
+  .setSystemTransformations(({ series }) => extractLogsFieldsTransforms(series))
   .setPanelOptions((builder) => {
     addTableCustomPanelOptions(builder);
     const logsTableCategory = [t('logstable.category-table', 'Logs Table')];

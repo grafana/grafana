@@ -6,13 +6,13 @@ import {
   type DataSourceInstanceSettings,
   type DataTransformerConfig,
   type PanelData,
+  type ResolvedSystemTransformations,
 } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { type ExpressionQuery, type ExpressionQueryType } from 'app/features/expressions/types';
 import { type QueryGroupOptions } from 'app/types/query';
 
-import { type ResolvedSystemTransformations } from '../../../scene/systemTransformations';
 import { type QueryEditorType, type QueryEditorTypeConfig } from '../constants';
 
 import { type AlertRule, type QueryOptionField, type Transformation } from './types';
