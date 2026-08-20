@@ -1,4 +1,10 @@
-import { type FolderDoc, getDocTabLabel, getFolderDocLabel, listFolderDocs } from './folderDocConventions';
+import {
+  type FolderDoc,
+  ensureReadmeTab,
+  getDocTabLabel,
+  getFolderDocLabel,
+  listFolderDocs,
+} from './folderDocConventions';
 
 describe('listFolderDocs', () => {
   it('lists convention docs first (in priority order), then other markdown alphabetically', () => {
@@ -72,6 +78,32 @@ describe('listFolderDocs', () => {
 
   it('returns nothing when no markdown docs exist', () => {
     expect(listFolderDocs(['dashboards/team-a/dash.json'], 'dashboards/team-a')).toEqual([]);
+  });
+});
+
+describe('ensureReadmeTab', () => {
+  it('prepends a synthetic README tab when the folder has no README', () => {
+    const contributing: FolderDoc = {
+      key: 'contributing',
+      path: 'dashboards/team-a/CONTRIBUTING.md',
+      fileName: 'CONTRIBUTING.md',
+    };
+
+    const docs = ensureReadmeTab([contributing], 'dashboards/team-a');
+
+    expect(docs.map((d) => d.key)).toEqual(['readme', 'contributing']);
+    expect(docs[0]).toEqual({ key: 'readme', path: 'dashboards/team-a/README.md', fileName: 'README.md' });
+  });
+
+  it('synthesizes the README at the repository root when there is no source dir', () => {
+    const docs = ensureReadmeTab([], '');
+    expect(docs).toEqual([{ key: 'readme', path: 'README.md', fileName: 'README.md' }]);
+  });
+
+  it('leaves an existing README in place', () => {
+    const existing: FolderDoc = { key: 'readme', path: 'a/readme.md', fileName: 'readme.md' };
+    const docs = ensureReadmeTab([existing], 'a');
+    expect(docs).toEqual([existing]);
   });
 });
 

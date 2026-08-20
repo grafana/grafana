@@ -197,6 +197,7 @@ describe('browse-dashboards BrowseView', () => {
         readmePath: 'README.md',
         status: 'ok',
         isLoading: false,
+        isFetching: false,
         markdownContent,
         refetch: jest.fn(),
       });
@@ -210,6 +211,7 @@ describe('browse-dashboards BrowseView', () => {
         readmePath: 'README.md',
         status: 'missing',
         isLoading: false,
+        isFetching: false,
         markdownContent: undefined,
         refetch: jest.fn(),
       });

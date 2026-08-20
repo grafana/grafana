@@ -63,6 +63,7 @@ function setReadmeResult(overrides: Partial<UseFolderReadmeResult> = {}) {
     readmePath: 'dashboards/team-a/README.md',
     status: 'ok',
     isLoading: false,
+    isFetching: false,
     markdownContent: '# Hello\n\nThis is a README.',
     refetch: jest.fn(),
     ...overrides,
@@ -154,6 +155,24 @@ describe('FolderReadmePanel', () => {
       expect(tabSelectedSpy).toHaveBeenCalledWith({ repositoryType: 'github', doc: 'contributing' });
     });
 
+    it('persists the active tab in the URL and restores it from the query param', () => {
+      const contributing = doc('contributing', 'CONTRIBUTING.md');
+      setDocs({ docs: [readmeDoc, contributing] });
+
+      render(<FolderReadmePanel folderUID="test-folder" />, {
+        historyOptions: { initialEntries: ['/?docTab=CONTRIBUTING.md'] },
+      });
+
+      expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-folder', contributing.path);
+    });
+
+    it('shows a loading overlay while the newly selected doc is fetching', () => {
+      setReadmeResult({ status: 'ok', isFetching: true });
+      setup();
+
+      expect(screen.getByTestId('folder-doc-loading')).toBeInTheDocument();
+    });
+
     it('reports "other" for a non-convention doc selection', async () => {
       const changelog = doc(undefined, 'CHANGELOG.md');
       setDocs({ docs: [readmeDoc, changelog] });
@@ -162,6 +181,15 @@ describe('FolderReadmePanel', () => {
       await user.click(screen.getByRole('tab', { name: 'CHANGELOG' }));
 
       expect(tabSelectedSpy).toHaveBeenCalledWith({ repositoryType: 'github', doc: 'other' });
+    });
+
+    it('still shows the other doc tabs (plus a README tab) when the README file is missing', () => {
+      // useFolderDocs only discovers files that exist — no README here.
+      setDocs({ docs: [doc('security', 'SECURITY.md')] });
+      setup();
+
+      expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
     });
   });
 

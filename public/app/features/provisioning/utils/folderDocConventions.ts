@@ -101,6 +101,21 @@ export function listFolderDocs(filePaths: string[], sourceDir: string): FolderDo
   return docs;
 }
 
+/**
+ * Guarantees a README tab is present (first), synthesizing one at the folder's
+ * default README path when the file doesn't exist yet. This keeps the README
+ * tab — and its "Add README" affordance — visible even when the folder only has
+ * other docs, so the rest of the tabs stay reachable.
+ */
+export function ensureReadmeTab(docs: FolderDoc[], sourceDir: string): FolderDoc[] {
+  if (docs.some((doc) => doc.key === README_CONVENTION.key)) {
+    return docs;
+  }
+  const dir = stripTrailingSlashes(sourceDir);
+  const path = dir ? `${dir}/${README_CONVENTION.fileName}` : README_CONVENTION.fileName;
+  return [{ key: README_CONVENTION.key, path, fileName: README_CONVENTION.fileName }, ...docs];
+}
+
 function isMarkdown(fileName: string): boolean {
   return /\.(md|markdown)$/i.test(fileName);
 }

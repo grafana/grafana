@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
@@ -19,16 +19,20 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { useFolderDocs } from '../../hooks/useFolderDocs';
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
-import { type FolderDoc, getDocTabLabel, getFolderDocLabel, README_CONVENTION } from '../../utils/folderDocConventions';
+import { type FolderDoc, ensureReadmeTab, getDocTabLabel, README_CONVENTION } from '../../utils/folderDocConventions';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 
 import { FolderReadmeEvents } from './analytics/main';
 
 export const FOLDER_README_ANCHOR_ID = 'folder-readme';
+
+/** Query param that persists the selected doc tab in the URL (by file name). */
+export const FOLDER_DOC_TAB_PARAM = 'docTab';
 
 interface Props {
   folderUID: string;
@@ -53,24 +57,21 @@ export function FolderReadmePanel({ folderUID }: Props) {
 
 function FolderReadmePanelContent({ folderUID }: Props) {
   const styles = useStyles2(getStyles);
-  const { repository, folder, docs, isLoading: isDiscovering } = useFolderDocs(folderUID);
+  const { repository, folder, docs: foundDocs, sourceDir, isLoading: isDiscovering } = useFolderDocs(folderUID);
 
-  // The active doc is UI state; default to the README (or the highest-priority
-  // doc when there is no README) once discovery resolves.
-  const [activePath, setActivePath] = useState<string | undefined>(undefined);
-  useEffect(() => {
-    if (docs.length === 0) {
-      return;
-    }
-    // Keep the current selection if it still exists, otherwise fall back to the
-    // first (highest-priority) doc — README when present.
-    if (!docs.some((doc) => doc.path === activePath)) {
-      setActivePath(docs[0].path);
-    }
-  }, [docs, activePath]);
+  // Always surface a README tab (first) — synthesized when the file is missing —
+  // so its "Add README" affordance and the other tabs stay reachable together.
+  const docs = useMemo(() => ensureReadmeTab(foundDocs, sourceDir), [foundDocs, sourceDir]);
 
-  const activeDoc = docs.find((doc) => doc.path === activePath);
-  const { status, markdownContent, readmePath, refetch } = useFolderReadme(folderUID, activePath);
+  // The active tab lives in the URL so it's deep-linkable and survives reloads.
+  // Falls back to the first (highest-priority) doc — README when present.
+  const [queryParams, setQueryParams] = useQueryParams();
+  const activeTab =
+    typeof queryParams[FOLDER_DOC_TAB_PARAM] === 'string' ? queryParams[FOLDER_DOC_TAB_PARAM] : undefined;
+  const activeDoc = docs.find((doc) => doc.fileName === activeTab) ?? docs[0];
+  const activePath = activeDoc?.path;
+
+  const { status, markdownContent, readmePath, refetch, isFetching } = useFolderReadme(folderUID, activePath);
 
   const sectionRef = useRef<HTMLElement>(null);
   // TODO remove when react-use is fixed
@@ -98,7 +99,7 @@ function FolderReadmePanelContent({ folderUID }: Props) {
   }
 
   const selectDoc = (doc: FolderDoc) => {
-    setActivePath(doc.path);
+    setQueryParams({ [FOLDER_DOC_TAB_PARAM]: doc.fileName });
     if (repository) {
       FolderReadmeEvents.tabSelected({ repositoryType: repository.type, doc: doc.key ?? 'other' });
     }
@@ -166,6 +167,13 @@ function FolderReadmePanelContent({ folderUID }: Props) {
           isReadmeContext={isReadmeContext}
           refetch={refetch}
         />
+        {/* Switching tabs keeps the previous doc's content on screen (RTK holds
+            stale data), so overlay a spinner to signal the new doc is loading. */}
+        {!isDiscovering && status === 'ok' && isFetching && (
+          <div className={styles.loadingOverlay} data-testid="folder-doc-loading">
+            <Spinner size="lg" />
+          </div>
+        )}
       </div>
     </section>
   );
@@ -181,21 +189,12 @@ interface DocTabsProps {
  * The GitHub-style tab bar: one tab per markdown doc, in priority order. Tabs
  * that don't fit the available width collapse into a "More" menu, measured
  * against an off-screen copy of the full set (see {@link useDocTabOverflow}).
- * While discovery is still running (no docs yet) a single static README tab
- * stands in so the panel chrome doesn't jump.
+ * The caller guarantees at least a README tab.
  */
 function DocTabs({ docs, activePath, onSelect }: DocTabsProps) {
   const styles = useStyles2(getStyles);
   const [moreOpen, setMoreOpen] = useState(false);
   const { containerRef, measureRef, visibleCount } = useDocTabOverflow(docs.length);
-
-  if (docs.length === 0) {
-    return (
-      <div className={styles.tabList} role="tablist">
-        <Tab label={getFolderDocLabel(README_CONVENTION.key)} active />
-      </div>
-    );
-  }
 
   const visible = docs.slice(0, visibleCount);
   const overflow = docs.slice(visibleCount);
@@ -509,6 +508,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
   }),
   body: css({
+    position: 'relative',
     padding: theme.spacing(2),
+  }),
+  // Dims the current doc and centers a spinner while the next doc loads.
+  loadingOverlay: css({
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.background.primary,
+    opacity: 0.6,
   }),
 });

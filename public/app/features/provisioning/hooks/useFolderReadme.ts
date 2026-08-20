@@ -22,6 +22,12 @@ export interface UseFolderReadmeResult {
   status: FolderReadmeStatus;
   /** True while fetching, unlike `status === 'loading'` which a non-provisioned folder reports forever. */
   isLoading: boolean;
+  /**
+   * True whenever a request is in flight, including when switching to another
+   * doc while the previous one's content is still shown (RTK keeps stale `data`
+   * and reports `isLoading: false` on arg changes). Drives the tab-switch spinner.
+   */
+  isFetching: boolean;
   /** Markdown body of the README, or undefined when not loaded successfully. */
   markdownContent: string | undefined;
   refetch: () => void;
@@ -51,6 +57,7 @@ export function useFolderReadme(folderUID: string, docPath?: string): UseFolderR
   const {
     data: fileData,
     isLoading: isFileLoading,
+    isFetching: isFileFetching,
     error,
     refetch,
   } = useGetRepositoryFilesWithPathQuery(
@@ -126,6 +133,7 @@ export function useFolderReadme(folderUID: string, docPath?: string): UseFolderR
     readmePath,
     status,
     isLoading,
+    isFetching: isFileFetching,
     markdownContent,
     refetch,
   };
