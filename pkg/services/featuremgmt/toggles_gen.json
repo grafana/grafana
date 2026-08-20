@@ -1198,6 +1198,20 @@
     },
     {
       "metadata": {
+        "name": "authz.userPermissions",
+        "resourceVersion": "1786733435326",
+        "creationTimestamp": "2026-08-14T18:50:35Z"
+      },
+      "spec": {
+        "description": "Route user permission snapshots through the AuthZ service.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsAssumeRolePerDatasourceExternalId",
         "resourceVersion": "1784056946678",
         "creationTimestamp": "2026-07-14T19:22:26Z"
