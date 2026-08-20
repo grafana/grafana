@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/live
 go 1.26.6
 
 require (
-	github.com/grafana/grafana-app-sdk v0.57.2-0.20260820064044-4c0f3a562383
+	github.com/grafana/grafana-app-sdk v0.57.2-0.20260820121933-8b16d6ada1f0
 	github.com/stretchr/testify v1.12.0
 	k8s.io/apimachinery v0.36.3
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad

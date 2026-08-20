@@ -15,7 +15,7 @@ replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.57.2-0.20260820064044-4c0f3a562383
+	github.com/grafana/grafana-app-sdk v0.57.2-0.20260820121933-8b16d6ada1f0
 	github.com/grafana/grafana-app-sdk/logging v0.57.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/apiserver v0.0.0
@@ -220,9 +220,9 @@ require (
 	github.com/tjhop/slog-gokit v0.2.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
-	go.etcd.io/etcd/api/v3 v3.7.1 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.7.1 // indirect
-	go.etcd.io/etcd/client/v3 v3.7.1 // indirect
+	go.etcd.io/etcd/api/v3 v3.6.14 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.6.14 // indirect
+	go.etcd.io/etcd/client/v3 v3.6.14 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.70.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.70.0 // indirect

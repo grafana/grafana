@@ -8,7 +8,7 @@ require (
 	github.com/google/go-github/v82 v82.0.0
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.57.2-0.20260820064044-4c0f3a562383
+	github.com/grafana/grafana-app-sdk v0.57.2-0.20260820121933-8b16d6ada1f0
 	github.com/grafana/grafana-app-sdk/logging v0.57.0
 	github.com/grafana/grafana-plugin-sdk-go v0.296.4-0.20260820062033-164c814d1e05
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
@@ -287,9 +287,9 @@ require (
 	github.com/tjhop/slog-gokit v0.2.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
-	go.etcd.io/etcd/api/v3 v3.7.1 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.7.1 // indirect
-	go.etcd.io/etcd/client/v3 v3.7.1 // indirect
+	go.etcd.io/etcd/api/v3 v3.6.14 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.6.14 // indirect
+	go.etcd.io/etcd/client/v3 v3.6.14 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/collector/featuregate v1.63.0 // indirect
 	go.opentelemetry.io/collector/pdata v1.63.0 // indirect
