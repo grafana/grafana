@@ -91,7 +91,6 @@ To view notification history from the **History** page, follow these steps.
 1. Select the **Notifications** tab.
 
    Each row represents a notification sent to a contact point. The list shows the following columns:
-
    - **Time**: When the notification was sent.
    - **Status**: Whether the notification was for a **Firing** or **Resolved** alert.
    - **Group Labels**: The labels that identify the group of alerts included in the notification.
@@ -100,7 +99,6 @@ To view notification history from the **History** page, follow these steps.
    Failed notifications are marked with a **Failed** badge. Hover over the badge to see the error details.
 
 1. Filter the list to narrow down the results:
-
    - **Labels**: Enter a label or click a label on a notification in the list.
    - **Status**: Filter by **Firing** or **Resolved**.
    - **Delivery outcome**: Show only successful or failed notifications.
