@@ -1,8 +1,10 @@
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Badge, Stack, TagList, TagsInput, Text, useStyles2 } from '@grafana/ui';
+import { Badge, Stack, TagList, Text, useStyles2 } from '@grafana/ui';
 
 import { getNeutralTagListStyle } from '../../tagColors';
+
+import { NotebookTagPicker } from './NotebookTagPicker';
 
 const TAGS_INPUT_ID = 'notebook-tags';
 
@@ -46,15 +48,9 @@ export function NotebookDocumentHeader({ title, tags, timeFrom, timeTo, isEditin
         // flex-start, which would otherwise shrink this row to its content.
         <MetaRow label={tagsLabel} htmlFor={canEditTags ? TAGS_INPUT_ID : undefined} fillWidth={canEditTags}>
           {canEditTags && onTagsChange ? (
-            <TagsInput
-              id={TAGS_INPUT_ID}
-              tags={tags ?? []}
-              // Neutral rather than a colour per name, matching the read-mode tags and the list page.
-              // A first-class prop here, unlike TagList, which needs the override in tagColors.ts.
-              autoColors={false}
-              placeholder={t('dashboard.notebook-layout.tags-placeholder', 'Add a tag')}
-              onChange={(next) => onTagsChange(normalizeTags(next))}
-            />
+            // Its chips are neutral without being asked, ValuePill using the same two tokens the
+            // read-mode override in tagColors.ts applies.
+            <NotebookTagPicker id={TAGS_INPUT_ID} tags={tags} onChange={onTagsChange} />
           ) : (
             <TagList tags={tags ?? []} className={styles.neutralTags} />
           )}
@@ -101,16 +97,4 @@ function MetaRow({
       {children}
     </Stack>
   );
-}
-
-/**
- * A custom value arrives as the raw string the user typed, so `latency ` would otherwise become a tag
- * that renders identically to `latency` but is not equal to it.
- *
- * Case is deliberately left alone. Lowercasing would also rewrite tags picked *from the dropdown* — a
- * notebook tagged `Production` would silently become `production` the moment anything else was
- * changed — and tags are case-sensitive everywhere else in Grafana.
- */
-function normalizeTags(tags: string[]): string[] {
-  return Array.from(new Set(tags.map((tag) => tag.trim()).filter(Boolean)));
 }

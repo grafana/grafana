@@ -5999,6 +5999,7 @@
       "name": "Notebook",
       "pill": "Published Notebook",
       "tags": "Tags",
+      "tags-custom-value": "Add as a new tag",
       "tags-placeholder": "Add a tag",
       "time": "Time"
     },
