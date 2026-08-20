@@ -11942,7 +11942,7 @@
         "download": "Download",
         "enable-highlighting": "Enable highlighting",
         "filter-level": "Filter logs result by level",
-        "highlighting-unavailable": "Highlighting is disabled because these logs are too large and could freeze the browser"
+        "highlighting-unavailable": "Highlighting is disabled because these logs are too large and could impact performance"
       },
       "unwrapped-columns": {
         "disable": "Disable columns",

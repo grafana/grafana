@@ -28,7 +28,7 @@ const WRAP_JSON_LABEL_COPY = 'Wrap JSON';
 const WRAP_DISABLE_LABEL_COPY = 'Disable line wrapping';
 const ENABLE_HIGHLIGHTING_LABEL_COPY = 'Enable highlighting';
 const HIGHLIGHTING_UNAVAILABLE_TOOLTIP_COPY =
-  'Highlighting is disabled because these logs are too large and could freeze the browser';
+  'Highlighting is disabled because these logs are too large and could impact performance';
 const EXPANDED_LABEL_COPY = 'Expanded';
 const COLLAPSED_LABEL_COPY = 'Collapsed';
 const SHOW_UNIQUE_LABELS_LABEL_COPY = 'Show unique labels';

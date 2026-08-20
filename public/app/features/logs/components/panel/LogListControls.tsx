@@ -403,7 +403,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                     syntaxHighlightingUnavailable
                       ? t(
                           'logs.logs-controls.tooltip.highlighting-unavailable',
-                          'Highlighting is disabled because these logs are too large and could freeze the browser'
+                          'Highlighting is disabled because these logs are too large and could impact performance'
                         )
                       : syntaxHighlighting
                         ? t('logs.logs-controls.tooltip.disable-highlighting', 'Disable highlighting')
