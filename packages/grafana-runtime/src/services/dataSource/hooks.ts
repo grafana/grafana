@@ -10,6 +10,7 @@ import {
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
 import { getDataSourceInstance } from './dataSource';
+import { getDataSourceInstanceListItem } from './listItem';
 import {
   type GetDataSourceInstanceListFilters,
   getDataSourceInstanceSettings,
@@ -25,6 +26,15 @@ export interface UseDataSourceInstanceSettingsResult {
   isLoading: boolean;
   error?: Error;
   settings?: DataSourceInstanceSettings;
+}
+
+/**
+ * @public
+ */
+export interface UseDataSourceInstanceListItemResult {
+  isLoading: boolean;
+  error?: Error;
+  item?: DataSourceInstanceListItem;
 }
 
 /**
@@ -91,6 +101,30 @@ export function useDataSourceInstanceSettings(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const { loading, error, value } = useAsync(() => getDataSourceInstanceSettings(ref), [refKey]);
   return { isLoading: loading, error, settings: value };
+}
+
+/**
+ * React hook wrapping {@link getDataSourceInstanceListItem}. Re-fetches when `ref`
+ * changes (compared by value, so inline objects are safe).
+ *
+ * Prefer this over {@link useDataSourceInstanceSettings} whenever only identity or plugin
+ * metadata is needed — `item` carries `uid`, `type`, `name`, `meta`, `readOnly` and
+ * `isDefault`, and avoids depending on per-instance settings that will later be fetched on
+ * demand.
+ *
+ * Resolves **by uid only**: a ref with no usable uid — including `'default'`, `undefined` and
+ * type-only refs — yields `item: undefined` rather than the default data source. Template
+ * variable strings (e.g. `$ds` or `${ds}`) are not interpolated; resolve them to a uid first.
+ *
+ * @public
+ */
+export function useDataSourceInstanceListItem(
+  ref?: DataSourceRef | string | null
+): UseDataSourceInstanceListItemResult {
+  const refKey = stableKey(ref);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { loading, error, value } = useAsync(() => getDataSourceInstanceListItem(ref), [refKey]);
+  return { isLoading: loading, error, item: value };
 }
 
 /**
