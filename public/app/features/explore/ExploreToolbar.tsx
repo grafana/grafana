@@ -59,6 +59,7 @@ const getStyles = (theme: GrafanaTheme2, splitted: Boolean, visualRefreshEnabled
     background: theme.colors.background.page,
     borderTopLeftRadius: theme.shape.radius.lg,
     borderTopRightRadius: theme.shape.radius.lg,
+    padding: theme.spacing(2, 0),
   }),
 });
 

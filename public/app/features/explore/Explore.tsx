@@ -92,13 +92,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreContainer',
       display: 'flex',
       flexDirection: 'column',
-      paddingRight: theme.spacing(2),
       marginBottom: theme.spacing(2),
     }),
     wrapper: css({
       position: 'absolute',
       top: 0,
-      left: theme.spacing(2),
       right: 0,
       bottom: 0,
       display: 'flex',
@@ -599,7 +597,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
       compact,
       editSavedQueryRef,
       addingSavedQuery,
+      splitted,
     } = this.props;
+
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
     // Prometheus is the only datasource with an explorer to offer, so the whole sidebar
@@ -690,7 +690,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
           style={{
             position: 'relative',
             height: '100%',
-            paddingLeft: theme.spacing(2),
           }}
         >
           <div className={styles.wrapper}>
@@ -710,7 +709,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                 this.scrollElement = scrollElement || undefined;
               }}
             >
-              <div className={styles.exploreContainer}>
+              <div className={cx(styles.exploreContainer, splitted && styles.exploreContainerSplitted)}>
                 {datasourceInstance ? (
                   <>
                     <ContentOutlineItem
