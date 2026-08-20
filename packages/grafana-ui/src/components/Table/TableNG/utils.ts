@@ -1348,16 +1348,26 @@ function measureHeaderWidth(
   showTypeIcons: boolean,
   isSorted: boolean,
   tableRefreshEnabled: boolean,
+  isFilterable: boolean,
   isFiltered: boolean
 ): number {
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
   headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
   headerWidth += isSorted ? HEADER_ICON_SPACE : 0;
-  // the refreshed header marks an active filter with a persistent icon next to the sort arrow. Like
-  // the arrow, it only exists while that state holds, so its space is reserved only then (the widths
-  // recompute when the filter changes).
-  headerWidth += tableRefreshEnabled && isFiltered ? HEADER_ICON_SPACE : 0;
+  if (tableRefreshEnabled) {
+    // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
+    // stays in flow (opacity-faded, not unmounted) whenever the column is filterable at all.
+    headerWidth += isFilterable ? HEADER_MENU_SPACE : 0;
+    // an active filter additionally marks itself with a persistent icon next to the sort arrow. Like
+    // the arrow, it only exists while that state holds, so its space is reserved only then (the
+    // widths recompute when the filter changes).
+    headerWidth += isFiltered ? HEADER_ICON_SPACE : 0;
+  } else {
+    // the classic header renders its filter icon inline whenever the column is filterable, whether
+    // or not a filter is currently active.
+    headerWidth += isFilterable ? HEADER_ICON_SPACE : 0;
+  }
   return headerWidth;
 }
 
@@ -1592,6 +1602,7 @@ export function computeContentAwareColWidths(
       showTypeIcons,
       sortedKeys.has(getDisplayName(field)),
       tableRefreshEnabled,
+      field.config.custom?.filterable ?? false,
       filteredKeys.has(getDisplayName(field))
     );
 

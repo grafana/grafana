@@ -21,7 +21,7 @@ import { TableCellDisplayMode } from '../types';
 
 import { COLUMN, TABLE } from './constants';
 import { getJustifyContent } from './styles';
-import { type GetActionsFunctionLocal, type MeasureCellHeightEntry, type TableRow } from './types';
+import { type FilterType, type GetActionsFunctionLocal, type MeasureCellHeightEntry, type TableRow } from './types';
 import {
   applyFilter,
   applySort,
@@ -2134,6 +2134,7 @@ describe('TableNG utils', () => {
       expect(
         computeContentAwareColWidths(fields, 67, {
           typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
         })
       ).toEqual([67]);
@@ -2146,6 +2147,7 @@ describe('TableNG utils', () => {
       expect(
         computeContentAwareColWidths(fields, 50, {
           typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
         })
       ).toEqual([50]);
@@ -2160,6 +2162,7 @@ describe('TableNG utils', () => {
       expect(
         computeContentAwareColWidths(fields, 89, {
           typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
           filter,
         })
@@ -2167,7 +2170,11 @@ describe('TableNG utils', () => {
       // without the active filter the same column stops at 67 (availWidth 89 leaves it room to grow,
       // so pin availWidth to 67 to show the header no longer demands the extra icon).
       expect(
-        computeContentAwareColWidths(fields, 67, { typographyCtx: makeTypographyCtx(), tableRefreshEnabled: true })
+        computeContentAwareColWidths(fields, 67, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
       ).toEqual([67]);
     });
 
@@ -2180,6 +2187,7 @@ describe('TableNG utils', () => {
       expect(
         computeContentAwareColWidths(fields, 67, {
           typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
           filter: cleared,
         })
