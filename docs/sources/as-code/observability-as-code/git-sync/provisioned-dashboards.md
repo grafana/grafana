@@ -26,7 +26,15 @@ Git Sync functionalities are constantly evolving. [Contact Grafana](https://graf
 
 {{< /admonition >}}
 
-Using provisioning, you can choose to store your dashboard JSON files in either Git repositories using Git Sync or a local path, and manage them through the Grafana interface. Dashboards and folders synchronized using Git Sync or a local path are referred to as _provisioned_ resources. **Git Sync is the recommended method for provisioning your dashboards**.
+Using provisioning, you can choose to store your dashboard JSON files in either Git repositories using Git Sync, a local path, or Kubernetes ConfigMaps, and manage them through the Grafana interface. Dashboards and folders synchronized using Git Sync, a local path, or ConfigMaps are referred to as _provisioned_ resources. **Git Sync is the recommended method for provisioning your dashboards**.
+
+## Kubernetes ConfigMap repositories
+
+You can configure a Git Sync repository of type `configmap` so Grafana reads dashboard files from Kubernetes ConfigMap data keys (path separators are encoded as `__` in keys). Enable the type with `[provisioning] repository_types` including `configmap`. Grafana must run in-cluster with RBAC to `get`, `list`, `watch`, and `patch` ConfigMaps in the target namespace. ConfigMaps are limited to about 1 MiB of data.
+
+### Optional ConfigMap mirror
+
+For Git-backed repositories, you can set `spec.sync.configMapMirror.enabled: true` so successful dashboard applies are also written to ConfigMaps (for classic sidecar workflows). Grafana still applies resources into its own API; the mirror is best-effort compatibility and does not replace Git Sync ownership. Prefer `perDashboard: true` to stay under the ConfigMap size limit. Avoid pointing a sidecar at the same dashboards Git Sync already manages unless you disable classic file provisioning for those resources.
 
 ## Manage dashboards provisioned with Git Sync
 

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	configmaprepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/configmap"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -42,6 +43,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 			cfg.HomePath,
 			cfg.PermittedProvisioningPaths,
 		),
+		configmaprepo.Extra(configmaprepo.InClusterClientProvider()),
 		git.Extra(decrypter, allowInsecure),
 		github.Extra(
 			decrypter,

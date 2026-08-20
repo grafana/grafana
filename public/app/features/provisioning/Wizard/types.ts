@@ -5,7 +5,8 @@ import { type RepositoryFormData, type StatusInfo } from '../types';
 
 export type WizardStep = 'authType' | 'githubApp' | 'connection' | 'bootstrap' | 'finish' | 'synchronize';
 
-export type RepoType = RepositorySpec['type'];
+// 'configmap' is supported by the backend; generated client types lag until OpenAPI regen.
+export type RepoType = RepositorySpec['type'] | 'configmap';
 
 export type GitHubBasedConnectionType = 'github' | 'githubEnterprise';
 
@@ -48,6 +49,7 @@ export const RepoTypeDisplay: { [key in RepoType]: string } = {
   bitbucket: 'Bitbucket',
   git: 'Git',
   local: 'Local',
+  configmap: 'ConfigMap',
 };
 
 export type StepStatusInfo =

@@ -82,6 +82,19 @@ const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     ),
     icon: 'file-alt' as const,
   },
+  {
+    type: 'configmap',
+    label: t('provisioning.repository-types.configmap', 'ConfigMap'),
+    description: t(
+      'provisioning.repository-types.configmap-description',
+      'Sync from Kubernetes ConfigMaps'
+    ),
+    tooltip: t(
+      'provisioning.repository-types.configmap-tooltip',
+      'Provision dashboards from Kubernetes ConfigMap data keys. Requires Grafana to run in-cluster with ConfigMap RBAC.'
+    ),
+    icon: 'cube' as const,
+  },
 ];
 
 export const getRepositoryTypeConfig = (type: RepoType): RepositoryTypeConfig | undefined => {

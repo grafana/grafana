@@ -166,6 +166,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		progress.Complete(ctx, setupError)
 		return tracing.Error(span, setupError)
 	}
+	repositoryResources = resources.MaybeWrapConfigMapMirror(repositoryResources, rw, nil)
 	clients, err := r.clients.Clients(setupCtx, cfg.Namespace)
 	if err != nil {
 		setupSpan.End()

@@ -74,6 +74,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.JobStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("LocalRepositoryConfig"):
 		return &provisioningv0alpha1.LocalRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConfigMapRepositoryConfig"):
+		return &provisioningv0alpha1.ConfigMapRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConfigMapMirrorOptions"):
+		return &provisioningv0alpha1.ConfigMapMirrorOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("MigrateJobOptions"):
 		return &provisioningv0alpha1.MigrateJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("MoveJobOptions"):
