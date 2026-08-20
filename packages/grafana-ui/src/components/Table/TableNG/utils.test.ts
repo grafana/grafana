@@ -2148,6 +2148,35 @@ describe('TableNG utils', () => {
       expect(widths).toEqual([85]);
     });
 
+    it('rounds a header-bound column up rather than truncating it via cumulative rounding on overflow', () => {
+      // Real canvas measurement returns fractional widths, unlike this suite's integer CHAR_W mock.
+      // With no leftover to distribute (the auto columns already overflow availWidth), the second
+      // column's cumulative running sum can cross a whole-pixel boundary the "wrong" way and shave
+      // its own fractional need down — even though it has zero slack to give up, being sized to its
+      // header's exact minimum. Ceiling each column independently in that branch avoids that.
+      const headerCtx = createTypographyContext(14, 'sans-serif', 0.15);
+      const headerWidths: Record<string, number> = { A: 37.5, B: 47.4 };
+      jest
+        .spyOn(headerCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((text: string) => ({ width: headerWidths[String(text)] })) as never);
+
+      const fields: Field[] = [
+        { name: 'A', type: FieldType.string, values: ['x'], config: {} },
+        { name: 'B', type: FieldType.string, values: ['x'], config: {} },
+      ];
+      // header "A" => 37.5 + sort arrow 22 + chrome 13 = 72.5; header "B" => 47.4 + 22 + 13 = 82.4.
+      // Content "x" is tiny, so the header drives both. availWidth 154 < their 154.9 total, so the
+      // columns overflow and there is no leftover to distribute.
+      const widths = computeContentAwareColWidths(fields, 154, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: headerCtx,
+      });
+
+      // Without the fix this comes back [73, 82] — B truncated below its own 82.4 need.
+      expect(widths).toEqual([73, 83]);
+    });
+
     it('samples a bounded number of rows (spread across the field) rather than scanning every value', () => {
       const display = jest.fn((v) => ({ text: String(v), numeric: Number(v) }));
       const fields: Field[] = [
