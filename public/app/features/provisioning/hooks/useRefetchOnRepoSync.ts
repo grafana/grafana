@@ -13,8 +13,11 @@ import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
  * is deleted on completion and its terminal state is never observable (#1223).
  * `finished` advances once per completed pull; the ref dedupes repeat watch
  * events and seeds a baseline so mount-loaded data isn't refetched immediately.
+ *
+ * Returns the latest `status.sync.finished` timestamp so callers can key other
+ * cache refreshes (e.g. a resource listing) off the same signal.
  */
-export function useRefetchOnRepoSync(repositoryName: string | undefined, refetch: () => void) {
+export function useRefetchOnRepoSync(repositoryName: string | undefined, refetch: () => void): number | undefined {
   const { data } = useListRepositoryQuery(
     repositoryName ? { fieldSelector: `metadata.name=${repositoryName}`, watch: true } : skipToken
   );
@@ -38,4 +41,6 @@ export function useRefetchOnRepoSync(repositoryName: string | undefined, refetch
       refetch();
     }
   }, [repo, sync, syncFinished, refetch]);
+
+  return syncFinished;
 }

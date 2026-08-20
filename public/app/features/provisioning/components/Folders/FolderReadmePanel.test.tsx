@@ -1,10 +1,15 @@
-import { act, render, screen } from 'test/test-utils';
+import { HttpResponse, delay, http } from 'msw';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import { provisioningAPIv0alpha1, type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type UseFolderDocsResult, useFolderDocs } from '../../hooks/useFolderDocs';
 import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
+import { setupProvisioningMswServer } from '../../mocks/server';
 import { type FolderDoc, type FolderDocKey } from '../../utils/folderDocConventions';
 
 import { FOLDER_README_ANCHOR_ID, FolderReadmePanel } from './FolderReadmePanel';
@@ -13,10 +18,18 @@ import { FolderReadmeEvents } from './analytics/main';
 jest.mock('../../hooks/useFolderDocs');
 jest.mock('../../hooks/useFolderReadme');
 
+setupProvisioningMswServer();
+
+// The resource listing is fetched lazily on link click; stub the endpoint per test.
+function setResources(items: ResourceListItem[]) {
+  server.use(http.get(`${BASE}/repositories/:name/resources`, () => HttpResponse.json({ items })));
+}
+
 const mockUseFolderDocs = useFolderDocs as jest.MockedFunction<typeof useFolderDocs>;
 const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
 const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
 const createClickedSpy = jest.spyOn(FolderReadmeEvents, 'createClicked').mockImplementation();
+const linkClickedSpy = jest.spyOn(FolderReadmeEvents, 'linkClicked').mockImplementation();
 const tabSelectedSpy = jest.spyOn(FolderReadmeEvents, 'tabSelected').mockImplementation();
 
 const mockRepository = {
@@ -67,6 +80,7 @@ function setReadmeResult(overrides: Partial<UseFolderReadmeResult> = {}) {
     isFetching: false,
     markdownContent: '# Hello\n\nThis is a README.',
     refetch: jest.fn(),
+    syncFinished: undefined,
     ...overrides,
   });
 }
@@ -216,6 +230,141 @@ describe('FolderReadmePanel', () => {
     });
   });
 
+  describe('resource links', () => {
+    const dashboardItem: ResourceListItem = {
+      path: 'dashboards/team-a/cpu.json',
+      resource: 'dashboards',
+      name: 'abc',
+      group: '',
+      hash: '',
+    };
+
+    it('navigates in-app when a JSON link maps to a synced dashboard', async () => {
+      setResources([dashboardItem]);
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
+
+      const { user } = setup();
+      // Spy after render: test-utils swaps the locationService the component uses.
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      await user.click(screen.getByRole('link', { name: 'CPU' }));
+
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
+      expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'in_app' });
+    });
+
+    it('resolves a bare relative link (no ./) that renderMarkdown would otherwise strip', async () => {
+      setResources([dashboardItem]);
+      setReadmeResult({ markdownContent: 'See [CPU](cpu.json)' });
+
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      const link = screen.getByRole('link', { name: 'CPU' });
+      // The href must survive rendering (not be emptied to the app root).
+      expect(link).toHaveAttribute('href', 'https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json');
+      await user.click(link);
+
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
+    });
+
+    it('resolves when the click lands on a non-HTML element inside the link (e.g. an SVG icon)', async () => {
+      setResources([dashboardItem]);
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
+
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      const link = screen.getByRole('link', { name: 'CPU' });
+      // An inline SVG icon's element is an SVGElement, not an HTMLElement.
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      link.appendChild(svg);
+      await user.click(svg);
+
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
+    });
+
+    it('navigates the current tab to the host URL when a JSON link has no synced resource', async () => {
+      setResources([]);
+      const assignMock = jest.fn();
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
+
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      // window.location.assign is read-only in jsdom; replace it after render.
+      const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
+      Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
+      try {
+        await user.click(screen.getByRole('link', { name: 'CPU' }));
+
+        await waitFor(() =>
+          expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json')
+        );
+        expect(pushSpy).not.toHaveBeenCalled();
+        expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'host' });
+      } finally {
+        if (originalLocation) {
+          Object.defineProperty(window, 'location', originalLocation);
+        }
+      }
+    });
+
+    it('resolves against the current repository after switching repos (no stale listing)', async () => {
+      // Same path in each repo maps to a different dashboard. repo-b is delayed so
+      // that, without a remount, a stale synchronous read of repo-a's listing would
+      // push /d/aaa immediately (before repo-b's refetch resolves).
+      server.use(
+        http.get(`${BASE}/repositories/:name/resources`, async ({ params }) => {
+          const isB = params.name === 'repo-b';
+          if (isB) {
+            await delay(50);
+          }
+          return HttpResponse.json({
+            items: [
+              {
+                path: 'dashboards/team-a/cpu.json',
+                resource: 'dashboards',
+                name: isB ? 'bbb' : 'aaa',
+                group: '',
+                hash: '',
+              },
+            ],
+          });
+        })
+      );
+
+      // The panel resolves links against the repository from useFolderDocs.
+      setDocs({ repository: { ...mockRepository, name: 'repo-a' } });
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
+      const { user, rerender } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+
+      await user.click(screen.getByRole('link', { name: 'CPU' }));
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/aaa'));
+
+      // Switch to a different repository; the component must not reuse repo-a's listing.
+      setDocs({ repository: { ...mockRepository, name: 'repo-b' } });
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
+      rerender(<FolderReadmePanel folderUID="test-folder" />);
+      pushSpy.mockClear();
+
+      await user.click(screen.getByRole('link', { name: 'CPU' }));
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/bbb'));
+      // Must never have resolved against repo-a's stale listing.
+      expect(pushSpy).not.toHaveBeenCalledWith('/d/aaa');
+    });
+
+    it('records a host outcome for a non-resource link (markdown doc) and never pushes', async () => {
+      setReadmeResult({ markdownContent: 'See [notes](./notes.md)' });
+
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      const link = screen.getByRole('link', { name: 'notes' });
+      expect(link).toHaveAttribute('href', 'https://github.com/owner/repo/blob/main/dashboards/team-a/notes.md');
+      await user.click(link);
+
+      expect(pushSpy).not.toHaveBeenCalled();
+      expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'host' });
+    });
+  });
+
   describe('Add README empty state (no recognized docs)', () => {
     beforeEach(() => {
       setDocs({ docs: [] });
@@ -324,6 +473,22 @@ describe('FolderReadmePanel', () => {
     expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Edit document/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
+  });
+
+  it('strips script and event-handler payloads even though markdown is rendered without its own sanitizer', () => {
+    // renderMarkdown runs with noSanitize:true; textUtil.sanitize is the XSS
+    // boundary. This locks that in so noSanitize can't be dropped unnoticed.
+    setReadmeResult({
+      markdownContent: '<script>alert(1)</script>\n\n<img src="x" onerror="alert(2)">\n\n[click](javascript:alert(3))',
+    });
+
+    const { container } = setup();
+    const markdownDiv = container.querySelector('.markdown-html');
+    expect(markdownDiv).not.toBeNull();
+    expect(markdownDiv!.querySelector('script')).toBeNull();
+    expect(markdownDiv!.innerHTML).not.toContain('onerror');
+    expect(markdownDiv!.innerHTML).not.toContain('alert(1)');
+    expect(markdownDiv!.innerHTML).not.toContain('javascript:');
   });
 
   it('sanitizes mXSS payloads in README markdown', () => {

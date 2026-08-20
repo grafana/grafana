@@ -2212,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "Aucune requête capable d’alerter n’a été trouvée"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Configurer les mises en sourdine pour arrêter les notifications d’une règle d’alerte particulière"
@@ -2219,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Mettre en sourdine la règle d’alerte"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Nous n’avons trouvé aucun Alertmanager externe et vous n’avez peut-être pas accès à l’Alertmanager Grafana intégré.",
@@ -3702,6 +3707,9 @@
       "no-matching-instances-with-filters": "Aucune instance d’alerte ne correspond aux filtres actuellement sélectionnés pour la plage temporelle choisie.",
       "open-in-sidebar": "Ouvrir dans la barre latérale",
       "open-rule-details": "Ouvrir les détails de la règle",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Détails et conditions de la règle",
         "title": "Détails de la règle"
@@ -5420,6 +5428,16 @@
     "auto-grid": {
       "description": "Les panneaux se redimensionnent pour s'adapter et former des grilles uniformes",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Répéter les options",
           "variable": {
@@ -5437,15 +5455,36 @@
         "custom-min-width": {
           "clear": "Effacer"
         },
+        "fit-content": "",
         "height-fill": "Remplir l’écran",
+        "match-row-heights": "",
         "max-columns": "Colonnes maximales",
-        "min-height": "Hauteur des lignes",
-        "min-height-custom": "Hauteur de ligne personnalisée",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "Un nombre compris entre 50 et 2 000 est requis",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Largeur de colonne minimale",
         "min-width-custom": "Largeur personnalisée minimale",
         "min-width-custom-clear": "Retour à la largeur de colonne minimale standard",
-        "min-width-error": "Un nombre compris entre 50 et 2 000 est requis"
+        "min-width-error": "Un nombre compris entre 50 et 2 000 est requis",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5678,6 +5717,7 @@
       "panel-background": "Modifier l’arrière-plan du panneau",
       "panel-description": "Modifier la description du panneau",
       "panel-edit": "Modifications du panneau",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Nombre maximal de répétitions par ligne",
       "panel-preset": "Appliquer le préréglage du panneau",
       "panel-repeat-direction": "Répéter la direction",
@@ -9496,21 +9536,6 @@
   "get-enterprise": {
     "requires-license": "Nécessite une licence Grafana Enterprise",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "terminé",
-      "learn-how": "Découvrez comment dans les docs"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Vers les tutoriels avancés",
-      "aria-label-to-basic-tutorials": "Vers les tutoriels de base",
-      "checking-completed-setup-steps": "Vérification des étapes de configuration terminées",
-      "remove-this-panel": "Supprimer ce panneau"
-    },
-    "tutorial-card": {
-      "complete": "terminé"
-    }
   },
   "global-variables": {
     "details": {
@@ -17528,12 +17553,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Lien"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Vous avez besoin d’aide ?",
-      "welcome-to-grafana": "Bienvenue sur Grafana"
     }
   },
   "xychart": {

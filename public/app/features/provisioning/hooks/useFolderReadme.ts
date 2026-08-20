@@ -27,6 +27,12 @@ export interface UseFolderReadmeResult {
   /** Markdown body of the README, or undefined when not loaded successfully. */
   markdownContent: string | undefined;
   refetch: () => void;
+  /**
+   * Timestamp of the last completed repository sync (`status.sync.finished`), or
+   * undefined. Advances once per pull; callers can key cache refreshes off it so a
+   * sync that changes resources without touching the README isn't missed.
+   */
+  syncFinished: number | undefined;
 }
 
 /**
@@ -72,7 +78,7 @@ export function useFolderReadme(folderUID: string, docPath?: string): UseFolderR
   // first load and switching to a not-yet-cached doc).
   const isLoading = isRepoLoading || isFileLoading || (isFileFetching && !fileData);
 
-  useRefetchOnRepoSync(repository?.name, refetch);
+  const syncFinished = useRefetchOnRepoSync(repository?.name, refetch);
 
   let status: FolderReadmeStatus;
   if (isLoading) {
@@ -111,5 +117,6 @@ export function useFolderReadme(folderUID: string, docPath?: string): UseFolderR
     isFetching: isFileFetching,
     markdownContent,
     refetch,
+    syncFinished,
   };
 }

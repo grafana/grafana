@@ -6,6 +6,7 @@ import { useIntersection } from 'react-use';
 import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -19,14 +20,20 @@ import {
   ToolbarButton,
   useStyles2,
 } from '@grafana/ui';
-import { provisioningAPIv0alpha1, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  provisioningAPIv0alpha1,
+  type RepositoryView,
+  type ResourceListItem,
+  useLazyGetRepositoryResourcesQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { useFolderDocs } from '../../hooks/useFolderDocs';
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { type FolderDoc, ensureReadmeTab, getDocTabLabel, README_CONVENTION } from '../../utils/folderDocConventions';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
-import { rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
+import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
+import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
 
 import { FolderReadmeEvents } from './analytics/main';
 
@@ -95,7 +102,10 @@ function FolderReadmePanelContent({ folderUID }: Props) {
     }
   }, [folderUID, activeTab, setQueryParams]);
 
-  const { status, markdownContent, readmePath, refetch, isFetching } = useFolderReadme(folderUID, activePath);
+  const { status, markdownContent, readmePath, refetch, isFetching, syncFinished } = useFolderReadme(
+    folderUID,
+    activePath
+  );
 
   // Once the active doc has loaded, warm the next couple of tabs so switching to
   // them is instant. Their content is cached by RTK for later selection.
@@ -193,6 +203,7 @@ function FolderReadmePanelContent({ folderUID }: Props) {
           newFileUrl={newFileUrl}
           isReadmeContext={isReadmeContext}
           refetch={refetch}
+          syncFinished={syncFinished}
         />
         {/* Switching tabs keeps the previous doc's content on screen (RTK holds
             stale data), so overlay a spinner to signal the new doc is loading. */}
@@ -215,10 +226,9 @@ interface DocTabsProps {
 /**
  * The GitHub-style tab bar: one tab per markdown doc, in priority order. Tabs
  * that don't fit the available width collapse into a "More" menu, measured
- * against an off-screen copy of the full set (see {@link useDocTabOverflow}).
- * The active doc is always kept visible as a selected tab (so the tablist keeps
- * a valid selection), and the More trigger sits outside the tablist. The caller
- * guarantees at least a README tab.
+ * against an off-screen copy of the full set (see {@link useDocTabOverflow}). The
+ * active doc is always kept visible as a selected tab, and the More trigger sits
+ * outside the tablist. The caller guarantees at least a README tab.
  */
 function DocTabs({ docs, activePath, onSelect }: DocTabsProps) {
   const styles = useStyles2(getStyles);
@@ -404,6 +414,7 @@ interface ReadmeBodyProps {
   newFileUrl: string | undefined;
   isReadmeContext: boolean;
   refetch: () => void;
+  syncFinished: number | undefined;
 }
 
 function ReadmeBody({
@@ -414,6 +425,7 @@ function ReadmeBody({
   newFileUrl,
   isReadmeContext,
   refetch,
+  syncFinished,
 }: ReadmeBodyProps) {
   if (status === 'loading' || !repository) {
     return (
@@ -425,11 +437,16 @@ function ReadmeBody({
   switch (status) {
     case 'ok':
       return markdownContent !== undefined ? (
+        // Key by repository so switching to a folder in a different repo remounts
+        // (resetting the cached listing/refs), rather than resolving links against
+        // the previous repository's resources.
         <RenderedMarkdown
+          key={repository.name}
           markdown={markdownContent}
           repository={repository}
           baseDirInRepo={getReadmeBaseDir(repository.path, readmePath)}
           repositoryType={repository.type}
+          syncFinished={syncFinished}
         />
       ) : (
         <Text color="secondary">
@@ -453,30 +470,129 @@ function RenderedMarkdown({
   repository,
   baseDirInRepo,
   repositoryType,
+  syncFinished,
 }: {
   markdown: string;
   repository: RepositoryView;
   baseDirInRepo: string;
   repositoryType: RepositoryView['type'];
+  syncFinished: number | undefined;
 }) {
-  const html = renderMarkdown(markdown);
+  // Links to JSON/YAML files or folders are tagged during rewrite; the resource
+  // listing is fetched lazily only when the user first clicks one of them.
+  const [fetchResources, { data: resourcesData }] = useLazyGetRepositoryResourcesQuery();
+  const repositoryName = repository.name;
+  const repositoryPath = repository.path;
+
+  // renderMarkdown's default sanitizer strips the href of bare relative links
+  // (e.g. `dashboard.json`, `subfolder/`), leaving `<a href>` that resolves to
+  // the app root — so folder/dashboard links can't be rewritten or resolved.
+  // Render without it and rely on textUtil.sanitize below (the XSS boundary),
+  // which preserves relative links.
+  const html = renderMarkdown(markdown, { noSanitize: true });
   const rewritten = rewriteRelativeMarkdownLinks(html, { repository, baseDirInRepo });
   const safe = textUtil.sanitize(rewritten);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Only the latest async (first-click) resolution navigates, so overlapping
+  // clicks can't race and push an earlier link's destination after a later one.
+  const navTokenRef = useRef(0);
+  // Latest listing, read synchronously in the click handler so we only take over
+  // navigation when there is an in-app route.
+  const itemsRef = useRef<ResourceListItem[] | undefined>(undefined);
+  itemsRef.current = resourcesData?.items;
+
+  // Refresh the cached listing when a sync completes: it may add or rename
+  // resources without changing the README, which would otherwise leave stale
+  // links falling back to the host. Only refetch once we've loaded it, to stay
+  // lazy for READMEs whose links are never clicked.
+  useEffect(() => {
+    if (itemsRef.current) {
+      void fetchResources({ name: repositoryName }, false);
+    }
+  }, [syncFinished, repositoryName, fetchResources]);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) {
       return;
     }
-    const handleClick = (e: MouseEvent) => {
-      if (e.target instanceof HTMLElement && e.target.closest('a')) {
-        FolderReadmeEvents.linkClicked({ repositoryType });
+
+    const routeFor = (items: ResourceListItem[], repoPath: string) =>
+      createGrafanaLinkResolver(items, repositoryPath)(repoPath);
+
+    // First click before the listing is cached: resolve asynchronously. This is
+    // the only path that may navigate the current tab on a host fallback (a
+    // window.open after the await would be treated as non-user-initiated and
+    // blocked); once cached, clicks resolve synchronously below.
+    const resolveAsync = async (href: string | null, repoPath: string) => {
+      const token = ++navTokenRef.current;
+      let items: ResourceListItem[] = [];
+      try {
+        const result = await fetchResources({ name: repositoryName }, true).unwrap();
+        items = result.items ?? [];
+      } catch {
+        // Ignore — fall back to the host link below.
+      }
+      if (token !== navTokenRef.current) {
+        return; // A later click superseded this one.
+      }
+      const route = routeFor(items, repoPath);
+      if (route) {
+        locationService.push(route);
+        FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'in_app' });
+        return;
+      }
+      if (href) {
+        FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'host' });
+        window.location.assign(href);
       }
     };
+
+    const handleClick = (e: MouseEvent) => {
+      // Element (not HTMLElement): a click can land on an SVGElement — e.g. an
+      // inline icon inside the link — which still supports closest().
+      if (!(e.target instanceof Element)) {
+        return;
+      }
+      const anchor = e.target.closest('a');
+      if (!anchor) {
+        return;
+      }
+      const repoPath = anchor.getAttribute(RESOURCE_PATH_ATTR);
+      const href = anchor.getAttribute('href');
+      const plainClick = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+
+      if (repoPath && plainClick) {
+        const items = itemsRef.current;
+        if (items) {
+          // Cached: resolve synchronously and take over navigation only when
+          // there is an in-app route, so unresolved links keep their native
+          // (new-tab) behavior — consistent with untagged links beside them.
+          const route = routeFor(items, repoPath);
+          if (route) {
+            e.preventDefault();
+            locationService.push(route);
+            FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'in_app' });
+            return;
+          }
+        } else {
+          // Listing not loaded yet — resolve asynchronously for this first click.
+          e.preventDefault();
+          void resolveAsync(href, repoPath);
+          return;
+        }
+      }
+
+      // Native navigation to the host link. Only count links that actually go
+      // somewhere (skip anchors whose href was stripped for hostless repos).
+      if (href) {
+        FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'host' });
+      }
+    };
+
     el.addEventListener('click', handleClick);
     return () => el.removeEventListener('click', handleClick);
-  }, [repositoryType]);
+  }, [repositoryType, repositoryName, repositoryPath, fetchResources]);
 
   return <div ref={containerRef} className="markdown-html" dangerouslySetInnerHTML={{ __html: safe }} />;
 }

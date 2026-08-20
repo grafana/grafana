@@ -200,6 +200,7 @@ describe('browse-dashboards BrowseView', () => {
         isFetching: false,
         markdownContent,
         refetch: jest.fn(),
+        syncFinished: undefined,
       });
     }
 
@@ -214,6 +215,7 @@ describe('browse-dashboards BrowseView', () => {
         isFetching: false,
         markdownContent: undefined,
         refetch: jest.fn(),
+        syncFinished: undefined,
       });
     }
 

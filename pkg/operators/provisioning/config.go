@@ -104,6 +104,7 @@ type ControllerConfig struct {
 // local_permitted_prefixes =
 // [provisioning]
 // repository_types =
+// connection_types =
 // [nats]
 // # when enabled, the informers take their watch from NATS instead of the
 // # apiserver watch; operators use an external NATS (no embedded server).
@@ -515,13 +516,12 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 		return nil, err
 	}
 
-	// Build enabled types from the extras
-	enabledTypes := make(map[provisioning.ConnectionType]struct{})
-	for _, extra := range extras {
-		enabledTypes[extra.Type()] = struct{}{}
+	types := c.Settings.ProvisioningConnectionTypes
+	if len(types) == 0 {
+		types = defaultConnectionTypes(extras)
 	}
 
-	connectionFactory, err := connection.ProvideFactory(enabledTypes, extras)
+	connectionFactory, err := connection.ProvideFactory(connection.ToConnectionTypes(types), extras)
 	if err != nil {
 		return nil, fmt.Errorf("create connection factory: %w", err)
 	}
@@ -747,4 +747,14 @@ func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
 
 func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
 	return r.cfg, nil
+}
+
+func defaultConnectionTypes(extras []connection.Extra) []string {
+	types := []string{string(provisioning.GithubConnectionType)}
+	for _, extra := range extras {
+		if extra.Type() == provisioning.GithubEnterpriseConnectionType {
+			types = append(types, string(extra.Type()))
+		}
+	}
+	return types
 }

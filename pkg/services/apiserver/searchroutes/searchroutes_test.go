@@ -103,12 +103,12 @@ func TestBuild_SearchFieldsEnrolAKind(t *testing.T) {
 	}
 
 	t.Run("no fields, not enrolled", func(t *testing.T) {
-		assert.Empty(t, paths(build(playlists(nil), true, true, nil, fakeClient{}, builders, nil)))
+		assert.Empty(t, paths(BuildFromManifests(playlists(nil), true, true, nil, fakeClient{}, builders, nil)))
 	})
 
 	t.Run("one field, gets both endpoints", func(t *testing.T) {
 		fields := []app.ManifestVersionKindSearchField{{Name: "interval", Path: "spec.interval", Type: "string"}}
-		got := paths(build(playlists(fields), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(playlists(fields), true, true, nil, fakeClient{}, builders, nil))
 		assert.ElementsMatch(t, []string{"playlists/search", "playlists/trash"}, got[gv.String()])
 	})
 }
@@ -291,25 +291,25 @@ func TestBuild_ManifestOptOutIsHonoured(t *testing.T) {
 	optOut := func(v bool) *bool { return &v }
 
 	t.Run("says nothing, so gets both", func(t *testing.T) {
-		got := paths(build(dashboards(nil), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(dashboards(nil), true, true, nil, fakeClient{}, builders, nil))
 		assert.ElementsMatch(t, []string{"dashboards/search", "dashboards/trash"}, got[gv.String()])
 	})
 
 	t.Run("declines search, keeps trash", func(t *testing.T) {
 		search := &app.ManifestVersionKindSearch{Endpoint: optOut(false)}
-		got := paths(build(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
 		assert.Equal(t, []string{"dashboards/trash"}, got[gv.String()])
 	})
 
 	t.Run("declines trash, keeps search", func(t *testing.T) {
 		search := &app.ManifestVersionKindSearch{Trash: optOut(false)}
-		got := paths(build(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
 		assert.Equal(t, []string{"dashboards/search"}, got[gv.String()])
 	})
 
 	t.Run("declines both", func(t *testing.T) {
 		search := &app.ManifestVersionKindSearch{Endpoint: optOut(false), Trash: optOut(false)}
-		assert.Empty(t, paths(build(dashboards(search), true, true, nil, fakeClient{}, builders, nil)))
+		assert.Empty(t, paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil)))
 	})
 }
 

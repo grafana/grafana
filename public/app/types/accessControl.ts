@@ -178,6 +178,11 @@ export enum AccessControlAction {
   AlertingTemplatesDelete = 'alert.notifications.templates:delete',
   AlertingNotificationsTemplatesTest = 'alert.notifications.templates.test:write',
 
+  // Alerting inhibition rules actions
+  AlertingInhibitionRulesRead = 'alert.notifications.inhibition-rules:read',
+  AlertingInhibitionRulesWrite = 'alert.notifications.inhibition-rules:write',
+  AlertingInhibitionRulesDelete = 'alert.notifications.inhibition-rules:delete',
+
   // Alerting enrichments actions
   AlertingEnrichmentsRead = 'alert.enrichments:read',
   AlertingEnrichmentsWrite = 'alert.enrichments:write',

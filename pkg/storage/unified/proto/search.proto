@@ -364,6 +364,13 @@ message HybridSearchResult {
   // content = title and no metadata so rerankers always have text.
   // Only the best chunk influences score.
   repeated HybridSearchChunk chunks = 5;
+
+  // Manager kind. Empty when unmanaged, or when resolution for a
+  // semantic-only hit fails — best-effort display data, never an error.
+  string managed_by_kind = 7;
+
+  // Manager identity, alongside managed_by_kind.
+  string managed_by_id = 8;
 }
 
 message HybridSearchChunk {
