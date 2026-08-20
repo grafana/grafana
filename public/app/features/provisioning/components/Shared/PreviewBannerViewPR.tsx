@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
@@ -101,9 +101,6 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
       {showBranchInfo(repoType, branchInfo) && (
         <Box marginTop={1}>
           <span className={styles.branchRow}>
-            <Text color="secondary" variant="bodySmall">
-              <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.branch-text">branch:</Trans>
-            </Text>
             {/* branch that changes pushed to */}
             <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.targetBranch} repoType={repoType} />
             <Icon name="arrow-right" size="sm" className={styles.arrow} />

@@ -20,13 +20,6 @@ export function BranchDisplay({ baseUrl, branch, repoType }: Props) {
   const styles = useStyles2(getStyles);
   const link = getBranchUrl(baseUrl, branch, repoType);
 
-  const content = (
-    <>
-      <Icon name="code-branch" size="xs" className={styles.branchIcon} />
-      <span className={styles.branchName}>{branch}</span>
-    </>
-  );
-
   if (link.length) {
     return (
       <a
@@ -35,12 +28,19 @@ export function BranchDisplay({ baseUrl, branch, repoType }: Props) {
         rel="noopener noreferrer"
         className={cx(styles.branchPill, styles.branchPillLink)}
       >
-        {content}
+        <Icon name="code-branch" size="xs" className={styles.branchIcon} />
+        <span className={styles.branchName}>{branch}</span>
+        <Icon name="external-link-alt" size="xs" className={styles.branchIcon} />
       </a>
     );
   }
 
-  return <span className={styles.branchPill}>{content}</span>;
+  return (
+    <span className={styles.branchPill}>
+      <Icon name="code-branch" size="xs" className={styles.branchIcon} />
+      <span className={styles.branchName}>{branch}</span>
+    </span>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -60,7 +60,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     verticalAlign: 'middle',
   }),
   branchPillLink: css({
-    color: theme.colors.text.link,
+    color: theme.colors.text.primary,
     textDecoration: 'none',
     '&:hover': {
       textDecoration: 'none',
