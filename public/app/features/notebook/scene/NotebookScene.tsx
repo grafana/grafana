@@ -214,7 +214,9 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
     <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
       <div className={styles.controls}>
-        {isEditing && <NotebookSaveStatus autosave={model.autosave} />}
+        {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has to
+            be visible and retryable there too. This renders nothing until there is something to say. */}
+        <NotebookSaveStatus autosave={model.autosave} />
         {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
         <NotebookEditToggle notebook={model} />
         {!hideTimeControls && (
