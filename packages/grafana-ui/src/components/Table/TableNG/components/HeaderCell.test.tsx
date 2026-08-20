@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type Field, FieldType } from '@grafana/data';
+import { createTheme, type Field, FieldType } from '@grafana/data';
 import { type Column } from '@grafana/react-data-grid';
 
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
@@ -73,6 +73,22 @@ describe('HeaderCell', () => {
     render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { sortable: false } } })} />);
     const label = screen.getByRole('button', { name: 'Field1' });
     expect(window.getComputedStyle(label).cursor).toBe('default');
+  });
+
+  it('gives the header label the body text colour under table.refresh', () => {
+    const theme = createTheme();
+    const { unmount } = render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color).toBe(
+      theme.colors.text.primary
+    );
+
+    unmount();
+
+    // the classic header sits on the same background as the body rows, so its label stays de-emphasised
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color).toBe(
+      theme.colors.text.secondary
+    );
   });
 
   it('renders nothing when hideHeader is set', () => {

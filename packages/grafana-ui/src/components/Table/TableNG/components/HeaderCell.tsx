@@ -135,7 +135,11 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       {showTypeIcons && (
         <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
       )}
-      <button tabIndex={0} className={styles.headerCellLabel} title={displayName}>
+      <button
+        tabIndex={0}
+        className={clsx(styles.headerCellLabel, tableRefreshEnabled && styles.headerCellLabelPrimary)}
+        title={displayName}
+      >
         {displayName}
         {direction && (
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
@@ -269,8 +273,14 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
     },
     '&::selection': {
       backgroundColor: 'var(--rdg-background-color)',
-      color: theme.colors.text.secondary,
+      color: 'inherit',
     },
+  }),
+  // `table.refresh` gives the header its own background, so the label no longer needs to be
+  // de-emphasised against the body rows to read as a header — it takes the body text colour.
+  headerCellLabelPrimary: css({
+    label: 'headerCellLabelPrimary',
+    color: theme.colors.text.primary,
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,
