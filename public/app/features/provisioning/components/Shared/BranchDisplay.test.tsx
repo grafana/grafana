@@ -1,24 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from 'test/test-utils';
 
-import { textUtil } from '@grafana/data';
+import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { BranchDisplay } from './BranchDisplay';
 
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
-  textUtil: {
-    sanitizeUrl: jest.fn(),
-  },
-}));
-
-const mockTextUtil = jest.mocked(textUtil);
+setupProvisioningMswServer();
 
 describe('BranchDisplay', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockTextUtil.sanitizeUrl.mockImplementation((url) => url);
-  });
-
   it('renders the branch name', () => {
     render(<BranchDisplay baseUrl="https://github.com/org/repo" branch="feature/foo" repoType="github" />);
 
@@ -52,13 +40,10 @@ describe('BranchDisplay', () => {
     );
   });
 
-  it('sanitizes the branch URL before using it as href', () => {
-    mockTextUtil.sanitizeUrl.mockReturnValue('safe-url');
+  it('sanitizes unsafe branch URLs', () => {
+    render(<BranchDisplay baseUrl="javascript:alert(1)" branch="x" repoType="github" />);
 
-    render(<BranchDisplay baseUrl="https://github.com/org/repo" branch="feature/foo" repoType="github" />);
-
-    expect(mockTextUtil.sanitizeUrl).toHaveBeenCalledWith('https://github.com/org/repo/tree/feature/foo');
-    expect(screen.getByRole('link', { name: /feature\/foo/ })).toHaveAttribute('href', 'safe-url');
+    expect(screen.getByRole('link', { name: /x/ })).toHaveAttribute('href', 'about:blank');
   });
 
   it('renders as plain text (no link) for local repos', () => {
