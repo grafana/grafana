@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -28,6 +29,16 @@ func (r *statusRecorder) WriteHeader(code int) {
 	r.ResponseWriter.WriteHeader(code)
 }
 
+// Unwrap exposes the real ResponseWriter to http.ResponseController, so
+// ReverseProxy's Flush (used for chunked/SSE/any response with no
+// Content-Length) reaches the real connection instead of silently
+// no-opping against this wrapper. Per net/http's documented pattern for
+// wrapping ResponseWriter without hiding optional interfaces (Flusher,
+// Hijacker, etc).
+func (r *statusRecorder) Unwrap() http.ResponseWriter {
+	return r.ResponseWriter
+}
+
 // isBackendFailure reports whether a response status counts as a passive
 // circuit-breaker failure: transport-level errors (surfaced by
 // httputil.ReverseProxy's default ErrorHandler as 502) and the backend's own
@@ -43,9 +54,35 @@ func isBackendFailure(status int) bool {
 // newGroupBreaker returns a fresh passive circuit breaker for one group,
 // using gobreaker's own defaults (trip after more than 5 consecutive
 // failures, 60s open cooldown, 1 half-open trial request) rather than
-// inventing thresholds -- see AGENTS.md "Passive circuit breaking".
+// inventing thresholds -- see AGENTS.md "Passive circuit breaking". Context
+// cancellation/deadline errors are excluded from success/failure accounting
+// entirely (gobreaker calls this "excluded", not counted either way): a
+// client disconnecting mid-request surfaces through ReverseProxy as a 502
+// like any other transport failure, but it says nothing about the backend's
+// health, and a handful of abandoned requests must not trip the breaker for
+// every other caller.
 func newGroupBreaker(group string) *gobreaker.CircuitBreaker[struct{}] {
-	return gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{Name: group})
+	return gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
+		Name: group,
+		IsExcluded: func(err error) bool {
+			return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
+		},
+	})
+}
+
+// breakerOutcome turns one completed proxy attempt into the error
+// cb.Execute's func should return: the request's context error if it was
+// canceled/timed out (excluded by newGroupBreaker's IsExcluded, checked
+// ahead of status so a disconnect is never miscounted as a backend
+// failure), a backend-failure error for isBackendFailure statuses, or nil.
+func breakerOutcome(req *http.Request, status int) error {
+	if err := req.Context().Err(); err != nil {
+		return err
+	}
+	if isBackendFailure(status) {
+		return fmt.Errorf("router: backend returned status %d", status)
+	}
+	return nil
 }
 
 // serveThroughBreaker proxies one request to h through cb: closed/half-open
@@ -57,10 +94,7 @@ func serveThroughBreaker(cb *gobreaker.CircuitBreaker[struct{}], h http.Handler,
 	_, err := cb.Execute(func() (struct{}, error) {
 		rec := newStatusRecorder(w)
 		h.ServeHTTP(rec, req)
-		if isBackendFailure(rec.status) {
-			return struct{}{}, fmt.Errorf("router: backend returned status %d", rec.status)
-		}
-		return struct{}{}, nil
+		return struct{}{}, breakerOutcome(req, rec.status)
 	})
 	if errors.Is(err, gobreaker.ErrOpenState) || errors.Is(err, gobreaker.ErrTooManyRequests) {
 		http.Error(w, "backend unavailable", http.StatusServiceUnavailable)

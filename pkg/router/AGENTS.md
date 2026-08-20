@@ -210,7 +210,7 @@ The signal and the state are split; do not conflate them.
   close eagerly on swap, or you cut live requests. (Transports are currently shared per
   `tlsCacheKey` and not closed — revisit when per-backend teardown is added.)
 
-## Passive circuit breaking (planned)
+## Passive circuit breaking
 
 **Decision: passive-only, not active health probing.** The router does not run a periodic
 background probe against each backend (the way kube-aggregator's `AvailabilityController` actively
@@ -236,6 +236,22 @@ Library: not hand-rolled. Use `sony/gobreaker` (closed/open/half-open state mach
 *Release It!*), one instance per served group, wrapping the proxied request outcome. Do not
 reimplement failure-counting/cooldown/half-open logic from scratch — that's easy to get subtly wrong
 (flapping, thundering-herd on recovery) and gobreaker already gets it right.
+
+Implemented in `breaker.go` (per-group breaker + `serveThroughBreaker`), wired into both
+`HandleFunc`'s main dispatch and `serveOpenAPIGroupVersion`'s cache-miss path (the cache-hit path
+never touches the breaker — it never calls the backend). Two pitfalls found by review, worth knowing
+before touching this code again — see `specs/2026-08-19-router-circuit-breaker-design.md` for the full
+writeup:
+
+- Any wrapper placed between `ReverseProxy` and the real `http.ResponseWriter` (`statusRecorder` here,
+  and the pre-existing `captureWriter`) must forward `Flush` — either via `Unwrap() http.ResponseWriter`
+  (if it wraps a real writer) or a no-op `Flush()` (if it doesn't, like `captureWriter`'s in-memory
+  buffer). `ReverseProxy` flushes any response with no `Content-Length` on every write; a wrapper
+  missing both silently degrades that instead of erroring loudly, so it's easy to miss in review.
+- A canceled request context (client disconnect) must be excluded from breaker accounting via
+  `gobreaker.Settings.IsExcluded`, checked ahead of status — `ReverseProxy` maps a cancellation to the
+  same 502 as a real transport failure, so without the exclusion a few abandoned client requests trip
+  the breaker for every other caller on that group.
 
 ## Lifecycle / ownership
 

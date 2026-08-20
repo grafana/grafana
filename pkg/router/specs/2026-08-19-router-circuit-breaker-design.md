@@ -179,6 +179,32 @@ practice — noted here so it isn't rediscovered as new work.
 - `serveOpenAPIGroupVersion`: cache-hit path never touches the breaker (assert internal counts
   unchanged); cache-miss path routes through it identically to the main dispatch.
 
+## Amendments (post-review)
+
+Two issues surfaced by automated PR review (bugbot) against the initial implementation, both fixed:
+
+- **Wrapper writers must forward `Flush`.** `statusRecorder` (and the pre-existing `captureWriter`)
+  wrap `http.ResponseWriter` without exposing `Flush`. `httputil.ReverseProxy` flushes any response
+  with no `Content-Length` (`res.ContentLength == -1` — chunked responses, SSE, and much ordinary k8s
+  JSON) via `http.ResponseController(dst).Flush()` on every write. Without a route to the real
+  `Flusher`, that flush silently no-ops (Go's `ReverseProxy` swallows the error rather than panicking,
+  contrary to the review's initial "will panic" framing — but the practical effect is still real:
+  buffered/delayed delivery for streamed responses instead of prompt flushing). Fix: `statusRecorder`
+  implements `Unwrap() http.ResponseWriter` (the documented `net/http` pattern for wrapping
+  `ResponseWriter` without hiding optional interfaces), so `ResponseController` reaches the real
+  writer. `captureWriter` has no real writer yet to unwrap to (it owns its own buffer until `ServeHTTP`
+  returns), so it gets a no-op `Flush` instead — cheap, and enough to stop `ResponseController` from
+  treating it as unsupported.
+- **Canceled requests must not count as breaker failures.** A client disconnect surfaces through
+  `ReverseProxy` as its default 502 (same status as a real transport failure), so `isBackendFailure`
+  was counting client-side cancellations as backend unavailability — a handful of abandoned requests
+  could trip the breaker and fail-fast every other caller for the cooldown window, independent of
+  actual backend health. Fix: `newGroupBreaker`'s `Settings.IsExcluded` (a gobreaker hook built exactly
+  for this — "ignore context cancellations or other errors that should not affect the circuit breaker
+  state") checks for `context.Canceled`/`context.DeadlineExceeded`. `breakerOutcome` (shared by both
+  call sites) checks the request context ahead of the response status, so a cancellation is excluded
+  regardless of what status got written.
+
 ## Out of scope
 
 - Active health probing (see Decision above).

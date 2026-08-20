@@ -43,3 +43,11 @@ func newCaptureWriter() *captureWriter {
 func (c *captureWriter) Header() http.Header         { return c.header }
 func (c *captureWriter) Write(p []byte) (int, error) { return c.body.Write(p) }
 func (c *captureWriter) WriteHeader(code int)        { c.statusCode = code }
+
+// Flush is a no-op: captureWriter owns its own in-memory buffer (there is no
+// underlying real ResponseWriter to unwrap to yet -- the buffered body is
+// copied to the real ResponseWriter only after ServeHTTP returns), but it
+// must still satisfy http.Flusher so ReverseProxy's flush machinery (used
+// for chunked/SSE/any response with no Content-Length) doesn't treat this
+// writer as unsupported.
+func (c *captureWriter) Flush() {}

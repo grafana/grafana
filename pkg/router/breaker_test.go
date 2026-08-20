@@ -431,3 +431,56 @@ func TestOpenAPIGroupVersionCacheHitBypassesBreaker(t *testing.T) {
 		t.Errorf("upstream hits = %d, want 1 (second request must be served from cache, not dialed)", got)
 	}
 }
+
+// TestStatusRecorderUnwrapsForFlush pins that statusRecorder exposes Unwrap
+// so http.ResponseController can reach the underlying ResponseWriter's real
+// Flush -- without it, httputil.ReverseProxy's periodic/immediate flush for
+// streamed responses (chunked, SSE, any response with no Content-Length)
+// silently degrades because the wrapper hides the real Flusher.
+func TestStatusRecorderUnwrapsForFlush(t *testing.T) {
+	rw := httptest.NewRecorder()
+	rec := newStatusRecorder(rw)
+	if err := http.NewResponseController(rec).Flush(); err != nil {
+		t.Fatalf("Flush() via ResponseController = %v, want nil (statusRecorder must unwrap to the underlying Flusher)", err)
+	}
+	if !rw.Flushed {
+		t.Errorf("underlying recorder Flushed = false, want true")
+	}
+}
+
+// TestCaptureWriterSupportsFlush pins that captureWriter exposes a Flush so
+// ReverseProxy's flush machinery doesn't treat it as unsupported. Unlike
+// statusRecorder, captureWriter owns its own in-memory buffer (nothing real
+// to unwrap to yet -- the buffered body is copied to the real
+// ResponseWriter only after ServeHTTP returns), so a no-op Flush is correct
+// here, not Unwrap.
+func TestCaptureWriterSupportsFlush(t *testing.T) {
+	rec := newCaptureWriter()
+	if err := http.NewResponseController(rec).Flush(); err != nil {
+		t.Errorf("Flush() via ResponseController = %v, want nil (captureWriter must expose a no-op Flush)", err)
+	}
+}
+
+// TestHandleFuncBreakerIgnoresCanceledRequests pins that a canceled request
+// context (client disconnect) is excluded from breaker accounting entirely --
+// ReverseProxy maps a canceled request to its default 502, and without this
+// exclusion a handful of abandoned client requests would trip the breaker and
+// fail-fast every other caller for the cooldown window, even though the
+// backend itself is healthy.
+func TestHandleFuncBreakerIgnoresCanceledRequests(t *testing.T) {
+	h, calls := fixedStatusHandler(http.StatusBadGateway) // simulates ReverseProxy's cancel->502 mapping
+	s := withGroupHandler("dashboard.grafana.app", h)     // real newGroupBreaker defaults
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // pre-canceled: simulates a client that already disconnected
+
+	for i := 1; i <= 20; i++ {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil).WithContext(ctx)
+		s.HandleFunc(rec, req, next)
+	}
+	if got := calls.Load(); got != 20 {
+		t.Fatalf("handler called %d times, want 20 (breaker must never open on canceled-context requests)", got)
+	}
+}

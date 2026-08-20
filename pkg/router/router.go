@@ -239,10 +239,7 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 	rec := newCaptureWriter()
 	_, err := entry.breaker.Execute(func() (struct{}, error) {
 		entry.handler.ServeHTTP(rec, proxyReq)
-		if isBackendFailure(rec.statusCode) {
-			return struct{}{}, fmt.Errorf("router: backend returned status %d", rec.statusCode)
-		}
-		return struct{}{}, nil
+		return struct{}{}, breakerOutcome(proxyReq, rec.statusCode)
 	})
 	if errors.Is(err, gobreaker.ErrOpenState) || errors.Is(err, gobreaker.ErrTooManyRequests) {
 		http.Error(w, "backend unavailable", http.StatusServiceUnavailable)
