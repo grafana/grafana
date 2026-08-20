@@ -1,5 +1,6 @@
+import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, LinkButton, Stack, TextLink, Text } from '@grafana/ui';
+import { Alert, Box, Button, LinkButton, Stack, TextLink, Text } from '@grafana/ui';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
@@ -17,6 +18,15 @@ interface Props {
   branchInfo?: PreviewBranchInfo;
   /* URL of the version currently saved in Grafana, if the resource already exists. Offered as an action next to the pull request button. */
   originalUrl?: string;
+  /**
+   * Intercepts the pull request button instead of following its link directly. Receives `openDefault`,
+   * which opens the computed link in a new tab; callers can defer to it (e.g. after a pre-flight
+   * branch-existence check passes) or take a different path (e.g. offer a way out when the branch is gone).
+   * When set, the button becomes a click handler rather than a plain link.
+   */
+  onOpenPullRequest?: (openDefault: () => void) => void;
+  /** Renders the pull request button in a "checking…" state while an async pre-flight runs. */
+  isCheckingBranch?: boolean;
 }
 
 export type PreviewBranchInfo = {
@@ -47,14 +57,29 @@ function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch:
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, originalUrl }: Props) {
+export function PreviewBannerViewPR({
+  prURL,
+  isNewPr,
+  behindBranch,
+  repoUrl,
+  branchInfo,
+  originalUrl,
+  onOpenPullRequest,
+  isCheckingBranch,
+}: Props) {
   const { repoType, action, prTitle } = usePullRequestParam();
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
   // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the
   // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
   const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
-  const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
+  // When the PR/compare link is unavailable (e.g. the branch was removed after the PR was closed),
+  // fall back to the branch itself rather than the repo root, which is disorienting.
+  const branchLink =
+    branchInfo?.repoBaseUrl && branchInfo?.targetBranch
+      ? getBranchUrl(branchInfo.repoBaseUrl, branchInfo.targetBranch, repoType)
+      : '';
+  const linkUrl = prLink || branchLink || branchInfo?.repoBaseUrl || repoUrl;
 
   const actionText =
     action === 'delete'
@@ -108,11 +133,31 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
               {t('provisioned-resource-preview-banner.preview-banner.view-saved-version', 'View saved version')}
             </LinkButton>
           )}
-          {linkUrl && (
-            <LinkButton href={linkUrl} target="_blank" variant="primary" icon="external-link-alt" iconPlacement="right">
-              {actionText.button}
-            </LinkButton>
-          )}
+          {linkUrl &&
+            // When a caller needs to pre-flight before opening (e.g. verify the branch still exists),
+            // the primary action is a click handler; otherwise it stays a plain link so it opens in a
+            // new tab and cmd/middle-click work.
+            (onOpenPullRequest ? (
+              <Button
+                variant="primary"
+                icon="external-link-alt"
+                onClick={() => onOpenPullRequest(() => window.open(textUtil.sanitizeUrl(linkUrl), '_blank'))}
+              >
+                {isCheckingBranch
+                  ? t('provisioned-resource-preview-banner.preview-banner.checking-branch', 'Checking branch…')
+                  : actionText.button}
+              </Button>
+            ) : (
+              <LinkButton
+                href={linkUrl}
+                target="_blank"
+                variant="primary"
+                icon="external-link-alt"
+                iconPlacement="right"
+              >
+                {actionText.button}
+              </LinkButton>
+            ))}
         </Stack>
       }
     >

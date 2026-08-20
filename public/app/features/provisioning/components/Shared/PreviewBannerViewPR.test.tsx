@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
@@ -170,6 +171,60 @@ describe('PreviewBannerViewPR', () => {
       const link = screen.getByRole('link', { name: /pull request in GitHub/i });
       expect(link).toHaveAttribute('href', testUrl);
       expect(link).toHaveAttribute('target', '_blank');
+    });
+  });
+
+  describe('onOpenPullRequest override', () => {
+    beforeEach(() => {
+      mockUsePullRequestParam.mockReturnValue({
+        prURL: undefined,
+        newPrURL: undefined,
+        repoURL: undefined,
+        repoType: 'github',
+        resourcePushedTo: 'abc',
+        action: undefined,
+        prTitle: undefined,
+      });
+    });
+
+    it('renders a click handler (not a plain link) and defers to openDefault', async () => {
+      const user = userEvent.setup();
+      const onOpenPullRequest = jest.fn();
+      const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+
+      render(
+        <PreviewBannerViewPR
+          isNewPr
+          prURL="https://github.com/org/repo/compare"
+          onOpenPullRequest={onOpenPullRequest}
+        />
+      );
+
+      // With the override present the primary action is a button, not a link.
+      expect(screen.queryByRole('link', { name: /pull request in GitHub/i })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /Open pull request in GitHub/i }));
+
+      expect(onOpenPullRequest).toHaveBeenCalledTimes(1);
+      expect(openSpy).not.toHaveBeenCalled();
+
+      // The override receives a fallback that opens the computed link in a new tab.
+      onOpenPullRequest.mock.calls[0][0]();
+      expect(openSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank');
+
+      openSpy.mockRestore();
+    });
+
+    it('shows a checking state on the button while pre-flighting', () => {
+      render(
+        <PreviewBannerViewPR
+          isNewPr
+          prURL="https://github.com/org/repo/compare"
+          onOpenPullRequest={jest.fn()}
+          isCheckingBranch
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'Checking branch…' })).toBeInTheDocument();
     });
   });
 
