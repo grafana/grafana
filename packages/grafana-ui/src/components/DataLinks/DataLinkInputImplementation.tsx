@@ -3,11 +3,7 @@ import { memo, useMemo } from 'react';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { CodeMirrorInlineInput } from '../CodeMirror/InlineInput';
 
-import {
-  createDataLinkHighlighter,
-  createDataLinkTheme,
-  dataLinkAutocompletion,
-} from './codemirrorUtils';
+import { createDataLinkHighlighter, createDataLinkTheme, dataLinkAutocompletion } from './codemirrorUtils';
 import { type DataLinkInputProps } from './DataLinkInput';
 
 export const DataLinkInputImplementation = memo(
