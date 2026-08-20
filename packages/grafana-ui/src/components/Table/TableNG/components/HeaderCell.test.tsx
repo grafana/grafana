@@ -424,6 +424,30 @@ describe('HeaderCell', () => {
       expect(selectFirstCell).not.toHaveBeenCalled();
     });
 
+    // `table.refresh` puts the title, tooltip and active-filter icon in one wrapper, so "last child
+    // element of the header" is no longer the same thing as "last tab stop in the header".
+    const tooltipField = () => makeField({ config: { custom: { headerTooltip: 'Only counts displayed rows' } } });
+
+    it('does not call selectFirstCell when tabbing from the title ahead of the header tooltip', () => {
+      const { selectFirstCell } = renderInGrid({ field: tooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab' });
+      expect(selectFirstCell).not.toHaveBeenCalled();
+    });
+
+    it('calls selectFirstCell when tabbing from the header tooltip, the last tab stop in the cell', () => {
+      const { selectFirstCell } = renderInGrid({ field: tooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Only counts displayed rows' }), { key: 'Tab' });
+      expect(selectFirstCell).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls selectFirstCell when tabbing from the column menu, past the title and tooltip', () => {
+      const filterableTooltipField = () =>
+        makeField({ config: { custom: { filterable: true, headerTooltip: 'Only counts displayed rows' } } });
+      const { selectFirstCell } = renderInGrid({ field: filterableTooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Column options for Field1' }), { key: 'Tab' });
+      expect(selectFirstCell).toHaveBeenCalledTimes(1);
+    });
+
     it('ignores the keydown when the event target is not an HTMLElement', () => {
       const selectFirstCell = jest.fn();
       const { container } = render(

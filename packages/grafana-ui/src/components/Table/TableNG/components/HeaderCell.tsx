@@ -39,6 +39,10 @@ interface HeaderCellProps {
   tableRefreshEnabled?: boolean;
 }
 
+// Everything the header cell can put in the tab order: buttons, plus anything opting in with a
+// tabindex. The filter popup and column menu portal out of the cell, so their contents never match.
+const TABBABLE_SELECTOR = 'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export const HeaderCell: React.FC<HeaderCellProps> = ({
   column,
   direction,
@@ -123,12 +127,18 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       }
 
       const headerContent = ref.current;
-      const headerCell = ref.current?.parentNode;
+      const headerCell = headerContent?.parentNode;
       const row = headerCell?.parentNode;
-      const isLastElementInHeader =
-        headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
+      if (!headerContent || headerCell !== row?.lastElementChild) {
+        return;
+      }
 
-      if (isLastElementInHeader) {
+      // Compare against the last tabbable element itself rather than assuming the header's last child
+      // element holds it: under `table.refresh` the title, tooltip and active-filter icon share one
+      // wrapper, so tabbing from the title would otherwise look like tabbing out of the header and
+      // skip the controls after it.
+      const tabbables = headerContent.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR);
+      if (tabbables[tabbables.length - 1] === tableTabbedElement) {
         selectFirstCell();
       }
     };
