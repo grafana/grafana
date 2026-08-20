@@ -4402,13 +4402,14 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlabOAuth\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucketOAuth",
               "github",
               "githubEnterprise",
+              "githubOAuth",
               "gitlabOAuth"
             ]
           },
@@ -5760,6 +5761,7 @@
                 "bitbucketOAuth",
                 "github",
                 "githubEnterprise",
+                "githubOAuth",
                 "gitlabOAuth"
               ]
             }

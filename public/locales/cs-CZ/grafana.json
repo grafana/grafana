@@ -2236,6 +2236,8 @@
       "title-no-alerting-capable-query-found": "Nebyl nalezen žádný dotaz, který by spustil upozorňování"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Nakonfigurujte potlačení, abyste zastavili oznámení z konkrétního pravidla výstrahy"
@@ -2243,7 +2245,10 @@
         "text": {
           "silence-alert-rule": "Potlačit pravidlo výstrahy"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Nenašli jsme žádné externí správce výstrah a možná nemáte přístup k vestavěnému správci výstrah Grafana.",
@@ -3754,6 +3759,9 @@
       "no-matching-instances-with-filters": "Aktuální sadě filtrů pro vybraný časový rozsah neodpovídají žádné instance výstrah.",
       "open-in-sidebar": "Otevřít v postranním panelu",
       "open-rule-details": "Otevřít podrobnosti pravidla",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Podrobnosti a podmínky pravidla",
         "title": "Podrobnosti pravidla"
@@ -5500,6 +5508,16 @@
     "auto-grid": {
       "description": "Panely mění velikost tak, aby odpovídaly jednotným mřížkám",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Opakovat možnosti",
           "variable": {
@@ -5517,15 +5535,36 @@
         "custom-min-width": {
           "clear": "Vymazat"
         },
+        "fit-content": "",
         "height-fill": "Zaplnit obrazovku",
+        "match-row-heights": "",
         "max-columns": "Max. počet sloupců",
-        "min-height": "Výška řádku",
-        "min-height-custom": "Vlastní výška řádku",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "Zadejte číslo mezi 50 a 2000",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Min. šířka sloupce",
         "min-width-custom": "Vlastní min. šířka",
         "min-width-custom-clear": "Zpět na standardní min. šířku sloupce",
-        "min-width-error": "Zadejte číslo mezi 50 a 2000"
+        "min-width-error": "Zadejte číslo mezi 50 a 2000",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5758,6 +5797,7 @@
       "panel-background": "Změnit pozadí panelu",
       "panel-description": "Změnit popis panelu",
       "panel-edit": "Změny panelu",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max. počet opakování na řádek",
       "panel-preset": "Použít předvolbu panelu",
       "panel-repeat-direction": "Opakovat směr",
@@ -9620,21 +9660,6 @@
   "get-enterprise": {
     "requires-license": "Vyžaduje licenci Grafana Enterprise",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "dokončit",
-      "learn-how": "Zjistěte více v dokumentech"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "K pokročilým návodům",
-      "aria-label-to-basic-tutorials": "K základním návodům",
-      "checking-completed-setup-steps": "Kontrola dokončených kroků nastavení",
-      "remove-this-panel": "Odebrat tento panel"
-    },
-    "tutorial-card": {
-      "complete": "dokončit"
-    }
   },
   "global-variables": {
     "details": {
@@ -17802,12 +17827,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Odkaz"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Potřebujete pomoc?",
-      "welcome-to-grafana": "Vítejte v Grafaně"
     }
   },
   "xychart": {

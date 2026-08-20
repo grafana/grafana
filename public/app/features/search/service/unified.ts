@@ -1,6 +1,5 @@
 import { isEmpty } from 'lodash';
 
-import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import {
   API_GROUP as DASHBOARD_API_GROUP,
   BASE_URL as v0alphaBaseURL,
@@ -86,24 +85,19 @@ export class UnifiedSearcher implements GrafanaSearcher {
       throw new Error('facets not supported!');
     }
     // get the starred dashboards
-    let starsIds: string[] | undefined = [];
-    if (config.featureToggles.starsFromAPIServer) {
-      const name = `user-${contextSrv.user.uid}`;
-      const result: { data: ListStarsApiResponse } = await dispatch(
-        generatedAPI.endpoints.listStars.initiate({
-          fieldSelector: `metadata.name=${name}`,
-        })
-      );
-      const items = result.data.items;
-      starsIds = items?.length
-        ? items[0].spec.resource.find(({ group, kind }) => group === DASHBOARD_API_GROUP && kind === 'Dashboard')
-            ?.names || []
-        : [];
-    } else {
-      starsIds = await dispatch(legacyUserAPI.endpoints.getStars.initiate()).unwrap();
-    }
+    const name = `user-${contextSrv.user.uid}`;
+    const result: { data: ListStarsApiResponse } = await dispatch(
+      generatedAPI.endpoints.listStars.initiate({
+        fieldSelector: `metadata.name=${name}`,
+      })
+    );
+    const items = result.data.items;
+    const starsIds = items?.length
+      ? items[0].spec.resource.find(({ group, kind }) => group === DASHBOARD_API_GROUP && kind === 'Dashboard')
+          ?.names || []
+      : [];
 
-    if (starsIds?.length) {
+    if (starsIds.length) {
       return this.doSearchQuery({
         ...query,
         name: starsIds,
@@ -494,7 +488,7 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
   return rsp;
 }
 
-function toURL(resource: string, name: string, title: string): string {
+export function toURL(resource: string, name: string, title: string): string {
   if (resource === 'folders') {
     return `${config.appSubUrl}/dashboards/f/${name}`;
   }

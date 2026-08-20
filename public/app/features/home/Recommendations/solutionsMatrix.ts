@@ -4,20 +4,8 @@
  * detection lives in solutionState.ts.
  */
 
-export type SignalStatus = 'active' | 'inactive' | 'unknown';
-
-export interface SolutionState {
-  metrics: SignalStatus;
-  logs: SignalStatus;
-  traces: SignalStatus;
-  kubernetes: SignalStatus;
-  /**
-   * Span metrics in the org's Prometheus — the "App Observability in use" signal. Only gates
-   * the application-observability card and fails toward hiding it: unlike the core signals,
-   * 'unknown' never blanks the selection.
-   */
-  spanMetrics: SignalStatus;
-}
+import { type SolutionState } from '../solutions/solutionState';
+import { type SolutionId } from '../solutions/types';
 
 export type RecommendedCardId =
   | 'connect-metrics'
@@ -27,18 +15,10 @@ export type RecommendedCardId =
   | 'kubernetes-monitoring'
   | 'application-observability';
 
-/**
- * Existing-solution ids the left card can display (ExistingItem.id values) — the KEYS of the
- * priority table below. Distinct namespace from RecommendedCardId (the card ids inside the
- * arrays).
- */
-export const EXISTING_SOLUTION_IDS = ['kubernetes', 'metrics', 'logs', 'traces'] as const;
-export type ExistingSolutionId = (typeof EXISTING_SOLUTION_IDS)[number];
-
 // Complete total orders (every RecommendedCardId appears once) so the sort is deterministic;
 // gating means several entries are unreachable for a given solution, which is harmless.
 // Exported for the completeness invariant test only — consumers go through orderCardsForSolution.
-export const SOLUTION_CARD_PRIORITY: Record<ExistingSolutionId, readonly RecommendedCardId[]> = {
+export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCardId[]> = {
   // Infra affinity: K8s Monitoring turns the metrics already flowing into curated views.
   metrics: [
     'enable-logs',
@@ -81,7 +61,7 @@ export const SOLUTION_CARD_PRIORITY: Record<ExistingSolutionId, readonly Recomme
  * the matrix's blocking rules (selectRecommendations) stay authoritative; a solution view only
  * changes which of the selected cards leads the carousel.
  */
-export function orderCardsForSolution(cards: RecommendedCardId[], solution: ExistingSolutionId): RecommendedCardId[] {
+export function orderCardsForSolution(cards: RecommendedCardId[], solution: SolutionId): RecommendedCardId[] {
   const priority = SOLUTION_CARD_PRIORITY[solution];
   return [...cards].sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
 }

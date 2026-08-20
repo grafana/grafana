@@ -2212,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "Uyarı oluşturabilecek sorgu bulunamadı"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Belirli bir uyarı kuralından gelen bildirimleri durdurmak için sessize almaları yapılandırın"
@@ -2219,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Uyarı kuralını sessize al"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Harici bir Alertmanager bulunamadı ve yerleşik Grafana Alertmanager'a erişiminiz olmayabilir.",
@@ -3702,6 +3707,9 @@
       "no-matching-instances-with-filters": "Seçilen zaman aralığında mevcut filtre grubunuzla eşleşen uyarı örneği yok.",
       "open-in-sidebar": "Kenar çubuğunda aç",
       "open-rule-details": "Kural ayrıntılarını aç",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Kural ayrıntıları ve koşulları",
         "title": "Kural Ayrıntıları"
@@ -5420,6 +5428,16 @@
     "auto-grid": {
       "description": "Paneller, sığacak şekilde yeniden boyutlandırılır ve düzgün ızgaralar oluşturur.",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Tekrar seçenekleri",
           "variable": {
@@ -5437,15 +5455,36 @@
         "custom-min-width": {
           "clear": "Temizle"
         },
+        "fit-content": "",
         "height-fill": "Ekranı doldur",
+        "match-row-heights": "",
         "max-columns": "Maksimum sütun sayısı",
-        "min-height": "Satır yüksekliği",
-        "min-height-custom": "Özel satır yüksekliği",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "50 ile 2000 arasında bir sayı gereklidir",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Min. sütun genişliği",
         "min-width-custom": "Özel min. genişlik",
         "min-width-custom-clear": "Standart minimum sütun genişliğine dön",
-        "min-width-error": "50 ile 2000 arasında bir sayı gereklidir"
+        "min-width-error": "50 ile 2000 arasında bir sayı gereklidir",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5678,6 +5717,7 @@
       "panel-background": "Panel arka planını değiştir",
       "panel-description": "Panel açıklamasını değiştir",
       "panel-edit": "Panel değişiklikleri",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Satır başına maksimum tekrar sayısı",
       "panel-preset": "Panel ön ayarını uygula",
       "panel-repeat-direction": "Tekrar yönü",
@@ -9496,21 +9536,6 @@
   "get-enterprise": {
     "requires-license": "Grafana Enterprise lisansı gerektirir",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "tamamlandı",
-      "learn-how": "Belgelerden nasıl yapılacağını öğrenin"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Gelişmiş öğreticilere",
-      "aria-label-to-basic-tutorials": "Temel öğreticilere",
-      "checking-completed-setup-steps": "Tamamlanan kurulum adımları kontrol ediliyor",
-      "remove-this-panel": "Bu paneli kaldır"
-    },
-    "tutorial-card": {
-      "complete": "tamamlandı"
-    }
   },
   "global-variables": {
     "details": {
@@ -17528,12 +17553,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Bağlantı"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Yardıma mı ihtiyacınız var?",
-      "welcome-to-grafana": "Grafana'ya hoş geldiniz"
     }
   },
   "xychart": {

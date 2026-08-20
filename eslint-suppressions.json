@@ -1456,33 +1456,8 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage.test.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataQueriesTab.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/utils.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/utils.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/DashboardDataLayerSet.tsx": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -1540,16 +1515,6 @@
       "count": 1
     },
     "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/panel-actions/PanelGroupByAction/PanelGroupByAction.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/setDashboardPanelContext.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -1635,9 +1600,6 @@
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/QueryVariableForm.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "react-hooks/exhaustive-deps": {
       "count": 1
     }
@@ -1655,26 +1617,8 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/editors/AdHocFiltersVariableEditor.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/editors/GroupByVariableEditor.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/editors/QueryVariableEditor/QueryVariableEditor.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/utils.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -1856,11 +1800,6 @@
   "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
-    }
-  },
-  "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/EmailSharingConfiguration.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
     }
   },
   "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx": {
@@ -2681,9 +2620,6 @@
     }
   },
   "public/app/features/variables/query/actions.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 3
     }

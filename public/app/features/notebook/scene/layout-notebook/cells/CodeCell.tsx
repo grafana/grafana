@@ -38,6 +38,7 @@ const VIEW_SETUP = {
 const EDIT_SETUP = {
   lineNumbers: false,
   foldGutter: false,
+  history: false,
 };
 
 interface Props {

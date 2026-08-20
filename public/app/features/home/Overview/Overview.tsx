@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
+import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -8,8 +9,11 @@ import { type IconName, Button, Icon, Stack, Text, Dropdown, Menu, useTheme2, us
 import { useStoredString } from 'app/core/hooks/useStored';
 
 import { ctaClicked } from '../analytics/main';
+import { type Solution } from '../solutions/types';
 
 import { GetStarted } from './GetStarted';
+import { Solutions } from './Solutions';
+import { groupOverviewCards, resolveOverviewCards } from './solutionGroups';
 import { useGuides } from './useGuides';
 
 const HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY = 'grafana.home.overview.option';
@@ -22,32 +26,62 @@ interface Option {
   content: ReactNode;
 }
 
-export function Overview() {
+interface OverviewProps {
+  solutions: Solution[];
+}
+
+export function Overview({ solutions }: OverviewProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const guides = useGuides();
+  const { value: cards, loading: cardsLoading } = useAsync(() => resolveOverviewCards(solutions), [solutions]);
+  const groups = useMemo(() => groupOverviewCards(cards ?? []), [cards]);
 
   const options = useMemo<Option[]>(
     () => [
       {
         value: 'all-solutions',
         label: t('home.overview.options.all', 'All solutions'),
-        content: <></>,
+        content: (
+          <Solutions
+            loading={cardsLoading}
+            cards={cards ?? []}
+            emptyMessage={t('home.overview.empty.all', 'No solutions were found.')}
+          />
+        ),
       },
       {
         value: 'needs-attention',
         label: t('home.overview.options.attention', 'Needs attention'),
-        content: <></>,
+        content: (
+          <Solutions
+            loading={cardsLoading}
+            cards={groups.attention}
+            emptyMessage={t('home.overview.empty.attention', 'No solutions need attention.')}
+          />
+        ),
       },
       {
         value: 'enabled-solutions',
         label: t('home.overview.options.enabled', 'Enabled solutions'),
-        content: <></>,
+        content: (
+          <Solutions
+            loading={cardsLoading}
+            cards={groups.enabled}
+            emptyMessage={t('home.overview.empty.enabled', 'No enabled solutions with recent activity were found.')}
+          />
+        ),
       },
       {
         value: 'available-solutions',
         label: t('home.overview.options.available', 'Available solutions'),
-        content: <></>,
+        content: (
+          <Solutions
+            loading={cardsLoading}
+            cards={groups.available}
+            emptyMessage={t('home.overview.empty.available', 'No available solutions to show yet.')}
+          />
+        ),
       },
       // Hide get started if there are no guides to show, but do show it while loading
       ...(!guides || guides.length > 0
@@ -62,7 +96,7 @@ export function Overview() {
           ]
         : []),
     ],
-    [guides]
+    [cards, cardsLoading, groups, guides]
   );
   const [stored, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, options[0].value);
   const option = useMemo(() => options.find((o) => o.value === stored) ?? options[0], [options, stored]);
@@ -114,7 +148,7 @@ export function Overview() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div ref={ref}>
+    <Stack direction="column" gap={2} ref={ref}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" columnGap={2} rowGap={1} wrap="wrap">
         <Text element="h2" variant="h5">
           <Trans i18nKey="home.overview.title">Your observability stack overview</Trans>
@@ -141,7 +175,7 @@ export function Overview() {
       </Stack>
 
       {option.content}
-    </div>
+    </Stack>
   );
 }
 
