@@ -163,7 +163,6 @@ export const TimeSeriesPanel = ({
       cursorSync={cursorSync}
       annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
       onPinnedToSidebarChange={onPinnedToSidebarChange}
-      getComparisonFieldPairs={getComparisonFieldPairs}
     >
       {(uplotConfig, alignedFrame) => {
         const compFieldPairs = getComparisonFieldPairs(alignedFrame, frames!);

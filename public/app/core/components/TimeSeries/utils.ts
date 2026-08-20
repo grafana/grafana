@@ -114,14 +114,7 @@ const defaultConfig: GraphFieldConfig = {
   showValues: false,
 };
 
-/*
-  Derives the bidirectional pairing between a time-comparison series and its current-period counterpart, keyed by index into the aligned frame's fields.
-*/
-export interface TimeSeriesConfigPrepOpts {
-  getComparisonFieldPairs?: (alignedFrame: DataFrame, allFrames: DataFrame[]) => Map<number, number>;
-}
-
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimeSeriesConfigPrepOpts> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   frame,
   theme,
   timeZones,
@@ -133,7 +126,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimeSeriesConfigPrepOpt
   hoverProximity,
   orientation = VizOrientation.Horizontal,
   xAxisConfig,
-  getComparisonFieldPairs,
 }) => {
   // we want the Auto and Horizontal orientation to default to Horizontal
   const isHorizontal = orientation !== VizOrientation.Vertical;
@@ -762,10 +754,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimeSeriesConfigPrepOpt
 
   builder.setCursor(cursor);
 
-  if (getComparisonFieldPairs != null) {
-    addComparisonCursorPoint(builder, getComparisonFieldPairs(frame, allFrames));
-  }
-
   return builder;
 };
 
@@ -781,111 +769,6 @@ function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<str
     }
   });
   return originNames;
-}
-
-/**
- * uPlot types its cursor point options as value-or-function. It normalizes them to
- * functions during init, but accept either so this doesn't depend on that detail.
- */
-function resolvePointOpt<T>(
-  opt: T | ((u: uPlot, seriesIdx: number, ...rest: number[]) => T) | undefined,
-  ...args: [uPlot, number, ...number[]]
-): T | undefined {
-  return opt instanceof Function ? opt(...args) : opt;
-}
-
-/**
- * Size and color for a cursor point on the given series, read from the cursor point callbacks
- * uPlot resolved at init so this stays in step with whatever UPlotConfigBuilder configured.
- */
-function getCursorPointStyles(u: uPlot, seriesIdx: number): Record<string, string> {
-  const points = u.cursor.points!;
-  const size = resolvePointOpt(points.size, u, seriesIdx) ?? 0;
-  const width = resolvePointOpt(points.width, u, seriesIdx, size) ?? 0;
-  const fill = resolvePointOpt(points.fill, u, seriesIdx);
-  const stroke = resolvePointOpt(points.stroke, u, seriesIdx);
-
-  return {
-    width: `${size}px`,
-    height: `${size}px`,
-    // center the point on the datapoint rather than hanging it off the corner
-    marginLeft: `${-size / 2}px`,
-    marginTop: `${-size / 2}px`,
-    borderWidth: `${width}px`,
-    // Non-string fills (CanvasGradient) only arise for canvas-drawn series points, never for
-    // the DOM cursor point, but skip them rather than assume that.
-    ...(typeof fill === 'string' && { background: fill }),
-    ...(typeof stroke === 'string' && { borderColor: stroke }),
-  };
-}
-
-/**
- * Renders a second cursor point on the time-comparison counterpart of the hovered series,
- * so a comparison pair highlights together the same way it appears together in the tooltip.
- */
-function addComparisonCursorPoint(builder: UPlotConfigBuilder, pairs: Map<number, number>) {
-  if (pairs.size === 0) {
-    return;
-  }
-
-  let point: HTMLDivElement | null = null;
-  let closestSeriesIdx: number | null = null;
-
-  const hide = () => {
-    // (-10, -10) is uPlot's own offscreen convention for cursor points
-    point && (point.style.transform = 'translate(-10px, -10px)');
-  };
-
-  builder.addHook('init', (u) => {
-    point = document.createElement('div');
-    // inherits the round shape and pointer-events: none from uPlot's stylesheet
-    point.classList.add('u-cursor-pt');
-    hide();
-    u.over.appendChild(point);
-  });
-
-  // uPlot only reports a series here once it is within cursor.focus.prox, so this doubles as
-  // the proximity gate - our point appears and disappears in lockstep with uPlot's own.
-  builder.addHook('setSeries', (_u, seriesIdx) => {
-    closestSeriesIdx = seriesIdx;
-  });
-
-  builder.addHook('setCursor', (u) => {
-    if (point == null) {
-      return;
-    }
-
-    // uPlot leaves cursor.event set between mouse moves (it only clears it for synced
-    // updates), so a null event means this came from another panel's cursor rather than
-    // from hovering this one.
-    if (u.cursor.event == null) {
-      hide();
-      return;
-    }
-
-    const pairIdx = closestSeriesIdx == null ? undefined : pairs.get(closestSeriesIdx);
-
-    if (pairIdx == null || !u.series[pairIdx]?.show) {
-      hide();
-      return;
-    }
-
-    const dataIdx = u.cursor.idxs?.[pairIdx];
-    const yVal = dataIdx == null ? null : u.data[pairIdx][dataIdx];
-
-    if (dataIdx == null || yVal == null) {
-      hide();
-      return;
-    }
-
-    // CSS pixels, not canvas pixels - this positions a DOM element, not a canvas draw
-    const left = u.valToPos(u.data[0][dataIdx]!, 'x');
-    const top = u.valToPos(yVal, u.series[pairIdx].scale!);
-
-    Object.assign(point.style, getCursorPointStyles(u, pairIdx), {
-      transform: `translate(${Math.ceil(left)}px, ${Math.ceil(top)}px)`,
-    });
-  });
 }
 
 export function getXAxisConfig(lanes = 1): Pick<AxisProps, 'size' | 'gap' | 'ticks'> | undefined {

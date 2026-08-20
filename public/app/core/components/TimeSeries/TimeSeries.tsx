@@ -7,28 +7,17 @@ import { type TimeSeriesLegendOptions } from 'app/plugins/panel/timeseries/panel
 
 import { GraphNG, type GraphNGProps, type PropDiffFn } from '../GraphNG/GraphNG';
 
-import { getXAxisConfig, preparePlotConfigBuilder, type TimeSeriesConfigPrepOpts } from './utils';
+import { getXAxisConfig, preparePlotConfigBuilder } from './utils';
 
 const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'annotationLanes', 'theme'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme' | 'legend'> & {
   legend: TimeSeriesLegendOptions;
   onPinnedToSidebarChange?: (pinned: boolean) => void;
-  getComparisonFieldPairs?: TimeSeriesConfigPrepOpts['getComparisonFieldPairs'];
 };
 
 export function TimeSeries(props: TimeSeriesProps) {
-  const {
-    timeZone,
-    options,
-    renderers,
-    tweakAxis,
-    tweakScale,
-    legend,
-    frames,
-    onPinnedToSidebarChange,
-    getComparisonFieldPairs,
-  } = props;
+  const { timeZone, options, renderers, tweakAxis, tweakScale, legend, frames, onPinnedToSidebarChange } = props;
   const theme = useTheme2();
 
   const prepConfig = useCallback(
@@ -45,10 +34,9 @@ export function TimeSeries(props: TimeSeriesProps) {
         hoverProximity: options?.tooltip?.hoverProximity,
         orientation: options?.orientation,
         xAxisConfig: getXAxisConfig(annotationLanes),
-        getComparisonFieldPairs,
       });
     },
-    [theme, timeZone, options, renderers, tweakAxis, tweakScale, getComparisonFieldPairs]
+    [theme, timeZone, options, renderers, tweakAxis, tweakScale]
   );
 
   const renderLegend = useCallback(
