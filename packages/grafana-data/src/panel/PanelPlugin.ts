@@ -28,6 +28,7 @@ import {
   type PanelDataTransformations,
   type PanelDataTransformationsContext,
   type PanelDataTransformationsSupplier,
+  type ResolvedPanelDataTransformations,
 } from '../types/transformations';
 import { type FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
@@ -181,6 +182,7 @@ export class PanelPlugin<
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
   private presetsSupplier?: VisualizationPresetsSupplier<TOptions, TFieldConfigOptions>;
   private dataTransformationsSupplier?: PanelDataTransformationsSupplier;
+  private dataTransformationsSupplierFailed = false;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -382,7 +384,11 @@ export class PanelPlugin<
    *
    * The supplier receives the query result frames on every data update, so it can return
    * different transformations for different shapes of data. Empty results pass through
-   * without consulting the supplier.
+   * without consulting the supplier. See {@link PanelDataTransformationsSupplier} for what it may
+   * return and {@link PanelDataTransformations} for the two positions.
+   *
+   * Grafana calls these *system transformations* internally, and the transformations editor shows
+   * them as read-only rows under "Panel transformations".
    *
    * @example
    * ```typescript
@@ -413,12 +419,28 @@ export class PanelPlugin<
   /**
    * Transformations registered via {@link setDataTransformations}, normalized to explicit
    * positions so callers never have to handle the array shorthand. Both groups are empty when the
-   * plugin registered none.
+   * plugin registered none, and when its supplier throws. Never throws.
    *
    * @internal
    */
-  getDataTransformations(ctx: PanelDataTransformationsContext): Required<PanelDataTransformations> {
-    const registered = this.dataTransformationsSupplier?.(ctx);
+  getDataTransformations(ctx: PanelDataTransformationsContext): ResolvedPanelDataTransformations {
+    let registered: ReturnType<PanelDataTransformationsSupplier>;
+
+    try {
+      registered = this.dataTransformationsSupplier?.(ctx);
+    } catch (err) {
+      // Callers run the supplier from inside the panel's data pipeline and from inside an editor
+      // render, so an escaping exception would error the panel's data or take down the edit pane.
+      // Registering nothing leaves the panel on its untransformed data, the same outcome as a plugin
+      // that never called setDataTransformations. Reported once, because those callers reach this on
+      // every data update and every render.
+      if (!this.dataTransformationsSupplierFailed) {
+        this.dataTransformationsSupplierFailed = true;
+        console.error(`Panel plugin "${this.meta?.id}" threw from its setDataTransformations supplier`, err);
+      }
+
+      return { prepend: [], append: [] };
+    }
 
     if (!registered) {
       return { prepend: [], append: [] };

@@ -766,6 +766,7 @@ export {
   type PanelDataTransformations,
   type PanelDataTransformationsContext,
   type PanelDataTransformationsSupplier,
+  type ResolvedPanelDataTransformations,
   type SynchronousDataTransformerInfo,
   type DataTransformerConfig,
   type FrameMatcher,

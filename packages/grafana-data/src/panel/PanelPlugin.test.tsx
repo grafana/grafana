@@ -591,6 +591,10 @@ describe('PanelPlugin', () => {
     });
   });
   describe('data transformations', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
     it('returns no transformations when the plugin registered none', () => {
       const panel = new PanelPlugin(() => <div />);
 
@@ -609,6 +613,19 @@ describe('PanelPlugin', () => {
         append: [],
       });
       expect(supplier).toHaveBeenCalledWith({ series });
+    });
+
+    it('runs the supplier on every call, leaving memoization to the caller', () => {
+      const supplier = jest.fn().mockReturnValue([{ id: 'reduce', options: {} }]);
+      const panel = new PanelPlugin(() => <div />).setDataTransformations(supplier);
+      const series = [createDataFrame({ fields: [{ type: FieldType.number, name: 'Value' }] })];
+
+      panel.getDataTransformations({ series });
+      panel.getDataTransformations({ series });
+
+      // Same frames both times. The dashboard pipeline caches the result against that array, and
+      // that cache is only correct while this layer does no caching of its own.
+      expect(supplier).toHaveBeenCalledTimes(2);
     });
 
     it('treats an undefined result from the supplier as no transformations', () => {
@@ -653,6 +670,31 @@ describe('PanelPlugin', () => {
       const panel = new PanelPlugin(() => <div />);
 
       expect(panel.hasDataTransformations()).toBe(false);
+    });
+
+    it('falls back to no transformations when the supplier throws', () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => {
+        throw new Error('boom');
+      });
+
+      // The pipeline runs this inside a data operator and the editor inside a render, so a throw
+      // that escapes here errors the panel's data or takes down the edit pane.
+      expect(() => panel.getDataTransformations({ series: [] })).not.toThrow();
+      expect(panel.getDataTransformations({ series: [] })).toEqual({ prepend: [], append: [] });
+    });
+
+    it('reports a throwing supplier once, not on every call', () => {
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => {
+        throw new Error('boom');
+      });
+
+      panel.getDataTransformations({ series: [] });
+      panel.getDataTransformations({ series: [] });
+      panel.getDataTransformations({ series: [] });
+
+      expect(errorSpy).toHaveBeenCalledTimes(1);
     });
 
     it('reports registered transformations without consulting the supplier', () => {
