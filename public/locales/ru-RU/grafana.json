@@ -2236,6 +2236,8 @@
       "title-no-alerting-capable-query-found": "Не найдены запросы, способные генерировать оповещения"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Настройте временные отключения, чтобы прекратить отправку уведомлений от определенного правила оповещения"
@@ -2243,7 +2245,10 @@
         "text": {
           "silence-alert-rule": "Временное отключение правила оповещения"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Внешние обработчики оповещений не были найдены, поэтому у вас может не быть доступа к встроенному обработчику Grafana Alertmanager.",
@@ -3754,6 +3759,9 @@
       "no-matching-instances-with-filters": "Ни один экземпляр оповещения не соответствует текущему набору фильтров для выбранного временного интервала.",
       "open-in-sidebar": "Открыть на боковой панели",
       "open-rule-details": "Открыть сведения о правиле",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Сведения о правиле и условия",
         "title": "Сведения о правиле"
@@ -5500,6 +5508,16 @@
     "auto-grid": {
       "description": "Панели изменяют размер и образуют однородные сетки.",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Повторение параметров",
           "variable": {
@@ -5517,15 +5535,36 @@
         "custom-min-width": {
           "clear": "Очистить"
         },
+        "fit-content": "",
         "height-fill": "Заполнить экран",
+        "match-row-heights": "",
         "max-columns": "Макс. кол-во столбцов",
-        "min-height": "Высота строки",
-        "min-height-custom": "Пользовательская высота строки",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "Требуется значение от 50 до 2000",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Мин. ширина столбца",
         "min-width-custom": "Пользовательская мин. ширина",
         "min-width-custom-clear": "Вернуться к стандартной минимальной ширине столбца",
-        "min-width-error": "Требуется значение от 50 до 2000"
+        "min-width-error": "Требуется значение от 50 до 2000",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5758,6 +5797,7 @@
       "panel-background": "Изменить фон панели",
       "panel-description": "Изменить описание панели",
       "panel-edit": "Изменения в панели",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Макс. повторений на строку",
       "panel-preset": "Применить предустановку панели",
       "panel-repeat-direction": "Повторение направления",
@@ -9620,21 +9660,6 @@
   "get-enterprise": {
     "requires-license": "Требуется лицензия Grafana Enterprise",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "завершить",
-      "learn-how": "Подробнее — в документации"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "К расширенным руководствам",
-      "aria-label-to-basic-tutorials": "К базовым руководствам",
-      "checking-completed-setup-steps": "Проверка завершенных этапов настройки",
-      "remove-this-panel": "Удалить панель"
-    },
-    "tutorial-card": {
-      "complete": "завершить"
-    }
   },
   "global-variables": {
     "details": {
@@ -17802,12 +17827,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Ссылка"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Нужна помощь?",
-      "welcome-to-grafana": "Добро пожаловать в Grafana"
     }
   },
   "xychart": {

@@ -11,7 +11,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-02-09,lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 2026-05-22,live.runAPIServer,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2026-05-22,live.keepHAPrefixInCloud,experimental,@grafana/grafana-app-platform-squad,false,true,false
-2025-08-29,starsFromAPIServer,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2023-11-29,influxqlStreamingParser,experimental,@grafana/data-sources-plugins,false,false,false
 2024-02-01,influxdbRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
 2023-07-13,lokiLogsDataplane,experimental,@grafana/data-sources-plugins,false,false,false
@@ -343,6 +342,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-12,grafana.visualDesignRefresh,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-06-09,dashboard.vectorSearch,experimental,@grafana/search-and-storage,false,false,false
 2026-06-25,grafana.vectorSearchCmdk,experimental,@grafana/search-and-storage,false,false,true
+2026-08-04,grafana.cmdkHybridSearch,experimental,@grafana/search-and-storage,false,false,true
 2026-06-22,assistant.fullscreenWorkspace,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-06-19,splunk.useLegacyResultsApi,experimental,@grafana/data-sources-plugins,false,false,false
 2026-06-17,grafana.queryVarEditorRedesign,GA,@grafana/dashboards-squad,false,false,true

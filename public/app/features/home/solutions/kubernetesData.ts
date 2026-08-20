@@ -50,9 +50,6 @@ const HEALTH_QUERIES: Record<string, string> = {
 // Firing alert instances scoped to Kubernetes workloads; heartbeats excluded.
 const ALERTS_MATCHER = '{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""}';
 
-// Never user-visible (useAsync swallows it) — no i18n. Tests assert this exact message.
-const NO_KUBERNETES_DATA_ERROR = 'No Prometheus datasource with Kubernetes data';
-
 // Mirrors the k8s app's namespace detection (kube_namespace_status_phase), with the inventory lookback.
 const NAMESPACE_PROBE = `count(last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`;
 
@@ -110,15 +107,10 @@ export async function resolveKubernetesDatasource(): Promise<DataSourceInstanceL
   return kubernetesPrometheusResolution.get();
 }
 
-// All fetches await the same TTL-cached resolution promise, so concurrent mount = one probe, then
-// inventory/health/CPU requests run in parallel (a shared prerequisite, then parallel).
-
-/** Cluster and pod counts via kube-state-metrics; throws when no datasource has Kubernetes data. */
-export async function fetchKubernetesInventory(): Promise<KubernetesInventory> {
-  const ds = await kubernetesPrometheusResolution.get();
-  if (!ds) {
-    throw new Error(NO_KUBERNETES_DATA_ERROR);
-  }
+/** Cluster and pod counts via kube-state-metrics. */
+export async function fetchKubernetesInventory(
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
+): Promise<KubernetesInventory> {
   const frames = await runInstantQueries(INVENTORY_QUERIES, ds);
   return {
     clusters: readScalar(frames, 'clusters') ?? 0,
@@ -126,12 +118,10 @@ export async function fetchKubernetesInventory(): Promise<KubernetesInventory> {
   };
 }
 
-/** Health signals via kube-state-metrics and alert metrics; throws when no datasource has Kubernetes data. */
-export async function fetchKubernetesHealth(): Promise<KubernetesHealth> {
-  const ds = await kubernetesPrometheusResolution.get();
-  if (!ds) {
-    throw new Error(NO_KUBERNETES_DATA_ERROR);
-  }
+/** Health signals via kube-state-metrics and alert metrics. */
+export async function fetchKubernetesHealth(
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
+): Promise<KubernetesHealth> {
   // Grafana-managed firing alerts live in the state-history target datasource under a
   // configurable metric name; hard-coding GRAFANA_ALERTS on the k8s datasource misses them.
   const grafanaMetric = config.unifiedAlerting.stateHistory?.prometheusMetricName ?? 'GRAFANA_ALERTS';
@@ -178,12 +168,10 @@ async function fetchGrafanaManagedAlertCount(uid: string, metric: string): Promi
   }
 }
 
-/** Cluster CPU over 24h (cAdvisor); throws when no datasource has Kubernetes data, null when the metric is absent. */
-export async function fetchClusterCpuSeries(): Promise<FieldSparkline | null> {
-  const ds = await kubernetesPrometheusResolution.get();
-  if (!ds) {
-    throw new Error(NO_KUBERNETES_DATA_ERROR);
-  }
+/** Cluster CPU over 24h (cAdvisor); null when the metric is absent. */
+export async function fetchClusterCpuSeries(
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
+): Promise<FieldSparkline | null> {
   const frames = await runRangeQuery('cpu', 'sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))', 24, ds);
   return readSeries(frames, 'cpu');
 }
