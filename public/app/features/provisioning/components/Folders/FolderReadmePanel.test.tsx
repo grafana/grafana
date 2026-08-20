@@ -104,7 +104,7 @@ describe('FolderReadmePanel', () => {
   it('shows an Edit icon button targeting the host editor when a doc exists', () => {
     setup();
 
-    const editLink = screen.getByRole('link', { name: /Edit README\.md/i });
+    const editLink = screen.getByRole('link', { name: /Edit document/i });
     expect(editLink).toHaveAttribute('href', 'https://github.com/owner/repo/edit/main/dashboards/team-a/README.md');
   });
 
@@ -112,7 +112,7 @@ describe('FolderReadmePanel', () => {
     setDocs({ repository: { ...mockRepository, path: 'ops/resources' } });
     setup();
 
-    expect(screen.getByRole('link', { name: /Edit README\.md/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Edit document/i })).toHaveAttribute(
       'href',
       'https://github.com/owner/repo/edit/main/ops/resources/dashboards/team-a/README.md'
     );
@@ -120,7 +120,7 @@ describe('FolderReadmePanel', () => {
 
   it('reports an interaction when the edit link is clicked', async () => {
     const { user } = setup();
-    await user.click(screen.getByRole('link', { name: /Edit README\.md/i }));
+    await user.click(screen.getByRole('link', { name: /Edit document/i }));
 
     expect(editClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github' });
   });
@@ -253,7 +253,7 @@ describe('FolderReadmePanel', () => {
     it('renders a warning alert with a retry button', () => {
       setup();
 
-      expect(screen.getByText(/Couldn.t load README/)).toBeInTheDocument();
+      expect(screen.getByText(/Couldn.t load this document/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Try again/i })).toBeInTheDocument();
     });
 
@@ -320,9 +320,9 @@ describe('FolderReadmePanel', () => {
     setReadmeResult({ markdownContent: '' });
 
     setup();
-    expect(screen.queryByText(/Unable to display README content/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Unable to display this document/i)).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Edit README\.md/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Edit document/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
   });
 

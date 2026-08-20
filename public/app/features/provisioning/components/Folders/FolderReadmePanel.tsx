@@ -33,7 +33,7 @@ import { FolderReadmeEvents } from './analytics/main';
 export const FOLDER_README_ANCHOR_ID = 'folder-readme';
 
 /** Query param that persists the selected doc tab in the URL (by file name). */
-export const FOLDER_DOC_TAB_PARAM = 'docTab';
+const FOLDER_DOC_TAB_PARAM = 'docTab';
 
 /** Slack subtracted from the tab bar width so rounding never clips the last tab / More. */
 const TAB_OVERFLOW_BUFFER_PX = 8;
@@ -136,7 +136,6 @@ function FolderReadmePanelContent({ folderUID }: Props) {
   // The empty "Add README" state only makes sense for the README itself; another
   // doc that fails to load is a load error, not a missing README.
   const isReadmeContext = !activeDoc || activeDoc.key === README_CONVENTION.key;
-  const activeFileName = activeDoc?.fileName ?? README_CONVENTION.fileName;
 
   const editUrl = repository
     ? getRepoEditFileUrl({
@@ -177,8 +176,8 @@ function FolderReadmePanelContent({ folderUID }: Props) {
             variant="secondary"
             fill="text"
             size="sm"
-            tooltip={t('browse-dashboards.readme.edit-doc-tooltip', 'Edit {{name}}', { name: activeFileName })}
-            aria-label={t('browse-dashboards.readme.edit-doc-tooltip', 'Edit {{name}}', { name: activeFileName })}
+            tooltip={t('browse-dashboards.readme.edit-doc-tooltip', 'Edit document')}
+            aria-label={t('browse-dashboards.readme.edit-doc-tooltip', 'Edit document')}
             onClick={() => {
               repository && FolderReadmeEvents.editClicked({ repositoryType: repository.type });
             }}
@@ -191,7 +190,6 @@ function FolderReadmePanelContent({ folderUID }: Props) {
           markdownContent={markdownContent}
           repository={repository}
           readmePath={readmePath}
-          fileName={activeFileName}
           newFileUrl={newFileUrl}
           isReadmeContext={isReadmeContext}
           refetch={refetch}
@@ -225,9 +223,8 @@ interface DocTabsProps {
 function DocTabs({ docs, activePath, onSelect }: DocTabsProps) {
   const styles = useStyles2(getStyles);
   const [moreOpen, setMoreOpen] = useState(false);
-  const { containerRef, measureRef, visibleCount } = useDocTabOverflow(docs);
-
-  const { visible, overflow } = splitDocTabs(docs, activePath, visibleCount);
+  const activeIndex = docs.findIndex((doc) => doc.path === activePath);
+  const { containerRef, measureRef, visible, overflow } = useDocTabOverflow(docs, activeIndex);
   const overflowActive = overflow.some((doc) => doc.path === activePath);
 
   return (
@@ -292,39 +289,24 @@ function DocTabs({ docs, activePath, onSelect }: DocTabsProps) {
   );
 }
 
-/**
- * Splits docs into visible tabs and overflow, keeping the active doc visible: if
- * it would fall into overflow it takes the last visible slot, so the tablist
- * always has a selected tab and the selection isn't hidden behind More.
- */
-function splitDocTabs(
-  docs: FolderDoc[],
-  activePath: string | undefined,
-  visibleCount: number
-): { visible: FolderDoc[]; overflow: FolderDoc[] } {
-  let visible = docs.slice(0, visibleCount);
-  const activeIndex = docs.findIndex((doc) => doc.path === activePath);
-  if (activeIndex >= visibleCount && visibleCount > 0) {
-    visible = [...docs.slice(0, visibleCount - 1), docs[activeIndex]];
-  }
-  const visiblePaths = new Set(visible.map((doc) => doc.path));
-  const overflow = docs.filter((doc) => !visiblePaths.has(doc.path));
-  return { visible, overflow };
+interface DocTabLayout {
+  visible: FolderDoc[];
+  overflow: FolderDoc[];
 }
 
 /**
- * Computes how many doc tabs fit in the tab bar. Measures the natural widths of
- * an off-screen copy of every tab against the visible container's width and,
- * when they overflow, reserves room for the More trigger. Recomputes on resize
- * of either the container or the measurement row (so it also reacts when the doc
- * set changes to different labels of the same count).
+ * Splits docs into visible tabs and a "More" overflow based on measured widths.
+ * The active tab is always kept visible and its own width is reserved first, so
+ * selecting a long-named overflow doc can't overflow the row and clip itself or
+ * the More trigger. Recomputes on resize of the container or the measurement row
+ * (label-width changes) and whenever the active tab changes.
  */
-function useDocTabOverflow(docs: FolderDoc[]) {
+function useDocTabOverflow(docs: FolderDoc[], activeIndex: number) {
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState(docs.length);
+  const [layout, setLayout] = useState<DocTabLayout>({ visible: docs, overflow: [] });
   // Re-run when the doc identities change, not just their count.
-  const signature = docs.map((doc) => doc.path).join(' ');
+  const signature = docs.map((doc) => doc.path).join(' ');
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -337,9 +319,9 @@ function useDocTabOverflow(docs: FolderDoc[]) {
       const tabEls = Array.from(measure.querySelectorAll<HTMLElement>('[data-measure-tab]'));
       const rawWidth = container.getBoundingClientRect().width;
       // Not laid out yet (or no environment layout, e.g. jsdom): can't measure, so
-      // show everything rather than collapse to a single tab.
-      if (rawWidth <= 0) {
-        setVisibleCount(tabEls.length);
+      // show everything rather than collapse.
+      if (rawWidth <= 0 || tabEls.length !== docs.length) {
+        setLayout({ visible: docs, overflow: [] });
         return;
       }
 
@@ -350,24 +332,34 @@ function useDocTabOverflow(docs: FolderDoc[]) {
       const widths = tabEls.map((el) => el.getBoundingClientRect().width);
       const moreWidth = moreEl ? moreEl.getBoundingClientRect().width : 0;
 
-      const total = widths.reduce((sum, width) => sum + width, 0);
-      if (total <= available) {
-        setVisibleCount(tabEls.length);
+      if (widths.reduce((sum, width) => sum + width, 0) <= available) {
+        setLayout({ visible: docs, overflow: [] });
         return;
       }
 
-      // Overflowing: reserve space for the More trigger and fit what remains.
-      let used = 0;
-      let count = 0;
-      for (const width of widths) {
-        used += width;
-        if (used + moreWidth <= available) {
-          count++;
-        } else {
+      // Overflow exists → reserve the More trigger and the always-visible active
+      // tab first, then greedily fill the rest with leading tabs in order.
+      const activeWidth = activeIndex >= 0 ? widths[activeIndex] : 0;
+      let budget = available - moreWidth - activeWidth;
+      const visibleIndexes = new Set<number>();
+      if (activeIndex >= 0) {
+        visibleIndexes.add(activeIndex);
+      }
+      for (let i = 0; i < widths.length; i++) {
+        if (i === activeIndex) {
+          continue;
+        }
+        if (budget - widths[i] < 0) {
           break;
         }
+        budget -= widths[i];
+        visibleIndexes.add(i);
       }
-      setVisibleCount(Math.max(1, count));
+
+      setLayout({
+        visible: docs.filter((_, i) => visibleIndexes.has(i)),
+        overflow: docs.filter((_, i) => !visibleIndexes.has(i)),
+      });
     };
 
     recompute();
@@ -375,9 +367,9 @@ function useDocTabOverflow(docs: FolderDoc[]) {
     observer.observe(container);
     observer.observe(measure);
     return () => observer.disconnect();
-  }, [signature]);
+  }, [signature, activeIndex, docs]);
 
-  return { containerRef, measureRef, visibleCount };
+  return { containerRef, measureRef, ...layout };
 }
 
 /**
@@ -409,8 +401,6 @@ interface ReadmeBodyProps {
   markdownContent: string | undefined;
   repository: RepositoryView | undefined;
   readmePath: string;
-  /** Active doc's file name, used in the load-error and parse-error messages. */
-  fileName: string;
   newFileUrl: string | undefined;
   isReadmeContext: boolean;
   refetch: () => void;
@@ -421,7 +411,6 @@ function ReadmeBody({
   markdownContent,
   repository,
   readmePath,
-  fileName,
   newFileUrl,
   isReadmeContext,
   refetch,
@@ -444,7 +433,7 @@ function ReadmeBody({
         />
       ) : (
         <Text color="secondary">
-          {t('browse-dashboards.readme.parse-error', 'Unable to display {{name}}.', { name: fileName })}
+          <Trans i18nKey="browse-dashboards.readme.parse-error">Unable to display this document.</Trans>
         </Text>
       );
     case 'missing':
@@ -452,10 +441,10 @@ function ReadmeBody({
       return isReadmeContext ? (
         <AddReadmeEmptyState newFileUrl={newFileUrl} repositoryType={repository.type} />
       ) : (
-        <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} fileName={fileName} />
+        <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} />
       );
     case 'error':
-      return <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} fileName={fileName} />;
+      return <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} />;
   }
 }
 
@@ -535,20 +524,9 @@ function AddReadmeEmptyState({
   );
 }
 
-function ReadmeLoadError({
-  onRetry,
-  repositoryType,
-  fileName,
-}: {
-  onRetry: () => void;
-  repositoryType: RepositoryView['type'];
-  fileName: string;
-}) {
+function ReadmeLoadError({ onRetry, repositoryType }: { onRetry: () => void; repositoryType: RepositoryView['type'] }) {
   return (
-    <Alert
-      severity="warning"
-      title={t('browse-dashboards.readme.load-error-title', "Couldn't load {{name}}", { name: fileName })}
-    >
+    <Alert severity="warning" title={t('browse-dashboards.readme.load-error-title', "Couldn't load this document")}>
       <Button
         variant="secondary"
         size="sm"
