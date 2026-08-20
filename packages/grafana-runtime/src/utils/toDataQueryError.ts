@@ -9,25 +9,39 @@ import { type DataQueryError } from '@grafana/data';
 export function toDataQueryError(err: DataQueryError | string | unknown): DataQueryError {
   const error: DataQueryError = err || {};
 
-  if (!error.message) {
-    if (typeof err === 'string') {
-      return { message: err };
-    }
-
-    let message = 'Query error';
-    if (error.message) {
-      message = error.message;
-    } else if (error.data && error.data.message && error.data?.message !== 'Query data error') {
-      message = error.data.message;
-    } else if (error?.data?.message === 'Query data error' && error?.data?.error) {
-      message = error.data.error;
-    } else if (error.data && error.data.error) {
-      message = error.data.error;
-    } else if (error.status) {
-      message = `Query error: ${error.status} ${error.statusText}`;
-    }
-    error.message = message;
+  if (error.message) {
+    return error;
   }
 
+  if (typeof err === 'string') {
+    return { message: err };
+  }
+
+  let message = 'Query error';
+  if (error.data && error.data.message && error.data?.message !== 'Query data error') {
+    message = error.data.message;
+  } else if (error?.data?.message === 'Query data error' && error?.data?.error) {
+    message = error.data.error;
+  } else if (error.data && error.data.error) {
+    message = error.data.error;
+  } else if (error.status) {
+    message = `Query error: ${error.status} ${error.statusText}`;
+  }
+
+  // Normally we attach the message to the object we were given. But objects that went through
+  // the Redux store are frozen by immer, so we copy instead of writing to them.
+  if (!Object.isExtensible(error)) {
+    const copy: DataQueryError & { stack?: string } = { ...error, message };
+
+    // The spread above misses stack, since it's not an enumerable property. We keep it here
+    // because it's often the only clue about where the error came from.
+    if (copy.stack === undefined && 'stack' in error && typeof error.stack === 'string') {
+      copy.stack = error.stack;
+    }
+
+    return copy;
+  }
+
+  error.message = message;
   return error;
 }
