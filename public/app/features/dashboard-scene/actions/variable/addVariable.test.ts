@@ -43,7 +43,9 @@ describe('addVariable', () => {
 
     dashboard.state.sidebar.redoAction();
 
-    expect(variableSet.state.variables).toEqual([existing, newVariable]);
+    expect(variableSet.state.variables).toHaveLength(2);
+    expect(variableSet.state.variables[0]).toBe(existing);
+    expect(variableSet.state.variables[1]).toBe(newVariable);
     expect(dashboard.state.sidebar.getSelectedObject()).toBe(newVariable);
   });
 
