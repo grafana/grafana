@@ -82,7 +82,6 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         ) : cta ? (
           <LinkButton
             href={cta.href}
-
             fill="text"
             size="sm"
             icon="angle-right"
