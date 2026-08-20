@@ -321,6 +321,28 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 	}
 }
 
+func TestAdmissionMutator_Mutate_ForwardsOldObjectToFactory(t *testing.T) {
+	factory := NewMockFactory(t)
+
+	oldRepo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec: provisioning.RepositorySpec{
+			Sync: provisioning.SyncOptions{IntervalSeconds: 30},
+		},
+	}
+	newRepo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
+		Spec:       provisioning.RepositorySpec{},
+	}
+
+	factory.EXPECT().Mutate(mock.Anything, mock.Anything, oldRepo).Return(nil).Once()
+
+	m := NewAdmissionMutator(factory, 60*time.Second)
+	attr := newMutatorTestAttributes(newRepo, oldRepo, admission.Update)
+
+	require.NoError(t, m.Mutate(context.Background(), attr, nil))
+}
+
 func TestCopySecureValues(t *testing.T) {
 	tests := []struct {
 		name           string
