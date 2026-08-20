@@ -62,6 +62,7 @@ export function setupNavTestState({
     pluginAdminEnabled: true,
     cloudMigrationEnabled: false,
     disableLoginForm: false,
+    auth: {},
     publicDashboardAccessToken: undefined,
     provisioningEnabled: false,
     featureToggles,

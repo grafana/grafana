@@ -10,16 +10,16 @@ const DASHBOARD_READER = [AccessControlAction.DashboardsRead];
 
 describe('buildStaticNavTree', () => {
   describe('sections', () => {
-    it('builds just Home for a user with no permissions', () => {
+    it('builds Home and Profile for a signed-in user with no permissions', () => {
       setup();
 
-      expect(ids(buildStaticNavTree())).toEqual([NavID.home]);
+      expect(ids(buildStaticNavTree())).toEqual([NavID.home, NavID.profile]);
     });
 
     it('seeds Home first, then the sections a user can see', () => {
       setup({ permissions: DASHBOARD_READER });
 
-      expect(ids(buildStaticNavTree())).toEqual([NavID.home, NavID.dashboards]);
+      expect(ids(buildStaticNavTree())).toEqual([NavID.home, NavID.dashboards, NavID.profile]);
     });
 
     it('points home at the login page when signed out and anonymous access is disabled', () => {
@@ -118,6 +118,35 @@ describe('buildStaticNavTree', () => {
 
       setup({ orgRole: 'None', permissions: DASHBOARD_READER });
       expect(playlists(buildStaticNavTree())).toBeUndefined();
+    });
+  });
+
+  describe('profile section', () => {
+    it('builds the profile node from user details', () => {
+      setup();
+      const profile = findById(buildStaticNavTree(), NavID.profile);
+
+      expect(profile?.text).toBe('Test User');
+      expect(profile?.subTitle).toBe('testuser');
+      expect(ids(profile?.children ?? [])).toEqual(['profile/settings', 'profile/notifications', 'profile/password']);
+    });
+
+    it('omits the change password link when the login form is disabled', () => {
+      setup({ config: { disableLoginForm: true } });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.profile)?.children ?? [])).not.toContain('profile/password');
+    });
+
+    it('omits the change password link when login is disabled', () => {
+      setup({ config: { auth: { disableLogin: true } } });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.profile)?.children ?? [])).not.toContain('profile/password');
+    });
+
+    it('omits the profile node for anonymous users', () => {
+      setup({ isSignedIn: false, config: { anonymousEnabled: true } });
+
+      expect(findById(buildStaticNavTree(), NavID.profile)).toBeUndefined();
     });
   });
 });

@@ -4,6 +4,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { dashboardsNavEntry } from './sections/dashboards.navEntry';
 import { getHomeNode } from './sections/home.navEntry';
+import { profileNavEntry } from './sections/profile.navEntry';
 import { applyAppSubUrl, buildEntries, type NavEntryBuilder, pruneEmptyNavSections, sortNavTree } from './utils';
 
 /**
@@ -54,7 +55,7 @@ export function getInitialNavTree(): NavModelItem[] {
  * seeds the tree. The entries are defined in ./sections; this module only
  * composes them.
  */
-const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [dashboardsNavEntry];
+const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [dashboardsNavEntry, profileNavEntry];
 
 /**
  * Builds the static (non-plugin) portion of the nav tree, sorted, with urls
