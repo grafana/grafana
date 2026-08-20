@@ -190,7 +190,7 @@ describe('PreviewBannerViewPR', () => {
     it('renders a click handler that opens a tab synchronously and hands the caller open/cancel', async () => {
       const user = userEvent.setup();
       const onOpenPullRequest = jest.fn();
-      const pendingTab = { location: { href: '' }, close: jest.fn() };
+      const pendingTab = { location: { href: '' }, close: jest.fn(), opener: {} as unknown };
       const openSpy = jest.spyOn(window, 'open').mockReturnValue(pendingTab as unknown as Window);
 
       render(
@@ -207,6 +207,8 @@ describe('PreviewBannerViewPR', () => {
 
       // The tab is opened within the click gesture, before the async check runs.
       expect(openSpy).toHaveBeenCalledWith('about:blank', '_blank');
+      // The opener is severed to prevent reverse tabnabbing.
+      expect(pendingTab.opener).toBeNull();
       expect(onOpenPullRequest).toHaveBeenCalledTimes(1);
 
       const actions = onOpenPullRequest.mock.calls[0][0];

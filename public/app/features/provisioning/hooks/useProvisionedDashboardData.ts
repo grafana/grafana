@@ -1,4 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { useMemo } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
@@ -138,6 +139,10 @@ export function useProvisionedDashboardData(
   // the write workflow (which targets the configured branch) that a non-default ref would select.
   const loadedFromRef = forceNewBranch ? undefined : (params.get('ref') ?? undefined);
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
+  // Generate the recovery branch once per hook lifetime. Computing it inline would produce a new name
+  // on every render, and the form's reset(defaultValues, { keepDirtyValues }) would then silently swap
+  // the still-pristine branch whenever an unrelated rerender occurs (e.g. toggling a save option).
+  const recoveryBranch = useMemo(() => generateNewBranchName('dashboard'), []);
 
   const defaultValuesResult = useDefaultValues({
     meta,
@@ -170,7 +175,7 @@ export function useProvisionedDashboardData(
   let defaultValues = values;
   if (values && forceNewBranch) {
     // Seed a fresh branch name; useBranchTemplate overrides it when a name template is configured.
-    defaultValues = { ...values, workflow: 'branch' as const, ref: generateNewBranchName('dashboard') };
+    defaultValues = { ...values, workflow: 'branch' as const, ref: recoveryBranch };
   } else if (values && shouldEnforceBranchTemplate(repository, gitConventionsEnabled) && values.workflow !== 'branch') {
     defaultValues = { ...values, workflow: 'branch' as const };
   }

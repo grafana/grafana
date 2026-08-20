@@ -153,13 +153,19 @@ export function PreviewBannerViewPR({
                   // Open the tab synchronously within the click gesture so a slow pre-flight can't get
                   // the eventual navigation blocked as a popup; the caller then drives or closes it.
                   const pendingTab = window.open('about:blank', '_blank');
+                  // Sever the opener so the PR page can't reach back via window.opener (reverse
+                  // tabnabbing). We can't pass 'noopener' to window.open here — it returns null, and we
+                  // need the handle to navigate the tab after the async check.
+                  if (pendingTab) {
+                    pendingTab.opener = null;
+                  }
                   onOpenPullRequest({
                     open: () => {
                       const href = textUtil.sanitizeUrl(linkUrl);
                       if (pendingTab) {
                         pendingTab.location.href = href;
                       } else {
-                        window.open(href, '_blank');
+                        window.open(href, '_blank', 'noopener,noreferrer');
                       }
                     },
                     cancel: () => pendingTab?.close(),
