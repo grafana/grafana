@@ -12,7 +12,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/lib/pq"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -218,7 +217,7 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 
 	_, err := s.pool.Exec(ctx, insertAnnotationSQL,
 		namespace, name, timeMs, timeEnd, dashboardUID, panelID,
-		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt, legacyID, legacyData,
+		text, tags, scopes, createdBy, createdAt, legacyID, legacyData,
 	)
 	if err != nil {
 		// Check for unique constraint violation
@@ -247,8 +246,8 @@ func (s *PostgreSQLStore) Update(ctx context.Context, anno *annotationV0.Annotat
 
 	result, err := s.pool.Exec(ctx, query,
 		anno.Spec.Text,
-		pq.Array(anno.Spec.Tags),
-		pq.Array(anno.Spec.Scopes),
+		anno.Spec.Tags,
+		anno.Spec.Scopes,
 		legacyData,
 		anno.Namespace,
 		anno.Name,
@@ -422,7 +421,7 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 			// Contains operator: tags @> $N
 			conditions = append(conditions, fmt.Sprintf("tags @> $%d", argNum))
 		}
-		args = append(args, pq.Array(opts.Tags))
+		args = append(args, opts.Tags)
 		argNum++
 	}
 
@@ -433,7 +432,7 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 		} else {
 			conditions = append(conditions, fmt.Sprintf("scopes @> $%d", argNum))
 		}
-		args = append(args, pq.Array(opts.Scopes))
+		args = append(args, opts.Scopes)
 		argNum++
 	}
 

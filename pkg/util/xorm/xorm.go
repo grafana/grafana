@@ -53,6 +53,7 @@ func close(engine *Engine) {
 }
 
 func init() {
+	sql.Register("postgres", PostgresDriver())
 	regDrvsNDialects()
 }
 

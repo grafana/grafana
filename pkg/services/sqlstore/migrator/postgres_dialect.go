@@ -3,11 +3,11 @@ package migrator
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -183,9 +183,9 @@ func (db *PostgresDialect) TruncateDBTables(engine *xorm.Engine) error {
 }
 
 func (db *PostgresDialect) isThisError(err error, errcode string) bool {
-	var driverErr *pq.Error
+	var driverErr *pgconn.PgError
 	if errors.As(err, &driverErr) {
-		if string(driverErr.Code) == errcode {
+		if driverErr.Code == errcode {
 			return true
 		}
 	}
@@ -194,7 +194,7 @@ func (db *PostgresDialect) isThisError(err error, errcode string) bool {
 }
 
 func (db *PostgresDialect) ErrorMessage(err error) string {
-	var driverErr *pq.Error
+	var driverErr *pgconn.PgError
 	if errors.As(err, &driverErr) {
 		return driverErr.Message
 	}
@@ -349,17 +349,12 @@ func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 }
 
 func (db *PostgresDialect) GetDBName(dsn string) (string, error) {
-	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
-		parsedDSN, err := pq.ParseURL(dsn) // nolint:staticcheck
-		if err != nil {
-			return "", err
-		}
-		dsn = parsedDSN
+	config, err := pgx.ParseConfig(dsn)
+	if err != nil {
+		return "", err
 	}
-	re := regexp.MustCompile(`dbname=(\w+)`)
-	submatch := re.FindSubmatch([]byte(dsn))
-	if len(submatch) < 2 {
+	if config.Database == "" {
 		return "", fmt.Errorf("failed to get database name")
 	}
-	return string(submatch[1]), nil
+	return config.Database, nil
 }
