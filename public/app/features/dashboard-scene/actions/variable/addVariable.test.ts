@@ -49,7 +49,7 @@ describe('addVariable', () => {
     expect(dashboard.state.sidebar.getSelectedObject()).toBe(newVariable);
   });
 
-  it('undo reselects docked sidebar', () => {
+  it('when undone while the sidebar is docked, the dashboard is selected', () => {
     const existing = new CustomVariable({ name: 'existing', query: 'a,b' });
     const variableSet = new SceneVariableSet({ variables: [existing] });
     const dashboard = buildScene(variableSet);
