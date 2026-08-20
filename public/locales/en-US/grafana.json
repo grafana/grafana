@@ -10635,6 +10635,7 @@
       "cell-inspect-tooltip": "Inspect value",
       "column-menu-filter": "Filter values",
       "column-menu-label": "Column options for {{name}}",
+      "column-menu-update-filter": "Update filter",
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}",
       "csv-placeholder": "Enter CSV here...",
