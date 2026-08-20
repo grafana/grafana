@@ -79,7 +79,7 @@ func newMetrics(reg prometheus.Registerer) *accessMetrics {
 
 // rbacAllowlist is a map of group to resources that are compatible with RBAC.
 var rbacAllowlist = groupResource{
-	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil},
+	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil, "variables": nil},
 	"folder.grafana.app":    map[string]interface{}{"folders": nil},
 	"iam.grafana.app":       map[string]interface{}{"users": nil, "teams": nil, "serviceaccounts": nil},
 }

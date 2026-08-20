@@ -71,7 +71,10 @@ func (r *ZanzanaPermissionResolver) teamsForCurrentUser(usr identity.Requester) 
 // ResolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
 func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
 	subject := usr.GetUID()
-	namespace := types.OrgNamespaceFormatter(usr.GetOrgID())
+	namespace := usr.GetNamespace()
+	if namespace == "" {
+		namespace = types.OrgNamespaceFormatter(usr.GetOrgID())
+	}
 	return r.listAllWithPrefix(ctx, namespace, subject, r.teamsForCurrentUser(usr), "", "")
 }
 

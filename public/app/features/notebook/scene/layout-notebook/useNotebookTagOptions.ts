@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { type ComboboxOption } from '@grafana/ui';
 import { useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 
-import { NOTEBOOKS_PAGE_LIMIT } from '../../list/useNotebooksList';
+import { NOTEBOOKS_PAGE_LIMIT } from '../../list/pageLimit';
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
