@@ -39,6 +39,7 @@
   ],
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
+    "generate-e2e-selectors-json": "tsx ./scripts/generate-e2e-selectors-json.ts",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
@@ -50,11 +51,13 @@
     "@types/node": "24.10.1",
     "@types/semver": "7.7.1",
     "@typescript/native": "npm:typescript@^7.0.2",
+    "acorn": "8.15.0",
     "esbuild": "0.25.8",
     "rimraf": "6.0.1",
     "rollup": "^4.60.1",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
+    "tsx": "^4.21.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "dependencies": {
