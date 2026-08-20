@@ -916,6 +916,7 @@ describe('transformSaveModelToScene', () => {
       const dashboard = {
         ...defaultDashboard,
         title: 'Legacy dashboard',
+        uid: 'test-uid',
         time: { from: 'now-6h', to: 'now' },
       };
 
