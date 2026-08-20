@@ -146,7 +146,7 @@ export const getCardContainerStyles = (
         }),
       },
       visualRefreshEnabled && {
-        border: `1px solid ${theme.colors.border.weak}`,
+        border: `1px solid ${theme.colors.border.faint}`,
       }
     ),
     oldContainer: css({

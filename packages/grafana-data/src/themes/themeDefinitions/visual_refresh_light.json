@@ -93,6 +93,7 @@
       "link": "palette.blue600"
     },
     "border": {
+      "faint": "palette.neutral150",
       "weak": "palette.neutral200",
       "medium": "palette.neutral300",
       "strong": "palette.neutral400"
@@ -118,6 +119,9 @@
     },
     "switch": {
       "activeBackgroundHover": "palette.orange600"
+    },
+    "panel": {
+      "borderColor": "palette.neutral150"
     },
     "codeEditor": {
       "keyword": "palette.blue700",

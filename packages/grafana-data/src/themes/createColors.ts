@@ -50,6 +50,8 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       }),
 
       border: z.object({
+        /** Use for page, panel, cards */
+        faint: z.string().optional(),
         /** Use for decoration */
         weak: z.string().optional(),
         /** Use for widget borders */
@@ -130,6 +132,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
+    faint: `rgba(${this.whiteBase}, 0.08)`,
     weak: `rgba(${this.whiteBase}, 0.12)`,
     medium: `rgba(${this.whiteBase}, 0.2)`,
     strong: `rgba(${this.whiteBase}, 0.30)`,
@@ -233,6 +236,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   border = {
+    faint: `rgba(${this.blackBase}, 0.08)`,
     weak: `rgba(${this.blackBase}, 0.12)`,
     medium: `rgba(${this.blackBase}, 0.3)`,
     strong: `rgba(${this.blackBase}, 0.4)`,

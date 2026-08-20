@@ -93,6 +93,7 @@
       "link": "palette.blue400"
     },
     "border": {
+      "faint": "palette.ink750",
       "weak": "palette.ink700",
       "medium": "palette.ink650",
       "strong": "palette.ink550"
@@ -126,6 +127,9 @@
     },
     "input": {
       "background": "palette.ink850"
+    },
+    "panel": {
+      "borderColor": "palette.ink750"
     },
     "codeEditor": {
       "keyword": "palette.blue300",
