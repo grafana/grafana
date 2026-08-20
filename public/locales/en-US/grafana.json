@@ -1619,6 +1619,15 @@
         "title": "Auto-sync is enabled"
       },
       "confirm": {
+        "autosync-body": "Are you sure you want to enable Auto-sync? Grafana will continuously sync alert configuration from this data source until you turn it off in Alerting settings.",
+        "autosync-confirm": "Enable auto-sync",
+        "autosync-error-body": "Failed to enable Auto-sync. Please check the error details and try again.",
+        "autosync-error-title": "Auto-sync Failed",
+        "autosync-importing-body": "Enabling Auto-sync. Please wait...",
+        "autosync-importing-title": "Enabling auto-sync...",
+        "autosync-success-body": "Auto-sync enabled. Redirecting...",
+        "autosync-success-title": "Auto-sync Enabled",
+        "autosync-title": "Confirm Auto-sync",
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
         "error-body": "Failed to import resources. Please check the error details and try again.",
@@ -1688,7 +1697,10 @@
       "renamed-receivers_one": "{{count}} contact points will be renamed",
       "renamed-receivers_other": "{{count}} contact points will be renamed",
       "review": {
+        "autosync-badge": "Will sync continuously",
         "back": "Alert rules",
+        "back-notifications": "Notification resources",
+        "enable-autosync": "Enable auto-sync",
         "filter": "Filter",
         "folder": "Target folder",
         "heading": "Review Import",
@@ -1706,6 +1718,7 @@
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
+        "rules-autosync-badge": "Syncs automatically",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Alert Rules",
         "skipped": "Skipped",
@@ -1731,12 +1744,17 @@
         "yaml-description": "Import rules from a Prometheus YAML file."
       },
       "step1": {
+        "autosync-datasource-filtered": "Auto-sync can only mirror from Mimir or Cortex Alertmanager data sources.",
+        "autosync-label": "Auto-sync",
+        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Skips the Alert Rules step since rules sync automatically too.",
         "datasource": "Alertmanager data source",
         "heading": "Import Notification Resources",
         "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
         "no-datasources": "No Alertmanager data sources found",
+        "no-mimir-cortex-datasources": "No Mimir or Cortex data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
+        "policy-tree-autosync-disabled": "Not needed. Auto-sync mirrors the source directly, so there's no policy tree to name.",
         "policy-tree-desc": "When you import, Grafana creates a separate notification policy tree. Enter a name you will recognize.",
         "policy-tree-help": "When you import this Alertmanager configuration, Grafana will create a separate notification policy tree for it. The name you enter here will identify that tree in the UI and is what you select when you import alert rules that should use this routing. Use a label you will recognize — for example data source, team, cluster, or environment (such as prometheus-prod or platform-team).",
         "policy-tree-help-title": "About policy tree names",
@@ -3863,6 +3881,8 @@
       "title-notification-policies": "Notification policies"
     },
     "wizard-import-to-gma": {
+      "autosync-success-body": "Grafana will keep syncing alert configuration from this data source.",
+      "autosync-success-title": "Auto-sync enabled",
       "error": "Failed to import resources",
       "staged-success-body": "Your imported config is now staged in the Import tab.",
       "staged-success-title": "Configuration staged",
@@ -6150,7 +6170,6 @@
       "title": "Title"
     },
     "save-dashboard-diff": {
-      "full-json-diff": "Full JSON diff",
       "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON",
       "title-because-dashboard-migrated-grafana-format": "The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format",
       "title-folder": "folder",
@@ -6301,6 +6320,13 @@
         "collapse": "Collapse editor",
         "copy-as-resource": "Copy as resource",
         "copy-as-resource-tooltip": "Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files",
+        "diff-disabled-tooltip": "Fix syntax errors to view the diff",
+        "diff-migrated": "Note: The diff also includes changes resulting from migration to the new dashboard format.",
+        "diff-no-changes": "No changes to show",
+        "diff-no-changes-body": "The dashboard matches the original. Changes appear here as you make them.",
+        "diff-toggle": "Show diff",
+        "diff-unavailable": "Cannot show changes",
+        "diff-unavailable-body": "The original dashboard is not available for comparison.",
         "expand": "Expand editor",
         "modal-title": "Edit dashboard as code",
         "pane-header": "Edit as code",
@@ -7898,7 +7924,6 @@
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>."
   },
   "dashboard-schema-editor": {
-    "format-label": "Format:",
     "json-disabled-tooltip": "Fix YAML syntax errors to switch to JSON",
     "yaml-disabled-tooltip": "Fix JSON syntax errors to switch to YAML"
   },
@@ -8267,9 +8292,6 @@
       "current-value": "Current value: {{currentValue}} ",
       "label-state-name": "State name"
     }
-  },
-  "diff-viewer": {
-    "loading": "Loading diff..."
   },
   "dimensions": {
     "background-size-editor": {
@@ -10571,6 +10593,9 @@
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
     },
+    "query-input": {
+      "loading": "Loading editor"
+    },
     "range-slider": {
       "drag-handle-aria-label": "Use arrow keys to change the value"
     },
@@ -12302,6 +12327,10 @@
       "title": "Why host with Grafana?"
     }
   },
+  "monaco-diff-editor": {
+    "view-inline": "Inline",
+    "view-side-by-side": "Side by side"
+  },
   "multicombobox": {
     "all": {
       "title-deselect": "Deselect all",
@@ -12894,20 +12923,24 @@
       "undo-action": "Undo: {{action}}"
     },
     "list": {
-      "all-authors": "All authors",
-      "author-filter": "Filter by author",
       "count_one": "{{count}} notebook",
       "count_other": "{{count}} notebooks",
+      "count-loading": "Loading {{shown}} of {{total}}...",
+      "count-of-total": "Showing {{shown}} of {{total}}",
+      "count-of-total-approx": "Showing {{shown}} of up to {{total}}",
       "count-truncated_one": "First {{count}} notebook loaded",
       "count-truncated_other": "First {{count}} notebooks loaded",
       "create-error": "Failed to create notebook",
+      "created-by-me": "Created by me",
       "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
       "empty-title": "You haven't created any notebooks yet",
       "empty-title-read-only": "No notebooks available to you",
       "load-error": "Failed to load notebooks",
+      "loading": "Loading notebooks",
       "new-notebook": "New notebook",
       "new-notebook-title": "New notebook",
       "no-results": "No notebooks found",
+      "partial-load-error": "Some notebooks could not be loaded",
       "search-placeholder": "Search notebooks by title...",
       "table": {
         "author": "Author",
@@ -13649,7 +13682,7 @@
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
-      "branch-text": "branch:",
+      "branch-targets": "targets",
       "delete-from-branch": "The rest of Grafana users in your organization will still see this resource until this branch is merged",
       "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
       "open-in-repo-button": "Open in {{repoType}}",

@@ -325,11 +325,6 @@ export interface FeatureToggles {
   */
   canvasPanelPanZoom?: boolean;
   /**
-  * Load Canvas panel from an external plugin instead of the bundled core plugin
-  * @default false
-  */
-  canvasExternalPlugin?: boolean;
-  /**
   * Enables time comparison option in supported panels
   * @default false
   */
@@ -1236,6 +1231,16 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesUsersRedirectNoFallback?: boolean;
+  /**
+  * Enables auth info APIs in the app platform
+  * @default false
+  */
+  kubernetesAuthInfoApi?: boolean;
+  /**
+  * Redirects the requests of the auth info service to the app platform APIs
+  * @default false
+  */
+  kubernetesAuthInfoRedirect?: boolean;
   /**
   * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false

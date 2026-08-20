@@ -28,7 +28,9 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
         ? 'gitlab'
         : spec?.type === 'githubOAuth'
           ? 'github'
-          : (spec?.type ?? 'github');
+          : spec?.type === 'githubEnterpriseOAuth'
+            ? 'githubEnterprise'
+            : (spec?.type ?? 'github');
   return (
     <Card noMargin key={name} isSelected={isSelected} onClick={onClick}>
       <Card.Figure>

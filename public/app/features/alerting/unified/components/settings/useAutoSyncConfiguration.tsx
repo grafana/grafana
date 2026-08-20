@@ -54,10 +54,8 @@ export function isOperatorManaged(state: AutoSyncState): state is Extract<AutoSy
 }
 
 export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
-  // Both endpoints require Org Admin (admin_config) or are only meaningful behind the sync toggle;
-  // skip them for everyone else so callers that mount this unconditionally (e.g. the Import wizard)
-  // don't fire a guaranteed-403 request on every page load. Must match Step1AlertmanagerResources's
-  // `isAutoSyncSegmentEnabled` gate for the Auto-sync checkbox itself.
+  // admin_config requires Org Admin; skip for everyone else so unconditional callers (e.g. the
+  // Import wizard) don't fire a guaranteed 403. Must match Step1's `isAutoSyncSegmentEnabled` gate.
   const canAccess =
     Boolean(config.featureToggles['alerting.syncExternalAlertmanager']) && contextSrv.hasRole(OrgRole.Admin);
 
