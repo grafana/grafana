@@ -126,10 +126,6 @@ describe('moveGridItem', () => {
       return { dashboard, source, destination, gridItem, panel, tab1: tabsManager.state.tabs[0] };
     }
 
-    // Regression test: crossing between grid types forces draggedGridItemInside to fabricate a
-    // new wrapper each time (DashboardGridItem <-> AutoGridItem), so perform() can't reuse the
-    // wrapper it was originally called with — it must re-resolve it from panel.parent, same as
-    // undo() does, or a redo leaves a stale, unremoved wrapper behind in the source layout.
     test('redo after undo does not leave a stale wrapper behind in source', () => {
       const { dashboard, source, destination, gridItem, panel, tab1 } = buildMixedGridScene();
       deactivate = activateFullSceneTree(dashboard);
