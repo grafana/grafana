@@ -151,7 +151,7 @@ describe('DashboardCodePane', () => {
 
     await userEvent.click(screen.getByRole('switch', { name: 'Show diff' }));
 
-    expect(screen.getByText(/migrated to the new Grafana dashboard format/)).toBeInTheDocument();
+    expect(screen.getByText(/migration to the new dashboard format/)).toBeInTheDocument();
     expect(screen.getByTestId('diff-viewer')).toBeInTheDocument();
   });
 });
