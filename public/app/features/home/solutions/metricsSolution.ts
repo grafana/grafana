@@ -13,7 +13,7 @@ import { t } from '@grafana/i18n';
 import { METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { resolveKubernetesDatasource } from './kubernetesData';
 import { drilldownActiveCta } from './pluginPages';
-import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, labelRecencyProbe, probeFound } from './solutionDataProbes';
+import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, probeFound, prometheusHasRecentMetrics } from './solutionDataProbes';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal, type SignalDetection } from './solutionState';
 import {
@@ -26,8 +26,6 @@ import { getTelemetrySetupCta, getTelemetrySetupLearnMore } from './telemetrySet
 import { type Solution } from './types';
 
 const formatUsageNumber = getValueFormat('short');
-
-const prometheusHasRecentLabels = labelRecencyProbe('api/v1/labels', (ms) => Math.floor(ms / 1000));
 
 function diskPressureExploreHref(ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>): string {
   return urlUtil.renderUrl(locationUtil.assureBaseUrl('/explore'), {
@@ -47,7 +45,7 @@ function diskPressureExploreHref(ds: Pick<DataSourceInstanceListItem, 'uid' | 't
 
 export function metricsSolution(): Solution {
   const prometheus = memoize(() =>
-    detectSignal(() => probeFound('prometheus', prometheusHasRecentLabels, CLOUD_UTILITY_PROM_DATASOURCE_UIDS))
+    detectSignal(() => probeFound('prometheus', prometheusHasRecentMetrics, CLOUD_UTILITY_PROM_DATASOURCE_UIDS))
   );
   // Kubernetes telemetry is Prometheus data, so it proves metrics too. Keep this as an independent
   // probe so the metrics solution does not depend on the Kubernetes card.
