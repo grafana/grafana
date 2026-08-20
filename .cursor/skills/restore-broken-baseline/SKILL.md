@@ -1,6 +1,6 @@
 ---
 name: restore-broken-baseline
-description: Restore this workspace to the known broken baseline for the dotted-identifier bug on fix/influx-dotted-identifiers, move every Task Tracking Jira issue back to To Do, remove the jira-ticket-e2e skill so it can be built live next time, and start the local Grafana server. Use after an investigation or fix cycle. Restore only — never implement or re-apply product changes.
+description: Restore this workspace to the known broken baseline for the dotted-identifier bug on fix/influx-dotted-identifiers, move every Task Tracking Jira issue back to To Do and every Linear "Liam — Jolly demo" issue back to Todo, remove the jira-ticket-e2e skill so it can be built live next time, and start the local Grafana server. Use after an investigation or fix cycle. Restore only — never implement or re-apply product changes.
 ---
 
 # Restore workspace to the known broken baseline
@@ -45,7 +45,15 @@ Resolve refs in this order:
 
 If neither resolves, stop and report; do not guess a SHA.
 
-## Jira board to reset
+## Boards to reset (Jira and Linear)
+
+The demo runs on two issue trackers: the Jira Task Tracking project and a
+Linear project for customers that use Linear. Reset **both** every time,
+even if the invoking chat only mentions one. Issues the invoking chat names
+as preserved (e.g. curated Under Review tickets with PRs) are exceptions on
+either board.
+
+### Jira
 
 Return **every** issue on the Task Tracking board to **To Do** (the open
 column), not a hardcoded subset. Do this even if the invoking chat did not
@@ -68,6 +76,22 @@ The open-column transition is named **To Do** (not "Open"). Look up the
 current transition id with `getTransitionsForJiraIssue` rather than hard-coding
 it. Do not recreate Cursor Automations or Jira webhook rules; moving a ticket
 back to To Do is enough for the next In Progress transition to fire again.
+
+### Linear
+
+Workspace: `linear.app/anyspherefff` · Team: `Anyspherefff` ·
+Project: **Liam — Jolly demo** (ANY-18…ANY-24 mirror KAN-6…KAN-12).
+
+Scope strictly to that project. The `Anyspherefff` team hosts unrelated
+issues (other people's agent tests, prototype seeds, backlog items) — never
+change anything outside the "Liam — Jolly demo" project.
+
+Reset = set every issue in that project to **Todo** unless the invoking chat
+preserves it. Use the Linear MCP: `list_issues` filtered to the project
+(paginate until complete), `list_issue_statuses` for the team to resolve the
+"Todo" state by name (do not hardcode state ids), and `save_issue` with the
+issue id + status to apply it. Leave assignees, labels, and descriptions
+untouched.
 
 ## Steps
 
@@ -118,8 +142,10 @@ back to To Do is enough for the next In Progress transition to fire again.
    missing, the baseline tag is stale — stop and report; do not patch the rules
    by hand.
 
-6. Move every Jira board item back to To Do (do this; do not only remind
+6. Move both boards back to their open column (do this; do not only remind
    the user):
+
+   **Jira:**
 
    1. Search `project = KAN ORDER BY key ASC` (`searchJiraIssuesUsingJql`).
       Follow `nextPageToken` until every issue is listed.
@@ -130,8 +156,16 @@ back to To Do is enough for the next In Progress transition to fire again.
    4. If a ticket is Done and still has a Resolution set, clear `resolution`
       if the transition is blocked.
 
-   Git restore is complete even if a Jira call fails. Report any keys that
-   could not be moved so the user can fix them by hand.
+   **Linear:**
+
+   5. `list_issues` for project "Liam — Jolly demo" (team `Anyspherefff`);
+      paginate until complete. Do not touch issues outside that project.
+   6. For each non-preserved issue not already in `Todo`: resolve the `Todo`
+      state via `list_issue_statuses` and apply it with `save_issue`.
+
+   Git restore is complete even if a board call fails. Report any Jira keys
+   or Linear issue ids that could not be moved so the user can fix them by
+   hand.
 
 7. Clear leftover local work and stale pull requests (do this; do not only
    remind the user). Stale ticket-fix PRs left open across runs are confusing
@@ -191,7 +225,8 @@ back to To Do is enough for the next In Progress transition to fire again.
    - confirm `.cursor/skills/jira-ticket-e2e` is absent
    - confirm the workspace rules are present (`testing-coverage.mdc`,
      `visual-verification.mdc`) and any stale ticket PRs were closed
-   - every Jira key on the board and its status after the reset
+   - every Jira KAN key and every Linear "Liam — Jolly demo" issue with its
+     status after the reset
    - Grafana URL `http://localhost:3000/` and login `admin` / `admin`
    - how to attach: `tmux attach -t grafana-backend` /
      `tmux attach -t grafana-frontend`
