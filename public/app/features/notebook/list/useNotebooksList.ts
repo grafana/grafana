@@ -119,7 +119,12 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   }, [hasNextPage, isFetching, isError, fetchNextPage]);
 
   // Latch on the first "no such route" answer, so we stop asking for the rest of the session.
-  if (search.error && isRouteMissing(search.error) && !usingFallback) {
+  //
+  // Only while nothing has come back for these filters: every page asks the same URL, so a 404 on
+  // the first one means the route is absent, but a 404 partway through the walk means something
+  // transient — a pod restarting mid-deploy, a proxy answering for it. That is a real error to
+  // show, not grounds for abandoning search for the session.
+  if (search.currentData === undefined && search.error && isRouteMissing(search.error) && !usingFallback) {
     searchUnavailable = true;
     // Setting state during render is the derived-state pattern: React re-runs this component
     // before committing, so the fallback request starts in the same commit and nothing paints in

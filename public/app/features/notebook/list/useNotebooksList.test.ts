@@ -63,6 +63,11 @@ interface SearchExtras {
    * request for the current filters is in flight, but not as `currentData`.
    */
   staleData?: boolean;
+  /**
+   * The error landed partway through the cursor walk, so the pages that did load are still held
+   * alongside it. Without this an error means nothing came back at all.
+   */
+  errorAfterPages?: boolean;
 }
 
 const mockFetchNextPage = jest.fn();
@@ -81,9 +86,10 @@ function searchPage(items: ResultItem[], extra: SearchExtras = {}): SearchResult
 
 /** Stands in for the infinite query: the pages accumulated so far, plus the paging controls. */
 function setSearchPages(pages: SearchResults[], extra: SearchExtras = {}) {
-  const data = extra.error
-    ? undefined
-    : { pages, pageParams: pages.map((_, i) => (i === 0 ? undefined : `cursor-${i}`)) };
+  const data =
+    extra.error && !extra.errorAfterPages
+      ? undefined
+      : { pages, pageParams: pages.map((_, i) => (i === 0 ? undefined : `cursor-${i}`)) };
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
   mockUseSearchNotebooksQuery.mockReturnValue({
     data,
@@ -767,6 +773,24 @@ describe('useNotebooksList', () => {
       await waitFor(() => {
         expect(result.current.isTruncated).toBe(true);
       });
+    });
+
+    // Every page asks the same URL, so only a 404 with nothing loaded says the route is absent. One
+    // partway through the walk is transient — a pod restarting mid-deploy, a proxy answering for it
+    // — and abandoning search for the session on it would hide the failure behind stale-looking
+    // rows.
+    it('does not fall back when a 404 lands partway through the walk', async () => {
+      setSearchPages([searchPage([makeHit({ name: 'nb1', title: 'From search' })], { continueToken: 'next-page' })], {
+        error: { status: 404, data: { message: 'not found' }, config: { url: '' } },
+        errorAfterPages: true,
+      });
+      setList([makeNotebook({ name: 'nb-from-list', title: 'From list' })]);
+
+      const { result } = setupHook();
+
+      expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+      expect(result.current.error).toEqual(expect.objectContaining({ status: 404 }));
+      expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
     });
 
     it('stops asking for the search route once it is known to be missing', async () => {

@@ -169,9 +169,6 @@ export function NotebooksListPage() {
                     escapeRegex={false}
                     placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
                   />
-                  {/* An arbitrary-author filter would need the server to enumerate authors, which
-                      the index cannot facet on. Filtering to one known identity needs no such
-                      list. */}
                   {canFilterByMe && (
                     <Checkbox
                       id="notebooks-created-by-me"

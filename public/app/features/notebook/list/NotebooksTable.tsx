@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useMemo } from 'react';
+import { memo, type ReactNode, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
@@ -29,33 +29,76 @@ interface Props {
 }
 
 /**
- * Header and geometry per column, shared by the table and its loading skeleton. Held in one place
- * so the placeholder keeps the real shape and the two cannot drift apart.
+ * Id, header, geometry and loading placeholder per column, shared by the table and its skeleton.
+ * Held in one place so the placeholder keeps the real shape and the two cannot drift apart.
+ *
+ * A plain function rather than a hook: both callers build their columns inside the useMemo
+ * InteractiveTable asks for, so this runs there and needs no memo of its own.
  */
-function useColumnLayout() {
-  return useMemo(
-    () => ({
-      // Title is capped so it stops absorbing all the table's slack; tags take the remainder.
-      title: { header: t('notebooks.list.table.title', 'Title'), width: 320, maxWidth: 320 },
-      authorName: { header: t('notebooks.list.table.author', 'Author'), width: 180 },
-      tags: { header: t('notebooks.list.table.tags', 'Tags'), minWidth: 160 },
-      created: { header: t('notebooks.list.table.created', 'Created'), width: 120, disableGrow: true },
-      updated: { header: t('notebooks.list.table.updated', 'Updated'), width: 120, disableGrow: true },
-      actions: { header: '', disableGrow: true },
-    }),
-    []
-  );
+function getColumnLayout() {
+  return {
+    // Title is capped so it stops absorbing all the table's slack; tags take the remainder.
+    title: {
+      id: 'title',
+      header: t('notebooks.list.table.title', 'Title'),
+      width: 320,
+      maxWidth: 320,
+      skeleton: () => <Skeleton width={220} />,
+    },
+    authorName: {
+      id: 'authorName',
+      header: t('notebooks.list.table.author', 'Author'),
+      width: 180,
+      skeleton: () => <Skeleton width={120} />,
+    },
+    tags: {
+      id: 'tags',
+      header: t('notebooks.list.table.tags', 'Tags'),
+      minWidth: 160,
+      skeleton: () => <TagList.Skeleton />,
+    },
+    created: {
+      id: 'created',
+      header: t('notebooks.list.table.created', 'Created'),
+      width: 120,
+      disableGrow: true,
+      skeleton: () => <Skeleton width={70} />,
+    },
+    updated: {
+      id: 'updated',
+      header: t('notebooks.list.table.updated', 'Updated'),
+      width: 120,
+      disableGrow: true,
+      skeleton: () => <Skeleton width={70} />,
+    },
+    actions: {
+      id: 'actions',
+      header: '',
+      disableGrow: true,
+      skeleton: () => <Skeleton width={60} />,
+    },
+  } satisfies Record<string, ColumnLayout>;
+}
+
+/** One column's shared definition: everything but the cell, plus what stands in for it while loading. */
+type ColumnLayout = Omit<Column<NotebookRow>, 'cell' | 'sortType'> & { skeleton: () => ReactNode };
+
+/** Drops the placeholder, so what is left is a column the real table can spread. */
+function withoutSkeleton({ skeleton, ...column }: ColumnLayout) {
+  return column;
 }
 
 export function NotebooksTable({ notebooks }: Props) {
   const styles = useStyles2(getStyles);
-  const layout = useColumnLayout();
 
-  const columns: Array<Column<NotebookRow>> = useMemo(
-    () => [
+  // InteractiveTable requires memoized columns, and styles is memoized by useStyles2, so this stays
+  // referentially stable and the table doesn't remount.
+  const columns: Array<Column<NotebookRow>> = useMemo(() => {
+    const layout = getColumnLayout();
+
+    return [
       {
-        id: 'title',
-        ...layout.title,
+        ...withoutSkeleton(layout.title),
         sortType: 'string',
         cell: ({ row: { original } }) => (
           <TextLink color="primary" inline={false} href={notebookViewUrl(original.uid)} title={original.title}>
@@ -64,36 +107,29 @@ export function NotebooksTable({ notebooks }: Props) {
         ),
       },
       {
-        id: 'authorName',
-        ...layout.authorName,
+        ...withoutSkeleton(layout.authorName),
         sortType: 'string',
       },
       {
-        id: 'tags',
-        ...layout.tags,
+        ...withoutSkeleton(layout.tags),
         cell: ({ row: { original } }) => <TagList tags={original.tags} displayMax={3} className={styles.tagList} />,
       },
       {
-        id: 'created',
-        ...layout.created,
+        ...withoutSkeleton(layout.created),
         sortType: 'number',
         cell: ({ row: { original } }) => <RelativeTime timestamp={original.created} />,
       },
       {
-        id: 'updated',
-        ...layout.updated,
+        ...withoutSkeleton(layout.updated),
         sortType: 'number',
         cell: ({ row: { original } }) => <RelativeTime timestamp={original.updated} />,
       },
       {
-        id: 'actions',
-        ...layout.actions,
+        ...withoutSkeleton(layout.actions),
         cell: ({ row: { original } }) => <NotebookRowActions uid={original.uid} />,
       },
-    ],
-    // styles and layout are memoized, so this stays referentially stable and the table doesn't remount.
-    [styles, layout]
-  );
+    ];
+  }, [styles]);
 
   return (
     <InteractiveTable
@@ -121,18 +157,15 @@ interface SkeletonRow {
  * arrive.
  */
 export function NotebooksTableSkeleton() {
-  const layout = useColumnLayout();
-
+  // Memoized because InteractiveTable requires it, and derived from the shared layout so the
+  // columns are the real ones by construction rather than by being kept in step by hand.
   const columns: Array<Column<SkeletonRow>> = useMemo(
-    () => [
-      { id: 'title', ...layout.title, cell: () => <Skeleton width={220} /> },
-      { id: 'authorName', ...layout.authorName, cell: () => <Skeleton width={120} /> },
-      { id: 'tags', ...layout.tags, cell: () => <TagList.Skeleton /> },
-      { id: 'created', ...layout.created, cell: () => <Skeleton width={70} /> },
-      { id: 'updated', ...layout.updated, cell: () => <Skeleton width={70} /> },
-      { id: 'actions', ...layout.actions, cell: () => <Skeleton width={60} /> },
-    ],
-    [layout]
+    () =>
+      Object.values(getColumnLayout()).map(({ skeleton, ...column }) => ({
+        ...column,
+        cell: skeleton,
+      })),
+    []
   );
 
   const rows = useMemo(() => Array.from({ length: SKELETON_ROWS }, (_, i) => ({ uid: `skeleton-${i}` })), []);
