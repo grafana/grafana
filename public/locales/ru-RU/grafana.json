@@ -1176,8 +1176,8 @@
         "with-causes": ""
       },
       "failedWith": "Ошибка {{-config}} со статусом {{status}}: {{-message}}",
-      "time-interval-in-use": "Невозможно удалить временной интервал, так как он используется либо политками уведомления либо правилами оповещения.",
-      "time-interval-name-exists": "Временной интервал с таким именем уже существует. Используйте другое имя или переименуйте существующий интервал."
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1632,17 +1632,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Начать импорт? Это действие приведет к созданию новых ресурсов в Grafana Alerting.",
         "confirm": "Начать импорт",
@@ -1690,26 +1679,6 @@
       "info-description": "Этот мастер помогает импортировать правила оповещения и ресурсы уведомлений из внешних источников в Grafana Alerting. Подробнее см. в <2>документации</2>.",
       "info-title": "Мастер импорта",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Введите текст для поиска существующего пространства имен.",
         "label": "Пространство имен"
@@ -1733,10 +1702,6 @@
         "filter": "Фильтр",
         "folder": "Целевая папка",
         "heading": "Проверка импорта",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Пространство имен",
         "nothing": "Нет данных для импорта",
         "nothing-desc": "Оба шага были пропущены. Вернитесь назад и задайте хотя бы один источник импорта.",
@@ -1763,22 +1728,6 @@
         "validation-warning": "Во избежание конфликтов некоторые ресурсы будут переименованы.",
         "will-import-config": "Будет импортирована эта конфигурация",
         "will-import-rules": "Будут импортированы правила",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_few": "",
-        "merge-inhibition-rules_many": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_few": "",
-        "merge-receivers_many": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_few": "",
-        "merge-templates_many": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_few": "",
-        "merge-time-intervals_many": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Будет импортировано {{count}} правило",
         "will-import-rules-count_few": "Будет импортировано {{count}} правила",
         "will-import-rules-count_many": "Будет импортировано {{count}} правил",
@@ -1892,14 +1841,10 @@
         "cancel-confirm-title": "Отменить импорт?",
         "cancel-confirm-yes": "Отменить изменения",
         "skip": "Пропустить",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Ресурсы уведомлений",
         "step-notifications-desc": "Точки контакта, политики, шаблоны",
         "step-review": "Проверка и импорт",
         "step-review-desc": "Предварительный просмотр и подтверждение импорта",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Правила оповещения",
         "step-rules-desc": "Правила оповещения и записи"
       },
@@ -3333,8 +3278,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3351,9 +3300,62 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_few": "",
+          "merge-contact-points_many": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_few": "",
+          "merge-inhibition-rules_many": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_few": "",
+          "merge-templates_many": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_few": "",
+          "merge-time-intervals_many": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3364,6 +3366,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_few": "",
@@ -3659,7 +3663,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Уникальное имя для временного интервала.",
-      "error-save-time-interval": "Не удалось сохранить временной интервал",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Загрузка временного интервала",
       "title-no-matching-time-interval-found": "Соответствующий временной интервал не найден"
     },
@@ -3910,6 +3914,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Не удалось импортировать ресурсы",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Ресурсы импортированы в Grafana Alerting."
     },
     "yaml-content-info": {
@@ -4689,8 +4695,8 @@
     "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда.",
     "trash-state-manager": {
       "label": {
-        "alphabetically-az": "В алфавитном порядке (прямом)",
-        "alphabetically-za": "В алфавитном порядке (обратном)",
+        "alphabetically-az": "В алфавитном порядке (А–Я)",
+        "alphabetically-za": "В алфавитном порядке (Я–А)",
         "deleted-by-az": "",
         "deleted-by-za": "",
         "deleted-newest": "Удалено (сначала новые)",
@@ -6131,6 +6137,7 @@
       "new-row-title": "Новая строка",
       "row": {
         "collapse": "Свернуть строку {{title}}",
+        "copy-link": "",
         "expand": "Развернуть строку {{title}}",
         "new": "Новая строка",
         "repeat": {
@@ -9044,11 +9051,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -11926,6 +11936,7 @@
       "no-details": "Отсутствуют поля для отображения.",
       "open-assistant": "Объяснить строку журнала в Assistant",
       "pin-line": "Закрепить журнал",
+      "prettify": "",
       "remove-displayed-field": "Удалить поле",
       "remove-log": "Удалить журнал",
       "scroll-to-logline": "Прокрутить до строки журнала",
@@ -12639,7 +12650,7 @@
     },
     "machine-learning": {
       "subtitle": "Обзор функций ИИ и машинного обучения",
-      "title": "ИИ и машинное обучение"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Управление дашбордами папок и разрешениями"
@@ -12966,6 +12977,29 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12973,6 +13007,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -13007,8 +13050,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14591,6 +14634,12 @@
     "shared": {
       "branch-description": "Ветвь, используемая для подготовки",
       "branch-label": "Ветвь",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16365,6 +16414,9 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
     },
     "options": {
       "render-mode": ""

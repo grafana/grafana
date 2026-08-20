@@ -22,12 +22,12 @@ import { type PyroscopeQuery } from 'app/features/explore/TraceView/components/T
 
 import {
   defaultProfilingKeys,
-  getFormattedTags,
   pyroscopeProfileIdTagKey,
   scopedVarsFromSpan,
   scopedVarsFromTags,
-  scopedVarsFromTrace,
 } from '../../../createSpanLink';
+import { scopedVarsFromTrace } from '../../../createTraceLink';
+import { getFormattedTags, getSpanTags } from '../../../crossSignalConfig';
 import { type TraceSpan } from '../../types/trace';
 
 import { type TraceFlameGraphs } from '.';
@@ -113,7 +113,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
           traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0
             ? traceToProfilesOptions.tags
             : defaultProfilingKeys;
-        labelSelector = `{${getFormattedTags(span, tags)}}`;
+        labelSelector = `{${getFormattedTags(getSpanTags(span), tags)}}`;
       }
 
       const request = {

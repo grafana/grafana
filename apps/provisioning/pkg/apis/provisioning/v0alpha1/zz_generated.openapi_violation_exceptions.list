@@ -19,6 +19,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioni
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositorySpec,Workflows
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryView,Workflows
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryViewList,AllowedTargets
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryViewList,AvailableConnectionTypes
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryViewList,AvailableRepositoryTypes
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryViewList,AvailableResources
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositoryViewList,Items

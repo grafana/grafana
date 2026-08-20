@@ -12,9 +12,7 @@ interface Props {
    * rather than the prompt deriving it, so both add-block affordances take it the same way.
    */
   index: number;
-  /**
-   * Not wired up yet, exactly as on NotebookAddBlockDivider — edit mode owns cell insertion.
-   */
+  /** Insertion belongs to the layout manager, exactly as on NotebookAddBlockDivider. */
   onAdd?: (type: NotebookBlockType, index: number) => void;
 }
 

@@ -1088,6 +1088,9 @@
               }
             ]
           },
+          "fitContent": {
+            "type": "boolean"
+          },
           "repeat": {
             "$ref": "#/components/schemas/DashboardAutoGridRepeatOptions"
           }
@@ -1137,6 +1140,9 @@
           "fillScreen": {
             "type": "boolean"
           },
+          "fitContent": {
+            "type": "boolean"
+          },
           "items": {
             "type": "array",
             "items": {
@@ -1148,9 +1154,26 @@
               ]
             }
           },
+          "matchRowHeights": {
+            "type": "boolean"
+          },
           "maxColumnCount": {
             "type": "number",
             "format": "double"
+          },
+          "maxHeight": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxHeightMode": {
+            "type": "string"
+          },
+          "minHeight": {
+            "type": "number",
+            "format": "double"
+          },
+          "minHeightMode": {
+            "type": "string"
           },
           "rowHeight": {
             "type": "number",
