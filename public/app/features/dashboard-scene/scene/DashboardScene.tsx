@@ -18,7 +18,6 @@ import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteract
 import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
-  SceneDataTransformer,
   sceneGraph,
   type SceneObject,
   SceneObjectBase,
@@ -116,6 +115,7 @@ import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { PanelDataTransformer } from './PanelDataTransformer';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
@@ -1113,7 +1113,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!skipDataQuery && !panel.state.$data) {
       const defaultDs = getDataSourceSrv().getInstanceSettings(null);
       panel.setState({
-        $data: new SceneDataTransformer({
+        $data: new PanelDataTransformer({
           $data: new SceneQueryRunner({
             // The query editor needs the datasource type, which config.defaultDatasource does not provide.
             datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,

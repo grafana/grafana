@@ -1,12 +1,21 @@
 import { css } from '@emotion/css';
 import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { throttle } from 'lodash';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '@grafana/data';
+import {
+  type CustomTransformOperator,
+  type DataFrame,
+  type DataTransformContext,
+  type DataTransformerConfig,
+  type GrafanaTheme2,
+  type PanelData,
+  type ResolvedSystemTransformations,
+  transformDataFrame,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import {
   type SceneComponentProps,
   SceneDataTransformer,
@@ -14,14 +23,26 @@ import {
   type SceneObjectRef,
   type SceneObjectState,
   type SceneQueryRunner,
+  type SystemTransformationPosition,
   type VizPanel,
 } from '@grafana/scenes';
-import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, ConfirmModal, Icon, Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
+import { PanelDataTransformer } from '../../scene/PanelDataTransformer';
+import {
+  NO_SYSTEM_TRANSFORMATIONS,
+  getUserTransformations,
+  splitSystemTransformations,
+} from '../../scene/systemTransformations';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
+import {
+  SystemTransformationBadge,
+  getSystemTransformationName,
+  getSystemTransformationsGroupLabel,
+} from '../systemTransformationDisplay';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
@@ -70,10 +91,52 @@ export class PanelDataTransformationsTab
   }
 
   public onChangeTransformations(transformations: DataTransformerConfig[]) {
-    const transformer = this.getDataTransformer();
-    transformer.setState({ transformations });
-    transformer.reprocessTransformations();
+    // A plain `setState` would drop the plugin's entries, which share this array.
+    this.getDataTransformer().setUserTransformations(transformations);
   }
+
+  public getResolvedSystemTransformations(series: DataFrame[]): ResolvedSystemTransformations {
+    const transformer = this.getDataTransformer();
+
+    return transformer instanceof PanelDataTransformer
+      ? transformer.getResolvedSystemTransformations(series)
+      : NO_SYSTEM_TRANSFORMATIONS;
+  }
+}
+
+/**
+ * The query result with the plugin's *prepended* transformations applied. Editor rows replay the
+ * user transformations over this, so it has to include the plugin's stage or each row is configured
+ * against a field shape it will never receive. Appended ones run after every user transformation, so
+ * they are part of no row's input.
+ */
+function useSystemTransformedData(
+  sourceData: PanelData | undefined,
+  systemTransformations: Array<DataTransformerConfig | CustomTransformOperator>
+): PanelData | undefined {
+  const sourceSeries = sourceData?.series;
+  const [series, setSeries] = useState(sourceSeries);
+  const hasSystemTransformations = systemTransformations.length > 0;
+
+  useEffect(() => {
+    if (!hasSystemTransformations || !sourceSeries) {
+      return;
+    }
+
+    const ctx: DataTransformContext = { interpolate: (v: string) => getTemplateSrv().replace(v) };
+    const subscription = transformDataFrame(systemTransformations, sourceSeries, ctx).subscribe(setSeries);
+
+    return () => subscription.unsubscribe();
+  }, [hasSystemTransformations, systemTransformations, sourceSeries]);
+
+  // `data` is an effect dep of every editor row, so a fresh object each render re-runs their replays.
+  return useMemo(() => {
+    if (!sourceData || !hasSystemTransformations || !series) {
+      return sourceData;
+    }
+
+    return { ...sourceData, series };
+  }, [sourceData, hasSystemTransformations, series]);
 }
 
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
@@ -81,15 +144,25 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
 
+  const { userTransformations } = useMemo(
+    () => splitSystemTransformations(Array.isArray(transformsWrongType) ? transformsWrongType : []),
+    [transformsWrongType]
+  );
+
+  // No `useMemo`: the provider's cache already makes this identity stable.
+  const { prepend: systemPrepend, append: systemAppend } = model.getResolvedSystemTransformations(
+    sourceData.data?.series ?? []
+  );
+  const hasSystemTransformations = systemPrepend.length > 0 || systemAppend.length > 0;
+
+  const editorData = useSystemTransformedData(sourceData.data, systemPrepend);
+
   // Type guard to ensure transformations are DataTransformerConfig[]
   const transformations = useMemo<DataTransformerConfig[]>(() => {
-    return Array.isArray(transformsWrongType)
-      ? transformsWrongType.filter(
-          (t): t is DataTransformerConfig =>
-            t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
-        )
-      : [];
-  }, [transformsWrongType]);
+    return userTransformations.filter(
+      (t): t is DataTransformerConfig => t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
+    );
+  }, [userTransformations]);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
@@ -124,7 +197,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
     [model, transformations]
   );
 
-  if (!data || !sourceData.data) {
+  if (!data || !editorData) {
     return;
   }
 
@@ -143,14 +216,14 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
     />
   );
 
-  if (transformations.length < 1) {
+  if (transformations.length < 1 && !hasSystemTransformations) {
     return (
       <>
         <EmptyTransformationsMessage
           onShowPicker={openDrawer}
           onGoToQueries={onGoToQueries}
           onAddTransformation={onAddTransformation}
-          data={sourceData.data.series}
+          data={editorData.series}
           datasourceUid={sourceData.datasource?.uid}
           queries={sourceData.queries}
         />
@@ -161,7 +234,11 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   return (
     <>
-      <TransformationsEditor data={sourceData.data} transformations={transformations} model={model} />
+      <SystemTransformationRows transformations={systemPrepend} position="prepend" />
+      {transformations.length > 0 && (
+        <TransformationsEditor data={editorData} transformations={transformations} model={model} />
+      )}
+      <SystemTransformationRows transformations={systemAppend} position="append" />
       <ButtonGroup>
         <Button
           icon="plus"
@@ -173,17 +250,19 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
             Add another transformation
           </Trans>
         </Button>
-        <Button
-          data-testid={selectors.components.Transforms.removeAllTransformationsButton}
-          className={styles.removeAll}
-          icon="times"
-          variant="secondary"
-          onClick={() => setConfirmModalOpen(true)}
-        >
-          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
-            Delete all transformations
-          </Trans>
-        </Button>
+        {transformations.length > 0 && (
+          <Button
+            data-testid={selectors.components.Transforms.removeAllTransformationsButton}
+            className={styles.removeAll}
+            icon="times"
+            variant="secondary"
+            onClick={() => setConfirmModalOpen(true)}
+          >
+            <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
+              Delete all transformations
+            </Trans>
+          </Button>
+        )}
       </ButtonGroup>
       <ConfirmModal
         isOpen={confirmModalOpen}
@@ -277,9 +356,63 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
   );
 }
 
+interface SystemTransformationRowsProps {
+  transformations: Array<DataTransformerConfig | CustomTransformOperator>;
+  position: SystemTransformationPosition;
+}
+
+function SystemTransformationRows({ transformations, position }: SystemTransformationRowsProps) {
+  const styles = useStyles2(getStyles);
+
+  if (transformations.length === 0) {
+    return null;
+  }
+
+  return (
+    <ul className={styles.systemRows} aria-label={getSystemTransformationsGroupLabel(position)}>
+      {transformations.map((transformation, index) => {
+        const id = typeof transformation === 'function' ? undefined : transformation.id;
+
+        return (
+          <li
+            key={`${id ?? 'custom'}-${index}`}
+            className={styles.systemRow}
+            data-testid={selectors.components.Transforms.systemTransformationRow}
+          >
+            {/* Decorative — `SystemTransformationBadge` carries the same meaning as text. */}
+            <Icon name="lock" size="sm" />
+            <span className={styles.systemRowName}>{getSystemTransformationName(transformation)}</span>
+            <SystemTransformationBadge />
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   removeAll: css({
     marginLeft: theme.spacing(2),
+  }),
+  systemRows: css({
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+  }),
+  systemRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1, 1, 1, 2),
+    marginBottom: theme.spacing(0.5),
+    background: theme.colors.background.secondary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    color: theme.colors.text.secondary,
+  }),
+  systemRowName: css({
+    flexGrow: 1,
+    fontWeight: theme.typography.fontWeightMedium,
   }),
 });
 
@@ -295,7 +428,7 @@ function TransformationsTab(props: TransformationsTabProps) {
     <Tab
       label={model.getTabLabel()}
       icon="process"
-      counter={transformerState.transformations.length}
+      counter={getUserTransformations(transformerState.transformations).length}
       active={props.active}
       onChangeTab={props.onChangeTab}
     />

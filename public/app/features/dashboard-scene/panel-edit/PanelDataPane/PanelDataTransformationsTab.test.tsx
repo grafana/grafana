@@ -6,6 +6,7 @@ import {
   FieldType,
   type LoadingState,
   type PanelData,
+  type ResolvedSystemTransformations,
   type TimeRange,
   standardTransformersRegistry,
   toDataFrame,
@@ -18,6 +19,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
+import { NO_SYSTEM_TRANSFORMATIONS } from '../../scene/systemTransformations';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../../utils/utils';
@@ -35,12 +37,17 @@ jest.mock('@grafana/runtime', () => ({
 function createModelMock(
   panelData: PanelData,
   transformations?: DataTransformerConfig[],
-  onChangeTransformationsMock?: Function
+  onChangeTransformationsMock?: Function,
+  systemTransformations?: Partial<ResolvedSystemTransformations>
 ) {
   return {
     getDataTransformer: () => new SceneDataTransformer({ data: panelData, transformations: transformations || [] }),
     getQueryRunner: () => new SceneQueryRunner({ queries: [], data: panelData }),
     onChangeTransformations: onChangeTransformationsMock,
+    // The real accessor delegates to `PanelDataTransformer`; this mock builds a bare
+    // `SceneDataTransformer`, so the resolved result is supplied directly.
+    getResolvedSystemTransformations: () =>
+      systemTransformations ? { ...NO_SYSTEM_TRANSFORMATIONS, ...systemTransformations } : NO_SYSTEM_TRANSFORMATIONS,
   } as unknown as PanelDataTransformationsTab;
 }
 
@@ -63,6 +70,26 @@ describe('PanelDataTransformationsModel', () => {
     const { transformsTab } = setupTabScene('panel-1');
     transformsTab.onChangeTransformations([{ id: 'calculateField', options: {} }]);
     expect(transformsTab.getDataTransformer().state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
+  });
+
+  it('preserves system transformations when changing user transformations', () => {
+    const { transformsTab } = setupTabScene('panel-1');
+    const transformer = transformsTab.getDataTransformer();
+
+    transformer.setSystemTransformations({
+      prepend: [{ id: 'limit', options: { limitField: 10 } }],
+      append: [{ id: 'reduce', options: {} }],
+    });
+
+    transformsTab.onChangeTransformations([{ id: 'calculateField', options: {} }]);
+
+    // The user's edit only addresses their own list, so the runtime entries have to survive it — and
+    // stay at the edges, since position is what orders them.
+    expect(transformer.state.transformations).toEqual([
+      { id: 'limit', options: { limitField: 10 }, origin: 'plugin', position: 'prepend' },
+      { id: 'calculateField', options: {} },
+      { id: 'reduce', options: {}, origin: 'plugin', position: 'append' },
+    ]);
   });
 });
 
@@ -161,6 +188,53 @@ describe('PanelDataTransformationsTab', () => {
     await userEvent.click(confirmButton);
 
     expect(onChangeTransformation).toHaveBeenCalledWith([]);
+  });
+
+  describe('system transformation rows', () => {
+    it('renders them as read-only rows around the user transformations', async () => {
+      const modelMock = createModelMock(mockData, [{ id: 'calculateField', options: {} }], jest.fn(), {
+        prepend: [{ id: 'limit', options: {} }],
+        append: [{ id: 'reduce', options: {} }],
+      });
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      const rows = await screen.findAllByTestId(selectors.components.Transforms.systemTransformationRow);
+      expect(rows.map((row) => row.textContent)).toEqual([
+        expect.stringContaining('Limit'),
+        expect.stringContaining('Reduce'),
+      ]);
+
+      // Read-only: no per-row remove button, unlike the user's editable row.
+      expect(screen.getByText('1 - Add field from calculation')).toBeInTheDocument();
+    });
+
+    it('renders the rows instead of the empty message when there are no user transformations', async () => {
+      const modelMock = createModelMock(mockData, [], jest.fn(), { prepend: [{ id: 'limit', options: {} }] });
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      expect(await screen.findAllByTestId(selectors.components.Transforms.systemTransformationRow)).toHaveLength(1);
+      expect(screen.queryByTestId(selectors.components.Transforms.noTransformationsMessage)).not.toBeInTheDocument();
+      // Nothing of the user's to delete, so the destructive action is not offered.
+      expect(
+        screen.queryByTestId(selectors.components.Transforms.removeAllTransformationsButton)
+      ).not.toBeInTheDocument();
+    });
+
+    it('labels an operator-form transformation as code defined', async () => {
+      const modelMock = createModelMock(mockData, [], jest.fn(), { prepend: [() => (source) => source] });
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      const row = await screen.findByTestId(selectors.components.Transforms.systemTransformationRow);
+      expect(row).toHaveTextContent('Custom transformation (code defined)');
+    });
+
+    it('is absent when the plugin registers nothing', async () => {
+      const modelMock = createModelMock(mockData, [{ id: 'calculateField', options: {} }], jest.fn());
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      await screen.findByText('1 - Add field from calculation');
+      expect(screen.queryByTestId(selectors.components.Transforms.systemTransformationRow)).not.toBeInTheDocument();
+    });
   });
 
   it('can filter transformations in the drawer', async () => {

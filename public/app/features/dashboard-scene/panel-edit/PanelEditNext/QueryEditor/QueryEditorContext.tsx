@@ -6,6 +6,7 @@ import {
   type DataSourceInstanceSettings,
   type DataTransformerConfig,
   type PanelData,
+  type ResolvedSystemTransformations,
 } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
@@ -50,6 +51,11 @@ export interface AlertingState {
 export interface PanelState {
   panel: VizPanel;
   transformations: Transformation[];
+  /**
+   * Not editable, and deliberately absent from `transformations` — anything reconstructing what a
+   * user transformation receives has to replay `prepend` first.
+   */
+  systemTransformations: ResolvedSystemTransformations;
 }
 
 export interface QueryOptionsState {
