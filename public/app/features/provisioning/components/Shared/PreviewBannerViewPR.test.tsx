@@ -229,6 +229,20 @@ describe('PreviewBannerViewPR', () => {
 
       expect(screen.getByText('A resource has been updated in a branch in GitHub.')).toBeInTheDocument();
     });
+
+    it('keeps the "View pull request" button for an existing-PR update (button tracks isNewPr, not action)', () => {
+      setup({ prURL: 'test-url', isNewPr: false, actionProp: 'update' });
+
+      expect(screen.getByText('A resource has been updated in a branch in GitHub.')).toBeInTheDocument();
+      expect(screen.getByText('View pull request in GitHub')).toBeInTheDocument();
+      expect(screen.queryByText('Open pull request in GitHub')).not.toBeInTheDocument();
+    });
+
+    it('shows the "Open pull request" button for a new-branch update', () => {
+      setup({ prURL: 'test-url', isNewPr: true, actionProp: 'update' });
+
+      expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+    });
   });
 
   describe('Branch information', () => {

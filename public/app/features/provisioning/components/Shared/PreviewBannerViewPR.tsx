@@ -138,20 +138,47 @@ interface BannerText {
   button: string;
 }
 
+// title/body describe the action (create/update/delete/move); the button (Open vs View pull
+// request) depends only on whether a PR already exists, so it's derived separately from isNewPr.
+type BannerCopy = Omit<BannerText, 'button'>;
+
 function getBannerText(action: string | undefined, isNewPr: boolean | undefined, repoType: string): BannerText {
+  const copy = getBannerCopy(action, isNewPr, repoType);
+  return { ...copy, button: getButtonText(isNewPr, repoType) };
+}
+
+function getBannerCopy(action: string | undefined, isNewPr: boolean | undefined, repoType: string): BannerCopy {
   switch (action) {
     case 'delete':
-      return getDeleteBannerText(repoType);
+      return getDeleteBannerCopy(repoType);
     case 'update':
-      return getUpdateBannerText(repoType);
+      return getUpdateBannerCopy(repoType);
     case 'move':
-      return getMoveBannerText(repoType);
+      return getMoveBannerCopy(repoType);
     default:
-      return getCreateBannerText(isNewPr, repoType);
+      return getCreateBannerCopy(isNewPr, repoType);
   }
 }
 
-function getCreateBannerText(isNewPr: boolean | undefined, repoType: string): BannerText {
+function getButtonText(isNewPr: boolean | undefined, repoType: string): string {
+  return isNewPr
+    ? t(
+        'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
+        'Open pull request in {{repoType}}',
+        {
+          repoType,
+        }
+      )
+    : t(
+        'provisioned-resource-preview-banner.preview-banner.view-pull-request-in-repo',
+        'View pull request in {{repoType}}',
+        {
+          repoType,
+        }
+      );
+}
+
+function getCreateBannerCopy(isNewPr: boolean | undefined, repoType: string): BannerCopy {
   return {
     title: isNewPr
       ? t(
@@ -168,21 +195,10 @@ function getCreateBannerText(isNewPr: boolean | undefined, repoType: string): Ba
       'provisioned-resource-preview-banner.preview-banner.not-saved',
       'The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged'
     ),
-    button: isNewPr
-      ? t(
-          'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-          'Open pull request in {{repoType}}',
-          { repoType }
-        )
-      : t(
-          'provisioned-resource-preview-banner.preview-banner.view-pull-request-in-repo',
-          'View pull request in {{repoType}}',
-          { repoType }
-        ),
   };
 }
 
-function getDeleteBannerText(repoType: string): BannerText {
+function getDeleteBannerCopy(repoType: string): BannerCopy {
   return {
     title: t(
       'provisioned-resource-preview-banner.title-deleted-resource-in-branch',
@@ -193,15 +209,10 @@ function getDeleteBannerText(repoType: string): BannerText {
       'provisioned-resource-preview-banner.preview-banner.delete-from-branch',
       'The rest of Grafana users in your organization will still see this resource until this branch is merged'
     ),
-    button: t(
-      'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-      'Open pull request in {{repoType}}',
-      { repoType }
-    ),
   };
 }
 
-function getUpdateBannerText(repoType: string): BannerText {
+function getUpdateBannerCopy(repoType: string): BannerCopy {
   return {
     title: t(
       'provisioned-resource-preview-banner.title-updated-resource-in-branch',
@@ -212,15 +223,10 @@ function getUpdateBannerText(repoType: string): BannerText {
       'provisioned-resource-preview-banner.preview-banner.update-from-branch',
       'The rest of Grafana users in your organization will still see the current version until this branch is merged'
     ),
-    button: t(
-      'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-      'Open pull request in {{repoType}}',
-      { repoType }
-    ),
   };
 }
 
-function getMoveBannerText(repoType: string): BannerText {
+function getMoveBannerCopy(repoType: string): BannerCopy {
   return {
     title: t(
       'provisioned-resource-preview-banner.title-moved-resource-in-branch',
@@ -230,11 +236,6 @@ function getMoveBannerText(repoType: string): BannerText {
     body: t(
       'provisioned-resource-preview-banner.preview-banner.move-from-branch',
       'The rest of Grafana users in your organization will still see the current version until this branch is merged'
-    ),
-    button: t(
-      'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-      'Open pull request in {{repoType}}',
-      { repoType }
     ),
   };
 }
