@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/notebooks"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -361,6 +362,42 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 		Grants: []string{"Admin"},
 	}
 
+	// Notebooks (experimental) are flat and folderless for the MVP: notebook storage has
+	// EnableFolderSupport=false (pkg/registry/apis/dashboard/register.go), so a notebook cannot be
+	// placed in a folder and folder inheritance never applies. These org-wide roles grant notebook
+	// access under Unified Storage enforcement: read/write/delete on the notebooks:* object scope,
+	// and create on folders:* (the create verb resolves root to the general folder). The Viewer read
+	// wildcard is safe precisely because no folder-scoped notebook can exist, so it cannot bypass any
+	// folder ACL. At GA, folder support is enabled and these narrow to folder-scoped grants (dropping
+	// the Viewer wildcard), matching dashboards.
+	notebooksReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:notebooks:reader",
+			DisplayName: "Reader",
+			Group:       "Notebooks",
+			Description: "Read all notebooks.",
+			Permissions: []ac.Permission{
+				{Action: notebooks.ActionNotebooksRead, Scope: notebooks.ScopeNotebooksAll},
+			},
+		},
+		Grants: []string{string(org.RoleViewer)},
+	}
+
+	notebooksWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:notebooks:writer",
+			DisplayName: "Writer",
+			Group:       "Notebooks",
+			Description: "Create, read, write or delete all notebooks.",
+			Permissions: ac.ConcatPermissions(notebooksReaderRole.Role.Permissions, []ac.Permission{
+				{Action: notebooks.ActionNotebooksWrite, Scope: notebooks.ScopeNotebooksAll},
+				{Action: notebooks.ActionNotebooksDelete, Scope: notebooks.ScopeNotebooksAll},
+				{Action: notebooks.ActionNotebooksCreate, Scope: folder.ScopeFoldersAll},
+			}),
+		},
+		Grants: []string{string(org.RoleEditor)},
+	}
+
 	foldersCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:folders:creator",
@@ -658,6 +695,7 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
 		annotationsReaderRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
+		notebooksReaderRole, notebooksWriterRole,
 		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
