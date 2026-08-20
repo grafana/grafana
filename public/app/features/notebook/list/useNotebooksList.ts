@@ -66,6 +66,13 @@ const SEARCH_DEBOUNCE_MS = 300;
  */
 let searchUnavailable = false;
 
+/**
+ * Whether the route has ever answered, which is what makes a later 404 readable as transient rather
+ * than as absence. Module-level for the same reason as `searchUnavailable`: whether this deployment
+ * serves the route is a property of the deployment, not of one mount or one set of filters.
+ */
+let searchConfirmedAvailable = false;
+
 /** A notebook flattened for display, so the table never has to know about k8s metadata. */
 export interface NotebookRow {
   uid: string;
@@ -118,13 +125,20 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     }
   }, [hasNextPage, isFetching, isError, fetchNextPage]);
 
+  // An answer for any filters proves the route is served here, and that outlives the cache entry it
+  // arrived in.
+  if (search.currentData !== undefined) {
+    searchConfirmedAvailable = true;
+  }
+
   // Latch on the first "no such route" answer, so we stop asking for the rest of the session.
   //
-  // Only while nothing has come back for these filters: every page asks the same URL, so a 404 on
-  // the first one means the route is absent, but a 404 partway through the walk means something
-  // transient — a pod restarting mid-deploy, a proxy answering for it. That is a real error to
-  // show, not grounds for abandoning search for the session.
-  if (search.currentData === undefined && search.error && isRouteMissing(search.error) && !usingFallback) {
+  // Only while the route has never answered: every page and every set of filters asks the same URL,
+  // so once anything has come back, a 404 means something transient — a pod restarting mid-deploy,
+  // a proxy answering for it — and is a real error to show rather than grounds for abandoning
+  // search. Not `currentData === undefined`, which is empty on every filter change and so cannot
+  // tell "never answered" from "not answered for these filters yet".
+  if (!searchConfirmedAvailable && search.error && isRouteMissing(search.error) && !usingFallback) {
     searchUnavailable = true;
     // Setting state during render is the derived-state pattern: React re-runs this component
     // before committing, so the fallback request starts in the same commit and nothing paints in
@@ -386,7 +400,8 @@ function anonymousAuthor(): string {
   return t('notebooks.list.unknown-author', 'Anonymous');
 }
 
-/** Test seam: the latch is module state, so it has to be resettable between cases. */
+/** Test seam: the latches are module state, so they have to be resettable between cases. */
 export function __resetSearchAvailabilityForTests() {
   searchUnavailable = false;
+  searchConfirmedAvailable = false;
 }

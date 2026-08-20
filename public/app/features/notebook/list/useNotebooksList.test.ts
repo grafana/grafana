@@ -793,6 +793,30 @@ describe('useNotebooksList', () => {
       expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
     });
 
+    // Same class of bug as the mid-walk case, reached through a new cache key instead: `currentData`
+    // is empty on every filter change, so it cannot tell "the route never answered" from "it has
+    // not answered for these filters yet".
+    it('does not fall back when a 404 lands on a new filter after an earlier query answered', async () => {
+      setSearch([makeHit({ name: 'nb1', title: 'From search' })]);
+      setList([makeNotebook({ name: 'nb-from-list', title: 'From list' })]);
+
+      const { result } = setupHook();
+
+      // The route answered once, so it is served here.
+      expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+
+      // A new filter is a new cache key, so nothing is held for it — and this one 404s.
+      setSearchRouteMissing();
+      act(() => {
+        result.current.setSearchQuery('checkout');
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toEqual(expect.objectContaining({ status: 404 }));
+      });
+      expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
+    });
+
     it('stops asking for the search route once it is known to be missing', async () => {
       setSearchRouteMissing();
       setList([makeNotebook({ name: 'nb1', title: 'From list' })]);
