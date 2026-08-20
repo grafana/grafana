@@ -123,7 +123,7 @@ function getPermissionsForProvider(type: InstructionAvailability): Permission[] 
         },
         {
           name: t('provisioning.bitbucket.permissions.webhooks-label', 'Webhooks'),
-          access: t('provisioning.bitbucket.permissions.webhooks-read-write', 'Read and write'),
+          access: t('provisioning.bitbucket.permissions.webhooks-read-write-delete', 'Read, write, and delete'),
         },
       ];
     default:

@@ -105,7 +105,11 @@
       "load-subscriptions": "Załaduj subskrypcje"
     },
     "dimension-fields": {
-      "aria-label-remove": "Usuń",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Wymiary",
       "placeholder-field": "Pole",
       "placeholder-operation": "Operacja",

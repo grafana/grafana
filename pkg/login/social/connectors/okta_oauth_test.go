@@ -190,7 +190,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 				AutoAssignOrgRole: "Viewer", // default role
 			}
 
-			provider := NewOktaProvider(
+			provider := mustNewOktaProvider(t,
 				&social.OAuthInfo{
 					ApiUrl:                  server.URL + "/user",
 					RoleAttributePath:       tt.roleAttributePath,
@@ -201,7 +201,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 					SkipOrgRoleSync:         tt.skipOrgRoleSync,
 				},
 				cfg,
-				ProvideOrgRoleMapper(cfg,
+				mustProvideOrgRoleMapper(t, cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures(),
@@ -432,7 +432,7 @@ func TestSocialOkta_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewOktaProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewOktaProvider(t, &social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -512,7 +512,7 @@ func TestSocialOkta_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewOktaProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewOktaProvider(t, tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -608,10 +608,10 @@ func TestSocialOkta_UserInfo_WithIDTokenValidation(t *testing.T) {
 				AutoAssignOrgRole: "Viewer", // default role
 			}
 
-			s := NewOktaProvider(
+			s := mustNewOktaProvider(t,
 				info,
 				cfg,
-				ProvideOrgRoleMapper(cfg,
+				mustProvideOrgRoleMapper(t, cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures(),

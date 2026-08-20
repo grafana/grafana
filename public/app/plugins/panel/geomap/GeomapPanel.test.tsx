@@ -1,5 +1,6 @@
 import type OpenLayersMap from 'ol/Map';
 import type View from 'ol/View';
+import Attribution from 'ol/control/Attribution';
 import { transformExtent } from 'ol/proj';
 import { type ComponentProps } from 'react';
 
@@ -93,6 +94,10 @@ jest.mock('./utils/layers', () => ({
     options: {},
   }),
   applyLayerFilter: jest.fn(),
+}));
+
+jest.mock('./utils/attribution', () => ({
+  updateAttributionVisibility: jest.fn(),
 }));
 
 jest.mock('./view', () => ({
@@ -707,6 +712,9 @@ describe('GeomapPanel - View Listener', () => {
 
       panel.optionsChanged(oldOptions, newOptions);
       expect(mockMap.getControls).toHaveBeenCalled();
+
+      const { updateAttributionVisibility } = require('./utils/attribution');
+      expect(updateAttributionVisibility).toHaveBeenCalledWith(panel.layers, newOptions.controls);
     });
 
     it('should register view listener when dashboardVariable is enabled via options change', async () => {
@@ -907,6 +915,19 @@ describe('GeomapPanel - View Listener', () => {
       });
 
       expect(setStateSpy).toHaveBeenCalled();
+    });
+
+    it('adds the attribution control even when optional attribution is hidden', async () => {
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+      (mockMap.addControl as jest.Mock).mockClear();
+
+      panel.initControls({
+        showZoom: false,
+        showAttribution: false,
+      });
+
+      expect(mockMap.addControl).toHaveBeenCalledWith(expect.any(Attribution));
     });
 
     it('should handle controls when map is not initialized', () => {

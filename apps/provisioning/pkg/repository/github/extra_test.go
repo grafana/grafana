@@ -532,7 +532,7 @@ func TestExtra_Mutate(t *testing.T) {
 
 			e := github.Extra(nil, nil, nil, false)
 
-			err := e.Mutate(ctx, tt.obj)
+			err := e.Mutate(ctx, tt.obj, nil)
 
 			if tt.expectedError {
 				require.Error(t, err)

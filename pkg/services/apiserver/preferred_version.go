@@ -39,6 +39,21 @@ func applyPreferredAPIVersions(logger log.Logger, cfg *setting.Cfg, scheme *runt
 	return nil
 }
 
+// preferredFirst reorders pvs so preferred is first (unchanged if absent); does not touch the scheme, so it is runtime-safe.
+func preferredFirst(pvs []schema.GroupVersion, preferred schema.GroupVersion) []schema.GroupVersion {
+	if !slices.Contains(pvs, preferred) {
+		return pvs
+	}
+	out := make([]schema.GroupVersion, 0, len(pvs))
+	out = append(out, preferred)
+	for _, gv := range pvs {
+		if gv != preferred {
+			out = append(out, gv)
+		}
+	}
+	return out
+}
+
 // ParseGroupVersionSetting parses a "group/version" string (e.g.
 // "dashboard.grafana.app/v1") into a GroupVersion. It requires both
 // group and version to be present and non-empty. The optional settingName names

@@ -50,7 +50,7 @@ func ProvideFolderPermissions(
 		nil,
 	)
 
-	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func ProvideFolderPermissions(
 	cache := localcache.ProvideService()
 
 	userSvc, err := userimpl.ProvideService(
-		sqlStore,
+		legacysql.NewDatabaseProvider(sqlStore),
 		orgService,
 		cfg,
 		teamSvc,

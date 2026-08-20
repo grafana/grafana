@@ -1,0 +1,57 @@
+---
+description: Feature and improvement highlights for Grafana v13.2
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '13.2'
+  - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: What's new in Grafana v13.2
+posts:
+  - title: Dashboards and visualizations
+    items:
+      - whats-new/2026-06-30-redesigned-query-variable-editor.md
+      - whats-new/2026-07-08-organize-dashboards-faster-with-multi-select-grouping.md
+      - whats-new/2026-07-18-saved-queries-is-now-generally-available-with-command-palette-and-provisioning-support.md
+      - whats-new/2026-07-23-revamped-homepage-for-grafana.md
+      - whats-new/2026-07-29-panel-thresholds-interpolation.md
+      - whats-new/2026-07-30-new-panel-query-errors-and-notices-ui.md
+      - whats-new/2026-08-06-more-filterable-panels.md
+      - whats-new/2026-08-11-explore-busy-panels-with-the-new-view-panel-sidebar.md
+      - whats-new/2026-08-14-improved-auto-layout-indication-when-editing-dashboards.md
+  - title: Data sources
+    items:
+      - whats-new/2026-06-24-google-workload-identity-federation-for-bigquery-and-google-cloud-monitoring.md
+      - whats-new/2026-07-28-opensearch-added-index-browser-to-datasource-configuration-and-query.md
+      - whats-new/2026-08-03-oracle-easy-connect-plus-support.md
+      - whats-new/2026-08-13-azure-monitor-batch-api.md
+  - title: Git Sync
+    items:
+      - whats-new/2026-08-13-git-sync-support-for-github-enterprise.md
+      - whats-new/2026-08-14-authoring-commits-in-git-sync.md
+      - whats-new/2026-08-14-webhooks-available-for-gitlab-and-bitbucket.md
+  - title: Other
+    items:
+      - whats-new/2026-08-13-export-traces-of-grafana-to-a-file-for-easier-troubleshooting.md
+whats_new_grafana_version: 13.2
+weight: -56
+---
+
+# What's new in Grafana v13.2
+
+Welcome to Grafana 13.2!
+
+This release helps you share and reuse trusted queries to get answers faster and more easily onboard team members, dig into crowded panels without leaving the dashboard, and securely connect to your data with fewer long-lived secrets to manage.
+
+Saved queries are now generally available in Grafana Enterprise and Grafana Cloud, helping individual's knowledge become a library everyone can draw on: find them from anywhere using the command palette (cmd/ctrl+K) then quickly jump into Explore, and reliably manage them as code with Terraform.
+
+View panel mode gains a controls sidebar in public preview, so you can adjust visualization options without edit permissions and fan a busy time series out into one graph per series or label to see which one is actually moving. Query variables get a redesigned editor, OpenSearch adds an index picker to configuration and query editing, and BigQuery and Google Cloud Monitoring can now authenticate with Google Workload Identity Federation in Grafana Cloud instead of a service account key file.
+
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v13.2, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v13.2/).
+
+{{< docs/whats-new  >}}

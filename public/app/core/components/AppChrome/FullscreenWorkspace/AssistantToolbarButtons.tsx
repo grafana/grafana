@@ -102,7 +102,7 @@ export function AssistantToolbarButtons() {
               <Icon name="message-sparkles" size="lg" />
             </span>
           }
-          onClick={() => chrome.setFullscreenWorkspace(true)}
+          onClick={() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true })}
           aria-label={t('navigation.fullscreen-workspace.workspace', 'Workspace')}
           tooltip={t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
         >

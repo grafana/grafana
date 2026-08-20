@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
-  useFlagGlobalDashboardVariables,
+  useFlagGrafanaDashboardGlobalVariables,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
 } from '@grafana/runtime/internal';
@@ -50,8 +50,9 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const selectedObject = sidebar.getSelectedObject();
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
+  const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const feedbackButton = useFlagFeedbackButton();
-  const globalDashboardVariablesEnabled = useFlagGlobalDashboardVariables();
+
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       sidebar.closePane();
@@ -122,7 +123,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             />
             {globalDashboardVariablesEnabled && (
               <Sidebar.Button
-                icon="dollar-alt"
+                icon="gf-variable"
                 onClick={() => sidebar.openPane(new DashboardPredefinedVariablesPane({}))}
                 title={t('dashboard.sidebar.predefined-variables.title', 'Predefined variables')}
                 tooltip={t(

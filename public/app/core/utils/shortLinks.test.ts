@@ -1,4 +1,4 @@
-import { type LogRowModel } from '@grafana/data';
+import { type CurrentUserDTO, type LogRowModel } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneTimeRange } from '@grafana/scenes';
@@ -53,6 +53,12 @@ beforeEach(() => {
 
   document.execCommand = jest.fn();
   setTestFlags({ [FlagKeys.UseKubernetesShortURLsAPI]: false });
+
+  // Set the base org id via `jest.replaceProperty` on `config.bootData.user`
+  // (auto-restored after each test). We spread the existing user so any other
+  // members other tests may rely on are preserved, then override orgId — and we
+  // never mutate the shared `config` in place.
+  jest.replaceProperty(config.bootData, 'user', { ...config.bootData.user, orgId: 1 } as CurrentUserDTO);
 
   // clear memoizeOne function
   if ('clear' in createShortLink) {
@@ -165,9 +171,13 @@ describe('buildShortUrl', () => {
       writable: true,
     });
     config.appSubUrl = '';
+    // On-prem by default (namespace not `stacks-*`), so orgId is carried.
+    jest.replaceProperty(config, 'namespace', 'org-1');
   });
 
-  it('builds short URL with metadata name and namespace', () => {
+  it('uses the current org ID rather than the resource namespace', () => {
+    jest.replaceProperty(config.bootData, 'user', { ...config.bootData.user, orgId: 5 } as CurrentUserDTO);
+
     const shortUrl: ShortURL = {
       kind: 'ShortURL',
       apiVersion: 'shorturl.grafana.app/v1beta1',
@@ -180,25 +190,47 @@ describe('buildShortUrl', () => {
     };
 
     const result = buildShortUrl(shortUrl);
-    expect(result).toBe('https://grafana.example.com/goto/abc123def?orgId=org-5');
+    expect(result).toBe('https://grafana.example.com/goto/abc123def?orgId=5');
   });
 
-  it('builds short URL with appSubUrl configured', () => {
-    config.appSubUrl = '/grafana';
+  it('omits orgId on Cloud (no multi-org)', () => {
+    // Cloud instances use a `stacks-*` namespace and don't support multi-org,
+    // so the orgId query param would be pure noise.
+    jest.replaceProperty(config, 'namespace', 'stacks-42');
+    jest.replaceProperty(config.bootData, 'user', { ...config.bootData.user, orgId: 1 } as CurrentUserDTO);
 
     const shortUrl: ShortURL = {
       kind: 'ShortURL',
       apiVersion: 'shorturl.grafana.app/v1beta1',
       metadata: {
-        name: 'xyz789',
-        namespace: 'org-1',
+        name: 'cloud-shortlink',
+        namespace: 'stacks-42',
       },
       spec: defaultSpec(),
       status: defaultStatus(),
     };
 
     const result = buildShortUrl(shortUrl);
-    expect(result).toBe('https://grafana.example.com/grafana/goto/xyz789?orgId=org-1');
+    expect(result).toBe('https://grafana.example.com/goto/cloud-shortlink');
+  });
+
+  it('builds short URL with appSubUrl configured', () => {
+    config.appSubUrl = '/grafana';
+    jest.replaceProperty(config.bootData, 'user', { ...config.bootData.user, orgId: 1 } as CurrentUserDTO);
+
+    const shortUrl: ShortURL = {
+      kind: 'ShortURL',
+      apiVersion: 'shorturl.grafana.app/v1beta1',
+      metadata: {
+        name: 'xyz789',
+        namespace: 'default',
+      },
+      spec: defaultSpec(),
+      status: defaultStatus(),
+    };
+
+    const result = buildShortUrl(shortUrl);
+    expect(result).toBe('https://grafana.example.com/grafana/goto/xyz789?orgId=1');
   });
 });
 

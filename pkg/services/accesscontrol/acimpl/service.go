@@ -125,22 +125,27 @@ func ProvideOSSService(
 
 // Service is the service implementing role based access control.
 type Service struct {
-	actionResolver  accesscontrol.ActionResolver
-	cache           *localcache.CacheService
-	cfg             *setting.Cfg
-	features        featuremgmt.FeatureToggles
-	log             log.Logger
-	registrations   accesscontrol.RegistrationList
-	rolesMu         sync.RWMutex
-	roles           map[string]*accesscontrol.RoleDTO
-	store           accesscontrol.Store
-	seeder          *seeding.Seeder
-	permRegistry    permreg.PermissionRegistry
-	isInitialized   bool
-	sql             db.DB
-	serverLock      *serverlock.ServerLockService
-	singleFlight    singleflight.Group
-	zanzanaResolver *ZanzanaPermissionResolver
+	actionResolver        accesscontrol.ActionResolver
+	cache                 *localcache.CacheService
+	cfg                   *setting.Cfg
+	features              featuremgmt.FeatureToggles
+	log                   log.Logger
+	registrations         accesscontrol.RegistrationList
+	rolesMu               sync.RWMutex
+	roles                 map[string]*accesscontrol.RoleDTO
+	store                 accesscontrol.Store
+	seeder                *seeding.Seeder
+	permRegistry          permreg.PermissionRegistry
+	isInitialized         bool
+	sql                   db.DB
+	serverLock            *serverlock.ServerLockService
+	singleFlight          singleflight.Group
+	userPermissionsClient accesscontrol.UserPermissionsClient
+	zanzanaResolver       *ZanzanaPermissionResolver
+}
+
+func (s *Service) SetUserPermissionsClient(client accesscontrol.UserPermissionsClient) {
+	s.userPermissionsClient = client
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -173,11 +178,15 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	return s.mergeZanzanaUserPermissions(ctx, user, permissions, options), nil
 }
 
+func (s *Service) GetLocalUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	return s.GetUserPermissions(ctx, user, options)
+}
+
 func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, user identity.Requester, legacy []accesscontrol.Permission, options accesscontrol.Options) []accesscontrol.Permission {
 	if s.zanzanaResolver == nil {
 		return legacy
 	}
-	if !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
+	if options.SkipZanzanaCache || !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
 		return s.zanzanaResolver.MergeCurrentUser(ctx, user, legacy, s.log)
 	}
 

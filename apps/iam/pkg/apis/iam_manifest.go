@@ -77,14 +77,14 @@ var appManifestData = app.ManifestData{
 							Name:         "email",
 							Path:         "spec.email",
 							Type:         "string",
-							Capabilities: []string{"filter", "retrieve"},
+							Capabilities: []string{"filter", "sort", "retrieve"},
 							Description:  "The email address of the user",
 						},
 						{
 							Name:         "login",
 							Path:         "spec.login",
 							Type:         "string",
-							Capabilities: []string{"filter", "retrieve"},
+							Capabilities: []string{"filter", "sort", "retrieve"},
 							Description:  "The login of the user",
 						},
 						{
@@ -125,6 +125,35 @@ var appManifestData = app.ManifestData{
 								OperationProps: spec3.OperationProps{
 
 									OperationId: "getUserTeams",
+
+									Parameters: []*spec3.Parameter{
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:     "continue",
+												In:       "query",
+												Required: true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"string"},
+													},
+												},
+											},
+										},
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:     "limit",
+												In:       "query",
+												Required: true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"integer"},
+													},
+												},
+											},
+										},
+									},
 
 									Responses: &spec3.Responses{
 										ResponsesProps: spec3.ResponsesProps{
@@ -1524,6 +1553,7 @@ func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (g
 }
 
 var customRouteToGoParamsType = map[string]runtime.Object{
+	"v0alpha1|User|teams|GET": &v0alpha1.GetUserTeamsRequestParamsObject{},
 
 	"v0alpha1|ServiceAccount|tokens|GET": &v0alpha1.ListServiceAccountTokensRequestParamsObject{},
 }
