@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -9,6 +9,7 @@ import {
   PluginType,
   locationUtil,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { DataSourceModal, type DataSourceModalProps } from './DataSourceModal';
@@ -113,7 +114,7 @@ describe('DataSourceDropdown', () => {
       });
     });
 
-    it('should fetch the DS applying the correct filters consistently across lists', async () => {
+    it('should fetch the DS list once, applying the correct filters', async () => {
       const filters = {
         mixed: true,
         tracing: true,
@@ -137,13 +138,9 @@ describe('DataSourceDropdown', () => {
       getListMock.mockClear();
       render(<DataSourceModal {...props}></DataSourceModal>);
 
-      // Every call to the service must contain same filters
-      expect(getListMock).toHaveBeenCalled();
-      getListMock.mock.calls.forEach((call) =>
-        expect(call[0]).toMatchObject({
-          ...filters,
-        })
-      );
+      // The modal is the only place fetching the list, and all lists it renders share it
+      expect(getListMock).toHaveBeenCalledTimes(1);
+      expect(getListMock.mock.calls[0][0]).toMatchObject({ ...filters });
     });
 
     it('should render the provided dataSources instead of fetching a list', async () => {
@@ -153,6 +150,22 @@ describe('DataSourceDropdown', () => {
 
       expect(await screen.findByText(onlyPassedIn.name, { selector: 'span' })).toBeInTheDocument();
       expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
+    });
+
+    it('should render built-in data sources from the provided list', async () => {
+      const passedInBuiltIn = createDS('only.passed.in.builtin', 5, true);
+
+      setup({ dataSources: [passedInBuiltIn] });
+
+      // Rendered twice - the desktop column and the list appended for the mobile layout
+      const builtInLists = screen.getAllByTestId(
+        selectors.components.DataSourcePicker.advancedModal.builtInDataSourceList
+      );
+      expect(builtInLists).toHaveLength(2);
+      for (const list of builtInLists) {
+        expect(await within(list).findByText(passedInBuiltIn.name, { selector: 'span' })).toBeInTheDocument();
+        expect(within(list).queryByText(mockDSBuiltIn.name, { selector: 'span' })).toBeNull();
+      }
     });
   });
 
