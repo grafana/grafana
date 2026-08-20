@@ -171,6 +171,7 @@ require (
 	github.com/rs/cors v1.11.1 // @grafana/identity-access-team
 	github.com/russellhaering/goxmldsig v1.6.1 // @grafana/grafana-backend-group
 	github.com/shopspring/decimal v1.4.0 // @grafana/grafana-datasources-core-services
+	github.com/sony/gobreaker/v2 v2.4.0 // @grafana/grafana-app-platform-squad
 	github.com/spf13/cobra v1.10.2 // @grafana/grafana-app-platform-squad
 	github.com/spf13/pflag v1.0.10 // @grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-sharing-squad
@@ -708,8 +709,6 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
 )
-
-require github.com/sony/gobreaker/v2 v2.4.0
 
 replace (
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints
