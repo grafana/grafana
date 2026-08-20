@@ -4,11 +4,13 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { setBackendSrv } from '@grafana/runtime';
 import { setDataSourceInstanceSettings, setDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { getLocalPluginMock } from 'app/features/plugins/admin/mocks/mockHelpers';
 
 import {
   wellFormedDashboardMigrationItem,
   wellFormedDatasourceMigrationItem,
   wellFormedLibraryElementMigrationItem,
+  wellFormedPluginMigrationItem,
 } from '../fixtures/migrationItems';
 import { registerMockAPI } from '../fixtures/mswAPI';
 import { wellFormedDatasource } from '../fixtures/others';
@@ -18,7 +20,7 @@ import { ResourcesTable, type ResourcesTableProps } from './ResourcesTable';
 setBackendSrv(backendSrv);
 
 function render(props: Partial<ResourcesTableProps>) {
-  rtlRender(
+  return rtlRender(
     <TestProvider>
       <ResourcesTable
         onChangeSort={() => {}}
@@ -26,7 +28,7 @@ function render(props: Partial<ResourcesTableProps>) {
         numberOfPages={10}
         page={0}
         resources={props.resources || []}
-        localPlugins={[]}
+        localPlugins={props.localPlugins || []}
       />
     </TestProvider>
   );
@@ -65,6 +67,33 @@ describe('ResourcesTable', () => {
 
     expect(await screen.findByText(`Data source ${item.refId}`)).toBeInTheDocument();
     expect(screen.getByText(`Unknown data source`)).toBeInTheDocument();
+  });
+
+  it('renders the data source logo', async () => {
+    const resources = [wellFormedDatasourceMigrationItem(1, { refId: datasourceA.uid })];
+
+    const { container } = render({ resources });
+    await screen.findByText('Datasource A');
+
+    // The logo is decorative (alt=""), so it has no accessible name to query by.
+    expect(container.querySelector('img')).toHaveAttribute('src', datasourceA.meta.info.logos.small);
+  });
+
+  it('renders plugins with their logo', () => {
+    const plugin = getLocalPluginMock();
+    const resources = [
+      wellFormedPluginMigrationItem(1, {
+        refId: plugin.id,
+        name: plugin.name,
+        parentName: 'Plugins',
+      }),
+    ];
+
+    const { container } = render({ resources, localPlugins: [plugin] });
+
+    expect(screen.getByText(plugin.name)).toBeInTheDocument();
+    expect(screen.getByText('Plugins')).toBeInTheDocument();
+    expect(container.querySelector('img')).toHaveAttribute('src', plugin.info.logos.small);
   });
 
   it('renders dashboards', async () => {
