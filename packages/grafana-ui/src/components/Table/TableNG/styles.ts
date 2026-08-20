@@ -42,6 +42,15 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].textAlign === key[1].textAlign &&
   cacheKey[1].textWrap === key[1].textWrap;
 
+// How far the `table.refresh` header background steps away from the background the rows sit on.
+// `emphasize` moves in whichever direction contrasts — lighter in dark themes, darker in light ones
+// — so one coefficient covers both, as well as a transparent panel sitting on the canvas.
+// `background.elevated` can't do this job: in light themes it *is* `background.primary` (both are
+// white), so the header was indistinguishable from its rows. 0.04 was picked to land dark themes on
+// the same colour `background.elevated` gave them (#212428 vs #22252b) and light themes within a
+// hair of `background.secondary`, the established "one step off white" surface.
+const HEADER_BACKGROUND_EMPHASIS = 0.04;
+
 export const getGridStyles = memoize(
   (
     theme: GrafanaTheme2,
@@ -64,6 +73,10 @@ export const getGridStyles = memoize(
 
     const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
 
+    const headerBackgroundColor = tableRefreshEnabled
+      ? theme.colors.emphasize(bgColor, HEADER_BACKGROUND_EMPHASIS)
+      : bgColor;
+
     // The expander column is the outer table's first column (see markEdgeColumns), so under
     // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
     // other first column — `gridNested` below has to know about it to stay flush with that column.
@@ -73,7 +86,7 @@ export const getGridStyles = memoize(
       grid: css({
         '--rdg-background-color': bgColor,
         // `table.refresh` gives the header its own surface distinct from the body rows.
-        '--rdg-header-background-color': tableRefreshEnabled ? theme.colors.background.elevated : bgColor,
+        '--rdg-header-background-color': headerBackgroundColor,
         '--rdg-border-color': borderColor,
         '--rdg-color': theme.colors.text.primary,
         '--rdg-summary-border-color': borderColor,
@@ -84,9 +97,15 @@ export const getGridStyles = memoize(
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
-        '--rdg-row-hover-background-color': transparent
-          ? theme.colors.background.primary
-          : theme.colors.background.secondary,
+        // Under `table.refresh` a hovered row takes the header's surface, so "one step off the row
+        // background" means one thing across the table. The old pair had the same blind spot the
+        // header did: on a transparent panel it hovered *lighter* (`background.primary`), which in a
+        // light theme is white on near-white.
+        '--rdg-row-hover-background-color': tableRefreshEnabled
+          ? headerBackgroundColor
+          : transparent
+            ? theme.colors.background.primary
+            : theme.colors.background.secondary,
         '--rdg-row-selected-background-color': selectedRowColor,
         '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
 
