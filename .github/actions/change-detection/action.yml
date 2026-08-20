@@ -55,6 +55,9 @@ outputs:
   devenv:
     description: Whether the devenv or self have changed in any way
     value: ${{ steps.changed-files.outputs.devenv_any_modified || 'true' }}
+  dev-dashboards:
+    description: Whether the dev-dashboards jsonnet codegen inputs (devenv/dev-dashboards/** or devenv/jsonnet/**) or self have changed
+    value: ${{ steps.changed-files.outputs.dev_dashboards_any_modified || 'true' }}
 runs:
   using: composite
   steps:
@@ -302,6 +305,14 @@ runs:
             - 'devenv/**'
             - '.dockerignore'
             - '${{ inputs.self }}'
+          dev_dashboards:
+            # devenv/dev-dashboards/** is go:embed'd and drives the devenv/jsonnet
+            # codegen (dev-dashboards.libsonnet); devenv/jsonnet/** is that codegen
+            # itself. Narrower than `devenv` so unrelated devenv/** changes (e.g.
+            # devenv/docker/blocks/**) don't trigger backend codegen verification.
+            - 'devenv/dev-dashboards/**'
+            - 'devenv/jsonnet/**'
+            - '${{ inputs.self }}'
     - name: Print all change groups
       shell: bash
       run: |
@@ -337,3 +348,5 @@ runs:
         echo " --> ${{ steps.changed-files.outputs.rpm_packaging_all_modified_files }}"
         echo "devenv: ${{ steps.changed-files.outputs.devenv_any_modified || 'true' }}"
         echo " --> ${{ steps.changed-files.outputs.devenv_all_modified_files }}"
+        echo "Dev dashboards: ${{ steps.changed-files.outputs.dev_dashboards_any_modified || 'true' }}"
+        echo " --> ${{ steps.changed-files.outputs.dev_dashboards_all_modified_files }}"

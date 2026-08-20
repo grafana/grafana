@@ -265,12 +265,16 @@ export const LogsTable = ({
   const logRows = useMemo(() => {
     const logs = rawTableFrame
       ? dataFrameToLogsModel([rawTableFrame], undefined, undefined, panelData.request?.targets, false).rows.map(
-          (logRow) =>
-            new LogListModel(logRow, {
-              escape: false,
-              timeZone,
-              wrapLogMessage: true,
-            })
+          (logRow, index) =>
+            new LogListModel(
+              logRow,
+              {
+                escape: false,
+                timeZone,
+                wrapLogMessage: true,
+              },
+              index
+            )
         )
       : null;
     return logs ?? [];

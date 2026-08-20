@@ -30,7 +30,7 @@ func TestIntegrationGetSSOSettings(t *testing.T) {
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
+		sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		ssoSettingsStore = ProvideStore(sqlStore)
 
 		template := models.SSOSettings{
@@ -91,7 +91,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
+		sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		ssoSettingsStore = ProvideStore(sqlStore)
 	}
 
@@ -268,7 +268,7 @@ func TestIntegrationListSSOSettings(t *testing.T) {
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
+		sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		ssoSettingsStore = ProvideStore(sqlStore)
 	}
 
@@ -332,7 +332,7 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 	var ssoSettingsStore *SSOSettingsStore
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
+		sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		ssoSettingsStore = ProvideStore(sqlStore)
 	}
 

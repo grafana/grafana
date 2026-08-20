@@ -102,8 +102,7 @@ test.describe(
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Options');
       await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       await expectRepeatPanelsRendered(panels, repeatOptions.length);
 
