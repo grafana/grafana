@@ -1619,6 +1619,15 @@
         "title": "Auto-sync is enabled"
       },
       "confirm": {
+        "autosync-body": "Are you sure you want to enable Auto-sync? Grafana will continuously sync alert configuration from this data source until you turn it off in Alerting settings.",
+        "autosync-confirm": "Enable auto-sync",
+        "autosync-error-body": "Failed to enable Auto-sync. Please check the error details and try again.",
+        "autosync-error-title": "Auto-sync Failed",
+        "autosync-importing-body": "Enabling Auto-sync. Please wait...",
+        "autosync-importing-title": "Enabling auto-sync...",
+        "autosync-success-body": "Auto-sync enabled. Redirecting...",
+        "autosync-success-title": "Auto-sync Enabled",
+        "autosync-title": "Confirm Auto-sync",
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
         "error-body": "Failed to import resources. Please check the error details and try again.",
@@ -1688,7 +1697,10 @@
       "renamed-receivers_one": "{{count}} contact points will be renamed",
       "renamed-receivers_other": "{{count}} contact points will be renamed",
       "review": {
+        "autosync-badge": "Will sync continuously",
         "back": "Alert rules",
+        "back-notifications": "Notification resources",
+        "enable-autosync": "Enable auto-sync",
         "filter": "Filter",
         "folder": "Target folder",
         "heading": "Review Import",
@@ -1706,6 +1718,7 @@
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
+        "rules-autosync-badge": "Syncs automatically",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Alert Rules",
         "skipped": "Skipped",
@@ -1731,12 +1744,17 @@
         "yaml-description": "Import rules from a Prometheus YAML file."
       },
       "step1": {
+        "autosync-datasource-filtered": "Auto-sync can only mirror from Mimir or Cortex Alertmanager data sources.",
+        "autosync-label": "Auto-sync",
+        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Skips the Alert Rules step since rules sync automatically too.",
         "datasource": "Alertmanager data source",
         "heading": "Import Notification Resources",
         "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
         "no-datasources": "No Alertmanager data sources found",
+        "no-mimir-cortex-datasources": "No Mimir or Cortex data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
+        "policy-tree-autosync-disabled": "Not needed. Auto-sync mirrors the source directly, so there's no policy tree to name.",
         "policy-tree-desc": "When you import, Grafana creates a separate notification policy tree. Enter a name you will recognize.",
         "policy-tree-help": "When you import this Alertmanager configuration, Grafana will create a separate notification policy tree for it. The name you enter here will identify that tree in the UI and is what you select when you import alert rules that should use this routing. Use a label you will recognize — for example data source, team, cluster, or environment (such as prometheus-prod or platform-team).",
         "policy-tree-help-title": "About policy tree names",
@@ -3863,6 +3881,8 @@
       "title-notification-policies": "Notification policies"
     },
     "wizard-import-to-gma": {
+      "autosync-success-body": "Grafana will keep syncing alert configuration from this data source.",
+      "autosync-success-title": "Auto-sync enabled",
       "error": "Failed to import resources",
       "staged-success-body": "Your imported config is now staged in the Import tab.",
       "staged-success-title": "Configuration staged",
