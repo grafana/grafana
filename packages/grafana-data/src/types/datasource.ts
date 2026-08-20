@@ -526,6 +526,90 @@ export interface LegacyMetricFindQueryOptions {
   variable?: { name: string };
 }
 
+/** @alpha */
+export const QUERY_EDITOR_COAUTHORING_V1_COMPONENT_ID = 'grafana/query-editor-coauthoring/v1';
+
+/** @alpha */
+export interface QueryEditorCoauthoringRangeV1 {
+  from: number;
+  to: number;
+}
+
+/** @alpha */
+export interface QueryEditorCoauthoringMetricMetadataV1 {
+  name: string;
+  type?: string;
+  help?: string;
+  unit?: string;
+  labels?: string[];
+}
+
+/** @alpha */
+export interface QueryEditorCoauthoringContextV1 {
+  queryKey: string;
+  revision: string;
+  query: string;
+  focusRanges: QueryEditorCoauthoringRangeV1[];
+  language: { id: string; displayName: string };
+  metricMetadata: QueryEditorCoauthoringMetricMetadataV1[];
+}
+
+/** @alpha */
+export interface QueryEditorCoauthoringChangeV1 {
+  id: string;
+  original: string;
+  proposed: string;
+  kind?: string;
+  focus?: 'inside' | 'outside';
+}
+
+/** @alpha */
+export type QueryEditorCoauthoringSnapshotV1 =
+  | { mode: 'hidden' }
+  | { mode: 'selection'; selectedText: string; revision: string }
+  | { mode: 'session'; revision: string };
+
+/** @alpha */
+export type QueryEditorCoauthoringProposalResultV1<TQuery extends DataQuery = DataQuery> =
+  | {
+      status: 'staged';
+      query: TQuery;
+      queryKey: string;
+      baselineRevision: string;
+      changes: QueryEditorCoauthoringChangeV1[];
+    }
+  | { status: 'rejected'; reason: 'invalid' | 'unchanged' | 'stale' };
+
+/** @alpha */
+export interface QueryEditorCoauthoringControllerV1<TQuery extends DataQuery = DataQuery> {
+  getSnapshot(): QueryEditorCoauthoringSnapshotV1;
+  subscribe(listener: VoidFunction): VoidFunction;
+  getPortalTarget(): HTMLElement;
+  begin(): Promise<QueryEditorCoauthoringContextV1>;
+  refreshContext(): Promise<QueryEditorCoauthoringContextV1>;
+  stageEditorDiff(source: string): QueryEditorCoauthoringProposalResultV1<TQuery>;
+  clearEditorDiff(): void;
+  focus(): void;
+  dismiss(): void;
+  dispose(): void;
+}
+
+/** @alpha */
+export interface QueryEditorCoauthoringV1Props {
+  surfaceGeneration: string;
+  createController(): QueryEditorCoauthoringControllerV1;
+  onSurfaceStateChange(event: { generation: string; state: 'ready' | 'unavailable' | 'failed' }): void;
+}
+
+/** @alpha */
+export interface QueryEditorCoauthoringHostDescriptorV1 {
+  componentId: typeof QUERY_EDITOR_COAUTHORING_V1_COMPONENT_ID;
+  generation: string;
+  queryKey: string;
+  surfaceState: 'pending' | 'ready' | 'unavailable' | 'failed';
+  onSurfaceStateChange(event: { generation: string; state: 'ready' | 'unavailable' | 'failed' }): void;
+}
+
 /** @internal */
 export interface QueryEditorCoauthoringRange {
   from: number;
@@ -602,6 +686,8 @@ export interface QueryEditorProps<
   datasource: DSType;
   query: TVQuery;
   onRunQuery: () => void;
+  /** @alpha */
+  queryEditorCoauthoringHost?: QueryEditorCoauthoringHostDescriptorV1;
   onChange: (value: TVQuery) => void;
   onBlur?: () => void;
   onAddQuery?: (query: TQuery) => void;

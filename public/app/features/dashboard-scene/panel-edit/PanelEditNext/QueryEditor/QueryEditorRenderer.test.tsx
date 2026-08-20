@@ -9,6 +9,7 @@ import {
   getDefaultTimeRange,
   LoadingState,
   type QueryEditorCoauthoringCapability,
+  type QueryEditorCoauthoringHostDescriptorV1,
   type TestDataSourceResponse,
 } from '@grafana/data';
 import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
@@ -183,6 +184,49 @@ describe('QueryEditorRenderer', () => {
     expect(screen.getByRole('button', { name: /query with assistant/i })).toBeInTheDocument();
   });
 
+  it('uses a new pending generation for another query and ignores lifecycle events from the prior generation', () => {
+    mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
+    const hosts: QueryEditorCoauthoringHostDescriptorV1[] = [];
+    function HostAwareQueryEditor({
+      queryEditorCoauthoringHost,
+    }: {
+      queryEditorCoauthoringHost?: QueryEditorCoauthoringHostDescriptorV1;
+    }) {
+      if (queryEditorCoauthoringHost) {
+        hosts.push(queryEditorCoauthoringHost);
+      }
+      return <div data-testid="host-aware-query-editor" />;
+    }
+    const queryDsData = {
+      datasource: new MockDataSourceApi({ QueryEditor: HostAwareQueryEditor }),
+      dsSettings: ds1SettingsMock,
+    };
+    const renderPanel = (query: DataQuery) => (
+      <QueryEditorPanel
+        query={query}
+        queryDsData={queryDsData}
+        queryDsLoading={false}
+        queries={[queryA, queryB]}
+        updateQuery={jest.fn()}
+        addQuery={jest.fn()}
+        runQueries={jest.fn()}
+      />
+    );
+    const { rerender } = render(renderPanel(queryA));
+    const firstHost = hosts.at(-1)!;
+
+    act(() => firstHost.onSurfaceStateChange({ generation: firstHost.generation, state: 'ready' }));
+    expect(hosts.at(-1)?.surfaceState).toBe('ready');
+
+    rerender(renderPanel(queryB));
+    const secondHost = hosts.at(-1)!;
+    expect(secondHost.generation).not.toBe(firstHost.generation);
+    expect(secondHost.surfaceState).toBe('pending');
+
+    act(() => firstHost.onSurfaceStateChange({ generation: firstHost.generation, state: 'failed' }));
+    expect(hosts.at(-1)?.surfaceState).toBe('pending');
+  });
+
   it('runs a proposed query while keeping the baseline in the editor and coordinates revert and accept', () => {
     mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
     const updateQuery = jest.fn();
@@ -232,17 +276,20 @@ describe('QueryEditorRenderer', () => {
     );
     const { rerender } = render(renderPanel(queryA, [queryA, queryB]));
     const coauthoringProps = mockQueryCoauthoring.mock.lastCall?.[0] as {
-      onAccept: (query: DataQuery) => void;
-      onPreview: (query: DataQuery) => void;
+      onAccept: (query: DataQuery, baselineRevision?: string) => void;
+      onPreview: (query: DataQuery, baselineRevision?: string) => void;
       onRevertPreview: () => void;
     };
 
-    act(() => coauthoringProps.onPreview(proposedQuery));
+    act(() => coauthoringProps.onPreview(proposedQuery, 'revision-1'));
     expect(updateQuery).toHaveBeenCalledWith(proposedQuery, 'A');
     expect(runQueries).toHaveBeenCalledTimes(1);
 
     rerender(renderPanel(proposedQuery, [proposedQuery, queryB]));
     expect(screen.getByTestId('preview-editor')).toHaveTextContent('series-a:series-a');
+
+    act(() => coauthoringProps.onAccept(proposedQuery, 'obsolete-revision'));
+    expect(updateQuery).toHaveBeenLastCalledWith(proposedQuery, 'A');
 
     act(() => coauthoringProps.onRevertPreview());
     expect(updateQuery).toHaveBeenLastCalledWith(queryA, 'A');
