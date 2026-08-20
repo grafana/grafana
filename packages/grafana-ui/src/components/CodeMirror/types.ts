@@ -3,12 +3,14 @@ import { type EditorState, type Extension } from '@codemirror/state';
 import { type BasicSetupOptions } from '@uiw/react-codemirror';
 import { type ReactNode } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
+
 export type CodeMirrorCompletion = Completion;
 export type CodeMirrorCompletionContext = CompletionContext;
 export type CodeMirrorCompletionResult = CompletionResult;
 export type CodeMirrorCompletionSource = CompletionSource;
 
-export type CodeMirrorExtension = Extension;
+export type CodeMirrorExtension = Extension | Promise<Extension>;
 
 export type CodeMirrorCompletionMode = 'override' | 'merge';
 
@@ -32,7 +34,7 @@ export type CodeMirrorSqlDialect = 'standardSql' | 'mySql';
  * A CodeMirror theme: either a theme extension (e.g. from `EditorView.theme`)
  * or one of CodeMirror's built-in keywords.
  */
-export type CodeMirrorEditorTheme = CodeMirrorExtension | 'light' | 'dark' | 'none';
+export type CodeMirrorEditorTheme = Extension | 'light' | 'dark' | 'none';
 
 /**
  * A single parameter within a function signature, such as `decimals: number`.
@@ -95,6 +97,14 @@ export interface SignatureHelp {
  * Computes signature help for the cursor position, or `null` when none applies.
  */
 export type SignatureHelpProvider = (state: EditorState, pos: number) => SignatureHelp | null;
+
+export interface SignatureHelpOptions {
+  /**
+   * Grafana theme used to style the tooltip. When omitted the tooltip falls
+   * back to CodeMirror's default tooltip chrome plus the structural base styles.
+   */
+  theme?: GrafanaTheme2;
+}
 
 export interface CodeMirrorEditorProps {
   /**

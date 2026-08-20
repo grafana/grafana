@@ -19,9 +19,10 @@ describe('QueryInput', () => {
     expect(await screen.findByText('my.graphite.query')).toBeInTheDocument();
   });
 
-  it('renders with the query field selector', () => {
+  it('renders with the query field selector', async () => {
     renderInput();
 
+    expect(await screen.findByRole('textbox')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.QueryField.container)).toBeInTheDocument();
   });
 

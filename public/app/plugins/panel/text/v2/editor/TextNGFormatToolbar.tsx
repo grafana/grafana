@@ -1,4 +1,4 @@
-import { EditorView } from '@codemirror/view';
+import { type EditorView as CodeMirrorEditorView } from '@codemirror/view';
 import { type ReactNode, type RefObject } from 'react';
 
 import { type IconName } from '@grafana/data';
@@ -18,7 +18,7 @@ interface FormatAction {
   tooltip: string;
   icon?: IconName;
   label?: ReactNode;
-  run: (view: EditorView) => void;
+  run: (view: CodeMirrorEditorView) => void;
 }
 
 /** Spread into `toggleSurround`. */
@@ -135,8 +135,9 @@ export function TextNGFormatToolbar({ mode, editorContainerRef }: TextNGFormatTo
     return null;
   }
 
-  const runAction = (action: FormatAction) => {
+  const runAction = async (action: FormatAction) => {
     const container = editorContainerRef.current;
+    const { EditorView } = await import('@codemirror/view');
     const view = container ? EditorView.findFromDOM(container) : null;
     if (view) {
       action.run(view);

@@ -1,5 +1,5 @@
-import { Prec } from '@codemirror/state';
-import { EditorView, keymap, placeholder as placeholderExtension } from '@codemirror/view';
+import type { Extension } from '@codemirror/state';
+import type { EditorView as CodeMirrorEditorView } from '@codemirror/view';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
@@ -27,6 +27,7 @@ export interface QueryFieldConfigOptions {
 export interface QueryFieldConfig {
   theme: CodeMirrorEditorTheme;
   basicSetup: CodeMirrorBasicSetup;
+  lineWrapping: true;
   extensions: CodeMirrorExtension[];
 }
 
@@ -49,7 +50,78 @@ const QUERY_FIELD_BASIC_SETUP = {
   drawSelection: false,
 } as const;
 
-function createQueryFieldTheme(theme: GrafanaTheme2): CodeMirrorEditorTheme {
+/**
+ * Configuration for rendering a `CodeMirrorEditor` as a query field: styled as
+ * a standard Grafana input, runs the query on Shift+Enter or Ctrl+Enter, and
+ * wraps long queries instead of scrolling horizontally. Replaces the deprecated
+ * Slate-based `QueryField`.
+ *
+ * Spread the result onto the editor and memoize it — a new config each render
+ * reconfigures the editor:
+ *
+ * ```tsx
+ * const config = useMemo(() => getQueryFieldConfig(theme, { onRunQuery }), [theme, onRunQuery]);
+ * return <CodeMirrorEditor value={query} onChange={onChange} height="auto" {...config} />;
+ * ```
+ */
+export function getQueryFieldConfig(theme: GrafanaTheme2, options: QueryFieldConfigOptions = {}): QueryFieldConfig {
+  const { onRunQuery, onBlur, placeholder } = options;
+
+  return {
+    theme: 'none',
+    basicSetup: QUERY_FIELD_BASIC_SETUP,
+    lineWrapping: true,
+    extensions: [createQueryFieldExtension(theme, { onRunQuery, onBlur, placeholder })],
+  };
+}
+
+async function createQueryFieldExtension(
+  theme: GrafanaTheme2,
+  { onRunQuery, onBlur, placeholder }: QueryFieldConfigOptions
+): Promise<Extension> {
+  const [{ Prec }, { EditorView, keymap, placeholder: placeholderExtension }] = await Promise.all([
+    import('@codemirror/state'),
+    import('@codemirror/view'),
+  ]);
+  const extensions: Extension[] = [createQueryFieldTheme(theme, EditorView)];
+
+  if (onRunQuery) {
+    const run = () => {
+      onRunQuery();
+      return true;
+    };
+
+    // Highest precedence so these win over the default keymap, which binds
+    // Shift-Enter (insert newline) and Mod-Enter (insert blank line).
+    extensions.push(
+      Prec.highest(
+        keymap.of([
+          { key: 'Shift-Enter', run },
+          { key: 'Ctrl-Enter', run },
+        ])
+      )
+    );
+  }
+
+  if (onBlur) {
+    extensions.push(
+      EditorView.domEventHandlers({
+        blur: () => {
+          onBlur();
+          return false;
+        },
+      })
+    );
+  }
+
+  if (placeholder) {
+    extensions.push(placeholderExtension(placeholder));
+  }
+
+  return extensions;
+}
+
+function createQueryFieldTheme(theme: GrafanaTheme2, EditorView: typeof CodeMirrorEditorView): Extension {
   return EditorView.theme(
     {
       // The editor root carries the standard input chrome (background, border,
@@ -83,62 +155,4 @@ function createQueryFieldTheme(theme: GrafanaTheme2): CodeMirrorEditorTheme {
     },
     { dark: theme.isDark }
   );
-}
-
-/**
- * Configuration for rendering a `CodeMirrorEditor` as a query field: styled as
- * a standard Grafana input, runs the query on Shift+Enter or Ctrl+Enter, and
- * wraps long queries instead of scrolling horizontally. Replaces the deprecated
- * Slate-based `QueryField`.
- *
- * Spread the result onto the editor and memoize it — a new config each render
- * reconfigures the editor:
- *
- * ```tsx
- * const config = useMemo(() => getQueryFieldConfig(theme, { onRunQuery }), [theme, onRunQuery]);
- * return <CodeMirrorEditor value={query} onChange={onChange} height="auto" {...config} />;
- * ```
- */
-export function getQueryFieldConfig(theme: GrafanaTheme2, options: QueryFieldConfigOptions = {}): QueryFieldConfig {
-  const { onRunQuery, onBlur, placeholder } = options;
-
-  const extensions: CodeMirrorExtension[] = [EditorView.lineWrapping];
-
-  if (onRunQuery) {
-    const run = () => {
-      onRunQuery();
-      return true;
-    };
-    // Highest precedence so these win over the default keymap, which binds
-    // Shift-Enter (insert newline) and Mod-Enter (insert blank line).
-    extensions.push(
-      Prec.highest(
-        keymap.of([
-          { key: 'Shift-Enter', run },
-          { key: 'Ctrl-Enter', run },
-        ])
-      )
-    );
-  }
-
-  if (onBlur) {
-    extensions.push(
-      EditorView.domEventHandlers({
-        blur: () => {
-          onBlur();
-          return false;
-        },
-      })
-    );
-  }
-
-  if (placeholder) {
-    extensions.push(placeholderExtension(placeholder));
-  }
-
-  return {
-    theme: createQueryFieldTheme(theme),
-    basicSetup: QUERY_FIELD_BASIC_SETUP,
-    extensions,
-  };
 }

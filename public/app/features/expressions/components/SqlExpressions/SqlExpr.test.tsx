@@ -200,14 +200,16 @@ describe('SqlExpr', () => {
     await expect(resolveTables(null)).resolves.toEqual([{ name: 'table A', completion: '`table A`' }]);
   });
 
-  it('uses the CodeMirror SQL editor when sqlExpressionsCodeMirror is enabled', () => {
+  it('uses the CodeMirror SQL editor when sqlExpressionsCodeMirror is enabled', async () => {
     setTestFlags({ sqlExpressionsCodeMirror: true });
 
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
     const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
 
-    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+    const { findByTestId } = render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    expect(await findByTestId('sql-editor')).toHaveTextContent('SELECT * FROM A');
 
     expect(SqlEditorMock.mock.calls[0][0]).toEqual(
       expect.objectContaining({

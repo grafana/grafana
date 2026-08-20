@@ -82,7 +82,8 @@ export { FilterPill } from './components/FilterPill/FilterPill';
 export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/ConfirmModal';
 /** @deprecated Slate is being removed from `@grafana/ui`. Migrate to `QueryInput`; this export may be removed in a future release. */
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
-export { QueryInput, type QueryInputProps } from './components/QueryInput/QueryInput';
+export { QueryInput } from './components/QueryInput/QueryInputLazy';
+export type { QueryInputProps } from './components/QueryInput/QueryInput';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
 export { ReactMonacoDiffEditorLazy as ReactMonacoDiffEditor } from './components/Monaco/ReactMonacoDiffEditorLazy';
@@ -218,7 +219,7 @@ export {
   DataLinksInlineEditorBase,
   type DataLinksInlineEditorBaseProps,
 } from './components/DataLinks/DataLinksInlineEditor/DataLinksInlineEditorBase';
-export { DataLinkInput } from './components/DataLinks/DataLinkInput';
+export { DataLinkInput } from './components/DataLinks/DataLinkInputLazy';
 export {
   DataLinksContextMenu,
   type DataLinksContextMenuProps,

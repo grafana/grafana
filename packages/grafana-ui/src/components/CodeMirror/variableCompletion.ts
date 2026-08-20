@@ -1,4 +1,3 @@
-import { insertCompletionText } from '@codemirror/autocomplete';
 import { type EditorState } from '@codemirror/state';
 
 import { type VariableSuggestion } from '@grafana/data';
@@ -72,7 +71,12 @@ function referenceEnd(state: EditorState, from: number, to: number): number {
  */
 export function applyVariableReference(text: string): CompletionApply {
   return (view, _completion, from, to) => {
-    view.dispatch(insertCompletionText(view.state, text, from, referenceEnd(view.state, from, to)));
+    const end = referenceEnd(view.state, from, to);
+    view.dispatch({
+      changes: { from, to: end, insert: text },
+      selection: { anchor: from + text.length },
+      userEvent: 'input.complete',
+    });
   };
 }
 

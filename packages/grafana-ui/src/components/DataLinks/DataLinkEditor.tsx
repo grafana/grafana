@@ -9,7 +9,7 @@ import { Field } from '../Forms/Field';
 import { getLabelStyles } from '../Forms/Label';
 import { Switch } from '../Switch/Switch';
 
-import { DataLinkInput } from './DataLinkInput';
+import { DataLinkInput } from './DataLinkInputLazy';
 
 interface DataLinkEditorProps {
   index: number;
