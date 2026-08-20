@@ -193,7 +193,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
           bottomSpacing={0}
           title={t(
             'dashboard.sidebar.edit-schema.diff-migrated',
-            'The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format'
+            'Note: The diff also includes changes resulting from migration to the new dashboard format.'
           )}
         />
       )}
