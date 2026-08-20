@@ -100,11 +100,8 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 		return errors.New("no compatible plugin implementation found")
 	}
 
-	p.clientV3, err = grpcplugin.NewClientV3(rpcClient)
-	if err != nil {
-		p.state = pluginStateStartFail
-		return err
-	}
+	// Attach V3 when the client exists
+	p.clientV3, _ = grpcplugin.NewClientV3(rpcClient)
 
 	p.state = pluginStateStartSuccess
 	return nil
