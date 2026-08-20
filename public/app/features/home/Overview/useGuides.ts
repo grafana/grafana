@@ -125,7 +125,7 @@ export function useGuides() {
         icon: 'open-telemetry',
         color: theme.visualization.getColorByName('blue'),
         cta: t('home.overview.get-started.cards.opentelemetry.cta', 'Start setup'),
-        href: '/a/grafana-setupguide-app/getting-started/opentelemetry',
+        href: '/a/grafana-setupguide-app/getting-started/otel',
       },
       {
         id: 'kubernetes',
