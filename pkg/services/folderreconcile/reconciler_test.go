@@ -16,12 +16,14 @@ import (
 
 // fakeLock either runs fn (as if the lock were acquired) or skips it (as if another replica holds it).
 type fakeLock struct {
-	acquired bool
-	calls    int
+	acquired    bool
+	calls       int
+	maxInterval time.Duration
 }
 
-func (f *fakeLock) LockAndExecute(ctx context.Context, _ string, _ time.Duration, fn func(context.Context)) error {
+func (f *fakeLock) LockExecuteAndRelease(ctx context.Context, _ string, maxInterval time.Duration, fn func(context.Context)) error {
 	f.calls++
+	f.maxInterval = maxInterval
 	if f.acquired {
 		fn(ctx)
 	}
@@ -119,4 +121,14 @@ func TestTick_OnlyReconcilesWhenLockAcquired(t *testing.T) {
 	lock.acquired = true
 	r.tick(context.Background())
 	require.Equal(t, []string{"gone"}, alerts.deleted)
+}
+
+func TestTick_UsesCrashRecoveryMaxInterval(t *testing.T) {
+	lock := &fakeLock{acquired: true}
+	r := newReconciler(&fakeFolders{FakeService: foldertest.NewFakeService()}, &fakeOrgs{}, lock, minInterval, nil)
+
+	r.tick(context.Background())
+
+	// The lock's maxInterval is a crash-recovery ceiling, independent of how often we tick.
+	require.Equal(t, lockMaxInterval, lock.maxInterval)
 }
