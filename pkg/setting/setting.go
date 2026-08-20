@@ -200,6 +200,7 @@ type Cfg struct {
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
 	ProvisioningRepositoryTypes               []string
+	ProvisioningConnectionTypes               []string
 	ProvisioningLokiURL                       string
 	ProvisioningLokiUser                      string
 	ProvisioningLokiPassword                  string
@@ -335,6 +336,7 @@ type Cfg struct {
 	PanelSeriesLimit                 int
 	DashboardDefaultPreload          bool
 	DashboardSchemaMigrationCacheTTL time.Duration
+	ReportRenderQueryGracePeriod     time.Duration
 
 	// Auth
 	LoginCookieName                   string
@@ -769,6 +771,10 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
+	// SearchEnforceSortCapability rejects a sort on a field that does not declare
+	// sorting. Off by default: violations are counted first, so they can be fixed
+	// before requests start failing.
+	SearchEnforceSortCapability bool
 	// SearchPostRankAuthz enables the post-filter authorization search path:
 	// bleve ranks without the in-searcher authz wrapper and authorization runs
 	// app-side in rank order with early exit once the page is filled.
@@ -789,16 +795,22 @@ type Cfg struct {
 	// defaults to dashboards; external defaults to none.
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
-	VectorDBHost                     string
-	VectorDBPort                     string
-	VectorDBName                     string
-	VectorDBUser                     string
-	VectorDBPassword                 string
-	VectorDBSSLMode                  string
-	VectorIndexingEnabled            bool          // run the embedding backfiller and reconciler
-	VectorReconcilerInterval         time.Duration // reconciler tick interval; default 60s
-	VectorPromotionThreshold         int           // row count per tenant to trigger promotion
-	VectorPromoterInterval           time.Duration // promoter tick interval; 0 disables
+	// Registers the VectorStore write RPCs on the storage server.
+	EnableVectorStore bool
+	// Service identities allowed to call the VectorStore write RPCs.
+	// Empty = no identity restriction.
+	VectorAllowedWriteServices   []string
+	VectorDBHost                 string
+	VectorDBPort                 string
+	VectorDBName                 string
+	VectorDBUser                 string
+	VectorDBPassword             string
+	VectorDBSSLMode              string
+	VectorIndexingEnabled        bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval     time.Duration // reconciler tick interval; default 60s
+	VectorEmbeddingCountInterval time.Duration // stored-embedding gauge sample interval; 0 disables
+	VectorPromotionThreshold     int           // row count per tenant to trigger promotion
+	VectorPromoterInterval       time.Duration // promoter tick interval; 0 disables
 
 	// VectorSearch per-tenant query-embedding cache (DB-backed, FIFO).
 	VectorQueryCacheEnabled      bool
@@ -944,6 +956,12 @@ func (cfg *Cfg) ResolveGrafanaComProxyAPIToken() {
 // the same intention can be used to hide both features.
 func (cfg *Cfg) AddChangePasswordLink() bool {
 	return !cfg.DisableLoginForm && !cfg.DisableLogin
+}
+
+// IsDevEnv reports whether Grafana is running in a non-production environment.
+// Some experimental startup params should only honoured when this condition is true.
+func (cfg *Cfg) IsDevEnv() bool {
+	return cfg.Env != Prod
 }
 
 type CommandLineArgs struct {
@@ -1622,6 +1640,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 	cfg.DashboardDefaultPreload = dashboards.Key("default_preload").MustBool(false)
 	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
+	cfg.ReportRenderQueryGracePeriod = dashboards.Key("report_render_query_grace_period").MustDuration(3 * time.Second)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
@@ -2108,7 +2127,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	auth := iniFile.Section("auth")
 
-	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
+	readOAuthAllowInsecureEmailLookup(iniFile, cfg)
 
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
@@ -2124,7 +2143,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Default to the translation key used in the frontend
 	cfg.OAuthLoginErrorMessage = valueAsString(auth, "oauth_login_error_message", "oauth.login.error")
 	readOAuthCookieMaxAge(iniFile, cfg)
-	cfg.OAuthRefreshTokenServerLockMinWaitMs = auth.Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(1000)
+	readOAuthRefreshLockSettings(iniFile, cfg)
 	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
 	// Deprecated
@@ -2532,6 +2551,19 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 			}
 
 			cfg.ProvisioningRepositoryTypes[i] = s
+		}
+	}
+
+	connectionTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "connection_types", ""))
+	if connectionTypes != "|" && connectionTypes != "" {
+		cfg.ProvisioningConnectionTypes = strings.Split(connectionTypes, "|")
+		for i, s := range cfg.ProvisioningConnectionTypes {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning connection type is empty in '%s' (at index %d)", connectionTypes, i)
+			}
+
+			cfg.ProvisioningConnectionTypes[i] = s
 		}
 	}
 

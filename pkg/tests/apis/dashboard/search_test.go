@@ -443,7 +443,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 			require.NoError(t, err)
 
 			var statusCode int
-			body := []byte(fmt.Sprintf(`{"uid":"%s","title":"Permission Test Folder"}`, folderUID))
+			body := fmt.Appendf(nil, `{"uid":"%s","title":"Permission Test Folder"}`, folderUID)
 			result := restClient.Post().AbsPath("api", "folders").
 				Body(body).
 				SetHeader("Content-type", "application/json").

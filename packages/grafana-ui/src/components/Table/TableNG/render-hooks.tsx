@@ -76,6 +76,7 @@ import {
   getDisplayName,
   getSummaryCellTextAlign,
   isCellInspectEnabled,
+  isSortableField,
   parseStyleJson,
   predicateByName,
   shouldTextOverflow,
@@ -509,6 +510,7 @@ function buildColumnsFromFields(
       width,
       headerCellClass,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
+      sortable: isSortableField(field),
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell

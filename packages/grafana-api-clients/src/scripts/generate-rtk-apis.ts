@@ -104,12 +104,6 @@ const config: ConfigFile = {
       apiFile: '../clients/rtkq/preferences/team/baseAPI.ts',
       filterEndpoints: ['getTeamPreferences', 'updateTeamPreferences', 'patchTeamPreferences'],
     },
-    '../clients/rtkq/user/endpoints.gen.ts': {
-      schemaFile: path.join(basePath, 'public/openapi3.json'),
-      hooks: defaultHooksOptions,
-      apiFile: '../clients/rtkq/user/baseAPI.ts',
-      filterEndpoints: ['starDashboardByUid', 'unstarDashboardByUid'],
-    },
     ...createAPIConfig('advisor', 'v0alpha1'),
     ...createAPIConfig('correlations', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v0alpha1'),

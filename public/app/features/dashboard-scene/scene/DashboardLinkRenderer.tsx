@@ -12,11 +12,11 @@ import {
 } from 'app/features/dashboard/components/SubMenu/DashboardLinksDashboard';
 import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
-import { linkSelectionId, openEditLinkPane } from '../settings/links/LinkAddEditableElement';
+import { duplicateLink, linkSelectionId, openEditLinkPane } from '../settings/links/LinkAddEditableElement';
 import { linkEditActions } from '../settings/links/actions';
 import { LINK_ICON_MAP } from '../settings/links/utils';
 
-import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
+import { ControlActionsPopover, LinkEditActions } from './ControlActionsPopover';
 import { type DashboardScene } from './DashboardScene';
 
 export interface Props {
@@ -37,19 +37,24 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex, d
     openEditLinkPane(dashboard, Number(linkIndex));
   }, [dashboard, linkIndex]);
 
+  const onClickDuplicateLink = useCallback(() => {
+    duplicateLink(dashboard, linkIndex);
+  }, [dashboard, linkIndex]);
+
   const onClickDeleteLink = useCallback(() => {
     linkEditActions.removeLink({ dashboard, linkIndex });
   }, [dashboard, linkIndex]);
 
   const editActions = useMemo(
     () => (
-      <ControlEditActions
-        element={{ name: link.title, type: 'link' }}
+      <LinkEditActions
+        name={link.title}
         onClickEdit={onClickEditLink}
+        onClickDuplicate={onClickDuplicateLink}
         onClickDelete={onClickDeleteLink}
       />
     ),
-    [link.title, onClickEditLink, onClickDeleteLink]
+    [link.title, onClickEditLink, onClickDuplicateLink, onClickDeleteLink]
   );
 
   let content: React.ReactNode;

@@ -27,8 +27,8 @@ type Builder interface {
 	// MaxItemsPerResource caps the items returned by a single Extract
 	// call. 0 means uncapped.
 	MaxItemsPerResource() int
-	// Extract turns a stored value into embeddable items. Folder display
-	// titles are deliberately absent: HybridSearch resolves them fresh at
-	// query time, so stored copies would only go stale.
-	Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte) ([]Item, error)
+	// Version identifies the content format Extract produces; bump on output changes to trigger re-embed backfills, never reuse a value.
+	Version() int
+	// Extract turns a stored value into embeddable items; folderTitle prefixes the breadcrumb.
+	Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]Item, error)
 }

@@ -71,7 +71,7 @@ func newRepositoryHTTPClient(limits *provisioning.GitRequestLimits) *http.Client
 	})
 }
 
-func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
+func (e *extra) Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error {
 	return Mutate(ctx, obj)
 }
 

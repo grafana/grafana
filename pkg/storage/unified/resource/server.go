@@ -290,10 +290,6 @@ type SearchOptions struct {
 	// TTL for the dedup cache used in ListModifiedSince updates. 0 disables the cache.
 	IndexModificationCacheTTL time.Duration
 
-	// Keep deleted objects in the index so trash searches can find them. Off means
-	// a delete removes the document, as it did before trash search existed.
-	IndexDeletedDocuments bool
-
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
 
@@ -692,6 +688,10 @@ type server struct {
 	// init checking
 	once    sync.Once
 	initErr error
+
+	// noReplayWarnOnce keeps the "backend cannot replay events" warning to one
+	// log line per server instead of one per watch.
+	noReplayWarnOnce sync.Once
 
 	maxPageSizeBytes int
 	reg              prometheus.Registerer
@@ -1584,15 +1584,23 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		req.Limit = 500 // default max 500 items in a page
 	}
 
-	req = filterFieldSelectors(req)
-	if s.useFieldSelectorSearch(req) {
-		// If we get here, we're doing list with selectable fields. Let's do search instead, since
-		// we index all selectable fields, and fetch resulting documents one by one.
+	req = filterSelectors(req)
+	if s.useSelectorSearch(req) {
+		// If we get here, we're doing list with selectable fields or labels. Let's do
+		// search instead, since we index both, and fetch resulting documents one by one.
 		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
 		if s.storageMetrics != nil {
 			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
 		}
-		return s.listWithFieldSelectors(ctx, req)
+		return s.listWithSelectors(ctx, req)
+	}
+
+	if req.NextPageToken != "" {
+		if token, err := GetContinueToken(req.NextPageToken); err == nil && tokenFromOtherListPath(token, false) {
+			return &resourcepb.ListResponse{
+				Error: NewBadRequestError("continue token was issued for a search-backed list"),
+			}, nil
+		}
 	}
 
 	switch req.Source {
@@ -1745,9 +1753,16 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 	)
 	maxPageBytes := s.maxPageSizeBytes
 
-	// Cache admin check results per folder to avoid redundant Check calls
-	// for items in the same folder.
-	folderAdminCache := make(map[string]bool)
+	// One authorizer per request: it caches folder-admin results, which must not
+	// outlive the request. The search path builds the same thing, so the two trash
+	// views cannot drift on who may see what.
+	authorizer := NewTrashAuthorizer(s.access, user, key, func(err error) {
+		s.degraded(ctx, "folder_admin_check", classifyAuthError(err), NamespacedResource{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}, err)
+	})
 
 	rv, err := s.backend.ListHistory(ctx, req, func(iter ListIterator) error {
 		for iter.Next() {
@@ -1766,11 +1781,9 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 				continue
 			}
 
-			// Check if user is admin in this folder (cached) or the user who deleted the item.
-			if !s.checkFolderAdmin(ctx, user, iter.Folder(), key, folderAdminCache) {
-				if obj.GetUpdatedBy() != user.GetUID() {
-					continue
-				}
+			// The deletion marker records the deleting user as the last updater.
+			if !authorizer.Allowed(ctx, iter.Folder(), obj.GetUpdatedBy()) {
+				continue
 			}
 
 			item := &resourcepb.ResourceWrapper{
@@ -1819,33 +1832,6 @@ func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListR
 		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
 	}
 	return rsp, nil
-}
-
-// checkFolderAdmin checks whether the user has admin permission (VerbSetPermissions) in the given
-// folder. Results are cached per folder to avoid redundant Check calls.
-func (s *server) checkFolderAdmin(ctx context.Context, user claims.AuthInfo, folder string, key *resourcepb.ResourceKey, cache map[string]bool) bool {
-	if isAdmin, ok := cache[folder]; ok {
-		return isAdmin
-	}
-	resp, err := s.access.Check(ctx, user, claims.CheckRequest{
-		Verb:      utils.VerbSetPermissions,
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-	}, folder)
-	if err != nil {
-		// The error is swallowed (user treated as non-admin), so without this
-		// the failure is invisible. Record it as a degraded operation, tagging
-		// whether authz was unavailable vs. a logical error.
-		s.degraded(ctx, "folder_admin_check", classifyAuthError(err), NamespacedResource{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-		}, err)
-	}
-	isAdmin := err == nil && resp.Allowed
-	cache[folder] = isAdmin
-	return isAdmin
 }
 
 // parseTrashItem unmarshals the raw value into a GrafanaMetaAccessor.
@@ -2056,6 +2042,99 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		since = req.Since
 	}
 
+	sendEvent := func(event *WrittenEvent) error {
+		if !matchesQueryKey(req.Options.Key, event.Key) {
+			return nil
+		}
+		if !checker(event.Key.Name, event.Folder) {
+			return nil
+		}
+
+		value := event.Value
+		switch {
+		case event.Type == resourcepb.WatchEvent_DELETED:
+			// remove the delete marker stored in the value for deleted objects
+			value = []byte{}
+		case value == nil:
+			// Replay events arrive without their object value so a broad watch
+			// does not read objects it would filters out above.
+			// Live events already carry it, so this only reads on replayed events.
+			rsp := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.ResourceVersion})
+			if rsp.Error != nil {
+				if rsp.Error.Code == http.StatusNotFound {
+					// The object version was pruned from the data store, so the
+					// watch can no longer be replayed faithfully; tell the client
+					// to list again from scratch.
+					s.log.Info("cannot replay: event data pruned", "key", event.Key, "resource_version", event.ResourceVersion, "since", since)
+					return NewResourceVersionExpiredError(since)
+				}
+				return fmt.Errorf("reading object for watch event: %s", rsp.Error.Message)
+			}
+			if rsp.ResourceVersion != event.ResourceVersion {
+				s.log.Error("resource version mismatch reading watch event value", "key", event.Key, "expected", event.ResourceVersion, "actual", rsp.ResourceVersion)
+				return fmt.Errorf("resource version mismatch")
+			}
+			value = rsp.Value
+		}
+		resp := &resourcepb.WatchEvent{
+			Timestamp: event.Timestamp,
+			Type:      event.Type,
+			Resource: &resourcepb.WatchEvent_Resource{
+				Value:   value,
+				Version: event.ResourceVersion,
+			},
+		}
+		if event.PreviousRV > 0 {
+			prevObj, err := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
+			switch {
+			case err != nil:
+				s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", err)
+			case prevObj.Error != nil:
+				s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error.Message)
+			case prevObj.ResourceVersion != event.PreviousRV:
+				s.log.Error("resource version mismatch reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
+			default:
+				resp.Previous = &resourcepb.WatchEvent_Resource{
+					Value:   prevObj.Value,
+					Version: prevObj.ResourceVersion,
+				}
+			}
+		}
+		if err := srv.Send(resp); err != nil {
+			return err
+		}
+		lastEmittedRV = event.ResourceVersion
+
+		if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
+			// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
+			// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
+			latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
+			if latencySeconds > 0 {
+				s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Group, event.Key.Resource).Observe(latencySeconds)
+			}
+		}
+		return nil
+	}
+
+	// The broadcaster only delivers events that arrive after the subscription
+	// above, so anything written between `since` and that subscription must be
+	// replayed from the event store. When those events are already pruned we
+	// cannot know what was missed, so the request is rejected with an "expired"
+	// error that tells the client to list again from scratch. Watches that start
+	// from the current state have nothing to catch up on.
+	catchingUp := req.Since > 0 || req.SendInitialEvents
+	if catchingUp && since > 0 {
+		replayedRV, err := s.replayEventsSince(ctx, since, sendEvent)
+		if err != nil {
+			return err
+		}
+		// Events replayed from the store may also be delivered by the
+		// broadcaster; skip them below by moving `since` forward.
+		if replayedRV > since {
+			since = replayedRV
+		}
+	}
+
 	// Set up periodic bookmark ticker when the client opted in.
 	var bookmarkC <-chan time.Time
 	if req.AllowWatchBookmarks && s.bookmarkFrequency > 0 {
@@ -2080,57 +2159,74 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				return nil
 			}
 			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
-			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				if !checker(event.Key.Name, event.Folder) {
-					continue
-				}
-
-				value := event.Value
-				// remove the delete marker stored in the value for deleted objects
-				if event.Type == resourcepb.WatchEvent_DELETED {
-					value = []byte{}
-				}
-				resp := &resourcepb.WatchEvent{
-					Timestamp: event.Timestamp,
-					Type:      event.Type,
-					Resource: &resourcepb.WatchEvent_Resource{
-						Value:   value,
-						Version: event.ResourceVersion,
-					},
-				}
-				if event.PreviousRV > 0 {
-					prevObj, err := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
-					if err != nil {
-						// This scenario should never happen, but if it does, we should log it and continue
-						// sending the event without the previous object. The client will decide what to do.
-						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error)
-					} else {
-						if prevObj.ResourceVersion != event.PreviousRV {
-							s.log.Error("resource version mismatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
-							return fmt.Errorf("resource version mismatch")
-						}
-						resp.Previous = &resourcepb.WatchEvent_Resource{
-							Value:   prevObj.Value,
-							Version: prevObj.ResourceVersion,
-						}
-					}
-				}
-				if err := srv.Send(resp); err != nil {
-					return err
-				}
-				lastEmittedRV = event.ResourceVersion
-
-				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
-					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
-					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
-					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
-					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
-					}
-				}
+			if event.ResourceVersion <= since {
+				continue
+			}
+			if err := sendEvent(event); err != nil {
+				return err
 			}
 		}
 	}
+}
+
+// EventReplayer is an optional StorageBackend capability that allows the server
+// to replay historical write events for a client resuming a watch from a
+// resource version that predates its subscription.
+// This only exists to distinguish between sql/backend and storage_backend.go as
+// we are not adding these capabilities to sql/backend.
+// TODO: remove when compatibility with SQL backend is no longer needed.
+type EventReplayer interface {
+	// ListEventsSince returns all write events with a resource version greater
+	// than sinceRV, in ascending resource version order.
+	ListEventsSince(ctx context.Context, sinceRV int64) iter.Seq2[*WrittenEvent, error]
+
+	// CanReplayFrom reports whether every event newer than sinceRV can still be
+	// replayed. It returns an error when those events may already have been
+	// pruned, in which case the client has to list again from scratch.
+	CanReplayFrom(ctx context.Context, sinceRV int64) error
+}
+
+// replayEventsSince sends every event newer than `since` straight from the event
+// store and returns the highest resource version it read. It returns an expired
+// error when the events needed to catch up have already been pruned, so that the
+// client lists again from scratch instead of missing writes.
+func (s *server) replayEventsSince(ctx context.Context, since int64, send func(*WrittenEvent) error) (int64, error) {
+	// TODO: remove when compatibility with SQL backend is no longer needed.
+	replayer, ok := s.backend.(EventReplayer)
+	if !ok {
+		// Best effort: the backend cannot replay, so a client resuming from an
+		// older resource version may miss events written before it subscribed.
+		s.noReplayWarnOnce.Do(func() {
+			s.log.Warn("watch: backend cannot replay events, watches resuming from an evicted resource version may miss events")
+		})
+		return 0, nil
+	}
+
+	if err := replayer.CanReplayFrom(ctx, since); err != nil {
+		s.log.Info("watch: cannot resume from the requested resource version", "since", since, "error", err)
+		return 0, err
+	}
+
+	maxRV := since
+	for event, err := range replayer.ListEventsSince(ctx, since) {
+		if err != nil {
+			return maxRV, err
+		}
+		if err := send(event); err != nil {
+			return maxRV, err
+		}
+		if event.ResourceVersion > maxRV {
+			maxRV = event.ResourceVersion
+		}
+	}
+
+	// If replaying took long enough that `since` aged out of the replay window,
+	// a concurrent prune may have deleted events in the range we just streamed.
+	if err := replayer.CanReplayFrom(ctx, since); err != nil {
+		s.log.Info("watch: events aged out while replaying; asking client to re-list", "since", since, "error", err)
+		return maxRV, err
+	}
+	return maxRV, nil
 }
 
 func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
