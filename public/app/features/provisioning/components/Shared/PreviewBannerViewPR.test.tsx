@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
@@ -210,9 +210,12 @@ describe('PreviewBannerViewPR', () => {
       const target = screen.getByTestId(selectors.pages.Provisioning.PreviewBanner.targetBranchLink);
 
       expect(source).toHaveTextContent('dashboard/2026-08-20-abcde');
-      expect(source).toHaveAttribute('href', 'https://github.com/org/repo/tree/dashboard/2026-08-20-abcde');
+      expect(within(source).getByRole('link')).toHaveAttribute(
+        'href',
+        'https://github.com/org/repo/tree/dashboard/2026-08-20-abcde'
+      );
       expect(target).toHaveTextContent('develop');
-      expect(target).toHaveAttribute('href', 'https://github.com/org/repo/tree/develop');
+      expect(within(target).getByRole('link')).toHaveAttribute('href', 'https://github.com/org/repo/tree/develop');
     });
 
     it('exposes the branch-direction arrow to assistive technology', () => {

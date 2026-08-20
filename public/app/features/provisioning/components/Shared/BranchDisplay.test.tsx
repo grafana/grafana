@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
 
@@ -19,7 +19,7 @@ describe('BranchDisplay', () => {
     const link = screen.getByRole('link', { name: /feature\/foo/ });
     expect(link).toHaveAttribute('href', 'https://github.com/org/repo/tree/feature/foo');
     expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(link).toHaveAttribute('rel', 'noreferrer');
   });
 
   it('builds the correct branch URL for GitLab repos', () => {
@@ -70,7 +70,8 @@ describe('BranchDisplay', () => {
       />
     );
 
-    expect(screen.getByTestId('branch-pill')).toBe(screen.getByRole('link', { name: /feature\/foo/ }));
+    const pill = screen.getByTestId('branch-pill');
+    expect(within(pill).getByRole('link', { name: /feature\/foo/ })).toBeInTheDocument();
   });
 
   it('wires the provided e2e selector onto the plain-text pill', () => {
