@@ -151,6 +151,7 @@ async function getHybridDashboardActions(searchQuery: string): Promise<CommandPa
       priority: SEARCH_RESULTS_PRIORITY,
       url,
       subtitle: locationInfo[location]?.name,
+      managedBy: extractManagerKind(hit.managedBy),
     };
   });
 }

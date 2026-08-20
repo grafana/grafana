@@ -182,7 +182,14 @@ describe('dashboardActions', () => {
               field: {},
             },
           ]),
-          getHybridSearchHandler([{ name: 'hybrid-dashboard-1', title: 'Hybrid dashboard 1', score: 0.9 }])
+          getHybridSearchHandler([
+            {
+              name: 'hybrid-dashboard-1',
+              title: 'Hybrid dashboard 1',
+              score: 0.9,
+              managedBy: { kind: ManagerKind.Repo },
+            },
+          ])
         );
       });
 
@@ -197,6 +204,7 @@ describe('dashboardActions', () => {
             sectionId: 'dashboards',
             subtitle: 'Dashboards',
             url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
+            managedBy: ManagerKind.Repo,
           },
           expect.objectContaining({
             id: 'go/folder/dashboards/f/my-folder-1',
@@ -254,6 +262,7 @@ describe('dashboardActions', () => {
             sectionId: 'dashboards',
             subtitle: undefined,
             url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
+            managedBy: ManagerKind.Repo,
           },
           expect.objectContaining({
             name: 'My folder 1',
@@ -332,7 +341,16 @@ describe('dashboardActions', () => {
     it('returns hybrid dashboard actions when both the cmdkHybridSearch and vectorSearch flags are on', async () => {
       mockContextSrv.user.isSignedIn = true;
       setTestFlags({ 'grafana.cmdkHybridSearch': true, 'dashboard.vectorSearch': true });
-      server.use(getHybridSearchHandler([{ name: 'hybrid-dashboard-1', title: 'Hybrid dashboard 1', score: 0.9 }]));
+      server.use(
+        getHybridSearchHandler([
+          {
+            name: 'hybrid-dashboard-1',
+            title: 'Hybrid dashboard 1',
+            score: 0.9,
+            managedBy: { kind: ManagerKind.Repo },
+          },
+        ])
+      );
 
       const { result } = renderHook(
         () => {
@@ -350,6 +368,7 @@ describe('dashboardActions', () => {
             sectionId: 'dashboards',
             subtitle: 'Dashboards',
             url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
+            managedBy: ManagerKind.Repo,
           },
         ]);
       });

@@ -144,6 +144,8 @@ export interface HybridSearchHitInput {
   folder?: string;
   /** Relevance score (higher = better). */
   score?: number;
+  /** Resource manager metadata. */
+  managedBy?: DashboardHit['managedBy'];
   /** Best matching chunk text. */
   snippet?: string;
 }
@@ -163,6 +165,7 @@ export function getHybridSearchHandler(hits: HybridSearchHitInput[] = []) {
       title: hit.title,
       folder: hit.folder,
       score: hit.score ?? 0,
+      managedBy: hit.managedBy,
       field: {
         score: hit.score ?? 0,
         ...(hit.snippet !== undefined && {
