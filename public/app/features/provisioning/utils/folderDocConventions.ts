@@ -8,7 +8,7 @@ import { t } from '@grafana/i18n';
  */
 export type FolderDocKey = 'readme' | 'contributing' | 'security';
 
-export interface FolderDocConvention {
+interface FolderDocConvention {
   key: FolderDocKey;
   /** Canonical file name, used when creating the file from the empty state. */
   fileName: string;
@@ -16,7 +16,7 @@ export interface FolderDocConvention {
   matches: string[];
 }
 
-export const FOLDER_DOC_CONVENTIONS: FolderDocConvention[] = [
+const FOLDER_DOC_CONVENTIONS: FolderDocConvention[] = [
   { key: 'readme', fileName: 'README.md', matches: ['README.md', 'README.markdown', 'README'] },
   { key: 'contributing', fileName: 'CONTRIBUTING.md', matches: ['CONTRIBUTING.md'] },
   { key: 'security', fileName: 'SECURITY.md', matches: ['SECURITY.md'] },
