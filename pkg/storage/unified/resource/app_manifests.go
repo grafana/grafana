@@ -11,6 +11,7 @@ import (
 	alerting_rules "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	annotation "github.com/grafana/grafana/apps/annotation/pkg/apis"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
+	coordination "github.com/grafana/grafana/apps/coordination/pkg/apis/manifestdata"
 	correlations "github.com/grafana/grafana/apps/correlations/pkg/apis"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashvalidator "github.com/grafana/grafana/apps/dashvalidator/pkg/apis/manifestdata"
@@ -37,6 +38,7 @@ func AppManifests() []app.Manifest {
 		alerting_rules.LocalManifest(),
 		annotation.LocalManifest(),
 		collections.LocalManifest(),
+		coordination.LocalManifest(),
 		correlations.LocalManifest(),
 		dashboard.LocalManifest(),
 		dashvalidator.LocalManifest(),

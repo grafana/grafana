@@ -17,6 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 )
 
+// connectionControllerLeaseName is the coordination GlobalLease the connection
+// operator elects its single active replica on.
+const connectionControllerLeaseName = "provisioning-connection-controller"
+
 // RunConnectionController starts the connection controller operator.
 func RunConnectionController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -67,15 +71,23 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	if err != nil {
 		return fmt.Errorf("failed to add connection event handler: %w", err)
 	}
-	go connSource.Run(ctx.Done())
 
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		return fmt.Errorf("connection controller informer cache sync failed")
+	elector, err := newControllerElector(controllerCfg, connectionControllerLeaseName)
+	if err != nil {
+		return fmt.Errorf("failed to create leader elector: %w", err)
 	}
 
-	connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
-		logger.Info("connection operator is ready")
-		deps.HealthNotifier.SetReady()
-	}, func() {})
-	return nil
+	// Healthy as soon as we are up and contending; only the elected leader runs the
+	// controller and its informer source.
+	deps.HealthNotifier.SetReady()
+
+	return elector.Run(ctx, func(leaderCtx context.Context) {
+		go connSource.Run(leaderCtx.Done())
+		if !cache.WaitForCacheSync(leaderCtx.Done(), reg.HasSynced) {
+			return
+		}
+		connController.Run(leaderCtx, controllerCfg.NumberOfWorkers(), func() {
+			logger.Info("connection controller acquired leadership and started")
+		}, func() {})
+	})
 }

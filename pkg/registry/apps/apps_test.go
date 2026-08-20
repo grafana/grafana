@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
+	"github.com/grafana/grafana/pkg/registry/apps/coordination"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
@@ -32,15 +33,29 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	historianAppInstaller := &historian.AppInstaller{}
 	quotasAppInstaller := &quotas.QuotasAppInstaller{}
 	dashvalidatorAppInstaller := &dashvalidator.DashValidatorAppInstaller{}
+	coordinationAppInstaller := &coordination.AppInstaller{}
 
 	tests := []struct {
-		name           string
-		flags          []any
-		rulesInst      *rules.AppInstaller
-		expectRulesApp bool
+		name                  string
+		flags                 []any
+		rulesInst             *rules.AppInstaller
+		expectRulesApp        bool
+		expectCoordinationApp bool
 	}{
 		{name: "no rules installer", flags: nil, rulesInst: nil, expectRulesApp: false},
 		{name: "with rules installer", flags: nil, rulesInst: rulesInstaller, expectRulesApp: true},
+		{
+			name:                  "coordination gated off by default",
+			flags:                 nil,
+			rulesInst:             nil,
+			expectCoordinationApp: false,
+		},
+		{
+			name:                  "coordination enabled by feature flag",
+			flags:                 []any{featuremgmt.FlagCoordinationLeasesApi},
+			rulesInst:             nil,
+			expectCoordinationApp: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -63,11 +78,17 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				historianAppInstaller,
 				quotasAppInstaller,
 				dashvalidatorAppInstaller,
+				coordinationAppInstaller,
 			)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)
 			} else {
 				require.NotContains(t, got, tt.rulesInst)
+			}
+			if tt.expectCoordinationApp {
+				require.Contains(t, got, coordinationAppInstaller)
+			} else {
+				require.NotContains(t, got, coordinationAppInstaller)
 			}
 		})
 	}

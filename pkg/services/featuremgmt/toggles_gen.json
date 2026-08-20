@@ -1564,6 +1564,20 @@
     },
     {
       "metadata": {
+        "name": "coordinationLeasesApi",
+        "resourceVersion": "1787050737266",
+        "creationTimestamp": "2026-08-18T10:58:57Z"
+      },
+      "spec": {
+        "description": "Enables the cluster-scoped coordination.grafana.app Lease API for fleet-level leader election and shard ownership",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "crashDetection",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-11-12T15:07:27Z"

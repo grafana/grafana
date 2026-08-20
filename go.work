@@ -12,6 +12,7 @@ use (
 	./apps/alerting/rules
 	./apps/annotation
 	./apps/collections
+	./apps/coordination
 	./apps/correlations
 	./apps/dashboard
 	./apps/dashvalidator

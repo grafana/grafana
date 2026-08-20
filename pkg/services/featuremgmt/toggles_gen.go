@@ -718,6 +718,10 @@ const (
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
 
+	// FlagCoordinationLeasesApi
+	// Enables the cluster-scoped coordination.grafana.app Lease API for fleet-level leader election and shard ownership
+	FlagCoordinationLeasesApi = "coordinationLeasesApi"
+
 	// FlagPluginsUseMTPlugins
 	// Enables plugins decoupling from bootdata
 	FlagPluginsUseMTPlugins = "plugins.useMTPlugins"

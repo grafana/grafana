@@ -949,6 +949,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("job_poll_interval", opts.ProvisioningJobPollInterval.String())
 		require.NoError(t, err)
 	}
+	if opts.CoordinationGCGracePeriod > 0 {
+		coordinationSect, err := getOrCreateSection("coordination")
+		require.NoError(t, err)
+		_, err = coordinationSect.NewKey("gc_grace_period", opts.CoordinationGCGracePeriod.String())
+		require.NoError(t, err)
+	}
 	if opts.EnableSCIM {
 		scimSection, err := getOrCreateSection("auth.scim")
 		require.NoError(t, err)
@@ -1178,11 +1184,15 @@ type GrafanaOpts struct {
 	RBACSingleOrganization      bool
 	GlobalRoleSeedingEnabled    bool
 	APIServerRuntimeConfig      string
-	DisableControllers          bool
-	DisableDBCleanup            bool
-	MigrationParquetBuffer      bool
-	MigrationChunkMaxBytes      int64
-	EnableSQLKVBackend          bool
+	// CoordinationGCGracePeriod overrides [coordination] gc_grace_period, how long a
+	// lease must stay expired before the coordination garbage collector deletes it.
+	// Set it low to exercise GC deletion quickly. Zero leaves the app default (24h).
+	CoordinationGCGracePeriod time.Duration
+	DisableControllers        bool
+	DisableDBCleanup          bool
+	MigrationParquetBuffer    bool
+	MigrationChunkMaxBytes    int64
+	EnableSQLKVBackend        bool
 	// EnableSearchAPI turns on the per-resource /search endpoints, which are off
 	// by default.
 	EnableSearchAPI bool

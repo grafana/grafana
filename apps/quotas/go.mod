@@ -13,6 +13,7 @@ replace (
 	github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
 	github.com/grafana/grafana/apps/annotation => ../annotation
 	github.com/grafana/grafana/apps/collections => ../collections
+	github.com/grafana/grafana/apps/coordination => ../coordination
 	github.com/grafana/grafana/apps/correlations => ../correlations
 	github.com/grafana/grafana/apps/dashboard => ../dashboard
 	github.com/grafana/grafana/apps/dashvalidator => ../dashvalidator
@@ -210,6 +211,7 @@ require (
 	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // indirect
 	github.com/grafana/grafana/apps/annotation v0.0.0 // indirect
 	github.com/grafana/grafana/apps/collections v0.0.0 // indirect
+	github.com/grafana/grafana/apps/coordination v0.0.0 // indirect
 	github.com/grafana/grafana/apps/correlations v0.0.0 // indirect
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // indirect
 	github.com/grafana/grafana/apps/dashvalidator v0.0.0 // indirect

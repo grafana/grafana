@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
+	coordinationv0alpha1 "github.com/grafana/grafana/apps/coordination/pkg/apis/coordination/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -339,6 +340,43 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 	c.provisioningClient = provisioningClient
 
 	return provisioningClient, nil
+}
+
+// CoordinationRestConfig builds a rest.Config for talking to the
+// coordination.grafana.app API. Like other groups without a dedicated server URL,
+// coordination is served by the aggregated API server, so this targets
+// aggregated_server_url — not provisioning_server_url. It mints tokens whose
+// audiences include the coordination group (and provisioning, matching the
+// aggregated-group convention), so the leader elector's GlobalLease reads/writes
+// are authorized correctly.
+func (c *ControllerConfig) CoordinationRestConfig() (*rest.Config, error) {
+	tokenExchangeClient, err := c.TokenExchangeClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+	}
+
+	tlsConfig, err := c.TLSConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get TLS configuration: %w", err)
+	}
+
+	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
+	aggregatedServerURL := operatorSec.Key("aggregated_server_url").String()
+	if aggregatedServerURL == "" {
+		return nil, fmt.Errorf("aggregated_server_url is required in [operator] section for the coordination API")
+	}
+
+	return &rest.Config{
+		APIPath: "/apis",
+		Host:    aggregatedServerURL,
+		WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
+			tokenExchangeClient,
+			clientauth.NewStaticAudienceProvider(coordinationv0alpha1.APIGroup, provisioning.GROUP),
+			clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
+		),
+		TLSClientConfig: tlsConfig,
+		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
+	}, nil
 }
 
 func (c *ControllerConfig) ResyncInterval() time.Duration {
