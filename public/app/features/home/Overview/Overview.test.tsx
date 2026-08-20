@@ -127,6 +127,36 @@ describe('Overview', () => {
     }
   });
 
+  it('handles the hash once and never overrides a later filter pick', async () => {
+    const scrollIntoView = jest.fn();
+    const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      mockUseGuides.mockReturnValue(undefined);
+      const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
+        historyOptions: { initialEntries: ['/#needs-attention'] },
+      });
+
+      await screen.findByText('No solutions need attention.');
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+      await user.click(screen.getByRole('button', { name: /needs attention/i }));
+      await user.click(screen.getByRole('menuitem', { name: 'All solutions' }));
+      await screen.findByText('No solutions were found.');
+
+      // Guides settling rebuilds the options; the already-handled hash must not re-apply.
+      mockUseGuides.mockReturnValue([]);
+      rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
+
+      expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
+      expect(screen.queryByText('No solutions need attention.')).not.toBeInTheDocument();
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    } finally {
+      window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
   it('tracks overview filter changes from the dropdown', async () => {
     mockUseGuides.mockReturnValue([]);
 

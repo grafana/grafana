@@ -103,9 +103,16 @@ export function Overview({ solutions }: OverviewProps) {
 
   const ref = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  // Handle each hash value once: `options` rebuilds as cards and guides settle, and re-running
+  // the match would re-scroll the page and override a filter the user picked in the meantime.
+  const handledHash = useRef<string>();
   useEffect(() => {
+    if (location.hash === handledHash.current) {
+      return;
+    }
     const match = options.find((o) => o.value === location.hash.slice(1));
     if (match) {
+      handledHash.current = location.hash;
       setStored(match.value);
       ref.current?.scrollIntoView({ behavior: 'smooth' });
     }
