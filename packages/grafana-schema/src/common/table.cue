@@ -134,6 +134,9 @@ TableOptions: {
 	}
 	// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 	disableKeyboardEvents?: bool
+	// Controls whether the column management sidebar starts open. Only applies when the
+	// `table.refresh` feature toggle is enabled, which is what introduces the sidebar.
+	showColumnsSidebar?: bool
 } @cuetsy(kind="interface")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

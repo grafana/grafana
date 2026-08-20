@@ -89,7 +89,7 @@ const createDisplayNameDataFrame = (displayName: string, values = ['A1', 'A2']):
           display: displayString,
           ...stdField,
         },
-      ]
+      ],
     })
   );
 
@@ -2801,6 +2801,98 @@ describe('TableNG', () => {
 
       rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
       expect(columnTemplate(container)).not.toBe(initialTemplate);
+    });
+  });
+
+  describe('table.refresh columns sidebar option', () => {
+    const sidebarLabel = 'Column visibility';
+
+    it('starts closed by default and open when showColumnsSidebar is set', () => {
+      const { unmount } = render(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+      unmount();
+
+      render(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.getByRole('complementary', { name: sidebarLabel })).toBeInTheDocument();
+    });
+
+    it('follows the option when it changes, so editing the panel option opens and closes it', () => {
+      const data = createBasicDataFrame();
+      const { rerender } = render(
+        <TableNG enableVirtualization={false} tableRefreshEnabled data={data} width={800} height={600} />
+      );
+      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={data}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.getByRole('complementary', { name: sidebarLabel })).toBeInTheDocument();
+
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar={false}
+          data={data}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+    });
+
+    it('lets the table close the sidebar locally without the unchanged option reopening it', async () => {
+      const data = createBasicDataFrame();
+      const { rerender } = render(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={data}
+          width={800}
+          height={600}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
+
+      // a re-render that doesn't change the option must not reassert it
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={data}
+          width={800}
+          height={601}
+        />
+      );
+      expect(screen.queryByRole('complementary', { name: sidebarLabel })).not.toBeInTheDocument();
     });
   });
 });

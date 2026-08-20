@@ -95,6 +95,7 @@ export function TableFlat(props: TableNGProps) {
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
     tableRefreshEnabled = false,
+    showColumnsSidebar = false,
   } = props;
 
   const theme = useTheme2();
@@ -259,7 +260,16 @@ export function TableFlat(props: TableNGProps) {
     ? filterFieldsByHiddenColumns(pinnedOrderedVisibleFields, hiddenColumns)
     : orderedVisibleFields;
 
-  const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(false);
+  const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
+  // Follow the panel option whenever it changes, so toggling it while editing the panel opens and
+  // closes the sidebar there and then. Keyed on the option changing rather than on its current
+  // value, so opening or closing the sidebar from the table itself still sticks — the option sets
+  // the sidebar's state, it doesn't pin it.
+  const prevShowColumnsSidebar = useRef(showColumnsSidebar);
+  if (prevShowColumnsSidebar.current !== showColumnsSidebar) {
+    prevShowColumnsSidebar.current = showColumnsSidebar;
+    setIsColumnVisibilityPanelOpen(showColumnsSidebar);
+  }
   const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
   // Mid-drag the sidebar just follows the handle, however narrow that gets: closing it the moment
   // the width crossed the threshold would yank it out from under a drag the user hasn't committed

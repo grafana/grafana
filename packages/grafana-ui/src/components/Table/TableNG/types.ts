@@ -156,6 +156,12 @@ interface BaseTableProps {
   contentAwareWidthsEnabled?: boolean;
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
+  /**
+   * `table.refresh`: whether the column management sidebar is open. Read as the sidebar's starting
+   * state and followed whenever it changes, so the panel option that drives it stays in charge while
+   * the panel is being edited. The table still opens and closes it locally in between.
+   */
+  showColumnsSidebar?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
