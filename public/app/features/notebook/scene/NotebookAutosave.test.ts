@@ -257,18 +257,64 @@ describe('NotebookAutosave', () => {
     expect(jest.mocked(updateNotebook).mock.calls[0][1].timeSettings.from).toBe('now-1h');
   });
 
-  // A writer that does not go through edit mode announces itself instead. APPLY_NOTEBOOK_SPEC is the
+  // A writer that does not go through edit mode asks for the save itself. APPLY_NOTEBOOK_SPEC is the
   // one that matters; that it actually calls this is covered in applyNotebookSpec.test.ts.
   it('saves a change announced by a writer that is not in edit mode', async () => {
     const scene = buildScene();
     deactivate = scene.activate();
 
     scene.state.body.state.cells[0].setState({ content: { kind: 'Markdown', spec: { text: 'Written elsewhere' } } });
-    scene.autosave.notifyDocumentChanged();
-    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    // No clock advanced: this caller is handed the outcome, so its save cannot sit on the debounce.
+    await scene.autosave.saveDocumentChange();
 
     expect(scene.state.isEditing).toBeFalsy();
     expect(savedTexts()).toEqual(['Written elsewhere']);
+  });
+
+  it('tells a writer whose save failed, instead of letting it report a write that never landed', async () => {
+    jest.mocked(updateNotebook).mockRejectedValue(new Error('The notebook was changed by someone else.'));
+    const scene = buildScene();
+    deactivate = scene.activate();
+
+    scene.state.body.state.cells[0].setState({ content: { kind: 'Markdown', spec: { text: 'Written elsewhere' } } });
+
+    await expect(scene.autosave.saveDocumentChange()).rejects.toThrow('The notebook was changed by someone else.');
+    expect(scene.autosave.state.status).toBe('error');
+  });
+
+  it('writes nothing when the announced document is already what was saved', async () => {
+    const scene = buildScene();
+    deactivate = scene.activate();
+
+    await scene.autosave.saveDocumentChange();
+
+    expect(updateNotebook).not.toHaveBeenCalled();
+  });
+
+  // The change is carried by the save queued behind the request already running, so waiting on the
+  // running one would hand the writer a success before its own content had been written.
+  it('waits for the queued save when a save was already in flight', async () => {
+    let finishFirstSave = () => {};
+    jest
+      .mocked(updateNotebook)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishFirstSave = () => resolve({ generation: 2 });
+          })
+      )
+      .mockResolvedValue({ generation: 3 });
+
+    const scene = activateEditing();
+    editFirstCell(scene, 'First');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    editFirstCell(scene, 'Second');
+    const saved = scene.autosave.saveDocumentChange();
+    finishFirstSave();
+    await saved;
+
+    expect(savedTexts()).toEqual(['First', 'Second']);
   });
 
   it('collapses several rapid edits into one request carrying the last of them', async () => {

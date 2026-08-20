@@ -39,7 +39,7 @@ export interface NotebookAutosaveState {
  * Changes only count while the notebook is being edited, and a time range only counts when it was changed
  * in that time: the time picker is there for readers too, and the range a reader picked is theirs, not the
  * range the notebook should open at for everyone. Writers that never enter edit mode call
- * `notifyDocumentChanged` instead.
+ * `saveDocumentChange` instead.
  */
 export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   /** The spec we treat as already written: what the last save sent, or the notebook as it was loaded. */
@@ -50,6 +50,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private timeSettingsEdited = false;
   private changeSub?: Unsubscribable;
   private inFlight = false;
+  /** The save now running, so a caller that reports an outcome can wait for the write to land. */
+  private inFlightSave?: Promise<void>;
   private saveAgainWhenIdle = false;
   private changePending = false;
   private hasSavedOnce = false;
@@ -91,16 +93,35 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   /**
-   * Schedules a save for a writer that does not go through edit mode.
+   * Saves a change made by a writer that does not go through edit mode, and waits for the write.
    *
    * The mutation API has no edit mode to enter (see `requiresNotebookEdit`), so its writes never set
    * `isEditing` and the change signal above ignores them. A write command that skips this does not save.
+   *
+   * It waits instead of leaving the save on the debounce because the caller reports an outcome: the
+   * assistant tells someone their notebook was written, and only the finished request knows whether it
+   * was. Throws when the save failed, so the caller can say that rather than claim a write that never
+   * reached the server.
    */
-  public notifyDocumentChanged(): void {
+  public async saveDocumentChange(): Promise<void> {
     // These writers hand over a whole document, time settings included, so what is in the scene now is
     // the notebook's own.
     this.timeSettingsEdited = true;
     this.schedule();
+    this.flush();
+
+    // `flush` runs the save synchronously, so anything to write is already in flight by now. A save that
+    // was already running when this arrived leaves this one queued behind it, and the queued one is the
+    // one carrying the change, so waiting on a single request would return before it was written.
+    while (this.inFlightSave) {
+      await this.inFlightSave;
+    }
+
+    // Nothing is left in flight, so the status now says how it went. Still no error means the write
+    // landed, or there was nothing to write and the notebook already holds what was asked for.
+    if (this.state.status === 'error') {
+      throw new Error(this.state.errorMessage ?? 'The notebook could not be saved.');
+    }
   }
 
   /**
@@ -221,8 +242,18 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     this.changePending = false;
 
-    const spec = this.buildSpecToSave();
-    const serialized = JSON.stringify(spec);
+    let spec: NotebookSpec;
+    let serialized: string;
+    try {
+      spec = this.buildSpecToSave();
+      serialized = JSON.stringify(spec);
+    } catch (error) {
+      // `hasSomethingToWrite` leaves this for the save to report, because this is the one place with
+      // somewhere to say it. A notebook whose spec cannot be built is not going to save.
+      this.setState({ status: 'error', errorMessage: error instanceof Error ? error.message : String(error) });
+      return;
+    }
+
     if (serialized === this.baseline) {
       // Lots of things change the scene without changing what gets saved. Left on `pending`, the
       // notebook would go on saying it has unsaved changes when it has none.
@@ -233,7 +264,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.inFlight = true;
     this.setState({ status: 'saving', errorMessage: undefined });
 
-    updateNotebook(uid, spec)
+    this.inFlightSave = updateNotebook(uid, spec)
       .then(({ generation }) => {
         this.recordWritten(spec, serialized);
         this.hasSavedOnce = true;
@@ -256,6 +287,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       })
       .finally(() => {
         this.inFlight = false;
+        // Cleared before the queued save runs, so that save can record its own request here.
+        this.inFlightSave = undefined;
         if (this.saveAgainWhenIdle) {
           this.saveAgainWhenIdle = false;
           this.saveNow();
