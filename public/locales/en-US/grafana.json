@@ -7049,7 +7049,6 @@
       "branch-gone-refresh-body": "The branch this preview was created on has been deleted. You are now viewing the saved version of this dashboard.",
       "branch-gone-save": "Save to a new branch",
       "branch-gone-title": "This branch no longer exists",
-      "go-to-saved": "Go to the saved dashboard",
       "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {

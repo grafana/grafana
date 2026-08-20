@@ -162,11 +162,13 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         route={route.routeName}
         slug={slug}
         path={path}
-        dashboardUid={dashboard.state.uid}
         onSaveToNewBranch={() => {
           // Keep the in-memory draft: enter edit mode on the current scene and open the save drawer
-          // defaulted to a fresh branch, since the branch this preview was on is gone.
-          dashboard.onEnterEditMode();
+          // defaulted to a fresh branch, since the branch this preview was on is gone. Only enter edit
+          // mode if not already editing — re-entering re-snapshots the baseline and clears isDirty.
+          if (!dashboard.state.isEditing) {
+            dashboard.onEnterEditMode();
+          }
           dashboard.openSaveDrawer({ forceNewBranch: true });
         }}
       />

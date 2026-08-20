@@ -44,6 +44,7 @@ export function SaveProvisionedDashboard({
         canPushToConfiguredBranch={canPushToConfiguredBranch}
         readOnly={readOnly}
         saveAsCopy={saveAsCopy}
+        forceNewBranch={forceNewBranch}
       />
     </ProvisionedFormGate>
   );

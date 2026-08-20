@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { useLazyGetRepositoryRefsQuery } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Modal } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
@@ -14,7 +14,11 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { isGitProvider } from '../../utils/repositoryTypes';
-import { type PreviewBranchInfo, PreviewBannerViewPR } from '../Shared/PreviewBannerViewPR';
+import {
+  type PreviewBranchInfo,
+  type PullRequestOpenActions,
+  PreviewBannerViewPR,
+} from '../Shared/PreviewBannerViewPR';
 
 export interface CommonBannerProps {
   queryParams: DashboardPageRouteSearchParams;
@@ -24,8 +28,6 @@ export interface CommonBannerProps {
 
 interface DashboardPreviewBannerProps extends CommonBannerProps {
   route?: string;
-  /** UID of the currently loaded scene, used to link back to the saved dashboard. */
-  dashboardUid?: string;
   /**
    * Re-opens the save flow on the current scene so the user can commit their draft to a fresh
    * branch. Wired from the page (which holds the scene) so this component stays scene-agnostic.
@@ -34,7 +36,6 @@ interface DashboardPreviewBannerProps extends CommonBannerProps {
 }
 
 interface DashboardPreviewBannerContentProps extends Required<Omit<CommonBannerProps, 'route'>> {
-  dashboardUid?: string;
   onSaveToNewBranch?: () => void;
 }
 
@@ -42,7 +43,6 @@ function DashboardPreviewBannerContent({
   queryParams,
   slug,
   path,
-  dashboardUid,
   onSaveToNewBranch,
 }: DashboardPreviewBannerContentProps) {
   const { prURL: existingPRUrl } = usePullRequestParam();
@@ -50,18 +50,16 @@ function DashboardPreviewBannerContent({
   const { repository } = useGetResourceRepositoryView({ name: slug });
   const [triggerRefs, { isFetching: isCheckingBranch }] = useLazyGetRepositoryRefsQuery();
   const [branchGone, setBranchGone] = useState(false);
+  const [refGoneDismissed, setRefGoneDismissed] = useState(false);
   const navigate = useNavigate();
 
   // The version currently saved in Grafana, if the dashboard already exists on the configured branch
   const existingUid = file.data?.resource?.existing?.metadata?.name;
-  // Prefer the saved-in-db uid; fall back to the loaded scene's uid (available after a refresh, when
-  // the file query for the gone ref no longer returns the existing resource).
-  const savedUid = existingUid ?? dashboardUid;
 
-  // Leaves the (now meaningless) branch preview for the saved dashboard, discarding any in-memory draft.
+  // Leaves the branch preview for the saved dashboard, discarding any in-memory draft.
   const goToSavedDashboard = useCallback(() => {
-    navigate(savedUid ? `/d/${savedUid}` : '/dashboards');
-  }, [navigate, savedUid]);
+    navigate(existingUid ? `/d/${existingUid}` : '/dashboards');
+  }, [navigate, existingUid]);
 
   useEffect(() => {
     // The scene cache has no TTL and is keyed by uid, so it can still be holding the scene from
@@ -73,26 +71,29 @@ function DashboardPreviewBannerContent({
   }, [existingUid]);
 
   // Verify the branch still exists before following the pull request link. If it is gone (e.g. the
-  // PR was closed and its branch deleted), offer a way out instead of opening a dead compare link.
+  // PR was closed and its branch deleted), close the pre-opened tab and offer a way out instead of
+  // opening a dead compare link. `open`/`cancel` act on a tab the banner opened synchronously within
+  // the click gesture, so a slow refs check doesn't get the eventual open blocked as a popup.
   const handleOpenPullRequest = useCallback(
-    async (openDefault: () => void) => {
+    async ({ open, cancel }: PullRequestOpenActions) => {
       const targetRef = file.data?.ref;
       const repoName = repository?.name;
       if (!repoName || !targetRef) {
-        openDefault();
+        open();
         return;
       }
 
       try {
         const refs = await triggerRefs({ name: repoName }).unwrap();
         if (refs.items?.some((ref) => ref.name === targetRef)) {
-          openDefault();
+          open();
         } else {
+          cancel();
           setBranchGone(true);
         }
       } catch {
         // Don't block the user on a failed check — fall back to the original behavior.
-        openDefault();
+        open();
       }
     },
     [file.data?.ref, repository?.name, triggerRefs]
@@ -113,20 +114,18 @@ function DashboardPreviewBannerContent({
     );
   }
 
-  // The preview ref could not be read (e.g. the branch was deleted). The scene loader has already
-  // fallen back to the saved version, so instead of a broken preview banner point the user at it.
-  // Only meaningful once the query has actually failed — not while it is still loading.
-  if (queryParams.ref && file.isError) {
+  // The preview ref is gone (404) — e.g. the page was refreshed after the branch was deleted. The
+  // scene loader has already fallen back to and rendered the saved version, so this is purely
+  // informational: surface a dismissible notice rather than a broken preview banner. A 404 is
+  // required (matching the loader) so transient/auth errors aren't mislabelled as a deleted branch.
+  const refGone = Boolean(queryParams.ref) && file.isError && isFetchError(file.error) && file.error.status === 404;
+  if (refGone && !refGoneDismissed) {
     return (
       <Alert
         severity="info"
         style={{ flex: 0 }}
         title={t('dashboard-scene.dashboard-preview-banner.branch-gone-title', 'This branch no longer exists')}
-        action={
-          <Button variant="primary" icon="arrow-left" onClick={goToSavedDashboard}>
-            {t('dashboard-scene.dashboard-preview-banner.go-to-saved', 'Go to the saved dashboard')}
-          </Button>
-        }
+        onRemove={() => setRefGoneDismissed(true)}
       >
         {t(
           'dashboard-scene.dashboard-preview-banner.branch-gone-refresh-body',
@@ -213,7 +212,6 @@ export function DashboardPreviewBanner({
   route,
   slug,
   path,
-  dashboardUid,
   onSaveToNewBranch,
 }: DashboardPreviewBannerProps) {
   const provisioningEnabled = config.provisioningEnabled;
@@ -226,7 +224,6 @@ export function DashboardPreviewBanner({
       queryParams={queryParams}
       slug={slug}
       path={path}
-      dashboardUid={dashboardUid}
       onSaveToNewBranch={onSaveToNewBranch}
     />
   );

@@ -187,10 +187,11 @@ describe('PreviewBannerViewPR', () => {
       });
     });
 
-    it('renders a click handler (not a plain link) and defers to openDefault', async () => {
+    it('renders a click handler that opens a tab synchronously and hands the caller open/cancel', async () => {
       const user = userEvent.setup();
       const onOpenPullRequest = jest.fn();
-      const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+      const pendingTab = { location: { href: '' }, close: jest.fn() };
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue(pendingTab as unknown as Window);
 
       render(
         <PreviewBannerViewPR
@@ -204,12 +205,17 @@ describe('PreviewBannerViewPR', () => {
       expect(screen.queryByRole('link', { name: /pull request in GitHub/i })).not.toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: /Open pull request in GitHub/i }));
 
+      // The tab is opened within the click gesture, before the async check runs.
+      expect(openSpy).toHaveBeenCalledWith('about:blank', '_blank');
       expect(onOpenPullRequest).toHaveBeenCalledTimes(1);
-      expect(openSpy).not.toHaveBeenCalled();
 
-      // The override receives a fallback that opens the computed link in a new tab.
-      onOpenPullRequest.mock.calls[0][0]();
-      expect(openSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank');
+      const actions = onOpenPullRequest.mock.calls[0][0];
+      // open() navigates the pre-opened tab to the computed link.
+      actions.open();
+      expect(pendingTab.location.href).toBe('https://github.com/org/repo/compare');
+      // cancel() closes it.
+      actions.cancel();
+      expect(pendingTab.close).toHaveBeenCalledTimes(1);
 
       openSpy.mockRestore();
     });

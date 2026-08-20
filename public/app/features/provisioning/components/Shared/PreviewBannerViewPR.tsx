@@ -19,12 +19,13 @@ interface Props {
   /* URL of the version currently saved in Grafana, if the resource already exists. Offered as an action next to the pull request button. */
   originalUrl?: string;
   /**
-   * Intercepts the pull request button instead of following its link directly. Receives `openDefault`,
-   * which opens the computed link in a new tab; callers can defer to it (e.g. after a pre-flight
-   * branch-existence check passes) or take a different path (e.g. offer a way out when the branch is gone).
-   * When set, the button becomes a click handler rather than a plain link.
+   * Intercepts the pull request button instead of following its link directly. The button opens a
+   * tab synchronously (within the click gesture, so it isn't blocked as a popup) and hands the caller
+   * `open`/`cancel` to drive it after an async check — e.g. `open()` once a pre-flight branch check
+   * passes, or `cancel()` plus a different path when the branch is gone. When set, the button becomes
+   * a click handler rather than a plain link.
    */
-  onOpenPullRequest?: (openDefault: () => void) => void;
+  onOpenPullRequest?: (actions: PullRequestOpenActions) => void;
   /** Renders the pull request button in a "checking…" state while an async pre-flight runs. */
   isCheckingBranch?: boolean;
 }
@@ -34,6 +35,13 @@ export type PreviewBranchInfo = {
   configuredBranch?: string;
   repoBaseUrl?: string;
 };
+
+export interface PullRequestOpenActions {
+  /** Navigate the pre-opened tab to the pull request URL. */
+  open: () => void;
+  /** Close the pre-opened tab (when the URL won't be opened after all). */
+  cancel: () => void;
+}
 
 const commonAlertProps = {
   severity: 'info' as const,
@@ -141,7 +149,22 @@ export function PreviewBannerViewPR({
               <Button
                 variant="primary"
                 icon="external-link-alt"
-                onClick={() => onOpenPullRequest(() => window.open(textUtil.sanitizeUrl(linkUrl), '_blank'))}
+                onClick={() => {
+                  // Open the tab synchronously within the click gesture so a slow pre-flight can't get
+                  // the eventual navigation blocked as a popup; the caller then drives or closes it.
+                  const pendingTab = window.open('about:blank', '_blank');
+                  onOpenPullRequest({
+                    open: () => {
+                      const href = textUtil.sanitizeUrl(linkUrl);
+                      if (pendingTab) {
+                        pendingTab.location.href = href;
+                      } else {
+                        window.open(href, '_blank');
+                      }
+                    },
+                    cancel: () => pendingTab?.close(),
+                  });
+                }}
               >
                 {isCheckingBranch
                   ? t('provisioned-resource-preview-banner.preview-banner.checking-branch', 'Checking branch…')

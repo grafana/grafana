@@ -65,6 +65,7 @@ export function SaveProvisionedDashboardForm({
   readOnly,
   repository,
   saveAsCopy,
+  forceNewBranch,
 }: Props) {
   const navigate = useNavigate();
   const { isDirty } = dashboard.useState();
@@ -111,12 +112,15 @@ export function SaveProvisionedDashboardForm({
   // Save is enabled when the form comment/path is dirty, the dashboard state is dirty, raw JSON was
   // provided from the editor, or the target branch was changed. Retargeting to a different branch is
   // a committable action on its own — e.g. moving an unchanged preview onto a fresh branch after the
-  // original branch was deleted.
+  // original branch was deleted. In that deleted-branch recovery (`forceNewBranch`) the generated
+  // branch is installed as a form default, so it never marks `ref` dirty; committing to the new
+  // branch is nonetheless the whole point, so Save must be enabled even with no other change.
   const rawDashboardJSON = dashboard.getRawJsonFromEditor();
   const isDirtyState =
     Boolean(dirtyFields.comment) ||
     Boolean(dirtyFields.path) ||
     Boolean(dirtyFields.ref) ||
+    Boolean(forceNewBranch) ||
     isDirty ||
     Boolean(rawDashboardJSON);
   const [workflow, ref] = watch(['workflow', 'ref']);

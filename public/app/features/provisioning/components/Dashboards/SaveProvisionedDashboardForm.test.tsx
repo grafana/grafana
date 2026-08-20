@@ -1044,6 +1044,36 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(await screen.findByRole('button', { name: /save/i })).toBeEnabled();
   });
 
+  it('should enable save in the deleted-branch recovery (forceNewBranch) with no other changes', () => {
+    // Recovery installs the generated branch as a default (never marks ref dirty) on an
+    // otherwise-unchanged preview, so Save must be enabled on the forceNewBranch flag alone.
+    const notDirtyDashboard = {
+      state: {
+        meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+        isDirty: false,
+      },
+      useState: () => ({
+        meta: { folderUid: 'folder-uid', slug: 'test-dashboard', k8s: { name: 'test-dashboard' } },
+        title: 'Test Dashboard',
+        description: 'Test Description',
+        isDirty: false,
+      }),
+      setState: jest.fn(),
+      closeModal: jest.fn(),
+      getSaveModel: jest.fn().mockReturnValue({}),
+      saveCompleted: jest.fn(),
+      getSaveAsModel: jest.fn().mockReturnValue({}),
+      setManager: jest.fn(),
+      getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+    } as unknown as DashboardScene;
+
+    setup({ dashboard: notDirtyDashboard, isNew: false, forceNewBranch: true });
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeEnabled();
+  });
+
   it('should properly handle read-only state for a repository without workflows', () => {
     setup({
       isNew: false,

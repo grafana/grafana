@@ -61,7 +61,6 @@ interface DashboardPreviewBannerProps {
   route?: string;
   slug?: string;
   path?: string;
-  dashboardUid?: string;
   onSaveToNewBranch?: () => void;
 }
 
@@ -123,7 +122,6 @@ const defaultProps: DashboardPreviewBannerProps = {
   route: DashboardRoutes.Provisioning,
   slug: 'my-repo',
   path: 'dashboards/foo.json',
-  dashboardUid: 'scene-uid',
 };
 
 function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: SetupOverrides = {}) {
@@ -332,9 +330,12 @@ describe('DashboardPreviewBanner', () => {
 
   describe('branch pre-flight on open pull request', () => {
     let windowOpenSpy: jest.SpyInstance;
+    let pendingTab: { location: { href: string }; close: jest.Mock };
 
     beforeEach(() => {
-      windowOpenSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+      // The button opens a tab synchronously within the click gesture; the pre-flight then drives it.
+      pendingTab = { location: { href: '' }, close: jest.fn() };
+      windowOpenSpy = jest.spyOn(window, 'open').mockReturnValue(pendingTab as unknown as Window);
     });
 
     afterEach(() => {
@@ -344,7 +345,7 @@ describe('DashboardPreviewBanner', () => {
     const clickOpenPullRequest = () =>
       userEvent.setup().click(screen.getByRole('button', { name: /Open pull request in GitHub/i }));
 
-    it('opens the pull request link when the branch still exists', async () => {
+    it('navigates the pre-opened tab to the pull request link when the branch still exists', async () => {
       mockTriggerRefs.mockReturnValue({
         unwrap: () => Promise.resolve({ items: [{ name: 'feature-branch' }] }),
       });
@@ -352,12 +353,13 @@ describe('DashboardPreviewBanner', () => {
 
       await clickOpenPullRequest();
 
+      expect(windowOpenSpy).toHaveBeenCalledWith('about:blank', '_blank');
       await waitFor(() => expect(mockTriggerRefs).toHaveBeenCalledWith({ name: 'my-repo' }));
-      expect(windowOpenSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank');
+      await waitFor(() => expect(pendingTab.location.href).toBe('https://github.com/org/repo/compare'));
       expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
     });
 
-    it('offers a way out when the branch is gone', async () => {
+    it('closes the tab and offers a way out when the branch is gone', async () => {
       mockTriggerRefs.mockReturnValue({
         unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
       });
@@ -366,7 +368,8 @@ describe('DashboardPreviewBanner', () => {
       await clickOpenPullRequest();
 
       expect(await screen.findByText('This branch no longer exists')).toBeInTheDocument();
-      expect(windowOpenSpy).not.toHaveBeenCalled();
+      expect(pendingTab.close).toHaveBeenCalled();
+      expect(pendingTab.location.href).toBe('');
     });
 
     it('re-opens the save flow from the modal', async () => {
@@ -414,27 +417,39 @@ describe('DashboardPreviewBanner', () => {
 
       await clickOpenPullRequest();
 
-      await waitFor(() => expect(windowOpenSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank'));
+      await waitFor(() => expect(pendingTab.location.href).toBe('https://github.com/org/repo/compare'));
       expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
     });
   });
 
   describe('when the preview ref no longer exists (after a refresh)', () => {
-    it('shows a recovery banner linking to the saved dashboard', async () => {
-      setup({ queryParams: { ref: 'feature-branch' } }, { fileQuery: { data: undefined, isError: true } });
+    it('shows a dismissible recovery banner on a 404', async () => {
+      setup(
+        { queryParams: { ref: 'feature-branch' } },
+        { fileQuery: { data: undefined, isError: true, error: { status: 404, data: {} } } }
+      );
 
       expect(screen.getByText('This branch no longer exists')).toBeInTheDocument();
 
-      await userEvent.setup().click(screen.getByRole('button', { name: 'Go to the saved dashboard' }));
+      // The banner is purely informational (the loader already shows the saved version) — it dismisses.
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Close alert' }));
 
-      // No existing resource in the errored response, so it falls back to the scene uid.
-      expect(mockNavigate).toHaveBeenCalledWith('/d/scene-uid');
+      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
+    });
+
+    it('does not show the recovery banner for non-404 errors', () => {
+      setup(
+        { queryParams: { ref: 'feature-branch' } },
+        { fileQuery: { data: undefined, isError: true, error: { status: 500, data: {} } } }
+      );
+
+      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
     });
 
     it('does not show the recovery banner while the file query is still loading', () => {
       setup({ queryParams: { ref: 'feature-branch' } }, { fileQuery: { data: undefined, isError: false } });
 
-      expect(screen.queryByRole('button', { name: 'Go to the saved dashboard' })).not.toBeInTheDocument();
+      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
     });
   });
 });
