@@ -246,98 +246,93 @@ function FilterSidebarForm({ filterState, showDataSourceManagedRules }: FilterSi
           </SidebarField>
         </SidebarSection>
 
-        <div className={styles.divider} />
+        {showDataSourceManagedRules && <div className={styles.divider} />}
 
-        <SidebarSection>
-          {showDataSourceManagedRules && (
-            <SidebarField
-              label={<Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>}
-              labelId="filter-label-rule-source"
-            >
-              <Controller
-                name="ruleSource"
-                control={control}
-                render={({ field }) => (
-                  <ToggleButtonGroup<AdvancedFilters['ruleSource']>
-                    aria-labelledby="filter-label-rule-source"
-                    value={field.value}
-                    onChange={(value) => {
-                      field.onChange(value);
-                      applyFormValues({ ruleSource: value });
-                    }}
-                    options={[
-                      { label: t('common.all', 'All'), value: null },
-                      {
-                        label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
-                        value: RuleSource.Grafana,
-                      },
-                      {
-                        label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
-                        value: RuleSource.DataSource,
-                      },
-                    ]}
-                  />
-                )}
-              />
-            </SidebarField>
-          )}
+        <SidebarSection hidden={!showDataSourceManagedRules}>
+          <SidebarField
+            label={<Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>}
+            labelId="filter-label-rule-source"
+          >
+            <Controller
+              name="ruleSource"
+              control={control}
+              render={({ field }) => (
+                <ToggleButtonGroup<AdvancedFilters['ruleSource']>
+                  aria-labelledby="filter-label-rule-source"
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    applyFormValues({ ruleSource: value });
+                  }}
+                  options={[
+                    { label: t('common.all', 'All'), value: null },
+                    {
+                      label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
+                      value: RuleSource.Grafana,
+                    },
+                    {
+                      label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
+                      value: RuleSource.DataSource,
+                    },
+                  ]}
+                />
+              )}
+            />
+          </SidebarField>
 
-          {showDataSourceManagedRules && (
-            <SidebarField
-              label={
-                <Stack gap={0.5} alignItems="center">
-                  <span>
-                    <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
-                  </span>
-                  <Tooltip
-                    content={
-                      <div>
-                        <p>
-                          <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
-                            Data sources containing configured alert rules are Mimir or Loki data sources where alert
-                            rules are stored and evaluated in the data source itself.
-                          </Trans>
-                        </p>
-                        <p>
-                          <Trans i18nKey="alerting.rules-filter.manage-alerts">
-                            In these data sources, you can select Manage alerts via Alerting UI to be able to manage
-                            these alert rules in the Grafana UI as well as in the data source where they were
-                            configured.
-                          </Trans>
-                        </p>
-                      </div>
-                    }
-                  >
-                    <Icon
-                      name="info-circle"
-                      size="sm"
-                      title={t(
-                        'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
-                        'Search by data sources help'
-                      )}
-                    />
-                  </Tooltip>
-                </Stack>
-              }
-            >
-              <Controller
-                name="dataSourceNames"
-                control={control}
-                render={({ field }) => (
-                  <MultiCombobox
-                    options={dataSourceOptions}
-                    value={field.value}
-                    onChange={(selections) => {
-                      const dataSourceNames = selections.map((s) => s.value);
-                      field.onChange(dataSourceNames);
-                      applyFormValues({ dataSourceNames });
-                    }}
-                    placeholder={t('alerting.rules-filter.placeholder-data-sources', 'Select data sources')}
+          <SidebarField
+            label={
+              <Stack gap={0.5} alignItems="center">
+                <span>
+                  <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
+                </span>
+                <Tooltip
+                  content={
+                    <div>
+                      <p>
+                        <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
+                          Data sources containing configured alert rules are Mimir or Loki data sources where alert
+                          rules are stored and evaluated in the data source itself.
+                        </Trans>
+                      </p>
+                      <p>
+                        <Trans i18nKey="alerting.rules-filter.manage-alerts">
+                          In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
+                          alert rules in the Grafana UI as well as in the data source where they were configured.
+                        </Trans>
+                      </p>
+                    </div>
+                  }
+                >
+                  <Icon
+                    name="info-circle"
+                    size="sm"
+                    title={t(
+                      'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
+                      'Search by data sources help'
+                    )}
                   />
-                )}
-              />
-            </SidebarField>
-          )}
+                </Tooltip>
+              </Stack>
+            }
+          >
+            <Controller
+              name="dataSourceNames"
+              control={control}
+              render={({ field }) => (
+                <MultiCombobox
+                  options={dataSourceOptions}
+                  value={field.value}
+                  onChange={(selections) => {
+                    const dataSourceNames = selections.map((s) => s.value);
+                    field.onChange(dataSourceNames);
+                    applyFormValues({ dataSourceNames });
+                  }}
+                  placeholder={t('alerting.rules-filter.placeholder-data-sources', 'Select data sources')}
+                />
+              )}
+            />
+          </SidebarField>
         </SidebarSection>
 
         <div className={styles.divider} />
@@ -550,8 +545,12 @@ function FilterSidebarForm({ filterState, showDataSourceManagedRules }: FilterSi
 // Section & field layout helpers
 // ---------------------------------------------------------------------------
 
-function SidebarSection({ children }: { children: React.ReactNode }) {
+function SidebarSection({ children, hidden = false }: { children: React.ReactNode; hidden?: boolean }) {
   const styles = useStyles2(getStyles);
+  if (hidden) {
+    return null;
+  }
+
   return (
     <div className={styles.section}>
       <Stack direction="column" gap={1.5}>

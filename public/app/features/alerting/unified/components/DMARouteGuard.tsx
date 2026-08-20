@@ -13,23 +13,20 @@ import { AlertingPageWrapper } from './AlertingPageWrapper';
 
 interface DMARouteGuardProps {
   children: ReactNode;
-  isDataSourceManaged: boolean;
-  pluginPage?: ReactNode;
+  /**
+   * Where to send the user when the plugin owns DMA. Supplying this marks the route as data
+   * source-managed; omit it for Grafana-managed routes and for requests the caller has already
+   * decided to refuse, so a denial in `children` is not pre-empted by the handoff.
+   */
+  pluginDestination?: ReactNode;
   unavailableDescription: ReactNode;
   pageNav?: NavModelItem;
 }
 
-export function DMARouteGuard({
-  children,
-  isDataSourceManaged,
-  pluginPage,
-  unavailableDescription,
-  pageNav,
-}: DMARouteGuardProps) {
+export function DMARouteGuard({ children, pluginDestination, unavailableDescription, pageNav }: DMARouteGuardProps) {
   const dmaStatus = useDMAStatus();
-  const needsDMAStatus = isDataSourceManaged || Boolean(pluginPage);
 
-  if (!needsDMAStatus) {
+  if (!pluginDestination) {
     return children;
   }
 
@@ -37,11 +34,11 @@ export function DMARouteGuard({
     return <AlertingPageWrapper pageNav={pageNav} navId={getAlertRulesNavId()} isLoading={true} />;
   }
 
-  if (dmaStatus.status === DMAStatus.ManagedByPlugin && pluginPage) {
-    return pluginPage;
+  if (dmaStatus.status === DMAStatus.ManagedByPlugin) {
+    return pluginDestination;
   }
 
-  if (dmaStatus.status === DMAStatus.NotAvailable && isDataSourceManaged) {
+  if (dmaStatus.status === DMAStatus.NotAvailable) {
     return (
       <AlertingPageWrapper pageNav={pageNav} navId={getAlertRulesNavId()}>
         <AlertWarning

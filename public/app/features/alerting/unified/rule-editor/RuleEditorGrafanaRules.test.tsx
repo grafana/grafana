@@ -268,6 +268,8 @@ describe('RuleEditor grafana managed rules', () => {
     });
 
     it('redirects external-only users creating alert rules to the plugin', async () => {
+      // Deliberately without DataSourcesRead: that guard exists for Grafana's own form, and must not
+      // stop the plugin from taking the request.
       grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
 
       renderRuleEditor();
@@ -276,6 +278,17 @@ describe('RuleEditor grafana managed rules', () => {
         expect(locationService.getLocation().pathname).toBe('/a/grafana-prometheusalerting-app/rules/new')
       );
       expect(locationService.getLocation().search).toBe('?type=alerting');
+    });
+
+    it('refuses editing a rule the user lacks permission for instead of handing off to the plugin', async () => {
+      // Grafana-side permission: only alert.rules:write, no external write. Without the refusal
+      // taking precedence the user is bounced into the plugin, which would deny them anyway.
+      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+
+      renderRuleEditor('pri$Prom$namespace$group$rule$hash');
+
+      expect(await screen.findByText('Cannot edit rules')).toBeInTheDocument();
+      expect(locationService.getLocation().pathname).not.toContain('grafana-prometheusalerting-app');
     });
 
     it('preserves prefilled recording-rule state when redirecting creation to the plugin', async () => {

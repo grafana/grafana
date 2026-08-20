@@ -17,19 +17,12 @@ jest.mock('./AlertingPageWrapper', () => ({
 
 const useDMAStatusMock = jest.mocked(useDMAStatus);
 
-function renderGuard({
-  isDataSourceManaged = true,
-  pluginPage = <div>Plugin page</div>,
-}: {
-  isDataSourceManaged?: boolean;
-  pluginPage?: ReactNode;
-} = {}) {
+// Spread rather than a default parameter, so an explicit `pluginDestination: undefined` overrides.
+function renderGuard(overrides: { pluginDestination?: ReactNode } = {}) {
+  const props = { pluginDestination: <div>Plugin page</div>, ...overrides };
+
   return render(
-    <DMARouteGuard
-      isDataSourceManaged={isDataSourceManaged}
-      pluginPage={pluginPage}
-      unavailableDescription="This resource is unavailable in Grafana."
-    >
+    <DMARouteGuard {...props} unavailableDescription="This resource is unavailable in Grafana.">
       <div>Grafana page</div>
     </DMARouteGuard>
   );
@@ -39,9 +32,20 @@ describe('DMARouteGuard', () => {
   it('renders Grafana routes without waiting for DMA status', () => {
     useDMAStatusMock.mockReturnValue({ status: DMAStatus.Loading });
 
-    renderGuard({ isDataSourceManaged: false, pluginPage: null });
+    renderGuard({ pluginDestination: undefined });
 
     expect(screen.getByText('Grafana page')).toBeInTheDocument();
+  });
+
+  it('renders children instead of handing off when the caller supplies no plugin destination', () => {
+    // The caller refused the request (e.g. missing permission), so `children` holds that answer and
+    // must not be pre-empted by the plugin redirect.
+    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByPlugin });
+
+    renderGuard({ pluginDestination: undefined });
+
+    expect(screen.getByText('Grafana page')).toBeInTheDocument();
+    expect(screen.queryByText('Plugin page')).not.toBeInTheDocument();
   });
 
   it('shows loading while a DMA route is being resolved', () => {

@@ -1,10 +1,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-import { type PluginMeta, PluginType } from '@grafana/data';
 import { config, isAppPluginInstalled } from '@grafana/runtime';
 import { getPluginSettings } from '@grafana/runtime/unstable';
 
 import { logError } from '../Analytics';
+import { prometheusAlertingPluginMeta } from '../testSetup/plugins';
 
 import { DMAStatus, useDMAStatus } from './useDMAStatus';
 
@@ -26,23 +26,6 @@ jest.mock('../Analytics', () => ({
 const isAppPluginInstalledMock = jest.mocked(isAppPluginInstalled);
 const getPluginSettingsMock = jest.mocked(getPluginSettings);
 const logErrorMock = jest.mocked(logError);
-
-const pluginSettings = {
-  id: 'grafana-prometheusalerting-app',
-  name: 'Prometheus Alerting',
-  type: PluginType.app,
-  info: {
-    author: { name: 'Grafana Labs' },
-    description: '',
-    links: [],
-    logos: { large: '', small: '' },
-    screenshots: [],
-    updated: '',
-    version: '',
-  },
-  module: '',
-  baseUrl: '',
-} satisfies PluginMeta;
 
 describe('useDMAStatus', () => {
   const originalFeatureToggle = config.featureToggles.alertingDisableDMAinUI;
@@ -94,7 +77,7 @@ describe('useDMAStatus', () => {
   it('enables DMA when the plugin is installed but disabled', async () => {
     isAppPluginInstalledMock.mockResolvedValue(true);
     getPluginSettingsMock.mockResolvedValue({
-      ...pluginSettings,
+      ...prometheusAlertingPluginMeta,
       enabled: false,
     });
 
@@ -106,7 +89,7 @@ describe('useDMAStatus', () => {
   it('disables DMA when the plugin is installed and enabled', async () => {
     isAppPluginInstalledMock.mockResolvedValue(true);
     getPluginSettingsMock.mockResolvedValue({
-      ...pluginSettings,
+      ...prometheusAlertingPluginMeta,
       enabled: true,
     });
 
@@ -119,7 +102,7 @@ describe('useDMAStatus', () => {
     config.featureToggles.alertingDisableDMAinUI = true;
     isAppPluginInstalledMock.mockResolvedValue(true);
     getPluginSettingsMock.mockResolvedValue({
-      ...pluginSettings,
+      ...prometheusAlertingPluginMeta,
       enabled: true,
     });
 

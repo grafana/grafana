@@ -5,6 +5,14 @@ import { setupDataSources } from '../testSetup/datasources';
 
 import { prometheusAlertingPlugin } from './prometheusNavigation';
 
+const prometheusIdentifier: PrometheusRuleIdentifier = {
+  ruleSourceName: 'Prometheus',
+  namespace: 'namespace',
+  groupName: 'group',
+  ruleName: 'rule',
+  ruleHash: 'hash',
+};
+
 describe('prometheusAlertingPlugin', () => {
   beforeEach(() => {
     setupDataSources(
@@ -33,22 +41,40 @@ describe('prometheusAlertingPlugin', () => {
   });
 
   it('uses the data source UID in Prometheus rule identifiers', () => {
-    const identifier: PrometheusRuleIdentifier = {
-      ruleSourceName: 'Prometheus',
-      namespace: 'namespace',
-      groupName: 'group',
-      ruleName: 'rule',
-      ruleHash: 'hash',
-    };
-
-    expect(prometheusAlertingPlugin.viewRule(identifier)).toBe(
+    expect(prometheusAlertingPlugin.viewRule(prometheusIdentifier)).toBe(
       '/a/grafana-prometheusalerting-app/rules/pri%24Prometheus-uid%24namespace%24group%24rule%24hash'
     );
-    expect(prometheusAlertingPlugin.editRule(identifier)).toBe(
+    expect(prometheusAlertingPlugin.editRule(prometheusIdentifier)).toBe(
       '/a/grafana-prometheusalerting-app/rules/pri%24Prometheus-uid%24namespace%24group%24rule%24hash/edit'
     );
-    expect(prometheusAlertingPlugin.cloneRule(identifier)).toBe(
+    expect(prometheusAlertingPlugin.cloneRule(prometheusIdentifier)).toBe(
       '/a/grafana-prometheusalerting-app/rules/new?copyFrom=pri%24Prometheus-uid%24namespace%24group%24rule%24hash'
+    );
+  });
+
+  it('forwards navigation state to the plugin', () => {
+    const stringified = 'pri%24Prometheus-uid%24namespace%24group%24rule%24hash';
+
+    expect(
+      prometheusAlertingPlugin.viewRule(prometheusIdentifier, { returnTo: '/alerting/list', tab: 'instances' })
+    ).toBe(`/a/grafana-prometheusalerting-app/rules/${stringified}?returnTo=%2Falerting%2Flist&tab=instances`);
+    expect(prometheusAlertingPlugin.editRule(prometheusIdentifier, { returnTo: '/alerting/list' })).toBe(
+      `/a/grafana-prometheusalerting-app/rules/${stringified}/edit?returnTo=%2Falerting%2Flist`
+    );
+    expect(prometheusAlertingPlugin.cloneRule(prometheusIdentifier, { returnTo: '/alerting/list' })).toBe(
+      `/a/grafana-prometheusalerting-app/rules/new?copyFrom=${stringified}&returnTo=%2Falerting%2Flist`
+    );
+    expect(prometheusAlertingPlugin.editGroup('mimir', 'ns', 'group', { returnTo: '/alerting/list' })).toBe(
+      '/a/grafana-prometheusalerting-app/groups/mimir/ns/group/edit?returnTo=%2Falerting%2Flist'
+    );
+  });
+
+  it('omits navigation params that are not set', () => {
+    expect(prometheusAlertingPlugin.newRule('alerting', { returnTo: undefined, defaults: undefined })).toBe(
+      '/a/grafana-prometheusalerting-app/rules/new?type=alerting'
+    );
+    expect(prometheusAlertingPlugin.viewGroup('mimir', 'ns', 'group')).toBe(
+      '/a/grafana-prometheusalerting-app/groups/mimir/ns/group'
     );
   });
 

@@ -26,7 +26,7 @@ export interface DMAState {
 
 export function useDMAStatus(): DMAState {
   const disabledByFeatureToggle = config.featureToggles.alertingDisableDMAinUI ?? false;
-  const [{ execute }, requestState] = useAsync(getDMAPluginStatus);
+  const [{ execute }, requestState] = useAsync(isDMAPluginEnabled);
 
   useEffect(() => {
     execute();
@@ -35,23 +35,18 @@ export function useDMAStatus(): DMAState {
   return getDMAState(requestState, disabledByFeatureToggle);
 }
 
-interface DMAPluginStatus {
-  enabled: boolean;
-  installed: boolean;
-}
-
-async function getDMAPluginStatus(): Promise<DMAPluginStatus> {
+async function isDMAPluginEnabled(): Promise<boolean> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
   try {
     return await Promise.race([
-      fetchDMAPluginStatus(),
-      new Promise<DMAPluginStatus>((resolve) => {
+      fetchDMAPluginEnabled(),
+      new Promise<boolean>((resolve) => {
         timeoutId = setTimeout(() => {
           logError(new Error('Timed out while checking Prometheus Alerting plugin status'), {
             timeout: String(DMA_STATUS_TIMEOUT_MS),
           });
-          resolve({ installed: false, enabled: false });
+          resolve(false);
         }, DMA_STATUS_TIMEOUT_MS);
       }),
     ]);
@@ -62,36 +57,31 @@ async function getDMAPluginStatus(): Promise<DMAPluginStatus> {
   }
 }
 
-async function fetchDMAPluginStatus(): Promise<DMAPluginStatus> {
-  const installed = await isAppPluginInstalled(PROMETHEUS_ALERTING_APP_ID);
-
-  if (!installed) {
-    return { installed: false, enabled: false };
+async function fetchDMAPluginEnabled(): Promise<boolean> {
+  if (!(await isAppPluginInstalled(PROMETHEUS_ALERTING_APP_ID))) {
+    return false;
   }
 
   try {
     const settings = await getPluginSettings(PROMETHEUS_ALERTING_APP_ID);
-    return { installed: true, enabled: Boolean(settings.enabled) };
+    return Boolean(settings.enabled);
   } catch (error) {
     const cause = error instanceof Error ? error.cause : error;
     if (isFetchError(cause) && cause.status === 404) {
-      return { installed: true, enabled: false };
+      return false;
     }
     throw error;
   }
 }
 
-function getDMAState(
-  requestState: AsyncState<DMAPluginStatus | undefined>,
-  disabledByFeatureToggle: boolean
-): DMAState {
+function getDMAState(requestState: AsyncState<boolean | undefined>, disabledByFeatureToggle: boolean): DMAState {
   const error = requestState.error;
 
   if (requestState.status === 'not-executed' || requestState.status === 'loading') {
     return { status: DMAStatus.Loading, error };
   }
 
-  if (requestState.result?.enabled) {
+  if (requestState.result) {
     return { status: DMAStatus.ManagedByPlugin, error };
   }
 

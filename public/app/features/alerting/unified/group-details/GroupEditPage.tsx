@@ -62,6 +62,7 @@ const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 function GroupEditPage() {
   const { dataSourceUid = '', namespaceId = '', groupName = '' } = useParams<GroupEditPageRouteParams>();
+  const { returnTo } = useReturnTo();
 
   if (isUngroupedRuleGroup(groupName)) {
     return <EntityNotFound entity={t('alerting.entities.group', 'Group')} />;
@@ -71,10 +72,12 @@ function GroupEditPage() {
 
   return (
     <DMARouteGuard
-      isDataSourceManaged={isDataSourceManaged}
-      pluginPage={
+      pluginDestination={
         isDataSourceManaged ? (
-          <Navigate replace to={prometheusAlertingPlugin.editGroup(dataSourceUid, namespaceId, groupName)} />
+          <Navigate
+            replace
+            to={prometheusAlertingPlugin.editGroup(dataSourceUid, namespaceId, groupName, { returnTo })}
+          />
         ) : undefined
       }
       unavailableDescription={

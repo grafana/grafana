@@ -46,8 +46,9 @@ const RuleViewer = () => {
 
   return (
     <DMARouteGuard
-      isDataSourceManaged={Boolean(externalIdentifier)}
-      pluginPage={externalIdentifier ? <PluginRuleRedirect identifier={externalIdentifier} action="view" /> : undefined}
+      pluginDestination={
+        externalIdentifier ? <PluginRuleRedirect identifier={externalIdentifier} action="view" /> : undefined
+      }
       unavailableDescription={
         <Trans i18nKey="alerting.rule-viewer.dma-disabled-description">This rule cannot be viewed from Grafana.</Trans>
       }

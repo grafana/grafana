@@ -15,6 +15,7 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { DMARouteGuard } from '../components/DMARouteGuard';
 import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 import { useFolder } from '../hooks/useFolder';
+import { useReturnTo } from '../hooks/useReturnTo';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { DataSourceGroupLoader } from '../rule-list/DataSourceGroupLoader';
@@ -40,6 +41,7 @@ const { usePrometheusRuleNamespacesQuery, useGetRuleGroupForNamespaceQuery } = a
 
 function GroupDetailsPage() {
   const { dataSourceUid = '', namespaceId = '', groupName = '' } = useParams<GroupPageRouteParams>();
+  const { returnTo } = useReturnTo();
 
   if (isUngroupedRuleGroup(groupName)) {
     return <EntityNotFound entity={t('alerting.entities.group', 'Group')} />;
@@ -49,10 +51,12 @@ function GroupDetailsPage() {
 
   return (
     <DMARouteGuard
-      isDataSourceManaged={isDataSourceManaged}
-      pluginPage={
+      pluginDestination={
         isDataSourceManaged ? (
-          <Navigate replace to={prometheusAlertingPlugin.viewGroup(dataSourceUid, namespaceId, groupName)} />
+          <Navigate
+            replace
+            to={prometheusAlertingPlugin.viewGroup(dataSourceUid, namespaceId, groupName, { returnTo })}
+          />
         ) : undefined
       }
       unavailableDescription={
