@@ -102,8 +102,8 @@ func TestCodecPathResourcesRegisterOneVersionPerType(t *testing.T) {
 var commonMultiVersionTypes = func() map[reflect.Type]bool {
 	m := map[reflect.Type]bool{}
 	for _, o := range []runtime.Object{
-		&metav1.WatchEvent{}, &metav1.ListOptions{}, &metav1.GetOptions{}, &metav1.DeleteOptions{},
-		&metav1.CreateOptions{}, &metav1.UpdateOptions{}, &metav1.PatchOptions{},
+		&metav1.WatchEvent{}, &metav1.InternalEvent{}, &metav1.ListOptions{}, &metav1.GetOptions{},
+		&metav1.DeleteOptions{}, &metav1.CreateOptions{}, &metav1.UpdateOptions{}, &metav1.PatchOptions{},
 		&metav1.PartialObjectMetadata{}, &metav1.PartialObjectMetadataList{},
 		// legacyiamv0.AddKnownTypes(scheme, version) is called for both legacyiamv0.VERSION and
 		// runtime.APIVersionInternal (register.go's InstallSchema) "to avoid the error: no kind is
@@ -138,6 +138,10 @@ func assertNoTypeSpansMultipleGVKs(t *testing.T, scheme *runtime.Scheme) {
 		if unversioned, ok := scheme.IsUnversioned(obj); ok && unversioned {
 			continue // e.g. metav1.Status - genuinely version-independent, not a codec-fallback risk
 		}
+		require.NotEqualf(t, runtime.APIVersionInternal, gvk.Version,
+			"%s is registered at the internal version (%v) - a hub type never exactly matches any "+
+				"external version in the LegacyCodec's list, so encoding it always hits the "+
+				"order-fallback and lets preferred_api_version pick the persisted version", typ, gvk)
 		byType[typ] = append(byType[typ], gvk)
 	}
 	for typ, gvks := range byType {

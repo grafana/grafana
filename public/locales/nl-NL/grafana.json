@@ -347,7 +347,7 @@
   },
   "alerting": {
     "active-timing-fields": {
-      "am-active-timing-select-label-active-timings": "Actieve timings"
+      "am-active-timing-select-label-active-timings": "Actieve tijden"
     },
     "ad": {
       "close": "Sluiten",
@@ -691,8 +691,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Matcher toevoegen",
-      "am-active-timing-select-label-active-timings": "Actieve timings",
-      "am-mute-timing-select-description-add-active-timing-to-policy": "Actieve timing toevoegen aan beleid",
+      "am-active-timing-select-label-active-timings": "Actieve tijden",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "Actieve tijden toevoegen aan beleid",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Demptiming toevoegen aan beleid",
       "am-mute-timing-select-label-mute-timings": "Demptimings",
       "aria-label-group-by": "Groeperen op",
@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} mislukt met status {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1617,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Weet je zeker dat je de import wilt starten? Met deze actie worden nieuwe bronnen aangemaakt in Grafana Alerting.",
         "confirm": "Importeren starten",
@@ -1675,26 +1665,6 @@
       "info-description": "Met deze wizard kun je waarschuwingsregels en meldingsbronnen uit externe bronnen importeren naar Grafana Alerting. Raadpleeg de <2>documentatie</2> voor meer informatie.",
       "info-title": "Importwizard",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Typ om naar een bestaande namespace te zoeken",
         "label": "Namespace"
@@ -1718,10 +1688,6 @@
         "filter": "Filter",
         "folder": "Doelmap",
         "heading": "Importeren controleren",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Namespace",
         "nothing": "Niets om te importeren",
         "nothing-desc": "Beide stappen zijn overgeslagen. Ga terug en configureer ten minste één importbron.",
@@ -1748,14 +1714,6 @@
         "validation-warning": "Sommige bronnen krijgen een nieuwe naam om conflicten te voorkomen.",
         "will-import-config": "Deze configuratie wordt geïmporteerd",
         "will-import-rules": "Zal regels importeren",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Zal  {{count}} regels importeren",
         "will-import-rules-count_other": "Zal  {{count}} regels importeren"
       },
@@ -1867,14 +1825,10 @@
         "cancel-confirm-title": "Import annuleren?",
         "cancel-confirm-yes": "Wijzigingen verwerpen",
         "skip": "Overslaan",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Meldingsbronnen",
         "step-notifications-desc": "Contactpunten, beleid, sjablonen",
         "step-review": "Controleren en importeren",
         "step-review-desc": "Import bekijken en bevestigen",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Waarschuwingsregels",
         "step-rules-desc": "Waarschuwings- en opnameregels"
       },
@@ -3282,8 +3236,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3258,54 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3316,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3611,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Een unieke naam voor het tijdsinterval",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Tijdsinterval laden",
       "title-no-matching-time-interval-found": "Geen overeenkomend tijdsinterval gevonden"
     },
@@ -3850,6 +3856,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Kan bronnen niet importeren",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Bronnen succesvol geïmporteerd naar Grafana Alerting."
     },
     "yaml-content-info": {
@@ -4095,7 +4103,7 @@
       "jwk-set-url-required": "De JWKS-URL is vereist wanneer ID-tokenvalidatie is ingeschakeld.",
       "login-attribute-path-description": "JMESPath-expressie om te gebruiken voor het opzoeken van gebruikersaanmeldingen uit het gebruikers-id-token.",
       "login-attribute-path-label": "Pad inlogattribuut",
-      "login-prompt-consent": "Toestemming ",
+      "login-prompt-consent": "Toestemming",
       "login-prompt-description": "Geeft het type gebruikersinteractie aan wanneer de gebruiker inlogt met de IdP.",
       "login-prompt-description-google": "Geeft het type gebruikersinteractie aan wanneer de gebruiker inlogt met Google. Dit wordt geforceerd om 'Toestemming' te geven wanneer 'Vernieuwingstoken gebruiken' is ingeschakeld.",
       "login-prompt-label": "Login prompt",
@@ -4164,7 +4172,7 @@
       "validate-id-token-description": "Indien ingeschakeld, valideert Grafana de JWT-handtekening van ID-tokens met behulp van het JWKS-eindpunt. Dit verhoogt de beveiliging doordat wordt gegarandeerd dat de tokens authentiek zijn en niet zijn gemanipuleerd.",
       "validate-id-token-label": "ID-token valideren",
       "workload-identity-token-file-description": "Het bestandspad naar het tokenbestand dat wordt gebruikt om te verifiëren bij de OAuth2-provider. Dit is alleen vereist wanneer clientauthenticatie is ingesteld op 'workload_identity'. Standaard ingesteld op /var/run/secrets/azure/tokens/azure-identity-token.",
-      "workload-identity-token-file-label": "Tokenbestand {{ workloadIdentityLabel }}",
+      "workload-identity-token-file-label": "{{ workloadIdentityLabel }} tokenbestand",
       "workload-identity-token-file-required": "Dit veld moet worden ingesteld wanneer clientauthenticatie is ingesteld op 'Workload-identiteit'."
     },
     "get-page-nav": {
@@ -4223,8 +4231,8 @@
       "category-thresholds": "Drempels",
       "description-color-by-field": "Gebruik de kleurwaarde van een verwant veld om elke balk te kleuren.",
       "description-x-label-max-length": "X-aslabels worden afgekapt tot de opgegeven lengte",
-      "name-bar-radius": "Staafradius",
-      "name-bar-width": "Staafbreedte",
+      "name-bar-radius": "Balkradius",
+      "name-bar-width": "Balkbreedte",
       "name-color-by-field": "Kleur per veld",
       "name-fill-opacity": "Dekking van opvulling",
       "name-full-highlight": "Markeer het volledige gebied bij hoveren",
@@ -4280,7 +4288,7 @@
         "description-medium": "{{spacing}} afstand vereisen",
         "description-none": "Alle vinkjes weergeven",
         "description-small": "{{spacing}} afstand vereisen",
-        "label-large": "Large",
+        "label-large": "Groot",
         "label-medium": "Medium",
         "label-none": "Geen",
         "label-small": "Klein"
@@ -4293,7 +4301,7 @@
       "label-auto": "Automatisch",
       "label-manual": "Handmatig"
     },
-    "category-bar-gauge": "Staafmeter",
+    "category-bar-gauge": "Balkmeter",
     "description-max-height": "Maximale rijhoogte (horizontale oriëntatie)",
     "description-min-height": "Minimale rijhoogte (horizontale oriëntatie)",
     "description-min-width": "Minimale kolombreedte (verticale oriëntatie)",
@@ -4332,7 +4340,7 @@
       "retro-lcd_desc": "Horizontaal, LCD-stijl, groen-geel-rode schaal"
     },
     "suggestions": {
-      "basic": "Staafmeter",
+      "basic": "Balkmeter",
       "lcd": "Staafmeter - LCD"
     },
     "value-display-options": {
@@ -4600,9 +4608,9 @@
       "all-failed_one": "Kan {{count}} dashboard niet herstellen.",
       "all-failed_other": "Kan {{count}} dashboards niet herstellen.",
       "failed-count_one": "{{count}} dashboard mislukt",
-      "failed-count_other": "{{count}} dashboards mislukt",
+      "failed-count_other": "{{count}} dashboard mislukt",
       "success-count_one": "{{count}} dashboard is hersteld",
-      "success-count_other": "{{count}} dashboards zijn hersteld"
+      "success-count_other": "{{count}} dashboard is hersteld"
     },
     "shared-with-me": "Gedeeld met mij",
     "starred-folders": "",
@@ -4620,7 +4628,7 @@
   },
   "candlestick": {
     "additional-fields-options": {
-      "label-ignore": "Negeer",
+      "label-ignore": "Negeren",
       "label-include": "Opnemen"
     },
     "candle-style-options": {
@@ -4689,7 +4697,7 @@
       "label-variant": "Variant"
     },
     "canvas-context-menu": {
-      "close-editor": "Editor Sluiten",
+      "close-editor": "Editor sluiten",
       "open-editor": "Editor openen",
       "render-menu-items": {
         "add-item-menu-item": {
@@ -6047,6 +6055,7 @@
       "new-row-title": "Nieuwe rij",
       "row": {
         "collapse": "Rij {{title}} samenvouwen",
+        "copy-link": "",
         "expand": "Rij {{title}} uitvouwen",
         "new": "Nieuwe rij",
         "repeat": {
@@ -6728,7 +6737,7 @@
       "description": "Voor dit dashboard is gegevensbronconfiguratie vereist. Selecteer gegevensbronnen voor elke invoer hieronder.",
       "preview": "Voorbeeldweergave dashboard",
       "auto-mapped_one": "{{count}} databron werd automatisch geconfigureerd:",
-      "auto-mapped_other": "{{count}} databronnen werden automatisch geconfigureerd:"
+      "auto-mapped_other": "{{count}} databron werd automatisch geconfigureerd:"
     },
     "community-mapping-select-datasource": "Selecteer een databron",
     "compatibility-auto-map-failed": "Kan niet automatisch alle databroninvoeren voor dit dashboard toewijzen. Voor de compatibiliteitscontrole moeten alle databronvariabelen worden opgelost.",
@@ -8918,11 +8927,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -9639,8 +9651,8 @@
         "nextNMinutes_other": "Volgende {{count}} minuten",
         "nextNMonths_one": "Volgende {{count}} maand",
         "nextNMonths_other": "Volgende {{count}} maanden",
-        "nextNYears_one": "Volgende {{count}} jaar",
-        "nextNYears_other": "Volgende {{count}} jaar"
+        "nextNYears_one": "Volgend {{count}} jaar",
+        "nextNYears_other": "Volgende {{count}} jaren"
       }
     },
     "field": {
@@ -10353,7 +10365,7 @@
         "label-may": "Mei",
         "label-november": "November",
         "label-october": "Oktober",
-        "label-september": "september"
+        "label-september": "September"
       },
       "quick-options": {
         "day-before-yesterday": "Eergisteren",
@@ -11734,6 +11746,7 @@
       "no-details": "Weer te geven velden.",
       "open-assistant": "",
       "pin-line": "Logboek vastzetten",
+      "prettify": "",
       "remove-displayed-field": "Veld verwijderen",
       "remove-log": "Log verwijderen",
       "scroll-to-logline": "Naar logregel scrollen",
@@ -12447,7 +12460,7 @@
     },
     "machine-learning": {
       "subtitle": "AI- en machine learning-functies verkennen",
-      "title": "AI en machine learning"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Mapdashboards en toestemmingen beheren"
@@ -12768,6 +12781,29 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12775,6 +12811,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -12805,8 +12850,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14353,6 +14398,12 @@
     "shared": {
       "branch-description": "De branch die moet worden gebruikt voor provisioning",
       "branch-label": "Branch",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -15840,7 +15891,7 @@
     "category-table": "Tabel",
     "category-table-footer": "Voettekst tabel",
     "cell-height-options": {
-      "label-large": "Large",
+      "label-large": "Groot",
       "label-medium": "Medium",
       "label-small": "Klein"
     },
@@ -16103,6 +16154,9 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "frame-picker": {
+      "label": ""
     },
     "options": {
       "render-mode": ""

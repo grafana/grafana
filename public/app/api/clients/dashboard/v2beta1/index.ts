@@ -106,6 +106,9 @@ export const {
   // creating a notebook refetches the list without any extra enhancement here.
   useListNotebookQuery,
   useCreateNotebookMutation,
+  // Lazy, because the list response is flattened for the table: exporting a row has to fetch that
+  // notebook's spec on demand rather than every row's up front.
+  useLazyGetNotebookQuery,
 } = dashboardAPIv2beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files

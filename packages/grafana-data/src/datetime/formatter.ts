@@ -1,11 +1,11 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
-import moment, { type Moment, type MomentInput } from 'moment-timezone';
 
 import { type TimeZone } from '../types/time';
 
 import { type DateTimeOptions, getTimeZone } from './common';
 import { systemDateFormats } from './formats';
-import { type DateTimeInput } from './moment_wrapper';
+import moment from './moment_implementation';
+import { type DateTimeInput, type Moment, toMomentInput } from './moment_wrapper';
 
 /**
  * The type describing the options that can be passed to the {@link dateTimeFormat}
@@ -97,10 +97,11 @@ const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => 
   return options?.format ?? systemDateFormats.fullDate;
 };
 
+// like moment's toUtc-then-convert pattern: the input is parsed in utc (zoneless strings are
+// interpreted as UTC per this module's contract) and the instant is then converted to the target
+// zone. Built as a single shim instance; the zone mutations don't reallocate.
 const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): Moment => {
-  // Zoneless inputs are interpreted as UTC before converting to the target zone.
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const inUtc = moment.utc(dateInUtc as MomentInput);
+  const inUtc = moment.utc(toMomentInput(dateInUtc));
   const zone = moment.tz.zone(timeZone);
 
   if (zone) {

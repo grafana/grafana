@@ -71,7 +71,7 @@ function AddFilterButton({ sectionOwner }: { sectionOwner: SceneObject }) {
       size="sm"
       variant="secondary"
       onClick={() => {
-        openAddFilterForm(dashboard, sectionOwner);
+        void openAddFilterForm(dashboard, sectionOwner);
         DashboardInteractions.addSectionFilterButtonClicked({ source: 'edit_pane' });
       }}
     >

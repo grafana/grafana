@@ -14,12 +14,14 @@ export interface TextNGCodeViewProps {
   content: string;
   language?: CodeLanguage;
   showLineNumbers: boolean;
+  /** CSS height passed straight to CodeMirror. Defaults to filling the parent. */
+  height?: string;
 }
 
 /**
  * Read-only, syntax-highlighted rendering of code-mode content
  */
-export function TextNGCodeView({ content, language, showLineNumbers }: TextNGCodeViewProps) {
+export function TextNGCodeView({ content, language, showLineNumbers, height = '100%' }: TextNGCodeViewProps) {
   const styles = useStyles2(getStyles);
 
   const basicSetup = useMemo(
@@ -50,7 +52,7 @@ export function TextNGCodeView({ content, language, showLineNumbers }: TextNGCod
       readOnly
       lineWrapping
       basicSetup={basicSetup}
-      height="100%"
+      height={height}
       aria-label={t('textng.code-view.aria-label-code-content', 'Code content')}
       loadingFallback={<pre className={styles.loadingFallback}>{content}</pre>}
     />

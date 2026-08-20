@@ -105,7 +105,11 @@
       "load-subscriptions": "Carregar subscrições"
     },
     "dimension-fields": {
-      "aria-label-remove": "Remover",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensões",
       "placeholder-field": "Campo",
       "placeholder-operation": "Funcionamento",
@@ -259,7 +263,7 @@
       "heading-selection": "Seleção",
       "locations-filter": "Localizações",
       "locations-filter-placeholder": "Selecionar uma localização",
-      "recent-tab": "Recentes",
+      "recent-tab": "Recente",
       "result-limit": "A mostrar os primeiros {{numResults}} resultados",
       "subscriptions-filter": "Subscrições",
       "subscriptions-filter-placeholder": "Selecionar uma subscrição",

@@ -1,4 +1,9 @@
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
+import {
+  getDataSourceInstance,
+  getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime/unstable';
 import {
   type AnnotationQueryKind,
   type PanelKind,
@@ -30,17 +35,36 @@ import {
   type DatasourceMappings,
 } from './inputs';
 
-// Mock external dependencies
-const mockGetDataSourceSrv: Record<string, jest.Mock> = {
-  getList: jest.fn().mockReturnValue([{ uid: 'ds-1', name: 'Prometheus', type: 'prometheus' }]),
-  get: jest.fn().mockResolvedValue({ meta: { builtIn: false } }),
-  getInstanceSettings: jest.fn().mockReturnValue(undefined),
-};
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => mockGetDataSourceSrv,
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceList: jest.fn(),
+  getDataSourceInstance: jest.fn(),
+  getDataSourceInstanceSettings: jest.fn(),
 }));
+
+const mockGetDataSourceInstanceList = getDataSourceInstanceList as jest.MockedFunction<
+  typeof getDataSourceInstanceList
+>;
+const mockGetDataSourceInstance = getDataSourceInstance as jest.MockedFunction<typeof getDataSourceInstance>;
+const mockGetDataSourceInstanceSettings = getDataSourceInstanceSettings as jest.MockedFunction<
+  typeof getDataSourceInstanceSettings
+>;
+
+const listItem = (overrides: Partial<DataSourceInstanceListItem>): DataSourceInstanceListItem =>
+  ({
+    uid: 'uid',
+    name: 'Name',
+    type: 'type',
+    ...overrides,
+  }) as DataSourceInstanceListItem;
+
+beforeEach(() => {
+  mockGetDataSourceInstanceList.mockResolvedValue([listItem({ uid: 'ds-1', name: 'Prometheus', type: 'prometheus' })]);
+  mockGetDataSourceInstance.mockResolvedValue({ meta: { builtIn: false } } as Awaited<
+    ReturnType<typeof getDataSourceInstance>
+  >);
+  mockGetDataSourceInstanceSettings.mockResolvedValue(undefined);
+});
 
 jest.mock('../../../library-panels/state/api', () => ({
   getLibraryPanel: jest.fn().mockRejectedValue({ status: 404 }),
@@ -387,9 +411,9 @@ describe('extractV2Inputs', () => {
   });
 
   it('pre-selects the datasource when its name matches an existing one of the same plugin type', async () => {
-    mockGetDataSourceSrv.getList.mockReturnValueOnce([
-      { uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' },
-      { uid: 'ds-stage', name: 'Staging MySQL', type: 'mysql' },
+    mockGetDataSourceInstanceList.mockResolvedValueOnce([
+      listItem({ uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' }),
+      listItem({ uid: 'ds-stage', name: 'Staging MySQL', type: 'mysql' }),
     ]);
 
     const dashboard = {
@@ -418,7 +442,9 @@ describe('extractV2Inputs', () => {
   });
 
   it('does not pre-select a datasource when no name matches', async () => {
-    mockGetDataSourceSrv.getList.mockReturnValueOnce([{ uid: 'ds-stage', name: 'Staging MySQL', type: 'mysql' }]);
+    mockGetDataSourceInstanceList.mockResolvedValueOnce([
+      listItem({ uid: 'ds-stage', name: 'Staging MySQL', type: 'mysql' }),
+    ]);
 
     const dashboard = {
       elements: {},
@@ -442,7 +468,9 @@ describe('extractV2Inputs', () => {
   });
 
   it('does not pre-select when no original name is present', async () => {
-    mockGetDataSourceSrv.getList.mockReturnValueOnce([{ uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' }]);
+    mockGetDataSourceInstanceList.mockResolvedValueOnce([
+      listItem({ uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' }),
+    ]);
 
     const dashboard = {
       elements: {},
@@ -536,7 +564,9 @@ describe('extractV2Inputs', () => {
   });
 
   it('should skip built-in datasources', async () => {
-    mockGetDataSourceSrv.get.mockResolvedValueOnce({ meta: { builtIn: true } });
+    mockGetDataSourceInstance.mockResolvedValueOnce({ meta: { builtIn: true } } as Awaited<
+      ReturnType<typeof getDataSourceInstance>
+    >);
 
     const dashboard = {
       elements: {},
@@ -553,9 +583,9 @@ describe('extractV2Inputs', () => {
   });
 
   it('should keep non-built-in datasources and skip built-in ones', async () => {
-    mockGetDataSourceSrv.get
-      .mockResolvedValueOnce({ meta: { builtIn: false } })
-      .mockResolvedValueOnce({ meta: { builtIn: true } });
+    mockGetDataSourceInstance
+      .mockResolvedValueOnce({ meta: { builtIn: false } } as Awaited<ReturnType<typeof getDataSourceInstance>>)
+      .mockResolvedValueOnce({ meta: { builtIn: true } } as Awaited<ReturnType<typeof getDataSourceInstance>>);
 
     const dashboard = {
       elements: {},
@@ -711,12 +741,12 @@ describe('extractV2Inputs', () => {
       },
     };
 
-    mockGetDataSourceSrv.getList.mockImplementation(({ pluginId }: { pluginId: string }) => {
-      if (pluginId === 'prometheus') {
-        return [{ uid: 'p1', name: 'Prod Prom', type: 'prometheus' }];
+    mockGetDataSourceInstanceList.mockImplementation(async (filters) => {
+      if (filters?.pluginId === 'prometheus') {
+        return [listItem({ uid: 'p1', name: 'Prod Prom', type: 'prometheus' })];
       }
-      if (pluginId === 'loki') {
-        return [{ uid: 'l1', name: 'Prod Loki', type: 'loki' }];
+      if (filters?.pluginId === 'loki') {
+        return [listItem({ uid: 'l1', name: 'Prod Loki', type: 'loki' })];
       }
       return [];
     });
@@ -778,12 +808,12 @@ describe('extractV2Inputs', () => {
       variables: [],
     };
 
-    mockGetDataSourceSrv.getList.mockImplementation(({ pluginId }: { pluginId: string }) => {
-      if (pluginId === 'loki') {
-        return [{ uid: 'l1', name: 'Prod Loki', type: 'loki' }];
+    mockGetDataSourceInstanceList.mockImplementation(async (filters) => {
+      if (filters?.pluginId === 'loki') {
+        return [listItem({ uid: 'l1', name: 'Prod Loki', type: 'loki' })];
       }
-      if (pluginId === 'grafana-sqlite-datasource') {
-        return [{ uid: 's1', name: 'SQLite', type: 'grafana-sqlite-datasource' }];
+      if (filters?.pluginId === 'grafana-sqlite-datasource') {
+        return [listItem({ uid: 's1', name: 'SQLite', type: 'grafana-sqlite-datasource' })];
       }
       return [];
     });
@@ -2488,27 +2518,29 @@ describe('interpolateV1Dashboard', () => {
   const getPanel = (result: DashboardJson, idx = 0) => (result.panels as Panel[])[idx];
 
   beforeEach(() => {
-    mockGetDataSourceSrv.getInstanceSettings = jest
-      .fn()
-      .mockImplementation((uid: string) =>
-        uid === 'prom-uid' ? { uid: 'prom-uid', type: 'prometheus', name: 'Prometheus' } : undefined
-      );
+    mockGetDataSourceInstanceSettings.mockImplementation(async (uid) =>
+      uid === 'prom-uid'
+        ? ({ uid: 'prom-uid', type: 'prometheus', name: 'Prometheus' } as DataSourceInstanceSettings)
+        : undefined
+    );
   });
 
-  it('should replace datasource placeholders with wildcard mapping', () => {
-    const result = interpolateV1Dashboard(makeDashboard(), [{ name: '*', type: 'datasource', value: 'prom-uid' }]);
+  it('should replace datasource placeholders with wildcard mapping', async () => {
+    const result = await interpolateV1Dashboard(makeDashboard(), [
+      { name: '*', type: 'datasource', value: 'prom-uid' },
+    ]);
     expect(getPanel(result).datasource!.uid).toBe('prom-uid');
   });
 
-  it('should replace named datasource mapping', () => {
-    const result = interpolateV1Dashboard(makeDashboard(), [
+  it('should replace named datasource mapping', async () => {
+    const result = await interpolateV1Dashboard(makeDashboard(), [
       { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'prom-uid' },
     ]);
     expect(getPanel(result).datasource!.uid).toBe('prom-uid');
   });
 
-  it('should handle expression datasources', () => {
-    const result = interpolateV1Dashboard(makeExprDashboard(), [
+  it('should handle expression datasources', async () => {
+    const result = await interpolateV1Dashboard(makeExprDashboard(), [
       { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'prom-uid' },
     ]);
     const panel = getPanel(result);
@@ -2517,8 +2549,8 @@ describe('interpolateV1Dashboard', () => {
     expect((panel.targets![0].datasource as { type: string }).type).toBe('__expr__');
   });
 
-  it('should force expression datasource to __expr__ even when mapped to a real UID', () => {
-    const result = interpolateV1Dashboard(makeExprDashboard(), [
+  it('should force expression datasource to __expr__ even when mapped to a real UID', async () => {
+    const result = await interpolateV1Dashboard(makeExprDashboard(), [
       { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'prom-uid' },
       { name: 'DS_EXPRESSION', type: 'datasource', pluginId: '__expr__', value: 'some-real-uid' },
     ]);
@@ -2527,14 +2559,16 @@ describe('interpolateV1Dashboard', () => {
     expect((panel.targets![0].datasource as { type: string }).type).toBe('__expr__');
   });
 
-  it('should handle expression datasources with wildcard mapping', () => {
-    const result = interpolateV1Dashboard(makeExprDashboard(), [{ name: '*', type: 'datasource', value: 'prom-uid' }]);
+  it('should handle expression datasources with wildcard mapping', async () => {
+    const result = await interpolateV1Dashboard(makeExprDashboard(), [
+      { name: '*', type: 'datasource', value: 'prom-uid' },
+    ]);
     const panel = getPanel(result);
     expect(panel.datasource!.uid).toBe('prom-uid');
     expect((panel.targets![0].datasource as { uid: string }).uid).toBe('__expr__');
   });
 
-  it('should handle constants', () => {
+  it('should handle constants', async () => {
     const dashboard = makeDashboard({
       __inputs: [{ name: 'VAR_INTERVAL', type: 'constant', label: 'Interval', description: '', value: '1m' }],
       panels: [] as DashboardJson['panels'],
@@ -2550,34 +2584,34 @@ describe('interpolateV1Dashboard', () => {
         ],
       } as DashboardJson['templating'],
     });
-    const result = interpolateV1Dashboard(dashboard, [{ name: 'VAR_INTERVAL', type: 'constant', value: '5m' }]);
+    const result = await interpolateV1Dashboard(dashboard, [{ name: 'VAR_INTERVAL', type: 'constant', value: '5m' }]);
     const variable = result.templating!.list![0] as VariableModel & { query: string; current: { value: string } };
     expect(variable.query).toBe('5m');
     expect(variable.current.value).toBe('5m');
   });
 
-  it('should strip __inputs, __elements, __requires from result', () => {
+  it('should strip __inputs, __elements, __requires from result', async () => {
     const dashboard = makeDashboard({
       __elements: { somePanel: {} } as unknown as DashboardJson['__elements'],
       __requires: [{ type: 'panel', id: 'timeseries' }] as DashboardJson['__requires'],
     });
-    const result = interpolateV1Dashboard(dashboard, [{ name: '*', type: 'datasource', value: 'prom-uid' }]);
+    const result = await interpolateV1Dashboard(dashboard, [{ name: '*', type: 'datasource', value: 'prom-uid' }]);
     expect(result.__inputs).toBeUndefined();
     expect(result.__elements).toBeUndefined();
     expect(result.__requires).toBeUndefined();
   });
 
-  it('should work with no __inputs', () => {
+  it('should work with no __inputs', async () => {
     const dashboard = makeDashboard({ __inputs: undefined, panels: [] as DashboardJson['panels'] });
-    const result = interpolateV1Dashboard(dashboard, []);
+    const result = await interpolateV1Dashboard(dashboard, []);
     expect(result.title).toBe('Test');
   });
 
-  it('should throw when datasource UID cannot be resolved', () => {
-    expect(() =>
+  it('should throw when datasource UID cannot be resolved', async () => {
+    await expect(
       interpolateV1Dashboard(makeDashboard(), [
         { name: 'DS_PROMETHEUS', type: 'datasource', pluginId: 'prometheus', value: 'nonexistent-uid' },
       ])
-    ).toThrow('datasource input "DS_PROMETHEUS" references UID "nonexistent-uid" which was not found');
+    ).rejects.toThrow('datasource input "DS_PROMETHEUS" references UID "nonexistent-uid" which was not found');
   });
 });

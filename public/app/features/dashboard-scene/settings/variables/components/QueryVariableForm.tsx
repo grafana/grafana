@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type QueryVariable, type VariableValueOption } from '@grafana/scenes';
 import { type DataSourceRef, type VariableRefresh, type VariableSort } from '@grafana/schema';
 import { Field, FieldSet } from '@grafana/ui';
@@ -90,7 +90,7 @@ export function QueryVariableEditorForm({
   options,
 }: QueryVariableEditorFormProps) {
   const { value: dsConfig } = useAsync(async () => {
-    const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
+    const datasource = await getDataSourceInstance(datasourceRef ?? '');
     const VariableQueryEditor = await getVariableQueryEditor(datasource);
     const defaultQuery = datasource?.variables?.getDefaultQuery?.();
 
@@ -102,7 +102,10 @@ export function QueryVariableEditorForm({
 
     // update data source if it is not defined in variable model
     if (!datasourceRef) {
-      const instanceSettings = getDataSourceSrv().getInstanceSettings({ type: datasource.type, uid: datasource.uid });
+      const instanceSettings = await getDataSourceInstanceSettings({
+        type: datasource.type,
+        uid: datasource.uid,
+      });
       if (instanceSettings) {
         onDataSourceChange(instanceSettings, true);
       }
