@@ -940,6 +940,188 @@ func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool)
 	return nil, false
 }
 
+// repoIDHandlerStub is a minimal repository.Repository that also implements
+// repository.RepoIDHandler, so tests can drive the RepoID backfill branch in
+// process() without needing a real gitlab/github repository.
+type repoIDHandlerStub struct {
+	cfg          *provisioning.Repository
+	resolvedID   string
+	shouldUpdate bool
+}
+
+var _ repository.Repository = (*repoIDHandlerStub)(nil)
+var _ repository.RepoIDHandler = (*repoIDHandlerStub)(nil)
+
+func (s *repoIDHandlerStub) Config() *provisioning.Repository { return s.cfg }
+
+func (s *repoIDHandlerStub) Test(context.Context) (*provisioning.TestResults, error) {
+	return &provisioning.TestResults{Success: true, Code: http.StatusOK}, nil
+}
+
+func (s *repoIDHandlerStub) ResolvedRepoID() string   { return s.resolvedID }
+func (s *repoIDHandlerStub) ShouldUpdateRepoID() bool { return s.shouldUpdate }
+
+// raceSimulatingPatcher approximates the apiserver's atomic JSON Patch
+// application (see k8s.io/apiserver/pkg/endpoints/handlers/patch.go,
+// jsonPatcher.applyJSPatch): all operations are evaluated against a single
+// storage snapshot, and if any "test" operation fails, none of the patch's
+// other operations are applied. This lets tests exercise what happens when a
+// stale reconciliation's precondition no longer holds, without needing the
+// real evanphx/json-patch dependency in this package.
+type raceSimulatingPatcher struct {
+	storage *provisioning.Repository
+}
+
+func (p *raceSimulatingPatcher) Patch(_ context.Context, _ *provisioning.Repository, patchOperations ...map[string]interface{}) error {
+	for _, op := range patchOperations {
+		if op["op"] != "test" {
+			continue
+		}
+		path, _ := op["path"].(string)
+		if path == "/spec/gitlab/url" {
+			var currentURL string
+			if p.storage.Spec.GitLab != nil {
+				currentURL = p.storage.Spec.GitLab.URL
+			}
+			if currentURL != op["value"] {
+				return apierrors.NewGenericServerResponse(
+					http.StatusUnprocessableEntity, "", schema.GroupResource{}, "",
+					fmt.Sprintf("test operation on %s failed", path), 0, false)
+			}
+		}
+	}
+
+	for _, op := range patchOperations {
+		if op["op"] == "add" && op["path"] == "/spec/gitlab/repoID" && p.storage.Spec.GitLab != nil {
+			p.storage.Spec.GitLab.RepoID, _ = op["value"].(string)
+		}
+	}
+
+	return nil
+}
+
+// TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL verifies
+// the fix for a reconciliation race: reconcile pass #1 reads url=A, resolves a
+// RepoID against it, but a concurrent write changes the stored url to B before
+// pass #1's patch lands. Without a "test" precondition on the url, the "add"
+// for repoID would succeed unconditionally and silently pin the ID resolved
+// for project A onto a repository that now points at project B.
+func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+	urlA := "https://gitlab.com/group/project-a"
+	urlB := "https://gitlab.com/group/project-b"
+
+	newRepo := func(url string) *provisioning.Repository {
+		return &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       repoName,
+				Namespace:  namespace,
+				Generation: 1,
+			},
+			Spec: provisioning.RepositorySpec{
+				Type:   provisioning.GitLabRepositoryType,
+				GitLab: &provisioning.GitLabRepositoryConfig{URL: url},
+			},
+			Status: provisioning.RepositoryStatus{
+				ObservedGeneration: 0, // Generation != ObservedGeneration triggers reconciliation.
+				Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+			},
+		}
+	}
+
+	testCases := []struct {
+		name          string
+		storageURL    string
+		wantErr       bool
+		wantRepoIDSet bool
+	}{
+		{
+			name:          "no concurrent change: backfill succeeds",
+			storageURL:    urlA,
+			wantErr:       false,
+			wantRepoIDSet: true,
+		},
+		{
+			name:          "concurrent url change: stale backfill is rejected",
+			storageURL:    urlB,
+			wantErr:       true,
+			wantRepoIDSet: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// What this reconcile pass observes and resolves the RepoID against.
+			observed := newRepo(urlA)
+			// What's actually in storage by the time the patch is applied --
+			// may have diverged due to a concurrent write.
+			storage := newRepo(tc.storageURL)
+
+			indexer := cache.NewIndexer(
+				cache.MetaNamespaceKeyFunc,
+				cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+			)
+			require.NoError(t, indexer.Add(observed))
+			repoLister := listers.NewRepositoryLister(indexer)
+
+			patcher := &raceSimulatingPatcher{storage: storage}
+
+			healthMetrics := NewMockHealthMetricsRecorder(t)
+			healthMetrics.EXPECT().
+				RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+				Maybe()
+
+			tester := repository.NewTester()
+			healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
+
+			mockRepo := &repoIDHandlerStub{
+				cfg:          observed,
+				resolvedID:   "resolved-for-a",
+				shouldUpdate: true,
+			}
+
+			repoFactory := repository.NewMockFactory(t)
+			repoFactory.On("Build", mock.Anything, mock.Anything).
+				Return(mockRepo, nil).Maybe()
+
+			mockJobs := &mockJobsQueueStore{
+				MockQueue: jobs.NewMockQueue(t),
+				MockStore: jobs.NewMockStore(t),
+			}
+
+			repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+			rc := &RepositoryController{
+				repos:         repoGetter,
+				quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+				healthChecker: healthChecker,
+				statusPatcher: patcher,
+				repoFactory:   repoFactory,
+				jobs:          mockJobs,
+				logger:        logging.DefaultLogger.With("logger", loggerName),
+				tracer:        tracing.InitializeTracerForTest(),
+			}
+
+			err := rc.process(namespace + "/" + repoName)
+
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			if tc.wantRepoIDSet {
+				assert.Equal(t, "resolved-for-a", storage.Spec.GitLab.RepoID,
+					"repoID should be backfilled when the url has not changed")
+			} else {
+				assert.Empty(t, storage.Spec.GitLab.RepoID,
+					"a stale reconciliation must not pin a repoID resolved for a different url")
+			}
+		})
+	}
+}
+
 func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testing.T) {
 	testCases := []struct {
 		name             string
@@ -1649,6 +1831,95 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 	_, healthPatched := patcher.findPatchOp("/status/health")
 	assert.False(t, healthPatched,
 		"existing HealthFailureHook status must not be overwritten during cooldown")
+}
+
+// TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError
+// verifies that a webhook call failing with repository.ErrUnauthorized is a
+// user-facing state, not a controller error: process() must return nil (no
+// Error-level log, no queue retry) even though the hook attempt failed, while
+// still recording the failure on /status/health so it's visible to the user.
+func TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> webhookOnCreate runs
+		},
+	}
+
+	stub := &hookRepoStub{
+		cfg:        repo,
+		hookErr:    repository.ErrUnauthorized,
+		hookErrSet: true,
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err, "an unauthorized hook failure must not surface as a controller error")
+
+	assert.Equal(t, int32(1), stub.onCreateCalls.Load(), "the hook attempt should still have run")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the failure must still be recorded on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy)
+	assert.Equal(t, provisioning.HealthFailureHook, healthStatus.Error)
+	require.Len(t, healthStatus.Message, 1)
+	assert.Contains(t, healthStatus.Message[0], repository.ErrUnauthorized.Error())
+}
+
+// TestRepositoryController_process_HookFailureNonAuthErrorStillReturnsError
+// a hook failure that is
+// NOT repository.ErrUnauthorized must still surface as a controller error
+// (Error-level log, eligible for retry), so only the specific user-fixable
+// auth case is silenced.
+func TestRepositoryController_process_HookFailureNonAuthErrorStillReturnsError(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> webhookOnCreate runs
+		},
+	}
+
+	stub := &hookRepoStub{cfg: repo} // hookErrSet is false -> hookResult() returns assert.AnError
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.Error(t, err, "a non-auth hook failure must still surface as a controller error")
+	assert.ErrorIs(t, err, assert.AnError)
+
+	assert.Equal(t, int32(1), stub.onCreateCalls.Load(), "the hook attempt should still have run")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the failure must still be recorded on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy)
+	assert.Equal(t, provisioning.HealthFailureHook, healthStatus.Error)
 }
 
 // newRecoveryController is a small helper that wires up the minimal set of

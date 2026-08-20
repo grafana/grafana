@@ -1,0 +1,28 @@
+{
+  "runtime.js": {
+    "src": "public/build/runtime.js",
+    "integrity": "sha256-rspackRuntimeIntegrityPlaceholderAAAAAAAAAAA="
+  },
+  "app.js": {
+    "src": "public/build/app.js",
+    "integrity": "sha256-rspackAppIntegrityPlaceholderAAAAAAAAAAAAAA="
+  },
+  "entrypoints": {
+    "app": {
+      "assets": {
+        "js": ["public/build/runtime.js", "public/build/app.js"],
+        "css": ["public/build/grafana.app.aaaa1111bbbb2222cccc.css"]
+      }
+    },
+    "dark": {
+      "assets": {
+        "css": ["public/build/grafana.dark.dddd3333eeee4444ffff.css"]
+      }
+    },
+    "light": {
+      "assets": {
+        "css": ["public/build/grafana.light.5555aaaa6666bbbb7777.css"]
+      }
+    }
+  }
+}

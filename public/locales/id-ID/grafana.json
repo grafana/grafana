@@ -1611,17 +1611,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Yakin ingin memulai impor? Tindakan ini akan membuat sumber daya baru di Grafana Alerting.",
         "confirm": "Mulai Impor",
@@ -1669,26 +1658,6 @@
       "info-description": "Panduan ini membantu Anda mengimpor aturan peringatan dan sumber daya notifikasi dari sumber eksternal ke Grafana Alerting. Untuk informasi selengkapnya, lihat <2>dokumentasi</2>.",
       "info-title": "Wizard impor",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Ketik untuk mencari namespace yang ada",
         "label": "Ruang nama"
@@ -1712,10 +1681,6 @@
         "filter": "Filter",
         "folder": "Folder target",
         "heading": "Tinjau Impor",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Ruang nama",
         "nothing": "Tidak ada yang dapat diimpor",
         "nothing-desc": "Kedua langkah dilewati. Kembali dan konfigurasikan setidaknya satu sumber impor.",
@@ -1742,10 +1707,6 @@
         "validation-warning": "Beberapa sumber daya akan diganti namanya untuk menghindari konflik.",
         "will-import-config": "Akan mengimpor konfigurasi ini",
         "will-import-rules": "Akan mengimpor aturan",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_other": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_other": "Akan mengimpor {{count}} aturan"
       },
       "routing-tree": {
@@ -1856,14 +1817,10 @@
         "cancel-confirm-title": "Batalkan impor?",
         "cancel-confirm-yes": "Buang perubahan",
         "skip": "Lewati",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Sumber daya notifikasi",
         "step-notifications-desc": "Titik kontak, kebijakan, templat",
         "step-review": "Tinjau & impor",
         "step-review-desc": "Pratinjau dan konfirmasikan impor",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Aturan peringatan",
         "step-rules-desc": "Aturan peringatan dan perekaman"
       },
@@ -2243,6 +2200,8 @@
       "title-no-alerting-capable-query-found": "Tidak ada kueri berkemampuan peringatan yang ditemukan"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Konfigurasikan kesenyapan untuk menghentikan notifikasi dari aturan peringatan tertentu"
@@ -2250,7 +2209,10 @@
         "text": {
           "silence-alert-rule": "Senyapkan aturan peringatan"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Kami tidak dapat menemukan Alertmanager eksternal dan Anda mungkin tidak memiliki akses ke Grafana Alertmanager bawaan.",
@@ -3283,6 +3245,35 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3690,6 +3681,9 @@
       "no-matching-instances-with-filters": "Tidak ada instance peringatan yang cocok dengan rangkaian filter Anda saat ini untuk rentang waktu yang dipilih.",
       "open-in-sidebar": "Buka di bilah sisi",
       "open-rule-details": "Buka detail aturan",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Detail dan ketentuan aturan",
         "title": "Detail Aturan"
@@ -3841,6 +3835,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Gagal mengimpor sumber daya",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Berhasil mengimpor sumber daya ke Grafana Alerting."
     },
     "yaml-content-info": {
@@ -5392,6 +5388,16 @@
     "auto-grid": {
       "description": "Ukuran panel diubah agar pas dan membentuk kisi yang seragam",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Ulangi opsi",
           "variable": {
@@ -5409,15 +5415,36 @@
         "custom-min-width": {
           "clear": "Hapus"
         },
+        "fit-content": "",
         "height-fill": "Isi layar",
+        "match-row-heights": "",
         "max-columns": "Kolom maks",
-        "min-height": "Tinggi baris",
-        "min-height-custom": "Tinggi baris kustom",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "Masukkan angka antara 50 dan 2000",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Lebar kolom min",
         "min-width-custom": "Lebar min kustom",
         "min-width-custom-clear": "Kembali ke lebar kolom min standar",
-        "min-width-error": "Masukkan angka antara 50 dan 2000"
+        "min-width-error": "Masukkan angka antara 50 dan 2000",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5650,6 +5677,7 @@
       "panel-background": "Ubah latar belakang panel",
       "panel-description": "Ubah deskripsi panel",
       "panel-edit": "Perubahan panel",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Pengulangan maksimum per baris",
       "panel-preset": "Terapkan preset panel",
       "panel-repeat-direction": "Ulangi arah",
@@ -6026,6 +6054,7 @@
       "new-row-title": "Baris baru",
       "row": {
         "collapse": "Ciutkan baris {{title}}",
+        "copy-link": "",
         "expand": "Perluas baris {{title}}",
         "new": "Baris baru",
         "repeat": {
@@ -8876,11 +8905,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -9442,21 +9474,6 @@
   "get-enterprise": {
     "requires-license": "Membutuhkan lisensi Grafana Enterprise",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "selesai",
-      "learn-how": "Pelajari caranya di dokumen"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Ke tutorial lanjutan",
-      "aria-label-to-basic-tutorials": "Ke tutorial dasar",
-      "checking-completed-setup-steps": "Memeriksa langkah-langkah pengaturan yang telah selesai",
-      "remove-this-panel": "Hapus panel ini"
-    },
-    "tutorial-card": {
-      "complete": "selesai"
-    }
   },
   "global-variables": {
     "details": {
@@ -12701,6 +12718,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -12715,6 +12738,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -17384,12 +17416,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Tautan"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Butuh bantuan?",
-      "welcome-to-grafana": "Selamat datang di Grafana"
     }
   },
   "xychart": {

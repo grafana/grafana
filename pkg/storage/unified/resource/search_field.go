@@ -32,8 +32,8 @@ const (
 	// SearchCapabilityPartial enables substring matching (Bleve ngram
 	// analyzer). Requires SearchCapabilityText.
 	SearchCapabilityPartial SearchCapability = "partial"
-	// SearchCapabilitySort makes the field sortable. It also enables DocValues
-	// on the keyword variant for column-wise reads and stable sort tie-breakers.
+	// SearchCapabilitySort enables sorting on the field. A search request can only
+	// sort on fields that declare it.
 	SearchCapabilitySort     SearchCapability = "sort"
 	SearchCapabilityFacet    SearchCapability = "facet"    // facetable on the keyword variant
 	SearchCapabilityRetrieve SearchCapability = "retrieve" // value is stored and returned in search results

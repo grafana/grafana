@@ -1,12 +1,12 @@
+import { SOLUTION_IDS } from '../solutions/constants';
+import { type SignalStatus, type SolutionState } from '../solutions/solutionState';
+
 import {
   type BaseRow,
-  EXISTING_SOLUTION_IDS,
   orderCardsForSolution,
   type RecommendedCardId,
   selectRecommendations,
-  type SignalStatus,
   SOLUTION_CARD_PRIORITY,
-  type SolutionState,
 } from './solutionsMatrix';
 
 function state(m: SignalStatus, l: SignalStatus, t: SignalStatus, k: SignalStatus): SolutionState {
@@ -114,7 +114,7 @@ describe('orderCardsForSolution', () => {
 
     for (const solutionState of reachable) {
       const { cards } = selectRecommendations(solutionState);
-      for (const id of EXISTING_SOLUTION_IDS) {
+      for (const id of SOLUTION_IDS) {
         const ordered = orderCardsForSolution(cards, id);
         expect([...ordered].sort()).toEqual([...cards].sort());
       }
@@ -122,7 +122,7 @@ describe('orderCardsForSolution', () => {
   });
 
   it('holds a complete total order per solution: every card id exactly once', () => {
-    for (const id of EXISTING_SOLUTION_IDS) {
+    for (const id of SOLUTION_IDS) {
       expect([...SOLUTION_CARD_PRIORITY[id]].sort()).toEqual([...ALL_CARD_IDS].sort());
     }
   });

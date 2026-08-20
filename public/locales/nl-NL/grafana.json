@@ -1618,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Weet je zeker dat je de import wilt starten? Met deze actie worden nieuwe bronnen aangemaakt in Grafana Alerting.",
         "confirm": "Importeren starten",
@@ -1676,26 +1665,6 @@
       "info-description": "Met deze wizard kun je waarschuwingsregels en meldingsbronnen uit externe bronnen importeren naar Grafana Alerting. Raadpleeg de <2>documentatie</2> voor meer informatie.",
       "info-title": "Importwizard",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Typ om naar een bestaande namespace te zoeken",
         "label": "Namespace"
@@ -1719,10 +1688,6 @@
         "filter": "Filter",
         "folder": "Doelmap",
         "heading": "Importeren controleren",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Namespace",
         "nothing": "Niets om te importeren",
         "nothing-desc": "Beide stappen zijn overgeslagen. Ga terug en configureer ten minste één importbron.",
@@ -1749,14 +1714,6 @@
         "validation-warning": "Sommige bronnen krijgen een nieuwe naam om conflicten te voorkomen.",
         "will-import-config": "Deze configuratie wordt geïmporteerd",
         "will-import-rules": "Zal regels importeren",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Zal  {{count}} regels importeren",
         "will-import-rules-count_other": "Zal  {{count}} regels importeren"
       },
@@ -1868,14 +1825,10 @@
         "cancel-confirm-title": "Import annuleren?",
         "cancel-confirm-yes": "Wijzigingen verwerpen",
         "skip": "Overslaan",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Meldingsbronnen",
         "step-notifications-desc": "Contactpunten, beleid, sjablonen",
         "step-review": "Controleren en importeren",
         "step-review-desc": "Import bekijken en bevestigen",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Waarschuwingsregels",
         "step-rules-desc": "Waarschuwings- en opnameregels"
       },
@@ -2259,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "Geen query gevonden die waarschuwingen mogelijk maakt"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Configureer stiltes om meldingen van een bepaalde waarschuwingsregel te stoppen"
@@ -2266,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Waarschuwingsregel dempen"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "We konden geen externe waarschuwingsmanagers vinden en je hebt mogelijk geen toegang tot de ingebouwde Grafana Alertmanager.",
@@ -3308,6 +3266,39 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3716,6 +3707,9 @@
       "no-matching-instances-with-filters": "Er komen geen waarschuwingsinstanties overeen met je huidige filterset voor het geselecteerde tijdsbereik.",
       "open-in-sidebar": "Openen in zijbalk",
       "open-rule-details": "Regeldetails openen",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Regeldetails en voorwaarden",
         "title": "Regeldetails"
@@ -3870,6 +3864,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Kan bronnen niet importeren",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Bronnen succesvol geïmporteerd naar Grafana Alerting."
     },
     "yaml-content-info": {
@@ -5432,6 +5428,16 @@
     "auto-grid": {
       "description": "Panelen verkleinen zodat ze passen en uniforme rasters vormen",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Opties voor herhalen",
           "variable": {
@@ -5449,15 +5455,36 @@
         "custom-min-width": {
           "clear": "Wissen"
         },
+        "fit-content": "",
         "height-fill": "Scherm vullen",
+        "match-row-heights": "",
         "max-columns": "Maximaal aantal kolommen",
-        "min-height": "Rijhoogte",
-        "min-height-custom": "Aangepaste rijhoogte",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "Een getal tussen 50 en 2000 is vereist",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Minimale kolombreedte",
         "min-width-custom": "Aangepaste minimumbreedte",
         "min-width-custom-clear": "Terug naar standaard minimale kolombreedte",
-        "min-width-error": "Een getal tussen 50 en 2000 is vereist"
+        "min-width-error": "Een getal tussen 50 en 2000 is vereist",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5690,6 +5717,7 @@
       "panel-background": "Paneelachtergrond wijzigen",
       "panel-description": "Paneelbeschrijving wijzigen",
       "panel-edit": "Paneelwijzigingen",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max herhalingen per rij",
       "panel-preset": "Paneelvoorinstelling toepassen",
       "panel-repeat-direction": "Herhaalrichting",
@@ -6067,6 +6095,7 @@
       "new-row-title": "Nieuwe rij",
       "row": {
         "collapse": "Rij {{title}} samenvouwen",
+        "copy-link": "",
         "expand": "Rij {{title}} uitvouwen",
         "new": "Nieuwe rij",
         "repeat": {
@@ -8938,11 +8967,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -9504,21 +9536,6 @@
   "get-enterprise": {
     "requires-license": "Vereist een Grafana Enterprise-licentie",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "voltooid",
-      "learn-how": "Ontdek hoe in de documenten"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Naar geavanceerde tutorials",
-      "aria-label-to-basic-tutorials": "Naar basistutorials",
-      "checking-completed-setup-steps": "Voltooide installatiestappen controleren",
-      "remove-this-panel": "Dit paneel verwijderen"
-    },
-    "tutorial-card": {
-      "complete": "voltooid"
-    }
   },
   "global-variables": {
     "details": {
@@ -12799,6 +12816,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -12813,6 +12836,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -17521,12 +17553,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Koppelen"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Hulp nodig?",
-      "welcome-to-grafana": "Welkom bij Grafana"
     }
   },
   "xychart": {

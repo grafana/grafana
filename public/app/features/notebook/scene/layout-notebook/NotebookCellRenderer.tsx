@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Suspense } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
@@ -15,7 +16,15 @@ const PANEL_HEIGHT = 300;
 // A notebook cell is one of two things: a panel (a chart) or narrative content (a markdown or
 // code block). This chooses the matching renderer, or shows a compact placeholder when the cell
 // is collapsed.
-export function NotebookCellRenderer({ cell, isEditing }: { cell: NotebookCellItem; isEditing: boolean }) {
+export function NotebookCellRenderer({
+  cell,
+  isEditing,
+  autoFocus,
+}: {
+  cell: NotebookCellItem;
+  isEditing: boolean;
+  autoFocus?: boolean;
+}) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
 
   if (collapsed) {
@@ -27,7 +36,7 @@ export function NotebookCellRenderer({ cell, isEditing }: { cell: NotebookCellIt
   }
 
   if (narrative) {
-    return <NarrativeCell content={narrative} isEditing={isEditing} />;
+    return <NarrativeCell cell={cell} content={narrative} isEditing={isEditing} autoFocus={autoFocus} />;
   }
 
   return null;
@@ -45,9 +54,23 @@ function PanelCell({ panel }: { panel: VizPanel }) {
 }
 
 // A narrative cell: markdown or code, rendered by the component registered for its content kind.
-function NarrativeCell({ content, isEditing }: { content: CellContentKind; isEditing: boolean }) {
+//
+// Edits go back through the layout manager rather than straight onto this cell, because a cell
+// cannot see the siblings that may reference the same element. They end up on cell state, which is
+// where transformNotebookSceneToSaveModel reads content from — so an export (and, later, a save)
+// serializes what the reader actually sees. Nothing is persisted to the API yet.
+function NarrativeCell({
+  cell,
+  content,
+  isEditing,
+  autoFocus,
+}: {
+  cell: NotebookCellItem;
+  content: CellContentKind;
+  isEditing: boolean;
+  autoFocus?: boolean;
+}) {
   const styles = useStyles2(getStyles);
-
   const registered = cellTypeRegistry.getIfExists(content.kind);
   if (!registered) {
     return null;
@@ -56,7 +79,14 @@ function NarrativeCell({ content, isEditing }: { content: CellContentKind; isEdi
   const Renderer = registered.render;
   return (
     <div className={styles.content}>
-      <Renderer content={content} isEditing={isEditing} />
+      <Suspense fallback={content.kind === 'Code' ? <pre>{content.spec.code}</pre> : null}>
+        <Renderer
+          content={content}
+          isEditing={isEditing}
+          autoFocus={autoFocus}
+          onChange={(updated) => cell.onContentChange(updated)}
+        />
+      </Suspense>
     </div>
   );
 }

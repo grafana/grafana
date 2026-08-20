@@ -2390,6 +2390,7 @@ __metadata:
     "@types/d3-interpolate": "npm:^3.0.0"
     "@types/history": "npm:4.7.11"
     "@types/lodash": "npm:4.17.20"
+    "@types/luxon": "npm:^3.0.0"
     "@types/node": "npm:24.10.1"
     "@types/papaparse": "npm:5.3.16"
     "@types/react": "npm:19.2.18"
@@ -2408,7 +2409,6 @@ __metadata:
     lodash: "npm:^4.17.23"
     marked: "npm:^16.3.0"
     marked-mangle: "npm:^1.1.12"
-    moment: "npm:^2.30.1"
     moment-timezone: "npm:^0.5.47"
     ol: "npm:^10.7.0"
     papaparse: "npm:^5.5.3"
@@ -2998,13 +2998,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:8.13.6":
-  version: 8.13.6
-  resolution: "@grafana/scenes-react@npm:8.13.6"
+"@grafana/scenes-react@npm:8.16.1":
+  version: 8.16.1
+  resolution: "@grafana/scenes-react@npm:8.16.1"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
-    "@grafana/scenes": "npm:8.13.6"
+    "@grafana/scenes": "npm:8.16.1"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3018,7 +3018,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/f961131c5e690c1a94c1d973d41632d041ac0b428c2c5c4f881a7b06ae65f4bd7b54e4b063181bb994be88f5b65073fbaffd1a05fca75a125087894d99f42229
+  checksum: 10/80804aba19911f3bcd610b88fc24f2ed72613699328f8f3b56bbb8221c96f8d7e5ec0388f4b90a9a6043641c296bcb4bd6b69d503e929b13495ef9bbffdec2bf
   languageName: node
   linkType: hard
 
@@ -3050,6 +3050,37 @@ __metadata:
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
   checksum: 10/ca3187337f42bbfce7a7d49d4cd236187c18a2a98a36abc1a74b0df655fc3574d70272480b2e7b07b0abbe6248df1c6751ee54b46fc7849d83c74925d1b52b5a
+  languageName: node
+  linkType: hard
+
+"@grafana/scenes@npm:8.16.1":
+  version: 8.16.1
+  resolution: "@grafana/scenes@npm:8.16.1"
+  dependencies:
+    "@emotion/css": "npm:^11.13.5"
+    "@emotion/react": "npm:^11.14.0"
+    "@floating-ui/react": "npm:^0.27.0"
+    "@leeoniya/ufuzzy": "npm:^1.0.16"
+    "@tanstack/react-virtual": "npm:^3.9.0"
+    history: "npm:^4.9.0"
+    lodash: "npm:^4.17.21"
+    react-grid-layout: "npm:^1.3.4"
+    react-select: "npm:^5.10.2"
+    react-use: "npm:^17.5.0"
+    react-virtualized-auto-sizer: "npm:^1.0.24"
+    uuid: "npm:^11.0.0"
+  peerDependencies:
+    "@grafana/data": ">=11.6"
+    "@grafana/e2e-selectors": ">=11.6"
+    "@grafana/i18n": "*"
+    "@grafana/runtime": ">=11.6"
+    "@grafana/schema": ">=11.6"
+    "@grafana/ui": ">=11.6"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+    react-router-dom: ^6.28.0
+    rxjs: ^7.8.1
+  checksum: 10/87b96e5fde4e397d7184295b80956e49f753afcfc87bc1d7a08c0a65df9125be3877ef387671acec789c633c7ad14fbc90b469103b28ae5a82c2e31a184a6dd1
   languageName: node
   linkType: hard
 
@@ -11142,6 +11173,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/luxon@npm:^3.0.0":
+  version: 3.7.4
+  resolution: "@types/luxon@npm:3.7.4"
+  checksum: 10/f062cbf6cfac319b88abcedd253308c6dc98e0b76e1ab991fb9fb1573c602097f2d54a95ea874d3678f3963a73478bcce260c621deb6c779c83ff891611e46d7
+  languageName: node
+  linkType: hard
+
 "@types/mailparser@npm:3.4.4, @types/mailparser@npm:^3.4.0":
   version: 3.4.4
   resolution: "@types/mailparser@npm:3.4.4"
@@ -14600,7 +14638,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:^2.3.1, classnames@npm:^2.3.2, classnames@npm:^2.5.1":
+"classnames@npm:^2.3.1, classnames@npm:^2.5.1":
   version: 2.5.1
   resolution: "classnames@npm:2.5.1"
   checksum: 10/58eb394e8817021b153bb6e7d782cfb667e4ab390cb2e9dac2fc7c6b979d1cc2b2a733093955fc5c94aa79ef5c8c89f11ab77780894509be6afbb91dddd79d15
@@ -16700,13 +16738,6 @@ __metadata:
   version: 4.0.4
   resolution: "diff@npm:4.0.4"
   checksum: 10/5019b3f5ae124ea9e95137119e1a83a59c252c75ddac873cc967832fd7a834570a58a4d58b941bdbd07832ebf98dcb232b27c561b7f5584357da6dae59bcac62
-  languageName: node
-  linkType: hard
-
-"diff@npm:^5.1.0":
-  version: 5.2.2
-  resolution: "diff@npm:5.2.2"
-  checksum: 10/8a885b38113d96138d87f6cb474ee959b7e9ab33c0c4cb1b07dcf019ec544945a2309d53d721532af020de4b3a58fb89f1026f64f42f9421aa9c3ae48a36998b
   languageName: node
   linkType: hard
 
@@ -19875,8 +19906,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:8.13.6"
-    "@grafana/scenes-react": "npm:8.13.6"
+    "@grafana/scenes": "npm:8.16.1"
+    "@grafana/scenes-react": "npm:8.16.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -20094,7 +20125,6 @@ __metadata:
     publint: "npm:^0.3.12"
     re-resizable: "npm:6.11.2"
     react: "npm:19.2.8"
-    react-diff-viewer-continued: "npm:^3.4.0"
     react-dom: "npm:19.2.8"
     react-draggable: "npm:4.5.0"
     react-highlight-words: "npm:0.21.0"
@@ -25951,11 +25981,11 @@ __metadata:
   linkType: hard
 
 "nanoid@npm:^3.3.16":
-  version: 3.3.17
-  resolution: "nanoid@npm:3.3.17"
+  version: 3.3.18
+  resolution: "nanoid@npm:3.3.18"
   bin:
     nanoid: bin/nanoid.cjs
-  checksum: 10/54c3238ba6ea31c173ccf70922481814892075dbf1b4636abec249d0b34d5594fc9a8892c04872068674010a11fa3d18316dc06e59e700def131ff9d8e740426
+  checksum: 10/1b3b4fdac831b92b56d1dbe8b1e63a372432faf86ea383134e3b53141ef8108a60b7f84343b5cefecac9550bb74edf8164da93ea07d1c4f757039bc75d8a5d9e
   languageName: node
   linkType: hard
 
@@ -29135,22 +29165,6 @@ __metadata:
   peerDependencies:
     react: ^15.3.0 || 16 || 17 || 18
   checksum: 10/ada5846c6f2839da0847c94c6c7f6c1ba50e2fd883c9e9fbad473b8bb1995e0ec4ecacc2ea8e6e5ee569e06e45cb2e9a9c8f1c52aa79128fa32e4c2b3d66529a
-  languageName: node
-  linkType: hard
-
-"react-diff-viewer-continued@npm:^3.4.0":
-  version: 3.4.0
-  resolution: "react-diff-viewer-continued@npm:3.4.0"
-  dependencies:
-    "@emotion/css": "npm:^11.11.2"
-    classnames: "npm:^2.3.2"
-    diff: "npm:^5.1.0"
-    memoize-one: "npm:^6.0.0"
-    prop-types: "npm:^15.8.1"
-  peerDependencies:
-    react: ^15.3.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^15.3.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: 10/98a5fc3e01ffd16768a6d52d5d0eb582b1650b3c02ba41c769c588a520cc428ea3ead4bb64610ecc8ad709a643404cc7edb769f0fdd644ed7923c8bceedb4f74
   languageName: node
   linkType: hard
 
