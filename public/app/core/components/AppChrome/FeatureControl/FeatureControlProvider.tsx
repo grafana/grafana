@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { useStoredBoolean } from 'app/core/hooks/useStored';
@@ -26,15 +26,33 @@ export const FeatureControlContext = createContext<FeatureControlContextType>({
 export const useFeatureControlContext = () => useContext(FeatureControlContext);
 
 export const FeatureControlContextProvider = ({ children }: { children: ReactNode }) => {
-  // When this session runs frontend assets from a PR preview build, the UI is
-  // shown by default so the preview is clearly signposted. Stored values (e.g.
-  // an explicit dismissal) still take precedence.
   const previewAssetsActive = Boolean(getPreviewAssetsFolder());
-  const [isAccessible, setIsAccessible] = useStoredBoolean(
+  const [storedIsAccessible, setStoredIsAccessible] = useStoredBoolean(
     FEATURE_CONTROL_ACCESSIBLE_LOCAL_STORAGE_KEY,
     previewAssetsActive
   );
-  const [isOpen, setIsOpen] = useStoredBoolean(FEATURE_CONTROL_OPEN_LOCAL_STORAGE_KEY, previewAssetsActive);
+  const [storedIsOpen, setStoredIsOpen] = useStoredBoolean(FEATURE_CONTROL_OPEN_LOCAL_STORAGE_KEY, previewAssetsActive);
+
+  // Ignore persisted dismissals on the first render of a preview session, but
+  // clear the override when the user changes either value during that session.
+  const [forceAccessible, setForceAccessible] = useState(previewAssetsActive);
+  const [forceOpen, setForceOpen] = useState(previewAssetsActive);
+  const isAccessible = forceAccessible || storedIsAccessible;
+  const isOpen = forceOpen || storedIsOpen;
+  const setIsAccessible = useCallback(
+    (value: boolean) => {
+      setForceAccessible(false);
+      setStoredIsAccessible(value);
+    },
+    [setStoredIsAccessible]
+  );
+  const setIsOpen = useCallback(
+    (value: boolean) => {
+      setForceOpen(false);
+      setStoredIsOpen(value);
+    },
+    [setStoredIsOpen]
+  );
 
   useEffect(() => {
     const syncForcedState = () => {

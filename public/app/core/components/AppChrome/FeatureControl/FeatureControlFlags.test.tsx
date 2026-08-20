@@ -68,8 +68,23 @@ describe('FeatureControlFlags', () => {
 
     renderComponent();
 
-    expect(screen.getByText('Frontend preview active')).toBeInTheDocument();
-    expect(screen.getByText('pr_grafana_123456')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Stop preview/ })).toBeInTheDocument();
+    const previewStatus = screen.getByRole('status');
+    expect(previewStatus).toHaveTextContent('Frontend preview active');
+    expect(previewStatus).toHaveTextContent('Build pr_grafana_123456 live for just you.');
+    expect(screen.getByRole('button', { name: 'Stop preview' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy share link' })).toBeInTheDocument();
+  });
+
+  it('copies a link that enables the active preview assets', async () => {
+    Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+    const user = userEvent.setup();
+    window.__grafanaPreviewAssets = 'pr_grafana_123456';
+
+    renderComponent();
+    await user.click(screen.getByRole('button', { name: 'Copy share link' }));
+
+    expect(await navigator.clipboard.readText()).toBe(
+      `${window.location.origin}/-/set-preview-assets?assets=pr_grafana_123456`
+    );
   });
 });

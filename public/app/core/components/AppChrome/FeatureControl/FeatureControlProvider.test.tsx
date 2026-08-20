@@ -43,6 +43,14 @@ describe('FeatureControlProvider', () => {
         <div data-testid="is-open">{isOpen.toString()}</div>
         <button onClick={() => setIsAccessible(true)}>Enable accessibility</button>
         <button onClick={() => setIsOpen(true)}>Open feature control</button>
+        <button
+          onClick={() => {
+            setIsAccessible(false);
+            setIsOpen(false);
+          }}
+        >
+          Dismiss feature control
+        </button>
       </div>
     );
   };
@@ -97,13 +105,24 @@ describe('FeatureControlProvider', () => {
     expectState({ isAccessible: true, isOpen: true });
   });
 
-  it('should respect a stored dismissal when preview assets are active', () => {
+  it('should override a stored dismissal on the first page load when preview assets are active', () => {
     window.__grafanaPreviewAssets = 'pr_grafana_123456';
     window.localStorage.setItem(STORAGE_KEYS.accessible, 'false');
     window.localStorage.setItem(STORAGE_KEYS.open, 'false');
     renderProvider();
 
+    expectState({ isAccessible: true, isOpen: true });
+    expectStorage({ isAccessible: 'false', isOpen: 'false' });
+  });
+
+  it('should allow feature control to be dismissed during a preview session', async () => {
+    window.__grafanaPreviewAssets = 'pr_grafana_123456';
+    renderProvider();
+
+    await userEvent.click(screen.getByText('Dismiss feature control'));
+
     expectState({ isAccessible: false, isOpen: false });
+    expectStorage({ isAccessible: 'false', isOpen: 'false' });
   });
 
   it('should update accessibility and open state', async () => {
