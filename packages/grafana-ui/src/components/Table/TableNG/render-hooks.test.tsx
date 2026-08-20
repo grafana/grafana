@@ -14,13 +14,14 @@ import {
   FieldColorModeId,
   FieldType,
 } from '@grafana/data';
-import { type CalculatedColumn, type RenderRowProps } from '@grafana/react-data-grid';
+import { type CalculatedColumn, type RenderCellProps, type RenderRowProps } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../utils/colors';
 import { type PanelContext } from '../../PanelChrome';
 
 import { type HeaderCell } from './components/HeaderCell';
+import { type TableCellTooltipProps } from './components/TableCellTooltip';
 import {
   type ColumnBuildConfig,
   prepareFieldsForDisplay,
@@ -291,6 +292,13 @@ function getHeaderCellProps(column: TableColumn): ComponentProps<typeof HeaderCe
   return node.props;
 }
 
+/**
+ * The grid passes a full RenderCellProps; the cell renderers only read `row` and `column`.
+ */
+function makeCellProps(column: TableColumn, row: TableRow): RenderCellProps<TableRow, TableSummaryRow> {
+  return { column, row } as unknown as RenderCellProps<TableRow, TableSummaryRow>;
+}
+
 function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConfig {
   const theme = createTheme();
   const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
@@ -396,6 +404,31 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
     expect(result.columns[0].width).toBe(150);
     expect(result.columns[1].width).toBe(200);
+  });
+
+  it('renders a cell tooltip against a prepared copy of the tooltip field', () => {
+    // The tooltip field is hidden, so it never reaches the builder through `fields` — it has to be
+    // prepared on lookup, otherwise the tooltip formats JSON with the frame's raw display processor.
+    const tooltipFrame = createDataFrame({
+      fields: [
+        { name: 'A', type: FieldType.string, values: ['x', 'y'], config: { custom: { tooltip: { field: 'J' } } } },
+        { name: 'J', type: FieldType.other, values: [{ a: 1 }, { a: 2 }], config: { custom: { hidden: true } } },
+      ],
+    });
+    const rawDisplay = (v: unknown) => ({ text: String(v), numeric: NaN });
+    tooltipFrame.fields[1].display = rawDisplay;
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+
+    const result = callFromFields(hook, [tooltipFrame.fields[0]], [100], tooltipFrame, rows, rows);
+    const node = result.columns[0].renderCell!(makeCellProps(result.columns[0], rows[0]));
+
+    if (!isValidElement<TableCellTooltipProps>(node)) {
+      throw new Error('renderCell did not return a tooltip element');
+    }
+    expect(node.props.field).not.toBe(tooltipFrame.fields[1]);
+    expect(node.props.field.display!({ a: 1 }).text).toBe(JSON.stringify({ a: 1 }, null, ' '));
+    // ...and the frame's own field is left alone
+    expect(tooltipFrame.fields[1].display).toBe(rawDisplay);
   });
 
   function makePillFrame({ withMappings }: { withMappings: boolean }): DataFrame {

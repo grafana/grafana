@@ -451,7 +451,10 @@ function buildColumnsFromFields(
 
     const tooltipFieldName = field.config.custom?.tooltip?.field;
     if (tooltipFieldName) {
-      const tooltipField = frame.fields.find(predicateByName(tooltipFieldName));
+      // The tooltip field is usually hidden, so it's not part of `preparedFields`. Run it through the
+      // same preparation so the tooltip formats its value exactly like a rendered cell would.
+      const rawTooltipField = frame.fields.find(predicateByName(tooltipFieldName));
+      const tooltipField = rawTooltipField ? prepareFieldsForDisplay([rawTooltipField], theme)[0] : undefined;
       if (tooltipField) {
         const tooltipDisplayName = getDisplayName(tooltipField);
         const tooltipCellOptions = getCellOptions(tooltipField);
