@@ -19,9 +19,15 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 
 import { TableCellDisplayMode } from '../types';
 
-import { COLUMN, TABLE } from './constants';
+import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, TABLE } from './constants';
 import { getJustifyContent } from './styles';
-import { type FilterType, type GetActionsFunctionLocal, type MeasureCellHeightEntry, type TableRow } from './types';
+import {
+  type FilterType,
+  type GetActionsFunctionLocal,
+  type MeasureCellHeightEntry,
+  type TableColumn,
+  type TableRow,
+} from './types';
 import {
   applyFilter,
   applySort,
@@ -43,6 +49,7 @@ import {
   getCellLinks,
   getCellOptions,
   getColumnTypes,
+  markEdgeColumns,
   getComparator,
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
@@ -2123,6 +2130,23 @@ describe('TableNG utils', () => {
       expect(compute(fields, 50)).toEqual([50]);
     });
 
+    it('reserves the first column’s extra padding when the panel has none of its own', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: {} },
+        { name: 'Other', type: FieldType.string, values: ['a'], config: {} },
+      ];
+      // "Name" floors to MIN_WIDTH 50, "Other" sizes to its header (5*8 + chrome 13 = 53). Only the
+      // first column carries the 6px of extra inline-start padding that lines it up with the title.
+      expect(
+        computeContentAwareColWidths(fields, 109, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          noPanelPadding: true,
+        })
+      ).toEqual([56, 53]);
+      expect(compute(fields, 103)).toEqual([50, 53]);
+    });
+
     it('reserves the wider column menu instead of the filter icon when table.refresh is on', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
@@ -2357,6 +2381,49 @@ describe('TableNG utils', () => {
 
     it('returns an empty map for empty inputs', () => {
       expect(buildNestedColumnWidthsMap([], []).size).toBe(0);
+    });
+  });
+
+  describe('markEdgeColumns', () => {
+    const col = (key: string, overrides: Partial<TableColumn> = {}): TableColumn =>
+      ({
+        key,
+        name: key,
+        field: { name: key, type: FieldType.string, values: [], config: {} },
+        ...overrides,
+      }) as TableColumn;
+
+    it('tags the first and last columns on every cell variant', () => {
+      const [first, middle, last] = markEdgeColumns([col('a'), col('b'), col('c')]);
+
+      expect(first.headerCellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(first.cellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(first.summaryCellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(middle.headerCellClass).toBeUndefined();
+      expect(last.headerCellClass).toContain(LAST_COLUMN_CLASS);
+      expect(last.cellClass).toContain(LAST_COLUMN_CLASS);
+      expect(last.summaryCellClass).toContain(LAST_COLUMN_CLASS);
+    });
+
+    it('tags a single column as both edges', () => {
+      const [only] = markEdgeColumns([col('a')]);
+      expect(only.headerCellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(only.headerCellClass).toContain(LAST_COLUMN_CLASS);
+    });
+
+    it('keeps existing classes, including ones computed per row', () => {
+      const [first] = markEdgeColumns([
+        col('a', { headerCellClass: 'existing-header', cellClass: (row) => `row-${row.__index}` }),
+      ]);
+
+      expect(first.headerCellClass).toBe(`existing-header ${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`);
+      expect(typeof first.cellClass === 'function' && first.cellClass({ __index: 3, __depth: 0 })).toBe(
+        `row-3 ${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`
+      );
+    });
+
+    it('returns the list unchanged when there are no columns', () => {
+      expect(markEdgeColumns([])).toEqual([]);
     });
   });
 
