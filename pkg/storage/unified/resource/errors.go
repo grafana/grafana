@@ -323,14 +323,5 @@ func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
 		return grpccodes.Canceled
 	}
 
-	switch {
-	case httpCode >= 500:
-		return grpccodes.Internal
-	case httpCode >= 400:
-		return grpccodes.InvalidArgument
-	default:
-		// An ErrorResult carrying a non-error status is a caller bug, not a
-		// success: codes.OK here would silently turn it into a nil error.
-		return grpccodes.Unknown
-	}
+	return grpccodes.Unknown
 }
