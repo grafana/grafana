@@ -1,636 +1,412 @@
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
-import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { ctaClicked } from '../analytics/main';
+import { ctaClicked, recommendationsShown } from '../analytics/main';
+import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
+import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
+import { type SignalStatus, type SolutionState } from '../solutions/solutionState';
+import { type Solution, type SolutionId } from '../solutions/types';
+import { type HomepageSolutions } from '../useHomepageSolutions';
 
 import { Recommendations } from './Recommendations';
-import { HOSTED_TRACES_APP_ID } from './appPluginIds';
-import {
-  fetchClusterCpuSeries,
-  fetchKubernetesHealth,
-  fetchKubernetesInventory,
-  KUBERNETES_APP_ID,
-  resolveKubernetesDatasource,
-} from './kubernetesData';
-import { useSolutionState } from './solutionState';
-import { type SolutionState } from './solutionsMatrix';
-import { fetchLogsActivity, fetchMetricsActivity, type MetricsActivity } from './telemetryData';
+import { resetInstalledPlugins } from './pluginRecommendations';
 
 const mockGet = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ get: mockGet }),
 }));
+jest.mock('../analytics/main', () => ({ ctaClicked: jest.fn(), recommendationsShown: jest.fn() }));
 
-jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
-  ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
-  usePluginBridge: jest.fn(),
-}));
-
-jest.mock('../analytics/main', () => ({
-  ctaClicked: jest.fn(),
-}));
-
-// The RecommendationExisting child fetches its overview from Prometheus; resolve to no
-// datasource so tests exercise the (deterministic) no-data card instead of hitting one.
-jest.mock('./kubernetesData', () => ({
-  ...jest.requireActual('./kubernetesData'),
-  resolveKubernetesDatasource: jest.fn().mockResolvedValue(null),
-  fetchKubernetesInventory: jest.fn().mockResolvedValue({ clusters: 0, pods: 0 }),
-  fetchKubernetesHealth: jest.fn().mockResolvedValue({
-    alertsFiring: null,
-    unhealthyPods: null,
-    restarts1h: null,
-    notReadyNodes: null,
-  }),
-  fetchClusterCpuSeries: jest.fn().mockResolvedValue(null),
-}));
-
-jest.mock('./solutionState', () => ({
-  useSolutionState: jest.fn(),
-}));
-
-jest.mock('./telemetryData', () => ({
-  ...jest.requireActual('./telemetryData'),
-  fetchLogsActivity: jest.fn(),
-  fetchMetricsActivity: jest.fn(),
-  fetchTracesActivity: jest.fn(),
-  fetchTracesServices: jest.fn(),
-}));
-
-// Removed-app ids stay literal: the never-render guard must outlive their deleted constants.
-const LEGACY_APP_IDS = ['grafana-synthetic-monitoring-app', 'grafana-app-observability-app', 'grafana-kowalski-app'];
-const APP_IDS = [HOSTED_TRACES_APP_ID, KUBERNETES_APP_ID, ...LEGACY_APP_IDS];
-
-const listItem = (id: string, overrides: Partial<LocalPlugin> = {}) => ({
-  id,
-  enabled: false,
-  accessControl: { [AccessControlAction.PluginsWrite]: true, [AccessControlAction.PluginsAppAccess]: true },
-  ...overrides,
-});
-
-const mockUsePluginBridge = jest.mocked(usePluginBridge);
-const mockUseSolutionState = jest.mocked(useSolutionState);
-const mockFetchLogsActivity = jest.mocked(fetchLogsActivity);
-const mockFetchMetricsActivity = jest.mocked(fetchMetricsActivity);
-
-const prometheusDatasource: DataSourceInstanceListItem = {
-  uid: 'prom-uid',
-  name: 'grafanacloud-prom',
+const datasource: DataSourceInstanceListItem = {
+  uid: 'prometheus',
+  name: 'Prometheus',
   type: 'prometheus',
   meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
   readOnly: false,
-  isDefault: false,
+  isDefault: true,
 };
 
-const lokiDatasource: DataSourceInstanceListItem = {
-  uid: 'loki-uid',
-  name: 'grafanacloud-logs',
-  type: 'loki',
-  meta: { id: 'loki' } as DataSourceInstanceListItem['meta'],
-  readOnly: false,
-  isDefault: false,
+const DEFAULT_STATE: SolutionState = {
+  metrics: 'active',
+  logs: 'active',
+  traces: 'inactive',
+  kubernetes: 'inactive',
+  spanMetrics: 'inactive',
 };
 
-function setSolutionState(
-  overrides: Partial<SolutionState>,
-  ds: { loki?: DataSourceInstanceListItem; prometheus?: DataSourceInstanceListItem } = {}
-) {
-  // Honor the enabled gate like the real hook: a collapsed region resolves nothing.
-  mockUseSolutionState.mockImplementation((enabled = true) =>
-    enabled
-      ? {
-          value: {
-            state: {
-              metrics: 'inactive',
-              logs: 'inactive',
-              traces: 'inactive',
-              kubernetes: 'inactive',
-              spanMetrics: 'inactive',
-              ...overrides,
-            },
-            lokiDatasource: ds.loki ?? null,
-            tempoDatasource: null,
-            prometheusDatasource: ds.prometheus ?? null,
-          },
-          loading: false,
-        }
-      : { value: undefined, loading: false }
+function plugin(id: string, enabled = false, canWrite = true, canAccess = true): LocalPlugin {
+  return {
+    id,
+    enabled,
+    accessControl: {
+      [AccessControlAction.PluginsWrite]: canWrite,
+      [AccessControlAction.PluginsAppAccess]: canAccess,
+    },
+  } as unknown as LocalPlugin;
+}
+
+function solution(
+  id: SolutionId,
+  status: SignalStatus,
+  data: DataSourceInstanceListItem | null,
+  overrides: Partial<Solution> = {}
+): Solution {
+  return {
+    id,
+    title: id,
+    icon: 'chart-line',
+    signal: async () => status,
+    datasource: async () => data,
+    needsAttention: async () => false,
+    stats: async () => null,
+    refinedStats: async () => null,
+    sparkline: async () => null,
+    cta: async () => null,
+    alert: async () => null,
+    offer: async () => null,
+    ...overrides,
+  };
+}
+
+function homepageSolutions(
+  state: SolutionState = DEFAULT_STATE,
+  solutions: Solution[] = [],
+  signals: HomepageSolutions['signals'] = jest.fn(async () => state)
+): HomepageSolutions {
+  return { solutions, signals };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}
+
+const carouselRegion = () => screen.findByRole('region', { name: 'Recommended apps' });
+
+function visibleRecommendationTitle(region: HTMLElement): string {
+  return (
+    within(region)
+      .getAllByRole('heading', { level: 3, hidden: true })
+      .find((heading) => heading.closest('div[aria-hidden="false"]'))
+      ?.textContent?.trim() ?? ''
   );
 }
 
 beforeEach(() => {
+  resetInstalledPlugins();
   window.localStorage.clear();
-  jest.mocked(ctaClicked).mockClear();
-  mockUsePluginBridge.mockReset();
-  mockUsePluginBridge.mockReturnValue({
-    loading: false,
-    installed: true,
-    settings: { id: 'grafana-k8s-app' } as PluginMeta<{}>,
-  });
-  mockGet.mockReset();
-  mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id)));
-  mockUseSolutionState.mockReset();
-  mockFetchLogsActivity.mockReset();
-  mockFetchLogsActivity.mockResolvedValue({ bytes: null, sources: null, series: null });
-  mockFetchMetricsActivity.mockReset();
-  mockFetchMetricsActivity.mockResolvedValue({
-    series: null,
-    dataPointsPerMinute: null,
-    names: null,
-    hosts: null,
-    seriesSparkline: null,
-    disk: null,
-  });
-  // Metrics + Logs, no Traces: the two-card row (hosted-traces, kubernetes-monitoring).
-  setSolutionState({ metrics: 'active', logs: 'active' });
+  mockGet.mockReset().mockResolvedValue([plugin(HOSTED_TRACES_APP_ID), plugin(KUBERNETES_APP_ID)]);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+  jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockImplementation((action, metadata) => {
+    return Boolean(metadata.accessControl?.[action]);
+  });
+  jest.mocked(ctaClicked).mockClear();
+  jest.mocked(recommendationsShown).mockClear();
+  document.addEventListener('click', interceptLinkClicks);
 });
 
-afterEach(() => jest.restoreAllMocks());
-
-const carouselRegion = async () => screen.findByRole('region', { name: 'Recommended apps' });
+afterEach(() => {
+  document.removeEventListener('click', interceptLinkClicks);
+  jest.restoreAllMocks();
+});
 
 describe('Recommendations', () => {
-  // The default fixtures resolve no solution datasources, so the left card is in its no-data
-  // state and no solution view is active: the carousel keeps the global matrix order.
-  it('renders the matrix-selected cards in matrix order for ml_no_traces', async () => {
-    render(<Recommendations />);
+  it('uses the supplied aggregate signal getter and plugin inventory', async () => {
+    const signals = jest.fn(async () => DEFAULT_STATE);
+    render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
 
-    const region = await carouselRegion();
-    const titles = within(region)
-      .getAllByRole('heading', { level: 3, hidden: true })
-      .map((heading) => heading.textContent?.trim());
-    expect(titles).toEqual(['Trace requests across services', 'Monitor your Kubernetes fleet']);
-    expect(within(region).getByRole('link', { name: /Enable Hosted Traces/ })).toBeInTheDocument();
-    expect(
-      within(region).getByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })
-    ).toBeInTheDocument();
+    await carouselRegion();
+
+    expect(signals).toHaveBeenCalledTimes(1);
+    expect(mockGet).toHaveBeenCalledTimes(1);
   });
 
-  it('follows the selected solution: metrics-led by default, logs-led after switching', async () => {
-    setSolutionState({ metrics: 'active', logs: 'active' }, { prometheus: prometheusDatasource, loki: lokiDatasource });
-    mockFetchMetricsActivity.mockResolvedValue({
-      series: 4_200_000,
-      dataPointsPerMinute: null,
-      names: null,
-      hosts: 12,
-      seriesSparkline: null,
-      disk: null,
-    });
-    mockFetchLogsActivity.mockResolvedValue({ bytes: 47_000_000_000, sources: 8, series: null });
-
-    const { user } = render(<Recommendations />);
-
-    // The left card defaults to the first registry entry (kubernetes resolves no datasource).
-    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
-
-    const region = await carouselRegion();
-    const titles = () =>
-      within(region)
-        .getAllByRole('heading', { level: 3, hidden: true })
-        .map((heading) => heading.textContent?.trim());
-    // The metrics view leads with K8s Monitoring — the reverse of the matrix order.
-    expect(titles()).toEqual(['Monitor your Kubernetes fleet', 'Trace requests across services']);
-
-    // Advance to the second slide so the switch provably resets the carousel.
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByRole('button', { name: 'Go to recommendation 1' })).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: /Switch solution/i }));
-    await user.click(screen.getByRole('menuitem', { name: 'Hosted Logs' }));
-
-    expect(screen.getByRole('heading', { name: 'Hosted Logs' })).toBeInTheDocument();
-    // The logs view re-leads with Hosted Traces and restarts on the first slide.
-    expect(titles()).toEqual(['Trace requests across services', 'Monitor your Kubernetes fleet']);
-    expect(screen.queryByRole('button', { name: 'Go to recommendation 1' })).not.toBeInTheDocument();
-    expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-      surface: 'existing_solution',
-      action: 'switch_solution',
-      placement: 'card',
-      solution: 'logs',
-    });
-  });
-
-  it('holds the recommended column until the default solution settles, then paints its order', async () => {
-    setSolutionState({ metrics: 'active', logs: 'active', traces: 'active' }, { prometheus: prometheusDatasource });
-    let resolveMetrics!: (activity: MetricsActivity) => void;
-    mockFetchMetricsActivity.mockReturnValue(new Promise((resolve) => (resolveMetrics = resolve)));
-
-    render(<Recommendations />);
-
-    // While the metrics probe is pending the column holds a skeleton — never the global order
-    // that the settling default selection would immediately reorder.
-    await screen.findByTestId('recommended-card-skeleton');
-    expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
-
-    resolveMetrics({
-      series: 4,
-      dataPointsPerMinute: null,
-      names: null,
-      hosts: null,
-      seriesSparkline: null,
-      disk: null,
-    });
-
-    const region = await carouselRegion();
-    const titles = within(region)
-      .getAllByRole('heading', { level: 3, hidden: true })
-      .map((heading) => heading.textContent?.trim());
-    // The metrics view order — not the global matrix order, which leads with the service map.
-    expect(titles).toEqual(['Monitor your Kubernetes fleet', 'Explore your service map']);
-  });
-
-  it('shows a skeleton while the solution state is resolving', async () => {
-    mockUseSolutionState.mockReturnValue({ value: undefined, loading: true });
-
-    render(<Recommendations />);
-
-    expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
-  });
-
-  it('fills the carousel with the three telemetry pillars for an empty stack', async () => {
-    setSolutionState({});
-
-    render(<Recommendations />);
-
-    const region = await carouselRegion();
-    const titles = within(region)
-      .getAllByRole('heading', { level: 3, hidden: true })
-      .map((heading) => heading.textContent?.trim());
-    expect(titles).toEqual([
-      'Start with metrics',
-      'See the story behind your metrics',
-      'Trace requests across services',
-    ]);
-    expect(within(region).getByRole('link', { name: /Connect metrics/ })).toHaveAttribute(
-      'href',
-      '/connections/add-new-connection'
-    );
-  });
-
-  it('holds the skeleton while a selected plugin card waits on the plugin list', async () => {
-    mockGet.mockImplementation(() => new Promise(() => {}));
-
-    render(<Recommendations />);
-
-    expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
-  });
-
-  it('gives an enabled-but-silent app a setup CTA into the app', async () => {
-    mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: id === 'grafana-exploretraces-app' })));
-
-    render(<Recommendations />);
-
-    const setupLink = await screen.findByRole('link', { name: /Set up Hosted Traces/, hidden: true });
-    expect(setupLink).toHaveAttribute('href', '/a/grafana-exploretraces-app');
-    expect(screen.queryByRole('link', { name: /Enable Hosted Traces/, hidden: true })).not.toBeInTheDocument();
-  });
-
-  it('hides the setup card when the user lacks app access to the silent app', async () => {
-    mockGet.mockResolvedValue(
-      APP_IDS.map((id) =>
-        listItem(id, {
-          enabled: id === 'grafana-exploretraces-app',
-          accessControl:
-            id === 'grafana-exploretraces-app'
-              ? { [AccessControlAction.PluginsWrite]: true }
-              : { [AccessControlAction.PluginsWrite]: true, [AccessControlAction.PluginsAppAccess]: true },
-        })
-      )
-    );
-
-    render(<Recommendations />);
-
-    const region = await carouselRegion();
-    expect(within(region).queryByRole('link', { name: /Hosted Traces/, hidden: true })).not.toBeInTheDocument();
-    expect(
-      within(region).getByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })
-    ).toBeInTheDocument();
-  });
-
-  it('renders a single connection card for metrics_only without carousel controls or auto-advance', async () => {
-    jest.useFakeTimers();
-    try {
-      setSolutionState({ metrics: 'active' });
-
-      render(<Recommendations />);
-
-      // Flush the plugin-list fetch inside act; fake timers leave it pending otherwise.
-      await act(async () => {});
-
-      const addLogs = await screen.findByRole('link', { name: /Add Logs/ });
-      expect(addLogs).toHaveAttribute('href', '/connections/add-new-connection');
-      expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Previous' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /Go to recommendation/ })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument();
-
-      act(() => {
-        jest.advanceTimersByTime(11_000);
-      });
-
-      expect(screen.getByRole('link', { name: /Add Logs/ })).toBeInTheDocument();
-    } finally {
-      jest.useRealTimers();
-    }
-  });
-
-  it('selects the Helm-flavored logs card when kubernetes is active without logs', async () => {
-    setSolutionState({ metrics: 'active', kubernetes: 'active' });
-
-    render(<Recommendations />);
-
-    const setupLogs = await screen.findByRole('link', { name: /Set up log collection/ });
-    expect(setupLogs).toHaveAttribute('href', '/connections/add-new-connection');
-  });
-
-  it('hides the whole region when permissions filter out every card', async () => {
-    setSolutionState({ metrics: 'active' });
-    jest
-      .mocked(contextSrv.hasPermission)
-      .mockImplementation((action) => action !== AccessControlAction.DataSourcesCreate);
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-  });
-
-  it('keeps connection cards when the plugin fetch rejects, while plugin cards fail closed', async () => {
-    // DataSourcesCreate-only user: the plugin list request fails outright.
-    jest
-      .mocked(contextSrv.hasPermission)
-      .mockImplementation((action) => action === AccessControlAction.DataSourcesCreate);
-    mockGet.mockRejectedValue(new Error('boom'));
-    setSolutionState({ metrics: 'active' });
-
-    render(<Recommendations />);
-
-    expect(await screen.findByRole('link', { name: /Add Logs/ })).toBeInTheDocument();
-
-    // Same failure with a plugin-card selection: both cards fail closed and the whole region hides.
-    setSolutionState({ metrics: 'active', logs: 'active' });
-    const { container: second } = render(<Recommendations />);
-
-    await waitFor(() => expect(second).toBeEmptyDOMElement());
-  });
-
-  it('hides the whole region when the plugin list is empty and every card is plugin-kind', async () => {
-    mockGet.mockResolvedValue([]);
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-  });
-
-  it('hides the whole region when any signal is unknown', async () => {
-    setSolutionState({ metrics: 'active', logs: 'unknown' });
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-  });
-
-  it('hides the whole region when there is nothing left to recommend', async () => {
-    setSolutionState({
-      metrics: 'active',
-      logs: 'active',
-      traces: 'active',
-      kubernetes: 'active',
-      spanMetrics: 'active',
-    });
-
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
-  });
-
-  it('recommends App Observability for OTel starters, suppressed once span metrics exist', async () => {
-    setSolutionState({ metrics: 'active', logs: 'active', traces: 'active' });
-
-    const first = render(<Recommendations />);
-
-    let region = await carouselRegion();
-    const titles = within(region)
-      .getAllByRole('heading', { level: 3, hidden: true })
-      .map((heading) => heading.textContent?.trim());
-    expect(titles).toEqual(['Explore your service map', 'Monitor your Kubernetes fleet']);
-
-    first.unmount();
-    setSolutionState({ metrics: 'active', logs: 'active', traces: 'active', spanMetrics: 'active' });
-    render(<Recommendations />);
-
-    region = await carouselRegion();
-    expect(
-      within(region).queryByRole('link', { name: /Application Observability/, hidden: true })
-    ).not.toBeInTheDocument();
-    expect(
-      within(region).getByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })
-    ).toBeInTheDocument();
-  });
-
-  it('never renders the removed legacy cards, even installed and disabled', async () => {
-    render(<Recommendations />);
-
-    const region = await carouselRegion();
-    expect(within(region).queryByRole('link', { name: /Synthetic Monitoring/, hidden: true })).not.toBeInTheDocument();
-    expect(
-      within(region).queryByRole('link', { name: /Frontend Observability/, hidden: true })
-    ).not.toBeInTheDocument();
-  });
-
-  it('renders nothing when the user can manage neither plugins nor datasources', async () => {
+  it('renders nothing and starts no recommendation work without management permissions', () => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
+    const signals = jest.fn(async () => DEFAULT_STATE);
+    const { container } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
 
-    const { container } = render(<Recommendations />);
-
-    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    expect(container).toBeEmptyDOMElement();
+    expect(signals).not.toHaveBeenCalled();
     expect(mockGet).not.toHaveBeenCalled();
-    expect(mockUseSolutionState).not.toHaveBeenCalled();
   });
 
-  it('renders the section for a datasource-creation-only user', async () => {
-    jest
-      .mocked(contextSrv.hasPermission)
-      .mockImplementation((action) => action === AccessControlAction.DataSourcesCreate);
-    setSolutionState({ metrics: 'active' });
+  it('holds the region skeleton until every selection input settles', async () => {
+    const state = deferred<SolutionState>();
+    const signals = jest.fn(() => state.promise);
+    render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
 
-    render(<Recommendations />);
+    expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
+    expect(screen.queryByText('Recommendations for your stack')).not.toBeInTheDocument();
 
-    expect(await screen.findByRole('link', { name: /Add Logs/ })).toBeInTheDocument();
-  });
-
-  it('shows installed-but-disabled cards only with a scoped write permission', async () => {
-    jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action === AccessControlAction.PluginsWrite);
-    mockGet.mockResolvedValue([
-      listItem('grafana-exploretraces-app'),
-      listItem('grafana-k8s-app', { accessControl: {} }),
-    ]);
-
-    render(<Recommendations />);
-
-    expect(await screen.findByRole('link', { name: /Enable Hosted Traces/, hidden: true })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })).not.toBeInTheDocument();
-  });
-
-  it('shows not-installed cards but hides installed-but-disabled ones for an install-only user', async () => {
-    jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action === AccessControlAction.PluginsInstall);
-    mockGet.mockResolvedValue([listItem('grafana-k8s-app', { accessControl: {} })]);
-
-    render(<Recommendations />);
-
-    expect(await screen.findByRole('link', { name: /Enable Hosted Traces/, hidden: true })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Enable Kubernetes Monitoring/, hidden: true })).not.toBeInTheDocument();
-  });
-
-  it('hides install cards when plugin admin is disabled', async () => {
-    config.pluginAdminEnabled = false;
-    jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action === AccessControlAction.PluginsInstall);
-    mockGet.mockResolvedValue([]);
-
-    try {
-      const { container } = render(<Recommendations />);
-
-      await waitFor(() => expect(container).toBeEmptyDOMElement());
-    } finally {
-      config.pluginAdminEnabled = true;
-    }
-  });
-
-  it('collapses and expands the recommendations card', async () => {
-    const { user } = render(<Recommendations />);
+    await act(async () => state.resolve(DEFAULT_STATE));
 
     expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Hide' })).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Hide' }));
-
-    expect(screen.getByRole('button', { name: 'Show' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Show' })).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Previous' })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Show' }));
-
-    expect(screen.getByText('Recommendations for your stack')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Hide' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Hide' })).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument();
   });
 
-  it('does not refetch the existing-solution data when collapsed and expanded', async () => {
-    const mockResolve = jest.mocked(resolveKubernetesDatasource);
-    const mockInventory = jest.mocked(fetchKubernetesInventory);
-    const mockHealth = jest.mocked(fetchKubernetesHealth);
-    const mockCpu = jest.mocked(fetchClusterCpuSeries);
-    mockResolve.mockClear();
-    mockInventory.mockClear();
-    mockHealth.mockClear();
-    mockCpu.mockClear();
-    const { user } = render(<Recommendations />);
-
-    await screen.findByRole('button', { name: 'Next' });
-    expect(mockResolve).toHaveBeenCalledTimes(1);
-    expect(mockInventory).toHaveBeenCalledTimes(1);
-    expect(mockHealth).toHaveBeenCalledTimes(1);
-    expect(mockCpu).toHaveBeenCalledTimes(1);
-
-    await user.click(screen.getByRole('button', { name: 'Hide' }));
-    await user.click(screen.getByRole('button', { name: 'Show' }));
-
-    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
-    expect(mockResolve).toHaveBeenCalledTimes(1);
-    expect(mockInventory).toHaveBeenCalledTimes(1);
-    expect(mockHealth).toHaveBeenCalledTimes(1);
-    expect(mockCpu).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not run Kubernetes queries while collapsed from a stored preference, mounts once on Show', async () => {
-    window.localStorage.setItem('grafana.home.recommendations.collapsed', 'true');
-    const mockResolve = jest.mocked(resolveKubernetesDatasource);
-    mockResolve.mockClear();
-
-    const { user } = render(<Recommendations />);
-
-    await screen.findByText('Recommendations for your stack');
-    expect(mockResolve).not.toHaveBeenCalled();
-
-    await user.click(await screen.findByRole('button', { name: 'Show' }));
-    await waitFor(() => expect(mockResolve).toHaveBeenCalledTimes(1));
-
-    // Let the remounted view settle before toggling; a click mid-remount can hit a detached node.
-    await screen.findByRole('button', { name: 'Next' });
-    await user.click(screen.getByRole('button', { name: 'Hide' }));
-    await screen.findByRole('button', { name: 'Show' });
-    await user.click(screen.getByRole('button', { name: 'Show' }));
-    expect(mockResolve).toHaveBeenCalledTimes(1);
-    expect(screen.queryByTestId('recommendation-existing-skeleton')).not.toBeInTheDocument();
-  });
-
-  it('resolves no solution state and fetches no plugins while collapsed from a stored preference', async () => {
-    window.localStorage.setItem('grafana.home.recommendations.collapsed', 'true');
-
-    const { user } = render(<Recommendations />);
-
-    // The region renders header-only: no skeleton, no probes, no plugin fetch, no pills.
-    expect(await screen.findByRole('button', { name: 'Show' })).toBeInTheDocument();
-    expect(screen.queryByTestId('recommendations-skeleton')).not.toBeInTheDocument();
-    expect(mockUseSolutionState).toHaveBeenLastCalledWith(false);
-    expect(mockGet).not.toHaveBeenCalled();
-    expect(screen.queryByRole('link', { name: /Enable/ })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Show' }));
-
-    expect(mockUseSolutionState).toHaveBeenCalledWith(true);
-    expect(await screen.findByRole('link', { name: /Enable Hosted Traces/ })).toBeInTheDocument();
-    await waitFor(() => expect(mockGet).toHaveBeenCalled());
-  });
-
-  it('navigates recommendations with previous/next buttons', async () => {
-    const { user } = render(<Recommendations />);
+  it('renders the matrix-selected cards in matrix order', async () => {
+    render(<Recommendations solutions={homepageSolutions()} />);
 
     const region = await carouselRegion();
-    const getVisibleHeading = () =>
+    expect(
       within(region)
         .getAllByRole('heading', { level: 3, hidden: true })
-        .find((heading) => heading.closest('div[aria-hidden="false"]'));
-    const getVisibleTitle = () => getVisibleHeading()?.textContent?.trim() ?? '';
+        .map((heading) => heading.textContent?.trim())
+    ).toEqual(['Trace requests across services', 'Monitor your Kubernetes fleet']);
+  });
 
-    await screen.findByRole('button', { name: 'Next' });
+  it('tracks shown recommendations with the matrix starting state', async () => {
+    render(<Recommendations solutions={homepageSolutions()} />);
 
-    expect(getVisibleTitle()).toBe('Trace requests across services');
+    await carouselRegion();
+
+    await waitFor(() =>
+      expect(jest.mocked(recommendationsShown)).toHaveBeenCalledWith({
+        recommendation_ids: ['hosted-traces', 'kubernetes-monitoring'],
+        starting_state: 'ml_no_traces',
+        solution: undefined,
+      })
+    );
+  });
+
+  it('follows the selected solution order and resets the carousel when the solution changes', async () => {
+    const metrics = solution('metrics', 'active', datasource, { title: 'Metrics & infrastructure' });
+    const logs = solution(
+      'logs',
+      'active',
+      { ...datasource, uid: 'loki', name: 'Loki', type: 'loki' },
+      { title: 'Logs' }
+    );
+    const { user } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [metrics, logs])} />);
+
+    const region = await carouselRegion();
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(visibleRecommendationTitle(region)).toBe('Monitor your Kubernetes fleet');
 
     await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(visibleRecommendationTitle(region)).toBe('Trace requests across services');
 
-    expect(getVisibleTitle()).toBe('Monitor your Kubernetes fleet');
+    await user.click(screen.getByRole('button', { name: /switch solution/i }));
+    await user.click(screen.getByRole('menuitem', { name: logs.title }));
+
+    expect(await screen.findByRole('heading', { name: logs.title })).toBeInTheDocument();
+    expect(visibleRecommendationTitle(region)).toBe('Trace requests across services');
+  });
+
+  it('does not let inactive datasource details delay the recommendation order', async () => {
+    const logsDatasource = jest.fn(() => new Promise<DataSourceInstanceListItem | null>(() => {}));
+    const metrics = solution('metrics', 'active', datasource, { title: 'Metrics & infrastructure' });
+    const logs = solution('logs', 'inactive', null, {
+      title: 'Logs',
+      datasource: logsDatasource,
+    });
+    render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [metrics, logs])} />);
+
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(await carouselRegion()).toBeInTheDocument();
+    expect(screen.queryByTestId('recommended-card-skeleton')).not.toBeInTheDocument();
+    expect(logsDatasource).not.toHaveBeenCalled();
+  });
+
+  it('does not start selection while initially collapsed, then starts it on expansion', async () => {
+    window.localStorage.setItem('grafana.home.recommendations.collapsed', 'true');
+    const signals = jest.fn(async () => DEFAULT_STATE);
+    const { user } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
+
+    expect(await screen.findByRole('button', { name: 'Show' })).toBeInTheDocument();
+    expect(signals).not.toHaveBeenCalled();
+    expect(mockGet).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Show' }));
+
+    expect(await screen.findByRole('link', { name: /Enable Hosted Traces/ })).toBeInTheDocument();
+    expect(signals).toHaveBeenCalledTimes(1);
+    expect(mockGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the mounted solution facts when collapsed and expanded again', async () => {
+    const getDatasource = jest.fn(async () => datasource);
+    const metrics = solution('metrics', 'active', datasource, {
+      title: 'Metrics & infrastructure',
+      datasource: getDatasource,
+    });
+    const { user } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [metrics])} />);
+
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    const reads = getDatasource.mock.calls.length;
+    await user.click(screen.getByRole('button', { name: 'Hide' }));
+    await user.click(screen.getByRole('button', { name: 'Show' }));
+
+    expect(screen.getByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(getDatasource).toHaveBeenCalledTimes(reads);
+  });
+
+  it('hides the region when detection is inconclusive', async () => {
+    const unknown: SolutionState = { ...DEFAULT_STATE, logs: 'unknown' };
+    const { container } = render(<Recommendations solutions={homepageSolutions(unknown)} />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+  });
+
+  it('keeps connection recommendations when the plugin inventory is unavailable', async () => {
+    const metricsOnly: SolutionState = { ...DEFAULT_STATE, logs: 'inactive' };
+    mockGet.mockRejectedValue(new Error('plugin inventory unavailable'));
+    render(<Recommendations solutions={homepageSolutions(metricsOnly)} />);
+
+    expect(await screen.findByRole('link', { name: 'Learn more' })).toBeInTheDocument();
+  });
+
+  it('hides plugin-only recommendations when the plugin inventory is unavailable', async () => {
+    mockGet.mockRejectedValue(new Error('plugin inventory unavailable'));
+    const { container } = render(<Recommendations solutions={homepageSolutions()} />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+  });
+
+  it('filters disabled plugin actions by scoped write permission', async () => {
+    mockGet.mockResolvedValue([plugin(HOSTED_TRACES_APP_ID, false, false), plugin(KUBERNETES_APP_ID, false, true)]);
+    render(<Recommendations solutions={homepageSolutions()} />);
+
+    expect(await screen.findByRole('link', { name: /Enable Kubernetes Monitoring/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Enable Hosted Traces/ })).not.toBeInTheDocument();
+  });
+
+  it('shows connection guidance to a datasource-creation-only user', async () => {
+    jest
+      .mocked(contextSrv.hasPermission)
+      .mockImplementation((action) => action === AccessControlAction.DataSourcesCreate);
+    const metricsOnly: SolutionState = { ...DEFAULT_STATE, logs: 'inactive' };
+
+    render(<Recommendations solutions={homepageSolutions(metricsOnly)} />);
+
+    expect(await screen.findByRole('link', { name: 'Learn more' })).toBeInTheDocument();
+  });
+
+  it('does not show connection guidance to a plugin-management-only user', async () => {
+    jest.mocked(contextSrv.hasPermission).mockImplementation((action) => action === AccessControlAction.PluginsWrite);
+    const metricsOnly: SolutionState = { ...DEFAULT_STATE, logs: 'inactive' };
+    const { container } = render(<Recommendations solutions={homepageSolutions(metricsOnly)} />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+  });
+
+  it('uses the Kubernetes-specific logging guidance when cluster metrics are active', async () => {
+    const kubernetesWithoutLogs: SolutionState = {
+      ...DEFAULT_STATE,
+      logs: 'inactive',
+      kubernetes: 'active',
+    };
+    render(<Recommendations solutions={homepageSolutions(kubernetesWithoutLogs)} />);
+
+    const link = await screen.findByRole('link', { name: 'Learn more' });
+    expect(link).toHaveAttribute(
+      'href',
+      'https://grafana.com/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/configuration/'
+    );
+  });
+
+  it('uses external telemetry guidance even without access to the enabled app page', async () => {
+    mockGet.mockResolvedValue([plugin(HOSTED_TRACES_APP_ID, true, true, false), plugin(KUBERNETES_APP_ID, false)]);
+    const { user } = render(<Recommendations solutions={homepageSolutions()} />);
+
+    const link = await screen.findByRole('link', { name: 'Learn more' });
+    expect(link).toHaveAttribute('target', '_blank');
+    await user.click(link);
+
+    expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+      surface: 'recommendations',
+      action: 'learn_more',
+      placement: 'card',
+      recommendation_id: 'hosted-traces',
+      starting_state: 'ml_no_traces',
+    });
+  });
+
+  it('still requires app-page access for a non-telemetry setup action', async () => {
+    const mlt: SolutionState = { ...DEFAULT_STATE, traces: 'active' };
+    mockGet.mockResolvedValue([plugin(APP_OBSERVABILITY_APP_ID, true, true, false), plugin(KUBERNETES_APP_ID, false)]);
+
+    render(<Recommendations solutions={homepageSolutions(mlt)} />);
+    await carouselRegion();
+
+    expect(screen.queryByRole('heading', { name: 'Explore your service map', hidden: true })).not.toBeInTheDocument();
+  });
+
+  it('renders and tracks an accessible in-app setup action', async () => {
+    mockGet.mockResolvedValue([plugin(HOSTED_TRACES_APP_ID), plugin(KUBERNETES_APP_ID, true)]);
+    const { user } = render(<Recommendations solutions={homepageSolutions()} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    await user.click(await screen.findByRole('link', { name: 'Set up Kubernetes Monitoring' }));
+
+    expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+      surface: 'recommendations',
+      action: 'setup',
+      placement: 'card',
+      recommendation_id: 'kubernetes-monitoring',
+      starting_state: 'ml_no_traces',
+    });
+  });
+
+  it('does not invent install actions for plugins missing from the inventory', async () => {
+    mockGet.mockResolvedValue([plugin('grafana-core-app', true)]);
+    const { container } = render(<Recommendations solutions={homepageSolutions()} />);
+
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+  });
+
+  it('collapses and expands an already-resolved recommendation set', async () => {
+    const { user } = render(<Recommendations solutions={homepageSolutions()} />);
+
+    expect(await screen.findByRole('button', { name: 'Hide' })).toHaveAttribute('aria-expanded', 'true');
+    await user.click(screen.getByRole('button', { name: 'Hide' }));
+    expect(screen.getByRole('button', { name: 'Show' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Show' }));
+    expect(screen.getByRole('button', { name: 'Hide' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
+  });
+
+  it('navigates with arrows and dots and exposes the carousel semantics', async () => {
+    const { user } = render(<Recommendations solutions={homepageSolutions()} />);
+    const region = await carouselRegion();
+
+    expect(region).toHaveAttribute('aria-roledescription', 'carousel');
+    expect(visibleRecommendationTitle(region)).toBe('Trace requests across services');
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(visibleRecommendationTitle(region)).toBe('Monitor your Kubernetes fleet');
+    expect(screen.getByRole('button', { name: 'Go to recommendation 1' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Previous' }));
-
-    expect(getVisibleTitle()).toBe('Trace requests across services');
-  });
-
-  it('navigates recommendations with dots', async () => {
-    const { user } = render(<Recommendations />);
-
-    expect(await screen.findByRole('button', { name: 'Go to recommendation 2' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Go to recommendation 1' })).not.toBeInTheDocument();
+    expect(visibleRecommendationTitle(region)).toBe('Trace requests across services');
 
     await user.click(screen.getByRole('button', { name: 'Go to recommendation 2' }));
-
-    expect(screen.getByRole('button', { name: 'Go to recommendation 1' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Go to recommendation 2' })).not.toBeInTheDocument();
+    expect(visibleRecommendationTitle(region)).toBe('Monitor your Kubernetes fleet');
   });
 
-  it('pauses by default when reduced motion is preferred', async () => {
-    const matchMediaSpy = jest.spyOn(window, 'matchMedia').mockImplementation(
+  it('does not render or schedule carousel controls for a single recommendation', async () => {
+    const metricsOnly: SolutionState = { ...DEFAULT_STATE, logs: 'inactive' };
+    render(<Recommendations solutions={homepageSolutions(metricsOnly)} />);
+
+    expect(await carouselRegion()).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Previous' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument();
+  });
+
+  it('starts paused when reduced motion is preferred', async () => {
+    jest.spyOn(window, 'matchMedia').mockImplementation(
       () =>
         ({
           addEventListener: jest.fn(),
@@ -639,145 +415,79 @@ describe('Recommendations', () => {
         }) as unknown as MediaQueryList
     );
 
-    try {
-      render(<Recommendations />);
+    render(<Recommendations solutions={homepageSolutions()} />);
 
-      // findBy flushes the RecommendationExisting overview fetch inside act before asserting.
-      expect(await screen.findByRole('button', { name: 'Resume' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument();
-    } finally {
-      matchMediaSpy.mockRestore();
-    }
+    expect(await screen.findByRole('button', { name: 'Resume' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pause' })).not.toBeInTheDocument();
   });
 
-  it('auto-advances a multi-card carousel and pauses on demand', async () => {
+  it('auto-advances only while the carousel is running', async () => {
     jest.useFakeTimers();
 
     try {
-      render(<Recommendations />);
+      render(<Recommendations solutions={homepageSolutions()} />);
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const region = await carouselRegion();
 
-      const pauseButton = await screen.findByRole('button', { name: 'Pause' });
-      await user.click(pauseButton);
-
-      expect(screen.getByRole('button', { name: 'Resume' })).toBeInTheDocument();
-
-      act(() => {
-        jest.advanceTimersByTime(6000);
-      });
-
-      expect(screen.queryByRole('button', { name: 'Go to recommendation 1' })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Pause' }));
+      act(() => jest.advanceTimersByTime(6000));
+      expect(visibleRecommendationTitle(region)).toBe('Trace requests across services');
 
       await user.click(screen.getByRole('button', { name: 'Resume' }));
-
-      expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
-
-      act(() => {
-        jest.advanceTimersByTime(6000);
-      });
-
-      expect(screen.getByRole('button', { name: 'Go to recommendation 1' })).toBeInTheDocument();
+      act(() => jest.advanceTimersByTime(6000));
+      expect(visibleRecommendationTitle(region)).toBe('Monitor your Kubernetes fleet');
     } finally {
       jest.useRealTimers();
     }
   });
 
-  it('announces the recommendation slides as a carousel region', async () => {
-    render(<Recommendations />);
+  it('tracks an enable action with the matrix state', async () => {
+    const { user } = render(<Recommendations solutions={homepageSolutions()} />);
 
-    const region = await carouselRegion();
-    expect(region).toHaveAttribute('aria-roledescription', 'carousel');
+    await user.click(await screen.findByRole('link', { name: /Enable Hosted Traces/ }));
+
+    expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+      surface: 'recommendations',
+      action: 'enable',
+      placement: 'card',
+      recommendation_id: 'hosted-traces',
+      starting_state: 'ml_no_traces',
+    });
   });
 
-  describe('analytics', () => {
-    // LinkButton renders a plain <a href>; clicking it would trigger a real jsdom
-    // navigation (console.error -> jest-fail-on-console). Route anchor clicks through
-    // the SPA history the way the app does so the onClick fires without navigating.
-    beforeEach(() => {
-      document.addEventListener('click', interceptLinkClicks);
+  it('tracks an enable action from the collapsed pill', async () => {
+    const { user } = render(<Recommendations solutions={homepageSolutions()} />);
+
+    await screen.findByRole('link', { name: /Enable Hosted Traces/ });
+    await user.click(screen.getByRole('button', { name: 'Hide' }));
+    await user.click(screen.getByRole('link', { name: /Enable Hosted Traces/ }));
+
+    expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+      surface: 'recommendations',
+      action: 'enable',
+      placement: 'pill',
+      recommendation_id: 'hosted-traces',
+      starting_state: 'ml_no_traces',
     });
+  });
 
-    afterEach(() => {
-      document.removeEventListener('click', interceptLinkClicks);
-    });
+  it('tracks external guidance from the collapsed pill', async () => {
+    const metricsOnly: SolutionState = { ...DEFAULT_STATE, logs: 'inactive' };
+    const { user } = render(<Recommendations solutions={homepageSolutions(metricsOnly)} />);
 
-    it('tracks enable with the driving matrix row from the active card', async () => {
-      const { user } = render(<Recommendations />);
+    await screen.findByRole('link', { name: 'Learn more' });
+    await user.click(screen.getByRole('button', { name: 'Hide' }));
+    const pill = screen.getByRole('link', { name: 'Add logs' });
+    expect(pill).toHaveAttribute('target', '_blank');
+    expect(pill).toHaveAttribute('rel', 'noopener noreferrer');
+    await user.click(pill);
 
-      await user.click(await screen.findByRole('link', { name: /Enable Hosted Traces/ }));
-
-      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'recommendations',
-        action: 'enable',
-        placement: 'card',
-        recommendation_id: 'hosted-traces',
-        starting_state: 'ml_no_traces',
-      });
-    });
-
-    it('tracks setup from an enabled-but-silent app card', async () => {
-      mockGet.mockResolvedValue(APP_IDS.map((id) => listItem(id, { enabled: id === 'grafana-exploretraces-app' })));
-
-      const { user } = render(<Recommendations />);
-
-      await user.click(await screen.findByRole('link', { name: /Set up Hosted Traces/ }));
-
-      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'recommendations',
-        action: 'setup',
-        placement: 'card',
-        recommendation_id: 'hosted-traces',
-        starting_state: 'ml_no_traces',
-      });
-    });
-
-    it('tracks the active solution view on card clicks once a solution is selected', async () => {
-      setSolutionState(
-        { metrics: 'active', logs: 'active' },
-        { prometheus: prometheusDatasource, loki: lokiDatasource }
-      );
-      mockFetchMetricsActivity.mockResolvedValue({
-        series: 4_200_000,
-        dataPointsPerMinute: null,
-        names: null,
-        hosts: null,
-        seriesSparkline: null,
-        disk: null,
-      });
-      mockFetchLogsActivity.mockResolvedValue({ bytes: 47_000_000_000, sources: 8, series: null });
-
-      const { user } = render(<Recommendations />);
-
-      // Once the default (metrics) selection settles, its leading card is K8s Monitoring.
-      expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
-      await user.click(await screen.findByRole('link', { name: /Enable Kubernetes Monitoring/ }));
-
-      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'recommendations',
-        action: 'enable',
-        placement: 'card',
-        recommendation_id: 'kubernetes-monitoring',
-        starting_state: 'ml_no_traces',
-        solution: 'metrics',
-      });
-    });
-
-    it('tracks enable from a pill when the section is collapsed', async () => {
-      const { user } = render(<Recommendations />);
-
-      // Pills only exist for in-session collapses: a stored preference gates the probes off.
-      await screen.findByRole('link', { name: /Enable Hosted Traces/ });
-      await user.click(screen.getByRole('button', { name: 'Hide' }));
-
-      await user.click(await screen.findByRole('link', { name: /Enable Hosted Traces/ }));
-
-      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'recommendations',
-        action: 'enable',
-        placement: 'pill',
-        recommendation_id: 'hosted-traces',
-        starting_state: 'ml_no_traces',
-      });
+    expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+      surface: 'recommendations',
+      action: 'learn_more',
+      placement: 'pill',
+      recommendation_id: 'enable-logs',
+      starting_state: 'metrics_only',
     });
   });
 });

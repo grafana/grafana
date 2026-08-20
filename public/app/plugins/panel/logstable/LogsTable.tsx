@@ -265,12 +265,16 @@ export const LogsTable = ({
   const logRows = useMemo(() => {
     const logs = rawTableFrame
       ? dataFrameToLogsModel([rawTableFrame], undefined, undefined, panelData.request?.targets, false).rows.map(
-          (logRow) =>
-            new LogListModel(logRow, {
-              escape: false,
-              timeZone,
-              wrapLogMessage: true,
-            })
+          (logRow, index) =>
+            new LogListModel(
+              logRow,
+              {
+                escape: false,
+                timeZone,
+                wrapLogMessage: true,
+              },
+              index
+            )
         )
       : null;
     return logs ?? [];
@@ -307,7 +311,11 @@ export const LogsTable = ({
   return (
     <div className={styles.wrapper} ref={containerRef}>
       {renderTable && containerElement && (
-        <LogDetailsContextProvider enableLogDetails={options.enableLogDetails ?? true} logs={logRows}>
+        <LogDetailsContextProvider
+          enableLogDetails={options.enableLogDetails ?? true}
+          logs={logRows}
+          logOptionsStorageKey={SETTING_KEY_ROOT}
+        >
           <LogsTableFields
             tableWidth={width}
             fieldSelectorWidth={options.fieldSelectorWidth}

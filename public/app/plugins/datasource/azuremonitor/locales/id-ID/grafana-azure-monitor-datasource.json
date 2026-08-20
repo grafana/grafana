@@ -105,7 +105,11 @@
       "load-subscriptions": "Muat Langganan"
     },
     "dimension-fields": {
-      "aria-label-remove": "Hapus",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensi",
       "placeholder-field": "Bidang",
       "placeholder-operation": "Pengoperasian",

@@ -196,7 +196,16 @@ export async function getDataSourceInstanceList(
   return (results.length > 0 ? results : getInstanceSettingsListFallback(filtersWithAdapter)).map(toListItem);
 }
 
-function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
+// Expressions are included because `__expr__` (and the legacy `-100`) is the uid they are
+// registered under; they sit outside `byUid` only because they are set at boot.
+export function lookupByUid(uid: string): DataSourceInstanceSettings | undefined {
+  if (isExpressionReference(uid)) {
+    return getExpressionDataSourceSettings();
+  }
+  return byUid[uid];
+}
+
+export function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
     uid: settings.uid,
     type: settings.type,

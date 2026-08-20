@@ -75,6 +75,18 @@ describe('HeaderCell', () => {
     expect(window.getComputedStyle(label).cursor).toBe('default');
   });
 
+  it('renders nothing when hideHeader is set', () => {
+    const { container } = render(
+      <HeaderCell {...baseProps} field={makeField({ config: { custom: { hideHeader: true } } })} direction="ASC" />
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('still renders the display name when hideHeader is not set', () => {
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(screen.getByRole('button', { name: 'Field1' })).toHaveAttribute('title', 'Field1');
+  });
+
   it('renders with wrapped header text when wrapHeaderText is enabled', () => {
     render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { wrapHeaderText: true } } })} />);
     expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();

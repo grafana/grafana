@@ -2120,10 +2120,10 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 	kind := "ErrorResource"
 
 	makeValue := func(name string) []byte {
-		return []byte(fmt.Sprintf(
+		return fmt.Appendf(nil,
 			`{"apiVersion":"%s/v0alpha1","kind":"%s","metadata":{"name":"%s","namespace":"%s","uid":"%s"}}`,
 			group, kind, name, ns, uuid.New().String(),
-		))
+		)
 	}
 
 	t.Run("read nonexistent resource returns 404", func(t *testing.T) {

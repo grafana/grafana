@@ -270,12 +270,20 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		"warningCount", len(status.Warnings),
 		"message", status.Message,
 	}
-	switch {
-	case err != nil:
-		logger.Error("job failed", append(logFields, "error", err)...)
-	case status.State == provisioning.JobStateError:
-		logger.Error("job completed with errors", logFields...)
-	case status.State == provisioning.JobStateWarning:
+	if err != nil {
+		logFields = append(logFields, "error", err)
+	}
+	// Key the log level off the final job state, not off err: a worker can return
+	// an error that maps to a warning state (e.g. a feature disabled by
+	// configuration), which should not be logged or alerted as a failure.
+	switch status.State {
+	case provisioning.JobStateError:
+		if err != nil {
+			logger.Error("job failed", logFields...)
+		} else {
+			logger.Error("job completed with errors", logFields...)
+		}
+	case provisioning.JobStateWarning:
 		logger.Warn("job completed with warnings", logFields...)
 	default:
 		logger.Info("job complete", logFields...)

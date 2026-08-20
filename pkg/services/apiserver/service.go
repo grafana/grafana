@@ -349,7 +349,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Snapshot natural priority before applyPreferredAPIVersions reorders the scheme, so the cap ranks against natural order and preferred can't weaken it.
-	naturalOrder := naturalOrderSnapshot(s.scheme, groupVersions)
+	naturalOrder := NaturalOrderSnapshot(s.scheme, groupVersions)
 
 	if err := applyPreferredAPIVersions(s.log, s.cfg, s.scheme, apiResourceConfig); err != nil {
 		return err
@@ -377,8 +377,6 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
-
 		if s.cfg.EnableVersionPolicy {
 			versionPolicyIni, err := buildVersionPolicyIniLayer(s.cfg)
 			if err != nil {
@@ -388,11 +386,12 @@ func (s *service) start(ctx context.Context) error {
 				versionpolicy.NewResolver(naturalOrder),
 				versionPolicyIni,
 			)
-			if err := s.vpRegistry.Validate(); err != nil {
+			if err := s.vpRegistry.Validate(apiResourceConfig); err != nil {
 				return err
 			}
-			getter.SetVersionPolicy(s.vpRegistry)
 		}
+
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider, s.vpRegistry)
 
 		optsregister = getter.RegisterOptions
 		serverConfig.RESTOptionsGetter = getter

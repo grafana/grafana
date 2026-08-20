@@ -263,6 +263,12 @@ func (b *bleveIndex) runPostFilterAuthz(
 	// set is exhausted or the candidate budget is reached.
 	countOnly := limit == 0 && !wantFacets
 
+	// A trash total counts only hits the caller is allowed to see, so the scan
+	// cannot stop at a full page and fall back to the unfiltered match count. It
+	// keeps counting instead, which trash can afford: the deleter half costs no
+	// authorization call and the folder half is one cached call per folder.
+	countEveryHit := countOnly || trashAuthz != nil
+
 	agg, facetAuthorized, facetExhausted, err := b.prepareFacetAggregation(
 		ctx, access, req, index, firstReq, resources, stats, trashAuthz,
 	)
@@ -354,7 +360,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 				page = append(page, info.doc)
 			}
 			// Stop as soon as the page is full (early-exit).
-			if !countOnly && len(page) >= limit {
+			if !countEveryHit && len(page) >= limit {
 				stop = true
 				break
 			}
@@ -407,7 +413,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		exhausted = facetExhausted
 	}
 	return response, b.finalizePostFilter(ctx, response, page, selectFields, firstReq.Sort, req, firstRes,
-		authorized, exhausted, reverseSort, wantFacets, agg, stats)
+		authorized, exhausted, reverseSort, wantFacets, trashAuthz != nil, agg, stats)
 }
 
 // authorizeHits filters ranked hits by the trash rule when trashAuthz is set,
@@ -463,7 +469,7 @@ func (b *bleveIndex) prepareFacetAggregation(
 func (b *bleveIndex) facetScanFields(facets map[string]*resourcepb.ResourceSearchRequest_Facet, trash bool) []string {
 	fields := make([]string, 0, len(facets)+2)
 	for _, facet := range facets {
-		field := b.searchFields.storedFacetFields[facet.Field]
+		field := b.searchFields.storedFacetField(facet.Field)
 		if field != "" && !slices.Contains(fields, field) {
 			fields = append(fields, field)
 		}
@@ -483,7 +489,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 	stats *resource.SearchStats,
 	trashAuthz *resource.TrashAuthorizer,
 ) (*facetAggregator, int64, bool, error) {
-	agg := newFacetAggregator(facets, b.searchFields.storedFacetFields)
+	agg := newFacetAggregator(facets, b.searchFields.storedFacetField)
 	cfg := b.postRankAuthz
 	maxCandidates := int64(cfg.FacetSampleSize)
 	var candidates int64
@@ -579,19 +585,28 @@ func (b *bleveIndex) finalizePostFilter(
 	req *resourcepb.ResourceSearchRequest,
 	firstRes *bleve.SearchResult,
 	authorized int64,
-	exhausted, reverseSort, wantFacets bool,
+	exhausted, reverseSort, wantFacets, trash bool,
 	agg *facetAggregator,
 	stats *resource.SearchStats,
 ) error {
+	fromTop := len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0
 	exact := exhausted
-	if wantFacets {
+	switch {
+	case wantFacets:
 		response.TotalHits = authorized
-	} else if exhausted && len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 {
+	case trash:
+		// The unfiltered count would say how many deleted objects match regardless
+		// of who deleted them, which is what the trash rule exists to withhold: a
+		// caller could vary filters and read other people's deletions off the
+		// total. Only authorized hits are counted, even when that undercounts.
+		response.TotalHits = authorized
+		exact = exhausted && fromTop
+	case exhausted && fromTop:
 		// The scan saw every match from the top, so the authorized count is
 		// exact. Count-only requests (Limit == 0) reach this too: they scan
 		// solely to total, and only fall through when the budget cuts them off.
 		response.TotalHits = authorized
-	} else {
+	default:
 		exact = false
 		// Approximate: report the pre-authz match count (an over-count of the
 		// authorized total) instead of paying for a full scan.
@@ -631,7 +646,7 @@ func (b *bleveIndex) finalizePostFilter(
 type facetAggregator struct {
 	fields map[string]*resourcepb.ResourceSearchRequest_Facet
 	// requested field -> stored Bleve field
-	storedFields map[string]string
+	storedField func(string) string
 	// facet name -> term -> count
 	counts map[string]map[string]int64
 	// facet name -> number of authorized hits missing that field
@@ -642,14 +657,14 @@ type facetAggregator struct {
 
 func newFacetAggregator(
 	facets map[string]*resourcepb.ResourceSearchRequest_Facet,
-	storedFields map[string]string,
+	storedField func(string) string,
 ) *facetAggregator {
 	a := &facetAggregator{
-		fields:       facets,
-		storedFields: storedFields,
-		counts:       make(map[string]map[string]int64, len(facets)),
-		missing:      make(map[string]int64, len(facets)),
-		total:        make(map[string]int64, len(facets)),
+		fields:      facets,
+		storedField: storedField,
+		counts:      make(map[string]map[string]int64, len(facets)),
+		missing:     make(map[string]int64, len(facets)),
+		total:       make(map[string]int64, len(facets)),
 	}
 	for name := range facets {
 		a.counts[name] = make(map[string]int64)
@@ -659,7 +674,7 @@ func newFacetAggregator(
 
 func (a *facetAggregator) add(doc *search.DocumentMatch) {
 	for name, f := range a.fields {
-		v, ok := doc.Fields[a.storedFields[f.Field]]
+		v, ok := doc.Fields[a.storedField(f.Field)]
 		if !ok || v == nil {
 			a.missing[name]++
 			continue

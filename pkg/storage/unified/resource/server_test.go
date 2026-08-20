@@ -586,12 +586,12 @@ func TestListStoredResources(t *testing.T) {
 	})
 
 	create := func(namespace, name string) {
-		raw := []byte(fmt.Sprintf(`{
+		raw := fmt.Appendf(nil, `{
 			"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {"name": %q, "namespace": %q},
 			"spec": {"title": "hello", "interval": "5m"}
-		}`, name, namespace))
+		}`, name, namespace)
 		resp, err := server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
 			Key: &resourcepb.ResourceKey{
@@ -1766,7 +1766,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// observing them inflates the histogram with the time elapsed since they
 	// were originally written, not the actual reaction time of this watcher.
 	// Only the post-subscription event should be counted.
-	obs, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestResource)
+	obs, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
 	require.NoError(t, err)
 	m := &dto.Metric{}
 	require.NoError(t, obs.(prometheus.Metric).Write(m))

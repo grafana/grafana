@@ -35,8 +35,10 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
     closeDetails,
     enableLogDetails,
     logs,
+    prettifyDetailsJSON,
     replaceDetails,
     setCurrentLog,
+    setPrettifyDetailsJSON,
     showDetails,
     toggleDetails,
   } = useLogDetailsContext();
@@ -192,6 +194,7 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
             fontSize={store.get(`${SETTING_KEY_ROOT}.fontSize`) ?? 'default'}
             logs={logs}
             logOptionsStorageKey={SETTING_KEY_ROOT}
+            syntaxHighlighting={store.getBool(`${SETTING_KEY_ROOT}.syntaxHighlighting`, true)}
             showControls={false}
             showTime={false}
             sortOrder={LogsSortOrder.Ascending}
@@ -208,7 +211,9 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
               <LogLineDetailsComponent
                 log={currentLog}
                 logs={logs}
+                prettifyDetailsJSON={prettifyDetailsJSON}
                 search={search}
+                setPrettifyDetailsJSON={setPrettifyDetailsJSON}
                 timeRange={timeRange}
                 timeZone={timeZone}
               />

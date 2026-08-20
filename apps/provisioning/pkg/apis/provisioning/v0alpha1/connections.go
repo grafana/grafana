@@ -117,8 +117,8 @@ func (ConnectionType) OpenAPIModelName() string {
 const (
 	GithubConnectionType           ConnectionType = "github"
 	GithubEnterpriseConnectionType ConnectionType = "githubEnterprise"
-	GitlabConnectionType           ConnectionType = "gitlab"
-	BitbucketConnectionType        ConnectionType = "bitbucket"
+	GitlabOAuthConnectionType      ConnectionType = "gitlabOAuth"
+	BitbucketOAuthConnectionType   ConnectionType = "bitbucketOAuth"
 )
 
 type ConnectionSpec struct {
@@ -138,7 +138,7 @@ type ConnectionSpec struct {
 	// Only applicable when provider is "githubEnterprise"
 	GitHubEnterprise *GitHubEnterpriseConnectionConfig `json:"githubEnterprise,omitempty"`
 	// Bitbucket connection configuration
-	// Only applicable when provider is "bitbucket"
+	// Only applicable when provider is "bitbucketOAuth"
 	Bitbucket *BitbucketConnectionConfig `json:"bitbucket,omitempty"`
 
 	// OAuth app configuration shared by all OAuth app providers
@@ -150,6 +150,45 @@ type ConnectionSpec struct {
 
 func (c *ConnectionSpec) IsGitHub() bool {
 	return c.GitHub != nil || c.GitHubEnterprise != nil
+}
+
+// ConnectionAuthorizeRequest completes the OAuth authorization of a connection
+// by exchanging an authorization code for tokens. It is the request and
+// response body of the connection authorize subresource.
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ConnectionAuthorizeRequest struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec ConnectionAuthorizeRequestSpec `json:"spec"`
+
+	// +optional
+	Status ConnectionAuthorizeRequestStatus `json:"status,omitempty"`
+}
+
+func (ConnectionAuthorizeRequest) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ConnectionAuthorizeRequest"
+}
+
+type ConnectionAuthorizeRequestSpec struct {
+	// The authorization code returned by the provider
+	Code string `json:"code"`
+
+	// The redirect URI used in the authorization request
+	RedirectURI string `json:"redirectURI,omitempty"`
+}
+
+func (ConnectionAuthorizeRequestSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ConnectionAuthorizeRequestSpec"
+}
+
+type ConnectionAuthorizeRequestStatus struct {
+	// Whether the connection has been authorized
+	Authorized bool `json:"authorized"`
+}
+
+func (ConnectionAuthorizeRequestStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ConnectionAuthorizeRequestStatus"
 }
 
 func (ConnectionSpec) OpenAPIModelName() string {
