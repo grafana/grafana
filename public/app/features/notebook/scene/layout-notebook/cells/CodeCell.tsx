@@ -1,11 +1,10 @@
-import { ViewPlugin } from '@codemirror/view';
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, Combobox, type ComboboxOption, Stack, Text, useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, type CodeMirrorExtension } from '@grafana/ui/unstable';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import {
@@ -41,30 +40,6 @@ const EDIT_SETUP = {
   history: false,
 };
 
-/**
- * An extension that puts the caret in the editor.
- *
- * CodeMirrorEditor exposes no ref, no autoFocus and no onCreateEditor, so a view plugin is the only
- * hook into an editor that arrives with a lazily loaded chunk — it runs whenever CodeMirror builds
- * the view, however many frames later that is.
- *
- * The focus is deferred a frame for two reasons, both races it would otherwise lose: a plugin is
- * constructed before the view's DOM is appended to its parent, and focusing a detached node does
- * nothing; and the controls that ask for this — the add-block menu, the language picker — hand focus
- * back to themselves as they close, which floating-ui does in a microtask.
- *
- * A fresh plugin per request, because CodeMirror rebuilds its plugins exactly when the extensions
- * array stops being shallow-equal. That makes a new one the way to ask for the caret again.
- */
-function buildFocusExtension() {
-  return [
-    ViewPlugin.define((view) => {
-      requestAnimationFrame(() => view.focus());
-      return {};
-    }),
-  ];
-}
-
 interface Props {
   content: CellContentKind;
   isEditing: boolean;
@@ -82,8 +57,29 @@ export function CodeCell({ content, isEditing, autoFocus, onChange }: Props) {
   // making that a live condition would re-fire every request each time the reader re-enters edit mode.
   const [focusRequests, setFocusRequests] = useState(autoFocus && isEditing ? 1 : 0);
   const requestFocus = useCallback(() => setFocusRequests((count) => count + 1), []);
+  const [focusExtension, setFocusExtension] = useState<CodeMirrorExtension[]>();
 
-  const focusExtension = useMemo(() => (focusRequests > 0 ? buildFocusExtension() : undefined), [focusRequests]);
+  useEffect(() => {
+    if (focusRequests === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    import(
+      /* webpackChunkName: "notebook-codemirror-focus" */
+      './codeCellFocusExtension'
+    ).then(({ buildCodeCellFocusExtension }) => {
+      if (!cancelled) {
+        // A fresh extension identity makes CodeMirror rebuild the view plugin
+        // and honor every focus request, including one after a language change.
+        setFocusExtension(buildCodeCellFocusExtension());
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [focusRequests]);
 
   if (content.kind !== 'Code') {
     return null;

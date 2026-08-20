@@ -6,10 +6,12 @@ import { DataLinkBuiltInVars, type GrafanaTheme2, VariableOrigin, type VariableS
 import { type CodeMirrorCompletionContext, type CodeMirrorCompletionResult } from '../CodeMirror/types';
 import { createVariableCompletionSource } from '../CodeMirror/variableCompletion';
 
+import { type DataLinkInterpolationMode } from './DataLinkInput';
+
+export type { DataLinkInterpolationMode } from './DataLinkInput';
+
 // Matches a complete `${...}` variable reference anywhere in the document.
 const VARIABLE_PATTERN = /\$\{[^}]+\}/g;
-
-export type DataLinkInterpolationMode = 'url' | 'text';
 
 const VARIABLE_CLASS = 'cm-variable';
 
