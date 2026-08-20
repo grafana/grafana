@@ -47,6 +47,9 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
   const prOrCompareUrl = file.data?.urls?.newPullRequestURL || file.data?.urls?.compareURL; // Check if pull request URLs are available from the repository file data
   const prURL = existingPRUrl || prOrCompareUrl; // if PR URL is provided, use it, otherwise use BE response url
   const hasExistingPr = Boolean(existingPRUrl); // when existing PR URL is provided, it means the dashboard is loaded from a pull request
+  // Authoritative change type from the dry-run, so the banner title reflects the real action
+  // (create/update/delete/move) instead of inferring "new resource" from the absence of a PR URL.
+  const resourceAction = file.data?.resource?.action;
 
   const branchInfo: PreviewBranchInfo = {
     targetBranch: targetRef,
@@ -54,7 +57,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
     repoBaseUrl,
   };
 
-  return <PreviewBannerViewPR prURL={prURL} isNewPr={!hasExistingPr} branchInfo={branchInfo} />;
+  return <PreviewBannerViewPR prURL={prURL} isNewPr={!hasExistingPr} action={resourceAction} branchInfo={branchInfo} />;
 }
 
 export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {

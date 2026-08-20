@@ -63,6 +63,9 @@ interface FileQueryData {
     newPullRequestURL?: string;
     compareURL?: string;
   };
+  resource?: {
+    action?: 'create' | 'update' | 'delete' | 'move';
+  };
 }
 
 interface SetupOverrides {
@@ -235,6 +238,30 @@ describe('DashboardPreviewBanner', () => {
         })
       ).toBeInTheDocument();
       expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+    });
+
+    it('uses resource.action for the title so an edit without a PR URL is not labelled as created', () => {
+      setup(
+        {},
+        {
+          fileQuery: {
+            data: {
+              ref: 'feature-branch',
+              urls: defaultFileQueryReturn.data.urls,
+              resource: { action: 'update' },
+            },
+            isLoading: false,
+            error: null,
+          },
+        }
+      );
+
+      expect(
+        screen.getByRole('status', {
+          name: 'A resource has been updated in a branch in GitHub.',
+        })
+      ).toBeInTheDocument();
+      expect(screen.queryByText('A new resource has been created in a branch in GitHub.')).not.toBeInTheDocument();
     });
 
     it('calls useGetResourceRepositoryView with slug', () => {

@@ -1,6 +1,7 @@
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Icon, Stack, TextLink, Text } from '@grafana/ui';
+import { type ResourceObjects } from 'app/api/clients/provisioning/v0alpha1';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
@@ -16,6 +17,12 @@ interface Props {
   behindBranch?: boolean;
   repoUrl?: string;
   branchInfo?: PreviewBranchInfo;
+  /**
+   * Authoritative change type from the API dry-run (`resource.action`). When provided it selects
+   * the banner copy; otherwise we fall back to the `action` URL param. Preferred over `isNewPr`
+   * for the title, since `isNewPr` only reflects whether a PR URL was in the query, not the action.
+   */
+  action?: ResourceObjects['action'];
 }
 
 export type PreviewBranchInfo = {
@@ -46,8 +53,8 @@ function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch:
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
-  const { repoType, action, prTitle } = usePullRequestParam();
+export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, action }: Props) {
+  const { repoType, action: paramAction, prTitle } = usePullRequestParam();
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
   // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the
@@ -55,12 +62,16 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
   const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
   const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
 
+  const bannerAction = action ?? paramAction;
+
   const actionText =
-    action === 'delete'
+    bannerAction === 'delete'
       ? getDeleteBannerText(capitalizedRepoType)
-      : action === 'update'
+      : bannerAction === 'update'
         ? getUpdateBannerText(capitalizedRepoType)
-        : getCreateBannerText(isNewPr, capitalizedRepoType);
+        : bannerAction === 'move'
+          ? getMoveBannerText(capitalizedRepoType)
+          : getCreateBannerText(isNewPr, capitalizedRepoType);
 
   if (behindBranch) {
     return (
@@ -186,6 +197,25 @@ function getUpdateBannerText(repoType: string): BannerText {
     ),
     body: t(
       'provisioned-resource-preview-banner.preview-banner.update-from-branch',
+      'The rest of Grafana users in your organization will still see the current version until this branch is merged'
+    ),
+    button: t(
+      'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
+      'Open pull request in {{repoType}}',
+      { repoType }
+    ),
+  };
+}
+
+function getMoveBannerText(repoType: string): BannerText {
+  return {
+    title: t(
+      'provisioned-resource-preview-banner.title-moved-resource-in-branch',
+      'A resource has been moved in a branch in {{repoType}}.',
+      { repoType }
+    ),
+    body: t(
+      'provisioned-resource-preview-banner.preview-banner.move-from-branch',
       'The rest of Grafana users in your organization will still see the current version until this branch is merged'
     ),
     button: t(
