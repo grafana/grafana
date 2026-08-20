@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -87,6 +87,40 @@ const createDisplayNameDataFrame = (displayName: string, values = ['A1', 'A2']):
           values,
           config: { ...stdCellConfig, displayName },
           display: displayString,
+          ...stdField,
+        },
+      ]
+    })
+  );
+
+const createThreeColumnDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 3,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: ['A1', 'A2', 'A3'],
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'Column B',
+          type: FieldType.number,
+          values: [1, 2, 3],
+          config: stdCellConfig,
+          display: displayNumber,
+          ...stdField,
+        },
+        {
+          name: 'Column C',
+          type: FieldType.number,
+          values: [4, 5, 6],
+          config: stdCellConfig,
+          display: displayNumber,
           ...stdField,
         },
       ],
@@ -984,6 +1018,114 @@ describe('TableNG', () => {
       // The header shows the cached (frame-substituted) name — the important thing is that it's
       // consistent with the cells above, not blank or mismatched.
       expect(columnHeaders[1].querySelector('button')).toHaveAttribute('title', 'SortingValueTest');
+    });
+  });
+
+  describe('Column reordering', () => {
+    // jsdom has no native DataTransfer; react-data-grid's column drag only reads/writes a few
+    // members of it, so a minimal stub is enough to drive the drag/drop event sequence.
+    function createDataTransfer() {
+      return {
+        dropEffect: '',
+        effectAllowed: '',
+        setDragImage: jest.fn(),
+        setData: jest.fn(),
+        getData: jest.fn(),
+      };
+    }
+
+    it('reorders columns by dragging one header cell onto another', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+
+      const headerText = () =>
+        Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+      expect(headerText()).toEqual(['Column A', 'Column B']);
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      const dataTransfer = createDataTransfer();
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[1], { dataTransfer });
+      fireEvent.dragOver(headers[1], { dataTransfer });
+      fireEvent.drop(headers[1], { dataTransfer });
+
+      expect(headerText()).toEqual(['Column B', 'Column A']);
+    });
+
+    it('does not make columns draggable when the flag is off', () => {
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+      );
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      headers.forEach((header) => expect(header).not.toHaveAttribute('draggable', 'true'));
+
+      const headerText = () =>
+        Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+      const dataTransfer = createDataTransfer();
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[1], { dataTransfer });
+      fireEvent.dragOver(headers[1], { dataTransfer });
+      fireEvent.drop(headers[1], { dataTransfer });
+
+      // no reorder took place, since these columns were never made draggable
+      expect(headerText()).toEqual(['Column A', 'Column B']);
+    });
+  });
+
+  describe('table.refresh column hide/pin', () => {
+    const headerText = (container: HTMLElement) =>
+      Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+
+    it('hides a column from the column menu, disabling hide once only one column remains', async () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createThreeColumnDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column B'));
+      await userEvent.click(await screen.findByText('Hide column'));
+      expect(headerText(container)).toEqual(['Column A', 'Column C']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column C'));
+      await userEvent.click(await screen.findByText('Hide column'));
+      expect(headerText(container)).toEqual(['Column A']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column A'));
+      expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
+    });
+
+    it('pins a column from the column menu, moving it to the front and freezing it', async () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createThreeColumnDataFrame()}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText('Column options for Column C'));
+      await userEvent.click(await screen.findByText('Pin column left'));
+
+      expect(headerText(container)).toEqual(['Column C', 'Column A', 'Column B']);
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers[0]).toHaveClass('rdg-cell-frozen');
+      expect(headers[1]).not.toHaveClass('rdg-cell-frozen');
     });
   });
 

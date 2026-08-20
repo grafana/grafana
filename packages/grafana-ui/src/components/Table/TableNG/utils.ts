@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
@@ -35,7 +36,17 @@ import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
-import { CELL_HORIZONTAL_CHROME, COLUMN, HEADER_ICON_SPACE, TABLE } from './constants';
+import {
+  CELL_HORIZONTAL_CHROME,
+  COLUMN,
+  FIRST_COLUMN_CLASS,
+  FIRST_COLUMN_EXTRA_PADDING,
+  HEADER_DRAG_HANDLE_SPACE,
+  HEADER_ICON_SPACE,
+  HEADER_MENU_SPACE,
+  LAST_COLUMN_CLASS,
+  TABLE,
+} from './constants';
 import { type TextAlign } from './styles';
 import {
   type TableRow,
@@ -47,6 +58,7 @@ import {
   type MeasureCellHeightEntry,
   type FilterType,
   type GetActionsFunctionLocal,
+  type TableColumn,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
@@ -1141,6 +1153,67 @@ export function getVisibleFields(fields: Field[]): Field[] {
 
 /**
  * @internal
+ * `table.refresh`: reorders `fields` to match `order`, a list of display names captured from a
+ * drag-and-drop column reorder. Fields not present in `order` — new columns since the order was
+ * captured — are appended at the end, preserving their original relative order. A no-op when
+ * `order` is undefined or empty, so this is safe to call unconditionally with ephemeral state that
+ * starts out unset.
+ */
+export function orderFieldsByDisplayNames(fields: Field[], order?: string[]): Field[] {
+  if (!order || order.length === 0) {
+    return fields;
+  }
+  const byDisplayName = new Map(fields.map((field) => [getDisplayName(field), field]));
+  const ordered: Field[] = [];
+  for (const name of order) {
+    const field = byDisplayName.get(name);
+    if (field) {
+      ordered.push(field);
+      byDisplayName.delete(name);
+    }
+  }
+  for (const field of fields) {
+    if (byDisplayName.has(getDisplayName(field))) {
+      ordered.push(field);
+    }
+  }
+  return ordered;
+}
+
+/**
+ * @internal
+ * `table.refresh`: removes fields hidden via the ad hoc column menu/sidebar (as opposed to
+ * `getVisibleFields`'s config-driven `hideFrom.viz`). A no-op when `hiddenColumns` is undefined or
+ * empty.
+ */
+export function filterFieldsByHiddenColumns(fields: Field[], hiddenColumns?: ReadonlySet<string>): Field[] {
+  if (!hiddenColumns || hiddenColumns.size === 0) {
+    return fields;
+  }
+  return fields.filter((field) => !hiddenColumns.has(getDisplayName(field)));
+}
+
+/**
+ * @internal
+ * `table.refresh`: moves pinned fields to the front of `fields`, preserving the original relative
+ * order within the pinned group and within the remaining, unpinned group. Maps directly onto
+ * react-data-grid's frozen-column-count model, which only supports freezing a leading run of
+ * columns. A no-op when `pinnedColumns` is undefined or empty.
+ */
+export function orderFieldsByPinnedColumns(fields: Field[], pinnedColumns?: ReadonlySet<string>): Field[] {
+  if (!pinnedColumns || pinnedColumns.size === 0) {
+    return fields;
+  }
+  const pinned: Field[] = [];
+  const unpinned: Field[] = [];
+  for (const field of fields) {
+    (pinnedColumns.has(getDisplayName(field)) ? pinned : unpinned).push(field);
+  }
+  return [...pinned, ...unpinned];
+}
+
+/**
+ * @internal
  * returns a map of column types by display name
  */
 export function getColumnTypes(fields: Field[]): ColumnTypes {
@@ -1232,6 +1305,22 @@ export interface ContentAwareColWidthsOptions {
   getActions?: GetActionsFunctionLocal;
   /** Currently-sorted columns; a sorted column reserves header space for its sort arrow. */
   sortColumns?: SortColumn[];
+  /** `table.refresh`: a filterable column reserves the column menu button instead of a filter icon. */
+  tableRefreshEnabled?: boolean;
+  /**
+   * Active filters. Under `table.refresh` a filtered column also reserves space for the persistent
+   * filter icon that marks it, the same way a sorted column reserves space for its arrow.
+   */
+  filter?: FilterType;
+  /** `table.refresh`: a reorderable column reserves space for its drag handle. */
+  enableColumnReorder?: boolean;
+  /**
+   * `table.refresh`: hide/pin are available for every column, not just filterable ones, so the
+   * column menu they live in reserves space even when the column isn't filterable.
+   */
+  canManageColumns?: boolean;
+  /** The first column carries extra inline-start padding to line up with the panel title. */
+  noPanelPadding?: boolean;
   /** overridable for testing; otherwise derived from the auto-column count */
   sampleSize?: number;
 }
@@ -1328,6 +1417,20 @@ function measureInlineRunWidth(
 }
 
 /**
+ * `table.refresh`: whether the header column menu renders for a column. It offers whichever of
+ * filter/hide/pin/reorder apply — reorder via the "Manage columns" item that opens the sidebar, the
+ * others directly — so it shows as soon as any one of them is available. Shared by the menu's own
+ * render gate and the header width estimate, so the two can't drift out of sync.
+ */
+export function isColumnMenuVisible(
+  filterable: boolean,
+  canManageColumns: boolean,
+  enableColumnReorder: boolean
+): boolean {
+  return filterable || canManageColumns || enableColumnReorder;
+}
+
+/**
  * Width the header label needs, including its filter/sort/type-icon affordances.
  *
  * Canvas-measured exactly rather than estimated from `avgCharWidth`: this is a hard lower bound on
@@ -1335,12 +1438,36 @@ function measureInlineRunWidth(
  * column, not a sample across many rows. Sort-arrow space is only reserved when `isSorted` (widths
  * recompute on sort), so a tight column doesn't ellipsize its title the moment it's sorted.
  */
-function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean, isSorted: boolean): number {
+function measureHeaderWidth(
+  field: Field,
+  ctx: TypographyCtx,
+  showTypeIcons: boolean,
+  isSorted: boolean,
+  tableRefreshEnabled: boolean,
+  isFilterable: boolean,
+  isFiltered: boolean,
+  enableColumnReorder: boolean,
+  canManageColumns: boolean
+): number {
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
-  headerWidth += field.config?.custom?.filterable ? HEADER_ICON_SPACE : 0;
   headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
   headerWidth += isSorted ? HEADER_ICON_SPACE : 0;
+  // the drag handle is always in flow once reorder is enabled, unlike the sort arrow/filter icons
+  // which only reserve space while that state is active.
+  headerWidth += enableColumnReorder ? HEADER_DRAG_HANDLE_SPACE : 0;
+  if (tableRefreshEnabled) {
+    // stays in flow (opacity-faded, not unmounted) whenever the menu itself would render.
+    headerWidth += isColumnMenuVisible(isFilterable, canManageColumns, enableColumnReorder) ? HEADER_MENU_SPACE : 0;
+    // an active filter additionally marks itself with a persistent icon next to the sort arrow. Like
+    // the arrow, it only exists while that state holds, so its space is reserved only then (the
+    // widths recompute when the filter changes).
+    headerWidth += isFiltered ? HEADER_ICON_SPACE : 0;
+  } else {
+    // the classic header renders its filter icon inline whenever the column is filterable, whether
+    // or not a filter is currently active.
+    headerWidth += isFilterable ? HEADER_ICON_SPACE : 0;
+  }
   return headerWidth;
 }
 
@@ -1528,7 +1655,12 @@ export function computeContentAwareColWidths(
     showTypeIcons = false,
     getActions,
     sortColumns,
+    tableRefreshEnabled = false,
+    filter,
     sampleSize,
+    enableColumnReorder = false,
+    canManageColumns = false,
+    noPanelPadding = false,
   }: ContentAwareColWidthsOptions
 ): number[] {
   const autoIdxs: number[] = [];
@@ -1557,6 +1689,13 @@ export function computeContentAwareColWidths(
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
   const sortedKeys = new Set(sortColumns?.map((c) => c.columnKey));
+  // Filter entries are keyed per parent on nested tables, so match on the display name they carry
+  // rather than the key: nested columns share one width, so any active filter widens the column.
+  const filteredKeys = new Set(
+    Object.values(filter ?? {})
+      .filter((entry) => entry.filtered != null)
+      .map((entry) => entry.displayName)
+  );
 
   for (const i of autoIdxs) {
     const field = fields[i];
@@ -1564,7 +1703,12 @@ export function computeContentAwareColWidths(
       field,
       headerTypographyCtx,
       showTypeIcons,
-      sortedKeys.has(getDisplayName(field))
+      sortedKeys.has(getDisplayName(field)),
+      tableRefreshEnabled,
+      field.config.custom?.filterable ?? false,
+      filteredKeys.has(getDisplayName(field)),
+      enableColumnReorder,
+      canManageColumns
     );
 
     // Wrapped columns are measured like any other: a content-based width keeps a content-heavy
@@ -1582,9 +1726,12 @@ export function computeContentAwareColWidths(
     const floor = Math.max(COLUMN.MIN_WIDTH, field.config.custom?.minWidth ?? 0);
     const cap = Math.max(COLUMN.MAX_AUTO_WIDTH, floor);
     const clamped = Math.min(Math.max(Math.max(cellWidth, headerWidth, footerWidth), floor), cap);
+    // The first column's extra padding is chrome, not content, so it's added after the cap rather
+    // than eating into the room the content was measured to need.
+    const extraPadding = noPanelPadding && i === 0 ? FIRST_COLUMN_EXTRA_PADDING : 0;
 
-    contentWidths.set(i, clamped);
-    contentTotal += clamped;
+    contentWidths.set(i, clamped + extraPadding);
+    contentTotal += clamped + extraPadding;
   }
 
   // Distribute leftover space by growthWeight × √(content width): a column with more content grows
@@ -1594,13 +1741,23 @@ export function computeContentAwareColWidths(
   const growTotal = autoIdxs.reduce((sum, i) => sum + growShare(i), 0);
 
   const leftover = availWidth - definedWidth - contentTotal;
+  const shouldGrow = leftover > 0 && growTotal > 0;
   // Round cumulatively so the rounded widths sum to the same total as the exact ones. Rounding each
   // independently can push the total past availWidth and trigger a spurious horizontal scrollbar.
   let exactSoFar = 0;
   let roundedSoFar = 0;
   for (const i of autoIdxs) {
     const contentWidth = contentWidths.get(i)!;
-    const grown = leftover > 0 && growTotal > 0 ? contentWidth + leftover * (growShare(i) / growTotal) : contentWidth;
+    if (!shouldGrow) {
+      // No leftover to distribute — the columns already fill or overflow availWidth, so the grid
+      // scrolls regardless and matching the total exactly no longer matters. Round up instead of
+      // cumulatively: a column sitting exactly at its measured content need (fractional canvas
+      // measurement) has no slack to give up, and cumulative rounding can shave a random column
+      // below that need and truncate its header for no benefit.
+      widths[i] = Math.ceil(contentWidth);
+      continue;
+    }
+    const grown = contentWidth + leftover * (growShare(i) / growTotal);
     exactSoFar += grown;
     const rounded = Math.round(exactSoFar) - roundedSoFar;
     roundedSoFar += rounded;
@@ -1608,6 +1765,35 @@ export function computeContentAwareColWidths(
   }
 
   return widths;
+}
+
+type CellClass<TRow> = string | null | undefined | ((row: TRow) => string | null | undefined);
+
+const appendCellClass = <TRow>(existing: CellClass<TRow>, edgeClass: string): CellClass<TRow> =>
+  typeof existing === 'function' ? (row: TRow) => clsx(existing(row), edgeClass) : clsx(existing, edgeClass);
+
+const withEdgeClass = (column: TableColumn, edgeClass: string): TableColumn => ({
+  ...column,
+  headerCellClass: clsx(column.headerCellClass, edgeClass),
+  cellClass: appendCellClass(column.cellClass, edgeClass),
+  summaryCellClass: appendCellClass(column.summaryCellClass, edgeClass),
+});
+
+/**
+ * @internal
+ * Tags the edge columns with {@link FIRST_COLUMN_CLASS}/{@link LAST_COLUMN_CLASS}. Call this on the
+ * finished column list, after any programmatically injected columns (the nested table's row
+ * expander) are in place — a field's own index isn't enough to tell whether it ends up on an edge.
+ */
+export function markEdgeColumns(columns: TableColumn[]): TableColumn[] {
+  if (columns.length === 0) {
+    return columns;
+  }
+  const marked = [...columns];
+  marked[0] = withEdgeClass(marked[0], FIRST_COLUMN_CLASS);
+  const lastIdx = marked.length - 1;
+  marked[lastIdx] = withEdgeClass(marked[lastIdx], LAST_COLUMN_CLASS);
+  return marked;
 }
 
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {

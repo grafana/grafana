@@ -19,9 +19,15 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 
 import { TableCellDisplayMode } from '../types';
 
-import { COLUMN, TABLE } from './constants';
+import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, TABLE } from './constants';
 import { getJustifyContent } from './styles';
-import { type GetActionsFunctionLocal, type MeasureCellHeightEntry, type TableRow } from './types';
+import {
+  type FilterType,
+  type GetActionsFunctionLocal,
+  type MeasureCellHeightEntry,
+  type TableColumn,
+  type TableRow,
+} from './types';
 import {
   applyFilter,
   applySort,
@@ -43,6 +49,7 @@ import {
   getCellLinks,
   getCellOptions,
   getColumnTypes,
+  markEdgeColumns,
   getComparator,
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
@@ -53,7 +60,11 @@ import {
   createBoundedCache,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
+  filterFieldsByHiddenColumns,
+  isColumnMenuVisible,
   migrateTableDisplayModeToCellOptions,
+  orderFieldsByDisplayNames,
+  orderFieldsByPinnedColumns,
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
@@ -1704,6 +1715,25 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('isColumnMenuVisible', () => {
+    it('is visible when the column is filterable, even with no hide/pin/reorder', () => {
+      expect(isColumnMenuVisible(true, false, false)).toBe(true);
+    });
+
+    it('is visible when hide/pin are available, even on a non-filterable column', () => {
+      expect(isColumnMenuVisible(false, true, false)).toBe(true);
+    });
+
+    it('is visible when reorder is available, even with nothing else', () => {
+      // The "Manage columns" item opens the sidebar for reorder, so reorder alone justifies the menu.
+      expect(isColumnMenuVisible(false, false, true)).toBe(true);
+    });
+
+    it('is hidden when none of filter/hide/pin/reorder apply', () => {
+      expect(isColumnMenuVisible(false, false, false)).toBe(false);
+    });
+  });
+
   describe('computeContentAwareColWidths', () => {
     // Deterministic text measurement: every glyph is CHAR_W px wide, so a string of length L is
     // CHAR_W * L. Header widths are canvas-measured, so we mock measureText; body/pill content is
@@ -2123,6 +2153,137 @@ describe('TableNG utils', () => {
       expect(compute(fields, 50)).toEqual([50]);
     });
 
+    it('reserves header space for the drag handle when column reorder is enabled', () => {
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 4*8 = 32, + drag-handle space 20 + chrome 13 = 65; content "a" is tiny.
+      const widths = computeContentAwareColWidths(fields, 65, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+        enableColumnReorder: true,
+      });
+      expect(widths).toEqual([65]);
+      // the same column with reorder disabled floors to MIN_WIDTH 50 (no handle reserved).
+      expect(compute(fields, 50)).toEqual([50]);
+    });
+
+    it('reserves the first column’s extra padding when the panel has none of its own', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: {} },
+        { name: 'Other', type: FieldType.string, values: ['a'], config: {} },
+      ];
+      // "Name" floors to MIN_WIDTH 50, "Other" sizes to its header (5*8 + chrome 13 = 53). Only the
+      // first column carries the 6px of extra inline-start padding that lines it up with the title.
+      expect(
+        computeContentAwareColWidths(fields, 109, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          noPanelPadding: true,
+        })
+      ).toEqual([56, 53]);
+      expect(compute(fields, 103)).toEqual([50, 53]);
+    });
+
+    it('reserves the wider column menu instead of the filter icon when table.refresh is on', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
+      ];
+      // header "Name" (4) => 4*8 = 32, + chrome 13 = 45, plus the reserved affordance:
+      // filter icon (22) => 67 with the flag off, column menu (22) => 67 with it on. The two happen
+      // to tie today, so assert the flag doesn't double-reserve rather than that it widens.
+      expect(compute(fields, 67)).toEqual([67]);
+      expect(
+        computeContentAwareColWidths(fields, 67, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
+      ).toEqual([67]);
+    });
+
+    it('reserves no column menu space for a non-filterable column with no hide/pin either', () => {
+      // Without `canManageColumns` the menu has nothing to offer a non-filterable column (no
+      // filter, no hide/pin), so it doesn't render and the column shouldn't pay for it: content
+      // "a" floors to MIN_WIDTH either way.
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      expect(
+        computeContentAwareColWidths(fields, 50, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
+      ).toEqual([50]);
+    });
+
+    it('reserves column menu space for a non-filterable column when hide/pin are available', () => {
+      // Hide/pin apply to every column, not just filterable ones, so the menu (and its space) is in
+      // flow whenever `canManageColumns` is set, independent of `filterable`.
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 32, + menu 22 + chrome 13 = 67; content "a" is tiny.
+      expect(
+        computeContentAwareColWidths(fields, 67, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          canManageColumns: true,
+        })
+      ).toEqual([67]);
+    });
+
+    it('reserves column menu space for a non-filterable, unmanaged column when reorder is available', () => {
+      // Reorder alone justifies the menu too, since its "Manage columns" item opens the sidebar.
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 32, + drag handle 20 + menu 22 + chrome 13 = 87; content "a" is tiny.
+      expect(
+        computeContentAwareColWidths(fields, 87, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          enableColumnReorder: true,
+        })
+      ).toEqual([87]);
+    });
+
+    it('reserves header space for the filter icon on a filtered column when table.refresh is on', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
+      ];
+      const filter = { Name: { filtered: [{ value: 'a' }], displayName: 'Name' } } as unknown as FilterType;
+      // header "Name" (4) => 32, + menu 22 + chrome 13 = 67 unfiltered; the filter icon adds 22 => 89.
+      expect(
+        computeContentAwareColWidths(fields, 89, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          filter,
+        })
+      ).toEqual([89]);
+      // without the active filter the same column stops at 67 (availWidth 89 leaves it room to grow,
+      // so pin availWidth to 67 to show the header no longer demands the extra icon).
+      expect(
+        computeContentAwareColWidths(fields, 67, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
+      ).toEqual([67]);
+    });
+
+    it('ignores a filter whose values were cleared', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
+      ];
+      // an entry with no `filtered` values is not an active filter, so it reserves no icon space
+      const cleared = { Name: { displayName: 'Name' } } as unknown as FilterType;
+      expect(
+        computeContentAwareColWidths(fields, 67, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          filter: cleared,
+        })
+      ).toEqual([67]);
+    });
+
     it('measures header labels with the medium-weight header context when provided', () => {
       // Header labels render bolder than the body, so a wider (medium-weight) context is passed for
       // them. This mock context measures every glyph 2px wider than the body's CHAR_W.
@@ -2142,6 +2303,36 @@ describe('TableNG utils', () => {
       });
 
       expect(widths).toEqual([63]);
+    });
+
+    it('rounds a header-bound column up rather than truncating it via cumulative rounding on overflow', () => {
+      // Real canvas measurement returns fractional widths, unlike this suite's integer CHAR_W mock.
+      // With no leftover to distribute (auto columns already overflow availWidth), the second
+      // column's cumulative running sum can cross a whole-pixel boundary the "wrong" way and shave
+      // its own fractional need down — even though it has zero slack to give up (it's sized to its
+      // header's exact minimum). Ceiling each column independently in that branch avoids that.
+      const typographyCtx = createTypographyContext(14, 'sans-serif', 0.15);
+      const headerWidths: Record<string, number> = { A: 37.5, B: 47.4 };
+      jest
+        .spyOn(typographyCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((text: string) => ({
+          width: headerWidths[String(text)],
+        })) as typeof typographyCtx.ctx.measureText);
+
+      const fields: Field[] = [
+        { name: 'A', type: FieldType.string, values: ['x'], config: {} },
+        { name: 'B', type: FieldType.string, values: ['x'], config: {} },
+      ];
+      // header "A" => 37.5 + chrome 13 = 50.5; header "B" => 47.4 + chrome 13 = 60.4. Content "x" is
+      // tiny, so the header drives both. availWidth 110 < their 110.9 total, so this overflows.
+      const widths = computeContentAwareColWidths(fields, 110, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: typographyCtx,
+      });
+
+      // Without the fix this comes back [51, 60] — B truncated below its own 60.4 need.
+      expect(widths).toEqual([51, 61]);
     });
 
     it('samples a bounded number of rows (spread across the field) rather than scanning every value', () => {
@@ -2286,6 +2477,49 @@ describe('TableNG utils', () => {
 
     it('returns an empty map for empty inputs', () => {
       expect(buildNestedColumnWidthsMap([], []).size).toBe(0);
+    });
+  });
+
+  describe('markEdgeColumns', () => {
+    const col = (key: string, overrides: Partial<TableColumn> = {}): TableColumn =>
+      ({
+        key,
+        name: key,
+        field: { name: key, type: FieldType.string, values: [], config: {} },
+        ...overrides,
+      }) as TableColumn;
+
+    it('tags the first and last columns on every cell variant', () => {
+      const [first, middle, last] = markEdgeColumns([col('a'), col('b'), col('c')]);
+
+      expect(first.headerCellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(first.cellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(first.summaryCellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(middle.headerCellClass).toBeUndefined();
+      expect(last.headerCellClass).toContain(LAST_COLUMN_CLASS);
+      expect(last.cellClass).toContain(LAST_COLUMN_CLASS);
+      expect(last.summaryCellClass).toContain(LAST_COLUMN_CLASS);
+    });
+
+    it('tags a single column as both edges', () => {
+      const [only] = markEdgeColumns([col('a')]);
+      expect(only.headerCellClass).toContain(FIRST_COLUMN_CLASS);
+      expect(only.headerCellClass).toContain(LAST_COLUMN_CLASS);
+    });
+
+    it('keeps existing classes, including ones computed per row', () => {
+      const [first] = markEdgeColumns([
+        col('a', { headerCellClass: 'existing-header', cellClass: (row) => `row-${row.__index}` }),
+      ]);
+
+      expect(first.headerCellClass).toBe(`existing-header ${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`);
+      expect(typeof first.cellClass === 'function' && first.cellClass({ __index: 3, __depth: 0 })).toBe(
+        `row-3 ${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`
+      );
+    });
+
+    it('returns the list unchanged when there are no columns', () => {
+      expect(markEdgeColumns([])).toEqual([]);
     });
   });
 
@@ -2880,6 +3114,72 @@ describe('TableNG utils', () => {
       const field: Field = { name: 'test', type: FieldType.string, config: {}, values: [] };
       const predicate = predicateByName('other');
       expect(predicate(field)).toBe(false);
+    });
+  });
+
+  describe('orderFieldsByDisplayNames', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when order is undefined', () => {
+      expect(orderFieldsByDisplayNames(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when order is empty', () => {
+      expect(orderFieldsByDisplayNames(fields, [])).toBe(fields);
+    });
+
+    it('reorders fields to match the given display names', () => {
+      expect(orderFieldsByDisplayNames(fields, ['C', 'A', 'B'])).toEqual([fieldC, fieldA, fieldB]);
+    });
+
+    it('appends fields missing from order, preserving their original relative order', () => {
+      expect(orderFieldsByDisplayNames(fields, ['B'])).toEqual([fieldB, fieldA, fieldC]);
+    });
+
+    it('ignores names in order that do not match any field', () => {
+      expect(orderFieldsByDisplayNames(fields, ['D', 'C'])).toEqual([fieldC, fieldA, fieldB]);
+    });
+  });
+
+  describe('filterFieldsByHiddenColumns', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when hiddenColumns is undefined', () => {
+      expect(filterFieldsByHiddenColumns(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when hiddenColumns is empty', () => {
+      expect(filterFieldsByHiddenColumns(fields, new Set())).toBe(fields);
+    });
+
+    it('filters out fields whose display name is hidden', () => {
+      expect(filterFieldsByHiddenColumns(fields, new Set(['B']))).toEqual([fieldA, fieldC]);
+    });
+  });
+
+  describe('orderFieldsByPinnedColumns', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when pinnedColumns is undefined', () => {
+      expect(orderFieldsByPinnedColumns(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when pinnedColumns is empty', () => {
+      expect(orderFieldsByPinnedColumns(fields, new Set())).toBe(fields);
+    });
+
+    it('moves pinned fields to the front, preserving relative order within each group', () => {
+      expect(orderFieldsByPinnedColumns(fields, new Set(['C']))).toEqual([fieldC, fieldA, fieldB]);
+      expect(orderFieldsByPinnedColumns(fields, new Set(['C', 'A']))).toEqual([fieldA, fieldC, fieldB]);
     });
   });
 

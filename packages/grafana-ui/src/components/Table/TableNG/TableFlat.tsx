@@ -1,16 +1,19 @@
 import memoize from 'micro-memoize';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Field } from '@grafana/data';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
+import { clamp } from '../../../utils/clamp';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { usePanelContext } from '../../PanelChrome';
+import { useSplitter } from '../../Splitter/useSplitter';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { TABLE } from './constants';
+import { ColumnVisibilitySidePanel } from './components/ColumnVisibilitySidePanel';
+import { COLUMN_SETTLE_MS, TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
@@ -36,11 +39,16 @@ import {
 } from './types';
 import {
   calculateFooterHeight,
+  filterFieldsByHiddenColumns,
   getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
   getDefaultRowHeight,
+  getDisplayName,
   getVisibleFields,
+  markEdgeColumns,
+  orderFieldsByDisplayNames,
+  orderFieldsByPinnedColumns,
 } from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
@@ -49,6 +57,13 @@ type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellC
 // Stable references avoid invalidating useDataGridRows' memo on every render.
 const EMPTY_EXPANDED_ROWS: Set<string> = new Set();
 const NOOP_STABLE_KEY = () => '';
+
+// `table.refresh`: sizing for the column-visibility sidebar. The handle size below must match the
+// `handleSize: 'sm'` passed to `useSplitter` — it isn't exported from there to derive directly.
+const COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH = 220;
+const COLUMN_VISIBILITY_PANEL_MIN_WIDTH = 160;
+const COLUMN_VISIBILITY_PANEL_MAX_WIDTH = 400;
+const COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH = 8;
 
 export function TableFlat(props: TableNGProps) {
   const {
@@ -73,11 +88,13 @@ export function TableFlat(props: TableNGProps) {
     structureRev,
     timeRange,
     transparent,
+    noPanelPadding = false,
     width,
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
+    tableRefreshEnabled = false,
   } = props;
 
   const theme = useTheme2();
@@ -105,6 +122,55 @@ export function TableFlat(props: TableNGProps) {
     [hasFooter, visibleFields]
   );
 
+  // `table.refresh`: ephemeral column order/visibility/pinning from the header column menu and
+  // sidebar. `undefined` means "use field order/config as-is". Reset whenever the query
+  // structurally changes, same as the column-width reset below — state pointing at columns that no
+  // longer exist would be confusing rather than helpful.
+  const [columnOrder, setColumnOrder] = useState<string[]>();
+  const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(() => new Set());
+  const [pinnedColumns, setPinnedColumns] = useState<string[]>();
+  const [settlingColumnKeys, setSettlingColumnKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    setColumnOrder(undefined);
+    setHiddenColumns(new Set());
+    setPinnedColumns(undefined);
+    setSettlingColumnKeys(new Set());
+  }, [structureRev]);
+
+  useEffect(() => {
+    return () => clearTimeout(settleTimeoutRef.current);
+  }, []);
+
+  const markColumnsSettling = useCallback((displayNames: string[]) => {
+    setSettlingColumnKeys(new Set(displayNames));
+    clearTimeout(settleTimeoutRef.current);
+    settleTimeoutRef.current = setTimeout(() => setSettlingColumnKeys(new Set()), COLUMN_SETTLE_MS);
+  }, []);
+
+  const handleColumnsReorder = useCallback(
+    (sourceColumnKey: string, targetColumnKey: string) => {
+      setColumnOrder((current) => {
+        const next = [...(current ?? visibleFields.map(getDisplayName))];
+        const sourceIndex = next.indexOf(sourceColumnKey);
+        const targetIndex = next.indexOf(targetColumnKey);
+        if (sourceIndex < 0 || targetIndex < 0) {
+          return current;
+        }
+        next.splice(targetIndex, 0, next.splice(sourceIndex, 1)[0]);
+        return next;
+      });
+      markColumnsSettling([sourceColumnKey, targetColumnKey]);
+    },
+    [markColumnsSettling, visibleFields]
+  );
+
+  // only reorder when the flag is on, so a bug here can't affect the flag-off table at all.
+  const orderedVisibleFields = tableRefreshEnabled
+    ? orderFieldsByDisplayNames(visibleFields, columnOrder)
+    : visibleFields;
+
   const resizeHandler = useColumnResize(onColumnResize);
 
   const frameToRecords = useRowCompiler(data);
@@ -118,6 +184,118 @@ export function TableFlat(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, [], { initialSortBy: sortBy });
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
+
+  // `frozenColumns` is the persisted baseline pin count from field config — a column pinned
+  // through the header menu/sidebar is layered on top of it as ephemeral state, so the baseline is
+  // still respected until the user explicitly changes it.
+  const configuredPinnedColumns = useMemo(
+    () => orderedVisibleFields.slice(0, _frozenColumns).map(getDisplayName),
+    [orderedVisibleFields, _frozenColumns]
+  );
+  const pinnedColumnSet = useMemo(
+    () => new Set(pinnedColumns ?? configuredPinnedColumns),
+    [pinnedColumns, configuredPinnedColumns]
+  );
+
+  const handleHideColumn = useCallback(
+    (displayName: string) => {
+      setHiddenColumns((current) => {
+        // never hide the last remaining visible column
+        if (orderedVisibleFields.length - current.size <= 1) {
+          return current;
+        }
+        return new Set(current).add(displayName);
+      });
+      setFilter((current) => {
+        if (!(displayName in current)) {
+          return current;
+        }
+        const next = { ...current };
+        delete next[displayName];
+        return next;
+      });
+      setSortColumns((current) => current.filter((sort) => sort.columnKey !== displayName));
+    },
+    [orderedVisibleFields, setFilter, setSortColumns]
+  );
+
+  // The header menu can only hide a column; re-showing one happens from the column-visibility
+  // sidebar, which needs a two-way toggle rather than `handleHideColumn`'s one-way action.
+  const handleToggleColumnVisibility = useCallback(
+    (displayName: string, visible: boolean) => {
+      if (!visible) {
+        handleHideColumn(displayName);
+        return;
+      }
+      setHiddenColumns((current) => {
+        const next = new Set(current);
+        next.delete(displayName);
+        return next;
+      });
+    },
+    [handleHideColumn]
+  );
+
+  const handleTogglePin = useCallback(
+    (displayName: string) => {
+      setPinnedColumns((current) => {
+        const effective = current ?? configuredPinnedColumns;
+        return effective.includes(displayName)
+          ? effective.filter((column) => column !== displayName)
+          : [...effective, displayName];
+      });
+      markColumnsSettling([displayName]);
+    },
+    [configuredPinnedColumns, markColumnsSettling]
+  );
+
+  // only filter/pin when the flag is on, so a bug here can't affect the flag-off table at all.
+  // `pinnedOrderedVisibleFields` keeps hidden columns in — the sidebar needs to list them so they
+  // can be re-shown — while `displayedFields` (what actually reaches the grid) filters them out.
+  const pinnedOrderedVisibleFields = tableRefreshEnabled
+    ? orderFieldsByPinnedColumns(orderedVisibleFields, pinnedColumnSet)
+    : orderedVisibleFields;
+  const displayedFields = tableRefreshEnabled
+    ? filterFieldsByHiddenColumns(pinnedOrderedVisibleFields, hiddenColumns)
+    : orderedVisibleFields;
+
+  const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(false);
+  const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
+  // Mid-drag the sidebar just follows the handle, however narrow that gets: closing it the moment
+  // the width crossed the threshold would yank it out from under a drag the user hasn't committed
+  // to yet, with no way to change their mind by dragging back out.
+  const handlePanelResizing = useCallback((_flexFraction: number, sidebarPixels: number) => {
+    setColumnVisibilityPanelWidth(sidebarPixels);
+  }, []);
+  // The decision lands on release instead.
+  const handlePanelResizeEnd = useCallback((_flexFraction: number, sidebarPixels: number) => {
+    if (sidebarPixels < COLUMN_VISIBILITY_PANEL_MIN_WIDTH) {
+      // Let go past the point of usefulness — close it, same as the "Manage columns" trigger would,
+      // and reset its width so reopening starts back at a comfortable default rather than wherever
+      // it was dragged down to.
+      setIsColumnVisibilityPanelOpen(false);
+      setColumnVisibilityPanelWidth(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
+      return;
+    }
+    setColumnVisibilityPanelWidth(sidebarPixels);
+  }, []);
+  // The sidebar is the *primary* pane so it sits on the left and the drag math works the intuitive
+  // way (drag right → sidebar grows) — `useSplitter`'s `usePixels` mode always makes the pixel-sized
+  // pane secondary/on-the-right, which would put the sidebar on the wrong side. Plain flex-fraction
+  // mode instead, with an initial fraction chosen to land close to the sidebar's default pixel
+  // width; `minWidth`/`maxWidth` below clamp the actual rendered width regardless of that fraction.
+  //
+  // `useSplitter` re-derives `primaryProps.style.flexGrow` from this on every render, and tracking
+  // the live drag width re-renders us mid-drag — so this fraction has to be able to reach 0, or it
+  // reasserts itself as a floor and the sidebar stops short of closing.
+  const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
+    direction: 'row',
+    initialSize: clamp(columnVisibilityPanelWidth / Math.max(width, 1), 0, 0.5),
+    dragPosition: 'middle',
+    handleSize: 'sm',
+    onResizing: handlePanelResizing,
+    onSizeChanged: handlePanelResizeEnd,
+  });
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -141,8 +319,16 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out.
-  const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
+  // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out —
+  // as does the column-visibility sidebar, while it's open.
+  const columnVisibilityPanelAllocation =
+    tableRefreshEnabled && isColumnVisibilityPanelOpen
+      ? columnVisibilityPanelWidth + COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH
+      : 0;
+  const availableWidth = useMemo(
+    () => width - scrollbarWidth - columnVisibilityPanelAllocation,
+    [width, scrollbarWidth, columnVisibilityPanelAllocation]
+  );
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const applyToRowBgFn = useMemo(
@@ -153,7 +339,10 @@ export function TableFlat(props: TableNGProps) {
 
   const typographyCtx = useTypographyCtx(theme);
 
-  const frozenColumns = _frozenColumns;
+  const displayedPinnedColumnCount = tableRefreshEnabled
+    ? displayedFields.filter((field) => pinnedColumnSet.has(getDisplayName(field))).length
+    : 0;
+  const frozenColumns = tableRefreshEnabled ? displayedPinnedColumnCount : _frozenColumns;
 
   // When a width override is removed from field config, the configured-width count drops. That
   // change to field.config.custom.width is a mutation on the existing field objects, so it doesn't
@@ -175,10 +364,15 @@ export function TableFlat(props: TableNGProps) {
     showTypeIcons,
     getActions: getCellActions,
     sortColumns,
+    tableRefreshEnabled,
+    filter,
+    enableColumnReorder: tableRefreshEnabled,
+    canManageColumns: tableRefreshEnabled,
+    noPanelPadding,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
-    visibleFields,
+    displayedFields,
     availableWidth,
     frozenColumns,
     widthConfigResetKey,
@@ -187,11 +381,12 @@ export function TableFlat(props: TableNGProps) {
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
-    fields: visibleFields,
+    fields: displayedFields,
     enabled: hasHeader,
     sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
+    noPanelPadding,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
 
@@ -202,10 +397,11 @@ export function TableFlat(props: TableNGProps) {
 
   const rowHeight = useFlatRowHeight({
     columnWidths: widths,
-    fields: visibleFields,
+    fields: displayedFields,
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,
+    noPanelPadding,
   });
 
   const {
@@ -267,6 +463,13 @@ export function TableFlat(props: TableNGProps) {
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
+      enableColumnReorder: tableRefreshEnabled,
+      settlingColumnKeys,
+      onHideColumn: tableRefreshEnabled ? handleHideColumn : undefined,
+      onTogglePin: tableRefreshEnabled ? handleTogglePin : undefined,
+      onOpenColumnPanel: tableRefreshEnabled ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
+      pinnedColumns: tableRefreshEnabled ? pinnedColumnSet : undefined,
     }),
     [
       theme,
@@ -286,15 +489,20 @@ export function TableFlat(props: TableNGProps) {
       setFilter,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
+      settlingColumnKeys,
+      handleHideColumn,
+      handleTogglePin,
+      pinnedColumnSet,
     ]
   );
 
   const fromFields = useColumnBuilderFromFields(filterResult, columnBuildConfig);
 
-  const { columns, cellRootRenderers } = useMemo(
-    () => fromFields(visibleFields, widths, data, rows, sortedRows),
-    [fromFields, visibleFields, widths, data, rows, sortedRows]
-  );
+  const { columns, cellRootRenderers } = useMemo(() => {
+    const result = fromFields(displayedFields, widths, data, rows, sortedRows);
+    return { ...result, columns: markEdgeColumns(result.columns) };
+  }, [fromFields, displayedFields, widths, data, rows, sortedRows]);
 
   // invalidate columns on every structureRev change to support width editing in fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -304,7 +512,7 @@ export function TableFlat(props: TableNGProps) {
     [cellRootRenderers]
   );
 
-  return (
+  const dataGrid = (
     <TableDataGrid
       role="grid"
       gridRef={gridRef}
@@ -315,6 +523,7 @@ export function TableFlat(props: TableNGProps) {
       columnWidths={resetColumnWidths}
       onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
       onColumnResize={resizeHandler}
+      onColumnsReorder={tableRefreshEnabled ? handleColumnsReorder : undefined}
       onCellClick={onCellClick}
       onCellKeyDown={({ column, row }, event) => {
         if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
@@ -336,6 +545,8 @@ export function TableFlat(props: TableNGProps) {
       noHeader={!!noHeader}
       headerHeight={headerHeight}
       transparent={transparent}
+      tableRefreshEnabled={tableRefreshEnabled}
+      noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
       enablePagination={enablePagination}
@@ -351,5 +562,53 @@ export function TableFlat(props: TableNGProps) {
       inspectCell={inspectCell}
       onInspectCellDismiss={() => setInspectCell(null)}
     />
+  );
+
+  // The sidebar only ever mounts once the flag is on, there's a header to attach it to, and the
+  // user has actually opened it — so the common case (closed, or flag off) renders the grid alone,
+  // identical to before this feature existed.
+  if (!tableRefreshEnabled || !hasHeader || !isColumnVisibilityPanelOpen) {
+    return dataGrid;
+  }
+
+  return (
+    // Without the sidebar, `<TableDataGrid>` (`blockSize: 100%`) is TableFlat's own root and
+    // resolves its height directly against the real ancestor react-data-grid needs for its internal
+    // vertical scroll region. The splitter's container has no height of its own (`flexGrow: 1` needs
+    // a flex parent, which this one may not have) — without an explicit height here, that
+    // percentage chain breaks and the grid can't bound (or scroll) its rows vertically.
+    <div {...containerProps} style={{ height: '100%' }}>
+      <div
+        {...primaryProps}
+        style={{
+          ...primaryProps.style,
+          // `minWidth: 0` rather than no min-width at all: useSplitter clamps the drag to this
+          // element's own measured min/max (it zeroes the flexGrow and reads the resulting rect),
+          // and a flex item's automatic minimum is its min-content size — which would stop the drag
+          // dead at the sidebar's narrowest legible layout. Zero lets the pane keep closing all the
+          // way while the sidebar itself holds at min-content and is clipped by the overflow below,
+          // and it's what lets the width reach COLUMN_VISIBILITY_PANEL_MIN_WIDTH so the panel can
+          // close on release at all.
+          minWidth: 0,
+          maxWidth: COLUMN_VISIBILITY_PANEL_MAX_WIDTH,
+          overflow: 'hidden',
+        }}
+      >
+        <ColumnVisibilitySidePanel
+          fields={pinnedOrderedVisibleFields}
+          hiddenColumns={hiddenColumns}
+          pinnedColumns={pinnedColumnSet}
+          onToggleColumn={handleToggleColumnVisibility}
+          onTogglePin={handleTogglePin}
+          onColumnsReorder={handleColumnsReorder}
+          onClose={() => setIsColumnVisibilityPanelOpen(false)}
+          willCloseOnRelease={columnVisibilityPanelWidth < COLUMN_VISIBILITY_PANEL_MIN_WIDTH}
+        />
+      </div>
+      <div {...splitterProps} />
+      <div {...secondaryProps} style={{ ...secondaryProps.style, minWidth: 0 }}>
+        {dataGrid}
+      </div>
+    </div>
   );
 }

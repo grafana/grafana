@@ -1,17 +1,26 @@
 import { css } from '@emotion/css';
+import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { type Column, type SortDirection } from '@grafana/react-data-grid';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
 import { Stack } from '../../../Layout/Stack/Stack';
+import { Popover } from '../../../Tooltip/Popover';
 import { Filter } from '../Filter/Filter';
+import { FilterPopup } from '../Filter/FilterPopup';
+import { useFilterPopupState } from '../Filter/useFilterPopupState';
+import { HEADER_DRAG_HANDLE_WIDTH } from '../constants';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import { getDisplayName } from '../utils';
+import { getDisplayName, isColumnMenuVisible } from '../utils';
+
+import { HeaderCellMenu } from './HeaderCellMenu';
 
 interface HeaderCellProps {
   column: Column<TableRow, TableSummaryRow>;
@@ -26,6 +35,23 @@ interface HeaderCellProps {
   parentIndex?: number;
   crossFilterRows: Record<string, TableRow[]>;
   crossFilterTailRows: TableRow[];
+  /** `table.refresh`: left-align the label and move the filter into a hover-revealed column menu. */
+  tableRefreshEnabled?: boolean;
+  /** `table.refresh`: whether this column can be reordered by dragging its header cell. */
+  enableColumnReorder?: boolean;
+  /** `table.refresh`: hides this column via the column menu. Omitted when hiding isn't available. */
+  onHideColumn?: () => void;
+  /** `table.refresh`: whether hiding this column is currently allowed (e.g. not the last visible column). */
+  canHideColumn?: boolean;
+  /** `table.refresh`: whether this column is currently pinned. */
+  isPinned?: boolean;
+  /** `table.refresh`: pins/unpins this column via the column menu. Omitted when pinning isn't available. */
+  onTogglePin?: () => void;
+  /**
+   * `table.refresh`: opens the column-visibility sidebar via the column menu. Omitted when none of
+   * reorder/hide/pin are available for this table.
+   */
+  onOpenColumnPanel?: () => void;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -41,6 +67,13 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   parentIndex,
   crossFilterRows,
   crossFilterTailRows,
+  tableRefreshEnabled,
+  enableColumnReorder,
+  onHideColumn,
+  canHideColumn,
+  isPinned,
+  onTogglePin,
+  onOpenColumnPanel,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -49,6 +82,36 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
+  const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
+  const hasActiveFilter = tableRefreshEnabled && filterable && filter[filterKey]?.filtered != null;
+  // Whether hide/pin apply to this column at all — the "Manage columns" item opens the sidebar for
+  // reorder too, so it needs its own broader check rather than reusing this alone.
+  const canManageColumns = Boolean(onHideColumn) || Boolean(onTogglePin);
+  const canOpenColumnPanel = Boolean(onOpenColumnPanel) && (canManageColumns || Boolean(enableColumnReorder));
+
+  // The filter popup is shared by the two controls that open it — the column menu's "Filter values"
+  // item and the filter icon that marks an already-filtered column — so it lives here rather than in
+  // either one. `filterAnchor` is whichever control opened it, so the popup lands under that control
+  // and returns focus to it on close.
+  const filterIconRef = useRef<HTMLButtonElement>(null);
+  const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(null);
+  const { isPopoverVisible, setPopoverVisible, popupProps } = useFilterPopupState({
+    name: column.key,
+    filter,
+    setFilter,
+    field,
+    parentIndex,
+    crossFilterRows,
+    crossFilterTailRows,
+  });
+
+  const openFilter = useCallback(
+    (anchor: HTMLButtonElement | null) => {
+      setFilterAnchor(anchor);
+      setPopoverVisible(true);
+    },
+    [setPopoverVisible]
+  );
 
   // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
@@ -65,53 +128,136 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     return null;
   }
 
-  /* eslint-disable jsx-a11y/no-static-element-interactions */
-  return (
-    <Stack
-      ref={ref}
-      direction="row"
-      gap={0.5}
-      alignItems="center"
-      onKeyDown={
-        disableKeyboardEvents
-          ? undefined
-          : (ev) => {
-              // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
-              // to do to make filter and sort keyboard accessible, so we have to stop the propagation of events here,
-              // and add a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
-              ev.stopPropagation();
+  const onKeyDown = disableKeyboardEvents
+    ? undefined
+    : (ev: React.KeyboardEvent) => {
+        // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
+        // to do to make filter and sort keyboard accessible, so we have to stop the propagation of events here,
+        // and add a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
+        ev.stopPropagation();
 
-              if (!(ev.key === 'Tab' && !ev.shiftKey)) {
-                return;
-              }
+        if (!(ev.key === 'Tab' && !ev.shiftKey)) {
+          return;
+        }
 
-              const tableTabbedElement = ev.target;
-              if (!(tableTabbedElement instanceof HTMLElement)) {
-                return;
-              }
+        const tableTabbedElement = ev.target;
+        if (!(tableTabbedElement instanceof HTMLElement)) {
+          return;
+        }
 
-              const headerContent = ref.current;
-              const headerCell = ref.current?.parentNode;
-              const row = headerCell?.parentNode;
-              const isLastElementInHeader =
-                headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
+        const headerContent = ref.current;
+        const headerCell = ref.current?.parentNode;
+        const row = headerCell?.parentNode;
+        const isLastElementInHeader =
+          headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
 
-              if (isLastElementInHeader) {
-                selectFirstCell();
-              }
-            }
-      }
-    >
-      {/* eslint-enable jsx-a11y/no-static-element-interactions */}
+        if (isLastElementInHeader) {
+          selectFirstCell();
+        }
+      };
+
+  const label = (
+    <>
       {showTypeIcons && (
         <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
       )}
-      <button tabIndex={0} className={styles.headerCellLabel} title={displayName}>
+      <button
+        tabIndex={0}
+        className={clsx(styles.headerCellLabel, tableRefreshEnabled && styles.headerCellLabelPrimary)}
+        title={displayName}
+      >
         {displayName}
         {direction && (
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
         )}
       </button>
+      {/* The column menu is only revealed on hover, so an active filter needs a persistent marker of
+          its own; it sits with the sort arrow because both report the column's state. It doubles as a
+          shortcut back into the filter popup, so the filter can be adjusted or cleared without going
+          through the menu. Sized "sm" like the type icon rather than "lg" like the arrow: the funnel
+          fills its box where the arrow is a thin glyph, so the arrow's nominal size reads far bigger. */}
+      {hasActiveFilter && (
+        <button
+          ref={filterIconRef}
+          type="button"
+          className={styles.headerCellFilterButton}
+          aria-label={t('grafana-ui.table.edit-column-filter', 'Edit filter on {{name}}', { name: displayName })}
+          data-testid={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.activeFilterButton}
+          onClick={(ev) => {
+            // the header cell itself sorts on click, so this must not bubble
+            ev.stopPropagation();
+            openFilter(filterIconRef.current);
+          }}
+          onMouseDown={(ev) => ev.stopPropagation()}
+        >
+          <Icon className={styles.headerCellIcon} size="sm" name="filter" />
+        </button>
+      )}
+    </>
+  );
+
+  /* eslint-disable jsx-a11y/no-static-element-interactions */
+  if (tableRefreshEnabled) {
+    // Same DOM depth as the default branch below — the Tab handler above walks up from `ref` to the
+    // react-data-grid header cell, so this root has to stay its direct child.
+    return (
+      // A nested table's own header cells sit inside the outer grid's nested-frame cell, so
+      // `:hover`/`:focus-within` on that outer `.rdg-cell` would otherwise reveal every column's
+      // menu at once. `table-ng-header-cell` gives HeaderCellMenu something to scope to that's
+      // unique per column, regardless of how deep it sits in a nested table.
+      <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
+        {enableColumnReorder && (
+          // Chrome only recognizes a mousedown as the start of a native drag when it lands on an
+          // interactive element (a <button> works, a bare <svg>/<div> doesn't, even though
+          // `column.draggable` sits on the whole header cell and both have real painted content).
+          // This button gives the gesture a dependable anchor instead of relying on wherever the
+          // label text happens to be. It's not independently focusable or operable — reordering is
+          // drag-only — so it's out of the tab order and hidden from assistive tech.
+          <button type="button" tabIndex={-1} aria-hidden="true" className={styles.headerCellDragHandle}>
+            <Icon name="draggabledots" aria-hidden="true" />
+          </button>
+        )}
+        <div className={styles.headerCellLabelGroup}>{label}</div>
+
+        {isColumnMenuVisible(filterable, canManageColumns, Boolean(enableColumnReorder)) && (
+          <div className={styles.headerCellActions}>
+            <HeaderCellMenu
+              displayName={displayName}
+              filterable={filterable}
+              hasActiveFilter={hasActiveFilter}
+              onOpenFilter={openFilter}
+              onHideColumn={onHideColumn}
+              canHideColumn={canHideColumn}
+              isPinned={isPinned}
+              onTogglePin={onTogglePin}
+              onOpenColumnPanel={canOpenColumnPanel ? onOpenColumnPanel : undefined}
+            />
+          </div>
+        )}
+
+        {isPopoverVisible && filterAnchor && (
+          // `Popover` portals out of the header cell, but React events still bubble along the React
+          // tree, so a click inside the popup would otherwise reach react-data-grid's sort handler
+          // and re-sort the column while the user is picking values.
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+          <div onClick={(ev) => ev.stopPropagation()} onMouseDown={(ev) => ev.stopPropagation()}>
+            <Popover
+              content={<FilterPopup {...popupProps} buttonElement={filterAnchor} />}
+              // opens rightward from whichever control was used, rather than back across the column
+              placement="bottom-start"
+              referenceElement={filterAnchor}
+              show
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <Stack ref={ref} direction="row" gap={0.5} alignItems="center" onKeyDown={onKeyDown}>
+      {/* eslint-enable jsx-a11y/no-static-element-interactions */}
+      {label}
 
       {filterable && (
         <Filter
@@ -131,6 +277,70 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 };
 
 const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sortable = true) => ({
+  headerCellRoot: css({
+    label: 'headerCellRoot',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    // fill the header cell so the actions can sit against its trailing edge
+    flex: 1,
+    minWidth: 0,
+    // `headerCellLabel`'s `all: 'unset'` clears the label button's implicit non-selectability
+    // along with everything else. Left selectable, a drag starting on the label text is
+    // ambiguous between "select this text" and "drag this column" — browsers resolve that by
+    // starting a text selection (and, moving further, an OS-level text/link drag) instead of the
+    // column-reorder drag `column.draggable` is there for. This column reorder needs the mouse
+    // gesture to be unambiguous.
+    userSelect: 'none',
+  }),
+  // Collapsed to nothing rather than unmounted when the cell isn't hovered, so the label's shift can
+  // be animated in and out: `width` is what the label reacts to, and the negative inline-end margin
+  // cancels the root's flex gap so a collapsed handle occupies no space at all. Stays the muted
+  // secondary colour — it's an affordance, not part of the column's label.
+  headerCellDragHandle: css({
+    label: 'headerCellDragHandle',
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    color: theme.colors.text.secondary,
+    cursor: 'grab',
+    width: 0,
+    opacity: 0,
+    overflow: 'hidden',
+    marginInlineEnd: theme.spacing(-0.5),
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['width', 'opacity', 'margin-inline-end'], {
+        duration: theme.transitions.duration.shorter,
+      }),
+    },
+    // Hover only, and scoped to `.table-ng-header-cell` rather than the bare `.rdg-cell`, for the
+    // same two reasons HeaderCellMenu's button is: `:focus-within` would also match react-data-grid
+    // moving focus into the header cell when it becomes the grid's active cell, and in a nested
+    // table every column's header cell is a descendant of the outer grid's nested-frame cell, so
+    // `:hover` there would reveal all of them at once.
+    '.table-ng-header-cell:hover &': {
+      width: HEADER_DRAG_HANDLE_WIDTH,
+      opacity: 1,
+      marginInlineEnd: 0,
+    },
+  }),
+  headerCellLabelGroup: css({
+    label: 'headerCellLabelGroup',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    minWidth: 0,
+  }),
+  headerCellActions: css({
+    label: 'headerCellActions',
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
+    marginLeft: 'auto',
+  }),
   headerCellLabel: css({
     all: 'unset',
     cursor: sortable ? 'pointer' : 'default',
@@ -146,10 +356,28 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
     },
     '&::selection': {
       backgroundColor: 'var(--rdg-background-color)',
-      color: theme.colors.text.secondary,
+      color: 'inherit',
     },
+  }),
+  // `table.refresh` gives the header its own background, so the label no longer needs to be
+  // de-emphasised against the body rows to read as a header — it takes the body text colour.
+  headerCellLabelPrimary: css({
+    label: 'headerCellLabelPrimary',
+    color: theme.colors.text.primary,
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,
+  }),
+  // Wraps the filter icon without changing how it reads: no padding, border or background, so the
+  // button box is exactly the icon and the header's spacing and reserved width are unaffected.
+  headerCellFilterButton: css({
+    label: 'headerCellFilterButton',
+    display: 'flex',
+    alignItems: 'center',
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    cursor: 'pointer',
+    borderRadius: theme.spacing(0.25),
   }),
 }));

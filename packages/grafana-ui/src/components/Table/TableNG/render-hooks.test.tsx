@@ -22,6 +22,7 @@ import { type PanelContext } from '../../PanelChrome';
 
 import { type HeaderCell } from './components/HeaderCell';
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+import { getColumnSettleStyles, getHeaderCellStyles } from './styles';
 import { type FilterType, type NestedRowEntry, type TableColumn, type TableRow, type TableSummaryRow } from './types';
 import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
 
@@ -391,6 +392,95 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
     expect(result.columns[0].width).toBe(150);
     expect(result.columns[1].width).toBe(200);
+  });
+
+  describe('table.refresh column reorder', () => {
+    it('is draggable only when enableColumnReorder is set', () => {
+      const withReorder = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ enableColumnReorder: true }),
+      });
+      const reorderable = callFromFields(withReorder, frame.fields, [100, 100], frame, rows, rows);
+      expect(reorderable.columns.map((c) => c.draggable)).toEqual([true, true]);
+
+      const withoutReorder = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const notReorderable = callFromFields(withoutReorder, frame.fields, [100, 100], frame, rows, rows);
+      expect(notReorderable.columns.map((c) => c.draggable)).toEqual([undefined, undefined]);
+    });
+
+    it('adds the settle class to headerCellClass only for settling columns', () => {
+      const theme = createTheme();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ theme, settlingColumnKeys: new Set(['A']) }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(result.columns[0].headerCellClass).toContain(getColumnSettleStyles(theme));
+      expect(result.columns[1].headerCellClass).not.toContain(getColumnSettleStyles(theme));
+    });
+  });
+
+  describe('table.refresh column hide/pin', () => {
+    it('threads onHideColumn/onTogglePin/isPinned into each column, bound to its own display name', () => {
+      const onHideColumn = jest.fn();
+      const onTogglePin = jest.fn();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ onHideColumn, onTogglePin, pinnedColumns: new Set(['A']) }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const fieldAProps = getHeaderCellProps(result.columns[0]);
+      const fieldBProps = getHeaderCellProps(result.columns[1]);
+      expect(fieldAProps.isPinned).toBe(true);
+      expect(fieldBProps.isPinned).toBe(false);
+
+      fieldAProps.onHideColumn?.();
+      expect(onHideColumn).toHaveBeenCalledWith('A');
+      fieldBProps.onTogglePin?.();
+      expect(onTogglePin).toHaveBeenCalledWith('B');
+    });
+
+    it('omits onHideColumn/onTogglePin when not configured', () => {
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const headerProps = getHeaderCellProps(result.columns[0]);
+      expect(headerProps.onHideColumn).toBeUndefined();
+      expect(headerProps.onTogglePin).toBeUndefined();
+    });
+
+    it('sets canHideColumn based on the number of fields being built', () => {
+      const singleFieldFrame = createDataFrame({ fields: [{ name: 'A', type: FieldType.string, values: ['x'] }] });
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const result = callFromFields(hook, singleFieldFrame.fields, [100], singleFieldFrame, rows, rows);
+
+      expect(getHeaderCellProps(result.columns[0]).canHideColumn).toBe(false);
+    });
+  });
+
+  describe('header alignment', () => {
+    // Field B is numeric, so it right-aligns by default. table.refresh left-aligns every header
+    // regardless, giving the column menu a stable trailing edge to sit against.
+    function headerClassForNumericField(tableRefreshEnabled: boolean) {
+      const theme = createTheme();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ theme, tableRefreshEnabled }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      return { theme, headerCellClass: result.columns[1].headerCellClass };
+    }
+
+    it('right-aligns a numeric column header by default', () => {
+      const { theme, headerCellClass } = headerClassForNumericField(false);
+      expect(headerCellClass).toBe(getHeaderCellStyles(theme, 'flex-end'));
+    });
+
+    it('left-aligns a numeric column header when table.refresh is on', () => {
+      const { theme, headerCellClass } = headerClassForNumericField(true);
+      expect(headerCellClass).toBe(getHeaderCellStyles(theme, 'flex-start'));
+    });
   });
 
   function makePillFrame({ withMappings }: { withMappings: boolean }): DataFrame {

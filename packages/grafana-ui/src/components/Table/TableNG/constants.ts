@@ -32,9 +32,50 @@ export const TABLE = {
  */
 export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT;
 
+/**
+ * Marker classes stamped onto the first and last columns once the final column list is assembled.
+ * CSS can't find those columns on its own: `:first-child`/`:last-child` match the first and last
+ * *rendered* cells, and react-data-grid drops off-screen columns from the DOM, so they stop being
+ * the edge columns as soon as the grid scrolls horizontally.
+ */
+export const FIRST_COLUMN_CLASS = 'table-ng-first-col';
+export const LAST_COLUMN_CLASS = 'table-ng-last-col';
+
+// Distance from a panel's content edge to the start of its title text: PanelChrome's header
+// container padding (theme.spacing(1)) plus the title's own inline-start padding (x0_5).
+const PANEL_TITLE_INSET = 12;
+
+/**
+ * Extra inline-start padding the first column takes when the surrounding panel renders without
+ * padding of its own (see the `noPanelPadding` prop). The table then sits flush against the panel
+ * edge, which would leave the first column's content 6px in while the panel title sits at 12px —
+ * this makes up the difference so the two line up.
+ */
+export const FIRST_COLUMN_EXTRA_PADDING = PANEL_TITLE_INSET - TABLE.CELL_PADDING;
+
+// `table.refresh`: how long a column's "settle" highlight plays after it's reordered or pinned.
+export const COLUMN_SETTLE_MS = 280;
+
 // Space a single header affordance icon (filter / sort / type) reserves next to the label. Sized to
 // the widest of them — the sort arrow, rendered at Icon size "lg" (18px) — plus the flex gap, so a
 // filterable or sorted column doesn't ellipsize its title once its icon appears.
 const HEADER_ICON_WIDTH = 18;
 const HEADER_ICON_GAP = 4;
 export const HEADER_ICON_SPACE = HEADER_ICON_WIDTH + HEADER_ICON_GAP;
+
+// Space the `table.refresh` header column menu reserves. It replaces the inline filter icon, but is
+// an IconButton rather than a bare Icon, so it needs its own measurement: a size="sm" IconButton is
+// a 14px glyph plus the 4px trailing margin the component sets on itself. Keep in step with the
+// `size` prop in HeaderCellMenu — changing one without the other silently mis-sizes auto columns.
+// The menu button stays in flow while hover-hidden (it fades with opacity rather than unmounting),
+// so this reserves the same space whether or not it happens to be visible.
+const HEADER_MENU_BUTTON_WIDTH = 14 + 4;
+export const HEADER_MENU_SPACE = HEADER_MENU_BUTTON_WIDTH + HEADER_ICON_GAP;
+
+// Space the `table.refresh` reorder drag handle reserves before the label. It's a bare `Icon` at
+// default size="md" (16px) rather than an IconButton, so unlike the menu button it has no
+// component-level trailing margin of its own — just the header's own flex gap. The handle only
+// expands to this width on hover, but the space is reserved whenever reorder is enabled: otherwise
+// the title would start ellipsizing the moment the handle slides in.
+export const HEADER_DRAG_HANDLE_WIDTH = 16;
+export const HEADER_DRAG_HANDLE_SPACE = HEADER_DRAG_HANDLE_WIDTH + HEADER_ICON_GAP;

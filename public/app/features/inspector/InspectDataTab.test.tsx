@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
@@ -6,6 +7,7 @@ import { type Props } from 'react-virtualized-auto-sizer';
 import { type DataFrame, FieldType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { type TableNG } from '@grafana/ui/unstable';
 
 import { InspectDataTab } from './InspectDataTab';
@@ -241,7 +243,12 @@ describe('InspectDataTab', () => {
     });
 
     it('should render the data with TableNG instead of the legacy Table', () => {
-      render(<InspectDataTab {...createProps({ useTableNG: true })} />);
+      // CommonTableNG reads table.refresh via useFlagTableRefresh, which needs an OpenFeature client.
+      render(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab {...createProps({ useTableNG: true })} />
+        </OpenFeatureProvider>
+      );
       expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
       // react-data-grid (TableNG) uses role="grid", unlike the legacy Table's role="table"
       expect(screen.getByRole('grid')).toBeInTheDocument();

@@ -4,7 +4,14 @@ import memoize, { type Key, type RawKey } from 'micro-memoize';
 
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 
-import { COLUMN, TABLE } from './constants';
+import {
+  COLUMN,
+  COLUMN_SETTLE_MS,
+  FIRST_COLUMN_CLASS,
+  FIRST_COLUMN_EXTRA_PADDING,
+  LAST_COLUMN_CLASS,
+  TABLE,
+} from './constants';
 import { type TableCellStyles } from './types';
 
 // TextAlign, getJustifyContent, and IS_SAFARI_26 live here rather than in utils.tsx to avoid a
@@ -42,161 +49,248 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].textAlign === key[1].textAlign &&
   cacheKey[1].textWrap === key[1].textWrap;
 
-export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean) => {
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
-  if (visualRefreshEnabled) {
-    bgColor = transparent ? theme.colors.background.page : theme.components.panel.background;
-  }
-  // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
-  // unpredictable for background color cells
-  const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
-  const selectedRowColor = theme.isDark
-    ? colorManipulator.onBackground(theme.colors.warning.main, bgColor).darken(37).toHexString()
-    : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
+const buildHeaderColors = (theme: GrafanaTheme2, transparent?: boolean, tableRefreshEnabled?: boolean) => {
+  const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
+  const headerCellBackgroundColor = tableRefreshEnabled ? theme.colors.background.elevated : bgColor;
+  const headerCellDraggingBackgroundColor = theme.colors.emphasize(headerCellBackgroundColor, 0.1);
+  const headerCellDragTargetBackgroundColor = theme.colors.emphasize(headerCellBackgroundColor, 0.05);
+  return { headerCellBackgroundColor, headerCellDraggingBackgroundColor, headerCellDragTargetBackgroundColor };
+};
 
-  const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
+export const getGridStyles = memoize(
+  (
+    theme: GrafanaTheme2,
+    enablePagination?: boolean,
+    transparent?: boolean,
+    tableRefreshEnabled?: boolean,
+    noPanelPadding?: boolean
+  ) => {
+    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+    let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
+    if (visualRefreshEnabled) {
+      bgColor = transparent ? theme.colors.background.page : theme.components.panel.background;
+    }
+    // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
+    // unpredictable for background color cells
+    const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
+    const selectedRowColor = theme.isDark
+      ? colorManipulator.onBackground(theme.colors.warning.main, bgColor).darken(37).toHexString()
+      : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
 
-  return {
-    grid: css({
-      '--rdg-background-color': bgColor,
-      '--rdg-header-background-color': bgColor,
-      '--rdg-border-color': borderColor,
-      '--rdg-color': theme.colors.text.primary,
-      '--rdg-summary-border-color': borderColor,
-      '--rdg-summary-border-width': '1px',
+    const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
 
-      '--rdg-selection-color': theme.colors.info.transparent,
+    // `--rdg-header-background-color` needs to match the solid colors dragging/drag-over/settle use
+    // below — they're all derived from the same base color via buildHeaderColors rather than each
+    // computing it separately, so a themed header can't fall out of sync with its own drag states.
+    const { headerCellBackgroundColor, headerCellDraggingBackgroundColor, headerCellDragTargetBackgroundColor } =
+      buildHeaderColors(theme, transparent, tableRefreshEnabled);
 
-      // note: this cannot have any transparency since default cells that
-      // overlay/overflow on hover inherit this background and need to occlude cells below
-      '--rdg-row-background-color': bgColor,
-      '--rdg-row-hover-background-color': transparent
-        ? theme.colors.background.primary
-        : theme.colors.background.secondary,
-      '--rdg-row-selected-background-color': selectedRowColor,
-      '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
+    return {
+      grid: css({
+        '--rdg-background-color': bgColor,
+        // `table.refresh` gives the header its own surface distinct from the body rows.
+        '--rdg-header-background-color': headerCellBackgroundColor,
+        '--rdg-border-color': borderColor,
+        '--rdg-color': theme.colors.text.primary,
+        '--rdg-summary-border-color': borderColor,
+        '--rdg-summary-border-width': '1px',
 
-      // TODO: magic 32px number is unfortunate. it would be better to have the content
-      // flow using flexbox rather than hard-coding this size via a calc
-      blockSize: enablePagination ? 'calc(100% - 32px)' : '100%',
-      scrollbarWidth: 'thin',
-      scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
+        '--rdg-selection-color': theme.colors.info.transparent,
 
-      border: 'none',
+        // note: this cannot have any transparency since default cells that
+        // overlay/overflow on hover inherit this background and need to occlude cells below
+        '--rdg-row-background-color': bgColor,
+        '--rdg-row-hover-background-color': transparent
+          ? theme.colors.background.primary
+          : theme.colors.background.secondary,
+        '--rdg-row-selected-background-color': selectedRowColor,
+        '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
 
-      '.rdg-cell': {
-        padding: TABLE.CELL_PADDING,
+        // TODO: magic 32px number is unfortunate. it would be better to have the content
+        // flow using flexbox rather than hard-coding this size via a calc
+        blockSize: enablePagination ? 'calc(100% - 32px)' : '100%',
+        scrollbarWidth: 'thin',
+        scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
-        '&:last-child': {
-          borderInlineEnd: 'none',
-        },
+        border: 'none',
 
-        '&[aria-selected="true"][role="columnheader"]': {
-          outline: 'none',
-        },
-      },
+        '.rdg-cell': {
+          padding: TABLE.CELL_PADDING,
 
-      // add a box shadow on hover and selection for all body cells
-      '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
-        [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
-        // selected cells should appear below hovered cells.
-        ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 7 } }),
-        '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 6 },
-      },
+          '&:last-child': {
+            borderInlineEnd: 'none',
+          },
 
-      '.rdg-cell.rdg-cell-frozen': {
-        backgroundColor: 'var(--rdg-row-background-color)',
-        zIndex: theme.zIndex.tooltip - 4,
-        ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
-        '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
-      },
-
-      // have to override styles for row selection to workaround safari styles workaround
-      '[role="row"][aria-selected="true"]': {
-        '&:hover': {
-          '.rdg-cell.rdg-cell-frozen': {
-            backgroundColor: 'var(--rdg-row-selected-hover-background-color)',
+          '&[aria-selected="true"][role="columnheader"]': {
+            outline: 'none',
           },
         },
+
+        // add a box shadow on hover and selection for all body cells
+        '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
+          [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
+          // selected cells should appear below hovered cells.
+          ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 7 } }),
+          '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 6 },
+        },
+
         '.rdg-cell.rdg-cell-frozen': {
-          backgroundColor: 'var(--rdg-row-selected-background-color)',
+          backgroundColor: 'var(--rdg-row-background-color)',
+          zIndex: theme.zIndex.tooltip - 4,
+          ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
+          '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
         },
-      },
 
-      '.rdg-header-row, .rdg-summary-row': {
-        '.rdg-cell': {
-          zIndex: theme.zIndex.tooltip - 5,
-          '&.rdg-cell-frozen': {
-            zIndex: theme.zIndex.tooltip - 1,
+        // have to override styles for row selection to workaround safari styles workaround
+        '[role="row"][aria-selected="true"]': {
+          '&:hover': {
+            '.rdg-cell.rdg-cell-frozen': {
+              backgroundColor: 'var(--rdg-row-selected-hover-background-color)',
+            },
+          },
+          '.rdg-cell.rdg-cell-frozen': {
+            backgroundColor: 'var(--rdg-row-selected-background-color)',
           },
         },
-      },
-      '.rdg-summary-row >': {
-        '.rdg-cell': {
-          // 0.75 padding causes "jumping" on hover.
-          paddingBlock: theme.spacing(0.625),
+
+        '.rdg-header-row, .rdg-summary-row': {
+          '.rdg-cell': {
+            zIndex: theme.zIndex.tooltip - 5,
+            '&.rdg-cell-frozen': {
+              zIndex: theme.zIndex.tooltip - 1,
+            },
+          },
         },
-        [getActiveCellSelector()]: {
-          whiteSpace: 'pre-line',
-          height: '100%',
-          minHeight: 'fit-content',
-          overflowY: 'visible',
-          boxShadow: theme.shadows.z2,
+        '.rdg-summary-row >': {
+          '.rdg-cell': {
+            // 0.75 padding causes "jumping" on hover.
+            paddingBlock: theme.spacing(0.625),
+          },
+          [getActiveCellSelector()]: {
+            whiteSpace: 'pre-line',
+            height: '100%',
+            minHeight: 'fit-content',
+            overflowY: 'visible',
+            boxShadow: theme.shadows.z2,
+          },
         },
-      },
-    }),
-    gridNested: css({
-      // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no
-      // definite height, so its skipped-contents size is 0, and in Firefox a zero-size element never
-      // intersects the viewport, never becomes relevant, and stays collapsed forever.
-      contentVisibility: 'visible',
-      height: '100%',
-      width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
-      overflowX: 'scroll',
-      overflowY: 'hidden',
-      marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
-      marginBlock: TABLE.CELL_PADDING,
-      // usually row height will be set to 0 when not expanded, but auto cell height may lead to some rendering errors.
-      '&[aria-expanded="false"]': {
-        display: 'none',
-      },
-    }),
-    cellNested: css({
-      '&[aria-selected=true]': { outline: 'none' },
-      '&:hover': { backgroundColor: 'transparent' },
-    }),
-    noDataNested: css({
-      height: TABLE.NESTED_NO_DATA_HEIGHT,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.h4.fontSize,
-    }),
-    headerRow: css({
-      paddingBlockStart: 0,
-      fontWeight: 'normal',
-      '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
-    }),
-    displayNone: css({ display: 'none' }),
-    paginationContainer: css({
-      alignItems: 'center',
-      display: 'flex',
-      justifyContent: 'center',
-      marginTop: '8px',
-      width: '100%',
-    }),
-    paginationSummary: css({
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      display: 'flex',
-      justifyContent: 'flex-end',
-      padding: theme.spacing(0, 1, 0, 2),
-    }),
-    menuItem: css({ maxWidth: '200px' }),
-  };
-});
+
+        // `table.refresh` rounds the table's top corners, matching the header's own surface.
+        ...(tableRefreshEnabled && {
+          '.rdg-header-row > .rdg-cell': {
+            // Sub-pixel scroll offsets can leave a hairline gap above the sticky header where the
+            // row scrolled underneath it shows through — invisible before this commit, since the
+            // header shared the row background, but visible now that it's its own surface. A
+            // same-color 1px shadow just above the header's own box masks it without needing to
+            // touch react-data-grid's own sticky positioning. `overflow: hidden` below (for the
+            // rounded corners) doesn't clip this: it governs the cell's own content, not a
+            // box-shadow painted at its border edge.
+            boxShadow: '0 -1px 0 0 var(--rdg-header-background-color)',
+            // Backs the settle highlight (see getColumnSettleStyles): a plain transition rather than
+            // a @keyframes animation, so a background-color change mid-transition (the settle class
+            // toggling off, or a theme switch changing the color itself) blends smoothly from
+            // whatever's currently rendered instead of a keyframe animation restarting from a fixed
+            // "from" color computed under the old theme.
+            [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+              transition: theme.transitions.create('background-color', {
+                duration: COLUMN_SETTLE_MS,
+                easing: 'ease-out',
+              }),
+            },
+          },
+          // The `.rdg-cell.rdg-cell-frozen` rule above (for solid, occluding frozen body cells)
+          // also matches frozen *header* cells, at higher specificity than the plain `.rdg-cell`
+          // inheriting the header's background — so a frozen column's header cell fell back to the
+          // row background instead. Three classes' worth of specificity here beats that rule's two.
+          '.rdg-header-row > .rdg-cell.rdg-cell-frozen': {
+            backgroundColor: 'var(--rdg-header-background-color)',
+          },
+          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
+            borderStartStartRadius: theme.shape.radius.default,
+            overflow: 'hidden',
+          },
+          [`.rdg-header-row > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
+            borderStartEndRadius: theme.shape.radius.default,
+            overflow: 'hidden',
+          },
+        }),
+
+        // The panel around the table drops its own padding so the header surface can bleed to the
+        // panel edges, which leaves the first column's content further left than the panel title.
+        // Scoped to rows that are *direct* children, so a nested table's own grid (which lives
+        // inside a cell) keeps the standard padding throughout.
+        ...(noPanelPadding && {
+          [`& > * > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
+            paddingInlineStart: TABLE.CELL_PADDING + FIRST_COLUMN_EXTRA_PADDING,
+          },
+        }),
+      }),
+      gridNested: css({
+        // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no
+        // definite height, so its skipped-contents size is 0, and in Firefox a zero-size element never
+        // intersects the viewport, never becomes relevant, and stays collapsed forever.
+        contentVisibility: 'visible',
+        height: '100%',
+        width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
+        overflowX: 'scroll',
+        overflowY: 'hidden',
+        marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
+        marginBlock: TABLE.CELL_PADDING,
+        // usually row height will be set to 0 when not expanded, but auto cell height may lead to some rendering errors.
+        '&[aria-expanded="false"]': {
+          display: 'none',
+        },
+      }),
+      cellNested: css({
+        '&[aria-selected=true]': { outline: 'none' },
+        '&:hover': { backgroundColor: 'transparent' },
+      }),
+      noDataNested: css({
+        height: TABLE.NESTED_NO_DATA_HEIGHT,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: theme.colors.text.secondary,
+        fontSize: theme.typography.h4.fontSize,
+      }),
+      headerRow: css({
+        paddingBlockStart: 0,
+        fontWeight: 'normal',
+        '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
+        // `table.refresh`: react-data-grid applies these classes itself while a column drag is in
+        // progress — only the visual treatment lives here, gated so a column can only look
+        // draggable once `enableColumnReorder` actually makes it so.
+        ...(tableRefreshEnabled && {
+          '& .rdg-cell-dragging': {
+            cursor: 'grabbing',
+            backgroundColor: headerCellDraggingBackgroundColor,
+            boxShadow: `inset 0 0 0 1px ${theme.colors.border.medium}`,
+          },
+          '& .rdg-cell-drag-over': {
+            backgroundColor: headerCellDragTargetBackgroundColor,
+            boxShadow: `inset 3px 0 0 0 ${theme.colors.primary.main}`,
+          },
+        }),
+      }),
+      displayNone: css({ display: 'none' }),
+      paginationContainer: css({
+        alignItems: 'center',
+        display: 'flex',
+        justifyContent: 'center',
+        marginTop: '8px',
+        width: '100%',
+      }),
+      paginationSummary: css({
+        color: theme.colors.text.secondary,
+        fontSize: theme.typography.bodySmall.fontSize,
+        display: 'flex',
+        justifyContent: 'flex-end',
+        padding: theme.spacing(0, 1, 0, 2),
+      }),
+      menuItem: css({ maxWidth: '200px' }),
+    };
+  }
+);
 
 export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
   css({
@@ -209,6 +303,20 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
     '&:last-child': { borderInlineEnd: 'none' },
   })
 );
+
+// `table.refresh`: a brief highlight applied to a column's header after it's reordered or pinned,
+// so the change is noticeable even though the column itself doesn't move far. A plain background
+// color rather than a @keyframes animation: the header cell's own `background-color` transition
+// (see the `.rdg-header-row > .rdg-cell` rule above) picks this up and animates both in and back
+// out on its own, and — unlike a keyframe animation, which restarts from a fixed "from" color
+// whenever this class's underlying CSS regenerates under a new theme — a transition just retargets
+// smoothly from whatever's currently rendered, so switching themes mid-highlight doesn't jump.
+export const getColumnSettleStyles = memoize((theme: GrafanaTheme2, tableRefreshEnabled?: boolean) => {
+  const { headerCellDragTargetBackgroundColor } = buildHeaderColors(theme, false, tableRefreshEnabled);
+  return css({
+    backgroundColor: headerCellDragTargetBackgroundColor,
+  });
+});
 
 export const getDefaultCellStyles: TableCellStyles = memoize(
   (theme, { textAlign, shouldOverflow, maxHeight }) =>

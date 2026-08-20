@@ -10633,9 +10633,20 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
+      "close-column-visibility": "Close column visibility panel",
+      "column-menu-filter": "Filter values",
+      "column-menu-hide": "Hide column",
+      "column-menu-label": "Column options for {{name}}",
+      "column-menu-manage-columns": "Manage columns",
+      "column-menu-pin": "Pin column left",
+      "column-menu-unpin": "Unpin column",
+      "column-menu-update-filter": "Update filter",
+      "column-visibility": "Column visibility",
+      "columns": "Columns",
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}",
       "csv-placeholder": "Enter CSV here...",
+      "edit-column-filter": "Edit filter on {{name}}",
       "filter": {
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
@@ -10669,6 +10680,7 @@
           "count": "Count"
         }
       },
+      "hide-column-label": "Hide {{columnName}}",
       "inspect-drawer-title": "Inspect value",
       "nested-table": {
         "expander-column-name": "Expand nested rows",
@@ -10677,6 +10689,9 @@
       "no-rows": "No rows",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "pin-column-label": "Pin {{columnName}}",
+      "reorder-column-label": "Reorder {{columnName}}",
+      "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
       "sort-by-column-ascending": "Sort by column {{column}}, ascending",
       "sort-by-column-descending": "Sort by column {{column}}, descending",
@@ -10686,7 +10701,8 @@
       },
       "tooltip": {
         "trigger": "Toggle tooltip"
-      }
+      },
+      "unpin-column-label": "Unpin {{columnName}}"
     },
     "tags": {
       "list-label": "Tags"
