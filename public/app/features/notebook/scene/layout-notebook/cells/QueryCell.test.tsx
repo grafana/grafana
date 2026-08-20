@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import {
   type DataFrame,
@@ -27,6 +27,7 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
     onRunQuery,
     hideActionButtons,
     collapsable,
+    isOpen,
     renderHeaderExtras,
   }: {
     dataSource: DataSourceInstanceSettings;
@@ -36,6 +37,7 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
     onRunQuery: () => void;
     hideActionButtons?: boolean;
     collapsable?: boolean;
+    isOpen?: boolean;
     renderHeaderExtras?: () => ReactNode;
   }) => (
     <div>
@@ -43,6 +45,7 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
       <span data-testid="current-query">{JSON.stringify(query)}</span>
       <span data-testid="hide-action-buttons">{String(Boolean(hideActionButtons))}</span>
       <span data-testid="collapsable">{String(Boolean(collapsable))}</span>
+      <span data-testid="is-open">{String(Boolean(isOpen))}</span>
       <span data-testid="can-change-datasource">{String(Boolean(onChangeDataSource))}</span>
       {renderHeaderExtras?.()}
       <button onClick={() => onChange({ ...query, expr: 'up' } as DataQuery)}>edit query</button>
@@ -290,11 +293,69 @@ describe('QueryCell', () => {
   // Duplicate/remove/reorder never do anything meaningful for a cell that only ever has one query —
   // the notebook cell's own actions already cover duplicate/delete. hideActionButtons is the only
   // lever QueryEditorRow exposes for this (see QueryCell's own comment on why help goes with it).
-  it('hides the row-level duplicate/remove/drag actions and offers a collapse chevron', async () => {
+  // collapsable is false because collapse is driven externally now — see the collapse describe block.
+  it('hides the row-level duplicate/remove/drag actions', async () => {
     render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
 
     expect(await screen.findByTestId('hide-action-buttons')).toHaveTextContent('true');
-    expect(screen.getByTestId('collapsable')).toHaveTextContent('true');
+    expect(screen.getByTestId('collapsable')).toHaveTextContent('false');
+  });
+
+  it('renders the Run button outside the query editor row, not through renderHeaderExtras', async () => {
+    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+
+    // The mock only renders renderHeaderExtras' own return value inside its DOM — a Run button
+    // appearing here would mean it went back through that slot instead of its own row.
+    const editorRow = (await screen.findByTestId('resolved-datasource')).closest('div')!;
+    expect(within(editorRow).queryByRole('button', { name: 'Run query' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Run query' })).toBeInTheDocument();
+  });
+
+  describe('the query editor’s own collapse state', () => {
+    it('starts expanded in edit mode', async () => {
+      render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+
+      expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
+    });
+
+    it('starts collapsed in view mode', async () => {
+      render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
+
+      expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
+    });
+
+    it('toggles locally without ever calling onChange, in either mode', async () => {
+      const onChange = jest.fn();
+      const { user } = render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={onChange} />);
+
+      await user.click(await screen.findByRole('button', { name: 'Collapse query editor' }));
+
+      expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
+      expect(await screen.findByRole('button', { name: 'Expand query editor' })).toBeInTheDocument();
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    // Cells aren't remounted when the whole notebook flips between edit and view, so the initial
+    // useState alone would only ever apply on the very first render — this is what re-collapses (or
+    // re-expands) an already-mounted cell on a later mode switch too, not just a notebook opened
+    // straight into one mode or the other.
+    it('collapses when the notebook switches from edit to view mid-session, not only on a fresh load', async () => {
+      const { rerender } = render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+      expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
+
+      rerender(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
+
+      expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
+    });
+
+    it('expands again when the notebook switches back from view to edit', async () => {
+      const { rerender } = render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
+      expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
+
+      rerender(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+
+      expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
+    });
   });
 
   describe('while the notebook is being read, not edited', () => {
@@ -318,19 +379,24 @@ describe('QueryCell', () => {
       expect(await screen.findByRole('button', { name: 'Run query' })).toBeEnabled();
     });
 
-    it('still offers a working collapse chevron', async () => {
-      render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
+    it('still offers a working collapse toggle', async () => {
+      const { user } = render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
 
-      expect(await screen.findByTestId('collapsable')).toHaveTextContent('true');
+      await user.click(await screen.findByRole('button', { name: 'Expand query editor' }));
+
+      expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
     });
-  });
 
-  it('puts the Run button in the row header instead of a separate element below it', async () => {
-    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+    // The CSS pointer-events lock only stops mouse interaction — a focused input could still be typed
+    // into via the keyboard, which is exactly what this mock's "edit query" button stands in for here.
+    it('never calls onChange for a query edit that slips past the visual lock', async () => {
+      const onChange = jest.fn();
+      const { user } = render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={onChange} />);
 
-    // renderHeaderExtras is invoked by the mock right where QueryEditorRow's own header renders it —
-    // if this button showed up outside that render prop, it wouldn't exist at all in this mock's DOM.
-    expect(await screen.findByRole('button', { name: 'Run query' })).toBeInTheDocument();
+      await user.click(await screen.findByRole('button', { name: 'edit query' }));
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
   });
 
   it('auto-runs a cell that already has a saved query once its datasource resolves', async () => {

@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { GraphContainer } from 'app/features/explore/Graph/GraphContainer';
 import { type CellContentKind, type PanelQueryKind } from 'app/features/notebook/types';
@@ -53,6 +53,17 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
   const [data, setData] = useState<PanelData>();
   const [running, setRunning] = useState(false);
   const [dsSettings, setDsSettings] = useState<DataSourceInstanceSettings>();
+  // Reading a notebook starts every query editor collapsed (a wall of graphs, not a wall of query
+  // builders); editing starts them expanded. Purely local — never touches `content`, so toggling one
+  // back open isn't "editing" the notebook in any sense that should persist or be undoable.
+  const [collapsed, setCollapsed] = useState(!isEditing);
+  // Cells aren't remounted when the whole notebook flips between edit and view, so the useState above
+  // only ever seeds the very first render's value — this is what re-applies the mode's own default on
+  // every later transition too (e.g. edit -> view mid-session, not just a notebook opened straight into
+  // view mode), while still leaving room for a manual toggle in between transitions.
+  useEffect(() => {
+    setCollapsed(!isEditing);
+  }, [isEditing]);
 
   // Scoped to this cell alone, the same way Explore itself scopes a bus per pane
   // (Explore.tsx's own graphEventBus) — nothing outside this cell publishes or subscribes to it, so
@@ -156,28 +167,51 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
     return null;
   }
 
+  // The CSS lock below only stops mouse interaction — a focused input can still be typed into via the
+  // keyboard regardless of pointer-events, which would reach these otherwise. Refusing to call
+  // `onChange` at all while reading is what actually keeps a stray edit from persisting or ever
+  // reaching NotebookEditHistory's undo/redo — not the visual lock, which is just the user-facing half
+  // of the same guarantee.
   const changeQuery = (updated: DataQuery) => {
+    if (!isEditing) {
+      return;
+    }
     onChange({ kind: 'Query', spec: { ...content.spec, query: panelQueryKindFromDataQuery(updated, panelQuery) } });
   };
 
   const changeDataSource = (settings: DataSourceInstanceSettings) => {
+    if (!isEditing) {
+      return;
+    }
     changeQuery({ ...query, datasource: { uid: settings.uid, type: settings.type } });
   };
 
-  const runButton = (
-    <Button icon="play" onClick={runQuery} disabled={!dsSettings || running} size="sm">
-      {t('notebook.cell.query.run', 'Run query')}
-    </Button>
+  const collapseToggle = (
+    <IconButton
+      name={collapsed ? 'angle-right' : 'angle-down'}
+      tooltip={
+        collapsed
+          ? t('notebook.cell.query.expand', 'Expand query editor')
+          : t('notebook.cell.query.collapse', 'Collapse query editor')
+      }
+      aria-expanded={!collapsed}
+      onClick={() => setCollapsed((current) => !current)}
+    />
   );
 
   return (
     <Stack direction="column" gap={1}>
+      <Stack justifyContent="flex-end">
+        <Button icon="play" onClick={runQuery} disabled={!dsSettings || running} size="sm">
+          {t('notebook.cell.query.run', 'Run query')}
+        </Button>
+      </Stack>
+
       {dsSettings ? (
         // Locks the query editor body (the actual per-plugin editor UI) while the notebook is being
         // read rather than edited — see getStyles' own comment on why this reaches in via CSS instead
-        // of a prop. The header (datasource label, collapse chevron, Run button below) stays outside
-        // that lock, so a reader can still collapse down to the graph or re-run already-saved results
-        // without switching the notebook into edit mode first.
+        // of a prop. The header (datasource label, collapse chevron) stays outside that lock, so a
+        // reader can still collapse down to the graph without switching the notebook into edit mode.
         <div className={!isEditing ? styles.locked : undefined}>
           <QueryEditorRow
             data={data ?? { state: LoadingState.NotStarted, series: [], timeRange: resolvedRange }}
@@ -201,9 +235,15 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
             // toggle along with them; there's no way to keep just one without reaching past its own
             // props into its internals.
             hideActionButtons
-            collapsable
+            // Its own chevron is replaced by collapseToggle below: QueryOperationRow still syncs its
+            // visibility from `isOpen` even with `collapsable={false}` (only the click target — the
+            // chevron itself — goes away), and QueryEditorRow only ever reports an *open* row back
+            // to the caller (there's no equivalent notification when one is collapsed), so driving
+            // `isOpen` externally is the only way to actually own this state ourselves.
+            collapsable={false}
+            isOpen={!collapsed}
             hideHideQueryButton
-            renderHeaderExtras={() => runButton}
+            renderHeaderExtras={() => collapseToggle}
           />
         </div>
       ) : (
