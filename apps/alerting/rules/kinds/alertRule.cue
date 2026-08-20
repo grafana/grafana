@@ -52,6 +52,10 @@ alertRulev0alpha1: alertRuleKind & {
 	// plus the active branch's fields (receiver for SimplifiedRouting,
 	// routingTree for NamedRoutingTree) at the same level, so all three read
 	// from spec.notificationSettings.* directly.
+	search: {
+		endpoint: false
+		trash:    false
+	}
 	searchFields: [
 		{
 			name: "type"
