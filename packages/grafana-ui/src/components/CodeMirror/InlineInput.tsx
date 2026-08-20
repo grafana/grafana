@@ -126,7 +126,7 @@ function createInlineInputTheme(theme: GrafanaTheme2, monospace: boolean): Exten
       backgroundColor: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     },
     // The detail panel ("info" / documentation). CodeMirror gives it no color of
     // its own, so without this it falls back to the editor's light/dark base
@@ -136,7 +136,7 @@ function createInlineInputTheme(theme: GrafanaTheme2, monospace: boolean): Exten
       color: theme.colors.text.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       padding: theme.spacing(0.5, 1),
       fontFamily: theme.typography.fontFamily,
       fontSize: theme.typography.bodySmall.fontSize,

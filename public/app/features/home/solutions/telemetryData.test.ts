@@ -8,7 +8,7 @@ import {
 import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
-import { PROBE_TIMEOUT_MS, resolveBackendInstance } from './probeUtils';
+import { resolveBackendInstance } from './probeUtils';
 import { runInstantQueries, runRangeQuery } from './promQuery';
 import {
   fetchLogsActivity,
@@ -455,7 +455,7 @@ describe('metrics telemetry', () => {
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       { eta: expect.stringContaining('instance="web-03:9100",mountpoint="/data"') },
       prom,
-      PROBE_TIMEOUT_MS
+      30_000
     );
   });
 

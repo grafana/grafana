@@ -11,6 +11,7 @@ import { type Column, type SortDirection } from '@grafana/react-data-grid';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
+import { IconButton } from '../../../IconButton/IconButton';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Popover } from '../../../Tooltip/Popover';
 import { Filter } from '../Filter/Filter';
@@ -60,6 +61,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
+  const headerTooltip = field.config.custom?.headerTooltip;
+
   const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
   const hasActiveFilter = filterable && filter[filterKey]?.filtered != null;
 
@@ -146,6 +149,17 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
         )}
       </button>
+      {headerTooltip && (
+        <IconButton
+          name="info-circle"
+          size="sm"
+          tooltip={headerTooltip}
+          className={styles.headerTooltipIcon}
+          onClick={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        />
+      )}
       {/* The column menu is only revealed on hover, so an active filter needs a persistent marker of
           its own; it sits with the sort arrow because both report the column's state. It doubles as a
           shortcut back into the filter popup, so the filter can be adjusted or cleared without going
@@ -285,6 +299,9 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,
+  }),
+  headerTooltipIcon: css({
+    cursor: 'default',
   }),
   // Wraps the filter icon without changing how it reads: no padding, border or background, so the
   // button box is exactly the icon and the header's spacing and reserved width are unaffected.

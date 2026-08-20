@@ -1,6 +1,32 @@
+import memoize from 'micro-memoize';
+
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
+
+/**
+ * A lazily-started, shared solution fact derived from the solution's datasource: the first read
+ * resolves the datasource and starts `fetch`; every reader shares that one run. No datasource
+ * (solution not live) reads as null without starting the query.
+ */
+export function datasourceFact<T>(
+  datasource: () => Promise<DataSourceInstanceListItem | null>,
+  fetch: (ds: DataSourceInstanceListItem) => Promise<T | null>,
+  {
+    retryOnError = false,
+  }: {
+    /** Evict rejections so a later reader retries instead of sharing the cached failure. */
+    retryOnError?: boolean;
+  } = {}
+): () => Promise<T | null> {
+  return memoize(
+    async () => {
+      const ds = await datasource();
+      return ds ? fetch(ds) : null;
+    },
+    { isPromise: retryOnError }
+  );
+}
 
 /** Cap the probe fan-out: only the first N candidates (in priority order) are probed per page load. */
 export const MAX_PROBED_DATASOURCES = 10;
@@ -18,13 +44,10 @@ const HEALTH_CHECK_TIMEOUT_MS = 3000;
 // (billing/ML) carry exact unprefixed names; Loki utilities (query logs, alert history) are
 // provisioned with stack-prefixed names (grafanacloud-<slug>-usage-insights) over stable
 // unprefixed uids, so the name check matches both forms.
-const CLOUD_UTILITY_DATASOURCE_NAMES: Record<string, true> = {
-  'grafanacloud-usage': true,
-  'grafanacloud-ml-metrics': true,
-};
+const CLOUD_UTILITY_DATASOURCE_NAMES: ReadonlySet<string> = new Set(['grafanacloud-usage', 'grafanacloud-ml-metrics']);
 const CLOUD_UTILITY_LOKI_NAME_PATTERN = /^grafanacloud-(.+-)?(usage-insights|alert-state-history)$/;
 function isCloudUtilityDatasourceName(name: string): boolean {
-  return Boolean(CLOUD_UTILITY_DATASOURCE_NAMES[name]) || CLOUD_UTILITY_LOKI_NAME_PATTERN.test(name);
+  return CLOUD_UTILITY_DATASOURCE_NAMES.has(name) || CLOUD_UTILITY_LOKI_NAME_PATTERN.test(name);
 }
 
 /** Backend-capable datasource instance for `uid`, or null when it cannot serve resource calls. */
@@ -37,9 +60,14 @@ export async function resolveBackendInstance(uid: string): Promise<DataSourceWit
  * GET through the classic datasource proxy, timeout-bounded, never toasts. Some datasource
  * backends (e.g. Tempo) serve their HTTP API only here, not on the resource router.
  */
-export async function probeProxyGet<T>(uid: string, path: string, params: Record<string, unknown>): Promise<T> {
+export async function probeProxyGet<T>(
+  uid: string,
+  path: string,
+  params: Record<string, unknown>,
+  timeoutMs = PROBE_TIMEOUT_MS
+): Promise<T> {
   const url = `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
-  return withTimeout(getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false }), PROBE_TIMEOUT_MS);
+  return withTimeout(getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false }), timeoutMs);
 }
 
 /** Rejects when `promise` outlasts `ms`; the underlying request keeps running but stops gating the caller. */

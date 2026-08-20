@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 
 import { HOSTED_TRACES_APP_ID } from './appPluginIds';
 import { drilldownActiveCta } from './pluginPages';
+import { datasourceFact } from './probeUtils';
 import { probeFound, tempoHasTraces } from './solutionDataProbes';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal } from './solutionState';
@@ -41,14 +42,10 @@ export function tracesSolution(): Solution {
   const detect = memoize(() => detectSignal(() => probeFound('tempo', tempoHasTraces)));
   const datasource = async () => (await detect()).datasource;
 
-  const activity = memoize(async () => {
-    const ds = await datasource();
-    return ds ? fetchTracesActivity(ds) : null;
-  });
-  const services = memoize(async () => {
-    const ds = await datasource();
-    return ds ? fetchTracesServices(ds) : null;
-  });
+  // retryOnError: a timed-out or failed query must not cache its rejection for the whole visit —
+  // the abandoned request still warms Tempo's query cache, so a later reader's retry succeeds.
+  const activity = datasourceFact(datasource, fetchTracesActivity, { retryOnError: true });
+  const services = datasourceFact(datasource, fetchTracesServices, { retryOnError: true });
 
   const signal = async () => (await detect()).status;
 

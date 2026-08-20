@@ -1517,8 +1517,9 @@ export type ConnectionSpec = {
      - `"bitbucketOAuth"`
      - `"github"`
      - `"githubEnterprise"`
+     - `"githubOAuth"`
      - `"gitlabOAuth"` */
-  type: 'bitbucketOAuth' | 'github' | 'githubEnterprise' | 'gitlabOAuth';
+  type: 'bitbucketOAuth' | 'github' | 'githubEnterprise' | 'githubOAuth' | 'gitlabOAuth';
   /** The connection URL */
   url?: string;
   /** Webhook configuration for this connection */
@@ -1959,6 +1960,8 @@ export type GitLabRepositoryConfig = {
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
+  /** RepoID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input. */
+  repoID?: string;
   /** The repository URL (e.g. `https://gitlab.com/example/test`). */
   url?: string;
 };
@@ -2291,7 +2294,7 @@ export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** AvailableConnectionTypes is the list of connection types supported in this instance */
-  availableConnectionTypes?: ('bitbucketOAuth' | 'github' | 'githubEnterprise' | 'gitlabOAuth')[];
+  availableConnectionTypes?: ('bitbucketOAuth' | 'github' | 'githubEnterprise' | 'githubOAuth' | 'gitlabOAuth')[];
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
   availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local')[];
   /** AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled). */

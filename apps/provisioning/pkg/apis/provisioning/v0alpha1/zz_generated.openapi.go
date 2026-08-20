@@ -601,11 +601,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlabOAuth\"`",
+							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "gitlabOAuth"},
+							Enum:        []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "githubOAuth", "gitlabOAuth"},
 						},
 					},
 					"url": {
@@ -1298,6 +1298,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref common.Ref
 					"path": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"repoID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RepoID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -2956,7 +2963,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 										Default: "",
 										Type:    []string{"string"},
 										Format:  "",
-										Enum:    []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "gitlabOAuth"},
+										Enum:    []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "githubOAuth", "gitlabOAuth"},
 									},
 								},
 							},

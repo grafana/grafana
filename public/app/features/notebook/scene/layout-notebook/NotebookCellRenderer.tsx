@@ -70,7 +70,6 @@ function NarrativeCell({
   autoFocus?: boolean;
 }) {
   const styles = useStyles2(getStyles);
-
   const registered = cellTypeRegistry.getIfExists(content.kind);
   if (!registered) {
     return null;

@@ -13,6 +13,8 @@ interface SolutionStatsRowProps {
   /** Optional replacement for the base stats when richer data resolves. */
   refinedStats: () => Promise<SolutionStats | null>;
   sparkline: () => Promise<SolutionSparklineData | null>;
+  /** Overview cards render denser stats; the recommendations card keeps the large defaults. */
+  compact?: boolean;
   gap?: ComponentProps<typeof Stack>['gap'];
   statsTestId?: string;
   sparklineTestId?: string;
@@ -23,6 +25,7 @@ export function SolutionStatsRow({
   refinedStats,
   sparkline,
   gap = 2,
+  compact = false,
   statsTestId,
   sparklineTestId,
 }: SolutionStatsRowProps) {
@@ -45,16 +48,16 @@ export function SolutionStatsRow({
         <div className={styles.stats}>
           {resolvedStats === null ? (
             <Stack direction="column" gap={0} data-testid={statsTestId}>
-              <Skeleton width={96} height={28} />
+              <Skeleton width={96} height={compact ? 22 : 28} />
               <Skeleton width={72} />
             </Stack>
           ) : (
             <Stack direction="column" gap={0}>
-              <Text variant="h2" color="primary">
+              <Text variant={compact ? 'h3' : 'h2'} color="primary">
                 {resolvedStats.primary}
               </Text>
               {resolvedStats.secondary && (
-                <Text variant="body" color="secondary">
+                <Text variant={compact ? 'bodySmall' : 'body'} color="secondary">
                   {resolvedStats.secondary}
                 </Text>
               )}
