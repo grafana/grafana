@@ -10,9 +10,11 @@ import {
   AUTO_GRID_DEFAULT_COLUMN_WIDTH,
   AUTO_GRID_DEFAULT_ROW_HEIGHT,
   type AutoGridColumnWidth,
+  type AutoGridMinHeight,
   type AutoGridRowHeight,
   getAutoRowsTemplate,
   getTemplateColumnsTemplate,
+  isAutoHeightPanelsEnabled,
   AutoGridLayoutManager,
 } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
@@ -24,7 +26,18 @@ export function serializeAutoGridLayout(
   layoutManager: AutoGridLayoutManager,
   isSnapshot?: boolean
 ): DashboardV2Spec['layout'] {
-  const { maxColumnCount, fillScreen, columnWidth, rowHeight, layout } = layoutManager.state;
+  const {
+    maxColumnCount,
+    fillScreen,
+    fitContent,
+    minHeight,
+    maxHeightMode,
+    maxHeight,
+    matchRowHeights,
+    columnWidth,
+    rowHeight,
+    layout,
+  } = layoutManager.state;
   const defaults = defaultAutoGridLayoutSpec();
 
   const items = isSnapshot
@@ -36,8 +49,13 @@ export function serializeAutoGridLayout(
     spec: {
       maxColumnCount,
       fillScreen: fillScreen === defaults.fillScreen ? undefined : fillScreen,
+      fitContent: fitContent === defaults.fitContent ? undefined : fitContent,
+      maxHeightMode: !maxHeightMode || maxHeightMode === 'unlimited' ? undefined : maxHeightMode,
+      maxHeight: maxHeightMode === 'custom' ? maxHeight : undefined,
+      matchRowHeights: matchRowHeights === false ? false : undefined,
       ...serializeAutoGridColumnWidth(columnWidth),
       ...serializeAutoGridRowHeight(rowHeight),
+      ...serializeAutoGridMinHeight(minHeight),
       items,
     },
   };
@@ -71,6 +89,11 @@ export function serializeAutoGridItem(item: AutoGridItem, isSnapshot = false): A
       mode: 'variable',
       value: item.state.variableName,
     };
+  }
+
+  // Tri-state: undefined follows the layout default, so only persist an explicit override.
+  if (item.state.fitContent !== undefined) {
+    layoutItem.spec.fitContent = item.state.fitContent;
   }
 
   return layoutItem;
@@ -117,24 +140,50 @@ export function deserializeAutoGridLayout(
   }
 
   const defaults = defaultAutoGridLayoutSpec();
-  const { maxColumnCount, columnWidthMode, columnWidth, rowHeightMode, rowHeight, fillScreen } = layout.spec;
+  const {
+    maxColumnCount,
+    columnWidthMode,
+    columnWidth,
+    rowHeightMode,
+    rowHeight,
+    fillScreen,
+    fitContent,
+    minHeightMode,
+    minHeight,
+    maxHeightMode,
+    maxHeight,
+    matchRowHeights,
+  } = layout.spec;
 
   const children = layout.spec.items.map((item) => deserializeAutoGridItem(item, elements, panelIdGenerator));
 
   const columnWidthCombined = columnWidthMode === 'custom' ? columnWidth : columnWidthMode;
   const rowHeightCombined = rowHeightMode === 'custom' ? rowHeight : rowHeightMode;
+  const minHeightCombined = minHeightMode === 'custom' ? minHeight : minHeightMode;
+  const fillScreenResolved = fillScreen ?? defaults.fillScreen ?? false;
+  const fitContentResolved = fitContent ?? defaults.fitContent ?? false;
 
   return new AutoGridLayoutManager({
     maxColumnCount,
     columnWidth: columnWidthCombined,
     rowHeight: rowHeightCombined,
-    fillScreen: fillScreen ?? defaults.fillScreen,
+    fillScreen: fillScreenResolved,
+    fitContent: fitContentResolved,
+    minHeight: minHeightCombined,
+    maxHeightMode,
+    maxHeight,
+    matchRowHeights,
     layout: new AutoGridLayout({
       templateColumns: getTemplateColumnsTemplate(
         maxColumnCount ?? defaults.maxColumnCount!,
         columnWidthCombined ?? AUTO_GRID_DEFAULT_COLUMN_WIDTH
       ),
-      autoRows: getAutoRowsTemplate(rowHeightCombined ?? AUTO_GRID_DEFAULT_ROW_HEIGHT, fillScreen ?? false),
+      autoRows: getAutoRowsTemplate(
+        rowHeightCombined ?? AUTO_GRID_DEFAULT_ROW_HEIGHT,
+        fillScreenResolved,
+        // Rows must be able to grow if the layout default OR any panel opts into fit-content.
+        isAutoHeightPanelsEnabled() && (fitContentResolved || children.some((child) => child.state.fitContent === true))
+      ),
       children,
     }),
   });
@@ -151,6 +200,16 @@ function serializeAutoGridRowHeight(rowHeight: AutoGridRowHeight) {
   return {
     rowHeightMode: typeof rowHeight === 'number' ? 'custom' : rowHeight,
     rowHeight: typeof rowHeight === 'number' ? rowHeight : undefined,
+  };
+}
+
+function serializeAutoGridMinHeight(minHeight: AutoGridMinHeight | undefined) {
+  if (minHeight === undefined) {
+    return { minHeightMode: undefined, minHeight: undefined };
+  }
+  return {
+    minHeightMode: typeof minHeight === 'number' ? ('custom' as const) : minHeight,
+    minHeight: typeof minHeight === 'number' ? minHeight : undefined,
   };
 }
 
@@ -172,5 +231,6 @@ export function deserializeAutoGridItem(
     body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel, id) : buildVizPanel(panel, id),
     variableName: item.spec.repeat?.value,
     conditionalRendering: getConditionalRendering(item),
+    fitContent: item.spec.fitContent,
   });
 }

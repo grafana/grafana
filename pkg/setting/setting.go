@@ -196,6 +196,7 @@ type Cfg struct {
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
 	ProvisioningRepositoryTypes               []string
+	ProvisioningConnectionTypes               []string
 	ProvisioningLokiURL                       string
 	ProvisioningLokiUser                      string
 	ProvisioningLokiPassword                  string
@@ -330,6 +331,7 @@ type Cfg struct {
 	PanelSeriesLimit                 int
 	DashboardDefaultPreload          bool
 	DashboardSchemaMigrationCacheTTL time.Duration
+	ReportRenderQueryGracePeriod     time.Duration
 
 	// Auth
 	LoginCookieName                   string
@@ -1633,6 +1635,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 	cfg.DashboardDefaultPreload = dashboards.Key("default_preload").MustBool(false)
 	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
+	cfg.ReportRenderQueryGracePeriod = dashboards.Key("report_render_query_grace_period").MustDuration(3 * time.Second)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
@@ -2543,6 +2546,19 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 			}
 
 			cfg.ProvisioningRepositoryTypes[i] = s
+		}
+	}
+
+	connectionTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "connection_types", ""))
+	if connectionTypes != "|" && connectionTypes != "" {
+		cfg.ProvisioningConnectionTypes = strings.Split(connectionTypes, "|")
+		for i, s := range cfg.ProvisioningConnectionTypes {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning connection type is empty in '%s' (at index %d)", connectionTypes, i)
+			}
+
+			cfg.ProvisioningConnectionTypes[i] = s
 		}
 	}
 
