@@ -865,6 +865,62 @@ describe('TableNG', () => {
       expect(screen.getByText('1')).toBeInTheDocument();
     });
 
+    it('leaves the hidden header label out of content-aware auto widths', () => {
+      // A header long enough that it, not the cell content, would set the column width. With the
+      // header hidden there is no label to fit, so the column should size to its content instead.
+      const longHeader = 'Category, with a header label long enough to size this column on its own';
+      const frame = withFieldOverrides(
+        toDataFrame({
+          name: 'AutoWidths',
+          length: 3,
+          fields: [
+            {
+              name: longHeader,
+              type: FieldType.string,
+              values: ['A', 'B', 'C'],
+              config: {},
+              display: displayString,
+              ...stdField,
+            },
+            {
+              name: 'Name',
+              type: FieldType.string,
+              values: ['x', 'y', 'z'],
+              config: {},
+              display: displayString,
+              ...stdField,
+            },
+          ],
+        })
+      );
+
+      const renderWidths = (noHeader: boolean) => {
+        const { container, unmount } = render(
+          <TableNG
+            enableVirtualization={false}
+            contentAwareWidthsEnabled={true}
+            data={frame}
+            width={800}
+            height={600}
+            noHeader={noHeader}
+          />
+        );
+        // rdg lays the grid out with an inline grid-template-columns, so it holds every column width.
+        const widths = container
+          .querySelector<HTMLElement>('[role="grid"]')!
+          .style.gridTemplateColumns.split(' ')
+          .map(parseFloat);
+        unmount();
+        return widths;
+      };
+
+      const [withHeader] = renderWidths(false);
+      const [withoutHeader] = renderWidths(true);
+
+      expect(withHeader).toBeGreaterThan(0);
+      expect(withoutHeader).toBeLessThan(withHeader);
+    });
+
     it('shows full column name in title attribute for truncated headers', () => {
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />

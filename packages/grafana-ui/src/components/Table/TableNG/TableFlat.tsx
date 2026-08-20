@@ -173,6 +173,7 @@ export function TableFlat(props: TableNGProps) {
     enabled: contentAwareWidthsEnabled,
     typographyCtx,
     showTypeIcons,
+    hasHeader,
     getActions: getCellActions,
   });
 

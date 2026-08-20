@@ -1237,6 +1237,11 @@ export interface ContentAwareColWidthsOptions {
    */
   headerTypographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
+  /**
+   * Whether the table renders a header row. When it doesn't, the header label is not a lower bound on
+   * the column, so it is left out of the measurement entirely. Defaults to true.
+   */
+  hasHeader?: boolean;
   /** Bound `(field, rowIdx) => actions`, so Actions columns can be sized to their button labels. */
   getActions?: GetActionsFunctionLocal;
   /** overridable for testing; otherwise derived from the auto-column count */
@@ -1521,7 +1526,8 @@ function growthWeight(type: FieldType): number {
  * Content-aware variant of {@link computeColWidths}. Columns with a configured `custom.width` keep
  * that exact width. Every other ("auto") column is sized to fit its content:
  *   1. its cell content (a sampled, display-formatted, measured max) or a per-type default for
- *      graphical cells, whichever applies, unioned with its header label width;
+ *      graphical cells, whichever applies, unioned with its header label width (skipped when the
+ *      header row is hidden);
  *   2. clamped to `[max(MIN_WIDTH, custom.minWidth), MAX_AUTO_WIDTH]`;
  *   3. then, if the auto columns don't fill the available width, the leftover is distributed by a
  *      growth share of `growthWeight × √(content width)`, so a column with more content still takes
@@ -1537,7 +1543,14 @@ function growthWeight(type: FieldType): number {
 export function computeContentAwareColWidths(
   fields: Field[],
   availWidth: number,
-  { typographyCtx, headerTypographyCtx, showTypeIcons = false, getActions, sampleSize }: ContentAwareColWidthsOptions
+  {
+    typographyCtx,
+    headerTypographyCtx,
+    showTypeIcons = false,
+    hasHeader = true,
+    getActions,
+    sampleSize,
+  }: ContentAwareColWidthsOptions
 ): number[] {
   const autoIdxs: number[] = [];
   let definedWidth = 0;
@@ -1567,7 +1580,10 @@ export function computeContentAwareColWidths(
 
   for (const i of autoIdxs) {
     const field = fields[i];
-    const headerWidth = measureHeaderWidth(field, headerTypographyCtx, showTypeIcons, isSortableField(field));
+    // A hidden header row has no label to fit, so it doesn't bound the column at all.
+    const headerWidth = hasHeader
+      ? measureHeaderWidth(field, headerTypographyCtx, showTypeIcons, isSortableField(field))
+      : 0;
 
     // Wrapped columns are measured like any other: a content-based width keeps a content-heavy
     // column wider than a sparse one, and the cap bounds it so it wraps to extra height within.
