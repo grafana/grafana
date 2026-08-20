@@ -10,7 +10,7 @@ import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { getInputStyles } from '../Input/Input';
 
-import { CodeMirrorEditor } from './CodeEditorLazy';
+import { CodeEditor } from './CodeEditor';
 import { type CodeMirrorCompletionSource, type CodeMirrorExtension } from './types';
 
 export interface CodeMirrorInlineInputProps {
@@ -265,7 +265,7 @@ export const CodeMirrorInlineInput = memo(function CodeMirrorInlineInput({
   return (
     <div className={styles.wrapper} id={id}>
       <div className={styles.editor}>
-        <CodeMirrorEditor
+        <CodeEditor
           value={value}
           onChange={onChange}
           theme={editorTheme}
