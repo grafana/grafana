@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, useEffect } from 'react';
+import { type CSSProperties, useEffect } from 'react';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
