@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana-app-sdk/app"
 )
 
 // stubLoader satisfies RoutesLoader; the routing tests seed the snapshot
@@ -183,7 +185,7 @@ func TestOpenAPIV3MalformedSubpathFallsThrough(t *testing.T) {
 // fine.
 func TestReadyDoesNotFailOnPartialReconcileError(t *testing.T) {
 	r := NewGrafanaRouter(stubLoader{})
-	r.state.Store(&routerState{phase: serving, err: errors.New("group x failed to load")})
+	r.state.Store(&routerState{phase: serving, err: errors.New("group x failed to load"), served: true})
 
 	if err := r.Ready(context.Background()); err != nil {
 		t.Errorf("Ready() = %v, want nil (serving on last-known-good must still be ready)", err)
@@ -226,5 +228,56 @@ func TestRunDoesNotBusyLoopOnClosedNotifyChannel(t *testing.T) {
 
 	if loads := loader.loads.Load(); loads > 5 {
 		t.Errorf("Load called %d times after notify channel closed, want a small bounded number (busy-loop on closed channel)", loads)
+	}
+}
+
+type erroringLoader struct{}
+
+func (erroringLoader) Load(context.Context) ([]Backend, error) { return nil, errors.New("boom") }
+func (erroringLoader) Notify(context.Context) (<-chan struct{}, error) {
+	return make(chan struct{}), nil
+}
+
+// TestReadyFailsAfterTotallyFailedInitialReconcile is the exact regression
+// bugbot found in the previous fix: Ready must not report ready when the
+// very first reconcile failed completely (loader.Load itself errored) --
+// there is no last-known-good to fall back on, so the router owns /apis and
+// /openapi/v3 with an empty snapshot, and readyz going green would send
+// clients an empty discovery document instead of waiting for a real load.
+func TestReadyFailsAfterTotallyFailedInitialReconcile(t *testing.T) {
+	r := NewGrafanaRouter(erroringLoader{})
+	r.storeServing(r.reconcile(context.Background()))
+
+	if err := r.Ready(context.Background()); err == nil {
+		t.Error("Ready() = nil after totally failed initial reconcile, want error (nothing has ever been served)")
+	}
+}
+
+// failingBackend always fails Load, for testing partial-failure reconcile
+// scenarios (one group loads, another doesn't).
+type failingBackend struct{ group, rv string }
+
+func (b failingBackend) RV() string                 { return b.rv }
+func (b failingBackend) Group() string              { return b.group }
+func (b failingBackend) Manifest() app.ManifestData { return app.ManifestData{} }
+func (b failingBackend) Load(context.Context) (http.Handler, error) {
+	return nil, errors.New("load failed")
+}
+
+// TestReadyOKWithPartialLoadFailureGivenAtLeastOneServedGroup pins the case
+// this design must still get right even with the regression fix: if at
+// least one group loaded successfully (even on the very first reconcile),
+// that's real last-known-good, and readiness must not be held hostage by an
+// unrelated group's failure.
+func TestReadyOKWithPartialLoadFailureGivenAtLeastOneServedGroup(t *testing.T) {
+	loader := staticLoader{backends: []Backend{
+		&fakeBackend{group: "good.grafana.app", rv: "1"},
+		failingBackend{group: "bad.grafana.app", rv: "1"},
+	}}
+	r := NewGrafanaRouter(loader)
+	r.storeServing(r.reconcile(context.Background()))
+
+	if err := r.Ready(context.Background()); err != nil {
+		t.Errorf("Ready() = %v, want nil (one group succeeded, so last-known-good exists)", err)
 	}
 }

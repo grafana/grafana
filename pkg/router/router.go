@@ -61,6 +61,14 @@ const (
 type routerState struct {
 	phase phase
 	err   error // last reconcile error while serving, or the panic on crash
+
+	// served is true if r.served was non-empty at the moment this state was
+	// recorded -- i.e. at least one group has ever loaded successfully, so
+	// there is real last-known-good to serve even if err is set. Computed in
+	// storeServing (which runs on the reconcile goroutine, the sole owner of
+	// r.served) and stored here so Ready can read it lock-free from any
+	// goroutine without touching r.served directly.
+	served bool
 }
 
 // there won't be a cloud apps router in enterprise
@@ -321,29 +329,40 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 
 // storeServing records a completed reconcile's outcome. A non-nil err (a
 // partial Backend.Load failure -- see reconcile's doc comment) does not stop
-// the router serving last-known-good, so it's logged here rather than
-// surfaced as a readiness failure -- see Ready's doc comment for why.
+// the router serving last-known-good as long as at least one group is
+// actually served, so it's logged here rather than unconditionally surfaced
+// as a readiness failure -- see Ready's doc comment for why.
 func (r *GrafanaRouter) storeServing(err error) {
 	if err != nil {
 		slog.Error("router: reconcile completed with errors, serving last-known-good", "err", err)
 	}
-	r.state.Store(&routerState{phase: serving, err: err})
+	r.state.Store(&routerState{phase: serving, err: err, served: len(r.served) > 0})
 }
 
 // Ready reports the router is initialized and serving. The snapshot is
-// populated on the first reconcile in Run. A non-nil s.err while serving
-// means the last reconcile partially failed (e.g. one group's Backend.Load
-// errored) -- reconcile deliberately keeps serving last-known-good for every
-// other group in that case (see its doc comment), so it must not fail
-// readiness here: the enterprise command wires this to /readyz, and gating
-// it on any error would drain the whole router over one misbehaving group
-// while it's still able to proxy everything else. The error is still worth
-// surfacing (see Run's slog.Error), just not as a readiness failure.
+// populated on the first reconcile in Run.
+//
+// A non-nil s.err while serving means the last reconcile had some failure
+// (e.g. one group's Backend.Load errored, or loader.Load itself failed).
+// Whether that should fail readiness depends on s.served: if at least one
+// group is currently served, that's real last-known-good -- reconcile
+// deliberately keeps serving every other group in that case (see its doc
+// comment), so failing readiness here would drain the whole router over one
+// misbehaving group while it's still able to proxy everything else. But if
+// nothing has ever been served (e.g. the very first reconcile's loader.Load
+// call failed outright, or every backend failed to load), there is no
+// last-known-good to fall back on -- the router owns /apis and /openapi/v3,
+// so reporting ready with an empty snapshot would send clients an empty
+// discovery document instead of waiting for a real load. The enterprise
+// command wires this to /readyz. The error is still worth surfacing (see
+// storeServing's slog.Error) even when it doesn't fail readiness.
 func (r *GrafanaRouter) Ready(context.Context) error {
 	s := r.state.Load()
 	switch {
 	case s == nil || s.phase == starting:
 		return fmt.Errorf("router: initial reconcile not complete")
+	case s.phase == serving && s.err != nil && !s.served:
+		return fmt.Errorf("router: nothing served yet: %w", s.err)
 	case s.phase == serving:
 		return nil
 	default: // stopped / crashed
