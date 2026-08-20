@@ -43,6 +43,8 @@ export default (env: Env = {}): Configuration => ({
     },
     chunkFilename: '[name].[contenthash].js',
     publicPath: 'public/build/',
+    // Dynamic imports can run before Grafana's default Trusted Types policy is initialized.
+    trustedTypes: { policyName: 'grafana#webpack' },
   },
   resolve: {
     conditionNames: ['@grafana-app/source', '...'],
