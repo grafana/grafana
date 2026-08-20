@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 
 import { ctaClicked } from '../analytics/main';
 import { type Solution, type SolutionId } from '../solutions/types';
@@ -125,6 +126,80 @@ describe('Overview', () => {
     } finally {
       window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }
+  });
+
+  it('handles the hash once and never overrides a later filter pick', async () => {
+    const scrollIntoView = jest.fn();
+    const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      mockUseGuides.mockReturnValue(undefined);
+      const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
+        historyOptions: { initialEntries: ['/#needs-attention'] },
+      });
+
+      await screen.findByText('No solutions need attention.');
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+      await user.click(screen.getByRole('button', { name: /needs attention/i }));
+      await user.click(screen.getByRole('menuitem', { name: 'All solutions' }));
+      await screen.findByText('No solutions were found.');
+
+      // Guides settling rebuilds the options; the already-handled hash must not re-apply.
+      mockUseGuides.mockReturnValue([]);
+      rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
+
+      expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
+      expect(screen.queryByText('No solutions need attention.')).not.toBeInTheDocument();
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    } finally {
+      window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
+  it('clears the hash on an explicit filter pick and honors the next deep link', async () => {
+    const scrollIntoView = jest.fn();
+    const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
+        historyOptions: { initialEntries: ['/#needs-attention'] },
+      });
+
+      await screen.findByText('No solutions need attention.');
+      expect(locationService.getLocation().hash).toBe('#needs-attention');
+
+      await user.click(screen.getByRole('button', { name: /needs attention/i }));
+      await user.click(screen.getByRole('menuitem', { name: 'All solutions' }));
+
+      await screen.findByText('No solutions were found.');
+      expect(locationService.getLocation().hash).toBe('');
+
+      // The cleared anchor must work again as a fresh deep link.
+      act(() => locationService.push('/#needs-attention'));
+      expect(await screen.findByText('No solutions need attention.')).toBeInTheDocument();
+      expect(scrollIntoView).toHaveBeenCalledTimes(2);
+    } finally {
+      window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
+  it('clears an unrecognized anchor on an explicit filter pick', async () => {
+    const { user } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
+      historyOptions: { initialEntries: ['/?orgId=1#needs-aattention'] },
+    });
+
+    // The typo'd anchor selects nothing.
+    await screen.findByText('No solutions were found.');
+
+    await user.click(screen.getByRole('button', { name: /all solutions/i }));
+    await user.click(screen.getByRole('menuitem', { name: 'Enabled solutions' }));
+
+    await screen.findByText('No enabled solutions with recent activity were found.');
+    expect(locationService.getLocation().hash).toBe('');
+    expect(locationService.getLocation().search).toContain('orgId=1');
   });
 
   it('tracks overview filter changes from the dropdown', async () => {
