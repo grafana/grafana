@@ -66,7 +66,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
 | `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
-| `grafana.newPreferencesPage`                 | Whether to use the new SharedPreferences functional component                                                                                                 | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
 | `preferences.rerouteLegacyAPIs`              | Use K8s client implementation for legacy preferences API                                                                                                      | Yes                |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                                              | Yes                |
@@ -92,9 +91,11 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `secretsManagementAppPlatformUI`   | Enable the secrets management app platform UI                                                                                  |
 | `dashboardTemplates`               | Enables a flow to get started with a new dashboard from a template                                                             |
 | `alertRuleRestore`                 | Enables the alert rule restore feature                                                                                         |
+| `alertingMigrationWizardUI`        | Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting    |
 | `azureMonitorLogsBuilderEditor`    | Enables the logs builder mode for the Azure Monitor data source                                                                |
 | `datasources.azureMonitorBatchAPI` | Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request |
 | `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
+| `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
 | `panelTimeSettings`                | Enables a new panel time settings drawer                                                                                       |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |

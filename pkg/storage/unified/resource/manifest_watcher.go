@@ -33,7 +33,10 @@ import (
 )
 
 // v1alpha2 is the only version with SearchFields.
-var appManifestGVR = schema.GroupVersionResource{
+//
+// Exported because a server that reads AppManifests with its own client, rather
+// than through this watcher, still has to list the same resource.
+var AppManifestGVR = schema.GroupVersionResource{
 	Group:    "apps.grafana.app",
 	Version:  "v1alpha2",
 	Resource: "appmanifests",
@@ -183,7 +186,7 @@ func newManifestRESTConfig(cfg ManifestWatcherConfig) (*rest.Config, error) {
 // Authorization header, so the exchanged token must go there rather than in the
 // authlib X-Access-Token header. The token audience is the API group.
 func manifestAuthWrapper(exchanger authnlib.TokenExchanger) transport.WrapperFunc {
-	return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(exchanger, appManifestGVR.Group, clientauth.WildcardNamespace)
+	return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(exchanger, AppManifestGVR.Group, clientauth.WildcardNamespace)
 }
 
 // NewManifestWatcher creates a ManifestWatcher as a dskit service. The initial
@@ -325,7 +328,7 @@ func (w *ManifestWatcher) list(ctx context.Context, prev map[string]app.Manifest
 		default:
 		}
 
-		page, err := w.client.Resource(appManifestGVR).List(ctx, metav1.ListOptions{
+		page, err := w.client.Resource(AppManifestGVR).List(ctx, metav1.ListOptions{
 			Limit:    pollPageSize,
 			Continue: continueToken,
 		})
@@ -334,7 +337,7 @@ func (w *ManifestWatcher) list(ctx context.Context, prev map[string]app.Manifest
 		}
 		for i := range page.Items {
 			name := page.Items[i].GetName()
-			m, err := manifestFromUnstructured(&page.Items[i])
+			m, err := ManifestFromUnstructured(&page.Items[i])
 			if err != nil {
 				if p, ok := prev[name]; ok {
 					w.log.Warn("manifest watcher: keeping previous manifest, this poll failed to convert it",
@@ -372,9 +375,13 @@ func sortedManifests(byName map[string]app.Manifest) []app.Manifest {
 	return out
 }
 
-// manifestFromUnstructured converts an AppManifest apiserver object (v1alpha2)
+// ManifestFromUnstructured converts an AppManifest apiserver object (v1alpha2)
 // to an app.Manifest.
-func manifestFromUnstructured(item *unstructured.Unstructured) (app.Manifest, error) {
+//
+// Exported so a server that fetches AppManifests with its own client gets the
+// same conversion the watcher uses, rather than a second one that could disagree
+// about what a manifest means.
+func ManifestFromUnstructured(item *unstructured.Unstructured) (app.Manifest, error) {
 	specRaw, ok := item.Object["spec"]
 	if !ok {
 		return app.Manifest{}, fmt.Errorf("appmanifest %q has no spec", item.GetName())

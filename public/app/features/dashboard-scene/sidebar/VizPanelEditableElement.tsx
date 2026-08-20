@@ -67,9 +67,15 @@ function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean)
       );
   }, [titleId, panel, descriptionId, backgroundId, isNewElement]);
 
+  // Some layout options depend on plugin capabilities (e.g. content-fit), and
+  // plugins load async — subscribe so the categories rebuild once loaded.
+  panel.useState();
+  const plugin = panel.getPlugin();
+
   const layoutCategories = useMemo(
     () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
-    [layoutElement]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [layoutElement, plugin]
   );
 
   return [panelOptions, ...layoutCategories];

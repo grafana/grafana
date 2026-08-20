@@ -4448,7 +4448,7 @@
         ],
         "properties": {
           "bitbucket": {
-            "description": "Bitbucket connection configuration Only applicable when provider is \"bitbucket\"",
+            "description": "Bitbucket connection configuration Only applicable when provider is \"bitbucketOAuth\"",
             "allOf": [
               {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BitbucketConnectionConfig"
@@ -4489,14 +4489,14 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlabOAuth\"`",
             "type": "string",
             "default": "",
             "enum": [
-              "bitbucket",
+              "bitbucketOAuth",
               "github",
               "githubEnterprise",
-              "gitlab"
+              "gitlabOAuth"
             ]
           },
           "url": {
@@ -6163,6 +6163,20 @@
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
+          },
+          "availableConnectionTypes": {
+            "description": "AvailableConnectionTypes is the list of connection types supported in this instance",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": "",
+              "enum": [
+                "bitbucketOAuth",
+                "github",
+                "githubEnterprise",
+                "gitlabOAuth"
+              ]
+            }
           },
           "availableRepositoryTypes": {
             "description": "AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)",
