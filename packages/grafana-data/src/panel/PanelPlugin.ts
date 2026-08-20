@@ -24,6 +24,11 @@ import {
   type VisualizationPresetsSupplier,
   type VisualizationSuggestionsBuilder,
 } from '../types/suggestions';
+import {
+  type PanelDataTransformations,
+  type PanelDataTransformationsContext,
+  type PanelDataTransformationsSupplier,
+} from '../types/transformations';
 import { type FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
@@ -175,6 +180,7 @@ export class PanelPlugin<
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
   private presetsSupplier?: VisualizationPresetsSupplier<TOptions, TFieldConfigOptions>;
+  private dataTransformationsSupplier?: PanelDataTransformationsSupplier;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -385,6 +391,74 @@ export class PanelPlugin<
   setDataSupport(support: Partial<PanelPluginDataSupport>) {
     this.dataSupport = { ...this.dataSupport, ...support };
     return this;
+  }
+
+  /**
+   * Registers read-only transformations in dashboard panels.
+   *
+   * Prepended transformations run before every user-configured transformation, appended ones after
+   * all of them. Both run before field overrides, so the fields either position produces are
+   * matchable by an override. An array result is shorthand for `prepend`. Neither is persisted to
+   * the dashboard.
+   *
+   * The supplier receives the query result frames on every data update, so it can return
+   * different transformations for different shapes of data. Empty results pass through
+   * without consulting the supplier.
+   *
+   * @example
+   * ```typescript
+   * export const plugin = new PanelPlugin<Options>(MyPanel)
+   *     .setDataTransformations(({ series }) =>
+   *       series[0]?.meta?.preferredVisualisationType === 'nodeGraph'
+   *         ? [{ id: 'transpose', options: {} }]
+   *         : []
+   *     );
+   * ```
+   *
+   * @example
+   * ```typescript
+   * export const plugin = new PanelPlugin<Options>(MyPanel)
+   *     .setDataTransformations(() => ({
+   *       prepend: [{ id: 'extractFields', options: {} }],
+   *       append: [{ id: 'reduce', options: {} }],
+   *     }));
+   * ```
+   *
+   * @alpha
+   **/
+  setDataTransformations(supplier: PanelDataTransformationsSupplier) {
+    this.dataTransformationsSupplier = supplier;
+    return this;
+  }
+
+  /**
+   * Transformations registered via {@link setDataTransformations}, normalized to explicit
+   * positions so callers never have to handle the array shorthand. Both groups are empty when the
+   * plugin registered none.
+   *
+   * @internal
+   */
+  getDataTransformations(ctx: PanelDataTransformationsContext): Required<PanelDataTransformations> {
+    const registered = this.dataTransformationsSupplier?.(ctx);
+
+    if (!registered) {
+      return { prepend: [], append: [] };
+    }
+
+    return Array.isArray(registered)
+      ? { prepend: registered, append: [] }
+      : { prepend: registered.prepend ?? [], append: registered.append ?? [] };
+  }
+
+  /**
+   * Whether the plugin registered transformations at all, without running the supplier. Answers the
+   * data-independent half of the question, which {@link getDataTransformations} cannot: it needs
+   * frames, and a supplier is free to return none for a given set of them.
+   *
+   * @internal
+   */
+  hasDataTransformations() {
+    return this.dataTransformationsSupplier !== undefined;
   }
 
   /**
