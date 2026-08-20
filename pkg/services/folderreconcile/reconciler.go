@@ -72,7 +72,9 @@ func ProvideReconciler(
 }
 
 func newReconciler(folders folder.Service, orgs orgLister, lock serverLock, interval time.Duration, consumers ...Consumer) *Reconciler {
+	l := log.New("folder-reconciler")
 	if interval < minInterval {
+		l.Warn("[folder.deleted_resource_cleanup_interval] is too low; the minimum allowed is enforced", "minimum", minInterval)
 		interval = minInterval
 	}
 	return &Reconciler{
@@ -81,7 +83,7 @@ func newReconciler(folders folder.Service, orgs orgLister, lock serverLock, inte
 		orgs:      orgs,
 		lock:      lock,
 		interval:  interval,
-		log:       log.New("folder-reconciler"),
+		log:       l,
 	}
 }
 
