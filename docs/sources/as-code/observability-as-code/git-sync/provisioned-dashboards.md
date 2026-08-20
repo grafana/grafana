@@ -98,11 +98,50 @@ To save dashboard changes:
 1. On the prompt, select **Open a pull request in GitHub** to open a new PR to your repository.
 1. Follow your usual Git workflow to save and merge the PR to your repository.
 
+## Preview banner
+
+This section applies to Git repository connections (GitHub, GitHub Enterprise, GitLab, Bitbucket, and plain Git). It doesn't apply to local file provisioning, which has no branches or pull requests.
+
+Whenever you're viewing a provisioned dashboard loaded from a branch other than your repository's configured branch, Grafana shows a **preview banner** at the top of the page. You'll see it right after you create, edit, delete, or move a dashboard from the Grafana UI, as well as when you open a dashboard from a pull request notification.
+
+The banner's title reflects what changed:
+
+- **A new resource has been created in a branch in your Git provider.**
+- **A resource has been updated in a branch in your Git provider.**
+- **A resource has been deleted in a branch in your Git provider.**
+- **A resource has been moved in a branch in your Git provider.**
+
+In every case, the rest of your organization keeps seeing the version on the configured branch until the branch is merged — what you're looking at is a private preview of your own change. The banner also shows the branch your change was pushed to and the branch it targets.
+
+From the banner you can:
+
+- Select **Open a pull request** (or **View pull request**, if one already exists) to open the pull request for this change, in a new tab.
+- Select **View saved version**, when editing a dashboard that already exists in Grafana, to jump back to the version currently saved on the configured branch, so you can compare it against your draft.
+
+If the branch behind the preview no longer exists in the repository — for example, the pull request was already merged or closed and its source branch deleted — selecting **Open a pull request** can't take you to a live pull request. Grafana instead shows **This branch no longer exists** and offers two ways forward:
+
+- **Save to a new branch**: Reopens the save form with your draft intact, so you can commit it to a new branch and open a new pull request.
+- **View the current version**: Navigates to the dashboard as currently saved in Grafana, if it exists.
+
+{{< admonition type="note" >}}
+
+How much of the banner is interactive depends on your repository type:
+
+- **GitHub, GitHub Enterprise, GitLab, and Bitbucket** (enhanced integrations): the source and target branch names link directly to that branch in your Git provider, and the pull request action opens (or creates) a real pull request.
+- **Plain Git** connections: branch names are shown, but since plain Git has no pull-request concept or per-branch view, the pull request action opens the repository itself instead.
+
+Provisioned folders show a related banner, **This resource is behind the branch**, when the folder itself is out of sync with its configured branch. Select **Open in repository** to view the latest changes.
+
+{{< /admonition >}}
+
 ## Remove dashboards
 
-You can remove a provisioned dashboard by deleting the dashboard from the repository. The Grafana UI updates when the changes from the Git repository sync.
+You can remove a provisioned dashboard either from the Grafana UI or from the repository:
 
-To restore a deleted dashboard, raise a PR directly in your Git repository. Restoring resources from the UI isn't possible at the moment.
+- **From the Grafana UI**: Open the dashboard, go to its settings, and select **Delete**. On the **Provisioned dashboard** panel, choose the branch, comment, and other options the same way you would when [editing a dashboard](#edit-dashboards), then select **Delete**. On the prompt, select **Open a pull request** and follow your usual Git workflow to review and merge the change.
+- **From the repository**: Delete the dashboard's file directly in Git. The Grafana UI updates when the changes from the Git repository sync.
+
+To restore a deleted dashboard, revert the deletion (or re-add the file) directly in your Git repository and raise a PR as usual. Restoring resources from the UI isn't possible at the moment.
 
 ## Document folders with a README
 
