@@ -3,7 +3,7 @@ module github.com/grafana/grafana/pkg/codegen
 go 1.26.6
 
 require (
-	cuelang.org/go v0.11.1
+	cuelang.org/go v0.17.1
 	github.com/dave/dst v0.27.4
 	github.com/grafana/codejen v0.0.4
 	github.com/grafana/cog v0.1.23

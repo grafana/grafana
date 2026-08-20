@@ -5,7 +5,7 @@ go 1.26.6
 replace github.com/grafana/grafana/pkg/codegen => ../../codegen
 
 require (
-	cuelang.org/go v0.11.1
+	cuelang.org/go v0.17.1
 	github.com/grafana/codejen v0.0.4
 	github.com/grafana/cog v0.1.23
 	github.com/grafana/cuetsy v0.1.11
@@ -37,6 +37,7 @@ require (
 	github.com/rogpeppe/go-internal v1.15.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/mod v0.40.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
@@ -45,5 +46,4 @@ require (
 	golang.org/x/text v0.41.0 // indirect
 	golang.org/x/tools v0.49.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
