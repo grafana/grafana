@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+const userPermissionsDelegatedGrant = "authz.grafana.app/userpermissions:get"
+
 var _ accesscontrol.UserPermissionsClient = (*userPermissionsClient)(nil)
 
 type userPermissionsClient struct {
