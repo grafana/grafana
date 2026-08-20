@@ -943,6 +943,8 @@ func (rc *RepositoryController) process(key string) (err error) {
 			Checked: time.Now().UnixMilli(),
 			Message: []string{quotaCondition.Message},
 		}
+
+		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, provisioning.ReasonQuotaExceeded)
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/health",
