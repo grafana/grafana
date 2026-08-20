@@ -3993,6 +3993,7 @@
    "type": "object"
   },
   "Route": {
+   "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
    "properties": {
     "active_time_intervals": {
      "items": {
@@ -4034,6 +4035,12 @@
      },
      "type": "array"
     },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
     "receiver": {
      "type": "string"
     },
@@ -4047,7 +4054,6 @@
      "type": "array"
     }
    },
-   "title": "A Route is a node that contains definitions of how to handle alerts.",
    "type": "object"
   },
   "RouteExport": {
@@ -9106,6 +9112,12 @@
       "schema": {
        "$ref": "#/definitions/ForbiddenError"
       }
+     },
+     "409": {
+      "description": "PublicError",
+      "schema": {
+       "$ref": "#/definitions/PublicError"
+      }
      }
     },
     "summary": "Create a contact point.",
@@ -9203,6 +9215,12 @@
       "schema": {
        "$ref": "#/definitions/ForbiddenError"
       }
+     },
+     "409": {
+      "description": "PublicError",
+      "schema": {
+       "$ref": "#/definitions/PublicError"
+      }
      }
     },
     "summary": "Delete a contact point.",
@@ -9254,6 +9272,12 @@
       "description": "ForbiddenError",
       "schema": {
        "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "409": {
+      "description": "PublicError",
+      "schema": {
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
@@ -9526,6 +9550,12 @@
       "description": "ForbiddenError",
       "schema": {
        "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "409": {
+      "description": "PublicError",
+      "schema": {
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
@@ -9802,6 +9832,12 @@
       "schema": {
        "$ref": "#/definitions/ForbiddenError"
       }
+     },
+     "409": {
+      "description": "PublicError",
+      "schema": {
+       "$ref": "#/definitions/PublicError"
+      }
      }
     },
     "summary": "Clears the notification policy tree.",
@@ -9869,6 +9905,12 @@
       "description": "ForbiddenError",
       "schema": {
        "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "409": {
+      "description": "PublicError",
+      "schema": {
+       "$ref": "#/definitions/PublicError"
       }
      }
     },
