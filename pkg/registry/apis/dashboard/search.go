@@ -28,6 +28,7 @@ import (
 	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -808,7 +809,11 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 			Title:    r.GetTitle(),
 			Folder:   r.GetFolder(),
 			Score:    r.GetScore(),
-			Field:    field,
+			ManagedBy: dashboardv0alpha1.ManagedBy{
+				Kind: utils.ManagerKind(r.GetManagedByKind()),
+				ID:   r.GetManagedById(),
+			},
+			Field: field,
 		})
 	}
 
@@ -888,8 +893,8 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 
 	// Add sorting. Dashboard-specific fields live under the fields.*
 	// sub-document inside bleve; clients pass the bare name (e.g.
-	// ?sort=panel_types) and the search backend needs the prefixed form
-	// (fields.panel_types) to find them. The leading "-" descending marker
+	// ?sort=views_total) and the search backend needs the prefixed form
+	// (fields.views_total) to find them. The leading "-" descending marker
 	// is stripped first so the dashboard-field lookup sees the bare name
 	// regardless of direction.
 	if queryParams.Has("sort") {

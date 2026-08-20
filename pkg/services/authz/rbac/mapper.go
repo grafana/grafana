@@ -16,7 +16,10 @@ type Mapping interface {
 	// If no action is found, it returns false.
 	Action(verb string) (string, bool)
 	// ActionSets returns the action sets for the given verb.
-	// If no action sets are found, it returns an empty slice. This is expected for resources that do not have action sets (anything apart from dashboards and folders).
+	// Empty is expected for resources that are not granted via managed folder/dashboard
+	// (or other) action sets. Folder-scoped kinds such as dashboards, folders, alert
+	// rules, and variables must include folders:view/edit/admin so onlyStoreActionSets
+	// grants still authorize.
 	ActionSets(verb string) []string
 	// scope returns the scope for the given resource name.
 	Scope(name string) string
@@ -172,6 +175,47 @@ func newDashboardTranslation() translation {
 
 	dashTranslation.actionSetMapping = actionSetMapping
 	return dashTranslation
+}
+
+// newNotebookTranslation creates a translation for notebooks. Notebooks have their own
+// notebooks:* actions and a notebooks:uid: scope, but are folder-scoped like dashboards, so
+// their verbs map onto the folder action sets (folders:view/edit/admin) and folder grants
+// cover them. The notebooks:view/edit/admin object action sets (for per-notebook sharing) are
+// added later together with the notebook resource-permission service.
+func newNotebookTranslation() translation {
+	nbTranslation := newResourceTranslation("notebooks", "uid", true, nil)
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range nbTranslation.verbMapping {
+		var actionSets []string
+
+		// Notebook creation is only part of the folder action sets, so handle it separately.
+		if rbacAction == "notebooks:create" {
+			actionSets = append(actionSets, "folders:edit")
+			actionSets = append(actionSets, "folders:admin")
+		}
+		// The permission verbs come from the default translation. set_permissions is never a granted
+		// notebook action (no per-notebook permissions management) — it's mapped to folders:admin only
+		// so the trash folder-admin check (TrashAuthorizer.FolderAdmin) resolves. get_permissions
+		// falls through with no action set (nothing reads a notebook's permission list), so it's denied.
+		if rbacAction == "notebooks.permissions:write" {
+			actionSets = append(actionSets, "folders:admin")
+		}
+
+		if slices.Contains(ossaccesscontrol.NotebookViewActions, rbacAction) {
+			actionSets = append(actionSets, "folders:view")
+		}
+		if slices.Contains(ossaccesscontrol.NotebookEditActions, rbacAction) {
+			actionSets = append(actionSets, "folders:edit")
+		}
+		if slices.Contains(ossaccesscontrol.NotebookAdminActions, rbacAction) {
+			actionSets = append(actionSets, "folders:admin")
+		}
+		actionSetMapping[verb] = actionSets
+	}
+
+	nbTranslation.actionSetMapping = actionSetMapping
+	return nbTranslation
 }
 
 // newFolderTranslation creates a translation for folders and also maps the actions to action sets
@@ -368,6 +412,32 @@ func newAlertRuleTranslation() translation {
 	return t
 }
 
+// newVariableTranslation maps dashboard.grafana.app/variables to variables:*
+// and to the folder view/edit/admin action sets. Managed folder roles only
+// persist those action-set tokens when onlyStoreActionSets is on, so without
+// this mapping an Editor with folder Edit cannot create/update/delete
+// folder-scoped variables even though FolderEditActions includes variables:*.
+func newVariableTranslation() translation {
+	t := newResourceTranslation("variables", "uid", true, nil)
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range t.verbMapping {
+		var actionSets []string
+		if slices.Contains(ossaccesscontrol.FolderViewActions, rbacAction) {
+			actionSets = append(actionSets, "folders:view")
+		}
+		if slices.Contains(ossaccesscontrol.FolderEditActions, rbacAction) {
+			actionSets = append(actionSets, "folders:edit")
+		}
+		if slices.Contains(ossaccesscontrol.FolderAdminActions, rbacAction) {
+			actionSets = append(actionSets, "folders:admin")
+		}
+		actionSetMapping[verb] = actionSets
+	}
+	t.actionSetMapping = actionSetMapping
+	return t
+}
+
 // newSettingsTranslation maps setting.grafana.app/settings to the legacy
 // settings:read / settings:write actions. The K8s object name is the section,
 // so it lands in the conventional "uid" (object-name) attribute and the scope
@@ -418,7 +488,9 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
+			"notebooks":     newNotebookTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
+			"variables":     newVariableTranslation(),
 			// Annotations subresource for dashboards
 			// Uses dashboard scope (dashboards:uid:...) but annotation actions
 			"dashboards/annotations": translation{

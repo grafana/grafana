@@ -1618,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Är du säker på att du vill starta importen? Denna åtgärd skapar nya resurser i Grafana Alerting.",
         "confirm": "Starta import",
@@ -1676,26 +1665,6 @@
       "info-description": "Denna guide hjälper dig att importera larmregler och aviseringresurser från externa källor till Grafana Alerting. Mer information ges i <2>dokumentationen</2>.",
       "info-title": "Importguide",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Skriv för att söka efter ett befintligt namnområde",
         "label": "Namnområde"
@@ -1719,10 +1688,6 @@
         "filter": "Filtrera",
         "folder": "Målmapp",
         "heading": "Granska import",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Namnområde",
         "nothing": "Inget att importera",
         "nothing-desc": "Båda stegen hoppades över. Gå tillbaka och konfigurera minst en importkälla.",
@@ -1749,14 +1714,6 @@
         "validation-warning": "Vissa resurser kommer att döpas om för att undvika konflikter.",
         "will-import-config": "Kommer att importera denna konfiguration",
         "will-import-rules": "Kommer att importera regler",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Kommer att importera {{count}} regler för",
         "will-import-rules-count_other": "Kommer att importera {{count}} regler för"
       },
@@ -1868,14 +1825,10 @@
         "cancel-confirm-title": "Vill du avbryta importen?",
         "cancel-confirm-yes": "Ignorera ändringar",
         "skip": "Hoppa över",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Aviseringsresurser",
         "step-notifications-desc": "Kontaktpunkter, policyer, mallar",
         "step-review": "Granska och importera",
         "step-review-desc": "Förhandsgranska och bekräfta import",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Varningsregler",
         "step-rules-desc": "Regler för varningar och registrering"
       },
@@ -2259,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "Ingen larmkapabel fråga hittades"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Konfigurera tystnader för att stoppa aviseringar från en viss larmregel"
@@ -2266,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Tyst larmregel"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Vi kunde inte hitta några externa Alertmanager och du kanske inte har åtkomst till den inbyggda Grafana Alertmanager.",
@@ -3308,6 +3266,39 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3716,6 +3707,9 @@
       "no-matching-instances-with-filters": "Inga larminstanser matchar din nuvarande uppsättning filter för det valda tidsintervallet.",
       "open-in-sidebar": "Öppna i sidofält",
       "open-rule-details": "Öppna regeldetaljer",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Regeldetaljer och villkor",
         "title": "Regeldetaljer"
@@ -3870,6 +3864,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Det gick inte att importera resurser",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Resurserna har importerats till Grafana Alerting."
     },
     "yaml-content-info": {
@@ -5432,6 +5428,16 @@
     "auto-grid": {
       "description": "Paneler ändrar storlek för att passa ihop och bilda enhetliga rutnät",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Upprepningsalternativ",
           "variable": {
@@ -5449,15 +5455,36 @@
         "custom-min-width": {
           "clear": "Rensa"
         },
+        "fit-content": "",
         "height-fill": "Fyll skärmen",
+        "match-row-heights": "",
         "max-columns": "Max kolumner",
-        "min-height": "Radhöjd",
-        "min-height-custom": "Anpassad radhöjd",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "Ett nummer mellan 50 och 2000 krävs",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Minsta kolumnbredd",
         "min-width-custom": "Anpassad minsta bredd",
         "min-width-custom-clear": "Tillbaka till standard för minsta kolumnbredd",
-        "min-width-error": "Ett nummer mellan 50 och 2000 krävs"
+        "min-width-error": "Ett nummer mellan 50 och 2000 krävs",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5690,6 +5717,7 @@
       "panel-background": "Ändra panelbakgrund",
       "panel-description": "Ändra panelbeskrivning",
       "panel-edit": "Paneländringar",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Max upprepningar per rad",
       "panel-preset": "Tillämpa panelförinställning",
       "panel-repeat-direction": "Upprepa riktning",
@@ -6067,6 +6095,7 @@
       "new-row-title": "Ny rad",
       "row": {
         "collapse": "Dölj rad {{title}}",
+        "copy-link": "",
         "expand": "Expandera rad {{title}}",
         "new": "Ny rad",
         "repeat": {
@@ -8938,11 +8967,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -9504,21 +9536,6 @@
   "get-enterprise": {
     "requires-license": "Kräver en Grafana Enterprise-licens",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "klar",
-      "learn-how": "Läs mer i dokumenten"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Till avancerade handledningar",
-      "aria-label-to-basic-tutorials": "Till grundläggande handledningar",
-      "checking-completed-setup-steps": "Kontrollerar slutförda installationssteg",
-      "remove-this-panel": "Ta bort denna panel"
-    },
-    "tutorial-card": {
-      "complete": "klar"
-    }
   },
   "global-variables": {
     "details": {
@@ -12799,6 +12816,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -12813,6 +12836,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -17521,12 +17553,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Länk"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Behöver du hjälp?",
-      "welcome-to-grafana": "Välkommen till Grafana"
     }
   },
   "xychart": {

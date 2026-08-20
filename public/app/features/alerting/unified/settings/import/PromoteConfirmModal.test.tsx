@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { AppEvents } from '@grafana/data';
@@ -8,7 +8,7 @@ import { appEvents } from 'app/core/app_events';
 import { setupMswServer } from '../../mockApi';
 import { type AdminConfigPostState, setupAdminConfigPost } from '../../mocks/server/configure/admin_config';
 
-import { PromoteConfirmModal } from './PromoteConfirmModal';
+import { PromoteConfirmModal, getPreviewState } from './PromoteConfirmModal';
 
 const server = setupMswServer();
 
@@ -49,6 +49,46 @@ function fullDryRunResponse() {
     },
   });
 }
+
+describe('getPreviewState', () => {
+  const validResult = { valid: true, renamedReceivers: [], renamedTimeIntervals: [] };
+  const invalidResult = { valid: false, error: 'nope', renamedReceivers: [], renamedTimeIntervals: [] };
+
+  it('reports loading while the dry-run is in flight, regardless of other fields', () => {
+    expect(getPreviewState({ isLoading: true, isPreviewUnavailable: false })).toEqual({ kind: 'loading' });
+  });
+
+  it('reports unavailable for a dry-run error caused by a sync/permission gate', () => {
+    expect(getPreviewState({ isLoading: false, error: 'blocked', isPreviewUnavailable: true })).toEqual({
+      kind: 'unavailable',
+    });
+  });
+
+  it('reports error for a dry-run failure unrelated to the preview gates', () => {
+    expect(getPreviewState({ isLoading: false, error: 'server error', isPreviewUnavailable: false })).toEqual({
+      kind: 'error',
+      message: 'server error',
+    });
+  });
+
+  it('reports invalid with the backend error when the dry-run succeeds but the config is invalid', () => {
+    expect(getPreviewState({ isLoading: false, isPreviewUnavailable: false, result: invalidResult })).toEqual({
+      kind: 'invalid',
+      message: 'nope',
+    });
+  });
+
+  it('reports valid with the result when the dry-run succeeds and the config can be promoted', () => {
+    expect(getPreviewState({ isLoading: false, isPreviewUnavailable: false, result: validResult })).toEqual({
+      kind: 'valid',
+      result: validResult,
+    });
+  });
+
+  it('reports idle before the dry-run has settled (no error, no result, not loading)', () => {
+    expect(getPreviewState({ isLoading: false, isPreviewUnavailable: false })).toEqual({ kind: 'idle' });
+  });
+});
 
 describe('PromoteConfirmModal', () => {
   let appEventsEmitSpy: jest.SpyInstance;
@@ -188,7 +228,10 @@ describe('PromoteConfirmModal', () => {
 
     // backendSrv schedules its global toast 50ms after a failed request settles, so give it a
     // chance to fire before asserting it didn't.
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+
     expect(appEventsEmitSpy).not.toHaveBeenCalledWith(AppEvents.alertWarning, expect.anything());
     expect(appEventsEmitSpy).not.toHaveBeenCalledWith(AppEvents.alertError, expect.anything());
 

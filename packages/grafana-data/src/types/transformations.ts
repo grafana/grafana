@@ -65,11 +65,11 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
 export type CustomTransformOperator = (context: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]>;
 
 /**
- * Data handed to a {@link PanelDataTransformationsSupplier}.
+ * Data handed to a {@link SystemTransformationsSupplier}.
  *
  * @alpha
  */
-export interface PanelDataTransformationsContext {
+export interface SystemTransformationsContext {
   /** Query result frames, before user transformations and before field overrides */
   series: DataFrame[];
 }
@@ -80,7 +80,7 @@ export interface PanelDataTransformationsContext {
  *
  * @alpha
  */
-export interface PanelDataTransformations {
+export interface SystemTransformations {
   /**
    * Run before every user-configured transformation and before field overrides, so the fields
    * they produce are matchable by overrides and targetable by the user's own transformations.
@@ -94,24 +94,32 @@ export interface PanelDataTransformations {
 }
 
 /**
+ * {@link SystemTransformations} with both positions filled in: what
+ * `PanelPlugin.getSystemTransformations` returns, so callers handle neither the array shorthand nor a
+ * missing group.
+ *
+ * @alpha
+ */
+export type ResolvedSystemTransformations = Required<SystemTransformations>;
+
+/**
  * Returns read-only transformations a dashboard panel requires in order to render its data.
  *
- * Registered via `PanelPlugin.setDataTransformations`. An array result is shorthand for
- * {@link PanelDataTransformations.prepend}.
+ * Registered via `PanelPlugin.setSystemTransformations`. An array result is shorthand for
+ * {@link SystemTransformations.prepend}.
  *
  * Called once per data update that carries frames, so it may branch on frame shape or `meta`. The
  * result is cached against that frames array and shared by both positions and by the
- * transformations editor, so keep the supplier cheap and free of side effects. Empty results pass
- * through without consulting the supplier.
+ * transformations editor, so keep the supplier cheap and free of side effects. Those frames are the
+ * entire cache key — nothing else about the panel invalidates it. Empty results pass through without
+ * consulting the supplier, and a supplier that throws is treated as one that registered nothing.
  *
  * Only the series data topic is supported, in both positions: configs with `topic` set to
  * annotations or alert states are ignored.
  *
- * Option strings are mostly not interpolated — scenes skips these entries because they are carried
- * by a custom transform operator, and `transformDataFrame` skips its own pass while a scene is
- * registered. The exception is transformers that interpolate their own options through
- * `DataTransformContext.interpolate`, such as `formatTime` and `histogram`; those do see the
- * scene's interpolation.
+ * Option strings are not interpolated: scenes skips these entries because they are carried by a
+ * custom transform operator. Transformers that interpolate their own options through
+ * `DataTransformContext.interpolate`, such as `formatTime`, are the exception.
  *
  * Reaches Grafana dashboards only. `PanelRenderer` runs no transformations, so Explore,
  * alerting rule previews and visualization suggestion cards render the untransformed query
@@ -119,9 +127,9 @@ export interface PanelDataTransformations {
  *
  * @alpha
  */
-export type PanelDataTransformationsSupplier = (
-  ctx: PanelDataTransformationsContext
-) => Array<DataTransformerConfig | CustomTransformOperator> | PanelDataTransformations | undefined;
+export type SystemTransformationsSupplier = (
+  ctx: SystemTransformationsContext
+) => Array<DataTransformerConfig | CustomTransformOperator> | SystemTransformations | undefined;
 
 /**
  * Many transformations can be called with a simple synchronous function.

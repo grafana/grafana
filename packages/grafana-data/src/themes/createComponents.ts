@@ -94,6 +94,7 @@ export const ThemeComponentsInputSchema = z
     tooltip: z.object({
       text: z.string().optional(),
       background: z.string().optional(),
+      borderColor: z.string().optional(),
     }),
     panel: z.object({
       padding: z.number().optional(),
@@ -104,6 +105,11 @@ export const ThemeComponentsInputSchema = z
     }),
     dropdown: z.object({
       background: z.string().optional(),
+      borderColor: z.string().optional(),
+    }),
+    modal: z.object({
+      background: z.string().optional(),
+      borderColor: z.string().optional(),
     }),
     overlay: z.object({
       background: z.string().optional(),
@@ -113,6 +119,8 @@ export const ThemeComponentsInputSchema = z
       padding: z.number().optional(),
     }),
     drawer: z.object({
+      background: z.string().optional(),
+      borderColor: z.string().optional(),
       padding: z.number().optional(),
     }),
     textHighlight: z.object({
@@ -208,9 +216,11 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     },
     dropdown: {
       background: colors.background.elevated,
+      borderColor: 'transparent',
     },
     tooltip: {
       background: colors.background.elevated,
+      borderColor: 'transparent',
       text: colors.text.primary,
     },
     dashboard: {
@@ -218,7 +228,13 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       padding: 1,
     },
     drawer: {
+      background: colors.background.primary,
+      borderColor: 'transparent',
       padding: 2,
+    },
+    modal: {
+      background: colors.background.primary,
+      borderColor: colors.border.weak,
     },
     overlay: {
       background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.5)' : 'rgba(208, 209, 211, 0.5)',

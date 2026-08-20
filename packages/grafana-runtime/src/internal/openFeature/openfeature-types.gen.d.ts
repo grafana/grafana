@@ -61,7 +61,6 @@ declare module "@openfeature/core" {
     | "logsTablePanelNG"
     | "plugins.useMTPluginSettings"
     | "splashScreen"
-    | "grafana.newPreferencesPage"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
@@ -76,6 +75,7 @@ declare module "@openfeature/core" {
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
     | "grafana.vectorSearchCmdk"
+    | "grafana.cmdkHybridSearch"
     | "assistant.fullscreenWorkspace"
     | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
@@ -96,7 +96,8 @@ declare module "@openfeature/core" {
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
     | "grafana.panelPluginTransformations"
-    | "tracesDrilldown.useValueTypeFiltering";
+    | "tracesDrilldown.useValueTypeFiltering"
+    | "grafana.dashboardsAutoHeightPanels";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
