@@ -1,5 +1,7 @@
 import { type Mermaid } from 'mermaid';
 
+import { textUtil } from '@grafana/data';
+
 /** Selector for the fenced code blocks marked as mermaid by `marked` (```mermaid). */
 export const MERMAID_CODE_SELECTOR = 'code.language-mermaid';
 
@@ -29,14 +31,23 @@ function loadMermaid(): Promise<Mermaid> {
 // monotonic counter avoids collisions across re-renders and multiple diagrams.
 let diagramCounter = 0;
 
+/** Leaves the original source visible but flags it so one bad diagram doesn't hide the README. */
+function flagError(target: Element, signal?: { cancelled: boolean }) {
+  if (!signal?.cancelled && target.isConnected) {
+    target.classList.add(MERMAID_ERROR_CLASS);
+  }
+}
+
 /**
  * Finds mermaid fenced code blocks already rendered into `container` and
  * replaces each with its diagram. No-op (and no mermaid import) when the
  * container has no mermaid blocks.
  *
- * `securityLevel: 'strict'` makes mermaid sanitize its own SVG output and
- * disable interactivity, so the injected markup is safe despite bypassing the
- * README's outer sanitizer.
+ * The README source is untrusted, so the rendered SVG is passed through
+ * Grafana's SVG sanitizer before injection. `htmlLabels: false` keeps mermaid
+ * from emitting `<foreignObject>` labels (which the sanitizer would strip),
+ * rendering labels as plain SVG text instead. `securityLevel: 'strict'` is an
+ * additional layer, not the only one.
  */
 export async function renderMermaidDiagrams(container: HTMLElement, { isDark, signal }: RenderOptions): Promise<void> {
   const blocks = Array.from(container.querySelectorAll<HTMLElement>(MERMAID_CODE_SELECTOR));
@@ -44,18 +55,26 @@ export async function renderMermaidDiagrams(container: HTMLElement, { isDark, si
     return;
   }
 
-  const mermaid = await loadMermaid();
-  if (signal?.cancelled) {
+  let mermaid: Mermaid;
+  try {
+    mermaid = await loadMermaid();
+    if (signal?.cancelled) {
+      return;
+    }
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'strict',
+      theme: isDark ? 'dark' : 'default',
+      htmlLabels: false,
+      flowchart: { htmlLabels: false },
+      // We render our own error UI; don't let mermaid inject its "bomb" diagram.
+      suppressErrorRendering: true,
+    });
+  } catch {
+    // A chunk-load or init failure shouldn't leave the blocks silently unrendered.
+    blocks.forEach((code) => flagError(code.closest('pre') ?? code, signal));
     return;
   }
-
-  mermaid.initialize({
-    startOnLoad: false,
-    securityLevel: 'strict',
-    theme: isDark ? 'dark' : 'default',
-    // We render our own error UI; don't let mermaid inject its "bomb" diagram.
-    suppressErrorRendering: true,
-  });
 
   for (const code of blocks) {
     if (signal?.cancelled) {
@@ -73,14 +92,10 @@ export async function renderMermaidDiagrams(container: HTMLElement, { isDark, si
       }
       const wrapper = document.createElement('div');
       wrapper.className = MERMAID_DIAGRAM_CLASS;
-      wrapper.innerHTML = svg;
+      wrapper.innerHTML = textUtil.sanitizeSVGContent(svg);
       target.replaceWith(wrapper);
     } catch {
-      // Leave the original source visible and flag it so a typo in one diagram
-      // doesn't hide the rest of the README.
-      if (!signal?.cancelled && target.isConnected) {
-        target.classList.add(MERMAID_ERROR_CLASS);
-      }
+      flagError(target, signal);
     }
   }
 }

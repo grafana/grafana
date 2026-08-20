@@ -137,6 +137,43 @@ describe('renderMermaidDiagrams', () => {
     expect(container.querySelector(`.${MERMAID_DIAGRAM_CLASS}`)).not.toBeNull();
   });
 
+  it('renders labels as SVG text (no foreignObject) so the sanitizer keeps them', async () => {
+    const container = mountContainer(mermaidBlock('graph TD; A-->B;'));
+
+    await renderMermaidDiagrams(container, { isDark: false });
+
+    expect(mockInitialize).toHaveBeenCalledWith(
+      expect.objectContaining({ htmlLabels: false, flowchart: { htmlLabels: false } })
+    );
+  });
+
+  it('sanitizes the rendered SVG before injecting it', async () => {
+    mockRender.mockResolvedValue({ svg: '<svg><script>alert(1)</script><rect></rect></svg>' } as never);
+    const container = mountContainer(mermaidBlock('graph TD; A-->B;'));
+
+    await renderMermaidDiagrams(container, { isDark: false });
+
+    const diagram = container.querySelector(`.${MERMAID_DIAGRAM_CLASS}`);
+    expect(diagram).not.toBeNull();
+    // Grafana's SVG sanitizer strips the injected <script> even though it bypassed
+    // the README's outer sanitizer.
+    expect(diagram!.querySelector('script')).toBeNull();
+    expect(diagram!.innerHTML).not.toContain('<script');
+  });
+
+  it('flags every block when mermaid fails to initialize', async () => {
+    mockInitialize.mockImplementation(() => {
+      throw new Error('init failed');
+    });
+    const container = mountContainer(mermaidBlock('graph TD; A-->B;') + mermaidBlock('graph LR; C-->D;'));
+
+    await renderMermaidDiagrams(container, { isDark: false });
+
+    expect(container.querySelectorAll(`.${MERMAID_ERROR_CLASS}`)).toHaveLength(2);
+    expect(container.querySelector(`.${MERMAID_DIAGRAM_CLASS}`)).toBeNull();
+    expect(mockRender).not.toHaveBeenCalled();
+  });
+
   it('does not mutate the DOM once the signal is cancelled', async () => {
     let resolveRender!: (value: Awaited<ReturnType<typeof mockRender>>) => void;
     mockRender.mockImplementation(() => new Promise((resolve) => (resolveRender = resolve)));
