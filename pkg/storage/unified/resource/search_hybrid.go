@@ -214,7 +214,7 @@ func (s *searchServer) resolveManagedBy(ctx context.Context, key *resourcepb.Res
 		Options: &resourcepb.ListOptions{
 			Key: key,
 			Fields: []*resourcepb.Requirement{
-				{Key: SEARCH_FIELD_NAME, Operator: "in", Values: uids},
+				{Key: SEARCH_FIELD_NAME, Operator: string(selection.In), Values: uids},
 			},
 		},
 		Limit:  int64(len(uids)),
