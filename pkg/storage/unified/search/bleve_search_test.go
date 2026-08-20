@@ -751,6 +751,126 @@ func TestTitleSetFilterExactMatch(t *testing.T) {
 	})
 }
 
+// TestLabelFilterExactMatch covers label selectors, which compare whole values
+// case-sensitively. /search does not re-apply the selector to the resource, so
+// whatever the index returns is the answer.
+func TestLabelFilterExactMatch(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	seed := func(t *testing.T) resource.ResourceIndex {
+		index := newTestDashboardsIndex(t, threshold, 3, noop)
+		indexDocumentsWithLabels(t, index, key, map[string]map[string]string{
+			"name1": {"team": "Team Alpha"},
+			"name2": {"team": "alpha"},
+			"name3": {"team": "Team Beta"},
+		})
+		return index
+	}
+
+	for _, operator := range []string{"in", "="} {
+		t.Run(operator+" on a label matches the whole value", func(t *testing.T) {
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "Team Alpha"), []string{"name1"})
+		})
+
+		t.Run(operator+" on a label does not match a word of the value", func(t *testing.T) {
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "Team"), nil)
+			// "alpha" is a word of name1's value, and the whole value of name2.
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "alpha"), []string{"name2"})
+		})
+
+		t.Run(operator+" on a label is case sensitive", func(t *testing.T) {
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "team alpha"), nil)
+		})
+	}
+
+	t.Run("in on a label matches any listed value", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("in", "team", "Team Alpha", "Team Beta"), []string{"name1", "name3"})
+	})
+
+	t.Run("notin on a label excludes the whole value only", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "Team Alpha"), []string{"name2", "name3"})
+		// The failure mode here is excluding too much.
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "Team"), []string{"name1", "name2", "name3"})
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "alpha"), []string{"name1", "name3"})
+	})
+
+	t.Run("wildcard label values still match", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("in", "team", "Team*"), []string{"name1", "name3"})
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "Team*"), []string{"name2"})
+	})
+
+	t.Run("filter on a label the document does not carry matches nothing", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("in", "other", "Team Alpha"), nil)
+	})
+
+	t.Run("values sharing a word do not match each other", func(t *testing.T) {
+		// Label values are identifiers, and a hyphen is a word boundary to the text
+		// analyzer, which is how these used to match each other.
+		index := newTestDashboardsIndex(t, threshold, 4, noop)
+		indexDocumentsWithLabels(t, index, key, map[string]map[string]string{
+			"ops":    {"team": "platform-ops"},
+			"eng":    {"team": "platform-engineering"},
+			"foo":    {"env": "foo"},
+			"foobar": {"env": "foo-bar"},
+		})
+		checkSearchQuery(t, index, labelFilterQuery("in", "team", "platform-ops"), []string{"ops"})
+		checkSearchQuery(t, index, labelFilterQuery("in", "env", "foo"), []string{"foo"})
+		checkSearchQuery(t, index, labelFilterQuery("notin", "env", "foo"), []string{"eng", "foobar", "ops"})
+	})
+
+	t.Run("a label is returned as written", func(t *testing.T) {
+		// Stored values are not analyzed, so retrieval is unaffected by the mapping.
+		q := labelFilterQuery("in", "team", "Team Alpha")
+		q.Fields = []string{"labels.team"}
+		res, err := seed(t).Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, res.Results.Rows, 1)
+		require.Equal(t, "Team Alpha", string(res.Results.Rows[0].Cells[0]))
+	})
+}
+
+func indexDocumentsWithLabels(t *testing.T, index resource.ResourceIndex, key resource.NamespacedResource, docsWithLabels map[string]map[string]string) {
+	items := make([]*resource.BulkIndexItem, 0, len(docsWithLabels))
+	for name, labels := range docsWithLabels {
+		items = append(items, &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:   1,
+				Name: name,
+				Key: &resourcepb.ResourceKey{
+					Name:      name,
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+				Title:  name,
+				Labels: labels,
+			},
+		})
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+}
+
+func labelFilterQuery(operator, key string, values ...string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+			Labels: []*resourcepb.Requirement{{Key: key, Operator: operator, Values: values}},
+		},
+		// Sort by name so multi-hit expectations are deterministic (filters alone
+		// impose no order).
+		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+		Limit:  100000,
+	}
+}
+
 // TestPublicFieldNameFilter checks the filter path resolves a public field name
 // to its physical fields.* location, so callers don't supply the prefix.
 func TestPublicFieldNameFilter(t *testing.T) {
@@ -3219,4 +3339,111 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 			})
 		}
 	})
+}
+
+// The mapping and the query have to agree on a field's type, and neither side
+// fails loudly when they don't, so these filters run against a real index
+// instead of asserting on query shapes.
+func TestFilteringOnBooleanAndNumericFields(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "rules.alerting.grafana.app",
+		Resource:  "rules",
+	}
+	index := newTestIndexWithTypedFields(t, key, []resource.SearchFieldDefinition{
+		{Name: "paused", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+		{Name: "panelID", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+	})
+
+	rule := func(name string, paused bool, panelID int64) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name,
+				},
+				Name:   name,
+				Title:  name,
+				RV:     1,
+				Fields: map[string]any{"paused": paused, "panelID": panelID},
+			},
+		}
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		rule("rule-paused", true, 10),
+		rule("rule-active", false, 20),
+	}}))
+
+	filter := func(field, operator string, values ...string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+				Fields: []*resourcepb.Requirement{{Key: field, Operator: operator, Values: values}},
+			},
+			Limit: 100,
+		}
+	}
+
+	for _, tc := range []struct {
+		name     string
+		query    *resourcepb.ResourceSearchRequest
+		expected []string
+	}{
+		{"boolean equals", filter("paused", "=", "true"), []string{"rule-paused"}},
+		{"boolean not in", filter("paused", "notin", "true"), []string{"rule-active"}},
+		{"number equals", filter("panelID", "=", "10"), []string{"rule-paused"}},
+		{"number in", filter("panelID", "in", "10", "20"), []string{"rule-paused", "rule-active"}},
+		{"number greater than", filter("panelID", "gt", "15"), []string{"rule-active"}},
+		{"number greater than or equal", filter("panelID", "gte", "20"), []string{"rule-active"}},
+		{"number less than", filter("panelID", "lt", "20"), []string{"rule-paused"}},
+		{"number less than or equal", filter("panelID", "lte", "15"), []string{"rule-paused"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			checkSearchQueryUnordered(t, index, tc.query, tc.expected)
+		})
+	}
+
+	// A value that does not parse, or a comparison the field's type has no
+	// meaning for, is a caller mistake. Answering with an empty page would look
+	// like a rule set with nothing in it.
+	for _, tc := range []struct {
+		name  string
+		query *resourcepb.ResourceSearchRequest
+	}{
+		{"boolean value that is not true or false", filter("paused", "=", "yes")},
+		{"boolean compared with a range", filter("paused", "gt", "true")},
+		{"number value that is not a number", filter("panelID", "=", "ten")},
+		{"filter on a field that only declares retrieve", filter(resource.SEARCH_FIELD_CREATED, "gt", "0")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := index.Search(context.Background(), nil, tc.query, nil, nil)
+			require.NoError(t, err, "a bad request comes back in the response, not as an error")
+			require.NotNil(t, res.Error)
+			require.Equal(t, int32(400), res.Error.Code)
+		})
+	}
+}
+
+// newTestIndexWithTypedFields creates a test index whose kind declares the
+// given search fields, so non-string types keep their declared mapping.
+func newTestIndexWithTypedFields(t testing.TB, key resource.NamespacedResource, sfds []resource.SearchFieldDefinition) resource.ResourceIndex {
+	gvr := apischema.GroupVersionResource{Group: key.Group, Version: "v0", Resource: key.Resource}
+	provider := resource.NewMapProvider(
+		map[apischema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: sfds},
+		map[apischema.GroupResource]string{gvr.GroupResource(): gvr.Version},
+	)
+	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
+
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: threshold,
+		SearchFields:  resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{sfKey: provider}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	return index
 }

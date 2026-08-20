@@ -87,6 +87,13 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(async () => dsMock),
+  getDataSourceInstanceSettings: jest.fn(async (ref: string | null) => (ref === null ? defaultDsSettings : undefined)),
+  getDataSourceInstanceList: jest.fn(async () => [defaultDsSettings]),
+}));
+
 describe('isEditableVariableType', () => {
   it('should return true for editable variable types', () => {
     const editableTypes: VariableType[] = [
@@ -313,8 +320,8 @@ describe('getVariableScene', () => {
 
   it.each(Object.keys(editableVariables) as EditableVariableType[])(
     'should define a scene object for every variable type',
-    (type) => {
-      const variable = getVariableScene(type, { name: 'foo' });
+    async (type) => {
+      const variable = await getVariableScene(type, { name: 'foo' });
       expect(variable).toBeDefined();
     }
   );
@@ -327,17 +334,17 @@ describe('getVariableScene', () => {
     ['adhoc', AdHocFiltersVariable],
     ['groupby', GroupByVariable],
     ['textbox', TextBoxVariable],
-  ])('should return the scene variable instance for the given editable variable type', (type, instanceType) => {
+  ])('should return the scene variable instance for the given editable variable type', async (type, instanceType) => {
     const initialState = { name: 'MyVariable' };
-    const sceneVariable = getVariableScene(type as EditableVariableType, initialState);
+    const sceneVariable = await getVariableScene(type as EditableVariableType, initialState);
     expect(sceneVariable).toBeInstanceOf(instanceType);
     expect(sceneVariable.state.name).toBe(initialState.name);
     expect(sceneVariable.state.hide).toBe(undefined);
   });
 
-  it('should return the scene variable instance for the constant editable variable type', () => {
+  it('should return the scene variable instance for the constant editable variable type', async () => {
     const initialState = { name: 'MyVariable' };
-    const sceneVariable = getVariableScene('constant' as EditableVariableType, initialState);
+    const sceneVariable = await getVariableScene('constant' as EditableVariableType, initialState);
     expect(sceneVariable).toBeInstanceOf(ConstantVariable);
     expect(sceneVariable.state.name).toBe(initialState.name);
     expect(sceneVariable.state.hide).toBe(VariableHide.hideVariable);
@@ -421,8 +428,8 @@ describe('getDefinition', () => {
 });
 
 describe('getOptionDataSourceTypes', () => {
-  it('should return all data source types when no data source types are specified', () => {
-    const optionTypes = getOptionDataSourceTypes();
+  it('should return all data source types when no data source types are specified', async () => {
+    const optionTypes = await getOptionDataSourceTypes();
     expect(optionTypes).toHaveLength(1);
     expect(optionTypes[0].label).toBe('ds1');
   });
@@ -460,12 +467,12 @@ describe('getNextAvailableId', () => {
 });
 
 describe('getVariableDefault', () => {
-  it('should return a QueryVariable instance with the correct name', () => {
+  it('should return a QueryVariable instance with the correct name', async () => {
     const sceneVariables = new SceneVariableSet({
       variables: [],
     });
 
-    const defaultVariable = getVariableDefault(sceneVariables.state.variables);
+    const defaultVariable = await getVariableDefault(sceneVariables.state.variables);
 
     expect(defaultVariable).toBeInstanceOf(QueryVariable);
     expect(defaultVariable.state.name).toBe('query0');
