@@ -8,11 +8,13 @@ import {
 import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
-import { resolveBackendInstance } from './probeUtils';
+import { PROBE_TIMEOUT_MS, resolveBackendInstance } from './probeUtils';
 import { runInstantQueries, runRangeQuery } from './promQuery';
 import {
   fetchLogsActivity,
   fetchMetricsActivity,
+  fetchMetricsDiskHoursToFull,
+  fetchMetricsDiskPressure,
   fetchTracesActivity,
   fetchTracesServices,
   LOGS_STATS_LOOKBACK_DAYS,
@@ -284,6 +286,7 @@ describe('fetchTracesActivity', () => {
     expect(activity.spans).toBe(600);
     expect(activity.series?.x?.values).toEqual([1000, 2000, 3000]);
     expect(activity.series?.y.values).toEqual([100, 200, 300]);
+    expect(activity.lookbackHours).toBe(24);
     const end = Math.floor(Date.now() / 1000);
     expect(mockProxyGet).toHaveBeenCalledWith(
       '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
@@ -296,18 +299,84 @@ describe('fetchTracesActivity', () => {
   it('reports null spans when the response has no samples', async () => {
     mockProxyGet.mockResolvedValue({ series: [] });
 
-    await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null });
+    await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null, lookbackHours: 24 });
+  });
+
+  it('retries the known Tempo 2.x duration limit with a three-hour lookback', async () => {
+    mockProxyGet
+      .mockRejectedValueOnce({
+        status: 400,
+        data: { message: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s' },
+      })
+      .mockResolvedValueOnce({
+        series: [
+          {
+            samples: [
+              { timestampMs: '1000', value: 100 },
+              { timestampMs: '2000', value: 200 },
+            ],
+          },
+        ],
+      });
+
+    await expect(fetchTracesActivity(tempo)).resolves.toEqual(
+      expect.objectContaining({ spans: 300, lookbackHours: 3 })
+    );
+
+    const end = Math.floor(Date.now() / 1000);
+    expect(mockProxyGet).toHaveBeenNthCalledWith(
+      1,
+      '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
+      { q: '{} | count_over_time()', start: end - DATA_LOOKBACK_HOURS * 3600, end, step: '30m' },
+      undefined,
+      { showErrorAlert: false }
+    );
+    expect(mockProxyGet).toHaveBeenNthCalledWith(
+      2,
+      '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
+      { q: '{} | count_over_time()', start: end - 3 * 3600, end, step: '30m' },
+      undefined,
+      { showErrorAlert: false }
+    );
+  });
+
+  it('retries when Tempo returns the duration limit as a string response body', async () => {
+    mockProxyGet
+      .mockRejectedValueOnce({
+        status: 400,
+        data: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s',
+      })
+      .mockResolvedValueOnce({ series: [] });
+
+    await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null, lookbackHours: 3 });
+    expect(mockProxyGet).toHaveBeenCalledTimes(2);
+  });
+
+  it('preserves a malformed Tempo error response', async () => {
+    const error = { status: 400, data: {} };
+    mockProxyGet.mockRejectedValue(error);
+
+    await expect(fetchTracesActivity(tempo)).rejects.toBe(error);
+    expect(mockProxyGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry unrelated Tempo errors', async () => {
+    const error = { status: 400, data: { message: 'invalid TraceQL query' } };
+    mockProxyGet.mockRejectedValue(error);
+
+    await expect(fetchTracesActivity(tempo)).rejects.toBe(error);
+    expect(mockProxyGet).toHaveBeenCalledTimes(1);
   });
 });
 
-describe('fetchMetricsActivity', () => {
+describe('metrics telemetry', () => {
   const prom = { uid: 'prom-uid', type: 'prometheus' };
   const usageSettings = { uid: 'grafanacloud-usage', type: 'prometheus' } as unknown as DataSourceInstanceSettings;
 
   const scalarFrame = (refId: string, value: number, labels?: Record<string, string>) =>
     createDataFrame({ refId, fields: [{ name: 'Value', type: FieldType.number, values: [value], labels }] });
 
-  it('reads cardinality, name count, hosts, disk pressure, and the series sparkline', async () => {
+  it('reads cardinality, name count, hosts, and the series sparkline', async () => {
     const getResource = jest.fn(async (path: string) => {
       if (path === 'api/v1/cardinality/label_values') {
         return { series_count_total: 4_200_000 };
@@ -327,15 +396,7 @@ describe('fetchMetricsActivity', () => {
         ],
       }),
     ]);
-    mockRunInstantQueries.mockImplementation(async (queries) =>
-      'eta' in queries
-        ? [scalarFrame('eta', 6.4)]
-        : [
-            scalarFrame('hosts', 12),
-            scalarFrame('diskHosts', 3),
-            scalarFrame('diskWorst', 0.96, { instance: 'web-03:9100', mountpoint: '/data' }),
-          ]
-    );
+    mockRunInstantQueries.mockResolvedValue([scalarFrame('hosts', 12)]);
 
     const activity = await fetchMetricsActivity(prom);
 
@@ -343,12 +404,6 @@ describe('fetchMetricsActivity', () => {
     expect(activity.names).toBe(3);
     expect(activity.hosts).toBe(12);
     expect(activity.seriesSparkline?.y.values).toEqual([10, 20]);
-    expect(activity.disk).toEqual({
-      hostsAbove: 3,
-      worstInstance: 'web-03:9100',
-      worstRatio: 0.96,
-      hoursToFull: 6.4,
-    });
 
     const end = Math.floor(Date.now() / 1000);
     expect(getResource).toHaveBeenCalledWith(
@@ -367,19 +422,40 @@ describe('fetchMetricsActivity', () => {
       DATA_LOOKBACK_HOURS,
       prom
     );
+  });
+
+  it('reads disk pressure without waiting for the ETA refinement', async () => {
+    mockRunInstantQueries.mockResolvedValue([
+      scalarFrame('diskHosts', 3),
+      scalarFrame('diskWorst', 0.96, { instance: 'web-03:9100', mountpoint: '/data' }),
+    ]);
+
+    await expect(fetchMetricsDiskPressure(prom)).resolves.toEqual({
+      hostsAbove: 3,
+      worstInstance: 'web-03:9100',
+      worstMount: '/data',
+      worstRatio: 0.96,
+    });
     // diskWorst must stay per-filesystem (no `max by (instance)`) or the mountpoint label is lost.
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       expect.objectContaining({
         diskWorst: expect.stringMatching(/^topk\(1, \(1 - node_filesystem_avail_bytes\{/),
       }),
       prom,
-      undefined,
+      30_000,
       true
     );
-    // The follow-up ETA query pins the exact filesystem shown: worst host AND its fullest mountpoint.
+  });
+
+  it('reads the ETA for the filesystem selected by disk pressure', async () => {
+    mockRunInstantQueries.mockResolvedValue([scalarFrame('eta', 6.4)]);
+
+    await expect(fetchMetricsDiskHoursToFull('web-03:9100', '/data', prom)).resolves.toBe(6.4);
+
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       { eta: expect.stringContaining('instance="web-03:9100",mountpoint="/data"') },
-      prom
+      prom,
+      PROBE_TIMEOUT_MS
     );
   });
 
@@ -640,57 +716,34 @@ describe('fetchMetricsActivity', () => {
     await expect(promise).resolves.toMatchObject({ series: null, names: 2 });
   });
 
-  it('reports no disk pressure and skips the ETA query when nobody is above threshold', async () => {
-    const getResource = jest.fn(async () => ({ data: [] }));
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+  it('reports no disk pressure when nobody is above threshold', async () => {
     // count() over an empty vector returns an empty result, not zero: no diskHosts frame.
-    mockRunInstantQueries.mockResolvedValue([scalarFrame('hosts', 12)]);
+    mockRunInstantQueries.mockResolvedValue([]);
 
-    const promise = fetchMetricsActivity(prom);
-    await jest.advanceTimersByTimeAsync(10_000);
-    const activity = await promise;
+    const promise = fetchMetricsDiskPressure(prom);
+    const disk = await promise;
 
-    expect(activity.hosts).toBe(12);
-    expect(activity.disk).toBeNull();
+    expect(disk).toBeNull();
     expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
   });
 
-  it('omits the ETA and skips its query when the worst filesystem has no mountpoint label', async () => {
-    const getResource = jest.fn(async () => ({ data: [] }));
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+  it('preserves a missing mountpoint without starting an ETA query', async () => {
     mockRunInstantQueries.mockResolvedValue([
       scalarFrame('diskHosts', 1),
       scalarFrame('diskWorst', 0.93, { instance: 'db-01:9100' }),
     ]);
 
-    const promise = fetchMetricsActivity(prom);
-    await jest.advanceTimersByTimeAsync(10_000);
-    const activity = await promise;
+    const promise = fetchMetricsDiskPressure(prom);
+    const disk = await promise;
 
-    expect(activity.disk).toEqual({ hostsAbove: 1, worstInstance: 'db-01:9100', worstRatio: 0.93, hoursToFull: null });
-    // Without a filesystem identity there is nothing honest to query.
+    expect(disk).toEqual({ hostsAbove: 1, worstInstance: 'db-01:9100', worstMount: null, worstRatio: 0.93 });
     expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
   });
 
   it.each([90, 0])('drops a meaningless linear ETA (%s h)', async (eta) => {
-    const getResource = jest.fn(async () => ({ data: [] }));
-    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
-    mockRunInstantQueries.mockImplementation(async (queries) =>
-      'eta' in queries
-        ? [scalarFrame('eta', eta)]
-        : [scalarFrame('diskHosts', 1), scalarFrame('diskWorst', 0.93, { instance: 'db-01:9100', mountpoint: '/srv' })]
-    );
+    mockRunInstantQueries.mockResolvedValue([scalarFrame('eta', eta)]);
 
-    const promise = fetchMetricsActivity(prom);
-    await jest.advanceTimersByTimeAsync(10_000);
-    const activity = await promise;
-
-    expect(activity.disk).toEqual({
-      hostsAbove: 1,
-      worstInstance: 'db-01:9100',
-      worstRatio: 0.93,
-      hoursToFull: null,
-    });
+    await expect(fetchMetricsDiskHoursToFull('db-01:9100', '/srv', prom)).resolves.toBeNull();
   });
 
   it('resolves all-null without querying when the datasource has no backend instance', async () => {
@@ -702,7 +755,6 @@ describe('fetchMetricsActivity', () => {
       names: null,
       hosts: null,
       seriesSparkline: null,
-      disk: null,
     });
     expect(mockRunInstantQueries).not.toHaveBeenCalled();
     expect(mockRunRangeQuery).not.toHaveBeenCalled();
