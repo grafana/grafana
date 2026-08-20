@@ -586,12 +586,12 @@ func TestListStoredResources(t *testing.T) {
 	})
 
 	create := func(namespace, name string) {
-		raw := []byte(fmt.Sprintf(`{
+		raw := fmt.Appendf(nil, `{
 			"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {"name": %q, "namespace": %q},
 			"spec": {"title": "hello", "interval": "5m"}
-		}`, name, namespace))
+		}`, name, namespace)
 		resp, err := server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
 			Key: &resourcepb.ResourceKey{

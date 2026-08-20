@@ -1580,15 +1580,23 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		req.Limit = 500 // default max 500 items in a page
 	}
 
-	req = filterFieldSelectors(req)
-	if s.useFieldSelectorSearch(req) {
-		// If we get here, we're doing list with selectable fields. Let's do search instead, since
-		// we index all selectable fields, and fetch resulting documents one by one.
+	req = filterSelectors(req)
+	if s.useSelectorSearch(req) {
+		// If we get here, we're doing list with selectable fields or labels. Let's do
+		// search instead, since we index both, and fetch resulting documents one by one.
 		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
 		if s.storageMetrics != nil {
 			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
 		}
-		return s.listWithFieldSelectors(ctx, req)
+		return s.listWithSelectors(ctx, req)
+	}
+
+	if req.NextPageToken != "" {
+		if token, err := GetContinueToken(req.NextPageToken); err == nil && tokenFromOtherListPath(token, false) {
+			return &resourcepb.ListResponse{
+				Error: NewBadRequestError("continue token was issued for a search-backed list"),
+			}, nil
+		}
 	}
 
 	switch req.Source {

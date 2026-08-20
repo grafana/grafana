@@ -251,7 +251,7 @@ var (
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
 			Name:        "provisioning.readmes",
@@ -703,6 +703,14 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:        "reportRenderQueryDebounce",
+			Description: "On the report render page, wait for panel queries to settle (including late-registering repeat panel queries) before signaling the image renderer that the dashboard is done. Uses the legacy config-based toggle rather than OpenFeature since the render page authenticates via the image-renderer's signed render key rather than a normal user session, and OpenFeature evaluation isn't verified to work reliably in that context.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
 		},
 		{
 			Name:        "canvasPanelPanZoom",
@@ -1635,7 +1643,7 @@ var (
 			Name:        "alertingMigrationWizardUI",
 			Description: "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
 			Generate:    Generate{LegacyFrontend: true},
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
 		},
@@ -1651,9 +1659,9 @@ var (
 			Name:        "datasources.azureMonitorBatchAPI",
 			Description: "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
 			Generate:    Generate{Go: true, React: true, LegacyFrontend: true},
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "alertingRulePermanentlyDelete",
@@ -1885,9 +1893,9 @@ var (
 		{
 			Name:         "alertingImportAlertmanagerAPI",
 			Description:  "Enables the API to import Alertmanager configuration",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
+			HideFromDocs: false,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
@@ -2434,6 +2442,16 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:            "appplugins.loadAppManifest",
+			Description:     "Load app manifest when loading plugin definitions",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			Generate:        Generate{Go: true},
+			RequiresRestart: true,
+			Expression:      "false",
+			HideFromDocs:    true,
+		},
+		{
 			Name:            "appplugins.registerAPIServer",
 			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
 			Stage:           FeatureStageExperimental,
@@ -2540,15 +2558,6 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 			Expression:   "true", // enabled by default
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "dsAbstractionApp",
-			Description:  "Registers the dsabstraction app for querying datasources via unified SQL",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatasourcesCoreServicesSquad,
-			HideFromDocs: true,
-			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
@@ -2753,14 +2762,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "grafana.newPreferencesPage",
-			Description: "Whether to use the new SharedPreferences functional component",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{React: true, Go: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "datasource.useNewCRUDAPIs",
@@ -2995,6 +2996,15 @@ var (
 		{
 			Name:         "table.autoColumnWidths",
 			Description:  "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "table.refresh",
+			Description:  "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,
@@ -3238,6 +3248,32 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:        "grafana.panelPluginTransformations",
+			Description: "Let panel plugins register system transformations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "tracesDrilldown.useValueTypeFiltering",
+			Description:  "Enables value type filtering in Traces Drilldown",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Generate:     Generate{React: true},
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "grafana.dashboardsAutoHeightPanels",
+			Description:  "Enables the auto-height feature for dashboard panels",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+			HideFromDocs: true,
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
