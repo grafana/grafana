@@ -351,17 +351,44 @@ describe('FolderReadmePanel', () => {
       expect(pushSpy).not.toHaveBeenCalledWith('/d/aaa');
     });
 
-    it('records a host outcome for a non-resource link (markdown doc) and never pushes', async () => {
+    it('navigates in-app to the containing folder doc tab when a markdown link maps to a synced folder', async () => {
+      // A folder is keyed by its directory; the doc's containing folder resolves it.
+      setResources([{ path: 'dashboards/team-a', resource: 'folders', name: 'fold1', group: '', hash: '' }]);
+      setReadmeResult({ markdownContent: 'See [contributing](./CONTRIBUTING.md)' });
+
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      await user.click(screen.getByRole('link', { name: 'contributing' }));
+
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/dashboards/f/fold1?docTab=CONTRIBUTING.md'));
+      expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'in_app' });
+    });
+
+    it('navigates the current tab to the host URL when a markdown link has no synced folder', async () => {
+      setResources([]);
+      const assignMock = jest.fn();
       setReadmeResult({ markdownContent: 'See [notes](./notes.md)' });
 
       const { user } = setup();
       const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-      const link = screen.getByRole('link', { name: 'notes' });
-      expect(link).toHaveAttribute('href', 'https://github.com/owner/repo/blob/main/dashboards/team-a/notes.md');
-      await user.click(link);
+      // window.location.assign is read-only in jsdom; replace it after render.
+      const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
+      Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
+      try {
+        const link = screen.getByRole('link', { name: 'notes' });
+        expect(link).toHaveAttribute('href', 'https://github.com/owner/repo/blob/main/dashboards/team-a/notes.md');
+        await user.click(link);
 
-      expect(pushSpy).not.toHaveBeenCalled();
-      expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'host' });
+        await waitFor(() =>
+          expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/dashboards/team-a/notes.md')
+        );
+        expect(pushSpy).not.toHaveBeenCalled();
+        expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'host' });
+      } finally {
+        if (originalLocation) {
+          Object.defineProperty(window, 'location', originalLocation);
+        }
+      }
     });
   });
 

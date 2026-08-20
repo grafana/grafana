@@ -173,11 +173,12 @@ describe('rewriteRelativeMarkdownLinks', () => {
       expect(out).toContain(`${RESOURCE_PATH_ATTR}="ops/resources/GTM/"`);
     });
 
-    it('does not tag a markdown link', () => {
+    it('tags a markdown link so it can resolve to its folder doc tab, keeping the host href', () => {
       const html = `<p><a href="./notes.md">notes</a></p>`;
       const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });
 
-      expect(out).not.toContain(RESOURCE_PATH_ATTR);
+      expect(out).toContain(`${RESOURCE_PATH_ATTR}="ops/resources/RnD/notes.md"`);
+      expect(out).toContain('href="https://github.com/grafana/grafana-manifests/blob/main/ops/resources/RnD/notes.md"');
     });
 
     it('does not tag images', () => {
@@ -211,13 +212,17 @@ describe('rewriteRelativeMarkdownLinks', () => {
   });
 
   describe('isResourceLinkCandidate', () => {
-    it.each(['a/dash.json', 'a/pl.yaml', 'a/pl.yml', 'a/DASH.JSON', 'a/sub/', 'sub/'])('accepts %s', (path) => {
-      expect(isResourceLinkCandidate(path)).toBe(true);
-    });
+    it.each(['a/dash.json', 'a/pl.yaml', 'a/pl.yml', 'a/DASH.JSON', 'a/notes.md', 'a/GUIDE.markdown', 'a/sub/', 'sub/'])(
+      'accepts %s',
+      (path) => {
+        expect(isResourceLinkCandidate(path)).toBe(true);
+      }
+    );
 
-    // Extensionless paths (README, LICENSE, a folder link without a trailing
-    // slash) are not tagged, so they never trigger a resource lookup on click.
-    it.each(['a/notes.md', 'a/logo.png', 'a/archive.tar.gz', 'a/README', 'a/sub', 'sub', ''])('rejects %s', (path) => {
+    // Non-resource files (images, archives) and extensionless paths (README,
+    // LICENSE, a folder link without a trailing slash) are not tagged, so they
+    // never trigger a lookup on click.
+    it.each(['a/logo.png', 'a/archive.tar.gz', 'a/README', 'a/sub', 'sub', ''])('rejects %s', (path) => {
       expect(isResourceLinkCandidate(path)).toBe(false);
     });
   });
