@@ -114,10 +114,7 @@ export const QueryOptions = ({
                 />
               </InlineField>
             )}
-            <MaxDataPointsOption
-              value={localMaxDataPoints}
-              onChange={setLocalMaxDataPoints}
-            />
+            <MaxDataPointsOption value={localMaxDataPoints} onChange={setLocalMaxDataPoints} />
             <MinIntervalOption
               value={localMinInterval}
               onChange={handleMinIntervalChange}
@@ -125,10 +122,7 @@ export const QueryOptions = ({
               error={intervalError}
             />
             <Stack direction="row" justifyContent="flex-end">
-              <Button
-                size="sm"
-                onClick={applyOptions}
-              >
+              <Button size="sm" onClick={applyOptions}>
                 <Trans i18nKey="alerting.query-options.apply-button">Apply</Trans>
               </Button>
             </Stack>
@@ -203,4 +197,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-

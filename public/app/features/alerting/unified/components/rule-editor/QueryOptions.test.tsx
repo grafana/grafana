@@ -145,5 +145,4 @@ describe('QueryOptions', () => {
 
     expect(maxDataPointsInput).toHaveValue(500);
   });
-
 });
