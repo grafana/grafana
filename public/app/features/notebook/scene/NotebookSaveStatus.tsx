@@ -9,6 +9,12 @@ import { type NotebookAutosave, type NotebookSaveStatus as SaveStatus } from './
 const SAVED_VISIBLE_MS = 2000;
 
 /**
+ * Most saves land sooner than this. A word that appears and disappears in under a sixth of a second is a
+ * flicker rather than something anyone can read, so only a save slow enough to notice says it is saving.
+ */
+const SAVING_SHOWN_AFTER_MS = 150;
+
+/**
  * What the notebook's autosave is doing, in words. There is no save button, so nothing else tells a user
  * whether their work is safe, including when the assistant is the one writing.
  *
@@ -18,6 +24,7 @@ const SAVED_VISIBLE_MS = 2000;
 export function NotebookSaveStatus({ autosave }: { autosave: NotebookAutosave }) {
   const { status, errorMessage } = autosave.useState();
   const [savedExpired, setSavedExpired] = useState(false);
+  const [savingShown, setSavingShown] = useState(false);
 
   useEffect(() => {
     setSavedExpired(false);
@@ -30,7 +37,21 @@ export function NotebookSaveStatus({ autosave }: { autosave: NotebookAutosave })
     return () => clearTimeout(timeout);
   }, [status]);
 
-  if (status === 'idle' || (status === 'saved' && savedExpired)) {
+  useEffect(() => {
+    setSavingShown(false);
+
+    if (status !== 'saving') {
+      return;
+    }
+
+    const timeout = setTimeout(() => setSavingShown(true), SAVING_SHOWN_AFTER_MS);
+    return () => clearTimeout(timeout);
+  }, [status]);
+
+  // A save always starts from unsaved changes, so a save too quick to announce keeps saying that instead.
+  const shown = status === 'saving' && !savingShown ? 'pending' : status;
+
+  if (shown === 'idle' || (shown === 'saved' && savedExpired)) {
     return null;
   }
 
@@ -43,21 +64,21 @@ export function NotebookSaveStatus({ autosave }: { autosave: NotebookAutosave })
 
   const label = (
     <Text variant="bodySmall" color="secondary">
-      {labels[status]}
+      {labels[shown]}
     </Text>
   );
 
   return (
     <Stack gap={0.5} alignItems="center">
       {/* The message is the only thing saying WHY it failed, and too long to sit in the row. */}
-      {status === 'error' && errorMessage ? (
+      {shown === 'error' && errorMessage ? (
         <Tooltip content={errorMessage}>
           <span>{label}</span>
         </Tooltip>
       ) : (
         label
       )}
-      {status === 'error' ? (
+      {shown === 'error' ? (
         <Button variant="secondary" fill="text" size="sm" onClick={() => autosave.retry()}>
           {t('notebooks.save-status.retry', 'Retry')}
         </Button>

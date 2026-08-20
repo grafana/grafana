@@ -41,7 +41,6 @@ describe('NotebookSaveStatus', () => {
 
   it.each([
     ['pending', 'Unsaved changes'],
-    ['saving', 'Saving…'],
     ['saved', 'Saved'],
     ['error', 'Save failed'],
   ] as const)('renders %s as "%s"', (status, label) => {
@@ -51,6 +50,31 @@ describe('NotebookSaveStatus', () => {
     render(<NotebookSaveStatus autosave={autosave} />);
 
     expect(screen.getByText(label)).toBeInTheDocument();
+  });
+
+  describe('while a save is in flight', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    it('goes on reporting unsaved changes while the save is too quick to be worth a word', () => {
+      const autosave = buildAutosave();
+      autosave.setState({ status: 'saving' });
+
+      render(<NotebookSaveStatus autosave={autosave} />);
+
+      expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+      expect(screen.queryByText('Saving…')).not.toBeInTheDocument();
+    });
+
+    it('says it is saving once the save has taken long enough to notice', () => {
+      const autosave = buildAutosave();
+      autosave.setState({ status: 'saving' });
+
+      render(<NotebookSaveStatus autosave={autosave} />);
+      act(() => jest.advanceTimersByTime(150));
+
+      expect(screen.getByText('Saving…')).toBeInTheDocument();
+    });
   });
 
   describe('once the save has landed', () => {
