@@ -5,7 +5,9 @@
  * swapped onto the live NotebookScene in place (as `JsonModelEditView.onSaveSuccess` does for a
  * dashboard), so transient runtime state (in-flight queries, scroll position) is reset.
  *
- * In memory only. Saving is the caller's, and there is no notebook save flow yet.
+ * After the swap it hands the change to the notebook's autosave and waits for the write. The scene's own
+ * change signal only counts while the notebook is being edited, and there is no edit mode to enter from
+ * here.
  */
 
 import * as z from 'zod';
@@ -64,7 +66,7 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
   description:
     'Replace the notebook with a complete NotebookSpec: settings, elements (markdown, code, panel and ' +
     'library panel cells) and the ordered NotebookLayout that places them. The scene is rebuilt from ' +
-    'the spec. The change is in memory and is not saved.',
+    'the spec. The change is saved automatically.',
 
   payloadSchema: applyNotebookSpecPayloadSchema,
   permission: requiresNotebookEdit,
@@ -102,14 +104,33 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         overlay: undefined,
       });
 
-      // Echo the re-serialized spec so the caller sees what landed, and check it for dropped cells. One
-      // guard around both: the write has already landed, so nothing below may report `success: false`.
+      // Echo the re-serialized spec so the caller sees what landed, and check it for dropped cells. Both
+      // describe the scene rather than the save, so they run before it and one guard covers both: a check
+      // that cannot run is a warning, never a failure.
       let appliedNotebook: NotebookSpec | undefined;
       try {
         appliedNotebook = transformNotebookSceneToSaveModel(scene);
         warnings.push(...droppedCellWarnings(notebookSpec, appliedNotebook));
       } catch {
         warnings.push(UNKNOWN_SURVIVORS_WARNING);
+      }
+
+      // Waited on rather than left to the debounce: this result is the caller's only signal, and one that
+      // said the write succeeded while it was still in flight would report a notebook that never saved.
+      try {
+        await scene.autosave.saveDocumentChange();
+      } catch (error) {
+        return {
+          success: false,
+          // Says which half failed, because they differ: the scene on screen holds the new document, and
+          // the server still holds the old one. The notebook offers a Retry.
+          error: `The notebook was changed but could not be saved: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+          data: { applied: true, spec: appliedNotebook },
+          changes: [],
+          warnings: warnings.length > 0 ? warnings : undefined,
+        };
       }
 
       return {
