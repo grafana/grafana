@@ -32,6 +32,11 @@ interface MultiComboboxBaseProps<T extends string | number>
   onChange: (option: Array<ComboboxOption<T>>) => void;
   isClearable?: boolean;
   enableAllOption?: boolean;
+  /**
+   * Clears the search text and unfilters the list once an option is selected. Off by default, because
+   * keeping the search is what lets you tick several matches from one query.
+   */
+  clearSearchOnSelect?: boolean;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
@@ -54,6 +59,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     minWidth,
     maxWidth,
     isClearable,
+    clearSearchOnSelect = false,
     createCustomValue = false,
     customValueDescription,
     'aria-labelledby': ariaLabelledBy,
@@ -260,6 +266,16 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             }
           } else if (newSelectedItem) {
             addSelectedItem(newSelectedItem);
+          }
+
+          // Done here rather than in the reducer: that is meant to be pure, and `inputValue` is a
+          // controlled prop, so an inputValue returned from the reducer is inert. updateOptions('')
+          // rather than useOptions' resetSearch because it also reloads an unfiltered async list;
+          // for a plain options array the two are the same. Clearing the search is also what drops
+          // the createCustomValue row, which is right once the value it offered has been committed.
+          if (clearSearchOnSelect && inputValue !== '') {
+            setInputValue('');
+            updateOptions('');
           }
           break;
         case useCombobox.stateChangeTypes.InputChange:

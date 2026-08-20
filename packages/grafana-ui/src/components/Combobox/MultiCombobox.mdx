@@ -15,6 +15,13 @@ Use the prop `enableAllOption` to show the "All" option.
 - If no filtering is applied, selecting "All" will select all options, returning the same array as the `options` prop.
 - With filtering, selecting "All" will choose the filtered subset of options.
 
+## Clearing the search after a selection
+
+By default the typed search is kept after an option is selected, so several matches from one query can
+be ticked in a row. Pass `clearSearchOnSelect` when a selection should instead empty the field and
+restore the unfiltered list — useful where each selection is its own thought rather than one of a batch,
+and where `createCustomValue` would otherwise leave the committed text sitting in the input.
+
 ## Props
 
 <ArgTypes of={MultiCombobox} />
