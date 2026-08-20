@@ -19,7 +19,7 @@ export interface EditableDashboardElement {
   /**
    * Hook that returns sidebar options
    */
-  useSidebarOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[];
+  useSidebarOptions?(isNewElement: boolean): OptionsPaneCategoryDescriptor[];
 
   /**
    * Panel Actions

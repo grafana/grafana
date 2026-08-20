@@ -35,6 +35,11 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   },
 }));
 
+// Monaco can't boot web workers in jsdom
+jest.mock('app/core/components/MonacoDiffEditor/MonacoDiffEditor', () => ({
+  MonacoDiffEditor: () => <div data-testid="schema-diff-editor" />,
+}));
+
 const saveDashboardMutationMock = jest.fn();
 
 jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
@@ -192,7 +197,7 @@ describe('SaveDashboardDrawer', () => {
 
       await userEvent.click(await screen.findByRole('tab', { name: /Changes/ }));
 
-      expect(await screen.findByText('Full JSON diff')).toBeInTheDocument();
+      expect(await screen.findByTestId('schema-diff-editor')).toBeInTheDocument();
     });
 
     it('Can save', async () => {
@@ -237,11 +242,11 @@ describe('SaveDashboardDrawer', () => {
 
   describe('When a dashboard is managed by an external system', () => {
     beforeEach(() => {
-      config.featureToggles.provisioning = true;
+      config.provisioningEnabled = true;
     });
 
     afterEach(() => {
-      config.featureToggles.provisioning = false;
+      config.provisioningEnabled = false;
     });
 
     it('It should show the changes tab if the resource can be edited', async () => {

@@ -226,6 +226,7 @@ export enum PluginExtensionPoints {
   DataSourceConfigStatus = 'grafana/datasources/config/status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
+  UserProfileMenu = 'grafana/user/profile/menu/v1',
   TraceViewDetails = 'grafana/traceview/details',
   TraceViewHeaderActions = 'grafana/traceview/header/actions',
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',

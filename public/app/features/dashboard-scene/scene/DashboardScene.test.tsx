@@ -2017,11 +2017,11 @@ describe('DashboardScene', () => {
 
   describe('When checking dashboard managed by an external system', () => {
     beforeEach(() => {
-      config.featureToggles.provisioning = true;
+      config.provisioningEnabled = true;
     });
 
     afterEach(() => {
-      config.featureToggles.provisioning = false;
+      config.provisioningEnabled = false;
     });
 
     it('should return true if the dashboard is managed', () => {
@@ -2699,7 +2699,7 @@ describe('DashboardScene', () => {
 
   describe('refreshPredefinedVariables', () => {
     beforeEach(() => {
-      setTestFlags({ globalDashboardVariables: true });
+      setTestFlags({ 'grafana.dashboardGlobalVariables': true });
       mockFetchPredefinedVariables.mockReset();
     });
 
@@ -2726,10 +2726,17 @@ describe('DashboardScene', () => {
 
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [] }),
-        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+        meta: {
+          folderUid: 'folder-1',
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+            },
+          },
+        },
       });
 
-      // First refresh: inject all (no denylist). Fetch stays pending.
+      // First refresh: inject all (explicit empty denylist). Fetch stays pending.
       const staleRefresh = scene.refreshPredefinedVariables();
 
       // Second refresh: deny all — applies immediately and invalidates the in-flight fetch.
@@ -2786,10 +2793,17 @@ describe('DashboardScene', () => {
 
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [] }),
-        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+        meta: {
+          folderUid: 'folder-1',
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+            },
+          },
+        },
       });
 
-      // First: All (no denylist)
+      // First: All (explicit empty denylist)
       const firstRefresh = scene.refreshPredefinedVariables();
 
       // Second: Folder only (deny globals) — starts while first fetch is still pending.
@@ -2831,7 +2845,14 @@ describe('DashboardScene', () => {
 
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [] }),
-        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+        meta: {
+          folderUid: 'folder-1',
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+            },
+          },
+        },
       });
 
       await scene.refreshPredefinedVariables();
@@ -2878,7 +2899,11 @@ describe('DashboardScene', () => {
       scene.setState({
         meta: {
           ...scene.state.meta,
-          k8s: { annotations: {} },
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+            },
+          },
         },
       });
       const staleRefresh = scene.refreshPredefinedVariables();

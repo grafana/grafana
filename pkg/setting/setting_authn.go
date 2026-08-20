@@ -17,6 +17,7 @@ const (
 	defaultLoginMaxInactiveLifetime     = "7d"
 	defaultLoginMaxLifetime             = "30d"
 	defaultTokenRotationIntervalMinutes = 10
+	defaultOAuthRefreshLockMinWaitMs    = int64(1000)
 	defaultUserLastSeenUpdateInterval   = "15m"
 )
 
@@ -34,9 +35,13 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
-	readOAuthSettings(iniFile, cfg)
+	readOAuthAllowInsecureEmailLookup(iniFile, cfg)
+	readOAuthCookieMaxAge(iniFile, cfg)
+	readOAuthRefreshLockSettings(iniFile, cfg)
 	readCookieSecuritySettings(iniFile, cfg)
-	readServerURLSettings(iniFile, cfg)
+	if err := readServerURLSettings(iniFile, cfg); err != nil {
+		return err
+	}
 	readGrafanaComSettings(iniFile, cfg)
 	return readUserLastSeenUpdateInterval(iniFile, cfg)
 }
@@ -71,9 +76,16 @@ func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func readOAuthSettings(iniFile *ini.File, cfg *Cfg) {
-	auth := iniFile.Section("auth")
-	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
+func readOAuthCookieMaxAge(iniFile *ini.File, cfg *Cfg) {
+	cfg.OAuthCookieMaxAge = iniFile.Section("auth").Key("oauth_state_cookie_max_age").MustInt(600)
+}
+
+func readOAuthAllowInsecureEmailLookup(iniFile *ini.File, cfg *Cfg) {
+	cfg.OAuthAllowInsecureEmailLookup = iniFile.Section("auth").Key("oauth_allow_insecure_email_lookup").MustBool(false)
+}
+
+func readOAuthRefreshLockSettings(iniFile *ini.File, cfg *Cfg) {
+	cfg.OAuthRefreshTokenServerLockMinWaitMs = iniFile.Section("auth").Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(defaultOAuthRefreshLockMinWaitMs)
 }
 
 func readCookieSecuritySettings(iniFile *ini.File, cfg *Cfg) {
@@ -97,7 +109,9 @@ func readCookieSecuritySettings(iniFile *ini.File, cfg *Cfg) {
 	}
 }
 
-func readServerURLSettings(iniFile *ini.File, cfg *Cfg) {
+// readServerURLSettings sets AppURL even when the URL fails to parse, so
+// callers can include the offending value in their error reporting.
+func readServerURLSettings(iniFile *ini.File, cfg *Cfg) error {
 	server := iniFile.Section("server")
 	appURL := valueAsString(server, "root_url", "http://localhost:3000/")
 	if appURL[len(appURL)-1] != '/' {
@@ -105,9 +119,12 @@ func readServerURLSettings(iniFile *ini.File, cfg *Cfg) {
 	}
 	cfg.AppURL = appURL
 
-	if parsed, err := url.Parse(appURL); err == nil {
-		cfg.AppSubURL = strings.TrimSuffix(parsed.Path, "/")
+	parsed, err := url.Parse(appURL)
+	if err != nil {
+		return fmt.Errorf("server.root_url: %w", err)
 	}
+	cfg.AppSubURL = strings.TrimSuffix(parsed.Path, "/")
+	return nil
 }
 
 func readGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {

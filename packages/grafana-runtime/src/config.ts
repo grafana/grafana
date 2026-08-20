@@ -8,6 +8,7 @@ import {
   type BuildInfo,
   type DataSourceInstanceSettings,
   type FeatureToggles,
+  type GrafanaJavascriptAgentConfig,
   type GrafanaTheme,
   type GrafanaTheme2,
   type LicenseInfo,
@@ -156,7 +157,7 @@ export class GrafanaBootConfig {
   supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
-  grafanaJavascriptAgent = {
+  grafanaJavascriptAgent: GrafanaJavascriptAgentConfig = {
     enabled: false,
     apiKey: '',
     customEndpoint: '',
@@ -240,6 +241,7 @@ export class GrafanaBootConfig {
   dashboardPerformanceMetrics: string[] = [];
   panelSeriesLimit = 0;
   dashboardDefaultPreload = false;
+  reportRenderQueryGracePeriodMs = 3000;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,
@@ -252,6 +254,7 @@ export class GrafanaBootConfig {
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
   localFileSystemAvailable?: boolean;
+  provisioningEnabled = true;
   cloudMigrationEnabled?: boolean;
   cloudMigrationIsTarget?: boolean;
   cloudMigrationPollIntervalMs = 2000;

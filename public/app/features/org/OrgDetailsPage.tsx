@@ -2,16 +2,16 @@ import { memo, useEffect } from 'react';
 import { type ConnectedProps, connect } from 'react-redux';
 
 import { t } from '@grafana/i18n';
-import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
 import { Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
-import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { type StoreState } from 'app/types/store';
+
+import { SharedPreferences } from '../../core/components/SharedPreferences/SharedPreferences';
 
 import OrgProfile from './OrgProfile';
 import { loadOrganization, updateOrganization } from './state/actions';
@@ -55,8 +55,7 @@ export const OrgDetailsPage = memo(function OrgDetailsPage({
   const canReadPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
   const canWritePreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
 
-  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
-  const orgResourceUri = newPrefsEnabled ? 'namespace' : 'org';
+  const orgResourceUri = 'namespace';
 
   return (
     <Page navModel={navModel}>

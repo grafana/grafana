@@ -17,6 +17,7 @@ import {
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { type AxisProps, type ScaleProps, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
@@ -34,6 +35,7 @@ interface CandlestickPanelProps extends PanelProps<Options> {}
 export const CandlestickPanel = ({
   data,
   id,
+  title,
   timeRange,
   timeZone,
   width,
@@ -307,6 +309,7 @@ export const CandlestickPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       canExecuteActions={userCanExecuteActions}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, [info.frame])}
                     />
                   );
                 }}

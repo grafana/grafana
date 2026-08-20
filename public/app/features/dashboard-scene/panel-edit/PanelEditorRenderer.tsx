@@ -36,7 +36,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'row',
-      dragPosition: 'end',
+      dragPosition: 'middle',
       initialSize: 330,
       usePixels: true,
       collapsed: isInitiallyCollapsed,
@@ -92,7 +92,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'column',
-      dragPosition: 'start',
+      dragPosition: 'middle',
       initialSize: 0.5,
       collapseBelowPixels: 150,
       disabled: isScrollingLayout,
