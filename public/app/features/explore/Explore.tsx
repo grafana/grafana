@@ -79,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'exploreMain',
       // Is needed for some transition animations to work.
       position: 'relative',
-      marginTop: theme.spacing(3),
+      marginTop: theme.spacing(1),
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
