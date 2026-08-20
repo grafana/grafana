@@ -40,10 +40,7 @@ describe('StandardErrorsAndNoticesInspector', () => {
   });
 
   it('renders an Investigate with Assistant button per card when the assistant is available', () => {
-    setup(
-      [frameWithNotices([{ severity: 'warning', text: 'one' }])],
-      [{ message: 'Query blew up' }]
-    );
+    setup([frameWithNotices([{ severity: 'warning', text: 'one' }])], [{ message: 'Query blew up' }]);
 
     expect(screen.getAllByRole('button', { name: 'Investigate with Assistant' })).toHaveLength(2);
   });

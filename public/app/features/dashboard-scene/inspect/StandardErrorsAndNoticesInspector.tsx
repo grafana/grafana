@@ -162,7 +162,10 @@ function EntryCard({ entry, onClose }: { entry: InspectableEntry; onClose?: () =
             origin="grafana/errors-and-notices-inspector"
             prompt={buildAssistantPrompt(entry)}
             context={buildAssistantContext(entry)}
-            title={t('dashboard-scene.errors-and-notices-inspector.investigate-with-assistant', 'Investigate with Assistant')}
+            title={t(
+              'dashboard-scene.errors-and-notices-inspector.investigate-with-assistant',
+              'Investigate with Assistant'
+            )}
             size="sm"
             iconOnlyButton
             onClick={onClose}
