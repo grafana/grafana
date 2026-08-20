@@ -281,7 +281,7 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
         className={styles.folderField}
         label={t('variables-management.editor.folder-label', 'Folder')}
         description={
-          allowGlobalScope || !isNew
+          allowGlobalScope
             ? t(
                 'variables-management.editor.folder-description',
                 'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
@@ -300,7 +300,7 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
           permission={canChangeFolder ? 'edit' : 'view'}
           value={folderUid}
           disabled={!canChangeFolder}
-          onChange={(uid) => setFolderUid(allowGlobalScope || !isNew ? (uid ?? '') : uid)}
+          onChange={(uid) => setFolderUid(allowGlobalScope ? (uid ?? '') : uid)}
           excludeUIDs={getVariableFolderPickerExcludeUIDs()}
         />
       </Field>
