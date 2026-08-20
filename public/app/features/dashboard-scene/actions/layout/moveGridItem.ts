@@ -38,8 +38,12 @@ export function moveGridItem({
     // would otherwise get the sidebar hijacked to the last one after every drop.
     selectOnMove: false,
     perform: () => {
-      source.draggedGridItemOutside?.(gridItem);
-      destination.draggedGridItemInside?.(gridItem, destinationIndex);
+      const currentWrapper = panel.parent;
+      if (!(currentWrapper instanceof AutoGridItem || currentWrapper instanceof DashboardGridItem)) {
+        return;
+      }
+      source.draggedGridItemOutside?.(currentWrapper);
+      destination.draggedGridItemInside?.(currentWrapper, destinationIndex);
     },
     undo: () => {
       const currentWrapper = panel.parent;
