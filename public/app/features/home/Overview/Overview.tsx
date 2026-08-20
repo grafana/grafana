@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { type IconName, Button, Icon, Stack, Text, Dropdown, Menu, useTheme2, useStyles2 } from '@grafana/ui';
 import { useStoredString } from 'app/core/hooks/useStored';
 
@@ -110,9 +111,10 @@ export function Overview({ solutions }: OverviewProps) {
     if (location.hash === handledHash.current) {
       return;
     }
+    // Record even without a match so clearing the hash re-arms the same anchor for a later visit.
+    handledHash.current = location.hash;
     const match = options.find((o) => o.value === location.hash.slice(1));
     if (match) {
-      handledHash.current = location.hash;
       setStored(match.value);
       ref.current?.scrollIntoView({ behavior: 'smooth' });
     }
@@ -137,6 +139,12 @@ export function Overview({ solutions }: OverviewProps) {
               label={label}
               onClick={() => {
                 setStored(value);
+                // The hash is a one-shot deep link; an explicit pick supersedes it so a reload
+                // or shared URL does not resurrect the linked filter.
+                const current = locationService.getLocation();
+                if (options.some((o) => `#${o.value}` === current.hash)) {
+                  locationService.replace({ ...current, hash: '' });
+                }
                 ctaClicked({
                   surface: 'overview',
                   action: 'change_overview_filter',
