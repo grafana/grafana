@@ -107,8 +107,9 @@ export interface PanelDataTransformations {
  * Only the series data topic is supported, in both positions: configs with `topic` set to
  * annotations or alert states are ignored.
  *
- * Option strings are not interpolated, scenes skips these entries because they are carried
- * by a custom transform operator.
+ * Option strings are not interpolated: scenes skips these entries because they are carried by a
+ * custom transform operator. Transformers that interpolate their own options through
+ * `DataTransformContext.interpolate`, such as `formatTime`, are the exception.
  *
  * Reaches Grafana dashboards only. `PanelRenderer` runs no transformations, so Explore,
  * alerting rule previews and visualization suggestion cards render the untransformed query
