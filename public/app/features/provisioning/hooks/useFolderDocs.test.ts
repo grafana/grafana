@@ -1,11 +1,12 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 
-import { setupProvisioningMswServer } from '../mocks/server';
+import { createRepository } from '../mocks/factories';
+import { getMockLiveSrv, setupProvisioningMswServer } from '../mocks/server';
 
 import { useFolderDocs } from './useFolderDocs';
 import { RepoViewStatus, useGetResourceRepositoryView } from './useGetResourceRepositoryView';
@@ -83,5 +84,35 @@ describe('useFolderDocs', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.docs.map((d) => d.path)).toEqual(['README.md', 'SECURITY.md']);
+  });
+
+  it('refetches the file list when a pull sync completes, updating the tabs', async () => {
+    mockRepo('dashboards/team-a');
+    let files = ['dashboards/team-a/README.md'];
+    server.use(
+      http.get(`${BASE}/repositories`, () =>
+        HttpResponse.json({
+          items: [createRepository({ status: { sync: { state: 'success', finished: 1000, message: [] } } })],
+          metadata: { resourceVersion: '1' },
+        })
+      ),
+      http.get(`${BASE}/repositories/:name/files/`, () =>
+        HttpResponse.json({ items: files.map((path) => ({ path, hash: 'x' })) })
+      )
+    );
+
+    const { result } = renderHook(() => useFolderDocs('test-folder'), { wrapper: getWrapper({}) });
+    await waitFor(() => expect(result.current.docs.map((d) => d.fileName)).toEqual(['README.md']));
+
+    // A pull adds SECURITY.md; the completed sync should refresh the listing.
+    files = ['dashboards/team-a/README.md', 'dashboards/team-a/SECURITY.md'];
+    act(() =>
+      getMockLiveSrv().emitWatchEvent('repositories', {
+        type: 'MODIFIED',
+        object: createRepository({ status: { sync: { state: 'success', finished: 2000, message: [] } } }),
+      })
+    );
+
+    await waitFor(() => expect(result.current.docs.map((d) => d.fileName)).toEqual(['README.md', 'SECURITY.md']));
   });
 });

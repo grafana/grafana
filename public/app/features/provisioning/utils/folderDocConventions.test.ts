@@ -52,6 +52,15 @@ describe('listFolderDocs', () => {
     expect(docs[0].key).toBe('readme');
   });
 
+  it('recognizes the .markdown variant of Contributing and Security conventions', () => {
+    const docs = listFolderDocs(
+      ['dashboards/team-a/SECURITY.markdown', 'dashboards/team-a/CONTRIBUTING.markdown'],
+      'dashboards/team-a'
+    );
+    // They occupy their convention priority slots, not the alphabetical "other" tail.
+    expect(docs.map((d) => d.key)).toEqual(['contributing', 'security']);
+  });
+
   it('ignores docs in sub-folders or parent folders', () => {
     const paths = [
       'dashboards/team-a/nested/README.md', // sub-folder

@@ -1,16 +1,12 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { useEffect, useRef } from 'react';
 
 import { isFetchError } from '@grafana/runtime';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
-import {
-  type RepositoryView,
-  useGetRepositoryFilesWithPathQuery,
-  useListRepositoryQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
+import { useRefetchOnRepoSync } from './useRefetchOnRepoSync';
 
 export type FolderReadmeStatus = 'loading' | 'missing' | 'error' | 'ok';
 
@@ -55,7 +51,10 @@ export function useFolderReadme(folderUID: string, docPath?: string): UseFolderR
   const shouldFetch = !!repository && !!folderUID && !isRepoLoading;
 
   const {
-    data: fileData,
+    // `currentData` (not `data`) reflects the CURRENT arg — RTK keeps the
+    // previous doc's `data` while a newly selected doc is still fetching, which
+    // would otherwise render the old content beneath the new tab's label.
+    currentData: fileData,
     isLoading: isFileLoading,
     isFetching: isFileFetching,
     error,
@@ -69,35 +68,11 @@ export function useFolderReadme(folderUID: string, docPath?: string): UseFolderR
       : skipToken
   );
 
-  const isLoading = isRepoLoading || isFileLoading;
+  // No current-arg data while a request is in flight = still loading (covers the
+  // first load and switching to a not-yet-cached doc).
+  const isLoading = isRepoLoading || isFileLoading || (isFileFetching && !fileData);
 
-  // Watch repo sync, not the Job: the Job is deleted on completion so its
-  // terminal state is never observed (#1223).
-  const { data: repoData } = useListRepositoryQuery(
-    repository?.name ? { fieldSelector: `metadata.name=${repository.name}`, watch: true } : skipToken
-  );
-  const repo = repoData?.items?.[0];
-  const sync = repo?.status?.sync;
-  const syncFinished = sync?.finished;
-
-  // `finished` advances once per completed sync; dedupes repeat watch events and
-  // seeds a baseline so mount-loaded content isn't refetched.
-  const lastFinishedRef = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (!repo) {
-      return;
-    }
-    const finished = syncFinished ?? 0;
-    if (lastFinishedRef.current === undefined) {
-      lastFinishedRef.current = finished;
-      return;
-    }
-    // sync only advances on pull, so push/pr/move/delete never reach here.
-    if (finished > lastFinishedRef.current && (sync?.state === 'success' || sync?.state === 'warning')) {
-      lastFinishedRef.current = finished;
-      refetch();
-    }
-  }, [repo, sync, syncFinished, refetch]);
+  useRefetchOnRepoSync(repository?.name, refetch);
 
   let status: FolderReadmeStatus;
   if (isLoading) {

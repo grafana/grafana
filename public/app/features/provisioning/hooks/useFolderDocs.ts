@@ -8,6 +8,7 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type FolderDoc, listFolderDocs } from '../utils/folderDocConventions';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
+import { useRefetchOnRepoSync } from './useRefetchOnRepoSync';
 
 export interface UseFolderDocsResult {
   repository?: RepositoryView;
@@ -39,9 +40,14 @@ export function useFolderDocs(folderUID: string): UseFolderDocsResult {
 
   const shouldFetch = !!repository?.name && !!folderUID && !isRepoLoading;
 
-  const { data, isLoading: isFilesLoading } = useGetRepositoryFilesQuery(
-    shouldFetch ? { name: repository.name } : skipToken
-  );
+  const {
+    data,
+    isLoading: isFilesLoading,
+    refetch,
+  } = useGetRepositoryFilesQuery(shouldFetch ? { name: repository.name } : skipToken);
+
+  // Keep the tab set fresh: a completed pull can add/remove/rename markdown files.
+  useRefetchOnRepoSync(repository?.name, refetch);
 
   const docs = useMemo(() => {
     const items = data?.items ?? [];

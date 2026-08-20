@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useIntersection } from 'react-use';
 
 import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -80,6 +81,19 @@ function FolderReadmePanelContent({ folderUID }: Props) {
   );
   const activeDoc = docs[activeIndex];
   const activePath = activeDoc?.path;
+
+  // Drop the selected tab when moving to a different folder so a doc name carried
+  // over in the URL doesn't stick a same-named tab selected across folders.
+  const prevFolderUIDRef = useRef(folderUID);
+  useEffect(() => {
+    if (prevFolderUIDRef.current === folderUID) {
+      return;
+    }
+    prevFolderUIDRef.current = folderUID;
+    if (activeTab !== undefined) {
+      setQueryParams({ [FOLDER_DOC_TAB_PARAM]: null });
+    }
+  }, [folderUID, activeTab, setQueryParams]);
 
   const { status, markdownContent, readmePath, refetch, isFetching } = useFolderReadme(folderUID, activePath);
 
@@ -177,6 +191,7 @@ function FolderReadmePanelContent({ folderUID }: Props) {
           markdownContent={markdownContent}
           repository={repository}
           readmePath={readmePath}
+          fileName={activeFileName}
           newFileUrl={newFileUrl}
           isReadmeContext={isReadmeContext}
           refetch={refetch}
@@ -203,15 +218,16 @@ interface DocTabsProps {
  * The GitHub-style tab bar: one tab per markdown doc, in priority order. Tabs
  * that don't fit the available width collapse into a "More" menu, measured
  * against an off-screen copy of the full set (see {@link useDocTabOverflow}).
- * The caller guarantees at least a README tab.
+ * The active doc is always kept visible as a selected tab (so the tablist keeps
+ * a valid selection), and the More trigger sits outside the tablist. The caller
+ * guarantees at least a README tab.
  */
 function DocTabs({ docs, activePath, onSelect }: DocTabsProps) {
   const styles = useStyles2(getStyles);
   const [moreOpen, setMoreOpen] = useState(false);
-  const { containerRef, measureRef, visibleCount } = useDocTabOverflow(docs.length);
+  const { containerRef, measureRef, visibleCount } = useDocTabOverflow(docs);
 
-  const visible = docs.slice(0, visibleCount);
-  const overflow = docs.slice(visibleCount);
+  const { visible, overflow } = splitDocTabs(docs, activePath, visibleCount);
   const overflowActive = overflow.some((doc) => doc.path === activePath);
 
   return (
@@ -234,15 +250,17 @@ function DocTabs({ docs, activePath, onSelect }: DocTabsProps) {
         </span>
       </div>
 
-      <div ref={containerRef} className={styles.tabList} role="tablist">
-        {visible.map((doc) => (
-          <Tab
-            key={doc.path}
-            label={getDocTabLabel(doc)}
-            active={doc.path === activePath}
-            onChangeTab={() => onSelect(doc)}
-          />
-        ))}
+      <div ref={containerRef} className={styles.tabList}>
+        <div role="tablist" className={styles.tabs}>
+          {visible.map((doc) => (
+            <Tab
+              key={doc.path}
+              label={getDocTabLabel(doc)}
+              active={doc.path === activePath}
+              onChangeTab={() => onSelect(doc)}
+            />
+          ))}
+        </div>
         {overflow.length > 0 && (
           <Dropdown
             placement="bottom-start"
@@ -260,7 +278,11 @@ function DocTabs({ docs, activePath, onSelect }: DocTabsProps) {
               </Menu>
             }
           >
-            <ToolbarButton isOpen={moreOpen} variant={overflowActive ? 'active' : 'default'}>
+            <ToolbarButton
+              isOpen={moreOpen}
+              variant={overflowActive ? 'active' : 'default'}
+              data-testid={selectors.pages.BrowseDashboards.folderDocs.moreTab}
+            >
               <Trans i18nKey="browse-dashboards.readme.tab-more">More</Trans>
             </ToolbarButton>
           </Dropdown>
@@ -271,14 +293,38 @@ function DocTabs({ docs, activePath, onSelect }: DocTabsProps) {
 }
 
 /**
+ * Splits docs into visible tabs and overflow, keeping the active doc visible: if
+ * it would fall into overflow it takes the last visible slot, so the tablist
+ * always has a selected tab and the selection isn't hidden behind More.
+ */
+function splitDocTabs(
+  docs: FolderDoc[],
+  activePath: string | undefined,
+  visibleCount: number
+): { visible: FolderDoc[]; overflow: FolderDoc[] } {
+  let visible = docs.slice(0, visibleCount);
+  const activeIndex = docs.findIndex((doc) => doc.path === activePath);
+  if (activeIndex >= visibleCount && visibleCount > 0) {
+    visible = [...docs.slice(0, visibleCount - 1), docs[activeIndex]];
+  }
+  const visiblePaths = new Set(visible.map((doc) => doc.path));
+  const overflow = docs.filter((doc) => !visiblePaths.has(doc.path));
+  return { visible, overflow };
+}
+
+/**
  * Computes how many doc tabs fit in the tab bar. Measures the natural widths of
  * an off-screen copy of every tab against the visible container's width and,
- * when they overflow, reserves room for the More trigger. Recomputes on resize.
+ * when they overflow, reserves room for the More trigger. Recomputes on resize
+ * of either the container or the measurement row (so it also reacts when the doc
+ * set changes to different labels of the same count).
  */
-function useDocTabOverflow(docCount: number) {
+function useDocTabOverflow(docs: FolderDoc[]) {
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState(docCount);
+  const [visibleCount, setVisibleCount] = useState(docs.length);
+  // Re-run when the doc identities change, not just their count.
+  const signature = docs.map((doc) => doc.path).join(' ');
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -327,8 +373,9 @@ function useDocTabOverflow(docCount: number) {
     recompute();
     const observer = new ResizeObserver(recompute);
     observer.observe(container);
+    observer.observe(measure);
     return () => observer.disconnect();
-  }, [docCount]);
+  }, [signature]);
 
   return { containerRef, measureRef, visibleCount };
 }
@@ -362,6 +409,8 @@ interface ReadmeBodyProps {
   markdownContent: string | undefined;
   repository: RepositoryView | undefined;
   readmePath: string;
+  /** Active doc's file name, used in the load-error and parse-error messages. */
+  fileName: string;
   newFileUrl: string | undefined;
   isReadmeContext: boolean;
   refetch: () => void;
@@ -372,6 +421,7 @@ function ReadmeBody({
   markdownContent,
   repository,
   readmePath,
+  fileName,
   newFileUrl,
   isReadmeContext,
   refetch,
@@ -394,7 +444,7 @@ function ReadmeBody({
         />
       ) : (
         <Text color="secondary">
-          <Trans i18nKey="browse-dashboards.readme.parse-error">Unable to display README content.</Trans>
+          {t('browse-dashboards.readme.parse-error', 'Unable to display {{name}}.', { name: fileName })}
         </Text>
       );
     case 'missing':
@@ -402,10 +452,10 @@ function ReadmeBody({
       return isReadmeContext ? (
         <AddReadmeEmptyState newFileUrl={newFileUrl} repositoryType={repository.type} />
       ) : (
-        <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} />
+        <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} fileName={fileName} />
       );
     case 'error':
-      return <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} />;
+      return <ReadmeLoadError onRetry={refetch} repositoryType={repository.type} fileName={fileName} />;
   }
 }
 
@@ -485,9 +535,20 @@ function AddReadmeEmptyState({
   );
 }
 
-function ReadmeLoadError({ onRetry, repositoryType }: { onRetry: () => void; repositoryType: RepositoryView['type'] }) {
+function ReadmeLoadError({
+  onRetry,
+  repositoryType,
+  fileName,
+}: {
+  onRetry: () => void;
+  repositoryType: RepositoryView['type'];
+  fileName: string;
+}) {
   return (
-    <Alert severity="warning" title={t('browse-dashboards.readme.load-error-title', "Couldn't load README")}>
+    <Alert
+      severity="warning"
+      title={t('browse-dashboards.readme.load-error-title', "Couldn't load {{name}}", { name: fileName })}
+    >
       <Button
         variant="secondary"
         size="sm"
@@ -545,6 +606,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     minWidth: 0,
     overflow: 'hidden',
+  }),
+  // Inner row holding the actual tabs (role="tablist"); the More trigger sits
+  // outside it so a menu button never lives inside the tablist.
+  tabs: css({
+    display: 'flex',
+    alignItems: 'center',
+    minWidth: 0,
   }),
   // Off-screen measurement row: laid out (so widths are real) but visually hidden
   // and removed from the accessibility tree.

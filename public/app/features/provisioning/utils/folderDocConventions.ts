@@ -18,8 +18,8 @@ interface FolderDocConvention {
 
 const FOLDER_DOC_CONVENTIONS: FolderDocConvention[] = [
   { key: 'readme', fileName: 'README.md', matches: ['README.md', 'README.markdown', 'README'] },
-  { key: 'contributing', fileName: 'CONTRIBUTING.md', matches: ['CONTRIBUTING.md'] },
-  { key: 'security', fileName: 'SECURITY.md', matches: ['SECURITY.md'] },
+  { key: 'contributing', fileName: 'CONTRIBUTING.md', matches: ['CONTRIBUTING.md', 'CONTRIBUTING.markdown'] },
+  { key: 'security', fileName: 'SECURITY.md', matches: ['SECURITY.md', 'SECURITY.markdown'] },
 ];
 
 /** The README convention is the default tab and drives the empty state. */
