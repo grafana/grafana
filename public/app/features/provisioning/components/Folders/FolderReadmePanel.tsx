@@ -206,13 +206,19 @@ function RenderedMarkdown({
     return () => el.removeEventListener('click', handleClick);
   }, [repositoryType]);
 
-  // Turn ```mermaid fenced blocks into diagrams. The container is keyed by theme
-  // so a light/dark switch resets it to the source markup before we re-render.
+  // The effect owns the container's content instead of dangerouslySetInnerHTML:
+  // mermaid rendering mutates these nodes asynchronously, and if React still
+  // owned them it would re-commit the innerHTML (StrictMode, re-renders) mid-render,
+  // detaching the nodes we're replacing and dropping every diagram. Writing the
+  // HTML here means React never touches it, so our async mutations are safe.
+  // Re-runs (content or theme change) rebuild from `safe`, restoring the source
+  // fences before re-rendering the diagrams in the new theme.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) {
       return;
     }
+    el.innerHTML = safe;
     const signal = { cancelled: false };
     renderMermaidDiagrams(el, { isDark: theme.isDark, signal });
     return () => {
@@ -220,14 +226,7 @@ function RenderedMarkdown({
     };
   }, [safe, theme.isDark]);
 
-  return (
-    <div
-      key={theme.isDark ? 'dark' : 'light'}
-      ref={containerRef}
-      className={cx('markdown-html', styles.markdownBody)}
-      dangerouslySetInnerHTML={{ __html: safe }}
-    />
-  );
+  return <div ref={containerRef} className={cx('markdown-html', styles.markdownBody)} />;
 }
 
 /**
