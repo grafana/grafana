@@ -91,18 +91,10 @@ export class PanelDataTransformationsTab
   }
 
   public onChangeTransformations(transformations: DataTransformerConfig[]) {
-    // Not `setState({ transformations })`: the runtime transformations share that array and this list
-    // holds only the user's, so a plain write would uninstall the panel plugin's until the next
-    // resync. `setUserTransformations` re-joins them at the edges and reprocesses.
+    // A plain `setState` would drop the plugin's entries, which share this array.
     this.getDataTransformer().setUserTransformations(transformations);
   }
 
-  /**
-   * The panel plugin's transformations, resolved for the current query result. Read through the
-   * provider rather than off `state.transformations`, which holds one opaque wrapper operator per
-   * position: the supplier is data dependent and runs inside the pipeline, so the real configs only
-   * exist once frames are in hand.
-   */
   public getResolvedSystemTransformations(series: DataFrame[]): ResolvedSystemTransformations {
     const transformer = this.getDataTransformer();
 
@@ -113,13 +105,10 @@ export class PanelDataTransformationsTab
 }
 
 /**
- * The frames a user transformation is actually given: the query result with the panel plugin's
- * *prepended* transformations applied. Every editor row below reconstructs its own input by replaying
- * the user transformations over `data.series`, so that base has to already include the plugin's
- * stage — otherwise each row is configured against a field shape it will never receive.
- *
- * Appended transformations are deliberately absent: they run after every user transformation, so they
- * are part of no user transformation's input.
+ * The query result with the plugin's *prepended* transformations applied. Editor rows replay the
+ * user transformations over this, so it has to include the plugin's stage or each row is configured
+ * against a field shape it will never receive. Appended ones run after every user transformation, so
+ * they are part of no row's input.
  */
 function useSystemTransformedData(
   sourceData: PanelData | undefined,
@@ -140,8 +129,7 @@ function useSystemTransformedData(
     return () => subscription.unsubscribe();
   }, [hasSystemTransformations, systemTransformations, sourceSeries]);
 
-  // Identity matters here: `data` is an effect dependency of every editor row, so returning a fresh
-  // object each render would re-run all of their replays.
+  // `data` is an effect dep of every editor row, so a fresh object each render re-runs their replays.
   return useMemo(() => {
     if (!sourceData || !hasSystemTransformations || !series) {
       return sourceData;
@@ -161,9 +149,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
     [transformsWrongType]
   );
 
-  // No `useMemo`: the provider caches on the frames array and the resolved plugin, so the identity is
-  // already stable across renders — and it changes exactly when a plugin swap changes the answer,
-  // which the state array identity does not (the base class bails out of a deep-equal update).
+  // No `useMemo`: the provider's cache already makes this identity stable.
   const { prepend: systemPrepend, append: systemAppend } = model.getResolvedSystemTransformations(
     sourceData.data?.series ?? []
   );
@@ -375,15 +361,6 @@ interface SystemTransformationRowsProps {
   position: SystemTransformationPosition;
 }
 
-/**
- * Read-only rows for the transformations the panel plugin contributes. They are not editable, so they
- * get no drag handle, no editor and no remove button — only a name and a badge explaining where they
- * came from.
- *
- * A list rather than loose rows: these sit above and below the editable rows, and that placement is
- * the only thing telling a sighted user when they run. The group's name says it instead, so the
- * ordering survives for anyone who cannot see the layout.
- */
 function SystemTransformationRows({ transformations, position }: SystemTransformationRowsProps) {
   const styles = useStyles2(getStyles);
 

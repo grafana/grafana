@@ -32,9 +32,8 @@ interface TransformationDebugData {
  * Input: Output of all transformations before the current one (with filter applied)
  * Output: Output after applying the current transformation
  *
- * "Before the current one" includes the panel plugin's own transformations, which run ahead of every
- * user transformation — replaying only `transformations` would show frames the debugged
- * transformation never receives.
+ * "Before the current one" includes the plugin's own transformations: replaying only
+ * `transformations` would show frames the debugged transformation never receives.
  *
  * @returns Empty arrays if not active or transformation not found
  */

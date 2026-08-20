@@ -34,8 +34,6 @@ export class PanelModelCompatibilityWrapper implements PanelModel {
 
   public get transformations() {
     if (this._vizPanel.state.$data instanceof SceneDataTransformer) {
-      // System transformations are runtime-only, and this shim feeds visualization suggestion
-      // suppliers, which reason about what the user configured.
       return getUserTransformations(this._vizPanel.state.$data.state.transformations) as DataTransformerConfig[];
     }
 

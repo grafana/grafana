@@ -770,9 +770,8 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
-    // Deliberately the unfiltered array, replaced by object identity — so unlike the mutators above
-    // this already preserves the runtime transformations and must not be routed through
-    // setUserTransformations.
+    // Unfiltered and replaced by object identity, so unlike the mutators above this already preserves
+    // the runtime transformations — do not route it through setUserTransformations.
     const transformations = [...dataTransformer.state.transformations];
     // Find by object reference - same reference from useTransformations hook
     const index = transformations.findIndex((t) => t === oldConfig);

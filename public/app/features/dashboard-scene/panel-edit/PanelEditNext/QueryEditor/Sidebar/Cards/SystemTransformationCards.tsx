@@ -24,15 +24,8 @@ interface SystemTransformationCardsProps {
 }
 
 /**
- * The panel plugin's own transformations, shown alongside the user's so the sidebar lists the whole
- * pipeline rather than just the editable part of it.
- *
- * Deliberately not built on `SidebarCard`: that card is a selectable, draggable row with hover
- * actions and an inline add button, and none of those apply here. There is nothing to select — a
- * system transformation has no editor — nothing to reorder, and nothing to delete.
- *
- * A list rather than loose rows, named by position: the group sits above or below the editable
- * cards, and that placement is the only thing telling a sighted user when these run.
+ * Deliberately not built on `SidebarCard`: that card is selectable, draggable and carries hover
+ * actions, none of which apply — there is no editor to open, nothing to reorder, nothing to delete.
  */
 export function SystemTransformationCards({ transformations, position }: SystemTransformationCardsProps) {
   const styles = useStyles2(getStyles);
@@ -55,8 +48,7 @@ export function SystemTransformationCards({ transformations, position }: SystemT
           >
             <Icon name={typeConfig[QueryEditorType.Transformation].icon} size="sm" />
             <span className={styles.title}>{getSystemTransformationName(transformation)}</span>
-            {/* Titled rather than decorative: unlike the classic tab there is no room for a badge,
-                so the icon is the only thing carrying "read-only". */}
+            {/* Titled, not decorative: there is no room for a badge here, so the icon carries it. */}
             <Icon name="lock" size="sm" title={getSystemTransformationTooltip()} />
           </li>
         );
@@ -82,8 +74,7 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       gap: theme.spacing(1),
       padding: theme.spacing(0, 1),
-      // Muted against the editable cards, which sit on background.primary with a solid border. The
-      // contrast is what signals "not yours to change" before the lock icon is read.
+      // Muted against the editable cards: signals "not yours to change" before the lock icon is read.
       background: colorManipulator.alpha(theme.colors.background.secondary, 0.5),
       border: `1px dashed ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,

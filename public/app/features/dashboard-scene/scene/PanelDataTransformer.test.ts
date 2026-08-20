@@ -312,8 +312,8 @@ describe('PanelDataTransformer', () => {
     await waitFor(() => {
       expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toContain('level');
     });
-    // Both wrapper operators live in `transformations` now, so what keeps them out of editors and
-    // save models is the `origin` tag rather than a separate field.
+    // Both wrapper operators live in `transformations`, so what keeps them out of editors and save
+    // models is the `origin` tag rather than a separate field.
     expect(transformer.state.transformations).toHaveLength(2);
     expect(getUserTransformations(transformer.state.transformations)).toEqual([]);
   });
@@ -345,8 +345,8 @@ describe('PanelDataTransformer', () => {
     await waitFor(() => {
       expect(transformer.state.data?.state).toBe(LoadingState.Done);
     });
-    // Every panel of every dashboard is a `PanelDataTransformer` now, so an import that could only
-    // ever decide to install nothing is a cost the whole product pays while this feature is off.
+    // Every panel of every dashboard is a `PanelDataTransformer`, so an import that could only ever
+    // decide to install nothing is a cost the whole product pays while this feature is off.
     // The flag-on counterpart is the cold-plugin test below, which only passes via this import.
     expect(importPanelPlugin).not.toHaveBeenCalled();
   });

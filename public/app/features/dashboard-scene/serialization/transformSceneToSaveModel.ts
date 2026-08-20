@@ -337,17 +337,14 @@ function vizPanelDataToPanel(
   }
 
   if (dataProvider instanceof SceneDataTransformer) {
-    // System transformations are installed at runtime and never persisted. They share the array with
-    // the user's, so the filter is what excludes them.
     panel.transformations = getUserTransformations(dataProvider.state.transformations) as DataTransformerConfig[];
   }
 
   if (dataProvider && isSnapshot) {
     panel.datasource = GRAFANA_DATASOURCE_REF;
 
-    // For transformations the non-transformed data is snapshoted. A transformer resolves its
-    // source through the scene graph when it has no `$data` of its own, so fall back to the
-    // provider itself rather than asserting `$data` is set.
+    // Snapshots capture the non-transformed data. A transformer resolves its source through the
+    // scene graph when it has no `$data`, so fall back to the provider rather than asserting.
     const source =
       dataProvider instanceof SceneDataTransformer ? (dataProvider.state.$data ?? dataProvider) : dataProvider;
     const data = getPanelDataFrames(source.state.data);

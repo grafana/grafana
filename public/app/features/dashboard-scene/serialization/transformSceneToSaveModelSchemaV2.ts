@@ -454,9 +454,8 @@ export function getVizPanelQueries(
       return queries;
     }
 
-    // For transformations the non-transformed data is snapshoted. A transformer resolves its
-    // source through the scene graph when it has no `$data` of its own, so fall back to the
-    // provider itself rather than asserting `$data` is set.
+    // Snapshots capture the non-transformed data. A transformer resolves its source through the
+    // scene graph when it has no `$data`, so fall back to the provider rather than asserting.
     const source =
       dataProvider instanceof SceneDataTransformer ? (dataProvider.state.$data ?? dataProvider) : dataProvider;
     const snapshotData = getPanelDataFrames(source.state.data);
@@ -566,8 +565,8 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
   let transformations: TransformationKind[] = [];
   const dataProvider = vizPanel.state.$data;
   if (dataProvider instanceof SceneDataTransformer) {
-    // System transformations are installed at runtime and never persisted. The filter is load-bearing
-    // here: they are carried by custom transform operators, which the loop below rejects outright.
+    // Load-bearing, not just tidiness: system entries are custom transform operators, which the loop
+    // below rejects outright.
     const transformationList = getUserTransformations(dataProvider.state.transformations);
 
     if (transformationList.length === 0) {

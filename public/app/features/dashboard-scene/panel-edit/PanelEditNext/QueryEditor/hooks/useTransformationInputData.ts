@@ -54,16 +54,13 @@ export function useTransformationInputData({
       ({ transformId }) => transformId === selectedTransformation.transformId
     );
 
-    // Collect the config for everything that runs before the selected one: the plugin's
-    // transformations, then the user's up to this point. A transformation not in the list is treated
-    // as first, so nothing user-configured precedes it.
+    // A transformation not in the list is treated as first, so nothing user-configured precedes it.
     const precedingUserCount = Math.max(selectedIndex, 0);
     const precedingConfigs = [
       ...systemTransformations,
       ...allTransformations.slice(0, precedingUserCount).map(({ transformConfig }) => transformConfig),
     ];
 
-    // Genuinely first in the pipeline — raw query data is the input, so there is nothing to run.
     if (precedingConfigs.length === 0) {
       setInputData(rawData);
       return;

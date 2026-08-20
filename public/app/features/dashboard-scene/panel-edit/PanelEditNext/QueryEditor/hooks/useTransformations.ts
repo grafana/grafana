@@ -19,9 +19,8 @@ export function useTransformations(dataTransformer: SceneDataTransformer | null)
       return [];
     }
 
-    // Split first: system transformations share this array but are not addressable by the editor, and
-    // the indices below are the same index basis PanelDataPaneNext mutates by. Filtering alone is only
-    // accidentally correct today, because the wrappers carry no `id`.
+    // Split first: the indices below are the basis PanelDataPaneNext mutates by. Filtering on shape
+    // alone is only accidentally correct today, because the wrappers carry no `id`.
     const { userTransformations } = splitSystemTransformations(transformerState.transformations || []);
 
     // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)

@@ -52,10 +52,8 @@ export interface PanelState {
   panel: VizPanel;
   transformations: Transformation[];
   /**
-   * Transformations the panel's plugin requires, split by whether each group runs before or after
-   * `transformations`. Not editable, and deliberately absent from `transformations` — so anything
-   * that reconstructs what a user transformation receives has to replay `prepend` first, and
-   * anything that lists the pipeline has to show both.
+   * Not editable, and deliberately absent from `transformations` — anything reconstructing what a
+   * user transformation receives has to replay `prepend` first.
    */
   systemTransformations: ResolvedSystemTransformations;
 }

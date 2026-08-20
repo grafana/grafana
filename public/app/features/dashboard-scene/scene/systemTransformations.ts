@@ -5,11 +5,8 @@ import { isSystemTransformation, type SceneDataTransformation } from '@grafana/s
  * The transformations a panel's plugin requires for a given set of query result frames, in the form
  * `transformDataFrame` accepts and split by where each group runs.
  *
- * These are the resolved configs, not the wrapper operators that carry them through the pipeline.
- * `SceneDataTransformer.state.transformations` holds one opaque operator per position, because the
- * plugin's supplier is data dependent and runs inside the pipeline — the real configs only exist
- * once frames are in hand. Anything that needs to name them, or to reconstruct what a user
- * transformation receives, has to go through the provider rather than read state.
+ * These are the resolved configs, not the wrapper operators that carry them through the pipeline:
+ * the supplier is data dependent, so they only exist once frames are in hand.
  */
 export interface ResolvedSystemTransformations {
   prepend: Array<DataTransformerConfig | CustomTransformOperator>;
@@ -17,8 +14,8 @@ export interface ResolvedSystemTransformations {
 }
 
 /**
- * Stable identity for "nothing registered", so consumers that use these arrays as effect deps —
- * every transformation editor row does — do not churn on every render.
+ * Stable identity for "nothing registered", so consumers using these arrays as effect deps do not
+ * churn on every render.
  */
 export const NO_SYSTEM_TRANSFORMATIONS: ResolvedSystemTransformations = {
   prepend: [],
@@ -53,9 +50,6 @@ export function splitSystemTransformations(transformations: SceneDataTransformat
   return { systemPrepend, userTransformations, systemAppend };
 }
 
-/**
- * The user-configured transformations — the only ones editors show and serializers persist.
- */
 export function getUserTransformations(transformations: SceneDataTransformation[]): SceneDataTransformation[] {
   return transformations.filter((transformation) => !isSystemTransformation(transformation));
 }

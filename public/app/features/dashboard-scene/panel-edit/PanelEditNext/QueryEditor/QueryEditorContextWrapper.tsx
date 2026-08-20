@@ -303,9 +303,8 @@ export function QueryEditorContextWrapper({
     [queryRunnerState?.queries, queryRunnerState?.data, queryError]
   );
 
-  // No `useMemo`: the provider caches on the frames array and the resolved plugin, so the identity is
-  // already stable across renders. The `useTransformations` subscription above is what re-renders this
-  // component after a plugin swap, which is when the answer changes without the frames changing.
+  // No `useMemo`: the provider's cache already makes this identity stable. The `useTransformations`
+  // subscription above is what re-renders after a plugin swap.
   const systemTransformations =
     dataTransformer instanceof PanelDataTransformer
       ? dataTransformer.getResolvedSystemTransformations(queryRunnerState?.data?.series ?? [])
