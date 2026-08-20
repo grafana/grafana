@@ -49,6 +49,11 @@ interface Props {
    * useFocusExtension, which explains why a nonce and not a boolean is needed here.
    */
   focusRequestId?: number;
+  /**
+   * Where the caret should land on that focus grant, instead of the document's own end — see
+   * MarkdownCell's own `caretOffset` doc comment. Only meaningful together with `focusRequestId`.
+   */
+  caretOffset?: number;
   /** True while any cell in the notebook is being dragged, not only this one. */
   isDragActive?: boolean;
   dropIndicator?: NotebookCellDropIndicator;
@@ -86,6 +91,7 @@ export function NotebookCellFrame({
   isEditing,
   autoFocus,
   focusRequestId,
+  caretOffset,
   isDragActive,
   dropIndicator,
   onAdd,
@@ -136,6 +142,7 @@ export function NotebookCellFrame({
             isEditing={Boolean(isEditing)}
             autoFocus={autoFocus}
             focusRequestId={focusRequestId}
+            caretOffset={caretOffset}
             onAdvance={onAdvance}
             onFocusRequest={onFocusRequest}
           />

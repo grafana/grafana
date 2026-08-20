@@ -36,6 +36,13 @@ interface Props {
   autoFocus?: boolean;
   /** A nonce that changes on every fresh request to focus this cell — see useFocusExtension. */
   focusRequestId?: number;
+  /**
+   * Where the caret should land on that same focus grant, instead of the document's own end — the
+   * one case that matters today is a cell created by splitting another one mid-sentence, where this
+   * cell's own content isn't just short starter text but carries the reader's own text along with it
+   * (see NotebookLayoutManager's own onAdvance). Omitted everywhere else.
+   */
+  caretOffset?: number;
   onChange: (content: CellContentKind) => void;
   placeholder?: string;
   /**
@@ -53,6 +60,7 @@ export function MarkdownCell({
   isEditing,
   autoFocus,
   focusRequestId,
+  caretOffset,
   onChange,
   placeholder,
   onSubmit,
@@ -62,7 +70,7 @@ export function MarkdownCell({
   const livePreview = useMemo(() => markdownLivePreview(theme), [theme]);
 
   const editorContainerRef = useRef<HTMLDivElement>(null);
-  const focusExtension = useFocusExtension({ autoFocus, isEditing, focusRequestId });
+  const focusExtension = useFocusExtension({ autoFocus, isEditing, focusRequestId, caretOnFocus: caretOffset });
 
   // Drives CodeMirror's `value` locally instead of straight from `content.spec.text`, so the editor
   // never waits on the round trip back through onChange -> the layout manager -> Scenes state -> a
@@ -150,9 +158,10 @@ export function MarkdownCell({
         run: (view) => {
           const { state } = view;
           const pos = state.selection.main.head;
+          const tree = syntaxTree(state);
 
           let marker: string | undefined;
-          if (enclosingListKind(syntaxTree(state), pos)) {
+          if (enclosingListKind(tree, pos)) {
             marker = nextListContinuation(state, pos);
             // No marker means an empty item — the conventional "I'm done with this list" gesture,
             // left to lang-markdown's own bundled Enter handling (clears the marker, same cell).
@@ -163,12 +172,18 @@ export function MarkdownCell({
             }
           }
 
-          // Whatever sits after the caret belongs in the new block, not this one — that's what makes
-          // this a split rather than merely "add an empty block below." Removed here so it isn't left
-          // behind, duplicated in both cells.
-          const remainder = state.sliceDoc(pos, state.doc.length);
+          // Same boundary correction Shift+Enter uses (see newlineInsertionPoint's own doc comment):
+          // splitting exactly at `pos` could cut a closing bold/italic/code/strikethrough marker in
+          // two between the cells — this one loses its closer, the new one starts with an unpaired
+          // one — so the split point moves past it first.
+          const splitAt = newlineInsertionPoint(tree, pos);
+
+          // Whatever sits after the split point belongs in the new block, not this one — that's what
+          // makes this a split rather than merely "add an empty block below." Removed here so it
+          // isn't left behind, duplicated in both cells.
+          const remainder = state.sliceDoc(splitAt, state.doc.length);
           if (remainder) {
-            view.dispatch({ changes: { from: pos, to: state.doc.length } });
+            view.dispatch({ changes: { from: splitAt, to: state.doc.length } });
           }
 
           onSubmitRef.current?.(remainder, marker);

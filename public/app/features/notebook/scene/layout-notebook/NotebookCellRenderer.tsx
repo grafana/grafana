@@ -27,6 +27,7 @@ interface NarrativeCellFocusProps {
   isEditing: boolean;
   autoFocus?: boolean;
   focusRequestId?: number;
+  caretOffset?: number;
   onAdvance?: (remainder: string, marker?: string) => void;
   onFocusRequest?: () => void;
 }
@@ -39,6 +40,7 @@ export function NotebookCellRenderer({
   isEditing,
   autoFocus,
   focusRequestId,
+  caretOffset,
   onAdvance,
   onFocusRequest,
 }: { cell: NotebookCellItem } & NarrativeCellFocusProps) {
@@ -60,6 +62,7 @@ export function NotebookCellRenderer({
         isEditing={isEditing}
         autoFocus={autoFocus}
         focusRequestId={focusRequestId}
+        caretOffset={caretOffset}
         onAdvance={onAdvance}
         onFocusRequest={onFocusRequest}
       />
@@ -96,6 +99,7 @@ function NarrativeCell({
   isEditing,
   autoFocus,
   focusRequestId,
+  caretOffset,
   onAdvance,
   onFocusRequest,
 }: { cell: NotebookCellItem; content: CellContentKind } & NarrativeCellFocusProps) {
@@ -110,6 +114,7 @@ function NarrativeCell({
           isEditing={isEditing}
           autoFocus={autoFocus}
           focusRequestId={focusRequestId}
+          caretOffset={caretOffset}
           onAdvance={onAdvance}
           onFocusRequest={onFocusRequest}
         />
@@ -155,6 +160,7 @@ function SpecialMarkdownCell({
   isEditing,
   autoFocus,
   focusRequestId,
+  caretOffset,
   onAdvance,
   onFocusRequest,
 }: {
@@ -229,6 +235,7 @@ function SpecialMarkdownCell({
         isEditing={isEditing}
         autoFocus={autoFocus}
         focusRequestId={focusRequestId}
+        caretOffset={caretOffset}
         placeholder={t('notebook.add-block.prompt', 'Type to start writing — press / for blocks')}
         onChange={handleChange}
         onSubmit={onAdvance}

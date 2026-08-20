@@ -317,15 +317,18 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   // handful of times per drag.
   const [drag, setDrag] = useState<NotebookDragState | null>(null);
 
-  const [focusRequest, setFocusRequest] = useState<{ key: string; id: number } | null>(null);
+  const [focusRequest, setFocusRequest] = useState<{ key: string; id: number; caretOffset?: number } | null>(null);
   const nextFocusId = useRef(0);
-  const requestFocus = useCallback((key: string | null | undefined) => {
+  // `caretOffset` only matters for a split (see onAdvance below): the new cell's content there isn't
+  // just short starter text but carries the reader's own text along with it, so the default "end of
+  // document" would land the caret after that carried-over text instead of at the actual split point.
+  const requestFocus = useCallback((key: string | null | undefined, caretOffset?: number) => {
     if (!key) {
       setFocusRequest(null);
       return;
     }
     nextFocusId.current += 1;
-    setFocusRequest({ key, id: nextFocusId.current });
+    setFocusRequest({ key, id: nextFocusId.current, caretOffset });
   }, []);
 
   useEffect(() => {
@@ -404,6 +407,9 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     isEditing={isEditing}
                     autoFocus={cell.state.key === focusRequest?.key}
                     focusRequestId={focusRequest && cell.state.key === focusRequest.key ? focusRequest.id : undefined}
+                    caretOffset={
+                      focusRequest && cell.state.key === focusRequest.key ? focusRequest.caretOffset : undefined
+                    }
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
                     // Bound here rather than resolved inside the frame: the cells list belongs to the
@@ -419,7 +425,9 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                         cell,
                         text !== undefined ? { kind: 'Markdown', spec: { text } } : undefined
                       );
-                      requestFocus(created?.state.key);
+                      // The split point, not the end of whatever text got carried along with it — see
+                      // requestFocus's own doc comment on `caretOffset`.
+                      requestFocus(created?.state.key, (marker ?? '').length);
                     }}
                     onFocusRequest={() => requestFocus(cell.state.key)}
                   />

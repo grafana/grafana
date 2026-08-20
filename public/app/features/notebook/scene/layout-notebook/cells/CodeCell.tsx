@@ -64,7 +64,7 @@ export function CodeCell({ content, isEditing, autoFocus, onChange }: Props) {
     autoFocus,
     isEditing,
     focusRequestId: focusRequests || undefined,
-    moveToEndOnRefocus: false,
+    caretOnFocus: 'preserve',
   });
 
   if (content.kind !== 'Code') {
