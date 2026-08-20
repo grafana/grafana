@@ -230,6 +230,7 @@ type WriteResourceOption func(*writeResourceConfig)
 
 type writeResourceConfig struct {
 	existingHash string
+	sourceHash   string
 }
 
 // WithExistingHash provides the content hash of the resource as it currently
@@ -241,6 +242,15 @@ func WithExistingHash(hash string) WriteResourceOption {
 	}
 }
 
+// WithSourceHash provides the content hash returned by the repository tree.
+// Repositories that support hash reads can use it to avoid resolving the file
+// path again.
+func WithSourceHash(hash string) WriteResourceOption {
+	return func(cfg *writeResourceConfig) {
+		cfg.sourceHash = hash
+	}
+}
+
 func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path string, ref string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
 	var cfg writeResourceConfig
 	for _, o := range opts {
@@ -249,7 +259,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 
 	// Read the referenced file
 	readCtx, readSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.read_file")
-	fileInfo, err := r.repo.Read(readCtx, path, ref)
+	fileInfo, err := r.readResourceFile(readCtx, path, ref, cfg.sourceHash)
 	if err != nil {
 		readSpan.RecordError(err)
 		readSpan.End()
@@ -275,6 +285,15 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 
 	return r.writeResourceFromParsed(ctx, path, ref, parsed)
+}
+
+func (r *ResourcesManager) readResourceFile(ctx context.Context, path, ref, sourceHash string) (*repository.FileInfo, error) {
+	if sourceHash != "" {
+		if hashReader, ok := r.repo.(repository.HashReader); ok {
+			return hashReader.ReadByHash(ctx, path, ref, sourceHash)
+		}
+	}
+	return r.repo.Read(ctx, path, ref)
 }
 
 func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource, folderOpts ...EnsurePathOption) (string, schema.GroupVersionKind, error) {

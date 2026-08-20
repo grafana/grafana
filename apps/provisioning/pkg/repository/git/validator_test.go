@@ -233,6 +233,53 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
+			name: "valid request limits",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana.git",
+						Branch: "main",
+						RequestLimits: &provisioning.GitRequestLimits{
+							MaxConcurrent:     2,
+							RequestsPerSecond: 5,
+							Burst:             2,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "negative request limits are rejected",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana.git",
+						Branch: "main",
+						RequestLimits: &provisioning.GitRequestLimits{
+							MaxConcurrent:     -1,
+							RequestsPerSecond: -2,
+							Burst:             -3,
+						},
+					},
+				},
+			},
+			expectedError: true,
+			errorContains: []string{
+				"maxConcurrent",
+				"requestsPerSecond",
+				"burst",
+				"must not be negative",
+			},
+		},
+		{
 			name: "http url with token is rejected",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{

@@ -159,11 +159,29 @@ Replace the placeholders with your values:
 
 - _`<REPOSITORY_NAME>`_: Unique identifier for this repository resource
 - _`<REPOSITORY_TITLE>`_: Human-readable name displayed in Grafana UI
-- _`<GIT_REPO_URL>`_: GitHub repository URL
+- _`<GIT_REPO_URL>`_: Git repository URL
 - _`<BRANCH>`_: Branch to sync
 - _`<GITHUB_CONNECTION_NAME>`_: The name of your GitHub connection
 - _`<GITHUB_ENTERPRISE_CONNECTION_NAME>`_: The name of your GitHub Enterprise connection
 - _`<GIT_PAT>`_: Git provider Personal Access Token
+
+#### Limit Pure Git requests
+
+You can limit the Git Smart HTTP requests that a Pure Git repository sends to your Git server. Add `requestLimits` to the `spec.git` section of the repository resource:
+
+```yaml
+spec:
+  type: git
+  git:
+    requestLimits:
+      maxConcurrent: 2
+      requestsPerSecond: 5
+      burst: 2
+```
+
+Each repository applies its own limits. To keep request concurrency and rate unlimited, omit `requestLimits` or set both `maxConcurrent` and `requestsPerSecond` to `0`.
+
+Low limits can increase sync duration. During resource application, waiting for a Pure Git request slot and applying the resource share the global `[provisioning]` [`sync_resource_timeout`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sync_resource_timeout) setting. Requests made outside resource application, such as the initial repository scan, use the overall sync context.
 
 {{< admonition type="note" >}}
 
@@ -175,20 +193,27 @@ Git Sync supports two sync targets: `target: folder` (the default) creates a fol
 
 The following configuration parameters are available:
 
-| Field                                   | Description                                                     |
-| --------------------------------------- | --------------------------------------------------------------- |
-| `metadata.name`                         | Unique identifier for this repository resource                  |
-| `spec.title`                            | Human-readable name displayed in Grafana UI                     |
-| `spec.type`                             | Repository type (`github`, `githubEnterprise`)                  |
-| `spec.github.url`                       | GitHub repository URL                                           |
-| `spec.github.branch`                    | Branch to sync                                                  |
-| `spec.github.path`                      | Directory path containing dashboards                            |
-| `spec.github.generateDashboardPreviews` | Generate preview images (true/false) (Only available in GitHub) |
-| `spec.sync.enabled`                     | Enable synchronization (true/false)                             |
-| `spec.sync.intervalSeconds`             | Sync interval in seconds                                        |
-| `spec.sync.target`                      | Where to place synced dashboards (`folder` or `folderless`)     |
-| `spec.workflows`                        | Enabled workflows: `write` (direct commits), `branch` (PRs)     |
-| `secure.token.create`                   | GitHub Personal Access Token                                    |
+| Field                                      | Description                                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `metadata.name`                            | Unique identifier for this repository resource                                             |
+| `spec.title`                               | Human-readable name displayed in Grafana UI                                                |
+| `spec.type`                                | Repository type (`git`, `github`, `githubEnterprise`, `gitlab`, or `bitbucket`)            |
+| `spec.git.url`                             | Pure Git repository URL                                                                    |
+| `spec.git.branch`                          | Pure Git branch to sync                                                                    |
+| `spec.git.path`                            | Directory path containing dashboards in a Pure Git repository                              |
+| `spec.git.tokenUser`                       | Username used with a Pure Git personal access token                                        |
+| `spec.git.requestLimits.maxConcurrent`     | Maximum concurrent Pure Git Smart HTTP requests per repository. Default is `0` (unlimited) |
+| `spec.git.requestLimits.requestsPerSecond` | Sustained Pure Git Smart HTTP request rate. Default is `0` (unlimited)                     |
+| `spec.git.requestLimits.burst`             | Burst allowance when `requestsPerSecond` is enabled. Default is `0` (uses `1`)             |
+| `spec.github.url`                          | GitHub repository URL                                                                      |
+| `spec.github.branch`                       | Branch to sync                                                                             |
+| `spec.github.path`                         | Directory path containing dashboards                                                       |
+| `spec.github.generateDashboardPreviews`    | Generate preview images (true/false) (Only available in GitHub)                            |
+| `spec.sync.enabled`                        | Enable synchronization (true/false)                                                        |
+| `spec.sync.intervalSeconds`                | Sync interval in seconds                                                                   |
+| `spec.sync.target`                         | Where to place synced dashboards (`folder` or `folderless`)                                |
+| `spec.workflows`                           | Enabled workflows: `write` (direct commits), `branch` (PRs)                                |
+| `secure.token.create`                      | Personal access token                                                                      |
 
 ## Push the resources to Grafana
 

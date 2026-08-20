@@ -1,6 +1,28 @@
 import { type ErrorDetails } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getConnectionFormErrors } from './getFormErrors';
+import { getConfigFormErrors, getConnectionFormErrors, getFormErrors } from './getFormErrors';
+
+describe('Pure Git request limit errors', () => {
+  const errors: ErrorDetails[] = [
+    {
+      field: 'spec.git.requestLimits.maxConcurrent',
+      detail: 'Must be zero or greater',
+      type: 'FieldValueInvalid',
+    },
+  ];
+
+  it('maps request limit errors to the wizard form', () => {
+    expect(getFormErrors(errors)).toEqual([
+      ['repository.requestLimits.maxConcurrent', { message: 'Must be zero or greater' }],
+    ]);
+  });
+
+  it('maps request limit errors to the configuration form', () => {
+    expect(getConfigFormErrors(errors)).toEqual([
+      ['requestLimits.maxConcurrent', { message: 'Must be zero or greater' }],
+    ]);
+  });
+});
 
 describe('getConnectionFormErrors', () => {
   it('maps GitHub Enterprise server URL errors to the serverUrl field', () => {

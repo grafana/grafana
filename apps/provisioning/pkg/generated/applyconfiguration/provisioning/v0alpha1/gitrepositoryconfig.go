@@ -19,6 +19,8 @@ type GitRepositoryConfigApplyConfiguration struct {
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
 	Path *string `json:"path,omitempty"`
+	// RequestLimits controls outbound Git Smart HTTP traffic for this repository.
+	RequestLimits *GitRequestLimitsApplyConfiguration `json:"requestLimits,omitempty"`
 }
 
 // GitRepositoryConfigApplyConfiguration constructs a declarative configuration of the GitRepositoryConfig type for use with
@@ -56,5 +58,13 @@ func (b *GitRepositoryConfigApplyConfiguration) WithTokenUser(value string) *Git
 // If called multiple times, the Path field is set to the value of the last call.
 func (b *GitRepositoryConfigApplyConfiguration) WithPath(value string) *GitRepositoryConfigApplyConfiguration {
 	b.Path = &value
+	return b
+}
+
+// WithRequestLimits sets the RequestLimits field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the RequestLimits field is set to the value of the last call.
+func (b *GitRepositoryConfigApplyConfiguration) WithRequestLimits(value *GitRequestLimitsApplyConfiguration) *GitRepositoryConfigApplyConfiguration {
+	b.RequestLimits = value
 	return b
 }

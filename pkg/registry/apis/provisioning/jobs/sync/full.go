@@ -309,6 +309,9 @@ func applyChange(
 	if change.Existing != nil && change.Existing.Hash != "" {
 		writeOpts = append(writeOpts, resources.WithExistingHash(change.Existing.Hash))
 	}
+	if change.Hash != "" {
+		writeOpts = append(writeOpts, resources.WithSourceHash(change.Hash))
+	}
 
 	if change.Action == repository.FileActionUpdated && change.Existing != nil && change.Existing.Name != "" {
 		oldGVR := schema.GroupVersionResource{

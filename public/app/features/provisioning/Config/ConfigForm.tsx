@@ -42,6 +42,7 @@ import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
+import { PureGitRequestLimitsSection } from './PureGitRequestLimitsSection';
 import { WebhookSection } from './WebhookSection';
 import { getDefaultValues } from './defaults';
 
@@ -360,6 +361,17 @@ export function ConfigForm({ data }: ConfigFormProps) {
             <Field noMargin label={gitFields.pathConfig.label} description={gitFields.pathConfig.description}>
               <Input id="repository-path" {...register('path')} />
             </Field>
+            {type === 'git' && (
+              <PureGitRequestLimitsSection<RepositoryFormData>
+                register={register}
+                maxConcurrentName="requestLimits.maxConcurrent"
+                requestsPerSecondName="requestLimits.requestsPerSecond"
+                burstName="requestLimits.burst"
+                maxConcurrentError={errors.requestLimits?.maxConcurrent?.message}
+                requestsPerSecondError={errors.requestLimits?.requestsPerSecond?.message}
+                burstError={errors.requestLimits?.burst?.message}
+              />
+            )}
           </>
         )}
 

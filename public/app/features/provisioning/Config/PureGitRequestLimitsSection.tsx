@@ -1,0 +1,116 @@
+import { useEffect, useState } from 'react';
+import { type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
+
+import { t } from '@grafana/i18n';
+import { Collapse, Field, Input, Stack } from '@grafana/ui';
+
+interface Props<T extends FieldValues> {
+  register: UseFormRegister<T>;
+  maxConcurrentName: Path<T>;
+  requestsPerSecondName: Path<T>;
+  burstName: Path<T>;
+  maxConcurrentError?: string;
+  requestsPerSecondError?: string;
+  burstError?: string;
+}
+
+const toOptionalNumber = (value: string) => (value === '' ? undefined : Number(value));
+
+export function PureGitRequestLimitsSection<T extends FieldValues>({
+  register,
+  maxConcurrentName,
+  requestsPerSecondName,
+  burstName,
+  maxConcurrentError,
+  requestsPerSecondError,
+  burstError,
+}: Props<T>) {
+  const hasError = Boolean(maxConcurrentError || requestsPerSecondError || burstError);
+  const [isOpen, setIsOpen] = useState(hasError);
+
+  useEffect(() => {
+    if (hasError) {
+      setIsOpen(true);
+    }
+  }, [hasError]);
+
+  const validateLimit = (value: unknown) =>
+    value === undefined ||
+    (typeof value === 'number' && Number.isInteger(value) && value >= 0) ||
+    t('provisioning.pure-git-request-limits.error-non-negative-integer', 'Enter zero or a positive integer.');
+
+  const registrationOptions = {
+    setValueAs: toOptionalNumber,
+    validate: validateLimit,
+  };
+
+  return (
+    <Collapse
+      label={t('provisioning.pure-git-request-limits.label-section', 'Request limits')}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+    >
+      <Stack direction="column" gap={2}>
+        <Field
+          noMargin
+          label={t('provisioning.pure-git-request-limits.label-max-concurrent', 'Maximum concurrent requests')}
+          description={t(
+            'provisioning.pure-git-request-limits.description-max-concurrent',
+            'Maximum number of concurrent Git requests. Use 0 for unlimited.'
+          )}
+          error={maxConcurrentError}
+          invalid={Boolean(maxConcurrentError)}
+        >
+          <Input
+            {...register(maxConcurrentName, registrationOptions)}
+            id="pure-git-max-concurrent"
+            type="number"
+            min={0}
+            step={1}
+            placeholder={String(0)}
+          />
+        </Field>
+
+        <Field
+          noMargin
+          label={t('provisioning.pure-git-request-limits.label-requests-per-second', 'Requests per second')}
+          description={t(
+            'provisioning.pure-git-request-limits.description-requests-per-second',
+            'Sustained Git request rate. Use 0 for unlimited.'
+          )}
+          error={requestsPerSecondError}
+          invalid={Boolean(requestsPerSecondError)}
+        >
+          <Input
+            {...register(requestsPerSecondName, registrationOptions)}
+            id="pure-git-requests-per-second"
+            type="number"
+            min={0}
+            step={1}
+            placeholder={String(0)}
+          />
+        </Field>
+
+        <Field
+          noMargin
+          label={t('provisioning.pure-git-request-limits.label-burst', 'Burst')}
+          description={t(
+            'provisioning.pure-git-request-limits.description-burst',
+            'Leave empty or set to 0 to use the default burst size of 1 request.'
+          )}
+          error={burstError}
+          invalid={Boolean(burstError)}
+        >
+          <Input
+            {...register(burstName, registrationOptions)}
+            id="pure-git-burst"
+            type="number"
+            min={0}
+            step={1}
+            placeholder={String(0)}
+          />
+        </Field>
+      </Stack>
+    </Collapse>
+  );
+}

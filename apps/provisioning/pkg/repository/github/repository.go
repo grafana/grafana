@@ -36,6 +36,7 @@ type GithubRepository interface {
 	repository.Versioned
 	repository.Writer
 	repository.SizeLimitedReader
+	repository.HashReader
 	repository.RepositoryWithURLs
 	repository.StageableRepository
 	repository.BranchHandler

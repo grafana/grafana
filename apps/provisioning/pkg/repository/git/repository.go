@@ -39,6 +39,7 @@ type RepositoryConfig struct {
 	Branch           string
 	TokenUser        string
 	Token            common.RawSecureValue
+	HTTPClient       *http.Client
 	CommitSigningKey common.RawSecureValue
 	SigningMethod    provisioning.SigningMethod
 	SMIMECertificate string
@@ -63,6 +64,9 @@ func NewRepository(
 	opts := []options.Option{options.WithCapabilityNegotiation()}
 	if gitConfig.SkipGitSuffix {
 		opts = append(opts, options.WithoutGitSuffix())
+	}
+	if gitConfig.HTTPClient != nil {
+		opts = append(opts, options.WithHTTPClient(gitConfig.HTTPClient))
 	}
 	if !gitConfig.Token.IsZero() {
 		tokenUser := gitConfig.TokenUser
@@ -407,6 +411,30 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 		return nil, fmt.Errorf("read blob: %w", mapNanogitError(err))
 	}
 
+	return r.fileInfoFromBlob(filePath, ref, blob)
+}
+
+func (r *gitRepository) ReadByHash(ctx context.Context, filePath, ref, contentHash string) (*repository.FileInfo, error) {
+	ctx, logger := r.withGitContext(ctx, ref)
+	logger.Info("read repository blob", "path", filePath)
+
+	blobHash, err := hash.FromHex(contentHash)
+	if err != nil {
+		return nil, fmt.Errorf("parse blob hash: %w", err)
+	}
+
+	blob, err := r.client.GetBlob(ctx, blobHash)
+	if err != nil {
+		if errors.Is(err, nanogit.ErrObjectNotFound) {
+			return nil, repository.ErrFileNotFound
+		}
+		return nil, fmt.Errorf("read blob: %w", mapNanogitError(err))
+	}
+
+	return r.fileInfoFromBlob(filePath, ref, blob)
+}
+
+func (r *gitRepository) fileInfoFromBlob(filePath, ref string, blob *nanogit.Blob) (*repository.FileInfo, error) {
 	if max := r.maxBytes.Load(); max > 0 && int64(len(blob.Content)) > max {
 		return nil, apierrors.NewRequestEntityTooLargeError(
 			fmt.Sprintf("file %q is %d bytes; max allowed is %d bytes", filePath, len(blob.Content), max),

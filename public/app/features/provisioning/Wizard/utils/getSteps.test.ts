@@ -32,6 +32,24 @@ describe('getSteps', () => {
     expect(connectionStep?.name).toBe('Configure repository');
     expect(connectionStep?.title).toBe('Configure repository');
   });
+
+  it('validates Pure Git request limits on the connection step', () => {
+    const connectionStep = getSteps('git').find((step) => step.id === 'connection');
+
+    expect(connectionStep?.formFields).toEqual(
+      expect.arrayContaining([
+        'repository.requestLimits.maxConcurrent',
+        'repository.requestLimits.requestsPerSecond',
+        'repository.requestLimits.burst',
+      ])
+    );
+  });
+
+  it('does not add Pure Git request limits to other providers', () => {
+    const connectionStep = getSteps('github').find((step) => step.id === 'connection');
+
+    expect(connectionStep?.formFields).not.toContain('repository.requestLimits.maxConcurrent');
+  });
 });
 
 describe('getSyncStepStatus', () => {

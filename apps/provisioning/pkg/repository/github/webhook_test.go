@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -17,8 +18,31 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
+
+func TestGithubWebhookRepositorySupportsHashReads(t *testing.T) {
+	ctx := context.Background()
+	gitRepo := git.NewMockGitRepository(t)
+	githubRepo := &githubRepository{GitRepository: gitRepo}
+	webhookRepo := NewGithubWebhookRepository(githubRepo, "", "")
+
+	hashReader, ok := webhookRepo.(repo.HashReader)
+	require.True(t, ok)
+
+	expected := &repo.FileInfo{
+		Path: "dashboards/test.json",
+		Ref:  "main",
+		Hash: "abcdef",
+		Data: []byte("dashboard"),
+	}
+	gitRepo.EXPECT().ReadByHash(ctx, expected.Path, expected.Ref, expected.Hash).Return(expected, nil)
+
+	actual, err := hashReader.ReadByHash(ctx, expected.Path, expected.Ref, expected.Hash)
+	require.NoError(t, err)
+	require.Same(t, expected, actual)
+}
 
 func TestParseWebhooks(t *testing.T) {
 	tests := []struct {

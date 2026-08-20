@@ -125,10 +125,25 @@ type GitRepositoryConfig struct {
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
 	Path string `json:"path,omitempty"`
+	// RequestLimits controls outbound Git Smart HTTP traffic for this repository.
+	RequestLimits *GitRequestLimits `json:"requestLimits,omitempty"`
 }
 
 func (GitRepositoryConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitRepositoryConfig"
+}
+
+type GitRequestLimits struct {
+	// Maximum number of concurrent outbound requests. Zero disables the limit.
+	MaxConcurrent int `json:"maxConcurrent,omitempty"`
+	// Sustained number of outbound requests per second. Zero disables rate limiting.
+	RequestsPerSecond int `json:"requestsPerSecond,omitempty"`
+	// Burst allowance for the request rate limit. Zero uses a burst of one.
+	Burst int `json:"burst,omitempty"`
+}
+
+func (GitRequestLimits) OpenAPIModelName() string {
+	return OpenAPIPrefix + "GitRequestLimits"
 }
 
 type BitbucketRepositoryConfig struct {

@@ -3,6 +3,7 @@ package git
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -50,10 +51,23 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		Path:             cfg.Path,
 		TokenUser:        cfg.TokenUser,
 		Token:            token,
+		HTTPClient:       newRepositoryHTTPClient(cfg.RequestLimits),
 		CommitSigningKey: signingKey,
 		SigningMethod:    SigningMethodFromSpec(r),
 		SMIMECertificate: SMIMECertificateFromSpec(r),
 		SkipGitSuffix:    true,
+	})
+}
+
+func newRepositoryHTTPClient(limits *provisioning.GitRequestLimits) *http.Client {
+	if limits == nil || (limits.MaxConcurrent <= 0 && limits.RequestsPerSecond <= 0) {
+		return nil
+	}
+
+	return newHTTPClient(httpClientConfig{
+		MaxConcurrentRequests: limits.MaxConcurrent,
+		RequestsPerSecond:     limits.RequestsPerSecond,
+		Burst:                 limits.Burst,
 	})
 }
 

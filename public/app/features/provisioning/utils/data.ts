@@ -140,6 +140,13 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     branch: data.branch || '',
     path: data.path,
   };
+  const requestLimits =
+    data.requestLimits &&
+    [data.requestLimits.maxConcurrent, data.requestLimits.requestsPerSecond, data.requestLimits.burst].some(
+      (value) => value !== undefined
+    )
+      ? data.requestLimits
+      : undefined;
 
   switch (data.type) {
     case 'github':
@@ -164,7 +171,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       };
       break;
     case 'git':
-      spec.git = { ...baseConfig, tokenUser: data.tokenUser };
+      spec.git = { ...baseConfig, tokenUser: data.tokenUser, requestLimits };
       break;
     case 'local':
       spec.local = {
