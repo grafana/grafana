@@ -1036,6 +1036,12 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 			return fmt.Errorf("expected old object to be a User, got %T", oldObj)
 		}
 		return user.ValidateOnUpdate(ctx, b.userSearchClient, oldUserObj, typedObj)
+	case *iamv0.ServiceAccount:
+		oldSAObj, ok := oldObj.(*iamv0.ServiceAccount)
+		if !ok {
+			return fmt.Errorf("expected old object to be a ServiceAccount, got %T", oldObj)
+		}
+		return serviceaccount.ValidateOnUpdate(ctx, typedObj, oldSAObj)
 	case *iamv0.ResourcePermission:
 		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj, b.mappers)
 	case *iamv0.Team:
@@ -1113,7 +1119,7 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 		case *iamv0.User:
 			return user.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.ServiceAccount:
-			return serviceaccount.MutateOnCreate(ctx, typedObj)
+			return serviceaccount.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Team:
 			return team.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Role:
@@ -1133,6 +1139,8 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 			if a.GetSubresource() != "status" {
 				return user.MutateOnCreateAndUpdate(ctx, typedObj)
 			}
+		case *iamv0.ServiceAccount:
+			return serviceaccount.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Team:
 			return team.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Role:

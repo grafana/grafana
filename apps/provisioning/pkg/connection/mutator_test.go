@@ -136,7 +136,7 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 	}{
 		{
 			name:      "removes token when connection type is changed",
-			newType:   provisioning.GitlabConnectionType,
+			newType:   provisioning.GitlabOAuthConnectionType,
 			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			wantToken: common.InlineSecureValue{Remove: true},
