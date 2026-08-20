@@ -14,6 +14,7 @@ import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { type DashboardDropTarget } from './types/DashboardDropTarget';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -25,7 +26,7 @@ describe('DashboardLayoutOrchestrator', () => {
     // Nothing is mutated mid-drag any more (no eager detach) — the item stays in its source
     // the whole time. These tests drive _stopDraggingSync directly, as a real drag would call it
     // once the pointer is released, and assert on the single atomic outcome it produces.
-    it('should drop item into current tab when dropped on tab header', () => {
+    it('should drop item into current tab when dropped on tab header', async () => {
       const { orchestrator, tab1Manager, tab2Manager, gridItem, tabsManager, tab1 } = setupWithTwoTabs();
 
       orchestrator.setState({
@@ -35,42 +36,19 @@ describe('DashboardLayoutOrchestrator', () => {
 
       const tab2 = tabsManager.state.tabs[1];
 
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceDropTarget = tab1Manager;
-      // Simulates having hovered/switched to tab2 (lastDropTarget is the TabItem)
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._lastDropTarget = tab2;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceOriginalIndex = 0;
-
       expect(tab1Manager.state.layout.state.children).toHaveLength(1);
       expect(tab2Manager.state.layout.state.children).toHaveLength(0);
 
-      // Mock _getDropTargetUnderMouse to return null (simulating cursor over tab header)
-      // @ts-expect-error - accessing private method for testing
-      const originalGetDropTargetUnderMouse = orchestrator._getDropTargetUnderMouse;
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(null);
+      // Simulates having hovered/switched to tab2 (lastDropTarget is the TabItem), with the
+      // cursor released over the tab header (no valid drop target under mouse)
+      await stopDragging(orchestrator, { sourceDropTarget: tab1Manager, lastDropTarget: tab2, sourceOriginalIndex: 0 });
 
-      const mockEvent = { clientX: 100, clientY: 100 } as PointerEvent;
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._stopDraggingSync(mockEvent);
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = originalGetDropTargetUnderMouse;
-
-      return new Promise<void>((resolve) => {
-        setTimeout(() => {
-          expect(tab2Manager.state.layout.state.children).toHaveLength(1);
-          expect(tab2Manager.state.layout.state.children[0]).toBe(gridItem);
-          expect(tab1Manager.state.layout.state.children).toHaveLength(0);
-          resolve();
-        }, 0);
-      });
+      expect(tab2Manager.state.layout.state.children).toHaveLength(1);
+      expect(tab2Manager.state.layout.state.children[0]).toBe(gridItem);
+      expect(tab1Manager.state.layout.state.children).toHaveLength(0);
     });
 
-    it('should cancel drop when panel is released between tab headers — item stays in source, nothing recorded', () => {
+    it('should cancel drop when panel is released between tab headers — item stays in source, nothing recorded', async () => {
       const { dashboard, orchestrator, tab1Manager, gridItem, tabsManager, tab1 } = setupWithTwoTabs();
 
       orchestrator.setState({
@@ -78,26 +56,10 @@ describe('DashboardLayoutOrchestrator', () => {
         sourceTabKey: tab1.state.key,
       });
 
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceDropTarget = tab1Manager;
-      // Cursor released over the tab bar itself (between headers)
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._lastDropTarget = tabsManager;
-
       expect(tab1Manager.state.layout.state.children).toHaveLength(1);
 
-      // @ts-expect-error - accessing private method for testing
-      const originalGetDropTargetUnderMouse = orchestrator._getDropTargetUnderMouse;
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(null);
-
-      const mockEvent = { clientX: 100, clientY: 100 } as PointerEvent;
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._stopDraggingSync(mockEvent);
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = originalGetDropTargetUnderMouse;
+      // Cursor released over the tab bar itself (between headers), no valid target under mouse
+      await stopDragging(orchestrator, { sourceDropTarget: tab1Manager, lastDropTarget: tabsManager });
 
       // Nothing was ever mutated, so the panel is exactly where it started and there's nothing
       // to undo.
@@ -106,7 +68,7 @@ describe('DashboardLayoutOrchestrator', () => {
       expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
     });
 
-    it('should preserve original order when cancelled among sibling panels', () => {
+    it('should preserve original order when cancelled among sibling panels', async () => {
       const { dashboard, orchestrator, tab1Manager, tabsManager, gridItem, tab1 } = setupWithTwoTabs();
 
       // Add more panels to tab1: [itemBefore, gridItem, itemAfter]
@@ -123,25 +85,11 @@ describe('DashboardLayoutOrchestrator', () => {
         sourceTabKey: tab1.state.key,
       });
 
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceDropTarget = tab1Manager;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._lastDropTarget = tabsManager;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceOriginalIndex = 1;
-
-      // @ts-expect-error - accessing private method for testing
-      const originalGetDropTargetUnderMouse = orchestrator._getDropTargetUnderMouse;
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(null);
-
-      const mockEvent = { clientX: 100, clientY: 100 } as PointerEvent;
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._stopDraggingSync(mockEvent);
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = originalGetDropTargetUnderMouse;
+      await stopDragging(orchestrator, {
+        sourceDropTarget: tab1Manager,
+        lastDropTarget: tabsManager,
+        sourceOriginalIndex: 1,
+      });
 
       const children = tab1Manager.state.layout.state.children;
       expect(children).toHaveLength(3);
@@ -151,7 +99,7 @@ describe('DashboardLayoutOrchestrator', () => {
       expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
     });
 
-    it('should not cancel drop when lastDropTarget is stale TabsLayoutManager but mouse is over valid target', () => {
+    it('should not cancel drop when lastDropTarget is stale TabsLayoutManager but mouse is over valid target', async () => {
       const { orchestrator, tab1Manager, tab2Manager, gridItem, tabsManager, tab1 } = setupWithTwoTabs();
 
       orchestrator.setState({
@@ -159,38 +107,20 @@ describe('DashboardLayoutOrchestrator', () => {
         sourceTabKey: tab1.state.key,
       });
 
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceDropTarget = tab1Manager;
       // Stale: last pointermove was over the tab bar, but pointerup lands on a valid target
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._lastDropTarget = tabsManager;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceOriginalIndex = 0;
-
-      // @ts-expect-error - accessing private method for testing
-      const originalGetDropTargetUnderMouse = orchestrator._getDropTargetUnderMouse;
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(tab2Manager);
-
-      const mockEvent = { clientX: 100, clientY: 100 } as PointerEvent;
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._stopDraggingSync(mockEvent);
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = originalGetDropTargetUnderMouse;
-
-      return new Promise<void>((resolve) => {
-        setTimeout(() => {
-          expect(tab1Manager.state.layout.state.children).toHaveLength(0);
-          expect(tab2Manager.state.layout.state.children).toHaveLength(1);
-          expect(tab2Manager.state.layout.state.children[0]).toBe(gridItem);
-          resolve();
-        }, 0);
+      await stopDragging(orchestrator, {
+        sourceDropTarget: tab1Manager,
+        lastDropTarget: tabsManager,
+        sourceOriginalIndex: 0,
+        dropTargetUnderMouse: tab2Manager,
       });
+
+      expect(tab1Manager.state.layout.state.children).toHaveLength(0);
+      expect(tab2Manager.state.layout.state.children).toHaveLength(1);
+      expect(tab2Manager.state.layout.state.children[0]).toBe(gridItem);
     });
 
-    it('should complete normal drop when valid drop target exists', () => {
+    it('should complete normal drop when valid drop target exists', async () => {
       const { dashboard, orchestrator, tab1Manager, tab2Manager, gridItem, tab1 } = setupWithTwoTabs();
 
       orchestrator.setState({
@@ -198,95 +128,60 @@ describe('DashboardLayoutOrchestrator', () => {
         sourceTabKey: tab1.state.key,
       });
 
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceDropTarget = tab1Manager;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._lastDropTarget = tab2Manager;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceOriginalIndex = 0;
-
       expect(tab1Manager.state.layout.state.children).toHaveLength(1);
 
-      // @ts-expect-error - accessing private method for testing
-      const originalGetDropTargetUnderMouse = orchestrator._getDropTargetUnderMouse;
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(tab2Manager);
-
-      const mockEvent = { clientX: 100, clientY: 100 } as PointerEvent;
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._stopDraggingSync(mockEvent);
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = originalGetDropTargetUnderMouse;
-
-      return new Promise<void>((resolve) => {
-        setTimeout(() => {
-          expect(tab1Manager.state.layout.state.children).toHaveLength(0);
-          expect(tab2Manager.state.layout.state.children).toHaveLength(1);
-          expect(tab2Manager.state.layout.state.children[0]).toBe(gridItem);
-
-          const sidebar = dashboard.state.sidebar;
-          expect(sidebar.state.undoStack).toHaveLength(1);
-
-          sidebar.undoAction();
-          expect(tab1Manager.state.layout.state.children).toHaveLength(1);
-          expect(tab1Manager.state.layout.state.children[0].state.body).toBe(gridItem.state.body);
-          expect(tab2Manager.state.layout.state.children).toHaveLength(0);
-
-          resolve();
-        }, 0);
+      await stopDragging(orchestrator, {
+        sourceDropTarget: tab1Manager,
+        lastDropTarget: tab2Manager,
+        sourceOriginalIndex: 0,
+        dropTargetUnderMouse: tab2Manager,
       });
+
+      expect(tab1Manager.state.layout.state.children).toHaveLength(0);
+      expect(tab2Manager.state.layout.state.children).toHaveLength(1);
+      expect(tab2Manager.state.layout.state.children[0]).toBe(gridItem);
+
+      const sidebar = dashboard.state.sidebar;
+      expect(sidebar.state.undoStack).toHaveLength(1);
+
+      sidebar.undoAction();
+      expect(tab1Manager.state.layout.state.children).toHaveLength(1);
+      expect(tab1Manager.state.layout.state.children[0].state.body).toBe(gridItem.state.body);
+      expect(tab2Manager.state.layout.state.children).toHaveLength(0);
     });
   });
 
   describe('undo/redo for panel drag', () => {
     // Same-grid reorder is recorded by AutoGridLayout itself (via draggedChildren) — see
     // AutoGridLayout.test.tsx. This suite covers cross-layout moves, owned by the orchestrator.
-    it('records one undo entry for a cross-grid move between two plain AutoGrids and round-trips', () => {
+    it('records one undo entry for a cross-grid move between two plain AutoGrids and round-trips', async () => {
       const { dashboard, managerA, managerB, gridItem, panel } = setupTwoAutoGrids();
       const orchestrator = dashboard.state.layoutOrchestrator;
 
       orchestrator.setState({ draggingGridItem: gridItem.getRef() });
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceDropTarget = managerA;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._lastDropTarget = managerB;
-      // @ts-expect-error - accessing private property for testing
-      orchestrator._sourceOriginalIndex = 0;
 
-      // @ts-expect-error - accessing private method for testing
-      const originalGetDropTargetUnderMouse = orchestrator._getDropTargetUnderMouse;
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(managerB);
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._stopDraggingSync({ clientX: 0, clientY: 0 } as PointerEvent);
-
-      // @ts-expect-error - accessing private method for testing
-      orchestrator._getDropTargetUnderMouse = originalGetDropTargetUnderMouse;
-
-      return new Promise<void>((resolve) => {
-        setTimeout(() => {
-          expect(managerA.state.layout.state.children).toHaveLength(0);
-          expect(managerB.state.layout.state.children).toHaveLength(1);
-          expect(managerB.state.layout.state.children[0]).toBe(gridItem);
-
-          const sidebar = dashboard.state.sidebar;
-          expect(sidebar.state.undoStack).toHaveLength(1);
-
-          sidebar.undoAction();
-          expect(managerB.state.layout.state.children).toHaveLength(0);
-          expect(managerA.state.layout.state.children).toHaveLength(1);
-          expect(managerA.state.layout.state.children[0].state.body).toBe(panel);
-
-          sidebar.redoAction();
-          expect(managerA.state.layout.state.children).toHaveLength(0);
-          expect(managerB.state.layout.state.children).toHaveLength(1);
-
-          resolve();
-        }, 0);
+      await stopDragging(orchestrator, {
+        sourceDropTarget: managerA,
+        lastDropTarget: managerB,
+        sourceOriginalIndex: 0,
+        dropTargetUnderMouse: managerB,
       });
+
+      expect(managerA.state.layout.state.children).toHaveLength(0);
+      expect(managerB.state.layout.state.children).toHaveLength(1);
+      expect(managerB.state.layout.state.children[0]).toBe(gridItem);
+
+      const sidebar = dashboard.state.sidebar;
+      expect(sidebar.state.undoStack).toHaveLength(1);
+
+      sidebar.undoAction();
+      expect(managerB.state.layout.state.children).toHaveLength(0);
+      expect(managerA.state.layout.state.children).toHaveLength(1);
+      expect(managerA.state.layout.state.children[0].state.body).toBe(panel);
+
+      sidebar.redoAction();
+      expect(managerA.state.layout.state.children).toHaveLength(0);
+      expect(managerB.state.layout.state.children).toHaveLength(1);
     });
   });
 
@@ -486,6 +381,38 @@ describe('AutoGridLayoutManager as DashboardDropTarget', () => {
     });
   });
 });
+
+async function stopDragging(
+  orchestrator: DashboardLayoutOrchestrator,
+  opts: {
+    sourceDropTarget: DashboardDropTarget | null;
+    lastDropTarget: DashboardDropTarget | null;
+    sourceOriginalIndex?: number;
+    dropTargetUnderMouse?: DashboardDropTarget | null;
+  }
+) {
+  // @ts-expect-error - accessing private property for testing
+  orchestrator._sourceDropTarget = opts.sourceDropTarget;
+  // @ts-expect-error - accessing private property for testing
+  orchestrator._lastDropTarget = opts.lastDropTarget;
+  if (opts.sourceOriginalIndex !== undefined) {
+    // @ts-expect-error - accessing private property for testing
+    orchestrator._sourceOriginalIndex = opts.sourceOriginalIndex;
+  }
+
+  // @ts-expect-error - accessing private method for testing
+  const originalGetDropTargetUnderMouse = orchestrator._getDropTargetUnderMouse;
+  // @ts-expect-error - accessing private method for testing
+  orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(opts.dropTargetUnderMouse ?? null);
+
+  // @ts-expect-error - accessing private method for testing
+  orchestrator._stopDraggingSync({ clientX: 100, clientY: 100 } as PointerEvent);
+
+  // @ts-expect-error - accessing private method for testing
+  orchestrator._getDropTargetUnderMouse = originalGetDropTargetUnderMouse;
+
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+}
 
 function setup() {
   const panel = new VizPanel({
