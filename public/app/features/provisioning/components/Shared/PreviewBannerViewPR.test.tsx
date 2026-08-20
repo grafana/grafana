@@ -24,22 +24,35 @@ const mockTextUtil = jest.mocked(textUtil);
 
 const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
 
+const githubCompareURL = 'https://github.com/org/repo/compare/main...feature?quick_pull=1';
+const gitlabMergeRequestURL = 'https://gitlab.com/org/repo/-/merge_requests/new?merge_request[source_branch]=feature';
+const bitbucketPullRequestURL = 'https://bitbucket.org/org/repo/pull-requests/new?source=feature';
+
 function setup(
-  options: { prURL: string; isNewPr?: boolean; repoType?: RepoType; action?: string; prTitle?: string } = {
-    prURL: 'test-url',
+  options: {
+    prURL?: string;
+    isNewPr?: boolean;
+    repoType?: RepoType;
+    action?: string;
+    prTitle?: string;
+    repoUrl?: string;
+  } = {
+    prURL: githubCompareURL,
     repoType: 'github',
   }
 ) {
   const componentProps = {
     prURL: options.prURL,
     isNewPr: options.isNewPr || false,
+    repoUrl: options.repoUrl,
   };
 
   mockUsePullRequestParam.mockReturnValue({
     prURL: undefined,
     newPrURL: undefined,
     repoURL: undefined,
-    repoType: options.repoType || 'github',
+    // Allow explicit undefined (missing repo_type query param) — don't coerce to github.
+    repoType: 'repoType' in options ? options.repoType : 'github',
     resourcePushedTo: 'abc',
     action: options.action,
     prTitle: options.prTitle,
@@ -76,14 +89,14 @@ describe('PreviewBannerViewPR', () => {
 
   describe('Dashboard scenarios', () => {
     it('should render correct text for new PR dashboard', () => {
-      setup({ prURL: 'test-url', isNewPr: true });
+      setup({ prURL: githubCompareURL, isNewPr: true });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(screen.getByText('A new resource has been created in a branch in GitHub.')).toBeInTheDocument();
     });
 
     it('should render correct text for existing PR dashboard', () => {
-      setup({ prURL: 'test-url', isNewPr: false });
+      setup({ prURL: githubCompareURL, isNewPr: false });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(
@@ -94,13 +107,13 @@ describe('PreviewBannerViewPR', () => {
     });
 
     it('should render correct button text for new PR dashboard', () => {
-      setup({ prURL: 'test-url', isNewPr: true });
+      setup({ prURL: githubCompareURL, isNewPr: true });
 
       expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
     });
 
     it('should render correct button text for existing PR dashboard', () => {
-      setup({ prURL: 'test-url', isNewPr: false });
+      setup({ prURL: githubCompareURL, isNewPr: false });
 
       expect(screen.getByText('View pull request in GitHub')).toBeInTheDocument();
     });
@@ -108,14 +121,14 @@ describe('PreviewBannerViewPR', () => {
 
   describe('Additional scenarios', () => {
     it('should render correct text for new PR resource', () => {
-      setup({ prURL: 'test-url', isNewPr: true });
+      setup({ prURL: githubCompareURL, isNewPr: true });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(screen.getByText('A new resource has been created in a branch in GitHub.')).toBeInTheDocument();
     });
 
     it('should render correct text for existing PR resource', () => {
-      setup({ prURL: 'test-url', isNewPr: false });
+      setup({ prURL: githubCompareURL, isNewPr: false });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(
@@ -126,13 +139,13 @@ describe('PreviewBannerViewPR', () => {
     });
 
     it('should render correct button text for new PR resource', () => {
-      setup({ prURL: 'test-url', isNewPr: true });
+      setup({ prURL: githubCompareURL, isNewPr: true });
 
       expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
     });
 
     it('should render correct button text for existing PR resource', () => {
-      setup({ prURL: 'test-url', isNewPr: false });
+      setup({ prURL: githubCompareURL, isNewPr: false });
 
       expect(screen.getByText('View pull request in GitHub')).toBeInTheDocument();
     });
@@ -152,7 +165,7 @@ describe('PreviewBannerViewPR', () => {
 
   describe('Different repository types', () => {
     it('should handle GitLab repository type', () => {
-      setup({ prURL: 'test-url', isNewPr: false, repoType: 'gitlab' });
+      setup({ prURL: gitlabMergeRequestURL, isNewPr: false, repoType: 'gitlab' });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(
@@ -163,7 +176,7 @@ describe('PreviewBannerViewPR', () => {
     });
 
     it('should handle Bitbucket repository type', () => {
-      setup({ prURL: 'test-url', isNewPr: false, repoType: 'bitbucket' });
+      setup({ prURL: bitbucketPullRequestURL, isNewPr: false, repoType: 'bitbucket' });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(
@@ -172,17 +185,82 @@ describe('PreviewBannerViewPR', () => {
         )
       ).toBeInTheDocument();
     });
+
+    it('should keep Open pull request label for GitLab when a PR URL is present', () => {
+      setup({ prURL: gitlabMergeRequestURL, isNewPr: true, repoType: 'gitlab' });
+
+      expect(screen.getByText('Open pull request in GitLab')).toBeInTheDocument();
+      expect(screen.queryByText(/cannot open pull requests from Grafana/i)).not.toBeInTheDocument();
+    });
+
+    it('should keep Open pull request label for Bitbucket when a PR URL is present', () => {
+      setup({ prURL: bitbucketPullRequestURL, isNewPr: true, repoType: 'bitbucket' });
+
+      expect(screen.getByText('Open pull request in Bitbucket')).toBeInTheDocument();
+      expect(screen.queryByText(/cannot open pull requests from Grafana/i)).not.toBeInTheDocument();
+    });
+
+    it('should use Open in Bitbucket when prURL is only the repo root', () => {
+      setup({
+        prURL: 'https://bitbucket.org/org/repo',
+        isNewPr: true,
+        repoType: 'bitbucket',
+      });
+
+      expect(screen.getByText('Open in Bitbucket')).toBeInTheDocument();
+      expect(screen.queryByText('Open pull request in Bitbucket')).not.toBeInTheDocument();
+      expect(screen.queryByText(/cannot open pull requests from Grafana/i)).not.toBeInTheDocument();
+    });
+
+    it('should use Open in Git and show the no-PR hint for pure git', () => {
+      setup({ prURL: 'https://git.example.com/org/repo', isNewPr: true, repoType: 'git' });
+
+      expect(screen.getByText('Open in Git')).toBeInTheDocument();
+      expect(screen.queryByText('Open pull request in Git')).not.toBeInTheDocument();
+      expect(screen.queryByText('View pull request in Git')).not.toBeInTheDocument();
+      // Body has no trailing period; join must insert one before the hint sentence.
+      expect(
+        screen.getByText(
+          /until this branch is merged\. This connection cannot open pull requests from Grafana/i
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('should not show the no-PR hint for GitHub when the PR URL is missing', () => {
+      setup({
+        prURL: undefined,
+        isNewPr: true,
+        repoType: 'github',
+        repoUrl: 'https://github.com/org/repo',
+      });
+
+      expect(screen.getByText('Open in GitHub')).toBeInTheDocument();
+      expect(screen.queryByText('Open pull request in GitHub')).not.toBeInTheDocument();
+      expect(screen.queryByText(/cannot open pull requests from Grafana/i)).not.toBeInTheDocument();
+    });
+
+    it('should not show the no-PR hint when repoType is missing', () => {
+      setup({
+        prURL: undefined,
+        isNewPr: true,
+        repoType: undefined,
+        repoUrl: 'https://example.com/org/repo',
+      });
+
+      expect(screen.getByText('Open in repository')).toBeInTheDocument();
+      expect(screen.queryByText(/cannot open pull requests from Grafana/i)).not.toBeInTheDocument();
+    });
   });
 
   describe('Delete action', () => {
     it('should render delete-specific title for new PR', () => {
-      setup({ prURL: 'test-url', isNewPr: true, action: 'delete' });
+      setup({ prURL: githubCompareURL, isNewPr: true, action: 'delete' });
 
       expect(screen.getByText('A resource has been deleted in a branch in GitHub.')).toBeInTheDocument();
     });
 
     it('should render delete-specific body text', () => {
-      setup({ prURL: 'test-url', isNewPr: true, action: 'delete' });
+      setup({ prURL: githubCompareURL, isNewPr: true, action: 'delete' });
 
       expect(
         screen.getByText(
@@ -192,7 +270,7 @@ describe('PreviewBannerViewPR', () => {
     });
 
     it('should still render PR button for delete action', () => {
-      setup({ prURL: 'test-url', isNewPr: true, action: 'delete' });
+      setup({ prURL: githubCompareURL, isNewPr: true, action: 'delete' });
 
       expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
     });
