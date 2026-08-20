@@ -3172,7 +3172,9 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{Go: true},
+			// LegacyFrontend: PoC needs config.featureToggles['authz.folderPathVisibility'] in
+			// browse-dashboards (identity-access-team#2285 §4.5, chunk 5 ghost-node injection).
+			Generate: Generate{Go: true, LegacyFrontend: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

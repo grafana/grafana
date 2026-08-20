@@ -1410,4 +1410,9 @@ export interface FeatureToggles {
   * @default false
   */
   cujTracking?: boolean;
+  /**
+  * Show a folder's full ancestor path, including the names of ancestors the signed-in user has no access to, as inert non-browsable context. Gates the relaxed real-tree-placement criterion so items with a resolvable-but-inaccessible ancestor chain render in their real position instead of falling through to Shared with me; leaves Shared with me itself, and every other partial-access scenario, unchanged when off.
+  * @default false
+  */
+  ['authz.folderPathVisibility']?: boolean;
 }

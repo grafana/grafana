@@ -1,3 +1,4 @@
+import { getAPINamespace } from '@grafana/api-clients';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
@@ -35,6 +36,153 @@ async function searchOldAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
     page,
     limit: pageSize,
   });
+}
+
+// --- Phase 1.5 PoC: folder path visibility (identity-access-team#2285 §4.5) ---
+//
+// Items whose parent isn't accessible but whose full ancestor *name* chain resolves are placed
+// in their real tree position, with the inaccessible ancestors rendered as inert "ghost" nodes,
+// instead of falling through to Shared with me (excluded there by the backend when
+// authz.folderPathVisibility is on -- see pkg/registry/apis/dashboard/search.go). This module
+// never reads or writes anything under Shared with me; it only discovers candidates via the
+// legacy /api/search?folder=sharedwithme (unaffected by that backend exclusion, since it's a
+// separate implementation) purely as a signal for where to inject ghost ancestors at the root.
+//
+// Ghost ancestor UID -> its already-resolved real children, so that expanding a ghost node in
+// the tree serves these instead of hitting listFolders/listDashboards's normal search path,
+// which would come back empty (the caller has no access to the ghost itself).
+const ghostChildrenByUID = new Map<string, DashboardViewItem[]>();
+const ghostFolderUIDs = new Set<string>();
+
+export function isGhostAncestorFolder(uid: string): boolean {
+  return ghostFolderUIDs.has(uid);
+}
+
+function getGhostChildren(parentUID: string, kind: DashboardViewItem['kind']): DashboardViewItem[] {
+  return (ghostChildrenByUID.get(parentUID) ?? []).filter((item) => item.kind === kind);
+}
+
+interface RawOrphan {
+  uid: string;
+  title: string;
+  url?: string;
+  kind: 'folder' | 'dashboard';
+  // Immediate (real) parent UID, per the legacy search response -- the folder the item lives in
+  // that the caller can't directly read.
+  folderUid: string;
+}
+
+async function fetchRawOrphans(): Promise<RawOrphan[]> {
+  const rows = await getBackendSrv().get<
+    Array<{ uid: string; title: string; type: string; url?: string; folderUid?: string }>
+  >('/api/search', { folder: 'sharedwithme' });
+
+  return rows
+    .filter((row): row is typeof row & { folderUid: string } => Boolean(row.folderUid))
+    .map((row) => ({
+      uid: row.uid,
+      title: row.title,
+      url: row.url,
+      kind: row.type === 'dash-folder' ? ('folder' as const) : ('dashboard' as const),
+      folderUid: row.folderUid,
+    }));
+}
+
+interface FolderInfo {
+  name: string;
+  title: string;
+  parent?: string;
+  detached?: boolean;
+}
+
+async function getFolderParents(uid: string): Promise<FolderInfo[]> {
+  const namespace = getAPINamespace();
+  const resp = await getBackendSrv().get<{ items?: FolderInfo[] }>(
+    `/apis/folder.grafana.app/v1beta1/namespaces/${namespace}/folders/${uid}/parents`
+  );
+  return resp.items ?? [];
+}
+
+// Resolves the ancestor chain for every distinct orphan, builds the ghost + real nodes along the
+// way (deduped, since multiple orphans can share ancestors), and returns only the root-level ones
+// -- deeper levels are served later via getGhostChildren() as the tree expands.
+async function fetchGhostAncestorItems(): Promise<NestedFolderDTO[]> {
+  ghostChildrenByUID.clear();
+  ghostFolderUIDs.clear();
+
+  const orphans = await fetchRawOrphans();
+  if (orphans.length === 0) {
+    return [];
+  }
+
+  const nodesByUID = new Map<string, DashboardViewItem>();
+
+  // Folder-kind orphans are themselves directly accessible (that's exactly why they're orphans:
+  // the folder itself is readable, its parent isn't) -- /parents on the orphan's OWN uid works,
+  // and the endpoint does the privileged walk for anything inaccessible above it. Calling
+  // /parents on orphan.folderUid instead (the inaccessible parent) would 403, since that
+  // subresource still requires "get" on whatever uid is in the URL.
+  for (const orphan of orphans) {
+    if (orphan.kind !== 'folder' || nodesByUID.has(orphan.uid)) {
+      continue;
+    }
+
+    let chain: FolderInfo[];
+    try {
+      chain = await getFolderParents(orphan.uid);
+    } catch (error) {
+      // Can't resolve this chain (e.g. a genuine cycle, or the privileged read itself failed) --
+      // leave this orphan unplaced rather than guessing at a position for it.
+      console.error(`Failed to resolve ghost ancestor chain for ${orphan.uid}`, error);
+      continue;
+    }
+
+    let prevUID: string | undefined = undefined;
+    for (const node of chain) {
+      if (!nodesByUID.has(node.name)) {
+        const isGhost = Boolean(node.detached);
+        if (isGhost) {
+          ghostFolderUIDs.add(node.name);
+        }
+        nodesByUID.set(node.name, {
+          kind: 'folder',
+          uid: node.name,
+          title: node.title,
+          parentUID: prevUID,
+          url: isGhost ? undefined : getFolderURL(node.name),
+        });
+      }
+      prevUID = node.name;
+    }
+  }
+
+  // Dashboard-kind orphans have no /parents of their own (only folders do), and their immediate
+  // parent is by definition inaccessible to the caller directly -- so they can only be placed if
+  // a folder-kind sibling under that same parent already resolved it above.
+  for (const orphan of orphans) {
+    if (orphan.kind !== 'dashboard' || !nodesByUID.has(orphan.folderUid)) {
+      continue;
+    }
+    nodesByUID.set(orphan.uid, {
+      kind: 'dashboard',
+      uid: orphan.uid,
+      title: orphan.title,
+      parentUID: orphan.folderUid,
+      url: orphan.url,
+    });
+  }
+
+  for (const node of nodesByUID.values()) {
+    if (node.parentUID !== undefined) {
+      const siblings = ghostChildrenByUID.get(node.parentUID) ?? [];
+      siblings.push(node);
+      ghostChildrenByUID.set(node.parentUID, siblings);
+    }
+  }
+
+  return Array.from(nodesByUID.values())
+    .filter((node) => node.parentUID === undefined)
+    .map((node) => ({ uid: node.uid, title: node.title }));
 }
 
 const virtualFolderBase = {
@@ -108,6 +256,13 @@ export async function listFolders(
   page = 1,
   pageSize = PAGE_SIZE
 ): Promise<DashboardViewItem[]> {
+  // Ghost ancestors (Phase 1.5 PoC, see comment above fetchGhostAncestorItems) have no real
+  // backing folder object the caller can query -- serve their already-resolved children instead
+  // of hitting the search API, which would come back empty.
+  if (parentUID !== undefined && isGhostAncestorFolder(parentUID)) {
+    return getGhostChildren(parentUID, 'folder');
+  }
+
   let folders: NestedFolderDTO[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
     if (config.featureToggles.foldersAppPlatformAPI) {
@@ -117,8 +272,13 @@ export async function listFolders(
     }
   }
 
+  if (parentUID === undefined && page === 1 && config.featureToggles['authz.folderPathVisibility']) {
+    folders = folders.concat(await listSafeGhosts(fetchGhostAncestorItems));
+  }
+
   return folders.map(({ uid, title, managedBy }) => {
-    const noUrl = isSharedWithMe(uid) || isVirtualTeamFolder(uid) || isVirtualStarredFolder(uid);
+    const noUrl =
+      isSharedWithMe(uid) || isVirtualTeamFolder(uid) || isVirtualStarredFolder(uid) || isGhostAncestorFolder(uid);
     return {
       kind: 'folder',
       uid,
@@ -134,7 +294,20 @@ export async function listFolders(
   });
 }
 
+async function listSafeGhosts(load: () => Promise<NestedFolderDTO[]>): Promise<NestedFolderDTO[]> {
+  try {
+    return await load();
+  } catch (error) {
+    console.error('Failed to load ghost ancestor folders', error);
+    return [];
+  }
+}
+
 export async function listDashboards(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<DashboardViewItem[]> {
+  if (parentUID !== undefined && isGhostAncestorFolder(parentUID)) {
+    return getGhostChildren(parentUID, 'dashboard');
+  }
+
   const searcher = getGrafanaSearcher();
 
   const dashboardsResults = await searcher.search({
