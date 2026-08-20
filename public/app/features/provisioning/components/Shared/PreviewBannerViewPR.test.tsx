@@ -1,7 +1,6 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { textUtil } from '@grafana/data';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
@@ -9,29 +8,22 @@ import { isValidRepoType } from '../../guards';
 
 import { PreviewBannerViewPR } from './PreviewBannerViewPR';
 
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
-  textUtil: {
-    sanitizeUrl: jest.fn(),
-  },
-}));
-
 jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => ({
   usePullRequestParam: jest.fn(),
 }));
-
-const mockTextUtil = jest.mocked(textUtil);
 
 const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
 
 function setup(
   options: {
-    prURL: string;
+    prURL?: string;
     isNewPr?: boolean;
     repoType?: RepoType;
     action?: string;
     prTitle?: string;
     originalUrl?: string;
+    behindBranch?: boolean;
+    repoUrl?: string;
   } = {
     prURL: 'test-url',
     repoType: 'github',
@@ -41,6 +33,8 @@ function setup(
     prURL: options.prURL,
     isNewPr: options.isNewPr || false,
     originalUrl: options.originalUrl,
+    behindBranch: options.behindBranch,
+    repoUrl: options.repoUrl,
   };
 
   mockUsePullRequestParam.mockReturnValue({
@@ -61,7 +55,6 @@ function setup(
 describe('PreviewBannerViewPR', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockTextUtil.sanitizeUrl.mockImplementation((url) => url);
   });
 
   afterEach(() => {
@@ -145,6 +138,27 @@ describe('PreviewBannerViewPR', () => {
       setup({ prURL: 'test-url', isNewPr: false });
 
       expect(screen.queryByRole('link', { name: 'View saved version' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Behind branch', () => {
+    // This is the variant the provisioned folder banner renders, and it has its own Alert.
+    it('should link to the repository in a new tab', () => {
+      const repoUrl = 'https://github.com/org/repo';
+      setup({ behindBranch: true, repoUrl });
+
+      expect(screen.getByText('This resource is behind the branch in GitHub.')).toBeInTheDocument();
+
+      const link = screen.getByRole('link', { name: /Open in GitHub/i });
+      expect(link).toHaveAttribute('href', repoUrl);
+      expect(link).toHaveAttribute('target', '_blank');
+    });
+
+    it('should not render the action when no repo url is available', () => {
+      setup({ behindBranch: true });
+
+      expect(screen.getByText('This resource is behind the branch in GitHub.')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /Open in GitHub/i })).not.toBeInTheDocument();
     });
   });
 

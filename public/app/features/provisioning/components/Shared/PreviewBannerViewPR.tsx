@@ -1,6 +1,5 @@
-import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Icon, LinkButton, Stack, TextLink, Text } from '@grafana/ui';
+import { Alert, Box, LinkButton, Stack, TextLink, Text } from '@grafana/ui';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
@@ -68,14 +67,6 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
     return (
       <Alert
         {...commonAlertProps}
-        buttonContent={
-          <Stack alignItems="center">
-            {t('provisioned-resource-preview-banner.preview-banner.open-in-repo-button', 'Open in {{repoType}}', {
-              repoType: capitalizedRepoType,
-            })}
-            <Icon name="external-link-alt" />
-          </Stack>
-        }
         title={t(
           'provisioned-resource-preview-banner.preview-banner.behind-branch-text',
           'This resource is behind the branch in {{repoType}}.',
@@ -83,7 +74,15 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
             repoType: capitalizedRepoType,
           }
         )}
-        onRemove={repoUrl ? () => window.open(textUtil.sanitizeUrl(repoUrl), '_blank') : undefined}
+        action={
+          repoUrl && (
+            <LinkButton href={repoUrl} target="_blank" variant="primary" icon="external-link-alt" iconPlacement="right">
+              {t('provisioned-resource-preview-banner.preview-banner.open-in-repo-button', 'Open in {{repoType}}', {
+                repoType: capitalizedRepoType,
+              })}
+            </LinkButton>
+          )
+        }
       >
         <Trans
           i18nKey="provisioned-resource-preview-banner.preview-banner.view-in-repo-button"
