@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/sony/gobreaker/v2"
 )
 
 const (
@@ -27,6 +29,14 @@ type handlerEntry struct {
 	backend Backend
 	handler http.Handler
 	lastRV  string
+
+	// breaker is a passive, per-group circuit breaker: it observes real
+	// proxied request outcomes (transport errors, 502/503/504) rather than
+	// running any active probe of its own -- see AGENTS.md "Passive circuit
+	// breaking". Reset to a fresh instance whenever this group is rebuilt for
+	// a changed RV (the target may have moved), but left untouched across an
+	// unchanged-RV reconcile, same as backend/handler above.
+	breaker *gobreaker.CircuitBreaker[struct{}]
 }
 
 // servingEntry is the immutable per-group record published into snapshot: the
@@ -36,6 +46,7 @@ type handlerEntry struct {
 type servingEntry struct {
 	handler http.Handler
 	rv      string
+	breaker *gobreaker.CircuitBreaker[struct{}]
 }
 
 type phase int
@@ -139,7 +150,7 @@ func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, ne
 	}
 	// /apis/<group> group discovery and /apis/<group>/... both proxy to the
 	// single owning backend (one backend owns all versions of a group).
-	entry.handler.ServeHTTP(w, req)
+	serveThroughBreaker(entry.breaker, entry.handler, w, req)
 }
 
 // groupFromPath returns the group segment of an /apis/<group>[/...] path.
@@ -220,11 +231,23 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 
 	// Cache miss or stale rv: proxy through, capturing the response so it can
 	// be cached on success. Strip conditional headers first — see
-	// stripConditionalHeaders' doc comment for why.
+	// stripConditionalHeaders' doc comment for why. Gated by the same
+	// per-group breaker as the main dispatch — this is still a real proxy
+	// call to the backend, so an outage must fail fast here too.
 	proxyReq := req.Clone(req.Context())
 	stripConditionalHeaders(proxyReq)
 	rec := newCaptureWriter()
-	entry.handler.ServeHTTP(rec, proxyReq)
+	_, err := entry.breaker.Execute(func() (struct{}, error) {
+		entry.handler.ServeHTTP(rec, proxyReq)
+		if isBackendFailure(rec.statusCode) {
+			return struct{}{}, fmt.Errorf("router: backend returned status %d", rec.statusCode)
+		}
+		return struct{}{}, nil
+	})
+	if errors.Is(err, gobreaker.ErrOpenState) || errors.Is(err, gobreaker.ErrTooManyRequests) {
+		http.Error(w, "backend unavailable", http.StatusServiceUnavailable)
+		return
+	}
 
 	for k, v := range rec.header {
 		w.Header()[k] = v
@@ -359,16 +382,20 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		}
 
 		if !ok {
-			// New group: create the entry.
-			r.served[group] = &handlerEntry{backend: b, handler: handler, lastRV: b.RV()}
+			// New group: create the entry, starting with a fresh, closed breaker.
+			r.served[group] = &handlerEntry{backend: b, handler: handler, lastRV: b.RV(), breaker: newGroupBreaker(group)}
 			continue
 		}
 		// Changed: swap the backend/handler in place. The transport (and its
 		// pool) is reused from the shared cache when the TLS key is unchanged,
-		// so the pool survives.
+		// so the pool survives. The breaker is reset to a fresh instance,
+		// though: an RV change can mean the target itself moved, so any prior
+		// trip state would be stale -- see AGENTS.md "Passive circuit
+		// breaking".
 		e.backend = b
 		e.handler = handler
 		e.lastRV = b.RV()
+		e.breaker = newGroupBreaker(group)
 	}
 
 	for group := range r.served {
@@ -392,7 +419,7 @@ func (r *GrafanaRouter) publish() {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
-		snap[group] = servingEntry{handler: e.handler, rv: e.lastRV}
+		snap[group] = servingEntry{handler: e.handler, rv: e.lastRV, breaker: e.breaker}
 		if e.backend != nil {
 			backends = append(backends, e.backend)
 		}

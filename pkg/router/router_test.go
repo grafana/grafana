@@ -24,7 +24,8 @@ func withGroups(groups ...string) *GrafanaRouter {
 			handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				_, _ = w.Write([]byte(g))
 			}),
-			lastRV: "1",
+			lastRV:  "1",
+			breaker: newGroupBreaker(g),
 		}
 	}
 	s.publish()
