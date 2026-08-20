@@ -187,16 +187,15 @@ export const getGridStyles = memoize(
             overflow: 'hidden',
           },
         }),
-
-        // The panel around the table drops its own padding so the header surface can bleed to the
-        // panel edges, which leaves the first column's content further left than the panel title.
-        // Scoped to rows that are *direct* children, so a nested table's own grid (which lives
-        // inside a cell) keeps the standard padding throughout.
-        ...(noPanelPadding && {
-          [`& > * > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
-            paddingInlineStart: TABLE.CELL_PADDING + FIRST_COLUMN_EXTRA_PADDING,
-          },
-        }),
+      }),
+      // The panel around the table drops its own padding so the header surface can bleed to the
+      // panel edges, which leaves the first column's content further left than the panel title.
+      // A class of its own rather than part of `grid`: a nested table's inner grid also carries
+      // `grid`, and only the outermost table's first column lines up with the panel title.
+      firstColumnInset: css({
+        [`& > * > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
+          paddingInlineStart: TABLE.CELL_PADDING + FIRST_COLUMN_EXTRA_PADDING,
+        },
       }),
       gridNested: css({
         // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no

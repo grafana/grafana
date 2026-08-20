@@ -313,7 +313,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   });
 
   const showPagination = enablePagination && numRows > 0;
-  const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled);
+  const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
@@ -551,6 +551,10 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
           nestedRows[row.__index].raw,
           nestedRows[row.__index].final
         );
+        // Each nested table is its own grid with its own header row, so it needs its own edge
+        // markers — the outer table's markers sit on the outer columns, the first of which is the
+        // expander that this nested grid is rendered inside.
+        markEdgeColumns(result[row.__index]);
       }
     }
     return result;
