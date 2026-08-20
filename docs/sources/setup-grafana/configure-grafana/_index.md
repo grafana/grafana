@@ -902,7 +902,15 @@ The file may contain either a classic dashboard JSON or a Kubernetes-format dash
 
 #### `default_preload`
 
-Instance-wide default for panel preloading, applied only to dashboards that do not explicitly set the `preload` property in their JSON. When `true`, all panels start loading as soon as the dashboard loads instead of lazy loading as they scroll into view. An explicit `preload` value in the dashboard JSON always takes precedence over this default. Default is `false`.
+The `preload` value given to newly created dashboards. When `true`, a new dashboard starts with all panels loading as soon as it opens, instead of lazy loading them as they scroll into view. Default is `false`.
+
+The value is written into the dashboard when it is created, so authors can change it in dashboard settings afterwards and their choice wins.
+
+This setting only applies to dashboards created after you set it. Existing dashboards keep whatever `preload` value they already have, so turning it on never changes how they behave. It applies to dashboards created in the UI; dashboards created through the API or provisioning use the `preload` value in the payload.
+
+#### `report_render_query_grace_period`
+
+How long the report render page (/d-report/) waits, after all panel queries appear to have settled, before telling the image renderer the dashboard is done. This guards against repeat panels that register their queries late (e.g. after a repeat variable's own query resolves), which can otherwise get captured blank. Only used when the feature flag `reportRenderQueryDebounce` is enabled. Default is `3s`.
 
 ### `[dashboard_cleanup]`
 
@@ -2903,6 +2911,12 @@ The minimum sync interval that you can set for a repository. Indicates how often
 List of enabled repository types, separated by `|`. When empty, defaults are applied by each subsystem.
 
 Supported types: `local`, `git`, `github`. Grafana Enterprise additionally supports `bitbucket` and `gitlab`.
+
+#### `connection_types`
+
+List of enabled connection types, separated by `|`. When empty, defaults are applied by each subsystem.
+
+Supported types: `github` and `githubOAuth`. Grafana Enterprise additionally supports `githubEnterprise`, `bitbucketOAuth`, and `gitlabOAuth`.
 
 #### `max_repositories`
 

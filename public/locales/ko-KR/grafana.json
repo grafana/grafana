@@ -2200,6 +2200,8 @@
       "title-no-alerting-capable-query-found": "경고 기능이 있는 쿼리를 찾을 수 없습니다"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "특정 경고 규칙에서 알림을 중지하도록 알림 끄기 구성"
@@ -2207,7 +2209,10 @@
         "text": {
           "silence-alert-rule": "경고 규칙 끄기"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "외부 Alertmanager를 찾을 수 없으며 내장된 Grafana Alertmanager에 액세스할 수 없습니다.",
@@ -3676,6 +3681,9 @@
       "no-matching-instances-with-filters": "선택한 시간 범위의 필터 설정과 일치되는 알림 인스턴스가 없습니다.",
       "open-in-sidebar": "사이드바에서 열기",
       "open-rule-details": "규칙 세부 정보 열기",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "규칙 세부 정보 및 조건",
         "title": "규칙 세부 정보"
@@ -5380,6 +5388,16 @@
     "auto-grid": {
       "description": "패널은 크기에 맞게 조정되어 균일한 그리드를 형성합니다.",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "반복 옵션",
           "variable": {
@@ -5397,15 +5415,36 @@
         "custom-min-width": {
           "clear": "초기화"
         },
+        "fit-content": "",
         "height-fill": "화면 채우기",
+        "match-row-heights": "",
         "max-columns": "최대 열 수",
-        "min-height": "행 높이",
-        "min-height-custom": "사용자 지정 행 높이",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "50에서 2000 사이의 숫자여야 합니다",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "최소 열 너비",
         "min-width-custom": "사용자 지정 최소 너비",
         "min-width-custom-clear": "표준 최소 열 너비로 돌아가기",
-        "min-width-error": "50에서 2000 사이의 숫자여야 합니다"
+        "min-width-error": "50에서 2000 사이의 숫자여야 합니다",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5638,6 +5677,7 @@
       "panel-background": "패널 배경 변경",
       "panel-description": "패널 설명 변경",
       "panel-edit": "패널 변경",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "행당 최대 반복 횟수",
       "panel-preset": "패널 사전 설정 적용",
       "panel-repeat-direction": "반복 방향",
@@ -9434,21 +9474,6 @@
   "get-enterprise": {
     "requires-license": "Grafana Enterprise 라이선스 필요",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "완료",
-      "learn-how": "문서에서 방법 알아보기"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "고급 튜토리얼로",
-      "aria-label-to-basic-tutorials": "기본 튜토리얼로",
-      "checking-completed-setup-steps": "완료된 설정 단계 확인 중",
-      "remove-this-panel": "이 패널 삭제"
-    },
-    "tutorial-card": {
-      "complete": "완료"
-    }
   },
   "global-variables": {
     "details": {
@@ -17391,12 +17416,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "링크"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "도움이 필요하세요?",
-      "welcome-to-grafana": "Grafana에 오신 것을 환영합니다."
     }
   },
   "xychart": {

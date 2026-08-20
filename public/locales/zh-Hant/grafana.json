@@ -2200,6 +2200,8 @@
       "title-no-alerting-capable-query-found": "找不到警報功能的查詢"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "設定靜音以停止來自特定警示規則的通知"
@@ -2207,7 +2209,10 @@
         "text": {
           "silence-alert-rule": "靜音警報規則"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "我們找不到任何外部的 Alertmanager，您可能沒有內建 Grafana Alertmanager 的存取權限。",
@@ -3676,6 +3681,9 @@
       "no-matching-instances-with-filters": "沒有警示執行個體符合您所選時間範圍的目前篩選條件。",
       "open-in-sidebar": "在側邊欄中開啟",
       "open-rule-details": "開啟規則詳細資料",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "規則詳細資料和條件",
         "title": "規則詳細資訊"
@@ -5380,6 +5388,16 @@
     "auto-grid": {
       "description": "面板調整大小以調整並形成統一的網格",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "重複選項",
           "variable": {
@@ -5397,15 +5415,36 @@
         "custom-min-width": {
           "clear": "清除"
         },
+        "fit-content": "",
         "height-fill": "填滿畫面",
+        "match-row-heights": "",
         "max-columns": "最大欄數",
-        "min-height": "列高",
-        "min-height-custom": "自訂列高",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "必須為 50 到 2000 之間的數字",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "最小欄寬度",
         "min-width-custom": "自訂最小寬度",
         "min-width-custom-clear": "回到標準最小欄寬",
-        "min-width-error": "必須為 50 到 2000 之間的數字"
+        "min-width-error": "必須為 50 到 2000 之間的數字",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5638,6 +5677,7 @@
       "panel-background": "變更面板背景",
       "panel-description": "變更面板描述",
       "panel-edit": "面板變更",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "每列最大重複次數",
       "panel-preset": "套用面板預設值",
       "panel-repeat-direction": "重複方向",
@@ -9434,21 +9474,6 @@
   "get-enterprise": {
     "requires-license": "需要 Grafana 企業版授權",
     "title": "企業版"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "完成",
-      "learn-how": "在文件中了解如何操作"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "前往進階教學",
-      "aria-label-to-basic-tutorials": "前往基本教學",
-      "checking-completed-setup-steps": "正在檢查已完成的設定步驟",
-      "remove-this-panel": "移除此面板"
-    },
-    "tutorial-card": {
-      "complete": "完成"
-    }
   },
   "global-variables": {
     "details": {
@@ -17391,12 +17416,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "連結"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "需要幫忙嗎？",
-      "welcome-to-grafana": "歡迎使用 Grafana"
     }
   },
   "xychart": {

@@ -1619,6 +1619,15 @@
         "title": "Auto-sync is enabled"
       },
       "confirm": {
+        "autosync-body": "Are you sure you want to enable Auto-sync? Grafana will continuously sync alert configuration from this data source until you turn it off in Alerting settings.",
+        "autosync-confirm": "Enable auto-sync",
+        "autosync-error-body": "Failed to enable Auto-sync. Please check the error details and try again.",
+        "autosync-error-title": "Auto-sync Failed",
+        "autosync-importing-body": "Enabling Auto-sync. Please wait...",
+        "autosync-importing-title": "Enabling auto-sync...",
+        "autosync-success-body": "Auto-sync enabled. Redirecting...",
+        "autosync-success-title": "Auto-sync Enabled",
+        "autosync-title": "Confirm Auto-sync",
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
         "error-body": "Failed to import resources. Please check the error details and try again.",
@@ -1688,7 +1697,10 @@
       "renamed-receivers_one": "{{count}} contact points will be renamed",
       "renamed-receivers_other": "{{count}} contact points will be renamed",
       "review": {
+        "autosync-badge": "Will sync continuously",
         "back": "Alert rules",
+        "back-notifications": "Notification resources",
+        "enable-autosync": "Enable auto-sync",
         "filter": "Filter",
         "folder": "Target folder",
         "heading": "Review Import",
@@ -1706,6 +1718,7 @@
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
+        "rules-autosync-badge": "Syncs automatically",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Alert Rules",
         "skipped": "Skipped",
@@ -1731,12 +1744,17 @@
         "yaml-description": "Import rules from a Prometheus YAML file."
       },
       "step1": {
+        "autosync-datasource-filtered": "Auto-sync can only mirror from Mimir or Cortex Alertmanager data sources.",
+        "autosync-label": "Auto-sync",
+        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Skips the Alert Rules step since rules sync automatically too.",
         "datasource": "Alertmanager data source",
         "heading": "Import Notification Resources",
         "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
         "no-datasources": "No Alertmanager data sources found",
+        "no-mimir-cortex-datasources": "No Mimir or Cortex data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
+        "policy-tree-autosync-disabled": "Not needed. Auto-sync mirrors the source directly, so there's no policy tree to name.",
         "policy-tree-desc": "When you import, Grafana creates a separate notification policy tree. Enter a name you will recognize.",
         "policy-tree-help": "When you import this Alertmanager configuration, Grafana will create a separate notification policy tree for it. The name you enter here will identify that tree in the UI and is what you select when you import alert rules that should use this routing. Use a label you will recognize — for example data source, team, cluster, or environment (such as prometheus-prod or platform-team).",
         "policy-tree-help-title": "About policy tree names",
@@ -3863,6 +3881,8 @@
       "title-notification-policies": "Notification policies"
     },
     "wizard-import-to-gma": {
+      "autosync-success-body": "Grafana will keep syncing alert configuration from this data source.",
+      "autosync-success-title": "Auto-sync enabled",
       "error": "Failed to import resources",
       "staged-success-body": "Your imported config is now staged in the Import tab.",
       "staged-success-title": "Configuration staged",
@@ -6150,7 +6170,6 @@
       "title": "Title"
     },
     "save-dashboard-diff": {
-      "full-json-diff": "Full JSON diff",
       "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON",
       "title-because-dashboard-migrated-grafana-format": "The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format",
       "title-folder": "folder",
@@ -6301,6 +6320,13 @@
         "collapse": "Collapse editor",
         "copy-as-resource": "Copy as resource",
         "copy-as-resource-tooltip": "Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files",
+        "diff-disabled-tooltip": "Fix syntax errors to view the diff",
+        "diff-migrated": "Note: The diff also includes changes resulting from migration to the new dashboard format.",
+        "diff-no-changes": "No changes to show",
+        "diff-no-changes-body": "The dashboard matches the original. Changes appear here as you make them.",
+        "diff-toggle": "Show diff",
+        "diff-unavailable": "Cannot show changes",
+        "diff-unavailable-body": "The original dashboard is not available for comparison.",
         "expand": "Expand editor",
         "modal-title": "Edit dashboard as code",
         "pane-header": "Edit as code",
@@ -7406,7 +7432,9 @@
     },
     "panel-data-queries-tab-rendered": {
       "add-query": "Add query",
-      "expression": "Expression "
+      "expression": "Expression ",
+      "sql-expressions-frontend-only": "SQL expressions can only evaluate results from backend datasources. This panel only contains frontend datasources.",
+      "sql-expressions-pending": "SQL expressions can only evaluate results from backend datasources."
     },
     "panel-data-transformations-tab": {
       "tab-label": "Transformations"
@@ -7896,7 +7924,6 @@
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>."
   },
   "dashboard-schema-editor": {
-    "format-label": "Format:",
     "json-disabled-tooltip": "Fix YAML syntax errors to switch to JSON",
     "yaml-disabled-tooltip": "Fix JSON syntax errors to switch to YAML"
   },
@@ -8265,9 +8292,6 @@
       "current-value": "Current value: {{currentValue}} ",
       "label-state-name": "State name"
     }
-  },
-  "diff-viewer": {
-    "loading": "Loading diff..."
   },
   "dimensions": {
     "background-size-editor": {
@@ -8682,7 +8706,8 @@
         "inspect-value": "Inspect value",
         "show-details": "Show details",
         "view-log-line": "View log line"
-      }
+      },
+      "loki-time-sort-tooltip": "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
     },
     "logs-table-empty-fields": {
       "no-fields": "No fields"
@@ -11050,6 +11075,7 @@
       "title": "Active incidents",
       "view-all": "View all incidents"
     },
+    "learn-more": "Learn more",
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
       "empty-description": "Once your organization has dashboards and usage data has been collected, dashboards with the most views over the last 30 days will be displayed here.",
@@ -11063,6 +11089,23 @@
       "title": "Latest from the blog"
     },
     "overview": {
+      "available": {
+        "logs": {
+          "action": "Add logs"
+        },
+        "metrics": {
+          "action": "Connect metrics"
+        },
+        "traces": {
+          "action": "Instrument traces"
+        }
+      },
+      "empty": {
+        "all": "No solutions were found.",
+        "attention": "No solutions need attention.",
+        "available": "No available solutions to show yet.",
+        "enabled": "No enabled solutions with recent activity were found."
+      },
       "get-started": {
         "cards": {
           "app-monitoring": {
@@ -11130,12 +11173,23 @@
         "show-more": "More getting started guides",
         "title": "Recommended getting started guides"
       },
+      "groups": {
+        "attention": "Needs attention",
+        "available": "Available",
+        "enabled": "Enabled"
+      },
       "options": {
         "all": "All solutions",
         "attention": "Needs attention",
         "available": "Available solutions",
         "enabled": "Enabled solutions",
         "get-started": "Get started"
+      },
+      "status": {
+        "attention": "Needs attention",
+        "available": "Not enabled",
+        "enabled": "Enabled",
+        "setup": "Ready to configure"
       },
       "title": "Your observability stack overview"
     },
@@ -11179,14 +11233,6 @@
       },
       "existing": "Enabled solution",
       "go-to": "Go to recommendation {{index}}",
-      "health": {
-        "nodes_one": "{{count}} node not ready",
-        "nodes_other": "{{count}} nodes not ready",
-        "pods_one": "{{count}} pod pending or failed",
-        "pods_other": "{{count}} pods pending or failed",
-        "restarts_one": "{{count}} restart in the last hour",
-        "restarts_other": "{{count}} restarts in the last hour"
-      },
       "hide": "Hide",
       "hosted-traces": {
         "action": "Enable Hosted Traces",
@@ -11195,19 +11241,6 @@
         "setup-action": "Set up Hosted Traces",
         "title": "Trace requests across services"
       },
-      "kubernetes": {
-        "action": "Open K8s app",
-        "alerts-firing_one": "{{value}} alert firing",
-        "alerts-firing_other": "{{value}} alerts firing",
-        "cluster-cpu": "Cluster CPU · last 24h",
-        "clusters_one": "{{value}} cluster",
-        "clusters_other": "{{value}} clusters",
-        "datasource": "via {{name}}",
-        "pods_one": "{{value}} pod",
-        "pods_other": "{{value}} pods",
-        "title": "Kubernetes Monitoring",
-        "view": "View"
-      },
       "kubernetes-monitoring": {
         "action": "Enable Kubernetes Monitoring",
         "context": "Cluster health next to your existing telemetry",
@@ -11215,50 +11248,18 @@
         "setup-action": "Set up Kubernetes Monitoring",
         "title": "Monitor your Kubernetes fleet"
       },
-      "logs": {
-        "action": "Open Explore (Logs)",
-        "action-explore": "Open in Explore",
-        "datasource": "via {{name}}",
-        "stats": "ingested · 7d",
-        "stats-sources_one": "ingested · 7d · ~{{count}} source",
-        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
-        "title": "Hosted Logs",
-        "volume": "Ingest volume · last 24h"
-      },
-      "metrics": {
-        "action": "Open Metrics Drilldown",
-        "action-explore": "Open in Explore",
-        "data-points-per-minute": "{{value}} data points/min",
-        "datasource": "via {{name}}",
-        "disk-eta_one": "~{{count}} h to full",
-        "disk-eta_other": "~{{count}} h to full",
-        "disk-hosts_one": "{{count}} host above 90% disk",
-        "disk-hosts_other": "{{count}} hosts above 90% disk",
-        "disk-worst": "{{host}} at {{percent}}%",
-        "names_one": "{{value}} metric",
-        "names_other": "{{value}} metrics",
-        "series_one": "{{value}} series",
-        "series_other": "{{value}} series",
-        "series-trend": "Active series · last 24h",
-        "stats": "active",
-        "stats-hosts_one": "active · {{count}} host",
-        "stats-hosts_other": "active · {{count}} hosts",
-        "title": "Metrics & infrastructure",
-        "view": "View"
-      },
       "next": "Next",
       "no-data": {
         "badge": "Getting started",
         "connect": "Connect a data source",
         "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
-        "description-partial": "Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.",
         "description-unknown": "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here.",
         "popular-solutions": "Popular solutions",
         "solution-k6": "k6",
         "solution-kubernetes": "Kubernetes Monitoring",
         "solution-synthetics": "Synthetic Monitoring",
         "title": "No data flowing yet",
-        "title-partial": "Add more telemetry"
+        "title-unknown": "We couldn't confirm your data"
       },
       "pause": "Pause",
       "previous": "Previous",
@@ -11267,19 +11268,75 @@
       "show": "Show",
       "switch": "Recommendations follow the selected solution",
       "switchSolution": "Switch solution",
-      "title": "Recommendations for your stack",
+      "title": "Recommendations for your stack"
+    },
+    "solutions": {
+      "cta": {
+        "enable": "Enable",
+        "open-app": "Open {{appName}}",
+        "open-explore": "Open in Explore",
+        "set-up": "Set up"
+      },
+      "kubernetes": {
+        "alerts-firing_one": "{{value}} alert firing",
+        "alerts-firing_other": "{{value}} alerts firing",
+        "cluster-cpu": "Cluster CPU · last 24h",
+        "clusters_one": "{{value}} cluster",
+        "clusters_other": "{{value}} clusters",
+        "description": "See cluster health, cost, and right-sizing savings in one view.",
+        "health-nodes_one": "{{count}} node not ready",
+        "health-nodes_other": "{{count}} nodes not ready",
+        "health-pods_one": "{{count}} pod pending or failed",
+        "health-pods_other": "{{count}} pods pending or failed",
+        "health-restarts_one": "{{count}} restart in the last hour",
+        "health-restarts_other": "{{count}} restarts in the last hour",
+        "pods_one": "{{value}} pod",
+        "pods_other": "{{value}} pods",
+        "setup-hint": "~3 min · Helm/Alloy",
+        "title": "Kubernetes Monitoring",
+        "view-alerts": "View alerts in Kubernetes Monitoring"
+      },
+      "logs": {
+        "description": "Aggregate and search logs from your applications and infrastructure.",
+        "setup-hint": "connect a logs source",
+        "stats": "ingested · 7d",
+        "stats-sources_one": "ingested · 7d · ~{{count}} source",
+        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
+        "title": "Logs",
+        "volume": "Ingest volume · last 24h"
+      },
+      "metrics": {
+        "data-points-per-minute": "{{value}} data points/min",
+        "description": "Connect Prometheus-compatible metrics to explore infrastructure health and trends.",
+        "disk-eta_one": "~{{count}} h to full",
+        "disk-eta_other": "~{{count}} h to full",
+        "disk-hosts_one": "{{count}} host above 90% disk",
+        "disk-hosts_other": "{{count}} hosts above 90% disk",
+        "disk-worst": "{{host}} at {{percent}}%",
+        "investigate-disk": "Investigate disk usage in Explore",
+        "names_one": "{{value}} metric",
+        "names_other": "{{value}} metrics",
+        "series_one": "{{value}} series",
+        "series_other": "{{value}} series",
+        "series-trend": "Active series · last 24h",
+        "setup-hint": "connect a metrics source",
+        "stats": "active",
+        "stats-hosts_one": "active · {{count}} host",
+        "stats-hosts_other": "active · {{count}} hosts",
+        "title": "Metrics & infrastructure"
+      },
       "traces": {
-        "action": "Open Traces Drilldown",
-        "action-explore": "Open in Explore",
-        "datasource": "via {{name}}",
+        "description": "See how requests flow across services and where they slow down.",
+        "setup-hint": "requires instrumentation",
         "spans_one": "{{value}} span",
         "spans_other": "{{value}} spans",
-        "stats": "traced · 24h",
-        "stats-services_one": "traced · 24h · {{count}} service",
-        "stats-services_other": "traced · 24h · {{count}} services",
-        "throughput": "Span throughput · last 24h",
-        "title": "Hosted Traces"
-      }
+        "stats": "traced · {{hours}}h",
+        "stats-services_one": "traced · {{hours}}h · {{count}} service",
+        "stats-services_other": "traced · {{hours}}h · {{count}} services",
+        "throughput": "Span throughput · last {{hours}}h",
+        "title": "Traces"
+      },
+      "via-datasource": "via {{name}}"
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
@@ -11855,7 +11912,8 @@
         "disable-highlighting": "Highlight text",
         "enable-highlighting": "Plain text",
         "escape-newlines": "Escape newlines",
-        "expand": "Collapsed"
+        "expand": "Collapsed",
+        "highlighting-unavailable": "Highlighting unavailable"
       },
       "labels": {
         "font-large": "Large font",
@@ -11908,7 +11966,8 @@
         "disable-highlighting": "Disable highlighting",
         "download": "Download",
         "enable-highlighting": "Enable highlighting",
-        "filter-level": "Filter logs result by level"
+        "filter-level": "Filter logs result by level",
+        "highlighting-unavailable": "Highlighting is disabled because these logs are too large and could impact performance"
       },
       "unwrapped-columns": {
         "disable": "Disable columns",
@@ -12264,6 +12323,10 @@
       "link-title": "More questions? Talk to an expert",
       "title": "Why host with Grafana?"
     }
+  },
+  "monaco-diff-editor": {
+    "view-inline": "Inline",
+    "view-side-by-side": "Side by side"
   },
   "multicombobox": {
     "all": {
@@ -12844,6 +12907,17 @@
       "label": "Export",
       "open-in-cursor": "Open in Cursor",
       "opening-in-cursor": "Opening in Cursor"
+    },
+    "history": {
+      "add-block": "Add block",
+      "delete-block": "Delete block",
+      "duplicate-block": "Duplicate block",
+      "edit-block": "Edit block",
+      "move-block": "Move block",
+      "redo": "Redo",
+      "redo-action": "Redo: {{action}}",
+      "undo": "Undo",
+      "undo-action": "Undo: {{action}}"
     },
     "list": {
       "all-authors": "All authors",
@@ -13601,7 +13675,7 @@
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
-      "branch-text": "branch:",
+      "branch-targets": "targets",
       "delete-from-branch": "The rest of Grafana users in your organization will still see this resource until this branch is merged",
       "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
       "open-in-repo-button": "Open in {{repoType}}",

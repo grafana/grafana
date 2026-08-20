@@ -360,6 +360,33 @@ func TestService_GetUserPermissions_ReloadCacheBypassesZanzanaCache(t *testing.T
 	require.Greater(t, zClient.ListCallCount(), firstCalls, "ReloadCache should bypass Zanzana cache")
 }
 
+func TestService_GetUserPermissions_SkipZanzanaCacheDoesNotReadOrWriteCache(t *testing.T) {
+	store := &actest.FakeStore{}
+	zClient := &countingZanzanaClient{
+		fakeZanzanaClient: fakeZanzanaClient{
+			listResp: &authzv1.ListResponse{Items: []string{"cached-dash"}},
+		},
+	}
+	svc := setupServiceWithPermissionCache(t, store, zClient, &usertest.FakeUserService{}, true)
+	siu := testSignedInUser()
+
+	permissions, err := svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Contains(t, permissions, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:cached-dash"})
+
+	zClient.listResp = &authzv1.ListResponse{Items: []string{"contextual-dash"}}
+	permissions, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{SkipZanzanaCache: true})
+	require.NoError(t, err)
+	require.Contains(t, permissions, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:contextual-dash"})
+	require.NotContains(t, permissions, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:cached-dash"})
+
+	zClient.listResp = &authzv1.ListResponse{Items: []string{"unexpected-dash"}}
+	permissions, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Contains(t, permissions, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:cached-dash"})
+	require.NotContains(t, permissions, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:contextual-dash"})
+}
+
 func TestService_GetUserPermissions_ClearUserPermissionCacheBypassesZanzanaCache(t *testing.T) {
 	store := &actest.FakeStore{}
 	zClient := &countingZanzanaClient{
