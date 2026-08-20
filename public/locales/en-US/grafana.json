@@ -12882,6 +12882,17 @@
       "open-in-cursor": "Open in Cursor",
       "opening-in-cursor": "Opening in Cursor"
     },
+    "history": {
+      "add-block": "Add block",
+      "delete-block": "Delete block",
+      "duplicate-block": "Duplicate block",
+      "edit-block": "Edit block",
+      "move-block": "Move block",
+      "redo": "Redo",
+      "redo-action": "Redo: {{action}}",
+      "undo": "Undo",
+      "undo-action": "Undo: {{action}}"
+    },
     "list": {
       "all-authors": "All authors",
       "author-filter": "Filter by author",

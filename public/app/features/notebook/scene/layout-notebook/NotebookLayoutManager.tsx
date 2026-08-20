@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropResult } from '@hello-pangea/dnd';
+import { isEqual } from 'lodash';
 import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -26,6 +27,8 @@ import {
   type NotebookLayoutItemKind,
   type NotebookLayoutKind,
 } from '../../types';
+import { type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
+import { isNotebookScene } from '../isNotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
@@ -47,6 +50,17 @@ interface NotebookLayoutManagerState extends SceneObjectState {
    * reintroduces the dependency cycle.
    */
   isEditing?: boolean;
+}
+
+// Keep typing useful to undo without storing every keystroke as a separate action.
+const CONTENT_EDIT_COALESCE_MS = 800;
+
+interface PendingContentEdit {
+  elementName: string;
+  before: CellContentKind;
+  after: CellContentKind;
+  action: NotebookEditAction;
+  timer?: ReturnType<typeof setTimeout>;
 }
 
 export class NotebookLayoutManager
@@ -74,16 +88,46 @@ export class NotebookLayoutManager
 
   public readonly descriptor = NotebookLayoutManager.descriptor;
 
-  // Serialization lives here (not in a standalone helper) so the manager doesn't import the
-  // serializer module — that mutual import is what forms a dependency cycle. The serializer
-  // still imports this manager to construct it in deserialize, which stays one-directional.
+  private pendingContentEdit?: PendingContentEdit;
+
+  public constructor(state: NotebookLayoutManagerState) {
+    super(state);
+
+    // Typing is grouped into one undo step that sits in a field until the typing stops. Without this,
+    // closing the notebook mid-word would leave that step behind, and the next typing would join it.
+    this.addActivationHandler(() => {
+      return () => this.commitContentEdits();
+    });
+  }
+
+  /**
+   * The scene above owns the history, so reading it here means nothing has to hand it over again when
+   * the scene swaps its body. duplicate(), the deserializer and tests build a manager with no scene
+   * above it. Editing one of those still works, the changes are just not recorded.
+   */
+  private get editHistory(): NotebookEditHistory | undefined {
+    let parent = this.parent;
+
+    while (parent) {
+      if (isNotebookScene(parent)) {
+        return parent.editHistory;
+      }
+      parent = parent.parent;
+    }
+
+    return undefined;
+  }
+
+  // Serialization lives here instead of in a helper file, so that this file never has to import the
+  // serializer. If both files imported each other they would form a cycle, which is what this layout
+  // avoids. The serializer still imports this class to build it when reading a notebook, one way only.
   public serialize(): NotebookLayoutKind {
     const cells: NotebookLayoutItemKind[] = this.state.cells.map((cell) => ({
       kind: 'NotebookLayoutItem',
       spec: {
         element: { kind: 'ElementReference', name: cell.state.elementName },
         source: cell.state.source,
-        // Emit collapsed only when it was set, so an omitted value stays omitted on round-trip.
+        // Only write `collapsed` when it has a value, so a notebook that never had it does not gain it.
         ...(cell.state.collapsed !== undefined ? { collapsed: cell.state.collapsed } : {}),
       },
     }));
@@ -91,8 +135,8 @@ export class NotebookLayoutManager
     return { kind: 'NotebookLayout', spec: { cells } };
   }
 
-  // Only panel cells are viz panels; markdown/code cells are narrative content and are
-  // intentionally invisible to the rest of the scene (query runner, edit tooling).
+  // Only panel cells hold a viz panel. Text and code cells are just content, and the rest of the
+  // scene (the query runner, the edit tools) is meant not to see them.
   public getVizPanels(): VizPanel[] {
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
   }
@@ -116,23 +160,116 @@ export class NotebookLayoutManager
    * It lives on the manager because that is what owns `cells`; a cell cannot see its siblings.
    */
   public setCellContent = (target: NotebookCellItem, content: CellContentKind): void => {
+    const previous = target.state.content;
+    if (!previous || isEqual(previous, content)) {
+      return;
+    }
+
+    const pending = this.pendingContentEdit;
+    if (pending?.elementName === target.state.elementName) {
+      this.extendContentEdit(pending, content);
+      return;
+    }
+
+    this.commitContentEdits();
+    this.startContentEdit(target.state.elementName, previous, content);
+  };
+
+  /**
+   * Adds a change to the edit already being typed, so a run of key presses is one undo step.
+   *
+   * Typing back to where the edit started leaves nothing to undo, so the action is taken off the
+   * history rather than left there doing nothing.
+   */
+  private extendContentEdit(edit: PendingContentEdit, content: CellContentKind): void {
+    this.applyCellContent(edit.elementName, content);
+    edit.after = structuredClone(content);
+
+    if (isEqual(edit.before, edit.after)) {
+      this.editHistory?.discard(edit.action);
+      this.finishContentEdit(edit);
+      return;
+    }
+
+    this.scheduleContentEditCommit(edit);
+  }
+
+  private startContentEdit(elementName: string, previous: CellContentKind, content: CellContentKind): void {
+    const after = structuredClone(content);
+    const history = this.editHistory;
+    if (!history) {
+      this.applyCellContent(elementName, after);
+      return;
+    }
+
+    // perform and undo read `edit` when they run, not now: extendContentEdit keeps changing `after`
+    // while typing continues, and the last value is the one to redo. Both stop the grouping first, so
+    // undoing while typing also ends the edit it undoes.
+    const edit: PendingContentEdit = {
+      elementName,
+      before: structuredClone(previous),
+      after,
+      action: {
+        label: t('notebooks.history.edit-block', 'Edit block'),
+        perform: () => {
+          this.finishContentEdit(edit);
+          this.applyCellContent(edit.elementName, edit.after);
+        },
+        undo: () => {
+          this.finishContentEdit(edit);
+          this.applyCellContent(edit.elementName, edit.before);
+        },
+      },
+    };
+
+    this.pendingContentEdit = edit;
+    this.applyCellContent(edit.elementName, edit.after);
+    history.record(edit.action);
+    this.scheduleContentEditCommit(edit);
+  }
+
+  public commitContentEdits(): void {
+    if (this.pendingContentEdit) {
+      this.finishContentEdit(this.pendingContentEdit);
+    }
+  }
+
+  private scheduleContentEditCommit(edit: PendingContentEdit): void {
+    clearTimeout(edit.timer);
+    edit.timer = setTimeout(() => this.finishContentEdit(edit), CONTENT_EDIT_COALESCE_MS);
+  }
+
+  private finishContentEdit(edit: PendingContentEdit): void {
+    clearTimeout(edit.timer);
+    if (this.pendingContentEdit === edit) {
+      this.pendingContentEdit = undefined;
+    }
+  }
+
+  private applyCellContent(elementName: string, content: CellContentKind): void {
     for (const cell of this.state.cells) {
       // Panel cells carry no content and must not gain any.
-      if (cell.state.content && cell.state.elementName === target.state.elementName) {
+      if (cell.state.content && cell.state.elementName === elementName) {
         cell.setState({ content });
       }
     }
-  };
+  }
 
   /**
    * Reorders a cell, mirroring RowsLayoutManager.moveRow. The cell objects move rather than being
    * rebuilt, so a panel cell keeps its VizPanel and its already-fetched data across the move.
    */
   public moveCell(fromIndex: number, toIndex: number) {
-    const cells = [...this.state.cells];
-    const [removed] = cells.splice(fromIndex, 1);
-    cells.splice(toIndex, 0, removed);
-    this.setState({ cells });
+    const cell = this.state.cells[fromIndex];
+    if (!cell || fromIndex === toIndex || toIndex < 0 || toIndex >= this.state.cells.length) {
+      return;
+    }
+
+    this.executeEdit({
+      label: t('notebooks.history.move-block', 'Move block'),
+      perform: () => this.moveCellTo(cell, toIndex),
+      undo: () => this.moveCellTo(cell, fromIndex),
+    });
   }
 
   /**
@@ -157,9 +294,12 @@ export class NotebookLayoutManager
       content: defaultCodeCellContentKind(),
     });
 
-    const cells = [...this.state.cells];
-    cells.splice(index, 0, cell);
-    this.setState({ cells });
+    const insertionIndex = Math.max(0, Math.min(index, this.state.cells.length));
+    this.executeEdit({
+      label: t('notebooks.history.add-block', 'Add block'),
+      perform: () => this.insertCell(cell, insertionIndex),
+      undo: () => this.removeCellInstance(cell),
+    });
 
     return cell;
   };
@@ -187,17 +327,63 @@ export class NotebookLayoutManager
       ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
     });
 
-    const cells = [...this.state.cells];
-    cells.splice(index + 1, 0, copy);
-    this.setState({ cells });
+    this.executeEdit({
+      label: t('notebooks.history.duplicate-block', 'Duplicate block'),
+      perform: () => this.insertCell(copy, index + 1),
+      undo: () => this.removeCellInstance(copy),
+    });
   }
 
   public removeCell(cell: NotebookCellItem): void {
-    const cells = this.state.cells.filter((candidate) => candidate !== cell);
+    const index = this.state.cells.indexOf(cell);
+    if (index === -1) {
+      return;
+    }
 
+    this.executeEdit({
+      label: t('notebooks.history.delete-block', 'Delete block'),
+      perform: () => this.removeCellInstance(cell),
+      undo: () => this.insertCell(cell, index),
+    });
+  }
+
+  private executeEdit(action: NotebookEditAction): void {
+    this.commitContentEdits();
+    const history = this.editHistory;
+    if (history) {
+      history.execute(action);
+    } else {
+      action.perform();
+    }
+  }
+
+  private insertCell(cell: NotebookCellItem, index: number): void {
+    if (this.state.cells.includes(cell)) {
+      return;
+    }
+
+    const cells = [...this.state.cells];
+    cells.splice(index, 0, cell);
+    this.setState({ cells });
+  }
+
+  private removeCellInstance(cell: NotebookCellItem): void {
+    const cells = this.state.cells.filter((candidate) => candidate !== cell);
     if (cells.length !== this.state.cells.length) {
       this.setState({ cells });
     }
+  }
+
+  private moveCellTo(cell: NotebookCellItem, toIndex: number): void {
+    const fromIndex = this.state.cells.indexOf(cell);
+    if (fromIndex === -1 || fromIndex === toIndex) {
+      return;
+    }
+
+    const cells = [...this.state.cells];
+    cells.splice(fromIndex, 1);
+    cells.splice(toIndex, 0, cell);
+    this.setState({ cells });
   }
 
   /**
