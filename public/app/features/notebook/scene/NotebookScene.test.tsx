@@ -190,6 +190,24 @@ describe('NotebookScene', () => {
       expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
     });
 
+    // The assistant writes without entering edit mode, so gating the status on `isEditing` would hide a
+    // failed save from the only person who could retry it.
+    it('reports a save outside edit mode, where the assistant writes', () => {
+      const scene = buildScene(false);
+      activate(scene);
+      render(<scene.Component model={scene} />);
+
+      expect(screen.queryByText('Save failed')).not.toBeInTheDocument();
+
+      act(() =>
+        scene.autosave.setState({ status: 'error', errorMessage: 'The notebook was changed by someone else.' })
+      );
+
+      expect(scene.state.isEditing).toBeUndefined();
+      expect(screen.getByText('Save failed')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    });
+
     it('records history for a body replaced before activation', () => {
       const scene = buildScene(false);
       const replacement = new NotebookLayoutManager({ cells: [] });
