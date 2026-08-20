@@ -1635,6 +1635,58 @@ describe('TableNG', () => {
       // After clicking, the header should have an aria-sort attribute
       expect(onSortByChange).toHaveBeenCalledTimes(1);
     });
+
+    it('keeps content-aware column widths stable when a column is sorted', async () => {
+      const longHeader = 'Category, with a header label long enough to size this column on its own';
+      // Auto-sized columns (no configured `custom.width`). The first header is long enough that the
+      // header label, not the cell content, sets the width — where a sorted-only reservation shows up.
+      const frame = withFieldOverrides(
+        toDataFrame({
+          name: 'AutoWidths',
+          length: 3,
+          fields: [
+            {
+              name: longHeader,
+              type: FieldType.string,
+              values: ['A', 'B', 'C'],
+              config: {},
+              display: displayString,
+              ...stdField,
+            },
+            {
+              name: 'Value',
+              type: FieldType.number,
+              values: [1, 2, 3],
+              config: {},
+              display: displayNumber,
+              ...stdField,
+            },
+            {
+              name: 'Name',
+              type: FieldType.string,
+              values: ['x', 'y', 'z'],
+              config: {},
+              display: displayString,
+              ...stdField,
+            },
+          ],
+        })
+      );
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} contentAwareWidthsEnabled={true} data={frame} width={800} height={600} />
+      );
+
+      // rdg lays the grid out with an inline grid-template-columns, so it holds every column width.
+      const grid = container.querySelector<HTMLElement>('[role="grid"]');
+      const widthsBeforeSort = grid?.style.gridTemplateColumns;
+      expect(widthsBeforeSort).toBeTruthy();
+
+      await user.click(screen.getByTitle(longHeader));
+
+      expect(container.querySelector('[role="columnheader"]')?.getAttribute('aria-sort')).toBe('ascending');
+      expect(grid?.style.gridTemplateColumns).toBe(widthsBeforeSort);
+    });
   });
 
   describe('Filtering', () => {
