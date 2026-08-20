@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
+	teamlbacapi "github.com/grafana/grafana/pkg/registry/apis/iam/teamlbac"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -494,6 +495,41 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		if err := b.teamLBACApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
 			return err
 		}
+
+		teamLBACRuleGetter, ok := storage[iamv0.TeamLBACRuleInfo.StoragePath()].(rest.Getter)
+		if !ok {
+			return fmt.Errorf("TeamLBACRule storage does not implement rest.Getter")
+		}
+
+		// TeamLBAC can be enabled in ST without serving the Team Kubernetes API.
+		// Prefer the registered Team storage when present because it already
+		// reflects the configured dual-write mode; otherwise evaluate membership
+		// through the internal legacy Team store.
+		teamStorage := storage[iamv0.TeamResourceInfo.StoragePath()]
+		if teamStorage == nil && b.legacyTeamStore != nil {
+			teamStorage = b.legacyTeamStore
+		}
+		teamGetter, ok := teamStorage.(rest.Getter)
+		if !ok {
+			return fmt.Errorf("TeamLBACRule for-subject subresource requires Team getter storage")
+		}
+		teamLister, ok := teamStorage.(rest.Lister)
+		if !ok {
+			return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
+		}
+		// Kubernetes requires a separate storage-map entry for each named
+		// subresource. Its value is a Connect handler, not another persistence
+		// store: the handler delegates rule reads to teamLBACRuleGetter, the
+		// mode-aware CRUD storage already registered at "teamlbacrules" above.
+		// Team's addmember/removemember subresources use the same pattern. This
+		// entry therefore adds only GET
+		// /teamlbacrules/{name}/for-subject/{type}/{uid}.
+		storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")] = teamlbacapi.NewRulesForSubjectREST(
+			teamLBACRuleGetter,
+			teamGetter,
+			teamLister,
+			b.tracing,
+		)
 	}
 
 	if enableRoleBindingsApi {
