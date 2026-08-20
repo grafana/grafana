@@ -372,6 +372,44 @@ func TestRenameResourceFile(t *testing.T) {
 		require.Contains(t, err.Error(), "failed to read previous file")
 	})
 
+	t.Run("old file parse error still attempts to write new resource", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "new-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+
+		// Client is nil so Run returns an error, isolating whether the write was
+		// even attempted from whether it succeeded.
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:  newObj,
+			Meta: newMeta,
+			GVK:  dashboardGVK,
+			Repo: testRepoInfo(),
+		}, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
+
+		require.Error(t, err, "write step is expected to fail (no client)")
+		require.Contains(t, err.Error(), "failed to write resource",
+			"the new resource must be attempted even when the previous file cannot be parsed")
+		require.Empty(t, folderName, "old resource's identity is unknown, so no folder cleanup signal can be produced")
+	})
+
 	t.Run("folder name empty when resource does not exist in grafana", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
