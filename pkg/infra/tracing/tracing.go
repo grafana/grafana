@@ -29,7 +29,6 @@ import (
 
 	"github.com/go-kit/log/level"
 
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -50,9 +49,12 @@ const (
 	w3cPropagator    string = "w3c"
 )
 
+// TracingService owns the OpenTelemetry tracer provider. It is not a background
+// service: the provider is built and installed here, before any service starts, and
+// torn down by the process through [TracingService.Shutdown] once every service has
+// stopped. Running it as part of the service graph meant the exporter stopped partway
+// through shutdown, dropping every span that ended later.
 type TracingService struct {
-	services.NamedService
-
 	cfg *TracingConfig
 	log log.Logger
 
@@ -98,11 +100,17 @@ func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
 		cfg: tracingCfg,
 		log: log.New("tracing"),
 	}
-	ots.NamedService = services.NewBasicService(ots.starting, ots.running, ots.stopping).WithName(ServiceName)
 
 	if err := ots.initOpentelemetryTracer(); err != nil {
 		return nil, err
 	}
+
+	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
+		if logErr := level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err); logErr != nil {
+			ots.log.Error("OpenTelemetry log returning error", logErr)
+		}
+	}))
+
 	return ots, nil
 }
 
@@ -111,7 +119,7 @@ func NewNoopTracerService() *TracingService {
 	otel.SetTracerProvider(tp)
 
 	cfg := NewEmptyTracingConfig()
-	ots := &TracingService{cfg: cfg, tracerProvider: tp}
+	ots := &TracingService{cfg: cfg, tracerProvider: tp, log: log.New("tracing")}
 	_ = ots.initOpentelemetryTracer()
 	return ots
 }
@@ -355,35 +363,14 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 	return nil
 }
 
-func (ots *TracingService) starting(ctx context.Context) error {
-	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
-		err = level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
-		if err != nil {
-			ots.log.Error("OpenTelemetry log returning error", err)
-		}
-	}))
-	return nil
-}
-func (ots *TracingService) running(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
-}
-
-func (ots *TracingService) stopping(_ error) error {
+// Shutdown flushes buffered spans and stops the tracer provider. Call it once every
+// other service has stopped, since spans ending after it are dropped. Idempotent.
+func (ots *TracingService) Shutdown(ctx context.Context) error {
 	ots.log.Info("Closing tracing")
 	if ots.tracerProvider == nil {
 		return nil
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
 	return ots.tracerProvider.Shutdown(ctx)
-}
-
-func (ots *TracingService) Run(ctx context.Context) error {
-	if err := ots.StartAsync(ctx); err != nil {
-		return err
-	}
-	return ots.AwaitTerminated(ctx)
 }
 
 func (ots *TracingService) Inject(ctx context.Context, header http.Header, _ trace.Span) {
@@ -479,4 +466,13 @@ var instrumentationScope = "github.com/grafana/grafana/pkg/infra/tracing"
 // Start only creates an OpenTelemetry span if the incoming context already includes a span.
 func Start(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
 	return trace.SpanFromContext(ctx).TracerProvider().Tracer(instrumentationScope).Start(ctx, name, trace.WithAttributes(attributes...))
+}
+
+// StartRoot behaves like Start, except it begins a new trace when the incoming
+// context has no span. Use it for work that runs outside any trace, such as shutdown.
+func StartRoot(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
+	if trace.SpanContextFromContext(ctx).IsValid() {
+		return Start(ctx, name, attributes...)
+	}
+	return otel.GetTracerProvider().Tracer(instrumentationScope).Start(ctx, name, trace.WithAttributes(attributes...))
 }

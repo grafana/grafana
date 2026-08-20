@@ -3,6 +3,7 @@ package tracing
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -14,15 +15,21 @@ import (
 var _ services.Listener = (*Listener)(nil)
 
 // Listener implements dskit's services.Listener interface to add comprehensive tracing
-// for service state transitions. It creates individual spans for each service state
-// (Starting, Running, Stopping) to track their durations, providing detailed timing
-// information about service lifecycle performance.
+// for service state transitions. Startup and shutdown get a parent span each. Nothing
+// spans the running state: it lasts as long as the process, so its span would only be
+// exported at exit, orphaning everything beneath it until then.
 type Listener struct {
 	serviceName string
 
 	ctx        context.Context
 	parentSpan trace.Span
 	stateSpan  trace.Span
+
+	shutdownMu  sync.Mutex
+	shutdownCtx context.Context
+
+	done     chan struct{}
+	doneOnce sync.Once
 }
 
 // NewListener creates a new tracing listener for the given service.
@@ -30,13 +37,39 @@ func NewListener(ctx context.Context, serviceName string) *Listener {
 	l := &Listener{
 		ctx:         ctx,
 		serviceName: serviceName,
+		done:        make(chan struct{}),
 	}
 	return l
 }
 
+// Done is closed once the listener has closed its last span.
+func (l *Listener) Done() <-chan struct{} {
+	return l.done
+}
+
+func (l *Listener) markDone() {
+	l.doneOnce.Do(func() { close(l.done) })
+}
+
+// SetShutdownContext sets the parent for the spans recorded from Stopping onwards.
+// Set it before the service can enter Stopping, or those spans start their own trace.
+func (l *Listener) SetShutdownContext(ctx context.Context) {
+	l.shutdownMu.Lock()
+	defer l.shutdownMu.Unlock()
+	l.shutdownCtx = ctx
+}
+
+func (l *Listener) shutdownContext() context.Context {
+	l.shutdownMu.Lock()
+	defer l.shutdownMu.Unlock()
+	if l.shutdownCtx == nil {
+		return context.Background()
+	}
+	return l.shutdownCtx
+}
+
 // Starting is called when the service transitions from NEW to STARTING.
 func (l *Listener) Starting() {
-	// Create the parent span when the service starts
 	spanCtx, span := tracing.Start(l.ctx, l.serviceName)
 	l.ctx = spanCtx
 	l.parentSpan = span
@@ -44,26 +77,37 @@ func (l *Listener) Starting() {
 	l.startSpan(services.Starting, nil)
 }
 
-// Running is called when the service transitions from STARTING to RUNNING.
+// Running is called when the service transitions from STARTING to RUNNING, and
+// closes the startup spans.
 func (l *Listener) Running() {
 	l.endSpan(nil)
-	l.startSpan(services.Running, nil)
+	l.endParentSpan(services.Running, nil)
 }
 
-// Stopping is called when the service transitions to the STOPPING state.
+// Stopping is called when the service transitions to the STOPPING state, and
+// opens the shutdown spans.
 func (l *Listener) Stopping(from services.State) {
 	l.endSpan(nil)
+	// A shutdown landing mid-startup skips Running, leaving the startup span open.
+	l.endParentSpan(from, nil)
+
+	spanCtx, span := tracing.StartRoot(l.shutdownContext(), l.serviceName)
+	l.ctx = spanCtx
+	l.parentSpan = span
+
 	l.startSpan(services.Stopping, &from)
 }
 
 // Terminated is called when the service transitions to the TERMINATED state.
 func (l *Listener) Terminated(from services.State) {
+	defer l.markDone()
 	l.endSpan(nil)
 	l.endParentSpan(from, nil)
 }
 
 // Failed is called when the service transitions to the FAILED state.
 func (l *Listener) Failed(from services.State, failure error) {
+	defer l.markDone()
 	l.endSpan(failure)
 	l.endParentSpan(from, failure)
 }
@@ -71,14 +115,13 @@ func (l *Listener) Failed(from services.State, failure error) {
 // startSpan creates and stores a span for the given state
 func (l *Listener) startSpan(toState services.State, fromState *services.State) {
 	spanName := fmt.Sprintf("%s Service", toState.String())
-	_, span := tracing.Start(l.ctx, spanName, attribute.String("grafana.service.name", l.serviceName))
 	attributes := []attribute.KeyValue{
 		attribute.String("grafana.service.name", l.serviceName),
 	}
 	if fromState != nil {
 		attributes = append(attributes, attribute.String("modules.tracing.from_state", fromState.String()))
 	}
-	span.SetAttributes(attributes...)
+	_, span := tracing.Start(l.ctx, spanName, attributes...)
 	l.stateSpan = span
 }
 
