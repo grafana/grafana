@@ -97,6 +97,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: css({
       position: 'absolute',
       top: 0,
+      left: 0,
       right: 0,
       bottom: 0,
       display: 'flex',
@@ -597,7 +598,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
       compact,
       editSavedQueryRef,
       addingSavedQuery,
-      splitted,
     } = this.props;
 
     const { contentOutlineVisible } = this.state;
@@ -709,7 +709,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                 this.scrollElement = scrollElement || undefined;
               }}
             >
-              <div className={cx(styles.exploreContainer, splitted && styles.exploreContainerSplitted)}>
+              <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
                   <>
                     <ContentOutlineItem
