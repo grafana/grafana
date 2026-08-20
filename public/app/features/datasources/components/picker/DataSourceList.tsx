@@ -3,19 +3,14 @@ import { useMemo } from 'react';
 import * as React from 'react';
 import { type Observable } from 'rxjs';
 
-import {
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
-  type DataSourceRef,
-  type GrafanaTheme2,
-} from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourceRef, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type FavoriteDatasources, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { SearchStatus } from '@grafana/ui/internal';
 
-import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
+import { useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { VirtualizedList } from './VirtualizedList';
@@ -30,18 +25,6 @@ export interface DataSourceListProps {
   className?: string;
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | DataSourceInstanceSettings | string | null | undefined;
-  /** Would be nicer if these parameters were part of a filtering object */
-  tracing?: boolean;
-  mixed?: boolean;
-  dashboard?: boolean;
-  metrics?: boolean;
-  type?: string | string[];
-  annotations?: boolean;
-  variables?: boolean;
-  alerting?: boolean;
-  pluginId?: string;
-  /** If true,we show only DSs with logs; and if true, pluginId shouldnt be passed in */
-  logs?: boolean;
   width?: number;
   keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
@@ -49,7 +32,7 @@ export interface DataSourceListProps {
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
-  dataSources?: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
+  dataSources: DataSourceInstanceSettings[];
   favoriteDataSources: FavoriteDatasources;
   /** Ref to the scroll container element, used by the virtualizer */
   scrollRef: React.RefObject<HTMLDivElement | null>;
@@ -66,6 +49,8 @@ export function DataSourceList(props: DataSourceListProps) {
     className,
     current,
     onChange,
+    dataSources,
+    filter,
     enableKeyboardNavigation,
     onClickEmptyStateCTA,
     favoriteDataSources,
@@ -75,7 +60,13 @@ export function DataSourceList(props: DataSourceListProps) {
   } = props;
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
-  const sortedDataSources = useSortedDataSources(props, current, recentlyUsedDataSources, favoriteDataSources);
+  const sortedDataSources = useSortedDataSources(
+    dataSources,
+    filter,
+    current,
+    recentlyUsedDataSources,
+    favoriteDataSources
+  );
 
   const searchStatusMessage =
     sortedDataSources.length === 0
@@ -109,28 +100,13 @@ export function DataSourceList(props: DataSourceListProps) {
 }
 
 function useSortedDataSources(
-  props: DataSourceListProps,
+  dataSources: DataSourceInstanceSettings[],
+  filter: DataSourceListProps['filter'],
   current: DataSourceRef | DataSourceInstanceSettings | string | null | undefined,
   recentlyUsedDataSources: string[],
   favoriteDataSources: FavoriteDatasources
 ) {
-  const dataSources = useDatasources(
-    {
-      alerting: props.alerting,
-      annotations: props.annotations,
-      dashboard: props.dashboard,
-      logs: props.logs,
-      metrics: props.metrics,
-      mixed: props.mixed,
-      pluginId: props.pluginId,
-      tracing: props.tracing,
-      type: props.type,
-      variables: props.variables,
-    },
-    props.dataSources
-  );
-
-  const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
+  const filteredDataSources = filter ? dataSources.filter(filter) : dataSources;
 
   return useMemo(
     () =>
