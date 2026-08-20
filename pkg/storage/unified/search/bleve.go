@@ -2861,13 +2861,31 @@ func resolveFieldName(fields resource.SearchableDocumentFields, key string) stri
 
 // isReservedTopLevelField reports whether key is a standard field or an internal
 // top-level variant (title_phrase/title_ngram) that must never be prefixed.
+//
+// The declarations and the column set do not cover the same names, so both are
+// consulted: managedBy is declared for faceting and has no column because it is
+// not stored, while rv has a column and no declaration.
 func isReservedTopLevelField(key string) bool {
 	switch key {
 	case resource.SEARCH_FIELD_TITLE_PHRASE, resource.SEARCH_FIELD_TITLE_NGRAM:
 		return true
 	}
+	if declaredTopLevelNames[key] {
+		return true
+	}
 	return resource.StandardSearchFields().Field(key) != nil
 }
+
+var declaredTopLevelNames = func() map[string]bool {
+	names := map[string]bool{}
+	for _, def := range resource.StandardSearchFieldDefinitions() {
+		names[def.Name] = true
+	}
+	for _, def := range resource.TrashSearchFieldDefinitions() {
+		names[def.Name] = true
+	}
+	return names
+}()
 
 // filterQueries builds the label and field filter clauses (the AND terms that
 // are not the free-text query) for a search request.

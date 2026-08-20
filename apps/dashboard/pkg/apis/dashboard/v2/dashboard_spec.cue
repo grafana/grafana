@@ -670,12 +670,18 @@ AutoGridLayoutKind: {
 }
 
 AutoGridLayoutSpec: {
-	maxColumnCount?: number | *3
-	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
-	columnWidth?:    number
-	rowHeightMode:   "short" | *"standard" | "tall" | "custom"
-	rowHeight?:      number
-	fillScreen?:     bool | *false
+	maxColumnCount?:  number | *3
+	columnWidthMode:  "narrow" | *"standard" | "wide" | "custom"
+	columnWidth?:     number
+	rowHeightMode:    "short" | *"standard" | "tall" | "custom"
+	rowHeight?:       number
+	fillScreen?:      bool | *false
+	fitContent?:      bool | *false
+	minHeightMode?:   "none" | "short" | "standard" | "tall" | "custom"
+	minHeight?:       number
+	maxHeightMode?:   "unlimited" | "short" | "standard" | "tall" | "custom"
+	maxHeight?:       number
+	matchRowHeights?: bool | *true
 	items: [...AutoGridLayoutItemKind]
 }
 
@@ -688,6 +694,7 @@ AutoGridLayoutItemSpec: {
 	element:               ElementReference
 	repeat?:               AutoGridRepeatOptions
 	conditionalRendering?: ConditionalRenderingGroupKind
+	fitContent?:           bool
 }
 
 TabsLayoutKind: {

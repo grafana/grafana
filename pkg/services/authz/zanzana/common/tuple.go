@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -42,6 +43,7 @@ const (
 )
 
 var (
+	KindNotebooks       string = dashv2beta1.NotebookResourceInfo.GroupResource().Resource
 	KindTeams           string = iamv0.TeamKind().GroupVersionResource().Resource
 	KindUsers           string = iamv0.UserKind().GroupVersionResource().Resource
 	KindServiceAccounts string = iamv0.ServiceAccountKind().GroupVersionResource().Resource

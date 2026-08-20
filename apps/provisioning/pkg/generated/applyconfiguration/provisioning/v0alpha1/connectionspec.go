@@ -26,7 +26,7 @@ type ConnectionSpecApplyConfiguration struct {
 	// Only applicable when provider is "githubEnterprise"
 	GitHubEnterprise *GitHubEnterpriseConnectionConfigApplyConfiguration `json:"githubEnterprise,omitempty"`
 	// Bitbucket connection configuration
-	// Only applicable when provider is "bitbucket"
+	// Only applicable when provider is "bitbucketOAuth"
 	Bitbucket *BitbucketConnectionConfigApplyConfiguration `json:"bitbucket,omitempty"`
 	// OAuth app configuration shared by all OAuth app providers
 	OAuth *ConnectionOAuthConfigApplyConfiguration `json:"oauth,omitempty"`
