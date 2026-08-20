@@ -18,7 +18,7 @@ function createController(portalTarget: HTMLElement): jest.Mocked<QueryEditorCoa
     query: 'rate(http_requests_total[5m])',
     focusRanges: [{ from: 0, to: 4 }],
     language: { id: 'promql', displayName: 'PromQL' },
-    metricMetadata: [],
+    metadata: [],
   };
 
   const snapshot = { mode: 'selection' as const, selectedText: 'rate', revision: 'revision-1' };

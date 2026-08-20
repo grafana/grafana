@@ -1,5 +1,5 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
-import { type ComponentType } from 'react';
+
 import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
 import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
@@ -70,7 +70,7 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         id: PluginExtensionExposedComponents.QueryEditorCoauthoringV1,
         title: 'Query editor coauthoring',
         description: 'AI-assisted query editing for compatible query editors',
-        component: QueryCoauthoringExposedComponent as ComponentType,
+        component: QueryCoauthoringExposedComponent,
       },
     ],
   });

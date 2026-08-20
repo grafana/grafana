@@ -247,9 +247,9 @@ export const isAddedComponentMetaInfoMissing = (
   return false;
 };
 
-export const isExposedComponentMetaInfoMissing = (
+export const isExposedComponentMetaInfoMissing = <Props>(
   pluginId: string,
-  metaInfo: PluginExtensionExposedComponentConfig,
+  metaInfo: PluginExtensionExposedComponentConfig<Props>,
   log: ExtensionsLog,
   apps: AppPluginConfig[]
 ) => {

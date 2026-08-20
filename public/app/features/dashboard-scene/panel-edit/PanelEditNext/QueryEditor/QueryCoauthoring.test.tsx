@@ -79,12 +79,19 @@ async function setup(
     revision: '1',
     query: 'rate(http_requests_total[5m])',
     focusRanges: [{ from: 0, to: 4 }],
-    language: { id: 'promql', displayName: 'PromQL' },
-    metricMetadata: [
+    language: {
+      id: 'promql',
+      displayName: 'PromQL',
+      guidance: [
+        'Treat slash-separated label names as alternatives.',
+        'For a counter breakdown, apply rate before aggregating.',
+      ],
+    },
+    metadata: [
       {
+        kind: 'metric',
         name: 'http_requests_total',
-        type: 'counter',
-        help: 'Total HTTP requests.',
+        attributes: { type: 'counter', help: 'Total HTTP requests.' },
       },
     ],
   }
@@ -116,7 +123,7 @@ async function setup(
     subscribe: () => () => undefined,
     getPortalTarget: () => anchorElement,
     reportSurfaceSize: jest.fn(),
-    getQueryText: jest.fn(() => 'rate(http_requests_total[5m])'),
+    getQueryText: jest.fn(() => context.query),
     begin: jest.fn().mockResolvedValue(context),
     refreshContext: jest.fn().mockImplementation(() => controller.begin()),
     stageEditorDiff: stagePreview,
@@ -191,7 +198,7 @@ describe('QueryCoauthoring', () => {
     const request = mockIdentifySelection.mock.calls[0][0];
     expect(request).toMatchObject({
       origin: 'grafana/panel-edit-next/query-coauthoring/identify',
-      agentName: 'promql-coauthor-intent',
+      agentName: 'query-coauthor-intent',
       agentId: 'grafana.query.coauthor.identify.v1',
       prompt: 'Explain the focused part of this existing PromQL query.',
     });
@@ -213,7 +220,7 @@ describe('QueryCoauthoring', () => {
       query,
       focusRanges: [{ from: 0, to: query.length }],
       language: { id: 'promql', displayName: 'PromQL' },
-      metricMetadata: [{ name: 'http_requests_total', type: 'counter' }],
+      metadata: [{ kind: 'metric', name: 'http_requests_total', attributes: { type: 'counter' } }],
     });
 
     const request = mockIdentifySelection.mock.calls[0][0];
@@ -223,6 +230,39 @@ describe('QueryCoauthoring', () => {
 
     act(() => request.onError());
     expect(screen.getByText(/The complete PromQL query is selected for coauthoring\./)).toBeInTheDocument();
+  });
+
+  it('uses the datasource-provided language and guidance without PromQL assumptions', async () => {
+    await setup(0, true, {
+      revision: '1',
+      query: '{service_name="checkout"} |= "error"',
+      focusRanges: [{ from: 0, to: 26 }],
+      language: {
+        id: 'logql',
+        displayName: 'LogQL',
+        guidance: ['Preserve the stream selector unless the user explicitly asks to change it.'],
+      },
+      metadata: [{ kind: 'stream label', name: 'service_name', attributes: { values: ['checkout'] } }],
+    });
+
+    const identificationRequest = mockIdentifySelection.mock.calls[0][0];
+    expect(identificationRequest).toMatchObject({
+      agentName: 'query-coauthor-intent',
+      prompt: 'Explain the focused part of this existing LogQL query.',
+    });
+    expect(identificationRequest.systemPrompt).toContain('Query language: {"id":"logql"');
+    expect(identificationRequest.systemPrompt).not.toContain('PromQL');
+
+    const user = userEvent.setup();
+    await user.type(screen.getByRole('textbox'), 'Match timeout errors');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    expect(request.agentName).toBe('query-coauthor');
+    expect(request.systemPrompt).toContain('You help LogQL novices');
+    expect(request.systemPrompt).toContain('Preserve the stream selector');
+    expect(request.systemPrompt).not.toContain('PromQL');
+    expect(request.tools[0].description).toContain('current LogQL query');
   });
 
   it('allows prompt entry while identifying and ignores a late explanation after submission', async () => {
@@ -264,7 +304,7 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     expect(request).toMatchObject({
       origin: 'grafana/panel-edit-next/query-coauthoring',
-      agentName: 'promql-coauthor',
+      agentName: 'query-coauthor',
       agentId: 'grafana.query.coauthor.v1',
       prompt: 'Show the total count instead',
     });
@@ -448,9 +488,24 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByText('Building query…')).toBeInTheDocument();
     expect(screen.getByLabelText('Query focus')).toHaveTextContent('FOCUS');
     expect(screen.getByLabelText('Query focus')).toHaveTextContent('rate');
-    expect(screen.getByLabelText('Relevant metric')).toHaveTextContent('METRIC');
-    expect(screen.getByLabelText('Relevant metric')).toHaveTextContent('http_requests_total');
+    expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('CONTEXT');
+    expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('http_requests_total');
     expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toBeInTheDocument();
+  });
+
+  it('degrades safely when an independently released datasource omits metadata', async () => {
+    mockIsGenerating = true;
+
+    await setup(0, true, {
+      revision: '1',
+      query: 'rate(http_requests_total[5m])',
+      focusRanges: [{ from: 0, to: 4 }],
+      language: { id: 'promql', displayName: 'PromQL' },
+      metadata: undefined,
+    } as unknown as QueryEditorCoauthoringContextV1);
+
+    expect(screen.getByText('Building query…')).toBeInTheDocument();
+    expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('PromQL');
   });
 
   it('constrains the popover to the viewport below its editor anchor', async () => {

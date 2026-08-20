@@ -536,12 +536,21 @@ export interface QueryEditorCoauthoringRangeV1 {
 }
 
 /** @alpha */
-export interface QueryEditorCoauthoringMetricMetadataV1 {
+export interface QueryEditorCoauthoringMetadataV1 {
+  kind: string;
   name: string;
-  type?: string;
-  help?: string;
-  unit?: string;
-  labels?: string[];
+  attributes?: Record<string, string | string[]>;
+}
+
+/** @alpha */
+export interface QueryEditorCoauthoringLanguageV1 {
+  id: string;
+  displayName: string;
+  /**
+   * Static, datasource-owned guidance for editing this query language.
+   * This must not contain user-authored query text or dynamically loaded metadata.
+   */
+  guidance?: string[];
 }
 
 /** @alpha */
@@ -549,8 +558,8 @@ export interface QueryEditorCoauthoringContextV1 {
   revision: string;
   query: string;
   focusRanges: QueryEditorCoauthoringRangeV1[];
-  language: { id: string; displayName: string };
-  metricMetadata: QueryEditorCoauthoringMetricMetadataV1[];
+  language: QueryEditorCoauthoringLanguageV1;
+  metadata: QueryEditorCoauthoringMetadataV1[];
 }
 
 /** @alpha */

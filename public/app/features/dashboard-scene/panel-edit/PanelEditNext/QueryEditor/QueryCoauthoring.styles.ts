@@ -1,0 +1,140 @@
+import { css } from '@emotion/css';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+
+export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+      width: 'min(403px, calc(100vw - 16px))',
+      minHeight: 0,
+      padding: theme.spacing(1),
+      color: theme.colors.text.primary,
+      background: theme.colors.background.secondary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z3,
+      overflow: 'hidden',
+    }),
+    closeRow: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      marginBottom: theme.spacing(-0.5),
+    }),
+    promptRow: css({
+      display: 'grid',
+      gridTemplateColumns: '1fr auto',
+      alignItems: 'center',
+      columnGap: theme.spacing(0.5),
+      marginInline: theme.spacing(1),
+    }),
+    promptInput: css({
+      height: theme.spacing(4),
+      minHeight: theme.spacing(4),
+    }),
+    promptSubmit: css({
+      width: theme.spacing(3.5),
+      height: theme.spacing(3.5),
+      margin: 0,
+      padding: theme.spacing(0.75),
+    }),
+    status: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.75),
+      padding: theme.spacing(0.5),
+    }),
+    building: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.5),
+    }),
+    workingFlow: css({
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+      padding: theme.spacing(0, 0.5, 0.5),
+    }),
+    workingStep: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.25),
+      minWidth: 0,
+      padding: theme.spacing(0.5, 0.75),
+      border: `1px dashed ${theme.colors.border.medium}`,
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.primary,
+      code: {
+        minWidth: 0,
+        overflow: 'hidden',
+        color: theme.colors.text.secondary,
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      },
+    }),
+    clarification: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+      minHeight: 0,
+      overflow: 'hidden',
+    }),
+    clarificationMessage: css({
+      flex: '1 1 auto',
+      minHeight: 0,
+      paddingRight: theme.spacing(0.5),
+      overflowY: 'auto',
+      scrollbarGutter: 'stable',
+    }),
+    proposal: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+      minHeight: 0,
+      overflow: 'hidden',
+    }),
+    proposalBody: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+      minHeight: 0,
+      paddingRight: theme.spacing(0.5),
+      overflowY: 'auto',
+      scrollbarGutter: 'stable',
+    }),
+    changes: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.5),
+    }),
+    changePair: css({
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+    }),
+    change: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.25),
+      minWidth: 0,
+      padding: theme.spacing(0.75),
+      border: `1px dashed ${theme.colors.border.medium}`,
+      borderRadius: theme.shape.radius.default,
+      code: {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      },
+    }),
+    proposedChange: css({
+      background: theme.colors.action.selected,
+    }),
+  };
+}

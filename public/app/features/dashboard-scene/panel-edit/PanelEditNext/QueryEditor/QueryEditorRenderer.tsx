@@ -54,8 +54,8 @@ export function QueryEditorPanel({
   const coauthoringDatasourceType = queryDsData?.dsSettings?.type ?? '';
   const queryRef = useRef(query);
   queryRef.current = query;
-  const coauthoringBaselineRef = useRef<DataQuery>();
-  const coauthoringPreviewTransactionRef = useRef<CoauthoringPreviewTransaction>();
+  const coauthoringBaselineRef = useRef<DataQuery | undefined>(undefined);
+  const coauthoringPreviewTransactionRef = useRef<CoauthoringPreviewTransaction | undefined>(undefined);
   const [coauthoringBaseline, setCoauthoringBaseline] = useState<DataQuery>();
   const error = data?.errors?.find((e) => e.refId === query?.refId);
   const queryRefId = query?.refId;
