@@ -194,6 +194,7 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
             fontSize={store.get(`${SETTING_KEY_ROOT}.fontSize`) ?? 'default'}
             logs={logs}
             logOptionsStorageKey={SETTING_KEY_ROOT}
+            syntaxHighlighting={store.getBool(`${SETTING_KEY_ROOT}.syntaxHighlighting`, true)}
             showControls={false}
             showTime={false}
             sortOrder={LogsSortOrder.Ascending}
