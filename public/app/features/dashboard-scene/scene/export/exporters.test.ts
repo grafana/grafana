@@ -698,9 +698,10 @@ describe('dashboard exporter v1', () => {
         getVariablesFromState: () => [],
       });
 
-      const exported = (await makeExportableV1(dashboardModel)) as { error: Error };
-      expect(exported.error).toBeInstanceOf(Error);
-      expect(exported.error.message).toBe('Datasource missing-uid was not found');
+      const exported = (await makeExportableV1(dashboardModel)) as { error: { message: string } };
+      expect(JSON.parse(JSON.stringify(exported))).toEqual({
+        error: { message: 'Datasource missing-uid was not found' },
+      });
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });

@@ -356,9 +356,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
     return newObj;
   } catch (err) {
     console.error('Export failed:', err);
-    return {
-      error: err,
-    };
+    return toExportableError(err);
   }
 }
 
@@ -601,8 +599,12 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     return dashboard;
   } catch (err) {
     console.error('Export failed:', err);
-    return {
-      error: err,
-    };
+    return toExportableError(err);
   }
+}
+
+function toExportableError(err: unknown): { error: { message: string } } {
+  return {
+    error: { message: err instanceof Error ? err.message : String(err) },
+  };
 }
