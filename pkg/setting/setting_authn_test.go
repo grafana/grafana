@@ -38,6 +38,8 @@ func TestApplyAuthnSettings(t *testing.T) {
 		require.NoError(t, err)
 		_, err = auth.NewKey("oauth_refresh_token_server_lock_min_wait_ms", "1250")
 		require.NoError(t, err)
+		_, err = auth.NewKey("oauth_allow_insecure_email_lookup", "true")
+		require.NoError(t, err)
 
 		users, err := settings.NewSection("users")
 		require.NoError(t, err)
@@ -68,6 +70,7 @@ func TestApplyAuthnSettings(t *testing.T) {
 		assert.Equal(t, "secretKey.v1", cfg.Raw.Section("security").Key("encryption_provider").String())
 		assert.Equal(t, 900, cfg.OAuthCookieMaxAge)
 		assert.Equal(t, int64(1250), cfg.OAuthRefreshTokenServerLockMinWaitMs)
+		assert.True(t, cfg.OAuthAllowInsecureEmailLookup)
 		assert.True(t, cfg.CookieSecure)
 		assert.Equal(t, http.SameSiteStrictMode, cfg.CookieSameSiteMode)
 		assert.Equal(t, "http://localtest.example.com:8080/", cfg.AppURL)

@@ -1618,17 +1618,6 @@
         "import-rules": "Import alert rules",
         "title": "Auto-sync is enabled"
       },
-      "autosync-review": {
-        "back": "Add method",
-        "badge": "Will sync continuously",
-        "card-title": "Auto-sync",
-        "enable": "Enable auto-sync",
-        "heading": "Review & enable auto-sync",
-        "scope": "Scope",
-        "scope-value": "Contact points, notification policies, templates, mute timings, and alert rules",
-        "source": "Source",
-        "subtitle": "Confirm the source. Once enabled, Grafana keeps these resources in sync until you turn it off in Alerting settings."
-      },
       "confirm": {
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
@@ -1676,26 +1665,6 @@
       "info-description": "This wizard helps you import alert rules and notification resources from external sources to Grafana Alerting. For more information, refer to the <2>documentation</2>.",
       "info-title": "Import wizard",
       "loading": "Loading…",
-      "method": {
-        "autosync": "Auto-sync",
-        "autosync-datasource-label": "Data source",
-        "autosync-datasource-placeholder": "Select a data source…",
-        "autosync-desc": "Grafana continuously syncs alert configuration from a Mimir or Cortex Alertmanager data source. The synced resources stay read-only and managed by the source.",
-        "autosync-no-datasources-desc": "Auto-sync needs a Mimir or Cortex Alertmanager data source. Add one, then start this wizard again.",
-        "autosync-no-datasources-title": "No Mimir or Cortex data sources",
-        "autosync-title": "Auto-sync",
-        "heading": "How do you want to add these resources?",
-        "next-steps": "Next you'll set up notification resources and alert rules, then review & import.",
-        "promote": "Promote",
-        "promote-desc": "Promote when you are ready to use these resources. Each contact point, policy, template, and mute timing merges into your live config and becomes a normal, editable Grafana resource.",
-        "promote-title": "Promote",
-        "promote-warning-desc": "The imported resources merge into your live notification config. To reverse it later you would have to delete each resulting resource by hand.",
-        "promote-warning-title": "Promoting can't be undone",
-        "stage": "Stage",
-        "stage-desc": "Stage brings the config in safely without touching your live setup. Resources stay visible but read-only so you can review them first. Promote when you are ready to use them as editable Grafana resources.",
-        "stage-title": "Stage",
-        "subtitle": "Choose how alert configuration from your external Alertmanager is brought into Grafana. You can change this before you finish."
-      },
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
@@ -1723,18 +1692,6 @@
         "filter": "Filter",
         "folder": "Target folder",
         "heading": "Review Import",
-        "merge-inhibition-rules_one": "{{count}} inhibition rule",
-        "merge-inhibition-rules_other": "{{count}} inhibition rules",
-        "merge-receivers_one": "{{count}} contact point",
-        "merge-receivers_other": "{{count}} contact points",
-        "merge-route": "a notification route",
-        "merge-summary": "Will merge into your live config: {{summary}}",
-        "merge-templates_one": "{{count}} template",
-        "merge-templates_other": "{{count}} templates",
-        "merge-time-intervals_one": "{{count}} mute timing",
-        "merge-time-intervals_other": "{{count}} mute timings",
-        "method": "Method",
-        "method-promote": "Promote",
         "namespace": "Namespace",
         "nothing": "Nothing to import",
         "nothing-desc": "Both steps were skipped. Go back and configure at least one import source.",
@@ -1872,14 +1829,10 @@
         "cancel-confirm-title": "Cancel import?",
         "cancel-confirm-yes": "Discard changes",
         "skip": "Skip",
-        "step-method": "Import method",
-        "step-method-desc": "How to bring resources into Grafana",
         "step-notifications": "Notification resources",
         "step-notifications-desc": "Contact points, policies, templates",
         "step-review": "Review & import",
         "step-review-desc": "Preview and confirm import",
-        "step-review-enable": "Review & enable",
-        "step-review-enable-desc": "Confirm and enable auto-sync",
         "step-rules": "Alert rules",
         "step-rules-desc": "Alert and recording rules"
       },
@@ -2259,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "This alert rule may have been deleted, or you may not have permission to view it.",
+      "body-permission-create-silence": "You can still silence individual alert rules from their detail pages.",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Configure silences to stop notifications from a particular alert rule"
@@ -2266,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Silence alert rule"
         }
-      }
+      },
+      "text-checking-permissions": "Checking permissions...",
+      "title-alert-rule-unavailable": "Alert rule unavailable",
+      "title-permission-create-silence": "You do not have permission to create this silence"
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "We could not find any external Alertmanagers and you may not have access to the built-in Grafana Alertmanager.",
@@ -3749,6 +3707,9 @@
       "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
       "open-rule-details": "Open rule details",
+      "query-error-forbidden": "This page reads alert state history from a Prometheus data source, and you do not have permission to query it. Ask an administrator to grant you the query permission for that data source.",
+      "query-error-generic": "The query for alert instances failed, so we cannot tell which alerts are firing or pending.",
+      "query-error-title": "Unable to load alert instances",
       "rule-details": {
         "subtitle": "Rule details and conditions",
         "title": "Rule Details"
@@ -5467,6 +5428,16 @@
     "auto-grid": {
       "description": "Panels resize to fit and form uniform grids",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "Default",
+            "description": "Override the layout default for this panel. \"Default\" follows the layout setting.",
+            "off": "Off",
+            "on": "On",
+            "title": "Auto fit"
+          },
+          "title": "Auto fit"
+        },
         "repeat": {
           "title": "Repeat options",
           "variable": {
@@ -5484,15 +5455,36 @@
         "custom-min-width": {
           "clear": "Clear"
         },
+        "fit-content": "Auto fit",
         "height-fill": "Fill screen",
+        "match-row-heights": "Match row heights",
         "max-columns": "Max columns",
-        "min-height": "Row height",
-        "min-height-custom": "Custom row height",
+        "max-height": "Max height",
+        "max-height-clear": "Back to unlimited",
+        "max-height-clear-label": "Clear",
+        "max-height-custom": "Custom",
+        "max-height-custom-label": "Custom max height",
+        "max-height-error": "A number between 50 and 10000 is required",
+        "max-height-short": "Short",
+        "max-height-standard": "Standard",
+        "max-height-tall": "Tall",
+        "max-height-unlimited": "Unlimited",
+        "min-height": "Min height",
+        "min-height-custom": "Custom min height",
+        "min-height-custom-clear": "Back to standard min height",
+        "min-height-custom-option": "Custom",
         "min-height-error": "A number between 50 and 2000 is required",
+        "min-height-none": "None",
+        "min-height-short": "Short",
+        "min-height-standard": "Standard",
+        "min-height-tall": "Tall",
         "min-width": "Min column width",
         "min-width-custom": "Custom min width",
         "min-width-custom-clear": "Back to standard min column width",
-        "min-width-error": "A number between 50 and 2000 is required"
+        "min-width-error": "A number between 50 and 2000 is required",
+        "row-height": "Row height",
+        "row-height-custom": "Custom row height",
+        "row-height-custom-clear": "Back to standard row height"
       },
       "resize-intercept": {
         "edit": "Edit auto layout",
@@ -5725,6 +5717,7 @@
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
       "panel-edit": "Panel changes",
+      "panel-fit-content": "Panel auto fit content",
       "panel-max-repeats-per-row": "Max repeats per row",
       "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",
@@ -9551,21 +9544,6 @@
     "requires-license": "Requires a Grafana Enterprise license",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "complete",
-      "learn-how": "Learn how in the docs"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "To advanced tutorials",
-      "aria-label-to-basic-tutorials": "To basic tutorials",
-      "checking-completed-setup-steps": "Checking completed setup steps",
-      "remove-this-panel": "Remove this panel"
-    },
-    "tutorial-card": {
-      "complete": "complete"
-    }
-  },
   "global-variables": {
     "details": {
       "create-error": "Failed to create global variable",
@@ -11079,6 +11057,7 @@
       "title": "Active incidents",
       "view-all": "View all incidents"
     },
+    "learn-more": "Learn more",
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
       "empty-description": "Once your organization has dashboards and usage data has been collected, dashboards with the most views over the last 30 days will be displayed here.",
@@ -11092,6 +11071,23 @@
       "title": "Latest from the blog"
     },
     "overview": {
+      "available": {
+        "logs": {
+          "action": "Add logs"
+        },
+        "metrics": {
+          "action": "Connect metrics"
+        },
+        "traces": {
+          "action": "Instrument traces"
+        }
+      },
+      "empty": {
+        "all": "No solutions were found.",
+        "attention": "No solutions need attention.",
+        "available": "No available solutions to show yet.",
+        "enabled": "No enabled solutions with recent activity were found."
+      },
       "get-started": {
         "cards": {
           "app-monitoring": {
@@ -11159,12 +11155,23 @@
         "show-more": "More getting started guides",
         "title": "Recommended getting started guides"
       },
+      "groups": {
+        "attention": "Needs attention",
+        "available": "Available",
+        "enabled": "Enabled"
+      },
       "options": {
         "all": "All solutions",
         "attention": "Needs attention",
         "available": "Available solutions",
         "enabled": "Enabled solutions",
         "get-started": "Get started"
+      },
+      "status": {
+        "attention": "Needs attention",
+        "available": "Not enabled",
+        "enabled": "Enabled",
+        "setup": "Ready to configure"
       },
       "title": "Your observability stack overview"
     },
@@ -11208,14 +11215,6 @@
       },
       "existing": "Enabled solution",
       "go-to": "Go to recommendation {{index}}",
-      "health": {
-        "nodes_one": "{{count}} node not ready",
-        "nodes_other": "{{count}} nodes not ready",
-        "pods_one": "{{count}} pod pending or failed",
-        "pods_other": "{{count}} pods pending or failed",
-        "restarts_one": "{{count}} restart in the last hour",
-        "restarts_other": "{{count}} restarts in the last hour"
-      },
       "hide": "Hide",
       "hosted-traces": {
         "action": "Enable Hosted Traces",
@@ -11224,19 +11223,6 @@
         "setup-action": "Set up Hosted Traces",
         "title": "Trace requests across services"
       },
-      "kubernetes": {
-        "action": "Open K8s app",
-        "alerts-firing_one": "{{value}} alert firing",
-        "alerts-firing_other": "{{value}} alerts firing",
-        "cluster-cpu": "Cluster CPU · last 24h",
-        "clusters_one": "{{value}} cluster",
-        "clusters_other": "{{value}} clusters",
-        "datasource": "via {{name}}",
-        "pods_one": "{{value}} pod",
-        "pods_other": "{{value}} pods",
-        "title": "Kubernetes Monitoring",
-        "view": "View"
-      },
       "kubernetes-monitoring": {
         "action": "Enable Kubernetes Monitoring",
         "context": "Cluster health next to your existing telemetry",
@@ -11244,50 +11230,18 @@
         "setup-action": "Set up Kubernetes Monitoring",
         "title": "Monitor your Kubernetes fleet"
       },
-      "logs": {
-        "action": "Open Explore (Logs)",
-        "action-explore": "Open in Explore",
-        "datasource": "via {{name}}",
-        "stats": "ingested · 7d",
-        "stats-sources_one": "ingested · 7d · ~{{count}} source",
-        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
-        "title": "Hosted Logs",
-        "volume": "Ingest volume · last 24h"
-      },
-      "metrics": {
-        "action": "Open Metrics Drilldown",
-        "action-explore": "Open in Explore",
-        "data-points-per-minute": "{{value}} data points/min",
-        "datasource": "via {{name}}",
-        "disk-eta_one": "~{{count}} h to full",
-        "disk-eta_other": "~{{count}} h to full",
-        "disk-hosts_one": "{{count}} host above 90% disk",
-        "disk-hosts_other": "{{count}} hosts above 90% disk",
-        "disk-worst": "{{host}} at {{percent}}%",
-        "names_one": "{{value}} metric",
-        "names_other": "{{value}} metrics",
-        "series_one": "{{value}} series",
-        "series_other": "{{value}} series",
-        "series-trend": "Active series · last 24h",
-        "stats": "active",
-        "stats-hosts_one": "active · {{count}} host",
-        "stats-hosts_other": "active · {{count}} hosts",
-        "title": "Metrics & infrastructure",
-        "view": "View"
-      },
       "next": "Next",
       "no-data": {
         "badge": "Getting started",
         "connect": "Connect a data source",
         "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
-        "description-partial": "Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.",
         "description-unknown": "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here.",
         "popular-solutions": "Popular solutions",
         "solution-k6": "k6",
         "solution-kubernetes": "Kubernetes Monitoring",
         "solution-synthetics": "Synthetic Monitoring",
         "title": "No data flowing yet",
-        "title-partial": "Add more telemetry"
+        "title-unknown": "We couldn't confirm your data"
       },
       "pause": "Pause",
       "previous": "Previous",
@@ -11296,19 +11250,75 @@
       "show": "Show",
       "switch": "Recommendations follow the selected solution",
       "switchSolution": "Switch solution",
-      "title": "Recommendations for your stack",
+      "title": "Recommendations for your stack"
+    },
+    "solutions": {
+      "cta": {
+        "enable": "Enable",
+        "open-app": "Open {{appName}}",
+        "open-explore": "Open in Explore",
+        "set-up": "Set up"
+      },
+      "kubernetes": {
+        "alerts-firing_one": "{{value}} alert firing",
+        "alerts-firing_other": "{{value}} alerts firing",
+        "cluster-cpu": "Cluster CPU · last 24h",
+        "clusters_one": "{{value}} cluster",
+        "clusters_other": "{{value}} clusters",
+        "description": "See cluster health, cost, and right-sizing savings in one view.",
+        "health-nodes_one": "{{count}} node not ready",
+        "health-nodes_other": "{{count}} nodes not ready",
+        "health-pods_one": "{{count}} pod pending or failed",
+        "health-pods_other": "{{count}} pods pending or failed",
+        "health-restarts_one": "{{count}} restart in the last hour",
+        "health-restarts_other": "{{count}} restarts in the last hour",
+        "pods_one": "{{value}} pod",
+        "pods_other": "{{value}} pods",
+        "setup-hint": "~3 min · Helm/Alloy",
+        "title": "Kubernetes Monitoring",
+        "view-alerts": "View alerts in Kubernetes Monitoring"
+      },
+      "logs": {
+        "description": "Aggregate and search logs from your applications and infrastructure.",
+        "setup-hint": "connect a logs source",
+        "stats": "ingested · 7d",
+        "stats-sources_one": "ingested · 7d · ~{{count}} source",
+        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
+        "title": "Logs",
+        "volume": "Ingest volume · last 24h"
+      },
+      "metrics": {
+        "data-points-per-minute": "{{value}} data points/min",
+        "description": "Connect Prometheus-compatible metrics to explore infrastructure health and trends.",
+        "disk-eta_one": "~{{count}} h to full",
+        "disk-eta_other": "~{{count}} h to full",
+        "disk-hosts_one": "{{count}} host above 90% disk",
+        "disk-hosts_other": "{{count}} hosts above 90% disk",
+        "disk-worst": "{{host}} at {{percent}}%",
+        "investigate-disk": "Investigate disk usage in Explore",
+        "names_one": "{{value}} metric",
+        "names_other": "{{value}} metrics",
+        "series_one": "{{value}} series",
+        "series_other": "{{value}} series",
+        "series-trend": "Active series · last 24h",
+        "setup-hint": "connect a metrics source",
+        "stats": "active",
+        "stats-hosts_one": "active · {{count}} host",
+        "stats-hosts_other": "active · {{count}} hosts",
+        "title": "Metrics & infrastructure"
+      },
       "traces": {
-        "action": "Open Traces Drilldown",
-        "action-explore": "Open in Explore",
-        "datasource": "via {{name}}",
+        "description": "See how requests flow across services and where they slow down.",
+        "setup-hint": "requires instrumentation",
         "spans_one": "{{value}} span",
         "spans_other": "{{value}} spans",
-        "stats": "traced · 24h",
-        "stats-services_one": "traced · 24h · {{count}} service",
-        "stats-services_other": "traced · 24h · {{count}} services",
-        "throughput": "Span throughput · last 24h",
-        "title": "Hosted Traces"
-      }
+        "stats": "traced · {{hours}}h",
+        "stats-services_one": "traced · {{hours}}h · {{count}} service",
+        "stats-services_other": "traced · {{hours}}h · {{count}} services",
+        "throughput": "Span throughput · last {{hours}}h",
+        "title": "Traces"
+      },
+      "via-datasource": "via {{name}}"
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
@@ -11884,7 +11894,8 @@
         "disable-highlighting": "Highlight text",
         "enable-highlighting": "Plain text",
         "escape-newlines": "Escape newlines",
-        "expand": "Collapsed"
+        "expand": "Collapsed",
+        "highlighting-unavailable": "Highlighting unavailable"
       },
       "labels": {
         "font-large": "Large font",
@@ -11937,7 +11948,8 @@
         "disable-highlighting": "Disable highlighting",
         "download": "Download",
         "enable-highlighting": "Enable highlighting",
-        "filter-level": "Filter logs result by level"
+        "filter-level": "Filter logs result by level",
+        "highlighting-unavailable": "Highlighting is disabled because these logs are too large and could impact performance"
       },
       "unwrapped-columns": {
         "disable": "Disable columns",
@@ -12845,6 +12857,12 @@
       "visualization-placeholder": "Coming soon"
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "Code",
+        "aria-label-language": "Code language",
+        "custom-language": "Use this language name",
+        "language-plain-text": "Plain text"
+      },
       "delete": "Delete block",
       "delete-confirm-text": "This removes the block and its content from the notebook. Are you sure you want to continue?",
       "delete-confirm-title": "Delete block?",
@@ -12859,6 +12877,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "Notebook copied as Markdown",
+      "copy-markdown": "Copy as Markdown",
+      "download-markdown": "Download as .md",
+      "error": "Failed to export notebook",
+      "label": "Export",
+      "open-in-cursor": "Open in Cursor",
+      "opening-in-cursor": "Opening in Cursor"
+    },
     "list": {
       "all-authors": "All authors",
       "author-filter": "Filter by author",
@@ -17567,12 +17594,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Link"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Need help?",
-      "welcome-to-grafana": "Welcome to Grafana"
     }
   },
   "xychart": {

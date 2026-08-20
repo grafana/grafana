@@ -1611,17 +1611,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "您确定要开始导入吗？此操作将在 Grafana 警报中创建新资源。",
         "confirm": "开始导入",
@@ -1669,26 +1658,6 @@
       "info-description": "此向导可帮助您将警报规则和通知资源从外部源导入到 Grafana Alerting。如需了解更多信息，请参阅<2>文档</2>。",
       "info-title": "导入向导",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "键入以搜索现有命名空间",
         "label": "命名空间"
@@ -1712,10 +1681,6 @@
         "filter": "筛选条件",
         "folder": "目标文件夹",
         "heading": "检查导入内容",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "命名空间",
         "nothing": "没有要导入的内容",
         "nothing-desc": "这两个步骤均已被跳过。请返回并至少配置一个导入源。",
@@ -1742,10 +1707,6 @@
         "validation-warning": "为了避免冲突，某些资源将被重命名。",
         "will-import-config": "将导入此配置",
         "will-import-rules": "将导入规则",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_other": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_other": "将导入 {{count}} 条规则"
       },
       "routing-tree": {
@@ -1856,14 +1817,10 @@
         "cancel-confirm-title": "要取消导入吗？",
         "cancel-confirm-yes": "丢弃更改",
         "skip": "跳过",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "通知资源",
         "step-notifications-desc": "联络点、策略、模板",
         "step-review": "检查并导入",
         "step-review-desc": "预览并确认导入",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "警报规则",
         "step-rules-desc": "警报和录制规则"
       },
@@ -2243,6 +2200,8 @@
       "title-no-alerting-capable-query-found": "未找到支持警报的查询"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "配置静默，用于停止接收来自特定警报规则的通知"
@@ -2250,7 +2209,10 @@
         "text": {
           "silence-alert-rule": "静默警报规则"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "我们找不到任何外部的 Alertmanager，您可能无权访问内置的 Grafana Alertmanager。",
@@ -3283,6 +3245,35 @@
         "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
         "revert": {
           "body": "",
@@ -3690,6 +3681,9 @@
       "no-matching-instances-with-filters": "在所选时间范围内，没有符合您当前筛选条件组的警报实例。",
       "open-in-sidebar": "在侧边栏中打开",
       "open-rule-details": "打开规则详情",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "规则详情和条件",
         "title": "规则详情"
@@ -3841,6 +3835,8 @@
     },
     "wizard-import-to-gma": {
       "error": "导入资源失败",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "已成功将资源导入到 Grafana Alerting。"
     },
     "yaml-content-info": {
@@ -5392,6 +5388,16 @@
     "auto-grid": {
       "description": "调整面板大小以适应并形成统一的网格",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "重复选项",
           "variable": {
@@ -5409,15 +5415,36 @@
         "custom-min-width": {
           "clear": "清除"
         },
+        "fit-content": "",
         "height-fill": "填充屏幕",
+        "match-row-heights": "",
         "max-columns": "最大列数",
-        "min-height": "行高",
-        "min-height-custom": "自定义行高",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "需要介于 50 和 2000 之间的数字",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "最小列宽",
         "min-width-custom": "自定义最小宽度",
         "min-width-custom-clear": "恢复为标准的最小列宽",
-        "min-width-error": "需要介于 50 和 2000 之间的数字"
+        "min-width-error": "需要介于 50 和 2000 之间的数字",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5650,6 +5677,7 @@
       "panel-background": "更改面板背景",
       "panel-description": "更改面板描述",
       "panel-edit": "面板更改",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "每行最大重复次数",
       "panel-preset": "应用面板预设",
       "panel-repeat-direction": "重复方向",
@@ -6026,6 +6054,7 @@
       "new-row-title": "新行",
       "row": {
         "collapse": "折叠行“{{title}}”",
+        "copy-link": "",
         "expand": "展开行“{{title}}”",
         "new": "新行",
         "repeat": {
@@ -8876,11 +8905,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -9442,21 +9474,6 @@
   "get-enterprise": {
     "requires-license": "需要 Grafana 企业版许可证",
     "title": "企业"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "完成",
-      "learn-how": "在文档中了解如何操作"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "前往高级教程",
-      "aria-label-to-basic-tutorials": "前往基础教程",
-      "checking-completed-setup-steps": "检查已完成的设置步骤",
-      "remove-this-panel": "移除此面板"
-    },
-    "tutorial-card": {
-      "complete": "完成"
-    }
   },
   "global-variables": {
     "details": {
@@ -12701,6 +12718,12 @@
       "visualization-placeholder": ""
     },
     "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
       "delete": "",
       "delete-confirm-text": "",
       "delete-confirm-title": "",
@@ -12715,6 +12738,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -17384,12 +17416,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "链接"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "需要帮助吗？",
-      "welcome-to-grafana": "欢迎使用 Grafana"
     }
   },
   "xychart": {

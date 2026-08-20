@@ -49,17 +49,14 @@ import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 import { RenamedResourcesList } from './CollapsibleRenameList';
 import { PolicyTreeNameHelp } from './PolicyTreeNameHelp';
-import { PromoteMergeSummary } from './PromoteMergeSummary';
 import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
 import { getPauseRulesLabel } from './Wizard/steps';
-import { type ImportMethod, StepKey } from './Wizard/types';
+import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
-import { StepImportMethod } from './steps/StepImportMethod';
-import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
 import { type DryRunValidationResult } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
 import {
@@ -72,11 +69,6 @@ import {
 import { getRoutingTreeLabel } from './useRoutingTrees';
 
 export interface ImportFormValues {
-  // Step 0: how the resources are brought into Grafana
-  importMethod: ImportMethod;
-  /** Selected Mimir/Cortex data source UID when importMethod is 'autosync' */
-  autosyncDatasourceUID?: string;
-
   // Step 1: Alertmanager resources
   step1Completed: boolean;
   step1Skipped: boolean;
@@ -225,9 +217,6 @@ function ImportWizardContent() {
 
   const formAPI = useForm<ImportFormValues>({
     defaultValues: {
-      // Step 0 — default to the staged one-time import (auto-sync stays opt-in)
-      importMethod: 'stage',
-      autosyncDatasourceUID: undefined,
       // Step 1
       step1Completed: false,
       step1Skipped: false,
@@ -283,7 +272,7 @@ function ImportWizardContent() {
       yamlFile: formValues.notificationsYamlFile,
       templateFiles: formValues.notificationsTemplateFiles,
       configIdentifier: formValues.policyTreeName,
-      promote: formValues.importMethod === 'promote',
+      promote: false,
     });
   }, [getValues, runDryRun]);
 
@@ -369,7 +358,7 @@ function ImportWizardContent() {
           yamlFile: values.notificationsYamlFile,
           templateFiles: values.notificationsTemplateFiles,
           configIdentifier: values.policyTreeName,
-          promote: values.importMethod === 'promote',
+          promote: false,
         });
       }
 
@@ -402,7 +391,6 @@ function ImportWizardContent() {
       const isRootFolder = isEmpty(targetFolder?.uid);
 
       trackImportToGMASuccess({
-        importMethod: values.importMethod,
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
         isRootFolder,
@@ -417,13 +405,13 @@ function ImportWizardContent() {
         skipSubPath: true,
       });
 
-      // A staged (non-promoted) notifications import lands on the Import tab so the user can review the
-      // staged copy and decide to promote or revert it. Everything else keeps the rule-list redirect.
-      const stagedNotifications = willImportNotifications && values.importMethod !== 'promote';
-
+      // Holds the "Import Successful" state on screen for a beat — Modal has no close animation,
+      // so without this delay the confirmation would disappear instantly instead of being seen.
       setTimeout(() => {
         setShowConfirmModal(false);
-        if (stagedNotifications) {
+        // A staged notifications import lands on the Import tab so the user can review the staged
+        // copy and decide to promote or revert it. Everything else keeps the rule-list redirect.
+        if (willImportNotifications) {
           notifyApp.success(
             t('alerting.wizard-import-to-gma.staged-success-title', 'Configuration staged'),
             t(
@@ -442,7 +430,6 @@ function ImportWizardContent() {
     } catch (err) {
       setImportStatus('error');
       trackImportToGMAError({
-        importMethod: values.importMethod,
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
       });
@@ -483,12 +470,6 @@ function ImportWizardContent() {
 
       <FormProvider {...formAPI}>
         <WizardLayout>
-          {/* Step 0: Import method */}
-          {activeStep === StepKey.Method && <StepImportMethod onNext={() => true} onCancel={handleWizardCancel} />}
-
-          {/* Auto-sync: Review & enable */}
-          {activeStep === StepKey.ReviewEnable && <StepReviewEnableAutoSync onCancel={handleWizardCancel} />}
-
           {/* Step 1: Notification Resources */}
           {activeStep === StepKey.Notifications && (
             <Step1Wrapper
@@ -853,20 +834,9 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                       <PolicyTreeNameHelp />
                     </Stack>
                   </div>
-                  {formData.importMethod === 'promote' && (
-                    <div className={styles.row}>
-                      <Text color="secondary">{t('alerting.import-to-gma.review.method', 'Method')}</Text>
-                      <Text weight="medium">{t('alerting.import-to-gma.review.method-promote', 'Promote')}</Text>
-                    </div>
-                  )}
                   {dryRunResult && (
                     <Box marginTop={1}>
                       <ValidationStatusIndicator result={dryRunResult} />
-                    </Box>
-                  )}
-                  {formData.importMethod === 'promote' && dryRunResult?.stats && (
-                    <Box marginTop={1}>
-                      <PromoteMergeSummary stats={dryRunResult.stats} />
                     </Box>
                   )}
                 </Stack>
@@ -1165,14 +1135,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '& > span:first-of-type': {
       minWidth: '150px',
     },
-  }),
-  badge: css({
-    padding: theme.spacing(0.5, 1),
-    borderRadius: theme.shape.radius.default,
-    backgroundColor: theme.colors.success.transparent,
-    color: theme.colors.success.text,
-    fontSize: theme.typography.bodySmall.fontSize,
-    fontWeight: theme.typography.fontWeightMedium,
   }),
   badgeSkipped: css({
     padding: theme.spacing(0.5, 1),

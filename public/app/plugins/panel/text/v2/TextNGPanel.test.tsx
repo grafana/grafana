@@ -21,16 +21,19 @@ jest.mock('@grafana/ui/unstable', () => ({
   CodeMirrorEditor: ({
     value,
     basicSetup,
+    height,
     'aria-label': ariaLabel,
   }: {
     value: string;
     basicSetup?: { lineNumbers?: boolean };
+    height?: string;
     'aria-label'?: string;
   }) => (
     <textarea
       aria-label={ariaLabel}
       value={value}
       data-line-numbers={String(Boolean(basicSetup?.lineNumbers))}
+      data-height={height}
       readOnly
     />
   ),
@@ -471,6 +474,61 @@ describe('TextNGPanel', () => {
         expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
         expect(screen.getByRole('radio', { name: 'Split' })).toBeChecked();
       });
+    });
+  });
+
+  describe('fit content', () => {
+    it('does not apply size containment to markdown content when fitContent is set', () => {
+      replaceVariablesMock.mockReturnValueOnce('hello');
+      const props = Object.assign({}, defaultProps, {
+        fitContent: true,
+        options: { content: 'hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      let view: HTMLElement | null = screen.getByTestId('TextNGPanel-converted-content');
+      while (view) {
+        expect(getComputedStyle(view).contain).not.toBe('strict');
+        view = view.parentElement;
+      }
+    });
+
+    it.each([
+      ['auto', 'line 1\nline 2\nline 3', true],
+      ['100%', 'line 1\nline 2\nline 3', false],
+    ])('gives the code view a height of %s when fitContent is %s', async (expectedHeight, contentTest, fitContent) => {
+      replaceVariablesMock.mockReturnValueOnce(contentTest);
+      const props = Object.assign({}, defaultProps, {
+        fitContent,
+        options: { content: contentTest, mode: TextMode.Code },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      expect(await screen.findByRole('textbox')).toHaveAttribute('data-height', expectedHeight);
+    });
+
+    it('ignores fitContent while the panel is being edited', async () => {
+      const frames = [
+        toDataFrame({ name: 'Frame A', fields: [{ name: 'host', values: ['web-1'] }] }),
+        toDataFrame({ name: 'Frame B', fields: [{ name: 'host', values: ['web-2'] }] }),
+      ];
+      const props = createProps(replaceVariablesMock, {
+        fitContent: true,
+        data: createData(frames),
+        options: { content: '# Hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.PanelEditor);
+
+      // The editing surface keeps its bounded, scrollable layout: some ancestor
+      // is still stretched to fill the panel instead of sizing to content.
+      let ancestor: HTMLElement | null = await screen.findByTestId('TextNGEditor');
+      while (ancestor && getComputedStyle(ancestor).height !== '100%') {
+        ancestor = ancestor.parentElement;
+      }
+      expect(ancestor).not.toBeNull();
     });
   });
 });
