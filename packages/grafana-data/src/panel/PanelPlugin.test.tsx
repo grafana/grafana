@@ -598,17 +598,17 @@ describe('PanelPlugin', () => {
     it('returns no transformations when the plugin registered none', () => {
       const panel = new PanelPlugin(() => <div />);
 
-      expect(panel.getDataTransformations({ series: [] })).toEqual({ prepend: [], append: [] });
+      expect(panel.getSystemTransformations({ series: [] })).toEqual({ prepend: [], append: [] });
     });
 
     it('is chainable and passes the query result frames to the supplier', () => {
       const supplier = jest.fn().mockReturnValue([{ id: 'extractFields', options: {} }]);
       const panel = new PanelPlugin(() => <div />);
 
-      expect(panel.setDataTransformations(supplier)).toBe(panel);
+      expect(panel.setSystemTransformations(supplier)).toBe(panel);
 
       const series = [createDataFrame({ fields: [{ type: FieldType.number, name: 'Value' }] })];
-      expect(panel.getDataTransformations({ series })).toEqual({
+      expect(panel.getSystemTransformations({ series })).toEqual({
         prepend: [{ id: 'extractFields', options: {} }],
         append: [],
       });
@@ -617,11 +617,11 @@ describe('PanelPlugin', () => {
 
     it('runs the supplier on every call, leaving memoization to the caller', () => {
       const supplier = jest.fn().mockReturnValue([{ id: 'reduce', options: {} }]);
-      const panel = new PanelPlugin(() => <div />).setDataTransformations(supplier);
+      const panel = new PanelPlugin(() => <div />).setSystemTransformations(supplier);
       const series = [createDataFrame({ fields: [{ type: FieldType.number, name: 'Value' }] })];
 
-      panel.getDataTransformations({ series });
-      panel.getDataTransformations({ series });
+      panel.getSystemTransformations({ series });
+      panel.getSystemTransformations({ series });
 
       // Same frames both times. The dashboard pipeline caches the result against that array, and
       // that cache is only correct while this layer does no caching of its own.
@@ -629,38 +629,38 @@ describe('PanelPlugin', () => {
     });
 
     it('treats an undefined result from the supplier as no transformations', () => {
-      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => undefined);
+      const panel = new PanelPlugin(() => <div />).setSystemTransformations(() => undefined);
 
-      expect(panel.getDataTransformations({ series: [] })).toEqual({ prepend: [], append: [] });
+      expect(panel.getSystemTransformations({ series: [] })).toEqual({ prepend: [], append: [] });
     });
 
     it('treats an array result as prepended transformations', () => {
-      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => [{ id: 'reduce', options: {} }]);
+      const panel = new PanelPlugin(() => <div />).setSystemTransformations(() => [{ id: 'reduce', options: {} }]);
 
-      expect(panel.getDataTransformations({ series: [] })).toEqual({
+      expect(panel.getSystemTransformations({ series: [] })).toEqual({
         prepend: [{ id: 'reduce', options: {} }],
         append: [],
       });
     });
 
     it('accepts explicit prepend and append groups', () => {
-      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => ({
+      const panel = new PanelPlugin(() => <div />).setSystemTransformations(() => ({
         prepend: [{ id: 'extractFields', options: {} }],
         append: [{ id: 'reduce', options: {} }],
       }));
 
-      expect(panel.getDataTransformations({ series: [] })).toEqual({
+      expect(panel.getSystemTransformations({ series: [] })).toEqual({
         prepend: [{ id: 'extractFields', options: {} }],
         append: [{ id: 'reduce', options: {} }],
       });
     });
 
     it('fills in the group the supplier omitted', () => {
-      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => ({
+      const panel = new PanelPlugin(() => <div />).setSystemTransformations(() => ({
         append: [{ id: 'reduce', options: {} }],
       }));
 
-      expect(panel.getDataTransformations({ series: [] })).toEqual({
+      expect(panel.getSystemTransformations({ series: [] })).toEqual({
         prepend: [],
         append: [{ id: 'reduce', options: {} }],
       });
@@ -669,39 +669,39 @@ describe('PanelPlugin', () => {
     it('reports no registered transformations before a supplier is set', () => {
       const panel = new PanelPlugin(() => <div />);
 
-      expect(panel.hasDataTransformations()).toBe(false);
+      expect(panel.hasSystemTransformations()).toBe(false);
     });
 
     it('falls back to no transformations when the supplier throws', () => {
       jest.spyOn(console, 'error').mockImplementation();
-      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => {
+      const panel = new PanelPlugin(() => <div />).setSystemTransformations(() => {
         throw new Error('boom');
       });
 
       // The pipeline runs this inside a data operator and the editor inside a render, so a throw
       // that escapes here errors the panel's data or takes down the edit pane.
-      expect(() => panel.getDataTransformations({ series: [] })).not.toThrow();
-      expect(panel.getDataTransformations({ series: [] })).toEqual({ prepend: [], append: [] });
+      expect(() => panel.getSystemTransformations({ series: [] })).not.toThrow();
+      expect(panel.getSystemTransformations({ series: [] })).toEqual({ prepend: [], append: [] });
     });
 
     it('reports a throwing supplier once, not on every call', () => {
       const errorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => {
+      const panel = new PanelPlugin(() => <div />).setSystemTransformations(() => {
         throw new Error('boom');
       });
 
-      panel.getDataTransformations({ series: [] });
-      panel.getDataTransformations({ series: [] });
-      panel.getDataTransformations({ series: [] });
+      panel.getSystemTransformations({ series: [] });
+      panel.getSystemTransformations({ series: [] });
+      panel.getSystemTransformations({ series: [] });
 
       expect(errorSpy).toHaveBeenCalledTimes(1);
     });
 
     it('reports registered transformations without consulting the supplier', () => {
       const supplier = jest.fn().mockReturnValue([{ id: 'reduce', options: {} }]);
-      const panel = new PanelPlugin(() => <div />).setDataTransformations(supplier);
+      const panel = new PanelPlugin(() => <div />).setSystemTransformations(supplier);
 
-      expect(panel.hasDataTransformations()).toBe(true);
+      expect(panel.hasSystemTransformations()).toBe(true);
       // The data-independent half of the question: a caller with no frames in hand still needs to
       // know whether to install anything, and a supplier is free to return nothing for given frames.
       expect(supplier).not.toHaveBeenCalled();

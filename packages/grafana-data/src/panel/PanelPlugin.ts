@@ -25,10 +25,10 @@ import {
   type VisualizationSuggestionsBuilder,
 } from '../types/suggestions';
 import {
-  type PanelDataTransformations,
-  type PanelDataTransformationsContext,
-  type PanelDataTransformationsSupplier,
-  type ResolvedPanelDataTransformations,
+  type ResolvedSystemTransformations,
+  type SystemTransformations,
+  type SystemTransformationsContext,
+  type SystemTransformationsSupplier,
 } from '../types/transformations';
 import { type FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
@@ -181,8 +181,8 @@ export class PanelPlugin<
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
   private presetsSupplier?: VisualizationPresetsSupplier<TOptions, TFieldConfigOptions>;
-  private dataTransformationsSupplier?: PanelDataTransformationsSupplier;
-  private dataTransformationsSupplierFailed = false;
+  private systemTransformationsSupplier?: SystemTransformationsSupplier;
+  private systemTransformationsSupplierFailed = false;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -405,16 +405,15 @@ export class PanelPlugin<
    *
    * The supplier receives the query result frames on every data update, so it can return
    * different transformations for different shapes of data. Empty results pass through
-   * without consulting the supplier. See {@link PanelDataTransformationsSupplier} for what it may
-   * return and {@link PanelDataTransformations} for the two positions.
+   * without consulting the supplier. See {@link SystemTransformationsSupplier} for what it may
+   * return and {@link SystemTransformations} for the two positions.
    *
-   * Grafana calls these *system transformations* internally, and the transformations editor shows
-   * them as read-only rows under "Panel transformations".
+   * The transformations editor shows them as read-only rows under "Panel transformations".
    *
    * @example
    * ```typescript
    * export const plugin = new PanelPlugin<Options>(MyPanel)
-   *     .setDataTransformations(({ series }) =>
+   *     .setSystemTransformations(({ series }) =>
    *       series[0]?.meta?.preferredVisualisationType === 'nodeGraph'
    *         ? [{ id: 'transpose', options: {} }]
    *         : []
@@ -424,7 +423,7 @@ export class PanelPlugin<
    * @example
    * ```typescript
    * export const plugin = new PanelPlugin<Options>(MyPanel)
-   *     .setDataTransformations(() => ({
+   *     .setSystemTransformations(() => ({
    *       prepend: [{ id: 'extractFields', options: {} }],
    *       append: [{ id: 'reduce', options: {} }],
    *     }));
@@ -432,32 +431,32 @@ export class PanelPlugin<
    *
    * @alpha
    **/
-  setDataTransformations(supplier: PanelDataTransformationsSupplier) {
-    this.dataTransformationsSupplier = supplier;
+  setSystemTransformations(supplier: SystemTransformationsSupplier) {
+    this.systemTransformationsSupplier = supplier;
     return this;
   }
 
   /**
-   * Transformations registered via {@link setDataTransformations}, normalized to explicit
+   * Transformations registered via {@link setSystemTransformations}, normalized to explicit
    * positions so callers never have to handle the array shorthand. Both groups are empty when the
    * plugin registered none, and when its supplier throws. Never throws.
    *
    * @internal
    */
-  getDataTransformations(ctx: PanelDataTransformationsContext): ResolvedPanelDataTransformations {
-    let registered: ReturnType<PanelDataTransformationsSupplier>;
+  getSystemTransformations(ctx: SystemTransformationsContext): ResolvedSystemTransformations {
+    let registered: ReturnType<SystemTransformationsSupplier>;
 
     try {
-      registered = this.dataTransformationsSupplier?.(ctx);
+      registered = this.systemTransformationsSupplier?.(ctx);
     } catch (err) {
       // Callers run the supplier from inside the panel's data pipeline and from inside an editor
       // render, so an escaping exception would error the panel's data or take down the edit pane.
       // Registering nothing leaves the panel on its untransformed data, the same outcome as a plugin
-      // that never called setDataTransformations. Reported once, because those callers reach this on
+      // that never called setSystemTransformations. Reported once, because those callers reach this on
       // every data update and every render.
-      if (!this.dataTransformationsSupplierFailed) {
-        this.dataTransformationsSupplierFailed = true;
-        console.error(`Panel plugin "${this.meta?.id}" threw from its setDataTransformations supplier`, err);
+      if (!this.systemTransformationsSupplierFailed) {
+        this.systemTransformationsSupplierFailed = true;
+        console.error(`Panel plugin "${this.meta?.id}" threw from its setSystemTransformations supplier`, err);
       }
 
       return { prepend: [], append: [] };
@@ -474,13 +473,13 @@ export class PanelPlugin<
 
   /**
    * Whether the plugin registered transformations at all, without running the supplier. Answers the
-   * data-independent half of the question, which {@link getDataTransformations} cannot: it needs
+   * data-independent half of the question, which {@link getSystemTransformations} cannot: it needs
    * frames, and a supplier is free to return none for a given set of them.
    *
    * @internal
    */
-  hasDataTransformations() {
-    return this.dataTransformationsSupplier !== undefined;
+  hasSystemTransformations() {
+    return this.systemTransformationsSupplier !== undefined;
   }
 
   /**
