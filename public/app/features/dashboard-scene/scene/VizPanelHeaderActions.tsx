@@ -4,7 +4,6 @@ import {
   AdHocFiltersVariable,
   GroupByVariable,
   type SceneComponentProps,
-  SceneDataTransformer,
   sceneGraph,
   SceneObjectBase,
   type SceneObjectState,
@@ -151,9 +150,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
   public getQueryRunner() {
     const panel = this.parent;
     const dataObject = panel ? sceneGraph.getData(panel) : undefined;
-    // A panel with queries but no transformations has the query runner as its `$data`, and
-    // `getData` then returns the runner itself — unwrapping unconditionally would lose it.
-    const queryRunner = dataObject instanceof SceneDataTransformer ? dataObject.state.$data : dataObject;
+    const queryRunner = dataObject?.state.$data;
 
     if (!queryRunner || !(queryRunner instanceof SceneQueryRunner)) {
       return null;

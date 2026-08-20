@@ -118,41 +118,12 @@ describe('VizPanelSubHeader', () => {
 
     expect(subHeader.state.supportsApplicability).toBe(false);
   });
-
-  describe('getQueryRunner', () => {
-    it('finds the query runner directly under the user transformer', async () => {
-      const { subHeader, queryRunner } = await buildScene();
-
-      const found = subHeader.getQueryRunner();
-
-      expect(found).toBeInstanceOf(SceneQueryRunner);
-      // Compared as a boolean: scene objects hold circular references, so a failing `toBe`
-      // diff cannot be serialized by the jest reporter.
-      expect(found === queryRunner).toBe(true);
-    });
-
-    it('finds the query runner when it is the panel data provider itself', async () => {
-      const { subHeader, queryRunner } = await buildScene({ withBareQueryRunner: true });
-
-      // Documents a deliberate widening: the previous one-level unwrap returned null for a
-      // panel whose `$data` is the runner itself, hiding the sub header. No dashboard path
-      // builds that chain today, but unwrapping zero transformer levels is just as valid.
-      const found = subHeader.getQueryRunner();
-
-      expect(found).toBeInstanceOf(SceneQueryRunner);
-      // Compared as a boolean: scene objects hold circular references, so a failing `toBe`
-      // diff cannot be serialized by the jest reporter.
-      expect(found === queryRunner).toBe(true);
-    });
-  });
 });
 
 interface BuildSceneOptions {
   applicabilityEnabled?: boolean;
   variableDatasourceUid?: string;
   noGroupBy?: boolean;
-  /** Set the query runner directly as the panel's `$data`, with no transformer wrapping it. */
-  withBareQueryRunner?: boolean;
 }
 
 async function buildScene(options?: BuildSceneOptions) {
@@ -181,9 +152,10 @@ async function buildScene(options?: BuildSceneOptions) {
     datasource: { uid: options?.variableDatasourceUid ?? 'ds-1' },
   });
 
-  const dataProvider = options?.withBareQueryRunner
-    ? queryRunner
-    : new SceneDataTransformer({ $data: queryRunner, transformations: [] });
+  const dataProvider = new SceneDataTransformer({
+    $data: queryRunner,
+    transformations: [],
+  });
 
   const panelState: VizPanelState = {
     key: 'panel-1',
