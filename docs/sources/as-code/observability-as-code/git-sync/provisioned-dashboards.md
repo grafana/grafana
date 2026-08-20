@@ -109,14 +109,48 @@ To restore a deleted dashboard, raise a PR directly in your Git repository. Rest
 You can document the contents or any other relevant piece of information of your provisioned folder in a `README.md` file stored alongside its resources in the repository. Grafana renders the README inline on the folder page, below the list of dashboards, so your team can see what's in the folder, how it's organized, and where to find the right dashboard without leaving Grafana.
 
 - When the folder contains a `README.md` file, Grafana renders its Markdown content. Relative links and images in the README resolve against the host repository.
-- If the folder has no `README.md`, or if the folder is empty, you'll be prompted to action with a **Add README** button.
-- You can edit the README any time. Select the edit pencil in the README header to open the file in your Git provider's editor and commit changes through your usual workflow.
+- If the folder has no `README.md`, or if the folder is empty, you're prompted to action with an **Add README** button.
+- You can edit the README any time. Select the edit pencil in the README header to open the file in your Git provider's editor and commit changes through your usual workflow. When you have several documents, the edit pencil targets the document that's currently open.
 
 {{< admonition type="note" >}}
 
 It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
 
 {{< /admonition >}}
+
+### Browse multiple documents with tabs
+
+A folder can hold more than one Markdown document. When it does, Grafana shows a tab for each document above the rendered content, similar to how a Git provider presents documentation files.
+
+- Grafana lists any `.md` and `.markdown` files stored alongside the folder's resources.
+- The `README`, `CONTRIBUTING.md`, and `SECURITY.md` files appear first, in that order, when they're present. All other documents follow in alphabetical order.
+- The README renders by default. Select a tab to load that document.
+- When there are more tabs than fit the width of the page, the extra tabs collapse into a **More** menu.
+
+Use this to keep related documentation, such as contribution guidelines or ownership details, next to the dashboards it describes.
+
+### Navigate to resources from Markdown links
+
+Markdown links are context-aware. A link that points to a provisioned resource file, such as a dashboard JSON file or a folder, resolves to the matching page inside Grafana when you select it. This lets you move between documentation and dashboards the same way you move between provisioned resources.
+
+- Links to resource files, such as dashboard JSON or YAML files and folder paths, open the corresponding dashboard or folder in Grafana.
+- Grafana resolves the link the first time you select a candidate link, then reuses that result for subsequent clicks. The resolved list refreshes after a sync completes, so links to newly added or renamed resources keep working.
+- When a link doesn't match a provisioned resource, Grafana falls back to the file in the host repository, so the same README still works when viewed on GitHub or GitLab.
+
+### Render Mermaid diagrams
+
+Grafana renders [Mermaid](https://mermaid.js.org/) diagrams defined in your Markdown documents. Use a fenced code block with the `mermaid` language to include a diagram:
+
+````markdown
+```mermaid
+flowchart LR
+  A[Ingest] --> B[Store]
+  B --> C[Query]
+  C --> D[Dashboard]
+```
+````
+
+Grafana replaces the code block with the rendered diagram and matches it to your light or dark theme. Documents without a Mermaid block aren't affected.
 
 ## Best practices
 
