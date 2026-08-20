@@ -1,6 +1,9 @@
-import { textUtil } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import { type GrafanaTheme2, textUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Icon, Stack, TextLink, Text } from '@grafana/ui';
+import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { type ResourceObjects } from 'app/api/clients/provisioning/v0alpha1';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
@@ -8,7 +11,8 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequ
 
 import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import { isGitProvider } from '../../utils/repositoryTypes';
-import { getBranchUrl } from '../utils/url';
+
+import { BranchDisplay } from './BranchDisplay';
 
 interface Props {
   /* PR url either from url param or BE response. It is used to open the pull request in a new tab. */
@@ -36,24 +40,11 @@ const commonAlertProps = {
   style: { flex: 0 } as const,
 };
 
-function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch: string; repoType?: string }) {
-  const link = getBranchUrl(baseUrl, branch, repoType);
-
-  if (link.length) {
-    return (
-      <TextLink href={link} external>
-        {branch}
-      </TextLink>
-    );
-  }
-
-  return <Text color="info">{branch}</Text>;
-}
-
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
 export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, action }: Props) {
+  const styles = useStyles2(getStyles);
   const { repoType, action: paramAction, prTitle } = usePullRequestParam();
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
@@ -63,15 +54,7 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
   const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
 
   const bannerAction = action ?? paramAction;
-
-  const actionText =
-    bannerAction === 'delete'
-      ? getDeleteBannerText(capitalizedRepoType)
-      : bannerAction === 'update'
-        ? getUpdateBannerText(capitalizedRepoType)
-        : bannerAction === 'move'
-          ? getMoveBannerText(capitalizedRepoType)
-          : getCreateBannerText(isNewPr, capitalizedRepoType);
+  const actionText = getBannerText(bannerAction, isNewPr, capitalizedRepoType);
 
   if (behindBranch) {
     return (
@@ -121,11 +104,28 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
       {/* when the repo type is a valid provider, we show branch information */}
       {showBranchInfo(repoType, branchInfo) && (
         <Box marginTop={1}>
-          <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.branch-text">branch:</Trans>{' '}
-          {/* branch that changes pushed to */}
-          <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.targetBranch} repoType={repoType} />
-          {'\u2192'} {/* Target branch (configured branch) */}
-          <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.configuredBranch} repoType={repoType} />
+          <span className={styles.branchRow}>
+            {/* branch that changes pushed to */}
+            <BranchDisplay
+              baseUrl={branchInfo.repoBaseUrl}
+              branch={branchInfo.targetBranch}
+              repoType={repoType}
+              dataTestId={selectors.pages.Provisioning.PreviewBanner.sourceBranchLink}
+            />
+            <Icon
+              name="arrow-right"
+              size="sm"
+              className={styles.arrow}
+              aria-label={t('provisioned-resource-preview-banner.preview-banner.branch-targets', 'targets')}
+            />
+            {/* Target branch (configured branch) */}
+            <BranchDisplay
+              baseUrl={branchInfo.repoBaseUrl}
+              branch={branchInfo.configuredBranch}
+              repoType={repoType}
+              dataTestId={selectors.pages.Provisioning.PreviewBanner.targetBranchLink}
+            />
+          </span>
         </Box>
       )}
     </Alert>
@@ -136,6 +136,19 @@ interface BannerText {
   title: string;
   body: string;
   button: string;
+}
+
+function getBannerText(action: string | undefined, isNewPr: boolean | undefined, repoType: string): BannerText {
+  switch (action) {
+    case 'delete':
+      return getDeleteBannerText(repoType);
+    case 'update':
+      return getUpdateBannerText(repoType);
+    case 'move':
+      return getMoveBannerText(repoType);
+    default:
+      return getCreateBannerText(isNewPr, repoType);
+  }
 }
 
 function getCreateBannerText(isNewPr: boolean | undefined, repoType: string): BannerText {
@@ -238,3 +251,16 @@ function showBranchInfo(
 
   return false;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  branchRow: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.75),
+    flexWrap: 'wrap',
+  }),
+  arrow: css({
+    flexShrink: 0,
+    color: theme.colors.text.secondary,
+  }),
+});

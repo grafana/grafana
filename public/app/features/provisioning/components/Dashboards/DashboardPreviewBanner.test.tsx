@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
-import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceObjects, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { DashboardRoutes } from 'app/types/dashboard';
@@ -64,7 +64,7 @@ interface FileQueryData {
     compareURL?: string;
   };
   resource?: {
-    action?: 'create' | 'update' | 'delete' | 'move';
+    action?: ResourceObjects['action'];
   };
 }
 
@@ -188,6 +188,12 @@ describe('DashboardPreviewBanner', () => {
       expect(
         screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
       ).not.toBeInTheDocument();
+    });
+
+    it('returns null while the file query is loading', () => {
+      setup({}, { fileQuery: { data: {}, isLoading: true, error: null } });
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
   });
 

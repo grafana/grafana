@@ -26,6 +26,12 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
   const { repository } = useGetResourceRepositoryView({ name: slug });
 
+  // Wait for the dry-run to resolve before rendering. resource.action drives the title, so showing
+  // the banner mid-load would flash the "created" default and then flip to the real action.
+  if (file.isLoading) {
+    return null;
+  }
+
   // early return if there is an error loading dashboard file from repository
   if (file.data?.errors) {
     return (
