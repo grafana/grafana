@@ -120,15 +120,6 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
-			Name:         "starsFromAPIServer",
-			Description:  "populate star status from apiserver",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaFrontendNavigation,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -2954,6 +2945,14 @@ var (
 		{
 			Name:        "grafana.vectorSearchCmdk",
 			Description: "Enables semantic (vector) dashboard search in the command palette",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "grafana.cmdkHybridSearch",
+			Description: "Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",

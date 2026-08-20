@@ -67,6 +67,9 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
       title: t('dashboard-scene.build-new-dashboard-save-model.data.title.new-dashboard', 'New dashboard'),
       panels: [],
       timezone: contextSrv.user?.timezone || defaultDashboard.timezone,
+      // Seed from the instance default so the value is persisted on first save. Authors can flip it
+      // afterwards and their choice wins, because nothing reads the config again after creation.
+      preload: config.dashboardDefaultPreload,
     },
   };
 
@@ -137,6 +140,9 @@ export async function buildNewDashboardSaveModelV2(
         ...defaultTimeSettingsSpec(),
         timezone: contextSrv.user?.timezone || defaultTimeSettingsSpec().timezone,
       },
+      // Overrides the schema default, which is a hardcoded false. v2 requires a concrete boolean, so
+      // seeding here is what lets the instance default reach v2 dashboards at all.
+      preload: config.dashboardDefaultPreload,
     },
     access: {
       canStar: false,

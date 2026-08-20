@@ -902,7 +902,11 @@ The file may contain either a classic dashboard JSON or a Kubernetes-format dash
 
 #### `default_preload`
 
-Instance-wide default for panel preloading, applied only to dashboards that do not explicitly set the `preload` property in their JSON. When `true`, all panels start loading as soon as the dashboard loads instead of lazy loading as they scroll into view. An explicit `preload` value in the dashboard JSON always takes precedence over this default. Default is `false`.
+The `preload` value given to newly created dashboards. When `true`, a new dashboard starts with all panels loading as soon as it opens, instead of lazy loading them as they scroll into view. Default is `false`.
+
+The value is written into the dashboard when it is created, so authors can change it in dashboard settings afterwards and their choice wins.
+
+This setting only applies to dashboards created after you set it. Existing dashboards keep whatever `preload` value they already have, so turning it on never changes how they behave. It applies to dashboards created in the UI; dashboards created through the API or provisioning use the `preload` value in the payload.
 
 #### `report_render_query_grace_period`
 
