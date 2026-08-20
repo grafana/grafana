@@ -6,8 +6,11 @@ import { type Props } from 'react-virtualized-auto-sizer';
 import { type DataFrame, FieldType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { type TableNG } from '@grafana/ui/unstable';
 
 import { InspectDataTab } from './InspectDataTab';
+
+type TableNGProps = ComponentProps<typeof TableNG>;
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: Props) =>
@@ -17,6 +20,22 @@ jest.mock('react-virtualized-auto-sizer', () => {
       scaledWidth: 1,
       width: 1,
     });
+});
+
+// Whether every field already had a displayName cached at the moment InspectDataTab handed the
+// frame to TableNG — snapshotted here, before TableNG's own fallback caching pass (which mutates
+// field.state on the same object in place) can run and mask the thing we're trying to observe.
+let dataArrivedWithCachedDisplayNames: boolean | undefined;
+jest.mock('@grafana/ui/unstable', () => {
+  const actual = jest.requireActual('@grafana/ui/unstable');
+  return {
+    ...actual,
+    // Delegate to the real component so the "grid renders" assertions keep working.
+    TableNG: (props: TableNGProps) => {
+      dataArrivedWithCachedDisplayNames = props.data.fields.every((f) => Boolean(f.state?.displayName));
+      return <actual.TableNG {...props} />;
+    },
+  };
 });
 
 const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTab>>) => {
@@ -217,12 +236,29 @@ describe('InspectDataTab', () => {
   });
 
   describe('when useTableNG is true', () => {
+    beforeEach(() => {
+      dataArrivedWithCachedDisplayNames = undefined;
+    });
+
     it('should render the data with TableNG instead of the legacy Table', () => {
       render(<InspectDataTab {...createProps({ useTableNG: true })} />);
       expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
       // react-data-grid (TableNG) uses role="grid", unlike the legacy Table's role="table"
       expect(screen.getByRole('grid')).toBeInTheDocument();
       expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    });
+
+    it('should pass TableNG data with display names already cached, even with withFieldConfig applied', () => {
+      // withFieldConfig runs the data through applyFieldOverrides, which always clears any
+      // previously cached displayName (see fieldOverrides.ts) — the fix must re-cache after that,
+      // not before, or the pre-cache never survives to the frame TableNG actually renders.
+      render(
+        <InspectDataTab
+          {...createProps({ useTableNG: true, options: { withTransforms: false, withFieldConfig: true } })}
+        />
+      );
+
+      expect(dataArrivedWithCachedDisplayNames).toBe(true);
     });
   });
 });

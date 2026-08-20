@@ -28,6 +28,7 @@ import (
 	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -808,7 +809,11 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 			Title:    r.GetTitle(),
 			Folder:   r.GetFolder(),
 			Score:    r.GetScore(),
-			Field:    field,
+			ManagedBy: dashboardv0alpha1.ManagedBy{
+				Kind: utils.ManagerKind(r.GetManagedByKind()),
+				ID:   r.GetManagedById(),
+			},
+			Field: field,
 		})
 	}
 

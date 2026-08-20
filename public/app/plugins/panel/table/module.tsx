@@ -22,6 +22,7 @@ function getTableNoValuePlaceholder(): string {
 export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
+  .setFitContentSupport()
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Actions]: {

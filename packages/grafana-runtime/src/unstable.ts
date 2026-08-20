@@ -25,15 +25,18 @@ export {
   reloadDataSourceInstanceSettings,
 } from './services/dataSource/settings';
 export { getDataSourceInstance, registerRuntimeDataSourceInstance } from './services/dataSource/dataSource';
+export { getDataSourceInstanceListItem } from './services/dataSource/listItem';
 export {
   useDataSourceInstanceSettings,
   useDataSourceInstance,
   useDataSourceInstanceList,
+  useDataSourceInstanceListItem,
   useDefaultDataSourceInstance,
   useHasDataSourceInstance,
   type UseDataSourceInstanceSettingsResult,
   type UseDataSourceInstanceResult,
   type UseDataSourceInstanceListResult,
+  type UseDataSourceInstanceListItemResult,
   type UseDefaultDataSourceInstanceResult,
   type UseHasDataSourceInstanceResult,
 } from './services/dataSource/hooks';
