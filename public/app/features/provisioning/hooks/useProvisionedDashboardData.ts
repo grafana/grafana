@@ -17,6 +17,7 @@ import {
   getDefaultWorkflow,
   shouldEnforceBranchTemplate,
 } from '../components/defaults';
+import { generateNewBranchName } from '../components/utils/newBranchName';
 import { generatePath } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { type ProvisionedDashboardFormData } from '../types/form';
@@ -123,10 +124,19 @@ export interface ProvisionedDashboardData {
  * It retrieves default values, repository information, and workflow options based on the current dashboard state.
  */
 
-export function useProvisionedDashboardData(dashboard: DashboardScene, saveAsCopy?: boolean): ProvisionedDashboardData {
+export function useProvisionedDashboardData(
+  dashboard: DashboardScene,
+  saveAsCopy?: boolean,
+  // Forces a fresh branch workflow regardless of the ref the preview was loaded from — used by the
+  // deleted-branch recovery so the draft is committed to a new branch instead of pushed at the
+  // (gone) preview ref or the configured default branch.
+  forceNewBranch?: boolean
+): ProvisionedDashboardData {
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const [params] = useUrlParams();
-  const loadedFromRef = params.get('ref') ?? undefined;
+  // When recovering onto a new branch, ignore the preview's ref so the defaults don't fall back to
+  // the write workflow (which targets the configured branch) that a non-default ref would select.
+  const loadedFromRef = forceNewBranch ? undefined : (params.get('ref') ?? undefined);
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   const defaultValuesResult = useDefaultValues({
@@ -157,10 +167,13 @@ export function useProvisionedDashboardData(dashboard: DashboardScene, saveAsCop
   // so the templated branch is created and sent as `ref`, rather than a direct push that drops it.
   // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use.
   // useBranchTemplate then fills the `ref`.
-  const defaultValues =
-    values && shouldEnforceBranchTemplate(repository, gitConventionsEnabled) && values.workflow !== 'branch'
-      ? { ...values, workflow: 'branch' as const }
-      : values;
+  let defaultValues = values;
+  if (values && forceNewBranch) {
+    // Seed a fresh branch name; useBranchTemplate overrides it when a name template is configured.
+    defaultValues = { ...values, workflow: 'branch' as const, ref: generateNewBranchName('dashboard') };
+  } else if (values && shouldEnforceBranchTemplate(repository, gitConventionsEnabled) && values.workflow !== 'branch') {
+    defaultValues = { ...values, workflow: 'branch' as const };
+  }
 
   return {
     defaultValues,

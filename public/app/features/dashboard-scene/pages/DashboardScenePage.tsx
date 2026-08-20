@@ -162,11 +162,12 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         route={route.routeName}
         slug={slug}
         path={path}
+        dashboardUid={dashboard.state.uid}
         onSaveToNewBranch={() => {
-          // Keep the in-memory draft: enter edit mode on the current scene and open the save drawer,
-          // where the provisioned save form lets the user pick a new branch.
+          // Keep the in-memory draft: enter edit mode on the current scene and open the save drawer
+          // defaulted to a fresh branch, since the branch this preview was on is gone.
           dashboard.onEnterEditMode();
-          dashboard.openSaveDrawer({});
+          dashboard.openSaveDrawer({ forceNewBranch: true });
         }}
       />
       <DashboardConversionWarningBanner dashboard={dashboard} />

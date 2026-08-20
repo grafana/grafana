@@ -13,11 +13,19 @@ export interface SaveProvisionedDashboardProps {
   drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
   saveAsCopy?: boolean;
+  /** Recovery entry point: default the form to a brand-new branch (see useProvisionedDashboardData). */
+  forceNewBranch?: boolean;
 }
 
-export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy }: SaveProvisionedDashboardProps) {
+export function SaveProvisionedDashboard({
+  drawer,
+  changeInfo,
+  dashboard,
+  saveAsCopy,
+  forceNewBranch,
+}: SaveProvisionedDashboardProps) {
   const { isNew, defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
-    useProvisionedDashboardData(dashboard, saveAsCopy);
+    useProvisionedDashboardData(dashboard, saveAsCopy, forceNewBranch);
 
   return (
     <ProvisionedFormGate

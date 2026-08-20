@@ -46,6 +46,12 @@ jest.mock('@grafana/api-clients/rtkq/provisioning/v0alpha1', () => ({
   useLazyGetRepositoryRefsQuery: () => [mockTriggerRefs, { isFetching: false }],
 }));
 
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useNavigate: () => mockNavigate,
+}));
+
 const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
 const mockUseGetResourceRepositoryView = jest.mocked(useGetResourceRepositoryView);
 const mockUseGetRepositoryFilesWithPathQuery = jest.mocked(useGetRepositoryFilesWithPathQuery);
@@ -55,6 +61,7 @@ interface DashboardPreviewBannerProps {
   route?: string;
   slug?: string;
   path?: string;
+  dashboardUid?: string;
   onSaveToNewBranch?: () => void;
 }
 
@@ -84,7 +91,7 @@ interface FileQueryData {
 
 interface SetupOverrides {
   pullRequestParam?: PullRequestParamReturn;
-  fileQuery?: { data: FileQueryData; isLoading?: boolean; error?: unknown };
+  fileQuery?: { data?: FileQueryData; isLoading?: boolean; isError?: boolean; error?: unknown };
 }
 
 const defaultRepositoryView = {
@@ -116,6 +123,7 @@ const defaultProps: DashboardPreviewBannerProps = {
   route: DashboardRoutes.Provisioning,
   slug: 'my-repo',
   path: 'dashboards/foo.json',
+  dashboardUid: 'scene-uid',
 };
 
 function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: SetupOverrides = {}) {
@@ -375,6 +383,29 @@ describe('DashboardPreviewBanner', () => {
       expect(onSaveToNewBranch).toHaveBeenCalledTimes(1);
     });
 
+    it('discards changes by navigating to the saved dashboard', async () => {
+      mockTriggerRefs.mockReturnValue({
+        unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
+      });
+      setup(
+        {},
+        {
+          fileQuery: {
+            data: {
+              ...defaultFileQueryReturn.data,
+              resource: { existing: { metadata: { name: 'original-uid' } } },
+            },
+          },
+        }
+      );
+
+      await clickOpenPullRequest();
+      await screen.findByText('This branch no longer exists');
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Discard changes' }));
+
+      expect(mockNavigate).toHaveBeenCalledWith('/d/original-uid');
+    });
+
     it('falls back to opening the link when the refs check fails', async () => {
       mockTriggerRefs.mockReturnValue({
         unwrap: () => Promise.reject(new Error('boom')),
@@ -385,6 +416,25 @@ describe('DashboardPreviewBanner', () => {
 
       await waitFor(() => expect(windowOpenSpy).toHaveBeenCalledWith('https://github.com/org/repo/compare', '_blank'));
       expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when the preview ref no longer exists (after a refresh)', () => {
+    it('shows a recovery banner linking to the saved dashboard', async () => {
+      setup({ queryParams: { ref: 'feature-branch' } }, { fileQuery: { data: undefined, isError: true } });
+
+      expect(screen.getByText('This branch no longer exists')).toBeInTheDocument();
+
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Go to the saved dashboard' }));
+
+      // No existing resource in the errored response, so it falls back to the scene uid.
+      expect(mockNavigate).toHaveBeenCalledWith('/d/scene-uid');
+    });
+
+    it('does not show the recovery banner while the file query is still loading', () => {
+      setup({ queryParams: { ref: 'feature-branch' } }, { fileQuery: { data: undefined, isError: false } });
+
+      expect(screen.queryByRole('button', { name: 'Go to the saved dashboard' })).not.toBeInTheDocument();
     });
   });
 });
