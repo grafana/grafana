@@ -108,6 +108,12 @@ To restore a deleted dashboard, raise a PR directly in your Git repository. Rest
 
 You can document the contents or any other relevant piece of information of your provisioned folder in a `README.md` file stored alongside its resources in the repository. Grafana renders the README inline on the folder page, below the list of dashboards, so your team can see what's in the folder, how it's organized, and where to find the right dashboard without leaving Grafana.
 
+Common uses include:
+
+- **Runbooks**: Document how to respond to an alert or investigate an incident, with links to the dashboards teammates need.
+- **Architectural diagrams**: Show how the system a folder monitors fits together, using [Mermaid](#render-mermaid-diagrams) diagrams that render inline.
+- **Onboarding guidelines**: Explain what each dashboard is for and how a new team member should navigate the folder.
+
 - When the folder contains a `README.md` file, Grafana renders its Markdown content. Relative links and images in the README resolve against the host repository.
 - If the folder has no `README.md`, or if the folder is empty, you're prompted to action with an **Add README** button.
 - You can edit the README any time. Select the edit pencil in the README header to open the file in your Git provider's editor and commit changes through your usual workflow. When you have several documents, the edit pencil targets the document that's currently open.
@@ -127,7 +133,7 @@ A folder can hold more than one Markdown document. When it does, Grafana shows a
 - The README renders by default. Select a tab to load that document.
 - When there are more tabs than fit the width of the page, the extra tabs collapse into a **More** menu.
 
-Use this to keep related documentation, such as contribution guidelines or ownership details, next to the dashboards it describes.
+Use this to keep related documentation next to the dashboards it describes, such as a runbook, an onboarding guide, or contribution and ownership details in separate documents.
 
 ### Navigate to resources from Markdown links
 
@@ -139,7 +145,7 @@ Markdown links are context-aware. A link that points to a provisioned resource f
 
 ### Render Mermaid diagrams
 
-Grafana renders [Mermaid](https://mermaid.js.org/) diagrams defined in your Markdown documents. Use a fenced code block with the `mermaid` language to include a diagram:
+Grafana renders [Mermaid](https://mermaid.js.org/) diagrams defined in your Markdown documents. Use them to embed architectural diagrams, incident runbook flows, or data pipeline overviews next to the dashboards that monitor them. Use a fenced code block with the `mermaid` language to include a diagram:
 
 ````markdown
 ```mermaid
@@ -160,6 +166,6 @@ Follow these recommendations when working with provisioned dashboards:
 - **Provide clear commit messages**: Describe your changes to help with tracking and collaboration.
 - **Regularly sync your repository**: Keep Grafana up to date with the latest changes.
 - **Review the Events tab**: Monitor sync status to ensure changes are applied correctly.
-- **Add a folder README**: Document each folder's contents with a `README.md` so your teammates can find the right dashboard quickly.
+- **Add a folder README**: Document each folder's contents with a `README.md` so your teammates can find the right dashboard quickly. Use additional documents for runbooks, architectural diagrams, or onboarding guidelines that belong next to the dashboards.
 
 Refer to [Work with provisioned repositories](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/use-git-sync) for general guidance about using Git Sync.
