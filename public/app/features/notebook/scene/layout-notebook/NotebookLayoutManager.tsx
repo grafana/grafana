@@ -652,16 +652,16 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}
                     onAdvance={(remainder, marker) => {
-                      // A marker (list continuation) goes ahead of whatever text the split carried
-                      // along; with neither, insertCellAfter's own empty-paragraph default applies.
-                      const text = marker !== undefined || remainder ? (marker ?? '') + remainder : undefined;
+                      // With neither a marker nor a remainder, insertCellAfter's own empty-paragraph
+                      // default applies — see splitSeed for how the two combine otherwise.
+                      const { text, caretOffset } = splitSeed(remainder, marker);
                       const created = model.insertCellAfter(
                         cell,
                         text !== undefined ? { kind: 'Markdown', spec: { text } } : undefined
                       );
                       // The split point, not the end of whatever text got carried along with it — see
                       // requestFocus's own doc comment on `caretOffset`.
-                      requestFocus(created?.state.key, (marker ?? '').length);
+                      requestFocus(created?.state.key, caretOffset);
                     }}
                     onFocusRequest={() => requestFocus(cell.state.key)}
                   />
@@ -705,6 +705,34 @@ function contentForBlockType(type: NotebookBlockType): CellContentKind | undefin
  */
 function isEmptyMarkdown(content: CellContentKind | undefined): boolean {
   return content?.kind === 'Markdown' && content.spec.text === '';
+}
+
+/**
+ * What Enter's split-off cell (see NotebookLayoutManagerRenderer's onAdvance) should start with, and
+ * where its caret belongs. `remainder` is every line MarkdownCell found after the caret, exactly as
+ * the reader left it — which, for a cell that already holds further list items typed in via
+ * Shift+Enter, includes those items too, each already carrying its own marker. `marker` only ever
+ * describes the item the caret was actually in, so it only belongs in front of *that* item's leftover
+ * text: once the caret sat at the very end of it, gluing the marker onto the whole remainder instead
+ * would prefix an extra, empty item ahead of the next one rather than cleanly handing it over.
+ */
+export function splitSeed(
+  remainder: string,
+  marker: string | undefined
+): { text: string | undefined; caretOffset: number } {
+  if (marker === undefined) {
+    return { text: remainder || undefined, caretOffset: 0 };
+  }
+
+  const newlineIndex = remainder.indexOf('\n');
+  const restOfCaretLine = newlineIndex === -1 ? remainder : remainder.slice(0, newlineIndex);
+  const laterLines = newlineIndex === -1 ? '' : remainder.slice(newlineIndex + 1);
+
+  if (restOfCaretLine === '' && laterLines) {
+    return { text: laterLines, caretOffset: 0 };
+  }
+
+  return { text: marker + remainder, caretOffset: marker.length };
 }
 
 function confirmRemoveCell(model: NotebookLayoutManager, cell: NotebookCellItem) {

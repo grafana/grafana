@@ -86,7 +86,7 @@ jest.mock('@grafana/ui/unstable', () => {
 });
 
 import { NotebookCellItem } from './NotebookCellItem';
-import { NotebookLayoutManager } from './NotebookLayoutManager';
+import { NotebookLayoutManager, splitSeed } from './NotebookLayoutManager';
 
 const DRAG_HANDLE_SELECTOR = '[data-rfd-drag-handle-draggable-id]';
 
@@ -1121,6 +1121,41 @@ describe('NotebookLayoutManager', () => {
       expect(clone.state.cells[0].state.body).toBeUndefined();
       expect(clone.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
       expect(clone.state.cells[0].state.content).not.toBe(original.state.content);
+    });
+  });
+});
+
+// What NotebookLayoutManagerRenderer's onAdvance hands to insertCellAfter on Enter — pulled out here
+// since MarkdownCell's own Enter binding lives inside a real CodeMirror keymap, which this file's
+// mocked CodeMirrorEditor never actually runs (see the mock's own doc comment above).
+describe('splitSeed', () => {
+  it('defers to insertCellAfter’s own empty-paragraph default outside a list', () => {
+    expect(splitSeed('', undefined)).toEqual({ text: undefined, caretOffset: 0 });
+  });
+
+  it('carries a plain paragraph’s leftover text as-is, uncontaminated by any marker', () => {
+    expect(splitSeed('rest of the sentence', undefined)).toEqual({ text: 'rest of the sentence', caretOffset: 0 });
+  });
+
+  it('seeds a fresh empty item when Enter lands at the end of the list', () => {
+    expect(splitSeed('', '- ')).toEqual({ text: '- ', caretOffset: 2 });
+  });
+
+  it('prefixes the marker onto text left on the caret’s own line', () => {
+    expect(splitSeed('rest of the item', '- ')).toEqual({ text: '- rest of the item', caretOffset: 2 });
+  });
+
+  // The bug: Enter at the end of an item that already has further items below it (typed into this
+  // same cell via Shift+Enter) used to glue the marker onto the *whole* remainder, prefixing a stray
+  // empty item ahead of the next one instead of just handing it over.
+  it('hands a later, already-marked item over untouched instead of prefixing it with an empty one', () => {
+    expect(splitSeed('\n- item three', '- ')).toEqual({ text: '- item three', caretOffset: 0 });
+  });
+
+  it('still prefixes the marker when the caret’s own line has text ahead of later items', () => {
+    expect(splitSeed('rest of item two\n- item three', '- ')).toEqual({
+      text: '- rest of item two\n- item three',
+      caretOffset: 2,
     });
   });
 });
