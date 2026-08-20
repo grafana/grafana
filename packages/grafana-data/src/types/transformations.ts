@@ -94,6 +94,15 @@ export interface PanelDataTransformations {
 }
 
 /**
+ * {@link PanelDataTransformations} with both positions filled in: what
+ * `PanelPlugin.getDataTransformations` returns, so callers handle neither the array shorthand nor a
+ * missing group.
+ *
+ * @alpha
+ */
+export type ResolvedPanelDataTransformations = Required<PanelDataTransformations>;
+
+/**
  * Returns read-only transformations a dashboard panel requires in order to render its data.
  *
  * Registered via `PanelPlugin.setDataTransformations`. An array result is shorthand for
@@ -101,8 +110,9 @@ export interface PanelDataTransformations {
  *
  * Called once per data update that carries frames, so it may branch on frame shape or `meta`. The
  * result is cached against that frames array and shared by both positions and by the
- * transformations editor, so keep the supplier cheap and free of side effects. Empty results pass
- * through without consulting the supplier.
+ * transformations editor, so keep the supplier cheap and free of side effects. Those frames are the
+ * entire cache key — nothing else about the panel invalidates it. Empty results pass through without
+ * consulting the supplier, and a supplier that throws is treated as one that registered nothing.
  *
  * Only the series data topic is supported, in both positions: configs with `topic` set to
  * annotations or alert states are ignored.
