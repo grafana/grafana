@@ -137,11 +137,9 @@ Use this to keep related documentation next to the dashboards it describes, such
 
 ### Navigate to resources from Markdown links
 
-Markdown links are context-aware. A link that points to a provisioned resource file, such as a dashboard JSON file or a folder, resolves to the matching page inside Grafana when you select it. This lets you move between documentation and dashboards the same way you move between provisioned resources.
+Markdown links are context-aware. A link that points to a provisioned resource file, such as a dashboard JSON file or a folder, opens the matching page inside Grafana when you select it. This lets you move between documentation and dashboards the same way you move between provisioned resources.
 
-- Links to resource files, such as dashboard JSON or YAML files and folder paths, open the corresponding dashboard or folder in Grafana.
-- Grafana resolves the link the first time you select a candidate link, then reuses that result for subsequent clicks. The resolved list refreshes after a sync completes, so links to newly added or renamed resources keep working.
-- When a link doesn't match a provisioned resource, Grafana falls back to the file in the host repository, so the same README still works when viewed on GitHub or GitLab.
+When a link doesn't match a provisioned resource, Grafana opens the file in the host repository, so the same README still works when viewed on GitHub or GitLab.
 
 ### Render Mermaid diagrams
 
