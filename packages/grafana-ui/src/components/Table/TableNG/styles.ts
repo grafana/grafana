@@ -64,6 +64,11 @@ export const getGridStyles = memoize(
 
     const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
 
+    // The expander column is the outer table's first column (see markEdgeColumns), so under
+    // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
+    // other first column — `gridNested` below has to know about it to stay flush with that column.
+    const nestedGridExpanderPaddingOffset = noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0;
+
     return {
       grid: css({
         '--rdg-background-color': bgColor,
@@ -199,10 +204,14 @@ export const getGridStyles = memoize(
         // intersects the viewport, never becomes relevant, and stays collapsed forever.
         contentVisibility: 'visible',
         height: '100%',
-        width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
+        // The expander column is tagged `FIRST_COLUMN_CLASS` (see markEdgeColumns), so under
+        // `noPanelPadding` its own paddingInlineStart grows by `FIRST_COLUMN_EXTRA_PADDING` too —
+        // subtract it back out here so this nested grid still starts flush with the expander
+        // column's edge instead of drifting right by that same amount.
+        width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - nestedGridExpanderPaddingOffset - 1}px)`,
         overflowX: 'scroll',
         overflowY: 'hidden',
-        marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
+        marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - nestedGridExpanderPaddingOffset - 1,
         marginBlock: TABLE.CELL_PADDING,
         // usually row height will be set to 0 when not expanded, but auto cell height may lead to some rendering errors.
         '&[aria-expanded="false"]': {

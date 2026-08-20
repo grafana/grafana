@@ -61,7 +61,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const filterable = field.config.custom?.filterable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
-  const hasActiveFilter = tableRefreshEnabled && filterable && filter[filterKey]?.filtered != null;
+  const hasActiveFilter = filterable && filter[filterKey]?.filtered != null;
 
   // The filter popup is shared by the two controls that open it — the column menu's "Filter values"
   // item and the filter icon that marks an already-filtered column — so it lives here rather than in
@@ -102,33 +102,34 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     return null;
   }
 
-  const onKeyDown = disableKeyboardEvents
-    ? undefined
-    : (ev: React.KeyboardEvent) => {
-        // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
-        // to do to make filter and sort keyboard accessible, so we have to stop the propagation of events here,
-        // and add a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
-        ev.stopPropagation();
+  let onKeyDown: React.KeyboardEventHandler | undefined;
+  if (!disableKeyboardEvents) {
+    onKeyDown = (ev: React.KeyboardEvent) => {
+      // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
+      // to do to make filter and sort keyboard accessible, so we have to stop the propagation of events here,
+      // and add a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
+      ev.stopPropagation();
 
-        if (!(ev.key === 'Tab' && !ev.shiftKey)) {
-          return;
-        }
+      if (!(ev.key === 'Tab' && !ev.shiftKey)) {
+        return;
+      }
 
-        const tableTabbedElement = ev.target;
-        if (!(tableTabbedElement instanceof HTMLElement)) {
-          return;
-        }
+      const tableTabbedElement = ev.target;
+      if (!(tableTabbedElement instanceof HTMLElement)) {
+        return;
+      }
 
-        const headerContent = ref.current;
-        const headerCell = ref.current?.parentNode;
-        const row = headerCell?.parentNode;
-        const isLastElementInHeader =
-          headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
+      const headerContent = ref.current;
+      const headerCell = ref.current?.parentNode;
+      const row = headerCell?.parentNode;
+      const isLastElementInHeader =
+        headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
 
-        if (isLastElementInHeader) {
-          selectFirstCell();
-        }
-      };
+      if (isLastElementInHeader) {
+        selectFirstCell();
+      }
+    };
+  }
 
   const label = (
     <>
@@ -150,7 +151,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           shortcut back into the filter popup, so the filter can be adjusted or cleared without going
           through the menu. Sized "sm" like the type icon rather than "lg" like the arrow: the funnel
           fills its box where the arrow is a thin glyph, so the arrow's nominal size reads far bigger. */}
-      {hasActiveFilter && (
+      {tableRefreshEnabled && hasActiveFilter && (
         <button
           ref={filterIconRef}
           type="button"

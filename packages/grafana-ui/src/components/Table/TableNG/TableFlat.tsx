@@ -303,7 +303,8 @@ export function TableFlat(props: TableNGProps) {
 
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths, data, rows, sortedRows);
-    return { ...result, columns: markEdgeColumns(result.columns) };
+    markEdgeColumns(result);
+    return result;
   }, [fromFields, visibleFields, widths, data, rows, sortedRows]);
 
   // invalidate columns on every structureRev change to support width editing in fieldConfig.

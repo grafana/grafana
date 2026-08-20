@@ -683,13 +683,13 @@ export const versionedComponents = {
         },
         headerColumnMenu: {
           button: {
-            '13.2.0': 'data-testid tableng header column-menu-button',
+            '13.3.0': 'data-testid tableng header column-menu-button',
           },
           filterItem: {
-            '13.2.0': 'data-testid tableng header column-menu-filter-item',
+            '13.3.0': 'data-testid tableng header column-menu-filter-item',
           },
           activeFilterButton: {
-            '13.2.0': 'data-testid tableng header active-filter-button',
+            '13.3.0': 'data-testid tableng header active-filter-button',
           },
         },
         Filters: {

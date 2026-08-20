@@ -21,7 +21,7 @@ import {
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
-import { type ColumnWidth, type ColumnWidths, type SortColumn } from '@grafana/react-data-grid';
+import type { ColumnWidth, ColumnWidths, SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
   type FieldTextAlignment,
@@ -46,18 +46,19 @@ import {
   LAST_COLUMN_CLASS,
   TABLE,
 } from './constants';
-import { type TextAlign } from './styles';
-import {
-  type TableRow,
-  type ColumnTypes,
-  type FrameToRowsConverter,
-  type Comparator,
-  type TypographyCtx,
-  type MeasureCellHeight,
-  type MeasureCellHeightEntry,
-  type FilterType,
-  type GetActionsFunctionLocal,
-  type TableColumn,
+import type { TextAlign } from './styles';
+import type {
+  TableRow,
+  ColumnTypes,
+  FrameToRowsConverter,
+  Comparator,
+  TypographyCtx,
+  MeasureCellHeight,
+  MeasureCellHeightEntry,
+  FilterType,
+  GetActionsFunctionLocal,
+  TableColumn,
+  FromFieldsResult,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
@@ -1671,28 +1672,37 @@ type CellClass<TRow> = string | null | undefined | ((row: TRow) => string | null
 const appendCellClass = <TRow>(existing: CellClass<TRow>, edgeClass: string): CellClass<TRow> =>
   typeof existing === 'function' ? (row: TRow) => clsx(existing(row), edgeClass) : clsx(existing, edgeClass);
 
-const withEdgeClass = (column: TableColumn, edgeClass: string): TableColumn => ({
-  ...column,
-  headerCellClass: clsx(column.headerCellClass, edgeClass),
-  cellClass: appendCellClass(column.cellClass, edgeClass),
-  summaryCellClass: appendCellClass(column.summaryCellClass, edgeClass),
-});
+// react-data-grid types these fields `readonly` for callers building a column once; here we're
+// intentionally mutating an already-built one in place, so we cast that guard away locally.
+type MutableColumnClasses = {
+  -readonly [K in 'headerCellClass' | 'cellClass' | 'summaryCellClass']?: TableColumn[K];
+};
+
+const addEdgeClass = (column: TableColumn, edgeClass: string): void => {
+  const mutable: MutableColumnClasses = column;
+  mutable.headerCellClass = clsx(column.headerCellClass, edgeClass);
+  mutable.cellClass = appendCellClass(column.cellClass, edgeClass);
+  mutable.summaryCellClass = appendCellClass(column.summaryCellClass, edgeClass);
+};
 
 /**
  * @internal
  * Tags the edge columns with {@link FIRST_COLUMN_CLASS}/{@link LAST_COLUMN_CLASS}. Call this on the
  * finished column list, after any programmatically injected columns (the nested table's row
  * expander) are in place — a field's own index isn't enough to tell whether it ends up on an edge.
+ *
+ * Mutates `columns` (and the edge column objects) in place rather than copying: the list is always
+ * freshly built by the caller right before this call, so there's nothing else holding a reference
+ * that immutability would protect, and it's the same assumption `result.columns.unshift(...)`
+ * already makes elsewhere for the nested expander column.
  */
-export function markEdgeColumns(columns: TableColumn[]): TableColumn[] {
+export function markEdgeColumns(fromFieldsResult: FromFieldsResult): undefined {
+  const { columns } = fromFieldsResult;
   if (columns.length === 0) {
-    return columns;
+    return;
   }
-  const marked = [...columns];
-  marked[0] = withEdgeClass(marked[0], FIRST_COLUMN_CLASS);
-  const lastIdx = marked.length - 1;
-  marked[lastIdx] = withEdgeClass(marked[lastIdx], LAST_COLUMN_CLASS);
-  return marked;
+  addEdgeClass(columns[0], FIRST_COLUMN_CLASS);
+  addEdgeClass(columns[columns.length - 1], LAST_COLUMN_CLASS);
 }
 
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {

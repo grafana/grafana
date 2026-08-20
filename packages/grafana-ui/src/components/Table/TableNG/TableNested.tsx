@@ -560,7 +560,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     const result = fromFields(visibleFields, widths, data, rows, sortedRows);
 
     if (!firstRowNestedData) {
-      return { ...result, columns: markEdgeColumns(result.columns) };
+      markEdgeColumns(result);
+      return result;
     }
 
     const expanderCellRenderer: CellRootRenderer = (key, cellProps) => <Cell key={key} {...cellProps} />;
@@ -582,7 +583,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     );
 
     // after the expander column is in place, so it (not the first field) is tagged as the edge.
-    return { ...result, columns: markEdgeColumns(result.columns) };
+    markEdgeColumns(result);
+    return result;
   }, [
     buildNestedTableExpanderColumn,
     data,

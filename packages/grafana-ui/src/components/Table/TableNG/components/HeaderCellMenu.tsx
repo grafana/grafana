@@ -85,22 +85,12 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     alignItems: 'center',
     flexShrink: 0,
   }),
-  // Revealed on hover, but only faded rather than removed from the layout: the button must stay
-  // tabbable while transparent so keyboard users can reach it, and auto column widths reserve its
-  // space unconditionally (see HEADER_MENU_SPACE) because it never leaves the flow. An active filter
-  // is reported by a persistent icon in HeaderCell rather than by pinning this button visible.
+  // Faded not unmounted on hover: stays tabbable, and auto column widths always reserve its space
+  // (see HEADER_MENU_SPACE). Active filter shown via a persistent icon in HeaderCell instead.
   //
-  // Deliberately keyed on the button's own `:focus-visible` rather than the header cell's
-  // `:focus-within`: react-data-grid moves DOM focus into the header cell whenever it's the grid's
-  // active cell, so `:focus-within` revealed the menu on plain cell navigation, with no pointer or
-  // keyboard intent behind it. `aria-expanded` (set by Dropdown) keeps it visible while its own menu
-  // is open, which would otherwise vanish the moment the pointer left the cell.
-  //
-  // Scoped to `.table-ng-header-cell`, HeaderCell's own per-column root, rather than the bare
-  // `.rdg-cell` react-data-grid puts on every header cell: in a nested table, a column's header
-  // cell is also a descendant of the *outer* grid's nested-frame `.rdg-cell`, and `:hover` bubbles
-  // up to that ancestor too. Matching on bare `.rdg-cell` would then reveal every column's menu in
-  // the nested table at once, since they're all descendants of that same outer cell.
+  // Keyed on the button's own `:focus-visible`, not the cell's `:focus-within`: rdg moves DOM focus
+  // into the header cell on plain grid navigation, so `:focus-within` fired with no real intent.
+  // `aria-expanded` (from Dropdown) keeps it visible while its dropdown is open.
   button: css({
     label: 'headerColumnMenuButton',
     color: theme.colors.text.secondary,
@@ -108,6 +98,9 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity', { duration: theme.transitions.duration.shorter }),
     },
+    // Scoped to `.table-ng-header-cell` (HeaderCell's own root), not bare `.rdg-cell`: in a nested
+    // table, a column's header cell also sits inside the outer grid's `.rdg-cell`, so `:hover` on
+    // bare `.rdg-cell` would reveal every column's menu in the nested table at once.
     '.table-ng-header-cell:hover &, &:focus-visible, &[aria-expanded="true"]': {
       opacity: 1,
     },

@@ -161,7 +161,6 @@ export interface ColumnBuildConfig {
   setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   showTypeIcons?: boolean;
-  /** `table.refresh`: left-align header labels and move the filter into the header column menu. */
   tableRefreshEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
@@ -289,8 +288,6 @@ function buildColumnsFromFields(
     const textAlign = getAlignment(field);
     const justifyContent = getJustifyContent(textAlign);
     const displayName = getDisplayName(field);
-    // the refreshed header always left-aligns its label, independent of how the body cells align,
-    // so the column menu has a stable trailing edge to sit against
     const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
     const CellType = getCellRenderer(field, cellOptions);
 

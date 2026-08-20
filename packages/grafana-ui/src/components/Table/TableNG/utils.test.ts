@@ -23,6 +23,7 @@ import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, TABLE } from './constant
 import { getJustifyContent } from './styles';
 import {
   type FilterType,
+  type FromFieldsResult,
   type GetActionsFunctionLocal,
   type MeasureCellHeightEntry,
   type TableColumn,
@@ -2393,8 +2394,14 @@ describe('TableNG utils', () => {
         ...overrides,
       }) as TableColumn;
 
+    // markEdgeColumns mutates the passed-in FromFieldsResult's columns in place rather than
+    // returning a new list, so tests build one of these and read back `.columns` after the call.
+    const withColumns = (columns: TableColumn[]): FromFieldsResult => ({ columns, cellRootRenderers: {} });
+
     it('tags the first and last columns on every cell variant', () => {
-      const [first, middle, last] = markEdgeColumns([col('a'), col('b'), col('c')]);
+      const result = withColumns([col('a'), col('b'), col('c')]);
+      markEdgeColumns(result);
+      const [first, middle, last] = result.columns;
 
       expect(first.headerCellClass).toContain(FIRST_COLUMN_CLASS);
       expect(first.cellClass).toContain(FIRST_COLUMN_CLASS);
@@ -2406,15 +2413,20 @@ describe('TableNG utils', () => {
     });
 
     it('tags a single column as both edges', () => {
-      const [only] = markEdgeColumns([col('a')]);
+      const result = withColumns([col('a')]);
+      markEdgeColumns(result);
+      const [only] = result.columns;
+
       expect(only.headerCellClass).toContain(FIRST_COLUMN_CLASS);
       expect(only.headerCellClass).toContain(LAST_COLUMN_CLASS);
     });
 
     it('keeps existing classes, including ones computed per row', () => {
-      const [first] = markEdgeColumns([
+      const result = withColumns([
         col('a', { headerCellClass: 'existing-header', cellClass: (row) => `row-${row.__index}` }),
       ]);
+      markEdgeColumns(result);
+      const [first] = result.columns;
 
       expect(first.headerCellClass).toBe(`existing-header ${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`);
       expect(typeof first.cellClass === 'function' && first.cellClass({ __index: 3, __depth: 0 })).toBe(
@@ -2422,8 +2434,10 @@ describe('TableNG utils', () => {
       );
     });
 
-    it('returns the list unchanged when there are no columns', () => {
-      expect(markEdgeColumns([])).toEqual([]);
+    it('leaves the list unchanged when there are no columns', () => {
+      const result = withColumns([]);
+      markEdgeColumns(result);
+      expect(result.columns).toEqual([]);
     });
   });
 
