@@ -362,13 +362,14 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 		Grants: []string{"Admin"},
 	}
 
-	// Notebooks (experimental) have no folder UI yet, so they are created at the root and folder
-	// inheritance cannot reach them. These flat org-wide roles keep notebooks visible/usable under
-	// Unified Storage enforcement: read on the notebooks:* object scope (reaches folderless
-	// notebooks), and create on folders:* (the create verb resolves root to the general folder).
-	// MVP-only: once a folder UI exists, narrow these to folder-scoped grants and lean on the
-	// folder-inheritance action sets instead (a Viewer wildcard would otherwise expose notebooks in
-	// restricted folders).
+	// Notebooks (experimental) are flat and folderless for the MVP: notebook storage has
+	// EnableFolderSupport=false (pkg/registry/apis/dashboard/register.go), so a notebook cannot be
+	// placed in a folder and folder inheritance never applies. These org-wide roles grant notebook
+	// access under Unified Storage enforcement: read/write/delete on the notebooks:* object scope,
+	// and create on folders:* (the create verb resolves root to the general folder). The Viewer read
+	// wildcard is safe precisely because no folder-scoped notebook can exist, so it cannot bypass any
+	// folder ACL. At GA, folder support is enabled and these narrow to folder-scoped grants (dropping
+	// the Viewer wildcard), matching dashboards.
 	notebooksReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:notebooks:reader",

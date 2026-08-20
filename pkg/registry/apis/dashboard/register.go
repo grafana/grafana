@@ -1027,8 +1027,16 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// Notebook storage is always registered so FlagDashboardNotebooks can be
 	// evaluated per request (and targeted per tenant) via OpenFeature in the
 	// authorizer, without requiring a restart. See GetAuthorizer.
+	//
+	// EnableFolderSupport is deliberately OFF for the MVP: notebook RBAC is a flat, org-wide
+	// grant (fixed:notebooks:reader/writer on notebooks:*, see pkg/api/accesscontrol.go), and
+	// there is no folder UI. If folder-scoped notebooks could exist (e.g. created via API or
+	// provisioning with a grafana.app/folder annotation), that wildcard would let every Viewer
+	// read them regardless of the folder's permissions. Forbidding a folder annotation keeps
+	// every notebook folderless, so the wildcard cannot bypass any folder ACL. Flip this back to
+	// true at GA, when a folder UI and folder-scoped notebook RBAC replace the flat grants.
 	opts.StorageOptsRegister(dashv2beta1.NotebookResourceInfo.GroupResource(), apistore.StorageOptions{
-		EnableFolderSupport: true,
+		EnableFolderSupport: false,
 	})
 
 	nbStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.NotebookResourceInfo, opts.OptsGetter)
