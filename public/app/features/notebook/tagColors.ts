@@ -12,12 +12,18 @@ import { type GrafanaTheme2 } from '@grafana/data';
  * visual-refresh themes replace that palette with 22 colours of which none is neutral — index 9, the
  * grey in the default palette, is lavender there. There is no index that is neutral across themes.
  *
- * `Tag` sets its background and colour from a single class, so this descendant rule outranks it on
+ * `Tag` sets its background and colour from a single class, so this two-part rule outranks it on
  * specificity. The query library flattens its tags the same way, for the same reason.
+ *
+ * Matched on `data-tag-id`, which `TagList` puts on every `Tag` and on nothing else, rather than on
+ * the element name. A plain `span` rule catches the `+ N` overflow label `TagList` renders alongside
+ * the tags once `displayMax` is set, which would give a count meant to read as muted text a chip's
+ * background; and it would quietly stop matching the tags themselves the day one of these lists is
+ * given an `onClick`, because a clickable `Tag` renders a `button`.
  */
 export const getNeutralTagListStyle = (theme: GrafanaTheme2) =>
   css({
-    span: {
+    '[data-tag-id]': {
       backgroundColor: theme.colors.background.secondary,
       color: theme.colors.text.primary,
     },
