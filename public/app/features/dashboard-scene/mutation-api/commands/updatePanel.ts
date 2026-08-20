@@ -7,21 +7,23 @@
  * which handles fieldConfig cleanup and $data pipeline management.
  */
 
-import { mergeWith, cloneDeep, isArray } from 'lodash';
+import { cloneDeep, isArray, mergeWith } from 'lodash';
 import type * as z from 'zod';
 
 import { type FieldConfigSource } from '@grafana/data';
+import { SceneDataTransformer } from '@grafana/scenes';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getElements, panelQueryKindToSceneQuery } from '../../serialization/layoutSerializers/utils';
+import { transformDataTopic } from '../../serialization/transformToV2TypesUtils';
 import { getQueryRunnerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { serializeResultLayoutItem } from './panelSerialization';
-import { payloads, type PanelQueryKind, type TransformationKind } from './schemas';
-import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
+import { type PanelQueryKind, payloads, type TransformationKind } from './schemas';
+import { enterEditModeIfNeeded, type MutationCommand, requiresEdit } from './types';
 
 const updatePanelPayloadSchema = payloads.updatePanel;
 
@@ -39,12 +41,6 @@ function mergeReplacingArrays(
   });
 }
 
-interface DataTransformerLike {
-  state: { transformations?: unknown[]; $data?: unknown };
-  setState: (state: { transformations?: unknown[] }) => void;
-  reprocessTransformations: () => void;
-}
-
 interface RawLinksHolder {
   state: { rawLinks: unknown };
   setState: (state: Record<string, unknown>) => void;
@@ -56,15 +52,6 @@ function hasRawLinks(item: unknown): item is RawLinksHolder {
   }
   const { state } = item;
   return typeof state === 'object' && state !== null && 'rawLinks' in state && typeof item.setState === 'function';
-}
-
-function isDataTransformer(data: unknown): data is DataTransformerLike {
-  if (!data || typeof data !== 'object' || !('state' in data)) {
-    return false;
-  }
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const state = (data as DataTransformerLike).state;
-  return typeof state === 'object' && Array.isArray(state?.transformations);
 }
 
 export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
@@ -164,16 +151,15 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
             queryRunner.runQueries();
           }
 
-          if (dataSpec.transformations !== undefined && isDataTransformer(dataPipeline)) {
+          if (dataSpec.transformations !== undefined && dataPipeline instanceof SceneDataTransformer) {
             const transformations = dataSpec.transformations.map((t: TransformationKind) => ({
               id: t.group,
               disabled: t.spec.disabled,
               filter: t.spec.filter,
-              topic: t.spec.topic,
+              topic: transformDataTopic(t.spec.topic),
               options: t.spec.options,
             }));
-            dataPipeline.setState({ transformations });
-            dataPipeline.reprocessTransformations();
+            dataPipeline.setUserTransformations(transformations);
           }
 
           if (dataSpec.queryOptions && queryRunner) {
