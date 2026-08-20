@@ -166,25 +166,29 @@ export const CanvasTooltip = ({ scene }: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    marginTop: '20px',
-    background: theme.colors.background.primary,
-  }),
-  tooltipWrapper: css({
-    top: 0,
-    left: 0,
-    whiteSpace: 'pre',
-    borderRadius: theme.shape.radius.default,
-    position: 'fixed',
-    background: theme.colors.background.primary,
-    border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z2,
-    userSelect: 'text',
-    padding: 0,
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
-  pinned: css({
-    boxShadow: theme.shadows.z3,
-  }),
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const background = visualRefreshEnabled ? theme.components.tooltip.background : theme.colors.background.primary;
+  return {
+    wrapper: css({
+      marginTop: '20px',
+      background,
+    }),
+    tooltipWrapper: css({
+      top: 0,
+      left: 0,
+      whiteSpace: 'pre',
+      borderRadius: theme.shape.radius.default,
+      position: 'fixed',
+      background,
+      border: `1px solid ${theme.colors.border.weak}`,
+      boxShadow: theme.shadows.z2,
+      userSelect: 'text',
+      padding: 0,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    pinned: css({
+      boxShadow: theme.shadows.z3,
+    }),
+  };
+};

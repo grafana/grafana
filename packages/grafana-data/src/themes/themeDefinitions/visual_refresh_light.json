@@ -176,5 +176,10 @@
     "borderRadiusSm": 4,
     "borderRadius": 8,
     "borderRadiusLg": 12
+  },
+  "shadows": {
+    "z1": "0px 1px 2px hsl(from palette.neutral350 h s l / 0.75)",
+    "z2": "0px 4px 8px hsl(from palette.neutral350 h s l / 0.75)",
+    "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
   }
 }

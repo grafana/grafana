@@ -68,14 +68,17 @@ export const AnnotationTooltip = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    zIndex: theme.zIndex.tooltip,
-    whiteSpace: 'initial',
-    borderRadius: theme.shape.radius.default,
-    background: theme.colors.background.elevated,
-    border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z3,
-    userSelect: 'text',
-  }),
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  return {
+    wrapper: css({
+      zIndex: theme.zIndex.tooltip,
+      whiteSpace: 'initial',
+      borderRadius: theme.shape.radius.default,
+      background: visualRefreshEnabled ? theme.components.tooltip.background : theme.colors.background.elevated,
+      border: `1px solid ${theme.colors.border.weak}`,
+      boxShadow: theme.shadows.z3,
+      userSelect: 'text',
+    }),
+  };
+};

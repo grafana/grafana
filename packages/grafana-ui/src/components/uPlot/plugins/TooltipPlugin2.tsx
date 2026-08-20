@@ -774,21 +774,24 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
-  tooltipWrapper: css({
-    top: 0,
-    left: 0,
-    zIndex: theme.zIndex.tooltip,
-    whiteSpace: 'pre',
-    borderRadius: theme.shape.radius.lg,
-    position: 'fixed',
-    background: theme.colors.background.elevated,
-    border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z2,
-    userSelect: 'text',
-    maxWidth: maxWidth ?? 'none',
-  }),
-  pinned: css({
-    boxShadow: theme.shadows.z3,
-  }),
-});
+const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  return {
+    tooltipWrapper: css({
+      top: 0,
+      left: 0,
+      zIndex: theme.zIndex.tooltip,
+      whiteSpace: 'pre',
+      borderRadius: theme.shape.radius.lg,
+      position: 'fixed',
+      background: visualRefreshEnabled ? theme.components.tooltip.background : theme.colors.background.elevated,
+      border: `1px solid ${theme.colors.border.weak}`,
+      boxShadow: theme.shadows.z2,
+      userSelect: 'text',
+      maxWidth: maxWidth ?? 'none',
+    }),
+    pinned: css({
+      boxShadow: theme.shadows.z3,
+    }),
+  };
+};

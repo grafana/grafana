@@ -124,26 +124,29 @@ export const AnnotationTooltipCluster = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  zebra: css({
-    backgroundColor: theme.colors.background.primary,
-    paddingBottom: theme.spacing(1.5),
-  }),
-  annotationWrapper: css({
-    paddingBottom: theme.spacing(1.5),
-  }),
-  wrapper: css({
-    zIndex: theme.zIndex.tooltip,
-    whiteSpace: 'initial',
-    borderRadius: theme.shape.radius.default,
-    background: theme.colors.background.elevated,
-    border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z3,
-    userSelect: 'text',
-    overflow: 'hidden',
-  }),
-  hr: css({
-    borderTop: `1px solid ${theme.colors.border.medium}`,
-    width: '100%',
-  }),
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  return {
+    zebra: css({
+      backgroundColor: theme.colors.background.primary,
+      paddingBottom: theme.spacing(1.5),
+    }),
+    annotationWrapper: css({
+      paddingBottom: theme.spacing(1.5),
+    }),
+    wrapper: css({
+      zIndex: theme.zIndex.tooltip,
+      whiteSpace: 'initial',
+      borderRadius: theme.shape.radius.default,
+      background: visualRefreshEnabled ? theme.components.tooltip.background : theme.colors.background.elevated,
+      border: `1px solid ${theme.colors.border.weak}`,
+      boxShadow: theme.shadows.z3,
+      userSelect: 'text',
+      overflow: 'hidden',
+    }),
+    hr: css({
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+      width: '100%',
+    }),
+  };
+};

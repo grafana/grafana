@@ -242,7 +242,9 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2, maxWidth: number | undefi
       filter: 'drop-shadow(0 0 8px rgba(0, 0, 0, 0.5))',
     }),
     tooltipWrapper: css({
-      background: theme.colors.background.elevated,
+      background: theme.flags.visualDesignRefresh
+        ? theme.components.tooltip.background
+        : theme.colors.background.elevated,
       maxWidth: maxWidth ?? 'none',
       whiteSpace: 'pre',
       borderRadius: theme.shape.radius.default,
