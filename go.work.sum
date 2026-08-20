@@ -2403,6 +2403,8 @@ go.opentelemetry.io/contrib/samplers/jaegerremote v0.36.0/go.mod h1:tjrgaYHDx+1C
 go.opentelemetry.io/contrib/samplers/jaegerremote v0.37.0/go.mod h1:+JlICiUxqOsm1bu6zTvygwOl5b5DRO+u8A+IgnL2ONs=
 go.opentelemetry.io/contrib/zpages v0.62.0 h1:9fUYTLmrK0x/lweM2uM+BOx069jLx8PxVqWhegGJ9Bo=
 go.opentelemetry.io/contrib/zpages v0.62.0/go.mod h1:C8kXoiC1Ytvereztus2R+kqdSa6W/MZ8FfS8Zwj+LiM=
+go.opentelemetry.io/contrib/zpages v0.66.0 h1:fFAdraKB5z4v8HWwQWoKFZojN+OdsEtVDKsXFyB5+ro=
+go.opentelemetry.io/contrib/zpages v0.66.0/go.mod h1:3yOWHV71U0ph6YaITmXyDV/owY3N4BRaG5iBgAZxo1E=
 go.opentelemetry.io/otel v1.21.0/go.mod h1:QZzNPQPm1zLX4gZK4cMi+71eaorMSGT3A4znnUvNNEo=
 go.opentelemetry.io/otel v1.24.0/go.mod h1:W7b9Ozg4nkF5tWI5zsXkaKKDjdVjpD4oAt9Qi/MArHo=
 go.opentelemetry.io/otel v1.35.0/go.mod h1:UEqy8Zp11hpkUrL73gSlELM0DupHoiq72dR+Zqel/+Y=
