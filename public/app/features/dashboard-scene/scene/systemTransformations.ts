@@ -17,7 +17,7 @@ export interface ResolvedSystemTransformations {
  * Stable identity for "nothing registered", so consumers using these arrays as effect deps do not
  * churn on every render.
  */
-export const NO_SYSTEM_TRANSFORMATIONS: ResolvedSystemTransformations = {
+export const NO_SYSTEM_TRANSFORMATIONS: Readonly<ResolvedSystemTransformations> = {
   prepend: [],
   append: [],
 };
