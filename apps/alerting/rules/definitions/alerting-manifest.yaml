@@ -84,7 +84,9 @@ spec:
             routingTree:
               type: string
             type:
-              $ref: '#/components/schemas/NotificationSettingsType'
+              allOf:
+              - $ref: '#/components/schemas/NotificationSettingsType'
+              default: NamedRoutingTree
           required:
           - type
           - routingTree
@@ -190,7 +192,9 @@ spec:
             repeatInterval:
               $ref: '#/components/schemas/PromDuration'
             type:
-              $ref: '#/components/schemas/NotificationSettingsType'
+              allOf:
+              - $ref: '#/components/schemas/NotificationSettingsType'
+              default: SimplifiedRouting
           required:
           - type
           - receiver

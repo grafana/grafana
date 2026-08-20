@@ -2,6 +2,8 @@ package search
 
 import (
 	"encoding/base64"
+	"math"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,10 +53,21 @@ func testProvider() resource.SearchFieldsProvider {
 			Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve},
 		},
 		{
-			// non-string but sortable (shaped like alert-rule "panelID").
+			// non-string, filterable and sortable (shaped like alert-rule "panelID").
 			Name:         "panel_id",
 			Type:         resource.SearchFieldTypeInt64,
-			Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve},
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve},
+		},
+		{
+			Name:         "ratio",
+			Type:         resource.SearchFieldTypeDouble,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve},
+		},
+		{
+			// numeric without the filter capability, so a range on it is refused.
+			Name:         "weight",
+			Type:         resource.SearchFieldTypeInt64,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
 		},
 		{
 			// string array with sort capability: exercises the Array half of the
@@ -291,11 +304,87 @@ func TestTranslateSearchQuery_ValidationErrors(t *testing.T) {
 			wantField: "sort[0].field",
 		},
 		{
-			name: "filter on non-string field",
+			// Membership of an empty set is not the same as no filter at all, which is
+			// what the backend would read it as.
+			name: "filter with no values",
 			mutate: func(q *searchv0.SearchQuery) {
-				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "paused", Operator: "In", Values: []string{"true"}}}
+				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "folder", Operator: "In"}}
 			},
-			wantField: "where.filter.field",
+			wantField: "where.filter.values",
+		},
+		{
+			name: "filter on a boolean field with a value that is not true or false",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "paused", Operator: "In", Values: []string{"yes"}}}
+			},
+			wantField: "where.filter.values[0]",
+		},
+		{
+			name: "filter on an integer field with a value that is not a number",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "panel_id", Operator: "In", Values: []string{"ten"}}}
+			},
+			wantField: "where.filter.values[0]",
+		},
+		{
+			name: "range without a bound",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "panel_id"}}
+			},
+			wantField: "where.range",
+		},
+		{
+			name: "range with both gt and gte",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "panel_id", GT: new(1.0), GTE: new(2.0)}}
+			},
+			wantField: "where.range",
+		},
+		{
+			name: "range on a boolean field",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "paused", GT: new(1.0)}}
+			},
+			wantField: "where.range.field",
+		},
+		{
+			name: "range on a string field",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "folder", GT: new(1.0)}}
+			},
+			wantField: "where.range.field",
+		},
+		{
+			name: "range on a field that cannot be filtered",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "weight", GT: new(1.0)}}
+			},
+			wantField: "where.range.field",
+		},
+		{
+			// The schema types every bound as a number, so an integer field has to
+			// refuse the fractional ones itself.
+			name: "fractional bound on an integer field",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "panel_id", GT: new(1.5)}}
+			},
+			wantField: "where.range.gt",
+		},
+		{
+			// float64 rounds MaxInt64 up to 2^63, so refusing it here beats a 400 from
+			// the search server.
+			name: "integer bound at the edge of what an int64 holds",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "panel_id", LT: new(float64(math.MaxInt64))}}
+			},
+			wantField: "where.range.lt",
+		},
+		{
+			name: "unknown field in a range",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "nope", GT: new(1.0)}}
+			},
+			wantField: "where.range.field",
 		},
 		{
 			name: "whitespace-only text value",
@@ -502,4 +591,138 @@ func TestTranslateSearchQuery_ContinueToken(t *testing.T) {
 	req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
 	require.Empty(t, errs)
 	assert.Equal(t, []string{"cursor-value"}, req.SearchAfter)
+}
+
+// Boolean and numeric filters reach the backend as the strings it parses back,
+// so the two sides have to agree on the spelling.
+func TestTranslateSearchQuery_FilterOnNumberAndBooleanFields(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		filter   searchv0.FilterPredicate
+		operator string
+		values   []string
+	}{
+		{"boolean", searchv0.FilterPredicate{Field: "paused", Operator: "In", Values: []string{"true"}}, "in", []string{"true"}},
+		{"boolean excluded", searchv0.FilterPredicate{Field: "paused", Operator: "NotIn", Values: []string{"false"}}, "notin", []string{"false"}},
+		{"integer set", searchv0.FilterPredicate{Field: "panel_id", Operator: "In", Values: []string{"10", "20"}}, "in", []string{"10", "20"}},
+		{"double", searchv0.FilterPredicate{Field: "ratio", Operator: "In", Values: []string{"0.5"}}, "in", []string{"0.5"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			q := searchQuery(nil)
+			q.Where = &searchv0.WhereNode{Filter: &tc.filter}
+			req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+			require.Empty(t, errs)
+			require.Len(t, req.Options.Fields, 1)
+			assert.Equal(t, tc.filter.Field, req.Options.Fields[0].Key)
+			assert.Equal(t, tc.operator, req.Options.Fields[0].Operator)
+			assert.Equal(t, tc.values, req.Options.Fields[0].Values)
+		})
+	}
+}
+
+// Each bound becomes its own requirement, which the backend ANDs together like
+// any other pair of field filters.
+func TestTranslateSearchQuery_RangeLeaf(t *testing.T) {
+	q := searchQuery(nil)
+	q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "panel_id", GTE: new(10.0), LT: new(20.0)}}
+	req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+	require.Empty(t, errs)
+	require.Len(t, req.Options.Fields, 2)
+	// Bounds come out in a fixed order.
+	assert.Equal(t, "gte", req.Options.Fields[0].Operator)
+	assert.Equal(t, []string{"10"}, req.Options.Fields[0].Values, "a whole bound carries no decimal point, so an integer field accepts it")
+	assert.Equal(t, "lt", req.Options.Fields[1].Operator)
+	assert.Equal(t, []string{"20"}, req.Options.Fields[1].Values)
+	for _, r := range req.Options.Fields {
+		assert.Equal(t, "panel_id", r.Key)
+	}
+}
+
+func TestTranslateSearchQuery_RangeOnDoubleKeepsFraction(t *testing.T) {
+	q := searchQuery(nil)
+	q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "ratio", GT: new(0.25)}}
+	req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+	require.Empty(t, errs)
+	require.Len(t, req.Options.Fields, 1)
+	assert.Equal(t, "gt", req.Options.Fields[0].Operator)
+	assert.Equal(t, []string{"0.25"}, req.Options.Fields[0].Values)
+}
+
+// A range next to a text leaf and a filter leaf, which is how the alert rule
+// list view asks its question.
+func TestTranslateSearchQuery_RangeInsideAnd(t *testing.T) {
+	q := searchQuery(nil)
+	q.Where = &searchv0.WhereNode{And: []searchv0.WhereNode{
+		{Text: &searchv0.TextPredicate{Value: "cpu"}},
+		{Filter: &searchv0.FilterPredicate{Field: "paused", Operator: "In", Values: []string{"false"}}},
+		{Range: &searchv0.RangePredicate{Field: "panel_id", GT: new(5.0)}},
+	}}
+	req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+	require.Empty(t, errs)
+	assert.Equal(t, "cpu", req.Query)
+	require.Len(t, req.Options.Fields, 2)
+	assert.Equal(t, "paused", req.Options.Fields[0].Key)
+	assert.Equal(t, "panel_id", req.Options.Fields[1].Key)
+	assert.Equal(t, "gt", req.Options.Fields[1].Operator)
+}
+
+// The high end of the int64 range is not exact as a float64, so both edges are
+// worth pinning.
+func TestTranslateSearchQuery_IntegerBoundEdges(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		bound  float64
+		accept bool
+	}{
+		{"lowest int64", math.MinInt64, true},
+		{"below the lowest int64", -math.Exp2(63) - 2048, false},
+		{"highest whole float below 2^63", math.Exp2(63) - 1024, true},
+		{"MaxInt64, which float64 rounds up to 2^63", math.MaxInt64, false},
+		{"above int64", math.Exp2(64), false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			q := searchQuery(nil)
+			q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: "panel_id", LT: &tc.bound}}
+			_, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+			if tc.accept {
+				require.Empty(t, errs)
+				return
+			}
+			require.Len(t, errs, 1)
+			assert.Equal(t, "where.range.lt", errs[0].Field)
+		})
+	}
+}
+
+// At the extremes FormatFloat's shortest form is neither parseable by the backend
+// nor the number the caller sent.
+func TestTranslateSearchQuery_BoundValuesSurviveTheHandover(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		field string
+		bound float64
+		want  string
+	}{
+		{"lowest int64", "panel_id", math.MinInt64, "-9223372036854775808"},
+		{"largest float64 below 2^63", "panel_id", math.Exp2(63) - 1024, "9223372036854774784"},
+		{"a value past 2^53", "panel_id", math.Exp2(53) + 2, "9007199254740994"},
+		{"a small integer", "panel_id", 10, "10"},
+		{"a whole bound on a double field", "ratio", 3, "3"},
+		{"a fraction on a double field", "ratio", 0.25, "0.25"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			q := searchQuery(nil)
+			q.Where = &searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: tc.field, GTE: &tc.bound}}
+			req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+			require.Empty(t, errs)
+			require.Len(t, req.Options.Fields, 1)
+			require.Equal(t, []string{tc.want}, req.Options.Fields[0].Values)
+
+			// A value ParseInt rejects would be a 400 the API layer should have caught.
+			if tc.field == "panel_id" {
+				_, err := strconv.ParseInt(tc.want, 10, 64)
+				require.NoError(t, err)
+			}
+		})
+	}
 }

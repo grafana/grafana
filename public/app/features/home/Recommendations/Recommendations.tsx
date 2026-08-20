@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { config } from '@grafana/runtime';
@@ -56,61 +56,69 @@ function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
   const probesEnabled = everExpanded.current;
 
   const plugins = useAsync(async () => (probesEnabled ? fetchInstalledPlugins() : undefined), [probesEnabled]);
-  const pluginsById = new Map((plugins.value ?? []).map((plugin) => [plugin.id, plugin]));
+  const pluginsById = useMemo(
+    () => new Map((plugins.value ?? []).map((plugin) => [plugin.id, plugin])),
+    [plugins.value]
+  );
+
   // Derived from the settled value, not the loading flag: on the probesEnabled flip, useAsync
   // still reports the gated run's state for one frame, which must read as pending.
   const pluginsSettled = !!plugins.value || !!plugins.error;
 
   const { value: resolution } = useSolutionState(probesEnabled);
-  const selection = resolution ? selectRecommendations(resolution.state) : undefined;
-
-  const cardsById = getRecommendationCards();
-  const selectedCards = selection?.cards.map((id) => cardsById[id]) ?? [];
+  const selection = useMemo(() => (resolution ? selectRecommendations(resolution.state) : undefined), [resolution]);
+  const cardsById = useMemo(() => getRecommendationCards(), []);
 
   // An unavailable plugin list fails closed (plugin cards only). /api/plugins always lists at
   // least the core plugins, so an empty response means the list is unreliable and also fails closed.
   const listReady = !!plugins.value && plugins.value.length > 0;
 
-  const toItems = (cards: RecommendedCardId[]): RecommendationItem[] =>
-    cards.flatMap((cardId): RecommendationItem[] => {
-      const card = cardsById[cardId];
-      if (card.kind === 'connection') {
-        // Independent of the plugin list: a failing /api/plugins must not hide a connection card.
-        return contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) ? [{ ...card, cta: 'enable' }] : [];
-      }
-      if (!listReady) {
-        return [];
-      }
-      const plugin = pluginsById.get(card.pluginId);
-      if (!plugin) {
-        // Unlistable plugins take the install-only path.
-        return canInstall ? [toEnableItem(card)] : [];
-      }
-      if (plugin.enabled) {
-        // Selection already established the solution is silent; the setup CTA leads into the app,
-        // so it only renders for users who can open it.
-        return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin)
-          ? [toSetupItem(card)]
-          : [];
-      }
-      // plugins:write is scoped to this plugin.
-      return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin) ? [toEnableItem(card)] : [];
-    });
+  const toItems = useCallback(
+    (cards: RecommendedCardId[]): RecommendationItem[] =>
+      cards.flatMap((cardId): RecommendationItem[] => {
+        const card = cardsById[cardId];
+        if (card.kind === 'connection') {
+          // Independent of the plugin list: a failing /api/plugins must not hide a connection card.
+          return contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) ? [{ ...card, cta: 'enable' }] : [];
+        }
+        if (!listReady) {
+          return [];
+        }
+        const plugin = pluginsById.get(card.pluginId);
+        if (!plugin) {
+          // Unlistable plugins take the install-only path.
+          return canInstall ? [toEnableItem(card)] : [];
+        }
+        if (plugin.enabled) {
+          // Selection already established the solution is silent; the setup CTA leads into the app,
+          // so it only renders for users who can open it.
+          return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin)
+            ? [toSetupItem(card)]
+            : [];
+        }
+        // plugins:write is scoped to this plugin.
+        return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin) ? [toEnableItem(card)] : [];
+      }),
+    [canInstall, cardsById, listReady, pluginsById]
+  );
 
-  const recommendations = toItems(selection?.cards ?? []);
+  const recommendations = useMemo(() => toItems(selection?.cards ?? []), [selection?.cards, toItems]);
   // Per-solution views are permutations of the same selection (membership is the matrix's
   // call, never the view's), so the skeleton and region-hide gates below stay list-agnostic.
   // The Record type keeps the literal in lockstep with EXISTING_SOLUTION_IDS.
-  const forSolution = (id: ExistingSolutionId) => toItems(orderCardsForSolution(selection?.cards ?? [], id));
-  const recommendationsBySolution: Record<ExistingSolutionId, RecommendationItem[]> = {
-    kubernetes: forSolution('kubernetes'),
-    metrics: forSolution('metrics'),
-    logs: forSolution('logs'),
-    traces: forSolution('traces'),
-  };
+  const recommendationsBySolution: Record<ExistingSolutionId, RecommendationItem[]> = useMemo(() => {
+    const forSolution = (id: ExistingSolutionId) => toItems(orderCardsForSolution(selection?.cards ?? [], id));
+    return {
+      kubernetes: forSolution('kubernetes'),
+      metrics: forSolution('metrics'),
+      logs: forSolution('logs'),
+      traces: forSolution('traces'),
+    };
+  }, [selection?.cards, toItems]);
 
   // The region renders once state settles; recommendations only decide the right column.
   // Collapsed (gated-off) renders immediately as just the header row.
+  const selectedCards = selection?.cards.map((id) => cardsById[id]) ?? [];
   const waitingOnPlugins = !pluginsSettled && selectedCards.some((card) => card.kind === 'plugin');
   if (probesEnabled && (!selection || waitingOnPlugins)) {
     return <RecommendationsSkeleton />;
