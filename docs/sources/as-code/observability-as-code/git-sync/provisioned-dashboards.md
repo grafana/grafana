@@ -118,7 +118,7 @@ From the banner you can:
 - Select **Open a pull request** (or **View pull request**, if one already exists) to open the pull request for this change, in a new tab.
 - Select **View saved version**, when editing a dashboard that already exists in Grafana, to jump back to the version currently saved on the configured branch, so you can compare it against your draft.
 
-If the branch behind the preview no longer exists in the repository — for example, the pull request was already merged or closed and its source branch deleted — selecting **Open a pull request** can't take you to a live pull request. Grafana instead shows **This branch no longer exists** and offers two ways forward:
+If the branch behind the preview no longer exists in the repository, for example, the pull request was already merged or closed and its source branch deleted, selecting **Open a pull request** can't take you to a live pull request. Grafana instead shows **This branch no longer exists** and offers two ways forward:
 
 - **Save to a new branch**: Reopens the save form with your draft intact, so you can commit it to a new branch and open a new pull request.
 - **View the current version**: Navigates to the dashboard as currently saved in Grafana, if it exists.
