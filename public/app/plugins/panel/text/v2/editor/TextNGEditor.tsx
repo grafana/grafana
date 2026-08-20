@@ -131,7 +131,7 @@ export function TextNGEditor({
 
   useDebounce(() => setPreviewSource(draftRef.current), PREVIEW_DEBOUNCE_MS, [draft]);
 
-  const format = getInterpolateFormat(codeLanguage);
+  const format = getInterpolateFormat(mode, codeLanguage);
   const showPreview = view !== 'write';
 
   const interpolatedContent = useMemo(

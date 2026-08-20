@@ -189,4 +189,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddAlertRuleStateBigIntMigration(mg)
 
 	mg.AddObsoleteMigration(obsolete.PlaylistMigrations())
+
+	ualert.CollateBinAlertRuleFolderFullpath(mg)
 }

@@ -20,6 +20,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
@@ -124,6 +125,11 @@ type BleveOptions struct {
 	// deleted documents. Read once at creation and recorded there, so a later change
 	// cannot leave trash missing what was deleted while it was off.
 	IndexDeletedDocuments bool
+
+	// EnforceSortCapability rejects a sort on a field that does not declare the
+	// sort capability. When false the violation is only counted, so an operator
+	// can see what real traffic would break before turning this on.
+	EnforceSortCapability bool
 
 	// PostRankAuthzEnabled enables the post-filter (post-rank) authorization
 	// path. Set from the search_post_rank_authz config option at backend init.
@@ -1705,6 +1711,8 @@ type bleveIndex struct {
 	index bleve.Index
 	// Index features this index was built with, from its build info.
 	features []resource.IndexFeature
+	// Whether this index holds label values whole, from its own mapping.
+	labelsAreKeyword bool
 	// Both are needed to tell "trash is off" from "trash is on but this index has
 	// not been rebuilt yet".
 	keepsDeletedDocuments bool
@@ -1754,6 +1762,8 @@ type bleveIndex struct {
 	// stored in Bleve internal data, so concurrent BulkIndex calls don't lose increments.
 	snapshotMutationMu sync.Mutex
 
+	enforceSortCapability bool
+
 	// postRankAuthzEnabled enables the post-ranking authz path. When false,
 	// the in-searcher permissionScopedQuery path is used.
 	postRankAuthzEnabled bool
@@ -1784,6 +1794,7 @@ func (b *bleveBackend) newBleveIndex(
 		key:                   key,
 		index:                 index,
 		features:              features,
+		labelsAreKeyword:      labelAnalyzerIsKeyword(index),
 		keepsDeletedDocuments: slices.Contains(features, resource.IndexFeatureHoldsDeletedDocuments),
 		wantsDeletedDocuments: b.opts.IndexDeletedDocuments,
 		indexStorage:          newIndexType,
@@ -1794,6 +1805,7 @@ func (b *bleveBackend) newBleveIndex(
 		updaterFn:             updaterFn,
 		minUpdateInterval:     b.opts.IndexMinUpdateInterval,
 		indexMetrics:          b.indexMetrics,
+		enforceSortCapability: b.opts.EnforceSortCapability,
 		postRankAuthzEnabled:  b.opts.PostRankAuthzEnabled,
 		postRankAuthz:         b.opts.PostRankAuthz.effective(),
 		trashRetention:        b.opts.TrashRetention,
@@ -2535,6 +2547,10 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		searchrequest.Facets = nil
 	}
 
+	if errResult := b.checkSortCapability(req); errResult != nil {
+		return nil, errResult
+	}
+
 	// Add the sort fields
 	sorting := b.getSortFields(req)
 	searchrequest.SortBy(sorting)
@@ -2845,13 +2861,31 @@ func resolveFieldName(fields resource.SearchableDocumentFields, key string) stri
 
 // isReservedTopLevelField reports whether key is a standard field or an internal
 // top-level variant (title_phrase/title_ngram) that must never be prefixed.
+//
+// The declarations and the column set do not cover the same names, so both are
+// consulted: managedBy is declared for faceting and has no column because it is
+// not stored, while rv has a column and no declaration.
 func isReservedTopLevelField(key string) bool {
 	switch key {
 	case resource.SEARCH_FIELD_TITLE_PHRASE, resource.SEARCH_FIELD_TITLE_NGRAM:
 		return true
 	}
+	if declaredTopLevelNames[key] {
+		return true
+	}
 	return resource.StandardSearchFields().Field(key) != nil
 }
+
+var declaredTopLevelNames = func() map[string]bool {
+	names := map[string]bool{}
+	for _, def := range resource.StandardSearchFieldDefinitions() {
+		names[def.Name] = true
+	}
+	for _, def := range resource.TrashSearchFieldDefinitions() {
+		names[def.Name] = true
+	}
+	return names
+}()
 
 // filterQueries builds the label and field filter clauses (the AND terms that
 // are not the free-text query) for a search request.
@@ -2995,12 +3029,33 @@ func (b *bleveIndex) textQueryKindFor(name string) textQueryKind {
 	if kind, ok := b.searchFields.textQueryKinds[name]; ok {
 		return kind
 	}
+	// Reference keys are dynamic, so the keyword sub-document is matched by prefix.
 	if strings.HasPrefix(name, referenceFieldPrefix) {
+		return textQueryTerm
+	}
+	// Label keys are dynamic too, but labels were text-analyzed until the keyword
+	// mapping shipped, so follow what this index actually holds.
+	if strings.HasPrefix(name, labelFieldPrefix) && b.labelsAreKeyword {
 		return textQueryTerm
 	}
 	// Undeclared fields (dynamically indexed, or named by a client we don't know
 	// about) keep the analyzed default.
 	return textQueryStandard
+}
+
+// labelAnalyzerIsKeyword reports whether an index holds label values whole. Read
+// from the index's own stored mapping, so an index written before labels became
+// keyword-analyzed is queried the way it was written. Any key answers for the
+// whole sub-document, which maps no key of its own.
+func labelAnalyzerIsKeyword(index bleve.Index) bool {
+	if index == nil {
+		return false
+	}
+	m := index.Mapping()
+	if m == nil {
+		return false
+	}
+	return m.AnalyzerNameForPath(labelFieldPrefix+"anyKey") == keyword.Name
 }
 
 // titleQueryFields expands a text query on the logical title field across its
@@ -3266,6 +3321,38 @@ const (
 	whitespaceCharacters = " \t\r\n"
 )
 
+// checkSortCapability holds a sort to what the field declares. A field that is
+// not indexed at all (a retrieve-only number, or a name no version declares)
+// silently comes back in an arbitrary order.
+func (b *bleveIndex) checkSortCapability(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	for _, sort := range req.SortBy {
+		if b.sortableField(sort.Field) {
+			continue
+		}
+		if b.indexMetrics != nil {
+			b.indexMetrics.SearchCapabilityViolations.WithLabelValues(b.key.Resource, string(resource.SearchCapabilitySort)).Inc()
+		}
+		if !b.enforceSortCapability {
+			b.logger.Warn("search sorts on a field that does not declare the sort capability", "field", sort.Field)
+			continue
+		}
+		return resource.NewBadRequestError(fmt.Sprintf("field %q does not support sorting", sort.Field))
+	}
+	return nil
+}
+
+// sortableField reports whether a request may sort on this field name.
+func (b *bleveIndex) sortableField(key string) bool {
+	fields := b.searchFields.sortableFields
+	if fields == nil {
+		// Index opened without per-kind declarations; standard fields still apply.
+		fields = standardSortableFields
+	}
+	// Both the bare and the prefixed name are keys, so no trimming here: a bare
+	// name a standard field owns must not become sortable under the prefix.
+	return fields[key]
+}
+
 // keywordFieldFor reports the keyword-analyzed index field backing a filter or
 // sort field, and false when the field has no keyword form.
 func (b *bleveIndex) keywordFieldFor(key string) (keywordField, bool) {
@@ -3276,6 +3363,18 @@ func (b *bleveIndex) keywordFieldFor(key string) (keywordField, bool) {
 	}
 	kf, ok := fields[key]
 	return kf, ok
+}
+
+// numberOrBoolFieldFor is the counterpart of keywordFieldFor for fields that are
+// not strings.
+func (b *bleveIndex) numberOrBoolFieldFor(key string) (numberOrBoolField, bool) {
+	fields := b.searchFields.numberOrBoolFields
+	if fields == nil {
+		// Index opened without per-kind declarations; standard fields still apply.
+		fields = standardNumberOrBoolFields
+	}
+	nb, ok := fields[key]
+	return nb, ok
 }
 
 // usesExactTermFilter reports whether "=" or "in" on key matches the whole value
@@ -3299,6 +3398,11 @@ func (b *bleveIndex) usesExactTermFilter(key string) bool {
 
 // Convert a "requirement" into a bleve query
 func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	// Boolean and numeric fields are indexed in their native form, which a term
+	// or match query cannot reach, so they take a separate path.
+	if nb, ok := b.numberOrBoolFieldFor(req.Key); ok {
+		return numberOrBoolQuery(nb, req)
+	}
 	useExactTermQuery := b.usesExactTermFilter(req.Key)
 	switch selection.Operator(req.Operator) {
 	case selection.DoubleEquals:
@@ -3359,9 +3463,151 @@ func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query,
 	case selection.LessThan:
 	case selection.Exists:
 	}
-	return nil, resource.NewBadRequestError(
+	return nil, unsupportedRequirementError(req)
+}
+
+func unsupportedRequirementError(req *resourcepb.Requirement) *resourcepb.ErrorResult {
+	return resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
 	)
+}
+
+func numberOrBoolQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	if !nb.filterable {
+		// The field is not indexed for filtering, so the alternative is an empty
+		// page with no sign the filter was ignored.
+		return nil, resource.NewBadRequestError(fmt.Sprintf("field %s does not support filtering", req.Key))
+	}
+
+	switch selection.Operator(req.Operator) {
+	case selection.Equals, selection.DoubleEquals, selection.In, selection.NotIn:
+		return numberOrBoolSetQuery(nb, req)
+	case selection.GreaterThan, selection.LessThan, resource.OperatorGreaterThanOrEqual, resource.OperatorLessThanOrEqual:
+		return numberOrBoolRangeQuery(nb, req)
+	default:
+		return nil, unsupportedRequirementError(req)
+	}
+}
+
+// Combining rules follow the string path: "=" with several values is an AND,
+// "in" is an OR.
+func numberOrBoolSetQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	op := selection.Operator(req.Operator)
+	if op == selection.DoubleEquals && len(req.Values) != 1 {
+		return nil, unsupportedRequirementError(req)
+	}
+	// The string path answers match-all here, turning "in the empty set" into no
+	// filter at all. Nothing can depend on that for these fields yet.
+	if len(req.Values) == 0 {
+		return nil, resource.NewBadRequestError(fmt.Sprintf("filter on field %s has no values", req.Key))
+	}
+
+	queries := make([]query.Query, 0, len(req.Values))
+	for _, v := range req.Values {
+		q, errRes := numberOrBoolValueQuery(nb, req.Key, v)
+		if errRes != nil {
+			return nil, errRes
+		}
+		queries = append(queries, q)
+	}
+
+	switch {
+	case op == selection.NotIn:
+		boolQuery := bleve.NewBooleanQuery()
+		boolQuery.AddMustNot(queries...)
+		// must still have a value
+		boolQuery.AddMust(bleve.NewMatchAllQuery())
+		return boolQuery, nil
+	case len(queries) == 1:
+		return queries[0], nil
+	case op == selection.Equals:
+		return query.NewConjunctionQuery(queries), nil
+	default:
+		return query.NewDisjunctionQuery(queries), nil
+	}
+}
+
+// A number has no term form, so equality has to be a range with both bounds on
+// the value.
+func numberOrBoolValueQuery(nb numberOrBoolField, key, value string) (query.Query, *resourcepb.ErrorResult) {
+	if nb.isBoolean() {
+		b, ok := parseBooleanFilterValue(value)
+		if !ok {
+			return nil, resource.NewBadRequestError(fmt.Sprintf("invalid boolean value for field %s: %q", key, value))
+		}
+		q := bleve.NewBoolFieldQuery(b)
+		q.SetField(nb.name)
+		return q, nil
+	}
+
+	n, errRes := parseNumericFilterValue(nb, key, value)
+	if errRes != nil {
+		return nil, errRes
+	}
+	inclusive := true
+	q := bleve.NewNumericRangeInclusiveQuery(&n, &n, &inclusive, &inclusive)
+	q.SetField(nb.name)
+	return q, nil
+}
+
+func numberOrBoolRangeQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	if nb.isBoolean() {
+		return nil, resource.NewBadRequestError(fmt.Sprintf("field %s is a boolean and cannot be compared with %s", req.Key, req.Operator))
+	}
+	if len(req.Values) != 1 {
+		return nil, resource.NewBadRequestError(fmt.Sprintf("operator %s on field %s takes exactly one value", req.Operator, req.Key))
+	}
+	bound, errRes := parseNumericFilterValue(nb, req.Key, req.Values[0])
+	if errRes != nil {
+		return nil, errRes
+	}
+
+	op := selection.Operator(req.Operator)
+	inclusive := op == resource.OperatorGreaterThanOrEqual || op == resource.OperatorLessThanOrEqual
+
+	var q *query.NumericRangeQuery
+	if op == selection.GreaterThan || op == resource.OperatorGreaterThanOrEqual {
+		q = bleve.NewNumericRangeInclusiveQuery(&bound, nil, &inclusive, nil)
+	} else {
+		q = bleve.NewNumericRangeInclusiveQuery(nil, &bound, nil, &inclusive)
+	}
+	q.SetField(nb.name)
+	return q, nil
+}
+
+// Only the two canonical spellings, so "yes" is reported rather than read as
+// false.
+func parseBooleanFilterValue(value string) (bool, bool) {
+	switch value {
+	case "true":
+		return true, true
+	case "false":
+		return false, true
+	}
+	return false, false
+}
+
+// An int64 field takes integers only, so "0.5" is reported rather than turned
+// into a query that cannot match.
+//
+// Bleve stores numbers as float64, so two int64 values past 2^53 can collapse
+// onto one. The bound is converted the same way as the indexed value, so such a
+// filter can match a neighbour but never misses.
+func parseNumericFilterValue(nb numberOrBoolField, key, value string) (float64, *resourcepb.ErrorResult) {
+	if nb.fieldType == resource.SearchFieldTypeDouble {
+		f, err := strconv.ParseFloat(value, 64)
+		// ParseFloat also reads NaN and Inf, which no JSON number can hold. As a
+		// bound they would give an empty or unbounded result rather than an error.
+		if err != nil || math.IsNaN(f) || math.IsInf(f, 0) {
+			return 0, resource.NewBadRequestError(fmt.Sprintf("invalid number value for field %s: %q", key, value))
+		}
+		return f, nil
+	}
+	n, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return 0, resource.NewBadRequestError(fmt.Sprintf("invalid integer value for field %s: %q", key, value))
+	}
+	return float64(n), nil
 }
 
 // allRequirementValuesQuery preserves selector semantics where multiple "=" values are combined with AND.

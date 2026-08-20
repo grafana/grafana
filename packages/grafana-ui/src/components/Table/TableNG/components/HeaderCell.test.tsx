@@ -75,9 +75,52 @@ describe('HeaderCell', () => {
     expect(window.getComputedStyle(label).cursor).toBe('default');
   });
 
+  it('renders nothing when hideHeader is set', () => {
+    const { container } = render(
+      <HeaderCell {...baseProps} field={makeField({ config: { custom: { hideHeader: true } } })} direction="ASC" />
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('still renders the display name when hideHeader is not set', () => {
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(screen.getByRole('button', { name: 'Field1' })).toHaveAttribute('title', 'Field1');
+  });
+
   it('renders with wrapped header text when wrapHeaderText is enabled', () => {
     render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { wrapHeaderText: true } } })} />);
     expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
+  });
+
+  it('renders an info tooltip when headerTooltip is set', () => {
+    render(
+      <HeaderCell
+        {...baseProps}
+        field={makeField({ config: { custom: { headerTooltip: 'Only sorts the results on display' } } })}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Only sorts the results on display' })).toBeInTheDocument();
+  });
+
+  it('does not render an info tooltip when headerTooltip is not set', () => {
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+  });
+
+  it('does not bubble info tooltip clicks to the column header', async () => {
+    const onHeaderClick = jest.fn();
+    render(
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <div onClick={onHeaderClick}>
+        <HeaderCell
+          {...baseProps}
+          field={makeField({ config: { custom: { headerTooltip: 'Only sorts the results on display' } } })}
+        />
+      </div>
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Only sorts the results on display' }));
+    expect(onHeaderClick).not.toHaveBeenCalled();
   });
 
   it('renders a filter button when the field is filterable', () => {

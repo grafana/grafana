@@ -177,6 +177,47 @@ func newDashboardTranslation() translation {
 	return dashTranslation
 }
 
+// newNotebookTranslation creates a translation for notebooks. Notebooks have their own
+// notebooks:* actions and a notebooks:uid: scope, but are folder-scoped like dashboards, so
+// their verbs map onto the folder action sets (folders:view/edit/admin) and folder grants
+// cover them. The notebooks:view/edit/admin object action sets (for per-notebook sharing) are
+// added later together with the notebook resource-permission service.
+func newNotebookTranslation() translation {
+	nbTranslation := newResourceTranslation("notebooks", "uid", true, nil)
+
+	actionSetMapping := make(map[string][]string)
+	for verb, rbacAction := range nbTranslation.verbMapping {
+		var actionSets []string
+
+		// Notebook creation is only part of the folder action sets, so handle it separately.
+		if rbacAction == "notebooks:create" {
+			actionSets = append(actionSets, "folders:edit")
+			actionSets = append(actionSets, "folders:admin")
+		}
+		// The permission verbs come from the default translation. set_permissions is never a granted
+		// notebook action (no per-notebook permissions management) — it's mapped to folders:admin only
+		// so the trash folder-admin check (TrashAuthorizer.FolderAdmin) resolves. get_permissions
+		// falls through with no action set (nothing reads a notebook's permission list), so it's denied.
+		if rbacAction == "notebooks.permissions:write" {
+			actionSets = append(actionSets, "folders:admin")
+		}
+
+		if slices.Contains(ossaccesscontrol.NotebookViewActions, rbacAction) {
+			actionSets = append(actionSets, "folders:view")
+		}
+		if slices.Contains(ossaccesscontrol.NotebookEditActions, rbacAction) {
+			actionSets = append(actionSets, "folders:edit")
+		}
+		if slices.Contains(ossaccesscontrol.NotebookAdminActions, rbacAction) {
+			actionSets = append(actionSets, "folders:admin")
+		}
+		actionSetMapping[verb] = actionSets
+	}
+
+	nbTranslation.actionSetMapping = actionSetMapping
+	return nbTranslation
+}
+
 // newFolderTranslation creates a translation for folders and also maps the actions to action sets
 func newFolderTranslation() translation {
 	folderTranslation := newResourceTranslation("folders", "uid", true, nil)
@@ -447,6 +488,7 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
+			"notebooks":     newNotebookTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
 			"variables":     newVariableTranslation(),
 			// Annotations subresource for dashboards

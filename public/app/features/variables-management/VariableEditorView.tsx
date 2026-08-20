@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EmbeddedScene, SceneFlexLayout, SceneTimeRange, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Button, ConfirmModal, Field, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Field, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import {
   useCreateVariableMutation,
   useDeleteVariableMutation,
@@ -56,6 +56,50 @@ export interface VariableEditorViewProps {
  */
 export function VariableEditorView({ source, existingNames = [], onBack }: VariableEditorViewProps) {
   const styles = useStyles2(getStyles);
+  const [defaultName] = useState(() => getNextAvailableVariableName('query', existingNames));
+  const [initialVariable, setInitialVariable] = useState<SceneVariable | undefined>(() =>
+    source
+      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        createSceneVariableFromVariableModel(getVariableKind(source) as TypedVariableModelV2)
+      : undefined
+  );
+
+  useEffect(() => {
+    if (initialVariable) {
+      return;
+    }
+
+    let cancelled = false;
+    getVariableScene('query', { name: defaultName }).then((variable) => {
+      if (!cancelled) {
+        setInitialVariable(variable);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [defaultName, initialVariable]);
+
+  if (!initialVariable) {
+    return (
+      <div className={styles.container}>
+        <Spinner />
+      </div>
+    );
+  }
+
+  return <VariableEditorLoaded source={source} onBack={onBack} initialVariable={initialVariable} />;
+}
+
+interface VariableEditorLoadedProps {
+  source?: Variable;
+  onBack: () => void;
+  initialVariable: SceneVariable;
+}
+
+function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEditorLoadedProps) {
+  const styles = useStyles2(getStyles);
   const isNew = !source;
   const allowGlobalScope = canManageGlobalVariables();
   const [searchParams] = useSearchParams();
@@ -73,12 +117,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     }
     return allowGlobalScope ? '' : undefined;
   });
-  const [sceneVariable, setSceneVariable] = useState<SceneVariable>(() =>
-    source
-      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        createSceneVariableFromVariableModel(getVariableKind(source) as TypedVariableModelV2)
-      : getVariableScene('query', { name: getNextAvailableVariableName('query', existingNames) })
-  );
+  const [sceneVariable, setSceneVariable] = useState(initialVariable);
 
   const [createVariable, { isLoading: isCreating }] = useCreateVariableMutation();
   const [updateVariable, { isLoading: isUpdating }] = useUpdateVariableMutation();
@@ -154,9 +193,9 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     return deactivate;
   }, [scene]);
 
-  const onTypeChange = (type: EditableVariableType) => {
+  const onTypeChange = async (type: EditableVariableType) => {
     const { name, label } = sceneVariable.state;
-    setSceneVariable(getVariableScene(type, { name, label }));
+    setSceneVariable(await getVariableScene(type, { name, label }));
     // The new scene carries over the last committed (valid) name.
     setHasNameError(false);
   };

@@ -1,31 +1,31 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, within } from 'test/test-utils';
 
-import { textUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { isValidRepoType } from '../../guards';
+import { setupProvisioningMswServer } from '../../mocks/server';
 
-import { PreviewBannerViewPR } from './PreviewBannerViewPR';
-
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
-  textUtil: {
-    sanitizeUrl: jest.fn(),
-  },
-}));
+import { PreviewBannerViewPR, type PreviewBranchInfo } from './PreviewBannerViewPR';
 
 jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => ({
   usePullRequestParam: jest.fn(),
 }));
 
-const mockTextUtil = jest.mocked(textUtil);
-
 const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
 
+setupProvisioningMswServer();
+
 function setup(
-  options: { prURL: string; isNewPr?: boolean; repoType?: RepoType; action?: string; prTitle?: string } = {
+  options: {
+    prURL: string;
+    isNewPr?: boolean;
+    repoType?: RepoType;
+    action?: string;
+    prTitle?: string;
+    branchInfo?: PreviewBranchInfo;
+  } = {
     prURL: 'test-url',
     repoType: 'github',
   }
@@ -33,6 +33,7 @@ function setup(
   const componentProps = {
     prURL: options.prURL,
     isNewPr: options.isNewPr || false,
+    branchInfo: options.branchInfo,
   };
 
   mockUsePullRequestParam.mockReturnValue({
@@ -45,9 +46,7 @@ function setup(
     prTitle: options.prTitle,
   });
 
-  const renderResult = render(<PreviewBannerViewPR {...componentProps} />);
-
-  return { renderResult, props: componentProps };
+  return { ...render(<PreviewBannerViewPR {...componentProps} />), props: componentProps };
 }
 
 describe('PreviewBannerViewPR', () => {
@@ -63,7 +62,6 @@ describe('PreviewBannerViewPR', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockTextUtil.sanitizeUrl.mockImplementation((url) => url);
   });
 
   afterEach(() => {
@@ -141,10 +139,10 @@ describe('PreviewBannerViewPR', () => {
   describe('Button functionality', () => {
     it('should open URL in new tab when button is clicked', async () => {
       const testUrl = 'https://GitHub.com/test/repo/pull/123';
-      setup({ prURL: testUrl });
+      const { user } = setup({ prURL: testUrl });
 
       const button = screen.getByRole('button', { name: /close alert/i });
-      await userEvent.click(button);
+      await user.click(button);
 
       expect(windowOpenSpy).toHaveBeenCalledWith(testUrl, '_blank');
     });
@@ -198,22 +196,51 @@ describe('PreviewBannerViewPR', () => {
     });
   });
 
+  describe('Branch information', () => {
+    const branchInfo: PreviewBranchInfo = {
+      repoBaseUrl: 'https://github.com/org/repo',
+      targetBranch: 'dashboard/2026-08-20-abcde',
+      configuredBranch: 'develop',
+    };
+
+    it('renders source and target branch pills with stable selectors', () => {
+      setup({ prURL: 'test-url', isNewPr: true, repoType: 'github', branchInfo });
+
+      const source = screen.getByTestId(selectors.pages.Provisioning.PreviewBanner.sourceBranchLink);
+      const target = screen.getByTestId(selectors.pages.Provisioning.PreviewBanner.targetBranchLink);
+
+      expect(source).toHaveTextContent('dashboard/2026-08-20-abcde');
+      expect(within(source).getByRole('link')).toHaveAttribute(
+        'href',
+        'https://github.com/org/repo/tree/dashboard/2026-08-20-abcde'
+      );
+      expect(target).toHaveTextContent('develop');
+      expect(within(target).getByRole('link')).toHaveAttribute('href', 'https://github.com/org/repo/tree/develop');
+    });
+
+    it('exposes the branch-direction arrow to assistive technology', () => {
+      setup({ prURL: 'test-url', isNewPr: true, repoType: 'github', branchInfo });
+
+      expect(screen.getByLabelText('targets')).toBeInTheDocument();
+    });
+  });
+
   describe('PR title prefill', () => {
     const githubPrURL = 'https://github.com/org/repo/compare/main...feature?quick_pull=1&labels=grafana';
 
     it('appends an encoded title param to a GitHub PR URL when pr_title is present', async () => {
-      setup({ prURL: githubPrURL, repoType: 'github', prTitle: 'update: My Dashboard' });
+      const { user } = setup({ prURL: githubPrURL, repoType: 'github', prTitle: 'update: My Dashboard' });
 
-      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+      await user.click(screen.getByRole('button', { name: /close alert/i }));
 
       expect(windowOpenSpy).toHaveBeenCalledWith(`${githubPrURL}&title=update%3A%20My%20Dashboard`, '_blank');
     });
 
     it('uses merge_request[title] for GitLab', async () => {
       const gitlabPrURL = 'https://gitlab.com/org/repo/-/merge_requests/new?merge_request[source_branch]=feature';
-      setup({ prURL: gitlabPrURL, repoType: 'gitlab', prTitle: 'update: My Dashboard' });
+      const { user } = setup({ prURL: gitlabPrURL, repoType: 'gitlab', prTitle: 'update: My Dashboard' });
 
-      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+      await user.click(screen.getByRole('button', { name: /close alert/i }));
 
       expect(windowOpenSpy).toHaveBeenCalledWith(
         `${gitlabPrURL}&merge_request[title]=update%3A%20My%20Dashboard`,
@@ -222,9 +249,9 @@ describe('PreviewBannerViewPR', () => {
     });
 
     it('leaves the PR URL unchanged when no pr_title is present', async () => {
-      setup({ prURL: githubPrURL, repoType: 'github' });
+      const { user } = setup({ prURL: githubPrURL, repoType: 'github' });
 
-      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+      await user.click(screen.getByRole('button', { name: /close alert/i }));
 
       expect(windowOpenSpy).toHaveBeenCalledWith(githubPrURL, '_blank');
     });

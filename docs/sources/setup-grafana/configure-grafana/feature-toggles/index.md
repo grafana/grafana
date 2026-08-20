@@ -62,11 +62,16 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingImportYAMLUI`                       | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
+| `alertingNotificationHistory`                | Enables the notification history feature                                                                                                                      | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
+| `kubernetesAlertingHistorian`                | Adds support for Kubernetes alerting historian APIs                                                                                                           | Yes                |
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
+| `alertingNotificationHistoryRuleViewer`      | Enables the notification history tab in the rule viewer                                                                                                       | Yes                |
+| `alertingNotificationHistoryGlobal`          | Enables the notification history global menu item viewer                                                                                                      | Yes                |
+| `alertingNotificationHistoryTriage`          | Enables the notification history timeline in the triage instance details drawer                                                                               | Yes                |
+| `alertingNotificationHistoryDetail`          | Enables the notification history detail page                                                                                                                  | Yes                |
 | `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
-| `grafana.newPreferencesPage`                 | Whether to use the new SharedPreferences functional component                                                                                                 | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
 | `preferences.rerouteLegacyAPIs`              | Use K8s client implementation for legacy preferences API                                                                                                      | Yes                |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                                              | Yes                |
@@ -77,32 +82,35 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 [Public preview](https://grafana.com/docs/release-life-cycle/#public-preview) features are supported by our Support teams, but might be limited to enablement, configuration, and some troubleshooting.
 
-| Feature toggle name               | Description                                                                                      |
-| --------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `panelTitleSearch`                | Search for dashboards using panel title                                                          |
-| `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability   |
-| `provisioning.readmes`            | Render the README.md of a Git Sync provisioned folder inline below its dashboards list           |
-| `provisioning.gitConventions`     | Enable configurable commit message, branch name, and pull request title conventions for Git Sync |
-| `provisioning.userAttribution`    | Author Git Sync commits as the acting Grafana user                                               |
-| `externalServiceAccounts`         | Automatic service account and token setup for plugins                                            |
-| `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                        |
-| `pdfTables`                       | Enables generating table data as PDF in reporting                                                |
-| `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                               |
-| `timeComparison`                  | Enables time comparison option in supported panels                                               |
-| `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                    |
-| `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                               |
-| `alertRuleRestore`                | Enables the alert rule restore feature                                                           |
-| `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                  |
-| `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                                 |
-| `interactiveLearning`             | Enables the interactive learning app                                                             |
-| `panelTimeSettings`               | Enables a new panel time settings drawer                                                         |
-| `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                             |
-| `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                               |
-| `queryEditorNext`                 | Enables next generation query editor experience                                                  |
-| `grafana.viewPanelPane`           | Enables the sidebar pane with new toggles and options in panel view mode                         |
-| `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                     |
-| `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session            |
-| `grafana.dynamicTraceToLogs`      | Check for the existence of logs when linking from the Trace View                                 |
+| Feature toggle name                | Description                                                                                                                    |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `panelTitleSearch`                 | Search for dashboards using panel title                                                                                        |
+| `faroDatasourceSelector`           | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                 |
+| `provisioning.readmes`             | Render the README.md of a Git Sync provisioned folder inline below its dashboards list                                         |
+| `provisioning.gitConventions`      | Enable configurable commit message, branch name, and pull request title conventions for Git Sync                               |
+| `provisioning.userAttribution`     | Author Git Sync commits as the acting Grafana user                                                                             |
+| `externalServiceAccounts`          | Automatic service account and token setup for plugins                                                                          |
+| `feedbackButton`                   | Enables the feedback button in the dashboard edit sidebar                                                                      |
+| `pdfTables`                        | Enables generating table data as PDF in reporting                                                                              |
+| `canvasPanelPanZoom`               | Allow pan and zoom in canvas panel                                                                                             |
+| `timeComparison`                   | Enables time comparison option in supported panels                                                                             |
+| `secretsManagementAppPlatformUI`   | Enable the secrets management app platform UI                                                                                  |
+| `dashboardTemplates`               | Enables a flow to get started with a new dashboard from a template                                                             |
+| `alertRuleRestore`                 | Enables the alert rule restore feature                                                                                         |
+| `alertingMigrationWizardUI`        | Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting    |
+| `azureMonitorLogsBuilderEditor`    | Enables the logs builder mode for the Azure Monitor data source                                                                |
+| `datasources.azureMonitorBatchAPI` | Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request |
+| `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
+| `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
+| `interactiveLearning`              | Enables the interactive learning app                                                                                           |
+| `panelTimeSettings`                | Enables a new panel time settings drawer                                                                                       |
+| `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
+| `pyroscopeUTF8LabelNames`          | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |
+| `queryEditorNext`                  | Enables next generation query editor experience                                                                                |
+| `grafana.viewPanelPane`            | Enables the sidebar pane with new toggles and options in panel view mode                                                       |
+| `flameGraphWithCallTree`           | Enables the new Flame Graph UI containing the Call Tree view                                                                   |
+| `splashScreen`                     | Enables the splash screen modal for introducing new Grafana features on first session                                          |
+| `grafana.dynamicTraceToLogs`       | Check for the existence of logs when linking from the Trace View                                                               |
 
 ## Development feature toggles
 

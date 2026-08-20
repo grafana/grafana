@@ -1,5 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
 import {
@@ -72,6 +72,10 @@ function registerMimirDataSources(datasources: Array<typeof MIMIR_DS_PAYLOAD> = 
 }
 
 const postState: AdminConfigPostState = { lastPayload: null };
+
+// The underlying hook now gates its queries on this toggle + Org Admin (it's only ever mounted here,
+// behind both — see ImportSettingsPage.tsx), so these tests need it on to exercise the real path.
+testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
 beforeEach(() => {
   postState.lastPayload = null;

@@ -95,6 +95,10 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 			},
 			{
 				"group": "sql-fallback",
+				"resource": "recordingrules"
+			},
+			{
+				"group": "sql-fallback",
 				"resource": "library_elements"
 			}
 		]`, string(jj))
@@ -116,6 +120,10 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 				"group": "sql-fallback",
 				"resource": "alertrules",
 				"count": 1
+			},
+			{
+				"group": "sql-fallback",
+				"resource": "recordingrules"
 			},
 			{
 				"group": "sql-fallback",
@@ -147,8 +155,101 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 			},
 			{
 				"group": "sql-fallback",
+				"resource": "recordingrules"
+			},
+			{
+				"group": "sql-fallback",
 				"resource": "library_elements"
 			}
 		]`, string(jj))
+	})
+}
+
+// Alert rules and recording rules live in the same table and are told apart by the
+// `record` column, so the fallback has to report them under separate resources. If it
+// lumped both into "alertrules", callers that read both kinds would count every
+// recording rule twice.
+func TestIntegrationDirectSQLStatsSplitsRecordingRules(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	db, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	ctx := request.WithNamespace(context.Background(), "default")
+
+	tempUser := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{}}
+	ruleStore := ngalertstore.SetupStoreForTesting(t, db)
+
+	insert := func(t *testing.T, uid, folderUID string, record *ngmodels.Record) {
+		t.Helper()
+		_, err := ruleStore.InsertAlertRules(context.Background(), ngmodels.NewUserUID(tempUser), []ngmodels.InsertRule{{
+			AlertRule: ngmodels.AlertRule{
+				UID:   uid,
+				Title: uid,
+				OrgID: 1,
+				Data: []ngmodels.AlertQuery{{
+					RefID:             "A",
+					Model:             json.RawMessage("{}"),
+					DatasourceUID:     expr.DatasourceUID,
+					RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(60), To: ngmodels.Duration(0)},
+				}},
+				Condition:       "A",
+				Updated:         time.Now(),
+				NamespaceUID:    folderUID,
+				ExecErrState:    ngmodels.ExecutionErrorState(ngmodels.Alerting),
+				NoDataState:     ngmodels.Alerting,
+				IntervalSeconds: 60,
+				Record:          record,
+			}}})
+		require.NoError(t, err)
+	}
+
+	rec := func(metric string) *ngmodels.Record {
+		return &ngmodels.Record{Metric: metric, From: "A", TargetDatasourceUID: "some-ds"}
+	}
+
+	// recording rules only -- the case the folder counts previously got wrong
+	insert(t, "rec-1", "folder-rec", rec("m1"))
+	insert(t, "rec-2", "folder-rec", rec("m2"))
+	// a mix of both kinds
+	insert(t, "mix-alert", "folder-mix", nil)
+	insert(t, "mix-rec", "folder-mix", rec("m3"))
+
+	store := &LegacyStatsGetter{SQL: legacysql.NewDatabaseProvider(db)}
+
+	counts := func(t *testing.T, folderUID string) map[string]int64 {
+		t.Helper()
+		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+			Namespace: "default",
+			Folder:    []string{folderUID},
+		})
+		require.NoError(t, err)
+		out := map[string]int64{}
+		for _, s := range stats.Stats {
+			require.Equal(t, "sql-fallback", s.Group)
+			out[s.Resource] = s.Count
+		}
+		return out
+	}
+
+	t.Run("folder with only recording rules", func(t *testing.T) {
+		got := counts(t, "folder-rec")
+		require.Equal(t, int64(0), got["alertrules"])
+		require.Equal(t, int64(2), got["recordingrules"])
+	})
+
+	t.Run("folder with both kinds", func(t *testing.T) {
+		got := counts(t, "folder-mix")
+		require.Equal(t, int64(1), got["alertrules"])
+		require.Equal(t, int64(1), got["recordingrules"])
+	})
+
+	// The two predicates must partition the table: every row lands in exactly one
+	// count. If a row fell through both, a folder that still holds rules would look
+	// empty and the delete-safety check would let it be deleted.
+	t.Run("every rule is counted exactly once", func(t *testing.T) {
+		for folderUID, total := range map[string]int64{"folder-rec": 2, "folder-mix": 2} {
+			got := counts(t, folderUID)
+			require.Equal(t, total, got["alertrules"]+got["recordingrules"],
+				"alertrules+recordingrules must equal the number of rules in %s", folderUID)
+		}
 	})
 }

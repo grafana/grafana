@@ -733,3 +733,4 @@
 "Change key_path collation of nats_discovery_peers in postgres"
 "alter alert_rule_state id column to bigint for postgres"
 "alter alert_rule_state id sequence to bigint for postgres"
+"ensure folder_fullpath column sorts the same way as golang"

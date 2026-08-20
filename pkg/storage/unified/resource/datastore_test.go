@@ -1584,7 +1584,7 @@ func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dat
 				Action:          DataActionCreated,
 			}
 
-			err := ds.Save(ctx, dataKey, bytes.NewReader([]byte(fmt.Sprintf("version-%d", version))))
+			err := ds.Save(ctx, dataKey, bytes.NewReader(fmt.Appendf(nil, "version-%d", version)))
 			require.NoError(t, err)
 		}
 
@@ -3069,7 +3069,7 @@ func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataS
 			Folder:          "test-folder",
 		}
 
-		err := ds.Save(ctx, dataKey, bytes.NewReader([]byte(fmt.Sprintf("content-%d", i))))
+		err := ds.Save(ctx, dataKey, bytes.NewReader(fmt.Appendf(nil, "content-%d", i)))
 		require.NoError(t, err)
 	}
 
@@ -3334,7 +3334,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 				Action:          DataActionCreated,
 				Folder:          "test-folder",
 			}
-			err := ds.Save(ctx, existingKeys[i], bytes.NewReader([]byte(fmt.Sprintf("value-%d", i))))
+			err := ds.Save(ctx, existingKeys[i], bytes.NewReader(fmt.Appendf(nil, "value-%d", i)))
 			require.NoError(t, err)
 		}
 
@@ -3452,7 +3452,7 @@ func testDataStoreGetLatestAndPredecessor(t *testing.T, ctx context.Context, ds 
 				Action:          DataActionCreated,
 			}
 
-			err := ds.Save(ctx, dataKey, bytes.NewReader([]byte(fmt.Sprintf("version-%d", version))))
+			err := ds.Save(ctx, dataKey, bytes.NewReader(fmt.Appendf(nil, "version-%d", version)))
 			require.NoError(t, err)
 		}
 

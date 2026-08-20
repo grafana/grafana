@@ -164,7 +164,8 @@ describe('transformSaveModelToScene', () => {
       const oldModel = new DashboardModel(dash);
       const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
 
-      // Unset preload must stay undefined so getIsLazy can defer to the instance-wide default.
+      // Unset preload must stay undefined so a later save does not pin an explicit `false` onto a
+      // dashboard that never expressed a preference.
       expect(scene.state.preload).toBeUndefined();
     });
 

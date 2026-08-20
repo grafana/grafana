@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -39,11 +40,14 @@ const (
 type Service struct {
 	authzv1.UnimplementedAuthzServiceServer
 
-	store           store.Store
-	folderStore     store.FolderStore
-	permissionStore store.PermissionStore
-	identityStore   legacy.LegacyIdentityStore
-	settings        Settings
+	store                    store.Store
+	folderStore              store.FolderStore
+	permissionStore          store.PermissionStore
+	userPermissionsEvaluator accesscontrol.UserPermissionsEvaluator
+	userPermissionsResolver  UserPermissionsResolver
+	actionResolver           accesscontrol.ActionResolver
+	identityStore            legacy.LegacyIdentityStore
+	settings                 Settings
 
 	mapper MapperRegistry
 
@@ -64,6 +68,10 @@ type Service struct {
 	teamIDCache     cacheWrap[map[int64]string]
 }
 
+type UserPermissionsResolver interface {
+	ResolveCurrentUserPermissions(ctx context.Context, user identity.Requester) ([]accesscontrol.Permission, error)
+}
+
 type Settings struct {
 	AnonOrgRole string
 	// CacheTTL is the time to live for the permission cache entries.
@@ -79,6 +87,9 @@ func NewService(
 	folderStore store.FolderStore,
 	identityStore legacy.LegacyIdentityStore,
 	permissionStore store.PermissionStore,
+	userPermissionsEvaluator accesscontrol.UserPermissionsEvaluator,
+	userPermissionsResolver UserPermissionsResolver,
+	actionResolver accesscontrol.ActionResolver,
 	logger log.Logger,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
@@ -89,23 +100,26 @@ func NewService(
 		settings.AnonOrgRole = "Viewer"
 	}
 	return &Service{
-		store:           store.NewStore(sql, tracer),
-		folderStore:     folderStore,
-		permissionStore: permissionStore,
-		identityStore:   identityStore,
-		settings:        settings,
-		logger:          logger,
-		tracer:          tracer,
-		metrics:         newMetrics(reg),
-		mapper:          NewMapperRegistry(),
-		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, settings.CacheTTL),
-		permDenialCache: newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
-		userTeamCache:   newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, settings.CacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL, settings.LocalFolderCacheTTL),
-		teamIDCache:     newCacheWrap[map[int64]string](cache, logger, tracer, longCacheTTL),
-		sf:              new(singleflight.Group),
+		store:                    store.NewStore(sql, tracer),
+		folderStore:              folderStore,
+		permissionStore:          permissionStore,
+		actionResolver:           actionResolver,
+		identityStore:            identityStore,
+		settings:                 settings,
+		userPermissionsEvaluator: userPermissionsEvaluator,
+		userPermissionsResolver:  userPermissionsResolver,
+		logger:                   logger,
+		tracer:                   tracer,
+		metrics:                  newMetrics(reg),
+		mapper:                   NewMapperRegistry(),
+		idCache:                  newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
+		permCache:                newCacheWrap[map[string]bool](cache, logger, tracer, settings.CacheTTL),
+		permDenialCache:          newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
+		userTeamCache:            newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
+		basicRoleCache:           newCacheWrap[store.BasicRole](cache, logger, tracer, settings.CacheTTL),
+		folderCache:              newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL, settings.LocalFolderCacheTTL),
+		teamIDCache:              newCacheWrap[map[int64]string](cache, logger, tracer, longCacheTTL),
+		sf:                       new(singleflight.Group),
 	}
 }
 
@@ -801,21 +815,30 @@ func (s *Service) getRendererPermissions(ctx context.Context, action string) (ma
 	_, span := s.tracer.Start(ctx, "authz_direct_db.service.getRendererPermissions")
 	defer span.End()
 
-	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" || action == "datasources:query" || action == "plugins.metas:read" {
+	if action == "dashboards:read" || action == "folders:read" || action == "variables:read" ||
+		action == "datasources:read" || action == "datasources:query" || action == "plugins.metas:read" {
 		return map[string]bool{"*": true}, nil
 	}
 	return map[string]bool{}, nil
 }
 
 func (s *Service) GetUserIdentifiers(ctx context.Context, ns types.NamespaceInfo, userUID string) (*store.UserIdentifiers, error) {
+	return s.getUserIdentifiers(ctx, ns, userUID, false)
+}
+
+func (s *Service) getUserIdentifiers(ctx context.Context, ns types.NamespaceInfo, userUID string, skipCache bool) (*store.UserIdentifiers, error) {
 	uidCacheKey := userIdentifierCacheKey(ns.Value, userUID)
-	if cached, ok := s.idCache.Get(ctx, uidCacheKey); ok {
-		return &cached, nil
+	if !skipCache {
+		if cached, ok := s.idCache.Get(ctx, uidCacheKey); ok {
+			return &cached, nil
+		}
 	}
 
 	idCacheKey := userIdentifierCacheKeyById(ns.Value, userUID)
-	if cached, ok := s.idCache.Get(ctx, idCacheKey); ok {
-		return &cached, nil
+	if !skipCache {
+		if cached, ok := s.idCache.Get(ctx, idCacheKey); ok {
+			return &cached, nil
+		}
 	}
 
 	var userIDQuery store.UserIdentifierQuery
@@ -837,13 +860,19 @@ func (s *Service) GetUserIdentifiers(ctx context.Context, ns types.NamespaceInfo
 }
 
 func (s *Service) getUserTeams(ctx context.Context, ns types.NamespaceInfo, userIdentifiers *store.UserIdentifiers) ([]int64, error) {
+	return s.getUserTeamsWithCache(ctx, ns, userIdentifiers, false)
+}
+
+func (s *Service) getUserTeamsWithCache(ctx context.Context, ns types.NamespaceInfo, userIdentifiers *store.UserIdentifiers, skipCache bool) ([]int64, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserTeams")
 	defer span.End()
 
 	teamIDs := make([]int64, 0, 50)
 	teamsCacheKey := userTeamCacheKey(ns.Value, userIdentifiers.UID)
-	if cached, ok := s.userTeamCache.Get(ctx, teamsCacheKey); ok {
-		return cached, nil
+	if !skipCache {
+		if cached, ok := s.userTeamCache.Get(ctx, teamsCacheKey); ok {
+			return cached, nil
+		}
 	}
 
 	teamQuery := legacy.ListUserTeamsQuery{
@@ -871,12 +900,18 @@ func (s *Service) getUserTeams(ctx context.Context, ns types.NamespaceInfo, user
 }
 
 func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, userIdentifiers *store.UserIdentifiers) (store.BasicRole, error) {
+	return s.getUserBasicRoleWithCache(ctx, ns, userIdentifiers, false)
+}
+
+func (s *Service) getUserBasicRoleWithCache(ctx context.Context, ns types.NamespaceInfo, userIdentifiers *store.UserIdentifiers, skipCache bool) (store.BasicRole, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getUserBasicRole")
 	defer span.End()
 
 	basicRoleKey := userBasicRoleCacheKey(ns.Value, userIdentifiers.UID)
-	if cached, ok := s.basicRoleCache.Get(ctx, basicRoleKey); ok {
-		return cached, nil
+	if !skipCache {
+		if cached, ok := s.basicRoleCache.Get(ctx, basicRoleKey); ok {
+			return cached, nil
+		}
 	}
 
 	basicRole, err := s.store.GetBasicRoles(ctx, ns, store.BasicRoleQuery{UserID: userIdentifiers.ID})

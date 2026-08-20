@@ -1,18 +1,59 @@
-import { act, fireEvent, render, screen, userEvent, within } from 'test/test-utils';
+import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-// Monaco does not run in jsdom; a textarea carries readOnly into the DOM so the edit-mode
-// propagation is observable end to end.
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  CodeEditor: ({ value, readOnly }: { value: string; readOnly?: boolean }) => (
-    <textarea aria-label="Code" defaultValue={value} readOnly={readOnly} />
-  ),
-}));
+import { type NotebookEditHistory } from '../NotebookEditHistory';
+import { NotebookScene } from '../NotebookScene';
+
+// CodeMirror does not run in jsdom; a textarea carries readOnly into the DOM so the edit-mode
+// propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
+// does — a new `extensions` identity is what rebuilds CodeMirror's view plugins — which makes the
+// manager -> frame -> renderer -> cell wiring observable here.
+jest.mock('@grafana/ui/unstable', () => {
+  // Required inside the factory, which jest hoists above the imports.
+  const { useEffect, useRef } = require('react');
+
+  return {
+    ...jest.requireActual('@grafana/ui/unstable'),
+    CodeMirrorEditor: ({
+      value,
+      readOnly,
+      extensions,
+      onChange,
+      'aria-label': ariaLabel,
+    }: {
+      value: string;
+      readOnly?: boolean;
+      extensions?: unknown[];
+      onChange?: (value: string) => void;
+      'aria-label'?: string;
+    }) => {
+      const ref = useRef(null);
+
+      useEffect(() => {
+        if (!extensions?.length) {
+          return;
+        }
+
+        const frame = requestAnimationFrame(() => ref.current?.focus());
+        return () => cancelAnimationFrame(frame);
+      }, [extensions]);
+
+      return (
+        <textarea
+          ref={ref}
+          aria-label={ariaLabel}
+          defaultValue={value}
+          readOnly={readOnly}
+          onChange={(event) => onChange?.(event.currentTarget.value)}
+        />
+      );
+    },
+  };
+});
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
@@ -29,6 +70,18 @@ function buildManager(cells: NotebookCellItem[], isEditing?: boolean) {
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     isEditing,
   });
+}
+
+function attachHistory(manager: NotebookLayoutManager): NotebookEditHistory {
+  const scene = new NotebookScene({
+    title: 'My notebook',
+    body: manager,
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({}),
+  });
+
+  return scene.editHistory;
 }
 
 function renderManager(manager: NotebookLayoutManager) {
@@ -319,6 +372,136 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
+  describe('addCell', () => {
+    const PROMPT = /type to start writing/i;
+
+    async function pickCode(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement) {
+      await user.click(trigger);
+      await user.click(screen.getByRole('menuitem', { name: 'Code' }));
+    }
+
+    // A divider belongs to the cell above it, so the one inside cell 'a' inserts between 'a' and 'b'.
+    // The leading divider comes first in the DOM, so index 1 is cell 'a' s own divider.
+    it('inserts an empty code cell where the divider offered it', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await pickCode(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
+
+      expect(cellNames(manager)).toEqual(['a', 'code-1', 'b']);
+      expect(manager.state.cells[1].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
+      // Inserted because a person asked for it, not because the assistant proposed it.
+      expect(manager.state.cells[1].state.source).toBe('user');
+    });
+
+    it('inserts above the first cell from the leading divider', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await pickCode(user, screen.getAllByRole('button', { name: 'Add block' })[0]);
+
+      expect(cellNames(manager)).toEqual(['code-1', 'a', 'b']);
+    });
+
+    it('appends from the end-of-document prompt', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+
+      expect(cellNames(manager)).toEqual(['a', 'b', 'code-1']);
+    });
+
+    // The prompt is the only affordance an empty notebook has, so this is the sole path to a first cell.
+    it('gives an empty notebook its first cell', async () => {
+      const { manager, user } = renderManager(buildManager([], true));
+
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+
+      expect(cellNames(manager)).toEqual(['code-1']);
+    });
+
+    // serialize() writes elementName as the key into the notebook's `elements` map, so a repeat would
+    // collapse the two cells into one element on the next round-trip.
+    it('gives every inserted cell an unused element name', () => {
+      const manager = buildManager(buildNarrativeCells(['code-1']));
+
+      manager.addCell('code', 1);
+      manager.addCell('code', 2);
+
+      expect(cellNames(manager)).toEqual(['code-1', 'code-2', 'code-3']);
+    });
+
+    // The cell arrives editable rather than needing a second interaction to become so — the notebook is
+    // already in edit mode, which is the only way to reach the menu at all.
+    it('renders the new cell as an editable code editor', async () => {
+      const { user } = renderManager(buildManager([], true));
+
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+
+      expect(await screen.findByRole('textbox', { name: 'Code' })).not.toHaveAttribute('readonly');
+      expect(screen.getByRole('combobox', { name: 'Code language' })).toBeInTheDocument();
+    });
+
+    // The reader asked for a block, so the caret belongs in it rather than one click away. It is also
+    // a race the cell has to win: the block menu hands focus back to the button that opened it as it
+    // closes.
+    it('hands the caret to the new cell', async () => {
+      const { user } = renderManager(buildManager([], true));
+
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+
+      await waitFor(() => expect(screen.getByRole('textbox', { name: 'Code' })).toHaveFocus());
+    });
+
+    // Only the newest one: every earlier cell keeps its content but gives up the caret, so a second
+    // insertion does not leave two editors fighting over it.
+    it('moves the caret on to the next cell it inserts', async () => {
+      const { user } = renderManager(buildManager([], true));
+
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+      await pickCode(user, screen.getByRole('button', { name: PROMPT }));
+
+      await waitFor(() => {
+        const editors = screen.getAllByRole('textbox', { name: 'Code' });
+        expect(editors).toHaveLength(2);
+        expect(editors[0]).not.toHaveFocus();
+        expect(editors[1]).toHaveFocus();
+      });
+    });
+
+    // Cells the reader did not just insert are left alone, however they arrived.
+    it('leaves the caret alone in a code cell the reader did not insert', async () => {
+      const cells = [
+        new NotebookCellItem({
+          elementName: 'existing',
+          source: 'assistant',
+          content: { kind: 'Code', spec: { code: 'select 1', language: 'sql' } },
+        }),
+      ];
+      renderManager(buildManager(cells, true));
+
+      // The cell asks for the caret a frame late, so this has to outlast that window to mean anything.
+      await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+      expect(screen.getByRole('textbox', { name: 'Code' })).not.toHaveFocus();
+    });
+
+    // Only code is buildable so far. The rest of the menu stays inert rather than inserting a cell with
+    // no content kind behind it, which the renderer would draw as a blank gap.
+    it('leaves the block types it cannot build yet alone', () => {
+      const manager = buildManager(buildNarrativeCells(['a']));
+
+      expect(manager.addCell('heading', 1)).toBeUndefined();
+      expect(manager.addCell('paragraph', 1)).toBeUndefined();
+      expect(manager.addCell('visualization', 1)).toBeUndefined();
+      expect(cellNames(manager)).toEqual(['a']);
+    });
+
+    // What the renderer hands the caret to, so it has to be the cell that landed in the list.
+    it('returns the inserted cell', () => {
+      const manager = buildManager(buildNarrativeCells(['a']));
+
+      expect(manager.addCell('code', 0)).toBe(manager.state.cells[0]);
+    });
+  });
+
   describe('drag handles', () => {
     it('does not render drag handles outside edit mode', () => {
       const { container } = renderNotebook();
@@ -446,6 +629,221 @@ describe('NotebookLayoutManager', () => {
       act(() => manager.editModeChanged(true));
 
       expect(screen.getByLabelText('Code')).not.toHaveAttribute('readonly');
+    });
+  });
+
+  describe('setCellContent', () => {
+    const edited = { kind: 'Code' as const, spec: { code: 'select 2', language: 'sql' } };
+
+    function codeCell(elementName: string) {
+      return new NotebookCellItem({
+        elementName,
+        source: 'user',
+        content: { kind: 'Code', spec: { code: 'select 1', language: 'sql' } },
+      });
+    }
+
+    it('applies the content to the edited cell', () => {
+      const cell = codeCell('query');
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+
+      manager.setCellContent(cell, edited);
+
+      expect(cell.state.content).toEqual(edited);
+    });
+
+    // Two layout items may legally reference one element. serialize() folds them back into a single
+    // elements[name] entry where the last cell wins, so an edit that reached only the edited cell
+    // would be silently discarded by an unedited duplicate that follows it.
+    it('applies the content to every cell referencing the same element', () => {
+      const first = codeCell('query');
+      const second = codeCell('query');
+      const manager = new NotebookLayoutManager({ cells: [first, second] });
+
+      manager.setCellContent(first, edited);
+
+      expect(second.state.content).toEqual(edited);
+    });
+
+    it('leaves cells referencing a different element alone', () => {
+      const cell = codeCell('query');
+      const other = codeCell('other-query');
+      const manager = new NotebookLayoutManager({ cells: [cell, other] });
+
+      manager.setCellContent(cell, edited);
+
+      expect(other.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+    });
+
+    // The manager binds this onto NotebookCellFrame, which forwards it to the cell renderer. Every
+    // other case here calls the method directly, so without this one the whole chain could be
+    // unwired and they would all still pass.
+    it('is reached by typing into a rendered code cell', async () => {
+      const cell = codeCell('query');
+      const manager = new NotebookLayoutManager({
+        cells: [cell],
+        isEditing: true,
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      });
+
+      const { user } = render(<manager.Component model={manager} />);
+
+      const editor = await screen.findByLabelText('Code');
+      await user.clear(editor);
+      await user.type(editor, 'select 2');
+
+      expect(cell.state.content).toEqual(edited);
+    });
+
+    it('does not give a panel cell narrative content', () => {
+      const cell = codeCell('query');
+      // A panel and a narrative cell should never share a name, but a panel must not sprout content
+      // if they do — getElements branches on `panel` first, so it would corrupt the panel's element.
+      const panel = new NotebookCellItem({ elementName: 'query', source: 'user' });
+      const manager = new NotebookLayoutManager({ cells: [cell, panel] });
+
+      manager.setCellContent(cell, edited);
+
+      expect(panel.state.content).toBeUndefined();
+    });
+
+    it('coalesces rapid editor changes into one undo action', async () => {
+      const first = codeCell('query');
+      const second = codeCell('query');
+      const manager = new NotebookLayoutManager({
+        cells: [first, second],
+        isEditing: true,
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      });
+      const history = attachHistory(manager);
+      const { user } = render(<manager.Component model={manager} />);
+
+      const editor = (await screen.findAllByLabelText('Code'))[0];
+      await user.clear(editor);
+      await user.type(editor, 'select 2');
+
+      expect(history.state.canUndo).toBe(true);
+      expect(history.state.undoLabel).toBe('Edit block');
+
+      expect(first.state.content).toEqual(edited);
+      expect(second.state.content).toEqual(edited);
+
+      act(() => history.undo());
+      expect(first.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+      expect(second.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+      expect(history.state.canRedo).toBe(true);
+
+      act(() => history.redo());
+      expect(first.state.content).toEqual(edited);
+      expect(second.state.content).toEqual(edited);
+    });
+
+    it('drops an editor transaction that returns to its starting content', () => {
+      const cell = codeCell('query');
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = attachHistory(manager);
+
+      manager.setCellContent(cell, edited);
+      manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+
+      expect(history.state.canUndo).toBe(false);
+    });
+
+    // If the edit is not closed on the way out, typing after coming back is added to the old edit.
+    it('closes a pending edit when the notebook is deactivated', () => {
+      const cell = codeCell('query');
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = attachHistory(manager);
+      const deactivate = manager.activate();
+
+      manager.setCellContent(cell, edited);
+      deactivate();
+      manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 3', language: 'sql' } });
+
+      expect(history.state.canUndo).toBe(true);
+      history.undo();
+      expect(cell.state.content).toEqual(edited);
+    });
+
+    it('starts a new undo step after the coalescing window', () => {
+      jest.useFakeTimers();
+      try {
+        const cell = codeCell('query');
+        const manager = new NotebookLayoutManager({ cells: [cell] });
+        const history = attachHistory(manager);
+
+        manager.setCellContent(cell, edited);
+        jest.advanceTimersByTime(801);
+        manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 3', language: 'sql' } });
+
+        history.undo();
+        expect(cell.state.content).toEqual(edited);
+        history.undo();
+        expect(cell.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
+  describe('edit history', () => {
+    function withHistory(cells: NotebookCellItem[]) {
+      const manager = buildManager(cells);
+      return { manager, history: attachHistory(manager) };
+    }
+
+    it('undoes and redoes adding a block', () => {
+      const { manager, history } = withHistory(buildNarrativeCells(['a']));
+
+      const added = manager.addCell('code', 1);
+      expect(cellNames(manager)).toEqual(['a', added?.state.elementName]);
+
+      history.undo();
+      expect(cellNames(manager)).toEqual(['a']);
+
+      history.redo();
+      expect(manager.state.cells[1]).toBe(added);
+    });
+
+    it('undoes and redoes a move', () => {
+      const { manager, history } = withHistory(buildNarrativeCells(['a', 'b', 'c']));
+
+      manager.moveCell(0, 2);
+      expect(cellNames(manager)).toEqual(['b', 'c', 'a']);
+
+      history.undo();
+      expect(cellNames(manager)).toEqual(['a', 'b', 'c']);
+
+      history.redo();
+      expect(cellNames(manager)).toEqual(['b', 'c', 'a']);
+    });
+
+    it('restores the same cell after delete', () => {
+      const cells = buildNarrativeCells(['a', 'b']);
+      const { manager, history } = withHistory(cells);
+
+      manager.removeCell(cells[0]);
+      expect(cellNames(manager)).toEqual(['b']);
+
+      history.undo();
+      expect(manager.state.cells[0]).toBe(cells[0]);
+
+      history.redo();
+      expect(cellNames(manager)).toEqual(['b']);
+    });
+
+    it('removes the exact duplicate on undo', () => {
+      const cells = buildNarrativeCells(['a']);
+      const { manager, history } = withHistory(cells);
+
+      manager.duplicateCell(cells[0]);
+      const duplicate = manager.state.cells[1];
+
+      history.undo();
+      expect(manager.state.cells).toEqual(cells);
+
+      history.redo();
+      expect(manager.state.cells[1]).toBe(duplicate);
     });
   });
 

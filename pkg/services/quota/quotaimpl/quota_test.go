@@ -115,7 +115,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 	require.NoError(t, err)
 	userService, err := userimpl.ProvideService(
-		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(sqlStore), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)

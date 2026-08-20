@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} falló con {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1617,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "¿Seguro que quieres iniciar la importación? Esta acción creará nuevos recursos en Grafana Alerting.",
         "confirm": "Iniciar importación",
@@ -1675,26 +1665,6 @@
       "info-description": "Este asistente te ayuda a importar reglas de alerta y recursos de notificación desde fuentes externas a Grafana Alerting. Para obtener más información, consulta la <2>documentación</2>.",
       "info-title": "Asistente de importación",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Escribe para buscar un espacio de nombres existente",
         "label": "Nombre del espacio"
@@ -1718,10 +1688,6 @@
         "filter": "Filtro",
         "folder": "Carpeta de destino",
         "heading": "Revisar importación",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Nombre del espacio",
         "nothing": "No hay nada para importar.",
         "nothing-desc": "Se han omitido ambos pasos. Vuelve atrás y configura al menos una fuente de importación.",
@@ -1748,14 +1714,6 @@
         "validation-warning": "Se cambiará el nombre de algunos recursos para evitar conflictos.",
         "will-import-config": "Se importará esta configuración.",
         "will-import-rules": "Se importarán reglas",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Se importará {{count}} regla",
         "will-import-rules-count_other": "Se importarán {{count}} reglas"
       },
@@ -1867,14 +1825,10 @@
         "cancel-confirm-title": "¿Cancelar la importación?",
         "cancel-confirm-yes": "Descartar cambios",
         "skip": "Omitir",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Recursos de notificación",
         "step-notifications-desc": "Puntos de contacto, políticas, plantillas",
         "step-review": "Revisar e importar",
         "step-review-desc": "Vista previa y confirmación de la importación",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Reglas de alerta",
         "step-rules-desc": "Reglas de alerta y registro"
       },
@@ -2258,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "No se ha encontrado ninguna consulta con capacidad de alerta"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Configurar silencios para detener las notificaciones de una regla de alerta en particular"
@@ -2265,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Silenciar regla de alerta"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "No hemos podido encontrar ningún Alertmanager externo y es posible que no tengas acceso al Alertmanager integrado de Grafana.",
@@ -3282,8 +3241,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3263,54 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3321,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3616,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Un nombre único para el intervalo de tiempo",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Cargando intervalo de tiempo",
       "title-no-matching-time-interval-found": "No se ha encontrado ningún intervalo de tiempo coincidente"
     },
@@ -3696,6 +3707,9 @@
       "no-matching-instances-with-filters": "Ninguna instancia de alerta coincide con tu conjunto actual de filtros para el intervalo de tiempo seleccionado.",
       "open-in-sidebar": "Abrir en la barra lateral",
       "open-rule-details": "Abrir detalles de la regla",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Detalles y condiciones de la regla",
         "title": "Detalles de la regla"
@@ -3850,6 +3864,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Error al importar los recursos",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Recursos importados correctamente a Grafana Alerting."
     },
     "yaml-content-info": {
@@ -5412,6 +5428,16 @@
     "auto-grid": {
       "description": "Los paneles se redimensionan para ajustarse y formar cuadrículas uniformes",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Repetir opciones",
           "variable": {
@@ -5429,15 +5455,36 @@
         "custom-min-width": {
           "clear": "Borrar"
         },
+        "fit-content": "",
         "height-fill": "Rellenar pantalla",
+        "match-row-heights": "",
         "max-columns": "Columnas máximas",
-        "min-height": "Altura de fila",
-        "min-height-custom": "Altura de fila personalizada",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "Se requiere un número entre 50 y 2000",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Ancho de columna mínimo",
         "min-width-custom": "Ancho mínimo personalizado",
         "min-width-custom-clear": "Volver al ancho mínimo de columna estándar",
-        "min-width-error": "Se requiere un número entre 50 y 2000"
+        "min-width-error": "Se requiere un número entre 50 y 2000",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5670,6 +5717,7 @@
       "panel-background": "Cambiar fondo del panel",
       "panel-description": "Cambiar descripción del panel",
       "panel-edit": "Cambios en el panel",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Máx. de repeticiones por fila",
       "panel-preset": "Aplicar valor preestablecido del panel",
       "panel-repeat-direction": "Repetir dirección",
@@ -6047,6 +6095,7 @@
       "new-row-title": "Fila nueva",
       "row": {
         "collapse": "Contraer fila {{title}}",
+        "copy-link": "",
         "expand": "Expandir fila {{title}}",
         "new": "Fila nueva",
         "repeat": {
@@ -8918,11 +8967,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -9484,21 +9536,6 @@
   "get-enterprise": {
     "requires-license": "Requiere una licencia de Grafana Enterprise",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "completada",
-      "learn-how": "Aprenda cómo hacerlo con nuestra documentación"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Ir a tutoriales avanzados",
-      "aria-label-to-basic-tutorials": "Ir a tutoriales básicos",
-      "checking-completed-setup-steps": "Comprobando pasos de configuración completados",
-      "remove-this-panel": "Eliminar este panel"
-    },
-    "tutorial-card": {
-      "complete": "completada"
-    }
   },
   "global-variables": {
     "details": {
@@ -11734,6 +11771,7 @@
       "no-details": "No hay campos que mostrar.",
       "open-assistant": "",
       "pin-line": "Anclar log",
+      "prettify": "",
       "remove-displayed-field": "Eliminar campo",
       "remove-log": "Eliminar log",
       "scroll-to-logline": "Desplazarse a la línea de log",
@@ -11890,7 +11928,7 @@
     },
     "name-enable-field-selector": "Habilitar selector de campos",
     "name-enable-infinite-scrolling": "Habilitar el desplazamiento infinito",
-    "name-enable-log-details": "Habilitar detalles de log",
+    "name-enable-log-details": "Habilitar datos de log",
     "name-enable-logs-highlighting": "Habilitar resaltado de logs",
     "name-font-size": "Tamaño de letra",
     "name-order": "Orden",
@@ -12447,7 +12485,7 @@
     },
     "machine-learning": {
       "subtitle": "Explorar las funciones de IA y aprendizaje automático",
-      "title": "IA y aprendizaje automático"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
@@ -12768,6 +12806,29 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12775,6 +12836,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -12805,8 +12875,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14353,6 +14423,12 @@
     "shared": {
       "branch-description": "La rama que se utilizará para el aprovisionamiento",
       "branch-label": "Rama",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16104,6 +16180,9 @@
       "view-split": "",
       "view-write": ""
     },
+    "frame-picker": {
+      "label": ""
+    },
     "options": {
       "render-mode": ""
     },
@@ -17474,12 +17553,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Enlace"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "¿Necesitas ayuda?",
-      "welcome-to-grafana": "Te damos la bienvenida a Grafana"
     }
   },
   "xychart": {

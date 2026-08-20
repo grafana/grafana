@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}} non riuscita con {{status}}: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1617,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "Vuoi davvero avviare l'importazione? Questa operazione creerà nuove risorse in Grafana Alerting.",
         "confirm": "Avvia importazione",
@@ -1675,26 +1665,6 @@
       "info-description": "Questa procedura guidata consente di importare regole di avviso e risorse di notifica da origini esterne in Grafana Alerting. Per ulteriori informazioni, consulta la <2>documentazione</2>.",
       "info-title": "Procedura guidata per l'importazione",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Digita per cercare uno spazio dei nomi esistente",
         "label": "Namespace"
@@ -1718,10 +1688,6 @@
         "filter": "Filtra",
         "folder": "Cartella di destinazione",
         "heading": "Rivedi importazione",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Spazio di nomi",
         "nothing": "Niente da importare",
         "nothing-desc": "Entrambi i passaggi sono stati saltati. Torna indietro e configura almeno un'origine di importazione.",
@@ -1748,14 +1714,6 @@
         "validation-warning": "Alcune risorse verranno rinominate per evitare conflitti.",
         "will-import-config": "Importazione di questa configurazione",
         "will-import-rules": "Importazione delle regole",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "Importazione di {{count}} regola",
         "will-import-rules-count_other": "Importazione di {{count}} regole"
       },
@@ -1867,14 +1825,10 @@
         "cancel-confirm-title": "Annullare l'importazione?",
         "cancel-confirm-yes": "Ignora modifiche",
         "skip": "Salta",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Risorse di notifica",
         "step-notifications-desc": "Punti di contatto, criteri, modelli",
         "step-review": "Rivedi e importa",
         "step-review-desc": "Visualizza in anteprima e conferma l'importazione",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Regole di avviso",
         "step-rules-desc": "Regole di avviso e registrazione"
       },
@@ -2258,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "Nessuna query con funzione di avviso trovata"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Configura i silenzi per arrestare le notifiche da una particolare regola di avviso"
@@ -2265,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Silenzia regola di avviso"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Non è stato possibile trovare alcun Alertmanager esterno e potresti non avere accesso all'Alertmanager Grafana integrato.",
@@ -2581,7 +2540,7 @@
         "error-code": "Messaggio di errore: \"{{error}}\"",
         "routes": {
           "conflictingMatchers": "Impossibile aggiungere o aggiornare il percorso: i matcher sono in conflitto con una struttura di routing esterna se abbiamo unito i matcher {{-matchers}}. Ciò renderebbe il percorso irraggiungibile.",
-          "unknownMatchers": "<corrispondenze sconosciute>"
+          "unknownMatchers": "<elementi di corrispondenza sconosciuti>"
         },
         "suffix": "Aggiorna la pagina e riprova.",
         "title": "Impossibile aggiungere o aggiornare i criteri di notifica"
@@ -3282,8 +3241,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3263,54 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3321,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3616,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Un nome univoco per l'intervallo di tempo",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Caricamento dell'intervallo di tempo",
       "title-no-matching-time-interval-found": "Nessun intervallo di tempo corrispondente trovato"
     },
@@ -3696,6 +3707,9 @@
       "no-matching-instances-with-filters": "Nessuna istanza di avviso corrisponde al tuo set di filtri corrente per l'intervallo di tempo selezionato.",
       "open-in-sidebar": "Apri nella barra laterale",
       "open-rule-details": "Apri i dettagli della regola",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Dettagli e condizioni della regola",
         "title": "Dettagli della regola"
@@ -3850,6 +3864,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Impossibile importare le risorse",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Risorse importate correttamente in Grafana Alerting."
     },
     "yaml-content-info": {
@@ -5412,6 +5428,16 @@
     "auto-grid": {
       "description": "I pannelli si ridimensionano per adattarsi e formare griglie uniformi",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Ripeti le opzioni",
           "variable": {
@@ -5429,15 +5455,36 @@
         "custom-min-width": {
           "clear": "Cancella"
         },
+        "fit-content": "",
         "height-fill": "Riempi schermo",
+        "match-row-heights": "",
         "max-columns": "Colonne massime",
-        "min-height": "Altezza riga",
-        "min-height-custom": "Altezza riga personalizzata",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "È richiesto un numero compreso tra 50 e 2.000",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Larghezza minima colonna",
         "min-width-custom": "Larghezza minima personalizzata",
         "min-width-custom-clear": "Torna alla larghezza minima standard della colonna",
-        "min-width-error": "È richiesto un numero compreso tra 50 e 2.000"
+        "min-width-error": "È richiesto un numero compreso tra 50 e 2.000",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5670,6 +5717,7 @@
       "panel-background": "Modifica lo sfondo del pannello",
       "panel-description": "Modifica la descrizione del pannello",
       "panel-edit": "Modifiche al pannello",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Ripetizioni massime per riga",
       "panel-preset": "Applica preimpostazione del pannello",
       "panel-repeat-direction": "Ripeti la direzione",
@@ -6047,6 +6095,7 @@
       "new-row-title": "Nuova riga",
       "row": {
         "collapse": "Riduci riga {{title}}",
+        "copy-link": "",
         "expand": "Espandi riga {{title}}",
         "new": "Nuova riga",
         "repeat": {
@@ -8918,11 +8967,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -9484,21 +9536,6 @@
   "get-enterprise": {
     "requires-license": "Richiede una licenza Grafana Enterprise",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "completo",
-      "learn-how": "Scopri come nella documentazione"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Ai tutorial avanzati",
-      "aria-label-to-basic-tutorials": "Ai tutorial di base",
-      "checking-completed-setup-steps": "Verifica dei passaggi di configurazione completati",
-      "remove-this-panel": "Rimuovi questo pannello"
-    },
-    "tutorial-card": {
-      "complete": "completo"
-    }
   },
   "global-variables": {
     "details": {
@@ -11734,6 +11771,7 @@
       "no-details": "Nessun campo da visualizzare.",
       "open-assistant": "",
       "pin-line": "Fissa registro",
+      "prettify": "",
       "remove-displayed-field": "Rimuovi campo",
       "remove-log": "Rimuovi registro",
       "scroll-to-logline": "Scorri fino alla riga del registro",
@@ -12447,7 +12485,7 @@
     },
     "machine-learning": {
       "subtitle": "Esplora le funzionalità di IA e di apprendimento automatico",
-      "title": "IA e apprendimento automatico"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gestisci dashboard e autorizzazioni delle cartelle"
@@ -12768,6 +12806,29 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12775,6 +12836,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -12805,8 +12875,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14353,6 +14423,12 @@
     "shared": {
       "branch-description": "Il ramo da utilizzare per il provisioning",
       "branch-label": "Ramo",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16104,6 +16180,9 @@
       "view-split": "",
       "view-write": ""
     },
+    "frame-picker": {
+      "label": ""
+    },
     "options": {
       "render-mode": ""
     },
@@ -17474,12 +17553,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Collegamento"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Hai bisogno di aiuto?",
-      "welcome-to-grafana": "Ti diamo il benvenuto in Grafana"
     }
   },
   "xychart": {
