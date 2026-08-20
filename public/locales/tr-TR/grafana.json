@@ -1162,7 +1162,8 @@
         "with-causes": ""
       },
       "failedWith": "{{-config}}, {{status}} durumu ile başarısız oldu: {{-message}}",
-      "time-interval-in-use": ""
+      "time-interval-in-use": "",
+      "time-interval-name-exists": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1617,17 +1618,6 @@
         "import-rules": "",
         "title": ""
       },
-      "autosync-review": {
-        "back": "",
-        "badge": "",
-        "card-title": "",
-        "enable": "",
-        "heading": "",
-        "scope": "",
-        "scope-value": "",
-        "source": "",
-        "subtitle": ""
-      },
       "confirm": {
         "body": "İçe aktarma işlemini başlatmak istediğinizden emin misiniz? Bu eylem, Grafana Alerting'de yeni kaynaklar oluşturacaktır.",
         "confirm": "İçe aktarmayı başlat",
@@ -1675,26 +1665,6 @@
       "info-description": "Bu sihirbaz, uyarı kurallarını ve bildirim kaynaklarını haricî kaynaklardan Grafana Alerting'e aktarmanıza yardımcı olur. Daha fazla bilgi için <2>belgelere</2> bakın.",
       "info-title": "İçe aktarma sihirbazı",
       "loading": "",
-      "method": {
-        "autosync": "",
-        "autosync-datasource-label": "",
-        "autosync-datasource-placeholder": "",
-        "autosync-desc": "",
-        "autosync-no-datasources-desc": "",
-        "autosync-no-datasources-title": "",
-        "autosync-title": "",
-        "heading": "",
-        "next-steps": "",
-        "promote": "",
-        "promote-desc": "",
-        "promote-title": "",
-        "promote-warning-desc": "",
-        "promote-warning-title": "",
-        "stage": "",
-        "stage-desc": "",
-        "stage-title": "",
-        "subtitle": ""
-      },
       "namespace": {
         "description": "Mevcut bir ad alanı aramak için yazın",
         "label": "Ad alanı"
@@ -1718,10 +1688,6 @@
         "filter": "Filtre",
         "folder": "Hedef klasör",
         "heading": "İçe aktarmayı incele",
-        "merge-route": "",
-        "merge-summary": "",
-        "method": "",
-        "method-promote": "",
         "namespace": "Ad alanı",
         "nothing": "İçe aktarılacak hiçbir şey yok",
         "nothing-desc": "Her iki adım da atlandı. Geri dönün ve en az bir içe aktarma kaynağı yapılandırın.",
@@ -1748,14 +1714,6 @@
         "validation-warning": "Çakışmaları önlemek için bazı kaynakların adı değiştirilecektir.",
         "will-import-config": "Bu yapılandırma içe aktarılacak",
         "will-import-rules": "Kurallar içe aktarılacak",
-        "merge-inhibition-rules_one": "",
-        "merge-inhibition-rules_other": "",
-        "merge-receivers_one": "",
-        "merge-receivers_other": "",
-        "merge-templates_one": "",
-        "merge-templates_other": "",
-        "merge-time-intervals_one": "",
-        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "{{count}} kural içe aktarılacak",
         "will-import-rules-count_other": "{{count}} kural içe aktarılacak"
       },
@@ -1867,14 +1825,10 @@
         "cancel-confirm-title": "İçe aktarma iptal edilsin mi?",
         "cancel-confirm-yes": "Değişiklikleri sil",
         "skip": "Atla",
-        "step-method": "",
-        "step-method-desc": "",
         "step-notifications": "Bildirim kaynakları",
         "step-notifications-desc": "İletişim noktaları, politikalar, şablonlar",
         "step-review": "İncele ve içe aktar",
         "step-review-desc": "Ön izle ve içe aktarmayı onayla",
-        "step-review-enable": "",
-        "step-review-enable-desc": "",
         "step-rules": "Uyarı kuralları",
         "step-rules-desc": "Uyarı ve kayıt kuralları"
       },
@@ -2258,6 +2212,8 @@
       "title-no-alerting-capable-query-found": "Uyarı oluşturabilecek sorgu bulunamadı"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Belirli bir uyarı kuralından gelen bildirimleri durdurmak için sessize almaları yapılandırın"
@@ -2265,7 +2221,10 @@
         "text": {
           "silence-alert-rule": "Uyarı kuralını sessize al"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "Harici bir Alertmanager bulunamadı ve yerleşik Grafana Alertmanager'a erişiminiz olmayabilir.",
@@ -3282,8 +3241,12 @@
         "picker-label": "",
         "picker-placeholder": "",
         "save-disabled-no-selection": "",
+        "save-disabled-staged-config": "",
         "save-error": "",
         "save-success": "",
+        "staged-conflict-active-title": "",
+        "staged-conflict-body": "",
+        "staged-conflict-title": "",
         "title": ""
       },
       "import": {
@@ -3300,9 +3263,54 @@
         "inhibition-equal": "",
         "loading": "",
         "no-matchers": "",
+        "no-write-permission": "",
         "parse-error-body": "",
         "parse-error-title": "",
+        "promote": {
+          "checking": "",
+          "confirm": "",
+          "dry-run-error": "",
+          "dry-run-unavailable-body": "",
+          "dry-run-unavailable-title": "",
+          "error-title": "",
+          "invalid-title": "",
+          "merge-heading": "",
+          "merge-info": "",
+          "merge-route": "",
+          "rename-contact-point": "",
+          "rename-heading": "",
+          "rename-subtitle": "",
+          "rename-time-interval": "",
+          "rules-note-body": "",
+          "success-body": "",
+          "success-title": "",
+          "sync-not-cleared-body": "",
+          "sync-not-cleared-title": "",
+          "sync-stops-body": "",
+          "sync-stops-title": "",
+          "title": "",
+          "merge-contact-points_one": "",
+          "merge-contact-points_other": "",
+          "merge-inhibition-rules_one": "",
+          "merge-inhibition-rules_other": "",
+          "merge-templates_one": "",
+          "merge-templates_other": "",
+          "merge-time-intervals_one": "",
+          "merge-time-intervals_other": ""
+        },
+        "promote-button": "",
         "resources": "",
+        "revert": {
+          "body": "",
+          "confirm": "",
+          "error-title": "",
+          "reassure-live": "",
+          "reassure-promoted": "",
+          "reassure-reimport": "",
+          "success": "",
+          "title": ""
+        },
+        "revert-button": "",
         "section": {
           "contact-points": "",
           "inhibition-rules": "",
@@ -3313,6 +3321,8 @@
         "staged-badge": "",
         "staged-description": "",
         "staged-title": "",
+        "sync-managed-description": "",
+        "synced-badge": "",
         "view": "",
         "policy-tree-routes_one": "",
         "policy-tree-routes_other": ""
@@ -3606,6 +3616,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "Zaman aralığı için benzersiz ad",
+      "error-save-time-interval": "",
       "text-loading-time-interval": "Zaman aralığı yükleniyor",
       "title-no-matching-time-interval-found": "Eşleşen zaman aralığı bulunamadı"
     },
@@ -3696,6 +3707,9 @@
       "no-matching-instances-with-filters": "Seçilen zaman aralığında mevcut filtre grubunuzla eşleşen uyarı örneği yok.",
       "open-in-sidebar": "Kenar çubuğunda aç",
       "open-rule-details": "Kural ayrıntılarını aç",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "Kural ayrıntıları ve koşulları",
         "title": "Kural Ayrıntıları"
@@ -3850,6 +3864,8 @@
     },
     "wizard-import-to-gma": {
       "error": "Kaynaklar içe aktarılamadı",
+      "staged-success-body": "",
+      "staged-success-title": "",
       "success": "Kaynaklar Grafana Alerting'e başarıyla içe aktarıldı."
     },
     "yaml-content-info": {
@@ -5412,6 +5428,16 @@
     "auto-grid": {
       "description": "Paneller, sığacak şekilde yeniden boyutlandırılır ve düzgün ızgaralar oluşturur.",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "Tekrar seçenekleri",
           "variable": {
@@ -5429,15 +5455,36 @@
         "custom-min-width": {
           "clear": "Temizle"
         },
+        "fit-content": "",
         "height-fill": "Ekranı doldur",
+        "match-row-heights": "",
         "max-columns": "Maksimum sütun sayısı",
-        "min-height": "Satır yüksekliği",
-        "min-height-custom": "Özel satır yüksekliği",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "50 ile 2000 arasında bir sayı gereklidir",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "Min. sütun genişliği",
         "min-width-custom": "Özel min. genişlik",
         "min-width-custom-clear": "Standart minimum sütun genişliğine dön",
-        "min-width-error": "50 ile 2000 arasında bir sayı gereklidir"
+        "min-width-error": "50 ile 2000 arasında bir sayı gereklidir",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5670,6 +5717,7 @@
       "panel-background": "Panel arka planını değiştir",
       "panel-description": "Panel açıklamasını değiştir",
       "panel-edit": "Panel değişiklikleri",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "Satır başına maksimum tekrar sayısı",
       "panel-preset": "Panel ön ayarını uygula",
       "panel-repeat-direction": "Tekrar yönü",
@@ -6047,6 +6095,7 @@
       "new-row-title": "Yeni satır",
       "row": {
         "collapse": "{{title}} satırını daralt",
+        "copy-link": "",
         "expand": "{{title}} satırını genişlet",
         "new": "Yeni satır",
         "repeat": {
@@ -8918,11 +8967,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
       "logs-for-this-trace": {
         "button": "",
+        "logs-found-tooltip": "",
+        "no-logs-found-tooltip": "",
         "no-logs-tooltip": "",
         "tooltip": ""
       },
@@ -9484,21 +9536,6 @@
   "get-enterprise": {
     "requires-license": "Grafana Enterprise lisansı gerektirir",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "tamamlandı",
-      "learn-how": "Belgelerden nasıl yapılacağını öğrenin"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Gelişmiş öğreticilere",
-      "aria-label-to-basic-tutorials": "Temel öğreticilere",
-      "checking-completed-setup-steps": "Tamamlanan kurulum adımları kontrol ediliyor",
-      "remove-this-panel": "Bu paneli kaldır"
-    },
-    "tutorial-card": {
-      "complete": "tamamlandı"
-    }
   },
   "global-variables": {
     "details": {
@@ -11734,6 +11771,7 @@
       "no-details": "Görüntülenecek alan yok.",
       "open-assistant": "Asistan'da günlük kaydı satırını açıklayın",
       "pin-line": "Günlüğü sabitle",
+      "prettify": "",
       "remove-displayed-field": "Alanı kaldır",
       "remove-log": "Günlüğü kaldır",
       "scroll-to-logline": "Günlük satırına git",
@@ -12447,7 +12485,7 @@
     },
     "machine-learning": {
       "subtitle": "Yapay zekâ ve makine öğrenimi özelliklerini keşfedin",
-      "title": "Yapay zekâ ve makine öğrenimi"
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Klasör panolarını ve izinlerini yönetin"
@@ -12768,6 +12806,29 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "",
+      "heading": "",
+      "label": "",
+      "paragraph": "",
+      "prompt": "",
+      "visualization": "",
+      "visualization-placeholder": ""
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "",
+        "aria-label-language": "",
+        "custom-language": "",
+        "language-plain-text": ""
+      },
+      "delete": "",
+      "delete-confirm-text": "",
+      "delete-confirm-title": "",
+      "delete-confirm-yes": "",
+      "drag-handle": "",
+      "duplicate": ""
+    },
     "errors": {
       "entity": "",
       "failed-to-load": "",
@@ -12775,6 +12836,15 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "",
+      "copy-markdown": "",
+      "download-markdown": "",
+      "error": "",
+      "label": "",
+      "open-in-cursor": "",
+      "opening-in-cursor": ""
+    },
     "list": {
       "all-authors": "",
       "author-filter": "",
@@ -12805,8 +12875,8 @@
     },
     "view": {
       "copy-link": "",
-      "edit-mode": "",
-      "editing": ""
+      "mode-edit": "",
+      "mode-view": ""
     }
   },
   "notifications": {
@@ -14353,6 +14423,12 @@
     "shared": {
       "branch-description": "Sağlama için kullanılacak dal",
       "branch-label": "Dal",
+      "commit-author-email-description": "",
+      "commit-author-email-label": "",
+      "commit-author-email-placeholder": "",
+      "commit-author-name-description": "",
+      "commit-author-name-label": "",
+      "commit-author-name-placeholder": "",
       "commit-signer-email-description": "",
       "commit-signer-email-label": "",
       "commit-signer-email-placeholder": "",
@@ -16104,6 +16180,9 @@
       "view-split": "",
       "view-write": ""
     },
+    "frame-picker": {
+      "label": ""
+    },
     "options": {
       "render-mode": ""
     },
@@ -17474,12 +17553,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Bağlantı"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Yardıma mı ihtiyacınız var?",
-      "welcome-to-grafana": "Grafana'ya hoş geldiniz"
     }
   },
   "xychart": {

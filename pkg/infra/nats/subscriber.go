@@ -2,7 +2,6 @@ package nats
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -68,12 +67,6 @@ type SubscriberService struct {
 
 func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config) *SubscriberService {
 	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, config.SubscriberCredentials)
-	// A slow consumer means the broker dropped messages the client could not drain in time.
-	conn.onAsyncError = func(err error) {
-		if errors.Is(err, natsclient.ErrSlowConsumer) {
-			m.slowConsumers.Inc()
-		}
-	}
 	s := &SubscriberService{connection: conn, metrics: m}
 	s.NamedService = services.NewBasicService(nil, s.running, s.stopping).WithName(subscriberName)
 	return s

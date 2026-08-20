@@ -52,6 +52,12 @@ module.exports = createNoRestrictedSyntax(
       'Usage of config.panels is not allowed. Use the function getPanelPluginMetas or usePanelPluginMetas from @grafana/runtime/internal instead',
   },
   {
+    name: 'no-config-datasources',
+    selector: 'MemberExpression[object.name="config"][property.name="datasources"]',
+    message:
+      'Usage of config.datasources is not allowed. Use getDataSourceInstanceSettings, getDataSourceInstanceList or the matching hooks from @grafana/runtime/unstable instead',
+  },
+  {
     name: 'no-direct-date-fns',
     selector: 'ImportDeclaration[source.value="date-fns"][importKind!="type"]',
     message: 'Use deep imports instead (e.g. date-fns/format) to avoid pulling in the entire library.',

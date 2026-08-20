@@ -601,11 +601,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlab\"`",
+							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"gitlabOAuth\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucket", "github", "githubEnterprise", "gitlab"},
+							Enum:        []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "gitlabOAuth"},
 						},
 					},
 					"url": {
@@ -629,7 +629,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					},
 					"bitbucket": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Bitbucket connection configuration Only applicable when provider is \"bitbucket\"",
+							Description: "Bitbucket connection configuration Only applicable when provider is \"bitbucketOAuth\"",
 							Ref:         ref(BitbucketConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
@@ -2941,6 +2941,22 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 										Type:    []string{"string"},
 										Format:  "",
 										Enum:    []interface{}{"bitbucket", "git", "github", "githubEnterprise", "gitlab", "local"},
+									},
+								},
+							},
+						},
+					},
+					"availableConnectionTypes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AvailableConnectionTypes is the list of connection types supported in this instance",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+										Enum:    []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "gitlabOAuth"},
 									},
 								},
 							},

@@ -77,7 +77,7 @@ export function AddSectionFilterButton({ sectionOwner }: { sectionOwner: SceneOb
     <SidebarAddButton
       tooltip={t('dashboard.sidebar.filters.add-filter', 'Add filter')}
       onAdd={() => {
-        openAddFilterForm(dashboard, sectionOwner);
+        void openAddFilterForm(dashboard, sectionOwner);
         DashboardInteractions.addSectionFilterButtonClicked({ source: 'edit_pane' });
       }}
     />
