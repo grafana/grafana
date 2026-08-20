@@ -929,6 +929,73 @@ describe('utils', () => {
       expect(rows.map((row) => row.value)).toEqual(['20', '25']);
       expect(rows.map((row) => row.delta)).toEqual([undefined, undefined]);
     });
+
+    describe('gaps in the compared data', () => {
+      /**
+       * A non-null data index does not imply a non-null value - synced cursors fill every series'
+       * index without running the per-series null scan, so a hovered index can land on a gap.
+       * Subtracting one coerces it to 0, which would report the other series' whole value as a
+       * change.
+       */
+      function framesWithValues(currentValues: Array<number | null>, compareValues: Array<number | null>) {
+        return [
+          fields[0],
+          { ...fields[CURRENT_IDX], values: currentValues },
+          { ...fields[COMPARE_IDX], values: compareValues },
+        ] as unknown as typeof fields;
+      }
+
+      function hoverAt(
+        gappyFields: typeof fields,
+        dataIdxs: Array<number | null>,
+        seriesIdx: number,
+        compareFieldIdx: number
+      ) {
+        return getFieldDisplayItems(
+          gappyFields,
+          xField,
+          dataIdxs,
+          seriesIdx,
+          TooltipDisplayMode.Multi,
+          SortOrder.None,
+          undefined,
+          false,
+          undefined,
+          compareFieldIdx
+        );
+      }
+
+      it('omits the compare row when the comparison series has a gap at the hovered index', () => {
+        // the row-level null guard drops it before any delta is computed
+        const gappy = framesWithValues([10, 20, 30], [8, null, 30]);
+
+        const rows = hoverAt(gappy, [1, 1, 1], CURRENT_IDX, COMPARE_IDX);
+
+        expect(rows.map((row) => row.value)).toEqual(['20']);
+      });
+
+      it('reports no delta when the hovered series has a gap, rather than diffing against zero', () => {
+        // The annotated row is the one at compareFieldIdx, and it renders because its own value is
+        // present. The gap is on the hovered series it is diffed against, which the row-level null
+        // guard never inspects. Without the null check the delta would be '+25' - the compare
+        // value in full, colored green as though it were a real increase.
+        const gappy = framesWithValues([10, null, 30], [8, 25, 30]);
+
+        const rows = hoverAt(gappy, [1, 1, 1], CURRENT_IDX, COMPARE_IDX);
+
+        expect(rows.map((row) => row.value)).toEqual(['25']);
+        expect(rows[0].delta).toBeUndefined();
+      });
+
+      it('still reports a delta when a compared value is a genuine zero', () => {
+        // guards against the null check being written as a falsy check
+        const zeroed = framesWithValues([10, 0, 30], [8, 25, 30]);
+
+        const rows = hoverAt(zeroed, [1, 1, 1], CURRENT_IDX, COMPARE_IDX);
+
+        expect(rows[1].delta).toEqual({ text: '25', numeric: 25 });
+      });
+    });
   });
 
   describe('isTooltipScrollable', () => {

@@ -217,15 +217,18 @@ export const getFieldDisplayItems = (
     ) {
       const compData = fields[compareFieldIdx].values[dataIdxs[compareFieldIdx]];
       const normalData = fields[seriesIdx].values[dataIdxs[seriesIdx]];
-      let diffVal;
-      if (seriesIdx === compareFieldIdx) {
-        diffVal = getTooltipDisplayValue(normalData - compData, field);
-      } else {
-        diffVal = getTooltipDisplayValue(compData - normalData, field);
-      }
+      // only show a delta if both values exist
+      if (compData != null && normalData != null) {
+        let diffVal;
+        if (seriesIdx === compareFieldIdx) {
+          diffVal = getTooltipDisplayValue(normalData - compData, field);
+        } else {
+          diffVal = getTooltipDisplayValue(compData - normalData, field);
+        }
 
-      // text comes from the field's display processor, so it keeps the field's unit and decimals
-      delta = { text: diffVal.text, numeric: diffVal.numeric };
+        // text comes from the field's display processor, so it keeps the field's unit and decimals
+        delta = { text: diffVal.text, numeric: diffVal.numeric };
+      }
     }
 
     rows.push({
