@@ -57,7 +57,15 @@ export function CodeCell({ content, isEditing, autoFocus, onChange }: Props) {
   const [focusRequests, setFocusRequests] = useState(0);
   const requestFocus = useCallback(() => setFocusRequests((count) => count + 1), []);
 
-  const focusExtension = useFocusExtension({ autoFocus, isEditing, focusRequestId: focusRequests || undefined });
+  // The language picker's own re-request (see requestFocus below) only restores focus — the code
+  // itself is untouched by picking a language, so the caret should stay exactly where the reader
+  // left it rather than jump to the end the way a freshly-seeded cell's content would want.
+  const focusExtension = useFocusExtension({
+    autoFocus,
+    isEditing,
+    focusRequestId: focusRequests || undefined,
+    moveToEndOnRefocus: false,
+  });
 
   if (content.kind !== 'Code') {
     return null;

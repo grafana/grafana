@@ -10,16 +10,20 @@ import { useMemo, useRef } from 'react';
  * A fresh call is how a caller asks for the caret again — CodeMirror rebuilds its plugins whenever the
  * `extensions` array identity changes.
  *
- * Also moves the selection to the end of the document: a freshly created view otherwise defaults to
- * position 0, which sits before any text a cell already arrives with (a list marker, a heading's "# ")
- * instead of ready to continue it.
+ * `moveToEnd` optionally also moves the selection to the end of the document: a freshly created view
+ * otherwise defaults to position 0, which sits before any text a cell already arrives with (a list
+ * marker, a heading's "# ") instead of ready to continue it. Not always wanted, though — a request
+ * that merely restores focus to a cell whose own content didn't change (CodeCell's language picker)
+ * should leave the reader's caret exactly where they left it, not jump it to the end.
  */
-function buildFocusExtension() {
+function buildFocusExtension(moveToEnd: boolean) {
   return [
     ViewPlugin.define((view) => {
       requestAnimationFrame(() => {
         view.focus();
-        view.dispatch({ selection: EditorSelection.cursor(view.state.doc.length) });
+        if (moveToEnd) {
+          view.dispatch({ selection: EditorSelection.cursor(view.state.doc.length) });
+        }
       });
       return {};
     }),
@@ -38,16 +42,23 @@ function buildFocusExtension() {
  *
  * `pendingAutoFocus` only fires once, at mount: it captures `autoFocus && isEditing` on first render
  * and never reconsiders it, so a cell that already had its turn doesn't get refocused just for
- * remounting (MarkdownCell remounts its editor on every `isEditing` toggle).
+ * remounting (MarkdownCell remounts its editor on every `isEditing` toggle). That initial mount
+ * always moves the caret to the end (a cell only auto-focuses at mount when it's new, or was just
+ * seeded with starter content it should continue from) — `moveToEndOnRefocus` covers the *other*
+ * kind of request, a repeat one after mount, where that's not always true. MarkdownCell converting a
+ * cell in place still seeds new content (defaults to `true`); CodeCell's language picker doesn't
+ * touch the cell's own code at all, so it passes `false` to leave the reader's caret alone.
  */
 export function useFocusExtension({
   autoFocus,
   isEditing,
   focusRequestId,
+  moveToEndOnRefocus = true,
 }: {
   autoFocus?: boolean;
   isEditing: boolean;
   focusRequestId?: number;
+  moveToEndOnRefocus?: boolean;
 }): Extension[] | undefined {
   const pendingAutoFocus = useRef(autoFocus && isEditing);
   const previousFocusRequestId = useRef(focusRequestId);
@@ -60,11 +71,11 @@ export function useFocusExtension({
     if (pendingAutoFocus.current) {
       pendingAutoFocus.current = false;
       previousFocusRequestId.current = focusRequestId;
-      return buildFocusExtension();
+      return buildFocusExtension(true);
     }
 
     const isFreshRequest = focusRequestId !== undefined && focusRequestId !== previousFocusRequestId.current;
     previousFocusRequestId.current = focusRequestId;
-    return isFreshRequest ? buildFocusExtension() : undefined;
-  }, [isEditing, focusRequestId]);
+    return isFreshRequest ? buildFocusExtension(moveToEndOnRefocus) : undefined;
+  }, [isEditing, focusRequestId, moveToEndOnRefocus]);
 }

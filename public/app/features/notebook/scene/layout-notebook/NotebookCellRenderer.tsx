@@ -27,7 +27,7 @@ interface NarrativeCellFocusProps {
   isEditing: boolean;
   autoFocus?: boolean;
   focusRequestId?: number;
-  onAdvance?: (marker?: string) => void;
+  onAdvance?: (remainder: string, marker?: string) => void;
   onFocusRequest?: () => void;
 }
 

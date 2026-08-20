@@ -62,11 +62,12 @@ interface Props {
   onDelete?: () => void;
   /**
    * Enter's "split into a new block" gesture — a genuinely new cell is inserted right after this one
-   * and takes the caret, wherever in the document this cell happens to be.
-   * A marker argument (`'- '`, or the next number) means Enter was pressed on a non-empty list
-   * item — the caller seeds it into the new cell so the list continues there.
+   * and takes the caret, wherever in the document this cell happens to be. `remainder` is whatever
+   * text sat after the caret (already removed from this cell), for the caller to seed into the new
+   * one. A `marker` argument (`'- '`, or the next number) means Enter was pressed on a non-empty list
+   * item — the caller seeds it ahead of `remainder` so the list continues there.
    */
-  onAdvance?: (marker?: string) => void;
+  onAdvance?: (remainder: string, marker?: string) => void;
   /**
    * Re-requests the caret for this same cell after something else moved it away without meaning to —
    * currently just the "/" menu any empty markdown cell offers.

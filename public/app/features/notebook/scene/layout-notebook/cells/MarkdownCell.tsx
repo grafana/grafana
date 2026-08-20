@@ -1,3 +1,4 @@
+import { insertNewlineContinueMarkup } from '@codemirror/lang-markdown';
 import { syntaxTree } from '@codemirror/language';
 import { Prec } from '@codemirror/state';
 import { keymap, placeholder as placeholderExtension, type KeyBinding } from '@codemirror/view';
@@ -39,9 +40,12 @@ interface Props {
   placeholder?: string;
   /**
    * Intercepts a plain Enter keypress (Shift+Enter still inserts a literal newline) instead of it
-   * inserting one, moving on to whatever this means for the caller — which could be advancing to the next block, or inserting a new block.
+   * inserting one — this cell keeps only the text before the caret; `remainder` is whatever came
+   * after it, already removed from here, for the caller to seed into the new block Enter creates
+   * (a genuine split, not just "add an empty block below"). `marker` is set instead of/alongside
+   * that when Enter was pressed on a non-empty list item, so the caller can continue the list there.
    */
-  onSubmit?: (marker?: string) => void;
+  onSubmit?: (remainder: string, marker?: string) => void;
 }
 
 export function MarkdownCell({
@@ -110,7 +114,12 @@ export function MarkdownCell({
           if (enclosingListKind(tree, pos)) {
             const marker = nextListContinuation(view.state, pos);
             if (marker === undefined) {
-              return false; // empty item — same "exit the list" gesture as plain Enter, same cell
+              // Empty item — same "exit the list" gesture as plain Enter, same cell. Reaches for
+              // lang-markdown's own Enter command directly rather than falling through to CM6's
+              // default Shift-Enter binding: that default has no list awareness at all (it only
+              // copies the current line's leading whitespace), leaving the empty marker in place
+              // instead of clearing it, since lang-markdown's smart handling binds to plain Enter only.
+              return insertNewlineContinueMarkup(view);
             }
             view.dispatch({
               changes: { from: insertAt, insert: '\n' + marker },
@@ -139,20 +148,30 @@ export function MarkdownCell({
       bindings.push({
         key: 'Enter',
         run: (view) => {
-          const pos = view.state.selection.main.head;
-          if (enclosingListKind(syntaxTree(view.state), pos)) {
-            const marker = nextListContinuation(view.state, pos);
+          const { state } = view;
+          const pos = state.selection.main.head;
+
+          let marker: string | undefined;
+          if (enclosingListKind(syntaxTree(state), pos)) {
+            marker = nextListContinuation(state, pos);
             // No marker means an empty item — the conventional "I'm done with this list" gesture,
             // left to lang-markdown's own bundled Enter handling (clears the marker, same cell).
-            // A non-empty item, on the other hand, advances exactly like a plain paragraph would,
-            // just with the next marker seeded into wherever it lands, so the list keeps going.
+            // A non-empty item, on the other hand, splits exactly like a plain paragraph would,
+            // just with the next marker seeded ahead of whatever text moves along with it.
             if (marker === undefined) {
               return false;
             }
-            onSubmitRef.current?.(marker);
-            return true;
           }
-          onSubmitRef.current?.();
+
+          // Whatever sits after the caret belongs in the new block, not this one — that's what makes
+          // this a split rather than merely "add an empty block below." Removed here so it isn't left
+          // behind, duplicated in both cells.
+          const remainder = state.sliceDoc(pos, state.doc.length);
+          if (remainder) {
+            view.dispatch({ changes: { from: pos, to: state.doc.length } });
+          }
+
+          onSubmitRef.current?.(remainder, marker);
           return true;
         },
       });

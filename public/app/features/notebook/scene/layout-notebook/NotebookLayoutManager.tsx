@@ -411,10 +411,13 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     onAdd={onAdd}
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}
-                    onAdvance={(marker) => {
+                    onAdvance={(remainder, marker) => {
+                      // A marker (list continuation) goes ahead of whatever text the split carried
+                      // along; with neither, insertCellAfter's own empty-paragraph default applies.
+                      const text = marker !== undefined || remainder ? (marker ?? '') + remainder : undefined;
                       const created = model.insertCellAfter(
                         cell,
-                        marker !== undefined ? { kind: 'Markdown', spec: { text: marker } } : undefined
+                        text !== undefined ? { kind: 'Markdown', spec: { text } } : undefined
                       );
                       requestFocus(created?.state.key);
                     }}
