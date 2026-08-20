@@ -38,7 +38,8 @@ describe('addVariable', () => {
 
     expect(dashboard.state.sidebar.getSelectedObject()).toBe(undefined);
 
-    expect(variableSet.state.variables).toEqual([existing]);
+    expect(variableSet.state.variables).toHaveLength(1);
+    expect(variableSet.state.variables[0]).toBe(existing);
 
     dashboard.state.sidebar.redoAction();
 
