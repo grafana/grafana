@@ -2496,6 +2496,64 @@ func TestService_Check_DelegationOverrideCacheIsolation(t *testing.T) {
 		require.True(t, resp.Allowed, "ordinary check must still pass via the dashboards:admin action set")
 	})
 
+	t.Run("delegation denial must not deny an ordinary resource named delegate", func(t *testing.T) {
+		s := setupService()
+		st := &fakeStore{
+			userID: &store.UserIdentifiers{UID: "test-uid", ID: 1},
+			userPermissions: []accesscontrol.Permission{
+				{Action: "dashboards:admin", Scope: "dashboards:uid:delegate"},
+			},
+		}
+		s.store = st
+		s.permissionStore = st
+		s.identityStore = &fakeIdentityStore{}
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+
+		resp, err := s.Check(ctx, delegationReq)
+		require.NoError(t, err)
+		require.False(t, resp.Allowed)
+
+		resp, err = s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "delegate",
+		})
+		require.NoError(t, err)
+		require.True(t, resp.Allowed)
+	})
+
+	t.Run("ordinary denial must not deny delegation for the same action and name", func(t *testing.T) {
+		s := setupService()
+		st := &fakeStore{
+			userID: &store.UserIdentifiers{UID: "test-uid", ID: 1},
+			userPermissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "permissions:type:delegate"},
+			},
+		}
+		s.store = st
+		s.permissionStore = st
+		s.identityStore = &fakeIdentityStore{}
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+
+		resp, err := s.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Verb:      "get",
+			Name:      "delegate",
+		})
+		require.NoError(t, err)
+		require.False(t, resp.Allowed)
+
+		resp, err = s.Check(ctx, delegationReq)
+		require.NoError(t, err)
+		require.True(t, resp.Allowed)
+	})
+
 	t.Run("legacy bare-action cache entries must not be readable by any lookup", func(t *testing.T) {
 		s := newService()
 		ctx := types.WithAuthInfo(context.Background(), callingService)
@@ -2910,7 +2968,7 @@ func TestService_CacheCheck(t *testing.T) {
 		s.idCache.Set(ctx, userIdentifierCacheKey("org-12", "test-uid"), *userID)
 
 		// Explicitly deny access to the dashboard
-		s.permDenialCache.Set(ctx, userPermDenialCacheKey("org-12", "test-uid", "dashboards:read", "dash1", "fold1"), true)
+		s.permDenialCache.Set(ctx, userPermDenialCacheKey("org-12", "test-uid", "dashboards:read", actionSetsForVerb(t, "dashboard.grafana.app", "dashboards", "", "get"), "dash1", "fold1"), true)
 
 		// Allow access to the dashboard to prove this is not checked
 		s.permCache.Set(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read", actionSetsForVerb(t, "dashboard.grafana.app", "dashboards", "", "get")), map[string]bool{"dashboards:uid:dash1": false})
