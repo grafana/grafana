@@ -34,6 +34,9 @@ export function moveGridItem({
   moveElement({
     source,
     movedObject: panel,
+    // Dragging panels around shouldn't auto-select them: a user moving several panels in a row
+    // would otherwise get the sidebar hijacked to the last one after every drop.
+    selectOnMove: false,
     perform: () => {
       source.draggedGridItemOutside?.(gridItem);
       destination.draggedGridItemInside?.(gridItem, destinationIndex);

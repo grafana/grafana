@@ -24,6 +24,9 @@ export function reorderAutoGridItems({ layout, movedItem, fromChildren, toChildr
   moveElement({
     source: layout,
     movedObject: movedItem.state.body,
+    // Dragging panels around shouldn't auto-select them: a user moving several panels in a row
+    // would otherwise get the sidebar hijacked to the last one after every drop.
+    selectOnMove: false,
     perform: () => {
       layout.setState({ children: toChildren });
       layout.publishEvent(new ObjectsReorderedOnCanvasEvent(layout), true);
