@@ -10573,6 +10573,9 @@
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
     },
+    "query-input": {
+      "loading": "Loading editor"
+    },
     "range-slider": {
       "drag-handle-aria-label": "Use arrow keys to change the value"
     },
