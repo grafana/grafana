@@ -8,6 +8,7 @@ import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from 
 import { AddCardButton } from './AddCardButton';
 import { GhostSidebarCard } from './Cards/GhostSidebarCard';
 import { QueryCard } from './Cards/QueryCard';
+import { SystemTransformationCards } from './Cards/SystemTransformationCards';
 import { TransformationCard } from './Cards/TransformationCard';
 import { CollapsableSection } from './CollapsableSection';
 import { DraggableList } from './DraggableList/DraggableList';
@@ -20,7 +21,7 @@ interface QueriesAndTransformationsViewProps {
 
 export function QueriesAndTransformationsView({ showButtonLabels = false }: QueriesAndTransformationsViewProps) {
   const { queries } = useQueryRunnerContext();
-  const { transformations } = usePanelContext();
+  const { transformations, systemTransformations } = usePanelContext();
   const { pendingExpression, pendingSavedQuery, pendingTransformation, multiSelectMode } = useQueryEditorUIContext();
   const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
@@ -41,7 +42,11 @@ export function QueriesAndTransformationsView({ showButtonLabels = false }: Quer
   // case) would be noise.
   const isPanelEmpty = queries.length === 0 && transformations.length === 0;
   const showQueriesEmptyState = isPanelEmpty && !showExpressionGhost && !showSavedQueryGhost;
-  const showTransformationsEmptyState = isPanelEmpty && !showTransformationGhost;
+  // Scoped to this section rather than folded into `isPanelEmpty`: the plugin's transformations are
+  // content here — the section is showing rows, so "No transformations" would contradict what is on
+  // screen — but they say nothing about whether the panel has queries.
+  const hasSystemTransformations = systemTransformations.prepend.length > 0 || systemTransformations.append.length > 0;
+  const showTransformationsEmptyState = isPanelEmpty && !showTransformationGhost && !hasSystemTransformations;
 
   return (
     <>
@@ -82,6 +87,7 @@ export function QueriesAndTransformationsView({ showButtonLabels = false }: Quer
           />
         }
       >
+        <SystemTransformationCards transformations={systemTransformations.prepend} position="prepend" />
         {transformations.length > 0 && (
           <DraggableList
             isDragDisabled={multiSelectMode}
@@ -92,6 +98,7 @@ export function QueriesAndTransformationsView({ showButtonLabels = false }: Quer
             onDragEnd={onTransformationDragEnd}
           />
         )}
+        <SystemTransformationCards transformations={systemTransformations.append} position="append" />
         {showTransformationGhost && (
           <GhostSidebarCard id={PENDING_CARD_ID.transformation} type={QueryEditorType.Transformation} />
         )}

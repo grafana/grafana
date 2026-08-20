@@ -77,12 +77,22 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
   );
 }
 
+/**
+ * Whether anything at all transforms this panel's data, so the toggle that switches the tab between
+ * the query result and the rendered frames is worth offering. A panel whose plugin registered
+ * transformations and whose user list is empty still renders frames the query did not return.
+ *
+ * System transformations share this list with the user's, so the plain length check covers both.
+ * Asking the plugin whether it registers any would be a different question — they are installed only
+ * while the feature toggle is on, and a toggle that switches between two identical views is worse
+ * than no toggle.
+ */
 function hasTransformations(dataProvider: SceneDataProvider) {
-  if (dataProvider instanceof SceneDataTransformer) {
-    return dataProvider.state.transformations.length > 0;
+  if (!(dataProvider instanceof SceneDataTransformer)) {
+    return false;
   }
 
-  return false;
+  return dataProvider.state.transformations.length > 0;
 }
 
 function getDataProviderToSubscribeTo(dataProvider: SceneDataProvider, withTransforms: boolean) {

@@ -12,7 +12,9 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataTransformer, SceneFlexLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -21,6 +23,7 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { DashboardDatasourceBehaviour } from './DashboardDatasourceBehaviour';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { PanelDataTransformer } from './PanelDataTransformer';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const grafanaDs = {
@@ -1035,6 +1038,75 @@ describe('DashboardDatasourceBehaviour', () => {
     });
 
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('Should re-run query after reprocess when the source panel only has plugin transformations', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
+
+    // An empty user list, so only the plugin's transformations make the transformer emit. Gating on
+    // `state.transformations.length` subscribes to the query runner instead and misses a reprocess,
+    // which runs no query.
+    const sourceTransformer = new PanelDataTransformer({
+      transformations: [],
+      $data: new SceneQueryRunner({
+        datasource: { uid: 'grafana' },
+        queries: [{ refId: 'A', queryType: 'randomWalk' }],
+      }),
+    });
+    // Installed directly rather than through a registered plugin — this behaviour only cares that
+    // the source has transformations at all. Set after construction because the constructor drops
+    // system entries, which is what stops a clone inheriting the source panel's.
+    sourceTransformer.setSystemTransformations({ prepend: [() => (source) => source] });
+
+    const sourcePanel = new VizPanel({
+      title: 'Panel A',
+      pluginId: 'table',
+      key: 'panel-1',
+      $data: sourceTransformer,
+    });
+
+    const dashboardDSPanel = new VizPanel({
+      title: 'Panel B',
+      pluginId: 'table',
+      key: 'panel-2',
+      $data: new SceneDataTransformer({
+        transformations: [],
+        $data: new SceneQueryRunner({
+          datasource: { uid: MIXED_DATASOURCE_NAME },
+          queries: [{ datasource: { uid: SHARED_DASHBOARD_QUERY }, refId: 'B', panelId: 1 }],
+          $behaviors: [new DashboardDatasourceBehaviour({})],
+        }),
+      }),
+    });
+
+    const scene = new DashboardScene({
+      title: 'hello',
+      uid: 'dash-1',
+      meta: { canEdit: true },
+      body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
+    });
+
+    activateFullSceneTree(scene);
+
+    await new Promise((r) => setTimeout(r, 1));
+
+    const spy = jest
+      .spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries')
+      .mockImplementation();
+
+    (sourcePanel.state.$data as SceneDataTransformer).setState({
+      data: {
+        state: LoadingState.Done,
+        series: [],
+        timeRange: getDefaultTimeRange(),
+        request: { requestId: 'new-request-id' } as DataQueryRequest,
+      },
+    });
+
+    expect(spy).toHaveBeenCalled();
+
+    setTestFlags({});
   });
 
   describe('Cancel and streaming scenarios', () => {

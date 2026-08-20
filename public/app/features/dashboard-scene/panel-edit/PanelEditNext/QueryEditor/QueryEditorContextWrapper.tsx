@@ -7,6 +7,8 @@ import { useTheme2 } from '@grafana/ui';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
+import { PanelDataTransformer } from '../../../scene/PanelDataTransformer';
+import { NO_SYSTEM_TRANSFORMATIONS } from '../../../scene/systemTransformations';
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 import { getQueryEditorTypeConfig } from '../constants';
@@ -301,12 +303,21 @@ export function QueryEditorContextWrapper({
     [queryRunnerState?.queries, queryRunnerState?.data, queryError]
   );
 
+  // No `useMemo`: the provider caches on the frames array and the resolved plugin, so the identity is
+  // already stable across renders. The `useTransformations` subscription above is what re-renders this
+  // component after a plugin swap, which is when the answer changes without the frames changing.
+  const systemTransformations =
+    dataTransformer instanceof PanelDataTransformer
+      ? dataTransformer.getResolvedSystemTransformations(queryRunnerState?.data?.series ?? [])
+      : NO_SYSTEM_TRANSFORMATIONS;
+
   const panelState = useMemo(() => {
     return {
       panel,
       transformations,
+      systemTransformations,
     };
-  }, [panel, transformations]);
+  }, [panel, transformations, systemTransformations]);
 
   const typeConfig = useMemo(() => getQueryEditorTypeConfig(theme), [theme]);
 

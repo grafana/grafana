@@ -27,6 +27,9 @@ function makeTransformation(id: string): Transformation {
   };
 }
 
+/** Stable identity: the hook re-runs its effect when any input's identity changes, rawData included. */
+const NO_SYSTEM_TRANSFORMATIONS: [] = [];
+
 function makeFrames(count: number): DataFrame[] {
   return Array.from({ length: count }, (_, i) => ({
     name: `frame-${i}`,
@@ -59,6 +62,7 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[0],
         allTransformations: transformations,
+        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
         rawData,
       })
     );
@@ -77,6 +81,7 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[1],
         allTransformations: transformations,
+        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
         rawData,
       })
     );
@@ -108,6 +113,7 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[2],
         allTransformations: transformations,
+        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
         rawData,
       })
     );
@@ -135,6 +141,7 @@ describe('useTransformationInputData', () => {
         useTransformationInputData({
           selectedTransformation: selected,
           allTransformations: transformations,
+          systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
           rawData,
         }),
       { initialProps: { selected: transformations[0] } }
@@ -166,6 +173,7 @@ describe('useTransformationInputData', () => {
         useTransformationInputData({
           selectedTransformation: transformations[1],
           allTransformations: transformations,
+          systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
           rawData: data,
         }),
       { initialProps: { data: rawData } }
@@ -188,6 +196,65 @@ describe('useTransformationInputData', () => {
     );
   });
 
+  describe('plugin-registered transformations', () => {
+    // These run ahead of every user transformation but are deliberately absent from the editable
+    // list, so replaying that list alone shows editors a field shape they will never receive.
+    const systemTransformations = [jest.fn()];
+
+    it('runs them even when the first user transformation is selected', () => {
+      const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
+
+      const { result } = renderHook(() =>
+        useTransformationInputData({
+          selectedTransformation: transformations[0],
+          allTransformations: transformations,
+          systemTransformations,
+          rawData,
+        })
+      );
+
+      // The raw-data short-circuit must not apply: something does precede this transformation.
+      expect(mockTransformDataFrame).toHaveBeenCalledWith(systemTransformations, rawData, expect.any(Object));
+      expect(result.current).toBe(mockPipelineOutput);
+    });
+
+    it('runs them ahead of the preceding user transformations', () => {
+      const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
+
+      renderHook(() =>
+        useTransformationInputData({
+          selectedTransformation: transformations[1],
+          allTransformations: transformations,
+          systemTransformations,
+          rawData,
+        })
+      );
+
+      // Order matters: the plugin's transformations produce the fields joinByField then consumes.
+      expect(mockTransformDataFrame).toHaveBeenCalledWith(
+        [...systemTransformations, transformations[0].transformConfig],
+        rawData,
+        expect.any(Object)
+      );
+    });
+
+    it('runs them alone for a transformation missing from the list', () => {
+      // findIndex returns -1 here; slicing by it directly would drop the list's last entry.
+      const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
+
+      renderHook(() =>
+        useTransformationInputData({
+          selectedTransformation: makeTransformation('reduce'),
+          allTransformations: transformations,
+          systemTransformations,
+          rawData,
+        })
+      );
+
+      expect(mockTransformDataFrame).toHaveBeenCalledWith(systemTransformations, rawData, expect.any(Object));
+    });
+  });
+
   it('cleans up the subscription when the component unmounts', () => {
     // Without cleanup, a stale subscription could call setState on an unmounted component,
     // causing React warnings and potential bugs if new query data arrives after navigation.
@@ -207,6 +274,7 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[1],
         allTransformations: transformations,
+        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
         rawData,
       })
     );

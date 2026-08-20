@@ -12,6 +12,7 @@ import { type DataQuery } from '@grafana/schema';
 import { type ExpressionQuery, type ExpressionQueryType } from 'app/features/expressions/types';
 import { type QueryGroupOptions } from 'app/types/query';
 
+import { type ResolvedSystemTransformations } from '../../../scene/systemTransformations';
 import { type QueryEditorType, type QueryEditorTypeConfig } from '../constants';
 
 import { type AlertRule, type QueryOptionField, type Transformation } from './types';
@@ -50,6 +51,13 @@ export interface AlertingState {
 export interface PanelState {
   panel: VizPanel;
   transformations: Transformation[];
+  /**
+   * Transformations the panel's plugin requires, split by whether each group runs before or after
+   * `transformations`. Not editable, and deliberately absent from `transformations` — so anything
+   * that reconstructs what a user transformation receives has to replay `prepend` first, and
+   * anything that lists the pipeline has to show both.
+   */
+  systemTransformations: ResolvedSystemTransformations;
 }
 
 export interface QueryOptionsState {

@@ -1,10 +1,11 @@
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
 import {
   SceneDataLayerSet,
   SceneDataTransformer,
   SceneGridLayout,
+  type SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneQueryRunner,
   SceneRefreshPicker,
@@ -32,10 +33,23 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { getUserTransformations } from '../scene/systemTransformations';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 import { hasPredefinedVariablesAnnotationChanges } from '../utils/predefinedVariablesMetadata';
 
 import { type DashboardChangeInfo } from './shared';
+
+/**
+ * The user-configured transformations on a scene object's state, if it carries any. The event payload
+ * types prev/new state as the base `SceneObjectState`, so the shape is checked rather than asserted.
+ */
+function userTransformationsOf(state: SceneObjectState) {
+  if (!('transformations' in state) || !Array.isArray(state.transformations)) {
+    return [];
+  }
+
+  return getUserTransformations(state.transformations);
+}
 
 export class DashboardSceneChangeTracker {
   private _changeTrackerSub: Unsubscribable | undefined;
@@ -73,6 +87,14 @@ export class DashboardSceneChangeTracker {
     }
     // SceneDataTransformer includes the transformation configuration
     if (payload.changedObject instanceof SceneDataTransformer) {
+      // System transformations are installed at runtime and never persisted, so installing or
+      // removing them cannot make the dashboard dirty. They share the array with the user's, so the
+      // key alone cannot tell the two apart — diff the user subset. Keyed on SceneDataTransformer
+      // rather than the panel subclass so future runtime origins are covered by construction.
+      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'transformations')) {
+        return !isEqual(userTransformationsOf(payload.prevState), userTransformationsOf(payload.newState));
+      }
+
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
         return true;
       }
