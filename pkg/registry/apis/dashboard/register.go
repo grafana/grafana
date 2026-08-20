@@ -1369,6 +1369,10 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 	}
 }
 
+// dashboardSearchResultsSchema is the published name for dashv0.SearchResults. The Go
+// type and the kind on the wire are unchanged.
+const dashboardSearchResultsSchema = "DashboardSearchResults"
+
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana dashboards as resources"
 
@@ -1378,6 +1382,16 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		refsBase := dashv0.OpenAPIPrefix
 
 		kinds := []string{"SearchResults", "DashboardHit", "ManagedBy", "FacetResult", "TermFacet", "SortBy"}
+
+		// The per-resource search endpoints publish a SearchResults of their own, and the
+		// API client generator keys components by the segment after the version, so the two
+		// cannot share a name.
+		published := func(k string) string {
+			if k == "SearchResults" {
+				return dashboardSearchResultsSchema
+			}
+			return k
+		}
 
 		// Add any missing definitions
 		//-----------------------------
@@ -1403,7 +1417,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 						spec.RefProperty("#/components/schemas/TermFacet"),
 					)
 				}
-				oas.Components.Schemas[k] = &v.Schema // use the short key (without the full package path)
+				oas.Components.Schemas[published(k)] = &v.Schema // use the short key (without the full package path)
 			}
 		}
 
@@ -1413,7 +1427,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 				Content: map[string]*spec3.MediaType{
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: spec.RefSchema("#/components/schemas/SearchResults"),
+							Schema: spec.RefSchema("#/components/schemas/" + dashboardSearchResultsSchema),
 						},
 					},
 				},
