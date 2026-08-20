@@ -32,6 +32,12 @@ func (offlineClientV3) ConvertObjects(context.Context, *pluginv3.ConvertObjectsR
 var errOffline = apierrors.NewServiceUnavailable("the plugin backend is not running")
 
 var _ resourcepb.ResourceIndexClient = offlineSearchClient{}
+var _ resourcepb.ResourceStoreClient = offlineStoreClient{}
+
+// offlineStoreClient allows list-keys routes to be registered without a resource
+// store. Registration only needs the client to exist; nothing calls it while
+// generating a spec, so the embedded nil interface is never reached.
+type offlineStoreClient struct{ resourcepb.ResourceStoreClient }
 
 // offlineSearchClient allows search and trash routes to be registered without
 // connecting to the search index.

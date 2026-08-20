@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -121,6 +122,10 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	}
 	routes.Namespace = append(routes.Namespace, searchHandlers...)
 
+	keysRoot, keysNamespaced := b.keysRoutes(gv)
+	routes.Root = append(routes.Root, keysRoot...)
+	routes.Namespace = append(routes.Namespace, keysNamespaced...)
+
 	for _, kind := range version.Kinds {
 		plural := strings.ToLower(kind.Plural)
 
@@ -201,6 +206,38 @@ func (b *AppPluginAPIBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.AP
 		handlers = append(handlers, gvRoutes.Routes.Namespace...)
 	}
 	return handlers, nil
+}
+
+// keysRoutes builds the list-keys endpoints for the kinds this version serves, at
+// both scopes. Delegated to keysroutes for the same reason as searchRoutes: which
+// kinds get the endpoint is decided in one place, so a plugin-served manifest and
+// the same manifest served as a CRD agree.
+func (b *AppPluginAPIBuilder) keysRoutes(gv schema.GroupVersion) (root, namespaced []builder.APIRouteHandler) {
+	if b.store == nil {
+		return nil, nil
+	}
+
+	// Matched to served versions by the manifest's own group, which is not always
+	// the group the plugin is served under. See apiGroupForPlugin.
+	manifest := *b.manifest
+	manifest.Group = b.group
+
+	built := keysroutes.BuildForServedGroupVersions(
+		[]*app.ManifestData{&manifest},
+		map[schema.GroupVersion]bool{gv: true},
+		b.opts.KeysAPIEnabled,
+		b.tracer,
+		b.store,
+	)
+
+	for _, gvRoutes := range built {
+		if gvRoutes.GroupVersion != gv || gvRoutes.Routes == nil {
+			continue
+		}
+		root = append(root, gvRoutes.Routes.Root...)
+		namespaced = append(namespaced, gvRoutes.Routes.Namespace...)
+	}
+	return root, namespaced
 }
 
 // routeHandler forwards a manifest route to the plugin's v3 route service.

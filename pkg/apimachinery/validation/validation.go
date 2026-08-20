@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // maxGroupLength is set conservatively below the DB column size of 190 (chosen to
@@ -61,8 +63,10 @@ func IsValidGrafanaName(name string) []string {
 }
 
 // reservedNames would collide with the subresource paths mounted next to an
-// object, for example .../folders/trash.
-var reservedNames = []string{"search", "trash", "history", "query"}
+// object, for example .../folders/trash. list-keys is listed even though its route
+// is POST-only, so it does not collide today: it keeps the rule consistent and
+// safe if a POST is ever registered on {resource}/{name}.
+var reservedNames = []string{"search", "trash", "history", "query", utils.ListKeysPathSegment}
 
 // IsReservedName checks if the name is one a new resource may not be saved under.
 //

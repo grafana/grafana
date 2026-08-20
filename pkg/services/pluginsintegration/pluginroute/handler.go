@@ -58,6 +58,7 @@ type Options struct {
 	Decrypter       decrypt.DecryptService
 	AccessChecker   appplugin.PluginAccessChecker
 	Search          resourcepb.ResourceIndexClient
+	Store           resourcepb.ResourceStoreClient
 	Runner          appplugin.AppPluginRunnerOptions
 	Tracer          tracing.Tracer
 	Features        featuremgmt.FeatureToggles
@@ -218,7 +219,7 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 		opts.Features = featuremgmt.WithFeatures()
 	}
 	return appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient, opts.ClientV3,
-		opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Search,
+		opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Search, opts.Store,
 		opts.Runner, opts.Tracer, opts.Features)
 }
 
