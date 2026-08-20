@@ -154,7 +154,7 @@ flowchart LR
 ```
 ````
 
-Grafana replaces the code block with the rendered diagram and matches it to your light or dark theme. Documents without a Mermaid block aren't affected.
+Grafana replaces the code block with the rendered diagram and matches it to your light or dark theme.
 
 ## Best practices
 
