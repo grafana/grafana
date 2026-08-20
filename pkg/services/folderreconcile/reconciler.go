@@ -29,14 +29,9 @@ const lockActionName = "folder-reconciler"
 // across a large multi-tenant fleet.
 const minInterval = 5 * time.Minute
 
-// lockMaxInterval is a crash-recovery ceiling, not a throttle: LockExecuteAndRelease releases the
-// row as soon as a pass finishes, so normal runs still happen every interval. This only matters if
-// a replica dies mid-pass without releasing, or a pass legitimately runs this long.
-const lockMaxInterval = time.Hour
-
 // serverLock is the subset of serverlock.ServerLockService used here, so tests can fake it.
 type serverLock interface {
-	LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
+	LockAndExecute(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
 }
 
 // Consumer is implemented by each resource type that stores resources inside folders.
@@ -108,9 +103,11 @@ func (r *Reconciler) Run(ctx context.Context) error {
 	}
 }
 
-// tick runs one reconcile pass under the server lock, so only one replica per tenant reconciles per interval.
+// tick runs one reconcile pass under the server lock, so only one replica per tenant reconciles per
+// interval regardless of how many replicas tick. maxInterval == r.interval on purpose: LockAndExecute
+// skips work started less than maxInterval ago, which is what caps the actual run frequency.
 func (r *Reconciler) tick(ctx context.Context) {
-	err := r.lock.LockExecuteAndRelease(ctx, lockActionName, lockMaxInterval, func(ctx context.Context) {
+	err := r.lock.LockAndExecute(ctx, lockActionName, r.interval, func(ctx context.Context) {
 		if err := r.reconcile(ctx); err != nil {
 			r.log.Error("Folder reconcile failed", "error", err)
 		}

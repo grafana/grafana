@@ -21,7 +21,7 @@ type fakeLock struct {
 	maxInterval time.Duration
 }
 
-func (f *fakeLock) LockExecuteAndRelease(ctx context.Context, _ string, maxInterval time.Duration, fn func(context.Context)) error {
+func (f *fakeLock) LockAndExecute(ctx context.Context, _ string, maxInterval time.Duration, fn func(context.Context)) error {
 	f.calls++
 	f.maxInterval = maxInterval
 	if f.acquired {
@@ -123,12 +123,13 @@ func TestTick_OnlyReconcilesWhenLockAcquired(t *testing.T) {
 	require.Equal(t, []string{"gone"}, alerts.deleted)
 }
 
-func TestTick_UsesCrashRecoveryMaxInterval(t *testing.T) {
+func TestTick_LockMaxIntervalMatchesTickInterval(t *testing.T) {
 	lock := &fakeLock{acquired: true}
-	r := newReconciler(&fakeFolders{FakeService: foldertest.NewFakeService()}, &fakeOrgs{}, lock, minInterval, nil)
+	r := newReconciler(&fakeFolders{FakeService: foldertest.NewFakeService()}, &fakeOrgs{}, lock, 15*time.Minute, nil)
 
 	r.tick(context.Background())
 
-	// The lock's maxInterval is a crash-recovery ceiling, independent of how often we tick.
-	require.Equal(t, lockMaxInterval, lock.maxInterval)
+	// maxInterval must equal the tick interval, so LockAndExecute is what caps actual run
+	// frequency to once per interval regardless of how many replicas tick.
+	require.Equal(t, r.interval, lock.maxInterval)
 }
