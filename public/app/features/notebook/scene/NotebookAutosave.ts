@@ -1,11 +1,12 @@
 import { debounce } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
-import { SceneObjectStateChangedEvent } from '@grafana/scenes';
+import { SceneObjectStateChangedEvent, type SceneObjectStateChangedPayload } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
+import { type Spec as NotebookSpec } from '../types';
 
 import { type NotebookScene } from './NotebookScene';
 
@@ -35,12 +36,18 @@ export interface NotebookAutosaveState {
  * work out which changes matter: `saveNow` compares what would be saved against what was saved last, and
  * skips the write when they match.
  *
- * Changes only count while the notebook is being edited. Time settings are part of what gets saved and the
- * time picker is there for readers too, so counting a reader's change would save their time range as the
- * notebook's own. Writers that never enter edit mode call `notifyDocumentChanged` instead.
+ * Changes only count while the notebook is being edited, and a time range only counts when it was changed
+ * in that time: the time picker is there for readers too, and the range a reader picked is theirs, not the
+ * range the notebook should open at for everyone. Writers that never enter edit mode call
+ * `notifyDocumentChanged` instead.
  */
 export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
-  private lastSaved?: string;
+  /** The spec we treat as already written: what the last save sent, or the notebook as it was loaded. */
+  private baseline?: string;
+  /** The time settings of `baseline`, sent again for as long as nobody has edited them. */
+  private savedTimeSettings?: NotebookSpec['timeSettings'];
+  /** Whether the time settings now in the scene are the notebook's own, rather than one reader's. */
+  private timeSettingsEdited = false;
   private changeSub?: Unsubscribable;
   private inFlight = false;
   private saveAgainWhenIdle = false;
@@ -53,22 +60,24 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
   /** Begins watching for changes. Returns the teardown, which flushes anything still pending. */
   public start(): () => void {
-    const current = JSON.stringify(transformNotebookSceneToSaveModel(this.scene));
-
-    if (this.lastSaved === undefined) {
+    if (this.baseline === undefined) {
       // Entering edit mode publishes state changes of its own, so without a baseline the first
       // comparison would write the notebook straight back unchanged.
-      this.lastSaved = current;
-    } else if (current !== this.lastSaved) {
+      this.recordWritten(this.buildSpecToSave());
+    } else {
       // A scene is cached and reactivated when you come back to a notebook, so this can be the same
-      // controller with edits that never reached the server. Recording them as written here would lose
-      // them, so try the save again instead of waiting for a change that may never come.
+      // controller with edits that never reached the server. Waiting for a change that may never come
+      // would lose them, and scheduling costs nothing when there is nothing to write.
       this.schedule();
     }
 
-    this.changeSub = this.scene.subscribeToEvent(SceneObjectStateChangedEvent, () => {
+    this.changeSub = this.scene.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
       if (!this.scene.state.isEditing) {
         return;
+      }
+
+      if (changesTimeSettings(payload, this.scene)) {
+        this.timeSettingsEdited = true;
       }
 
       this.schedule();
@@ -88,7 +97,20 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    * `isEditing` and the change signal above ignores them. A write command that skips this does not save.
    */
   public notifyDocumentChanged(): void {
+    // These writers hand over a whole document, time settings included, so what is in the scene now is
+    // the notebook's own.
+    this.timeSettingsEdited = true;
     this.schedule();
+  }
+
+  /**
+   * Marks the start of an editing session.
+   *
+   * A time range left behind by reading the notebook belongs to whoever was reading it, so a session
+   * starts by disowning the one that is there and counts only the changes made from here on.
+   */
+  public notifyEditingStarted(): void {
+    this.timeSettingsEdited = false;
   }
 
   /** Tries a failed save again. A failure waits for the next change, which may never come. */
@@ -118,6 +140,10 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private scheduleSave = debounce(() => this.saveNow(), IDLE_BEFORE_SAVE_MS, { maxWait: MAX_WAIT_MS });
 
   private schedule(): void {
+    if (!this.hasSomethingToWrite()) {
+      return;
+    }
+
     this.changePending = true;
 
     // Guarded so a keystroke does not publish state on every character.
@@ -126,6 +152,54 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     }
 
     this.scheduleSave();
+  }
+
+  /**
+   * Most state changes leave the saved notebook exactly as it is: opening a modal, a query finishing, a
+   * reader moving their own time range. Scheduling those would have the notebook report unsaved changes
+   * it does not have.
+   */
+  private hasSomethingToWrite(): boolean {
+    // Already known to differ, so a keystroke does not pay for a comparison.
+    if (this.state.status === 'pending') {
+      return true;
+    }
+
+    // A save in flight leaves the baseline on the older spec, so an edit back to what the server is
+    // about to hold would look like nothing to write when it is the next thing to write.
+    if (this.inFlight) {
+      return true;
+    }
+
+    // Serializing walks the whole scene, and a scene that cannot be serialized is a bug somewhere else.
+    // Throwing here would report it in whatever changed the scene, which has nowhere to say so, and the
+    // notebook would look fine while nothing saved. Assume there is work and let the save report it.
+    try {
+      return JSON.stringify(this.buildSpecToSave()) !== this.baseline;
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * The spec a save would send: the scene as it is, except for time settings nobody has edited, which
+   * stay as they were saved.
+   */
+  private buildSpecToSave(): NotebookSpec {
+    const spec = transformNotebookSceneToSaveModel(this.scene);
+
+    if (this.timeSettingsEdited || !this.savedTimeSettings) {
+      return spec;
+    }
+
+    return { ...spec, timeSettings: this.savedTimeSettings };
+  }
+
+  /** Records a spec as one there is no longer any reason to write. */
+  private recordWritten(spec: NotebookSpec, serialized = JSON.stringify(spec)): void {
+    this.baseline = serialized;
+    this.savedTimeSettings = spec.timeSettings;
+    this.timeSettingsEdited = false;
   }
 
   /** What to report when there is nothing waiting to be written. */
@@ -147,9 +221,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     this.changePending = false;
 
-    const spec = transformNotebookSceneToSaveModel(this.scene);
+    const spec = this.buildSpecToSave();
     const serialized = JSON.stringify(spec);
-    if (serialized === this.lastSaved) {
+    if (serialized === this.baseline) {
       // Lots of things change the scene without changing what gets saved. Left on `pending`, the
       // notebook would go on saying it has unsaved changes when it has none.
       this.setState({ status: this.restingStatus() });
@@ -161,7 +235,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     updateNotebook(uid, spec)
       .then(({ generation }) => {
-        this.lastSaved = serialized;
+        this.recordWritten(spec, serialized);
         this.hasSavedOnce = true;
         this.setState({
           // Something can have changed while this was in flight, and reporting it saved would claim
@@ -174,7 +248,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         });
       })
       .catch((error) => {
-        // Leave `lastSaved` alone, so the next comparison still sees a difference and tries again.
+        // Leave the baseline alone, so the next comparison still sees a difference and tries again.
         this.setState({
           status: 'error',
           errorMessage: error instanceof Error ? error.message : String(error),
@@ -188,4 +262,21 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         }
       });
   }
+}
+
+/**
+ * Whether a state change was a change to the notebook's time settings.
+ *
+ * `buildTimeSettingsSpec` reads them from these four places, so all four have to be named here: one left
+ * out is one whose edits get thrown away as if a reader had made them.
+ */
+function changesTimeSettings(payload: SceneObjectStateChangedPayload, scene: NotebookScene): boolean {
+  const { changedObject, partialUpdate } = payload;
+  const { $timeRange, timePicker, refreshPicker } = scene.state;
+
+  if (changedObject === scene) {
+    return 'hideTimeControls' in partialUpdate;
+  }
+
+  return changedObject === $timeRange || changedObject === timePicker || changedObject === refreshPicker;
 }

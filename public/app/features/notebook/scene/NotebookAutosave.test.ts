@@ -106,13 +106,13 @@ describe('NotebookAutosave', () => {
     expect(scene.autosave.state.status).toBe('saved');
   });
 
-  // Lots of things change the scene without changing what gets saved. Left on pending after one of those,
-  // the notebook would go on saying it has unsaved changes with nothing to save.
-  it('stops reporting unsaved changes when the change did not touch the spec', async () => {
+  // Lots of things change the scene without changing what gets saved. Reporting those would have the
+  // notebook claim unsaved changes it does not have.
+  it('reports no unsaved changes when the change did not touch the spec', async () => {
     const scene = activateEditing();
 
     scene.showModal(new TestOverlay({}));
-    expect(scene.autosave.state.status).toBe('pending');
+    expect(scene.autosave.state.status).toBe('idle');
 
     await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
 
@@ -120,7 +120,7 @@ describe('NotebookAutosave', () => {
     expect(scene.autosave.state.status).toBe('idle');
   });
 
-  it('falls back to saved, not idle, when a spec-less change follows a real save', async () => {
+  it('goes on saying saved when a spec-less change follows a real save', async () => {
     const scene = activateEditing();
 
     editFirstCell(scene, 'Hello world');
@@ -205,6 +205,43 @@ describe('NotebookAutosave', () => {
     deactivate = scene.activate();
 
     scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+    await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+    expect(updateNotebook).not.toHaveBeenCalled();
+  });
+
+  // A notebook opens at the time range it was saved with, so a range someone picked while reading it must
+  // not become the range it opens at for everyone else.
+  it('keeps the saved time range when a reader moved theirs before editing something else', async () => {
+    const scene = buildScene();
+    deactivate = scene.activate();
+
+    scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+    scene.onEnterEditMode();
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(savedTexts()).toEqual(['Hello world']);
+    expect(jest.mocked(updateNotebook).mock.calls[0][1].timeSettings.from).toBe('now-6h');
+  });
+
+  it('sends nothing when a notebook is reopened after a reader moved the time range', async () => {
+    const scene = buildScene();
+    deactivate = scene.activate();
+
+    scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+    deactivate();
+    deactivate = scene.activate();
+    await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+    expect(updateNotebook).not.toHaveBeenCalled();
+  });
+
+  it('reports nothing when edit mode is entered and nothing has been changed', async () => {
+    const scene = activateEditing();
+
+    expect(scene.autosave.state.status).toBe('idle');
+
     await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
 
     expect(updateNotebook).not.toHaveBeenCalled();

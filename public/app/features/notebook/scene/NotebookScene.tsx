@@ -157,6 +157,9 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       return;
     }
 
+    // Before the state change, because entering edit mode is itself a state change and autosave decides
+    // what to write the moment it sees one.
+    this.autosave.notifyEditingStarted();
     this.setState({ isEditing: true });
     // Same channel DashboardScene uses to tell its layout the mode changed.
     this.state.body.editModeChanged?.(true);
