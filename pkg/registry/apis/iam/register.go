@@ -52,6 +52,7 @@ import (
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -128,11 +129,16 @@ func RegisterAPIService(
 	}
 
 	// Mode lever for the SSO settings migration: any configured storage mode
-	// above 0 hands the SSOSetting kind to the MT-Settings store.
-	ssoUseMTSettings := false
+	// above 0 builds the MT-Settings client so the SSOSetting kind can ride the
+	// dual-writer; the storage mode then routes reads and writes between stores.
+	var ssoSettingsClient settingsvc.Service
 	if cfg != nil {
 		if resCfg, ok := cfg.UnifiedStorage[legacyiamv0.SSOSettingResourceInfo.GroupResource().String()]; ok && resCfg.DualWriterMode > grafanarest.Mode0 {
-			ssoUseMTSettings = true
+			c, err := sso.NewSettingsClient(cfg)
+			if err != nil {
+				log.New("iam.apis").Error("failed to build MT-Settings client for SSOSetting store", "error", err)
+			}
+			ssoSettingsClient = c
 		}
 	}
 
@@ -144,7 +150,7 @@ func RegisterAPIService(
 		externalGroupReconciler:           externalGroupReconciler,
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
-		ssoUseMTSettings:                  ssoUseMTSettings,
+		ssoSettingsClient:                 ssoSettingsClient,
 		roleApiInstaller:                  roleApiInstaller,
 		globalRoleApiInstaller:            globalRoleApiInstaller,
 		teamLBACApiInstaller:              teamLBACApiInstaller,
@@ -443,16 +449,30 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	// SSO settings apis
 	if enableSsoSettingsApi && b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
-		// The storage mode of [unified_storage.ssosettings.iam.grafana.app]
-		// decides which store serves the kind: at mode 0 (the default) the
-		// legacy store behaves as before; any higher mode engages the
-		// MT-Settings store, which fails loudly until it is implemented.
-		// The standard dual-writer cannot wrap this kind yet: it requires
-		// rest.CreaterUpdater and SSO settings are update-only.
-		if b.ssoUseMTSettings {
-			storage[ssoResource.StoragePath()] = sso.NewMTSettingsStore()
+		// With an MT-Settings client the SSOSetting kind rides the dual-writer (mode-gated
+		// reads/writes); without it (on-prem) the legacy store serves alone.
+		if b.ssoSettingsClient != nil && opts.DualWriteBuilder != nil {
+			writer, _ := b.ssoSettingsClient.(settingsvc.Writer)
+			mtStore := sso.NewMTSettingsStore(b.ssoSettingsClient, writer)
+			dw, err := opts.DualWriteBuilder(ssoResource.GroupResource(), b.ssoLegacyStore, mtStore)
+			if err != nil {
+				return err
+			}
+			// The legacy adapter returns the raw secret on Create so the dual-writer
+			// forwards it to MT-Settings; redact it back out of the client response.
+			redacted, err := sso.NewRedactingStore(dw)
+			if err != nil {
+				return err
+			}
+			storage[ssoResource.StoragePath()] = redacted
 		} else {
-			storage[ssoResource.StoragePath()] = b.ssoLegacyStore
+			// Legacy serves alone, but its Create still returns the raw input, so
+			// redact the response here too.
+			redacted, err := sso.NewRedactingStore(b.ssoLegacyStore)
+			if err != nil {
+				return err
+			}
+			storage[ssoResource.StoragePath()] = redacted
 		}
 	}
 
@@ -1016,6 +1036,12 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 			return fmt.Errorf("expected old object to be a User, got %T", oldObj)
 		}
 		return user.ValidateOnUpdate(ctx, b.userSearchClient, oldUserObj, typedObj)
+	case *iamv0.ServiceAccount:
+		oldSAObj, ok := oldObj.(*iamv0.ServiceAccount)
+		if !ok {
+			return fmt.Errorf("expected old object to be a ServiceAccount, got %T", oldObj)
+		}
+		return serviceaccount.ValidateOnUpdate(ctx, typedObj, oldSAObj)
 	case *iamv0.ResourcePermission:
 		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj, b.mappers)
 	case *iamv0.Team:
@@ -1093,7 +1119,7 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 		case *iamv0.User:
 			return user.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.ServiceAccount:
-			return serviceaccount.MutateOnCreate(ctx, typedObj)
+			return serviceaccount.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Team:
 			return team.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Role:
@@ -1102,6 +1128,8 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 			return b.globalRoleApiInstaller.MutateOnCreate(ctx, typedObj)
 		case *iamv0.RoleBinding:
 			return b.roleBindingsApiInstaller.MutateOnCreate(ctx, typedObj)
+		case *iamv0.TeamLBACRule:
+			return b.teamLBACApiInstaller.MutateOnCreate(ctx, typedObj)
 		}
 	case admission.Update:
 		switch typedObj := a.GetObject().(type) {
@@ -1111,6 +1139,8 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 			if a.GetSubresource() != "status" {
 				return user.MutateOnCreateAndUpdate(ctx, typedObj)
 			}
+		case *iamv0.ServiceAccount:
+			return serviceaccount.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Team:
 			return team.MutateOnCreateAndUpdate(ctx, typedObj)
 		case *iamv0.Role:
@@ -1131,6 +1161,12 @@ func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admis
 				return fmt.Errorf("old object is not a RoleBinding")
 			}
 			return b.roleBindingsApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
+		case *iamv0.TeamLBACRule:
+			oldObj, ok := a.GetOldObject().(*iamv0.TeamLBACRule)
+			if !ok {
+				return fmt.Errorf("old object is not a TeamLBACRule")
+			}
+			return b.teamLBACApiInstaller.MutateOnUpdate(ctx, oldObj, typedObj)
 		}
 	case admission.Delete:
 		switch oldObj := a.GetOldObject().(type) {
@@ -1170,8 +1206,13 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 		return nil, err
 	}
 
+	var vp *versionpolicy.VersionPolicyRegistry
+	if g, ok := defaultOptsGetter.(*apistore.RESTOptionsGetter); ok {
+		vp = g.VersionPolicy()
+	}
+
 	client := resource.NewLocalResourceClient(server)
-	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil)
+	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil, vp)
 
 	store, err := grafanaregistry.NewRegistryStoreWithSelectableFields(scheme, resourceInfo, optsGetter, selectableFieldsOpts)
 	return store, err

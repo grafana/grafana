@@ -49,6 +49,7 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
 /**
  * Populate the instance-settings cache from boot data. Intended to be called
  * exactly once at application startup via the `@grafana/runtime/internal` export.
+ * In tests, use {@link setDataSourceInstanceSettings} instead.
  *
  * @internal
  */
@@ -58,6 +59,28 @@ export function initDataSourceInstanceSettings(
 ): void {
   defaultName = defaultDsName;
   populateMaps(settings);
+}
+
+/**
+ * Test helper — the sanctioned way to seed the instance-settings cache in tests.
+ * Fully resets all module state (including runtime and expression data sources),
+ * then populates the cache from a clone of `settings` so test fixtures are never
+ * mutated. When `defaultDatasourceName` is omitted, the entry flagged with
+ * `isDefault: true` becomes the default. Should only be called from tests.
+ *
+ * @internal
+ */
+export function setDataSourceInstanceSettings(
+  settings: Record<string, DataSourceInstanceSettings>,
+  defaultDatasourceName?: string
+): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('setDataSourceInstanceSettings() function can only be called from tests.');
+  }
+
+  _resetForTests();
+  populateMaps(structuredClone(settings));
+  defaultName = defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '';
 }
 
 /**
@@ -173,7 +196,16 @@ export async function getDataSourceInstanceList(
   return (results.length > 0 ? results : getInstanceSettingsListFallback(filtersWithAdapter)).map(toListItem);
 }
 
-function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
+// Expressions are included because `__expr__` (and the legacy `-100`) is the uid they are
+// registered under; they sit outside `byUid` only because they are set at boot.
+export function lookupByUid(uid: string): DataSourceInstanceSettings | undefined {
+  if (isExpressionReference(uid)) {
+    return getExpressionDataSourceSettings();
+  }
+  return byUid[uid];
+}
+
+export function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
     uid: settings.uid,
     type: settings.type,
@@ -257,20 +289,25 @@ function lookupFromMaps(
     return byUid[defaultName] ?? byName[defaultName];
   }
 
-  // Template variable reference — interpolate and preserve the raw ref.
-  if (nameOrUid[0] === '$') {
+  // Template variable reference — interpolate and preserve the raw ref. The variable can
+  // sit anywhere in the string (e.g. `logs-${stage}-loki`), not only at the start; legacy
+  // DataSourceSrv.get() interpolates unconditionally. When interpolation changes nothing
+  // (a datasource name that merely contains `$`), fall through to the plain lookup.
+  if (nameOrUid.includes('$')) {
     const interpolated = getTemplateSrv().replace(nameOrUid, scopedVars, variableInterpolation);
-    const resolved = interpolated === 'default' ? byName[defaultName] : (byUid[interpolated] ?? byName[interpolated]);
-    if (!resolved) {
-      return undefined;
+    if (interpolated !== nameOrUid) {
+      const resolved = interpolated === 'default' ? byName[defaultName] : (byUid[interpolated] ?? byName[interpolated]);
+      if (!resolved) {
+        return undefined;
+      }
+      return {
+        ...resolved,
+        isDefault: false,
+        name: nameOrUid,
+        uid: nameOrUid,
+        rawRef: { type: resolved.type, uid: resolved.uid },
+      };
     }
-    return {
-      ...resolved,
-      isDefault: false,
-      name: nameOrUid,
-      uid: nameOrUid,
-      rawRef: { type: resolved.type, uid: resolved.uid },
-    };
   }
 
   return byUid[nameOrUid] ?? byName[nameOrUid] ?? byId[nameOrUid];

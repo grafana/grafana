@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type FormEvent, useCallback } from 'react';
+import { type FormEvent, Fragment, useCallback } from 'react';
 
 import {
   type DataSourceInstanceSettings,
@@ -14,7 +14,7 @@ import { EditorField } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { type AdHocFiltersController } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
-import { Alert, CodeEditor, Field, Switch, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, CodeEditor, Field, Switch, Stack, useStyles2, FieldSet } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
@@ -71,139 +71,141 @@ export function AdHocVariableForm({
     },
     [onDefaultKeysChange]
   );
+  const Wrapper = inline ? Fragment : FieldSet;
 
   return (
-    <Stack direction="column" gap={2}>
+    <Wrapper>
       {!inline && (
         <VariableLegend>
           <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Filter options</Trans>
         </VariableLegend>
       )}
+      <Stack direction="column" gap={2}>
+        <EditorField
+          label={t('dashboard-scene.ad-hoc-variable-form.label-data-source', 'Data source')}
+          htmlFor="data-source-picker"
+          tooltip={infoText}
+        >
+          <DataSourcePicker
+            current={datasource}
+            onChange={onDataSourceChange}
+            width={inline ? undefined : 30}
+            variables={true}
+            dashboard={true}
+            noDefault
+          />
+        </EditorField>
 
-      <EditorField
-        label={t('dashboard-scene.ad-hoc-variable-form.label-data-source', 'Data source')}
-        htmlFor="data-source-picker"
-        tooltip={infoText}
-      >
-        <DataSourcePicker
-          current={datasource}
-          onChange={onDataSourceChange}
-          width={inline ? undefined : 30}
-          variables={true}
-          dashboard={true}
-          noDefault
-        />
-      </EditorField>
+        {datasourceSupported === false ? (
+          <Alert
+            title={t(
+              'dashboard-scene.ad-hoc-variable-form.alert-not-supported',
+              'This data source does not support filters'
+            )}
+            severity="warning"
+            bottomSpacing={0}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText}
+          />
+        ) : null}
 
-      {datasourceSupported === false ? (
-        <Alert
-          title={t(
-            'dashboard-scene.ad-hoc-variable-form.alert-not-supported',
-            'This data source does not support filters'
+        {datasourceSupported && originFiltersController && (
+          <div className={!inline ? styles.originFiltersWrapper : undefined}>
+            <AdHocOriginFiltersEditor controller={originFiltersController} />
+          </div>
+        )}
+
+        {config.featureToggles.dashboardUnifiedDrilldownControls &&
+          datasource &&
+          datasourceSupported &&
+          datasourceSupportsGroupBy &&
+          onEnableGroupByChange && (
+            <Field
+              label={t('dashboard-scene.ad-hoc-variable-form.name-enable-group-by', 'Enable group by')}
+              description={t(
+                'dashboard-scene.ad-hoc-variable-form.description-enable-group-by',
+                'Enables group by operator in the filter combobox'
+              )}
+              noMargin
+            >
+              <Switch
+                value={enableGroupBy ?? false}
+                onChange={onEnableGroupByChange}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle}
+              />
+            </Field>
           )}
-          severity="warning"
-          bottomSpacing={0}
-          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText}
-        />
-      ) : null}
 
-      {datasourceSupported && originFiltersController && (
-        <div className={!inline ? styles.originFiltersWrapper : undefined}>
-          <AdHocOriginFiltersEditor controller={originFiltersController} />
-        </div>
-      )}
+        {datasourceSupported && onDefaultGroupByChange && (
+          <div className={!inline ? styles.originFiltersWrapper : undefined}>
+            <DefaultGroupByValueEditor
+              values={defaultGroupByValues ?? []}
+              options={defaultGroupByOptions}
+              onChange={onDefaultGroupByChange}
+            />
+          </div>
+        )}
 
-      {config.featureToggles.dashboardUnifiedDrilldownControls &&
-        datasource &&
-        datasourceSupported &&
-        datasourceSupportsGroupBy &&
-        onEnableGroupByChange && (
+        {datasourceSupported && onDefaultKeysChange && (
+          <>
+            <Field
+              label={t(
+                'dashboard-scene.ad-hoc-variable-form.label-use-static-key-dimensions',
+                'Use static key dimensions'
+              )}
+              description={t(
+                'dashboard-scene.ad-hoc-variable-form.description-provide-dimensions-as-csv-dimension-name-dimension-id',
+                'Provide dimensions as CSV: {{name}}, {{value}}',
+                { name: 'dimensionName', value: 'dimensionId' }
+              )}
+              noMargin
+            >
+              <Switch
+                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle}
+                value={defaultKeys != null}
+                onChange={(e) => {
+                  if (defaultKeys == null) {
+                    onDefaultKeysChange([]);
+                  } else {
+                    onDefaultKeysChange(undefined);
+                  }
+                }}
+              />
+            </Field>
+
+            {defaultKeys != null && (
+              <CodeEditor
+                height={300}
+                language="csv"
+                value={defaultKeys.map((o) => `${o.text},${o.value}`).join('\n')}
+                onBlur={updateStaticKeys}
+                onSave={updateStaticKeys}
+                showMiniMap={false}
+                showLineNumbers={true}
+              />
+            )}
+          </>
+        )}
+
+        {datasourceSupported && onAllowCustomValueChange && (
           <Field
-            label={t('dashboard-scene.ad-hoc-variable-form.name-enable-group-by', 'Enable group by')}
+            label={t('dashboard.sidebar.variable.selection-options.allow-custom-values', 'Allow custom values')}
             description={t(
-              'dashboard-scene.ad-hoc-variable-form.description-enable-group-by',
-              'Enables group by operator in the filter combobox'
+              'dashboard.sidebar.variable.selection-options.allow-custom-values-description',
+              'Enables users to enter values'
             )}
             noMargin
           >
             <Switch
-              value={enableGroupBy ?? false}
-              onChange={onEnableGroupByChange}
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle}
+              value={allowCustomValue ?? true}
+              onChange={onAllowCustomValueChange}
+              data-testid={
+                selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+              }
             />
           </Field>
         )}
-
-      {datasourceSupported && onDefaultGroupByChange && (
-        <div className={!inline ? styles.originFiltersWrapper : undefined}>
-          <DefaultGroupByValueEditor
-            values={defaultGroupByValues ?? []}
-            options={defaultGroupByOptions}
-            onChange={onDefaultGroupByChange}
-          />
-        </div>
-      )}
-
-      {datasourceSupported && onDefaultKeysChange && (
-        <>
-          <Field
-            label={t(
-              'dashboard-scene.ad-hoc-variable-form.label-use-static-key-dimensions',
-              'Use static key dimensions'
-            )}
-            description={t(
-              'dashboard-scene.ad-hoc-variable-form.description-provide-dimensions-as-csv-dimension-name-dimension-id',
-              'Provide dimensions as CSV: {{name}}, {{value}}',
-              { name: 'dimensionName', value: 'dimensionId' }
-            )}
-            noMargin
-          >
-            <Switch
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle}
-              value={defaultKeys != null}
-              onChange={(e) => {
-                if (defaultKeys == null) {
-                  onDefaultKeysChange([]);
-                } else {
-                  onDefaultKeysChange(undefined);
-                }
-              }}
-            />
-          </Field>
-
-          {defaultKeys != null && (
-            <CodeEditor
-              height={300}
-              language="csv"
-              value={defaultKeys.map((o) => `${o.text},${o.value}`).join('\n')}
-              onBlur={updateStaticKeys}
-              onSave={updateStaticKeys}
-              showMiniMap={false}
-              showLineNumbers={true}
-            />
-          )}
-        </>
-      )}
-
-      {datasourceSupported && onAllowCustomValueChange && (
-        <Field
-          label={t('dashboard.sidebar.variable.selection-options.allow-custom-values', 'Allow custom values')}
-          description={t(
-            'dashboard.sidebar.variable.selection-options.allow-custom-values-description',
-            'Enables users to enter values'
-          )}
-          noMargin
-        >
-          <Switch
-            value={allowCustomValue ?? true}
-            onChange={onAllowCustomValueChange}
-            data-testid={
-              selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
-            }
-          />
-        </Field>
-      )}
-    </Stack>
+      </Stack>
+    </Wrapper>
   );
 }
 

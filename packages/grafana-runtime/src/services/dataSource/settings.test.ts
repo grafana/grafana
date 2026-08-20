@@ -15,6 +15,7 @@ import {
   hasDataSourceInstance,
   initDataSourceInstanceSettings,
   reloadDataSourceInstanceSettings,
+  setDataSourceInstanceSettings,
   syncDataSourceInstanceSettings,
   upsertRuntimeDataSourceInstanceSettings,
 } from './settings';
@@ -264,6 +265,13 @@ describe('instanceSettings', () => {
         const result = await getDataSourceInstanceSettings({ type: '-100' });
         expect(result?.uid).toBe('__expr__');
       });
+
+      it('resolves a DataSourceRef with the expression uid but no type', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
+        const result = await getDataSourceInstanceSettings({ uid: '__expr__' });
+        expect(result?.uid).toBe('__expr__');
+      });
     });
 
     describe('template variables', () => {
@@ -293,6 +301,33 @@ describe('instanceSettings', () => {
         initDataSourceInstanceSettings(fixtures, 'Bravo');
 
         const result = await getDataSourceInstanceSettings('${multi}');
+        expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-alpha' });
+
+        setTemplateSrv(templateSrv);
+      });
+
+      it('resolves a name that contains $ but is not a variable through the plain lookup', async () => {
+        // The shared templateSrv mock returns unknown values unchanged, so
+        // interpolation is a no-op and the lookup must fall through. The variable
+        // wrapper would carry the ref string as uid and a rawRef; the genuine
+        // settings carry neither.
+        const dollar = ds({ id: 9, uid: 'uid-dollar', name: 'cost$db' });
+        initDataSourceInstanceSettings({ ...fixtures, [dollar.name]: dollar }, 'Bravo');
+
+        const result = await getDataSourceInstanceSettings('cost$db');
+        expect(result?.uid).toBe('uid-dollar');
+        expect(result?.rawRef).toBeUndefined();
+      });
+
+      it('interpolates a variable that is not at the start of the ref', async () => {
+        setTemplateSrv({
+          ...templateSrv,
+          replace: (value?: string) => (value === 'logs-${stage}-loki' ? 'Alpha' : (value ?? '')),
+        } as unknown as TemplateSrv);
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+        const result = await getDataSourceInstanceSettings('logs-${stage}-loki');
+        expect(result?.uid).toBe('logs-${stage}-loki');
         expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-alpha' });
 
         setTemplateSrv(templateSrv);
@@ -814,6 +849,71 @@ describe('instanceSettings', () => {
       syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
 
       expect((await getDataSourceInstanceSettings('runtime-ds'))?.name).toBe('Runtime');
+    });
+  });
+
+  describe('setDataSourceInstanceSettings', () => {
+    it('populates the cache so lookups by uid, name and id resolve', async () => {
+      setDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      expect((await getDataSourceInstanceSettings('uid-alpha'))?.name).toBe('Alpha');
+      expect((await getDataSourceInstanceSettings('Charlie'))?.uid).toBe('uid-charlie');
+      expect((await getDataSourceInstanceSettings('3'))?.name).toBe('Charlie');
+      expect((await getDataSourceInstanceSettings(null))?.name).toBe('Bravo');
+      expect(backendGet).not.toHaveBeenCalled();
+    });
+
+    it('derives the default from isDefault when defaultDatasourceName is omitted', async () => {
+      setDataSourceInstanceSettings(fixtures);
+      expect((await getDataSourceInstanceSettings(null))?.name).toBe('Bravo');
+    });
+
+    it('leaves the default unset when omitted and nothing is flagged as default', async () => {
+      setDataSourceInstanceSettings({ Alpha: fixtures.Alpha });
+      expect(await getDataSourceInstanceSettings(null)).toBeUndefined();
+    });
+
+    it('fully resets prior state, including runtime and expression data sources', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      upsertRuntimeDataSourceInstanceSettings(ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' }));
+      setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
+
+      setDataSourceInstanceSettings({ Alpha: fixtures.Alpha }, 'Alpha');
+
+      expect(await getDataSourceInstanceSettings('runtime-ds')).toBeUndefined();
+      expect(await getDataSourceInstanceSettings('__expr__')).toBeUndefined();
+      expect(await getDataSourceInstanceSettings('uid-bravo')).toBeUndefined();
+      expect((await getDataSourceInstanceSettings('uid-alpha'))?.name).toBe('Alpha');
+    });
+
+    it('does not mutate the passed fixtures', async () => {
+      // populateMaps normalizes a missing uid to the name; that must happen on a
+      // clone, not on the caller's fixture object.
+      const noUid = ds({ id: 7, name: 'NoUid', type: 'test-db' });
+      // @ts-expect-error - simulating boot data entries without a uid
+      noUid.uid = undefined;
+
+      setDataSourceInstanceSettings({ NoUid: noUid }, 'NoUid');
+
+      expect(noUid.uid).toBeUndefined();
+      expect((await getDataSourceInstanceSettings('NoUid'))?.uid).toBe('NoUid');
+    });
+
+    describe('when process is under development', () => {
+      let originalNodeEnv = process.env.NODE_ENV;
+      beforeEach(() => {
+        process.env.NODE_ENV = 'development';
+      });
+
+      afterEach(() => {
+        process.env.NODE_ENV = originalNodeEnv;
+      });
+
+      it('setDataSourceInstanceSettings should throw', () => {
+        expect(() => setDataSourceInstanceSettings(fixtures, 'Bravo')).toThrow(
+          new Error('setDataSourceInstanceSettings() function can only be called from tests.')
+        );
+      });
     });
   });
 
