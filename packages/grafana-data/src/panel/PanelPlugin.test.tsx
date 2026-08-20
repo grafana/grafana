@@ -590,4 +590,79 @@ describe('PanelPlugin', () => {
       expect(suggestions2).toHaveLength(0);
     });
   });
+  describe('data transformations', () => {
+    it('returns no transformations when the plugin registered none', () => {
+      const panel = new PanelPlugin(() => <div />);
+
+      expect(panel.getDataTransformations({ series: [] })).toEqual({ prepend: [], append: [] });
+    });
+
+    it('is chainable and passes the query result frames to the supplier', () => {
+      const supplier = jest.fn().mockReturnValue([{ id: 'extractFields', options: {} }]);
+      const panel = new PanelPlugin(() => <div />);
+
+      expect(panel.setDataTransformations(supplier)).toBe(panel);
+
+      const series = [createDataFrame({ fields: [{ type: FieldType.number, name: 'Value' }] })];
+      expect(panel.getDataTransformations({ series })).toEqual({
+        prepend: [{ id: 'extractFields', options: {} }],
+        append: [],
+      });
+      expect(supplier).toHaveBeenCalledWith({ series });
+    });
+
+    it('treats an undefined result from the supplier as no transformations', () => {
+      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => undefined);
+
+      expect(panel.getDataTransformations({ series: [] })).toEqual({ prepend: [], append: [] });
+    });
+
+    it('treats an array result as prepended transformations', () => {
+      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => [{ id: 'reduce', options: {} }]);
+
+      expect(panel.getDataTransformations({ series: [] })).toEqual({
+        prepend: [{ id: 'reduce', options: {} }],
+        append: [],
+      });
+    });
+
+    it('accepts explicit prepend and append groups', () => {
+      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => ({
+        prepend: [{ id: 'extractFields', options: {} }],
+        append: [{ id: 'reduce', options: {} }],
+      }));
+
+      expect(panel.getDataTransformations({ series: [] })).toEqual({
+        prepend: [{ id: 'extractFields', options: {} }],
+        append: [{ id: 'reduce', options: {} }],
+      });
+    });
+
+    it('fills in the group the supplier omitted', () => {
+      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => ({
+        append: [{ id: 'reduce', options: {} }],
+      }));
+
+      expect(panel.getDataTransformations({ series: [] })).toEqual({
+        prepend: [],
+        append: [{ id: 'reduce', options: {} }],
+      });
+    });
+
+    it('reports no registered transformations before a supplier is set', () => {
+      const panel = new PanelPlugin(() => <div />);
+
+      expect(panel.hasDataTransformations()).toBe(false);
+    });
+
+    it('reports registered transformations without consulting the supplier', () => {
+      const supplier = jest.fn().mockReturnValue([{ id: 'reduce', options: {} }]);
+      const panel = new PanelPlugin(() => <div />).setDataTransformations(supplier);
+
+      expect(panel.hasDataTransformations()).toBe(true);
+      // The data-independent half of the question: a caller with no frames in hand still needs to
+      // know whether to install anything, and a supplier is free to return nothing for given frames.
+      expect(supplier).not.toHaveBeenCalled();
+    });
+  });
 });
