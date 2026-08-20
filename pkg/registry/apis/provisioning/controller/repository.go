@@ -1092,7 +1092,7 @@ func (rc *RepositoryController) isUserCaused(err error) bool {
 }
 
 // classifyHookFailureReason maps a hook failure to a Ready condition reason,
-// mirroring classifyConnectionError's approach for the Connection resource so
+// mirroring classifyTestResultReason's approach for health-check failures so
 // an auth/permission problem is distinguishable from a generic failure
 // instead of always reporting the same reason.
 func classifyHookFailureReason(err error) string {
