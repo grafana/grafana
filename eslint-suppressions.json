@@ -1456,33 +1456,8 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage.test.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataQueriesTab.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/utils.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/utils.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/DashboardDataLayerSet.tsx": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -1540,16 +1515,6 @@
       "count": 1
     },
     "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/panel-actions/PanelGroupByAction/PanelGroupByAction.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/setDashboardPanelContext.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
