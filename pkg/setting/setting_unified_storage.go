@@ -280,7 +280,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(5 * time.Second)
 
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
-	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
+	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(true)
 	// enable sqlkv backwards compatibility mode with sql/backend
 	cfg.EnableSQLKVCompatibilityMode = section.Key("enable_sqlkv_compatibility_mode").MustBool(true)
 	// log every call reaching an exported method of the legacy sql/backend
@@ -288,7 +288,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 	cfg.LogSQLBackendCalls = section.Key("log_sql_backend_calls").MustBool(false)
 	// enable per-resource leases in the KV backend;
-	cfg.EnableKVLeases = section.Key("enable_kv_leases").MustBool(false)
+	cfg.EnableKVLeases = section.Key("enable_kv_leases").MustBool(true)
 	// TTL for per-resource write leases; 0 uses the backend default (10s).
 	cfg.KVLeaseTTL = section.Key("kv_lease_ttl").MustDuration(0)
 	// auto-renew write leases in the background so they are not lost while a
