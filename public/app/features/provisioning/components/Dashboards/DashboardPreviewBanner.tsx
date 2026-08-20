@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
@@ -69,7 +70,10 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
     repoBaseUrl,
   };
 
-  const originalUrl = typeof existingUid === 'string' && existingUid ? `/d/${existingUid}` : undefined;
+  // assureBaseUrl so the href still resolves under a configured appSubUrl, since opening the link
+  // in a new tab bypasses the router and hits the URL directly.
+  const originalUrl =
+    typeof existingUid === 'string' && existingUid ? locationUtil.assureBaseUrl(`/d/${existingUid}`) : undefined;
 
   return (
     <PreviewBannerViewPR prURL={prURL} isNewPr={!hasExistingPr} branchInfo={branchInfo} originalUrl={originalUrl} />
