@@ -23,6 +23,19 @@ const defaultHooksOptions = {
   mutations: true,
 };
 
+// Every namespaced kind can serve /search and /trash, and no frontend calls them yet, so
+// generating a hook per kind would add clients nobody imports. The dashboard search at
+// `/search` is a different, older endpoint and stays.
+const perResourceSearch = /^\/[^/]+\/(search|trash)$/;
+
+const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
+  if (Array.isArray(filterEndpoints)) {
+    return filterEndpoints;
+  }
+  return (name, operation) =>
+    !perResourceSearch.test(operation.path) && (filterEndpoints ? filterEndpoints(name, operation) : true);
+};
+
 /**
  * Helper to return consistent base API generation config
  */
@@ -32,7 +45,7 @@ const createAPIConfig = (app: string, version: string, filterEndpoints?: Endpoin
     [filePath]: {
       schemaFile: path.join(basePath, `packages/grafana-openapi/src/apis/${app}.grafana.app-${version}.json`),
       apiFile: `../clients/rtkq/${app}/${version}/baseAPI.ts`,
-      filterEndpoints,
+      filterEndpoints: withoutPerResourceSearch(filterEndpoints),
       tag: true,
       hooks: defaultHooksOptions,
       ...additional,
