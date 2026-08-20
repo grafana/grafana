@@ -45,4 +45,18 @@ describe('addVariable', () => {
     expect(variableSet.state.variables).toEqual([existing, newVariable]);
     expect(dashboard.state.sidebar.getSelectedObject()).toBe(newVariable);
   });
+
+  it('undo reselects docked sidebar', () => {
+    const existing = new CustomVariable({ name: 'existing', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [existing] });
+    const dashboard = buildScene(variableSet);
+    dashboard.state.sidebar.setState({ isDocked: true });
+
+    const newVariable = new CustomVariable({ name: 'added', query: 'c,d' });
+    addVariable({ source: variableSet, addedObject: newVariable });
+
+    dashboard.state.sidebar.undoAction();
+
+    expect(dashboard.state.sidebar.getSelectedObject()).toBe(dashboard);
+  });
 });
