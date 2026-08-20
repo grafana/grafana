@@ -18,7 +18,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { useDraggableListItemActions } from './useDraggableListItemActions';
+import { toDraggableListItemActions } from './helpers';
 
 const ID_VISIBLE_LIST = 'links-list-visible';
 const ID_CONTROLS_MENU_LIST = 'links-list-controls-menu';
@@ -62,7 +62,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
     [getLinkEditableElement]
   );
 
-  const linkActions = useDraggableListItemActions<PseudoSceneLink>(onClickLink, onDuplicateLink, onDeleteLink);
+  const linkActions = toDraggableListItemActions<PseudoSceneLink>(onClickLink, onDuplicateLink, onDeleteLink);
 
   const onDragEnd = useCallback(
     (result: DropResult) => {

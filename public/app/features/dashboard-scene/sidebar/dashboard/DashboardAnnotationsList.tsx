@@ -16,8 +16,7 @@ import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
 
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { partitionSceneObjects, selectSidebarObject } from './helpers';
-import { useDraggableListItemActions } from './useDraggableListItemActions';
+import { partitionSceneObjects, selectSidebarObject, toDraggableListItemActions } from './helpers';
 
 const ID_VISIBLE_LIST = 'annotations-list-visible';
 const ID_CONTROLS_MENU_LIST = 'annotations-list-controls-menu';
@@ -36,7 +35,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
     [annotationLayers]
   );
 
-  const annotationActions = useDraggableListItemActions<DashboardAnnotationsDataLayer>(
+  const annotationActions = toDraggableListItemActions<DashboardAnnotationsDataLayer>(
     selectSidebarObject,
     duplicateAnnotation,
     deleteAnnotation

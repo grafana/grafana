@@ -13,8 +13,7 @@ import { openAddFilterForm } from '../add-new/AddFilters';
 import { partitionVariablesByDisplay } from './DashboardVariablesList';
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { selectSidebarObject } from './helpers';
-import { useDraggableListItemActions } from './useDraggableListItemActions';
+import { selectSidebarObject, toDraggableListItemActions } from './helpers';
 import { confirmDeleteVariable, createDragEndHandler } from './variableListActions';
 
 const ID_FILTERS_VISIBLE_LIST = 'filters-list-visible';
@@ -32,7 +31,7 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
   const filters = useMemo(() => variables.filter(sceneUtils.isAdHocVariable), [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(filters), [filters]);
 
-  const filterActions = useDraggableListItemActions<SceneVariable>(
+  const filterActions = toDraggableListItemActions<SceneVariable>(
     selectSidebarObject,
     duplicateVariable,
     confirmDeleteVariable

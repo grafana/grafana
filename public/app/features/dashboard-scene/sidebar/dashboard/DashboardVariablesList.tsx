@@ -19,8 +19,7 @@ import { DashboardInteractions } from '../../utils/interactions';
 
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { partitionSceneObjects, selectSidebarObject } from './helpers';
-import { useDraggableListItemActions } from './useDraggableListItemActions';
+import { partitionSceneObjects, selectSidebarObject, toDraggableListItemActions } from './helpers';
 import { confirmDeleteVariable, createDragEndHandler } from './variableListActions';
 
 const ID_VISIBLE_LIST = 'variables-list-visible';
@@ -60,7 +59,7 @@ export function DashboardVariablesList({
   }, [includeAdHoc, listVariables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
-  const variableActions = useDraggableListItemActions<SceneVariable>(
+  const variableActions = toDraggableListItemActions<SceneVariable>(
     selectSidebarObject,
     duplicateVariable,
     confirmDeleteVariable

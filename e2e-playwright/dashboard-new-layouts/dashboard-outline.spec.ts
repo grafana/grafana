@@ -16,9 +16,17 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can use dashboard outline', async ({ gotoDashboardPage, selectors, page, controls, sidebar }) => {
+    test.only('can use dashboard outline', async ({ gotoDashboardPage, selectors, page, controls, sidebar }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Outline');
+
+      // Should be able to click Variables item in outline to see add variable button
+      await sidebar.contentOutline.clickItem('Variables');
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
+      ).toBeVisible();
+
       await sidebar.toolbar.clickButton('Outline');
 
       // Clicking a panel should scroll that panel in view

@@ -143,6 +143,7 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
       id: SidebarCategoryType.DashboardFilters,
       headerActions: <AddFilterIconButton dashboard={dashboard} />,
       itemsCount: filterCount,
+      isDashboardSidebar: true,
       renderTitle: () => title,
     });
 
