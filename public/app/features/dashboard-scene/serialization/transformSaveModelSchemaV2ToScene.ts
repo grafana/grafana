@@ -77,6 +77,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
+import { syncTransformationsFromUrl } from '../scene/syncTransformationsFromUrl';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
@@ -252,6 +253,7 @@ export function transformSaveModelSchemaV2ToScene(
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
         addPanelsOnLoadBehavior,
+        syncTransformationsFromUrl,
         new DashboardReloadBehavior({
           reloadOnParamsChange:
             config.featureToggles.reloadDashboardsOnParamsChange &&

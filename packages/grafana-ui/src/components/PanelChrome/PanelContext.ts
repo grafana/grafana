@@ -3,9 +3,11 @@ import { createContext, useContext } from 'react';
 import {
   type AnnotationEventUIModel,
   type CoreApp,
+  type CustomTransformOperator,
   type DashboardCursorSync,
   type DataFrame,
   type DataLinkPostProcessor,
+  type DataTransformerConfig,
   type EventBus,
   EventBusSrv,
 } from '@grafana/data';
@@ -85,6 +87,19 @@ export interface PanelContext {
    * in a the Promise resolving to a false value.
    */
   onUpdateData?: (frames: DataFrame[]) => Promise<boolean>;
+
+  /**
+   * Sets panel provided (system) transformations that are combined with the user configured ones.
+   * Prepended transformations run before the user transformations, appended ones after.
+   * Repeated calls replace the previous system transformations, calling with empty arrays clears them.
+   * Only supported in dashboard panel context currently.
+   *
+   * @alpha -- experimental
+   */
+  onSetSystemTransformations?: (transformations: {
+    prepend?: Array<DataTransformerConfig | CustomTransformOperator>;
+    append?: Array<DataTransformerConfig | CustomTransformOperator>;
+  }) => void;
 
   /**
    * Optional supplier for internal data links. If not provided a link pointing to Explore will be generated.

@@ -3,6 +3,7 @@ import { defaults, isEqual } from 'lodash';
 import { isEmptyObject, type ScopedVars, type TimeRange } from '@grafana/data';
 import {
   behaviors,
+  isSystemTransformation,
   type SceneGridItemLike,
   SceneGridRow,
   VizPanel,
@@ -336,7 +337,10 @@ function vizPanelDataToPanel(
   }
 
   if (dataProvider instanceof SceneDataTransformer) {
-    panel.transformations = dataProvider.state.transformations as DataTransformerConfig[];
+    // System (panel provided) transformations are runtime-only and never persisted
+    panel.transformations = dataProvider.state.transformations.filter(
+      (t) => !isSystemTransformation(t)
+    ) as DataTransformerConfig[];
   }
 
   if (dataProvider && isSnapshot) {

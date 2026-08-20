@@ -6,6 +6,7 @@ import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
   dataLayers,
+  isSystemTransformation,
   LocalValueVariable,
   type QueryVariable,
   sceneGraph,
@@ -559,11 +560,12 @@ export function getDataQueryKind(query: SceneDataQuery | string | undefined, que
   return defaultDS?.type || '';
 }
 
-function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
+export function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
   let transformations: TransformationKind[] = [];
   const dataProvider = vizPanel.state.$data;
   if (dataProvider instanceof SceneDataTransformer) {
-    const transformationList = dataProvider.state.transformations;
+    // System (panel provided) transformations are runtime-only and never persisted
+    const transformationList = dataProvider.state.transformations.filter((t) => !isSystemTransformation(t));
 
     if (transformationList.length === 0) {
       return [];

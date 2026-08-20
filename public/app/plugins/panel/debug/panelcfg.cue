@@ -27,7 +27,7 @@ composableKinds: PanelCfg: {
 					schemaChanged: bool
 				} @cuetsy(kind="type")
 
-				DebugMode: "render" | "events" | "cursor" | "State" | "ThrowError" @cuetsy(kind="enum")
+				DebugMode: "render" | "events" | "cursor" | "State" | "ThrowError" | "transformations" @cuetsy(kind="enum")
 
 				Options: {
 					mode:      DebugMode

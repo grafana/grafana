@@ -1,6 +1,13 @@
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  dataLayers,
+  SceneDataTransformer,
+  sceneGraph,
+  sceneUtils,
+  type VizPanel,
+} from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
@@ -210,6 +217,14 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     // TODO
     //return onUpdatePanelSnapshotData(this.props.panel, frames);
     return Promise.resolve(true);
+  };
+
+  context.onSetSystemTransformations = (transformations) => {
+    const provider = vizPanel.state.$data;
+
+    if (provider instanceof SceneDataTransformer) {
+      provider.setSystemTransformations(transformations);
+    }
   };
 
   // Only wire up the status-popover inspector opener when the new panel errors UI is enabled.

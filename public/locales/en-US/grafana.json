@@ -7729,6 +7729,13 @@
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
     },
+    "system-transformation-rows": {
+      "badge-system": "System",
+      "badge-url": "URL",
+      "custom-transformation-name": "Custom transformation (code defined)",
+      "tooltip-system": "Added automatically by the panel. Read-only.",
+      "tooltip-url": "Added from the URL. Read-only."
+    },
     "text-box-variable": {
       "name-default-value": "Default value"
     },
@@ -8264,6 +8271,10 @@
     "state-view": {
       "current-value": "Current value: {{currentValue}} ",
       "label-state-name": "State name"
+    },
+    "system-transformations-view": {
+      "description": "This mode prepends a limit transformation and appends a reduce transformation to the user configured ones. Open the transformations tab in the panel editor to see them as read-only rows.",
+      "frame-summary": "{{name}}: {{fieldCount}} fields, {{rowCount}} rows"
     }
   },
   "diff-viewer": {

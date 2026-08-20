@@ -17,6 +17,7 @@ export const plugin = new PanelPlugin<Options>(DebugPanel).useFieldConfig().setP
           { label: 'Cursor', value: DebugMode.Cursor },
           { label: 'Cursor', value: DebugMode.Cursor },
           { label: 'Share state', value: DebugMode.State },
+          { label: 'System transformations', value: DebugMode.Transformations },
           { label: 'Throw error', value: DebugMode.ThrowError },
         ],
       },

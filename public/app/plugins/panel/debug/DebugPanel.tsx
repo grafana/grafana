@@ -4,6 +4,7 @@ import { CursorView } from './CursorView';
 import { EventBusLoggerPanel } from './EventBusLogger';
 import { RenderInfoViewer } from './RenderInfoViewer';
 import { StateView } from './StateView';
+import { SystemTransformationsView } from './SystemTransformationsView';
 import { type Options, DebugMode } from './panelcfg.gen';
 
 type Props = PanelProps<Options>;
@@ -18,6 +19,8 @@ export function DebugPanel(props: Props) {
       return <CursorView eventBus={props.eventBus} />;
     case DebugMode.State:
       return <StateView {...props} />;
+    case DebugMode.Transformations:
+      return <SystemTransformationsView {...props} />;
     case DebugMode.ThrowError:
       throw new Error('I failed you and for that i am deeply sorry');
     default:

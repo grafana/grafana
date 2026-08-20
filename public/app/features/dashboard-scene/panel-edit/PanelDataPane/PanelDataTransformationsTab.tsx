@@ -3,12 +3,19 @@ import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { throttle } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
-import { type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '@grafana/data';
+import {
+  type DataTransformerConfig,
+  type GrafanaTheme2,
+  type PanelData,
+  standardTransformersRegistry,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
+  isSystemTransformation,
   type SceneComponentProps,
+  type SceneDataTransformation,
   SceneDataTransformer,
   SceneObjectBase,
   type SceneObjectRef,
@@ -16,7 +23,7 @@ import {
   type SceneQueryRunner,
   type VizPanel,
 } from '@grafana/scenes';
-import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
+import { Badge, Button, ButtonGroup, ConfirmModal, Icon, Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
@@ -71,9 +78,36 @@ export class PanelDataTransformationsTab
 
   public onChangeTransformations(transformations: DataTransformerConfig[]) {
     const transformer = this.getDataTransformer();
-    transformer.setState({ transformations });
+    const { systemPrepend, systemAppend } = splitSystemTransformations(transformer.state.transformations);
+
+    // User edits never touch system (panel provided) transformations - preserve them at the edges
+    transformer.setState({ transformations: [...systemPrepend, ...transformations, ...systemAppend] });
     transformer.reprocessTransformations();
   }
+}
+
+/**
+ * Splits transformations into the system (panel provided, read-only) groups and the user configured ones.
+ * System transformations carry their placement in the `position` property.
+ */
+export function splitSystemTransformations(transformations: SceneDataTransformation[]): {
+  systemPrepend: SceneDataTransformation[];
+  userTransformations: SceneDataTransformation[];
+  systemAppend: SceneDataTransformation[];
+} {
+  const systemPrepend: SceneDataTransformation[] = [];
+  const userTransformations: SceneDataTransformation[] = [];
+  const systemAppend: SceneDataTransformation[] = [];
+
+  for (const transformation of transformations) {
+    if (isSystemTransformation(transformation)) {
+      (transformation.position === 'append' ? systemAppend : systemPrepend).push(transformation);
+    } else {
+      userTransformations.push(transformation);
+    }
+  }
+
+  return { systemPrepend, userTransformations, systemAppend };
 }
 
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
@@ -81,15 +115,19 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
 
+  const { systemPrepend, userTransformations, systemAppend } = useMemo(
+    () => splitSystemTransformations(Array.isArray(transformsWrongType) ? transformsWrongType : []),
+    [transformsWrongType]
+  );
+
   // Type guard to ensure transformations are DataTransformerConfig[]
   const transformations = useMemo<DataTransformerConfig[]>(() => {
-    return Array.isArray(transformsWrongType)
-      ? transformsWrongType.filter(
-          (t): t is DataTransformerConfig =>
-            t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
-        )
-      : [];
-  }, [transformsWrongType]);
+    return userTransformations.filter(
+      (t): t is DataTransformerConfig => t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
+    );
+  }, [userTransformations]);
+
+  const hasSystemTransformations = systemPrepend.length > 0 || systemAppend.length > 0;
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
@@ -143,7 +181,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
     />
   );
 
-  if (transformations.length < 1) {
+  if (transformations.length < 1 && !hasSystemTransformations) {
     return (
       <>
         <EmptyTransformationsMessage
@@ -161,7 +199,11 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   return (
     <>
-      <TransformationsEditor data={sourceData.data} transformations={transformations} model={model} />
+      <SystemTransformationRows transformations={systemPrepend} />
+      {transformations.length > 0 && (
+        <TransformationsEditor data={sourceData.data} transformations={transformations} model={model} />
+      )}
+      <SystemTransformationRows transformations={systemAppend} />
       <ButtonGroup>
         <Button
           icon="plus"
@@ -173,17 +215,19 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
             Add another transformation
           </Trans>
         </Button>
-        <Button
-          data-testid={selectors.components.Transforms.removeAllTransformationsButton}
-          className={styles.removeAll}
-          icon="times"
-          variant="secondary"
-          onClick={() => setConfirmModalOpen(true)}
-        >
-          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
-            Delete all transformations
-          </Trans>
-        </Button>
+        {transformations.length > 0 && (
+          <Button
+            data-testid={selectors.components.Transforms.removeAllTransformationsButton}
+            className={styles.removeAll}
+            icon="times"
+            variant="secondary"
+            onClick={() => setConfirmModalOpen(true)}
+          >
+            <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
+              Delete all transformations
+            </Trans>
+          </Button>
+        )}
       </ButtonGroup>
       <ConfirmModal
         isOpen={confirmModalOpen}
@@ -277,9 +321,74 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
   );
 }
 
+interface SystemTransformationRowsProps {
+  transformations: SceneDataTransformation[];
+}
+
+function SystemTransformationRows({ transformations }: SystemTransformationRowsProps) {
+  const styles = useStyles2(getStyles);
+
+  if (transformations.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      {transformations.map((transformation, index) => {
+        const id = 'id' in transformation && typeof transformation.id === 'string' ? transformation.id : undefined;
+        const name = id
+          ? (standardTransformersRegistry.getIfExists(id)?.name ?? id)
+          : t(
+              'dashboard-scene.system-transformation-rows.custom-transformation-name',
+              'Custom transformation (code defined)'
+            );
+        const fromUrl = 'origin' in transformation && transformation.origin === 'url';
+
+        return (
+          <div key={`${id ?? 'custom'}-${index}`} className={styles.systemRow} data-testid="system-transformation-row">
+            <Icon name="lock" size="sm" />
+            <span className={styles.systemRowName}>{name}</span>
+            <Badge
+              text={
+                fromUrl
+                  ? t('dashboard-scene.system-transformation-rows.badge-url', 'URL')
+                  : t('dashboard-scene.system-transformation-rows.badge-system', 'System')
+              }
+              color="blue"
+              tooltip={
+                fromUrl
+                  ? t('dashboard-scene.system-transformation-rows.tooltip-url', 'Added from the URL. Read-only.')
+                  : t(
+                      'dashboard-scene.system-transformation-rows.tooltip-system',
+                      'Added automatically by the panel. Read-only.'
+                    )
+              }
+            />
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   removeAll: css({
     marginLeft: theme.spacing(2),
+  }),
+  systemRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1, 2),
+    marginBottom: theme.spacing(1),
+    background: theme.colors.background.secondary,
+    border: `1px dashed ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    color: theme.colors.text.secondary,
+  }),
+  systemRowName: css({
+    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeightMedium,
   }),
 });
 

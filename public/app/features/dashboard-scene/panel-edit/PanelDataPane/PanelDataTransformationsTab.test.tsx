@@ -64,6 +64,23 @@ describe('PanelDataTransformationsModel', () => {
     transformsTab.onChangeTransformations([{ id: 'calculateField', options: {} }]);
     expect(transformsTab.getDataTransformer().state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
   });
+
+  it('preserves system transformations when changing user transformations', () => {
+    const { transformsTab } = setupTabScene('panel-1');
+    const transformer = transformsTab.getDataTransformer();
+    transformer.setSystemTransformations({
+      prepend: [{ id: 'limit', options: {} }],
+      append: [{ id: 'reduce', options: {} }],
+    });
+
+    transformsTab.onChangeTransformations([{ id: 'calculateField', options: {} }]);
+
+    expect(transformer.state.transformations).toEqual([
+      { id: 'limit', options: {}, origin: 'system', position: 'prepend' },
+      { id: 'calculateField', options: {} },
+      { id: 'reduce', options: {}, origin: 'system', position: 'append' },
+    ]);
+  });
 });
 
 describe('PanelDataTransformationsTab', () => {
@@ -161,6 +178,42 @@ describe('PanelDataTransformationsTab', () => {
     await userEvent.click(confirmButton);
 
     expect(onChangeTransformation).toHaveBeenCalledWith([]);
+  });
+
+  it('renders system transformations as read-only rows', async () => {
+    const modelMock = createModelMock(
+      mockData,
+      [
+        { id: 'limit', options: {}, origin: 'system', position: 'prepend' },
+        { id: 'calculateField', options: {} },
+        { id: 'reduce', options: {}, origin: 'system', position: 'append' },
+      ] as DataTransformerConfig[],
+      jest.fn()
+    );
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+    await screen.findByText('1 - Add field from calculation');
+    const systemRows = screen.getAllByTestId('system-transformation-row');
+    expect(systemRows).toHaveLength(2);
+    expect(systemRows[0]).toHaveTextContent('Limit');
+    expect(systemRows[1]).toHaveTextContent('Reduce');
+
+    // Only the user transformation row is editable
+    expect(screen.getAllByTestId(selectors.components.QueryEditorRow.actionButton('Remove'))).toHaveLength(1);
+  });
+
+  it('renders read-only rows instead of the empty message when there are only system transformations', async () => {
+    const modelMock = createModelMock(
+      mockData,
+      [{ id: 'reduce', options: {}, origin: 'system', position: 'append' }] as DataTransformerConfig[],
+      jest.fn()
+    );
+    render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+    await screen.findByTestId('system-transformation-row');
+    await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
+    // Nothing to delete when there are no user transformations
+    expect(screen.queryByTestId(selectors.components.Transforms.removeAllTransformationsButton)).toBeNull();
   });
 
   it('can filter transformations in the drawer', async () => {

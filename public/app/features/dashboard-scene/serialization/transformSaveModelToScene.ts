@@ -59,6 +59,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getIsLazy } from '../scene/layouts-shared/utils';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { syncTransformationsFromUrl } from '../scene/syncTransformationsFromUrl';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
@@ -373,6 +374,7 @@ export function createDashboardSceneFromDashboardModel(
     registerPanelInteractionsReporter,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     addPanelsOnLoadBehavior,
+    syncTransformationsFromUrl,
     new DashboardReloadBehavior({
       reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
       uid,
