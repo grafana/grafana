@@ -8,6 +8,13 @@ import { t } from '@grafana/i18n';
  */
 export type FolderDocKey = 'readme' | 'contributing' | 'security';
 
+/**
+ * Query param that selects a folder doc tab by its file name (e.g.
+ * `?docTab=CONTRIBUTING.md`). Shared so links that resolve to a doc in another
+ * folder can deep-link straight to the right tab.
+ */
+export const FOLDER_DOC_TAB_PARAM = 'docTab';
+
 interface FolderDocConvention {
   key: FolderDocKey;
   /** Canonical file name, used when creating the file from the empty state. */
@@ -88,7 +95,7 @@ export function listFolderDocs(filePaths: string[], sourceDir: string): FolderDo
   }
 
   const others = inDir
-    .filter((file) => !usedPaths.has(file.path) && isMarkdown(file.fileName))
+    .filter((file) => !usedPaths.has(file.path) && isMarkdownFile(file.fileName))
     .sort((a, b) => {
       const an = a.fileName.toLowerCase();
       const bn = b.fileName.toLowerCase();
@@ -116,7 +123,8 @@ export function ensureReadmeTab(docs: FolderDoc[], sourceDir: string): FolderDoc
   return [{ key: README_CONVENTION.key, path, fileName: README_CONVENTION.fileName }, ...docs];
 }
 
-function isMarkdown(fileName: string): boolean {
+/** Whether a file name is a markdown doc (`.md` / `.markdown`). */
+export function isMarkdownFile(fileName: string): boolean {
   return /\.(md|markdown)$/i.test(fileName);
 }
 

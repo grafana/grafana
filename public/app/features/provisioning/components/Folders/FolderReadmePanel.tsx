@@ -30,7 +30,13 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { useFolderDocs } from '../../hooks/useFolderDocs';
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
-import { type FolderDoc, ensureReadmeTab, getDocTabLabel, README_CONVENTION } from '../../utils/folderDocConventions';
+import {
+  type FolderDoc,
+  ensureReadmeTab,
+  FOLDER_DOC_TAB_PARAM,
+  getDocTabLabel,
+  README_CONVENTION,
+} from '../../utils/folderDocConventions';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
@@ -38,9 +44,6 @@ import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
 import { FolderReadmeEvents } from './analytics/main';
 
 export const FOLDER_README_ANCHOR_ID = 'folder-readme';
-
-/** Query param that persists the selected doc tab in the URL (by file name). */
-const FOLDER_DOC_TAB_PARAM = 'docTab';
 
 /** Slack subtracted from the tab bar width so rounding never clips the last tab / More. */
 const TAB_OVERFLOW_BUFFER_PX = 8;
