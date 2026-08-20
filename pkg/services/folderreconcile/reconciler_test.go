@@ -3,6 +3,7 @@ package folderreconcile
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -12,6 +13,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
+
+// fakeLock either runs fn (as if the lock were acquired) or skips it (as if another replica holds it).
+type fakeLock struct {
+	acquired bool
+	calls    int
+}
+
+func (f *fakeLock) LockAndExecute(ctx context.Context, _ string, _ time.Duration, fn func(context.Context)) error {
+	f.calls++
+	if f.acquired {
+		fn(ctx)
+	}
+	return nil
+}
 
 type fakeConsumer struct {
 	name    string
@@ -75,10 +90,33 @@ func TestReconcile(t *testing.T) {
 		inGet:       map[string]bool{"exists": true, "racy": true},
 	}
 
-	r := newReconciler(folders, &fakeOrgs{ids: []int64{1}}, 0, alerts, panels)
+	r := newReconciler(folders, &fakeOrgs{ids: []int64{1}}, nil, 0, alerts, panels)
 	require.NoError(t, r.reconcile(context.Background()))
 
 	// Only the truly missing "gone" folder is cleaned up, for every consumer that referenced it.
 	require.Equal(t, []string{"gone"}, alerts.deleted)
 	require.Equal(t, []string{"gone"}, panels.deleted)
+}
+
+func TestNewReconciler_IntervalFloor(t *testing.T) {
+	r := newReconciler(&fakeFolders{FakeService: foldertest.NewFakeService()}, &fakeOrgs{}, nil, time.Minute, nil)
+	require.Equal(t, minInterval, r.interval)
+
+	r = newReconciler(&fakeFolders{FakeService: foldertest.NewFakeService()}, &fakeOrgs{}, nil, 15*time.Minute, nil)
+	require.Equal(t, 15*time.Minute, r.interval)
+}
+
+func TestTick_OnlyReconcilesWhenLockAcquired(t *testing.T) {
+	alerts := &fakeConsumer{name: "alerts", inUse: map[int64][]string{1: {"gone"}}}
+	folders := &fakeFolders{FakeService: foldertest.NewFakeService(), inSearch: map[string]bool{}}
+
+	lock := &fakeLock{acquired: false}
+	r := newReconciler(folders, &fakeOrgs{ids: []int64{1}}, lock, minInterval, alerts)
+	r.tick(context.Background())
+	require.Equal(t, 1, lock.calls)
+	require.Empty(t, alerts.deleted)
+
+	lock.acquired = true
+	r.tick(context.Background())
+	require.Equal(t, []string{"gone"}, alerts.deleted)
 }
