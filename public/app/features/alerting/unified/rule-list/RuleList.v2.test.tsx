@@ -5,7 +5,6 @@ import { byRole, byTestId } from 'testing-library-selector';
 import { OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
-import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { DMAStatus, useDMAStatus } from '../hooks/useDMAStatus';
@@ -109,7 +108,6 @@ describe('RuleListPage v2', () => {
 
   it('hides the data source recording-rule action when the plugin manages DMA', async () => {
     useDMAStatusMock.mockImplementation(actualUseDMAStatus);
-    invalidatePluginSettingsCache(prometheusAlertingPluginMeta.id);
     addPlugin(prometheusAlertingPluginMeta);
     grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
 

@@ -6,7 +6,6 @@ import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { locationService, setPluginLinksHook } from '@grafana/runtime';
-import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleGroupDTO, type GrafanaPromRulesResponse } from 'app/types/unified-alerting-dto';
 
@@ -330,7 +329,6 @@ describe('GroupDetailsPage', () => {
   });
 
   it('redirects data source-managed groups to the plugin', async () => {
-    invalidatePluginSettingsCache(prometheusAlertingPluginMeta.id);
     addPlugin(prometheusAlertingPluginMeta);
 
     renderGroupDetailsPage('prometheus', 'test-prom-namespace', 'test-group-cpu');

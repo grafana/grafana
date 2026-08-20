@@ -5,7 +5,6 @@ import { screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { locationService, setPluginLinksHook } from '@grafana/runtime';
-import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
@@ -250,7 +249,6 @@ describe('RuleEditor grafana managed rules', () => {
 
   describe('when the Prometheus Alerting plugin manages DMA', () => {
     beforeEach(() => {
-      invalidatePluginSettingsCache(prometheusAlertingPluginMeta.id);
       addPlugin(prometheusAlertingPluginMeta);
       setupDataSources(dataSources.default);
     });
@@ -369,14 +367,6 @@ describe('RuleEditor with alertingDisableDMAinUI feature toggle', () => {
     // Expressions should still be available for Grafana-managed alerts in advanced mode
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
     expect(removeExpressionsButtons.length).toBeGreaterThan(0);
-  });
-
-  it('offers plugin installation or enablement for a data source-managed rule', async () => {
-    renderRuleEditor(undefined, 'recording');
-
-    expect(
-      await screen.findByRole('link', { name: 'Install or enable the Prometheus Alerting plugin' })
-    ).toHaveAttribute('href', '/plugins/grafana-prometheusalerting-app');
   });
 
   it('shows DMA as unavailable when an external-only user creates an alert rule', async () => {

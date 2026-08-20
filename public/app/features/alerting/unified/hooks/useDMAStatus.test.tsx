@@ -27,6 +27,11 @@ const isAppPluginInstalledMock = jest.mocked(isAppPluginInstalled);
 const getPluginSettingsMock = jest.mocked(getPluginSettings);
 const logErrorMock = jest.mocked(logError);
 
+function mockInstalledPlugin(enabled: boolean) {
+  isAppPluginInstalledMock.mockResolvedValue(true);
+  getPluginSettingsMock.mockResolvedValue({ ...prometheusAlertingPluginMeta, enabled });
+}
+
 describe('useDMAStatus', () => {
   const originalFeatureToggle = config.featureToggles.alertingDisableDMAinUI;
 
@@ -74,37 +79,20 @@ describe('useDMAStatus', () => {
     expect(getPluginSettingsMock).not.toHaveBeenCalled();
   });
 
-  it('enables DMA when the plugin is installed but disabled', async () => {
-    isAppPluginInstalledMock.mockResolvedValue(true);
-    getPluginSettingsMock.mockResolvedValue({
-      ...prometheusAlertingPluginMeta,
-      enabled: false,
-    });
+  it.each([
+    [false, DMAStatus.ManagedByGrafana],
+    [true, DMAStatus.ManagedByPlugin],
+  ])('maps an installed plugin with enabled=%s to %s', async (enabled, expectedStatus) => {
+    mockInstalledPlugin(enabled);
 
     const { result } = renderHook(() => useDMAStatus());
 
-    await waitFor(() => expect(result.current.status).toBe(DMAStatus.ManagedByGrafana));
-  });
-
-  it('disables DMA when the plugin is installed and enabled', async () => {
-    isAppPluginInstalledMock.mockResolvedValue(true);
-    getPluginSettingsMock.mockResolvedValue({
-      ...prometheusAlertingPluginMeta,
-      enabled: true,
-    });
-
-    const { result } = renderHook(() => useDMAStatus());
-
-    await waitFor(() => expect(result.current.status).toBe(DMAStatus.ManagedByPlugin));
+    await waitFor(() => expect(result.current.status).toBe(expectedStatus));
   });
 
   it('uses an enabled plugin when the feature toggle is enabled', async () => {
     config.featureToggles.alertingDisableDMAinUI = true;
-    isAppPluginInstalledMock.mockResolvedValue(true);
-    getPluginSettingsMock.mockResolvedValue({
-      ...prometheusAlertingPluginMeta,
-      enabled: true,
-    });
+    mockInstalledPlugin(true);
 
     const { result } = renderHook(() => useDMAStatus());
 

@@ -106,24 +106,21 @@ describe('RuleList - FilterView', () => {
     expect(await screen.findByText(/No more results/)).toBeInTheDocument();
   });
 
-  it.each(['the Prometheus Alerting plugin manages data source-managed rules', 'DMA is disabled in the Grafana UI'])(
-    'should not render data source-managed rules when %s',
-    async () => {
-      render(
-        <FilterView
-          filterState={getFilter({ ruleSource: RuleSource.DataSource, dataSourceNames: ['Mimir'] })}
-          showDataSourceManagedRules={false}
-        />
-      );
+  it('does not render data source-managed rules when they are unavailable', async () => {
+    render(
+      <FilterView
+        filterState={getFilter({ ruleSource: RuleSource.DataSource, dataSourceNames: ['Mimir'] })}
+        showDataSourceManagedRules={false}
+      />
+    );
 
-      act(() => {
-        io.enterNode(screen.getByTestId('load-more-helper'));
-      });
+    act(() => {
+      io.enterNode(screen.getByTestId('load-more-helper'));
+    });
 
-      expect(await screen.findByText(/No matching rules found/)).toBeInTheDocument();
-      expect(screen.queryByRole('treeitem', { name: /mimir-test-rule/i })).not.toBeInTheDocument();
-    }
-  );
+    expect(await screen.findByText(/No matching rules found/)).toBeInTheDocument();
+    expect(screen.queryByRole('treeitem', { name: /mimir-test-rule/i })).not.toBeInTheDocument();
+  });
 
   it('should display empty state when no rules are found', async () => {
     render(<FilterView filterState={getFilter({ groupName: 'non-existing-group' })} />);

@@ -4,7 +4,7 @@ import { type RuleFormType } from '../types/rule-form';
 import { type PluginRuleRoute } from '../utils/prometheusNavigation';
 import { isDataSourceManagedRuleByType, isGrafanaRuleIdentifier, isRecordingRuleByType } from '../utils/rules';
 
-export type RuleEditorRouteType = 'recording' | 'alerting' | 'grafana-recording';
+type RuleEditorRouteType = 'recording' | 'alerting' | 'grafana-recording';
 
 /** What Grafana itself renders when the plugin does not take over. */
 export type GrafanaEditorPage =

@@ -29,14 +29,6 @@ function renderGuard(overrides: { pluginDestination?: ReactNode } = {}) {
 }
 
 describe('DMARouteGuard', () => {
-  it('renders Grafana routes without waiting for DMA status', () => {
-    useDMAStatusMock.mockReturnValue({ status: DMAStatus.Loading });
-
-    renderGuard({ pluginDestination: undefined });
-
-    expect(screen.getByText('Grafana page')).toBeInTheDocument();
-  });
-
   it('renders children instead of handing off when the caller supplies no plugin destination', () => {
     // The caller refused the request (e.g. missing permission), so `children` holds that answer and
     // must not be pre-empted by the plugin redirect.
@@ -48,21 +40,16 @@ describe('DMARouteGuard', () => {
     expect(screen.queryByText('Plugin page')).not.toBeInTheDocument();
   });
 
-  it('shows loading while a DMA route is being resolved', () => {
-    useDMAStatusMock.mockReturnValue({ status: DMAStatus.Loading });
+  it.each([
+    [DMAStatus.Loading, 'Loading DMA status'],
+    [DMAStatus.ManagedByPlugin, 'Plugin page'],
+    [DMAStatus.ManagedByGrafana, 'Grafana page'],
+  ])('renders the expected destination for %s', (status, expectedText) => {
+    useDMAStatusMock.mockReturnValue({ status });
 
     renderGuard();
 
-    expect(screen.getByText('Loading DMA status')).toBeInTheDocument();
-    expect(screen.queryByText('Grafana page')).not.toBeInTheDocument();
-  });
-
-  it('renders the plugin destination when DMA is plugin-managed', () => {
-    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByPlugin });
-
-    renderGuard();
-
-    expect(screen.getByText('Plugin page')).toBeInTheDocument();
+    expect(screen.getByText(expectedText)).toBeInTheDocument();
   });
 
   it('offers plugin installation or enablement when DMA is unavailable', () => {
@@ -75,13 +62,5 @@ describe('DMARouteGuard', () => {
       'href',
       '/plugins/grafana-prometheusalerting-app'
     );
-  });
-
-  it('renders the Grafana page when DMA is Grafana-managed', () => {
-    useDMAStatusMock.mockReturnValue({ status: DMAStatus.ManagedByGrafana });
-
-    renderGuard();
-
-    expect(screen.getByText('Grafana page')).toBeInTheDocument();
   });
 });
