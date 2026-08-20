@@ -18,7 +18,7 @@ import {
   ToolbarButton,
   useStyles2,
 } from '@grafana/ui';
-import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { provisioningAPIv0alpha1, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { useFolderDocs } from '../../hooks/useFolderDocs';
@@ -33,6 +33,12 @@ export const FOLDER_README_ANCHOR_ID = 'folder-readme';
 
 /** Query param that persists the selected doc tab in the URL (by file name). */
 export const FOLDER_DOC_TAB_PARAM = 'docTab';
+
+/** Slack subtracted from the tab bar width so rounding never clips the last tab / More. */
+const TAB_OVERFLOW_BUFFER_PX = 8;
+
+/** How many tabs after the active one to prefetch so switching feels instant. */
+const PREFETCH_ADJACENT_DOCS = 2;
 
 interface Props {
   folderUID: string;
@@ -68,10 +74,18 @@ function FolderReadmePanelContent({ folderUID }: Props) {
   const [queryParams, setQueryParams] = useQueryParams();
   const activeTab =
     typeof queryParams[FOLDER_DOC_TAB_PARAM] === 'string' ? queryParams[FOLDER_DOC_TAB_PARAM] : undefined;
-  const activeDoc = docs.find((doc) => doc.fileName === activeTab) ?? docs[0];
+  const activeIndex = Math.max(
+    0,
+    docs.findIndex((doc) => doc.fileName === activeTab)
+  );
+  const activeDoc = docs[activeIndex];
   const activePath = activeDoc?.path;
 
   const { status, markdownContent, readmePath, refetch, isFetching } = useFolderReadme(folderUID, activePath);
+
+  // Once the active doc has loaded, warm the next couple of tabs so switching to
+  // them is instant. Their content is cached by RTK for later selection.
+  usePrefetchAdjacentDocs(repository?.name, docs, activeIndex, status === 'ok');
 
   const sectionRef = useRef<HTMLElement>(null);
   // TODO remove when react-use is fixed
@@ -212,7 +226,9 @@ function DocTabs({ docs, activePath, onSelect }: DocTabsProps) {
           </span>
         ))}
         <span data-measure-more>
-          <ToolbarButton>
+          {/* isOpen={false} so the measured width includes the caret the real
+              More trigger renders — otherwise we under-reserve and clip it. */}
+          <ToolbarButton isOpen={false}>
             <Trans i18nKey="browse-dashboards.readme.tab-more">More</Trans>
           </ToolbarButton>
         </span>
@@ -272,12 +288,23 @@ function useDocTabOverflow(docCount: number) {
     }
 
     const recompute = () => {
-      const available = container.clientWidth;
       const tabEls = Array.from(measure.querySelectorAll<HTMLElement>('[data-measure-tab]'));
-      const moreEl = measure.querySelector<HTMLElement>('[data-measure-more]');
-      const moreWidth = moreEl?.offsetWidth ?? 0;
+      const rawWidth = container.getBoundingClientRect().width;
+      // Not laid out yet (or no environment layout, e.g. jsdom): can't measure, so
+      // show everything rather than collapse to a single tab.
+      if (rawWidth <= 0) {
+        setVisibleCount(tabEls.length);
+        return;
+      }
 
-      const total = tabEls.reduce((sum, el) => sum + el.offsetWidth, 0);
+      // Sub-pixel widths (getBoundingClientRect) and a small buffer keep rounding
+      // from clipping the last tab or the More trigger.
+      const available = rawWidth - TAB_OVERFLOW_BUFFER_PX;
+      const moreEl = measure.querySelector<HTMLElement>('[data-measure-more]');
+      const widths = tabEls.map((el) => el.getBoundingClientRect().width);
+      const moreWidth = moreEl ? moreEl.getBoundingClientRect().width : 0;
+
+      const total = widths.reduce((sum, width) => sum + width, 0);
       if (total <= available) {
         setVisibleCount(tabEls.length);
         return;
@@ -286,8 +313,8 @@ function useDocTabOverflow(docCount: number) {
       // Overflowing: reserve space for the More trigger and fit what remains.
       let used = 0;
       let count = 0;
-      for (const el of tabEls) {
-        used += el.offsetWidth;
+      for (const width of widths) {
+        used += width;
         if (used + moreWidth <= available) {
           count++;
         } else {
@@ -304,6 +331,30 @@ function useDocTabOverflow(docCount: number) {
   }, [docCount]);
 
   return { containerRef, measureRef, visibleCount };
+}
+
+/**
+ * Warms the RTK cache for the next {@link PREFETCH_ADJACENT_DOCS} docs after the
+ * active one, in parallel, once `enabled` (the active doc has loaded). Prefetched
+ * content is cached so selecting those tabs renders without a fetch.
+ */
+function usePrefetchAdjacentDocs(
+  repositoryName: string | undefined,
+  docs: FolderDoc[],
+  activeIndex: number,
+  enabled: boolean
+) {
+  const prefetchDoc = provisioningAPIv0alpha1.usePrefetch('getRepositoryFilesWithPath');
+
+  useEffect(() => {
+    if (!enabled || !repositoryName) {
+      return;
+    }
+    const upcoming = docs.slice(activeIndex + 1, activeIndex + 1 + PREFETCH_ADJACENT_DOCS);
+    for (const doc of upcoming) {
+      prefetchDoc({ name: repositoryName, path: doc.path });
+    }
+  }, [enabled, repositoryName, docs, activeIndex, prefetchDoc]);
 }
 
 interface ReadmeBodyProps {

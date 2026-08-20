@@ -1,6 +1,7 @@
 import { act, render, screen } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type UseFolderDocsResult, useFolderDocs } from '../../hooks/useFolderDocs';
 import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
@@ -78,6 +79,8 @@ describe('FolderReadmePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setTestFlags({ 'provisioning.readmes': true });
+    // Stub prefetch so the panel doesn't fire real queries during unit tests.
+    jest.spyOn(provisioningAPIv0alpha1, 'usePrefetch').mockReturnValue(jest.fn());
     setDocs();
     setReadmeResult();
   });
@@ -190,6 +193,26 @@ describe('FolderReadmePanel', () => {
 
       expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
+    });
+
+    it('prefetches the next couple of docs once the active doc has loaded', () => {
+      const prefetch = jest.fn();
+      jest.spyOn(provisioningAPIv0alpha1, 'usePrefetch').mockReturnValue(prefetch);
+      setDocs({
+        docs: [
+          readmeDoc,
+          doc('contributing', 'CONTRIBUTING.md'),
+          doc('security', 'SECURITY.md'),
+          doc(undefined, 'CHANGELOG.md'),
+        ],
+      });
+      setReadmeResult({ status: 'ok' });
+      setup();
+
+      // README is active (index 0), so the next two docs are warmed — not the third.
+      expect(prefetch).toHaveBeenCalledWith({ name: 'test-repo', path: 'dashboards/team-a/CONTRIBUTING.md' });
+      expect(prefetch).toHaveBeenCalledWith({ name: 'test-repo', path: 'dashboards/team-a/SECURITY.md' });
+      expect(prefetch).not.toHaveBeenCalledWith({ name: 'test-repo', path: 'dashboards/team-a/CHANGELOG.md' });
     });
   });
 
