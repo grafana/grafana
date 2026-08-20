@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -184,10 +185,12 @@ func TestHybridSearch(t *testing.T) {
 			HybridSearchResponse: &resourcepb.HybridSearchResponse{
 				Results: []*resourcepb.HybridSearchResult{
 					{
-						Key:    &resourcepb.ResourceKey{Namespace: "test", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d1"},
-						Title:  "CPU usage",
-						Folder: "f1",
-						Score:  0.032,
+						Key:           &resourcepb.ResourceKey{Namespace: "test", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d1"},
+						Title:         "CPU usage",
+						Folder:        "f1",
+						Score:         0.032,
+						ManagedByKind: "repo",
+						ManagedById:   "m1",
 						Chunks: []*resourcepb.HybridSearchChunk{
 							{Subresource: "panel/3", Content: "CPU usage by host"},
 							{Subresource: "panel/7", Content: "CPU saturation"},
@@ -235,6 +238,8 @@ func TestHybridSearch(t *testing.T) {
 		assert.Equal(t, "f1", p.Hits[0].Folder)
 		assert.Equal(t, "dashboards", p.Hits[0].Resource)
 		assert.Equal(t, 0.032, p.Hits[0].Score)
+		assert.Equal(t, v0alpha1.ManagedBy{Kind: utils.ManagerKind("repo"), ID: "m1"}, p.Hits[0].ManagedBy)
+		assert.True(t, p.Hits[1].ManagedBy.IsZero(), "unmanaged hit must not fabricate a manager")
 
 		require.NotNil(t, p.Hits[0].Field)
 		assert.Equal(t, "panel/3", p.Hits[0].Field.Object["subresource"])
