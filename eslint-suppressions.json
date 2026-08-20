@@ -1837,11 +1837,6 @@
       "count": 3
     }
   },
-  "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/EmailSharingConfiguration.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx": {
     "@grafana/require-no-margin": {
       "count": 4
