@@ -108,7 +108,7 @@ describe('InspectDataTab', () => {
   });
 
   it('offers the transformations toggle when only the plugin registered transformations', async () => {
-    registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+    registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
     const { panel, tab } = buildTab({ pluginId: 'logs-table' });
     activateFullSceneTree(panel);
@@ -142,7 +142,7 @@ describe('InspectDataTab', () => {
     // Registering a supplier installs the wrapper operators whatever the supplier goes on to return,
     // so the pipeline is longer than it looks and only resolving against the frames says whether it
     // does anything.
-    registerPlugin('logs-table', (p) => p.setDataTransformations(() => []));
+    registerPlugin('logs-table', (p) => p.setSystemTransformations(() => []));
 
     const { panel, tab } = buildTab({ pluginId: 'logs-table' });
     activateFullSceneTree(panel);
@@ -154,7 +154,7 @@ describe('InspectDataTab', () => {
   // only follow it by resolving per query result.
   const registerBranchingPlugin = () =>
     registerPlugin('logs-table', (p) =>
-      p.setDataTransformations(({ series }) => (series[0]?.meta?.custom?.extract ? [extractLabels] : []))
+      p.setSystemTransformations(({ series }) => (series[0]?.meta?.custom?.extract ? [extractLabels] : []))
     );
 
   it('hides the transformations toggle for frames a data dependent supplier skips', async () => {
@@ -177,7 +177,7 @@ describe('InspectDataTab', () => {
 
   it('hides the transformations toggle when the feature toggle is off', async () => {
     setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: false });
-    registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+    registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
     const { panel, tab } = buildTab({ pluginId: 'logs-table' });
     activateFullSceneTree(panel);

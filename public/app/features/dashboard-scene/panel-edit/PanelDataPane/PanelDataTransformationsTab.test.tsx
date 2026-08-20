@@ -6,6 +6,7 @@ import {
   FieldType,
   type LoadingState,
   type PanelData,
+  type ResolvedSystemTransformations,
   type TimeRange,
   standardTransformersRegistry,
   toDataFrame,
@@ -18,7 +19,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { NO_SYSTEM_TRANSFORMATIONS, type ResolvedSystemTransformations } from '../../scene/systemTransformations';
+import { NO_SYSTEM_TRANSFORMATIONS } from '../../scene/systemTransformations';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../../utils/utils';

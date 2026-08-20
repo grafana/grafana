@@ -122,7 +122,7 @@ describe('UPDATE_PANEL and plugin registered transformations', () => {
 
   it('keeps the plugin transformations installed when the command replaces the user ones', async () => {
     const plugin = getPanelPlugin({ id: 'logs-table' });
-    plugin.setDataTransformations(() => [extractLabels]);
+    plugin.setSystemTransformations(() => [extractLabels]);
     plugins.set('logs-table', plugin);
 
     const { scene, transformer } = buildScene('logs-table');

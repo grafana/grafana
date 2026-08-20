@@ -94,7 +94,7 @@ describe('PanelDataTransformationsTab system transformations', () => {
 
   it('feeds the editor the fields the plugin transformations produce', async () => {
     const plugin = getPanelPlugin({ id: 'logs-table' });
-    plugin.setDataTransformations(() => [extractLabels]);
+    plugin.setSystemTransformations(() => [extractLabels]);
     plugins.set('logs-table', plugin);
 
     render(<PanelDataTransformationsTabRendered model={createModel('logs-table')} />);

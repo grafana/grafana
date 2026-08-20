@@ -132,7 +132,7 @@ describe('PanelDataTransformer', () => {
 
   describe('pipeline order', () => {
     it('runs plugin transformations before user transformations', async () => {
-      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
       const { transformer } = buildPipeline({
         pluginId: 'logs-table',
@@ -158,7 +158,7 @@ describe('PanelDataTransformer', () => {
       // `reduce` collapses to one row per field, so it can only produce this shape if it ran after the
       // user's `organize` rather than before it.
       registerPlugin('reducer', (p) =>
-        p.setDataTransformations(() => ({ append: [{ id: 'reduce', options: { reducers: ['count'] } }] }))
+        p.setSystemTransformations(() => ({ append: [{ id: 'reduce', options: { reducers: ['count'] } }] }))
       );
 
       const { transformer } = buildPipeline({
@@ -178,7 +178,7 @@ describe('PanelDataTransformer', () => {
 
     it('wraps user transformations when the plugin registers both positions', async () => {
       registerPlugin('both', (p) =>
-        p.setDataTransformations(() => ({
+        p.setSystemTransformations(() => ({
           prepend: [extractLabels],
           append: [{ id: 'reduce', options: { reducers: ['count'] } }],
         }))
@@ -199,7 +199,7 @@ describe('PanelDataTransformer', () => {
     });
 
     it('keeps applying plugin transformations across an editor add and delete', async () => {
-      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
       const { transformer, panel } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
       activateFullSceneTree(panel);
@@ -232,7 +232,7 @@ describe('PanelDataTransformer', () => {
         prepend: [extractLabels],
         append: [{ id: 'reduce', options: { reducers: ['count'] } }],
       });
-      registerPlugin('both', (p) => p.setDataTransformations(supplier));
+      registerPlugin('both', (p) => p.setSystemTransformations(supplier));
 
       const series = [frameWithLabels()];
       const { transformer } = buildPipeline({ pluginId: 'both', series });
@@ -252,7 +252,7 @@ describe('PanelDataTransformer', () => {
 
     it('resolves the supplier once per emission', async () => {
       const supplier = jest.fn().mockReturnValue({ prepend: [extractLabels], append: [] });
-      registerPlugin('both', (p) => p.setDataTransformations(supplier));
+      registerPlugin('both', (p) => p.setSystemTransformations(supplier));
 
       const { transformer } = buildPipeline({ pluginId: 'both', series: [frameWithLabels()] });
       activateFullSceneTree(transformer);
@@ -271,7 +271,7 @@ describe('PanelDataTransformer', () => {
 
     it('lets the supplier branch on frame metadata', async () => {
       registerPlugin('graph', (p) =>
-        p.setDataTransformations(({ series }) =>
+        p.setSystemTransformations(({ series }) =>
           series[0]?.meta?.preferredVisualisationType === 'nodeGraph' ? [extractLabels] : []
         )
       );
@@ -295,7 +295,7 @@ describe('PanelDataTransformer', () => {
     });
 
     it('re-runs the supplier when the panel switches visualization', async () => {
-      registerPlugin('extracts', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('extracts', (p) => p.setSystemTransformations(() => [extractLabels]));
       registerPlugin('plain');
 
       const { transformer, panel } = buildPipeline({ pluginId: 'extracts', series: [frameWithLabels()] });
@@ -313,14 +313,14 @@ describe('PanelDataTransformer', () => {
       });
     });
 
-    it('surfaces a failing supplier as a panel data error', async () => {
+    it('contains a throwing supplier instead of erroring the panel', async () => {
       registerPlugin('broken', (p) =>
-        p.setDataTransformations(() => {
+        p.setSystemTransformations(() => {
           throw new Error('supplier blew up');
         })
       );
 
-      // Scenes logs the failure itself before turning it into panel data.
+      // PanelPlugin reports the broken supplier itself, so nothing reaches the pipeline to log.
       const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       const { transformer } = buildPipeline({
@@ -330,13 +330,15 @@ describe('PanelDataTransformer', () => {
       });
       activateFullSceneTree(transformer);
 
+      // The plugin registers nothing, which is the same outcome as a plugin that never called
+      // setSystemTransformations: the user's own transformations still run over the query result.
       await waitFor(() => {
-        expect(transformer.state.data?.state).toBe(LoadingState.Error);
+        expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toEqual(['Field', 'Max']);
       });
-      expect(transformer.state.data?.errors?.[0].message).toContain('supplier blew up');
-      // One pipeline means one error boundary: the user's transformations do not run either, and
-      // the panel falls back to the untransformed frames.
-      expect(transformer.state.data?.series[0]?.fields.map((f) => f.name)).toEqual(['time', 'line', 'labels']);
+      expect(transformer.state.data?.state).toBe(LoadingState.Done);
+      expect(transformer.state.data?.errors).toBeUndefined();
+      // Once, not once per emission and per editor render.
+      expect(consoleError).toHaveBeenCalledTimes(1);
 
       consoleError.mockRestore();
     });
@@ -345,7 +347,7 @@ describe('PanelDataTransformer', () => {
   describe('getResolvedSystemTransformations', () => {
     it('returns the shared empty result when the feature toggle is off', async () => {
       setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: false });
-      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
       const series = [frameWithLabels()];
       const { transformer } = buildPipeline({ pluginId: 'logs-table', series });
@@ -355,7 +357,7 @@ describe('PanelDataTransformer', () => {
     });
 
     it('returns the shared empty result for an empty frame set', async () => {
-      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
       const { transformer } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
       activateFullSceneTree(transformer);
@@ -365,7 +367,7 @@ describe('PanelDataTransformer', () => {
 
     it('returns the shared empty result when the plugin resolves to nothing for these frames', async () => {
       registerPlugin('conditional', (p) =>
-        p.setDataTransformations(({ series }) => (series[0]?.meta?.custom?.extract ? [extractLabels] : []))
+        p.setSystemTransformations(({ series }) => (series[0]?.meta?.custom?.extract ? [extractLabels] : []))
       );
 
       const series = [frameWithLabels()];
@@ -377,7 +379,7 @@ describe('PanelDataTransformer', () => {
 
     it('drops configs targeting a topic other than series', async () => {
       registerPlugin('annotator', (p) =>
-        p.setDataTransformations(() => ({
+        p.setSystemTransformations(() => ({
           prepend: [extractLabels, { ...extractLabels, topic: DataTopic.Annotations }],
           append: [{ id: 'reduce', options: {}, topic: DataTopic.Annotations }],
         }))
@@ -396,7 +398,7 @@ describe('PanelDataTransformer', () => {
   describe('the feature toggle', () => {
     it('does nothing when the feature toggle is off', async () => {
       setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: false });
-      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
       const series = [frameWithLabels()];
       const { transformer } = buildPipeline({ pluginId: 'logs-table', series });
@@ -412,7 +414,7 @@ describe('PanelDataTransformer', () => {
 
     it('does not resolve the plugin at all when the feature toggle is off', async () => {
       setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: false });
-      registerPlugin('cold', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('cold', (p) => p.setSystemTransformations(() => [extractLabels]));
       coldPlugins.add('cold');
 
       const { transformer } = buildPipeline({ pluginId: 'cold', series: [frameWithLabels()] });
@@ -428,7 +430,7 @@ describe('PanelDataTransformer', () => {
     });
 
     it('stops applying plugin transformations when the toggle is turned off mid-session', async () => {
-      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
       const { transformer } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
       activateFullSceneTree(transformer);
@@ -457,7 +459,7 @@ describe('PanelDataTransformer', () => {
     it('installs both wrapper operators even when the plugin registers only one position', async () => {
       // Which half is non-empty depends on the frames, so it is not knowable at install time.
       registerPlugin('appender', (p) =>
-        p.setDataTransformations(() => ({ append: [{ id: 'reduce', options: { reducers: ['count'] } }] }))
+        p.setSystemTransformations(() => ({ append: [{ id: 'reduce', options: { reducers: ['count'] } }] }))
       );
 
       const { transformer } = buildPipeline({ pluginId: 'appender', series: [frameWithLabels()] });
@@ -473,7 +475,7 @@ describe('PanelDataTransformer', () => {
     });
 
     it('keeps the plugin transformations out of the editable transformations list', async () => {
-      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
       const { transformer } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
       activateFullSceneTree(transformer);
@@ -506,7 +508,7 @@ describe('PanelDataTransformer', () => {
     });
 
     it('binds a cloned panel to its own plugin rather than the source panel it was cloned from', async () => {
-      registerPlugin('extracts', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('extracts', (p) => p.setSystemTransformations(() => [extractLabels]));
       registerPlugin('plain');
 
       const { panel, transformer } = buildPipeline({ pluginId: 'extracts', series: [frameWithLabels()] });
@@ -553,7 +555,7 @@ describe('PanelDataTransformer', () => {
     });
 
     it('removes it when the panel switches to a plugin that registers nothing', async () => {
-      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
       registerPlugin('plain');
 
       const series = [frameWithLabels()];
@@ -574,7 +576,7 @@ describe('PanelDataTransformer', () => {
     });
 
     it('does not mark the dashboard dirty when it installs', async () => {
-      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
       const { transformer, panel } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
 
@@ -598,9 +600,9 @@ describe('PanelDataTransformer', () => {
     });
 
     it('re-runs when the panel switches between two plugins that both register transformations', async () => {
-      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
       registerPlugin('reducer', (p) =>
-        p.setDataTransformations(() => [{ id: 'reduce', options: { reducers: ['max'] } }])
+        p.setSystemTransformations(() => [{ id: 'reduce', options: { reducers: ['max'] } }])
       );
 
       const { transformer, panel } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
@@ -625,7 +627,7 @@ describe('PanelDataTransformer', () => {
 
   describe('resolving the plugin', () => {
     it('transforms even when the plugin is not yet in the synchronous cache', async () => {
-      registerPlugin('cold', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('cold', (p) => p.setSystemTransformations(() => [extractLabels]));
       coldPlugins.add('cold');
 
       const { transformer } = buildPipeline({ pluginId: 'cold', series: [frameWithLabels()] });
@@ -637,7 +639,7 @@ describe('PanelDataTransformer', () => {
     });
 
     it('applies transformations from a plugin only the panel can resolve', async () => {
-      registerPlugin('runtime-only', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('runtime-only', (p) => p.setSystemTransformations(() => [extractLabels]));
       importerBlindPlugins.add('runtime-only');
 
       const { panel, transformer } = buildPipeline({ pluginId: 'runtime-only', series: [frameWithLabels()] });
@@ -693,7 +695,7 @@ describe('PanelDataTransformer', () => {
       }
 
       it('asks the plugin for the current pluginId, not the one still loaded', async () => {
-        registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+        registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
         const { transformer } = buildSwappingPanel('logs-table');
 
@@ -707,7 +709,7 @@ describe('PanelDataTransformer', () => {
         // Invisible to both synchronous lookups and to the importer, so nothing can resolve it until
         // the panel itself loads it — the runtime-registered plugin case.
         importerBlindPlugins.add('runtime-logs');
-        registerPlugin('runtime-logs', (p) => p.setDataTransformations(() => [extractLabels]));
+        registerPlugin('runtime-logs', (p) => p.setSystemTransformations(() => [extractLabels]));
 
         const { panel, transformer } = buildSwappingPanel('runtime-logs');
 
@@ -730,7 +732,7 @@ describe('PanelDataTransformer', () => {
   describe('data topics', () => {
     it('ignores transformations that target a topic other than series', async () => {
       registerPlugin('mixed-topics', (p) =>
-        p.setDataTransformations(() => [
+        p.setSystemTransformations(() => [
           // Only series frames reach the plugin operator, so this would collapse the frame into
           // reducer rows if it were misapplied to series data instead of being dropped.
           extractLabels,
@@ -754,7 +756,7 @@ describe('PanelDataTransformer', () => {
     });
 
     it('leaves annotation frames on the annotations topic', async () => {
-      registerPlugin('logs-table', (p) => p.setDataTransformations(() => [extractLabels]));
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
 
       const annotation = toDataFrame({
         name: 'anno',
@@ -781,7 +783,7 @@ describe('PanelDataTransformer', () => {
   describe('field overrides', () => {
     it('applies overrides to fields produced by a plugin transformation', async () => {
       registerPlugin('logs-table', (p) => {
-        p.setDataTransformations(() => [extractLabels]).useFieldConfig({});
+        p.setSystemTransformations(() => [extractLabels]).useFieldConfig({});
       });
 
       const { transformer, panel } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
@@ -826,7 +828,7 @@ describe('PanelDataTransformer', () => {
       // provider — so overrides, which are applied to the provider's output, see their fields just
       // as they see a prepended one's.
       registerPlugin('reducer', (p) => {
-        p.setDataTransformations(() => ({
+        p.setSystemTransformations(() => ({
           append: [{ id: 'reduce', options: { reducers: ['count'] } }],
         })).useFieldConfig({});
       });
