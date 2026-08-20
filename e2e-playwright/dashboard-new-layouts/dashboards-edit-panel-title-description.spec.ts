@@ -1,5 +1,7 @@
-import { DashboardPage, E2ESelectorGroups, Components } from '@grafana/plugin-e2e';
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
+
+import { type DashboardPage, type E2ESelectorGroups, type Components } from '@grafana/plugin-e2e';
+
 import { test, expect } from './fixtures';
 import { Controls, Sidebar, Panels } from './page-objects';
 
