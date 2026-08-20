@@ -5,8 +5,9 @@ import { MetaInfoText } from '../MetaInfoText';
 
 // Display name set by the Prometheus/Mimir backend (promlib) for the
 // equivalent-samples-read query stat parsed from the Server-Timing header.
-// Matched literally because the backend attaches the stat without tagging a headline.
-const EQUIVALENT_SAMPLES_READ_STAT = 'Equivalent samples read';
+// A query can run as a range, instant, and exemplar request at once, each
+// carrying its own stat prefixed with its query type, so all three are summed.
+const EQUIVALENT_SAMPLES_READ_STAT = /^(Exemplar|Instant|Range): Equivalent samples read$/;
 
 interface Props {
   data: DataFrame[];
@@ -15,19 +16,26 @@ interface Props {
 export function GraphMetaInfo({ data }: Props) {
   let totalSamples = 0;
   let unit = 'short';
-  const queriesVisited: Record<string, boolean> = {};
+  // Keyed by refId + stat name, since one refId can carry a stat per query type.
+  const statsVisited: Record<string, boolean> = {};
 
   for (const frame of data) {
-    const { refId } = frame; // Stats are per query, keeping track by refId
-    if (refId && !queriesVisited[refId]) {
-      const stat = frame.meta?.stats?.find((s) => s.displayName === EQUIVALENT_SAMPLES_READ_STAT);
-      if (stat) {
-        totalSamples += stat.value;
-        if (stat.unit) {
-          unit = stat.unit;
-        }
-      }
-      queriesVisited[refId] = true;
+    const { refId } = frame;
+    if (!refId) {
+      continue;
+    }
+    const stat = frame.meta?.stats?.find((s) => EQUIVALENT_SAMPLES_READ_STAT.test(s.displayName ?? ''));
+    if (!stat) {
+      continue;
+    }
+    const statKey = `${refId}:${stat.displayName}`;
+    if (statsVisited[statKey]) {
+      continue;
+    }
+    statsVisited[statKey] = true;
+    totalSamples += stat.value;
+    if (stat.unit) {
+      unit = stat.unit;
     }
   }
 

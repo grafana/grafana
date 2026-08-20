@@ -4,7 +4,7 @@ import { toDataFrame, FieldType } from '@grafana/data';
 
 import { GraphMetaInfo } from './GraphMetaInfo';
 
-function graphFrame(refId: string, samples?: number) {
+function graphFrame(refId: string, queryType?: 'Exemplar' | 'Instant' | 'Range', samples?: number) {
   return toDataFrame({
     refId,
     fields: [
@@ -12,24 +12,38 @@ function graphFrame(refId: string, samples?: number) {
       { name: 'Value', type: FieldType.number, values: [1] },
     ],
     meta:
-      samples === undefined
+      queryType === undefined || samples === undefined
         ? undefined
-        : { stats: [{ displayName: 'Equivalent samples read', unit: 'short', value: samples }] },
+        : { stats: [{ displayName: `${queryType}: Equivalent samples read`, unit: 'short', value: samples }] },
   });
 }
 
 describe('GraphMetaInfo', () => {
   it('renders the formatted equivalent samples read stat', () => {
-    render(<GraphMetaInfo data={[graphFrame('A', 17647)]} />);
+    render(<GraphMetaInfo data={[graphFrame('A', 'Range', 17647)]} />);
 
     expect(screen.getByText('Equivalent samples read:')).toBeInTheDocument();
     expect(screen.getByText('17.6 K')).toBeInTheDocument();
   });
 
-  it('sums the stat across queries, deduping by refId', () => {
-    render(<GraphMetaInfo data={[graphFrame('A', 1000), graphFrame('A', 1000), graphFrame('B', 1000)]} />);
+  it('sums the stat across duplicate frames for the same query, deduping by refId and query type', () => {
+    render(
+      <GraphMetaInfo
+        data={[graphFrame('A', 'Range', 1000), graphFrame('A', 'Range', 1000), graphFrame('B', 'Range', 1000)]}
+      />
+    );
 
     expect(screen.getByText('2 K')).toBeInTheDocument();
+  });
+
+  it('sums the stat across query types for the same refId', () => {
+    render(
+      <GraphMetaInfo
+        data={[graphFrame('A', 'Range', 1000), graphFrame('A', 'Instant', 500), graphFrame('A', 'Exemplar', 250)]}
+      />
+    );
+
+    expect(screen.getByText('1.75 K')).toBeInTheDocument();
   });
 
   it('renders nothing when no frame carries the stat', () => {
