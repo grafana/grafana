@@ -643,6 +643,6 @@ describe('TextNGEditor handlebars preview', () => {
       />
     );
 
-    expect(within(screen.getByTestId(PREVIEW_TEST_ID)).getByRole('alert')).toHaveTextContent('Handlebars error:');
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Handlebars error:');
   });
 });

@@ -11,8 +11,7 @@ import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
-import { templateErrorMessage } from '../handlebars';
-import { interpolateTemplate } from '../renderContent';
+import { catchTemplateError, interpolateTemplate } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
@@ -135,25 +134,15 @@ export function TextNGEditor({
   const format = getInterpolateFormat(mode, codeLanguage);
   const showPreview = view !== 'write';
 
-  const { interpolatedContent, previewError } = useMemo((): {
-    interpolatedContent: string;
-    previewError?: string;
-  } => {
-    if (!showPreview) {
-      return { interpolatedContent: '' };
-    }
-
-    try {
-      return {
-        interpolatedContent: interpolateTemplate(
-          { content: previewSource, mode, series, renderMode, format },
-          replaceVariables
-        ),
-      };
-    } catch (error) {
-      return { interpolatedContent: '', previewError: templateErrorMessage(error) };
-    }
-  }, [showPreview, previewSource, mode, series, renderMode, format, replaceVariables]);
+  const { content: interpolatedContent, error: previewError } = useMemo(
+    () =>
+      catchTemplateError(() =>
+        showPreview
+          ? interpolateTemplate({ content: previewSource, mode, series, renderMode, format }, replaceVariables)
+          : ''
+      ),
+    [showPreview, previewSource, mode, series, renderMode, format, replaceVariables]
+  );
 
   const previewHtml = useMemo(
     () => (mode === TextMode.Code ? '' : transformContent(mode, interpolatedContent, config.disableSanitizeHtml)),
@@ -228,12 +217,12 @@ export function TextNGEditor({
   const showEditor = view !== 'preview';
   const isCode = mode === TextMode.Code;
 
-  const renderOutput = (testId: string) =>
-    previewError ? (
-      <div data-testid={testId}>
-        <Alert severity="error" title={previewError} />
-      </div>
-    ) : isCode ? (
+  const renderOutput = (testId: string) => {
+    if (previewError) {
+      return <Alert severity="error" title={previewError} data-testid={testId} />;
+    }
+
+    return isCode ? (
       <div className={styles.fullHeight} data-testid={testId}>
         <TextNGCodeView content={interpolatedContent} language={codeLanguage} showLineNumbers={showLineNumbers} />
       </div>
@@ -245,6 +234,7 @@ export function TextNGEditor({
         data-testid={testId}
       />
     );
+  };
 
   return (
     <div className={styles.wrapper} data-testid="TextNGEditor">

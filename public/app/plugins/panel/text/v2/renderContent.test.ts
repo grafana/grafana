@@ -6,7 +6,13 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
-import { hasRenderableData, interpolateTemplate, MAX_RENDERED_ROWS, renderContent } from './renderContent';
+import {
+  catchTemplateError,
+  hasRenderableData,
+  interpolateTemplate,
+  MAX_RENDERED_ROWS,
+  renderContent,
+} from './renderContent';
 
 beforeEach(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -180,16 +186,22 @@ describe('interpolateTemplate', () => {
       expect(() => interpolate('{{#each data}}', [hosts], RenderMode.Once)).toThrow();
     });
 
-    it('says so when a Once template only saw the capped rows', () => {
+    describe('truncation notice', () => {
       const big = toDataFrame({
         fields: [
           { name: 'n', type: FieldType.number, values: Array.from({ length: MAX_RENDERED_ROWS + 10 }, (_, i) => i) },
         ],
       });
 
-      expect(interpolate('{{data.length}}', [big], RenderMode.Once)).toBe(
-        `${MAX_RENDERED_ROWS}\n\nShowing the first ${MAX_RENDERED_ROWS} rows.`
-      );
+      it('says so when a Once template only saw the capped rows', () => {
+        expect(interpolate('{{data.length}}', [big], RenderMode.Once)).toBe(
+          `${MAX_RENDERED_ROWS}\n\nShowing the first ${MAX_RENDERED_ROWS} rows.`
+        );
+      });
+
+      it('is left off content that never read the rows, since nothing was truncated', () => {
+        expect(interpolate('# Status', [big], RenderMode.Once)).toBe('# Status');
+      });
     });
   });
 });
@@ -222,5 +234,19 @@ describe('renderContent', () => {
     expect(render('<b>${__data.fields.host}</b><script>alert(1)</script>', RenderMode.PerRow, TextMode.HTML)).toBe(
       '<b>web-1</b>&lt;script&gt;alert(1)&lt;/script&gt;\n<b>web-2</b>&lt;script&gt;alert(1)&lt;/script&gt;'
     );
+  });
+});
+
+describe('catchTemplateError', () => {
+  it('passes the content through when nothing throws', () => {
+    expect(catchTemplateError(() => 'hello')).toEqual({ content: 'hello' });
+  });
+
+  it('describes the failure instead', () => {
+    expect(
+      catchTemplateError(() => {
+        throw new Error('boom');
+      })
+    ).toEqual({ content: '', error: 'Handlebars error: boom' });
   });
 });

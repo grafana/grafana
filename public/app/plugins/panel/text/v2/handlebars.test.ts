@@ -2,13 +2,7 @@ import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import { FieldType, type InterpolateFunction, toDataFrame } from '@grafana/data';
 
-import {
-  buildAllRowsContext,
-  buildRows,
-  compileTemplate,
-  type TemplateContext,
-  templateErrorMessage,
-} from './handlebars';
+import { buildAllRowsContext, buildRows, compileTemplate, type TemplateContext } from './handlebars';
 
 const hosts = toDataFrame({
   name: 'frameA',
@@ -203,10 +197,6 @@ describe('compileTemplate', () => {
 
     it('throws on a runtime error', () => {
       expect(() => render('{{nope a}}', { a: 1 })).toThrow();
-    });
-
-    it('describes the failure', () => {
-      expect(templateErrorMessage(new Error('boom'))).toBe('Handlebars error: boom');
     });
   });
 });

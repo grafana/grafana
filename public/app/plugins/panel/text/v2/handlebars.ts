@@ -9,7 +9,6 @@ import {
   type InterpolateFunction,
   isDateTime,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 
 /** One row of query data, keyed by field display name. */
 export type TemplateRow = Record<string, unknown>;
@@ -68,15 +67,9 @@ export function buildAllRowsContext(series: DataFrame[], maxRows = Infinity): Al
 
 export function compileTemplate(content: string, replaceVariables: InterpolateFunction): CompiledTemplate {
   const env = createEnvironment(replaceVariables);
-  const template: HandlebarsTemplateDelegate<TemplateContext> = env.compile(env.parse(content));
 
-  return (context) => template(context);
-}
-
-export function templateErrorMessage(error: unknown): string {
-  return t('textng.render.handlebars-error', 'Handlebars error: {{message}}', {
-    message: error instanceof Error ? error.message : String(error),
-  });
+  // Parse up front so a syntax error throws here, not once per rendered row.
+  return env.compile(env.parse(content));
 }
 
 const toNumber = (value: unknown): number => (typeof value === 'number' ? value : Number(value));

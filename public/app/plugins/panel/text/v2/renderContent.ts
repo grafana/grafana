@@ -4,7 +4,13 @@ import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
-import { buildAllRowsContext, buildRows, type CompiledTemplate, compileTemplate } from './handlebars';
+import {
+  type AllRowsContext,
+  buildAllRowsContext,
+  buildRows,
+  type CompiledTemplate,
+  compileTemplate,
+} from './handlebars';
 import { transformContent } from './utils';
 
 /** Caps the rows either render mode will touch, since the edit preview re-interpolates on every keystroke. */
@@ -19,6 +25,26 @@ export interface TextTemplate {
   format?: string;
 }
 
+/** A finished render pass, or the error that stopped it. */
+export interface RenderedContent {
+  content: string;
+  error?: string;
+}
+
+/** Turns a broken Handlebars template into an error to display instead of content. */
+export function catchTemplateError(render: () => string): RenderedContent {
+  try {
+    return { content: render() };
+  } catch (error) {
+    return {
+      content: '',
+      error: t('textng.render.handlebars-error', 'Handlebars error: {{message}}', {
+        message: error instanceof Error ? error.message : String(error),
+      }),
+    };
+  }
+}
+
 export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
   return series?.some((frame) => frame.fields.length > 0 && frame.length > 0) ?? false;
 }
@@ -29,7 +55,7 @@ function handlebarsEnabled(): boolean {
 }
 
 export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
-  const { content, mode, series, renderMode, format } = template;
+  const { content, mode, series = [], renderMode, format } = template;
 
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
   const compiled =
@@ -43,14 +69,33 @@ export function interpolateTemplate(template: TextTemplate, replaceVariables: In
     return replaceVariables(content, {}, format);
   }
 
-  const blocks = [replaceVariables(compiled(buildAllRowsContext(series ?? [], MAX_RENDERED_ROWS)), {}, format)];
+  let readRows = false;
+  const rows = trackRowAccess(buildAllRowsContext(series, MAX_RENDERED_ROWS), () => {
+    readRows = true;
+  });
 
-  // The context the template read was capped, so say so rather than silently under-count.
-  if (countRows(series ?? []) > MAX_RENDERED_ROWS) {
+  const blocks = [replaceVariables(compiled(rows), {}, format)];
+
+  if (readRows && countRows(series) > MAX_RENDERED_ROWS) {
     blocks.push(truncationNotice());
   }
 
   return joinBlocks(blocks, mode);
+}
+
+// Content that never reads the capped collections cannot be under-counting, so
+// only a template that touched them earns the truncation notice.
+function trackRowAccess(context: AllRowsContext, onRead: () => void): AllRowsContext {
+  return {
+    get data() {
+      onRead();
+      return context.data;
+    },
+    get frames() {
+      onRead();
+      return context.frames;
+    },
+  };
 }
 
 function countRows(series: DataFrame[]): number {

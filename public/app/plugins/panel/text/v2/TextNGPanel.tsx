@@ -28,8 +28,7 @@ import {
 import { TextNGCodeView } from './TextNGCodeView';
 import { type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
-import { templateErrorMessage } from './handlebars';
-import { renderContent } from './renderContent';
+import { catchTemplateError, renderContent, type RenderedContent } from './renderContent';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
@@ -55,7 +54,7 @@ export function TextNGPanel(props: Props) {
   // shape and remounts the editor, so its view mode is held here instead.
   const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
 
-  const [processed, setProcessed] = useState<RenderedContent>(() =>
+  const [processed, setProcessed] = useState<ProcessedContent>(() =>
     // The editor renders its own preview, so skip the render pass on entry.
     isEditing ? { mode: options.mode, content: EMPTY_CONTENT } : renderPanelContent(options, series, replaceVariables)
   );
@@ -161,13 +160,11 @@ export function TextNGPanel(props: Props) {
   );
 }
 
-interface RenderedContent {
+interface ProcessedContent extends RenderedContent {
   mode: TextMode;
-  content: string;
-  error?: string;
 }
 
-interface TextNGViewProps extends RenderedContent {
+interface TextNGViewProps extends ProcessedContent {
   code: Options['code'];
   fitContent?: boolean;
 }
@@ -274,24 +271,23 @@ function renderPanelContent(
   options: Options,
   series: DataFrame[],
   replaceVariables: InterpolateFunction
-): RenderedContent {
-  try {
-    const content = renderContent(
-      {
-        content: options.content ?? '',
-        mode: options.mode,
-        series,
-        renderMode: options.renderMode,
-        format: getInterpolateFormat(options.mode, options.code?.language),
-      },
-      replaceVariables,
-      config.disableSanitizeHtml
-    );
-
-    return { mode: options.mode, content };
-  } catch (error) {
-    return { mode: options.mode, content: '', error: templateErrorMessage(error) };
-  }
+): ProcessedContent {
+  return {
+    mode: options.mode,
+    ...catchTemplateError(() =>
+      renderContent(
+        {
+          content: options.content ?? '',
+          mode: options.mode,
+          series,
+          renderMode: options.renderMode,
+          format: getInterpolateFormat(options.mode, options.code?.language),
+        },
+        replaceVariables,
+        config.disableSanitizeHtml
+      )
+    ),
+  };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
