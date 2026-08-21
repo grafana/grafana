@@ -112,7 +112,11 @@ export default function jsonMarkup(doc, styleFile) {
 
       case 'string':
         return (
-          '<span ' + style('json-markup-string') + '>' + wrapString(escape(obj.replace(/\n/g, '\n' + indent))) + '</span>'
+          '<span ' +
+          style('json-markup-string') +
+          '>' +
+          wrapString(escape(obj.replace(/\n/g, '\n' + indent))) +
+          '</span>'
         );
 
       case 'link':
