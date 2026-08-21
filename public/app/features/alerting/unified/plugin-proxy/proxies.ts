@@ -2,15 +2,10 @@ import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { createBridgeURL } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
-import {
-  ALERTMANAGER_NAME_QUERY_KEY,
-  CLOUD_RULE_IDENTIFIER_PREFIX,
-  GRAFANA_RULES_SOURCE_NAME,
-  PROMETHEUS_RULE_IDENTIFIER_PREFIX,
-} from '../utils/constants';
+import { ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
+import { isGrafanaRulesSource } from '../utils/datasource';
 import { parseQueryParamMatchers } from '../utils/matchers';
-import { stringifyDataSourceIdentifier, tryParse, unescapePathSeparators } from '../utils/rule-id';
-import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
+import { isDataSourceManagedIdentifier, toPluginRuleIdentifier, unescapePathSeparators } from '../utils/rule-id';
 
 import { type ProxyContext, type ProxyHandler, type ProxyMatcher, type RouteProxy } from './types';
 
@@ -60,49 +55,15 @@ function decode(value: string): string {
 
 /** A rules source or Alertmanager is data source managed unless it is the built-in Grafana one. */
 function isDataSourceManaged(name: string | undefined): boolean {
-  return Boolean(name) && name !== GRAFANA_RULES_SOURCE_NAME;
+  if (!name) {
+    return false;
+  }
+  return !isGrafanaRulesSource(name);
 }
 
 /** Grafana's URLs name a data source, the plugin's want its UID. */
 async function getDataSourceUid(name: string): Promise<string | undefined> {
   return (await getDataSourceInstanceSettings(name))?.uid;
-}
-
-/**
- * Grafana-managed rules are identified by a bare UID. Data source managed ones carry a prefix and
- * `$`-separated parts, so the identifier alone says who owns the rule without any lookup.
- */
-function isDataSourceManagedIdentifier(identifier: string | undefined): boolean {
-  if (!identifier) {
-    return false;
-  }
-
-  const decoded = decode(identifier);
-  return [CLOUD_RULE_IDENTIFIER_PREFIX, PROMETHEUS_RULE_IDENTIFIER_PREFIX].some((prefix) =>
-    decoded.startsWith(`${prefix}$`)
-  );
-}
-
-/**
- * Grafana and the plugin use the same identifier shape but not the same contents: Grafana puts the
- * data source *name* in the second slot, the plugin puts its *UID*. Passing one straight to the
- * other sends the plugin looking for a data source that doesn't exist, so swap that field over.
- *
- * Returns undefined for Grafana-managed rules (a bare UID, nothing to translate) and for names we
- * can't resolve to a data source — in both cases we leave the page on Grafana's side.
- */
-async function toPluginRuleIdentifier(rawIdentifier: string | undefined): Promise<string | undefined> {
-  const identifier = tryParse(rawIdentifier, true);
-  if (!identifier || !(isCloudRuleIdentifier(identifier) || isPrometheusRuleIdentifier(identifier))) {
-    return undefined;
-  }
-
-  const uid = await getDataSourceUid(identifier.ruleSourceName);
-  if (!uid) {
-    return undefined;
-  }
-
-  return encodeURIComponent(stringifyDataSourceIdentifier(identifier, uid));
 }
 
 /**
@@ -330,19 +291,25 @@ const alertmanagerPageProxies: RouteProxy[] = [
       return PLUGIN_ROUTES.newSilence;
     }),
   },
-  ...(['view', 'edit'] as const).map((action) => ({
+  {
     // The plugin shows a single silence in a drawer on the list page.
-    path: `/alerting/silence/:id/${action}`,
+    path: '/alerting/silence/:id/view',
     matches: (context: ProxyContext) => matchesExternalAlertmanager(context) && Boolean(context.params.id),
     handler: alertmanagerPage((params, { params: routeParams }) => {
       params.set(DRAWER_PARAMS.silence, routeParams.id ?? '');
-      if (action === 'edit') {
-        params.set(DRAWER_PARAMS.edit, 'true');
-      }
-
       return PLUGIN_ROUTES.silences;
     }),
-  })),
+  },
+  {
+    // The plugin shows a single silence in a drawer on the list page.
+    path: '/alerting/silence/:id/edit',
+    matches: (context: ProxyContext) => matchesExternalAlertmanager(context) && Boolean(context.params.id),
+    handler: alertmanagerPage((params, { params: routeParams }) => {
+      params.set(DRAWER_PARAMS.silence, routeParams.id ?? '');
+      params.set(DRAWER_PARAMS.edit, 'true');
+      return PLUGIN_ROUTES.silences;
+    }),
+  },
 ];
 
 /**

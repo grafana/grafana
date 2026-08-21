@@ -1,6 +1,7 @@
 import { nth } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   type CloudRuleIdentifier,
   type CombinedRule,
@@ -216,6 +217,28 @@ export function tryParse(value: string | undefined, decodeFromUri = false): Rule
   }
 }
 
+/**
+ * Grafana-managed rules are identified by a bare UID. Data source managed ones carry a prefix and
+ * `$`-separated parts, so the identifier alone says who owns the rule without any lookup.
+ */
+export function isDataSourceManagedIdentifier(identifier: string | undefined): boolean {
+  if (!identifier) {
+    return false;
+  }
+
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(identifier);
+  } catch {
+    // A stray '%' makes decoding throw. Fall back to the raw value rather than blowing up the page.
+    decoded = identifier;
+  }
+
+  return [CLOUD_RULE_IDENTIFIER_PREFIX, PROMETHEUS_RULE_IDENTIFIER_PREFIX].some((prefix) =>
+    decoded.startsWith(`${prefix}$`)
+  );
+}
+
 export function stringifyIdentifier(identifier: RuleIdentifier): string {
   if (isGrafanaRuleIdentifier(identifier)) {
     return identifier.uid;
@@ -245,6 +268,28 @@ export function stringifyDataSourceIdentifier(
     .map(escapeDollars)
     .map(escapePathSeparators)
     .join('$');
+}
+
+/**
+ * Grafana and the plugin use the same identifier shape but not the same contents: Grafana puts the
+ * data source *name* in the second slot, the plugin puts its *UID*. Passing one straight to the
+ * other sends the plugin looking for a data source that doesn't exist, so swap that field over.
+ *
+ * Returns undefined for Grafana-managed rules (a bare UID, nothing to translate) and for names we
+ * can't resolve to a data source — in both cases we leave the page on Grafana's side.
+ */
+export async function toPluginRuleIdentifier(rawIdentifier: string | undefined): Promise<string | undefined> {
+  const identifier = tryParse(rawIdentifier, true);
+  if (!identifier || !(isCloudRuleIdentifier(identifier) || isPrometheusRuleIdentifier(identifier))) {
+    return undefined;
+  }
+
+  const uid = (await getDataSourceInstanceSettings(identifier.ruleSourceName))?.uid;
+  if (!uid) {
+    return undefined;
+  }
+
+  return encodeURIComponent(stringifyDataSourceIdentifier(identifier, uid));
 }
 
 function hash(value: string): number {
