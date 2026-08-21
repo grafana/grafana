@@ -20,6 +20,23 @@ class CorsWorkerPublicPathRuntimeModule extends RuntimeModule {
   }
 }
 
+/**
+ * Used when publicPath is 'auto', which has no literal value to fall back on. Webpack's own
+ * derivation reads the worker's location, which for a CorsWorker is the blob URL rather than
+ * the chunk URL — so this runs after it (STAGE_ATTACH) and prefers the value the blob sets.
+ * The typeof guard matters: a natively constructed worker never sets the global, and there
+ * webpack's derivation is already correct because its location _is_ the chunk URL.
+ */
+class CorsWorkerPublicPathOverrideRuntimeModule extends RuntimeModule {
+  constructor() {
+    super('publicPath override', RuntimeModule.STAGE_ATTACH);
+  }
+
+  generate(): string {
+    return `if (typeof __webpack_worker_public_path__ !== 'undefined') ${RuntimeGlobals.publicPath} = __webpack_worker_public_path__;`;
+  }
+}
+
 // https://github.com/webpack/webpack/discussions/14648#discussioncomment-1604202
 // by @ https://github.com/piotr-oles
 export default class CorsWorkerPlugin {
@@ -44,11 +61,16 @@ export default class CorsWorkerPlugin {
           if (getChunkLoading(chunk) === 'import-scripts') {
             const publicPath = getChunkPublicPath(chunk);
 
-            if (publicPath !== 'auto') {
-              const module = new CorsWorkerPublicPathRuntimeModule(String(publicPath));
-              compilation.addRuntimeModule(chunk, module);
-              return true;
+            // Returning undefined leaves the requirement unsatisfied so webpack's own
+            // RuntimePlugin still installs AutoPublicPathRuntimeModule, which the override
+            // module then corrects for blob-loaded workers.
+            if (publicPath === 'auto') {
+              compilation.addRuntimeModule(chunk, new CorsWorkerPublicPathOverrideRuntimeModule());
+              return undefined;
             }
+
+            compilation.addRuntimeModule(chunk, new CorsWorkerPublicPathRuntimeModule(String(publicPath)));
+            return true;
           }
           return undefined;
         });
