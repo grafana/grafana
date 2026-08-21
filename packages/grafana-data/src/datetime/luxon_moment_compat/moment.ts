@@ -802,7 +802,7 @@ class MomentCompat implements MomentLike {
   private _dt: DateTime;
 
   constructor(dt: DateTime) {
-    this._dt = truncateToWholeMilliseconds(dt);
+    this._dt = dt;
   }
 
   private _setDt(next: DateTime): MomentLike {
