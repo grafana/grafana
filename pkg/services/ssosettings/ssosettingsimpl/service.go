@@ -283,6 +283,24 @@ func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
 	return result, nil
 }
 
+// ListStored returns the stored overrides with secrets decrypted, without
+// merging system defaults (List does merge them).
+func (s *Service) ListStored(ctx context.Context) ([]*models.SSOSettings, error) {
+	stored, err := s.store.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, setting := range stored {
+		setting.Settings, err = s.decryptSecrets(ctx, setting.Settings)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return stored, nil
+}
+
 func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSettings, error) {
 	storeSettings, err := s.List(ctx)
 	if err != nil {
