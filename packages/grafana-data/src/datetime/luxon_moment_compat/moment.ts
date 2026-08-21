@@ -645,7 +645,7 @@ function createTimeZoneInfo(name: string): MomentTimeZoneInfo | null {
   return zone;
 }
 
-function normalizeInput(input: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): DateTime {
+function parseInput(input: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): DateTime {
   const locale = normalizeLocale(options?.locale);
 
   if (typeof input === 'undefined') {
@@ -718,6 +718,10 @@ function normalizeInput(input: MomentInput, options?: MomentOptions, parseOption
   }
 
   return DateTime.invalid('unsupported moment input');
+}
+
+function normalizeInput(input: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): DateTime {
+  return truncateToWholeMilliseconds(parseInput(input, options, parseOptions));
 }
 
 function isMomentLike(value: unknown): value is MomentLike {

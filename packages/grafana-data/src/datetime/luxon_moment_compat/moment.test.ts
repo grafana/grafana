@@ -47,6 +47,15 @@ describe('fractional millisecond timestamps', () => {
     expect(moment.utc(0).millisecond(1.8).valueOf()).toBe(1);
     expect(moment.utc(0).set('milliseconds', 1.8).valueOf()).toBe(1);
   });
+
+  it('truncates comparison and diff operands symmetrically', () => {
+    const value = moment(1000.5);
+
+    expect(value.isSame(1000.5)).toBe(true);
+    expect(value.isBefore(1000.5)).toBe(false);
+    expect(value.isAfter(1000.5)).toBe(false);
+    expect(value.diff(1000.5, 'milliseconds', true)).toBe(0);
+  });
 });
 
 // used by enterprise code (public/app/extensions), which in-repo usage scans don't cover, so this
