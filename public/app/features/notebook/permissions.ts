@@ -16,3 +16,12 @@ import { AccessControlAction } from 'app/types/accessControl';
 export function canEditNotebooks(): boolean {
   return contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
 }
+
+/**
+ * Either permission is enough to open the picker, because it offers two routes: adding to a notebook
+ * that already exists needs write, and creating one needs create. The modal hides whichever tab the
+ * user cannot use.
+ */
+export function canAddPanelToNotebook(): boolean {
+  return canEditNotebooks() || contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+}

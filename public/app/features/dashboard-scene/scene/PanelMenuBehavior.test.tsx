@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, locationService } from '@grafana/runtime';
-import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
+import { getFeatureFlagClient, setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
   SceneQueryRunner,
@@ -53,6 +53,11 @@ jest.mock('app/core/utils/explore', () => ({
 }));
 
 jest.mock('app/core/services/context_srv');
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(() => ({ getBooleanValue: () => false })),
+}));
 
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
@@ -1125,10 +1130,76 @@ describe('panelMenuBehavior', () => {
       expect(stylesMenu?.[0].text).toBe('Copy styles');
     });
   });
+
+  describe('choose notebook', () => {
+    afterEach(() => {
+      setFeatureFlags(false);
+      mocks.contextSrv.hasPermission.mockReset();
+    });
+
+    async function itemsWith({ notebooks, permission }: { notebooks: boolean; permission: boolean }) {
+      setFeatureFlags(notebooks);
+      mocks.contextSrv.hasPermission.mockReturnValue(permission);
+
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      return menu.state.items ?? [];
+    }
+
+    it('is hidden when notebooks are disabled', async () => {
+      const items = await itemsWith({ notebooks: false, permission: true });
+
+      expect(items.find((item) => item.text === 'Choose notebook...')).toBeUndefined();
+    });
+
+    it('is hidden without permission to write or create', async () => {
+      const items = await itemsWith({ notebooks: true, permission: false });
+
+      expect(items.find((item) => item.text === 'Choose notebook...')).toBeUndefined();
+    });
+
+    // Adding a panel to a notebook writes to the notebook, so it must not be gated on dashboard
+    // edit mode the way Remove is.
+    it('is offered while reading the dashboard, not only while editing it', async () => {
+      const items = await itemsWith({ notebooks: true, permission: true });
+
+      expect(items.find((item) => item.text === 'Choose notebook...')).toEqual(
+        expect.objectContaining({ iconClassName: 'search' })
+      );
+      expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
+    });
+
+    it('sits in its own section immediately above Remove while editing', async () => {
+      setFeatureFlags(true);
+      mocks.contextSrv.hasPermission.mockReturnValue(true);
+
+      const { scene, menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      scene.setState({ isEditing: true });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const texts = (menu.state.items ?? []).map((item) => (item.type === 'divider' ? '---' : item.text));
+      expect(texts.slice(-4)).toEqual(['---', 'Choose notebook...', '---', 'Remove']);
+    });
+  });
 });
 
 interface SceneOptions {
   isEmbedded?: boolean;
+}
+
+/** Only getBooleanValue is read, and every flag the menu asks about is answered the same way. */
+function setFeatureFlags(enabled: boolean) {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial flag client is all the menu uses
+  jest
+    .mocked(getFeatureFlagClient)
+    .mockReturnValue({ getBooleanValue: () => enabled } as unknown as ReturnType<typeof getFeatureFlagClient>);
 }
 
 async function buildTestScene(options: SceneOptions) {
