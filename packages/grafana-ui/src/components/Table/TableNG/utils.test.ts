@@ -2148,6 +2148,42 @@ describe('TableNG utils', () => {
       expect(compute(fields, 103)).toEqual([50, 53]);
     });
 
+    // availWidth is pinned *below* what the header needs in these two, so there is no leftover for
+    // the single auto column to grow into: the returned width is the reservation itself rather than
+    // whatever room the panel happened to have.
+    it('reserves header space for the info button on a column with a headerTooltip', () => {
+      const withTooltip: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { headerTooltip: 'why' } } },
+      ];
+      // header "Name" (4) => 4*8 = 32, + tooltip button 22 + chrome 13 = 67; content "a" is tiny.
+      expect(compute(withTooltip, 60)).toEqual([67]);
+
+      // the same column without the tooltip needs only 45, so it floors to MIN_WIDTH 50 and then
+      // grows into the full 60 on offer — nothing reserved.
+      const plain: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      expect(compute(plain, 60)).toEqual([60]);
+    });
+
+    it('reserves the tooltip button in the refreshed header too, alongside the column menu', () => {
+      const fields: Field[] = [
+        {
+          name: 'Name',
+          type: FieldType.string,
+          values: ['a'],
+          config: { custom: { filterable: true, headerTooltip: 'why' } },
+        },
+      ];
+      // header "Name" (4) => 32, + tooltip 22 + menu 22 + chrome 13 = 89. Without the tooltip
+      // reservation this column would need only 67 and grow into the 80 on offer instead.
+      expect(
+        computeContentAwareColWidths(fields, 80, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
+      ).toEqual([89]);
+    });
+
     it('reserves the wider column menu instead of the filter icon when table.refresh is on', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },

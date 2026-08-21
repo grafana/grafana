@@ -43,6 +43,7 @@ import {
   FIRST_COLUMN_EXTRA_PADDING,
   HEADER_ICON_SPACE,
   HEADER_MENU_SPACE,
+  HEADER_TOOLTIP_SPACE,
   LAST_COLUMN_CLASS,
   TABLE,
 } from './constants';
@@ -1363,12 +1364,16 @@ function measureHeaderWidth(
   isSorted: boolean,
   tableRefreshEnabled: boolean,
   isFilterable: boolean,
-  isFiltered: boolean
+  isFiltered: boolean,
+  hasHeaderTooltip: boolean
 ): number {
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
   headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
   headerWidth += isSorted ? HEADER_ICON_SPACE : 0;
+  // `headerTooltip` renders its info button in both header variants, and unlike the sort arrow it's
+  // there for as long as the option is set rather than only while some state holds.
+  headerWidth += hasHeaderTooltip ? HEADER_TOOLTIP_SPACE : 0;
   if (tableRefreshEnabled) {
     // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
     // stays in flow (opacity-faded, not unmounted) whenever the column is filterable at all.
@@ -1618,7 +1623,8 @@ export function computeContentAwareColWidths(
       sortedKeys.has(getDisplayName(field)),
       tableRefreshEnabled,
       field.config.custom?.filterable ?? false,
-      filteredKeys.has(getDisplayName(field))
+      filteredKeys.has(getDisplayName(field)),
+      Boolean(field.config.custom?.headerTooltip)
     );
 
     // Wrapped columns are measured like any other: a content-based width keeps a content-heavy
