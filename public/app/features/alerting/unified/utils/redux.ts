@@ -1,11 +1,4 @@
-import {
-  type AsyncThunk,
-  type Draft,
-  type PayloadAction,
-  type SerializedError,
-  createSlice,
-  isAsyncThunkAction,
-} from '@reduxjs/toolkit';
+import { type AsyncThunk, type SerializedError } from '@reduxjs/toolkit';
 
 import { AppEvents } from '@grafana/data';
 import { type FetchError, isFetchError } from '@grafana/runtime';
@@ -13,63 +6,30 @@ import { appEvents } from 'app/core/app_events';
 
 import { LogMessages, logInfo } from '../Analytics';
 
+import {
+  type AsyncRequestMapSlice as AsyncRequestMapSliceBase,
+  type AsyncRequestState as AsyncRequestStateBase,
+  createAsyncMapSliceForTypePrefix,
+  createAsyncSliceForTypePrefix,
+  initialAsyncRequestState,
+  isAsyncRequestMapSlicePartiallyDispatched,
+  isAsyncRequestMapSlicePartiallyFulfilled,
+  isAsyncRequestMapSlicePending,
+  isAsyncRequestMapSliceSettled,
+  isAsyncRequestStatePending,
+} from './asyncRequestState';
 import { isErrorLike } from './misc';
 
-export interface AsyncRequestState<T> {
-  result?: T;
-  loading: boolean;
-  error?: SerializedError;
-  dispatched: boolean;
-  requestId?: string;
-}
-
-export const initialAsyncRequestState: Pick<
-  AsyncRequestState<undefined>,
-  'loading' | 'dispatched' | 'result' | 'error'
-> = Object.freeze({
-  loading: false,
-  result: undefined,
-  error: undefined,
-  dispatched: false,
-});
-
-export type AsyncRequestMapSlice<T> = Record<string, AsyncRequestState<T>>;
-
-export type AsyncRequestAction<T> = PayloadAction<Draft<T>, string, any, any>;
-
-function requestStateReducer<T, ThunkArg = void, ThunkApiConfig extends {} = {}>(
-  asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>,
-  state: Draft<AsyncRequestState<T>> = initialAsyncRequestState,
-  action: AsyncRequestAction<T>
-): Draft<AsyncRequestState<T>> {
-  if (asyncThunk.pending.match(action)) {
-    return {
-      result: state.result,
-      loading: true,
-      error: state.error,
-      dispatched: true,
-      requestId: action.meta.requestId,
-    };
-  } else if (asyncThunk.fulfilled.match(action)) {
-    if (state.requestId === undefined || state.requestId === action.meta.requestId) {
-      return {
-        ...state,
-        result: action.payload,
-        loading: false,
-        error: undefined,
-      };
-    }
-  } else if (asyncThunk.rejected.match(action)) {
-    if (state.requestId === action.meta.requestId) {
-      return {
-        ...state,
-        loading: false,
-        error: action.error,
-      };
-    }
-  }
-  return state;
-}
+export type AsyncRequestMapSlice<T> = AsyncRequestMapSliceBase<T>;
+export type AsyncRequestState<T> = AsyncRequestStateBase<T>;
+export {
+  initialAsyncRequestState,
+  isAsyncRequestMapSlicePartiallyDispatched,
+  isAsyncRequestMapSlicePartiallyFulfilled,
+  isAsyncRequestMapSlicePending,
+  isAsyncRequestMapSliceSettled,
+  isAsyncRequestStatePending,
+};
 
 /*
  * createAsyncSlice creates a slice based on a given async action, exposing its state.
@@ -79,15 +39,7 @@ export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig extends {} =
   name: string,
   asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>
 ) {
-  return createSlice({
-    name,
-    initialState: initialAsyncRequestState as AsyncRequestState<T>,
-    reducers: {},
-    extraReducers: (builder) =>
-      builder.addDefaultCase((state, action) =>
-        requestStateReducer(asyncThunk, state, action as unknown as AsyncRequestAction<T>)
-      ),
-  });
+  return createAsyncSliceForTypePrefix<T, ThunkArg>(name, asyncThunk.typePrefix);
 }
 
 /*
@@ -100,23 +52,7 @@ export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig extends {
   asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>,
   getEntityId: (arg: ThunkArg) => string
 ) {
-  return createSlice({
-    name,
-    initialState: {} as AsyncRequestMapSlice<T>,
-    reducers: {},
-    extraReducers: (builder) =>
-      builder.addDefaultCase((state, action) => {
-        if (isAsyncThunkAction(asyncThunk)(action)) {
-          const asyncAction = action as unknown as AsyncRequestAction<T>;
-          const entityId = getEntityId(asyncAction.meta.arg);
-          return {
-            ...state,
-            [entityId]: requestStateReducer(asyncThunk, state[entityId], asyncAction),
-          };
-        }
-        return state;
-      }),
-  });
+  return createAsyncMapSliceForTypePrefix<T, ThunkArg>(name, asyncThunk.typePrefix, getEntityId);
 }
 
 // rethrow promise error in redux serialized format
@@ -174,36 +110,4 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
   // in this case we want to avoid String(e) printing [object][object]
   logInfo(LogMessages.unknownMessageFromError, { error: JSON.stringify(e) });
   return UNKNOW_ERROR;
-}
-
-export function isAsyncRequestMapSliceSettled<T>(slice: AsyncRequestMapSlice<T>): boolean {
-  return Object.values(slice).every(isAsyncRequestStateSettled);
-}
-
-function isAsyncRequestStateSettled<T>(state: AsyncRequestState<T>): boolean {
-  return state.dispatched && !state.loading;
-}
-
-function isAsyncRequestStateFulfilled<T>(state: AsyncRequestState<T>): boolean {
-  return state.dispatched && !state.loading && !state.error;
-}
-
-export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>): boolean {
-  return Object.values(slice).some(isAsyncRequestStatePending);
-}
-
-export function isAsyncRequestMapSlicePartiallyDispatched<T>(slice: AsyncRequestMapSlice<T>): boolean {
-  return Object.values(slice).some((state) => state.dispatched);
-}
-
-export function isAsyncRequestMapSlicePartiallyFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
-  return Object.values(slice).some(isAsyncRequestStateFulfilled);
-}
-
-export function isAsyncRequestStatePending<T>(state?: AsyncRequestState<T>): boolean {
-  if (!state) {
-    return false;
-  }
-
-  return state.dispatched && state.loading;
 }

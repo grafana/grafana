@@ -1,0 +1,143 @@
+import { type Draft, type PayloadAction, type SerializedError, createSlice } from '@reduxjs/toolkit';
+
+export interface AsyncRequestState<T> {
+  result?: T;
+  loading: boolean;
+  error?: SerializedError;
+  dispatched: boolean;
+  requestId?: string;
+}
+
+export const initialAsyncRequestState: Pick<
+  AsyncRequestState<undefined>,
+  'loading' | 'dispatched' | 'result' | 'error'
+> = Object.freeze({
+  loading: false,
+  result: undefined,
+  error: undefined,
+  dispatched: false,
+});
+
+export type AsyncRequestMapSlice<T> = Record<string, AsyncRequestState<T>>;
+
+type AsyncRequestAction<T, ThunkArg> = PayloadAction<
+  Draft<T>,
+  string,
+  { arg: ThunkArg; requestId: string },
+  SerializedError
+>;
+
+type AsyncActionStatus = 'pending' | 'fulfilled' | 'rejected';
+
+function getAsyncActionStatus(typePrefix: string, action: { type: string }): AsyncActionStatus | undefined {
+  const status = action.type.slice(typePrefix.length + 1);
+  if (
+    action.type.startsWith(`${typePrefix}/`) &&
+    (status === 'pending' || status === 'fulfilled' || status === 'rejected')
+  ) {
+    return status;
+  }
+  return undefined;
+}
+
+function requestStateReducer<T, ThunkArg>(
+  typePrefix: string,
+  state: Draft<AsyncRequestState<T>> = initialAsyncRequestState,
+  action: AsyncRequestAction<T, ThunkArg>
+): Draft<AsyncRequestState<T>> {
+  const status = getAsyncActionStatus(typePrefix, action);
+
+  if (status === 'pending') {
+    return {
+      result: state.result,
+      loading: true,
+      error: state.error,
+      dispatched: true,
+      requestId: action.meta.requestId,
+    };
+  }
+
+  if (status === 'fulfilled' && (state.requestId === undefined || state.requestId === action.meta.requestId)) {
+    return {
+      ...state,
+      result: action.payload,
+      loading: false,
+      error: undefined,
+    };
+  }
+
+  if (status === 'rejected' && state.requestId === action.meta.requestId) {
+    return {
+      ...state,
+      loading: false,
+      error: action.error,
+    };
+  }
+
+  return state;
+}
+
+export function createAsyncSliceForTypePrefix<T, ThunkArg = void>(name: string, typePrefix: string) {
+  return createSlice({
+    name,
+    initialState: initialAsyncRequestState as AsyncRequestState<T>,
+    reducers: {},
+    extraReducers: (builder) =>
+      builder.addDefaultCase((state, action) =>
+        requestStateReducer(typePrefix, state, action as unknown as AsyncRequestAction<T, ThunkArg>)
+      ),
+  });
+}
+
+export function createAsyncMapSliceForTypePrefix<T, ThunkArg>(
+  name: string,
+  typePrefix: string,
+  getEntityId: (arg: ThunkArg) => string
+) {
+  return createSlice({
+    name,
+    initialState: {} as AsyncRequestMapSlice<T>,
+    reducers: {},
+    extraReducers: (builder) =>
+      builder.addDefaultCase((state, action) => {
+        if (!getAsyncActionStatus(typePrefix, action)) {
+          return state;
+        }
+
+        const asyncAction = action as unknown as AsyncRequestAction<T, ThunkArg>;
+        const entityId = getEntityId(asyncAction.meta.arg);
+        return {
+          ...state,
+          [entityId]: requestStateReducer(typePrefix, state[entityId], asyncAction),
+        };
+      }),
+  });
+}
+
+export function isAsyncRequestMapSliceSettled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).every(isAsyncRequestStateSettled);
+}
+
+function isAsyncRequestStateSettled<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && !state.loading;
+}
+
+function isAsyncRequestStateFulfilled<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && !state.loading && !state.error;
+}
+
+export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some(isAsyncRequestStatePending);
+}
+
+export function isAsyncRequestMapSlicePartiallyDispatched<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some((state) => state.dispatched);
+}
+
+export function isAsyncRequestMapSlicePartiallyFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some(isAsyncRequestStateFulfilled);
+}
+
+export function isAsyncRequestStatePending<T>(state?: AsyncRequestState<T>): boolean {
+  return Boolean(state?.dispatched && state.loading);
+}

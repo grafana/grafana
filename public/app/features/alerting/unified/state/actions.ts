@@ -21,8 +21,10 @@ import { withAppEvents, withSerializedError } from '../utils/redux';
 import { getAlertInfo } from '../utils/rules';
 import { safeParsePrometheusDuration } from '../utils/time';
 
+import { alertingActionTypePrefix } from './actionTypes';
+
 export const fetchPromRulesAction = createAsyncThunk(
-  'unifiedalerting/fetchPromRules',
+  alertingActionTypePrefix.fetchPromRules,
   async (
     {
       rulesSourceName,
@@ -41,9 +43,9 @@ export const fetchPromRulesAction = createAsyncThunk(
     },
     thunkAPI
   ): Promise<RuleNamespace[]> => {
-    const fetchRulesWithLogging = withPromRulesMetadataLogging('unifiedalerting/fetchPromRules', fetchRules, {
+    const fetchRulesWithLogging = withPromRulesMetadataLogging(alertingActionTypePrefix.fetchPromRules, fetchRules, {
       dataSourceName: rulesSourceName,
-      thunk: 'unifiedalerting/fetchPromRules',
+      thunk: alertingActionTypePrefix.fetchPromRules,
     });
 
     return await withSerializedError(
@@ -53,7 +55,7 @@ export const fetchPromRulesAction = createAsyncThunk(
 );
 
 export const fetchRulerRulesAction = createAsyncThunk(
-  'unifiedalerting/fetchRulerRules',
+  alertingActionTypePrefix.fetchRulerRules,
   async (
     {
       rulesSourceName,
@@ -73,11 +75,11 @@ export const fetchRulerRulesAction = createAsyncThunk(
     }
 
     const fetchRulerRulesWithLogging = withRulerRulesMetadataLogging(
-      'unifiedalerting/fetchRulerRules',
+      alertingActionTypePrefix.fetchRulerRules,
       fetchRulerRules,
       {
         dataSourceName: rulesSourceName,
-        thunk: 'unifiedalerting/fetchRulerRules',
+        thunk: alertingActionTypePrefix.fetchRulerRules,
       }
     );
 
@@ -169,7 +171,7 @@ export function fetchAllPromRulesAction(
 }
 
 export const fetchGrafanaAnnotationsAction = createAsyncThunk(
-  'unifiedalerting/fetchGrafanaAnnotations',
+  alertingActionTypePrefix.fetchGrafanaAnnotations,
   (ruleUID: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(ruleUID))
 );
 
@@ -183,7 +185,7 @@ interface UpdateAlertManagerConfigActionOptions {
 }
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
-  'unifiedalerting/updateAMConfig',
+  alertingActionTypePrefix.updateAlertManagerConfig,
   (
     { alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, redirectSearch },
     thunkAPI
@@ -229,7 +231,7 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
 );
 
 export const deleteAlertManagerConfigAction = createAsyncThunk(
-  'unifiedalerting/deleteAlertManagerConfig',
+  alertingActionTypePrefix.deleteAlertManagerConfig,
   async (alertManagerSourceName: string, thunkAPI): Promise<void> => {
     return withAppEvents(
       withSerializedError(
