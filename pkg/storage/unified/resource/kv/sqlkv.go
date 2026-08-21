@@ -165,6 +165,84 @@ func (k *SqlKV) Ping(ctx context.Context) error {
 	return k.db.PingContext(ctx)
 }
 
+// EmptyKeyPathRow is a resource_history row whose key_path column is empty.
+// It carries the legacy compatibility columns needed to reconstruct the key_path.
+// Remove once sqlkv no longer needs to mirror legacy resource_history columns.
+type EmptyKeyPathRow struct {
+	GUID            string
+	Group           string
+	Resource        string
+	Namespace       string
+	Name            string
+	ResourceVersion int64
+	Action          int64
+	Folder          string
+}
+
+// ListEmptyKeyPaths returns up to limit resource_history rows whose key_path is
+// empty. Rows written before the code that populates key_path on write can have
+// an empty key_path; those rows are invisible to key range scans and must be
+// backfilled. See the key_path reconciler in the resource package.
+func (k *SqlKV) ListEmptyKeyPaths(ctx context.Context, limit int) ([]EmptyKeyPathRow, error) {
+	if limit <= 0 {
+		return nil, fmt.Errorf("limit must be greater than 0")
+	}
+
+	qb, err := k.getQueryBuilder(DataSection)
+	if err != nil {
+		return nil, err
+	}
+
+	query, args := qb.buildListEmptyKeyPathsQuery(limit)
+	rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list empty key_path rows: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var result []EmptyKeyPathRow
+	for rows.Next() {
+		var row EmptyKeyPathRow
+		if err := rows.Scan(&row.GUID, &row.Group, &row.Resource, &row.Namespace, &row.Name, &row.ResourceVersion, &row.Action, &row.Folder); err != nil {
+			return nil, fmt.Errorf("failed to scan empty key_path row: %w", err)
+		}
+		result = append(result, row)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to read empty key_path rows: %w", err)
+	}
+
+	return result, nil
+}
+
+// SetKeyPathIfEmpty sets key_path for the row identified by guid, but only if its
+// key_path is still empty. It reports whether a row was updated. The guard keeps
+// the operation idempotent and avoids clobbering a value a concurrent writer set.
+func (k *SqlKV) SetKeyPathIfEmpty(ctx context.Context, guid, keyPath string) (bool, error) {
+	if guid == "" {
+		return false, fmt.Errorf("guid is required")
+	}
+	if keyPath == "" {
+		return false, fmt.Errorf("keyPath is required")
+	}
+
+	qb, err := k.getQueryBuilder(DataSection)
+	if err != nil {
+		return false, err
+	}
+
+	query, args := qb.buildSetKeyPathIfEmptyQuery(guid, keyPath)
+	result, err := k.conn(ctx).ExecContext(ctx, query, args...)
+	if err != nil {
+		return false, fmt.Errorf("failed to set key_path: %w", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("failed to read rows affected: %w", err)
+	}
+	return n > 0, nil
+}
+
 func dataImportBatchRowLimit(dialectName string) int {
 	if dialectName == "sqlite" {
 		return dataImportBatchSQLiteMaxRows

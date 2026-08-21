@@ -312,6 +312,11 @@ type KVBackendOptions struct {
 	// is not lost while a slow write is still in flight. Only effective when
 	// EnableKVLeases is true.
 	LeaseAutoRenew bool
+
+	// ReconcileKeyPaths enables the background job that backfills empty key_path
+	// values in resource_history. Only effective when EnableKVLeases is true,
+	// since the job uses a lease to run on a single instance across HA.
+	ReconcileKeyPaths bool
 }
 
 // NewKVBackendOptions returns the options that come from Grafana's config. The
@@ -329,6 +334,7 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 		TenantWatcherConfig:     NewTenantWatcherConfig(cfg),
 		TenantDeleterConfig:     NewTenantDeleterConfig(cfg),
+		ReconcileKeyPaths:       cfg.ReconcileKeyPath,
 		// Callers that know better override this. Without a default, a wiring
 		// that forgets to set it runs garbage collection on every replica.
 		DisableStorageServices: !cfg.StorageServicesEnabled(),
@@ -484,6 +490,13 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Start the cleanup background job.
 	go backend.runCleanups(ctx)
+
+	// Backfill any resource_history rows left with an empty key_path by an older
+	// instance that did not populate it on write. Uses a lease so a single
+	// instance runs it across an HA deployment; skipped on read-only replicas.
+	if opts.ReconcileKeyPaths && leaseManager != nil && !opts.DisableStorageServices {
+		backend.startKeyPathReconciler(ctx)
+	}
 
 	// Optionally start the shadow NATS notifier (metrics only; see natsShadow).
 	if opts.EnableNatsNotifierShadow && opts.EventSubscriber != nil && opts.EventSubscriber.Enabled() {

@@ -33,6 +33,23 @@ func LegacyActionValue(action DataAction) (int64, error) {
 	}
 }
 
+// DataActionFromLegacy maps the legacy resource_history integer action encoding
+// back to a DataAction. It is the inverse of LegacyActionValue and is used to
+// reconstruct a key_path from the legacy compatibility columns.
+// Remove once sqlkv no longer needs to mirror those legacy columns.
+func DataActionFromLegacy(action int64) (DataAction, error) {
+	switch action {
+	case 1:
+		return DataActionCreated, nil
+	case 2:
+		return DataActionUpdated, nil
+	case 3:
+		return DataActionDeleted, nil
+	default:
+		return "", fmt.Errorf("unknown legacy action value: %d", action)
+	}
+}
+
 type DataKey struct {
 	Namespace       string
 	Group           string

@@ -343,6 +343,42 @@ func (qb *queryBuilder) buildInsertDatastoreBackwardCompatQuery(value []byte, gu
 	return query, []interface{}{guid, value, group, resource, namespace, name, action, folder}
 }
 
+// buildListEmptyKeyPathsQuery selects resource_history rows whose key_path column
+// is empty, returning the legacy compatibility columns needed to reconstruct it.
+// Ordering by guid keeps pagination deterministic across calls.
+func (qb *queryBuilder) buildListEmptyKeyPathsQuery(limit int) (string, []interface{}) {
+	query := fmt.Sprintf(
+		"SELECT %s, %s, %s, %s, %s, %s, %s, %s FROM %s WHERE %s = %s ORDER BY %s ASC LIMIT %d",
+		qb.dialect.QuoteIdent("guid"),
+		qb.dialect.QuoteIdent("group"),
+		qb.dialect.QuoteIdent("resource"),
+		qb.dialect.QuoteIdent("namespace"),
+		qb.dialect.QuoteIdent("name"),
+		qb.dialect.QuoteIdent("resource_version"),
+		qb.dialect.QuoteIdent("action"),
+		qb.dialect.QuoteIdent("folder"),
+		qb.dialect.QuoteIdent(qb.tableName),
+		qb.dialect.QuoteIdent("key_path"), qb.dialect.Placeholder(1),
+		qb.dialect.QuoteIdent("guid"),
+		limit,
+	)
+	return query, []interface{}{""}
+}
+
+// buildSetKeyPathIfEmptyQuery updates key_path for a single guid, but only when it
+// is still empty. The guard keeps the reconcile idempotent and avoids racing with
+// a concurrent writer that has already populated the row.
+func (qb *queryBuilder) buildSetKeyPathIfEmptyQuery(guid, keyPath string) (string, []interface{}) {
+	query := fmt.Sprintf(
+		"UPDATE %s SET %s = %s WHERE %s = %s AND %s = %s",
+		qb.dialect.QuoteIdent(qb.tableName),
+		qb.dialect.QuoteIdent("key_path"), qb.dialect.Placeholder(1),
+		qb.dialect.QuoteIdent("guid"), qb.dialect.Placeholder(2),
+		qb.dialect.QuoteIdent("key_path"), qb.dialect.Placeholder(3),
+	)
+	return query, []interface{}{keyPath, guid, ""}
+}
+
 // buildUpdateDatastoreQuery generates UPDATE for datastore section
 func (qb *queryBuilder) buildUpdateDatastoreQuery(keyPath string, value []byte) (string, []interface{}) {
 	query := fmt.Sprintf(

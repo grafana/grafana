@@ -294,6 +294,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// auto-renew write leases in the background so they are not lost while a
 	// slow write is still in flight.
 	cfg.KVLeaseAutoRenew = section.Key("kv_lease_auto_renew").MustBool(false)
+	// backfill resource_history rows left with an empty key_path by an older
+	// instance. Only runs when enable_kv_leases is true. Default on.
+	cfg.ReconcileKeyPath = section.Key("reconcile_key_path").MustBool(true)
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")

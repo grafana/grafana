@@ -30,6 +30,65 @@ func setupSQLKVMock(t *testing.T, driverName string) (*SqlKV, *sql.DB, sqlmock.S
 	return sqlKV, db, mock
 }
 
+func TestListEmptyKeyPaths(t *testing.T) {
+	sqlKV, _, mock := setupSQLKVMock(t, "sqlite3")
+
+	rows := sqlmock.NewRows([]string{"guid", "group", "resource", "namespace", "name", "resource_version", "action", "folder"}).
+		AddRow("guid-1", "playlist.grafana.app", "playlists", "default", "p1", int64(123), int64(1), "").
+		AddRow("guid-2", "iam.grafana.app", "roles", "", "admin", int64(456), int64(3), "fold")
+
+	mock.ExpectQuery(`(?i)select .*from .*resource_history.* where .*key_path.* = .* order by .*guid.* asc limit 1000`).
+		WithArgs("").
+		WillReturnRows(rows)
+
+	got, err := sqlKV.ListEmptyKeyPaths(context.Background(), 1000)
+	require.NoError(t, err)
+	require.Len(t, got, 2)
+	require.Equal(t, EmptyKeyPathRow{GUID: "guid-1", Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "p1", ResourceVersion: 123, Action: 1}, got[0])
+	require.Equal(t, EmptyKeyPathRow{GUID: "guid-2", Group: "iam.grafana.app", Resource: "roles", Name: "admin", ResourceVersion: 456, Action: 3, Folder: "fold"}, got[1])
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestListEmptyKeyPathsInvalidLimit(t *testing.T) {
+	sqlKV, _, _ := setupSQLKVMock(t, "sqlite3")
+	_, err := sqlKV.ListEmptyKeyPaths(context.Background(), 0)
+	require.Error(t, err)
+}
+
+func TestSetKeyPathIfEmpty(t *testing.T) {
+	t.Run("updates and reports affected", func(t *testing.T) {
+		sqlKV, _, mock := setupSQLKVMock(t, "sqlite3")
+		mock.ExpectExec(`(?i)update .*resource_history.* set .*key_path.* = .* where .*guid.* = .* and .*key_path.* = `).
+			WithArgs("unified/data/g/r/ns/n/1~created~", "guid-1", "").
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		ok, err := sqlKV.SetKeyPathIfEmpty(context.Background(), "guid-1", "unified/data/g/r/ns/n/1~created~")
+		require.NoError(t, err)
+		require.True(t, ok)
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("no row updated reports false", func(t *testing.T) {
+		sqlKV, _, mock := setupSQLKVMock(t, "sqlite3")
+		mock.ExpectExec(`(?i)update .*resource_history`).
+			WithArgs("kp", "guid-1", "").
+			WillReturnResult(sqlmock.NewResult(0, 0))
+
+		ok, err := sqlKV.SetKeyPathIfEmpty(context.Background(), "guid-1", "kp")
+		require.NoError(t, err)
+		require.False(t, ok)
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("validates arguments", func(t *testing.T) {
+		sqlKV, _, _ := setupSQLKVMock(t, "sqlite3")
+		_, err := sqlKV.SetKeyPathIfEmpty(context.Background(), "", "kp")
+		require.Error(t, err)
+		_, err = sqlKV.SetKeyPathIfEmpty(context.Background(), "guid", "")
+		require.Error(t, err)
+	})
+}
+
 func buildDataImportRows(count int) []DataImportRow {
 	rows := make([]DataImportRow, count)
 	for i := range count {

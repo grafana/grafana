@@ -861,6 +861,9 @@ type Cfg struct {
 	EnableKVLeases                    bool
 	KVLeaseTTL                        time.Duration
 	KVLeaseAutoRenew                  bool
+	// ReconcileKeyPath enables the background job that backfills empty key_path
+	// values in resource_history. Only effective when EnableKVLeases is true.
+	ReconcileKeyPath bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
