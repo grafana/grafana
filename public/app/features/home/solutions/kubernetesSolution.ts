@@ -14,6 +14,7 @@ import {
   type KubernetesHealth,
 } from './kubernetesData';
 import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
+import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal } from './solutionState';
 import { type Solution } from './types';
@@ -61,18 +62,9 @@ export function kubernetesSolution(): Solution {
   const detect = memoize(() => detectSignal(resolveKubernetesDatasource));
   const datasource = async () => (await detect()).datasource;
 
-  const inventory = memoize(async () => {
-    const ds = await datasource();
-    return ds ? fetchKubernetesInventory(ds) : null;
-  });
-  const health = memoize(async () => {
-    const ds = await datasource();
-    return ds ? fetchKubernetesHealth(ds) : null;
-  });
-  const clusterCpu = memoize(async () => {
-    const ds = await datasource();
-    return ds ? fetchClusterCpuSeries(ds) : null;
-  });
+  const inventory = datasourceFact(datasource, fetchKubernetesInventory);
+  const health = datasourceFact(datasource, fetchKubernetesHealth);
+  const clusterCpu = datasourceFact(datasource, fetchClusterCpuSeries);
   const alert = memoize(async () => {
     const status = await health();
     if (!status || hasHealthProblems(status) !== true) {

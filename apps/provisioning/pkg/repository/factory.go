@@ -16,7 +16,7 @@ type Mutator func(ctx context.Context, obj runtime.Object) error
 type Extra interface {
 	Type() provisioning.RepositoryType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
-	Mutate(ctx context.Context, obj runtime.Object) error
+	Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error
 	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
@@ -24,7 +24,7 @@ type Extra interface {
 type Factory interface {
 	Types() []provisioning.RepositoryType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
-	Mutate(ctx context.Context, obj runtime.Object) error
+	Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error
 	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
@@ -78,7 +78,7 @@ func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Reposi
 	return nil, fmt.Errorf("repository type %q is not supported", r.Spec.Type)
 }
 
-func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
+func (f *factory) Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error {
 	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil
@@ -87,7 +87,7 @@ func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
 	// Find the extra that matches this repository type
 	for _, e := range f.extras {
 		if e.Type() == repo.Spec.Type {
-			return e.Mutate(ctx, obj)
+			return e.Mutate(ctx, obj, oldObj)
 		}
 	}
 
