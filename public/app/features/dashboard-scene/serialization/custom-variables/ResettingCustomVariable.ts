@@ -1,4 +1,4 @@
-import { type Observable, asapScheduler, observeOn, of, switchMap, tap } from 'rxjs';
+import { type Observable, asapScheduler, filter, observeOn, of, switchMap } from 'rxjs';
 
 import { CustomVariable, type VariableGetOptionsArgs, type VariableValueOption } from '@grafana/scenes';
 
@@ -13,6 +13,12 @@ import { CustomVariable, type VariableGetOptionsArgs, type VariableValueOption }
 // option set. state.options is read before super.getValueOptions() runs, so it reflects
 // the previous resolution and survives scene cloning, unlike an instance field would.
 export class ResettingCustomVariable extends CustomVariable {
+  // Identifies the most recent resolution. A deferred reset from a superseded one must not
+  // land, so it carries the generation it was issued for and drops if that is no longer
+  // current. Deliberately not state: it is only meaningful within a live update cycle, so a
+  // clone starting over at zero is correct.
+  private _generation = 0;
+
   public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     const hasResolvedNonEmptyBefore = this.state.options.length > 0;
 
@@ -22,13 +28,22 @@ export class ResettingCustomVariable extends CustomVariable {
       return options$;
     }
 
+    const generation = ++this._generation;
+
     return options$.pipe(
       switchMap((options) => {
         // Non-empty resolutions stay synchronous, matching CustomVariable. Only the reset
-        // needs deferring, so an ordinary value-to-value change is unaffected.
+        // needs deferring, so an ordinary value change is unaffected.
         if (options.length > 0) {
           return of(options);
         }
+
+        // Cleared synchronously, before returning, so a resolution that starts before the
+        // deferred emission below lands does not read a flag this call set and revert its
+        // own result. Clearing unconditionally, including when the flag was already set:
+        // once a dependency has resolved and then gone empty, a value restored from the URL
+        // is itself stale, since it was written before the dependency cleared.
+        this.skipNextValidation = false;
 
         return of(options).pipe(
           // Deferred to a microtask so the reset lands after the synchronous state-change
@@ -40,14 +55,7 @@ export class ResettingCustomVariable extends CustomVariable {
           // defers for the same reason. Remove once scopes state management no longer
           // depends on this ordering.
           observeOn(asapScheduler),
-          tap(() => {
-            // Cleared unconditionally, including when the flag was already set before this
-            // call. By the time a dependency has resolved once and then gone empty, a value
-            // restored from the URL is itself stale: it was written before the dependency
-            // cleared. Preserving a pre-existing flag here reinstates that stale value and
-            // the reset never lands, which the scopes integration test demonstrates.
-            this.skipNextValidation = false;
-          })
+          filter(() => generation === this._generation)
         );
       })
     );
