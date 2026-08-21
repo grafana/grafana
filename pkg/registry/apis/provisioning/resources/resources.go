@@ -429,10 +429,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read previous file: %w", err)
 	}
-	oldParsed, err := r.parser.Parse(ctx, oldInfo)
-	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse previous file: %w", err)
-	}
+	oldParsed, oldParseErr := r.parser.Parse(ctx, oldInfo)
 
 	newInfo, err := r.repo.Read(ctx, newPath, newRef)
 	if err != nil {
@@ -441,6 +438,20 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse new file: %w", err)
+	}
+
+	if oldParseErr != nil {
+		// The previous path can no longer be parsed (e.g. it fails path validation
+		// after the file was renamed away from it) -- its identity is unknown, so we
+		// cannot safely delete it or compare it against the new resource. Proceed
+		// with writing the new resource anyway: the rename's whole point is the new
+		// path, and it must not be held hostage by the old, now-irrelevant one. The
+		// old resource is left for manual cleanup instead of silently disappearing.
+		newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
+		if err != nil {
+			return "", "", gvk, fmt.Errorf("failed to write resource: %w", err)
+		}
+		return newName, "", gvk, fmt.Errorf("failed to parse previous file, old resource may need manual cleanup: %w", oldParseErr)
 	}
 
 	// Delete the old resource when the identity changed (name or resource kind).
