@@ -147,6 +147,8 @@ interface BaseTableProps {
   disableSanitizeHtml?: boolean;
   // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
   disableKeyboardEvents?: boolean;
+  // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
+  contentAwareWidthsEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */

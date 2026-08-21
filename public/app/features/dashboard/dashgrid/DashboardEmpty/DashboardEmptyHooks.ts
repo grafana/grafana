@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { locationService } from '@grafana/runtime';
-import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
+import { openPanelEditor } from 'app/features/dashboard-scene/panel-edit/openPanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
@@ -47,7 +47,7 @@ export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo }: 
     return () => {
       if (dashboard instanceof DashboardScene) {
         const panel = dashboard.onCreateNewPanel();
-        dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
+        openPanelEditor(dashboard, panel, true);
         locationService.partial({ firstPanel: true });
       } else {
         const id = onCreateNewPanel(dashboard, initialDatasource);

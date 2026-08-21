@@ -69,11 +69,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * populate star status from apiserver
-  * @default false
-  */
-  starsFromAPIServer?: boolean;
-  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   * @default false
   */
@@ -124,11 +119,6 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
-  * Enable export functionality for provisioned resources
-  * @default false
-  */
-  provisioningExport?: boolean;
-  /**
   * Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
   * @default true
   */
@@ -168,11 +158,6 @@ export interface FeatureToggles {
   * @default false
   */
   externalServiceAccounts?: boolean;
-  /**
-  * Routes snapshot requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesSnapshots?: boolean;
   /**
   * When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
   * @default false
@@ -330,15 +315,15 @@ export interface FeatureToggles {
   */
   reportRenderBinding?: boolean;
   /**
+  * On the report render page, wait for panel queries to settle (including late-registering repeat panel queries) before signaling the image renderer that the dashboard is done. Uses the legacy config-based toggle rather than OpenFeature since the render page authenticates via the image-renderer's signed render key rather than a normal user session, and OpenFeature evaluation isn't verified to work reliably in that context.
+  * @default false
+  */
+  reportRenderQueryDebounce?: boolean;
+  /**
   * Allow pan and zoom in canvas panel
   * @default false
   */
   canvasPanelPanZoom?: boolean;
-  /**
-  * Load Canvas panel from an external plugin instead of the bundled core plugin
-  * @default false
-  */
-  canvasExternalPlugin?: boolean;
   /**
   * Enables time comparison option in supported panels
   * @default false
@@ -544,11 +529,6 @@ export interface FeatureToggles {
   * @default false
   */
   preserveDashboardStateWhenNavigating?: boolean;
-  /**
-  * Enables the new central alert history.
-  * @default false
-  */
-  alertingCentralAlertHistory?: boolean;
   /**
   * Preserve plugin proxy trailing slash.
   * @default false
@@ -857,9 +837,9 @@ export interface FeatureToggles {
   azureMonitorLogsBuilderEditor?: boolean;
   /**
   * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
-  * @default false
+  * @default true
   */
-  azureMonitorBatchAPI?: boolean;
+  ['datasources.azureMonitorBatchAPI']?: boolean;
   /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
@@ -1032,7 +1012,7 @@ export interface FeatureToggles {
   otelLogsFormatting?: boolean;
   /**
   * Enables the notification history feature
-  * @default false
+  * @default true
   */
   alertingNotificationHistory?: boolean;
   /**
@@ -1163,7 +1143,7 @@ export interface FeatureToggles {
   lokiQueryLimitsContext?: boolean;
   /**
   * Adds support for Kubernetes alerting historian APIs
-  * @default false
+  * @default true
   */
   kubernetesAlertingHistorian?: boolean;
   /**
@@ -1247,6 +1227,21 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
+  * Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
+  * @default false
+  */
+  kubernetesUsersRedirectNoFallback?: boolean;
+  /**
+  * Enables auth info APIs in the app platform
+  * @default false
+  */
+  kubernetesAuthInfoApi?: boolean;
+  /**
+  * Redirects the requests of the auth info service to the app platform APIs
+  * @default false
+  */
+  kubernetesAuthInfoRedirect?: boolean;
+  /**
   * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false
   */
@@ -1258,22 +1253,22 @@ export interface FeatureToggles {
   alertingIgnorePendingForNoDataAndError?: boolean;
   /**
   * Enables the notification history tab in the rule viewer
-  * @default false
+  * @default true
   */
   alertingNotificationHistoryRuleViewer?: boolean;
   /**
   * Enables the notification history global menu item viewer
-  * @default false
+  * @default true
   */
   alertingNotificationHistoryGlobal?: boolean;
   /**
   * Enables the notification history timeline in the triage instance details drawer
-  * @default false
+  * @default true
   */
   alertingNotificationHistoryTriage?: boolean;
   /**
   * Enables the notification history detail page
-  * @default false
+  * @default true
   */
   alertingNotificationHistoryDetail?: boolean;
   /**
@@ -1291,11 +1286,6 @@ export interface FeatureToggles {
   * @default true
   */
   rememberUserOrgForSso?: boolean;
-  /**
-  * Registers the dsabstraction app for querying datasources via unified SQL
-  * @default false
-  */
-  dsAbstractionApp?: boolean;
   /**
   * Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
   * @default false

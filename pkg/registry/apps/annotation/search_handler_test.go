@@ -13,7 +13,6 @@ import (
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -193,7 +192,7 @@ func TestSearchHandler(t *testing.T) {
 			for _, name := range tt.deleteFirst {
 				require.NoError(t, store.Delete(ctx, metav1.NamespaceDefault, name))
 			}
-			handler := newSearchHandler(store, accessClient, dashClient, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+			handler := newSearchHandler(store, accessClient, dashClient, ProvideMetrics(nil), log.NewNopLogger())
 
 			u := &url.URL{
 				Scheme:   "http",

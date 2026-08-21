@@ -25,6 +25,7 @@ import { COLUMN, TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
+  useContentAwareWidths,
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
@@ -50,7 +51,6 @@ import {
 } from './types';
 import {
   calculateFooterHeight,
-  getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
   getDefaultRowHeight,
@@ -89,6 +89,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
+    contentAwareWidthsEnabled = false,
   } = props;
 
   const uniqueId = useId();
@@ -198,10 +199,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const availableWidth = useMemo(() => width - COLUMN.EXPANDER_WIDTH - scrollbarWidth, [width, scrollbarWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
-  const applyToRowBgFn = useMemo(
-    () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
-    [data.fields, getCellColorInlineStyles]
-  );
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const typographyCtx = useTypographyCtx(theme);
@@ -220,13 +217,19 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
-  const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey);
+  const contentAwareWidths = useContentAwareWidths({
+    enabled: contentAwareWidthsEnabled,
+    typographyCtx,
+    showTypeIcons,
+    getActions: getCellActions,
+  });
+
+  const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });
@@ -240,6 +243,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     nestedVisibleFields,
     availableWidth,
     structureRev,
+    contentAware: contentAwareWidths,
   });
 
   const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
@@ -247,7 +251,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     columnWidths: nestedFieldWidths,
     fields: nestedVisibleFields,
     enabled: hasNestedHeaders,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });
@@ -370,7 +373,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
       theme,
-      applyToRowBgFn,
       getCellColorInlineStyles,
       getTextColorForBackground,
       rowHeight,
@@ -390,7 +392,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       timeRange,
     }),
     [
-      applyToRowBgFn,
       disableKeyboardEvents,
       disableSanitizeHtml,
       filter,

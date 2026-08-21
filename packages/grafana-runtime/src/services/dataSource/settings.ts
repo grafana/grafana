@@ -49,6 +49,7 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
 /**
  * Populate the instance-settings cache from boot data. Intended to be called
  * exactly once at application startup via the `@grafana/runtime/internal` export.
+ * In tests, use {@link setDataSourceInstanceSettings} instead.
  *
  * @internal
  */
@@ -58,6 +59,28 @@ export function initDataSourceInstanceSettings(
 ): void {
   defaultName = defaultDsName;
   populateMaps(settings);
+}
+
+/**
+ * Test helper — the sanctioned way to seed the instance-settings cache in tests.
+ * Fully resets all module state (including runtime and expression data sources),
+ * then populates the cache from a clone of `settings` so test fixtures are never
+ * mutated. When `defaultDatasourceName` is omitted, the entry flagged with
+ * `isDefault: true` becomes the default. Should only be called from tests.
+ *
+ * @internal
+ */
+export function setDataSourceInstanceSettings(
+  settings: Record<string, DataSourceInstanceSettings>,
+  defaultDatasourceName?: string
+): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('setDataSourceInstanceSettings() function can only be called from tests.');
+  }
+
+  _resetForTests();
+  populateMaps(structuredClone(settings));
+  defaultName = defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '';
 }
 
 /**
@@ -173,7 +196,16 @@ export async function getDataSourceInstanceList(
   return (results.length > 0 ? results : getInstanceSettingsListFallback(filtersWithAdapter)).map(toListItem);
 }
 
-function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
+// Expressions are included because `__expr__` (and the legacy `-100`) is the uid they are
+// registered under; they sit outside `byUid` only because they are set at boot.
+export function lookupByUid(uid: string): DataSourceInstanceSettings | undefined {
+  if (isExpressionReference(uid)) {
+    return getExpressionDataSourceSettings();
+  }
+  return byUid[uid];
+}
+
+export function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
     uid: settings.uid,
     type: settings.type,
@@ -195,8 +227,8 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
 }
 
 /**
- * Resolve the default data source instance of a given type. Returns the instance flagged
- * as default, otherwise the first instance of that type, or `undefined` when none exist.
+ * Resolve the list item for the default data source of a given type. Returns the instance
+ * flagged as default, otherwise the first instance of that type, or `undefined` when none exist.
  *
  * Covers the common "get my data source" pattern (`list.find(ds => ds.isDefault) ?? list[0]`)
  * without exposing the full list. The heavy per-instance settings are not included — fetch
@@ -204,7 +236,9 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
  *
  * @public
  */
-export async function getDefaultDataSourceInstance(type: string): Promise<DataSourceInstanceListItem | undefined> {
+export async function getDefaultDataSourceInstanceListItem(
+  type: string
+): Promise<DataSourceInstanceListItem | undefined> {
   const allOfType = await getDataSourceInstanceList({ type, all: true });
   const list = allOfType.filter((item) => matchesType(item, type));
   const defaultInstance = list.find((item) => item.isDefault);

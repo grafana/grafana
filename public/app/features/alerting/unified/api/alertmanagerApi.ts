@@ -355,6 +355,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         method: 'POST',
         data: config,
         showSuccessAlert: false,
+        showErrorAlert: false,
       }),
       invalidatesTags: ['AlertmanagerConfiguration', 'ContactPoint', 'ContactPointsStatus', 'Receiver'],
     }),

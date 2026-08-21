@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import {
   type AbsoluteTimeRange,
   CoreApp,
+  type DataQueryRequest,
   type EventBus,
   EventBusSrv,
   type FieldConfigSource,
@@ -137,17 +138,13 @@ const setUp = (
 
 describe('LogsTable', () => {
   let origResizeObserver = global.ResizeObserver;
-  let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
-  let jestScrollIntoView = jest.fn();
 
   beforeAll(() => {
     mockTransformationsRegistry([organizeFieldsTransformer, extractFieldsTransformer]);
   });
 
   beforeEach(() => {
-    jestScrollIntoView = jest.fn();
     origResizeObserver = global.ResizeObserver;
-    origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {
       callback: unknown;
@@ -158,13 +155,10 @@ describe('LogsTable', () => {
       unobserve() {}
       disconnect() {}
     };
-
-    window.HTMLElement.prototype.scrollIntoView = jestScrollIntoView;
   });
 
   afterEach(() => {
     global.ResizeObserver = origResizeObserver;
-    window.HTMLElement.prototype.scrollIntoView = origScrollIntoView;
   });
 
   it('should render', async () => {
@@ -430,6 +424,43 @@ describe('LogsTable', () => {
       });
 
       expect(await screen.findByText('Data is missing a time field')).toBeInTheDocument();
+    });
+  });
+
+  describe('Loki time column tooltip', () => {
+    const lokiTooltip =
+      "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right.";
+
+    it('shows a tooltip on the timestamp column when the query uses Loki', async () => {
+      const { container } = setUp({
+        data: getPanelData({
+          request: {
+            targets: [{ refId: 'A', datasource: { type: 'loki' } }],
+          } as DataQueryRequest,
+        }),
+      });
+
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      expect(screen.getByRole('button', { name: lokiTooltip })).toBeInTheDocument();
+      const timestampHeader = Array.from(container.querySelectorAll('[role="columnheader"]')).find((header) =>
+        header.textContent?.includes('timestamp')
+      );
+      expect(timestampHeader).toContainElement(screen.getByRole('button', { name: lokiTooltip }));
+    });
+
+    it('does not show a timestamp tooltip for other data sources', async () => {
+      setUp({
+        data: getPanelData({
+          request: {
+            targets: [{ refId: 'A', datasource: { type: 'elasticsearch' } }],
+          } as DataQueryRequest,
+        }),
+      });
+
+      await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
+
+      expect(screen.queryByRole('button', { name: lokiTooltip })).not.toBeInTheDocument();
     });
   });
 });

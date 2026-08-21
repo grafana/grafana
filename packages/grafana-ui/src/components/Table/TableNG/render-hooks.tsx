@@ -44,6 +44,7 @@ import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
+import { CELL_HORIZONTAL_CHROME } from './constants';
 import {
   getCellActionStyles,
   getDefaultCellStyles,
@@ -71,11 +72,13 @@ import {
   canFieldBeColorized,
   displayJsonValue,
   getAlignment,
+  getApplyToRowBgFn,
   type getCellColorInlineStylesFactory,
   getCellOptions,
   getDisplayName,
   getSummaryCellTextAlign,
   isCellInspectEnabled,
+  isSortableField,
   parseStyleJson,
   predicateByName,
   shouldTextOverflow,
@@ -144,7 +147,6 @@ export function useDataGridRows(
 // -----------------------------------------------------------------------------
 
 export interface ColumnBuildConfig {
-  applyToRowBgFn: ((rowIdx: number) => Partial<CSSProperties>) | undefined;
   disableKeyboardEvents?: boolean;
   disableSanitizeHtml?: boolean;
   filter: FilterType;
@@ -190,7 +192,6 @@ function buildColumnsFromFields(
 ): FromFieldsResult {
   const {
     theme,
-    applyToRowBgFn,
     getCellColorInlineStyles,
     getTextColorForBackground,
     rowHeight,
@@ -209,6 +210,13 @@ function buildColumnsFromFields(
     showTypeIcons,
     timeRange,
   } = config;
+
+  // Resolve the apply-to-row background function against this frame's own fields.
+  // Nested tables are independent frames: their apply-to-row coloring must read from
+  // the nested field's own values at the nested row's local `__index`, not from the
+  // parent frame. Deriving it here (rather than passing a single top-level closure via
+  // config) keeps `applyToRowBgFn(row.__index)` correct for both flat and nested rows.
+  const applyToRowBgFn = getApplyToRowBgFn(frame.fields, getCellColorInlineStyles) ?? undefined;
 
   const result: FromFieldsResult = {
     columns: [],
@@ -293,6 +301,7 @@ function buildColumnsFromFields(
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
     const showActions = cellInspect || showFilters;
     const width = widths[i];
+    const contentWidth = width - CELL_HORIZONTAL_CHROME;
 
     // helps us avoid string cx and emotion per-cell
     const cellActionClassName = showActions
@@ -392,7 +401,7 @@ function buildColumnsFromFields(
             rowIdx={rowIdx}
             theme={theme}
             value={value}
-            width={width}
+            width={contentWidth}
             timeRange={timeRange}
             cellInspect={cellInspect}
             showFilters={showFilters}
@@ -509,6 +518,7 @@ function buildColumnsFromFields(
       width,
       headerCellClass,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
+      sortable: isSortableField(field),
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell

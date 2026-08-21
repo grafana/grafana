@@ -137,6 +137,7 @@ message ListTagsRequest {
 message TagListOptions {
   string prefix = 1;
   int32 limit = 2;
+  string contains = 3;
 }
 
 message ListTagsResponse {

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, within } from '@testing-library/react';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
@@ -200,6 +200,7 @@ describe('User interactions', () => {
 
       await user.click(elements.addAnnotationButton());
 
+      await waitFor(() => expect(annotationEditActions.addAnnotation).toHaveBeenCalled());
       expect(annotationEditActions.addAnnotation).toHaveBeenCalledWith({
         source: elements.dataLayerSet,
         addedObject: expect.objectContaining({
