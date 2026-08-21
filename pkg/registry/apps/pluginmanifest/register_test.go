@@ -12,8 +12,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	pluginregistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
+
+// mustBuilder constructs a Builder for tests, failing the test if construction errors.
+func mustBuilder(t *testing.T, features featuremgmt.FeatureToggles, reg pluginregistry.Service) *Builder {
+	t.Helper()
+	return ProvideBuilder(features, reg, nil, nil, nil, nil)
+}
 
 // enabledFeatures returns feature toggles with the app-sdk manifest feature enabled.
 func enabledFeatures() featuremgmt.FeatureToggles {
@@ -83,7 +90,7 @@ func TestBuildInstallers(t *testing.T) {
 			FS:       fakeFS,
 		}
 
-		installers, err := ProvideBuilder(featuremgmt.WithFeatures(), reg, nil, nil).BuildInstallers(context.Background())
+		installers, err := mustBuilder(t, featuremgmt.WithFeatures(), reg).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Empty(t, installers)
 	})
@@ -93,7 +100,7 @@ func TestBuildInstallers(t *testing.T) {
 		// Plugins loaded between those points (e.g. under the service-loading path, where the
 		// registry is empty at injection time) must still produce installers.
 		reg := pluginfakes.NewFakePluginRegistry()
-		builder := ProvideBuilder(enabledFeatures(), reg, nil, nil)
+		builder := mustBuilder(t, enabledFeatures(), reg)
 
 		installers, err := builder.BuildInstallers(context.Background())
 		require.NoError(t, err)
@@ -119,7 +126,7 @@ func TestBuildInstallers(t *testing.T) {
 			FS: manifestFS(""),
 		}
 
-		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
+		installers, err := mustBuilder(t, enabledFeatures(), reg).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Empty(t, installers)
 	})
@@ -134,7 +141,7 @@ func TestBuildInstallers(t *testing.T) {
 			FS: manifestFS(manifestCR("test-app", "testapp.ext.grafana.com", "Thing", "things", false)),
 		}
 
-		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
+		installers, err := mustBuilder(t, enabledFeatures(), reg).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Len(t, installers, 1)
 		require.Equal(t, []schema.GroupVersion{{Group: "testapp.ext.grafana.com", Version: "v1"}}, installers[0].GroupVersions())
@@ -150,7 +157,7 @@ func TestBuildInstallers(t *testing.T) {
 			FS: manifestFS("not valid json"),
 		}
 
-		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
+		installers, err := mustBuilder(t, enabledFeatures(), reg).BuildInstallers(context.Background())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "test-app")
 		require.Empty(t, installers)
@@ -166,7 +173,7 @@ func TestBuildInstallers(t *testing.T) {
 			FS: manifestFS(manifestCR("ds-app", "dsapp.ext.grafana.com", "X", "xs", false)),
 		}
 
-		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
+		installers, err := mustBuilder(t, enabledFeatures(), reg).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Empty(t, installers)
 	})
@@ -178,7 +185,7 @@ func TestBuildInstallers(t *testing.T) {
 			FS:       manifestFS(manifestCR("test-app", "testapp.ext.grafana.com", "Thing", "things", false)),
 		}
 
-		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
+		installers, err := mustBuilder(t, enabledFeatures(), reg).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Len(t, installers, 1)
 		require.Nil(t, installers[0].AdmissionPlugin())
@@ -191,7 +198,7 @@ func TestBuildInstallers(t *testing.T) {
 			FS:       manifestFS(manifestCR("test-app", "testapp.ext.grafana.com", "Thing", "things", true)),
 		}
 
-		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
+		installers, err := mustBuilder(t, enabledFeatures(), reg).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Len(t, installers, 1)
 		require.NotNil(t, installers[0].AdmissionPlugin())

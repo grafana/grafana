@@ -6,7 +6,7 @@
   },
   "spec": {
     "appName": "test-app-with-sdk-manifest",
-    "group": "testappwithsdkmanifest.ext.grafana.com",
+    "group": "testappwithsdkmanifest.ext.grafana.app",
     "versions": [
       {
         "name": "v1",
@@ -45,6 +45,45 @@
           }
         ]
       }
-    ]
+    ],
+    "roles": {
+      "reader": {
+        "title": "Thing Reader",
+        "description": "Read and list things.",
+        "kinds": [
+          {
+            "kind": "Thing",
+            "permissionSet": "viewer"
+          }
+        ],
+        "routes": [
+          "reload"
+        ]
+      },
+      "writer": {
+        "title": "Thing Writer",
+        "description": "Create, update and delete things.",
+        "kinds": [
+          {
+            "kind": "Thing",
+            "permissionSet": "editor"
+          }
+        ],
+        "routes": []
+      }
+    },
+    "roleBindings": {
+      "viewer": [
+        "reader"
+      ],
+      "editor": [
+        "reader",
+        "writer"
+      ],
+      "admin": [
+        "reader",
+        "writer"
+      ]
+    }
   }
 }

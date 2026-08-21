@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,7 +31,7 @@ func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 
 	helper := setupHelper(t)
 
-	disco, err := helper.GetGroupVersionInfoJSON("testappwithsdkmanifest.ext.grafana.com")
+	disco, err := helper.GetGroupVersionInfoJSON("testappwithsdkmanifest.ext.grafana.app")
 	require.NoError(t, err)
 	require.JSONEq(t, `[
 		{
@@ -96,7 +97,7 @@ func TestIntegrationPluginManifestOpenAPIV2(t *testing.T) {
 	raw, err := result.Raw()
 	require.NoError(t, err)
 	// The custom-route kind must appear in the built spec.
-	require.Contains(t, string(raw), "testappwithsdkmanifest.ext.grafana.com")
+	require.Contains(t, string(raw), "testappwithsdkmanifest.ext.grafana.app")
 }
 
 // TestIntegrationPluginManifestCreate verifies a resource can be created and read back
@@ -110,7 +111,7 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 	helper := setupHelper(t)
 
 	gvr := schema.GroupVersionResource{
-		Group:    "testappwithsdkmanifest.ext.grafana.com",
+		Group:    "testappwithsdkmanifest.ext.grafana.app",
 		Version:  "v1",
 		Resource: "things",
 	}
@@ -121,7 +122,7 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 	})
 
 	obj := &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": "testappwithsdkmanifest.ext.grafana.com/v1",
+		"apiVersion": "testappwithsdkmanifest.ext.grafana.app/v1",
 		"kind":       "Thing",
 		"metadata": map[string]any{
 			"name":      "thing-1",
@@ -137,12 +138,12 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 	})
 
 	// The persisted object must keep the plugin's group, not a foreign one.
-	require.Equal(t, "testappwithsdkmanifest.ext.grafana.com/v1", created.GetAPIVersion())
+	require.Equal(t, "testappwithsdkmanifest.ext.grafana.app/v1", created.GetAPIVersion())
 	require.Equal(t, "Thing", created.GetKind())
 
 	got, err := client.Resource.Get(context.Background(), "thing-1", metav1.GetOptions{})
 	require.NoError(t, err)
-	require.Equal(t, "testappwithsdkmanifest.ext.grafana.com/v1", got.GetAPIVersion())
+	require.Equal(t, "testappwithsdkmanifest.ext.grafana.app/v1", got.GetAPIVersion())
 
 	// LIST exercises the typed-list append in unified storage. Manifest kinds are backed by
 	// an untyped object whose list uses an interface element type ([]resource.Object); the
@@ -152,14 +153,14 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
 	require.Equal(t, "thing-1", list.Items[0].GetName())
-	require.Equal(t, "testappwithsdkmanifest.ext.grafana.com/v1", list.Items[0].GetAPIVersion())
+	require.Equal(t, "testappwithsdkmanifest.ext.grafana.app/v1", list.Items[0].GetAPIVersion())
 
 	// Server-side apply exercises the managedFields/structured-merge-diff type converter,
 	// which indexes models by the x-kubernetes-group-version-kind OpenAPI extension. Without
 	// that extension on the served definition, apply fails with "no corresponding type for
 	// <gvk>". This guards that the extension is present and the apply path works.
 	applyObj := &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": "testappwithsdkmanifest.ext.grafana.com/v1",
+		"apiVersion": "testappwithsdkmanifest.ext.grafana.app/v1",
 		"kind":       "Thing",
 		"metadata": map[string]any{
 			"name":      "thing-1",
@@ -172,7 +173,7 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 		FieldManager: "pluginmanifest-test",
 	})
 	require.NoError(t, err)
-	require.Equal(t, "testappwithsdkmanifest.ext.grafana.com/v1", applied.GetAPIVersion())
+	require.Equal(t, "testappwithsdkmanifest.ext.grafana.app/v1", applied.GetAPIVersion())
 }
 
 // TestIntegrationPluginManifestServiceLoading verifies the manifest APIs are still served when
@@ -185,9 +186,83 @@ func TestIntegrationPluginManifestServiceLoading(t *testing.T) {
 
 	helper := setupHelper(t, featuremgmt.FlagPluginStoreServiceLoading)
 
-	disco, err := helper.GetGroupVersionInfoJSON("testappwithsdkmanifest.ext.grafana.com")
+	disco, err := helper.GetGroupVersionInfoJSON("testappwithsdkmanifest.ext.grafana.app")
 	require.NoError(t, err)
 	require.Contains(t, disco, `"resource": "things"`)
+}
+
+// TestIntegrationPluginManifestRoles verifies the roles declared in the plugin's app-sdk
+// manifest are registered as RBAC roles and actually gate access to the manifest's kinds.
+//
+// The manifest binds "reader" (viewer permission set) to Viewer/Editor/Admin and "writer"
+// (editor permission set) to Editor/Admin, so a Viewer may read but not write, while an
+// Editor may do both. Without role support no role grants the actions the authorizer checks
+// and these APIs are unusable for anyone but a privileged identity.
+func TestIntegrationPluginManifestRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := setupHelper(t)
+
+	gvr := schema.GroupVersionResource{
+		Group:    "testappwithsdkmanifest.ext.grafana.app",
+		Version:  "v1",
+		Resource: "things",
+	}
+	clientFor := func(u apis.User) *apis.K8sResourceClient {
+		return helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      u,
+			Namespace: "default",
+			GVR:       gvr,
+		})
+	}
+	newThing := func(name string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "testappwithsdkmanifest.ext.grafana.app/v1",
+			"kind":       "Thing",
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": "default",
+			},
+			"spec": map[string]any{"foo": "bar"},
+		}}
+	}
+
+	ctx := context.Background()
+
+	t.Run("editor is granted the writer role and can create", func(t *testing.T) {
+		editor := clientFor(helper.Org1.Editor)
+		created, err := editor.Resource.Create(ctx, newThing("thing-editor"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = editor.Resource.Delete(ctx, "thing-editor", metav1.DeleteOptions{})
+		})
+		require.Equal(t, "thing-editor", created.GetName())
+	})
+
+	t.Run("viewer is granted the reader role and can read", func(t *testing.T) {
+		// Seeded by the editor, since a viewer must not be able to create.
+		editor := clientFor(helper.Org1.Editor)
+		_, err := editor.Resource.Create(ctx, newThing("thing-readable"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = editor.Resource.Delete(ctx, "thing-readable", metav1.DeleteOptions{})
+		})
+
+		viewer := clientFor(helper.Org1.Viewer)
+		got, err := viewer.Resource.Get(ctx, "thing-readable", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "thing-readable", got.GetName())
+
+		_, err = viewer.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("viewer is not granted the writer role and cannot create", func(t *testing.T) {
+		viewer := clientFor(helper.Org1.Viewer)
+		_, err := viewer.Resource.Create(ctx, newThing("thing-denied"), metav1.CreateOptions{})
+		require.Error(t, err)
+		require.Truef(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+	})
 }
 
 func setupHelper(t *testing.T, extraFeatureToggles ...string) *apis.K8sTestHelper {
