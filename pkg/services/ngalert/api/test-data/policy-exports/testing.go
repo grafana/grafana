@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
@@ -35,11 +36,6 @@ var AllRoutes = func() map[string]*v1.Route {
 
 var Config = func() *v1.AMConfigV1 {
 	return &v1.AMConfigV1{
-		AlertmanagerConfig: v1.PostableApiAlertingConfig{
-			Config: v1.Config{
-				Route: Legacy(),
-			},
-		},
 		// Add receiver references to help tests avoid validation errors.
 		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{Name: "default-receiver"},
@@ -59,11 +55,12 @@ var Config = func() *v1.AMConfigV1 {
 			v1.TimeIntervalUID("A provisioned interval override"): {Title: "A provisioned interval override"},
 		},
 		ManagedRoutes: map[string]*v1.Route{
-			"empty":            Empty(),
-			"override-inherit": OverrideInherit(),
-			"matcher-variety":  MatcherVariety(),
-			"special-cases":    SpecialCases(),
-			"deeply-nested":    DeeplyNested(),
+			models.DefaultRoutingTreeName: Legacy(),
+			"empty":                       Empty(),
+			"override-inherit":            OverrideInherit(),
+			"matcher-variety":             MatcherVariety(),
+			"special-cases":               SpecialCases(),
+			"deeply-nested":               DeeplyNested(),
 		},
 	}
 }

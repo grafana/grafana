@@ -276,7 +276,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
 	}
 
-	apiConfig := PostableApiAlertingConfigToAPI(cfg.AlertmanagerConfig, cfg.SortedTimeIntervals())
+	apiConfig := PostableApiAlertingConfigToAPI(cfg.AlertmanagerConfig, cfg.GetDefaultRoute(), cfg.SortedTimeIntervals())
 
 	if withAutogen {
 		// We validate the notification settings in a similar way to when we POST.

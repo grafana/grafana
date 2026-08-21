@@ -47,15 +47,16 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 		return definitions.Route{}, "", err
 	}
 
-	if rev.Config.AlertmanagerConfig.Route == nil {
+	route := rev.Config.GetDefaultRoute()
+	if route == nil {
 		return definitions.Route{}, "", fmt.Errorf("no route present in current alertmanager config")
 	}
 
-	provenance, err := nps.provenanceStore.GetProvenance(ctx, rev.Config.AlertmanagerConfig.Route, orgID)
+	provenance, err := nps.provenanceStore.GetProvenance(ctx, route, orgID)
 	if err != nil {
 		return definitions.Route{}, "", err
 	}
-	result := *rev.Config.AlertmanagerConfig.Route
+	result := *route
 	result.Provenance = v1.Provenance(provenance)
 	version := calculateRouteFingerprint(result)
 	return *notifier.RouteToAPI(&result), version, nil
@@ -73,7 +74,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return definitions.Route{}, "", err
 	}
 
-	err = nps.checkOptimisticConcurrency(*revision.Config.AlertmanagerConfig.Route, p, version, "update")
+	err = nps.checkOptimisticConcurrency(*revision.Config.GetDefaultRoute(), p, version, "update")
 	if err != nil {
 		return definitions.Route{}, "", err
 	}
@@ -91,7 +92,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return definitions.Route{}, "", models.MakeErrRouteInvalidFormat(err)
 	}
 
-	revision.Config.AlertmanagerConfig.Route = tree
+	revision.Config.SetDefaultRoute(tree)
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
@@ -119,7 +120,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 		nps.log.Error("Failed to parse default alertmanager config: %w", err)
 		return definitions.Route{}, fmt.Errorf("failed to parse default alertmanager config: %w", err)
 	}
-	route := defaultCfg.AlertmanagerConfig.Route
+	route := defaultCfg.GetDefaultRoute()
 
 	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {

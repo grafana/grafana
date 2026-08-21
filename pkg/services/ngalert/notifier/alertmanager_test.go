@@ -85,12 +85,8 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 	require.NoError(t, err)
 
 	cfg := &v1.AMConfigV1{
-		AlertmanagerConfig: v1.PostableApiAlertingConfig{
-			Config: v1.Config{
-				Route: &v1.Route{
-					Receiver: "default-receiver",
-				},
-			},
+		ManagedRoutes: map[string]*v1.Route{
+			ngmodels.DefaultRoutingTreeName: {Receiver: "default-receiver"},
 		},
 		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
@@ -151,21 +147,17 @@ receivers:
 }
 
 func TestAlertmanager_ApplyConfig(t *testing.T) {
-	basicConfig := func() v1.PostableApiAlertingConfig {
-		return v1.PostableApiAlertingConfig{
-			Config: v1.Config{
-				Route: &v1.Route{
-					Receiver: "default-receiver",
-				},
-			},
-		}
-	}
 	basicReceivers := func() map[v1.ResourceUID]v1.PostableApiReceiver {
 		return v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "default-receiver",
 			},
 		})
+	}
+	basicManagedRoutes := func() map[string]*v1.Route {
+		return map[string]*v1.Route{
+			ngmodels.DefaultRoutingTreeName: {Receiver: "default-receiver"},
+		}
 	}
 
 	grafanaTmpl := v1.NewTemplateGroup("", "grafana-template", "{{ define \"grafana.title\" }}Alert{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
@@ -180,8 +172,8 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			name:     "basic config",
 			features: featuremgmt.WithFeatures(),
 			config: &v1.AMConfigV1{
-				AlertmanagerConfig: basicConfig(),
-				Receivers:          basicReceivers(),
+				ManagedRoutes: basicManagedRoutes(),
+				Receivers:     basicReceivers(),
 				Templates: map[v1.ResourceUID]v1.TemplateGroup{
 					grafanaTmpl.UID: grafanaTmpl,
 				},
@@ -192,8 +184,8 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			name:     "with mimir config",
 			features: featuremgmt.WithFeatures(),
 			config: &v1.AMConfigV1{
-				AlertmanagerConfig: basicConfig(),
-				Receivers:          basicReceivers(),
+				ManagedRoutes: basicManagedRoutes(),
+				Receivers:     basicReceivers(),
 				Templates: map[v1.ResourceUID]v1.TemplateGroup{
 					grafanaTmpl.UID: grafanaTmpl,
 				},
@@ -223,8 +215,8 @@ receivers:
 			name:     "invalid config fails",
 			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 			config: &v1.AMConfigV1{
-				AlertmanagerConfig: basicConfig(),
-				Receivers:          basicReceivers(),
+				ManagedRoutes: basicManagedRoutes(),
+				Receivers:     basicReceivers(),
 				ExtraConfigs: []v1.ExtraConfiguration{
 					{
 						Identifier: "", // invalid: empty identifier
@@ -274,10 +266,8 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				v1.TemplateUID(v1.TemplateKindGrafana, "a-template.tmpl"): {Title: "a-template.tmpl", Content: "{{ define \"a\" }}a{{ end }}", Kind: v1.TemplateKindGrafana},
 				v1.TemplateUID(v1.TemplateKindGrafana, "b-template.tmpl"): {Title: "b-template.tmpl", Content: "{{ define \"b\" }}b{{ end }}", Kind: v1.TemplateKindGrafana},
 			},
-			AlertmanagerConfig: v1.PostableApiAlertingConfig{
-				Config: v1.Config{
-					Route: &v1.Route{Receiver: receivers[0]},
-				},
+			ManagedRoutes: map[string]*v1.Route{
+				ngmodels.DefaultRoutingTreeName: {Receiver: receivers[0]},
 			},
 			Receivers: v1.ReceiversFromSlice(postableReceivers),
 		}
@@ -313,7 +303,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.AlertmanagerConfig.Route.GroupByStr = []string{"cluster"}
+				cfg.GetDefaultRoute().GroupByStr = []string{"cluster"}
 			},
 		},
 		{
@@ -371,8 +361,9 @@ receivers:
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "team-a", "team-b", "team-c")
 				cfg.ManagedRoutes = map[string]*v1.Route{
-					"team-b-policy": {Receiver: "team-b"},
-					"team-a-policy": {Receiver: "team-a"},
+					ngmodels.DefaultRoutingTreeName: {Receiver: "default-receiver"},
+					"team-b-policy":                 {Receiver: "team-b"},
+					"team-a-policy":                 {Receiver: "team-a"},
 				}
 				return cfg
 			},

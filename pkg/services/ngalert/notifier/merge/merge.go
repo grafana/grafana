@@ -189,7 +189,6 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
 					Global:       nil, // Grafana does not use global. The Global settings are set to the respective integrations at parse time.
-					Route:        cfg.AlertmanagerConfig.Route,
 					InhibitRules: cfg.AlertmanagerConfig.InhibitRules,
 					Templates:    nil, // Grafana does not use this.
 				},
