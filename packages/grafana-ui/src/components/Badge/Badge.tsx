@@ -82,15 +82,19 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
 
   if (color === 'brand') {
     bgColor = theme.colors.gradients.brandHorizontal;
-    borderColor = 'transparent';
+    borderColor = theme.flags.visualDesignRefresh
+      ? theme.isDark
+        ? 'palette.orange800'
+        : 'palette.orange200'
+      : 'transparent';
     textColor = theme.colors.primary.contrastText;
   }
 
   return {
     wrapper: css({
       display: 'inline-flex',
-      padding: '1px 4px',
-      borderRadius: theme.shape.radius.sm,
+      padding: theme.flags.visualDesignRefresh ? '1px 6px' : '1px 4px',
+      borderRadius: theme.shape.radius.pill,
       background: bgColor,
       border: `1px solid ${borderColor}`,
       color: textColor,
