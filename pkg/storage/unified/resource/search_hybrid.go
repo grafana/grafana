@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -337,7 +338,7 @@ func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
 func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
 	if err != nil {
 		if res := ErrorResultFromGRPCDetails(err); res != nil {
-			return grpcErrorFromErrorResult(res)
+			return errors.Join(grpcErrorFromErrorResult(res), err)
 		}
 		return err
 	}
