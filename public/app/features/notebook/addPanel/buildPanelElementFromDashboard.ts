@@ -57,8 +57,9 @@ export async function buildPanelElementFromDashboard(vizPanel: VizPanel): Promis
 
 /**
  * Interpolation is the datasource's own business — only it knows which parts of its query language
- * are variable references. A datasource that does not implement it leaves its queries alone, which is
- * the same outcome as today rather than a worse one.
+ * are variable references. A datasource that does not implement it, or that cannot be resolved at all,
+ * leaves its queries alone - the same outcome as today rather than a worse one. A datasource whose
+ * interpolation throws is a different matter and is allowed to fail the whole add; see below.
  *
  * `__sceneObject` is what lets templateSrv resolve through the scene graph to this panel's variables,
  * exactly as tryGetExploreUrlForPanel passes it.
@@ -73,14 +74,20 @@ async function interpolateQueries(
 
   const interpolated = await Promise.all(
     queries.map(async (query) => {
+      let datasource;
       try {
-        const datasource = await getDataSourceInstance(query.datasource || fallbackDatasource);
-        return datasource.interpolateVariablesInQueries?.([query], scopedVars, filters)[0] ?? query;
+        datasource = await getDataSourceInstance(query.datasource || fallbackDatasource);
       } catch {
         // An unresolvable datasource is not a reason to lose the panel: the query goes across as it
         // stands, which is what would have happened without interpolation at all.
         return query;
       }
+
+      // Deliberately outside the catch above. A datasource that cannot be resolved is a known state
+      // with a sane answer, but one whose interpolation *throws* is not: swallowing that would write
+      // the un-interpolated query and report success, which is precisely the silently-wrong data this
+      // function exists to prevent. Better to fail the add than to file the wrong query.
+      return datasource.interpolateVariablesInQueries?.([query], scopedVars, filters)?.[0] ?? query;
     })
   );
 

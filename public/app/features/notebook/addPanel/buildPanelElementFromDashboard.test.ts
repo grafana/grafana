@@ -1,3 +1,4 @@
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { SceneQueryRunner, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
@@ -7,8 +8,10 @@ const interpolateVariablesInQueries = jest.fn();
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: jest.fn(() => Promise.resolve({ interpolateVariablesInQueries })),
+  getDataSourceInstance: jest.fn(),
 }));
+
+const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
 
 /** A panel whose query names a variable, inside a scene that defines it. */
 function buildPanel(queries: DataQuery[], title = 'CPU', description?: string) {
@@ -26,6 +29,10 @@ function buildPanel(queries: DataQuery[], title = 'CPU', description?: string) {
 
 describe('buildPanelElementFromDashboard', () => {
   beforeEach(() => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only interpolation is read
+    getDataSourceInstanceMock.mockResolvedValue({ interpolateVariablesInQueries } as unknown as Awaited<
+      ReturnType<typeof getDataSourceInstance>
+    >);
     // By default, stand in for a datasource that resolves `$service` to its current value.
     interpolateVariablesInQueries.mockImplementation((queries: DataQuery[]) =>
       queries.map((query) => ({ ...query, expr: String(Reflect.get(query, 'expr')).replace('$service', 'checkout') }))
@@ -77,12 +84,48 @@ describe('buildPanelElementFromDashboard', () => {
     });
   });
 
-  // Interpolation is optional on DataSourceApi, and a datasource without it must not lose the panel.
+  /**
+   * Interpolation is optional on DataSourceApi, so this stands in for a datasource that does not
+   * implement it at all - the method absent, not present and returning nothing. Asserted on the query
+   * that came out rather than on how many, because a count survives the query being replaced wholesale.
+   */
   it('keeps the queries as they are when the datasource cannot interpolate', async () => {
-    interpolateVariablesInQueries.mockReturnValue(undefined);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a datasource with no interpolation
+    getDataSourceInstanceMock.mockResolvedValueOnce({} as unknown as Awaited<ReturnType<typeof getDataSourceInstance>>);
 
     const element = await buildPanelElementFromDashboard(buildPanel([{ refId: 'A', ...{ expr: 'up' } }]));
 
-    expect(element.kind === 'Panel' && element.spec.data.spec.queries).toHaveLength(1);
+    if (element.kind !== 'Panel') {
+      throw new Error('expected a Panel element');
+    }
+    expect(element.spec.data.spec.queries).toHaveLength(1);
+    expect(element.spec.data.spec.queries[0].spec.query.spec).toMatchObject({ expr: 'up' });
+  });
+
+  // Same again for a datasource that cannot be resolved at all: no interpolation, but the panel still
+  // crosses over intact.
+  it('keeps the queries as they are when the datasource cannot be resolved', async () => {
+    getDataSourceInstanceMock.mockRejectedValueOnce(new Error('no such datasource'));
+
+    const element = await buildPanelElementFromDashboard(buildPanel([{ refId: 'A', ...{ expr: 'up' } }]));
+
+    expect(element.kind === 'Panel' && element.spec.data.spec.queries[0].spec.query.spec).toMatchObject({
+      expr: 'up',
+    });
+  });
+
+  /**
+   * A datasource that throws while interpolating is not the same as one that cannot interpolate. The
+   * query it would have rewritten is the one thing this function exists to rewrite, so filing the raw
+   * version and reporting success would be worse than failing the add outright.
+   */
+  it('fails the add rather than storing an un-interpolated query', async () => {
+    interpolateVariablesInQueries.mockImplementation(() => {
+      throw new Error('interpolation blew up');
+    });
+
+    await expect(
+      buildPanelElementFromDashboard(buildPanel([{ refId: 'A', ...{ expr: 'up{job="$service"}' } }]))
+    ).rejects.toThrow('interpolation blew up');
   });
 });

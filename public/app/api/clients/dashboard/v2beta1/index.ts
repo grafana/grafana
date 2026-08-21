@@ -107,12 +107,9 @@ export const {
   // tags itself into the same namespace so create/delete refetch it too.
   useListNotebookQuery,
   useCreateNotebookMutation,
-  // Lazy for two independent reasons. Exporting a list row has to fetch that one notebook's spec on
-  // demand rather than every row's up front; and the add-panel read-modify-write relies on the
-  // trigger defaulting to preferCacheValue: false, since a stale spec here would be written straight
-  // back, dropping whatever changed in between.
+  // Lazy because exporting a list row has to fetch that one notebook's spec on demand rather than
+  // every row's up front.
   useLazyGetNotebookQuery,
-  useReplaceNotebookMutation,
 } = dashboardAPIv2beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files

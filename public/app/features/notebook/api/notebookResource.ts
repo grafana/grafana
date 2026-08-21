@@ -110,15 +110,20 @@ export async function updateNotebookSpec(
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema spec type at the read seam
   const next = update(current.spec as unknown as NotebookSpec);
 
-  // Tracked, unlike the create above: this mutation's `invalidatesTags` is what drops the cached GET
-  // for this notebook, so opening it afterwards shows the change rather than the spec read a moment
-  // ago. `createNotebook` can skip that because its caller navigates to a notebook nothing has cached.
+  // `track: false` for the same reason as the create above: nothing renders this mutation's state, so
+  // a tracked write parks its result in the store with no component subscribed and nothing to reset
+  // it - and for a PUT that result is the whole notebook the server echoed back. The invalidation
+  // that drops this notebook's cached GET is unaffected: RTK Query keys tag invalidation off the
+  // thunk being fulfilled, not off `track`.
   const result = await dispatch(
-    dashboardAPIv2beta1.endpoints.replaceNotebook.initiate({
-      name: uid,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema spec type at the write seam
-      notebook: { ...current, spec: next as unknown as Notebook['spec'] },
-    })
+    dashboardAPIv2beta1.endpoints.replaceNotebook.initiate(
+      {
+        name: uid,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema spec type at the write seam
+        notebook: { ...current, spec: next as unknown as Notebook['spec'] },
+      },
+      { track: false }
+    )
   );
 
   if ('error' in result && result.error) {
