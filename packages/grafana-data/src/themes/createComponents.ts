@@ -146,6 +146,9 @@ export const ThemeComponentsInputSchema = z
         })
         .optional(),
     }),
+    badge: z.object({
+      colors: z.array(z.object({ text: z.string(), background: z.string(), border: z.string() })).optional(),
+    }),
   })
   .partial();
 
