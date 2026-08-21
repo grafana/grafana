@@ -32,10 +32,10 @@ type filesConnector struct {
 	// maxFileSize caps the size in bytes of files read from or written to the
 	// repository through this connector. <=0 disables the check.
 	maxFileSize int64
-	metrics     FilesMetrics
+	metrics     *repository.OperationMetrics
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, maxFileSize int64, metrics FilesMetrics) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, maxFileSize int64, metrics *repository.OperationMetrics) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
@@ -116,7 +116,7 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 	// means every downstream consumer (the parser, the authorizer, the folder
 	// manager, DualReadWriter) is instrumented automatically, since they all
 	// operate on this same reference.
-	readWriter = resources.WrapReaderWriter(readWriter, &c.metrics)
+	readWriter = repository.WrapReaderWriter(readWriter, c.metrics)
 
 	dualReadWriter, authorizer, err := c.createDualReadWriter(ctx, repo, readWriter)
 	if err != nil {
@@ -192,7 +192,7 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
 	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, clients, c.folderMetadataEnabled)
-	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled, &c.metrics), authorizer, nil
+	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled, c.metrics), authorizer, nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.

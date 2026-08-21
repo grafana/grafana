@@ -28,11 +28,13 @@ const keepFileName = ".keep"
 // a _folder.json, since the metadata file supersedes the keep marker.
 type Worker struct {
 	clientFactory resources.ClientFactory
-	metrics       resources.ResourceMetrics
+	// operationMetrics observes every repository operation performed during
+	// this job (size, duration, outcome), regardless of caller.
+	operationMetrics *repository.OperationMetrics
 }
 
-func NewWorker(clientFactory resources.ClientFactory, metrics resources.ResourceMetrics) *Worker {
-	return &Worker{clientFactory: clientFactory, metrics: metrics}
+func NewWorker(clientFactory resources.ClientFactory, operationMetrics *repository.OperationMetrics) *Worker {
+	return &Worker{clientFactory: clientFactory, operationMetrics: operationMetrics}
 }
 
 func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
@@ -92,7 +94,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		if !ok {
 			return fmt.Errorf("repository does not support read/write operations")
 		}
-		rw = resources.WrapReaderWriter(rw, &w.metrics)
+		rw = repository.WrapReaderWriter(rw, w.operationMetrics)
 
 		entries, err := rw.ReadTree(ctx, ref)
 		if err != nil {

@@ -38,7 +38,7 @@ type DualReadWriter struct {
 	folders               *FolderManager
 	authorizer            Authorizer
 	folderMetadataEnabled bool
-	metrics               FileSizeRecorder
+	metrics               *repository.OperationMetrics
 }
 
 type DualWriteOptions struct {
@@ -54,7 +54,7 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, folderMetadataEnabled bool, metrics FileSizeRecorder) *DualReadWriter {
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, folderMetadataEnabled bool, metrics *repository.OperationMetrics) *DualReadWriter {
 	return &DualReadWriter{repo: repo, parser: parser, folders: folders, authorizer: authorizer, folderMetadataEnabled: folderMetadataEnabled, metrics: metrics}
 }
 
@@ -466,7 +466,7 @@ func (r *DualReadWriter) createResourceAndNewFolderMetadata(ctx context.Context,
 		if !ok {
 			return fmt.Errorf("repository does not support read/write operations")
 		}
-		rw = WrapReaderWriter(rw, r.metrics)
+		rw = repository.WrapReaderWriter(rw, r.metrics)
 		if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
 			if err := r.writeNewFoldersMetadata(ctx, rw, opts.Path, opts.Ref, opts.Message); err != nil {
 				return err
@@ -487,7 +487,7 @@ func (r *DualReadWriter) moveResourceAndCreateNewFolderMetadata(ctx context.Cont
 		if !ok {
 			return fmt.Errorf("repository does not support read/write operations")
 		}
-		rw = WrapReaderWriter(rw, r.metrics)
+		rw = repository.WrapReaderWriter(rw, r.metrics)
 		if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
 			if err := r.writeNewFoldersMetadata(ctx, rw, opts.Path, opts.Ref, opts.Message); err != nil {
 				return err

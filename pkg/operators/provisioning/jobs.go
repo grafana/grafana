@@ -115,7 +115,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	resourceMetrics := resources.RegisterResourceMetrics(registry)
+	operationMetrics := repository.RegisterOperationMetrics(registry)
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
@@ -133,7 +133,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		statusPatcher.Patch,
 		syncer,
 		metrics,
-		resourceMetrics,
+		operationMetrics,
 		tracer,
 		maxSyncWorkers,
 		cfg.ProvisioningMaxFileSize,
@@ -150,7 +150,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		export.ExportAllWithNewUIDs,
 		stageIfPossible,
 		metrics,
-		resourceMetrics,
+		operationMetrics,
 	)
 
 	// Migration export preserves original names so the takeover
@@ -162,7 +162,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		export.ExportAll,
 		stageIfPossible,
 		metrics,
-		resourceMetrics,
+		operationMetrics,
 	)
 	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -173,13 +173,13 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
 
 	// Delete
-	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics, resourceMetrics)
+	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics, operationMetrics)
 
 	// Move
-	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics, resourceMetrics)
+	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics, operationMetrics)
 
 	// Fix Metadata
-	fixMetadataWorker := fixfoldermetadata.NewWorker(clients, resourceMetrics)
+	fixMetadataWorker := fixfoldermetadata.NewWorker(clients, operationMetrics)
 
 	// Release Resources (orphan cleanup — removes ownership annotations)
 	releaseResourcesWorker := releaseresourcespkg.NewWorker(resourceLister, clients, 10)

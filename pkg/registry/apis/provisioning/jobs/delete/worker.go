@@ -22,18 +22,18 @@ type Worker struct {
 	wrapFn           repository.WrapWithStageFn
 	resourcesFactory resources.RepositoryResourcesFactory
 	metrics          jobs.JobMetrics
-	// resourceMetrics observes every repository operation performed during
+	// operationMetrics observes every repository operation performed during
 	// this job (size, duration, outcome), regardless of caller.
-	resourceMetrics resources.ResourceMetrics
+	operationMetrics *repository.OperationMetrics
 }
 
-func NewWorker(syncWorker jobs.Worker, wrapFn repository.WrapWithStageFn, resourcesFactory resources.RepositoryResourcesFactory, metrics jobs.JobMetrics, resourceMetrics resources.ResourceMetrics) *Worker {
+func NewWorker(syncWorker jobs.Worker, wrapFn repository.WrapWithStageFn, resourcesFactory resources.RepositoryResourcesFactory, metrics jobs.JobMetrics, operationMetrics *repository.OperationMetrics) *Worker {
 	return &Worker{
 		syncWorker:       syncWorker,
 		wrapFn:           wrapFn,
 		resourcesFactory: resourcesFactory,
 		metrics:          metrics,
-		resourceMetrics:  resourceMetrics,
+		operationMetrics: operationMetrics,
 	}
 }
 
@@ -73,7 +73,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 			logger.Error("delete job submitted targeting repository that is not a ReaderWriter")
 			return errors.New("delete job submitted targeting repository that is not a ReaderWriter")
 		}
-		rw = resources.WrapReaderWriter(rw, &w.resourceMetrics)
+		rw = repository.WrapReaderWriter(rw, w.operationMetrics)
 
 		// Resolve ResourceRef entries to file paths using RepositoryResources
 		if len(opts.Resources) > 0 {

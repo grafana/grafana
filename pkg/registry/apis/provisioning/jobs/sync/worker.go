@@ -38,9 +38,9 @@ type SyncWorker struct {
 
 	metrics jobs.JobMetrics
 
-	// resourceMetrics observes every repository operation performed during
+	// operationMetrics observes every repository operation performed during
 	// this job (size, duration, outcome), regardless of caller.
-	resourceMetrics resources.ResourceMetrics
+	operationMetrics *repository.OperationMetrics
 
 	tracer tracing.Tracer
 
@@ -57,7 +57,7 @@ func NewSyncWorker(
 	patchStatus RepositoryPatchFn,
 	syncer Syncer,
 	metrics jobs.JobMetrics,
-	resourceMetrics resources.ResourceMetrics,
+	operationMetrics *repository.OperationMetrics,
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
 	maxFileSize int64,
@@ -68,7 +68,7 @@ func NewSyncWorker(
 		patchStatus:         patchStatus,
 		syncer:              syncer,
 		metrics:             metrics,
-		resourceMetrics:     resourceMetrics,
+		operationMetrics:    operationMetrics,
 		tracer:              tracer,
 		maxSyncWorkers:      maxSyncWorkers,
 		maxFileSize:         maxFileSize,
@@ -114,7 +114,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 			m.WithMaxFileSize(r.maxFileSize)
 		}
 	}
-	rw = resources.WrapReaderWriter(rw, &r.resourceMetrics)
+	rw = repository.WrapReaderWriter(rw, r.operationMetrics)
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)
 	// Preserve last ref
