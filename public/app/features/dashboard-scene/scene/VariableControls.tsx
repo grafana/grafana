@@ -26,7 +26,6 @@ import { getPredefinedOrigin } from '../utils/predefinedVariables';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
 import { VariableEditActions } from './edit-actions-popover/VariableEditActions';
@@ -60,7 +59,6 @@ export function VariableControls({
             isEditingNewLayouts={isEditingNewLayouts}
           />
         ))}
-      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
 }
