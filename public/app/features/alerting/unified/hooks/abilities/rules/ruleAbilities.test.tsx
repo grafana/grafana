@@ -8,7 +8,7 @@ import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } fr
 import { setFolderAccessControl } from '../../../mocks/server/configure';
 import { setupDataSources } from '../../../testSetup/datasources';
 import { groupIdentifier } from '../../../utils/groupIdentifier';
-import * as misc from '../../../utils/misc';
+import * as environment from '../../../utils/environment';
 import { isLoading, isNotSupported, isPluginManaged, isProvisioned, isSupported } from '../abilityUtils';
 import { ExternalRuleAction, RuleAction, isInsufficientPermissions } from '../types';
 
@@ -241,7 +241,7 @@ describe('useRuleAdministrationAbility', () => {
   });
 
   it('returns INSUFFICIENT_PERMISSIONS for deletePermanently when user has delete permission but is not admin', async () => {
-    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
+    jest.spyOn(environment, 'isAdmin').mockReturnValue(false);
     setFolderAccessControl({
       'alert.rules:read': true,
       'alert.rules:write': true,
@@ -265,7 +265,7 @@ describe('useRuleAdministrationAbility', () => {
   });
 
   it('grants deletePermanently when user has delete permission and is admin', async () => {
-    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
+    jest.spyOn(environment, 'isAdmin').mockReturnValue(true);
     setFolderAccessControl({
       'alert.rules:read': true,
       'alert.rules:write': true,
@@ -450,7 +450,7 @@ describe('usePromRuleAdministrationAbility', () => {
   });
 
   it('returns INSUFFICIENT_PERMISSIONS for deletePermanently when user has delete permission but is not admin', async () => {
-    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
+    jest.spyOn(environment, 'isAdmin').mockReturnValue(false);
     setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
 
     const promRule = makePromRule();
@@ -468,7 +468,7 @@ describe('usePromRuleAdministrationAbility', () => {
   });
 
   it('grants deletePermanently when user has delete permission and is admin', async () => {
-    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
+    jest.spyOn(environment, 'isAdmin').mockReturnValue(true);
     setFolderAccessControl({ 'alert.rules:write': true, 'alert.rules:delete': true });
 
     const promRule = makePromRule();

@@ -9,7 +9,7 @@ import { type GrafanaPromRuleDTO, type RulerRuleDTO } from 'app/types/unified-al
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { getRulesPermissions } from '../../../utils/access-control';
-import { isAdmin } from '../../../utils/misc';
+import { isAdmin } from '../../../utils/environment';
 import { getRulePluginOrigin } from '../../../utils/rules';
 import {
   type AsyncAbility,

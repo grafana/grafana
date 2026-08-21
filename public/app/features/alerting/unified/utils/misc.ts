@@ -44,8 +44,6 @@ import { rulesNav } from './navigation';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
 
-export { isAdmin, isLocalDevEnv, isOpenSourceEdition } from './environment';
-
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {
   const sourceName = getRulesSourceName(ruleSource);
   const identifier = ruleId.fromCombinedRule(sourceName, rule);

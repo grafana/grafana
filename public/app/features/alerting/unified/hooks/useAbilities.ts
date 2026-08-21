@@ -11,7 +11,7 @@ import { type GrafanaPromRuleDTO, type RulerRuleDTO } from 'app/types/unified-al
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { getRulesPermissions } from '../utils/access-control';
 import { getGroupOriginName, groupIdentifier } from '../utils/groupIdentifier';
-import { isAdmin } from '../utils/misc';
+import { isAdmin } from '../utils/environment';
 import {
   getRulePluginOrigin,
   isProvisionedPromRule,

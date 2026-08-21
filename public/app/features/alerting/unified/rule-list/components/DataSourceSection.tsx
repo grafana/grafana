@@ -10,7 +10,8 @@ import { type RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { Spacer } from '../../components/Spacer';
 import { WithReturnButton } from '../../components/WithReturnButton';
-import { isAdmin, stringifyErrorLike } from '../../utils/misc';
+import { isAdmin } from '../../utils/environment';
+import { stringifyErrorLike } from '../../utils/misc';
 
 import { DataSourceIcon } from './DataSourceIcon';
 import { LoadingIndicator } from './RuleGroup';

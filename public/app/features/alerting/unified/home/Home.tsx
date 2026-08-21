@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { Box, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
-import { isLocalDevEnv } from '../utils/misc';
+import { isLocalDevEnv } from '../utils/environment';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import GettingStarted, { WelcomeHeader } from './GettingStarted';
