@@ -120,7 +120,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		if restConfig != nil {
 			// Embedded mode: use LoopbackClientConfig via the eventual provider
-			clientFactory = resources.NewClientFactory(restConfig, reg)
+			clientFactory = resources.NewClientFactory(restConfig, reg, resources.ComponentZanzana)
 		} else {
 			// Standalone mode: use explicit URLs with token exchange
 			if cfg.ZanzanaReconciler.FolderAPIServerURL == "" {
@@ -182,7 +182,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				})
 			}
 
-			clientFactory = resources.NewClientFactoryForMultipleAPIServers(configProviders, reg)
+			clientFactory = resources.NewClientFactoryForMultipleAPIServers(configProviders, reg, resources.ComponentZanzana)
 		}
 	}
 
