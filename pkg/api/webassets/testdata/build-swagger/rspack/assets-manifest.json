@@ -1,0 +1,18 @@
+{
+  "runtime.js": {
+    "src": "public/build-swagger/rspack/runtime.js",
+    "integrity": "sha256-rspackSwaggerRuntimeIntegrityPlaceholderAA="
+  },
+  "swagger.js": {
+    "src": "public/build-swagger/rspack/swagger.js",
+    "integrity": "sha256-rspackSwaggerAppIntegrityPlaceholderAAAAAAA="
+  },
+  "entrypoints": {
+    "app": {
+      "assets": {
+        "js": ["public/build-swagger/rspack/runtime.js", "public/build-swagger/rspack/swagger.js"],
+        "css": ["public/build-swagger/rspack/grafana.swagger.css"]
+      }
+    }
+  }
+}

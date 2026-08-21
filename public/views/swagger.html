@@ -29,7 +29,7 @@
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <script nonce="[[$.Nonce]]">
       [[if .Assets.ContentDeliveryURL]]
-          window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build-swagger/';
+          window.public_cdn_path = '[[.Assets.ContentDeliveryURL]][[.Assets.PublicPath]]';
       [[end]]
     </script>
     <div id="root"></div>

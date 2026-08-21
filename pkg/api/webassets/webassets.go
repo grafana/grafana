@@ -28,6 +28,10 @@ const (
 	BuildDir       = "build"
 	RspackBuildDir = BuildDir + "/rspack"
 
+	// SwaggerBuildDir holds the /swagger bundle, laid out the same way as BuildDir.
+	SwaggerBuildDir       = "build-swagger"
+	RspackSwaggerBuildDir = SwaggerBuildDir + "/rspack"
+
 	AssetsManifestFile = "assets-manifest.json"
 )
 
@@ -40,10 +44,23 @@ func PublicPathFor(buildDir string) string {
 // ResolveBuildDir returns the directory holding the manifest and boot script to read.
 // Call it per request; resolving at startup pins the rollout to process lifetime.
 func ResolveBuildDir(ctx context.Context) string {
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRspackBuild, false, openfeature.TransactionContext(ctx)) {
+	if rspackEnabled(ctx) {
 		return RspackBuildDir
 	}
 	return BuildDir
+}
+
+// ResolveSwaggerBuildDir is ResolveBuildDir for the /swagger bundle. Same flag, so both
+// pages switch bundlers together.
+func ResolveSwaggerBuildDir(ctx context.Context) string {
+	if rspackEnabled(ctx) {
+		return RspackSwaggerBuildDir
+	}
+	return SwaggerBuildDir
+}
+
+func rspackEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRspackBuild, false, openfeature.TransactionContext(ctx))
 }
 
 type ManifestInfo struct {
