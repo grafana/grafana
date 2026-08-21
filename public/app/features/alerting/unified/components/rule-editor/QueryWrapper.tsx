@@ -115,68 +115,6 @@ export const QueryWrapper = ({
     }
   }
 
-  function SelectingDataSourceTooltip() {
-    const styles = useStyles2(getStyles);
-    return (
-      <div className={styles.dsTooltip}>
-        <Tooltip
-          content={
-            <Trans i18nKey="alerting.selecting-data-source-tooltip.tooltip-content">
-              Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon
-              for more information.
-            </Trans>
-          }
-        >
-          <Icon name="info-circle" onClick={() => window.open(DOCS_URL_DATA_SOURCE_ALERTING, '_blank')} />
-        </Tooltip>
-      </div>
-    );
-  }
-
-  // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
-  function HeaderExtras({
-    query,
-    error,
-    index,
-    isAdvancedMode = true,
-  }: {
-    query: AlertQuery<AlertDataQuery>;
-    error?: Error;
-    index: number;
-    isAdvancedMode?: boolean;
-  }) {
-    const queryOptions: AlertQueryOptions = {
-      maxDataPoints: query.model.maxDataPoints,
-      minInterval: query.model.intervalMs ? msToSingleUnitDuration(query.model.intervalMs) : undefined,
-    };
-    const alertQueryOptions: AlertQueryOptions = {
-      maxDataPoints: queryOptions.maxDataPoints,
-      minInterval: queryOptions.minInterval,
-    };
-
-    const isAlertCondition = condition === query.refId;
-
-    return (
-      <Stack direction="row" alignItems="center" gap={1}>
-        <SelectingDataSourceTooltip />
-        <AlertingRuleQueryExtensionPoint query={Object.assign({}, query.model)} extensionsToShow="queryless" />
-        <QueryOptions
-          onChangeTimeRange={onChangeTimeRange}
-          query={query}
-          queryOptions={alertQueryOptions}
-          onChangeQueryOptions={onChangeQueryOptions}
-          index={index}
-        />
-        {isAdvancedMode && (
-          <ExpressionStatusIndicator
-            onSetCondition={() => onSetCondition(query.refId)}
-            isCondition={isAlertCondition}
-          />
-        )}
-      </Stack>
-    );
-  }
-
   const showVizualisation = data.state !== LoadingState.NotStarted;
   // ⚠️ the query editors want the entire array of queries passed as "DataQuery" NOT "AlertQuery"
   // TypeScript isn't complaining here because the interfaces just happen to be compatible
@@ -205,7 +143,16 @@ export const QueryWrapper = ({
           queries={editorQueries}
           range={range}
           renderHeaderExtras={() => (
-            <HeaderExtras query={query} index={index} error={error} isAdvancedMode={isAdvancedMode} />
+            <HeaderExtras
+              query={query}
+              index={index}
+              error={error}
+              isAdvancedMode={isAdvancedMode}
+              condition={condition}
+              onSetCondition={onSetCondition}
+              onChangeTimeRange={onChangeTimeRange}
+              onChangeQueryOptions={onChangeQueryOptions}
+            />
           )}
           app={CoreApp.UnifiedAlerting}
           hideHideQueryButton={true}
@@ -215,6 +162,78 @@ export const QueryWrapper = ({
     </Stack>
   );
 };
+
+function SelectingDataSourceTooltip() {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.dsTooltip}>
+      <Tooltip
+        content={
+          <Trans i18nKey="alerting.selecting-data-source-tooltip.tooltip-content">
+            Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon
+            for more information.
+          </Trans>
+        }
+      >
+        <Icon name="info-circle" onClick={() => window.open(DOCS_URL_DATA_SOURCE_ALERTING, '_blank')} />
+      </Tooltip>
+    </div>
+  );
+}
+
+// TODO add a warning label here too when the data looks like time series data and is used as an alert condition
+//
+// This is defined at module scope (not nested inside QueryWrapper) so its component identity stays stable across
+// QueryWrapper re-renders. When it was a nested function, every re-render created a brand new function reference,
+// so React treated each render's <HeaderExtras /> as a different component type and remounted the whole subtree -
+// including the query options Toggletip - any time a keystroke inside it triggered a parent update via onChange.
+function HeaderExtras({
+  query,
+  index,
+  error,
+  isAdvancedMode = true,
+  condition,
+  onSetCondition,
+  onChangeTimeRange,
+  onChangeQueryOptions,
+}: {
+  query: AlertQuery<AlertDataQuery>;
+  index: number;
+  error?: Error;
+  isAdvancedMode?: boolean;
+  condition: string | null;
+  onSetCondition: (refId: string) => void;
+  onChangeTimeRange?: (timeRange: RelativeTimeRange, index: number) => void;
+  onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
+}) {
+  const queryOptions: AlertQueryOptions = {
+    maxDataPoints: query.model.maxDataPoints,
+    minInterval: query.model.intervalMs ? msToSingleUnitDuration(query.model.intervalMs) : undefined,
+  };
+  const alertQueryOptions: AlertQueryOptions = {
+    maxDataPoints: queryOptions.maxDataPoints,
+    minInterval: queryOptions.minInterval,
+  };
+
+  const isAlertCondition = condition === query.refId;
+
+  return (
+    <Stack direction="row" alignItems="center" gap={1}>
+      <SelectingDataSourceTooltip />
+      <AlertingRuleQueryExtensionPoint query={Object.assign({}, query.model)} extensionsToShow="queryless" />
+      <QueryOptions
+        onChangeTimeRange={onChangeTimeRange}
+        query={query}
+        queryOptions={alertQueryOptions}
+        onChangeQueryOptions={onChangeQueryOptions}
+        index={index}
+      />
+      {isAdvancedMode && (
+        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={isAlertCondition} />
+      )}
+    </Stack>
+  );
+}
 
 export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => {
   const styles = useStyles2(getStyles);
