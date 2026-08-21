@@ -65,10 +65,13 @@ export async function fetchSyntheticsHealth(
 ): Promise<SyntheticsHealth> {
   // partial: readers are null-safe; one failed query keeps the rest.
   const frames = await runInstantQueries(HEALTH_QUERIES, ds, undefined, true);
+  // A check is a (job, instance) pair and several checks can share a job name; fall back to
+  // the target (instance) when the job label is missing.
   const worst = readLabeledScalar(frames, 'worst', 'job');
+  const worstInstance = readLabeledScalar(frames, 'worst', 'instance');
   return {
     failing: readScalar(frames, 'failing'),
-    worstCheck: worst?.label ?? null,
+    worstCheck: worst?.label ?? worstInstance?.label ?? null,
     worstRatio: worst?.value ?? null,
   };
 }
@@ -79,7 +82,9 @@ export async function fetchSyntheticsSuccessSeries(
 ): Promise<FieldSparkline | null> {
   const frames = await runRangeQuery(
     'success',
-    'sum(rate(probe_all_success_sum[5m])) / sum(rate(probe_all_success_count[5m]))',
+    // [1h] rate window: check cadence is configurable up to one run per hour and rate() needs
+    // two samples in the window; [5m] would blank the trend for slow fleets.
+    'sum(rate(probe_all_success_sum[1h])) / sum(rate(probe_all_success_count[1h]))',
     24,
     ds
   );

@@ -228,6 +228,18 @@ describe('fetchSyntheticsHealth', () => {
       worstRatio: 0.5,
     });
   });
+
+  it('falls back to the instance label when the worst check has no job label', async () => {
+    framesByRefId = {
+      failing: numberFrame('failing', [1]),
+      worst: numberFrame('worst', [0.5], { instance: 'https://shop.example' }),
+    };
+
+    await expect(fetchSyntheticsHealth(datasource)).resolves.toMatchObject({
+      worstCheck: 'https://shop.example',
+      worstRatio: 0.5,
+    });
+  });
 });
 
 describe('fetchSyntheticsSuccessSeries', () => {
@@ -246,7 +258,7 @@ describe('fetchSyntheticsSuccessSeries', () => {
 
     expect(series).not.toBeNull();
     expect(seriesCalls()[0][0].queries[0].expr).toBe(
-      'sum(rate(probe_all_success_sum[5m])) / sum(rate(probe_all_success_count[5m]))'
+      'sum(rate(probe_all_success_sum[1h])) / sum(rate(probe_all_success_count[1h]))'
     );
   });
 

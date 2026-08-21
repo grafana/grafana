@@ -22,6 +22,8 @@ export interface PluginRecommendationCard extends RecommendationItem {
   appHref: string;
   /** Uses signal onboarding instead of the app page when the plugin is enabled but silent. */
   telemetryType?: TelemetryType;
+  /** Permission the setup flow itself requires, beyond access to the app page. */
+  setupPermission?: string;
 }
 
 /** Guided-connection card: never "enabled-but-silent", so no setup variant. */
@@ -169,6 +171,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       ),
       action: t('home.recommendations.synthetic-monitoring.action', 'Enable Synthetic Monitoring'),
       setupAction: t('home.recommendations.synthetic-monitoring.setup-action', 'Create your first check'),
+      setupPermission: `${SYNTHETIC_MONITORING_APP_ID}.checks:write`,
     }),
   };
 }

@@ -2,6 +2,7 @@ import memoize from 'micro-memoize';
 
 import { formattedValueToString, getValueFormat, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { contextSrv } from 'app/core/services/context_srv';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
 import { SYNTHETIC_MONITORING_APP_ID } from './appPluginIds';
@@ -70,7 +71,10 @@ export function syntheticsSolution(): Solution {
       ),
       setupHint: t('home.solutions.synthetics.setup-hint', 'create a check'),
       setupCta: async () => {
-        // Hide setup when this user cannot open the destination.
+        // Hide setup when this user cannot open the destination or create a check there.
+        if (!contextSrv.hasPermission(`${SYNTHETIC_MONITORING_APP_ID}.checks:write`)) {
+          return null;
+        }
         const page = await accessibleAppPage(SYNTHETIC_MONITORING_APP_ID, '/checks/choose-type');
         return page
           ? {
@@ -100,7 +104,7 @@ export function syntheticsSolution(): Solution {
         secondary:
           usage.successRatio != null
             ? t('home.solutions.synthetics.stats', '{{percent}}% success · 24h', {
-                percent: (usage.successRatio * 100).toFixed(1),
+                percent: parseFloat((usage.successRatio * 100).toFixed(1)),
               })
             : undefined,
       };

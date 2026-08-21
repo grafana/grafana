@@ -88,9 +88,11 @@ function selectRecommendationState(inventory: LocalPlugin[], signals: SolutionSt
             },
           ];
         }
-        return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin)
-          ? [toSetupItem(card)]
-          : [];
+        // App access gates the destination page; setupPermission gates the flow itself.
+        const canSetup =
+          contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin) &&
+          (!card.setupPermission || contextSrv.hasPermission(card.setupPermission));
+        return canSetup ? [toSetupItem(card)] : [];
       }
       // plugins:write is scoped to this plugin.
       return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin) ? [toEnableItem(card)] : [];

@@ -1,4 +1,5 @@
 import { type DataSourceInstanceListItem, type FieldSparkline } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { pluginAvailability, setupGuideEnabled } from './pluginAvailability';
 import { accessibleAppPage } from './pluginPages';
@@ -55,7 +56,10 @@ beforeEach(() => {
   mockSetupGuideEnabled.mockResolvedValue(false);
   mockAccessibleAppPage.mockReset();
   mockAccessibleAppPage.mockImplementation(async (appId, path) => `/a/${appId}${path}`);
+  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 });
+
+afterEach(() => jest.restoreAllMocks());
 
 describe('syntheticsSolution', () => {
   it('constructs an inert solution with its identity available synchronously', () => {
@@ -177,6 +181,15 @@ describe('syntheticsSolution stats and sparkline', () => {
     expect(mockFetchStats).toHaveBeenCalledWith(datasource);
   });
 
+  it('renders a fully green fleet without a trailing decimal', async () => {
+    mockFetchStats.mockResolvedValue({ checks: 2, successRatio: 1 });
+
+    await expect(syntheticsSolution().stats()).resolves.toEqual({
+      primary: '2 checks',
+      secondary: '100% success · 24h',
+    });
+  });
+
   it('omits stats without a check count', async () => {
     mockFetchStats.mockResolvedValue({ checks: null, successRatio: 0.9 });
     await expect(syntheticsSolution().stats()).resolves.toBeNull();
@@ -278,6 +291,15 @@ describe('syntheticsSolution CTA and offer', () => {
       cta: null,
       learnMore: { href: 'https://grafana.com/docs/grafana-cloud/testing/synthetic-monitoring/' },
     });
+  });
+
+  it('keeps the offer without a CTA when the user cannot create checks', async () => {
+    mockProbe.mockResolvedValue(null);
+    jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
+
+    await expect(syntheticsSolution().offer()).resolves.toMatchObject({ availability: 'setup', cta: null });
+    expect(contextSrv.hasPermission).toHaveBeenCalledWith('grafana-synthetic-monitoring-app.checks:write');
+    expect(mockAccessibleAppPage).not.toHaveBeenCalled();
   });
 
   it('never loads plugin availability for an active solution', async () => {
