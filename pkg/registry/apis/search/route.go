@@ -11,7 +11,7 @@ import (
 )
 
 // ConfigSection and ConfigKey name the ini setting that turns these endpoints
-// on. The endpoints are off by default while the API is being built out.
+// on. Search is on by default, trash is not.
 //
 // Trash has its own key rather than sharing ConfigKey. It authorizes on a
 // different rule -- folder admin, or whoever deleted the object -- that has not been
