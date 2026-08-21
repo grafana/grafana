@@ -4,6 +4,9 @@
 
 import 'vendor/css/font_awesome.css';
 
+import { loadLegacyMoment } from '@grafana/data/internal/legacyMoment';
+
+import { setLegacyMoment } from './core/legacyMomentShim';
 import { initPreferences } from './initPreferences';
 import { patchFetchForLegacyAPIMode } from './legacyAPIHandling';
 
@@ -23,6 +26,11 @@ if (window.nonce) {
   __webpack_nonce__ = window.nonce;
 }
 
+// The exact `moment-timezone` import is aliased to legacyMomentShim in the web
+// bundlers. This source-only loader bypasses that alias so only the legacy path
+// downloads and installs the real implementation before the app is evaluated.
+const legacyMomentPromise = window.__grafanaUseLuxon ? undefined : loadLegacyMoment();
+
 // This is an indication to the window.onLoad failure check that the app bundle has loaded.
 window.__grafana_app_bundle_loaded = true;
 
@@ -32,6 +40,10 @@ async function bootstrapWindowData() {
   //
   // Must be first because initPreferences depends on bootdata
   await window.__grafana_boot_data_promise;
+
+  if (legacyMomentPromise) {
+    setLegacyMoment(await legacyMomentPromise);
+  }
 
   patchFetchForLegacyAPIMode();
 
