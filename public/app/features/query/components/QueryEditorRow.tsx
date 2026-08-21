@@ -99,7 +99,6 @@ interface State<TQuery extends DataQuery> {
   /** DatasourceUid or ds variable expression used to resolve current datasource */
   queriedDataSourceIdentifier?: string | null;
   datasource: DataSourceApi<TQuery> | null;
-  datasourceUid?: string | null;
   data?: PanelData;
   isOpen?: boolean;
   showingHelp: boolean;

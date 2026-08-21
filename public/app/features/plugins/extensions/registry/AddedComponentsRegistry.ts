@@ -25,7 +25,6 @@ export class AddedComponentsRegistry extends Registry<
     apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<AddedComponentRegistryItem[]>>;
-      initialState?: RegistryType<AddedComponentRegistryItem[]>;
     } = {}
   ) {
     super(apps, options);

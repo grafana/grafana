@@ -37,8 +37,6 @@ export interface FetchCommunityDashboardsParams {
 export interface GnetDashboardDependency {
   pluginSlug: string;
   pluginTypeCode: 'app' | 'panel' | 'datasource' | 'grafana';
-  pluginName?: string;
-  pluginVersion?: string;
   [key: string]: unknown;
 }
 
