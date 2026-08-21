@@ -773,7 +773,7 @@ function truncateToWholeMilliseconds(dt: DateTime): DateTime {
 
   return DateTime.fromMillis(Math.trunc(milliseconds), {
     zone: dt.zone,
-    locale: dt.locale,
+    locale: dt.locale ?? undefined,
   });
 }
 
