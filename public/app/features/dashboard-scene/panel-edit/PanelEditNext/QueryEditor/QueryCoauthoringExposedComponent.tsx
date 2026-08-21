@@ -6,6 +6,7 @@ import {
   useCallback,
   useLayoutEffect,
   useMemo,
+  useRef,
   useSyncExternalStore,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -16,7 +17,8 @@ import {
   type QueryEditorCoauthoringV1Props,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, ClipboardButton, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
+import { getModKey } from 'app/core/utils/browser';
 
 import { QueryCoauthoring } from './QueryCoauthoring';
 import { useQueryCoauthoringHost } from './QueryCoauthoringHostContext';
@@ -39,6 +41,7 @@ function QueryCoauthoringControllerSurface({
   const handleFailure = useCallback(() => {
     controller.clearEditorDiff();
     host.revert();
+    controller.dismiss();
   }, [controller, host]);
 
   return (
@@ -78,6 +81,18 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
   const styles = useStyles2(getStyles);
   const snapshot = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   const portalTarget = controller.getPortalTarget();
+  const invocationCounts = useRef(new Map<string, number>());
+  const activeInvocationQuery = useRef<string | undefined>(undefined);
+
+  if (snapshot.mode === 'session') {
+    const query = controller.getQueryText();
+    if (activeInvocationQuery.current !== query) {
+      activeInvocationQuery.current = query;
+      invocationCounts.current.set(query, (invocationCounts.current.get(query) ?? 0) + 1);
+    }
+  } else {
+    activeInvocationQuery.current = undefined;
+  }
 
   useLayoutEffect(() => {
     const updateSurfaceSize = () => {
@@ -107,16 +122,6 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
     const preserveSelection = (event: MouseEvent<HTMLButtonElement>) => event.preventDefault();
     return createPortal(
       <div className={styles.toolbarSurface} data-testid="query-coauthoring-selection-toolbar">
-        <ClipboardButton
-          fill="text"
-          getText={() => snapshot.selectedText}
-          onMouseDown={preserveSelection}
-          size="sm"
-          variant="secondary"
-        >
-          {t('query-editor-coauthoring.copy', 'Copy')}
-        </ClipboardButton>
-        <span aria-hidden="true" className={styles.divider} />
         <Button
           fill="text"
           icon="ai-sparkle"
@@ -125,7 +130,8 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
           size="sm"
           variant="secondary"
         >
-          {t('query-editor-coauthoring.coauthor', 'Coauthor')}
+          {t('query-editor-coauthoring.explain-or-modify', 'Explain or modify')}
+          <span className={styles.shortcut}>{getModKey()}+.</span>
         </Button>
       </div>,
       portalTarget
@@ -139,6 +145,8 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
       onAccept={host.accept}
       onPreview={host.preview}
       onRevertPreview={host.revert}
+      isPreviewRunning={host.previewPhase === 'pending' || host.previewPhase === 'running'}
+      showIterationNudge={(invocationCounts.current.get(controller.getQueryText()) ?? 0) > 2}
       timeRange={host.timeRange}
     />
   );
@@ -146,10 +154,11 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    divider: css({
-      width: 1,
-      alignSelf: 'stretch',
-      background: theme.colors.border.weak,
+    shortcut: css({
+      marginLeft: theme.spacing(0.75),
+      color: theme.colors.text.disabled,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
     toolbarSurface: css({
       display: 'flex',
@@ -162,7 +171,7 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.shadows.z2,
       overflow: 'hidden',
     }),
   };

@@ -94,7 +94,8 @@ async function setup(
         attributes: { type: 'counter', help: 'Total HTTP requests.' },
       },
     ],
-  }
+  },
+  props: { isPreviewRunning?: boolean; showIterationNudge?: boolean } = {}
 ) {
   const focus = jest.fn();
   const clearPreview = jest.fn();
@@ -151,9 +152,14 @@ async function setup(
       onAccept={onAccept}
       onPreview={onPreview}
       onRevertPreview={onRevertPreview}
+      isPreviewRunning={props.isPreviewRunning}
+      showIterationNudge={props.showIterationNudge}
       timeRange={{ from: 1_000, to: 2_000 }}
     />
   );
+  await act(async () => {
+    await Promise.resolve();
+  });
   if (waitForPrompt) {
     await screen.findByRole('textbox', { name: 'Describe a query change' });
   }
@@ -185,10 +191,11 @@ describe('QueryCoauthoring', () => {
     mockAssistantLoading = false;
   });
 
-  it('shows the selected metric context using the Figma Looks like treatment', async () => {
+  it('shows the focused query summary using the highlighted query treatment', async () => {
     await setup();
 
-    expect(await screen.findByText('Looks like: http_requests_total is a counter metric.')).toBeInTheDocument();
+    expect(await screen.findByText('Highlighted query')).toBeInTheDocument();
+    expect(screen.getByText('http_requests_total is a counter metric.')).toBeInTheDocument();
   });
 
   it('requests and renders a privacy-bounded semantic explanation of the focused query text', async () => {
@@ -210,7 +217,7 @@ describe('QueryCoauthoring', () => {
     act(() => request.onComplete('Looks like: Calculates the per-second request rate.'));
 
     expect(screen.getByText(/Calculates the per-second request rate\./)).toBeInTheDocument();
-    expect(screen.getByText(/Looks like:/)).toBeInTheDocument();
+    expect(screen.getByText('Highlighted query')).toBeInTheDocument();
   });
 
   it('requests a holistic explanation when the whole query is focused', async () => {
@@ -270,7 +277,7 @@ describe('QueryCoauthoring', () => {
     const { user } = await setup();
     const identificationRequest = mockIdentifySelection.mock.calls[0][0];
 
-    expect(screen.getByText('Identifying intent…')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Reading highlighted query...');
     await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Use increase');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
 
@@ -285,11 +292,11 @@ describe('QueryCoauthoring', () => {
     mockAssistantAvailable = false;
     const { user, capability, dismissInvocation, focus } = await setup(0, false);
 
-    expect(await screen.findByText('Assistant is not available')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Assistant is not available');
     expect(screen.queryByRole('textbox', { name: 'Describe a query change' })).not.toBeInTheDocument();
     expect(capability.begin).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole('button', { name: 'Dismiss' }));
+    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
 
     expect(dismissInvocation).toHaveBeenCalled();
     expect(focus).toHaveBeenCalled();
@@ -340,8 +347,15 @@ describe('QueryCoauthoring', () => {
     expect(onAccept).not.toHaveBeenCalled();
     expect(stagePreview).toHaveBeenCalledWith('increase(http_requests_total[5m])');
     expect(onPreview).toHaveBeenCalledWith({ refId: 'A', expr: 'increase(http_requests_total[5m])' });
+    expect(screen.getByText('Suggestion updated')).toBeInTheDocument();
     expect(screen.getByText('Returns the increase over the selected range.')).toBeInTheDocument();
     expect(screen.getByText('increase')).toBeInTheDocument();
+    const proposalDetails = screen.getByRole('region', { name: 'Query proposal details' });
+    const original = within(proposalDetails).getByLabelText('Original function');
+    const proposed = within(proposalDetails).getByLabelText('Proposed function');
+    expect(original).toHaveTextContent('rate');
+    expect(proposed).toHaveTextContent('increase');
+    expect(original.compareDocumentPosition(proposed) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'Accept' }));
 
@@ -373,6 +387,86 @@ describe('QueryCoauthoring', () => {
 
     expect(screen.getByText(/could not be accepted/i)).toBeInTheDocument();
     expect(dismissInvocation).not.toHaveBeenCalled();
+  });
+
+  it('keeps long proposal messages and changes in a bounded body with actions outside it', async () => {
+    const { user, stagePreview } = await setup();
+    stagePreview.mockReturnValue({
+      status: 'staged',
+      query: { refId: 'A', expr: 'sum by (handler) (rate(http_requests_total[5m]))' } as DataQuery,
+      changes: Array.from({ length: 4 }, (_, index) => ({
+        id: `change-${index}`,
+        focus: 'inside',
+        original: `original_expression_${index}`,
+        proposed: `proposed_expression_${index}`,
+        kind: 'expression',
+      })),
+    });
+
+    await user.type(screen.getByRole('textbox'), 'Break down by handler');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
+        why: Array.from({ length: 5 }, (_, index) => `Detailed explanation ${index} for the proposed query change.`),
+      });
+      request.onComplete('');
+    });
+
+    const details = screen.getByRole('region', { name: 'Query proposal details' });
+    expect(details).toBe(screen.getByTestId('query-coauthoring-scroll-body'));
+    expect(details.children[0]).toHaveStyle({ flex: '0 0 auto' });
+    expect(details.children[1]).toHaveStyle({ flex: '0 0 auto' });
+    expect(within(details).getAllByLabelText(/^Original expression$/)).toHaveLength(4);
+    expect(within(details).getAllByLabelText(/^Proposed expression$/)).toHaveLength(4);
+    expect(within(details).queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open in chat' })).toBeInTheDocument();
+  });
+
+  it('moves from running the updated query to previewing it without replacing the proposal', async () => {
+    const { user, capability, onAccept, onPreview, onRevertPreview, rerender } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+
+    rerender(
+      <QueryCoauthoring
+        controller={capability}
+        datasourceType="prometheus"
+        onAccept={onAccept}
+        onPreview={onPreview}
+        onRevertPreview={onRevertPreview}
+        isPreviewRunning
+        timeRange={{ from: 1_000, to: 2_000 }}
+      />
+    );
+    const proposalStatus = screen.getByRole('status');
+    expect(proposalStatus).toHaveTextContent('Running updated query...');
+    expect(screen.getByText('Suggestion updated')).toBeInTheDocument();
+
+    rerender(
+      <QueryCoauthoring
+        controller={capability}
+        datasourceType="prometheus"
+        onAccept={onAccept}
+        onPreview={onPreview}
+        onRevertPreview={onRevertPreview}
+        timeRange={{ from: 1_000, to: 2_000 }}
+      />
+    );
+    expect(screen.getByRole('status')).toBe(proposalStatus);
+    expect(proposalStatus).toHaveTextContent('Previewing query');
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
   });
 
   it('clears a staged editor diff when generation fails after the proposal tool runs', async () => {
@@ -443,7 +537,7 @@ describe('QueryCoauthoring', () => {
     });
 
     expect(onPreview).toHaveBeenCalledTimes(1);
-    await user.click(screen.getByRole('button', { name: 'Dismiss' }));
+    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
     expect(onRevertPreview).toHaveBeenCalledTimes(1);
   });
 
@@ -483,20 +577,20 @@ describe('QueryCoauthoring', () => {
   it('keeps the captured query focus visible while building', async () => {
     mockIsGenerating = true;
 
-    await setup();
+    await setup(0, false);
 
-    expect(screen.getByText('Building query…')).toBeInTheDocument();
-    expect(screen.getByLabelText('Query focus')).toHaveTextContent('FOCUS');
+    expect(screen.getByRole('status')).toHaveTextContent('Building query...');
+    expect(await screen.findByLabelText('Query focus')).toHaveTextContent('FOCUS');
     expect(screen.getByLabelText('Query focus')).toHaveTextContent('rate');
     expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('CONTEXT');
     expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('http_requests_total');
-    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Describe a query change' })).not.toBeInTheDocument();
   });
 
   it('degrades safely when an independently released datasource omits metadata', async () => {
     mockIsGenerating = true;
 
-    await setup(0, true, {
+    await setup(0, false, {
       revision: '1',
       query: 'rate(http_requests_total[5m])',
       focusRanges: [{ from: 0, to: 4 }],
@@ -504,8 +598,8 @@ describe('QueryCoauthoring', () => {
       metadata: undefined,
     } as unknown as QueryEditorCoauthoringContextV1);
 
-    expect(screen.getByText('Building query…')).toBeInTheDocument();
-    expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('PromQL');
+    expect(screen.getByText('Building query...')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Relevant query context')).toHaveTextContent('PromQL');
   });
 
   it('constrains the popover to the viewport below its editor anchor', async () => {
@@ -711,7 +805,7 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByText('Should I group by handler, route, or both?')).toBeInTheDocument();
     expect(screen.queryByText(/did not return a valid PromQL proposal/i)).not.toBeInTheDocument();
 
-    await user.type(screen.getByRole('textbox', { name: 'Add a detail' }), 'Use handler');
+    await user.type(screen.getByRole('textbox', { name: 'Add extra detail' }), 'Use handler');
     await user.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(mockGenerate).toHaveBeenCalledTimes(2);
@@ -733,21 +827,20 @@ describe('QueryCoauthoring', () => {
 
   it('keeps clarification response controls outside the scrollable message region', async () => {
     const { user } = await setup();
+    const longClarification =
+      'Would you like to aggregate by method, filter specific traffic, or smooth the resulting series? '.repeat(4);
 
     await user.type(screen.getByRole('textbox'), 'Make this less noisy');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
-    act(() =>
-      mockGenerate.mock.calls[0][0].onComplete(
-        'Would you like to aggregate by method, filter specific traffic, or smooth the resulting series?'
-      )
-    );
+    act(() => mockGenerate.mock.calls[0][0].onComplete(longClarification));
 
     const message = screen.getByRole('region', { name: 'Clarification message' });
+    expect(message).toBe(screen.getByTestId('query-coauthoring-scroll-body'));
     expect(message).toHaveTextContent(/aggregate by method/);
     expect(within(message).queryByRole('textbox')).not.toBeInTheDocument();
     expect(within(message).queryByRole('button')).not.toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Add a detail' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeInTheDocument();
   });
 
   it('offers a bounded handoff when the request is too broad for one query', async () => {
@@ -762,7 +855,7 @@ describe('QueryCoauthoring', () => {
       request.onComplete('');
     });
 
-    expect(screen.getByText(/may need to span other data sources or queries/i)).toBeInTheDocument();
+    expect(screen.getByText(/may need to span another datasource or additional queries/i)).toBeInTheDocument();
     expect(screen.getByText(/unsaved panel edits will not be lost/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Continue with Assistant' }));
@@ -773,6 +866,23 @@ describe('QueryCoauthoring', () => {
         autoSend: false,
       })
     );
+  });
+
+  it('nudges the user toward Assistant after repeated iterations while allowing them to continue here', async () => {
+    const context: QueryEditorCoauthoringContextV1 = {
+      revision: '1',
+      query: 'rate(http_requests_total[5m])',
+      focusRanges: [{ from: 0, to: 4 }],
+      language: { id: 'promql', displayName: 'PromQL' },
+      metadata: [],
+    };
+    const { user } = await setup(0, false, context, { showIterationNudge: true });
+
+    expect(await screen.findByText(/Working on something big\?/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue in Assistant' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Continue here' }));
+    expect(await screen.findByRole('textbox', { name: 'Describe a query change' })).toBeInTheDocument();
   });
 
   it('continues a proposal in Assistant with a curated unsent draft', async () => {
@@ -789,7 +899,7 @@ describe('QueryCoauthoring', () => {
       request.onComplete('');
     });
 
-    await user.click(screen.getByRole('button', { name: 'Continue in Assistant' }));
+    await user.click(screen.getByRole('button', { name: 'Open in chat' }));
 
     expect(mockOpenAssistant).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -916,6 +1026,48 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByRole('dialog', { name: 'What went wrong?' })).toBeInTheDocument();
     expect(onAccept).not.toHaveBeenCalled();
     expect(dismissInvocation).not.toHaveBeenCalled();
+  });
+
+  it('does not accept a proposal when Enter activates another control', async () => {
+    const unrelatedAction = jest.fn();
+    const unrelatedButton = document.createElement('button');
+    unrelatedButton.textContent = 'Unrelated page action';
+    unrelatedButton.addEventListener('click', unrelatedAction);
+    document.body.append(unrelatedButton);
+    const { user, onAccept, dismissInvocation } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+
+    unrelatedButton.focus();
+    await user.keyboard('{Enter}');
+    expect(unrelatedAction).toHaveBeenCalledTimes(1);
+    expect(onAccept).not.toHaveBeenCalled();
+
+    screen.getByRole('button', { name: 'Open in chat' }).focus();
+    await user.keyboard('{Enter}');
+    expect(mockOpenAssistant).toHaveBeenCalledTimes(1);
+    expect(onAccept).not.toHaveBeenCalled();
+
+    act(() => screen.getByRole('button', { name: 'Helpful' }).focus());
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('dialog', { name: 'What went well?' })).toBeInTheDocument();
+    expect(onAccept).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+
+    act(() => screen.getByRole('button', { name: 'Close coauthoring' }).focus());
+    await user.keyboard('{Enter}');
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+    expect(onAccept).not.toHaveBeenCalled();
+    unrelatedButton.remove();
   });
 
   it('surfaces request errors with retry and dismissal paths', async () => {

@@ -1,12 +1,57 @@
-import { type ChangeEvent, type KeyboardEvent } from 'react';
+import { cx } from '@emotion/css';
+import { type ChangeEvent, type KeyboardEvent, type ReactNode } from 'react';
 
 import { type QueryEditorCoauthoringChangeV1, type QueryEditorCoauthoringContextV1 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Icon, IconButton, Spinner, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, IconButton, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import { workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
+
+interface HeaderProps {
+  children: ReactNode;
+  onClose?: () => void;
+  onStop?: () => void;
+  pulse?: boolean;
+}
+
+export function QueryCoauthoringHeader({ children, onClose, onStop, pulse = false }: HeaderProps) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
+  return (
+    <div className={styles.header}>
+      <div className={cx(styles.headerContent, pulse && styles.pulsingStatus)}>{children}</div>
+      {onStop ? (
+        <IconButton
+          className={styles.close}
+          name="square-shape"
+          size="sm"
+          tooltip={t('query-editor-coauthoring.stop', 'Stop')}
+          aria-label={t('query-editor-coauthoring.stop', 'Stop')}
+          onClick={onStop}
+        />
+      ) : onClose ? (
+        <IconButton
+          className={styles.close}
+          name="times"
+          size="sm"
+          tooltip={t('query-editor-coauthoring.close', 'Close coauthoring')}
+          aria-label={t('query-editor-coauthoring.close', 'Close coauthoring')}
+          onClick={onClose}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+export function QueryCoauthoringLiveStatus({ children }: { children: ReactNode }) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
+  return (
+    <div className={styles.status} role="status" aria-live="polite" aria-atomic="true">
+      {children}
+    </div>
+  );
+}
 
 interface PromptInputProps {
   value: string;
@@ -14,10 +59,8 @@ interface PromptInputProps {
   ariaLabel: string;
   actionLabel: string;
   disabled: boolean;
-  isGenerating?: boolean;
   onChange: (value: string) => void;
   onSubmit: () => void;
-  onStop?: () => void;
 }
 
 export function QueryCoauthoringPromptInput({
@@ -26,10 +69,8 @@ export function QueryCoauthoringPromptInput({
   ariaLabel,
   actionLabel,
   disabled,
-  isGenerating = false,
   onChange,
   onSubmit,
-  onStop,
 }: PromptInputProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => onChange(event.currentTarget.value);
@@ -54,40 +95,47 @@ export function QueryCoauthoringPromptInput({
       />
       <IconButton
         className={styles.promptSubmit}
-        name={isGenerating ? 'square-shape' : 'enter'}
-        variant="secondary"
-        aria-label={isGenerating ? t('query-editor-coauthoring.stop', 'Stop') : actionLabel}
-        disabled={!isGenerating && disabled}
-        onClick={isGenerating ? () => onStop?.() : onSubmit}
+        name="enter"
+        aria-label={actionLabel}
+        disabled={disabled}
+        onClick={onSubmit}
       />
     </div>
   );
 }
 
-export function QueryCoauthoringWorking({ context }: { context?: QueryEditorCoauthoringContextV1 }) {
+export function QueryCoauthoringWorking({
+  context,
+  onStop,
+}: {
+  context?: QueryEditorCoauthoringContextV1;
+  onStop: () => void;
+}) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
     <div className={styles.building}>
-      <div className={styles.status}>
-        <Spinner size="sm" />
-        <Text variant="bodySmall" color="secondary">
-          <Trans i18nKey="query-editor-coauthoring.building">Building query…</Trans>
-        </Text>
-      </div>
+      <QueryCoauthoringHeader onStop={onStop} pulse>
+        <QueryCoauthoringLiveStatus>
+          <Icon name="ai-sparkle" size="sm" />
+          <Text variant="bodySmall" color="secondary">
+            <Trans i18nKey="query-editor-coauthoring.building">Building query...</Trans>
+          </Text>
+        </QueryCoauthoringLiveStatus>
+      </QueryCoauthoringHeader>
       {context && (
         <div className={styles.workingFlow}>
           <div className={styles.workingStep} aria-label={t('query-editor-coauthoring.working-focus', 'Query focus')}>
-            <Text variant="bodySmall" color="secondary" weight="medium">
+            <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="query-editor-coauthoring.focus">FOCUS</Trans>
             </Text>
             <code>{workingFocusSummary(context)}</code>
           </div>
-          <Icon name="arrow-right" />
+          <Icon className={styles.flowArrow} name="arrow-right" />
           <div
-            className={styles.workingStep}
+            className={cx(styles.workingStep, styles.workingStepDelayed)}
             aria-label={t('query-editor-coauthoring.relevant-context', 'Relevant query context')}
           >
-            <Text variant="bodySmall" color="secondary" weight="medium">
+            <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="query-editor-coauthoring.context">CONTEXT</Trans>
             </Text>
             <code>{workingContextSummary(context)}</code>
@@ -98,122 +146,113 @@ export function QueryCoauthoringWorking({ context }: { context?: QueryEditorCoau
   );
 }
 
-interface ClarificationProps {
-  message: string;
-  intent: string;
-  onIntentChange: (value: string) => void;
-  onSubmit: () => void;
-  onDismiss: () => void;
-}
-
-export function QueryCoauthoringClarification({
-  message,
-  intent,
-  onIntentChange,
-  onSubmit,
-  onDismiss,
-}: ClarificationProps) {
-  const styles = useStyles2(getQueryCoauthoringStyles);
-  return (
-    <div className={styles.clarification}>
-      <Text variant="bodySmall" weight="medium">
-        <Trans i18nKey="query-editor-coauthoring.clarification-title">Assistant needs one detail</Trans>
-      </Text>
-      <div
-        className={styles.clarificationMessage}
-        role="region"
-        aria-label={t('query-editor-coauthoring.clarification-message', 'Clarification message')}
-      >
-        <Text variant="bodySmall">{message}</Text>
-      </div>
-      <QueryCoauthoringPromptInput
-        value={intent}
-        placeholder={t('query-editor-coauthoring.clarification-placeholder', 'Add a detail...')}
-        ariaLabel={t('query-editor-coauthoring.clarification-label', 'Add a detail')}
-        actionLabel={t('query-editor-coauthoring.continue', 'Continue')}
-        disabled={!intent.trim()}
-        onChange={onIntentChange}
-        onSubmit={onSubmit}
-      />
-      <Stack justifyContent="flex-start">
-        <Button size="sm" variant="secondary" onClick={onDismiss}>
-          <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
-        </Button>
-      </Stack>
-    </div>
-  );
-}
-
 interface FallbackProps {
   reason: string;
   onFeedback: (feedback: QueryCoauthoringFeedbackState) => void;
-  onDismiss: () => void;
   onContinue: (reason: string) => void;
 }
 
-export function QueryCoauthoringFallback({ reason, onFeedback, onDismiss, onContinue }: FallbackProps) {
+export function QueryCoauthoringFallback({ reason, onFeedback, onContinue }: FallbackProps) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
   return (
-    <Stack direction="column" gap={1}>
-      <Text variant="bodySmall">
-        <Trans i18nKey="query-editor-coauthoring.handoff-guidance">
-          This change may need to span other data sources or queries outside the one in focus. Continue in Assistant to
-          make larger changes.
-        </Trans>
-      </Text>
-      <Text variant="bodySmall" color="secondary" italic>
-        <Trans i18nKey="query-editor-coauthoring.unsaved-safe">Your unsaved panel edits will not be lost.</Trans>
-      </Text>
-      <Stack gap={1} justifyContent="space-between">
-        <FeedbackButtons outcome="handoff" onFeedback={onFeedback} />
-        <Stack gap={1}>
-          <Button size="sm" variant="secondary" onClick={onDismiss}>
-            <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
-          </Button>
-          <Button size="sm" icon="ai-sparkle" onClick={() => onContinue(reason)}>
-            <Trans i18nKey="query-editor-coauthoring.continue-assistant">Continue with Assistant</Trans>
-          </Button>
-        </Stack>
-      </Stack>
-    </Stack>
+    <>
+      <div className={styles.handoff}>
+        <Text variant="body">
+          <Trans i18nKey="query-editor-coauthoring.handoff-guidance">
+            Your changes may need to span another datasource or additional queries outside the one we are focused on.
+            Continue in Assistant chat to make larger changes.
+          </Trans>
+        </Text>
+        <Text variant="body" color="secondary" italic>
+          <Trans i18nKey="query-editor-coauthoring.unsaved-safe">Any unsaved panel edits will not be lost.</Trans>
+        </Text>
+      </div>
+      <div className={styles.footer}>
+        <div className={styles.footerActions}>
+          <FeedbackButtons outcome="handoff" onFeedback={onFeedback} />
+        </div>
+        <Button size="sm" fill="text" icon="ai-sparkle" onClick={() => onContinue(reason)}>
+          <Trans i18nKey="query-editor-coauthoring.continue-assistant">Continue with Assistant</Trans>
+        </Button>
+      </div>
+    </>
   );
 }
 
 interface ProposalProps {
   why: string[];
   changes: QueryEditorCoauthoringChangeV1[];
+  isPreviewRunning: boolean;
   onFeedback: (feedback: QueryCoauthoringFeedbackState) => void;
-  onDismiss: () => void;
+  onClose: () => void;
   onContinue: () => void;
   onAccept: () => void;
 }
 
-export function QueryCoauthoringProposal({ why, changes, onFeedback, onDismiss, onContinue, onAccept }: ProposalProps) {
+export function QueryCoauthoringProposal({
+  why,
+  changes,
+  isPreviewRunning,
+  onFeedback,
+  onClose,
+  onContinue,
+  onAccept,
+}: ProposalProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
     <div className={styles.proposal}>
-      <div className={styles.proposalBody}>
-        <Text variant="bodySmall" weight="medium">
-          <Trans i18nKey="query-editor-coauthoring.why">Why</Trans>
-        </Text>
-        <Stack direction="column" gap={0.5}>
+      <QueryCoauthoringHeader onClose={onClose} pulse={isPreviewRunning}>
+        <QueryCoauthoringLiveStatus>
+          {isPreviewRunning ? (
+            <>
+              <Icon name="ai-sparkle" size="sm" />
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="query-editor-coauthoring.running-updated-query">Running updated query...</Trans>
+              </Text>
+            </>
+          ) : (
+            <Badge color="blue" text={t('query-editor-coauthoring.previewing-query', 'Previewing query')} />
+          )}
+        </QueryCoauthoringLiveStatus>
+      </QueryCoauthoringHeader>
+      <div
+        className={styles.scrollBody}
+        data-testid="query-coauthoring-scroll-body"
+        role="region"
+        aria-label={t('query-editor-coauthoring.proposal-details', 'Query proposal details')}
+      >
+        <div className={styles.proposalBody}>
+          <Text variant="body" color="secondary">
+            <Trans i18nKey="query-editor-coauthoring.suggestion-updated">Suggestion updated</Trans>
+          </Text>
           {why.map((reason, index) => (
-            <Text variant="bodySmall" key={index}>
+            <Text variant="body" key={index}>
               {reason}
             </Text>
           ))}
-        </Stack>
+        </div>
         {changes.length > 0 && (
           <div className={styles.changes}>
             {changes.slice(0, 4).map((change) => (
               <div className={styles.changePair} key={change.id}>
-                <div className={styles.change}>
+                <div
+                  className={styles.change}
+                  aria-label={t('query-editor-coauthoring.original-change', 'Original {{kind}}', {
+                    kind: change.kind ?? 'change',
+                  })}
+                >
                   <Text variant="bodySmall" color="secondary">
                     {(change.kind ?? 'change').toUpperCase()}
                   </Text>
                   <code>{change.original || 'added'}</code>
                 </div>
-                <Icon name="arrow-right" />
-                <div className={`${styles.change} ${styles.proposedChange}`}>
+                <Icon className={styles.flowArrow} name="arrow-right" />
+                <div
+                  className={cx(styles.change, styles.proposedChange)}
+                  aria-label={t('query-editor-coauthoring.proposed-change', 'Proposed {{kind}}', {
+                    kind: change.kind ?? 'change',
+                  })}
+                >
                   <Text variant="bodySmall" color="secondary">
                     {(change.kind ?? 'change').toUpperCase()}
                   </Text>
@@ -224,22 +263,51 @@ export function QueryCoauthoringProposal({ why, changes, onFeedback, onDismiss, 
           </div>
         )}
       </div>
-      <Stack gap={1} justifyContent="space-between">
-        <Stack gap={0.5}>
+      <div className={styles.footer}>
+        <div className={styles.footerActions}>
           <FeedbackButtons outcome="proposal" onFeedback={onFeedback} />
-          <Button size="sm" variant="secondary" onClick={onDismiss}>
-            <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
+        </div>
+        <div className={styles.footerActions}>
+          <Button className={styles.compactButton} size="sm" fill="text" icon="ai-sparkle" onClick={onContinue}>
+            <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in chat</Trans>
           </Button>
-        </Stack>
-        <Stack gap={1}>
-          <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={onContinue}>
-            <Trans i18nKey="query-editor-coauthoring.continue-in-assistant">Continue in Assistant</Trans>
-          </Button>
-          <Button size="sm" icon="check" onClick={onAccept}>
+          <Button className={styles.compactButton} size="sm" icon="check" onClick={onAccept}>
             <Trans i18nKey="query-editor-coauthoring.accept">Accept</Trans>
           </Button>
-        </Stack>
-      </Stack>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function QueryCoauthoringIterationNudge({
+  onContinueHere,
+  onContinueInAssistant,
+}: {
+  onContinueHere: () => void;
+  onContinueInAssistant: () => void;
+}) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
+  return (
+    <div className={styles.iteration}>
+      <div className={styles.iterationCopy}>
+        <Text variant="body" color="secondary">
+          <Trans i18nKey="query-editor-coauthoring.iteration-nudge">
+            Working on something big? Iterate on larger changes with more space.
+          </Trans>
+        </Text>
+      </div>
+      <div className={styles.footer}>
+        <span />
+        <div className={styles.footerActions}>
+          <Button size="sm" fill="text" variant="secondary" onClick={onContinueHere}>
+            <Trans i18nKey="query-editor-coauthoring.continue-here">Continue here</Trans>
+          </Button>
+          <Button size="sm" fill="text" icon="ai-sparkle" onClick={onContinueInAssistant}>
+            <Trans i18nKey="query-editor-coauthoring.continue-in-assistant">Continue in Assistant</Trans>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -256,7 +324,6 @@ function FeedbackButtons({
       <IconButton
         name="thumbs-up"
         size="sm"
-        variant="secondary"
         tooltip={t('query-editor-coauthoring.feedback-helpful', 'Helpful')}
         aria-label={t('query-editor-coauthoring.feedback-helpful', 'Helpful')}
         onClick={() => onFeedback({ outcome, rating: 1 })}
@@ -264,7 +331,6 @@ function FeedbackButtons({
       <IconButton
         name="thumbs-down"
         size="sm"
-        variant="secondary"
         tooltip={t('query-editor-coauthoring.feedback-not-helpful', 'Not helpful')}
         aria-label={t('query-editor-coauthoring.feedback-not-helpful', 'Not helpful')}
         onClick={() => onFeedback({ outcome, rating: -1 })}

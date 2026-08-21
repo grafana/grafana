@@ -1,11 +1,12 @@
 import { isEqual } from 'lodash';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CoreApp,
   type DataSourceApi,
   type DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
+  LoadingState,
   type PanelData,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -57,12 +58,25 @@ export function QueryEditorPanel({
   const coauthoringBaselineRef = useRef<DataQuery | undefined>(undefined);
   const coauthoringPreviewTransactionRef = useRef<CoauthoringPreviewTransaction | undefined>(undefined);
   const [coauthoringBaseline, setCoauthoringBaseline] = useState<DataQuery>();
+  const [coauthoringPreviewPhase, setCoauthoringPreviewPhase] = useState<'idle' | 'pending' | 'running' | 'complete'>(
+    'idle'
+  );
   const error = data?.errors?.find((e) => e.refId === query?.refId);
   const queryRefId = query?.refId;
   // Filter panel data to only include data for this specific query
   const filteredData = useMemo(() => {
     return queryRefId && data ? filterPanelDataToQuery(data, queryRefId) : undefined;
   }, [data, queryRefId]);
+
+  useEffect(() => {
+    if (!coauthoringBaseline) {
+      setCoauthoringPreviewPhase('idle');
+    } else if (data?.state === LoadingState.Loading) {
+      setCoauthoringPreviewPhase('running');
+    } else {
+      setCoauthoringPreviewPhase((phase) => (phase === 'running' ? 'complete' : phase));
+    }
+  }, [coauthoringBaseline, data?.state]);
 
   // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
   const handleChange = useCallback(
@@ -101,11 +115,12 @@ export function QueryEditorPanel({
       };
       coauthoringBaselineRef.current = baseline;
       setCoauthoringBaseline(baseline);
+      setCoauthoringPreviewPhase(data?.state === LoadingState.Loading ? 'running' : 'pending');
       updateQuery(proposedQuery, baseline.refId);
       runQueries();
       return true;
     },
-    [coauthoringIdentity, runQueries, updateQuery]
+    [coauthoringIdentity, data?.state, runQueries, updateQuery]
   );
 
   const revertCoauthoredQueryPreview = useCallback(() => {
@@ -117,6 +132,7 @@ export function QueryEditorPanel({
     coauthoringBaselineRef.current = undefined;
     coauthoringPreviewTransactionRef.current = undefined;
     setCoauthoringBaseline(undefined);
+    setCoauthoringPreviewPhase('idle');
     updateQuery(baseline, baseline.refId);
     runQueries();
   }, [runQueries, updateQuery]);
@@ -127,6 +143,7 @@ export function QueryEditorPanel({
       coauthoringBaselineRef.current = undefined;
       coauthoringPreviewTransactionRef.current = undefined;
       setCoauthoringBaseline(undefined);
+      setCoauthoringPreviewPhase('idle');
       updateQuery(baseline, baseline.refId);
     }
     runQueries();
@@ -142,6 +159,7 @@ export function QueryEditorPanel({
       coauthoringPreviewTransactionRef.current = undefined;
       coauthoringBaselineRef.current = undefined;
       setCoauthoringBaseline(undefined);
+      setCoauthoringPreviewPhase('idle');
       updateQuery(acceptedQuery, acceptedQuery.refId);
       return true;
     },
@@ -151,6 +169,7 @@ export function QueryEditorPanel({
   const coauthoringHost = useMemo(
     () => ({
       datasourceType: coauthoringDatasourceType,
+      previewPhase: coauthoringPreviewPhase,
       timeRange: filteredData?.timeRange
         ? { from: filteredData.timeRange.from.valueOf(), to: filteredData.timeRange.to.valueOf() }
         : undefined,
@@ -161,6 +180,7 @@ export function QueryEditorPanel({
     [
       acceptCoauthoredQuery,
       coauthoringDatasourceType,
+      coauthoringPreviewPhase,
       filteredData?.timeRange,
       previewCoauthoredQuery,
       revertCoauthoredQueryPreview,

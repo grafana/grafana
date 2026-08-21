@@ -41,6 +41,7 @@ function createController(portalTarget: HTMLElement): jest.Mocked<QueryEditorCoa
 function createHost() {
   return {
     datasourceType: 'prometheus',
+    previewPhase: 'idle' as const,
     timeRange: { from: 1_000, to: 2_000 },
     preview: jest.fn(() => true),
     accept: jest.fn(() => true),
@@ -60,8 +61,10 @@ describe('QueryCoauthoringExposedComponent', () => {
       </QueryCoauthoringHostProvider>
     );
 
-    expect(within(portalTarget).getByRole('button', { name: 'Copy' })).toBeVisible();
-    await userEvent.setup().click(within(portalTarget).getByRole('button', { name: 'Coauthor' }));
+    const action = within(portalTarget).getByRole('button', { name: /Explain or modify/ });
+    expect(action).toBeVisible();
+    expect(action).toHaveTextContent(/[⌘]|ctrl/);
+    await userEvent.setup().click(action);
     expect(controller.begin).toHaveBeenCalledTimes(1);
   });
 
@@ -96,6 +99,7 @@ describe('QueryCoauthoringExposedComponent', () => {
       await waitFor(() => {
         expect(controller.clearEditorDiff).toHaveBeenCalledTimes(1);
         expect(host.revert).toHaveBeenCalledTimes(1);
+        expect(controller.dismiss).toHaveBeenCalledTimes(1);
       });
     } finally {
       consoleError.mockRestore();

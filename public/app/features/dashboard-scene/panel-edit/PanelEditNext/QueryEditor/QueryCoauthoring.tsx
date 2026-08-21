@@ -9,13 +9,15 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { Alert, Button, Icon, IconButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { QueryCoauthoringFeedback, type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import {
-  QueryCoauthoringClarification,
   QueryCoauthoringFallback,
+  QueryCoauthoringHeader,
+  QueryCoauthoringIterationNudge,
+  QueryCoauthoringLiveStatus,
   QueryCoauthoringPromptInput,
   QueryCoauthoringProposal,
   QueryCoauthoringWorking,
@@ -59,6 +61,8 @@ interface Props {
   onAccept: (query: DataQuery) => boolean;
   onPreview: (query: DataQuery) => boolean;
   onRevertPreview: () => void;
+  isPreviewRunning?: boolean;
+  showIterationNudge?: boolean;
   timeRange?: { from: number; to: number };
 }
 
@@ -70,6 +74,8 @@ export function QueryCoauthoring({
   onAccept,
   onPreview,
   onRevertPreview,
+  isPreviewRunning = false,
+  showIterationNudge = false,
   timeRange,
 }: Props) {
   const {
@@ -94,6 +100,7 @@ export function QueryCoauthoring({
   const [clarification, setClarification] = useState<QueryClarification>();
   const [error, setError] = useState<string>();
   const [feedback, setFeedback] = useState<QueryCoauthoringFeedbackState>();
+  const [iterationNudgeDismissed, setIterationNudgeDismissed] = useState(false);
   const [availableHeight, setAvailableHeight] = useState<number>();
   const generationIdRef = useRef(0);
   const identificationIdRef = useRef(0);
@@ -128,6 +135,7 @@ export function QueryCoauthoring({
     setClarification(undefined);
     setError(undefined);
     setFeedback(undefined);
+    setIterationNudgeDismissed(false);
     contextPromiseRef.current = undefined;
   }, [cancel, cancelIdentification, controller, reset, resetIdentification, revertQueryPreview]);
 
@@ -477,16 +485,13 @@ export function QueryCoauthoring({
         } else {
           dismiss();
         }
-      } else if (event.key === 'Enter' && proposal && !feedback) {
-        event.preventDefault();
-        accept();
       }
     };
     document.addEventListener('keydown', onKeyDown, true);
     return () => {
       document.removeEventListener('keydown', onKeyDown, true);
     };
-  }, [accept, closeFeedback, dismiss, feedback, proposal]);
+  }, [closeFeedback, dismiss, feedback]);
 
   return createPortal(
     <div
@@ -495,146 +500,173 @@ export function QueryCoauthoring({
       aria-label={t('query-editor-coauthoring.dialog', 'Query coauthor')}
       style={availableHeight === undefined ? undefined : { maxHeight: availableHeight }}
     >
-      <div className={styles.closeRow}>
-        <IconButton
-          name="times"
-          size="sm"
-          tooltip={t('query-editor-coauthoring.close', 'Close coauthoring')}
-          aria-label={t('query-editor-coauthoring.close', 'Close coauthoring')}
-          onClick={dismiss}
-        />
-      </div>
-      {isAssistantAvailable && !proposal && !fallback && !clarification && !error && (
-        <QueryCoauthoringPromptInput
-          value={intent}
-          placeholder={t('query-editor-coauthoring.prompt-placeholder', 'Make a quick change...')}
-          ariaLabel={t('query-editor-coauthoring.prompt-label', 'Describe a query change')}
-          actionLabel={t('query-editor-coauthoring.submit', 'Coauthor')}
-          disabled={!intent.trim() || !context || contextError}
-          isGenerating={isGenerating}
-          onChange={setIntent}
-          onSubmit={() => void submit()}
-          onStop={stop}
-        />
-      )}
-
       {isAssistantLoading && (
-        <div className={styles.status}>
+        <QueryCoauthoringHeader onClose={dismiss} pulse>
           <Spinner size="sm" />
           <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="query-editor-coauthoring.checking-assistant">Checking Assistant availability…</Trans>
+            <Trans i18nKey="query-editor-coauthoring.checking-assistant">Checking Assistant availability...</Trans>
           </Text>
-        </div>
+        </QueryCoauthoringHeader>
       )}
       {!isAssistantLoading && !isAssistantAvailable && (
-        <Stack direction="column" gap={1}>
-          <Alert
-            severity="warning"
-            title={t('query-editor-coauthoring.assistant-unavailable', 'Assistant is not available')}
-          >
-            <Trans i18nKey="query-editor-coauthoring.assistant-unavailable-body">
-              Query coauthoring requires Grafana Assistant.
-            </Trans>
-          </Alert>
-          <Stack justifyContent="flex-end">
-            <Button size="sm" variant="secondary" onClick={dismiss}>
-              <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
-            </Button>
+        <>
+          <QueryCoauthoringHeader onClose={dismiss}>
+            <Text variant="bodySmall" weight="medium">
+              <Trans i18nKey="query-editor-coauthoring.assistant-unavailable">Assistant is not available</Trans>
+            </Text>
+          </QueryCoauthoringHeader>
+          <Stack direction="column" gap={1}>
+            <Alert
+              severity="warning"
+              title={t('query-editor-coauthoring.assistant-unavailable', 'Assistant is not available')}
+            >
+              <Trans i18nKey="query-editor-coauthoring.assistant-unavailable-body">
+                Query coauthoring requires Grafana Assistant.
+              </Trans>
+            </Alert>
+            <Stack justifyContent="flex-end">
+              <Button size="sm" variant="secondary" onClick={dismiss}>
+                <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
-      )}
-      {isAssistantAvailable && !context && !contextError && (
-        <div className={styles.status}>
-          <Spinner size="sm" />
-          <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="query-editor-coauthoring.identifying">Identifying intent…</Trans>
-          </Text>
-        </div>
+        </>
       )}
       {isAssistantAvailable &&
-        context &&
-        isIdentifying &&
         !isGenerating &&
         !proposal &&
         !fallback &&
-        !clarification &&
-        !error && (
-          <div className={styles.status}>
-            <Spinner size="sm" />
-            <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="query-editor-coauthoring.identifying">Identifying intent…</Trans>
-            </Text>
-          </div>
+        !error &&
+        !contextError &&
+        (!showIterationNudge || iterationNudgeDismissed || !context) && (
+          <>
+            <QueryCoauthoringHeader onClose={dismiss} pulse={!context || isIdentifying}>
+              {!context || isIdentifying ? (
+                <QueryCoauthoringLiveStatus>
+                  <Icon name="ai-sparkle" size="sm" />
+                  <Text variant="bodySmall" color="secondary">
+                    <Trans i18nKey="query-editor-coauthoring.reading-highlighted-query">
+                      Reading highlighted query...
+                    </Trans>
+                  </Text>
+                </QueryCoauthoringLiveStatus>
+              ) : clarification ? (
+                <Text variant="body" color="secondary">
+                  <Trans i18nKey="query-editor-coauthoring.clarification-title">Detail requested</Trans>
+                </Text>
+              ) : (
+                <Text variant="body" color="secondary">
+                  <Trans i18nKey="query-editor-coauthoring.highlighted-query">Highlighted query</Trans>
+                </Text>
+              )}
+            </QueryCoauthoringHeader>
+            {context && !isIdentifying && (
+              <div
+                className={styles.body}
+                data-testid="query-coauthoring-scroll-body"
+                role="region"
+                aria-label={
+                  clarification
+                    ? t('query-editor-coauthoring.clarification-message', 'Clarification message')
+                    : t('query-editor-coauthoring.highlighted-query-summary', 'Highlighted query summary')
+                }
+              >
+                <Text variant="body">
+                  {clarification?.message ?? selectionExplanation ?? selectionSummary(context)}
+                </Text>
+              </div>
+            )}
+          </>
         )}
       {isAssistantAvailable &&
-        context &&
-        !isIdentifying &&
         !isGenerating &&
         !proposal &&
         !fallback &&
-        !clarification &&
-        !error && (
-          <div className={styles.status}>
-            <Icon name="ai-sparkle" />
-            <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="query-editor-coauthoring.looks-like">Looks like:</Trans>{' '}
-              {selectionExplanation ?? selectionSummary(context)}
-            </Text>
-          </div>
-        )}
-      {isAssistantAvailable && isGenerating && <QueryCoauthoringWorking context={context} />}
-      {isAssistantAvailable && clarification && (
-        <QueryCoauthoringClarification
-          message={clarification.message}
-          intent={intent}
-          onIntentChange={setIntent}
-          onSubmit={() => void submit()}
-          onDismiss={dismiss}
-        />
-      )}
-      {isAssistantAvailable && contextError && (
-        <Stack direction="column" gap={1}>
-          <Alert
-            severity="error"
-            title={t('query-editor-coauthoring.context-error', 'Could not read the selected query context')}
+        !error &&
+        !contextError &&
+        (!showIterationNudge || iterationNudgeDismissed || !context) && (
+          <QueryCoauthoringPromptInput
+            value={intent}
+            placeholder={
+              clarification
+                ? t('query-editor-coauthoring.clarification-placeholder', 'Add extra detail...')
+                : t('query-editor-coauthoring.prompt-placeholder', 'Describe a quick change...')
+            }
+            ariaLabel={
+              clarification
+                ? t('query-editor-coauthoring.clarification-label', 'Add extra detail')
+                : t('query-editor-coauthoring.prompt-label', 'Describe a query change')
+            }
+            actionLabel={
+              clarification
+                ? t('query-editor-coauthoring.continue', 'Continue')
+                : t('query-editor-coauthoring.submit', 'Coauthor')
+            }
+            disabled={!intent.trim() || !context || contextError}
+            onChange={setIntent}
+            onSubmit={() => void submit()}
           />
-          <Stack gap={1} justifyContent="flex-end">
-            <Button size="sm" variant="secondary" onClick={dismiss}>
-              <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
-            </Button>
-            <Button size="sm" variant="secondary" onClick={loadContext}>
-              <Trans i18nKey="query-editor-coauthoring.retry">Try again</Trans>
-            </Button>
+        )}
+      {isAssistantAvailable && isGenerating && <QueryCoauthoringWorking context={context} onStop={stop} />}
+      {isAssistantAvailable && contextError && (
+        <>
+          <QueryCoauthoringHeader onClose={dismiss}>
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="query-editor-coauthoring.context-error">Could not read the selected query context</Trans>
+            </Text>
+          </QueryCoauthoringHeader>
+          <Stack direction="column" gap={1}>
+            <Alert
+              severity="error"
+              title={t('query-editor-coauthoring.context-error', 'Could not read the selected query context')}
+            />
+            <Stack gap={1} justifyContent="flex-end">
+              <Button size="sm" variant="secondary" onClick={dismiss}>
+                <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
+              </Button>
+              <Button size="sm" variant="secondary" onClick={loadContext}>
+                <Trans i18nKey="query-editor-coauthoring.retry">Try again</Trans>
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
+        </>
       )}
       {isAssistantAvailable && error && (
-        <Stack direction="column" gap={1}>
-          <Alert severity="error" title={error} />
-          <Stack gap={1} justifyContent="flex-end">
-            <Button size="sm" variant="secondary" onClick={() => setError(undefined)}>
-              <Trans i18nKey="query-editor-coauthoring.retry">Try again</Trans>
-            </Button>
-            <Button size="sm" variant="secondary" onClick={dismiss}>
-              <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
-            </Button>
+        <>
+          <QueryCoauthoringHeader onClose={dismiss}>
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="query-editor-coauthoring.error">Query coauthoring error</Trans>
+            </Text>
+          </QueryCoauthoringHeader>
+          <Stack direction="column" gap={1}>
+            <Alert severity="error" title={error} />
+            <Stack gap={1} justifyContent="flex-end">
+              <Button size="sm" variant="secondary" onClick={() => setError(undefined)}>
+                <Trans i18nKey="query-editor-coauthoring.retry">Try again</Trans>
+              </Button>
+              <Button size="sm" variant="secondary" onClick={dismiss}>
+                <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
+              </Button>
+            </Stack>
           </Stack>
-        </Stack>
+        </>
+      )}
+      {isAssistantAvailable && context && showIterationNudge && !iterationNudgeDismissed && !proposal && !fallback && (
+        <QueryCoauthoringIterationNudge
+          onContinueHere={() => setIterationNudgeDismissed(true)}
+          onContinueInAssistant={() => continueInAssistant()}
+        />
       )}
       {isAssistantAvailable && fallback && (
-        <QueryCoauthoringFallback
-          reason={fallback.reason}
-          onFeedback={setFeedback}
-          onDismiss={dismiss}
-          onContinue={continueInAssistant}
-        />
+        <QueryCoauthoringFallback reason={fallback.reason} onFeedback={setFeedback} onContinue={continueInAssistant} />
       )}
       {isAssistantAvailable && proposal && (
         <QueryCoauthoringProposal
           why={proposal.why}
           changes={proposal.staged.changes}
+          isPreviewRunning={isPreviewRunning}
           onFeedback={setFeedback}
-          onDismiss={dismiss}
+          onClose={dismiss}
           onContinue={() => continueInAssistant()}
           onAccept={accept}
         />

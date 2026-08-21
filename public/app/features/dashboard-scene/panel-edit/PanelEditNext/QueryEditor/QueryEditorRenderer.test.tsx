@@ -8,6 +8,7 @@ import {
   type DataQueryResponse,
   getDefaultTimeRange,
   LoadingState,
+  type PanelData,
   type TestDataSourceResponse,
 } from '@grafana/data';
 import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
@@ -209,12 +210,13 @@ describe('QueryEditorRenderer', () => {
       datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
       dsSettings: ds1SettingsMock,
     };
-    const renderPanel = (query: DataQuery, queries: DataQuery[]) => (
+    const renderPanel = (query: DataQuery, queries: DataQuery[], data?: PanelData) => (
       <QueryEditorPanel
         query={query}
         queryDsData={queryDsData}
         queryDsLoading={false}
         queries={queries}
+        data={data}
         updateQuery={updateQuery}
         addQuery={jest.fn()}
         runQueries={runQueries}
@@ -229,10 +231,22 @@ describe('QueryEditorRenderer', () => {
       hostResult = coauthoringProps.preview(proposedQuery);
     });
     expect(hostResult).toBe(true);
+    expect(coauthoringHost!.previewPhase).toBe('pending');
     expect(updateQuery).toHaveBeenCalledWith(proposedQuery, 'A');
     expect(runQueries).toHaveBeenCalledTimes(1);
 
-    rerender(renderPanel(proposedQuery, [proposedQuery, queryB]));
+    rerender(
+      renderPanel(proposedQuery, [proposedQuery, queryB], {
+        state: LoadingState.Loading,
+      } as PanelData)
+    );
+    expect(coauthoringHost!.previewPhase).toBe('running');
+    rerender(
+      renderPanel(proposedQuery, [proposedQuery, queryB], {
+        state: LoadingState.Done,
+      } as PanelData)
+    );
+    expect(coauthoringHost!.previewPhase).toBe('complete');
     expect(screen.getByTestId('preview-editor')).toHaveTextContent('series-a:series-a');
 
     act(() => coauthoringProps.revert());

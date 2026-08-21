@@ -4,6 +4,7 @@ import { type DataQuery } from '@grafana/data';
 
 export interface QueryCoauthoringHost {
   datasourceType: string;
+  previewPhase: 'idle' | 'pending' | 'running' | 'complete';
   timeRange?: { from: number; to: number };
   preview(query: DataQuery): boolean;
   accept(query: DataQuery): boolean;
