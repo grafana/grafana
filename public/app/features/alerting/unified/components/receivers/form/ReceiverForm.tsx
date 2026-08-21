@@ -20,7 +20,7 @@ import {
   type CommonSettingsComponentType,
   type ReceiverFormValues,
 } from '../../../types/receiver-form';
-import { makeAMLink, stringifyErrorLike } from '../../../utils/misc';
+import { isClientFetchError, makeAMLink, stringifyErrorLike } from '../../../utils/misc';
 import { initialAsyncRequestState } from '../../../utils/redux';
 
 import { ChannelSubForm } from './ChannelSubForm';
@@ -110,7 +110,7 @@ export function ReceiverForm<R extends ChannelValues>({
         const message = getErrorMessage(e);
         notifyApp.error('Failed to save the contact point', message);
 
-        if (isFetchError(e) && e.status >= 400 && e.status < 500) {
+        if (isClientFetchError(e)) {
           logWarning('Failed to save the contact point', {
             status: String(e.status),
             message,

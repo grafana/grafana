@@ -6,6 +6,7 @@ import { Badge, Button, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useStoredBoolean } from 'app/core/hooks/useStored';
 
 import { Guide, GuideSkeleton, type GuideProps } from './Guide';
+import { OverviewSectionHeading } from './OverviewSectionHeading';
 
 const HOME_GET_STARTED_EXPANDED_LOCAL_STORAGE_KEY = 'grafana.home.get-started.expanded';
 
@@ -15,12 +16,11 @@ export function GetStarted({ guides }: { guides?: GuideProps[] }) {
 
   return (
     <Stack direction="column" gap={2}>
-      <Stack direction="row" gap={1} alignItems="center">
+      <OverviewSectionHeading count={guides?.length}>
         <Text variant="body" element="h3" color="secondary">
           <Trans i18nKey="home.overview.get-started.title">Recommended getting started guides</Trans>
         </Text>
-        {guides && <Badge text={guides.length} color="darkgrey" className={styles.pill} />}
-      </Stack>
+      </OverviewSectionHeading>
 
       <Grid gap={2} columns={{ xs: 1, md: 2, lg: 3 }}>
         {!guides && Array.from({ length: 6 }).map((_, index) => <GuideSkeleton key={index} />)}

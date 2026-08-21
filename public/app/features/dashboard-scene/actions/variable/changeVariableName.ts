@@ -8,9 +8,14 @@ import {
   snapshotVariableSetsAlongPath,
 } from '../../settings/variables/utils';
 import { edit } from '../utils/edit';
-import { type EditActionProps } from '../utils/types';
 
-export function changeVariableName({ source, oldValue, newValue }: EditActionProps<SceneVariable, 'name'>) {
+interface ChangeVariableNameActionProps {
+  source: SceneVariable;
+  oldValue: SceneVariable['state']['name'];
+  newValue: SceneVariable['state']['name'];
+}
+
+export function changeVariableName({ source, oldValue, newValue }: ChangeVariableNameActionProps) {
   // Snapshot set + ancestors before mutate so undo restores drops and re-injections.
   const snapshots = snapshotVariableSetsAlongPath(source);
 

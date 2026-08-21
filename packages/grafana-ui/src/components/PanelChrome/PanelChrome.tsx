@@ -88,6 +88,11 @@ interface BaseProps {
    * Can contain text, pills, links, buttons, or any other React elements.
    */
   subHeaderContent?: ReactNode;
+  /**
+   * Minimum height (px) for the panel container. Used by content-fit layouts so
+   * the chrome still fills a floor when its content is shorter.
+   */
+  minHeight?: number;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -167,6 +172,7 @@ export function PanelChrome({
   showMenuAlways = false,
   subHeaderContent,
   subtitle,
+  minHeight,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -219,7 +225,7 @@ export function PanelChrome({
     paddingBottom: subHeaderHeight ? 0 : theme.spacing.gridSize,
   };
 
-  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
+  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height, minHeight };
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */

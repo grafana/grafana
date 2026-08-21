@@ -260,6 +260,9 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 		fq := folder.GetFoldersQuery{
 			OrgID:        user.GetOrgID(),
 			SignedInUser: user,
+			// Only folder UID and per-folder access are used below; serve
+			// from the search index rather than a full-object folder list.
+			MetadataOnly: true,
 		}
 		folders, err := service.folderService.GetFolders(ctx, fq)
 		if err != nil {
@@ -299,13 +302,10 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 	if err != nil {
 		return nil, nil, "", err
 	}
+	managerPropsMap = make(map[string]utils.ManagerProperties)
 	if len(rules) > 0 {
 		resourceType := rules[0].ResourceType()
-		uids := make([]string, 0, len(rules))
-		for _, r := range rules {
-			uids = append(uids, r.UID)
-		}
-		managerPropsMap, err = service.provenanceStore.GetManagerPropertiesByUIDs(ctx, user.GetOrgID(), resourceType, uids)
+		managerPropsMap, err = service.provenanceStore.GetAllManagerProperties(ctx, user.GetOrgID(), resourceType)
 		if err != nil {
 			return nil, nil, "", err
 		}
@@ -325,11 +325,7 @@ func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identit
 	managerPropsMap := make(map[string]utils.ManagerProperties)
 	if len(rules) > 0 {
 		resourceType := rules[0].ResourceType()
-		uids := make([]string, 0, len(rules))
-		for _, r := range rules {
-			uids = append(uids, r.UID)
-		}
-		managerPropsMap, err = service.provenanceStore.GetManagerPropertiesByUIDs(ctx, user.GetOrgID(), resourceType, uids)
+		managerPropsMap, err = service.provenanceStore.GetAllManagerProperties(ctx, user.GetOrgID(), resourceType)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1211,6 +1207,9 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 		UIDs:         nil,
 		WithFullpath: true,
 		SignedInUser: user,
+		// Only Fullpath is read below; serve from the search index rather than a
+		// full-object folder list.
+		MetadataOnly: true,
 	}
 	for uid := range namespaces {
 		fq.UIDs = append(fq.UIDs, uid)

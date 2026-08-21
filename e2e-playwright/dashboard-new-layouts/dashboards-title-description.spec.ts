@@ -14,13 +14,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can change dashboard description and title', async ({
-      gotoDashboardPage,
-      selectors,
-      components,
-      controls,
-      sidebar,
-    }) => {
+    test('can change dashboard description and title', async ({ gotoDashboardPage, selectors, controls, sidebar }) => {
       const dashboardPage = await gotoDashboardPage({ uid: 'ed155665/annotation-filtering' });
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Options');

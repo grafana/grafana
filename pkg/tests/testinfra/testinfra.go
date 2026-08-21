@@ -895,6 +895,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("repository_types", strings.Join(opts.ProvisioningRepositoryTypes, "|"))
 		require.NoError(t, err)
 	}
+	if len(opts.ProvisioningConnectionTypes) > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("connection_types", strings.Join(opts.ProvisioningConnectionTypes, "|"))
+		require.NoError(t, err)
+	}
 	if opts.ProvisioningMaxResourcesPerRepository > 0 {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
@@ -1143,6 +1149,7 @@ type GrafanaOpts struct {
 	ProvisioningAllowInsecure             bool
 	ProvisioningPublicRootURL             string
 	ProvisioningRepositoryTypes           []string
+	ProvisioningConnectionTypes           []string
 	ProvisioningResources                 []string
 	ProvisioningMaxResourcesPerRepository int64
 	ProvisioningMaxRepositories           int64
@@ -1238,10 +1245,10 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(), quotaService, supportbundlestest.NewFakeBundleService(), nil,
+		legacysql.NewDatabaseProvider(store), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(), quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 

@@ -5,23 +5,24 @@ import { Icon, useStyles2 } from '@grafana/ui';
 
 import { useStepperState } from './StepperState';
 import { getWizardSteps } from './steps';
-import { type StepKey, StepState } from './types';
-import { useImportMethod } from './useImportMethod';
+import { StepKey, StepState } from './types';
+import { useIsRulesForcedSkipped } from './useIsRulesForcedSkipped';
 
 /**
  * Stepper component - sidebar navigation for the wizard
  * - Completed without errors: green check icon
  * - Completed with errors/warnings: yellow warning icon
  * - Skipped: minus icon
+ * - Force-skipped (Auto-sync makes Rules redundant): minus icon, strikethrough, unclickable
  * - Pending: number
  */
 export const Stepper = () => {
   const styles = useStyles2(getStyles);
   const { activeStep, setActiveStep, setVisitedStep, visitedSteps, isStepCompleted, isStepSkipped, hasStepErrors } =
     useStepperState();
-  const method = useImportMethod();
+  const rulesForcedSkipped = useIsRulesForcedSkipped();
 
-  const steps = getWizardSteps(method);
+  const steps = getWizardSteps();
   const lastStep = steps[steps.length - 1];
 
   const handleStepClick = (stepId: StepKey) => {
@@ -31,6 +32,10 @@ export const Stepper = () => {
   };
 
   const canNavigateToStep = (stepId: StepKey): boolean => {
+    if (stepId === StepKey.Rules && rulesForcedSkipped) {
+      return false;
+    }
+
     const stepIndex = steps.findIndex((s) => s.id === stepId);
     const activeIndex = steps.findIndex((s) => s.id === activeStep);
 
@@ -57,16 +62,17 @@ export const Stepper = () => {
         const isVisited = visitedSteps[step.id] === StepState.Visited;
         const isCompleted = isStepCompleted(step.id);
         const isSkipped = isStepSkipped(step.id);
+        const isForcedSkipped = step.id === StepKey.Rules && rulesForcedSkipped;
         const hasErrors = hasStepErrors(step.id);
         const canNavigate = canNavigateToStep(step.id);
 
         // Determine visual state
         // - Warning: visited, not current, not last, has validation errors
         // - Success: visited, not current, not last, completed without errors
-        // - Skipped: skipped and not active
+        // - Skipped: skipped (manually or force-skipped) and not active
         const showWarning = isVisited && !isActive && !isLast && hasErrors;
         const showSuccess = isVisited && !isActive && !isLast && isCompleted && !hasErrors && !isSkipped;
-        const showSkipped = isSkipped && !isActive;
+        const showSkipped = (isSkipped || isForcedSkipped) && !isActive;
         const showNumber = !showWarning && !showSuccess && !showSkipped;
 
         const itemStyles = cx(styles.item, {
@@ -79,6 +85,7 @@ export const Stepper = () => {
               type="button"
               className={cx(styles.stepButton, {
                 [styles.stepButtonDisabled]: !canNavigate,
+                [styles.stepNameStrikethrough]: isForcedSkipped,
               })}
               onClick={() => handleStepClick(step.id)}
               disabled={!canNavigate}
@@ -141,6 +148,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       color: 'inherit',
     },
+  }),
+  stepNameStrikethrough: css({
+    textDecoration: 'line-through',
   }),
   indicator: css({
     display: 'flex',

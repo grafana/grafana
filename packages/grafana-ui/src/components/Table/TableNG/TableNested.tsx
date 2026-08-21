@@ -25,6 +25,7 @@ import { COLUMN, TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
+  useContentAwareWidths,
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
@@ -89,6 +90,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
+    contentAwareWidthsEnabled = false,
   } = props;
 
   const uniqueId = useId();
@@ -220,13 +222,19 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
-  const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey);
+  const contentAwareWidths = useContentAwareWidths({
+    enabled: contentAwareWidthsEnabled,
+    typographyCtx,
+    showTypeIcons,
+    getActions: getCellActions,
+  });
+
+  const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });
@@ -240,6 +248,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     nestedVisibleFields,
     availableWidth,
     structureRev,
+    contentAware: contentAwareWidths,
   });
 
   const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
@@ -247,7 +256,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     columnWidths: nestedFieldWidths,
     fields: nestedVisibleFields,
     enabled: hasNestedHeaders,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });

@@ -53,6 +53,7 @@ import {
   setDataSourcePluginImporter,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
+  setDataSourcePicker,
   setJourneyRegistry,
   setJourneyTracker,
   setPanelDataErrorView,
@@ -100,6 +101,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
+import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -222,6 +224,7 @@ export class GrafanaApp {
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
       setFolderPicker(LazyFolderPicker);
+      setDataSourcePicker(RuntimeDataSourcePickerShim);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
@@ -300,11 +303,13 @@ export class GrafanaApp {
       // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
       // need to wait on a network round trip).
       setExpressionDataSourceInstance(expressionDatasource);
+      // eslint-disable-next-line @grafana/no-config-datasources -- boot data is the seed for the instance settings cache
       initDataSourceInstanceSettings(config.datasources, config.defaultDatasource);
       setDataSourcePluginImporter(pluginImporter.importDataSource.bind(pluginImporter));
 
       // Init DataSourceSrv (legacy sync API; retained for backwards compatibility)
       const dataSourceSrv = new DatasourceSrv();
+      // eslint-disable-next-line @grafana/no-config-datasources -- legacy DataSourceSrv is seeded from boot data
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
