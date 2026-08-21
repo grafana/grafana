@@ -50,9 +50,9 @@ describe('groupSelectionInto', () => {
     const [tab1Panel1, tab1panel2] = body.state.tabs[0].getLayout().getVizPanels();
     const [tab2Panel3] = body.state.tabs[1].getLayout().getVizPanels();
 
-    expect(tab1Panel1 === p1).toBe(true);
-    expect(tab1panel2 === p3).toBe(true);
-    expect(tab2Panel3 === p2).toBe(true);
+    expect(tab1Panel1).toBe(p1);
+    expect(tab1panel2).toBe(p3);
+    expect(tab2Panel3).toBe(p2);
 
     expect(dashboard.state.sidebar.getSelectedObject()).toBe(body.state.tabs[0]);
 
