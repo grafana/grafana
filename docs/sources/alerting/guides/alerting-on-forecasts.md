@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/guides/alerting-on-forecasts/
-description: This guide ...
+description: Learn how to use forecasts in Grafana Alerting to detect future threshold breaches and anomalies outside the forecast range.
 keywords:
   - grafana
   - alerting
@@ -13,12 +13,6 @@ products:
 title: Alerting on forecasts
 menuTitle: Alerting on forecasts
 weight: 1050
-refs:
-  prioritize-symptoms-but-dont-ignore-infrastructure-signals:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/guides/best-practices/#prioritize-symptoms-but-dont-ignore-infrastructure-signals
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/guides/best-practices/#prioritize-symptoms-but-dont-ignore-infrastructure-signals
 ---
 
 # Alerting on forecasts
