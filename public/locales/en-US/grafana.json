@@ -969,8 +969,7 @@
       "used-by-rules_other": "Used by {{count}} alert rules"
     },
     "contact-points-filter": {
-      "aria-label-search-contact-points": "Search contact point by name or type",
-      "label-search-by-name-or-type": "search contact points",
+      "label-search-by-name-or-type": "Search by name or type",
       "placeholder-search": "Search"
     },
     "contact-points-page-contents": {
