@@ -230,7 +230,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     typographyCtx,
     showTypeIcons,
     getActions: getCellActions,
-    sortColumns,
     tableRefreshEnabled,
     filter,
   });
@@ -241,7 +240,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });
@@ -263,7 +261,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     columnWidths: nestedFieldWidths,
     fields: nestedVisibleFields,
     enabled: hasNestedHeaders,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });

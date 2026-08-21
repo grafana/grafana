@@ -4475,6 +4475,14 @@
               }
             ]
           },
+          "githubEnterpriseOAuth": {
+            "description": "GitHub Enterprise Server OAuth app connection configuration Only applicable when provider is \"githubEnterpriseOAuth\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubEnterpriseOAuthConnectionConfig"
+              }
+            ]
+          },
           "oauth": {
             "description": "OAuth app configuration shared by all OAuth app providers",
             "allOf": [
@@ -4489,13 +4497,14 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucketOAuth",
               "github",
               "githubEnterprise",
+              "githubEnterpriseOAuth",
               "githubOAuth",
               "gitlabOAuth"
             ]
@@ -4850,6 +4859,19 @@
             "type": "string",
             "default": ""
           },
+          "serverUrl": {
+            "description": "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitHubEnterpriseOAuthConnectionConfig": {
+        "type": "object",
+        "required": [
+          "serverUrl"
+        ],
+        "properties": {
           "serverUrl": {
             "description": "The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).",
             "type": "string",
@@ -6179,6 +6201,7 @@
                 "bitbucketOAuth",
                 "github",
                 "githubEnterprise",
+                "githubEnterpriseOAuth",
                 "githubOAuth",
                 "gitlabOAuth"
               ]

@@ -18,7 +18,7 @@ import { Filter } from '../Filter/Filter';
 import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import { getDisplayName } from '../utils';
+import { getDisplayName, isSortableField } from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
 
@@ -60,7 +60,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
-  const sortable = field.config.custom?.sortable !== false;
+  const sortable = isSortableField(field);
   const styles = useStyles2(getStyles, headerCellWrap, sortable);
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;

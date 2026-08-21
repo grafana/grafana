@@ -1742,13 +1742,13 @@ describe('TableNG utils', () => {
     afterEach(() => jest.restoreAllMocks());
 
     it('sizes a numeric column to its content, well under the 150px even-split default (#634)', () => {
-      // header "Value" (5) => 5*8+13 = 53; content "999" (3) => 3*8+13 = 37; so 53 wins.
+      // header "Value" (5) => 5*8 + sort arrow 22 + 13 = 75; content "999" (3) => 3*8+13 = 37; so 75 wins.
       // availWidth == content total, so there is no leftover to grow into.
       const fields: Field[] = [{ name: 'Value', type: FieldType.number, values: [1, 42, 999], config: {} }];
 
-      const [width] = compute(fields, 53);
+      const [width] = compute(fields, 75);
 
-      expect(width).toBe(53);
+      expect(width).toBe(75);
       expect(width).toBeLessThan(COLUMN.DEFAULT_WIDTH);
     });
 
@@ -1785,11 +1785,11 @@ describe('TableNG utils', () => {
     it('grows numeric and boolean columns only modestly while a string column takes most of the leftover', () => {
       const fields: Field[] = [
         { name: 'N', type: FieldType.number, values: [1], config: {} }, // floor 50
-        { name: 'Bool', type: FieldType.boolean, values: [true], config: {} }, // floor 50
+        { name: 'B', type: FieldType.boolean, values: [true], config: {} }, // floor 50
         { name: 'S', type: FieldType.string, values: ['x'], config: {} }, // floor 50
       ];
       // All three have content width 50, so √(content) is shared and only the weight differs
-      // (N/Bool 0.35, S 1 => total 1.7): N/Bool 50 + 200*(0.35/1.7) = 91; S 50 + 200*(1/1.7) = 168.
+      // (N/B 0.35, S 1 => total 1.7): N/B 50 + 200*(0.35/1.7) = 91; S 50 + 200*(1/1.7) = 168.
       expect(compute(fields, 350)).toEqual([91, 91, 168]);
     });
 
@@ -1888,8 +1888,8 @@ describe('TableNG utils', () => {
         },
       ];
       // Markdown always wraps and renders formatted, so it contributes no content width: header "md"
-      // (2*8+13 = 29) floors to MIN_WIDTH 50. The long source would otherwise stretch it to the cap.
-      expect(compute(fields, 50)).toEqual([50]);
+      // (2*8 + sort arrow 22 + 13 = 51) wins. The long source would otherwise stretch it to the cap.
+      expect(compute(fields, 51)).toEqual([51]);
     });
 
     // render-hooks attaches displayJsonValue to JSONView / `other` fields, so the value renders as
@@ -1964,13 +1964,14 @@ describe('TableNG utils', () => {
           config: { custom: { cellOptions: { type: TableCellDisplayMode.Actions } } },
         },
       ];
-      // No getActions => measurer returns 0, so the column floors to MIN_WIDTH (header "act" is smaller).
+      // No getActions => measurer returns 0, so the column falls back to its header width
+      // ("act" 3*8 + sort arrow 22 + 13 = 59).
       expect(
-        computeContentAwareColWidths(fields, 50, {
+        computeContentAwareColWidths(fields, 59, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
         })
-      ).toEqual([50]);
+      ).toEqual([59]);
     });
 
     it('sizes a data links column to fit its links via getCellLinks (fuzzy width)', () => {
@@ -2114,20 +2115,23 @@ describe('TableNG utils', () => {
 
     it('reserves header icon space so the label is not truncated by the type icon', () => {
       const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
-      // header "Name" (4) => 4*8 = 32, + type-icon space 22 + chrome 13 = 67.
-      expect(compute(fields, 67, /* showTypeIcons */ true)).toEqual([67]);
+      // header "Name" (4) => 4*8 = 32, + type-icon space 22 + sort-arrow space 22 + chrome 13 = 89.
+      expect(compute(fields, 89, /* showTypeIcons */ true)).toEqual([89]);
     });
 
-    it('reserves header space for the sort arrow on a sorted column', () => {
+    it('reserves header space for the sort arrow on every sortable column, sorted or not', () => {
+      // Reserving it up front (rather than when the column becomes sorted) is what keeps auto widths
+      // from changing when the user clicks a header to sort.
       const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
       // header "Name" (4) => 4*8 = 32, + sort-arrow space 22 + chrome 13 = 67; content "a" is tiny.
-      const widths = computeContentAwareColWidths(fields, 67, {
-        typographyCtx: makeTypographyCtx(),
-        headerTypographyCtx: makeTypographyCtx(),
-        sortColumns: [{ columnKey: 'Name', direction: 'ASC' }],
-      });
-      expect(widths).toEqual([67]);
-      // an unsorted column of the same content floors to MIN_WIDTH 50 (no arrow reserved).
+      expect(compute(fields, 67)).toEqual([67]);
+    });
+
+    it('reserves no sort-arrow space on a column with sorting disabled', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { sortable: false } } },
+      ];
+      // header "Name" (4) => 32 + chrome 13 = 45, so the column floors to MIN_WIDTH 50 instead of 67.
       expect(compute(fields, 50)).toEqual([50]);
     });
 
@@ -2136,16 +2140,17 @@ describe('TableNG utils', () => {
         { name: 'Name', type: FieldType.string, values: ['a'], config: {} },
         { name: 'Other', type: FieldType.string, values: ['a'], config: {} },
       ];
-      // "Name" floors to MIN_WIDTH 50, "Other" sizes to its header (5*8 + chrome 13 = 53). Only the
-      // first column carries the 6px of extra inline-start padding that lines it up with the title.
+      // "Name" sizes to its header (4*8 + sort arrow 22 + chrome 13 = 67), "Other" to its own
+      // (5*8 + 22 + 13 = 75). Only the first column carries the 6px of extra inline-start padding
+      // that lines it up with the panel title.
       expect(
-        computeContentAwareColWidths(fields, 109, {
+        computeContentAwareColWidths(fields, 148, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
           noPanelPadding: true,
         })
-      ).toEqual([56, 53]);
-      expect(compute(fields, 103)).toEqual([50, 53]);
+      ).toEqual([73, 75]);
+      expect(compute(fields, 142)).toEqual([67, 75]);
     });
 
     // availWidth is pinned *below* what the header needs in these two, so there is no leftover for
@@ -2155,13 +2160,12 @@ describe('TableNG utils', () => {
       const withTooltip: Field[] = [
         { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { headerTooltip: 'why' } } },
       ];
-      // header "Name" (4) => 4*8 = 32, + tooltip button 22 + chrome 13 = 67; content "a" is tiny.
-      expect(compute(withTooltip, 60)).toEqual([67]);
+      // header "Name" (4) => 4*8 = 32, + sort arrow 22 + tooltip button 22 + chrome 13 = 89.
+      expect(compute(withTooltip, 80)).toEqual([89]);
 
-      // the same column without the tooltip needs only 45, so it floors to MIN_WIDTH 50 and then
-      // grows into the full 60 on offer — nothing reserved.
+      // the same column without the tooltip needs only 67, so it grows into the full 80 on offer.
       const plain: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
-      expect(compute(plain, 60)).toEqual([60]);
+      expect(compute(plain, 80)).toEqual([80]);
     });
 
     it('reserves the tooltip button in the refreshed header too, alongside the column menu', () => {
@@ -2173,8 +2177,25 @@ describe('TableNG utils', () => {
           config: { custom: { filterable: true, headerTooltip: 'why' } },
         },
       ];
-      // header "Name" (4) => 32, + tooltip 22 + menu 22 + chrome 13 = 89. Without the tooltip
-      // reservation this column would need only 67 and grow into the 80 on offer instead.
+      // header "Name" (4) => 32, + sort arrow 22 + tooltip 22 + menu 22 + chrome 13 = 111. Without
+      // the tooltip reservation this column would need only 89 and grow into the 100 on offer.
+      expect(
+        computeContentAwareColWidths(fields, 100, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
+      ).toEqual([111]);
+    });
+
+    it('reserves the wider column menu instead of the filter icon when table.refresh is on', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
+      ];
+      // header "Name" (4) => 32, + sort arrow 22 + chrome 13 = 67, plus the reserved affordance:
+      // filter icon (22) => 89 with the flag off, column menu (22) => 89 with it on. The two happen
+      // to tie today, so assert the flag doesn't double-reserve rather than that it widens.
+      expect(compute(fields, 80)).toEqual([89]);
       expect(
         computeContentAwareColWidths(fields, 80, {
           typographyCtx: makeTypographyCtx(),
@@ -2184,34 +2205,18 @@ describe('TableNG utils', () => {
       ).toEqual([89]);
     });
 
-    it('reserves the wider column menu instead of the filter icon when table.refresh is on', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
-      ];
-      // header "Name" (4) => 4*8 = 32, + chrome 13 = 45, plus the reserved affordance:
-      // filter icon (22) => 67 with the flag off, column menu (22) => 67 with it on. The two happen
-      // to tie today, so assert the flag doesn't double-reserve rather than that it widens.
-      expect(compute(fields, 67)).toEqual([67]);
+    it('reserves no column menu space for a non-filterable column when table.refresh is on', () => {
+      // The menu only renders on filterable columns (it has nothing else to offer yet), so a
+      // non-filterable column must not pay for it: header 32 + sort arrow 22 + chrome 13 = 67, not
+      // the 89 it would need if the menu were reserved as well.
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
       expect(
-        computeContentAwareColWidths(fields, 67, {
+        computeContentAwareColWidths(fields, 60, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
         })
       ).toEqual([67]);
-    });
-
-    it('reserves no column menu space for a non-filterable column when table.refresh is on', () => {
-      // The menu only renders on filterable columns (it has nothing else to offer yet), so a
-      // non-filterable column must not pay for it: content "a" floors to MIN_WIDTH either way.
-      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
-      expect(
-        computeContentAwareColWidths(fields, 50, {
-          typographyCtx: makeTypographyCtx(),
-          headerTypographyCtx: makeTypographyCtx(),
-          tableRefreshEnabled: true,
-        })
-      ).toEqual([50]);
     });
 
     it('reserves header space for the filter icon on a filtered column when table.refresh is on', () => {
@@ -2219,24 +2224,25 @@ describe('TableNG utils', () => {
         { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
       ];
       const filter = { Name: { filtered: [{ value: 'a' }], displayName: 'Name' } } as unknown as FilterType;
-      // header "Name" (4) => 32, + menu 22 + chrome 13 = 67 unfiltered; the filter icon adds 22 => 89.
+      // header "Name" (4) => 32, + sort arrow 22 + menu 22 + chrome 13 = 89 unfiltered; the filter
+      // icon adds 22 => 111.
       expect(
-        computeContentAwareColWidths(fields, 89, {
+        computeContentAwareColWidths(fields, 100, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
           filter,
         })
-      ).toEqual([89]);
-      // without the active filter the same column stops at 67 (availWidth 89 leaves it room to grow,
-      // so pin availWidth to 67 to show the header no longer demands the extra icon).
+      ).toEqual([111]);
+      // without the active filter the same column stops at 89 (availWidth pinned below that, so the
+      // result is the header's own demand rather than the room on offer).
       expect(
-        computeContentAwareColWidths(fields, 67, {
+        computeContentAwareColWidths(fields, 80, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
         })
-      ).toEqual([67]);
+      ).toEqual([89]);
     });
 
     it('ignores a filter whose values were cleared', () => {
@@ -2246,13 +2252,13 @@ describe('TableNG utils', () => {
       // an entry with no `filtered` values is not an active filter, so it reserves no icon space
       const cleared = { Name: { displayName: 'Name' } } as unknown as FilterType;
       expect(
-        computeContentAwareColWidths(fields, 67, {
+        computeContentAwareColWidths(fields, 80, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
           filter: cleared,
         })
-      ).toEqual([67]);
+      ).toEqual([89]);
     });
 
     it('measures header labels with the medium-weight header context when provided', () => {
@@ -2265,15 +2271,44 @@ describe('TableNG utils', () => {
         .mockImplementation(((text: string) => ({ width: String(text).length * (CHAR_W + 2) })) as never);
 
       const fields: Field[] = [{ name: 'Value', type: FieldType.number, values: [9], config: {} }];
-      // body content "9" floors to MIN_WIDTH 50; header "Value" (5) at the header font => 5*10+13 = 63
-      // wins. Regular-weight measurement would give 5*8+13 = 53, so landing on 63 proves the header
-      // context was used. availWidth == 63 leaves no room to grow.
-      const widths = computeContentAwareColWidths(fields, 63, {
+      // body content "9" floors to MIN_WIDTH 50; header "Value" (5) at the header font
+      // => 5*10 + sort arrow 22 + 13 = 85 wins. Regular-weight measurement would give 5*8+22+13 = 75,
+      // so landing on 85 proves the header context was used. availWidth == 85 leaves no room to grow.
+      const widths = computeContentAwareColWidths(fields, 85, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: headerCtx,
       });
 
-      expect(widths).toEqual([63]);
+      expect(widths).toEqual([85]);
+    });
+
+    it('rounds a header-bound column up rather than truncating it via cumulative rounding on overflow', () => {
+      // Real canvas measurement returns fractional widths, unlike this suite's integer CHAR_W mock.
+      // With no leftover to distribute (the auto columns already overflow availWidth), the second
+      // column's cumulative running sum can cross a whole-pixel boundary the "wrong" way and shave
+      // its own fractional need down — even though it has zero slack to give up, being sized to its
+      // header's exact minimum. Ceiling each column independently in that branch avoids that.
+      const headerCtx = createTypographyContext(14, 'sans-serif', 0.15);
+      const headerWidths: Record<string, number> = { A: 37.5, B: 47.4 };
+      jest
+        .spyOn(headerCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((text: string) => ({ width: headerWidths[String(text)] })) as never);
+
+      const fields: Field[] = [
+        { name: 'A', type: FieldType.string, values: ['x'], config: {} },
+        { name: 'B', type: FieldType.string, values: ['x'], config: {} },
+      ];
+      // header "A" => 37.5 + sort arrow 22 + chrome 13 = 72.5; header "B" => 47.4 + 22 + 13 = 82.4.
+      // Content "x" is tiny, so the header drives both. availWidth 154 < their 154.9 total, so the
+      // columns overflow and there is no leftover to distribute.
+      const widths = computeContentAwareColWidths(fields, 154, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: headerCtx,
+      });
+
+      // Without the fix this comes back [73, 82] — B truncated below its own 82.4 need.
+      expect(widths).toEqual([73, 83]);
     });
 
     it('samples a bounded number of rows (spread across the field) rather than scanning every value', () => {

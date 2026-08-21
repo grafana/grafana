@@ -796,6 +796,15 @@ const processNestedTableRows = (rows: TableRow[], processParents: (parents: Tabl
 /* ----------------------------- Data grid sorting ---------------------------- */
 /**
  * @internal
+ * Columns are sortable unless explicitly disabled. Shared by the column definitions, the header
+ * cell, and the width/height measurement, which reserve room for the sort arrow.
+ */
+export function isSortableField(field: Field): boolean {
+  return field.config.custom?.sortable !== false;
+}
+
+/**
+ * @internal
  */
 export function applySort(
   rows: TableRow[],
@@ -1243,13 +1252,11 @@ export interface ContentAwareColWidthsOptions {
   showTypeIcons?: boolean;
   /** Bound `(field, rowIdx) => actions`, so Actions columns can be sized to their button labels. */
   getActions?: GetActionsFunctionLocal;
-  /** Currently-sorted columns; a sorted column reserves header space for its sort arrow. */
-  sortColumns?: SortColumn[];
   /** `table.refresh`: a filterable column reserves the column menu button instead of a filter icon. */
   tableRefreshEnabled?: boolean;
   /**
    * Active filters. Under `table.refresh` a filtered column also reserves space for the persistent
-   * filter icon that marks it, the same way a sorted column reserves space for its arrow.
+   * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
    */
   filter?: FilterType;
   /** The first column carries extra inline-start padding to line up with the panel title. */
@@ -1354,33 +1361,36 @@ function measureInlineRunWidth(
  *
  * Canvas-measured exactly rather than estimated from `avgCharWidth`: this is a hard lower bound on
  * the column, so an under-estimate truncates the title outright — and it's one short string per
- * column, not a sample across many rows. Sort-arrow space is only reserved when `isSorted` (widths
- * recompute on sort), so a tight column doesn't ellipsize its title the moment it's sorted.
+ * column, not a sample across many rows.
+ *
+ * Sort-arrow space is reserved for every sortable column, whether or not it is currently sorted:
+ * reserving it only for the sorted column would make every auto width a function of the sort state,
+ * so clicking a header would resize the whole table (the sorted column gains the arrow's width, and
+ * that shifts every other column's share of the leftover space).
  */
 function measureHeaderWidth(
   field: Field,
   ctx: TypographyCtx,
   showTypeIcons: boolean,
-  isSorted: boolean,
+  isSortable: boolean,
   tableRefreshEnabled: boolean,
-  isFilterable: boolean,
-  isFiltered: boolean,
-  hasHeaderTooltip: boolean
+  isFiltered: boolean
 ): number {
+  const isFilterable = field.config.custom?.filterable ?? false;
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
   headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
-  headerWidth += isSorted ? HEADER_ICON_SPACE : 0;
-  // `headerTooltip` renders its info button in both header variants, and unlike the sort arrow it's
-  // there for as long as the option is set rather than only while some state holds.
-  headerWidth += hasHeaderTooltip ? HEADER_TOOLTIP_SPACE : 0;
+  headerWidth += isSortable ? HEADER_ICON_SPACE : 0;
+  // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
+  // is there for as long as the option is set rather than only while some state holds.
+  headerWidth += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
   if (tableRefreshEnabled) {
     // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
     // stays in flow (opacity-faded, not unmounted) whenever the column is filterable at all.
     headerWidth += isFilterable ? HEADER_MENU_SPACE : 0;
-    // an active filter additionally marks itself with a persistent icon next to the sort arrow. Like
-    // the arrow, it only exists while that state holds, so its space is reserved only then (the
-    // widths recompute when the filter changes).
+    // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
+    // only exists while the filter holds, so its space is reserved only then (the widths recompute
+    // when the filter changes).
     headerWidth += isFiltered ? HEADER_ICON_SPACE : 0;
   } else {
     // the classic header renders its filter icon inline whenever the column is filterable, whether
@@ -1564,6 +1574,10 @@ function growthWeight(type: FieldType): number {
  *      the widest column doesn't run away from its neighbours; numeric/boolean columns grow only
  *      modestly (see {@link growthWeight}).
  * When content overflows the available width the content widths are kept and the grid scrolls.
+ *
+ * Every input is independent of the sort and filter state (fields hold the full, unsorted values),
+ * so widths stay put when the user sorts or filters. See {@link measureHeaderWidth} for the sort
+ * arrow, the one affordance that would otherwise make them sort-dependent.
  */
 export function computeContentAwareColWidths(
   fields: Field[],
@@ -1573,7 +1587,6 @@ export function computeContentAwareColWidths(
     headerTypographyCtx,
     showTypeIcons = false,
     getActions,
-    sortColumns,
     tableRefreshEnabled = false,
     filter,
     sampleSize,
@@ -1605,7 +1618,6 @@ export function computeContentAwareColWidths(
   let contentTotal = 0;
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
-  const sortedKeys = new Set(sortColumns?.map((c) => c.columnKey));
   // Filter entries are keyed per parent on nested tables, so match on the display name they carry
   // rather than the key: nested columns share one width, so any active filter widens the column.
   const filteredKeys = new Set(
@@ -1620,11 +1632,9 @@ export function computeContentAwareColWidths(
       field,
       headerTypographyCtx,
       showTypeIcons,
-      sortedKeys.has(getDisplayName(field)),
+      isSortableField(field),
       tableRefreshEnabled,
-      field.config.custom?.filterable ?? false,
-      filteredKeys.has(getDisplayName(field)),
-      Boolean(field.config.custom?.headerTooltip)
+      filteredKeys.has(getDisplayName(field))
     );
 
     // Wrapped columns are measured like any other: a content-based width keeps a content-heavy
@@ -1657,13 +1667,23 @@ export function computeContentAwareColWidths(
   const growTotal = autoIdxs.reduce((sum, i) => sum + growShare(i), 0);
 
   const leftover = availWidth - definedWidth - contentTotal;
+  const shouldGrow = leftover > 0 && growTotal > 0;
   // Round cumulatively so the rounded widths sum to the same total as the exact ones. Rounding each
   // independently can push the total past availWidth and trigger a spurious horizontal scrollbar.
   let exactSoFar = 0;
   let roundedSoFar = 0;
   for (const i of autoIdxs) {
     const contentWidth = contentWidths.get(i)!;
-    const grown = leftover > 0 && growTotal > 0 ? contentWidth + leftover * (growShare(i) / growTotal) : contentWidth;
+    if (!shouldGrow) {
+      // No leftover to distribute — the columns already fill or overflow availWidth, so the grid
+      // scrolls regardless and matching the total exactly no longer matters. Round up instead of
+      // cumulatively: a column sitting exactly at its measured content need (canvas measurement is
+      // fractional) has no slack to give up, and cumulative rounding can shave a column below that
+      // need and truncate its header for no benefit.
+      widths[i] = Math.ceil(contentWidth);
+      continue;
+    }
+    const grown = contentWidth + leftover * (growShare(i) / growTotal);
     exactSoFar += grown;
     const rounded = Math.round(exactSoFar) - roundedSoFar;
     roundedSoFar += rounded;
