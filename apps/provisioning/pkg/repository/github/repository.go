@@ -68,7 +68,7 @@ func newRepository(
 		return nil, fmt.Errorf("parse owner and repo: %w", err)
 	}
 
-	ghClient, err := factory.New(ctx, owner, repo, token, opts...)
+	ghClient, err := factory.New(owner, repo, token, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("create github client: %w", err)
 	}

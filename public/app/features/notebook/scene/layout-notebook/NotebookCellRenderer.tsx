@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Suspense } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
@@ -70,7 +71,6 @@ function NarrativeCell({
   autoFocus?: boolean;
 }) {
   const styles = useStyles2(getStyles);
-
   const registered = cellTypeRegistry.getIfExists(content.kind);
   if (!registered) {
     return null;
@@ -79,12 +79,14 @@ function NarrativeCell({
   const Renderer = registered.render;
   return (
     <div className={styles.content}>
-      <Renderer
-        content={content}
-        isEditing={isEditing}
-        autoFocus={autoFocus}
-        onChange={(updated) => cell.onContentChange(updated)}
-      />
+      <Suspense fallback={content.kind === 'Code' ? <pre>{content.spec.code}</pre> : null}>
+        <Renderer
+          content={content}
+          isEditing={isEditing}
+          autoFocus={autoFocus}
+          onChange={(updated) => cell.onContentChange(updated)}
+        />
+      </Suspense>
     </div>
   );
 }

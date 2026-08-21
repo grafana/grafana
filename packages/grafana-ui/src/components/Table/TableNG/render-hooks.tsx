@@ -44,6 +44,7 @@ import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
+import { CELL_HORIZONTAL_CHROME } from './constants';
 import {
   getCellActionStyles,
   getDefaultCellStyles,
@@ -76,6 +77,7 @@ import {
   getDisplayName,
   getSummaryCellTextAlign,
   isCellInspectEnabled,
+  isSortableField,
   parseStyleJson,
   predicateByName,
   shouldTextOverflow,
@@ -293,6 +295,7 @@ function buildColumnsFromFields(
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
     const showActions = cellInspect || showFilters;
     const width = widths[i];
+    const contentWidth = width - CELL_HORIZONTAL_CHROME;
 
     // helps us avoid string cx and emotion per-cell
     const cellActionClassName = showActions
@@ -392,7 +395,7 @@ function buildColumnsFromFields(
             rowIdx={rowIdx}
             theme={theme}
             value={value}
-            width={width}
+            width={contentWidth}
             timeRange={timeRange}
             cellInspect={cellInspect}
             showFilters={showFilters}
@@ -509,8 +512,7 @@ function buildColumnsFromFields(
       width,
       headerCellClass,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
-      // every column is sortable unless explicitly disabled
-      sortable: field.config.custom?.sortable !== false,
+      sortable: isSortableField(field),
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell

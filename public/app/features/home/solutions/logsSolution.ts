@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 
 import { LOGS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { drilldownActiveCta } from './pluginPages';
+import { datasourceFact } from './probeUtils';
 import { CLOUD_UTILITY_LOKI_DATASOURCE_UIDS, labelRecencyProbe, probeFound } from './solutionDataProbes';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal } from './solutionState';
@@ -21,10 +22,7 @@ export function logsSolution(): Solution {
   );
   const datasource = async () => (await detect()).datasource;
 
-  const activity = memoize(async () => {
-    const ds = await datasource();
-    return ds ? fetchLogsActivity(ds) : null;
-  });
+  const activity = datasourceFact(datasource, fetchLogsActivity);
 
   const signal = async () => (await detect()).status;
 

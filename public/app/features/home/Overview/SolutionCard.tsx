@@ -22,6 +22,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
     [needsAttention, solution]
   );
   const { value: cta = null, loading: ctaLoading } = useAsync(() => solution.cta(), [solution]);
+  const { value: datasource = null } = useAsync(() => solution.datasource(), [solution]);
   const styles = useStyles2(getStyles, needsAttention);
   const isAttentionCta = cta?.action === 'view_alerts';
   const status = needsAttention
@@ -36,7 +37,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
             <Icon name={solution.icon} size="lg" />
           </div>
           <Stack direction="column" gap={0}>
-            <Text element="h3" variant="h5">
+            <Text element="h3" variant="h6">
               {solution.title}
             </Text>
             <Stack direction="row" gap={1} alignItems="center">
@@ -44,6 +45,13 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
               <Text variant="bodySmall" color="secondary">
                 {status}
               </Text>
+              {datasource && (
+                <span className={styles.viaDatasource}>
+                  <Text variant="bodySmall" color="secondary" truncate>
+                    {t('home.solutions.via-datasource', 'via {{name}}', { name: datasource.name })}
+                  </Text>
+                </span>
+              )}
             </Stack>
           </Stack>
         </Stack>
@@ -54,6 +62,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           stats={solution.stats}
           refinedStats={solution.refinedStats}
           sparkline={solution.sparkline}
+          compact
           gap={3}
         />
 
@@ -116,7 +125,7 @@ export function AvailableSolutionCard({ solution, offer }: AvailableSolutionCard
             <Icon name={solution.icon} size="lg" />
           </div>
           <Stack direction="column" gap={0}>
-            <Text element="h3" variant="h5">
+            <Text element="h3" variant="h6">
               {solution.title}
             </Text>
             <Text variant="bodySmall" color="secondary">
@@ -135,31 +144,33 @@ export function AvailableSolutionCard({ solution, offer }: AvailableSolutionCard
 
       {(cta || offer.learnMore) && (
         <Card.Actions>
-          {cta && (
-            <LinkButton
-              href={cta.href}
-              variant="secondary"
-              size="sm"
-              onClick={() =>
-                ctaClicked({
-                  surface: 'overview',
-                  action: cta.action,
-                  placement: 'card',
-                  solution: solution.id,
-                })
-              }
-            >
-              {cta.label}
-            </LinkButton>
-          )}
-          {offer.learnMore && (
-            <LearnMoreLink
-              {...offer.learnMore}
-              onClick={() =>
-                ctaClicked({ surface: 'overview', action: 'learn_more', placement: 'card', solution: solution.id })
-              }
-            />
-          )}
+          <Stack gap={2} alignItems="center">
+            {cta && (
+              <LinkButton
+                href={cta.href}
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  ctaClicked({
+                    surface: 'overview',
+                    action: cta.action,
+                    placement: 'card',
+                    solution: solution.id,
+                  })
+                }
+              >
+                {cta.label}
+              </LinkButton>
+            )}
+            {offer.learnMore && (
+              <LearnMoreLink
+                {...offer.learnMore}
+                onClick={() =>
+                  ctaClicked({ surface: 'overview', action: 'learn_more', placement: 'card', solution: solution.id })
+                }
+              />
+            )}
+          </Stack>
         </Card.Actions>
       )}
     </Card>
@@ -175,13 +186,13 @@ export function SolutionCardSkeleton() {
         <Stack direction="row" gap={1.5} alignItems="center">
           <Skeleton width={32} height={32} />
           <Stack direction="column" gap={0}>
-            <Skeleton width={180} height={20} />
+            <Skeleton width={180} height={18} />
             <Skeleton width={80} />
           </Stack>
         </Stack>
       </Card.Heading>
       <Card.Description className={styles.content}>
-        <Skeleton width={130} height={32} />
+        <Skeleton width={130} height={24} />
         <Skeleton width="100%" height={20} />
       </Card.Description>
       <Card.Actions>
@@ -194,7 +205,7 @@ export function SolutionCardSkeleton() {
 const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
   card: css({
     height: '100%',
-    minHeight: theme.spacing(30),
+    minHeight: theme.spacing(22),
     background: theme.colors.background.canvas,
     border: `1px solid ${theme.colors.border.weak}`,
     ...(needsAttention && {
@@ -234,6 +245,17 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     borderRadius: theme.shape.radius.circle,
     background: needsAttention ? theme.colors.warning.main : theme.colors.success.main,
     flexShrink: 0,
+  }),
+  viaDatasource: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    minWidth: 0,
+
+    '&::before': {
+      content: '"·"',
+      color: theme.colors.text.secondary,
+    },
   }),
   content: css({
     display: 'flex',

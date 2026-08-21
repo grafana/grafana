@@ -194,7 +194,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     opacity: 0.9,
     backgroundColor: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
   }),
   affordancesHidden: css({
     [`& .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
