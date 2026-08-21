@@ -46,8 +46,6 @@ import (
 // AuthzServiceAudience is the audience for the authz service.
 const AuthzServiceAudience = "authzService"
 
-const userPermissionsDelegatedGrant = "authz.grafana.app/userpermissions:get"
-
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
 	cfg *setting.Cfg,
@@ -63,6 +61,8 @@ func ProvideAuthZClient(
 ) (authlib.AccessClient, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	zanzanaNoLegacy := zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient)
 
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
@@ -74,16 +74,15 @@ func ProvideAuthZClient(
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
-		return zanzanaClient, nil
-	}
-
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
 		if err != nil {
 			return nil, err
+		}
+		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
+		if zanzanaNoLegacy {
+			return zanzanaClient, nil
 		}
 		if zanzanaEnabled {
 			return newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
@@ -161,6 +160,10 @@ func ProvideAuthZClient(
 			authzlib.WithTracerClientOption(tracer),
 		)
 
+		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
+		if zanzanaNoLegacy {
+			return zanzanaClient, nil
+		}
 		if zanzanaEnabled {
 			return newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
 		}
@@ -250,7 +253,12 @@ func newShadowClient(engine setting.ZanzanaPrimaryEngine, rbacClient authlib.Acc
 	return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
 }
 
-func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (authlib.AccessClient, error) {
+type remoteRBACClient struct {
+	authlib.AccessClient
+	authlib.UserPermissionsClient
+}
+
+func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (*remoteRBACClient, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            clientCfg.token,
 		TokenExchangeURL: clientCfg.tokenExchangeURL,
@@ -311,9 +319,20 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 		})
 	}
 
-	client := authzlib.NewClient(conn, authzlib.WithCacheClientOption(authzCache), authzlib.WithTracerClientOption(tracer))
-
-	return client, nil
+	return &remoteRBACClient{
+		AccessClient: authzlib.NewClient(
+			conn,
+			authzlib.WithCacheClientOption(authzCache),
+			authzlib.WithTracerClientOption(tracer),
+		),
+		// Keep permission snapshots out of the process-local cache. The standalone
+		// AuthZ server owns their bounded-staleness caching strategy.
+		UserPermissionsClient: authzlib.NewClient(
+			conn,
+			authzlib.WithCacheClientOption(&NoopCache{}),
+			authzlib.WithTracerClientOption(tracer),
+		),
+	}, nil
 }
 
 func RegisterRBACAuthZService(

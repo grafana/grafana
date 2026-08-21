@@ -1467,9 +1467,6 @@
     }
   },
   "public/app/features/dashboard-scene/scene/export/exporters.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 3
     },
@@ -2176,16 +2173,6 @@
   "public/app/features/migrate-to-cloud/onprem/EmptyState/CallToAction/ConnectModal.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
-    }
-  },
-  "public/app/features/migrate-to-cloud/onprem/NameCell.tsx": {
-    "@grafana/no-config-datasources": {
-      "count": 2
-    }
-  },
-  "public/app/features/migrate-to-cloud/onprem/ResourcesTable.test.tsx": {
-    "@grafana/no-config-datasources": {
-      "count": 4
     }
   },
   "public/app/features/migrate-to-cloud/onprem/resourceDependency.ts": {

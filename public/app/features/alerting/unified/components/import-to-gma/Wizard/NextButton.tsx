@@ -4,6 +4,7 @@ import { Button, Stack } from '@grafana/ui';
 
 import { useStepperState } from './StepperState';
 import { getNextStep, isLastStep } from './steps';
+import { useIsRulesForcedSkipped } from './useIsRulesForcedSkipped';
 
 interface NextButtonProps {
   /** Handler called when clicking next - should return true to proceed */
@@ -26,7 +27,8 @@ interface NextButtonProps {
  */
 export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disabledTooltip }: NextButtonProps) => {
   const { activeStep, setActiveStep } = useStepperState();
-  const nextStep = getNextStep(activeStep);
+  const rulesForcedSkipped = useIsRulesForcedSkipped();
+  const nextStep = getNextStep(activeStep, rulesForcedSkipped);
   const isLast = isLastStep(activeStep);
 
   const handleClick = async () => {

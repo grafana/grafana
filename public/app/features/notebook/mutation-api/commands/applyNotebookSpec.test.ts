@@ -2,7 +2,7 @@ import { SceneObjectBase } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { notebookResourceFor } from '../../api/notebookResource';
+import { notebookResourceFor, updateNotebook } from '../../api/notebookResource';
 import { NotebookLayoutManager } from '../../scene/layout-notebook/NotebookLayoutManager';
 import { transformNotebookToScene } from '../../serialization/transformNotebookToScene';
 import { NotebookMutationClient } from '../NotebookMutationClient';
@@ -16,6 +16,13 @@ import {
   panelCell,
 } from '../test-utils';
 
+// Only the network write is stubbed. `notebookResourceFor` and everything else in the module stay real,
+// so the spec these tests assert on is the one that would be sent.
+jest.mock('../../api/notebookResource', () => ({
+  ...jest.requireActual('../../api/notebookResource'),
+  updateNotebook: jest.fn(),
+}));
+
 /** Concrete stand-in: SceneObjectBase is abstract, and overlay just needs a SceneObject. */
 class TestOverlay extends SceneObjectBase {}
 
@@ -23,6 +30,7 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
   beforeEach(() => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    jest.mocked(updateNotebook).mockReset().mockResolvedValue({ generation: 2 });
   });
 
   afterEach(() => {
@@ -142,7 +150,8 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     ]);
   });
 
-  it('says so when it cannot tell which cells survived', async () => {
+  // The save serializes the same scene, so a serializer that throws stops the write as well as the check.
+  it('says so when it cannot tell which cells survived, and that nothing was saved', async () => {
     const scene = notebookScene();
     const client = new NotebookMutationClient(scene);
     // Spied on the prototype because the rebuild swaps in a new layout manager, so the instance the scene
@@ -153,7 +162,8 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
 
     const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: notebookSpec() } });
 
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('could not be saved');
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrowing the command's own result shape
     expect((result.data as { spec?: unknown }).spec).toBeUndefined();
     expect(result.warnings).toEqual([
@@ -289,6 +299,40 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     });
 
     expect(scene.state.body.state.isEditing).toBe(false);
+  });
+
+  it('saves the applied change, which the scene change signal would otherwise miss', async () => {
+    const scene = notebookScene();
+    const client = new NotebookMutationClient(scene);
+
+    const result = await client.execute({
+      type: 'APPLY_NOTEBOOK_SPEC',
+      payload: { spec: notebookSpec({ elements: { summary: markdownCell('## Resolved') }, cells: ['summary'] }) },
+    });
+
+    expect(result.success).toBe(true);
+    // The notebook was never in edit mode, so the scene's own change signal is ignored for this write.
+    expect(scene.state.isEditing).toBeFalsy();
+    // Asserted on the request, not on a call to autosave, so what was sent is what the caller asked for.
+    expect(updateNotebook).toHaveBeenCalledTimes(1);
+    const [, sent] = jest.mocked(updateNotebook).mock.calls[0];
+    expect(sent.layout.spec.cells.map((cell) => cell.spec.element.name)).toEqual(['summary']);
+  });
+
+  // The scene already shows the new document, but nothing durable happened. A caller told this succeeded
+  // would tell someone their notebook was written when the server never got it.
+  it('reports a failure when the applied change could not be saved', async () => {
+    jest.mocked(updateNotebook).mockRejectedValue(new Error('The notebook was changed by someone else.'));
+    const scene = notebookScene();
+    const client = new NotebookMutationClient(scene);
+
+    const result = await client.execute({
+      type: 'APPLY_NOTEBOOK_SPEC',
+      payload: { spec: notebookSpec({ elements: { summary: markdownCell('## Resolved') }, cells: ['summary'] }) },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('The notebook was changed by someone else.');
   });
 
   it('is refused without dashboard write permission', async () => {

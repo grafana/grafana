@@ -581,7 +581,6 @@ func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate)
 	for _, f := range fields {
 		req.QueryFields = append(req.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
 			Name: f,
-			Type: resourcepb.QueryFieldType_TEXT,
 			// The backend applies boost unconditionally, so a zero value would
 			// zero-score every hit. v1 has no per-leaf boost, so use a neutral 1.
 			Boost: 1,

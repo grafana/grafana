@@ -8,12 +8,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/features"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
-
-	"github.com/grafana/grafana/pkg/infra/features"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestProxyUserAgent(t *testing.T) {

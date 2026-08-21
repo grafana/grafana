@@ -1198,6 +1198,20 @@
     },
     {
       "metadata": {
+        "name": "authz.userPermissions",
+        "resourceVersion": "1786733435326",
+        "creationTimestamp": "2026-08-14T18:50:35Z"
+      },
+      "spec": {
+        "description": "Route user permission snapshots through the AuthZ service.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsAssumeRolePerDatasourceExternalId",
         "resourceVersion": "1784056946678",
         "creationTimestamp": "2026-07-14T19:22:26Z"
@@ -1340,19 +1354,6 @@
         "description": "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "canvasExternalPlugin",
-        "resourceVersion": "1780948766147",
-        "creationTimestamp": "2026-06-08T19:59:26Z"
-      },
-      "spec": {
-        "description": "Load Canvas panel from an external plugin instead of the bundled core plugin",
-        "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad",
         "expression": "false"
       }
     },
@@ -3888,6 +3889,34 @@
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthInfoApi",
+        "resourceVersion": "1787225285831",
+        "creationTimestamp": "2026-08-20T11:28:05Z"
+      },
+      "spec": {
+        "description": "Enables auth info APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthInfoRedirect",
+        "resourceVersion": "1787225285831",
+        "creationTimestamp": "2026-08-20T11:28:05Z"
+      },
+      "spec": {
+        "description": "Redirects the requests of the auth info service to the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {

@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, textUtil } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Icon, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { type ResourceObjects } from 'app/api/clients/provisioning/v0alpha1';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
@@ -27,6 +27,8 @@ interface Props {
    * for the title, since `isNewPr` only reflects whether a PR URL was in the query, not the action.
    */
   action?: ResourceObjects['action'];
+  /* URL of the version currently saved in Grafana, if the resource already exists. Offered as an action next to the pull request button. */
+  originalUrl?: string;
 }
 
 export type PreviewBranchInfo = {
@@ -43,7 +45,7 @@ const commonAlertProps = {
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, action }: Props) {
+export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, action, originalUrl }: Props) {
   const styles = useStyles2(getStyles);
   const { repoType, action: paramAction, prTitle } = usePullRequestParam();
 
@@ -60,14 +62,6 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
     return (
       <Alert
         {...commonAlertProps}
-        buttonContent={
-          <Stack alignItems="center">
-            {t('provisioned-resource-preview-banner.preview-banner.open-in-repo-button', 'Open in {{repoType}}', {
-              repoType: capitalizedRepoType,
-            })}
-            <Icon name="external-link-alt" />
-          </Stack>
-        }
         title={t(
           'provisioned-resource-preview-banner.preview-banner.behind-branch-text',
           'This resource is behind the branch in {{repoType}}.',
@@ -75,7 +69,15 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
             repoType: capitalizedRepoType,
           }
         )}
-        onRemove={repoUrl ? () => window.open(textUtil.sanitizeUrl(repoUrl), '_blank') : undefined}
+        action={
+          repoUrl && (
+            <LinkButton href={repoUrl} target="_blank" variant="primary" icon="external-link-alt" iconPlacement="right">
+              {t('provisioned-resource-preview-banner.preview-banner.open-in-repo-button', 'Open in {{repoType}}', {
+                repoType: capitalizedRepoType,
+              })}
+            </LinkButton>
+          )
+        }
       >
         <Trans
           i18nKey="provisioned-resource-preview-banner.preview-banner.view-in-repo-button"
@@ -91,13 +93,23 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
     <Alert
       {...commonAlertProps}
       title={actionText.title}
-      buttonContent={
-        <Stack alignItems="center">
-          {actionText.button}
-          <Icon name="external-link-alt" />
+      // Both actions are rendered here rather than through buttonContent/onRemove, because Alert
+      // hardcodes buttonContent to variant="secondary" and the pull request is the primary action.
+      // Links (not buttons with onClick) so either can be opened in a new tab to compare versions.
+      action={
+        <Stack alignItems="center" wrap="wrap">
+          {originalUrl && (
+            <LinkButton href={originalUrl} variant="secondary" icon="arrow-left">
+              {t('provisioned-resource-preview-banner.preview-banner.view-saved-version', 'View saved version')}
+            </LinkButton>
+          )}
+          {linkUrl && (
+            <LinkButton href={linkUrl} target="_blank" variant="primary" icon="external-link-alt" iconPlacement="right">
+              {actionText.button}
+            </LinkButton>
+          )}
         </Stack>
       }
-      onRemove={linkUrl ? () => window.open(textUtil.sanitizeUrl(linkUrl), '_blank') : undefined}
     >
       {actionText.body}
 

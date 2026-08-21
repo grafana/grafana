@@ -165,6 +165,36 @@ func TestMapperRegistry_ExactMatchPreferred(t *testing.T) {
 	assert.Equal(t, "dashboards:uid:", mapping.Prefix())
 }
 
+func TestMapperRegistry_Variables(t *testing.T) {
+	reg := NewMapperRegistry()
+	mapping, ok := reg.Get("dashboard.grafana.app", "variables", "")
+	require.True(t, ok)
+	require.NotNil(t, mapping)
+	assert.Equal(t, "variables:uid:", mapping.Prefix())
+	assert.True(t, mapping.HasFolderSupport())
+
+	action, ok := mapping.Action("create")
+	require.True(t, ok)
+	assert.Equal(t, "variables:create", action)
+	action, ok = mapping.Action("get")
+	require.True(t, ok)
+	assert.Equal(t, "variables:read", action)
+	action, ok = mapping.Action("update")
+	require.True(t, ok)
+	assert.Equal(t, "variables:write", action)
+	action, ok = mapping.Action("delete")
+	require.True(t, ok)
+	assert.Equal(t, "variables:delete", action)
+
+	readActionSets := []string{"folders:view", "folders:edit", "folders:admin"}
+	writeActionSets := []string{"folders:edit", "folders:admin"}
+	assert.ElementsMatch(t, readActionSets, mapping.ActionSets(utils.VerbGet))
+	assert.ElementsMatch(t, readActionSets, mapping.ActionSets(utils.VerbList))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbCreate))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbUpdate))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbDelete))
+}
+
 func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 	parentTr := newResourceTranslation("widgets", "uid", true, nil)
 	subTr := translation{
@@ -419,4 +449,45 @@ func TestMapperRegistry_Settings(t *testing.T) {
 	assert.Equal(t, "settings:uid:auth.saml", mapping.Scope("auth.saml"))
 	assert.Equal(t, "settings:uid:", mapping.Prefix())
 	assert.False(t, mapping.HasFolderSupport())
+}
+
+func TestMapperRegistry_ResourceMappings_UnknownGroup(t *testing.T) {
+	reg := NewMapperRegistry()
+	assert.Nil(t, reg.ResourceMappings("unknown.grafana.app"))
+}
+
+func TestMapperRegistry_ResourceMappings_DashboardGroup(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mappings := reg.ResourceMappings("dashboard.grafana.app")
+	require.NotEmpty(t, mappings)
+
+	byAPIResource := make(map[string]Mapping, len(mappings))
+	for _, rm := range mappings {
+		require.NotEmpty(t, rm.APIResource)
+		require.NotNil(t, rm.Mapping)
+		byAPIResource[rm.APIResource] = rm.Mapping
+	}
+
+	assert.Contains(t, byAPIResource, "dashboards")
+	assert.Contains(t, byAPIResource, "librarypanels")
+	assert.Contains(t, byAPIResource, "dashboards/annotations")
+	assert.Contains(t, byAPIResource, "notebooks")
+	assert.Contains(t, byAPIResource, "variables")
+
+	dashboards, ok := reg.Get("dashboard.grafana.app", "dashboards", "")
+	require.True(t, ok)
+	assert.Equal(t, dashboards.Prefix(), byAPIResource["dashboards"].Prefix())
+	assert.Equal(t, "dashboards:uid:", byAPIResource["dashboards"].Prefix())
+
+	libraryPanels, ok := reg.Get("dashboard.grafana.app", "librarypanels", "")
+	require.True(t, ok)
+	assert.Equal(t, libraryPanels.Prefix(), byAPIResource["librarypanels"].Prefix())
+
+	annotations, ok := reg.Get("dashboard.grafana.app", "dashboards", "annotations")
+	require.True(t, ok)
+	assert.Equal(t, annotations.Prefix(), byAPIResource["dashboards/annotations"].Prefix())
+	action, ok := byAPIResource["dashboards/annotations"].Action(utils.VerbGet)
+	assert.True(t, ok)
+	assert.Equal(t, "annotations:read", action)
 }

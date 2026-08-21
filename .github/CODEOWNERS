@@ -158,6 +158,7 @@
 /pkg/middleware/ @grafana/grafana-backend-services-squad
 /pkg/mocks/ @grafanabot
 /pkg/models/ @grafana/identity-squad
+/pkg/router @grafana/grafana-app-platform-squad
 /pkg/server/ @grafana/grafana-backend-services-squad
 /pkg/apiserver @grafana/grafana-app-platform-squad
 /pkg/apimachinery @grafana/grafana-app-platform-squad
@@ -187,6 +188,7 @@
 /pkg/services/notebooks/ @grafana/sharing-squad
 /pkg/services/notifications/ @grafana/grafana-backend-services-squad
 /pkg/services/org/ @grafana/identity-squad
+/pkg/services/ofrep @grafana/grafana-backend-services-squad
 /pkg/services/preference/ @grafana/grafana-backend-services-squad
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
 /pkg/services/provisioning/alerting/ @grafana/alerting-squad
@@ -1255,7 +1257,6 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/datasource @grafana/grafana-datasources-core-services
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/registry/apis/secret @grafana/grafana-operator-experience-squad
-/pkg/registry/apis/ofrep @grafana/grafana-backend-services-squad
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/grafana-catalog
 /pkg/registry/apis/dashboard/search.go @grafana/grafana-search-and-storage
 /pkg/registry/apis/dashboard/search_test.go @grafana/grafana-search-and-storage

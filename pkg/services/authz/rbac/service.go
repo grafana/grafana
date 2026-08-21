@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -814,7 +815,8 @@ func (s *Service) getRendererPermissions(ctx context.Context, action string) (ma
 	_, span := s.tracer.Start(ctx, "authz_direct_db.service.getRendererPermissions")
 	defer span.End()
 
-	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" || action == "datasources:query" || action == "plugins.metas:read" {
+	if action == "dashboards:read" || action == "folders:read" || action == "variables:read" ||
+		action == "datasources:read" || action == "datasources:query" || action == "plugins.metas:read" {
 		return map[string]bool{"*": true}, nil
 	}
 	return map[string]bool{}, nil
@@ -1009,9 +1011,16 @@ func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[s
 		return scopeMap[""], nil
 	}
 
-	// If creating a resource that goes in a folder, but no folder is specified,
-	// assume parent folder is the general folder
-	if req.Verb == utils.VerbCreate && t.HasFolderSupport() && req.ParentFolder == "" {
+	// Create maps empty parent to general for every folder-capable resource
+	// (the create target is folders:uid:general). GET/LIST/update/delete must
+	// not: Viewer holds folders:read on general, and treating that as the parent
+	// of every root-parented object would list folders the user cannot access.
+	//
+	// Variables are the exception: they persist with an empty folder annotation
+	// while admission and RBAC grants use folders:uid:general, so empty must
+	// match general on every verb.
+	if t.HasFolderSupport() && req.ParentFolder == "" &&
+		(req.Verb == utils.VerbCreate || t.Resource() == "variables") {
 		req.ParentFolder = accesscontrol.GeneralFolderUID
 	}
 
@@ -1296,7 +1305,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	if strings.HasPrefix(req.Action, "folders:") || strings.HasPrefix(req.Action, "folders.permissions:") {
 		res = buildFolderList(scopeMap, tree)
 	} else {
-		res = buildItemList(scopeMap, tree, t.Prefix())
+		res = buildItemList(scopeMap, tree, t.Prefix(), t.Resource() == "variables")
 	}
 
 	if cacheHit {
@@ -1371,7 +1380,7 @@ func (s *Service) listPermissionWithFolderAuthz(ctx context.Context, scopeMap ma
 	// The prefix is irrelevant here since the folder scopeMap has no resource
 	// scopes. Do not use buildFolderList — it puts folder UIDs in the Items
 	// field, which would deny every real object.
-	res := buildItemList(folderScopeMap, tree, "")
+	res := buildItemList(folderScopeMap, tree, "", false)
 
 	if cacheHit {
 		res.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}
@@ -1406,7 +1415,7 @@ func buildFolderList(scopes map[string]bool, tree folderTree) *authzv1.ListRespo
 	return &authzv1.ListResponse{Items: itemList}
 }
 
-func buildItemList(scopes map[string]bool, tree folderTree, prefix string) *authzv1.ListResponse {
+func buildItemList(scopes map[string]bool, tree folderTree, prefix string, aliasRootFolderSentinels bool) *authzv1.ListResponse {
 	folderSet := make(map[string]struct{}, len(scopes))
 	itemSet := make(map[string]struct{}, len(scopes))
 
@@ -1416,6 +1425,13 @@ func buildItemList(scopes map[string]bool, tree folderTree, prefix string) *auth
 				continue
 			}
 			folderSet[identifier] = struct{}{}
+			// Variables persist as "" while grants use folders:uid:general.
+			// Do not alias for dashboards/folders: Folders[""] would match
+			// every root-parented object for anyone with a general grant.
+			if aliasRootFolderSentinels && folder.IsRootFolderUID(identifier) {
+				folderSet[accesscontrol.GeneralFolderUID] = struct{}{}
+				folderSet[""] = struct{}{}
+			}
 			for n := range tree.Children(identifier) {
 				folderSet[n.UID] = struct{}{}
 			}
