@@ -35,9 +35,9 @@ func ProvideGComSSOService(cfg *setting.Cfg) *GComSSOService {
 }
 
 func (s *GComSSOService) LogoutHook(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) error {
-	// Gated per-tenant: only call grafana.com logout when auth.cloudSupportTicketRoles
+	// Gated per-tenant: only call grafana.com logout when cloudRBACRoles
 	// is enabled for the requesting tenant.
-	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthCloudSupportTicketRoles, false, openfeature.TransactionContext(ctx)) {
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagCloudRBACRoles, false, openfeature.TransactionContext(ctx)) {
 		return nil
 	}
 

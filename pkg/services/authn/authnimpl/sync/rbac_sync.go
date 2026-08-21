@@ -30,11 +30,11 @@ var (
 	errSyncPermissionsForbidden = errutil.Forbidden("permissions.sync.forbidden")
 )
 
-// cloudSupportTicketRolesEnabled checks whether support-ticket roles should be
+// cloudRBACRolesEnabled checks whether support-ticket roles should be
 // included in cloud role sync.
-func cloudSupportTicketRolesEnabled(ctx context.Context) bool {
+func cloudRBACRolesEnabled(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(
-		ctx, featuremgmt.FlagAuthCloudSupportTicketRoles, false, openfeature.TransactionContext(ctx),
+		ctx, featuremgmt.FlagCloudRBACRoles, false, openfeature.TransactionContext(ctx),
 	)
 }
 
@@ -248,10 +248,10 @@ func (s *RBACSync) cloudRolesToAddAndRemove(ctx context.Context, ident *authn.Id
 		org.RoleAdmin:  {accesscontrol.FixedCloudAdminRole},
 	}
 
-	// The support-ticket roles remain gated behind the auth.cloudSupportTicketRoles
-	// feature flag. When disabled, they are left out of both the add and remove sets
+	// The support-ticket roles remain gated behind the cloudRBACRoles feature
+	// flag. When disabled, they are left out of both the add and remove sets
 	// so any pre-existing assignments are not touched.
-	if cloudSupportTicketRolesEnabled(ctx) {
+	if cloudRBACRolesEnabled(ctx) {
 		fixedCloudRoles[org.RoleViewer] = append(fixedCloudRoles[org.RoleViewer], accesscontrol.FixedCloudSupportTicketReader)
 		fixedCloudRoles[org.RoleEditor] = append(fixedCloudRoles[org.RoleEditor], accesscontrol.FixedCloudSupportTicketAdmin)
 		fixedCloudRoles[org.RoleAdmin] = append(fixedCloudRoles[org.RoleAdmin], accesscontrol.FixedCloudSupportTicketAdmin)

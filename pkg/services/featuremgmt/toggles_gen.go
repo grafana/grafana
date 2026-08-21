@@ -239,9 +239,9 @@ const (
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"
 
-	// FlagAuthCloudSupportTicketRoles
-	// Gates access to Grafana Cloud support-ticket RBAC roles
-	FlagAuthCloudSupportTicketRoles = "auth.cloudSupportTicketRoles"
+	// FlagCloudRBACRoles
+	// Enabled grafana cloud specific RBAC roles
+	FlagCloudRBACRoles = "cloudRBACRoles"
 
 	// FlagAlertingQueryOptimization
 	// Optimizes eligible queries in order to reduce load on datasources

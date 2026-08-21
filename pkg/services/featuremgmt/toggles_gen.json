@@ -1155,7 +1155,8 @@
       "metadata": {
         "name": "auth.cloudSupportTicketRoles",
         "resourceVersion": "1787083315240",
-        "creationTimestamp": "2026-08-18T20:01:55Z"
+        "creationTimestamp": "2026-08-18T20:01:55Z",
+        "deletionTimestamp": "2026-08-21T15:31:55Z"
       },
       "spec": {
         "description": "Gates access to Grafana Cloud support-ticket RBAC roles",

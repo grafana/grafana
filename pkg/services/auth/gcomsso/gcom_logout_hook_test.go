@@ -26,10 +26,10 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func setCloudSupportTicketRolesFlag(t *testing.T, enabled bool) {
+func setCloudRBACRolesFlag(t *testing.T, enabled bool) {
 	t.Helper()
 	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagAuthCloudSupportTicketRoles: setting.NewInMemoryFlag(featuremgmt.FlagAuthCloudSupportTicketRoles, enabled),
+		featuremgmt.FlagCloudRBACRoles: setting.NewInMemoryFlag(featuremgmt.FlagCloudRBACRoles, enabled),
 	})
 }
 
@@ -43,7 +43,7 @@ func TestGComSSOService_LogoutHook(t *testing.T) {
 	s := ProvideGComSSOService(cfg)
 
 	t.Run("Successfully logs out from grafana.com", func(t *testing.T) {
-		setCloudSupportTicketRolesFlag(t, true)
+		setCloudRBACRolesFlag(t, true)
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodPost, r.Method)
@@ -69,7 +69,7 @@ func TestGComSSOService_LogoutHook(t *testing.T) {
 	})
 
 	t.Run("Fails to log out from grafana.com", func(t *testing.T) {
-		setCloudSupportTicketRolesFlag(t, true)
+		setCloudRBACRolesFlag(t, true)
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -88,8 +88,8 @@ func TestGComSSOService_LogoutHook(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("Skips grafana.com logout when auth.cloudSupportTicketRoles is disabled", func(t *testing.T) {
-		setCloudSupportTicketRolesFlag(t, false)
+	t.Run("Skips grafana.com logout when cloudRBACRoles is disabled", func(t *testing.T) {
+		setCloudRBACRolesFlag(t, false)
 
 		called := false
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
