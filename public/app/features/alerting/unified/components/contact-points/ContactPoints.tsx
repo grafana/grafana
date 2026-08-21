@@ -104,9 +104,9 @@ const ContactPointsTab = () => {
   }
 
   return (
-    <Stack direction="column" gap={1}>
+    <Stack direction="column" gap={2}>
       {/* TODO we can add some additional info here with a ToggleTip */}
-      <Box display="flex" direction="row" alignItems="end" justifyContent="space-between" paddingBottom={3}>
+      <Box display="flex" direction="row" alignItems="end" justifyContent="space-between" paddingBottom={2}>
         <ContactPointsFilter />
 
         <Stack direction="row" gap={1}>

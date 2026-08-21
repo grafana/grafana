@@ -294,7 +294,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
 const getStyles = (theme: GrafanaTheme2) => ({
   headerWrapper: css({
     background: theme.flags.visualDesignRefresh ? theme.colors.background.primary : theme.colors.background.secondary,
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    padding: theme.spacing(1, 1, 1, 1.5),
     borderBottom: `solid 1px ${theme.colors.border.weak}`,
     borderTopLeftRadius: `${theme.shape.radius.lg}`,
     borderTopRightRadius: `${theme.shape.radius.lg}`,
