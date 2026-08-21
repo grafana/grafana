@@ -50,6 +50,24 @@ describe('ResettingCustomVariable', () => {
     deactivate();
   });
 
+  it('keeps a value reassigned in the same tick as a clear, rather than the superseded reset', async () => {
+    const dep = new TextBoxVariable({ name: 'dep', value: 'scopeA' });
+    const target = new ResettingCustomVariable({ name: 'target', query: '${dep}' });
+
+    const deactivate = activateFullSceneTree(sceneWithVariables([dep, target]));
+    expect(target.state.value).toBe('scopeA');
+
+    // Clear and reassign before the deferred reset can land. The clear must not leave a
+    // guard set that reverts the reassignment, and its stale empty result must not win.
+    dep.setValue('');
+    dep.setValue('scopeB');
+    await flushReset();
+
+    expect(target.state.value).toBe('scopeB');
+
+    deactivate();
+  });
+
   it('protects a URL-set value across multiple consecutive empty resolutions before anything has resolved', () => {
     const target = new ResettingCustomVariable({ name: 'target', query: '' });
 
