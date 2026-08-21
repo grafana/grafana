@@ -79,8 +79,10 @@ export const QueryOperationRowHeader = ({
 
       <Stack gap={1} alignItems="center">
         {actionsElement}
+        {/* The handle is labelled directly rather than through the icon: dragHandleProps makes it a
+            button, and the icon's <title> only exists once the SVG has loaded asynchronously. */}
         {draggable && (
-          <div className={styles.dragHandle} {...dragHandleProps}>
+          <div className={styles.dragHandle} {...dragHandleProps} aria-label={dragAndDropLabel}>
             <Icon title={dragAndDropLabel} name="draggabledots" size="lg" className={styles.dragIcon} />
           </div>
         )}

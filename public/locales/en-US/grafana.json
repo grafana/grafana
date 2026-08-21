@@ -7038,6 +7038,9 @@
       "name-json-values": "JSON",
       "selection-options": "Selection options"
     },
+    "dashboard-controls": {
+      "add": "Add"
+    },
     "dashboard-link-form": {
       "back-to-list": "Back to list",
       "label-icon": "Icon",
@@ -7817,9 +7820,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard.",
       "content-variable-not-referenced-other-variables-dashboard": "This variable is not referenced by other variables or dashboard.",
       "content-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
-    },
-    "variable-controls": {
-      "add-variable": "Add variable"
     },
     "variable-edit-actions": {
       "edit-custom-values": "Edit values",
@@ -9147,6 +9147,7 @@
     "json": {
       "cancel-button": "Cancel",
       "copy-button": "Copy to clipboard",
+      "dashboard-definition": "Dashboard definition",
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-format": "Format",
@@ -13696,7 +13697,8 @@
       "open-pull-request-in-repo": "Open pull request in {{repoType}}",
       "update-from-branch": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
       "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
-      "view-pull-request-in-repo": "View pull request in {{repoType}}"
+      "view-pull-request-in-repo": "View pull request in {{repoType}}",
+      "view-saved-version": "View saved version"
     },
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
     "title-deleted-resource-in-branch": "A resource has been deleted in a branch in {{repoType}}.",
