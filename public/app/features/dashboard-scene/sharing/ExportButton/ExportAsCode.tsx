@@ -8,7 +8,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Spinner, Stack, useStyles2 } from '@grafana/ui';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { dispatch } from 'app/store/store';
@@ -46,9 +46,16 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
     skipInvalid: true,
   });
   const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYAML : stringifiedDashboardJson;
+  const hasExportError = dashboardJson.value?.json && 'error' in dashboardJson.value.json;
 
   const onClickDownload = async () => {
-    await model.onSaveAsFile();
+    const result = await model.onSaveAsFile();
+    if (!result.success) {
+      const message = t('export.json.download-error_toast_message', 'Failed to download dashboard');
+      dispatch(notifyApp(createErrorNotification(message, String(result.error))));
+      return;
+    }
+
     const message = t('export.json.download-successful_toast_message', 'Your JSON has been downloaded');
     dispatch(notifyApp(createSuccessNotification(message)));
   };
@@ -93,6 +100,7 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
             variant="primary"
             icon="download-alt"
             onClick={onClickDownload}
+            disabled={dashboardJson.loading || Boolean(hasExportError)}
           >
             <Trans i18nKey="export.json.download-button">Download file</Trans>
           </Button>
