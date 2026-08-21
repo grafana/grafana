@@ -147,6 +147,10 @@ type UnifiedAlertingSettings struct {
 	// Duration for which a resolved alert state transition will continue to be sent to the Alertmanager.
 	ResolvedAlertRetention time.Duration
 
+	// Minimum time between re-sending a still-firing alert to the Alertmanager.
+	// Increase this on high-volume instances to reduce notification traffic.
+	ResendDelay time.Duration
+
 	// RuleVersionRecordLimit defines the limit of how many alert rule versions
 	// should be stored in the database for each alert_rule in an organization including the current one.
 	// 0 value means no limit
@@ -634,6 +638,14 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.ResolvedAlertRetention, err = gtime.ParseDuration(valueAsString(ua, "resolved_alert_retention", (15 * time.Minute).String()))
 	if err != nil {
 		return err
+	}
+
+	uaCfg.ResendDelay, err = gtime.ParseDuration(valueAsString(ua, "resend_delay", (30 * time.Second).String()))
+	if err != nil {
+		return fmt.Errorf("setting 'resend_delay' is invalid: %w", err)
+	}
+	if uaCfg.ResendDelay < 0 {
+		return fmt.Errorf("setting 'resend_delay' is invalid, only 0 or a positive duration are allowed")
 	}
 
 	uaCfg.RuleVersionRecordLimit = ua.Key("rule_version_record_limit").MustInt(0)
