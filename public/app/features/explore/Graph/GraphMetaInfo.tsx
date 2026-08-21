@@ -5,9 +5,10 @@ import { MetaInfoText } from '../MetaInfoText';
 
 // Display name set by the Prometheus/Mimir backend (promlib) for the
 // equivalent-samples-read query stat parsed from the Server-Timing header.
-// A query can run as a range, instant, and exemplar request at once, each
-// carrying its own stat prefixed with its query type, so all three are summed.
-const EQUIVALENT_SAMPLES_READ_STAT = /^(Exemplar|Instant|Range): Equivalent samples read$/;
+// A query can run as a range and an instant request at once, each carrying
+// its own stat prefixed with its query type, so both are summed. Exemplar
+// requests don't carry this stat.
+const EQUIVALENT_SAMPLES_READ_STAT = /^(Instant|Range): Equivalent samples read$/;
 
 interface Props {
   data: DataFrame[];

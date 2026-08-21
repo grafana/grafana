@@ -37,13 +37,15 @@ describe('GraphMetaInfo', () => {
   });
 
   it('sums the stat across query types for the same refId', () => {
-    render(
-      <GraphMetaInfo
-        data={[graphFrame('A', 'Range', 1000), graphFrame('A', 'Instant', 500), graphFrame('A', 'Exemplar', 250)]}
-      />
-    );
+    render(<GraphMetaInfo data={[graphFrame('A', 'Range', 1000), graphFrame('A', 'Instant', 500)]} />);
 
-    expect(screen.getByText('1.75 K')).toBeInTheDocument();
+    expect(screen.getByText('1.50 K')).toBeInTheDocument();
+  });
+
+  it('ignores an exemplar-tagged stat', () => {
+    render(<GraphMetaInfo data={[graphFrame('A', 'Range', 1000), graphFrame('A', 'Exemplar', 500)]} />);
+
+    expect(screen.getByText('1 K')).toBeInTheDocument();
   });
 
   it('renders nothing when no frame carries the stat', () => {
