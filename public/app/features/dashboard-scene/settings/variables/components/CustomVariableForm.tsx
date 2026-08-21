@@ -21,8 +21,6 @@ interface CustomVariableFormProps {
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
-  onQueryBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
-  onAllValueBlur?: (event: FormEvent<HTMLInputElement>) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
   onValuesFormatChange?: (format: CustomVariableModel['valuesFormat']) => void;
 }

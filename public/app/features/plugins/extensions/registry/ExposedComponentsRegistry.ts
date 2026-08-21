@@ -25,7 +25,6 @@ export class ExposedComponentsRegistry extends Registry<
     apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<ExposedComponentRegistryItem>>;
-      initialState?: RegistryType<ExposedComponentRegistryItem>;
     } = {}
   ) {
     super(apps, options);

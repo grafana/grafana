@@ -21,7 +21,6 @@ interface SupportSnapshotState {
   markdownText: string;
   snapshotSize?: string;
   randomize: Randomize;
-  loading?: boolean;
   error?: {
     title: string;
     message: string;
