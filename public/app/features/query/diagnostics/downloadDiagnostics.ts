@@ -2,7 +2,7 @@ import { saveAs } from 'file-saver';
 import { lastValueFrom } from 'rxjs';
 
 import { t } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
 import { type PanelDataPayload } from './capturePanelData';
@@ -24,6 +24,47 @@ function fileNameFromContentDisposition(header: string | null): string | undefin
   // Stop at a closing quote or the next parameter (;), so an unquoted filename followed by other
   // Content-Disposition params (e.g. filename*=) doesn't get captured into the name.
   return header?.match(/filename="?([^";]+)"?/i)?.[1];
+}
+
+/** Extracts a string `message` property from a parsed JSON error body, if present. */
+function messageFrom(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null || !('message' in value)) {
+    return undefined;
+  }
+  return typeof value.message === 'string' ? value.message : undefined;
+}
+
+/** The backend's own error message, however the failed response's body arrived: already-parsed JSON
+ * for a json-typed fetch, or a Blob for a blob-typed one. The archive-download endpoints always
+ * request responseType: 'blob' (they're downloading a file on success), so on failure the JSON error
+ * body arrives unparsed too -- see backendSrv's parseResponseBody, which honors the requested
+ * responseType regardless of what the response actually contains. */
+async function errorBodyMessage(data: unknown): Promise<string | undefined> {
+  if (data instanceof Blob) {
+    try {
+      return messageFrom(JSON.parse(await data.text()));
+    } catch {
+      return undefined;
+    }
+  }
+  return messageFrom(data);
+}
+
+/** One human-readable message for any diagnostics request failure, regardless of which endpoint it
+ * came from or why: the backend's own message when the response body has one, falling back to the
+ * HTTP status line, then to the error's own message. One path for every cause rather than one per
+ * endpoint -- a size-limit truncation is never a failure (see Build/BuildDashboard), so nothing here
+ * needs to special-case it. */
+export async function diagnosticsErrorMessage(error: Error): Promise<string> {
+  if (isFetchError(error)) {
+    const bodyMessage = await errorBodyMessage(error.data);
+    if (bodyMessage) {
+      return bodyMessage;
+    }
+    const parts = [error.status, error.statusText].filter(Boolean);
+    return parts.length ? parts.join(' ') : t('dashboard.diagnostics.request-failed', 'Request failed');
+  }
+  return error.message || t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics');
 }
 
 /**
