@@ -5,6 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Alert,
+  Box,
   Button,
   EmptyState,
   LinkButton,
@@ -105,7 +106,7 @@ const ContactPointsTab = () => {
   return (
     <Stack direction="column" gap={1}>
       {/* TODO we can add some additional info here with a ToggleTip */}
-      <Stack direction="row" alignItems="end" justifyContent="space-between">
+      <Box display="flex" direction="row" alignItems="end" justifyContent="space-between" paddingBottom={3}>
         <ContactPointsFilter />
 
         <Stack direction="row" gap={1}>
@@ -133,7 +134,7 @@ const ContactPointsTab = () => {
             </Button>
           )}
         </Stack>
-      </Stack>
+      </Box>
       {error ? (
         <Alert
           title={t(

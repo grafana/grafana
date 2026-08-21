@@ -279,8 +279,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   integrationWrapper: css({
     position: 'relative',
-
-    background: `${theme.colors.background.primary}`,
+    background: theme.flags.visualDesignRefresh ? theme.colors.background.primary : theme.colors.background.secondary,
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
   }),
   metadataRow: css({
