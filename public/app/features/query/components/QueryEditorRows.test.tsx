@@ -11,7 +11,12 @@ import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { QueryEditorRows, resolveRowDataSourceSettings, type Props } from './QueryEditorRows';
+import {
+  QueryEditorRows,
+  resolveRowDataSourceSettings,
+  settingsMatchInterpolatedUid,
+  type Props,
+} from './QueryEditorRows';
 
 const mockDS = mockDataSource({
   name: 'CloudManager',
@@ -31,9 +36,17 @@ const dsSrvMock: Pick<DataSourceSrv, 'get' | 'getList' | 'getInstanceSettings'> 
   getInstanceSettings: jest.fn(() => mockDS),
 };
 
+const mockReplace = jest.fn((target?: string) => target ?? '');
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => dsSrvMock,
+  getTemplateSrv: () => ({
+    replace: (target?: string) => mockReplace(target),
+    getVariables: () => [],
+    containsTemplate: () => false,
+    updateTimeRange: () => {},
+  }),
 }));
 
 jest.mock('@grafana/runtime/unstable', () => ({
@@ -463,6 +476,7 @@ describe('QueryEditorRows', () => {
     });
 
     afterEach(() => {
+      mockReplace.mockImplementation((target?: string) => target ?? '');
       jest
         .mocked(getDataSourceInstanceSettings)
         .mockImplementation(async (...args: unknown[]) =>
@@ -518,6 +532,63 @@ describe('QueryEditorRows', () => {
       });
 
       expect(settingsCalls()).toBeGreaterThan(callsAfterMount);
+    });
+
+    it('re-resolves settings when a datasource variable interpolates to a new uid', async () => {
+      let interpolatedUid = 'prom-uid';
+      mockReplace.mockImplementation((target?: string) => (target === '${ds}' ? interpolatedUid : (target ?? '')));
+
+      const variableQueries: DataQuery[] = [{ refId: 'A', datasource: { uid: '${ds}', type: 'prometheus' } }];
+      const { rerender } = render(<QueryEditorRows {...baseProps} queries={variableQueries} />);
+      expect(await screen.findByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      const callsAfterMount = settingsCalls();
+
+      interpolatedUid = 'loki-uid';
+      await act(async () => {
+        rerender(<QueryEditorRows {...baseProps} queries={variableQueries} data={{ ...baseProps.data }} />);
+      });
+
+      expect(settingsCalls()).toBeGreaterThan(callsAfterMount + 1);
+    });
+
+    it('does not re-resolve settings when panel data changes but the interpolated uid is unchanged', async () => {
+      mockReplace.mockImplementation((target?: string) => (target === '${ds}' ? 'prom-uid' : (target ?? '')));
+
+      const variableQueries: DataQuery[] = [{ refId: 'A', datasource: { uid: '${ds}', type: 'prometheus' } }];
+      const { rerender } = render(<QueryEditorRows {...baseProps} queries={variableQueries} />);
+      expect(await screen.findByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      const callsAfterMount = settingsCalls();
+
+      await act(async () => {
+        rerender(<QueryEditorRows {...baseProps} queries={variableQueries} data={{ ...baseProps.data }} />);
+      });
+
+      expect(settingsCalls()).toBe(callsAfterMount);
+    });
+
+    it.each([
+      {
+        name: 'matches settings whose rawRef uid is the interpolated uid',
+        settings: { uid: '${ds}', rawRef: { uid: 'prom-uid', type: 'prometheus' } },
+        interpolatedUid: 'prom-uid',
+        expected: true,
+      },
+      {
+        name: 'rejects settings whose rawRef uid is a previous interpolation',
+        settings: { uid: '${ds}', rawRef: { uid: 'prom-uid', type: 'prometheus' } },
+        interpolatedUid: 'loki-uid',
+        expected: false,
+      },
+      {
+        name: 'matches non-templated settings by uid',
+        settings: { uid: 'prom-uid' },
+        interpolatedUid: 'prom-uid',
+        expected: true,
+      },
+    ])('$name', ({ settings, interpolatedUid, expected }) => {
+      expect(
+        settingsMatchInterpolatedUid(settings as ReturnType<typeof mockDataSource>, interpolatedUid)
+      ).toBe(expected);
     });
 
     it.each([

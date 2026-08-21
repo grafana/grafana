@@ -14,6 +14,7 @@ import {
   getNextRefId,
   isSystemOverrideWithRef,
 } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { SafeSerializableSceneObject, type SceneObjectRef, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
@@ -326,15 +327,21 @@ function QueryEditorRowWithResolvedDataSource({
 }: QueryEditorRowWithResolvedDataSourceProps) {
   // Compare by value: `scopedVars` is a new `{ __sceneObject }` wrapper on every
   // QueryEditorRows render, and `query.datasource` is often an inline object.
+  // `interpolatedUid` is required too — `${ds}` and the scene key stay the same when
+  // the variable's value changes, but instance settings (type, meta, jsonData) do not.
+  const interpolatedUid = interpolatedDatasourceUid(query.datasource, scopedVars);
   const datasourceKey = stableKey(query.datasource);
   const varsKey = scopedVarsKey(scopedVars);
   const { value: querySettings } = useAsync(
     () => (query.datasource ? getDataSourceInstanceSettings(query.datasource, scopedVars) : Promise.resolve(undefined)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [datasourceKey, varsKey]
+    [datasourceKey, varsKey, interpolatedUid]
   );
 
-  const dataSourceSettings = resolveRowDataSourceSettings(query.datasource, querySettings, groupSettings);
+  const currentQuerySettings = settingsMatchInterpolatedUid(querySettings, interpolatedUid)
+    ? querySettings
+    : undefined;
+  const dataSourceSettings = resolveRowDataSourceSettings(query.datasource, currentQuerySettings, groupSettings);
   if (!dataSourceSettings) {
     return null;
   }
@@ -359,6 +366,40 @@ export function resolveRowDataSourceSettings(
     return querySettings;
   }
   return groupSettings.meta.mixed ? undefined : groupSettings;
+}
+
+function interpolatedDatasourceUid(
+  datasource: DataQuery['datasource'],
+  scopedVars?: ScopedVars
+): string | undefined {
+  if (datasource == null) {
+    return undefined;
+  }
+  const uid = typeof datasource === 'string' ? datasource : datasource.uid;
+  if (!uid) {
+    return undefined;
+  }
+  if (!uid.includes('$')) {
+    return uid;
+  }
+  return getTemplateSrv().replace(uid, scopedVars, firstVariableValue);
+}
+
+function firstVariableValue<T>(value: T | T[]): T {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export function settingsMatchInterpolatedUid(
+  querySettings: DataSourceInstanceSettings | undefined,
+  interpolatedUid: string | undefined
+): querySettings is DataSourceInstanceSettings {
+  if (!querySettings) {
+    return false;
+  }
+  if (interpolatedUid == null) {
+    return true;
+  }
+  return (querySettings.rawRef?.uid ?? querySettings.uid) === interpolatedUid;
 }
 
 function stableKey(value: unknown): string {
