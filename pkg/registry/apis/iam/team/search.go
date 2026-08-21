@@ -310,9 +310,9 @@ func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EMAIL,
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PROVISIONED,
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EXTERNAL_UID,
+			builders.TEAM_SEARCH_EMAIL,
+			builders.TEAM_SEARCH_PROVISIONED,
+			builders.TEAM_SEARCH_EXTERNAL_UID,
 			teamsearch.LegacyIDField,
 		},
 	}
@@ -331,13 +331,8 @@ func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			sortField := currField
-			if slices.Contains(builders.TeamSortableExtraFields, currField) {
-				sortField = resource.SEARCH_FIELD_PREFIX + currField
-			}
-
 			s := &resourcepb.ResourceSearchRequest_Sort{
-				Field: sortField,
+				Field: currField,
 				Desc:  desc,
 			}
 			searchRequest.SortBy = append(searchRequest.SortBy, s)
