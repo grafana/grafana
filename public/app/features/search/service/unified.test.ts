@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
 
 import { config, setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, searchRoute, starsRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
@@ -141,11 +141,8 @@ describe('Unified Storage Searcher', () => {
   });
 
   describe('starred', () => {
-    const STARS_URL = '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars';
-    const SEARCH_URL = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search';
-
     const starsHandler = (resources: Array<{ group: string; kind: string; names: string[] }>) =>
-      http.get(STARS_URL, () =>
+      http.get(starsRoute, () =>
         HttpResponse.json({
           kind: 'StarsList',
           apiVersion: 'collections.grafana.app/v1alpha1',
@@ -175,7 +172,7 @@ describe('Unified Storage Searcher', () => {
     // The searcher also hits the search endpoint for location info, so capture
     // every request and let assertions pick out the one carrying name filters.
     const captureSearchHandler = (hits: Array<Record<string, unknown>>) =>
-      http.get(SEARCH_URL, ({ request }) => {
+      http.get(searchRoute, ({ request }) => {
         searchRequests.push(new URL(request.url));
         return HttpResponse.json({ totalHits: hits.length, hits });
       });
