@@ -2199,6 +2199,60 @@ func TestRepositoryController_process_BranchProtectionFailureStillRunsHooks(t *t
 	assert.True(t, obsPatched, "observedGeneration must advance since hooks were not suppressed")
 }
 
+func TestRepositoryController_process_WritePermissionDeniedStillRunsHooks(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> would otherwise run webhookOnCreate
+		},
+	}
+
+	stub := &hookRepoStub{
+		cfg:        repo,
+		hookErrSet: true, hookErr: nil, // webhook creation succeeds
+		// Mirrors gitRepository.Test's CanWrite(false, nil) path exactly:
+		// apps/provisioning/pkg/repository/git/repository.go's "write permission denied" branch.
+		// Auth, repo-exists, and branch-read all succeeded there, so the repo (and its
+		// webhook API) is reachable even though the write workflow itself is blocked.
+		testResults: &provisioning.TestResults{
+			Success: false,
+			Code:    http.StatusForbidden,
+			Errors: []provisioning.ErrorDetails{
+				{Detail: repository.WritePermissionDeniedDetail},
+			},
+		},
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
+	assert.Equal(t, int32(1), stub.onCreateCalls.Load(),
+		"a write-permission-denied Test() failure must not suppress hooks — the repo and webhook API remain reachable")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the Test() failure must still be recorded on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy, "status should still report unhealthy so the user sees the write-permission error")
+
+	_, obsPatched := patcher.findPatchOp("/status/observedGeneration")
+	assert.True(t, obsPatched, "observedGeneration must advance since hooks were not suppressed")
+}
+
 func TestRepositoryController_process_UnauthorizedTestResultSuppressesHooks(t *testing.T) {
 	namespace := "default"
 	repoName := "test-repo"
