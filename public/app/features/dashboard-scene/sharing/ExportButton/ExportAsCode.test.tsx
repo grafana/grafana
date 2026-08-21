@@ -32,15 +32,19 @@ jest.mock('@grafana/ui/unstable', () => ({
     language,
     height,
     readOnly,
-    'aria-label': ariaLabel,
   }: {
     value: string;
     language?: string;
     height?: string;
     readOnly?: boolean;
-    'aria-label'?: string;
   }) => (
-    <textarea aria-label={ariaLabel} data-height={height} data-language={language} readOnly={readOnly} value={value} />
+    <textarea
+      data-testid="code-mirror-editor"
+      data-height={height}
+      data-language={language}
+      readOnly={readOnly}
+      value={value}
+    />
   ),
 }));
 
@@ -73,7 +77,7 @@ describe('ExportAsCode', () => {
   it('renders autosized JSON in a read-only CodeMirror editor', async () => {
     setup({ height: 480 });
 
-    const editor = await screen.findByRole('textbox', { name: 'Dashboard definition' });
+    const editor = await screen.findByTestId('code-mirror-editor');
 
     expect(editor).toHaveValue(dashboardJson);
     expect(editor).toHaveAttribute('data-language', 'json');
@@ -85,7 +89,7 @@ describe('ExportAsCode', () => {
   it('renders YAML when the YAML format is selected', async () => {
     setup({ isViewingYAML: true });
 
-    const editor = await screen.findByRole('textbox', { name: 'Dashboard definition' });
+    const editor = await screen.findByTestId('code-mirror-editor');
 
     expect(editor).toHaveValue(dashboardYAML);
     expect(editor).toHaveAttribute('data-language', 'yaml');
@@ -93,7 +97,7 @@ describe('ExportAsCode', () => {
 
   it('copies the rendered dashboard definition', async () => {
     const { onClipboardCopy } = setup();
-    await screen.findByRole('textbox', { name: 'Dashboard definition' });
+    await screen.findByTestId('code-mirror-editor');
 
     await userEvent.click(screen.getByRole('button', { name: 'Copy to clipboard' }));
 
@@ -102,7 +106,7 @@ describe('ExportAsCode', () => {
 
   it('preserves the dashboard download action', async () => {
     const { onSaveAsFile } = setup();
-    await screen.findByRole('textbox', { name: 'Dashboard definition' });
+    await screen.findByTestId('code-mirror-editor');
 
     await userEvent.click(screen.getByRole('button', { name: 'Download file' }));
 

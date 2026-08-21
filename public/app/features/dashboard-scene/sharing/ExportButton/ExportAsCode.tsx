@@ -77,7 +77,6 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
                   height={`${height}px`}
                   onChange={() => {}}
                   readOnly
-                  aria-label={t('export.json.dashboard-definition', 'Dashboard definition')}
                 />
               );
             }
