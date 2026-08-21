@@ -30,12 +30,12 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
     DashboardInteractions.addFilterButtonClicked({ source: 'variable_controls' });
   }, [dashboard]);
 
-  const handleAddAnnotationQuery = useCallback(() => {
+  const handleAddAnnotationQuery = useCallback(async () => {
     const dataLayers = sceneGraph.getData(dashboard);
     if (!(dataLayers instanceof DashboardDataLayerSet)) {
       return;
     }
-    const newAnnotation = dataLayers.createDefaultAnnotationLayer();
+    const newAnnotation = await dataLayers.createDefaultAnnotationLayer();
     annotationEditActions.addAnnotation({ source: dataLayers, addedObject: newAnnotation });
     DashboardInteractions.addAnnotationButtonClicked({ source: 'variable_controls' });
   }, [dashboard]);

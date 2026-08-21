@@ -26,6 +26,29 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// matchesResult builds a testify matcher that compares a recorded
+// JobResourceResult against want on every identity field, ignoring the
+// non-deterministic operation duration set by the sync workers.
+func matchesResult(want jobs.JobResourceResult) interface{} {
+	errMsg := func(err error) string {
+		if err == nil {
+			return ""
+		}
+		return err.Error()
+	}
+	return mock.MatchedBy(func(got jobs.JobResourceResult) bool {
+		return got.Name() == want.Name() &&
+			got.Group() == want.Group() &&
+			got.Kind() == want.Kind() &&
+			got.Path() == want.Path() &&
+			got.PreviousPath() == want.PreviousPath() &&
+			got.Action() == want.Action() &&
+			got.Reason() == want.Reason() &&
+			errMsg(got.Error()) == errMsg(want.Error()) &&
+			errMsg(got.Warning()) == errMsg(want.Warning())
+	})
+}
+
 func TestFullSync_ContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -297,8 +320,8 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "current-ref").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
-					"test-dashboard", "dashboards", "Dashboard").WithAction(repository.FileActionCreated).WithPath("dashboards/test.json").Build()).Return()
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
+					"test-dashboard", "dashboards", "Dashboard").WithAction(repository.FileActionCreated).WithPath("dashboards/test.json").Build())).Return()
 			},
 		},
 		{
@@ -344,13 +367,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "current-ref").
 					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"test-dashboard",
 					"dashboards",
 					"Dashboard",
 				).WithPath("dashboards/test.json").
 					WithAction(repository.FileActionUpdated).
-					Build()).Return()
+					Build())).Return()
 			},
 		},
 		{
@@ -394,13 +417,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "one/two/three/").Return(false)
 
 				repoResources.On("EnsureFolderPathExist", mock.Anything, "one/two/three/", "current-ref").Return("some-folder", nil)
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"some-folder",
 					"folder.grafana.app",
 					"Folder",
 				).WithPath("one/two/three/").
 					WithAction(repository.FileActionCreated).
-					Build()).Return()
+					Build())).Return()
 			},
 		},
 		{
@@ -482,13 +505,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Version: "v1",
 				}, nil)
 
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"test-dashboard",
 					"dashboards",
 					"Dashboard",
 				).WithPath("dashboards/test.json").
 					WithAction(repository.FileActionDeleted).
-					Build()).Return()
+					Build())).Return()
 			},
 		},
 		{
@@ -613,14 +636,14 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Resource: "dashboards",
 				}).Return(nil, schema.GroupVersionKind{}, errors.New("didn't work"))
 
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"test-dashboard",
 					"dashboards",
 					"dashboards", // could not find a real kind
 				).WithPath("dashboards/test.json").
 					WithAction(repository.FileActionDeleted).
 					WithError(fmt.Errorf("get client for deleted object: %w", errors.New("didn't work"))).
-					Build()).Return()
+					Build())).Return()
 			},
 		},
 		{
@@ -676,13 +699,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 
 				repoResources.On("RemoveFolderFromTree", "test-folder").Return()
 
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"test-folder",
 					"folders",
 					"Folder",
 				).WithPath("to-be-deleted/").
 					WithAction(repository.FileActionDeleted).
-					Build()).Return()
+					Build())).Return()
 			},
 		},
 		{
@@ -735,13 +758,13 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Version: "v1",
 				}, nil)
 
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"test-folder",
 					"folders",
 					"Folder",
 				).WithPath("to-be-deleted/").
 					WithAction(repository.FileActionDeleted).
-					Build()).Return()
+					Build())).Return()
 			},
 			verifyMocks: func(t *testing.T, repoResources *resources.MockRepositoryResources) {
 				repoResources.AssertNotCalled(t, "RemoveFolderFromTree", "test-folder")

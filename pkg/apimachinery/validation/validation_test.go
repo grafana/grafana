@@ -29,6 +29,10 @@ func TestValidation(t *testing.T) {
 			input:  []string{strings.Repeat("0", 254)},
 			expect: []string{"name is too long"},
 		}, {
+			name:   "reserved",
+			input:  []string{"search", "TRASH", "History", "QuErY"},
+			expect: []string{"name is reserved"},
+		}, {
 			name: "ok",
 			input: []string{
 				"hello",
