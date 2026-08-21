@@ -674,6 +674,8 @@ github.com/XSAM/otelsql v0.39.0 h1:4o374mEIMweaeevL7fd8Q3C710Xi2Jh/c8G4Qy9bvCY=
 github.com/XSAM/otelsql v0.39.0/go.mod h1:uMOXLUX+wkuAuP0AR3B45NXX7E9lJS2mERa8gqdU8R0=
 github.com/XSAM/otelsql v0.40.0 h1:8jaiQ6KcoEXF46fBmPEqb+pp29w2xjWfuXjZXTXBjaA=
 github.com/XSAM/otelsql v0.40.0/go.mod h1:/7F+1XKt3/sTlYtwKtkHQ5Gzoom+EerXmD1VdnTqfB4=
+github.com/aclements/go-moremath v0.0.0-20210112150236-f10218a38794 h1:xlwdaKcTNVW4PtpQb8aKA4Pjy0CdJHEqvFbAnvR5m2g=
+github.com/aclements/go-moremath v0.0.0-20210112150236-f10218a38794/go.mod h1:7e+I0LQFUI9AXWxOfsQROs9xPhoJtbsyWcjJqDd4KPY=
 github.com/agext/levenshtein v1.2.1/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/ajstarks/deck v0.0.0-20200831202436-30c9fc6549a9 h1:7kQgkwGRoLzC9K0oyXdJo7nve/bynv/KwUsxbiTlzAM=
 github.com/ajstarks/deck/generate v0.0.0-20210309230005-c3f852c02e19 h1:iXUgAaqDcIUGbRoy2TdeofRG/j1zpGRSEmNK05T+bi8=
@@ -2784,6 +2786,8 @@ golang.org/x/oauth2 v0.31.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwE
 golang.org/x/oauth2 v0.32.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
 golang.org/x/oauth2 v0.34.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
 golang.org/x/oauth2 v0.35.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
+golang.org/x/perf v0.0.0-20250813145418-2f7363a06fe1 h1:stGRioFgvBd3x8HoGVg9bb41lLTWLjBMFT/dMB7f4mQ=
+golang.org/x/perf v0.0.0-20250813145418-2f7363a06fe1/go.mod h1:rjfRjhHXb3XNVh/9i5Jr2tXoTd0vOlZN5rzsM8cQE6k=
 golang.org/x/sync v0.12.0/go.mod h1:1dzgHSNfp02xaA81J2MS99Qcpr2w7fw1gpm99rleRqA=
 golang.org/x/sync v0.14.0/go.mod h1:1dzgHSNfp02xaA81J2MS99Qcpr2w7fw1gpm99rleRqA=
 golang.org/x/sync v0.16.0/go.mod h1:1dzgHSNfp02xaA81J2MS99Qcpr2w7fw1gpm99rleRqA=
