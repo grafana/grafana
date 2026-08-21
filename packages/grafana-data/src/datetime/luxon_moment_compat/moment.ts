@@ -850,9 +850,7 @@ class MomentCompat implements MomentLike {
     }
 
     const normalizedUnit = normalizeUnit(unit);
-    return this._setDt(
-      this._dt.set({ [normalizedUnit]: normalizedUnit === 'millisecond' ? Math.trunc(value) : value })
-    );
+    return this._setDt(this._dt.set({ [normalizedUnit]: value }));
   }
 
   get(unit: UnitGetter): number {
@@ -953,7 +951,7 @@ class MomentCompat implements MomentLike {
   millisecond(): number;
   millisecond(value: number): MomentLike;
   millisecond(value?: number): number | MomentLike {
-    return value == null ? this._dt.millisecond : this._setDt(this._dt.set({ millisecond: Math.trunc(value) }));
+    return value == null ? this._dt.millisecond : this._setDt(this._dt.set({ millisecond: value }));
   }
 
   isValid(): boolean {
