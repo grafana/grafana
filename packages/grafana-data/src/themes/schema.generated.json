@@ -1049,6 +1049,18 @@
           },
           "additionalProperties": false
         },
+        "card": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "checkbox": {
           "type": "object",
           "properties": {
