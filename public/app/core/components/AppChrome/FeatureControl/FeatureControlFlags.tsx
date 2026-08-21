@@ -1,44 +1,23 @@
 import { css } from '@emotion/css';
-import { ClientProviderEvents } from '@openfeature/web-sdk';
-import { useEffect, useState } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getLocalStorageProvider } from '@grafana/runtime/internal';
-import { Card, Dropdown, Icon, IconButton, Menu, MenuItem, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Card, Dropdown, IconButton, Menu, MenuItem, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { FeatureControlFlag, type FeatureControlFlagProps } from './FeatureControlFlag';
+import { BubblingFlask } from './BubblingFlask';
+import { FeatureControlFlag } from './FeatureControlFlag';
 import { useFeatureControlContext } from './FeatureControlProvider';
-
-const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
-
-type Flag = NonNullable<FeatureControlFlagProps['flag']>;
+import { useFeatureFlagOverrides } from './useFeatureFlagOverrides';
 
 export const FeatureControlFlags = () => {
   const { setIsOpen, setIsAccessible } = useFeatureControlContext();
-  const [flags, setFlags] = useState<Flag[]>([]);
+  const flags = useFeatureFlagOverrides();
   const styles = useStyles2(getStyles);
-
-  useEffect(() => {
-    const loadFlags = () => {
-      setFlags(
-        Object.entries(getLocalStorageProvider().getFlags())
-          .map(([key, value]) => ({ key, value }))
-          .sort((a, b) => compare(a.key, b.key))
-      );
-    };
-    loadFlags();
-
-    getLocalStorageProvider().events.addHandler(ClientProviderEvents.ConfigurationChanged, loadFlags);
-    return () => {
-      getLocalStorageProvider().events.removeHandler(ClientProviderEvents.ConfigurationChanged, loadFlags);
-    };
-  }, []);
 
   return (
     <Card noMargin className={styles.card}>
       <Stack direction="row" alignItems="center">
-        <Icon name="flask" size="xl" />
+        <BubblingFlask bubbling={flags.length > 0} size="xl" />
         <Text variant="h4">
           <Trans i18nKey="feature-control.title">Feature control</Trans>
         </Text>
