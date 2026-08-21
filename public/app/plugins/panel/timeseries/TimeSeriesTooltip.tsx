@@ -81,10 +81,15 @@ export const TimeSeriesTooltip = ({
   const pluginContext = usePluginContext();
 
   const xField = series.fields[0];
-  let xVal = xField.values[dataIdxs[0]!];
+  // The first series is sometimes hidden (e.g. via the legend), in which case its
+  // dataIdx is null. Fall back to the first non-null dataIdx so the header timestamp
+  // is still rendered. See #109913.
+  const xDataIdx = dataIdxs.find((idx) => idx != null) ?? dataIdxs[0];
+  let xVal = xField.values[xDataIdx!];
 
   if (compareDiffMs != null && xField.type === FieldType.time) {
-    xVal += compareDiffMs[seriesIdx ?? 1];
+    const compareIdx = seriesIdx ?? dataIdxs.findIndex((idx) => idx != null) ?? 1;
+    xVal += compareDiffMs[compareIdx] ?? compareDiffMs[1] ?? 0;
   }
 
   const xDisp = formattedValueToString(xField.display!(xVal));
