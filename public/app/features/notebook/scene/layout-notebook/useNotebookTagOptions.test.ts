@@ -1,22 +1,31 @@
 import { renderHook } from 'test/test-utils';
 
-import { useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
+import { useSearchNotebooksInfiniteQuery } from '../../list/notebookSearchApi';
 
 import { useNotebookTagOptions } from './useNotebookTagOptions';
 
-jest.mock('app/api/clients/dashboard/v2beta1', () => ({
-  useListNotebookQuery: jest.fn(),
+jest.mock('../../list/notebookSearchApi', () => ({
+  useSearchNotebooksInfiniteQuery: jest.fn(),
 }));
 
-const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
+const mockUseSearchNotebooks = jest.mocked(useSearchNotebooksInfiniteQuery);
 
-function setLibrary(...tagSets: Array<string[] | undefined>) {
-  mockUseListNotebookQuery.mockReturnValue(
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the hook only reads items
+/** The tag terms the server aggregated, as the facet returns them. */
+function setFacet(...tags: string[]) {
+  mockUseSearchNotebooks.mockReturnValue(
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the hook reads one facet
     {
-      data: { items: tagSets.map((tags) => ({ spec: { tags } })) },
-    } as unknown as ReturnType<typeof useListNotebookQuery>
+      data: { pages: [{ items: [], facets: { tags: tags.map((value) => ({ value, count: 1 })) } }] },
+    } as unknown as ReturnType<typeof useSearchNotebooksInfiniteQuery>
   );
+}
+
+/** No answer at all: the route is not served, or the request failed. */
+function setNoAnswer() {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- absence is all this needs
+  mockUseSearchNotebooks.mockReturnValue({ data: undefined } as unknown as ReturnType<
+    typeof useSearchNotebooksInfiniteQuery
+  >);
 }
 
 function values(currentTags?: string[]) {
@@ -26,48 +35,65 @@ function values(currentTags?: string[]) {
 describe('useNotebookTagOptions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    setFacet();
   });
 
-  it('collects the tags of every notebook in the library', () => {
-    setLibrary(['checkout'], ['errors', 'slo']);
+  it('offers the tags the server aggregated', () => {
+    setFacet('checkout', 'errors', 'slo');
 
     expect(values()).toEqual(['checkout', 'errors', 'slo']);
   });
 
-  it('offers each tag once, however many notebooks carry it', () => {
-    setLibrary(['latency'], ['latency', 'slo'], ['latency']);
+  /**
+   * The whole point of the facet: the server counts the distinct values, so the tags arrive without a
+   * single notebook being fetched. The list endpoint returns full specs - every cell, panel and query -
+   * which is a lot of payload to read a handful of strings off.
+   */
+  it('asks for a facet rather than for notebooks, in one request', () => {
+    renderHook(() => useNotebookTagOptions());
 
-    expect(values()).toEqual(['latency', 'slo']);
+    expect(mockUseSearchNotebooks).toHaveBeenLastCalledWith(expect.objectContaining({ facets: ['tags'], limit: 1 }));
   });
 
   // Otherwise the dropdown would list the notebook's own tag as unticked while its pill sat in the field.
   it('includes the tags of the notebook being edited, even when nothing else carries them', () => {
-    setLibrary(['checkout']);
+    setFacet('checkout');
 
     expect(values(['bespoke'])).toEqual(['bespoke', 'checkout']);
   });
 
-  it('does not repeat a current tag the library already has', () => {
-    setLibrary(['latency', 'checkout']);
+  it('does not repeat a current tag the facet already offers', () => {
+    setFacet('latency', 'checkout');
 
     expect(values(['latency'])).toEqual(['checkout', 'latency']);
   });
 
   // Case-insensitively, so `Prod` does not sort away from `production`.
   it('sorts the options for a reader rather than by code point', () => {
-    setLibrary(['slo', 'Checkout', 'errors']);
+    setFacet('slo', 'Checkout', 'errors');
 
     expect(values()).toEqual(['Checkout', 'errors', 'slo']);
   });
 
-  it('copes with a notebook that has no tags at all', () => {
-    setLibrary(undefined, ['slo']);
+  /**
+   * The search route is not served everywhere and this asks for no fallback, so the dropdown is left
+   * offering what the notebook already has. The picker takes custom values, so nothing is unreachable -
+   * the suggestions are just gone.
+   */
+  it('falls back to the notebook own tags when there is no facet to read', () => {
+    setNoAnswer();
 
-    expect(values()).toEqual(['slo']);
+    expect(values(['latency'])).toEqual(['latency']);
+  });
+
+  it('copes with no answer and no tags of its own', () => {
+    setNoAnswer();
+
+    expect(values()).toEqual([]);
   });
 
   it('labels each option with the tag itself', () => {
-    setLibrary(['slo']);
+    setFacet('slo');
 
     expect(renderHook(() => useNotebookTagOptions()).result.current).toEqual([{ label: 'slo', value: 'slo' }]);
   });

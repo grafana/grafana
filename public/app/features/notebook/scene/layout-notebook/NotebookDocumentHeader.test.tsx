@@ -1,22 +1,25 @@
 import { render, screen } from 'test/test-utils';
 
-import { useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
+import { useSearchNotebooksInfiniteQuery } from '../../list/notebookSearchApi';
 
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 
-jest.mock('app/api/clients/dashboard/v2beta1', () => ({
-  useListNotebookQuery: jest.fn(),
+jest.mock('../../list/notebookSearchApi', () => ({
+  useSearchNotebooksInfiniteQuery: jest.fn(),
 }));
 
-const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
+const mockUseSearchNotebooks = jest.mocked(useSearchNotebooksInfiniteQuery);
 
-/** The tags the rest of the library carries, which is what the picker offers as options. */
-function setLibraryTags(...tagSets: string[][]) {
-  mockUseListNotebookQuery.mockReturnValue(
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the hook only reads items
+/**
+ * The tags the library carries, as the server's facet reports them — which is where the picker gets
+ * its options, rather than from the notebooks themselves.
+ */
+function setLibraryTags(...tags: string[]) {
+  mockUseSearchNotebooks.mockReturnValue(
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the hook reads one facet
     {
-      data: { items: tagSets.map((tags) => ({ spec: { tags } })) },
-    } as unknown as ReturnType<typeof useListNotebookQuery>
+      data: { pages: [{ items: [], facets: { tags: tags.map((value) => ({ value, count: 1 })) } }] },
+    } as unknown as ReturnType<typeof useSearchNotebooksInfiniteQuery>
   );
 }
 
@@ -55,7 +58,7 @@ describe('NotebookDocumentHeader', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    setLibraryTags(['checkout'], ['errors', 'latency'], ['slo']);
+    setLibraryTags('checkout', 'errors', 'latency', 'slo');
   });
 
   it('shows the tags under a Tags label, without a picker, while the notebook is being read', () => {
@@ -104,7 +107,7 @@ describe('NotebookDocumentHeader', () => {
 
   // A tag typed a moment ago is on no saved notebook, so nothing in the library listing would offer it.
   it('offers a tag the notebook already carries even when no other notebook has it', async () => {
-    setLibraryTags(['checkout']);
+    setLibraryTags('checkout');
     const { user } = setup({ isEditing: true, tags: ['bespoke'] });
 
     await user.click(screen.getByRole('combobox', { name: 'Tags' }));
