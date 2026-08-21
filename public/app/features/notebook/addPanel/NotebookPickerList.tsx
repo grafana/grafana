@@ -88,12 +88,14 @@ export function NotebookPickerList({
         </Stack>
       </ScrollContainer>
 
-      {/* The search walks every page up to its accumulation ceiling, so this only appears on a
-          library large enough to hit that - the filters themselves are applied server-side. */}
+      {/* Only on a library big enough to hit the search's accumulation ceiling: every page before
+          that is followed. Narrowing genuinely helps, because the filters are part of the query, but
+          it does not say "most recent" - the server ranks by relevance for a text query and by name
+          otherwise, and the list is not scoped to the reader unless they ask for that. */}
       {isTruncated && (
         <Text color="secondary" variant="bodySmall">
           <Trans i18nKey="notebooks.add-panel.list-truncated">
-            Only your most recent notebooks are shown. Narrow the search to find others.
+            Not every notebook is shown. Narrow the search to find others.
           </Trans>
         </Text>
       )}

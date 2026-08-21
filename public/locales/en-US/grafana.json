@@ -12920,7 +12920,7 @@
       "list-error-body": "Something went wrong loading your notebooks. Try again, or create a new one instead.",
       "list-no-matches": "No notebooks match these filters.",
       "list-none": "You have no notebooks yet. Create one instead.",
-      "list-truncated": "Only your most recent notebooks are shown. Narrow the search to find others.",
+      "list-truncated": "Not every notebook is shown. Narrow the search to find others.",
       "search-placeholder": "Search by title",
       "sort-alphabetical": "Alphabetically (A–Z)",
       "sort-created": "Recently created",

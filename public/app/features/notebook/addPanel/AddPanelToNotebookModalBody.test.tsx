@@ -162,7 +162,7 @@ describe('AddPanelToNotebookModalBody', () => {
       setPicker({ isTruncated: true });
       renderModal();
 
-      expect(screen.getByText(/Only your most recent notebooks are shown/)).toBeInTheDocument();
+      expect(screen.getByText(/Not every notebook is shown/)).toBeInTheDocument();
     });
 
     // Told apart by whether anything is filtering rather than by a total: the server reports no
