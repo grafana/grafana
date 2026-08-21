@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -25,6 +27,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -3009,4 +3012,456 @@ func TestClassifyAuthError(t *testing.T) {
 			require.Equal(t, tt.want, classifyAuthError(tt.err))
 		})
 	}
+}
+
+// Admin identity, so per-item authz never filters anything out: paging is what is
+// under test here, not authorization.
+func newKeysOnlyTestServer(t *testing.T) (*server, context.Context) {
+	t.Helper()
+	return newKeysOnlyTestServerWithMaxPageBytes(t, 0)
+}
+
+func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int) (*server, context.Context) {
+	t.Helper()
+
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, db.Close()) })
+
+	store, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+	require.NoError(t, err)
+
+	srv, err := NewResourceServer(ResourceServerOptions{Backend: store, MaxPageSizeBytes: maxPageBytes})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = srv.Stop(ctx)
+	})
+
+	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
+		Type:           authlib.TypeUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	})
+
+	return srv, ctx
+}
+
+func TestServerListKeysOnly(t *testing.T) {
+	const (
+		group    = "playlist.grafana.app"
+		resource = "playlists"
+		ns       = "default"
+	)
+
+	newKey := func(name string) *resourcepb.ResourceKey {
+		return &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns, Name: name}
+	}
+
+	rawPlaylist := func(t *testing.T, name, folder string) []byte {
+		t.Helper()
+		meta := map[string]any{"name": name, "namespace": ns}
+		if folder != "" {
+			meta["annotations"] = map[string]any{utils.AnnoKeyFolder: folder}
+		}
+		raw, err := json.Marshal(map[string]any{
+			"apiVersion": group + "/v0alpha1",
+			"kind":       "Playlist",
+			"metadata":   meta,
+			"spec":       map[string]any{"title": name, "interval": "5m"},
+		})
+		require.NoError(t, err)
+		return raw
+	}
+
+	seed := func(t *testing.T, srv *server, ctx context.Context, items map[string]string) {
+		t.Helper()
+		for _, name := range slices.Sorted(maps.Keys(items)) {
+			created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+				Key:   newKey(name),
+				Value: rawPlaylist(t, name, items[name]),
+			})
+			require.NoError(t, err)
+			require.Nil(t, created.Error)
+		}
+	}
+
+	collectionKey := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns}
+
+	t.Run("returns identity and folder with no object bodies", func(t *testing.T) {
+		srv, ctx := newKeysOnlyTestServer(t)
+		seed(t, srv, ctx, map[string]string{
+			"aaa": "folder-a",
+			"bbb": "",
+			"ccc": "folder-b",
+		})
+
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: collectionKey},
+			KeysOnly: true,
+		})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.Len(t, rsp.Items, 3)
+		require.Greater(t, rsp.ResourceVersion, int64(0))
+
+		names := make([]string, len(rsp.Items))
+		folders := make([]string, len(rsp.Items))
+		for i, item := range rsp.Items {
+			names[i] = item.Name
+			folders[i] = item.Folder
+			require.Empty(t, item.Value, "keys-only items must not carry a value")
+			require.Equal(t, ns, item.Namespace)
+			require.Greater(t, item.ResourceVersion, int64(0))
+		}
+		require.Equal(t, []string{"aaa", "bbb", "ccc"}, names)
+		require.Equal(t, []string{"folder-a", "", "folder-b"}, folders)
+
+		// Without keys_only: values, and no identity fields.
+		full, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{Key: collectionKey},
+		})
+		require.NoError(t, err)
+		require.Nil(t, full.Error)
+		require.Len(t, full.Items, 3)
+		for _, item := range full.Items {
+			require.NotEmpty(t, item.Value)
+			require.Empty(t, item.Name)
+		}
+	})
+
+	t.Run("honors limit and pins the snapshot RV across pages", func(t *testing.T) {
+		srv, ctx := newKeysOnlyTestServer(t)
+		seed(t, srv, ctx, map[string]string{
+			"aaa": "", "bbb": "", "ccc": "", "ddd": "", "eee": "",
+		})
+
+		var names []string
+		var pageRVs []int64
+		token := ""
+		for range 5 {
+			rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options:       &resourcepb.ListOptions{Key: collectionKey},
+				KeysOnly:      true,
+				Limit:         2,
+				NextPageToken: token,
+			})
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+			require.LessOrEqual(t, len(rsp.Items), 2)
+
+			for _, item := range rsp.Items {
+				names = append(names, item.Name)
+			}
+			pageRVs = append(pageRVs, rsp.ResourceVersion)
+
+			token = rsp.NextPageToken
+			if token == "" {
+				break
+			}
+		}
+
+		require.Equal(t, []string{"aaa", "bbb", "ccc", "ddd", "eee"}, names)
+		require.Len(t, pageRVs, 3)
+		for _, rv := range pageRVs[1:] {
+			require.Equal(t, pageRVs[0], rv, "every page must report the snapshot RV of the first")
+		}
+	})
+
+	// Selector handling lives in its own test; this covers the sources.
+	t.Run("refuses sources that need the object", func(t *testing.T) {
+		for name, source := range map[string]resourcepb.ListRequest_Source{
+			"history": resourcepb.ListRequest_HISTORY,
+			"trash":   resourcepb.ListRequest_TRASH,
+		} {
+			t.Run(name, func(t *testing.T) {
+				srv, ctx := newKeysOnlyTestServer(t)
+				seed(t, srv, ctx, map[string]string{"aaa": ""})
+
+				rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+					Options:  &resourcepb.ListOptions{Key: collectionKey},
+					KeysOnly: true,
+					Source:   source,
+				})
+				require.NoError(t, err)
+				require.NotNil(t, rsp.Error, "keys_only must be refused, not silently served")
+				require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+				require.Empty(t, rsp.Items)
+			})
+		}
+	})
+
+	t.Run("clamps an oversized limit", func(t *testing.T) {
+		srv, ctx := newKeysOnlyTestServer(t)
+		seed(t, srv, ctx, map[string]string{"aaa": "", "bbb": ""})
+
+		req := &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: collectionKey},
+			KeysOnly: true,
+			Limit:    maxKeysPageSize + 1_000_000,
+		}
+		rsp, err := srv.List(ctx, req)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.Len(t, rsp.Items, 2)
+		require.Equal(t, int64(maxKeysPageSize), req.Limit, "the limit must be clamped, not honored")
+	})
+}
+
+// Records the namespace each BatchCheck batch was scoped to, which is the thing
+// under test.
+type namespaceRecordingAccessClient struct {
+	mu         sync.Mutex
+	namespaces []string
+	items      map[string]string // name -> namespace seen on the check
+}
+
+func newNamespaceRecordingAccessClient() *namespaceRecordingAccessClient {
+	return &namespaceRecordingAccessClient{items: map[string]string{}}
+}
+
+func (c *namespaceRecordingAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: true}, nil
+}
+
+func (c *namespaceRecordingAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(_, _ string) bool { return true }, authlib.NoopZookie{}, nil
+}
+
+func (c *namespaceRecordingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	c.mu.Lock()
+	c.namespaces = append(c.namespaces, req.Namespace)
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, item := range req.Checks {
+		c.items[item.Name] = req.Namespace
+		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: true}
+	}
+	c.mu.Unlock()
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+func (c *namespaceRecordingAccessClient) seen() ([]string, map[string]string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return slices.Clone(c.namespaces), maps.Clone(c.items)
+}
+
+// Wildcard-scoped identity, so the identity is never what limits the result.
+func newRecordingTestServer(t *testing.T, ac authlib.AccessClient) (*server, context.Context) {
+	t.Helper()
+
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, db.Close()) })
+
+	store, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+	require.NoError(t, err)
+
+	srv, err := NewResourceServer(ResourceServerOptions{Backend: store, AccessClient: ac})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.Stop(stopCtx)
+	})
+
+	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
+		Type: authlib.TypeAccessPolicy, Name: "svc", UserUID: "svc",
+		Namespace: "*", OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+	})
+	return srv, ctx
+}
+
+// Authorizing against the request key would check every item under the empty
+// namespace, which the RBAC service rejects outright ("namespace is required").
+// Both directions matter: a cluster-scoped list must batch per item namespace, and
+// a namespaced list must keep using the request key.
+func TestListAuthorizesAgainstTheItemNamespace(t *testing.T) {
+	const (
+		group    = "playlist.grafana.app"
+		resource = "playlists"
+	)
+
+	seed := func(t *testing.T, srv *server, ctx context.Context, ns, name string) {
+		t.Helper()
+		raw, err := json.Marshal(map[string]any{
+			"apiVersion": group + "/v0alpha1",
+			"kind":       "Playlist",
+			"metadata":   map[string]any{"name": name, "namespace": ns},
+			"spec":       map[string]any{"title": name},
+		})
+		require.NoError(t, err)
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+			Key:   &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns, Name: name},
+			Value: raw,
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+	}
+
+	for name, tc := range map[string]struct {
+		requestNamespace string
+		seeded           map[string]string // name -> namespace
+		wantBatches      []string
+		wantItems        map[string]string // name -> namespace
+	}{
+		"cross-namespace list batches per item namespace": {
+			requestNamespace: "",
+			seeded:           map[string]string{"aaa": "ns-one", "bbb": "ns-two"},
+			wantBatches:      []string{"ns-one", "ns-two"},
+			wantItems:        map[string]string{"aaa": "ns-one", "bbb": "ns-two"},
+		},
+		"namespaced list uses the request key": {
+			requestNamespace: "ns-one",
+			seeded:           map[string]string{"aaa": "ns-one"},
+			wantBatches:      []string{"ns-one"},
+			wantItems:        map[string]string{"aaa": "ns-one"},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			ac := newNamespaceRecordingAccessClient()
+			srv, ctx := newRecordingTestServer(t, ac)
+
+			for objName, ns := range tc.seeded {
+				seed(t, srv, ctx, ns, objName)
+			}
+
+			rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: group, Resource: resource, Namespace: tc.requestNamespace,
+				}},
+				KeysOnly: true,
+			})
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+			require.Len(t, rsp.Items, len(tc.wantItems))
+
+			batches, perItem := ac.seen()
+			assert.NotContains(t, batches, "", "no batch may be scoped to the empty namespace")
+			assert.ElementsMatch(t, tc.wantBatches, batches, "one batch per namespace")
+			assert.Equal(t, tc.wantItems, perItem, "each item authorized under its own namespace")
+
+			got := map[string]string{}
+			for _, item := range rsp.Items {
+				got[item.Name] = item.Namespace
+			}
+			assert.Equal(t, tc.wantItems, got, "items carry their namespace back to the caller")
+		})
+	}
+}
+
+// Selectors that filterSelectors discards must still be refused for keys_only.
+//
+// On the normal path dropping them is safe: the proto documents label and field
+// matching as best-effort, and the client re-applies the full selector to the
+// decoded object. A keys-only response has no object, so nobody can re-filter --
+// accepting these would silently return every key as if the selector matched.
+func TestServerListKeysOnly_RefusesSelectorsFilterSelectorsDiscards(t *testing.T) {
+	const (
+		group    = "playlist.grafana.app"
+		resource = "playlists"
+		ns       = "default"
+	)
+	collectionKey := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns}
+
+	field := func(key, op string, values ...string) *resourcepb.ListOptions {
+		return &resourcepb.ListOptions{
+			Key:    collectionKey,
+			Fields: []*resourcepb.Requirement{{Key: key, Operator: op, Values: values}},
+		}
+	}
+	label := func(key, op string, values ...string) *resourcepb.ListOptions {
+		return &resourcepb.ListOptions{
+			Key:    collectionKey,
+			Labels: []*resourcepb.Requirement{{Key: key, Operator: op, Values: values}},
+		}
+	}
+
+	for name, tc := range map[string]struct {
+		opts           *resourcepb.ListOptions
+		wantBadRequest bool
+	}{
+		// All of these survive filterSelectors and were already refused.
+		"field equality": {opts: field("metadata.name", "=", "aaa"), wantBadRequest: true},
+		"label equality": {opts: label("team", "=", "a"), wantBadRequest: true},
+		// All of these are dropped by filterSelectors, so the check never saw them.
+		"field inequality": {opts: field("metadata.name", "!=", "aaa"), wantBadRequest: true},
+		"label inequality": {opts: label("team", "!=", "a"), wantBadRequest: true},
+		"label exists":     {opts: label("team", "exists"), wantBadRequest: true},
+		"label not exists": {opts: label("team", "!"), wantBadRequest: true},
+		"mismatched namespace": {
+			opts:           field("metadata.namespace", "=", "some-other-namespace"),
+			wantBadRequest: true,
+		},
+		// Genuinely redundant with the request key, so it stays served.
+		"matching namespace": {opts: field("metadata.namespace", "=", ns)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			srv, ctx := newKeysOnlyTestServer(t)
+			created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+				Key: &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns, Name: "aaa"},
+				Value: []byte(`{"apiVersion":"` + group + `/v0alpha1","kind":"Playlist",` +
+					`"metadata":{"name":"aaa","namespace":"` + ns + `"},"spec":{"title":"aaa"}}`),
+			})
+			require.NoError(t, err)
+			require.Nil(t, created.Error)
+
+			rsp, err := srv.List(ctx, &resourcepb.ListRequest{Options: tc.opts, KeysOnly: true})
+			require.NoError(t, err)
+
+			if tc.wantBadRequest {
+				require.NotNil(t, rsp.Error, "must be refused, not served as if the selector matched")
+				require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+				require.Empty(t, rsp.Items)
+				return
+			}
+			require.Nil(t, rsp.Error)
+			require.Len(t, rsp.Items, 1)
+		})
+	}
+}
+
+// The proto documents that a list is bounded by response payload size as well as
+// by limit. A keys page carries no value, but the identities still cost bytes, so
+// the budget has to count them or a large page can blow past it.
+func TestServerListKeysOnly_BytesBudgetAppliesToIdentity(t *testing.T) {
+	const (
+		group    = "playlist.grafana.app"
+		resource = "playlists"
+		ns       = "default"
+	)
+
+	// Long names, the way a real tenant can have them: this is what makes the
+	// identity bytes big enough to matter.
+	longName := strings.Repeat("n", 200)
+
+	srv, ctx := newKeysOnlyTestServerWithMaxPageBytes(t, 4096)
+	for i := range 50 {
+		name := fmt.Sprintf("%s-%03d", longName, i)
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+			Key: &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns, Name: name},
+			Value: []byte(`{"apiVersion":"` + group + `/v0alpha1","kind":"Playlist",` +
+				`"metadata":{"name":"` + name + `","namespace":"` + ns + `"},"spec":{"title":"t"}}`),
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+	}
+
+	rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns}},
+		KeysOnly: true,
+		Limit:    50,
+	})
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+
+	size := proto.Size(rsp)
+	require.Less(t, size, 4096*2,
+		"a keys page must respect maxPageSizeBytes; got %d bytes for %d items", size, len(rsp.Items))
+	require.NotEmpty(t, rsp.NextPageToken, "a truncated page must hand back a continue token")
+	require.Less(t, len(rsp.Items), 50, "the byte budget must have truncated the page")
 }

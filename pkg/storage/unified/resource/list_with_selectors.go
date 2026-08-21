@@ -132,7 +132,7 @@ func filterSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 	fields := make([]*resourcepb.Requirement, 0, len(req.Options.Fields))
 	for _, f := range req.Options.Fields {
 		// metadata.namespace is already in the request key.
-		if (f.Operator != "=" && f.Operator != "==") || f.Key == "metadata.namespace" {
+		if !isEqualityOperator(f.Operator) || f.Key == metadataNamespaceField {
 			continue
 		}
 		fields = append(fields, f)
@@ -149,6 +149,22 @@ func filterSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
 	req.Options.Labels = labels
 
 	return req
+}
+
+// metadataNamespaceField is the field selector key for an object's namespace.
+const metadataNamespaceField = "metadata.namespace"
+
+// isEqualityOperator reports whether op is either spelling of equality.
+//
+// filterSelectors and the keys_only check share this: if they disagreed, a
+// selector one treats as redundant is one the other silently drops.
+func isEqualityOperator(op string) bool {
+	switch selection.Operator(op) {
+	case selection.Equals, selection.DoubleEquals:
+		return true
+	default:
+		return false
+	}
 }
 
 // indexableSelectorOperator reports whether requirementQuery can turn the operator

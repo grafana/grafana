@@ -21,6 +21,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -66,6 +67,31 @@ func (s *server) logIfServerError(ctx context.Context, op string, key *resourcep
 // defaultBookmarkFrequency is how often periodic bookmark events are sent
 // to Watch clients that have AllowWatchBookmarks enabled.
 const defaultBookmarkFrequency = 10 * time.Second
+
+// maxKeysPageSize caps a keys_only page by count. The byte budget also applies,
+// but it measures the wire and a key costs far less there (~20 bytes) than the
+// wrapper holding it does in memory (~120), so bytes alone would admit a page
+// several times larger than intended.
+const maxKeysPageSize = 10000
+
+// rejectKeysOnlySelectors refuses the selectors a keys-only list cannot honor.
+//
+// A metadata.namespace equality repeating the request key is the one exemption: it
+// constrains nothing the key does not already.
+func rejectKeysOnlySelectors(opts *resourcepb.ListOptions) *resourcepb.ErrorResult {
+	if len(opts.Labels) > 0 {
+		return NewBadRequestError("keys_only cannot be combined with label selectors")
+	}
+	for _, f := range opts.Fields {
+		redundantNamespace := f.Key == metadataNamespaceField &&
+			isEqualityOperator(f.Operator) &&
+			len(f.Values) == 1 && f.Values[0] == opts.Key.GetNamespace()
+		if !redundantNamespace {
+			return NewBadRequestError("keys_only cannot be combined with field selectors")
+		}
+	}
+	return nil
+}
 
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
@@ -1564,6 +1590,14 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 	}
 
+	// Trash authorizes by decoding the object (see listFromTrash), so neither it
+	// nor history can be served from keys alone.
+	if req.KeysOnly && req.Source != resourcepb.ListRequest_STORE {
+		return &resourcepb.ListResponse{
+			Error: NewBadRequestError("keys_only is only supported for the store source"),
+		}, nil
+	}
+
 	if _, ok := claims.AuthInfoFrom(ctx); !ok {
 		return &resourcepb.ListResponse{
 			Error: &resourcepb.ErrorResult{
@@ -1579,16 +1613,33 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 	}
 
-	// Fast path for getting single value in a list
-	if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
-		return rsp, nil
+	// Fast path for getting single value in a list. Skipped for keys_only: it
+	// resolves names through Read, which fetches whole objects.
+	if !req.KeysOnly {
+		if rsp := s.tryFieldSelector(ctx, req); rsp != nil {
+			return rsp, nil
+		}
 	}
 
 	if req.Limit < 1 {
 		req.Limit = 500 // default max 500 items in a page
 	}
+	if req.KeysOnly && req.Limit > maxKeysPageSize {
+		req.Limit = maxKeysPageSize
+	}
+
+	// Before filterSelectors, which drops every non-indexable selector. On the
+	// normal path that is safe: matching is documented best-effort and the client
+	// re-applies the full selector to the decoded object. A keys-only response has
+	// no object, so an unhonored selector would silently look like it matched.
+	if req.KeysOnly {
+		if errRes := rejectKeysOnlySelectors(req.Options); errRes != nil {
+			return &resourcepb.ListResponse{Error: errRes}, nil
+		}
+	}
 
 	req = filterSelectors(req)
+
 	if s.useSelectorSearch(req) {
 		// If we get here, we're doing list with selectable fields or labels. Let's do
 		// search instead, since we index both, and fetch resulting documents one by one.
@@ -1663,6 +1714,7 @@ type listBackendFunc func(context.Context, *resourcepb.ListRequest, func(ListIte
 func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest, backendList listBackendFunc) (*resourcepb.ListResponse, error) {
 	// candidateItem holds metadata from the ListIterator for batch authorization.
 	type candidateItem struct {
+		namespace       string
 		name            string
 		folder          string
 		resourceVersion int64
@@ -1686,6 +1738,7 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 					return
 				}
 				if !yield(candidateItem{
+					namespace:       iter.Namespace(),
 					name:            iter.Name(),
 					folder:          iter.Folder(),
 					resourceVersion: iter.ResourceVersion(),
@@ -1698,13 +1751,20 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		}
 
 		extractFn := func(c candidateItem) authz.BatchCheckItem {
+			// A cross-namespace list has no namespace on the request key, so the
+			// item's own is the only correct scope. FilterAuthorized batches by
+			// namespace and flushes when it changes, so varying it per item is fine.
+			namespace := key.Namespace
+			if namespace == "" {
+				namespace = c.namespace
+			}
 			return authz.BatchCheckItem{
 				Name:               c.name,
 				Folder:             c.folder,
 				Verb:               utils.VerbGet,
 				Group:              key.Group,
 				Resource:           key.Resource,
-				Namespace:          key.Namespace,
+				Namespace:          namespace,
 				FreshnessTimestamp: ResourceVersionTime(c.resourceVersion),
 			}
 		}
@@ -1722,11 +1782,23 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 				break
 			}
 
-			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
-				ResourceVersion: item.resourceVersion,
-				Value:           item.value,
-			})
-			pageBytes += len(item.value)
+			if req.KeysOnly {
+				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+					ResourceVersion: item.resourceVersion,
+					Namespace:       item.namespace,
+					Name:            item.name,
+					Folder:          item.folder,
+				})
+				// Measured rather than approximated from the string lengths, so the
+				// budget stays right if the wrapper gains a field.
+				pageBytes += proto.Size(rsp.Items[len(rsp.Items)-1])
+			} else {
+				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+					ResourceVersion: item.resourceVersion,
+					Value:           item.value,
+				})
+				pageBytes += len(item.value)
+			}
 			lastContinueToken = item.continueToken
 		}
 
