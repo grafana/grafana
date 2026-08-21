@@ -27,8 +27,10 @@ type Plugin interface {
 	backend.AdmissionHandler
 	backend.ConversionHandler
 	backend.StreamHandler
+}
 
-	// Get access to a V3 client
+// PluginV3 is implemented by backend plugins that expose a V3 client.
+type PluginV3 interface {
 	ClientV3(ctx context.Context) (v3.ClientV3, bool)
 }
 

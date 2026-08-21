@@ -451,10 +451,11 @@ func (p *Plugin) Client() (PluginClient, bool) {
 }
 
 func (p *Plugin) ClientV3(ctx context.Context) (v3.ClientV3, bool) {
-	if p.client == nil {
+	client, ok := p.client.(backendplugin.PluginV3)
+	if !ok {
 		return nil, false
 	}
-	return p.client.ClientV3(ctx)
+	return client.ClientV3(ctx)
 }
 
 func (p *Plugin) ExecutablePath() string {

@@ -186,8 +186,8 @@ func (cp *corePlugin) ConvertObjects(ctx context.Context, req *backend.Conversio
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-// ClientV3 implements [backendplugin.Plugin].
-func (cp *corePlugin) ClientV3(ctx context.Context) (v3.ClientV3, bool) {
+// ClientV3 implements [backendplugin.PluginV3].
+func (cp *corePlugin) ClientV3(context.Context) (v3.ClientV3, bool) {
 	if cp.clientV3 == nil {
 		return nil, false
 	}

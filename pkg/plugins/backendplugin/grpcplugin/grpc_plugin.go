@@ -150,7 +150,7 @@ func (p *grpcPlugin) Target() backendplugin.Target {
 	return backendplugin.TargetLocal
 }
 
-// ClientV3 implements [backendplugin.Plugin].
+// ClientV3 implements [backendplugin.PluginV3].
 func (p *grpcPlugin) ClientV3(ctx context.Context) (v3.ClientV3, bool) {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
