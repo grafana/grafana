@@ -1621,8 +1621,8 @@ github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLm
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000/go.mod h1:/ZklAgE1i4f3Z8uriXwESmCr1VLF8lBGaJspuaGuf78=
 github.com/grafana/memberlist v0.3.1-0.20260515134459-1798cf41aca7 h1:F5hMoc+tCK4AeUKfaL1XFEVEPSg+eKQe712fsSO/JA0=
 github.com/grafana/memberlist v0.3.1-0.20260515134459-1798cf41aca7/go.mod h1:OSu8+LHxPUHB67c9v5Gfw5NQZxFWOL3EKmn9TgHvyCo=
-github.com/grafana/nanogit v1.4.0 h1:cfjtLc0PA9L2ukDwWhq6tmqRp3Pfm4eEFzm8mu0/Qek=
-github.com/grafana/nanogit v1.4.0/go.mod h1:Qgtv/BgRfVis/xhv6H35AY/aYLrzZFPn8rRwdVuR55E=
+github.com/grafana/nanogit v1.4.1 h1:mCiPiuTWh6RS1YzpYA9Z2PEvTckSSmpb9wqpquqOQJg=
+github.com/grafana/nanogit v1.4.1/go.mod h1:tMxEJQthUCDjyZZpB8DAmmTId2d4GyRYhmaMVFcyBSA=
 github.com/grafana/nanogit/gittest v1.4.1 h1:xm6Wd9KlfTbh1Yqyjez1JtW0V88PVDluulN0TXq8mB8=
 github.com/grafana/nanogit/gittest v1.4.1/go.mod h1:Rg7kXKLrpgOMLl+LiC89WXrHOS9xr+uNAoMBVXzo9Xo=
 github.com/grafana/otel-profiling-go v0.6.0 h1:W7lOZaJj4IJISXMcM1UBk3fJF3tzF2OD6MJBJaQp1H8=
