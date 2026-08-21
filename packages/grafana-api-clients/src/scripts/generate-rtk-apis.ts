@@ -9,13 +9,13 @@ const basePath = path.resolve(__dirname, '../../../..');
 // Include some types that are used inside the @rtk-query/codegen-openapi package
 // but not exported
 declare const operationKeys: readonly ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
-type OperationDefinition = {
+export type OperationDefinition = {
   path: string;
   verb: (typeof operationKeys)[number];
   pathItem: OpenAPIV3.PathItemObject;
   operation: OpenAPIV3.OperationObject;
 };
-type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
+export type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
 
 const defaultHooksOptions = {
   queries: true,
@@ -28,7 +28,7 @@ const defaultHooksOptions = {
 // `/search` is a different, older endpoint and stays.
 const perResourceSearch = /^\/[^/]+\/(search|trash)$/;
 
-const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
+export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
   if (Array.isArray(filterEndpoints)) {
     return filterEndpoints;
   }
