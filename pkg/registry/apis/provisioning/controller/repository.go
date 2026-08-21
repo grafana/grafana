@@ -996,7 +996,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 	// Only update fieldErrors from test results if they have changed.
 	// Updating patchOperations will bump the resourceVersion on every pass, which the
 	// informer's UpdateFunc turns straight back into a re-enqueue and we will
-	// immediately check for for repoHealth
+	// immediately check for repoHealth
 	if testResults != nil {
 		fieldErrors := testResults.Errors
 		if fieldErrors == nil {
@@ -1043,11 +1043,12 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 		repository.GetID(obj.Status.Webhook).IsEmpty()
 
 	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
+	hasWebhookToManage := len(obj.Spec.Workflows) > 0 || !repository.GetID(obj.Status.Webhook).IsEmpty()
 
 	// Suppress the hook retry while the hook-failure cooldown is active, or while
 	// the repository just failed its health check (it's known unreachable, so any
 	// create/update/delete call against it is doomed).
-	if shouldRunHooks && (rc.healthChecker.inHookFailureCooldown(obj) || !repoHealthy) {
+	if shouldRunHooks && hasWebhookToManage && (rc.healthChecker.inHookFailureCooldown(obj) || !repoHealthy) {
 		shouldRunHooks = false
 		suppressed = true
 	}
@@ -1109,7 +1110,15 @@ func isReachableTestResult(testResults *provisioning.TestResults) bool {
 		return true
 	}
 	switch testResults.Code {
-	case http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusServiceUnavailable:
+	case http.StatusForbidden:
+		// Couldn't be written to, but was still reachable
+		for _, e := range testResults.Errors {
+			if e.Detail == repository.WritePermissionDeniedDetail {
+				return true
+			}
+		}
+		return false
+	case http.StatusUnauthorized, http.StatusNotFound, http.StatusServiceUnavailable:
 		return false
 	default:
 		return true

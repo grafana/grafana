@@ -351,7 +351,7 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 				Errors: []provisioning.ErrorDetails{{
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  field.NewPath("secure", "token").String(),
-					Detail: "write permission denied",
+					Detail: repository.WritePermissionDeniedDetail,
 				}},
 			}, nil
 		}
