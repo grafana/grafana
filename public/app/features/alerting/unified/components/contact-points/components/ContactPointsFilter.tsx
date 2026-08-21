@@ -22,10 +22,7 @@ const ContactPointsFilter = () => {
 
   return (
     <Stack direction="row" alignItems="end" gap={0.5}>
-      <Field
-        noMargin
-        label={t('alerting.contact-points-filter.label-search-by-name-or-type', 'Search by name or type')}
-      >
+      <Field noMargin label={t('alerting.contact-points-filter.label-search-by-name-or-type', 'search contact points')}>
         <FilterInput
           aria-label={t(
             'alerting.contact-points-filter.aria-label-search-contact-points',
