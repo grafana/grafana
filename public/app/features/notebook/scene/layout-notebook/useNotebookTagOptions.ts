@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { type ComboboxOption } from '@grafana/ui';
 
-import { useSearchNotebooksInfiniteQuery } from '../../list/notebookSearchApi';
+import { useNotebookFieldFacetQuery } from '../../list/notebookSearchApi';
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
@@ -16,29 +16,18 @@ const NO_TAGS: string[] = [];
 const TAG_FACET_LIMIT = 100;
 
 /**
- * A facet, not a list: the server aggregates the distinct tag values across everything the query
- * matched and returns just those terms, so no notebook has to be fetched to learn its tags.
- *
- * `limit: 1` because the rows are not wanted at all. A facet is computed over the match set rather
- * than over the page, so asking for one row costs one request and still describes the whole library.
- *
- * Module scope keeps it referentially stable, which is what stops RTK Query treating each render as a
- * new argument and refetching.
+ * The field name the search index uses. Spelled out because the list page keeps its own SearchField
+ * map private, and reaching into that module for one string is not worth coupling this to it.
  */
-const TAG_FACET_QUERY = {
-  // The field name the search index uses. Spelled out because the list page keeps its own SearchField
-  // map private, and reaching into that module for one string is not worth coupling this to it.
-  facets: ['tags'],
-  facetLimit: TAG_FACET_LIMIT,
-  limit: 1,
-};
+const TAGS_FIELD = 'tags';
 
 /**
  * Every tag in the library, for the tag picker's dropdown.
  *
  * Deliberately not useNotebooksList: that hook follows the cursor to the end so its table can order
  * the whole match set, which for a header that only wants tag strings would be several sequential
- * requests for rows nothing reads.
+ * requests for rows nothing reads. It also provides the `Notebook` tag, which every notebook write
+ * invalidates - so sharing it would re-ask for these options on every autosave.
  *
  * With no facet - the search route is not served everywhere, and this asks for no fallback - the
  * dropdown offers only the notebook's own tags. That degrades rather than breaks: the picker takes
@@ -52,11 +41,9 @@ const TAG_FACET_QUERY = {
  */
 export function useNotebookTagOptions(currentTags: string[] = NO_TAGS): Array<ComboboxOption<string>> {
   // Only mounted while editing, so there is nothing to skip.
-  const { data } = useSearchNotebooksInfiniteQuery(TAG_FACET_QUERY);
+  const { data } = useNotebookFieldFacetQuery({ field: TAGS_FIELD, limit: TAG_FACET_LIMIT });
 
-  // Every page carries the same aggregation, so the first one answers for all of them - and only one
-  // is ever taken, since nothing here calls fetchNextPage.
-  const facetTerms = data?.pages[0]?.facets?.tags;
+  const facetTerms = data?.facets?.[TAGS_FIELD];
 
   const libraryTags = useMemo(() => (facetTerms ?? []).map((term) => term.value), [facetTerms]);
 

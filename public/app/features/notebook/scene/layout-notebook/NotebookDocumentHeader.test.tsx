@@ -1,14 +1,14 @@
 import { render, screen } from 'test/test-utils';
 
-import { useSearchNotebooksInfiniteQuery } from '../../list/notebookSearchApi';
+import { useNotebookFieldFacetQuery } from '../../list/notebookSearchApi';
 
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 
 jest.mock('../../list/notebookSearchApi', () => ({
-  useSearchNotebooksInfiniteQuery: jest.fn(),
+  useNotebookFieldFacetQuery: jest.fn(),
 }));
 
-const mockUseSearchNotebooks = jest.mocked(useSearchNotebooksInfiniteQuery);
+const mockUseSearchNotebooks = jest.mocked(useNotebookFieldFacetQuery);
 
 /**
  * The tags the library carries, as the server's facet reports them — which is where the picker gets
@@ -18,8 +18,8 @@ function setLibraryTags(...tags: string[]) {
   mockUseSearchNotebooks.mockReturnValue(
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the hook reads one facet
     {
-      data: { pages: [{ items: [], facets: { tags: tags.map((value) => ({ value, count: 1 })) } }] },
-    } as unknown as ReturnType<typeof useSearchNotebooksInfiniteQuery>
+      data: { items: [], facets: { tags: tags.map((value) => ({ value, count: 1 })) } },
+    } as unknown as ReturnType<typeof useNotebookFieldFacetQuery>
   );
 }
 

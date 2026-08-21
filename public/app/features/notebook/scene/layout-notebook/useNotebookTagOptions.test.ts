@@ -1,22 +1,22 @@
 import { renderHook } from 'test/test-utils';
 
-import { useSearchNotebooksInfiniteQuery } from '../../list/notebookSearchApi';
+import { useNotebookFieldFacetQuery } from '../../list/notebookSearchApi';
 
 import { useNotebookTagOptions } from './useNotebookTagOptions';
 
 jest.mock('../../list/notebookSearchApi', () => ({
-  useSearchNotebooksInfiniteQuery: jest.fn(),
+  useNotebookFieldFacetQuery: jest.fn(),
 }));
 
-const mockUseSearchNotebooks = jest.mocked(useSearchNotebooksInfiniteQuery);
+const mockUseSearchNotebooks = jest.mocked(useNotebookFieldFacetQuery);
 
 /** The tag terms the server aggregated, as the facet returns them. */
 function setFacet(...tags: string[]) {
   mockUseSearchNotebooks.mockReturnValue(
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the hook reads one facet
     {
-      data: { pages: [{ items: [], facets: { tags: tags.map((value) => ({ value, count: 1 })) } }] },
-    } as unknown as ReturnType<typeof useSearchNotebooksInfiniteQuery>
+      data: { items: [], facets: { tags: tags.map((value) => ({ value, count: 1 })) } },
+    } as unknown as ReturnType<typeof useNotebookFieldFacetQuery>
   );
 }
 
@@ -24,7 +24,7 @@ function setFacet(...tags: string[]) {
 function setNoAnswer() {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- absence is all this needs
   mockUseSearchNotebooks.mockReturnValue({ data: undefined } as unknown as ReturnType<
-    typeof useSearchNotebooksInfiniteQuery
+    typeof useNotebookFieldFacetQuery
   >);
 }
 
@@ -49,10 +49,11 @@ describe('useNotebookTagOptions', () => {
    * single notebook being fetched. The list endpoint returns full specs - every cell, panel and query -
    * which is a lot of payload to read a handful of strings off.
    */
-  it('asks for a facet rather than for notebooks, in one request', () => {
+  it('asks for the tags facet rather than for notebooks', () => {
     renderHook(() => useNotebookTagOptions());
 
-    expect(mockUseSearchNotebooks).toHaveBeenLastCalledWith(expect.objectContaining({ facets: ['tags'], limit: 1 }));
+    expect(mockUseSearchNotebooks).toHaveBeenCalledTimes(1);
+    expect(mockUseSearchNotebooks).toHaveBeenLastCalledWith({ field: 'tags', limit: 100 });
   });
 
   // Otherwise the dropdown would list the notebook's own tag as unticked while its pill sat in the field.
