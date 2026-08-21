@@ -11,8 +11,13 @@ function sceneWithVariables(variables: Array<TextBoxVariable | ResettingCustomVa
   });
 }
 
+// The reset is deferred by one microtask so it lands after the state-change notification
+// that triggered it (see ResettingCustomVariable for why), so assertions on a reset need
+// to yield first.
+const flushReset = () => Promise.resolve();
+
 describe('ResettingCustomVariable', () => {
-  it('resets to empty when a dependency that had already resolved a value clears at runtime', () => {
+  it('resets to empty when a dependency that had already resolved a value clears at runtime', async () => {
     const dep = new TextBoxVariable({ name: 'dep', value: 'scopeA' });
     const target = new ResettingCustomVariable({ name: 'target', query: '${dep}' });
 
@@ -21,9 +26,26 @@ describe('ResettingCustomVariable', () => {
     expect(target.state.value).toBe('scopeA');
 
     dep.setValue('');
+    await flushReset();
 
     expect(target.state.value).toBe('');
     expect(target.state.text).toBe('');
+
+    deactivate();
+  });
+
+  it('does not reset synchronously, so a pending URL write can land first', () => {
+    const dep = new TextBoxVariable({ name: 'dep', value: 'scopeA' });
+    const target = new ResettingCustomVariable({ name: 'target', query: '${dep}' });
+
+    const deactivate = activateFullSceneTree(sceneWithVariables([dep, target]));
+    expect(target.state.value).toBe('scopeA');
+
+    dep.setValue('');
+
+    // Still the old value in the same tick — this is what stops ScopesService's URL
+    // listener from seeing a var-<name> write while a stale scopes param is present.
+    expect(target.state.value).toBe('scopeA');
 
     deactivate();
   });
@@ -45,7 +67,7 @@ describe('ResettingCustomVariable', () => {
     expect(target.state.value).toBe('urlValue');
   });
 
-  it('keeps the latch tripped on a clone, unlike an instance field would', () => {
+  it('keeps the latch tripped on a clone, unlike an instance field would', async () => {
     const dep = new TextBoxVariable({ name: 'dep', value: 'scopeA' });
     const target = new ResettingCustomVariable({ name: 'target', query: '${dep}' });
 
@@ -54,13 +76,14 @@ describe('ResettingCustomVariable', () => {
 
     const clone = target.clone({ query: '' });
     clone.validateAndUpdate().subscribe();
+    await flushReset();
 
     expect(clone.state.value).toBe('');
 
     deactivate();
   });
 
-  it('resolves an includeAll variable to "All" rather than empty when a dependency clears', () => {
+  it('resolves an includeAll variable to "All" rather than empty when a dependency clears', async () => {
     const dep = new TextBoxVariable({ name: 'dep', value: 'scopeA' });
     const target = new ResettingCustomVariable({
       name: 'target',
@@ -78,6 +101,7 @@ describe('ResettingCustomVariable', () => {
     expect(target.state.value).toBe('scopeA');
 
     dep.setValue('');
+    await flushReset();
 
     expect(target.state.value).toBe('$__all');
     expect(target.state.text).toBe('All');
