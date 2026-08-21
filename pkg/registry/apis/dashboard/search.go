@@ -998,15 +998,12 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
 			{
 				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
-				Type:  resourcepb.QueryFieldType_KEYWORD,
 				Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
 			}, {
 				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_TEXT,
 				Boost: 2, // standard analyzer (word-level matching)
 			}, {
 				Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-				Type:  resourcepb.QueryFieldType_TEXT,
 				Boost: 1, // ngram analyzer (partial/prefix matching)
 			},
 		}
@@ -1014,7 +1011,6 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		if queryParams.Has("panelTitleSearch") && queryParams.Get("panelTitleSearch") != "false" {
 			searchRequest.QueryFields = append(searchRequest.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
 				Name:  builders.DASHBOARD_PANEL_TITLE,
-				Type:  resourcepb.QueryFieldType_TEXT,
 				Boost: 5,
 			})
 		}
