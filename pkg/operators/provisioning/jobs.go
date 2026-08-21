@@ -176,7 +176,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 
 	// Fix Metadata
-	fixMetadataWorker := fixfoldermetadata.NewWorker(clients)
+	fixMetadataWorker := fixfoldermetadata.NewWorker(clients, resourceMetrics)
 
 	// Release Resources (orphan cleanup — removes ownership annotations)
 	releaseResourcesWorker := releaseresourcespkg.NewWorker(resourceLister, clients, 10)

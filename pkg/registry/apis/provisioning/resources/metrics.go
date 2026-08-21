@@ -7,6 +7,20 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// FileSizeRecorder is satisfied by both ResourceMetrics (job execution) and the
+// provisioning package's FilesMetrics (files API) — their RecordFileRead/
+// RecordFileWrite methods already have matching signatures. Shared helpers
+// that are called from both layers (e.g. WriteFolderMetadata) take this
+// interface instead of a concrete type so either metric family can be plugged
+// in without resources importing the provisioning package (which would be a
+// cycle, since provisioning already imports resources).
+type FileSizeRecorder interface {
+	RecordFileRead(sizeBytes int, duration time.Duration, err error)
+	RecordFileWrite(sizeBytes int, duration time.Duration, err error)
+}
+
+var _ FileSizeRecorder = (*ResourceMetrics)(nil)
+
 // ResourceMetrics tracks resource files as they are read from or written to a
 // repository during provisioning job execution (sync, export): their size,
 // how long the read/write took, and how many succeeded or failed.

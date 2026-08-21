@@ -28,10 +28,11 @@ const keepFileName = ".keep"
 // a _folder.json, since the metadata file supersedes the keep marker.
 type Worker struct {
 	clientFactory resources.ClientFactory
+	metrics       resources.ResourceMetrics
 }
 
-func NewWorker(clientFactory resources.ClientFactory) *Worker {
-	return &Worker{clientFactory: clientFactory}
+func NewWorker(clientFactory resources.ClientFactory, metrics resources.ResourceMetrics) *Worker {
+	return &Worker{clientFactory: clientFactory, metrics: metrics}
 }
 
 func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
@@ -133,7 +134,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path), folderGVK)
 			_, writeErr := resources.WriteFolderMetadata(ctx, rw, folder.Path, manifest, ref,
-				fmt.Sprintf("Add folder metadata for %s", folder.Path))
+				fmt.Sprintf("Add folder metadata for %s", folder.Path), &w.metrics)
 
 			rb := jobs.NewFolderResult(folder.Path).
 				WithName(folder.ID).

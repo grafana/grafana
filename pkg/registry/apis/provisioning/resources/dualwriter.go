@@ -38,6 +38,7 @@ type DualReadWriter struct {
 	folders               *FolderManager
 	authorizer            Authorizer
 	folderMetadataEnabled bool
+	metrics               FileSizeRecorder
 }
 
 type DualWriteOptions struct {
@@ -53,8 +54,8 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, folderMetadataEnabled bool) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders, authorizer: authorizer, folderMetadataEnabled: folderMetadataEnabled}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, folderMetadataEnabled bool, metrics FileSizeRecorder) *DualReadWriter {
+	return &DualReadWriter{repo: repo, parser: parser, folders: folders, authorizer: authorizer, folderMetadataEnabled: folderMetadataEnabled, metrics: metrics}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -204,7 +205,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 			uid := util.GenerateShortUID()
 			manifest := NewFolderManifest(uid, safepath.Base(folderPath), r.folders.FolderGVK())
 			var writeErr error
-			stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message)
+			stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message, r.metrics)
 			if writeErr != nil {
 				return fmt.Errorf("failed to write folder metadata for %q: %w", folderPath, writeErr)
 			}
@@ -295,7 +296,7 @@ func (r *DualReadWriter) UpdateFolderMetadata(ctx context.Context, opts DualWrit
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
-	newHash, err := WriteFolderMetadataUpdate(ctx, r.repo, opts.Path, opts.Ref, opts.Message, &submitted)
+	newHash, err := WriteFolderMetadataUpdate(ctx, r.repo, opts.Path, opts.Ref, opts.Message, &submitted, r.metrics)
 	if err != nil {
 		return nil, err
 	}
@@ -529,7 +530,7 @@ func (r *DualReadWriter) writeNewFoldersMetadata(ctx context.Context, rw reposit
 		}
 
 		manifest := NewFolderManifest(util.GenerateShortUID(), safepath.Base(folderPath), r.folders.FolderGVK())
-		if _, err := WriteFolderMetadata(ctx, rw, folderPath, manifest, ref, message); err != nil {
+		if _, err := WriteFolderMetadata(ctx, rw, folderPath, manifest, ref, message, r.metrics); err != nil {
 			return fmt.Errorf("write folder metadata for %q: %w", folderPath, err)
 		}
 		return nil

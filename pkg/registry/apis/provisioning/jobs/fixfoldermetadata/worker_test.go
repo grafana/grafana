@@ -30,7 +30,7 @@ func newFolderClientFactory(t *testing.T) resources.ClientFactory {
 }
 
 func TestWorker_IsSupported(t *testing.T) {
-	w := NewWorker(newFolderClientFactory(t))
+	w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 	tests := []struct {
 		name     string
@@ -116,7 +116,7 @@ func repoConfig(name string) *provisioning.Repository {
 
 func TestWorker_CommitMessageFromJobSpec(t *testing.T) {
 	ctx := context.Background()
-	w := NewWorker(newFolderClientFactory(t))
+	w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 	mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 	mockStaged := repository.NewMockStagedRepository(t)
@@ -145,7 +145,7 @@ func TestWorker_CommitMessageFromJobSpec(t *testing.T) {
 func TestWorker_Process(t *testing.T) {
 	t.Run("creates _folder.json for directories without metadata", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
@@ -189,7 +189,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("skips directories that already have _folder.json", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
@@ -221,7 +221,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("mixed: creates missing metadata and skips existing", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
@@ -259,7 +259,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("fails immediately when Create returns an error", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
@@ -296,7 +296,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("uses default branch when options are nil", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
@@ -331,7 +331,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("returns error when ReadTree fails", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
@@ -353,7 +353,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("returns error when repository does not support read/write operations", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		// mockNonRWRepo is not stageable, so WrapWithStageAndPushIfPossible calls fn with the original repo.
 		// The original repo does not implement ReaderWriter, so the cast fails.
@@ -370,7 +370,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("sets ref URLs when repository supports it and ref is specified", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepoWithURLs{
 			mockStageableRepo:      mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)},
@@ -409,7 +409,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("blob entries are not processed as directories", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
@@ -441,7 +441,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("deletes .keep file after creating _folder.json", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
@@ -479,7 +479,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("deletes .keep file from folder that already has _folder.json", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
@@ -513,7 +513,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("tolerates .keep file already absent when deleting", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)
@@ -551,7 +551,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("does not attempt .keep deletion when folder has no .keep", func(t *testing.T) {
 		ctx := context.Background()
-		w := NewWorker(newFolderClientFactory(t))
+		w := NewWorker(newFolderClientFactory(t), resources.ResourceMetrics{})
 
 		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
 		mockStaged := repository.NewMockStagedRepository(t)

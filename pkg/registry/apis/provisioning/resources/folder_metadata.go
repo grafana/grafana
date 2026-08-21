@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -189,13 +190,18 @@ func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath,
 }
 
 // WriteFolderMetadata creates _folder.json into folderPath and returns the stable UID.
-func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, folderPath string, folder *folders.Folder, ref, message string) (string, error) {
+func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, folderPath string, folder *folders.Folder, ref, message string, metrics FileSizeRecorder) (string, error) {
 	data, err := marshalFolderManifest(folder)
 	if err != nil {
 		return "", fmt.Errorf("marshal folder metadata: %w", err)
 	}
 	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
-	if err := repo.Create(ctx, metadataPath, ref, data, message); err != nil {
+	start := time.Now()
+	err = repo.Create(ctx, metadataPath, ref, data, message)
+	if metrics != nil {
+		metrics.RecordFileWrite(len(data), time.Since(start), err)
+	}
+	if err != nil {
 		return "", fmt.Errorf("failed to create folder metadata: %w", err)
 	}
 	return folder.Name, nil
@@ -204,7 +210,7 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 // WriteFolderMetadataUpdate reads the existing _folder.json at folderPath, validates that the
 // ID (metadata.name) has not changed, updates the mutable fields (title, description) from
 // the submitted folder resource, and writes the result back. Returns the updated hash.
-func WriteFolderMetadataUpdate(ctx context.Context, repo repository.ReaderWriter, folderPath, ref, message string, submitted *folders.Folder) (string, error) {
+func WriteFolderMetadataUpdate(ctx context.Context, repo repository.ReaderWriter, folderPath, ref, message string, submitted *folders.Folder, metrics FileSizeRecorder) (string, error) {
 	existing, _, err := ReadFolderMetadata(ctx, repo, folderPath, ref)
 	if err != nil {
 		// When the target branch doesn't exist yet, fall back to reading from
@@ -239,7 +245,12 @@ func WriteFolderMetadataUpdate(ctx context.Context, repo repository.ReaderWriter
 		return "", fmt.Errorf("marshal updated folder metadata: %w", err)
 	}
 	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
-	if err := repo.Update(ctx, metadataPath, ref, data, message); err != nil {
+	start := time.Now()
+	err = repo.Update(ctx, metadataPath, ref, data, message)
+	if metrics != nil {
+		metrics.RecordFileWrite(len(data), time.Since(start), err)
+	}
+	if err != nil {
 		return "", fmt.Errorf("write updated folder metadata: %w", err)
 	}
 
