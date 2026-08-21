@@ -62,6 +62,7 @@ const queryCellContentKindSchema = z.object({
   spec: z.object({
     query: panelQueryKindSchema,
     queryOptions: queryOptionsSpecSchema.optional(),
+    graphStyle: z.enum(['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars']).optional(),
   }),
 }) satisfies z.ZodType<QueryCellContentKind>;
 

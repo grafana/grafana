@@ -87,11 +87,17 @@ jest.mock('react-virtualized-auto-sizer', () => {
     children({ width: 600, height: 300 });
 });
 
-// GraphContainer -> ExploreGraph -> PanelRenderer needs the whole panel-plugin loading pipeline
-// (see e.g. PanelStylesSection.test.tsx's own note on this) — replaced with a stub that just proves
-// the data this cell resolved actually reached it.
-jest.mock('app/features/explore/Graph/GraphContainer', () => ({
-  GraphContainer: ({ data }: { data: DataFrame[] }) => <div data-testid="graph">{data.length} series</div>,
+// ExploreGraph -> PanelRenderer needs the whole panel-plugin loading pipeline (see e.g.
+// PanelStylesSection.test.tsx's own note on this) — replaced with a stub that just proves the data
+// (and graph style) this cell resolved actually reached it. PanelChrome/ExploreGraphLabel are left
+// real: they're plain UI with no plugin-loading dependency, and ExploreGraphLabel's own real
+// RadioButtonGroup is what these tests click through to exercise the style-change wiring.
+jest.mock('app/features/explore/Graph/ExploreGraph', () => ({
+  ExploreGraph: ({ data, graphStyle }: { data: DataFrame[]; graphStyle: string }) => (
+    <div data-testid="graph" data-graph-style={graphStyle}>
+      {data.length} series
+    </div>
+  ),
 }));
 
 let resolvedSettings: { uid: string; type: string; name: string } | undefined = {
@@ -299,12 +305,13 @@ describe('QueryCell', () => {
   // Duplicate/remove/reorder never do anything meaningful for a cell that only ever has one query —
   // the notebook cell's own actions already cover duplicate/delete. hideActionButtons is the only
   // lever QueryEditorRow exposes for this (see QueryCell's own comment on why help goes with it).
-  // collapsable is false because collapse is driven externally now — see the collapse describe block.
+  // collapsable stays true — the native chevron (top-left of the header) is reused as-is; only its
+  // open/closed state is driven externally, via `isOpen` (see the collapse describe block).
   it('hides the row-level duplicate/remove/drag actions', async () => {
     render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
 
     expect(await screen.findByTestId('hide-action-buttons')).toHaveTextContent('true');
-    expect(screen.getByTestId('collapsable')).toHaveTextContent('false');
+    expect(screen.getByTestId('collapsable')).toHaveTextContent('true');
   });
 
   it('renders the Run button outside the query editor row, not through renderHeaderExtras', async () => {
@@ -330,16 +337,10 @@ describe('QueryCell', () => {
       expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
     });
 
-    it('toggles locally without ever calling onChange, in either mode', async () => {
-      const onChange = jest.fn();
-      const { user } = render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={onChange} />);
-
-      await user.click(await screen.findByRole('button', { name: 'Collapse query editor' }));
-
-      expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
-      expect(await screen.findByRole('button', { name: 'Expand query editor' })).toBeInTheDocument();
-      expect(onChange).not.toHaveBeenCalled();
-    });
+    // Manual toggling itself is QueryOperationRow's own native chevron click, entirely internal to
+    // the (mocked-away, here) shared component — nothing in QueryCell wires that click to `onChange`
+    // at all, so there is nothing for this file's mock to exercise beyond what's already covered by
+    // asserting `isOpen`/`collapsable` above.
 
     // Cells aren't remounted when the whole notebook flips between edit and view, so the initial
     // useState alone would only ever apply on the very first render — this is what re-collapses (or
@@ -383,14 +384,6 @@ describe('QueryCell', () => {
       render(<QueryCell content={savedQueryContent()} isEditing={false} onChange={jest.fn()} />);
 
       expect(await screen.findByRole('button', { name: 'Run query' })).toBeEnabled();
-    });
-
-    it('still offers a working collapse toggle', async () => {
-      const { user } = render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
-
-      await user.click(await screen.findByRole('button', { name: 'Expand query editor' }));
-
-      expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
     });
 
     // The CSS pointer-events lock only stops mouse interaction — a focused input could still be typed
@@ -551,6 +544,53 @@ describe('QueryCell', () => {
     });
 
     expect(await screen.findByTestId('graph')).toHaveTextContent('1 series');
+  });
+
+  it('defaults the graph style to lines for a cell that has never picked one', async () => {
+    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+    await screen.findByTestId('resolved-datasource');
+
+    act(() => {
+      emitData?.({ state: LoadingState.Done, series: [{ fields: [], length: 0 }], timeRange: range });
+    });
+
+    expect(await screen.findByTestId('graph')).toHaveAttribute('data-graph-style', 'lines');
+  });
+
+  it('persists a graph style change while editing', async () => {
+    const onChange = jest.fn();
+    const { user, rerender } = render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={onChange} />);
+    await screen.findByTestId('resolved-datasource');
+    act(() => {
+      emitData?.({ state: LoadingState.Done, series: [{ fields: [], length: 0 }], timeRange: range });
+    });
+
+    await user.click(await screen.findByRole('radio', { name: 'Bars' }));
+
+    // Fully controlled from `content`, same as the query text — clicking alone does not repaint the
+    // graph; only the owner re-rendering with the persisted value does.
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'Query', spec: expect.objectContaining({ graphStyle: 'bars' }) })
+    );
+
+    const updated = onChange.mock.calls[0][0] as CellContentKind;
+    rerender(<QueryCell content={updated} isEditing={true} onChange={onChange} />);
+
+    expect(await screen.findByTestId('graph')).toHaveAttribute('data-graph-style', 'bars');
+  });
+
+  it('keeps a graph style change local while reading, without calling onChange', async () => {
+    const onChange = jest.fn();
+    const { user } = render(<QueryCell content={savedQueryContent()} isEditing={false} onChange={onChange} />);
+    await screen.findByTestId('resolved-datasource');
+    act(() => {
+      emitData?.({ state: LoadingState.Done, series: [{ fields: [], length: 0 }], timeRange: range });
+    });
+
+    await user.click(await screen.findByRole('radio', { name: 'Points' }));
+
+    expect(await screen.findByTestId('graph')).toHaveAttribute('data-graph-style', 'points');
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('shows an error alert instead of a graph when the run fails', async () => {

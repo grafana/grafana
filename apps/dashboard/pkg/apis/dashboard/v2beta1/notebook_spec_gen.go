@@ -235,6 +235,9 @@ func (NotebookQueryCellContentKind) OpenAPIModelName() string {
 type NotebookQueryCellContentSpec struct {
 	Query        NotebookPanelQueryKind    `json:"query"`
 	QueryOptions *NotebookQueryOptionsSpec `json:"queryOptions,omitempty"`
+	// How the graph draws the result — mirrors Explore's own ExploreGraphStyle. Omitted means the
+	// cell has never had one chosen; the UI falls back to the same default Explore itself uses.
+	GraphStyle *NotebookQueryCellContentSpecGraphStyle `json:"graphStyle,omitempty"`
 }
 
 // NewNotebookQueryCellContentSpec creates a new NotebookQueryCellContentSpec object.
@@ -1454,6 +1457,22 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for NotebookTimeSettingsSpecWeekStart.
 func (NotebookTimeSettingsSpecWeekStart) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookTimeSettingsSpecWeekStart"
+}
+
+// +k8s:openapi-gen=true
+type NotebookQueryCellContentSpecGraphStyle string
+
+const (
+	NotebookQueryCellContentSpecGraphStyleLines        NotebookQueryCellContentSpecGraphStyle = "lines"
+	NotebookQueryCellContentSpecGraphStyleBars         NotebookQueryCellContentSpecGraphStyle = "bars"
+	NotebookQueryCellContentSpecGraphStylePoints       NotebookQueryCellContentSpecGraphStyle = "points"
+	NotebookQueryCellContentSpecGraphStyleStackedLines NotebookQueryCellContentSpecGraphStyle = "stacked_lines"
+	NotebookQueryCellContentSpecGraphStyleStackedBars  NotebookQueryCellContentSpecGraphStyle = "stacked_bars"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookQueryCellContentSpecGraphStyle.
+func (NotebookQueryCellContentSpecGraphStyle) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookQueryCellContentSpecGraphStyle"
 }
 
 // +k8s:openapi-gen=true

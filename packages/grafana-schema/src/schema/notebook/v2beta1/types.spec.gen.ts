@@ -165,6 +165,9 @@ export const defaultQueryCellContentKind = (): QueryCellContentKind => ({
 export interface QueryCellContentSpec {
 	query: PanelQueryKind;
 	queryOptions?: QueryOptionsSpec;
+	// How the graph draws the result — mirrors Explore's own ExploreGraphStyle. Omitted means the
+	// cell has never had one chosen; the UI falls back to the same default Explore itself uses.
+	graphStyle?: "lines" | "bars" | "points" | "stacked_lines" | "stacked_bars";
 }
 
 export const defaultQueryCellContentSpec = (): QueryCellContentSpec => ({

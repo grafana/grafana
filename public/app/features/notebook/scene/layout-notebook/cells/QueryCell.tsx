@@ -16,22 +16,27 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { Alert, Button, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, PanelChrome, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { GraphContainer } from 'app/features/explore/Graph/GraphContainer';
+import { ExploreGraph } from 'app/features/explore/Graph/ExploreGraph';
+import { ExploreGraphLabel } from 'app/features/explore/Graph/ExploreGraphLabel';
 import { type CellContentKind, type PanelQueryKind } from 'app/features/notebook/types';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { PanelQueryRunner } from 'app/features/query/state/PanelQueryRunner';
+import { type ExploreGraphStyle } from 'app/types/explore';
 
 // A lone graph fills its parent, so it needs a resolved height (not just min-height) or PanelChrome
 // measures 0 and nothing shows — same reasoning as NotebookCellRenderer's PANEL_HEIGHT.
 const GRAPH_HEIGHT = 300;
 
-// Explore's own graph is GraphContainer -> ExploreGraph -> PanelRenderer(pluginId: 'timeseries') —
-// this cell renders GraphContainer directly rather than PanelRenderer alone, so it gets the same
-// centred "no data" chrome and the Lines/Bars/Points/Stacked style toggle Explore's graph offers,
-// not just the bare timeseries panel underneath it.
+// Explore's own graph is GraphContainer -> ExploreGraph -> PanelRenderer(pluginId: 'timeseries'),
+// composed here directly (PanelChrome + ExploreGraphLabel + ExploreGraph) rather than through
+// GraphContainer itself: GraphContainer's own graphStyle is private state backed by a single global
+// localStorage key it shares with Explore, with no prop to redirect it anywhere else — dropping one
+// level down is what lets graphStyle live in this cell's own content instead of a global, ungated
+// browser preference.
 const noopSplitOpen: SplitOpen = () => {};
+const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
 
 interface Props {
   content: CellContentKind;
@@ -53,6 +58,11 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
   const [data, setData] = useState<PanelData>();
   const [running, setRunning] = useState(false);
   const [dsSettings, setDsSettings] = useState<DataSourceInstanceSettings>();
+  // Only ever read while `!isEditing` — a reader flipping through Lines/Bars/Points should see it
+  // change immediately (unlike a query edit, which has no visible effect at all while reading), just
+  // without it landing in `content`. Reset to undefined on nothing in particular: like `collapsed`,
+  // going back to edit mode simply stops consulting this and shows the real persisted value instead.
+  const [viewGraphStyle, setViewGraphStyle] = useState<ExploreGraphStyle>();
   // Reading a notebook starts every query editor collapsed (a wall of graphs, not a wall of query
   // builders); editing starts them expanded. Purely local — never touches `content`, so toggling one
   // back open isn't "editing" the notebook in any sense that should persist or be undoable.
@@ -67,7 +77,7 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
 
   // Scoped to this cell alone, the same way Explore itself scopes a bus per pane
   // (Explore.tsx's own graphEventBus) — nothing outside this cell publishes or subscribes to it, so
-  // it exists purely to satisfy GraphContainer's contract rather than to actually cross-notify anyone.
+  // it exists purely to satisfy ExploreGraph's contract rather than to actually cross-notify anyone.
   const eventBusRef = useRef<EventBusSrv | null>(null);
   if (!eventBusRef.current) {
     eventBusRef.current = new EventBusSrv();
@@ -91,6 +101,13 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
   const panelQuery = content.kind === 'Query' ? content.spec.query : undefined;
   const queryOptions = content.kind === 'Query' ? content.spec.queryOptions : undefined;
   const query = panelQuery ? dataQueryFromPanelQueryKind(panelQuery) : undefined;
+  const persistedGraphStyle = content.kind === 'Query' ? content.spec.graphStyle : undefined;
+  // Same shape as `collapsed`: edit mode always shows (and writes) the real persisted value; view
+  // mode shows a local override once the reader has picked one, falling back to the persisted value
+  // (or the default) until they do.
+  const graphStyle = isEditing
+    ? (persistedGraphStyle ?? DEFAULT_GRAPH_STYLE)
+    : (viewGraphStyle ?? persistedGraphStyle ?? DEFAULT_GRAPH_STYLE);
   const resolvedRange = range ?? getDefaultTimeRange();
   const dsRefName = panelQuery?.spec.query.datasource?.name;
   // Captured at mount, not re-derived each render: a freshly-inserted cell has an empty query spec
@@ -164,7 +181,7 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dsSettings]);
 
-  // GraphContainer's axis follows `range` on every render, so a picker change that does not fetch
+  // ExploreGraph's axis follows `range` on every render, so a picker change that does not fetch
   // again would leave the previous series under the new window. Only after this cell has already
   // run (auto or explicit) — a freshly-inserted empty cell still waits for Run rather than firing
   // the first time the reader moves the picker. Keyed off the window's endpoints rather than the
@@ -215,18 +232,13 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
     changeQuery({ ...query, datasource: { uid: settings.uid, type: settings.type } });
   };
 
-  const collapseToggle = (
-    <IconButton
-      name={collapsed ? 'angle-right' : 'angle-down'}
-      tooltip={
-        collapsed
-          ? t('notebook.cell.query.expand', 'Expand query editor')
-          : t('notebook.cell.query.collapse', 'Collapse query editor')
-      }
-      aria-expanded={!collapsed}
-      onClick={() => setCollapsed((current) => !current)}
-    />
-  );
+  const onGraphStyleChange = (style: ExploreGraphStyle) => {
+    if (isEditing) {
+      onChange({ kind: 'Query', spec: { ...content.spec, graphStyle: style } });
+    } else {
+      setViewGraphStyle(style);
+    }
+  };
 
   return (
     <Stack direction="column" gap={1}>
@@ -264,15 +276,14 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
             // toggle along with them; there's no way to keep just one without reaching past its own
             // props into its internals.
             hideActionButtons
-            // Its own chevron is replaced by collapseToggle below: QueryOperationRow still syncs its
-            // visibility from `isOpen` even with `collapsable={false}` (only the click target — the
-            // chevron itself — goes away), and QueryEditorRow only ever reports an *open* row back
-            // to the caller (there's no equivalent notification when one is collapsed), so driving
-            // `isOpen` externally is the only way to actually own this state ourselves.
-            collapsable={false}
+            // The native chevron (top-left of the header, before the query name) toggles its own
+            // internal open/closed state on click regardless of `collapsable`'s value — `isOpen` only
+            // ever forces a *re-sync* when it changes, which is exactly what's wanted here: a mode
+            // transition (see the `useEffect` on `isEditing` above) overwrites whatever the reader had
+            // it set to, but a manual click in between transitions is left alone.
+            collapsable
             isOpen={!collapsed}
             hideHideQueryButton
-            renderHeaderExtras={() => collapseToggle}
           />
         </div>
       ) : (
@@ -289,17 +300,28 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
         <AutoSizer disableHeight>
           {({ width }) =>
             width > 0 && (
-              <GraphContainer
-                data={data.series}
-                eventBus={eventBusRef.current!}
-                height={GRAPH_HEIGHT}
+              <PanelChrome
+                title={t('graph.container.title', 'Graph')}
                 width={width}
-                timeRange={resolvedRange}
-                timeZone="browser"
-                onChangeTime={onChangeTime}
-                splitOpenFn={noopSplitOpen}
+                height={GRAPH_HEIGHT}
                 loadingState={data.state}
-              />
+                actions={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
+              >
+                {(innerWidth, innerHeight) => (
+                  <ExploreGraph
+                    graphStyle={graphStyle}
+                    data={data.series}
+                    height={innerHeight}
+                    width={innerWidth}
+                    timeRange={resolvedRange}
+                    timeZone="browser"
+                    onChangeTime={onChangeTime}
+                    splitOpenFn={noopSplitOpen}
+                    loadingState={data.state}
+                    eventBus={eventBusRef.current!}
+                  />
+                )}
+              </PanelChrome>
             )
           }
         </AutoSizer>

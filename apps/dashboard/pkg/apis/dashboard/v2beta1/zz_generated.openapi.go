@@ -6888,6 +6888,13 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookQueryCellContentSpec(ref common.R
 							Ref: ref(NotebookQueryOptionsSpec{}.OpenAPIModelName()),
 						},
 					},
+					"graphStyle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "How the graph draws the result — mirrors Explore's own ExploreGraphStyle. Omitted means the cell has never had one chosen; the UI falls back to the same default Explore itself uses.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"query"},
 			},
