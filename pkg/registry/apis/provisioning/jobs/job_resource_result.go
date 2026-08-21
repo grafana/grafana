@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"errors"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -131,6 +132,7 @@ type JobResourceResult struct {
 	reason       string // explicit reason, takes precedence over classifyWarning
 	err          error
 	warning      error
+	startedAt    time.Time // stamped when the builder is created; used to derive the operation duration at record time
 }
 
 // jobResourceResultBuilder is a builder for creating JobResourceResult instances using a fluent API.
@@ -138,10 +140,13 @@ type jobResourceResultBuilder struct {
 	result JobResourceResult
 }
 
-// NewResourceResult creates a new builder for JobResourceResult.
+// NewResourceResult creates a new builder for JobResourceResult. The creation
+// time is stamped now so the recorder can derive how long the operation took:
+// callers build the result immediately before performing the resource operation,
+// then record it once the operation completes.
 func NewResourceResult() *jobResourceResultBuilder {
 	return &jobResourceResultBuilder{
-		result: JobResourceResult{},
+		result: JobResourceResult{startedAt: time.Now()},
 	}
 }
 
@@ -300,6 +305,17 @@ func (r JobResourceResult) PreviousPath() string {
 // Action returns the action performed on the resource.
 func (r JobResourceResult) Action() repository.FileAction {
 	return r.action
+}
+
+// elapsed returns how long the operation took, measured from when the result's
+// builder was created (see NewResourceResult) until now. It returns zero if the
+// start time was never stamped, so results built outside the builder are simply
+// treated as untimed.
+func (r JobResourceResult) elapsed() time.Duration {
+	if r.startedAt.IsZero() {
+		return 0
+	}
+	return time.Since(r.startedAt)
 }
 
 // Error returns the error associated with the resource operation.

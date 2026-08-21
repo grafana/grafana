@@ -21,9 +21,10 @@ type JobMetrics struct {
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 
-	resourceOpsTotal *prometheus.CounterVec // per-resource outcome counter
-	inFlight         *prometheus.GaugeVec   // jobs currently being processed, by driver + action
-	busySeconds      *prometheus.CounterVec // job duration credited at completion, by driver + action
+	resourceOpsTotal   *prometheus.CounterVec   // per-resource outcome counter
+	resourceOpDuration *prometheus.HistogramVec // per-resource operation duration
+	inFlight           *prometheus.GaugeVec     // jobs currently being processed, by driver + action
+	busySeconds        *prometheus.CounterVec   // job duration credited at completion, by driver + action
 }
 
 // claimTrigger records what enqueued the work-queue key that a worker is now
@@ -224,6 +225,16 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(resourceOpsTotal)
 
+		resourceOpDuration := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_resource_operation_duration_seconds",
+				Help:    "Duration of individual resource operations performed during provisioning job runs",
+				Buckets: []float64{0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0},
+			},
+			[]string{"action", "operation", "outcome", "group", "kind"},
+		)
+		registry.MustRegister(resourceOpDuration)
+
 		inFlight := prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name: "grafana_provisioning_jobs_in_flight",
@@ -250,6 +261,7 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 			syncDurationHist:                 syncDurationHist,
 			resourceOpsTotal:                 resourceOpsTotal,
+			resourceOpDuration:               resourceOpDuration,
 			inFlight:                         inFlight,
 			busySeconds:                      busySeconds,
 		}
@@ -311,8 +323,10 @@ func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duratio
 }
 
 // RecordResourceOperation derives outcome, operation, and reason from the
-// result and increments the resource operations counter.
-func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, result JobResourceResult) {
+// result and increments the resource operations counter. dur is the time the
+// operation took, measured by the progress recorder from result construction to
+// this call; it is observed in the duration histogram for real operations.
+func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, result JobResourceResult, dur time.Duration) {
 	var outcome ResourceOutcome
 	reason := result.Reason()
 
@@ -326,7 +340,14 @@ func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, resu
 		outcome = OutcomeSuccess
 	}
 
-	m.resourceOpsTotal.WithLabelValues(string(action), string(fileActionToOperation(result.Action())), string(outcome), reason, result.Group(), result.Kind()).Inc()
+	operation := fileActionToOperation(result.Action())
+	m.resourceOpsTotal.WithLabelValues(string(action), string(operation), string(outcome), reason, result.Group(), result.Kind()).Inc()
+
+	// Ignored operations are no-ops (nothing was written), so keep them out of the
+	// duration histogram; everything else is a real resource operation worth timing.
+	if m.resourceOpDuration != nil && dur > 0 && operation != OperationIgnored {
+		m.resourceOpDuration.WithLabelValues(string(action), string(operation), string(outcome), result.Group(), result.Kind()).Observe(dur.Seconds())
+	}
 }
 
 func fileActionToOperation(action repository.FileAction) ResourceOperation {
