@@ -42,7 +42,11 @@ export default (env: Env = {}): Configuration => ({
       return '[name].[contenthash].js';
     },
     chunkFilename: '[name].[contenthash].js',
-    publicPath: 'public/build/',
+    // Derived at runtime from the URL of the script that loads the runtime chunk, so chunks,
+    // workers and assets resolve under a CDN or a sub-path without the app reassigning
+    // __webpack_public_path__. The assets manifest needs a literal prefix instead — see
+    // scripts/webpack/plugins/assetsManifest.ts.
+    publicPath: 'auto',
   },
   resolve: {
     conditionNames: ['@grafana-app/source', '...'],

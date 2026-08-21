@@ -91,7 +91,8 @@ export default (env: Env = {}) => {
         entrypoints: true,
         integrity: true,
         integrityHashes: ['sha384', 'sha512'],
-        publicPath: true,
+        // See scripts/webpack/plugins/assetsManifest.ts for why this is a literal prefix.
+        publicPath: 'public/build/',
         output: 'assets-manifest.json',
       }),
       new WebpackBar({

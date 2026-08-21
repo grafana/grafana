@@ -37,7 +37,10 @@ export const manifestPluginOptions: Partial<Options> = {
   entrypoints: true,
   integrity: true,
   integrityHashes: ['sha384', 'sha512'],
-  publicPath: true,
+  // A literal prefix, not `true`: `true` reads output.publicPath, which is 'auto' and resolves
+  // to no prefix at all. The backend renders these paths verbatim into <script src> and
+  // <link href>, where a bare filename breaks every non-root route.
+  publicPath: 'public/build/',
   // This transform filters down the assets to only include the ones that are part of the entrypoints
   // this is all that the backend requires.
   transform: manifestTransform,

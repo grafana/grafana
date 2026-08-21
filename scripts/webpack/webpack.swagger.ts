@@ -59,7 +59,8 @@ export default (env: Env = {}): Configuration => {
     output: {
       clean: true,
       path: path.resolve(import.meta.dirname, '../../public/build-swagger'),
-      publicPath: 'public/build-swagger/',
+      // See webpack.common.ts — derived at runtime, with the manifest keeping a literal prefix.
+      publicPath: 'auto',
       crossOriginLoading: 'anonymous',
       filename: env.develop ? '[name].js' : '[name].[contenthash].js',
     },
@@ -70,7 +71,7 @@ export default (env: Env = {}): Configuration => {
       }),
       new SubresourceIntegrityPlugin(),
       new FeatureFlaggedSRIPlugin(),
-      new WebpackAssetsManifest(manifestPluginOptions),
+      new WebpackAssetsManifest({ ...manifestPluginOptions, publicPath: 'public/build-swagger/' }),
     ],
     resolve: {
       conditionNames: ['@grafana-app/source', '...'],
