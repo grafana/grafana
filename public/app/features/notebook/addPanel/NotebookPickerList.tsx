@@ -1,9 +1,8 @@
 import { t, Trans } from '@grafana/i18n';
 import { Alert, ScrollContainer, Spinner, Stack, Text } from '@grafana/ui';
 
-import { type NotebookRow } from '../list/useNotebooksList';
-
 import { NotebookPickerCard } from './NotebookPickerCard';
+import { type NotebookPickerRow } from './useNotebookPickerData';
 
 /**
  * The list is meant to be the modal's only scroll region — the tabs, filters and footer should stay
@@ -21,7 +20,7 @@ import { NotebookPickerCard } from './NotebookPickerCard';
 const LIST_MAX_HEIGHT = 'max(200px, calc(80vh - 360px))';
 
 interface Props {
-  notebooks: NotebookRow[];
+  notebooks: NotebookPickerRow[];
   /** Notebooks before filtering, to tell "none exist" apart from "none matched". */
   totalCount: number;
   isLoading: boolean;

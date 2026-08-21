@@ -3,19 +3,19 @@ import { useMemo, useState } from 'react';
 import { t } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
 
-import { type NotebookRow, useNotebooksList } from '../list/useNotebooksList';
+import { type NotebookPickerRow, useNotebookPickerData } from './useNotebookPickerData';
 
 export type NotebookSort = 'updated' | 'created' | 'alphabetical' | 'reverse-alphabetical';
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 /**
- * Sorting lives here rather than in useNotebooksList because the list page delegates ordering to its
- * table, which owns the sort state and renders the indicator. A picker has no table, so it needs its
- * own control over the same rows.
+ * Sorting lives here rather than in the data hook because it is a view concern: the list page
+ * delegates ordering to its table, which owns the sort state and renders the indicator, and a picker
+ * has no table.
  */
 export function useNotebookPicker() {
-  const list = useNotebooksList({ enabled: true });
+  const list = useNotebookPickerData();
   const [sort, setSort] = useState<NotebookSort>('updated');
 
   const rows = useMemo(() => sortNotebooks(list.rows, sort), [list.rows, sort]);
@@ -43,7 +43,7 @@ function compareDescending(a: string, b: string): number {
   return a > b ? -1 : 1;
 }
 
-function sortNotebooks(rows: NotebookRow[], sort: NotebookSort): NotebookRow[] {
+function sortNotebooks(rows: NotebookPickerRow[], sort: NotebookSort): NotebookPickerRow[] {
   // ISO timestamps sort correctly as plain strings, so the date comparisons need no parsing.
   const sorted = [...rows];
 

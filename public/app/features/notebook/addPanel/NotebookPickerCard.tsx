@@ -4,10 +4,10 @@ import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Card, TagList, useStyles2 } from '@grafana/ui';
 
-import { type NotebookRow } from '../list/useNotebooksList';
+import { type NotebookPickerRow } from './useNotebookPickerData';
 
 interface Props {
-  notebook: NotebookRow;
+  notebook: NotebookPickerRow;
   isSelected: boolean;
   onSelect: (uid: string) => void;
 }

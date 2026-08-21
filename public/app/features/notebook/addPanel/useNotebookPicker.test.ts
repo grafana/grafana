@@ -1,16 +1,15 @@
 import { act, renderHook } from 'test/test-utils';
 
-import { type NotebookRow, useNotebooksList } from '../list/useNotebooksList';
-
 import { useNotebookPicker } from './useNotebookPicker';
+import { type NotebookPickerRow, useNotebookPickerData } from './useNotebookPickerData';
 
-jest.mock('../list/useNotebooksList', () => ({
-  useNotebooksList: jest.fn(),
+jest.mock('./useNotebookPickerData', () => ({
+  useNotebookPickerData: jest.fn(),
 }));
 
-const mockUseNotebooksList = jest.mocked(useNotebooksList);
+const mockUseNotebookPickerData = jest.mocked(useNotebookPickerData);
 
-function row(overrides: Partial<NotebookRow> & { uid: string }): NotebookRow {
+function row(overrides: Partial<NotebookPickerRow> & { uid: string }): NotebookPickerRow {
   return {
     title: overrides.uid,
     tags: [],
@@ -23,9 +22,9 @@ function row(overrides: Partial<NotebookRow> & { uid: string }): NotebookRow {
   };
 }
 
-function setRows(rows: NotebookRow[]) {
+function setRows(rows: NotebookPickerRow[]) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only `rows` is read by the picker
-  mockUseNotebooksList.mockReturnValue({ rows } as ReturnType<typeof useNotebooksList>);
+  mockUseNotebookPickerData.mockReturnValue({ rows } as ReturnType<typeof useNotebookPickerData>);
 }
 
 describe('useNotebookPicker', () => {

@@ -6,12 +6,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebookConflictError } from '../api/notebookResource';
-import { type NotebookRow } from '../list/useNotebooksList';
 import { defaultPanelKind, type PanelKind } from '../types';
 
 import { AddPanelToNotebookModalBody } from './AddPanelToNotebookModalBody';
 import { addPanelToExistingNotebook, createNotebookWithPanel } from './addPanelToNotebook';
 import { useNotebookPicker } from './useNotebookPicker';
+import { type NotebookPickerRow } from './useNotebookPickerData';
 
 jest.mock('./useNotebookPicker', () => ({
   ...jest.requireActual('./useNotebookPicker'),
@@ -37,7 +37,7 @@ const createWithPanel = jest.mocked(createNotebookWithPanel);
 const mockContextSrv = jest.mocked(contextSrv);
 const mockCreateSuccessNotification = jest.mocked(createSuccessNotification);
 
-function row(uid: string, title: string): NotebookRow {
+function row(uid: string, title: string): NotebookPickerRow {
   return {
     uid,
     title,
