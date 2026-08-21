@@ -6,7 +6,12 @@ import CorsWorkerPlugin from './CorsWorkerPlugin.ts';
 import { compile, readAssets } from './testUtils.ts';
 
 const OUTPUT_PATH = '/dist';
-const PUBLIC_PATH = '/public/build/';
+const LITERAL_PUBLIC_PATH = '/public/build/';
+
+// Kept as literals so a change in either the plugin or in rspack's own auto publicPath runtime
+// module fails the test rather than passing silently.
+const AUTO_ASSIGNMENT = '__webpack_require__.p = scriptUrl';
+const OVERRIDE = `if (typeof __webpack_worker_public_path__ !== 'undefined') __webpack_require__.p = __webpack_worker_public_path__;`;
 
 function createConfig(publicPath: string): Configuration {
   return {
@@ -27,40 +32,66 @@ function createConfig(publicPath: string): Configuration {
   };
 }
 
+async function getWorkerChunk(publicPath: string): Promise<string> {
+  const { outputFs } = await compile(createConfig(publicPath));
+  const assets = readAssets(outputFs, OUTPUT_PATH);
+
+  const workerChunks = Object.entries(assets).filter(
+    ([filename, content]) => filename !== 'main.js' && content.includes('__webpack_worker_public_path__')
+  );
+  expect(workerChunks).toHaveLength(1);
+  return workerChunks[0][1];
+}
+
 describe('CorsWorkerPlugin', () => {
-  it('injects the __webpack_worker_public_path__ fallback into worker chunks without a later override', async () => {
-    const { outputFs } = await compile(createConfig(PUBLIC_PATH));
-    const assets = readAssets(outputFs, OUTPUT_PATH);
+  describe("when publicPath is 'auto'", () => {
+    it("overrides rspack's derivation, which resolves to the blob URL rather than the chunk URL", async () => {
+      const workerChunk = await getWorkerChunk('auto');
 
-    const workerAssets = Object.entries(assets).filter(([filename, content]) => {
-      return filename !== 'main.js' && content.includes('__webpack_worker_public_path__');
+      // Both must be present: rspack derives a value, then the blob-provided one wins.
+      expect(workerChunk).toContain(AUTO_ASSIGNMENT);
+      expect(workerChunk).toContain(OVERRIDE);
+
+      // Order is the whole point. Rspack renders its auto publicPath module after every stage
+      // below STAGE_TRIGGER; if that ever changes, the derivation clobbers the blob value and
+      // workers resolve chunks against the wrong origin.
+      expect(workerChunk.indexOf(OVERRIDE)).toBeGreaterThan(workerChunk.indexOf(AUTO_ASSIGNMENT));
+
+      // Nothing may reassign the public path afterwards, and the entry must not run first.
+      const afterOverride = workerChunk.slice(workerChunk.indexOf(OVERRIDE) + OVERRIDE.length);
+      expect(afterOverride).not.toContain('__webpack_require__.p =');
+      expect(afterOverride).toContain('__webpack_require__("./worker.js")');
     });
-    expect(workerAssets).toHaveLength(1);
 
-    const [, workerContent] = workerAssets[0];
-    const fallbackAssignment = `__webpack_require__.p = __webpack_worker_public_path__ || '${PUBLIC_PATH}';`;
-    expect(workerContent).toContain(fallbackAssignment);
+    it('leaves the derivation in place for workers that never set the global', async () => {
+      const workerChunk = await getWorkerChunk('auto');
 
-    const contentAfterFallback = workerContent.slice(
-      workerContent.indexOf(fallbackAssignment) + fallbackAssignment.length
-    );
-    expect(contentAfterFallback).not.toContain('__webpack_require__.p =');
+      // A natively constructed worker gets no global, and there rspack's derivation is already
+      // correct — hence the typeof guard rather than an unconditional assignment.
+      expect(workerChunk).not.toContain('__webpack_require__.p = __webpack_worker_public_path__ ||');
+      expect(workerChunk).toContain('Automatic publicPath is not supported');
+    });
   });
 
-  it('does not inject the fallback into non-worker chunks', async () => {
-    const { outputFs } = await compile(createConfig(PUBLIC_PATH));
+  describe('when publicPath is a literal', () => {
+    it('injects the fallback and no derivation', async () => {
+      const workerChunk = await getWorkerChunk(LITERAL_PUBLIC_PATH);
+
+      const fallback = `__webpack_require__.p = __webpack_worker_public_path__ || '${LITERAL_PUBLIC_PATH}';`;
+      expect(workerChunk).toContain(fallback);
+      expect(workerChunk).not.toContain('Automatic publicPath is not supported');
+      expect(workerChunk).not.toContain(OVERRIDE);
+
+      const afterFallback = workerChunk.slice(workerChunk.indexOf(fallback) + fallback.length);
+      expect(afterFallback).not.toContain('__webpack_require__.p =');
+    });
+  });
+
+  it('leaves non-worker chunks alone', async () => {
+    const { outputFs } = await compile(createConfig('auto'));
     const assets = readAssets(outputFs, OUTPUT_PATH);
 
     expect(assets['main.js']).toBeDefined();
     expect(assets['main.js']).not.toContain('__webpack_worker_public_path__');
-  });
-
-  it('is a no-op when publicPath is auto', async () => {
-    const { outputFs } = await compile(createConfig('auto'));
-    const assets = readAssets(outputFs, OUTPUT_PATH);
-
-    for (const content of Object.values(assets)) {
-      expect(content).not.toContain('__webpack_worker_public_path__');
-    }
   });
 });
