@@ -19,12 +19,15 @@ setupProvisioningMswServer();
 
 function setup(
   options: {
-    prURL: string;
+    prURL?: string;
     isNewPr?: boolean;
     repoType?: RepoType;
     action?: string;
     prTitle?: string;
     branchInfo?: PreviewBranchInfo;
+    originalUrl?: string;
+    behindBranch?: boolean;
+    repoUrl?: string;
   } = {
     prURL: 'test-url',
     repoType: 'github',
@@ -34,6 +37,9 @@ function setup(
     prURL: options.prURL,
     isNewPr: options.isNewPr || false,
     branchInfo: options.branchInfo,
+    originalUrl: options.originalUrl,
+    behindBranch: options.behindBranch,
+    repoUrl: options.repoUrl,
   };
 
   mockUsePullRequestParam.mockReturnValue({
@@ -50,26 +56,12 @@ function setup(
 }
 
 describe('PreviewBannerViewPR', () => {
-  let windowOpenSpy: jest.SpyInstance;
-
-  beforeAll(() => {
-    Object.defineProperty(window, 'open', {
-      writable: true,
-      value: jest.fn(),
-    });
-    windowOpenSpy = jest.spyOn(window, 'open');
-  });
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
-  });
-
-  afterAll(() => {
-    windowOpenSpy.mockRestore();
   });
 
   describe('Dashboard scenarios', () => {
@@ -136,15 +128,51 @@ describe('PreviewBannerViewPR', () => {
     });
   });
 
+  describe('Saved version action', () => {
+    it('should render a link to the saved version when originalUrl is provided', () => {
+      setup({ prURL: 'test-url', isNewPr: false, originalUrl: '/d/original-uid' });
+
+      const link = screen.getByRole('link', { name: 'View saved version' });
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveAttribute('href', '/d/original-uid');
+    });
+
+    it('should not render the link when originalUrl is not provided', () => {
+      setup({ prURL: 'test-url', isNewPr: false });
+
+      expect(screen.queryByRole('link', { name: 'View saved version' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Behind branch', () => {
+    // This is the variant the provisioned folder banner renders, and it has its own Alert.
+    it('should link to the repository in a new tab', () => {
+      const repoUrl = 'https://github.com/org/repo';
+      setup({ behindBranch: true, repoUrl });
+
+      expect(screen.getByText('This resource is behind the branch in GitHub.')).toBeInTheDocument();
+
+      const link = screen.getByRole('link', { name: /Open in GitHub/i });
+      expect(link).toHaveAttribute('href', repoUrl);
+      expect(link).toHaveAttribute('target', '_blank');
+    });
+
+    it('should not render the action when no repo url is available', () => {
+      setup({ behindBranch: true });
+
+      expect(screen.getByText('This resource is behind the branch in GitHub.')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /Open in GitHub/i })).not.toBeInTheDocument();
+    });
+  });
+
   describe('Button functionality', () => {
-    it('should open URL in new tab when button is clicked', async () => {
+    it('should link to the pull request URL in a new tab', () => {
       const testUrl = 'https://GitHub.com/test/repo/pull/123';
-      const { user } = setup({ prURL: testUrl });
+      setup({ prURL: testUrl });
 
-      const button = screen.getByRole('button', { name: /close alert/i });
-      await user.click(button);
-
-      expect(windowOpenSpy).toHaveBeenCalledWith(testUrl, '_blank');
+      const link = screen.getByRole('link', { name: /pull request in GitHub/i });
+      expect(link).toHaveAttribute('href', testUrl);
+      expect(link).toHaveAttribute('target', '_blank');
     });
   });
 
@@ -228,32 +256,29 @@ describe('PreviewBannerViewPR', () => {
   describe('PR title prefill', () => {
     const githubPrURL = 'https://github.com/org/repo/compare/main...feature?quick_pull=1&labels=grafana';
 
-    it('appends an encoded title param to a GitHub PR URL when pr_title is present', async () => {
-      const { user } = setup({ prURL: githubPrURL, repoType: 'github', prTitle: 'update: My Dashboard' });
+    it('appends an encoded title param to a GitHub PR URL when pr_title is present', () => {
+      setup({ prURL: githubPrURL, repoType: 'github', prTitle: 'update: My Dashboard' });
 
-      await user.click(screen.getByRole('button', { name: /close alert/i }));
-
-      expect(windowOpenSpy).toHaveBeenCalledWith(`${githubPrURL}&title=update%3A%20My%20Dashboard`, '_blank');
-    });
-
-    it('uses merge_request[title] for GitLab', async () => {
-      const gitlabPrURL = 'https://gitlab.com/org/repo/-/merge_requests/new?merge_request[source_branch]=feature';
-      const { user } = setup({ prURL: gitlabPrURL, repoType: 'gitlab', prTitle: 'update: My Dashboard' });
-
-      await user.click(screen.getByRole('button', { name: /close alert/i }));
-
-      expect(windowOpenSpy).toHaveBeenCalledWith(
-        `${gitlabPrURL}&merge_request[title]=update%3A%20My%20Dashboard`,
-        '_blank'
+      expect(screen.getByRole('link', { name: /pull request in GitHub/i })).toHaveAttribute(
+        'href',
+        `${githubPrURL}&title=update%3A%20My%20Dashboard`
       );
     });
 
-    it('leaves the PR URL unchanged when no pr_title is present', async () => {
-      const { user } = setup({ prURL: githubPrURL, repoType: 'github' });
+    it('uses merge_request[title] for GitLab', () => {
+      const gitlabPrURL = 'https://gitlab.com/org/repo/-/merge_requests/new?merge_request[source_branch]=feature';
+      setup({ prURL: gitlabPrURL, repoType: 'gitlab', prTitle: 'update: My Dashboard' });
 
-      await user.click(screen.getByRole('button', { name: /close alert/i }));
+      expect(screen.getByRole('link', { name: /pull request in GitLab/i })).toHaveAttribute(
+        'href',
+        `${gitlabPrURL}&merge_request[title]=update%3A%20My%20Dashboard`
+      );
+    });
 
-      expect(windowOpenSpy).toHaveBeenCalledWith(githubPrURL, '_blank');
+    it('leaves the PR URL unchanged when no pr_title is present', () => {
+      setup({ prURL: githubPrURL, repoType: 'github' });
+
+      expect(screen.getByRole('link', { name: /pull request in GitHub/i })).toHaveAttribute('href', githubPrURL);
     });
   });
 });
