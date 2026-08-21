@@ -76,10 +76,13 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         )}
       </Card.Description>
 
-      <Card.Actions>
-        {ctaLoading ? (
+      {ctaLoading && (
+        <Card.Actions>
           <Skeleton width={120} height={24} />
-        ) : cta ? (
+        </Card.Actions>
+      )}
+      {!ctaLoading && cta && (
+        <Card.Actions>
           <LinkButton
             href={cta.href}
             fill="text"
@@ -98,8 +101,8 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           >
             {cta.label}
           </LinkButton>
-        ) : null}
-      </Card.Actions>
+        </Card.Actions>
+      )}
     </Card>
   );
 }
