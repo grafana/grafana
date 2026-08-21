@@ -1,5 +1,6 @@
 import { locationUtil, type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { contextSrv } from 'app/core/services/context_srv';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
@@ -38,10 +39,20 @@ export async function drilldownActiveCta(
   appId: string,
   appName: string,
   appPath: string
-): Promise<SolutionCta<'open_solution'>> {
-  return (await isDrilldownAvailable(appId, appPath))
-    ? { label: openAppLabel(appName), href: locationUtil.assureBaseUrl(appPath), action: 'open_solution' }
-    : { label: openExploreLabel(), href: constructDataSourceExploreUrl({ name: ds.name }), action: 'open_solution' };
+): Promise<SolutionCta<'open_solution'> | null> {
+  if (await isDrilldownAvailable(appId, appPath)) {
+    return { label: openAppLabel(appName), href: locationUtil.assureBaseUrl(appPath), action: 'open_solution' };
+  }
+
+  if (contextSrv.hasAccessToExplore()) {
+    return {
+      label: openExploreLabel(),
+      href: constructDataSourceExploreUrl({ name: ds.name }),
+      action: 'open_solution',
+    };
+  }
+
+  return null;
 }
 
 // Product names are not translated.
