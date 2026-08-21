@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -232,9 +233,10 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	if err != nil {
 		return "", err
 	}
-	r.metrics.RecordFileSize("write", len(body))
 
+	start := time.Now()
 	err = r.repo.Write(ctx, fileName, options.Ref, body, commitMessage)
+	r.metrics.RecordFileWrite(len(body), time.Since(start), err)
 	if err != nil {
 		return "", fmt.Errorf("failed to write file: %s, %w", fileName, err)
 	}
@@ -266,13 +268,19 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 
 	// Read the referenced file
 	readCtx, readSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.read_file")
+	start := time.Now()
 	fileInfo, err := r.repo.Read(readCtx, path, ref)
+	duration := time.Since(start)
+	size := 0
+	if fileInfo != nil {
+		size = len(fileInfo.Data)
+	}
+	r.metrics.RecordFileRead(size, duration, err)
 	if err != nil {
 		readSpan.RecordError(err)
 		readSpan.End()
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
-	r.metrics.RecordFileSize("read", len(fileInfo.Data))
 	readSpan.End()
 
 	parseCtx, parseSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.parse_file")
