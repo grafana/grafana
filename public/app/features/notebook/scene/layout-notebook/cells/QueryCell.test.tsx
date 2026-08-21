@@ -6,9 +6,11 @@ import {
   type DataQuery,
   type DataSourceInstanceSettings,
   type DataSourceRef,
+  dateTime,
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
+  type TimeRange,
 } from '@grafana/data';
 import { type CellContentKind } from 'app/features/notebook/types';
 
@@ -162,6 +164,10 @@ function savedQueryContent(): CellContentKind {
 }
 
 const range = getDefaultTimeRange();
+
+function absoluteRange(from: string, to: string): TimeRange {
+  return { from: dateTime(from), to: dateTime(to), raw: { from, to } };
+}
 
 beforeEach(() => {
   resolvedSettings = { uid: 'default-uid', type: 'testdata', name: 'gdev-testdata' };
@@ -415,6 +421,78 @@ describe('QueryCell', () => {
 
     await screen.findByTestId('resolved-datasource');
     // Give any wrongly-firing auto-run effect a turn to resolve before asserting its absence.
+    await act(async () => {});
+    expect(mockRun).not.toHaveBeenCalled();
+  });
+
+  // The auto-run effect waits for dsSettings, which arrives after mount — so it cannot key off a
+  // live `hasQuery` without also firing the first time a freshly-inserted empty cell's spec is
+  // written into (the first keystroke). That would hit the datasource with a still-incomplete query
+  // instead of waiting for an explicit Run. The gate is "already saved at mount", not "has a query
+  // now".
+  it('does not auto-run when a freshly-inserted cell first gets a query spec written into it', async () => {
+    const { rerender } = render(
+      <QueryCell content={emptyQueryContent()} isEditing={true} range={range} onChange={jest.fn()} />
+    );
+
+    await screen.findByTestId('resolved-datasource');
+    await act(async () => {});
+    expect(mockRun).not.toHaveBeenCalled();
+
+    rerender(<QueryCell content={savedQueryContent()} isEditing={true} range={range} onChange={jest.fn()} />);
+
+    await act(async () => {});
+    expect(mockRun).not.toHaveBeenCalled();
+  });
+
+  // GraphContainer's axis follows `range` on every render, so if the cell does not fetch again the
+  // series stay from the previous window under the new axis. The first run is the auto-run of a
+  // saved query; the second is the picker change this is pinning.
+  it('re-runs a saved query when the notebook time range changes after auto-run', async () => {
+    const morning = absoluteRange('2024-01-01T00:00:00Z', '2024-01-01T06:00:00Z');
+    const afternoon = absoluteRange('2024-01-01T12:00:00Z', '2024-01-01T18:00:00Z');
+    const { rerender } = render(
+      <QueryCell content={savedQueryContent()} isEditing={true} range={morning} onChange={jest.fn()} />
+    );
+
+    await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(1));
+    expect(mockRun).toHaveBeenCalledWith(expect.objectContaining({ timeRange: morning }));
+
+    rerender(<QueryCell content={savedQueryContent()} isEditing={true} range={afternoon} onChange={jest.fn()} />);
+
+    await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(2));
+    expect(mockRun).toHaveBeenLastCalledWith(expect.objectContaining({ timeRange: afternoon }));
+  });
+
+  it('re-runs after an explicit Run when the notebook time range later changes', async () => {
+    const morning = absoluteRange('2024-01-01T00:00:00Z', '2024-01-01T06:00:00Z');
+    const afternoon = absoluteRange('2024-01-01T12:00:00Z', '2024-01-01T18:00:00Z');
+    const { user, rerender } = render(
+      <QueryCell content={emptyQueryContent()} isEditing={true} range={morning} onChange={jest.fn()} />
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(1));
+
+    rerender(<QueryCell content={emptyQueryContent()} isEditing={true} range={afternoon} onChange={jest.fn()} />);
+
+    await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(2));
+    expect(mockRun).toHaveBeenLastCalledWith(expect.objectContaining({ timeRange: afternoon }));
+  });
+
+  it('does not run an untouched cell just because the notebook time range changed', async () => {
+    const morning = absoluteRange('2024-01-01T00:00:00Z', '2024-01-01T06:00:00Z');
+    const afternoon = absoluteRange('2024-01-01T12:00:00Z', '2024-01-01T18:00:00Z');
+    const { rerender } = render(
+      <QueryCell content={emptyQueryContent()} isEditing={true} range={morning} onChange={jest.fn()} />
+    );
+
+    await screen.findByTestId('resolved-datasource');
+    await act(async () => {});
+    expect(mockRun).not.toHaveBeenCalled();
+
+    rerender(<QueryCell content={emptyQueryContent()} isEditing={true} range={afternoon} onChange={jest.fn()} />);
+
     await act(async () => {});
     expect(mockRun).not.toHaveBeenCalled();
   });

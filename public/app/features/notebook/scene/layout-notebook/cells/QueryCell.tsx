@@ -93,9 +93,12 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
   const query = panelQuery ? dataQueryFromPanelQueryKind(panelQuery) : undefined;
   const resolvedRange = range ?? getDefaultTimeRange();
   const dsRefName = panelQuery?.spec.query.datasource?.name;
-  // An untouched, freshly-inserted cell has an empty query spec (see defaultQueryCellContentKind) —
-  // nothing worth auto-running yet, unlike a cell that already carries a saved query.
-  const hasQuery = Boolean(panelQuery && Object.keys(panelQuery.spec.query.spec).length > 0);
+  // Captured at mount, not re-derived each render: a freshly-inserted cell has an empty query spec
+  // (see defaultQueryCellContentKind) and should wait for an explicit Run. A cell that already
+  // carries a saved query should auto-run once dsSettings resolves. Gating on a live `hasQuery`
+  // would also fire on the first keystroke into an empty cell, hitting the datasource with a
+  // still-incomplete query.
+  const hadQueryAtMount = useRef(Boolean(panelQuery && Object.keys(panelQuery.spec.query.spec).length > 0));
 
   useEffect(() => {
     const subscription = runnerRef
@@ -121,10 +124,16 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
     };
   }, [dsRefName]);
 
+  // Set inside runQuery rather than only in the auto-run effect, so an explicit Run counts too —
+  // otherwise a cell the reader already fetched would still leave stale series under a new axis
+  // when they later move the shared picker (see the range-change effect below).
+  const hasRun = useRef(false);
+
   const runQuery = async () => {
     if (!dsSettings || !query) {
       return;
     }
+    hasRun.current = true;
     setRunning(true);
     try {
       await runnerRef.current!.run({
@@ -144,18 +153,38 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
   // click Run themselves for a query that was already saved — same reasoning as auto-loading any
   // other already-authored content. Guarded by a ref rather than an empty dependency array: it has
   // to wait for `dsSettings` to resolve first, which happens a render or two after mount.
-  const hasAutoRun = useRef(false);
   useEffect(() => {
-    if (hasAutoRun.current || !dsSettings || !hasQuery) {
+    if (hasRun.current || !dsSettings || !hadQueryAtMount.current) {
       return;
     }
-    hasAutoRun.current = true;
     runQuery();
-    // runQuery is a fresh closure every render (it captures dsSettings/query/etc, already listed
-    // below); depending on it here would just make this effect re-evaluate every render for no
-    // reason, since the ref guard above — not the dependency array — is what makes this run once.
+    // runQuery is a fresh closure every render (it captures dsSettings/query/etc); depending on it
+    // here would just make this effect re-evaluate every render for no reason, since the ref
+    // guard above — not the dependency array — is what makes this run once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dsSettings, hasQuery]);
+  }, [dsSettings]);
+
+  // GraphContainer's axis follows `range` on every render, so a picker change that does not fetch
+  // again would leave the previous series under the new window. Only after this cell has already
+  // run (auto or explicit) — a freshly-inserted empty cell still waits for Run rather than firing
+  // the first time the reader moves the picker. Keyed off the window's endpoints rather than the
+  // TimeRange object: the layout re-renders with a new object for unrelated scene updates too.
+  // `resolvedRange` is not used here because the fallback (`getDefaultTimeRange()`) is a fresh
+  // `now` every render and would retrigger forever when no shared range was passed.
+  const rangeFromMs = range?.from.valueOf();
+  const rangeToMs = range?.to.valueOf();
+  const prevRangeFromMs = useRef(rangeFromMs);
+  const prevRangeToMs = useRef(rangeToMs);
+  useEffect(() => {
+    const rangeChanged = prevRangeFromMs.current !== rangeFromMs || prevRangeToMs.current !== rangeToMs;
+    prevRangeFromMs.current = rangeFromMs;
+    prevRangeToMs.current = rangeToMs;
+    if (!rangeChanged || !hasRun.current) {
+      return;
+    }
+    runQuery();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rangeFromMs, rangeToMs]);
 
   // Drag-to-zoom on the graph is Explore's own gesture for changing time range there — this cell
   // shares the notebook's own range instead (see the `range` prop), so honoring a per-graph zoom
