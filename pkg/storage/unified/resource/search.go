@@ -102,17 +102,20 @@ type BulkIndexRequest struct {
 }
 
 type IndexBuildInfo struct {
-	BuildTime        time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
-	BuildVersion     *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
-	SelectableFields []string        // List of selectable fields used when index was built.
-	SearchFieldsHash string          // Hash captured at build time over the SearchFieldDefinition slices registered for (group, resource), across all versions. Empty when no SearchFieldsProvider was in use.
-	Features         []IndexFeature  // Index features the index was built with. Empty on indexes built before index features existed.
+	BuildTime          time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
+	BuildVersion       *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
+	SelectableFields   []string        // List of selectable fields used when index was built.
+	SearchFieldsHash   string          // Hash captured at build time over the SearchFieldDefinition slices registered for (group, resource), across all versions. Empty when no SearchFieldsProvider was in use.
+	Features           []IndexFeature  // Index features the index was built with. Empty on indexes built before index features existed.
+	ReaderRequirements []IndexFeature  // Features a reader must understand before using this index. Empty on indexes built before requirements were recorded.
 }
 
-// IndexFeature names a mapping change an older index cannot satisfy. Only for
-// changes no declared search field describes, such as an internal marker: a
-// declared field already moves IndexAffectingHash. Choosing wrong is silent — no
-// rebuild, missing data, no error.
+// IndexFeature names something about an index the search fields hash does not
+// capture: an internal marker no field declares, a storage choice a declaration
+// does not describe, or fields kept out of the hash on purpose (see
+// TrashSearchFieldDefinitions). Changes the hash covers already force a rebuild.
+// Making such a change without adding a feature for it is silent: nothing
+// rebuilds, and older indexes keep serving without the mapping.
 type IndexFeature string
 
 // IndexFeatureTrashFields means the index maps TrashSearchFieldDefinitions. An
@@ -137,6 +140,11 @@ const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 // that path reports facet-capable but unstored fields as missing values.
 const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 
+// IndexFeatureHoldsDeletedDocuments means the index keeps deleted documents, so a
+// reader that does not exclude them returns deleted resources as live. Describes
+// what the index holds, not what it maps.
+const IndexFeatureHoldsDeletedDocuments IndexFeature = "holds-deleted-documents"
+
 // TrashIndexFeatures are the features an index needs before a deleted document may
 // be kept in it. Both writers read this one list, so the producer and the
 // BulkIndex backstop cannot disagree about what makes an index usable for trash.
@@ -145,10 +153,25 @@ func TrashIndexFeatures() []IndexFeature {
 }
 
 // currentIndexFeatures is recorded in every index this binary builds.
+//
+// A feature that changes which documents the index holds, not just how they are
+// mapped, belongs in readerRequiredFeatures too, and must not be enabled here
+// until that check has shipped for longer than the compatibility window —
+// instances without the check ignore the requirement and read the index anyway.
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureStoredFacets,
 	IndexFeatureTrashFields,
+}
+
+// knownIndexFeatures is every feature this binary can read. A feature belongs here
+// from the release that implements its reading side, even if nothing builds indexes
+// with it yet. Only ever grows.
+var knownIndexFeatures = []IndexFeature{
+	IndexFeatureDeletedMarker,
+	IndexFeatureStoredFacets,
+	IndexFeatureTrashFields,
+	IndexFeatureHoldsDeletedDocuments,
 }
 
 // requiredIndexFeatures is the subset an index must already have to be used. An
@@ -167,6 +190,17 @@ func CurrentIndexFeatures() []IndexFeature {
 	return slices.Sorted(slices.Values(currentIndexFeatures))
 }
 
+// IndexFeaturesForNewIndex returns what an index built now records. Whether it
+// keeps deleted documents is decided at creation, so it belongs with the rest
+// rather than in a field of its own.
+func IndexFeaturesForNewIndex(keepsDeletedDocuments bool) []IndexFeature {
+	features := currentIndexFeatures
+	if keepsDeletedDocuments {
+		features = append(slices.Clone(features), IndexFeatureHoldsDeletedDocuments)
+	}
+	return slices.Sorted(slices.Values(features))
+}
+
 // RequiredIndexFeatures returns the features an index must have to be used.
 // postRankAuthz adds the features only that path depends on, so deployments
 // serving facets from bleve itself are not rebuilt for it.
@@ -182,13 +216,44 @@ func RequiredIndexFeatures(postRankAuthz bool) []IndexFeature {
 // Features the index has and this binary does not require are ignored: an index
 // from a newer binary is the build version check's business.
 func MissingIndexFeatures(buildInfo IndexBuildInfo, requiredFeatures []IndexFeature) []IndexFeature {
+	return MissingFeatures(buildInfo.Features, requiredFeatures)
+}
+
+// MissingFeatures returns the required features absent from have. Takes the
+// feature list on its own, for callers holding a snapshot manifest rather than
+// an opened index.
+func MissingFeatures(have, requiredFeatures []IndexFeature) []IndexFeature {
 	var missing []IndexFeature
 	for _, feature := range requiredFeatures {
-		if !slices.Contains(buildInfo.Features, feature) {
+		if !slices.Contains(have, feature) {
 			missing = append(missing, feature)
 		}
 	}
 	return missing
+}
+
+// IndexReaderRequirements returns what an index must have its reader understand.
+// Derived from what the index holds, not what it maps: one keeping no deleted
+// documents is safe for any reader, whatever its mapping.
+func IndexReaderRequirements(keepsDeletedDocuments bool) []IndexFeature {
+	if !keepsDeletedDocuments {
+		return nil
+	}
+	return []IndexFeature{IndexFeatureHoldsDeletedDocuments}
+}
+
+// UnknownIndexRequirements returns declared requirements this binary does not
+// recognise; a non-empty result means the index must not be used. Matching on known
+// names rather than required ones is what lets an instance refuse a feature added
+// after it shipped.
+func UnknownIndexRequirements(requirements []IndexFeature) []IndexFeature {
+	var unknown []IndexFeature
+	for _, feature := range requirements {
+		if !slices.Contains(knownIndexFeatures, feature) {
+			unknown = append(unknown, feature)
+		}
+	}
+	return unknown
 }
 
 type ResourceIndex interface {
@@ -269,6 +334,12 @@ type SearchBackend interface {
 	// GetOpenIndexes returns the list of indexes that are currently open.
 	GetOpenIndexes() []NamespacedResource
 
+	// RemoveExpiredTrash deletes trash documents for objects that garbage
+	// collection has already removed from storage. The backend decides what is
+	// expired, because it holds the retention window. Errors are the backend's to
+	// log: a caller can only let the next pass try again.
+	RemoveExpiredTrash(ctx context.Context)
+
 	// Stop closes indexes and stops backend background tasks.
 	Stop()
 }
@@ -325,7 +396,6 @@ type searchServer struct {
 
 	injectFailuresPercent     int
 	indexModificationCacheTTL time.Duration
-	indexDeletedDocuments     bool
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
@@ -404,7 +474,6 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
-		indexDeletedDocuments:     opts.IndexDeletedDocuments,
 
 		queryCache:             opts.QueryCache,
 		queryCacheMaxPerTenant: opts.QueryCacheMaxPerTenant,
@@ -665,6 +734,16 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	if req.Offset < 0 {
 		return &resourcepb.ResourceSearchResponse{
 			Error: NewBadRequestError("offset cannot be negative"),
+		}, nil
+	}
+
+	// Trash authorizes each hit against one index's group and resource, so hits
+	// federated in from another index would be checked against the wrong one.
+	// Refused here rather than further in because resolving a federated index below
+	// can build one.
+	if req.IsDeleted && len(req.Federated) > 0 {
+		return &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("searching deleted resources does not support federated queries"),
 		}, nil
 	}
 
@@ -1364,6 +1443,8 @@ func (s *searchServer) init(ctx context.Context) error {
 	s.bgTaskWg.Add(1)
 	go s.runPeriodicScanForIndexesToRebuild(subctx)
 
+	s.bgTaskWg.Go(func() { s.runPeriodicTrashCleanup(subctx) })
+
 	s.startRateBucketSweeper(subctx)
 
 	end := time.Now().Unix()
@@ -1417,6 +1498,23 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 				s.log.Error("failed to get import times", "error", err)
 			}
 			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
+		}
+	}
+}
+
+// Reads already hide expired trash, so this only reclaims space and can run
+// rarely. It gets its own goroutine because draining a large backlog would
+// otherwise hold up the rebuild scan.
+func (s *searchServer) runPeriodicTrashCleanup(ctx context.Context) {
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.search.RemoveExpiredTrash(ctx)
 		}
 	}
 }
@@ -1923,7 +2021,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
 
 		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
-			Limit: listEverything,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     nsr.Group,
@@ -2164,13 +2261,16 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 // index. They do not when the feature is switched off, or when the index predates
 // the marker mappings and would serve a marked document as live. Either way the
 // document is removed instead, as it was before trash search existed.
+// keepsDeletedDocuments reads the decision recorded when the index was built, not
+// the current setting, so a change takes effect on the next rebuild. Consulting the
+// setting per write would leave trash missing what was deleted while it was off.
 func (s *searchServer) keepsDeletedDocuments(index ResourceIndex, logger log.Logger) bool {
-	if !s.indexDeletedDocuments {
-		return false
-	}
 	info, err := index.BuildInfo()
 	if err != nil {
 		logger.Warn("cannot read index features, removing deleted documents instead of keeping them", "err", err)
+		return false
+	}
+	if !slices.Contains(info.Features, IndexFeatureHoldsDeletedDocuments) {
 		return false
 	}
 	missing := MissingIndexFeatures(info, TrashIndexFeatures())

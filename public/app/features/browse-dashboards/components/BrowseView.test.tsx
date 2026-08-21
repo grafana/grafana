@@ -185,6 +185,7 @@ describe('browse-dashboards BrowseView', () => {
         isLoading: false,
         markdownContent,
         refetch: jest.fn(),
+        syncFinished: undefined,
       });
     }
 
@@ -205,6 +206,7 @@ describe('browse-dashboards BrowseView', () => {
         isLoading: false,
         markdownContent: undefined,
         refetch: jest.fn(),
+        syncFinished: undefined,
       });
     }
 

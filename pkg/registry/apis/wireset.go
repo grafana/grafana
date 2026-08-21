@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
-	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
@@ -52,7 +51,6 @@ var WireSetExts = wire.NewSet(
 var provisioningExtras = wire.NewSet(
 	pullrequest.ProvidePullRequestWorker,
 	webhooks.ProvideWebhooksWithImages,
-	extras.ProvideConnectionFactoryFromConfig,
 	extras.ProvideProvisioningExtraAPIs,
 	extras.ProvideExtraWorkers,
 	extras.ProvideQuotaGetter,
@@ -90,6 +88,5 @@ var WireSet = wire.NewSet(
 	preferences.RegisterAPIService,
 	collections.RegisterAPIService,
 	userstorage.RegisterAPIService,
-	ofrep.RegisterAPIService,
 	appplugin.RegisterAPIService,
 )

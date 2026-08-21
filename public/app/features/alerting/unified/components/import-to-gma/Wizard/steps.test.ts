@@ -1,70 +1,66 @@
-import { getNextStep, getPreviousStep, getWizardSteps, isAutoSyncMethod, isFirstStep, isLastStep } from './steps';
+import { getNextStep, getPreviousStep, getWizardSteps, isLastStep, isRulesForcedSkipped } from './steps';
 import { StepKey } from './types';
 
 describe('getWizardSteps', () => {
-  it.each(['stage', 'promote'] as const)('returns the full four-step rail for the %s import method', (method) => {
-    const steps = getWizardSteps(method).map((s) => s.id);
-    expect(steps).toEqual([StepKey.Method, StepKey.Notifications, StepKey.Rules, StepKey.Review]);
-  });
-
-  it('collapses to a two-step rail for the autosync method', () => {
-    const steps = getWizardSteps('autosync').map((s) => s.id);
-    expect(steps).toEqual([StepKey.Method, StepKey.ReviewEnable]);
+  it('returns the three-step rail', () => {
+    const steps = getWizardSteps().map((s) => s.id);
+    expect(steps).toEqual([StepKey.Notifications, StepKey.Rules, StepKey.Review]);
   });
 });
 
 describe('getNextStep', () => {
-  it('advances from Method into Notification resources for an import method', () => {
-    expect(getNextStep(StepKey.Method, 'promote')?.id).toBe(StepKey.Notifications);
+  it('advances from Notification resources to Alert rules', () => {
+    expect(getNextStep(StepKey.Notifications)?.id).toBe(StepKey.Rules);
   });
 
-  it('advances from Method straight to Review & enable for autosync', () => {
-    expect(getNextStep(StepKey.Method, 'autosync')?.id).toBe(StepKey.ReviewEnable);
+  it('returns undefined past the last step', () => {
+    expect(getNextStep(StepKey.Review)).toBeUndefined();
   });
 
-  it('returns undefined past the last step of each method', () => {
-    expect(getNextStep(StepKey.Review, 'stage')).toBeUndefined();
-    expect(getNextStep(StepKey.ReviewEnable, 'autosync')).toBeUndefined();
+  it('jumps from Notification resources straight to Review when Rules is force-skipped', () => {
+    expect(getNextStep(StepKey.Notifications, true)?.id).toBe(StepKey.Review);
+  });
+
+  it('does not skip Rules when skipRules is false', () => {
+    expect(getNextStep(StepKey.Notifications, false)?.id).toBe(StepKey.Rules);
   });
 });
 
 describe('getPreviousStep', () => {
-  it('goes back from Notification resources to Method for an import method', () => {
-    expect(getPreviousStep(StepKey.Notifications, 'stage')?.id).toBe(StepKey.Method);
-  });
-
-  it('goes back from Review & enable to Method for autosync', () => {
-    expect(getPreviousStep(StepKey.ReviewEnable, 'autosync')?.id).toBe(StepKey.Method);
+  it('goes back from Alert rules to Notification resources', () => {
+    expect(getPreviousStep(StepKey.Rules)?.id).toBe(StepKey.Notifications);
   });
 
   it('returns undefined before the first step', () => {
-    expect(getPreviousStep(StepKey.Method, 'promote')).toBeUndefined();
+    expect(getPreviousStep(StepKey.Notifications)).toBeUndefined();
   });
-});
 
-describe('isFirstStep', () => {
-  it('is true only for the Method step', () => {
-    expect(isFirstStep(StepKey.Method)).toBe(true);
-    expect(isFirstStep(StepKey.Notifications)).toBe(false);
+  it('jumps from Review straight back to Notification resources when Rules is force-skipped', () => {
+    expect(getPreviousStep(StepKey.Review, true)?.id).toBe(StepKey.Notifications);
+  });
+
+  it('does not skip Rules when skipRules is false', () => {
+    expect(getPreviousStep(StepKey.Review, false)?.id).toBe(StepKey.Rules);
   });
 });
 
 describe('isLastStep', () => {
-  it('is the Review step for import methods', () => {
-    expect(isLastStep(StepKey.Review, 'stage')).toBe(true);
-    expect(isLastStep(StepKey.Notifications, 'stage')).toBe(false);
-  });
-
-  it('is the Review & enable step for autosync', () => {
-    expect(isLastStep(StepKey.ReviewEnable, 'autosync')).toBe(true);
-    expect(isLastStep(StepKey.Method, 'autosync')).toBe(false);
+  it('is true only for the Review step', () => {
+    expect(isLastStep(StepKey.Review)).toBe(true);
+    expect(isLastStep(StepKey.Notifications)).toBe(false);
   });
 });
 
-describe('isAutoSyncMethod', () => {
-  it('is true only for the autosync method', () => {
-    expect(isAutoSyncMethod('autosync')).toBe(true);
-    expect(isAutoSyncMethod('stage')).toBe(false);
-    expect(isAutoSyncMethod('promote')).toBe(false);
+describe('isRulesForcedSkipped', () => {
+  it('is true only when Auto-sync is enabled and the source is a data source', () => {
+    expect(isRulesForcedSkipped(true, 'datasource')).toBe(true);
+  });
+
+  it('is false when Auto-sync is disabled', () => {
+    expect(isRulesForcedSkipped(false, 'datasource')).toBe(false);
+  });
+
+  it('is false for the YAML source, even with Auto-sync enabled', () => {
+    expect(isRulesForcedSkipped(true, 'yaml')).toBe(false);
   });
 });

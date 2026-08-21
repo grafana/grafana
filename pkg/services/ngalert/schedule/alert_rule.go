@@ -473,7 +473,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 		))
 	}
 	start = a.clock.Now()
-	_, _ = a.stateManager.ProcessEvalResults(
+	_, procErr := a.stateManager.ProcessEvalResults(
 		ctx,
 		e.scheduledAt,
 		e.rule,
@@ -488,6 +488,11 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 			sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
 		},
 	)
+	if errors.Is(procErr, state.ErrNotReady) {
+		logger.Warn("Skip processing evaluation results because the state cache is not ready")
+		a.metrics.EvaluationMissed.WithLabelValues(fmt.Sprint(a.key.OrgID), e.rule.Title, "state_not_warmed").Inc()
+		return nil
+	}
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
 	return nil

@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { isFetchError } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -47,6 +47,9 @@ export const useGetResourceRepositoryView = (args: GetResourceRepositoryArgs): R
   const data = useResourceRepositoryViewData(args);
   return {
     ...data,
+    // Derived here so every resolution path reports it; the name and folderName branches used to
+    // return undefined, which read as a Git repo to consumers picking the read-only tooltip copy
+    repoType: data.repository?.type,
     isMissingRepo: !data.isLoading && !data.repository,
   };
 };
@@ -57,11 +60,13 @@ const useResourceRepositoryViewData = ({
   skipQuery,
   includeInstance,
   includeFolderless,
-}: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo'> => {
+}: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo' | 'repoType'> => {
+  const provisioningEnabled = config.provisioningEnabled;
   // Skip when caller has no target. This query is shared across many
   // components, so a failing fetch would cycle all of them through retries.
   // `includeInstance`/`includeFolderless` override the skip for root-level lookups.
-  const shouldSkipSettings = skipQuery || (!name && !folderName && !includeInstance && !includeFolderless);
+  const shouldSkipSettings =
+    !provisioningEnabled || skipQuery || (!name && !folderName && !includeInstance && !includeFolderless);
   const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
 
   const {
@@ -70,12 +75,21 @@ const useResourceRepositoryViewData = ({
     error: settingsError,
   } = useGetFrontendSettingsQuery(settingsQueryArg);
 
-  const skipFolderQuery = !folderName || skipQuery;
+  const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery;
   const {
     data: folder,
     isLoading: isFolderLoading,
     error: folderError,
   } = useGetFolderQuery(skipFolderQuery ? skipToken : { name: folderName });
+
+  if (!provisioningEnabled) {
+    return {
+      isLoading: false,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      status: RepoViewStatus.Disabled,
+    };
+  }
 
   if (isSettingsLoading || isFolderLoading) {
     return {
@@ -197,7 +211,6 @@ const useResourceRepositoryViewData = ({
     folder,
     isInstanceManaged,
     isReadOnlyRepo: getIsReadOnlyRepo(repository),
-    repoType: repository?.type,
     status: RepoViewStatus.Ready,
   };
 };

@@ -3,12 +3,10 @@ import { act, renderHook } from '@testing-library/react';
 import { locationService } from '@grafana/runtime';
 import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { appEvents } from 'app/core/app_events';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { type DashboardMeta } from 'app/types/dashboard';
-import { DashboardSavedEvent } from 'app/types/events';
 
 import { useDatabaseSaveSwitch } from './useDatabaseSaveSwitch';
 import { RepoViewStatus } from './useGetResourceRepositoryView';
@@ -90,6 +88,7 @@ describe('useDatabaseSaveSwitch', () => {
   it('clears the provisioned folder and annotations when switching to the database', () => {
     const dashboard = createDashboard({
       folderUid: 'repo-folder',
+      folderTitle: 'Repo Folder',
       k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo } },
     });
     const { result } = setup({ dashboard });
@@ -97,7 +96,9 @@ describe('useDatabaseSaveSwitch', () => {
     act(() => result.current.switchToDatabase());
 
     expect(result.current.saveToDatabase).toBe(true);
-    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: undefined, k8s: undefined } });
+    expect(dashboard.setState).toHaveBeenCalledWith({
+      meta: { folderUid: undefined, folderTitle: undefined, k8s: undefined },
+    });
   });
 
   it('keeps the picked folder when the git flow has already dead-ended', () => {
@@ -128,7 +129,7 @@ describe('useDatabaseSaveSwitch', () => {
 
   it('restores the entry folder on switch-back when the repo never resolved', () => {
     locationService.push('/?folderUid=repo-folder');
-    const dashboard = createDashboard({ folderUid: 'orphaned-folder' });
+    const dashboard = createDashboard({ folderUid: 'orphaned-folder', folderTitle: 'Orphaned Folder' });
     const { result } = setup({ dashboard, repository: undefined, repoDataStatus: RepoViewStatus.Orphaned });
 
     act(() => result.current.switchToDatabase());
@@ -171,7 +172,9 @@ describe('useDatabaseSaveSwitch', () => {
     const { result, unmount } = setup({ dashboard });
 
     act(() => result.current.switchToDatabase());
-    act(() => appEvents.publish(new DashboardSavedEvent()));
+    // saveCompleted mints the uid and clears the overlay in one setState, so the unmount can land
+    // before or after the save without changing the outcome
+    dashboard.state.uid = 'saved-uid';
     const callsAfterSave = jest.mocked(dashboard.setState).mock.calls.length;
     unmount();
 

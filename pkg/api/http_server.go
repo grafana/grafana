@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -42,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
@@ -67,6 +69,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	"github.com/grafana/grafana/pkg/services/diagnostics"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -180,6 +183,7 @@ type HTTPServer struct {
 	pluginsUpdateChecker         *updatemanager.PluginsService
 	searchUsersService           searchusers.Service
 	queryDataService             query.Service
+	diagnosticsMetrics           *diagnostics.Metrics
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
 	NotificationService          notifications.Service
@@ -271,7 +275,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
-	apiKeyService apikey.Service, kvStore kvstore.KVStore,
+	apiKeyService apikey.Service, kvStore kvstore.KVStore, usageStats usagestats.Service,
 	secretsMigrator secrets.Migrator, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretMigrationProvider spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
@@ -287,6 +291,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	web.Env = cfg.Env
 	m := web.New()
 
+	var diagnosticsMetrics *diagnostics.Metrics
+	if cfg.StackID == "" {
+		diagnosticsMetrics = diagnostics.NewMetrics(sqlStore, usageStats, promRegister)
+	}
 	hs := &HTTPServer{
 		Cfg:                          cfg,
 		RouteRegister:                routeRegister,
@@ -342,6 +350,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		queryDataService:             queryDataService,
+		diagnosticsMetrics:           diagnosticsMetrics,
 		serviceAccountsService:       serviceaccountsService,
 		authInfoService:              authInfoService,
 		NotificationService:          notificationService,
@@ -693,7 +702,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.UseMiddleware(middleware.Recovery(hs.Cfg, hs.License))
 	m.UseMiddleware(hs.Csrf.Middleware())
 
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, webassets.BuildDir, "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "mockServiceWorker.js", "mockServiceWorker.js")

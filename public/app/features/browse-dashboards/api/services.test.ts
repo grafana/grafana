@@ -228,12 +228,10 @@ describe('browse-dashboards services', () => {
     describe('starred folders virtual item', () => {
       beforeEach(() => {
         config.featureToggles.foldersAppPlatformAPI = true;
-        config.featureToggles.starsFromAPIServer = true;
         setTestFlags({ 'grafana.starredFolders': true });
       });
 
       afterEach(() => {
-        config.featureToggles.starsFromAPIServer = false;
         setTestFlags({});
       });
 
@@ -249,15 +247,6 @@ describe('browse-dashboards services', () => {
         expect(uids.indexOf('starred_folders')).toBeLessThan(uids.indexOf('root-folder-1'));
         // The virtual container is a plain text row with no folder URL.
         expect(result.find((f) => f.uid === 'starred_folders')?.url).toBeUndefined();
-      });
-
-      it('does not insert the starred folders item when starsFromAPIServer is disabled', async () => {
-        config.featureToggles.starsFromAPIServer = false;
-        server.use(getCustomSearchHandler(allHits));
-
-        const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
-
-        expect(result.find((f) => f.uid === 'starred_folders')).toBeUndefined();
       });
     });
   });

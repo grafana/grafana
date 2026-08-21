@@ -7,7 +7,79 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestResolveBuildDir(t *testing.T) {
+	t.Run("resolves build when the rspack flag is off", func(t *testing.T) {
+		require.Equal(t, "build", ResolveBuildDir(context.Background()))
+	})
+
+	t.Run("resolves build/rspack when the rspack flag is on", func(t *testing.T) {
+		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
+
+		require.Equal(t, "build/rspack", ResolveBuildDir(context.Background()))
+	})
+}
+
+func TestGetWebAssetsBuildDir(t *testing.T) {
+	// Env must be dev so GetWebAssets skips its process-wide cache between subtests.
+	cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata"}
+	license := licensingtest.NewFakeLicensing()
+	license.On("ContentDeliveryPrefix").Return("grafana")
+
+	t.Run("flag off reads the webpack manifest", func(t *testing.T) {
+		ctx := context.Background()
+
+		assets, err := GetWebAssets(ctx, ResolveBuildDir(ctx), cfg, license)
+		require.NoError(t, err)
+		require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
+		require.Equal(t, "public/build/grafana.dark.722d809dba5a31f57d49.css", assets.Dark)
+	})
+
+	t.Run("flag on reads the rspack manifest", func(t *testing.T) {
+		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
+		ctx := context.Background()
+
+		assets, err := GetWebAssets(ctx, ResolveBuildDir(ctx), cfg, license)
+		require.NoError(t, err)
+		require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
+		require.Equal(t, "public/build/grafana.dark.dddd3333eeee4444ffff.css", assets.Dark)
+	})
+}
+
+func TestGetWebAssetsSwagger(t *testing.T) {
+	cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata"}
+	license := licensingtest.NewFakeLicensing()
+	license.On("ContentDeliveryPrefix").Return("grafana")
+
+	t.Run("flag off", func(t *testing.T) {
+		assets, err := GetWebAssets(context.Background(), "build-swagger", cfg, license)
+		require.NoError(t, err)
+		require.Equal(t, "public/build-swagger/runtime.js", assets.JSFiles[0].FilePath)
+	})
+
+	t.Run("flag on", func(t *testing.T) {
+		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
+
+		assets, err := GetWebAssets(context.Background(), "build-swagger", cfg, license)
+		require.NoError(t, err)
+		require.Equal(t, "public/build-swagger/runtime.js", assets.JSFiles[0].FilePath)
+	})
+}
+
+func TestGetWebAssetsMissingBuildDir(t *testing.T) {
+	cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata"}
+	license := licensingtest.NewFakeLicensing()
+	license.On("ContentDeliveryPrefix").Return("grafana")
+
+	assets, err := GetWebAssets(context.Background(), "build-does-not-exist", cfg, license)
+	require.ErrorContains(t, err, "failed to load assets-manifest.json")
+	require.Nil(t, assets)
+}
 
 func TestReadWebassets(t *testing.T) {
 	assets, err := ReadWebAssetsFromFile("testdata/build/assets-manifest.json")
@@ -39,23 +111,7 @@ func TestReadWebassets(t *testing.T) {
 		}
 	],
 	"dark": "public/build/grafana.dark.722d809dba5a31f57d49.css",
-	"light": "public/build/grafana.light.2fbd901d840329c18394.css",
-	"swagger": [
-		{
-		"filePath": "public/build/runtime.js",
-		"integrity": "sha256-tM4AGASn3Cb8139+wp3w6rlo3ELFAuUW7K4Pifx226o= sha384-DfxxsYWb0+RxiXOr+wtCSzAAYGecffq/iHyn6CN9tHmaORv1sS+rsrnlnJo2jPQD sha512-qSxdqrx0mJLY1mdkbKrkCyqOoIEgFqzCoY9+uIuFRIVDPFbb2nJy0NtaKMQvDJnAzIrJFwzwW1e250T4WqQNiQ=="
-		},
-		{
-		"filePath": "public/build/swagger.js",
-		"integrity": "sha256-wLlip7zRYODW/TPcI5JZPRdmWirc1KD+UcNF+8V9RBk= sha384-6VGD+LgCpjMZN/ORSjWcrWa9diUzQO3OfEhP0D2ZluSwP4IT+0kH7KEeD9NVbojd sha512-vZOCFzBZBhd34yGv8z7P4Gw4WLVR9HjpuK0y6Kcw+pCBk5Dv9qHBg3ZVs6s0tOnUmiMWwgL4Ne8f+zgiuJVPqg=="
-		}
-	],
-	"swaggerCssFiles": [
-		{
-		"filePath": "public/build/grafana.swagger.2733d417270d5dd49373.css",
-		"integrity": "sha256-GNcHNgIAT7S+J4X7seFjlvNPC1bRhM15d0cQBm3VFoQ= sha384-ywztCBf8uF0tTFjC1mLth33RI2WuFURN3dRy7Bv2PheGzbWJpwlgo9+mtT2Zm7mO sha512-e4c+VedZGqcwLqwfdqRWonggRPO0gjJ7Z0YbXK5z4bFTsUIc+x8ycIJG+eQaf8cuHlsakG4hkWNkRwLBazcFAg=="
-		}
-	]
+	"light": "public/build/grafana.light.2fbd901d840329c18394.css"
 	}`, string(dto))
 
 	assets.SetContentDeliveryURL("https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
@@ -87,30 +143,14 @@ func TestReadWebassets(t *testing.T) {
 		}
 	],
 	"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.dark.722d809dba5a31f57d49.css",
-	"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.2fbd901d840329c18394.css",
-	"swagger": [
-		{
-		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/runtime.js",
-		"integrity": "sha256-tM4AGASn3Cb8139+wp3w6rlo3ELFAuUW7K4Pifx226o= sha384-DfxxsYWb0+RxiXOr+wtCSzAAYGecffq/iHyn6CN9tHmaORv1sS+rsrnlnJo2jPQD sha512-qSxdqrx0mJLY1mdkbKrkCyqOoIEgFqzCoY9+uIuFRIVDPFbb2nJy0NtaKMQvDJnAzIrJFwzwW1e250T4WqQNiQ=="
-		},
-		{
-		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/swagger.js",
-		"integrity": "sha256-wLlip7zRYODW/TPcI5JZPRdmWirc1KD+UcNF+8V9RBk= sha384-6VGD+LgCpjMZN/ORSjWcrWa9diUzQO3OfEhP0D2ZluSwP4IT+0kH7KEeD9NVbojd sha512-vZOCFzBZBhd34yGv8z7P4Gw4WLVR9HjpuK0y6Kcw+pCBk5Dv9qHBg3ZVs6s0tOnUmiMWwgL4Ne8f+zgiuJVPqg=="
-		}
-	],
-	"swaggerCssFiles": [
-		{
-		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.swagger.2733d417270d5dd49373.css",
-		"integrity": "sha256-GNcHNgIAT7S+J4X7seFjlvNPC1bRhM15d0cQBm3VFoQ= sha384-ywztCBf8uF0tTFjC1mLth33RI2WuFURN3dRy7Bv2PheGzbWJpwlgo9+mtT2Zm7mO sha512-e4c+VedZGqcwLqwfdqRWonggRPO0gjJ7Z0YbXK5z4bFTsUIc+x8ycIJG+eQaf8cuHlsakG4hkWNkRwLBazcFAg=="
-		}
-	]
+	"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.2fbd901d840329c18394.css"
 	}`, string(dto))
 }
 
 func TestReadWebassetsFromCDN(t *testing.T) {
 	t.Skip()
 
-	assets, err := readWebAssetsFromCDN(context.Background(), "https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
+	assets, err := ReadWebAssetsFromCDN(context.Background(), "build", "https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
 	require.NoError(t, err)
 
 	dto, err := json.MarshalIndent(assets, "", "  ")
@@ -148,4 +188,31 @@ func TestReadWebassetsFromCDN(t *testing.T) {
 		"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.dark.b44253d019cd9cb46428.css",
 		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.e8e11c59b604d62836be.css"
 	  }`, string(dto))
+}
+
+func TestPublicPathFollowsBuildDir(t *testing.T) {
+	tests := []struct {
+		buildDir string
+		expected string
+	}{
+		{buildDir: BuildDir, expected: "public/build/"},
+		{buildDir: RspackBuildDir, expected: "public/build/rspack/"},
+		{buildDir: "build-swagger", expected: "public/build-swagger/"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.buildDir, func(t *testing.T) {
+			require.Equal(t, tt.expected, PublicPathFor(tt.buildDir))
+		})
+	}
+
+	t.Run("is set on assets read from disk", func(t *testing.T) {
+		cfg := &setting.Cfg{StaticRootPath: "testdata", Env: setting.Dev}
+		license := licensingtest.NewFakeLicensing()
+		license.On("ContentDeliveryPrefix").Return("grafana")
+
+		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+		require.NoError(t, err)
+		require.Equal(t, "public/build/rspack/", assets.PublicPath)
+	})
 }

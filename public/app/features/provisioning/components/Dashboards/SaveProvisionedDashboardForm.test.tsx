@@ -5,7 +5,7 @@ import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyManagerIdentity, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -29,6 +29,9 @@ jest.mock('@grafana/runtime', () => {
           state: 'alpha',
         },
       },
+      // getProvisionedMeta's k8s folder lookup isn't mocked in this suite; keep it disabled
+      // so folder selection doesn't attempt a real getFolder query.
+      provisioningEnabled: false,
     },
   };
 });
@@ -43,8 +46,19 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
 
 jest.mock('app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker', () => {
   return {
-    ProvisioningAwareFolderPicker: ({ onChange }: { onChange: (uid?: string, title?: string) => void }) => (
-      <button type="button" data-testid="folder-picker" onClick={() => onChange('picked-folder', 'Picked Folder')}>
+    ProvisioningAwareFolderPicker: ({
+      onChange,
+      value,
+    }: {
+      onChange: (uid?: string, title?: string) => void;
+      value?: string;
+    }) => (
+      <button
+        type="button"
+        data-testid="folder-picker"
+        data-folder-uid={value}
+        onClick={() => onChange('picked-folder', 'Picked Folder')}
+      >
         Mocked Folder Picker
       </button>
     ),
@@ -216,11 +230,16 @@ function saveSuccessResponse(name: string, title: string) {
 
 describe('SaveProvisionedDashboardForm', () => {
   let capturedRequest: { url: URL; body: unknown } | null = null;
+  const originalHref = window.location.href;
 
   beforeEach(() => {
     capturedRequest = null;
     jest.clearAllMocks();
     (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    window.history.replaceState({}, '', originalHref);
   });
 
   it('should render the form with correct fields for a new dashboard', async () => {
@@ -1084,6 +1103,68 @@ describe('SaveProvisionedDashboardForm', () => {
     });
   });
 
+  describe('enforced branch name template', () => {
+    beforeEach(() => {
+      setTestFlags({ 'provisioning.gitConventions': true });
+    });
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    const enforcedRepo: NonNullable<Props['repository']> = {
+      type: 'github',
+      name: 'test-repo',
+      title: 'Test Repo',
+      workflows: ['branch', 'write'],
+      target: 'folder',
+      branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}-{{title}}' },
+    };
+
+    const branchDefaults: Props['defaultValues'] = {
+      ref: 'dashboard/2023-01-01-abcde',
+      path: 'test-dashboard.json',
+      repo: 'test-repo',
+      comment: '',
+      folder: { uid: 'folder-uid', title: '' },
+      title: 'Test Dashboard',
+      description: 'Test Description',
+      workflow: 'branch',
+    };
+
+    it('sends the enforced template branch as ref to the /files endpoint on save', async () => {
+      // The whole point of the fix: the enforced branch must be sent as `ref` so the change lands
+      // on the template branch instead of being dropped (forbidden / direct push to configured branch).
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        })
+      );
+
+      const { user, props } = setup({
+        repository: { ...enforcedRepo, branch: 'main' },
+        defaultValues: branchDefaults,
+      });
+      props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+        apiVersion: 'dashboard.grafana.app/v1alpha1',
+        kind: 'Dashboard',
+        metadata: { generateName: 'p' },
+        spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+      });
+
+      const branch = await screen.findByRole('textbox', { name: /branch/i });
+      await waitFor(() => expect(branch).toHaveValue('grafana/create-test-dashboard'));
+
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      const request = requireCapturedRequest(capturedRequest);
+      expect(request.url.searchParams.get('ref')).toBe('grafana/create-test-dashboard');
+    });
+  });
+
   describe('title-to-filename auto-sync', () => {
     it('should auto-update filename when the title changes for a new dashboard', async () => {
       const { user } = setup({
@@ -1326,6 +1407,21 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(await screen.findByRole('button', { name: /no folder/i })).toBeInTheDocument();
   });
 
+  it('keeps the No folder button when a branch workflow gates out New folder', async () => {
+    setupFolderless({ repository: { workflows: ['branch'] }, defaultValues: { workflow: 'branch' } });
+
+    // Picking the root only retargets the form, so it survives workflows that cannot create a folder
+    expect(await screen.findByRole('button', { name: /no folder/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
+  });
+
+  it('passes no folder value to the picker for a new dashboard at root', async () => {
+    setupFolderless();
+
+    // An empty-string value would fire the picker's team-folder preselect and overwrite the root target
+    expect(await screen.findByTestId('folder-picker')).not.toHaveAttribute('data-folder-uid');
+  });
+
   it('does not show the No folder button for non-folderless repos', async () => {
     setup({
       repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folder' },
@@ -1373,8 +1469,73 @@ describe('SaveProvisionedDashboardForm', () => {
     );
     // The folder is cleared, but the open dashboard keeps its identity while the drawer is open
     expect(props.dashboard.setState).toHaveBeenCalledWith({
-      meta: { folderUid: undefined, folderTitle: undefined, k8s: undefined, slug: 'test-dashboard' },
+      meta: { folderUid: undefined, folderTitle: undefined, k8s: { annotations: {} }, slug: 'test-dashboard' },
     });
+  });
+
+  it('keeps the k8s identity but drops the old folder annotations when a copy changes folder', async () => {
+    const dashboardState = {
+      meta: {
+        folderUid: 'my-team-uid',
+        slug: 'test-dashboard',
+        k8s: {
+          name: 'existing-uid',
+          resourceVersion: '42',
+          annotations: { [AnnoKeyManagerIdentity]: 'test-repo', [AnnoKeySourcePath]: 'My Team/test-dashboard.json' },
+        },
+      },
+      title: 'Test Dashboard',
+      description: '',
+      isDirty: true,
+    };
+    const dashboard = {
+      state: dashboardState,
+      useState: () => dashboardState,
+      setState: jest.fn(),
+      closeModal: jest.fn(),
+      getSaveModel: jest.fn().mockReturnValue({}),
+      saveCompleted: jest.fn(),
+      getSaveAsModel: jest.fn().mockReturnValue({}),
+      setManager: jest.fn(),
+      getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+    } as unknown as DashboardScene;
+
+    const { user } = setup({
+      dashboard,
+      // A copy of an existing dashboard is the one flow where the folder picker meets a saved k8s identity
+      isNew: true,
+      saveAsCopy: true,
+      repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folderless' },
+      defaultValues: {
+        ref: 'main',
+        path: 'My Team/test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'my-team-uid', title: 'My Team' },
+        title: 'Test Dashboard',
+        description: '',
+        workflow: 'write',
+      },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /no folder/i }));
+
+    // The dashboard still resolves as an update; only the old folder's manager annotation goes,
+    // or the recomputed defaults would keep pointing at the old repository
+    await waitFor(() =>
+      expect(dashboard.setState).toHaveBeenCalledWith({
+        meta: {
+          folderUid: undefined,
+          folderTitle: undefined,
+          slug: 'test-dashboard',
+          k8s: {
+            name: 'existing-uid',
+            resourceVersion: '42',
+            annotations: { [AnnoKeySourcePath]: 'My Team/test-dashboard.json' },
+          },
+        },
+      })
+    );
   });
 
   it('ignores a slow folder pick that resolves after saving at root', async () => {
@@ -1586,9 +1747,6 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('syncs dashboard meta with the created folder so defaults recompute against it', async () => {
-    const FOLDER_BASE = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace';
-    server.use(http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json({ metadata: { annotations: {} } })));
-
     let dashboardRequest: { url: URL; body: unknown } | null = null;
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {

@@ -125,6 +125,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
+	"github.com/grafana/grafana/pkg/services/ofrep"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
@@ -189,7 +191,6 @@ import (
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 )
 
 var withOTelSet = wire.NewSet(
@@ -281,6 +282,7 @@ var wireBasicSet = wire.NewSet(
 	libraryelements.ProvideFolderConsumer,
 	ngalert.ProvideAlertRuleFolderConsumer,
 	folderreconcile.ProvideReconciler,
+	libraryelements.ProvideFolderUIDRepair,
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	github.ProvideFactory,
@@ -298,7 +300,6 @@ var wireBasicSet = wire.NewSet(
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
 	socialimpl.ProvideService,
-	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
 	graphite.ProvideService,
 	datasourceservice.ProvideCacheService,
@@ -306,6 +307,7 @@ var wireBasicSet = wire.NewSet(
 	encryptionservice.ProvideEncryptionService,
 	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,
+	ofrep.ProvideService,
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsDatabase.ProvideSecretsStore,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -374,6 +376,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
 	orgimpl.ProvideService,
 	orgimpl.ProvideDeletionService,
+	orgimpl.ProvideDeleteRegistrar,
+	wire.Bind(new(org.DeletionService), new(*orgimpl.DeletionService)),
 	statsimpl.ProvideService,
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideHealthService,

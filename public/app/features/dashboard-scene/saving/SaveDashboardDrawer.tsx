@@ -33,7 +33,8 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   // Git/Database switch for provisioned saves, owned by useDatabaseSaveSwitch. Lives on the
   // drawer because switching tabs unmounts the save form while the drawer stays open.
   saveToDatabase?: boolean;
-  databaseSwitchSnapshot?: { gitMeta: DashboardMeta; wasNew: boolean };
+  // uid is the scene uid at switch time; a different one on unmount means a save already landed
+  databaseSwitchSnapshot?: { gitMeta: DashboardMeta; wasNew: boolean; uid?: string };
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
@@ -90,7 +91,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const { meta } = dashboard.useState();
   const { provisioned: isProvisioned, folderTitle } = meta;
   const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
-  const { isProvisioned: isProvisionedNG, isLoading: isResolvingRepo } = useIsProvisionedNG(dashboard);
+  const { isProvisioned: isProvisionedNG, isLoading: isResolvingRepo } = useIsProvisionedNG(dashboard, saveAsCopy);
 
   const tabs = (
     <TabsBar>

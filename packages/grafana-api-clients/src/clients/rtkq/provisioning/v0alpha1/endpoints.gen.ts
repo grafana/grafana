@@ -120,6 +120,10 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Connection'],
       }),
+      createConnectionAuthorize: build.mutation<CreateConnectionAuthorizeApiResponse, CreateConnectionAuthorizeApiArg>({
+        query: (queryArg) => ({ url: `/connections/${queryArg.name}/authorize`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Connection'],
+      }),
       getConnectionRepositories: build.query<GetConnectionRepositoriesApiResponse, GetConnectionRepositoriesApiArg>({
         query: (queryArg) => ({ url: `/connections/${queryArg.name}/repositories` }),
         providesTags: ['Connection'],
@@ -722,6 +726,20 @@ export type UpdateConnectionApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type CreateConnectionAuthorizeApiResponse = /** status 200 OK */ ConnectionAuthorizeRequest;
+export type CreateConnectionAuthorizeApiArg = {
+  /** name of the ConnectionAuthorizeRequest */
+  name: string;
+  body: {
+    /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+    apiVersion?: string;
+    /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+    kind?: string;
+    metadata?: any;
+    spec: any;
+    status?: any;
+  };
 };
 export type GetConnectionRepositoriesApiResponse = /** status 200 OK */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1455,8 +1473,8 @@ export type ConnectionSecure = {
   token?: InlineSecureValue;
 };
 export type BitbucketConnectionConfig = {
-  /** App client ID */
-  clientID: string;
+  /** The workspace the OAuth consumer belongs to */
+  workspace: string;
 };
 export type GitHubConnectionConfig = {
   /** GitHub App ID */
@@ -1472,8 +1490,12 @@ export type GitHubEnterpriseConnectionConfig = {
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
   serverUrl: string;
 };
-export type GitlabConnectionConfig = {
-  /** App client ID */
+export type GitHubEnterpriseOAuthConnectionConfig = {
+  /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
+  serverUrl: string;
+};
+export type ConnectionOAuthConfig = {
+  /** The OAuth app client ID */
   clientID: string;
 };
 export type ConnectionWebhookConfig = {
@@ -1481,7 +1503,7 @@ export type ConnectionWebhookConfig = {
   disabled?: boolean;
 };
 export type ConnectionSpec = {
-  /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
+  /** Bitbucket connection configuration Only applicable when provider is "bitbucketOAuth" */
   bitbucket?: BitbucketConnectionConfig;
   /** The connection description */
   description?: string;
@@ -1489,18 +1511,22 @@ export type ConnectionSpec = {
   github?: GitHubConnectionConfig;
   /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
   githubEnterprise?: GitHubEnterpriseConnectionConfig;
-  /** Gitlab connection configuration Only applicable when provider is "gitlab" */
-  gitlab?: GitlabConnectionConfig;
+  /** GitHub Enterprise Server OAuth app connection configuration Only applicable when provider is "githubEnterpriseOAuth" */
+  githubEnterpriseOAuth?: GitHubEnterpriseOAuthConnectionConfig;
+  /** OAuth app configuration shared by all OAuth app providers */
+  oauth?: ConnectionOAuthConfig;
   /** The connection display name (shown in the UI) */
   title: string;
   /** The connection provider type
     
     Possible enum values:
-     - `"bitbucket"`
+     - `"bitbucketOAuth"`
      - `"github"`
      - `"githubEnterprise"`
-     - `"gitlab"` */
-  type: 'bitbucket' | 'github' | 'githubEnterprise' | 'gitlab';
+     - `"githubEnterpriseOAuth"`
+     - `"githubOAuth"`
+     - `"gitlabOAuth"` */
+  type: 'bitbucketOAuth' | 'github' | 'githubEnterprise' | 'githubEnterpriseOAuth' | 'githubOAuth' | 'gitlabOAuth';
   /** The connection URL */
   url?: string;
   /** Webhook configuration for this connection */
@@ -1635,6 +1661,25 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
+export type ConnectionAuthorizeRequestSpec = {
+  /** The authorization code returned by the provider */
+  code: string;
+  /** The redirect URI used in the authorization request */
+  redirectURI?: string;
+};
+export type ConnectionAuthorizeRequestStatus = {
+  /** Whether the connection has been authorized */
+  authorized: boolean;
+};
+export type ConnectionAuthorizeRequest = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ObjectMeta;
+  spec: ConnectionAuthorizeRequestSpec;
+  status?: ConnectionAuthorizeRequestStatus;
+};
 export type ResourceRef = {
   /** Group is the group of the resource, such as "dashboard.grafana.app". */
   group?: string;
@@ -1854,6 +1899,10 @@ export type BranchOptions = {
   nameTemplate?: string;
 };
 export type CommitOptions = {
+  /** Email used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset. */
+  authorEmail?: string;
+  /** Name used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset. */
+  authorName?: string;
   /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. */
   enforceTemplate?: boolean;
   /** Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */
@@ -1918,6 +1967,8 @@ export type GitLabRepositoryConfig = {
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
+  /** RepoID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input. */
+  repoID?: string;
   /** The repository URL (e.g. `https://gitlab.com/example/test`). */
   url?: string;
 };
@@ -2249,6 +2300,15 @@ export type RepositoryViewList = {
   allowedTargets?: ('folder' | 'folderless' | 'instance')[];
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  /** AvailableConnectionTypes is the list of connection types supported in this instance */
+  availableConnectionTypes?: (
+    | 'bitbucketOAuth'
+    | 'github'
+    | 'githubEnterprise'
+    | 'githubEnterpriseOAuth'
+    | 'githubOAuth'
+    | 'gitlabOAuth'
+  )[];
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
   availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local')[];
   /** AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled). */
@@ -2292,6 +2352,7 @@ export const {
   useReplaceConnectionMutation,
   useDeleteConnectionMutation,
   useUpdateConnectionMutation,
+  useCreateConnectionAuthorizeMutation,
   useGetConnectionRepositoriesQuery,
   useLazyGetConnectionRepositoriesQuery,
   useGetConnectionStatusQuery,
