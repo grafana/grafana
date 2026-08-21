@@ -1,4 +1,4 @@
-import { type Observable, map } from 'rxjs';
+import { type Observable, asapScheduler, map, observeOn } from 'rxjs';
 
 import { CustomVariable, type VariableGetOptionsArgs, type VariableValueOption } from '@grafana/scenes';
 
@@ -15,9 +15,23 @@ import { CustomVariable, type VariableGetOptionsArgs, type VariableValueOption }
 export class ResettingCustomVariable extends CustomVariable {
   public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     const hasResolvedNonEmptyBefore = this.state.options.length > 0;
+
+    if (!hasResolvedNonEmptyBefore) {
+      return super.getValueOptions(args);
+    }
+
     return super.getValueOptions(args).pipe(
+      // Deferred to a microtask so the reset lands after the synchronous state-change
+      // notification it was triggered by has fully unwound. ScopesService notifies its
+      // consumers before writing its own URL state, and its URL listener re-applies any
+      // scope it still sees in the URL, so resetting synchronously writes var-<name> while
+      // the stale scopes param is still present and the removal gets undone. Waiting one
+      // microtask lets that URL write land first. DashboardReloadBehavior defers for the
+      // same reason. Remove once scopes state management no longer depends on this
+      // ordering.
+      observeOn(asapScheduler),
       map((options) => {
-        if (options.length === 0 && hasResolvedNonEmptyBefore) {
+        if (options.length === 0) {
           this.skipNextValidation = false;
         }
         return options;
