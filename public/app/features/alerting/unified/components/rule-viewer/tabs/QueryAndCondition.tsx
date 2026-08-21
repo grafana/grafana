@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Stack } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { GrafanaRuleQueryViewer, QueryPreview } from '../../../GrafanaRuleQueryViewer';
-import { useAlertQueriesStatus } from '../../../hooks/useAlertQueriesStatus';
+import { getAlertQueriesStatus, useAlertQueryDataSources } from '../../../hooks/alertQueriesStatus';
 import { alertRuleToQueries } from '../../../utils/query';
 import { isFederatedRuleGroup, rulerRuleType } from '../../../utils/rules';
 import { useAlertQueryRunner } from '../../rule-editor/query-and-alert-condition/useAlertQueryRunner';
-import { NoQueryToRun } from '../EvalStatus';
+import { EvalLoadingBar, NoQueryToRun } from '../EvalStatus';
 
 interface Props {
   rule: CombinedRule;
@@ -57,7 +56,8 @@ const QueryAndCondition = ({ rule }: Props) => {
       });
   }, [queries]);
 
-  const { allDataSourcesAvailable, isLoading: isDsLoading } = useAlertQueriesStatus(queries);
+  const { dataSourcesByUid, isLoading: isDsLoading } = useAlertQueryDataSources(queries);
+  const { allDataSourcesAvailable } = getAlertQueriesStatus(queries, dataSourcesByUid);
 
   // isPreviewLoading only turns true once a runner emits, which skips query preparation entirely
   // and lags the request by up to 200ms. Counted, so overlapping runs don't clear each other.
@@ -107,18 +107,22 @@ const QueryAndCondition = ({ rule }: Props) => {
 
   return (
     <>
-      {rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
+      {/* Held above both branches: a preview without its data source renders nothing, not even a loading bar. */}
+      {isDsLoading && <EvalLoadingBar />}
+
+      {!isDsLoading && rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
         <GrafanaRuleQueryViewer
           rule={rule}
           condition={rule.rulerRule.grafana_alert.condition}
           queries={queries}
+          dataSourcesByUid={dataSourcesByUid}
           evalDataByQuery={mergedPreviewData}
           queryGraphLoading={queryGraphLoading}
           queryDataLoading={queryDataLoading}
         />
       )}
 
-      {!rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
+      {!isDsLoading && !rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
         <Stack direction="column" gap={1}>
           {queries.map((query) => {
             return (
@@ -127,7 +131,7 @@ const QueryAndCondition = ({ rule }: Props) => {
                 rule={rule}
                 refId={query.refId}
                 model={query.model}
-                dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
+                dataSource={dataSourcesByUid.get(query.datasourceUid)}
                 queryData={mergedPreviewData[query.refId]}
                 relativeTimeRange={query.relativeTimeRange}
                 isLoading={queryGraphLoading}
