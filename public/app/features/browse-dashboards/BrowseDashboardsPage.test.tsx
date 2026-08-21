@@ -403,7 +403,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     describe('with starred folders enabled', () => {
-      testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
+      testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
 
       beforeEach(() => {
         setTestFlags({ 'grafana.starredFolders': true });

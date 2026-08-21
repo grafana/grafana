@@ -23,12 +23,14 @@ jest.mock('@grafana/ui/unstable', () => {
     CodeMirrorEditor: ({
       value,
       readOnly,
+      basicSetup,
       extensions,
       onChange,
       'aria-label': ariaLabel,
     }: {
       value: string;
       readOnly?: boolean;
+      basicSetup?: { history?: boolean };
       extensions?: unknown[];
       onChange: (value: string) => void;
       'aria-label'?: string;
@@ -50,6 +52,7 @@ jest.mock('@grafana/ui/unstable', () => {
           aria-label={ariaLabel}
           value={value}
           readOnly={readOnly}
+          data-native-history={basicSetup?.history === false ? 'disabled' : 'enabled'}
           onChange={(e) => onChange(e.target.value)}
         />
       );
@@ -77,6 +80,12 @@ describe('CodeCell', () => {
     render(<CodeCell content={content} isEditing={true} onChange={jest.fn()} />);
 
     expect(screen.getByLabelText('Code')).not.toHaveAttribute('readonly');
+  });
+
+  it('uses notebook history instead of a separate CodeMirror history', () => {
+    render(<CodeCell content={content} isEditing={true} onChange={jest.fn()} />);
+
+    expect(screen.getByLabelText('Code')).toHaveAttribute('data-native-history', 'disabled');
   });
 
   it('labels the cell with its language while reading, without offering the picker', () => {

@@ -227,8 +227,8 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
 }
 
 /**
- * Resolve the default data source instance of a given type. Returns the instance flagged
- * as default, otherwise the first instance of that type, or `undefined` when none exist.
+ * Resolve the list item for the default data source of a given type. Returns the instance
+ * flagged as default, otherwise the first instance of that type, or `undefined` when none exist.
  *
  * Covers the common "get my data source" pattern (`list.find(ds => ds.isDefault) ?? list[0]`)
  * without exposing the full list. The heavy per-instance settings are not included — fetch
@@ -236,7 +236,9 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
  *
  * @public
  */
-export async function getDefaultDataSourceInstance(type: string): Promise<DataSourceInstanceListItem | undefined> {
+export async function getDefaultDataSourceInstanceListItem(
+  type: string
+): Promise<DataSourceInstanceListItem | undefined> {
   const allOfType = await getDataSourceInstanceList({ type, all: true });
   const list = allOfType.filter((item) => matchesType(item, type));
   const defaultInstance = list.find((item) => item.isDefault);

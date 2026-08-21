@@ -1,5 +1,7 @@
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
@@ -127,14 +129,14 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
     // we need to resolve it to a full datasource
     if (datasource && !datasource.uid) {
-      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      const datasourceToLoad = await getDataSourceInstance(datasource);
       datasource = {
         uid: datasourceToLoad.uid,
         type: datasourceToLoad.type,
       };
     }
 
-    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
+    const filterVar = await getAdHocFilterVariableFor(dashboard, datasource);
     updateAdHocFilterVariable(filterVar, newFilter);
   };
 
@@ -183,13 +185,13 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
     // we need to resolve it to a full datasource
     if (datasource && !datasource.uid) {
-      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      const datasourceToLoad = await getDataSourceInstance(datasource);
       datasource = {
         uid: datasourceToLoad.uid,
         type: datasourceToLoad.type,
       };
     }
-    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
+    const filterVar = await getAdHocFilterVariableFor(dashboard, datasource);
     bulkUpdateAdHocFiltersVariable(filterVar, items);
 
     if (items.length > 0) {
@@ -281,7 +283,13 @@ function getAdHocGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | n
   return null;
 }
 
-export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+export async function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+  // Resolve plugin meta before scanning so no await sits between the read and the
+  // setState write. Overlapping "Filter for value" actions would otherwise both
+  // miss the existing-variable scan and append a second Filters variable.
+  const pluginId = ds?.type ?? (await getDataSourceInstanceSettings(ds))?.type ?? '';
+  const supportsMultiValueOperators = Boolean((await getDatasourcePluginMeta(pluginId))?.multiValueFilterOperators);
+
   const variables = sceneGraph.getVariables(scene);
 
   for (const variable of variables.state.variables) {
@@ -296,7 +304,7 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   const newVariable = new AdHocFiltersVariable({
     name: 'Filters',
     datasource: ds,
-    supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
+    supportsMultiValueOperators,
     useQueriesAsFilterForOptions: true,
   });
 

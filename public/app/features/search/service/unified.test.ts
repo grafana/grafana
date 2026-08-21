@@ -184,7 +184,6 @@ describe('Unified Storage Searcher', () => {
 
     beforeEach(() => {
       searchRequests = [];
-      config.featureToggles.starsFromAPIServer = true;
       config.featureToggles.foldersAppPlatformAPI = true;
       setTestFlags({ 'grafana.starredFolders': true });
       // starred() reads stars via an RTK Query dispatch on the global store, so wire one up.
@@ -196,7 +195,6 @@ describe('Unified Storage Searcher', () => {
     });
 
     afterEach(() => {
-      config.featureToggles.starsFromAPIServer = false;
       config.featureToggles.foldersAppPlatformAPI = false;
       setTestFlags({});
     });
