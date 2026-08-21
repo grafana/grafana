@@ -2285,9 +2285,6 @@
     }
   },
   "public/app/features/query/components/QueryEditorRow.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@grafana/no-gf-form": {
       "count": 1
     },
@@ -2302,28 +2299,17 @@
     }
   },
   "public/app/features/query/components/QueryEditorRows.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
   "public/app/features/query/components/QueryGroup.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
   "public/app/features/query/state/DashboardQueryRunner/AnnotationsQueryRunner.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },

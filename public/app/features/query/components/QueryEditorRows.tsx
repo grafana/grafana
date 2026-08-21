@@ -1,5 +1,6 @@
 import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
-import { PureComponent, type ReactNode } from 'react';
+import { PureComponent, type ComponentProps, type ReactNode } from 'react';
+import { useAsync } from 'react-use';
 
 import {
   CoreApp,
@@ -13,7 +14,7 @@ import {
   getNextRefId,
   isSystemOverrideWithRef,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { SafeSerializableSceneObject, type SceneObjectRef, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -173,7 +174,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         const dataSourceRef = getDataSourceRef(dataSource);
 
         if (item.datasource) {
-          const previous = getDataSourceSrv().getInstanceSettings(item.datasource);
+          const previous = await getDataSourceInstanceSettings(item.datasource);
 
           if (previous?.type === dataSource.type) {
             return {
@@ -183,7 +184,7 @@ export class QueryEditorRows extends PureComponent<Props> {
           }
         }
 
-        const ds = await getDataSourceSrv().get(dataSourceRef);
+        const ds = await getDataSourceInstance(dataSourceRef);
 
         return { ...ds.getDefaultQuery?.(CoreApp.PanelEditor), ...item, datasource: dataSourceRef };
       })
@@ -256,19 +257,18 @@ export class QueryEditorRows extends PureComponent<Props> {
             return (
               <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
                 {queries.map((query, index) => {
-                  const dataSourceSettings = getDataSourceSettings(query, dsSettings, scopedVars);
                   const onChangeDataSourceSettings = dsSettings.meta.mixed
                     ? (settings: DataSourceInstanceSettings) => this.onDataSourceChange(settings, index)
                     : undefined;
 
                   const queryEditorRow = (
-                    <QueryEditorRow
+                    <QueryEditorRowWithResolvedDataSource
                       id={query.refId}
                       index={index}
                       key={query.refId}
                       data={data}
                       query={query}
-                      dataSource={dataSourceSettings}
+                      groupSettings={dsSettings}
                       scopedVars={scopedVars}
                       onChangeDataSource={onChangeDataSourceSettings}
                       onChange={(query) => this.onChangeQuery(query, index)}
@@ -309,14 +309,27 @@ export class QueryEditorRows extends PureComponent<Props> {
   }
 }
 
-const getDataSourceSettings = (
-  query: DataQuery,
-  groupSettings: DataSourceInstanceSettings,
-  scopedVars?: ScopedVars
-): DataSourceInstanceSettings => {
-  if (!query.datasource) {
-    return groupSettings;
-  }
-  const querySettings = getDataSourceSrv().getInstanceSettings(query.datasource, scopedVars);
-  return querySettings || groupSettings;
+type QueryEditorRowWithResolvedDataSourceProps = Omit<
+  ComponentProps<typeof QueryEditorRow>,
+  'dataSource' | 'query' | 'scopedVars'
+> & {
+  query: DataQuery;
+  groupSettings: DataSourceInstanceSettings;
+  scopedVars?: ScopedVars;
 };
+
+function QueryEditorRowWithResolvedDataSource({
+  query,
+  groupSettings,
+  scopedVars,
+  ...rowProps
+}: QueryEditorRowWithResolvedDataSourceProps) {
+  const { value: querySettings } = useAsync(
+    () => (query.datasource ? getDataSourceInstanceSettings(query.datasource, scopedVars) : Promise.resolve(undefined)),
+    [query.datasource, scopedVars]
+  );
+
+  const dataSourceSettings = !query.datasource ? groupSettings : (querySettings ?? groupSettings);
+
+  return <QueryEditorRow {...rowProps} query={query} dataSource={dataSourceSettings} scopedVars={scopedVars} />;
+}

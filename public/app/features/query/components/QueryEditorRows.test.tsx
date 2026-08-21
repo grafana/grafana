@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { DataSourceApi } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -34,6 +35,21 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => dsSrvMock,
 }));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
+  getDataSourceInstanceSettings: jest.fn(),
+}));
+
+jest
+  .mocked(getDataSourceInstance)
+  .mockImplementation((...args: unknown[]) => dsSrvMock.get(...(args as Parameters<DataSourceSrv['get']>)));
+jest
+  .mocked(getDataSourceInstanceSettings)
+  .mockImplementation(async (...args: unknown[]) =>
+    dsSrvMock.getInstanceSettings(...(args as Parameters<DataSourceSrv['getInstanceSettings']>))
+  );
 
 const props: Props = {
   queries: [

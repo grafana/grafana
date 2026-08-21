@@ -3,6 +3,7 @@ import { type PropsWithChildren } from 'react';
 
 import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
@@ -61,6 +62,12 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: mockGetInstanceSettings,
   }),
   reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn((...args: unknown[]) => mockGet(...args)),
+  getDataSourceInstanceSettings: jest.fn((...args: unknown[]) => Promise.resolve(mockGetInstanceSettings(...args))),
 }));
 
 // Draggable fails to render in tests, so we mock it out
@@ -399,7 +406,7 @@ describe('QueryEditorRow', () => {
     range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   });
   it('forwards scopedVars when resolving a query datasource variable', async () => {
-    mockGetInstanceSettings.mockClear();
+    jest.mocked(getDataSourceInstanceSettings).mockClear();
     const data = {
       state: LoadingState.Done,
       series: [],
@@ -412,7 +419,7 @@ describe('QueryEditorRow', () => {
     render(<QueryEditorRow {...props(data)} query={query} scopedVars={scopedVars} />);
 
     await waitFor(() => {
-      expect(mockGetInstanceSettings).toHaveBeenCalledWith(query.datasource, scopedVars);
+      expect(getDataSourceInstanceSettings).toHaveBeenCalledWith(query.datasource, scopedVars);
     });
   });
   it('should display error message in corresponding panel', async () => {

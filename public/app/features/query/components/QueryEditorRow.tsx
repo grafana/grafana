@@ -21,7 +21,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
+import { renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
@@ -103,20 +104,22 @@ interface State<TQuery extends DataQuery> {
   data?: PanelData;
   isOpen?: boolean;
   showingHelp: boolean;
+  isDatasourceLoading: boolean;
 }
 
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
-  dataSourceSrv = getDataSourceSrv();
   id = '';
   editorRef = createRef<HTMLDivElement>();
   private hasStartedScrollIntoView = false;
   private cancelScrollPin?: () => void;
+  private dsLoadInFlight = false;
 
   state: State<TQuery> = {
     datasource: null,
     data: undefined,
     isOpen: true,
     showingHelp: false,
+    isDatasourceLoading: false,
   };
 
   componentDidMount() {
@@ -150,12 +153,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
    * DataSourceSettings.uid can also be this variable expression.
    * This function always returns the current interpolated datasource uid.
    */
-  getInterpolatedDataSourceUID(): string | undefined {
+  async getInterpolatedDataSourceUID(): Promise<string | undefined> {
     if (this.props.query.datasource) {
-      const instanceSettings = this.dataSourceSrv.getInstanceSettings(
-        this.props.query.datasource,
-        this.props.scopedVars
-      );
+      const instanceSettings = await getDataSourceInstanceSettings(this.props.query.datasource, this.props.scopedVars);
       return instanceSettings?.rawRef?.uid ?? instanceSettings?.uid;
     }
 
@@ -163,27 +163,32 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   async loadDatasource() {
+    this.dsLoadInFlight = true;
+    this.setState({ isDatasourceLoading: true });
+
     let datasource: DataSourceApi;
-    const interpolatedUID = this.getInterpolatedDataSourceUID();
+    const interpolatedUID = await this.getInterpolatedDataSourceUID();
 
     try {
-      datasource = await this.dataSourceSrv.get(interpolatedUID);
+      datasource = await getDataSourceInstance(interpolatedUID);
     } catch (error) {
       // If the DS doesn't exist, it fails. Getting with no args returns the default DS.
-      datasource = await this.dataSourceSrv.get();
+      datasource = await getDataSourceInstance();
     }
 
     if (typeof this.props.onDataSourceLoaded === 'function') {
       this.props.onDataSourceLoaded(datasource);
     }
 
+    this.dsLoadInFlight = false;
     this.setState({
       datasource: datasource as unknown as DataSourceApi<TQuery>,
       queriedDataSourceIdentifier: interpolatedUID,
+      isDatasourceLoading: false,
     });
   }
 
-  componentDidUpdate(prevProps: Props<TQuery>) {
+  async componentDidUpdate(prevProps: Props<TQuery>) {
     const { datasource, queriedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
 
@@ -208,10 +213,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     this.scrollIntoViewIfNeeded();
 
-    // check if we need to load another datasource
-    if (datasource && queriedDataSourceIdentifier !== this.getInterpolatedDataSourceUID()) {
-      this.loadDatasource();
+    if (this.dsLoadInFlight) {
       return;
+    }
+
+    // check if we need to load another datasource
+    const interpolatedUID = await this.getInterpolatedDataSourceUID();
+    if (datasource && queriedDataSourceIdentifier !== interpolatedUID) {
+      this.loadDatasource();
     }
   }
 
@@ -236,9 +245,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   isWaitingForDatasourceToLoad(): boolean {
-    // if we not yet have loaded the datasource in state the
-    // ds in props and the ds in state will have different values.
-    return this.getInterpolatedDataSourceUID() !== this.state.queriedDataSourceIdentifier;
+    return this.state.isDatasourceLoading;
   }
 
   renderPluginEditor = () => {
