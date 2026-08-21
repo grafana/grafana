@@ -2326,11 +2326,12 @@ func TestGitRepository_createSignature(t *testing.T) {
 
 func TestNewGitRepository(t *testing.T) {
 	tests := []struct {
-		name          string
-		gitConfig     RepositoryConfig
-		wantError     bool
-		expectURL     string
-		expectSigning bool
+		name           string
+		gitConfig      RepositoryConfig
+		wantError      bool
+		expectURL      string
+		expectSigning  bool
+		expectMaxBytes int64
 	}{
 		{
 			name: "success - with token",
@@ -2342,6 +2343,18 @@ func TestNewGitRepository(t *testing.T) {
 			},
 			wantError: false,
 			expectURL: "https://git.example.com/owner/repo.git",
+		},
+		{
+			name: "success - with max file size",
+			gitConfig: RepositoryConfig{
+				URL:    "https://git.example.com/owner/repo.git",
+				Branch: "main",
+				Token:  "plain-token",
+				Limits: Limits{MaxFileSize: 1024},
+			},
+			wantError:      false,
+			expectURL:      "https://git.example.com/owner/repo.git",
+			expectMaxBytes: 1024,
 		},
 		{
 			name: "success - with commit signing",
@@ -2395,6 +2408,7 @@ func TestNewGitRepository(t *testing.T) {
 				} else {
 					require.Empty(t, gitRepo.(*gitRepository).writerOptions)
 				}
+				require.Equal(t, tt.expectMaxBytes, gitRepo.(*gitRepository).maxBytes.Load())
 			}
 		})
 	}
