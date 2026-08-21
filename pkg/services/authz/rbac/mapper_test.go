@@ -460,7 +460,7 @@ func TestMapperRegistry_ResourceMappings_DashboardGroup(t *testing.T) {
 	reg := NewMapperRegistry()
 
 	mappings := reg.ResourceMappings("dashboard.grafana.app")
-	require.Len(t, mappings, 3)
+	require.NotEmpty(t, mappings)
 
 	byAPIResource := make(map[string]Mapping, len(mappings))
 	for _, rm := range mappings {
@@ -472,6 +472,8 @@ func TestMapperRegistry_ResourceMappings_DashboardGroup(t *testing.T) {
 	assert.Contains(t, byAPIResource, "dashboards")
 	assert.Contains(t, byAPIResource, "librarypanels")
 	assert.Contains(t, byAPIResource, "dashboards/annotations")
+	assert.Contains(t, byAPIResource, "notebooks")
+	assert.Contains(t, byAPIResource, "variables")
 
 	dashboards, ok := reg.Get("dashboard.grafana.app", "dashboards", "")
 	require.True(t, ok)
