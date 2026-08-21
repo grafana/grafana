@@ -1,78 +1,112 @@
-import { css, cx } from '@emotion/css';
-import RCCascader, { type FieldNames } from '@rc-component/cascader';
-import * as React from 'react';
+import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { type IconName } from '../../types/icon';
-import { Button, type ButtonProps } from '../Button/Button';
-import { type CascaderOption } from '../Cascader/Cascader';
-import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
-import { getCascaderStyles } from '../Cascader/styles';
+import { Button } from '../Button/Button';
+import { HeadlessTreeSelect } from '../Cascader/TreeSelectImplementation';
+import { type CascaderOption } from '../Cascader/types';
 import { Icon } from '../Icon/Icon';
 
-export interface ButtonCascaderProps {
-  options: CascaderOption[];
-  children: string;
-  icon?: IconName;
-  disabled?: boolean;
-  value?: string[];
-  fieldNames?: FieldNames<CascaderOption, keyof CascaderOption>;
-  loadData?: (selectedOptions: CascaderOption[]) => void;
-  onChange?: (value: string[], selectedOptions: CascaderOption[]) => void;
-  onPopupVisibleChange?: (visible: boolean) => void;
-  className?: string;
-  variant?: ButtonProps['variant'];
-  buttonProps?: Omit<ButtonProps, 'children'>;
-  hideDownIcon?: boolean;
+import { type ButtonCascaderProps, type CascaderFieldNames } from './types';
+
+export type { ButtonCascaderProps, CascaderFieldNames } from './types';
+
+function isCascaderOptionArray(
+  value: CascaderOption[keyof CascaderOption]
+): value is CascaderOption[] {
+  return Array.isArray(value);
+}
+
+function mapOptions(
+  options: CascaderOption[],
+  fieldNames: CascaderFieldNames<CascaderOption> = {}
+): CascaderOption[] {
+  const labelField = fieldNames.label ?? 'label';
+  const valueField = fieldNames.value ?? 'value';
+  const childrenField = fieldNames.children ?? 'children';
+
+  return options.map((option) => {
+    const rawValue = option[valueField];
+    const value = rawValue == null ? '' : String(rawValue);
+    const rawLabel = option[labelField];
+    const rawChildren = option[childrenField];
+
+    return {
+      label: typeof rawLabel === 'string' ? rawLabel : value,
+      value,
+      disabled: option.disabled,
+      isLeaf: option.isLeaf,
+      children: isCascaderOptionArray(rawChildren) ? mapOptions(rawChildren, fieldNames) : undefined,
+    };
+  });
+}
+
+function publicOptions(options: CascaderOption[]): CascaderOption[] {
+  return options.map(({ label, value }) => ({ label, value }));
 }
 
 /**
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-buttoncascader--docs
  */
-export const ButtonCascader = (props: ButtonCascaderProps) => {
-  const { onChange, className, loadData, icon, buttonProps, hideDownIcon, variant, disabled, ...rest } = props;
+export const ButtonCascader = ({
+  options,
+  children,
+  icon,
+  disabled,
+  value,
+  fieldNames,
+  loadData,
+  onChange,
+  onPopupVisibleChange,
+  className,
+  variant,
+  buttonProps,
+  hideDownIcon,
+}: ButtonCascaderProps) => {
   const styles = useStyles2(getStyles);
-  const cascaderStyles = useStyles2(getCascaderStyles);
-
-  // Weird way to do this bit it goes around a styling issue in Button where even null/undefined child triggers
-  // styling change which messes up the look if there is only single icon content.
-  let content: React.ReactNode = props.children;
-  if (!hideDownIcon) {
-    content = [props.children, <Icon key={'down-icon'} name="angle-down" className={styles.icons.right} />];
-  }
+  const mappedOptions = mapOptions(options, fieldNames);
 
   return (
-    <RCCascader
-      onChange={onChangeCascader(onChange)}
-      loadData={onLoadDataCascader(loadData)}
-      popupClassName={cx(cascaderStyles.dropdown, styles.popup)}
-      {...rest}
-      expandIcon={null}
-    >
-      <Button icon={icon} disabled={disabled} variant={variant} {...(buttonProps ?? {})}>
-        {content}
-      </Button>
-    </RCCascader>
+    <HeadlessTreeSelect
+      options={mappedOptions}
+      valuePath={value}
+      onSelect={() => {}}
+      onChangePath={(values, selectedOptions) => onChange?.(values, publicOptions(selectedOptions))}
+      loadData={(selectedOptions) => loadData?.(publicOptions(selectedOptions))}
+      onOpenChange={onPopupVisibleChange}
+      className={className}
+      disabled={disabled}
+      renderTrigger={(triggerProps) => {
+        const { onClick, ref, ...rest } = triggerProps;
+        return (
+          <Button
+            icon={icon}
+            disabled={disabled}
+            variant={variant}
+            {...(buttonProps ?? {})}
+            {...rest}
+            ref={ref}
+            onClick={(event) => {
+              buttonProps?.onClick?.(event);
+              if (!event.defaultPrevented) {
+                onClick?.(event);
+              }
+            }}
+          >
+            {children}
+            {!hideDownIcon && <Icon name="angle-down" className={styles.icon} />}
+          </Button>
+        );
+      }}
+    />
   );
 };
 
 ButtonCascader.displayName = 'ButtonCascader';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    popup: css({
-      label: 'popup',
-      zIndex: theme.zIndex.dropdown,
-    }),
-    icons: {
-      right: css({
-        margin: '1px 0 0 4px',
-      }),
-      left: css({
-        margin: '-1px 4px 0 0',
-      }),
-    },
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  icon: css({
+    margin: theme.spacing(0, 0, 0, 0.5),
+  }),
+});

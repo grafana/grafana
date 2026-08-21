@@ -177,7 +177,7 @@ describe('Cascader', () => {
       </Field>
     );
 
-    expect(screen.getByRole('textbox', { name: 'Cascader label' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Cascader label' })).toBeInTheDocument();
   });
 
   it('applies data-testid to the root element', () => {
