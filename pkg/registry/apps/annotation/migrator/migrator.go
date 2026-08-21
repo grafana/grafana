@@ -320,6 +320,14 @@ type Status struct {
 	BackfillPending bool
 }
 
+// Behind reports whether the tenant's cursor trails the legacy head, meaning
+// SyncUpdates has changes left to replay. It compares the persisted cursor as
+// it stands. The Lookback rewind belongs to the scan in SyncUpdates, and
+// rewinding here would report every caught-up tenant as behind forever.
+func (s Status) Behind(c Cursors) bool {
+	return c.Updates.Before(s.UpdatesHead)
+}
+
 // Status reports where a tenant sits in the migration, given the cursors the
 // caller has persisted for it.
 func (m *Migrator) Status(ctx context.Context, req Request, cursors Cursors) (Status, error) {

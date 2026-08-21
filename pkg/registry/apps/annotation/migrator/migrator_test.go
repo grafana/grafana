@@ -450,7 +450,7 @@ func TestStatus_HeadIsZeroForEmptyTenant(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, UpdateCursor{}, st.UpdatesHead)
 	require.False(t, st.BackfillPending, "nothing to copy on an empty tenant")
-	require.False(t, Cursors{}.Updates.Before(st.UpdatesHead), "nothing to sync on an empty tenant")
+	require.False(t, st.Behind(Cursors{}), "nothing to sync on an empty tenant")
 }
 
 func TestStatus_BackfillPendingUntilDrained(t *testing.T) {
@@ -540,14 +540,14 @@ func TestStatus_HeadMovesAfterEditOnConvergedTenant(t *testing.T) {
 	st, err := m.Status(context.Background(), req("stacks-1", 0), cursors)
 	require.NoError(t, err)
 	require.False(t, st.BackfillPending, "every legacy id has been copied")
-	require.False(t, cursors.Updates.Before(st.UpdatesHead), "nothing changed since the cursor")
+	require.False(t, st.Behind(cursors), "nothing changed since the cursor")
 
 	r.rows[0] = LegacyAnnotation{ID: 1, Epoch: 1500, Updated: 30}
 
 	st, err = m.Status(context.Background(), req("stacks-1", 0), cursors)
 	require.NoError(t, err)
 	require.False(t, st.BackfillPending, "an edit creates no new id")
-	require.True(t, cursors.Updates.Before(st.UpdatesHead), "the edit must leave the tenant behind")
+	require.True(t, st.Behind(cursors), "the edit must leave the tenant behind")
 	require.Equal(t, UpdateCursor{Updated: 30, ID: 1}, st.UpdatesHead)
 }
 
@@ -889,7 +889,7 @@ func TestSyncUpdates_LookbackCatchesRowBehindTheCursor(t *testing.T) {
 	st, err := m.Status(context.Background(), syncReq, cursors)
 	require.NoError(t, err)
 	require.Equal(t, UpdateCursor{Updated: 100_000, ID: 2}, st.UpdatesHead, "the late row does not move the head")
-	require.False(t, cursors.Updates.Before(st.UpdatesHead), "the tenant looks caught up")
+	require.False(t, st.Behind(cursors), "the tenant looks caught up")
 
 	// The pass runs anyway, and the lookback is what finds the row.
 	_, _, err = m.SyncUpdates(context.Background(), syncReq, cursors)
@@ -915,5 +915,16 @@ func TestStatus_LookbackDoesNotAffectReportedPosition(t *testing.T) {
 	without, err := m.Status(context.Background(), req("stacks-1", 0), at)
 	require.NoError(t, err)
 	require.Equal(t, without, withLookback, "the lookback is a scan concern only")
-	require.False(t, at.Updates.Before(withLookback.UpdatesHead), "the cursor is at the head")
+	require.False(t, withLookback.Behind(at), "the cursor is at the head")
+}
+
+func TestStatus_BehindIsFalseAtTheHead(t *testing.T) {
+	head := UpdateCursor{Updated: 100_000, ID: 7}
+	st := Status{UpdatesHead: head}
+
+	require.False(t, st.Behind(Cursors{Updates: head}), "a cursor at the head is caught up")
+	require.False(t, st.Behind(Cursors{Updates: UpdateCursor{Updated: 100_001}}), "a cursor past the head is caught up")
+	require.True(t, st.Behind(Cursors{Updates: UpdateCursor{Updated: 100_000, ID: 6}}), "an earlier id trails the head")
+	require.True(t, st.Behind(Cursors{}), "a zero cursor trails a non-zero head")
+	require.False(t, Status{}.Behind(Cursors{}), "an empty tenant is never behind")
 }
