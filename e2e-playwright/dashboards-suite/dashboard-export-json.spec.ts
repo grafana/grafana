@@ -39,7 +39,10 @@ test.describe(
       ).toBeChecked({
         checked: false,
       });
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.CodeEditor.container)).toBeVisible();
+      const codeEditor = dashboardPage.getByGrafanaSelector(
+        selectors.pages.ExportDashboardDrawer.ExportAsJson.codeEditor
+      );
+      await expect(codeEditor.locator('.cm-editor')).toBeVisible();
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ExportDashboardDrawer.ExportAsJson.saveToFileButton)
