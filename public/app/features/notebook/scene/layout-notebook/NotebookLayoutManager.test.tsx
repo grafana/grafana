@@ -523,30 +523,30 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1].state.source).toBe('user');
     });
 
-    // The divider after the trailing empty cell is offering to insert *past* it — converting that
-    // cell in place (like its own "/" menu already does) instead of leaving it stranded next to a
-    // fresh cell once the invariant appends a new trailing slot after the conversion.
-    it('converts the trailing cell in place when the divider inserts past it, instead of leaving it behind', async () => {
+    // The divider after the trailing empty cell is offering to insert *past* it. Inserting after
+    // that slot would leave it stranded mid-document once the invariant appends a replacement;
+    // inserting before it keeps the empty cell at the tail and still records an "Add block".
+    it('inserts before the trailing empty slot when the divider offers a position past it', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
       const dividers = screen.getAllByRole('button', { name: 'Add block' });
 
       await pickCode(user, dividers[dividers.length - 1]);
 
-      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1', 'paragraph-2']);
+      expect(cellNames(manager)).toEqual(['a', 'b', 'code-1', 'paragraph-1']);
       expect(manager.state.cells[2].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
+      expect(manager.state.cells[3].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
     });
 
-    // Paragraph's starter content is already empty markdown — the same as the trailing slot — so
-    // convertCell → setCellContent used to return early and never claim the slot (Heading/Code
-    // change the content, so they don't hit this). The conversion still has to consume the slot
-    // and reveal a replacement, the same way those other types do from this same divider.
-    it('claims the trailing empty slot when the divider past it picks Paragraph', async () => {
+    // Same insert-before-trailing path as Code above — Paragraph's starter content is already
+    // empty markdown, identical to the trailing slot, so a convert-in-place used to be a no-op
+    // on the undo stack. A fresh cell still has to land before the slot.
+    it('inserts a paragraph before the trailing empty slot when the divider offers a position past it', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
       const dividers = screen.getAllByRole('button', { name: 'Add block' });
 
       await pickParagraph(user, dividers[dividers.length - 1]);
 
-      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1', 'paragraph-2']);
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-2', 'paragraph-1']);
       expect(manager.state.cells[2].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
       expect(manager.state.cells[3].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
     });
@@ -1010,6 +1010,52 @@ describe('NotebookLayoutManager', () => {
 
       history.redo();
       expect(manager.state.cells[1]).toBe(added);
+    });
+
+    // The divider below the trailing empty slot offers index === cells.length. Converting that
+    // slot in place (convertCell) used to skip executeEdit: Paragraph only called appendSystemCell
+    // (off the stack, so Undo did nothing) and Heading/Code landed as an "Edit block" that restored
+    // empty markdown instead of removing the added block.
+    it.each([
+      {
+        type: 'paragraph' as const,
+        addedName: 'paragraph-2',
+        content: { kind: 'Markdown' as const, spec: { text: '' } },
+      },
+      {
+        type: 'heading' as const,
+        addedName: 'heading-1',
+        content: { kind: 'Markdown' as const, spec: { text: '# ' } },
+      },
+      {
+        type: 'code' as const,
+        addedName: 'code-1',
+        content: { kind: 'Code' as const, spec: { language: '', code: '' } },
+      },
+    ])('undoes a $type block added past the trailing empty slot as Add block', ({ type, addedName, content }) => {
+      const cells = [
+        ...buildNarrativeCells(['a', 'b']),
+        new NotebookCellItem({
+          elementName: 'paragraph-1',
+          source: 'user',
+          content: { kind: 'Markdown', spec: { text: '' } },
+        }),
+      ];
+      const { manager, history } = withHistory(cells);
+
+      const added = manager.addCell(type, cells.length);
+
+      expect(history.state.undoLabel).toBe('Add block');
+      expect(cellNames(manager)).toEqual(['a', 'b', addedName, 'paragraph-1']);
+      expect(added?.state.content).toEqual(content);
+
+      history.undo();
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1']);
+      expect(manager.state.cells[2].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
+
+      history.redo();
+      expect(manager.state.cells[2]).toBe(added);
+      expect(cellNames(manager)).toEqual(['a', 'b', addedName, 'paragraph-1']);
     });
 
     // Enter's "split into a new block" gesture. Undoing only removes the split-off cell here — the
