@@ -1,10 +1,10 @@
 import { cx } from '@emotion/css';
-import { useCallback, useMemo, type JSX } from 'react';
+import { useCallback, useContext, useMemo, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
-import { Button, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Button, ElementSelectionContext, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
@@ -19,7 +19,7 @@ import {
   getActionStyles,
   SettingsActionButton,
 } from './EditActions';
-import { EditActionsPopover } from './EditActionsPopover';
+import { HoverPopover } from './EditActionsPopover';
 
 export function PanelEditActions({
   onClickEdit,
@@ -69,8 +69,17 @@ export function PanelEditActions({
 }
 
 export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
-  const { isSelectable } = useElementSelection(panel.state.key);
+  const elementSelectionContext = useContext(ElementSelectionContext);
+  const isSelectable = Boolean(elementSelectionContext?.enabled);
 
+  if (!isSelectable) {
+    return children;
+  }
+
+  return <PanelEditActionsPopover panel={panel}>{children}</PanelEditActionsPopover>;
+}
+
+function PanelEditActionsPopover({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
   const onClickEdit = useCallback(() => {
     const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
     selectionContext.onSelect({ id: panel.state.key! }, { force: true });
@@ -87,11 +96,13 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
     DashboardInteractions.panelActionClicked('copy', panelId, 'edit_popover');
     getDashboardSceneLike(panel).copyPanel(panel);
   }, [panel]);
+
   const onClickDuplicate = useCallback(() => {
     const panelId = getPanelIdForVizPanel(panel);
     DashboardInteractions.panelActionClicked('duplicate', panelId, 'edit_popover');
     getLayoutManagerFor(panel).duplicatePanel?.(panel);
   }, [panel]);
+
   const onClickDelete = useCallback(() => {
     const panelId = getPanelIdForVizPanel(panel);
     DashboardInteractions.panelActionClicked('delete', panelId, 'edit_popover');
@@ -113,8 +124,8 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
   );
 
   return (
-    <EditActionsPopover isEditable={Boolean(isSelectable)} content={editActions} placement="top-end">
+    <HoverPopover content={editActions} placement="top-end">
       {children}
-    </EditActionsPopover>
+    </HoverPopover>
   );
 }

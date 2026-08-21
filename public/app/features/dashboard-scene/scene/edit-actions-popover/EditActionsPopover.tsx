@@ -25,7 +25,6 @@ export function EditActionsPopover({ isEditable, ...props }: EditActionsPopoverP
   if (!isEditable) {
     return props.children;
   }
-
   return <HoverPopover {...props} />;
 }
 
@@ -38,7 +37,7 @@ const EditActionsPopoverContext = createContext<{ closePopover: () => void }>({ 
  */
 export const useEditActionsPopover = () => useContext(EditActionsPopoverContext);
 
-function HoverPopover({ content, children, placement = 'top-start' }: EditActionsPopoverProps) {
+export function HoverPopover({ content, children, placement = 'top-start' }: EditActionsPopoverProps) {
   const styles = useStyles2(getPopoverStyles);
   const [isOpen, setIsOpen] = useState(false);
 
