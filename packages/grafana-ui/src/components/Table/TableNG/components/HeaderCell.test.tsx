@@ -270,6 +270,32 @@ describe('HeaderCell', () => {
       expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
     });
 
+    it('tells assistive tech the filter icon expands a dialog, and whether it is open', async () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      render(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />);
+
+      const filterIcon = screen.getByLabelText(filterIconLabel);
+      expect(filterIcon).toHaveAttribute('aria-haspopup', 'dialog');
+      expect(filterIcon).toHaveAttribute('aria-expanded', 'false');
+
+      await userEvent.click(filterIcon);
+
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      expect(filterIcon).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('leaves the filter icon collapsed when the column menu opened the popup instead', async () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      render(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />);
+
+      await userEvent.click(screen.getByLabelText('Column options for Field1'));
+      await userEvent.click(await screen.findByText('Update filter'));
+
+      // the popup is open, but anchored to the menu — the icon must not claim it
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      expect(screen.getByLabelText(filterIconLabel)).toHaveAttribute('aria-expanded', 'false');
+    });
+
     it('does not sort the column when the filter icon is clicked', async () => {
       const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
       const onHeaderClick = jest.fn();

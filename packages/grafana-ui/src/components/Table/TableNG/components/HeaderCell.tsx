@@ -181,6 +181,11 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           type="button"
           className={styles.headerCellFilterButton}
           aria-label={t('grafana-ui.table.edit-column-filter', 'Edit filter on {{name}}', { name: displayName })}
+          aria-haspopup="dialog"
+          // The popup is shared with the column menu's "Filter values" item, so `isPopoverVisible`
+          // alone would have this button claim a popup that the menu opened. `filterAnchor` is
+          // whichever control opened it, which is what makes the distinction.
+          aria-expanded={isPopoverVisible && filterAnchor === filterIconRef.current}
           data-testid={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.activeFilterButton}
           onClick={(ev) => {
             // the header cell itself sorts on click, so this must not bubble
