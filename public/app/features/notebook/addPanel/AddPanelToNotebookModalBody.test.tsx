@@ -254,6 +254,40 @@ describe('AddPanelToNotebookModalBody', () => {
     });
   });
 
+  describe('the notebook cards', () => {
+    // The design separates the meta line with dots; Card.Meta's own default is a vertical bar.
+    it('separates the meta line with dots rather than bars', () => {
+      renderModal();
+
+      // Card.Meta renders each separator as its own element, so this is the separator itself rather
+      // than a dot that happens to be inside some other text. Two cards, one separator each.
+      expect(screen.getAllByText('·')).toHaveLength(2);
+      expect(screen.queryByText('|')).not.toBeInTheDocument();
+    });
+
+    /**
+     * The design puts the tags on their own line under the meta. Card.Tags is a right-hand column of
+     * the card's grid, so they have to come from the row below Meta instead - which is the shape this
+     * asserts, rather than the CSS: the tag list must not be inside the element holding the meta line.
+     */
+    it('puts the tags on their own line rather than beside the meta', () => {
+      setPicker({ rows: [{ ...row('nb1', 'Q2 latency regression'), tags: ['errors', 'checkout'] }] });
+      renderModal();
+
+      const wrapper = screen.getByText('errors').closest('div');
+
+      // Asserted on the grid area because that is what decides this: Card lays its slots out on a
+      // grid, where `Tags` is a column beside the meta and `Description` is the row beneath it.
+      // Document order is identical either way, so nothing else here can tell the two apart.
+      expect(wrapper && getComputedStyle(wrapper).gridArea).toBe('Description');
+
+      // That row spans the card, and TagList right-aligns its chips by default, so without this they
+      // would sit at the far edge instead of under the meta line they belong to.
+      const list = screen.getByRole('list', { name: 'Tags' });
+      expect(getComputedStyle(list).justifyContent).toBe('flex-start');
+    });
+  });
+
   describe('filters', () => {
     // MultiCombobox drops aria-label and reads aria-labelledby, so the obvious spelling leaves the
     // control with no accessible name at all.

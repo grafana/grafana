@@ -20,22 +20,28 @@ export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
     // make a list of cards a single-choice picker.
     <Card noMargin className={styles.card} isSelected={isSelected} onClick={() => onSelect(notebook.uid)}>
       <Card.Heading>{notebook.title}</Card.Heading>
-      <Card.Meta>
+      {/* Dots rather than the default vertical bar, per the design. */}
+      <Card.Meta separator="·">
         {[
           t('notebooks.add-panel.card-updated', 'Updated {{when}}', { when: dateTimeFormatTimeAgo(notebook.updated) }),
           t('notebooks.add-panel.card-author', 'By {{author}}', { author: notebook.authorName }),
         ]}
       </Card.Meta>
+      {/* The Description slot rather than Card.Tags: Tags is a right-hand column of the card's grid,
+          beside the meta line, and the design puts the tags on their own line under it. Description is
+          the row below Meta, so this needs no reaching into the card's own layout. */}
       {notebook.tags.length > 0 && (
-        <Card.Tags>
-          <TagList tags={notebook.tags} />
-        </Card.Tags>
+        <Card.Description>
+          {/* TagList right-aligns by default, and here it spans the width of the card. */}
+          <TagList tags={notebook.tags} className={styles.tagList} />
+        </Card.Description>
       )}
     </Card>
   );
 }
 
 const getStyles = () => ({
+  tagList: css({ justifyContent: 'flex-start' }),
   card: css({
     // The card's own selected styling already shows which notebook is chosen, so the radio it
     // renders alongside the title is redundant to look at. Hidden the same way as the global
