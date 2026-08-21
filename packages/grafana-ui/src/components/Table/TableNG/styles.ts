@@ -109,9 +109,8 @@ export const getGridStyles = memoize(
         '--rdg-row-selected-background-color': selectedRowColor,
         '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
 
-        // TODO: magic 32px number is unfortunate. it would be better to have the content
-        // flow using flexbox rather than hard-coding this size via a calc
-        blockSize: enablePagination ? 'calc(100% - 32px)' : '100%',
+        // theme.spacing(1) x 2 for the top and bottom of the padding container, and the 22px height of text is theme.spacing(2.75)
+        blockSize: enablePagination ? `calc(100% - ${theme.spacing(4.75)})` : '100%',
         scrollbarWidth: 'thin',
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
@@ -258,7 +257,7 @@ export const getGridStyles = memoize(
         alignItems: 'center',
         display: 'flex',
         justifyContent: 'center',
-        marginTop: theme.spacing(1),
+        marginBlock: theme.spacing(1),
         width: '100%',
       }),
       paginationSummary: css({
