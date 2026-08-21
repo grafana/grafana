@@ -1,4 +1,5 @@
-import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -15,10 +16,14 @@ describe('canWritePlaylists', () => {
   beforeEach(() => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
     (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = false;
-    config.featureToggles.playlistsRBAC = false;
+    setTestFlags({ [FlagKeys.GrafanaPlaylistsRBAC]: false });
   });
 
-  describe('with playlistsRBAC toggle off (legacy)', () => {
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  describe('with grafana.playlistsRBAC toggle off (legacy)', () => {
     it('returns true when user is an editor', () => {
       (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = true;
       expect(canWritePlaylists()).toBe(true);
@@ -29,9 +34,9 @@ describe('canWritePlaylists', () => {
     });
   });
 
-  describe('with playlistsRBAC toggle on', () => {
+  describe('with grafana.playlistsRBAC toggle on', () => {
     beforeEach(() => {
-      config.featureToggles.playlistsRBAC = true;
+      setTestFlags({ [FlagKeys.GrafanaPlaylistsRBAC]: true });
     });
 
     it('returns true when user has playlists:write', () => {

@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
@@ -9,7 +9,7 @@ import { type SearchQuery } from '../search/service/types';
 import { type PlaylistItemUI } from './types';
 
 export function canWritePlaylists(): boolean {
-  return config.featureToggles.playlistsRBAC
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPlaylistsRBAC, false)
     ? contextSrv.hasPermission(AccessControlAction.PlaylistsWrite)
     : contextSrv.isEditor;
 }

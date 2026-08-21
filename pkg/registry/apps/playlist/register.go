@@ -78,7 +78,7 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			}
 
 			//nolint:staticcheck // not yet migrated to OpenFeature
-			if !p.features.IsEnabledGlobally(featuremgmt.FlagPlaylistsRBAC) {
+			if !p.features.IsEnabledGlobally(featuremgmt.FlagGrafanaPlaylistsRBAC) {
 				// Hotfix: grant None-role users viewer-level access until the toggle is enabled.
 				// All other roles are handled by the default role authorizer.
 				if user.GetOrgRole() != org.RoleNone {

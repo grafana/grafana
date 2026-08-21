@@ -1,6 +1,6 @@
 {
   "folderScoped": false,
-  "featureFlags": ["playlistsRBAC"],
+  "featureFlags": ["grafana.playlistsRBAC"],
   "manifest": {
     "apiVersion": "playlist.grafana.app/v1",
     "kind": "Playlist",

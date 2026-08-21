@@ -28,7 +28,7 @@ func (m *mockAttributes) GetVerb() string         { return m.verb }
 func installerWithToggle(on bool, ac accesscontrol.AccessControl) *AppInstaller {
 	var features featuremgmt.FeatureToggles
 	if on {
-		features = featuremgmt.WithFeatures(featuremgmt.FlagPlaylistsRBAC)
+		features = featuremgmt.WithFeatures(featuremgmt.FlagGrafanaPlaylistsRBAC)
 	} else {
 		features = featuremgmt.WithFeatures()
 	}
