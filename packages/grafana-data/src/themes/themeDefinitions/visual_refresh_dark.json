@@ -175,6 +175,40 @@
         "right": "palette.orange800",
         "left": "palette.blue800"
       }
+    },
+    "badge": {
+      "colors": [
+        {
+          "text": "palette.blue300",
+          "background": "palette.blue950",
+          "border": "palette.blue800"
+        },
+        {
+          "text": "palette.red300",
+          "background": "palette.red950",
+          "border": "palette.red800"
+        },
+        {
+          "text": "palette.sage300",
+          "background": "palette.sage950",
+          "border": "palette.sage800"
+        },
+        {
+          "text": "palette.orange400",
+          "background": "palette.orange950",
+          "border": "palette.orange800"
+        },
+        {
+          "text": "palette.violet300",
+          "background": "palette.violet950",
+          "border": "palette.violet800"
+        },
+        {
+          "text": "palette.ink200",
+          "background": "palette.ink850",
+          "border": "palette.ink650"
+        }
+      ]
     }
   }
 }

@@ -176,5 +176,39 @@
     "borderRadiusSm": 4,
     "borderRadius": 8,
     "borderRadiusLg": 12
+  },
+  "badge": {
+    "colors": [
+      {
+        "text": "palette.blue800",
+        "background": "palette.blue50",
+        "border": "palette.blue200"
+      },
+      {
+        "text": "palette.red800",
+        "background": "palette.red50",
+        "border": "palette.red200"
+      },
+      {
+        "text": "palette.sage800",
+        "background": "palette.sage50",
+        "border": "palette.sage200"
+      },
+      {
+        "text": "palette.orange800",
+        "background": "palette.orange50",
+        "border": "palette.orange200"
+      },
+      {
+        "text": "palette.violet800",
+        "background": "palette.violet50",
+        "border": "palette.violet200"
+      },
+      {
+        "text": "palette.ink800",
+        "background": "palette.ink50",
+        "border": "palette.ink200"
+      }
+    ]
   }
 }
