@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -140,7 +141,7 @@ func getCARoot(caFile string) (*x509.CertPool, error) {
 	if caFile == "" {
 		return nil, nil
 	}
-	// It should be safe to ignore since caFile is passed as --internal.root-ca-file flag of apiserver
+	// It is safe to ignore since caFile is passed as --internal.root-ca-file flag of apiserver
 	// nolint:gosec
 	caCert, err := os.ReadFile(caFile)
 	if err != nil {
