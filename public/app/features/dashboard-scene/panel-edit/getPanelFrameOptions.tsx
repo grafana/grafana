@@ -200,6 +200,7 @@ export function PanelFrameTitleInput({
 
 export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: string }) {
   const { description, subtitle } = panel.useState();
+  const [value, setValue] = React.useState(description ?? subtitle ?? '');
   const [prevDescription, setPrevDescription] = React.useState(description ?? subtitle ?? '');
   let propName: 'description' | 'subtitle' = description ? 'description' : 'subtitle';
 
@@ -268,8 +269,8 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
       >
         <TextArea
           id={id}
-          value={subtitle ?? description}
-          onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
+          value={value}
+          onChange={(evt) => setValue(evt.currentTarget.value)}
           onFocus={() => setPrevDescription(subtitle ?? description ?? '')}
           onBlur={onCommitDescriptionChange}
         />
