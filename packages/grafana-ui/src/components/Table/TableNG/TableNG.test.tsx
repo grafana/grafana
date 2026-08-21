@@ -2174,6 +2174,31 @@ describe('TableNG', () => {
       expect(window.getComputedStyle(header).getPropertyValue('outline')).toBe('none');
     });
 
+    it('stacks a selected body cell below a hovered one', async () => {
+      // Both expand over their neighbors, so whichever is on top wins the overlap. A selection
+      // outlives the pointer, so ranking it above hover leaves a stale selected cell clipping the
+      // overflow of whatever the user hovers next.
+      render(<TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />);
+
+      // jsdom's selector engine never matches `:hover`, so the two values have to be compared as
+      // declared rather than as computed on an element.
+      const bodyCellStacking = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .filter((rule): rule is CSSStyleRule => 'selectorText' in rule)
+        .filter(
+          (rule) => rule.selectorText.includes(':not(.rdg-summary-row') && rule.style.getPropertyValue('z-index') !== ''
+        );
+
+      const hovered = bodyCellStacking.find((rule) => rule.selectorText.endsWith(':hover'));
+      const selected = bodyCellStacking.find((rule) => rule.selectorText.endsWith('[aria-selected=true]'));
+
+      expect(hovered).toBeDefined();
+      expect(selected).toBeDefined();
+      expect(Number(selected!.style.getPropertyValue('z-index'))).toBeLessThan(
+        Number(hovered!.style.getPropertyValue('z-index'))
+      );
+    });
+
     it('anchors a hover-expanded JSON cell to its top rather than centering the overflow', async () => {
       // The cell root inherits `align-items: center` from the default cell styles. Left unset here,
       // content taller than the max-height cap gets centered on the box's midpoint instead of pinned

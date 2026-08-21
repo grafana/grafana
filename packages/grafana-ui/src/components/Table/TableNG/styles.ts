@@ -100,16 +100,22 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       // add a box shadow on hover and selection for all body cells
       '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
         [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
-        // selected cells should appear below hovered cells.
-        ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 7 } }),
-        [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 6 },
+        // A selected cell sits below a hovered one, so that hovering a neighbor of the selected
+        // cell lifts its overflow clear rather than tucking it behind. The two selectors carry the
+        // same specificity, so the hover rule has to come last for a cell that is both to land on
+        // the hover value.
+        [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 7 },
+        ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 6 } }),
+        // react-data-grid rings the selected cell in the selection color. Once focus is gone that
+        // ring marks a cell the user can no longer see they are on, so leave the cell bare.
+        [`${SELECTED_CELL_SELECTOR}:not(:focus-within)`]: { outline: 'none' },
       },
 
       '.rdg-cell.rdg-cell-frozen': {
         backgroundColor: 'var(--rdg-row-background-color)',
         zIndex: theme.zIndex.tooltip - 4,
-        ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
         [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 3 },
+        ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
       },
 
       // have to override styles for row selection to workaround safari styles workaround
