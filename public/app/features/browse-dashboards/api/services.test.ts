@@ -4,7 +4,7 @@ import { type Store } from 'redux';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { config, setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler, apiFoldersHandlers } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, apiFoldersHandlers, starsRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
@@ -252,8 +252,6 @@ describe('browse-dashboards services', () => {
   });
 
   describe('listStarredFolders', () => {
-    const STARS_URL = '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars';
-
     const starsResponse = (resources: Array<{ group: string; kind: string; names: string[] }>) => ({
       kind: 'StarsList',
       apiVersion: 'collections.grafana.app/v1alpha1',
@@ -282,7 +280,7 @@ describe('browse-dashboards services', () => {
 
     it('resolves starred folders to prefixed view items under the virtual root', async () => {
       server.use(
-        http.get(STARS_URL, () =>
+        http.get(starsRoute, () =>
           HttpResponse.json(
             starsResponse([
               { group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['dash-1'] },
@@ -308,7 +306,7 @@ describe('browse-dashboards services', () => {
 
     it('returns an empty array when there is no starred folder resource', async () => {
       server.use(
-        http.get(STARS_URL, () =>
+        http.get(starsRoute, () =>
           HttpResponse.json(starsResponse([{ group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['dash-1'] }]))
         ),
         getCustomSearchHandler(starredFolderHits)
