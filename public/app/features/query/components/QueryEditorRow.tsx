@@ -21,7 +21,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
+import { getTemplateSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
@@ -162,10 +162,30 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid;
   }
 
+  /**
+   * Sync identity for the datasource this row should show. Used during render so a datasource
+   * (or variable) change can hide the plugin editor on this paint — `getDataSourceInstanceSettings`
+   * is async, so waiting for `componentDidUpdate` to finish that lookup would keep the previous
+   * editor mounted against the new query.
+   */
+  getDataSourceIdentifier(): string | undefined {
+    const queryDataSource = this.props.query.datasource;
+    if (queryDataSource) {
+      const uid = typeof queryDataSource === 'string' ? queryDataSource : queryDataSource.uid;
+      if (uid?.includes('$')) {
+        return getTemplateSrv().replace(uid, this.props.scopedVars, firstVariableValue);
+      }
+      return uid ?? this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid;
+    }
+
+    return this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid;
+  }
+
   async loadDatasource() {
     this.dsLoadInFlight = true;
     this.setState({ isDatasourceLoading: true });
 
+    const identifier = this.getDataSourceIdentifier();
     let datasource: DataSourceApi;
     const interpolatedUID = await this.getInterpolatedDataSourceUID();
 
@@ -183,12 +203,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.dsLoadInFlight = false;
     this.setState({
       datasource: datasource as unknown as DataSourceApi<TQuery>,
-      queriedDataSourceIdentifier: interpolatedUID,
+      queriedDataSourceIdentifier: identifier,
       isDatasourceLoading: false,
     });
   }
 
-  async componentDidUpdate(prevProps: Props<TQuery>) {
+  componentDidUpdate(prevProps: Props<TQuery>) {
     const { datasource, queriedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
 
@@ -218,8 +238,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
 
     // check if we need to load another datasource
-    const interpolatedUID = await this.getInterpolatedDataSourceUID();
-    if (datasource && queriedDataSourceIdentifier !== interpolatedUID) {
+    if (datasource && queriedDataSourceIdentifier !== this.getDataSourceIdentifier()) {
       this.loadDatasource();
     }
   }
@@ -245,7 +264,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   isWaitingForDatasourceToLoad(): boolean {
-    return this.state.isDatasourceLoading;
+    // Hide as soon as the query's datasource identity no longer matches the loaded
+    // instance. `isDatasourceLoading` is only set after `loadDatasource` starts, which
+    // is too late for the first render after a datasource or variable change.
+    return this.state.isDatasourceLoading || this.getDataSourceIdentifier() !== this.state.queriedDataSourceIdentifier;
   }
 
   renderPluginEditor = () => {
@@ -666,6 +688,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       </div>
     );
   }
+}
+
+function firstVariableValue<T>(value: T | T[]): T {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 /**

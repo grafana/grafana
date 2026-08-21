@@ -53,6 +53,7 @@ jest.mock('@grafana/assistant', () => ({
 const mockGet = jest.fn((..._args: unknown[]) => Promise.resolve(mockDS));
 const mockGetInstanceSettings = jest.fn((..._args: unknown[]) => mockDS);
 const mockReportInteraction = jest.fn();
+const mockReplace = jest.fn((target?: string) => target ?? '');
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -60,6 +61,12 @@ jest.mock('@grafana/runtime', () => ({
     get: mockGet,
     getList: () => {},
     getInstanceSettings: mockGetInstanceSettings,
+  }),
+  getTemplateSrv: () => ({
+    replace: (target?: string) => mockReplace(target),
+    getVariables: () => [],
+    containsTemplate: () => false,
+    updateTimeRange: () => {},
   }),
   reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
 }));
@@ -546,6 +553,80 @@ describe('QueryEditorRow', () => {
       await waitFor(() => expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument());
 
       expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('plugin editor while datasource changes', () => {
+    let editorQueryIds: string[];
+
+    function FakeQueryEditor({ query }: { query: DataQuery }) {
+      editorQueryIds.push(query.datasource?.uid ?? 'none');
+      return <div data-testid="fake-query-editor">{query.datasource?.uid ?? 'none'}</div>;
+    }
+
+    const data: PanelData = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+
+    beforeEach(() => {
+      editorQueryIds = [];
+      mockGet.mockImplementation((..._args: unknown[]) =>
+        Promise.resolve({
+          ...mockDS,
+          components: { QueryEditor: FakeQueryEditor },
+        })
+      );
+    });
+
+    afterEach(() => {
+      mockGet.mockImplementation((..._args: unknown[]) => Promise.resolve(mockDS));
+      mockReplace.mockImplementation((target?: string) => target ?? '');
+    });
+
+    it('hides the plugin editor immediately when the query datasource changes', async () => {
+      const initialProps = props(data);
+      const { rerender } = render(<QueryEditorRow {...initialProps} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('none');
+      const rendersBeforeChange = editorQueryIds.length;
+
+      rerender(
+        <QueryEditorRow
+          {...initialProps}
+          query={{ refId: 'B', datasource: { uid: 'other-ds', type: 'loki' } }}
+          queries={[{ refId: 'B', datasource: { uid: 'other-ds', type: 'loki' } }]}
+        />
+      );
+
+      // The previous plugin editor must not paint against the new query while the next
+      // datasource is still loading. `queryByTestId` can miss that paint if a later
+      // setState unmounts it in the same RTL flush.
+      expect(editorQueryIds.slice(rendersBeforeChange)).toEqual([]);
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('other-ds');
+    });
+
+    it('hides the plugin editor immediately when a datasource variable interpolates to a new uid', async () => {
+      let interpolatedUid = 'prom-uid';
+      mockReplace.mockImplementation((target?: string) => (target === '${ds}' ? interpolatedUid : (target ?? '')));
+
+      const query = { refId: 'B', datasource: { uid: '${ds}', type: 'prometheus' } };
+      const initialProps = { ...props(data), query, queries: [query] };
+      const { rerender } = render(<QueryEditorRow {...initialProps} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('${ds}');
+      const rendersBeforeChange = editorQueryIds.length;
+
+      interpolatedUid = 'loki-uid';
+      rerender(<QueryEditorRow {...initialProps} data={{ ...data }} />);
+
+      expect(editorQueryIds.slice(rendersBeforeChange)).toEqual([]);
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+
+      expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('${ds}');
     });
   });
 

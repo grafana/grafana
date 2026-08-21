@@ -324,12 +324,73 @@ function QueryEditorRowWithResolvedDataSource({
   scopedVars,
   ...rowProps
 }: QueryEditorRowWithResolvedDataSourceProps) {
+  // Compare by value: `scopedVars` is a new `{ __sceneObject }` wrapper on every
+  // QueryEditorRows render, and `query.datasource` is often an inline object.
+  const datasourceKey = stableKey(query.datasource);
+  const varsKey = scopedVarsKey(scopedVars);
   const { value: querySettings } = useAsync(
     () => (query.datasource ? getDataSourceInstanceSettings(query.datasource, scopedVars) : Promise.resolve(undefined)),
-    [query.datasource, scopedVars]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [datasourceKey, varsKey]
   );
 
-  const dataSourceSettings = !query.datasource ? groupSettings : (querySettings ?? groupSettings);
+  const dataSourceSettings = resolveRowDataSourceSettings(query.datasource, querySettings, groupSettings);
+  if (!dataSourceSettings) {
+    return null;
+  }
 
   return <QueryEditorRow {...rowProps} query={query} dataSource={dataSourceSettings} scopedVars={scopedVars} />;
+}
+
+/**
+ * A query with its own datasource ref must not inherit the group's settings until that
+ * lookup returns. Mixed group settings are the panel mixer, not the query's datasource —
+ * using them as a stand-in feeds Mixed into the row header and plugin context.
+ */
+export function resolveRowDataSourceSettings(
+  queryDatasource: DataQuery['datasource'],
+  querySettings: DataSourceInstanceSettings | undefined,
+  groupSettings: DataSourceInstanceSettings
+): DataSourceInstanceSettings | undefined {
+  if (!queryDatasource) {
+    return groupSettings;
+  }
+  if (querySettings) {
+    return querySettings;
+  }
+  return groupSettings.meta.mixed ? undefined : groupSettings;
+}
+
+function stableKey(value: unknown): string {
+  return JSON.stringify(value ?? null);
+}
+
+function scopedVarsKey(scopedVars?: ScopedVars): string {
+  if (!scopedVars) {
+    return '';
+  }
+
+  const sceneVar = scopedVars.__sceneObject;
+  if (!sceneVar) {
+    return stableKey(scopedVars);
+  }
+
+  // SafeSerializableSceneObject is circular under JSON.stringify (`value` returns this).
+  // Key by the underlying scene object so a new wrapper each render does not refetch.
+  const sceneObject = typeof sceneVar.valueOf === 'function' ? sceneVar.valueOf() : sceneVar;
+  const key = sceneObjectKey(sceneObject);
+  return key != null ? `scene:${key}` : 'scene';
+}
+
+function sceneObjectKey(sceneObject: unknown): string | undefined {
+  if (sceneObject == null || typeof sceneObject !== 'object' || !('state' in sceneObject)) {
+    return undefined;
+  }
+
+  const state = sceneObject.state;
+  if (state == null || typeof state !== 'object' || !('key' in state) || state.key == null) {
+    return undefined;
+  }
+
+  return String(state.key);
 }
