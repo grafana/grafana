@@ -170,6 +170,35 @@ measureTextMock.mockReturnValue({ width: 100 } as TextMetrics);
 expect(measureTextMock).toHaveBeenCalledWith('label', 12);
 ```
 
+**Never mock `@grafana/runtime/internal` to fake a feature flag.** It bypasses the real
+OpenFeature/flag-client wiring and drifts from how flags actually resolve at runtime:
+
+```ts
+// ❌ don't
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: () => ({ getBooleanValue: () => true }),
+}));
+```
+
+Use `setTestFlags` from `@grafana/test-utils/unstable` instead — it drives the real client:
+
+```ts
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+
+beforeAll(() => {
+  setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
+});
+
+afterAll(() => {
+  setTestFlags({});
+});
+```
+
+For classic `featuremgmt` toggles (not OpenFeature flags), use `testWithFeatureToggles`
+(`config.featureToggles`) instead of mocking `@grafana/runtime`.
+
 ## Step 3 — Don't test what shouldn't exist
 
 - **Skip modules slated for deletion.** Adding tests to deprecated code signals it's
