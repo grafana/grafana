@@ -13,7 +13,8 @@ export type RecommendedCardId =
   | 'enable-logs-k8s'
   | 'hosted-traces'
   | 'kubernetes-monitoring'
-  | 'application-observability';
+  | 'application-observability'
+  | 'synthetic-monitoring';
 
 // Complete total orders (every RecommendedCardId appears once) so the sort is deterministic;
 // gating means several entries are unreachable for a given solution, which is harmless.
@@ -27,6 +28,7 @@ export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCard
     'hosted-traces',
     'application-observability',
     'connect-metrics',
+    'synthetic-monitoring',
   ],
   // Logs↔traces correlation is the classic next step from logs.
   logs: [
@@ -36,6 +38,7 @@ export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCard
     'kubernetes-monitoring',
     'enable-logs',
     'enable-logs-k8s',
+    'synthetic-monitoring',
   ],
   // Traces are the App Observability foundation.
   traces: [
@@ -45,6 +48,7 @@ export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCard
     'enable-logs-k8s',
     'kubernetes-monitoring',
     'hosted-traces',
+    'synthetic-monitoring',
   ],
   kubernetes: [
     'enable-logs-k8s',
@@ -53,6 +57,17 @@ export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCard
     'application-observability',
     'connect-metrics',
     'kubernetes-monitoring',
+    'synthetic-monitoring',
+  ],
+  // Black-box uptime affinity: infra-adjacent next steps first, own card last (matches kubernetes).
+  synthetics: [
+    'kubernetes-monitoring',
+    'hosted-traces',
+    'application-observability',
+    'enable-logs',
+    'enable-logs-k8s',
+    'connect-metrics',
+    'synthetic-monitoring',
   ],
 };
 
@@ -96,8 +111,8 @@ export interface RecommendationSelection {
  * `metrics` inactive is unreachable — solutionState enforces the invariant.
  */
 export function selectRecommendations(state: SolutionState): RecommendationSelection {
-  const { metrics, logs, traces, kubernetes, spanMetrics } = state;
-  // The core-signal short-circuit deliberately excludes spanMetrics: it only gates one card.
+  const { metrics, logs, traces, kubernetes, spanMetrics, synthetics } = state;
+  // The core-signal short-circuit deliberately excludes spanMetrics and synthetics: they each gate one card.
   if (metrics === 'unknown' || logs === 'unknown' || traces === 'unknown' || kubernetes === 'unknown') {
     return { cards: [], baseRow: 'unknown' };
   }
@@ -115,18 +130,22 @@ export function selectRecommendations(state: SolutionState): RecommendationSelec
     return { cards: ['connect-metrics'], baseRow: 'partial_telemetry' };
   }
 
+  // Synthetic Monitoring rides the Kubernetes rows and the metrics-only row; like spanMetrics
+  // gating App O11y, only a definitive inactive shows the card.
+  const syntheticMonitoring: RecommendedCardId[] = synthetics === 'inactive' ? ['synthetic-monitoring'] : [];
+
   if (logs === 'inactive') {
     // Logs is PRIMARY before any traces/k8s recommendation; the K8s row only changes the copy
     // (Helm values flag). The row's Traces cell is moot when traces are already active.
     return kubernetes === 'active'
-      ? { cards: ['enable-logs-k8s'], baseRow: 'k8s_no_logs' }
-      : { cards: ['enable-logs'], baseRow: 'metrics_only' };
+      ? { cards: ['enable-logs-k8s', ...syntheticMonitoring], baseRow: 'k8s_no_logs' }
+      : { cards: ['enable-logs', ...syntheticMonitoring], baseRow: 'metrics_only' };
   }
 
   if (traces === 'inactive') {
     // Distinct rows so Hosted Traces clicks segment by Kubernetes presence.
     return kubernetes === 'active'
-      ? { cards: ['hosted-traces'], baseRow: 'mlk_no_traces' }
+      ? { cards: ['hosted-traces', ...syntheticMonitoring], baseRow: 'mlk_no_traces' }
       : { cards: ['hosted-traces', 'kubernetes-monitoring'], baseRow: 'ml_no_traces' };
   }
 
