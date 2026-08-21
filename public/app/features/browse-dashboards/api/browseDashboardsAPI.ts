@@ -1,7 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { handleRequestError } from '@grafana/api-clients';
-import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents, locationUtil } from '@grafana/data';
@@ -443,7 +442,6 @@ export const browseDashboardsAPI = createApi({
       onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, getState }) => {
         queryFulfilled.then(() => {
           dispatch(refreshParents(dashboardUIDs));
-          dispatch(legacyUserAPI.util.invalidateTags(['dashboardStars']));
           invalidateQuotaUsage(dispatch);
           for (const uid of dashboardUIDs) {
             dispatch(

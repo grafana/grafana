@@ -174,7 +174,6 @@ export function TableFlat(props: TableNGProps) {
     typographyCtx,
     showTypeIcons,
     getActions: getCellActions,
-    sortColumns,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
@@ -189,7 +188,6 @@ export function TableFlat(props: TableNGProps) {
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });

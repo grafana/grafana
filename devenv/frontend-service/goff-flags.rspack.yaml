@@ -1,0 +1,8 @@
+# Bundler selection for the frontend-service. Tilt uses this file instead of
+# goff-flags.webpack.yaml when RSPACK=1 is set.
+grafana.rspackBuild:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled

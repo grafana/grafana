@@ -109,15 +109,39 @@
       "selectedBorder": "palette.orange500"
     }
   },
+  "shape": {
+    "borderRadiusSm": 4,
+    "borderRadius": 8,
+    "borderRadiusLg": 12
+  },
+  "shadows": {
+    "z1": "0px 1px 2px hsl(from palette.neutral350 h s l / 0.75)",
+    "z2": "0px 4px 8px hsl(from palette.neutral350 h s l / 0.75)",
+    "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
+  },
   "components": {
     "checkbox": {
       "activeBackgroundHover": "palette.orange600"
     },
+    "drawer": {
+      "background": "palette.neutral50",
+      "borderColor": "palette.neutral200"
+    },
+    "modal": {
+      "background": "palette.neutral50",
+      "borderColor": "palette.neutral200"
+    },
     "overlay": {
-      "background": "hsl(from palette.neutral300 h s l / 0.5)"
+      "background": "hsl(from palette.neutral400 h s l / 0.5)"
+    },
+    "dropdown": {
+      "borderColor": "palette.neutral200"
     },
     "switch": {
       "activeBackgroundHover": "palette.orange600"
+    },
+    "tooltip": {
+      "borderColor": "palette.neutral200"
     },
     "codeEditor": {
       "keyword": "palette.blue700",
@@ -171,10 +195,5 @@
         "left": "palette.blue200"
       }
     }
-  },
-  "shape": {
-    "borderRadiusSm": 4,
-    "borderRadius": 8,
-    "borderRadiusLg": 12
   }
 }
