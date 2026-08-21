@@ -10,6 +10,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
@@ -54,13 +55,21 @@ func defaultRetryBackoff() wait.Backoff {
 type retryResourceInterface struct {
 	client  dynamic.ResourceInterface
 	backoff wait.Backoff
+	// gvr and metrics label and record the API server request latency. metrics
+	// may be nil (factory built without a registry); observe tolerates that.
+	gvr     schema.GroupVersionResource
+	metrics *clientMetrics
 }
 
-// newRetryResourceInterface creates a new ResourceInterface wrapper with retry logic
-func newRetryResourceInterface(client dynamic.ResourceInterface, backoff wait.Backoff) dynamic.ResourceInterface {
+// newRetryResourceInterface creates a new ResourceInterface wrapper with retry
+// logic. gvr labels the request-duration metric; metrics may be nil, in which
+// case no metrics are recorded.
+func newRetryResourceInterface(client dynamic.ResourceInterface, backoff wait.Backoff, gvr schema.GroupVersionResource, metrics *clientMetrics) dynamic.ResourceInterface {
 	return &retryResourceInterface{
 		client:  client,
 		backoff: backoff,
+		gvr:     gvr,
+		metrics: metrics,
 	}
 }
 
@@ -105,8 +114,13 @@ func isTransientError(err error) bool {
 	return errors.As(err, &opErr)
 }
 
-// retryWithBackoff executes a function with exponential backoff retry logic using wait.ExponentialBackoff
-func (r *retryResourceInterface) retryWithBackoff(ctx context.Context, fn func() error) error {
+// retryWithBackoff executes a function with exponential backoff retry logic using wait.ExponentialBackoff.
+// It records the operation's latency and outcome, timing the whole retried call
+// (including backoff waits) as that is the latency the caller observes.
+func (r *retryResourceInterface) retryWithBackoff(ctx context.Context, operation string, fn func() error) (retErr error) {
+	start := time.Now()
+	defer func() { r.metrics.observe(r.gvr, operation, start, retErr) }()
+
 	var lastErr error
 	attempt := 0
 	logger := logging.FromContext(ctx)
@@ -160,7 +174,7 @@ func (r *retryResourceInterface) Create(ctx context.Context, obj *unstructured.U
 	var result *unstructured.Unstructured
 	var err error
 
-	retryErr := r.retryWithBackoff(ctx, func() error {
+	retryErr := r.retryWithBackoff(ctx, operationCreate, func() error {
 		result, err = r.client.Create(ctx, obj, options, subresources...)
 		return err
 	})
@@ -176,7 +190,7 @@ func (r *retryResourceInterface) Update(ctx context.Context, obj *unstructured.U
 	var result *unstructured.Unstructured
 	var err error
 
-	retryErr := r.retryWithBackoff(ctx, func() error {
+	retryErr := r.retryWithBackoff(ctx, operationUpdate, func() error {
 		result, err = r.client.Update(ctx, obj, options, subresources...)
 		return err
 	})
@@ -192,7 +206,7 @@ func (r *retryResourceInterface) UpdateStatus(ctx context.Context, obj *unstruct
 	var result *unstructured.Unstructured
 	var err error
 
-	retryErr := r.retryWithBackoff(ctx, func() error {
+	retryErr := r.retryWithBackoff(ctx, operationUpdateStatus, func() error {
 		result, err = r.client.UpdateStatus(ctx, obj, options)
 		return err
 	})
@@ -205,14 +219,14 @@ func (r *retryResourceInterface) UpdateStatus(ctx context.Context, obj *unstruct
 
 // Delete implements dynamic.ResourceInterface
 func (r *retryResourceInterface) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
-	return r.retryWithBackoff(ctx, func() error {
+	return r.retryWithBackoff(ctx, operationDelete, func() error {
 		return r.client.Delete(ctx, name, options, subresources...)
 	})
 }
 
 // DeleteCollection implements dynamic.ResourceInterface
 func (r *retryResourceInterface) DeleteCollection(ctx context.Context, options metav1.DeleteOptions, listOptions metav1.ListOptions) error {
-	return r.retryWithBackoff(ctx, func() error {
+	return r.retryWithBackoff(ctx, operationDeleteCollection, func() error {
 		return r.client.DeleteCollection(ctx, options, listOptions)
 	})
 }
@@ -222,7 +236,7 @@ func (r *retryResourceInterface) Get(ctx context.Context, name string, options m
 	var result *unstructured.Unstructured
 	var err error
 
-	retryErr := r.retryWithBackoff(ctx, func() error {
+	retryErr := r.retryWithBackoff(ctx, operationGet, func() error {
 		result, err = r.client.Get(ctx, name, options, subresources...)
 		return err
 	})
@@ -238,7 +252,7 @@ func (r *retryResourceInterface) List(ctx context.Context, opts metav1.ListOptio
 	var result *unstructured.UnstructuredList
 	var err error
 
-	retryErr := r.retryWithBackoff(ctx, func() error {
+	retryErr := r.retryWithBackoff(ctx, operationList, func() error {
 		result, err = r.client.List(ctx, opts)
 		return err
 	})
@@ -261,7 +275,7 @@ func (r *retryResourceInterface) Patch(ctx context.Context, name string, pt type
 	var result *unstructured.Unstructured
 	var err error
 
-	retryErr := r.retryWithBackoff(ctx, func() error {
+	retryErr := r.retryWithBackoff(ctx, operationPatch, func() error {
 		result, err = r.client.Patch(ctx, name, pt, data, options, subresources...)
 		return err
 	})
@@ -277,7 +291,7 @@ func (r *retryResourceInterface) Apply(ctx context.Context, name string, obj *un
 	var result *unstructured.Unstructured
 	var err error
 
-	retryErr := r.retryWithBackoff(ctx, func() error {
+	retryErr := r.retryWithBackoff(ctx, operationApply, func() error {
 		result, err = r.client.Apply(ctx, name, obj, options, subresources...)
 		return err
 	})
@@ -293,7 +307,7 @@ func (r *retryResourceInterface) ApplyStatus(ctx context.Context, name string, o
 	var result *unstructured.Unstructured
 	var err error
 
-	retryErr := r.retryWithBackoff(ctx, func() error {
+	retryErr := r.retryWithBackoff(ctx, operationApplyStatus, func() error {
 		result, err = r.client.ApplyStatus(ctx, name, obj, options)
 		return err
 	})

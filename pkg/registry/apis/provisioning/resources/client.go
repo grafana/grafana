@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -165,6 +166,8 @@ type clientFactory struct {
 	clientsProvider clientsProvider
 	// supportedResources is the merged base + registered set, computed once.
 	supportedResources []SupportedResource
+	// metrics records API server request latency; may be nil (no registry).
+	metrics *clientMetrics
 }
 
 // TODO: Rename to NamespacedClients
@@ -247,21 +250,23 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // NewClientFactory creates a ClientFactory. The supported set is the configured list of
 // resources that can be managed from the UI; the ResourceClients it produces expose only
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
-// static SupportedProvisioningResources base set.
-func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
+// static SupportedProvisioningResources base set. reg receives the API server request
+// metrics and may be nil to skip registration.
+func NewClientFactory(configProvider apiserver.RestConfigProvider, reg prometheus.Registerer, supported ...SupportedResource) ClientFactory {
 	return &clientFactory{
 		clientsProvider:    newSingleAPIClients(configProvider),
 		supportedResources: activeResources(defaultSupportedResources(supported)),
+		metrics:            newClientMetrics(reg),
 	}
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
 // The supported set behaves as described on NewClientFactory.
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, reg prometheus.Registerer, supported ...SupportedResource) ClientFactory {
 	clientFactories := make(map[string]ClientFactory)
 
 	for api, configProvider := range configProviders {
-		clientFactory := NewClientFactory(configProvider, supported...)
+		clientFactory := NewClientFactory(configProvider, reg, supported...)
 		clientFactories[api] = clientFactory
 	}
 
@@ -320,6 +325,7 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
 		supportedResources: f.supportedResources,
+		metrics:            f.metrics,
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
@@ -329,6 +335,8 @@ type resourceClients struct {
 	namespace          string
 	clientsProvider    clientsProvider
 	supportedResources []SupportedResource
+	// metrics is passed to each resource client for API server request timing.
+	metrics *clientMetrics
 
 	// ResourceInterface cache for this context + namespace
 	mutex      sync.Mutex
@@ -386,7 +394,7 @@ func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKi
 	info = &clientInfo{
 		gvk:    gvk,
 		gvr:    gvr,
-		client: newRetryResourceInterface(baseClient, defaultRetryBackoff()),
+		client: newRetryResourceInterface(baseClient, defaultRetryBackoff(), gvr, c.metrics),
 	}
 	c.byKind[gvk] = info
 	c.byResource[gvr] = info
@@ -440,7 +448,7 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	info = &clientInfo{
 		gvk:    gvk,
 		gvr:    gvr,
-		client: newRetryResourceInterface(baseClient, defaultRetryBackoff()),
+		client: newRetryResourceInterface(baseClient, defaultRetryBackoff(), gvr, c.metrics),
 	}
 	c.byKind[gvk] = info
 	c.byResource[gvr] = info
