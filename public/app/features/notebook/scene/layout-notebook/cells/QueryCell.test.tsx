@@ -497,6 +497,27 @@ describe('QueryCell', () => {
     expect(mockRun).not.toHaveBeenCalled();
   });
 
+  // The two gates have to stay distinct: auto-run is "already saved at mount", range re-run is
+  // "this cell has already fetched once". Keying the picker effect off a live hasQuery would
+  // re-open the first-keystroke bug through a different door — typing into an empty cell, then
+  // nudging the picker, would hit the datasource without an explicit Run.
+  it('does not run when a freshly-inserted cell is typed into and the time range then changes', async () => {
+    const morning = absoluteRange('2024-01-01T00:00:00Z', '2024-01-01T06:00:00Z');
+    const afternoon = absoluteRange('2024-01-01T12:00:00Z', '2024-01-01T18:00:00Z');
+    const { rerender } = render(
+      <QueryCell content={emptyQueryContent()} isEditing={true} range={morning} onChange={jest.fn()} />
+    );
+
+    await screen.findByTestId('resolved-datasource');
+    await act(async () => {});
+    expect(mockRun).not.toHaveBeenCalled();
+
+    rerender(<QueryCell content={savedQueryContent()} isEditing={true} range={afternoon} onChange={jest.fn()} />);
+
+    await act(async () => {});
+    expect(mockRun).not.toHaveBeenCalled();
+  });
+
   it('runs against the resolved datasource and the notebook time range', async () => {
     const { user } = render(
       <QueryCell content={emptyQueryContent()} isEditing={true} range={range} onChange={jest.fn()} />
