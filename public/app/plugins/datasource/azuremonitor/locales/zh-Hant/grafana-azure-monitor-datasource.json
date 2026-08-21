@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "啟用基本記錄"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "批次 API",
+      "description-batch-api": "在單一請求中查詢多個資源，提高大型儀表板的效能。需要 <6>metrics.monitor.azure.com</6> 上訂閱範圍的<2>監控讀取器</2>角色。超出免費方案範圍可能會<9>產生額外費用</9>。",
+      "label-enable-batch-api": "啟用批次 API"
     },
     "config-editor": {
       "description-additional-settings": "附加設定為選擇性設定，可進行設定以便更妥善掌控您的資料來源。這包括安全 Socks 代理伺服器、要求逾時和轉寄的 Cookie。",
@@ -105,7 +105,11 @@
       "load-subscriptions": "載入訂閱"
     },
     "dimension-fields": {
-      "aria-label-remove": "移除",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "尺寸",
       "placeholder-field": "欄位",
       "placeholder-operation": "操作",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "指標命名空間"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "您可以跨訂閱和區域選取相同資源類型的項目。不同訂閱或區域中的資源會在不同的請求中查詢，並可能會單獨失敗。若要選取不同資源類型的資源，請先取消勾選您目前的選擇。",
+      "selection-notice-standard": "您可以選取相同資源類型和位置的項目。若要選取不同資源類型或位置的資源，請先取消勾選您目前的選擇。"
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "功能"
     },
     "nested-row": {
       "text-loading": "正在載入…"
@@ -218,8 +222,8 @@
       "tooltip-order-by": "以一或多欄為依據，按遞增或遞減順序將結果排序。"
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "在 {{maxPages}} 頁後停止載入；某些結果可能會被省略。",
+      "results-truncated-title": "Azure 監視器"
     },
     "query-editor": {
       "alert-error-occurred": "從 Azure Monitor 請求中繼資料時發生錯誤"

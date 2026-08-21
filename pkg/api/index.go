@@ -113,7 +113,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
 	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
-	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
 	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
 
 	// With the client-built nav tree the frontend only needs the items it cannot
@@ -143,7 +142,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
-	assets, err := webassets.GetWebAssets(c.Req.Context(), "build", hs.Cfg, hs.License)
+	assets, err := webassets.GetWebAssets(ctx, webassets.ResolveBuildDir(ctx), hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +200,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		RenderBindingSupported:              renderBindingSupported,
 		UseLuxon:                            useLuxon,
 		AssetSriChecksEnabled:               grafanaAssetSriChecks,
-		NewPreferencesPage:                  newPreferencesPage,
 		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
 	}
 

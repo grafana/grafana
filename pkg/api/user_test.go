@@ -94,7 +94,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), settings, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -169,7 +169,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), sc.cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -201,7 +201,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), sc.cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
@@ -677,7 +677,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
-		sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(sqlStore), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
@@ -908,7 +908,7 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), settings, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
 			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)

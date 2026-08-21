@@ -368,3 +368,16 @@ To add a data link, follow these steps:
    {{< /tabs >}}
 
 If you add multiple data links or actions, you can control the order in which they appear in the visualization. To do this, click and drag the data link or action to the desired position.
+
+## Panel-to-panel filtering
+
+You can use data links to link back to the dashboard you are currently on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
+
+To preserve the context of the current dashboard:
+
+- **Time range:** You must explicitly include the current time range in the link.
+- **Variables:** You must enable **Include all variables** to preserve existing selections.
+- **Ordering:** Ensure that **Include all variables** is placed before the specific variable you are defining in the link.
+
+Filters on the current dashboard are automatically preserved.
+Learn more in [Create dashboard URL variables > Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#filters).

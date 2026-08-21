@@ -212,7 +212,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	lookupParams := login.UserLookupParams{}
-	allowInsecureEmailLookup := cfg.Raw.Section("auth").Key("oauth_allow_insecure_email_lookup").MustBool(false)
+	allowInsecureEmailLookup := cfg.OAuthAllowInsecureEmailLookup
 	if allowInsecureEmailLookup {
 		lookupParams.Email = &userInfo.Email
 	}

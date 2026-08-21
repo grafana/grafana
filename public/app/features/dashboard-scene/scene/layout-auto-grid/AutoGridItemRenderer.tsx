@@ -2,7 +2,9 @@ import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { LazyLoader, sceneGraph, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
+import { selectors } from '@grafana/e2e-selectors';
+import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
+import { LazyLoader, sceneGraph, type SceneComponentProps, VizPanelFitScope, type VizPanel } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -14,21 +16,66 @@ import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
 import { type AutoGridItem } from './AutoGridItem';
-import { AutoGridLayoutManager } from './AutoGridLayoutManager';
+import {
+  AutoGridLayoutManager,
+  getFitMinHeightInPixels,
+  getMaxHeightCssValue,
+  getNamedHeightInPixels,
+} from './AutoGridLayoutManager';
 import { AutoGridResizeIntercept } from './AutoGridResizeIntercept';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
-  const { body, repeatedPanels = [], key } = model.useState();
+  const { body, repeatedPanels = [], key, fitContent: itemFitContent } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
   const { isEditing, preload } = useDashboardState(model);
   const styles = useStyles2(getStyles);
   const soloPanelContext = useSoloPanelContext();
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
 
-  // Check if this grid is a drop target for external drags
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
-  const { isDropTarget } = layoutManager.useState();
+  const {
+    isDropTarget,
+    fitContent: layoutFitContent,
+    rowHeight,
+    minHeight,
+    maxHeightMode,
+    maxHeight,
+    matchRowHeights,
+  } = layoutManager.useState();
+
+  // Subscribe so we re-render once the plugin loads and its capability is known.
+  body.useState();
+
+  const autoHeightPanelsEnabled = useFlagGrafanaDashboardsAutoHeightPanels();
+
+  // Content-fit only applies to panels whose plugin supports it. A per-panel
+  // override (opt-in/opt-out) wins over the layout default.
+  const pluginSupportsFit = body.getPlugin()?.supportsFitContent === true;
+  const fitContentOn = autoHeightPanelsEnabled && pluginSupportsFit && (itemFitContent ?? layoutFitContent) === true;
+  const matchRowHeightsOn = !autoHeightPanelsEnabled || matchRowHeights !== false;
+  const rowHeightPx = getNamedHeightInPixels(rowHeight);
+  const fitMinHeightPx = getFitMinHeightInPixels(minHeight, rowHeight);
+
+  // Fit-content sizing is pure CSS: the browser sizes the row to content. The
+  // min-height floor is applied to the panel chrome (via the fit context) so
+  // the chrome itself fills it — a min-height on this cell would leave the
+  // chrome floating at the top.
+  // Non-fit panels stay at the row height; when row heights aren't matched they
+  // must pin to it explicitly so a tall fit sibling doesn't stretch them.
+  // When a max height bounds the cell, the cap is applied to the panel chrome
+  // and the scroll lives on the chrome's content area — not on this cell — so
+  // the panel header stays fixed while the body scrolls (see
+  // styles.itemMaxHeightClip). The value travels down via a CSS variable.
+  const maxHeightCss = getMaxHeightCssValue(maxHeightMode, maxHeight);
+  const isMaxHeightBounded = maxHeightCss !== 'none';
+  const itemStyle = fitContentOn
+    ? isMaxHeightBounded
+      ? { '--auto-grid-item-max-height': maxHeightCss }
+      : undefined
+    : matchRowHeightsOn
+      ? undefined
+      : { height: rowHeightPx };
 
   const Wrapper = useMemo(
     () =>
@@ -43,6 +90,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat = false,
           isLastPanel = false,
           isSelected = false,
+          extraStyle,
         }: {
           item: VizPanel;
           conditionalRendering?: ConditionalRenderingGroup;
@@ -52,6 +100,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat?: boolean;
           isLastPanel?: boolean;
           isSelected?: boolean;
+          extraStyle?: React.CSSProperties;
         }) => {
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
             useIsConditionallyHidden(conditionalRendering);
@@ -69,7 +118,13 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
           const wrapperContent = (
             <>
-              <item.Component model={item} />
+              {autoHeightPanelsEnabled ? (
+                <VizPanelFitScope enabled={fitContentOn} minHeight={fitMinHeightPx}>
+                  <item.Component model={item} />
+                </VizPanelFitScope>
+              ) : (
+                <item.Component model={item} />
+              )}
               {conditionalRenderingOverlay}
               {showResizeIntercept && <AutoGridResizeIntercept item={model} />}
             </>
@@ -80,7 +135,12 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
               {...(addDndContainer
                 ? { ref: model.containerRef, [AUTO_GRID_ITEM_DROP_TARGET_ATTR]: showDropTarget ? key : undefined }
                 : {})}
-              className={cx(isConditionallyHidden && !isEditing && styles.hidden)}
+              className={cx(
+                isConditionallyHidden && !isEditing && styles.hidden,
+                fitContentOn && styles.itemFitContent,
+                fitContentOn && isMaxHeightBounded && styles.itemMaxHeightClip
+              )}
+              style={extraStyle}
             >
               {isDragged && <div className={styles.draggedPlaceholder} />}
               {
@@ -97,22 +157,18 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           );
         }
       ),
-    [model, isLazy, key, styles, isEditing]
+    [model, isLazy, key, styles, isEditing, fitContentOn, isMaxHeightBounded, fitMinHeightPx, autoHeightPanelsEnabled]
   );
 
   const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
 
   if (soloPanelContext) {
-    // Use lazy loading only for panel search layout (SoloPanelContextValueWithSearchStringFilter)
-    // as it renders multiple panels in a grid. Skip lazy loading for viewPanel URL param
-    // (SoloPanelContextWithPathIdFilter) since single panels should render immediately.
     const useLazyForSoloPanel = isLazy && soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
     return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], useLazyForSoloPanel);
   }
 
   const isDragging = !!draggingKey;
   const isDragged = draggingKey === key;
-  // Show drop target attribute for both internal drags and external drags (when this grid is a drop target)
   const showDropTarget = isDragging || !!isDropTarget;
 
   return (
@@ -125,6 +181,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
         isDragged={isDragged}
         showDropTarget={showDropTarget}
         isLastPanel={repeatedPanels.length === 0}
+        extraStyle={itemStyle}
       />
       {repeatedPanels.map((item, idx) => (
         <Wrapper
@@ -137,6 +194,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat={true}
           isLastPanel={idx === repeatedPanels.length - 1}
           isSelected={isSourceSelected}
+          extraStyle={itemStyle}
         />
       ))}
     </>
@@ -154,8 +212,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: `var(${DRAGGED_ITEM_HEIGHT})`,
     opacity: 0.8,
 
-    // Unfortunately, we need to re-enforce the absolute position here. Otherwise, the position will be overwritten with
-    //  a relative position by .dashboard-visible-hidden-element
     '&.dashboard-visible-hidden-element': {
       position: 'absolute',
     },
@@ -172,5 +228,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   hidden: css({
     display: 'none',
+  }),
+  itemFitContent: css({
+    width: '100%',
+  }),
+  // Cap the panel chrome itself (not the cell) and scroll inside its content
+  // area, so the panel header stays fixed while the body scrolls. The chrome is
+  // a flex column (header, then content); `minHeight: 0` lets the content flex
+  // item shrink to the remaining space instead of overflowing the chrome.
+  // Because nothing overflows the cell, selection/hover outlines at the
+  // chrome's edges stay unclipped.
+  itemMaxHeightClip: css({
+    '& [data-viz-panel-key] > div > section': {
+      maxHeight: 'var(--auto-grid-item-max-height)',
+    },
+    [`& [data-viz-panel-key] > div > section > [data-testid="${selectors.components.Panels.Panel.content}"]`]: {
+      minHeight: 0,
+      overflowY: 'auto',
+    },
   }),
 });

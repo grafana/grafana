@@ -10,11 +10,12 @@ import {
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
 import { getDataSourceInstance } from './dataSource';
+import { getDataSourceInstanceListItem } from './listItem';
 import {
   type GetDataSourceInstanceListFilters,
   getDataSourceInstanceSettings,
   getDataSourceInstanceList,
-  getDefaultDataSourceInstance,
+  getDefaultDataSourceInstanceListItem,
   hasDataSourceInstance,
 } from './settings';
 
@@ -25,6 +26,15 @@ export interface UseDataSourceInstanceSettingsResult {
   isLoading: boolean;
   error?: Error;
   settings?: DataSourceInstanceSettings;
+}
+
+/**
+ * @public
+ */
+export interface UseDataSourceInstanceListItemResult {
+  isLoading: boolean;
+  error?: Error;
+  item?: DataSourceInstanceListItem;
 }
 
 /**
@@ -48,7 +58,7 @@ export interface UseDataSourceInstanceResult {
 /**
  * @public
  */
-export interface UseDefaultDataSourceInstanceResult {
+export interface UseDefaultDataSourceInstanceListItemResult {
   isLoading: boolean;
   error?: Error;
   item?: DataSourceInstanceListItem;
@@ -94,6 +104,30 @@ export function useDataSourceInstanceSettings(
 }
 
 /**
+ * React hook wrapping {@link getDataSourceInstanceListItem}. Re-fetches when `ref`
+ * changes (compared by value, so inline objects are safe).
+ *
+ * Prefer this over {@link useDataSourceInstanceSettings} whenever only identity or plugin
+ * metadata is needed — `item` carries `uid`, `type`, `name`, `meta`, `readOnly` and
+ * `isDefault`, and avoids depending on per-instance settings that will later be fetched on
+ * demand.
+ *
+ * Resolves **by uid only**: a ref with no usable uid — including `'default'`, `undefined` and
+ * type-only refs — yields `item: undefined` rather than the default data source. Template
+ * variable strings (e.g. `$ds` or `${ds}`) are not interpolated; resolve them to a uid first.
+ *
+ * @public
+ */
+export function useDataSourceInstanceListItem(
+  ref?: DataSourceRef | string | null
+): UseDataSourceInstanceListItemResult {
+  const refKey = stableKey(ref);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { loading, error, value } = useAsync(() => getDataSourceInstanceListItem(ref), [refKey]);
+  return { isLoading: loading, error, item: value };
+}
+
+/**
  * React hook wrapping {@link getDataSourceInstanceList}. Re-fetches when
  * `filters` changes (compared by value, so inline objects are safe).
  * When `filters.filter` (a callback) is set, the hook re-fetches when the
@@ -132,13 +166,13 @@ export function useDataSourceInstance(ref?: DataSourceRef | string | null): UseD
 }
 
 /**
- * React hook wrapping {@link getDefaultDataSourceInstance}. Re-fetches when
+ * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-fetches when
  * `type` changes.
  *
  * @public
  */
-export function useDefaultDataSourceInstance(type: string): UseDefaultDataSourceInstanceResult {
-  const { loading, error, value } = useAsync(() => getDefaultDataSourceInstance(type), [type]);
+export function useDefaultDataSourceInstanceListItem(type: string): UseDefaultDataSourceInstanceListItemResult {
+  const { loading, error, value } = useAsync(() => getDefaultDataSourceInstanceListItem(type), [type]);
   return { isLoading: loading, error, item: value };
 }
 

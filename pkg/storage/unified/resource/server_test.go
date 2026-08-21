@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -586,12 +587,12 @@ func TestListStoredResources(t *testing.T) {
 	})
 
 	create := func(namespace, name string) {
-		raw := []byte(fmt.Sprintf(`{
+		raw := fmt.Appendf(nil, `{
 			"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {"name": %q, "namespace": %q},
 			"spec": {"title": "hello", "interval": "5m"}
-		}`, name, namespace))
+		}`, name, namespace)
 		resp, err := server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
 			Key: &resourcepb.ResourceKey{
@@ -1414,18 +1415,25 @@ type watchTestServerOpts struct {
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
+	// KV, when set, is used instead of a fresh in-memory store. It allows
+	// starting a second server on top of existing data.
+	KV KV
 }
 
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	t.Helper()
-	db, err := badger.Open(badger.DefaultOptions("").
-		WithInMemory(true).
-		WithLogger(nil))
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, db.Close()) })
+	kvStore := opts.KV
+	if kvStore == nil {
+		db, err := badger.Open(badger.DefaultOptions("").
+			WithInMemory(true).
+			WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, db.Close()) })
+		kvStore = NewBadgerKV(db)
+	}
 
 	store, err := NewKVStorageBackend(KVBackendOptions{
-		KvStore:      NewBadgerKV(db),
+		KvStore:      kvStore,
 		WatchOptions: WatchOptions{SettleDelay: 1 * time.Millisecond},
 	})
 	require.NoError(t, err)
@@ -1450,6 +1458,13 @@ var playlistCounter int
 // createTestPlaylist creates a playlist resource with a unique auto-generated
 // name. ctx must already carry auth info.
 func createTestPlaylist(ctx context.Context, srv *server) error {
+	_, err := createTestPlaylistRV(ctx, srv)
+	return err
+}
+
+// createTestPlaylistRV is like createTestPlaylist but also returns the resource
+// version of the created resource.
+func createTestPlaylistRV(ctx context.Context, srv *server) (int64, error) {
 	playlistCounter++
 	name := fmt.Sprintf("playlist-%d", playlistCounter)
 	value := []byte(`{
@@ -1474,12 +1489,12 @@ func createTestPlaylist(ctx context.Context, srv *server) error {
 	}
 	created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if created.Error != nil {
-		return fmt.Errorf("creating playlist %q: %v", name, created.Error)
+		return 0, fmt.Errorf("creating playlist %q: %v", name, created.Error)
 	}
-	return nil
+	return created.ResourceVersion, nil
 }
 
 func TestPeriodicBookmarks(t *testing.T) {
@@ -1704,7 +1719,7 @@ func TestWatchContextCancellation(t *testing.T) {
 }
 
 // TestWatchEventMetricsWithSinceRV makes sure that we don't emit watch delay metrics when replaying
-// cached events for clients that start watching from old RVs. The metric should only be reporting
+// events for clients that start watching from old RVs. The metric should only be reporting
 // data for events emitted after the Watch is setup.
 func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	testUser := newWatchTestUser()
@@ -1716,13 +1731,16 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
 	defer cancel()
 
-	// Create two resources before the watch starts. The broadcaster will absorb
-	// these events into its replay cache and hand them to any future subscriber.
+	// An RV from just before the first write: old enough that the events below
+	// have to be replayed, but still inside the event retention period.
+	sinceRV := snowflakeFromTime(time.Now().Add(-time.Minute))
+
+	// Create two resources before the watch starts. These events predate the
+	// subscription, so they have to be replayed from the event store.
 	require.NoError(t, createTestPlaylist(ctx, srv))
 	require.NoError(t, createTestPlaylist(ctx, srv))
 
-	// Wait until the broadcaster has received both events, so the cache is
-	// populated by the time we subscribe.
+	// Wait until the broadcaster has observed both events before we subscribe.
 	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
 
 	// Start a watch with a tiny Since RV.
@@ -1733,7 +1751,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
 			},
-			Since: 42,
+			Since: sinceRV,
 		}, mock)
 	})
 
@@ -1745,7 +1763,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	require.NoError(t, createTestPlaylist(ctx, srv))
 
 	// Wait until the mock has received all three events (two replayed from the
-	// cache + one live).
+	// event store + one live).
 	received := 0
 	timeout := time.After(5 * time.Second)
 	for received < 3 {
@@ -1762,7 +1780,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	cancel()
 	require.NoError(t, eg.Wait())
 
-	// Replayed cache entries are catch-up traffic, not "late" deliveries —
+	// Replayed events are catch-up traffic, not "late" deliveries —
 	// observing them inflates the histogram with the time elapsed since they
 	// were originally written, not the actual reaction time of this watcher.
 	// Only the post-subscription event should be counted.
@@ -1772,6 +1790,159 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	require.NoError(t, obs.(prometheus.Metric).Write(m))
 	require.Equal(t, uint64(1), m.Histogram.GetSampleCount(),
 		"WatchEventLatency should only observe events that arrived after the subscription started")
+}
+
+// TestWatchReplaysMissedEvents makes sure that a client resuming from a resource
+// version that predates its subscription still gets every event, replayed from
+// the event store.
+func TestWatchReplaysMissedEvents(t *testing.T) {
+	testUser := newWatchTestUser()
+
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, db.Close()) })
+	kvStore := NewBadgerKV(db)
+
+	writer := newWatchTestServer(t, watchTestServerOpts{KV: kvStore})
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+	defer cancel()
+
+	// Resume from the first write, so the second one has to be caught up on.
+	sinceRV, err := createTestPlaylistRV(ctx, writer)
+	require.NoError(t, err)
+	require.NoError(t, createTestPlaylist(ctx, writer))
+
+	// Replay only returns settled events (older than the 1ms settle window), so
+	// let the writes above settle before resuming. A fresh reader server cannot
+	// fall back to its broadcaster here: its poller starts from the current max
+	// RV and skips these pre-existing events, so replay is the only catch-up path.
+	time.Sleep(20 * time.Millisecond)
+
+	// A second server on the same store never saw the writes above, so the only
+	// way it can catch up is by replaying them from the event store.
+	reader := newWatchTestServer(t, watchTestServerOpts{KV: kvStore})
+
+	mock := newMockWatchServer(ctx)
+	var eg errgroup.Group
+	eg.Go(func() error {
+		return reader.Watch(&resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+			},
+			Since: sinceRV,
+		}, mock)
+	})
+
+	select {
+	case evt := <-mock.events:
+		require.Equal(t, resourcepb.WatchEvent_ADDED, evt.Type)
+		require.Greater(t, evt.Resource.Version, sinceRV)
+		// Replay events carry no value from the backend; the server must have
+		// materialised it lazily before sending.
+		require.NotEmpty(t, evt.Resource.Value, "replayed event value should be materialised by the server")
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for the replayed event")
+	}
+
+	cancel()
+	require.NoError(t, eg.Wait())
+}
+
+// TestWatchReplayExpiresWhenDataPruned makes sure that if an event survives the
+// watch's filters during replay but its object value has been pruned from the
+// data store, the server refuses the resume with an expired error so the client
+// lists again from scratch instead of silently missing the write.
+func TestWatchReplayExpiresWhenDataPruned(t *testing.T) {
+	testUser := newWatchTestUser()
+	srv := newWatchTestServer(t, watchTestServerOpts{})
+
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+	defer cancel()
+
+	// A real, settled write to resume from.
+	sinceRV, err := createTestPlaylistRV(ctx, srv)
+	require.NoError(t, err)
+
+	// Inject an event whose object value is not in the data store, as if it had
+	// been pruned. It matches the watch scope so it passes the filters and forces
+	// the server's lazy value read, which then finds nothing.
+	backend := srv.backend.(*kvStorageBackend)
+	require.NoError(t, backend.eventStore.Save(ctx, Event{
+		Namespace:       watchTestNamespace,
+		Group:           watchTestGroup,
+		Resource:        watchTestResource,
+		Name:            "pruned-resource",
+		ResourceVersion: sinceRV + 1,
+		Action:          DataActionCreated,
+	}))
+
+	// Let the writes settle so replay covers them.
+	time.Sleep(20 * time.Millisecond)
+
+	err = srv.Watch(&resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+		},
+		Since: sinceRV,
+	}, newMockWatchServer(ctx))
+
+	require.Error(t, err)
+	require.True(t, IsResourceVersionExpired(err), "expected an expired resource version error, got %v", err)
+}
+
+// TestWatchRejectsExpiredResourceVersion makes sure that a watch starting from a
+// resource version whose events may have been pruned is rejected with an error that
+// tells the client to list again from scratch.
+func TestWatchRejectsExpiredResourceVersion(t *testing.T) {
+	testUser := newWatchTestUser()
+	srv := newWatchTestServer(t, watchTestServerOpts{})
+
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+	defer cancel()
+	require.NoError(t, createTestPlaylist(ctx, srv))
+
+	// A resource version older than the replay window: its events may already
+	// have been pruned, so the resume must be refused.
+	expiredRV := snowflakeFromTime(time.Now().Add(-2 * time.Hour))
+	err := srv.Watch(&resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+		},
+		Since: expiredRV,
+	}, newMockWatchServer(ctx))
+
+	require.Error(t, err)
+	require.True(t, IsResourceVersionExpired(err), "expected an expired resource version error, got %v", err)
+
+	// The error must survive the trip through gRPC as a 410/Expired status so
+	// that clients re-list instead of retrying the same resource version.
+	result := AsErrorResult(err)
+	require.Equal(t, int32(http.StatusGone), result.Code)
+	require.Equal(t, string(metav1.StatusReasonExpired), result.Reason)
+}
+
+// TestWatchExpiredResourceVersionOverGRPC makes sure the expired error keeps its
+// 410/Expired reason when it travels through gRPC to the client.
+func TestWatchExpiredResourceVersionOverGRPC(t *testing.T) {
+	testUser := newWatchTestUser()
+	srv := newWatchTestServer(t, watchTestServerOpts{})
+
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+	defer cancel()
+	require.NoError(t, createTestPlaylist(ctx, srv))
+
+	client := NewLocalResourceClient(srv)
+	stream, err := client.Watch(ctx, &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+		},
+		Since: snowflakeFromTime(time.Now().Add(-2 * time.Hour)),
+	})
+	require.NoError(t, err)
+
+	_, err = stream.Recv()
+	require.Error(t, err)
+	require.True(t, IsResourceVersionExpired(err), "expected an expired resource version error, got %v", err)
 }
 
 // TestWatchInitialEventsRespectsItemChecker tests that checker is used for
