@@ -319,6 +319,26 @@ describe('AddPanelToNotebookModalBody', () => {
     });
   });
 
+  describe('an empty library', () => {
+    it('suggests creating one when the reader could', () => {
+      setPicker({ rows: [], isFiltered: false });
+      renderModal();
+
+      expect(screen.getByText(/Create one instead/)).toBeInTheDocument();
+    });
+
+    // dashboards:write opens this picker, dashboards:create is what the create tab needs, so a reader
+    // can arrive here with no way to make the notebook they are being told to make.
+    it('does not suggest it to a reader who cannot create', () => {
+      grant([AccessControlAction.DashboardsWrite]);
+      setPicker({ rows: [], isFiltered: false });
+      renderModal();
+
+      expect(screen.getByText(/no permission to create one/)).toBeInTheDocument();
+      expect(screen.queryByText(/Create one instead/)).not.toBeInTheDocument();
+    });
+  });
+
   describe('permissions', () => {
     it('hides the create tab without permission to create', () => {
       grant([AccessControlAction.DashboardsWrite]);

@@ -11,10 +11,11 @@ jest.mock('@grafana/runtime/unstable', () => ({
 }));
 
 /** A panel whose query names a variable, inside a scene that defines it. */
-function buildPanel(queries: DataQuery[], title = 'CPU') {
+function buildPanel(queries: DataQuery[], title = 'CPU', description?: string) {
   return new VizPanel({
     key: 'panel-1',
     title,
+    description,
     pluginId: 'timeseries',
     $variables: new SceneVariableSet({
       variables: [new TestVariable({ name: 'service', value: 'checkout', text: 'checkout', query: 'A' })],
@@ -52,6 +53,16 @@ describe('buildPanelElementFromDashboard', () => {
     const element = await buildPanelElementFromDashboard(buildPanel([{ refId: 'A' }], 'Errors for $service'));
 
     expect(element.kind === 'Panel' && element.spec.title).toBe('Errors for checkout');
+  });
+
+  // Prose rather than a query, so this is cosmetic rather than wrong data - but a notebook has no
+  // variables, so the reader would be shown a name that means nothing there.
+  it('interpolates the description, so the cell does not explain itself with a variable name', async () => {
+    const element = await buildPanelElementFromDashboard(
+      buildPanel([{ refId: 'A' }], 'CPU', 'Errors seen by $service')
+    );
+
+    expect(element.kind === 'Panel' && element.spec.description).toBe('Errors seen by checkout');
   });
 
   // Interpolating means rewriting queries, and the user is still looking at the dashboard it came from.

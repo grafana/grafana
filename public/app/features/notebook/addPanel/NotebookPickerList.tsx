@@ -24,6 +24,8 @@ interface Props {
   notebooks: NotebookRow[];
   /** Whether any filter is applied, to tell "none exist" apart from "none matched". */
   isFiltered: boolean;
+  /** Whether the reader can create one, so an empty library only suggests it when they could. */
+  canCreate: boolean;
   isLoading: boolean;
   error?: unknown;
   /** The server had more than one page, so this list is not the whole library. */
@@ -35,6 +37,7 @@ interface Props {
 export function NotebookPickerList({
   notebooks,
   isFiltered,
+  canCreate,
   isLoading,
   error,
   isTruncated,
@@ -64,7 +67,16 @@ export function NotebookPickerList({
       <Stack direction="column" alignItems="center" gap={1}>
         <Text color="secondary">
           {!isFiltered ? (
-            <Trans i18nKey="notebooks.add-panel.list-none">You have no notebooks yet. Create one instead.</Trans>
+            // Pointing at the create tab is only advice if the reader has one. Adding to an existing
+            // notebook needs dashboards:write and creating needs dashboards:create, so a reader can
+            // open this picker with no way to make the notebook it is telling them to make.
+            canCreate ? (
+              <Trans i18nKey="notebooks.add-panel.list-none">You have no notebooks yet. Create one instead.</Trans>
+            ) : (
+              <Trans i18nKey="notebooks.add-panel.list-none-read-only">
+                You have no notebooks yet, and no permission to create one.
+              </Trans>
+            )
           ) : (
             <Trans i18nKey="notebooks.add-panel.list-no-matches">No notebooks match these filters.</Trans>
           )}

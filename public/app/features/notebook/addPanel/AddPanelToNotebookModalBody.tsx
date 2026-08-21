@@ -179,6 +179,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
               <NotebookPickerList
                 notebooks={picker.rows}
                 isFiltered={picker.isFiltered}
+                canCreate={canCreate}
                 isLoading={picker.isLoading}
                 error={picker.error}
                 isTruncated={picker.isTruncated}

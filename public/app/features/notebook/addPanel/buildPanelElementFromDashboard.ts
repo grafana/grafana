@@ -9,7 +9,8 @@ import { type PanelElement } from '../types';
 /**
  * Turns a dashboard panel into the panel element a notebook stores.
  *
- * The queries and title are interpolated first, because the notebook is a different document: it has
+ * The queries and the panel's own text are interpolated first, because the notebook is a different
+ * document: it has
  * no variables of its own (NotebookScene installs only ScopesVariable, and the spec has nowhere to
  * carry definitions), so a query still saying `$service` would resolve to nothing there and quietly
  * return the wrong data. The panel menu's Explore action solves the same problem the same way, via
@@ -35,8 +36,17 @@ export async function buildPanelElementFromDashboard(vizPanel: VizPanel): Promis
     });
   }
 
+  // Interpolated against the source panel, not the clone: the clone is detached from the dashboard,
+  // so it has no variables to resolve through.
   if (captured.state.title) {
     captured.setState({ title: sceneGraph.interpolate(vizPanel, captured.state.title) });
+  }
+
+  // The description reads as prose rather than driving a query, so a stray `$service` here is a
+  // cosmetic wrong rather than wrong data - but it would still show the reader a variable name that
+  // means nothing in a notebook.
+  if (captured.state.description) {
+    captured.setState({ description: sceneGraph.interpolate(vizPanel, captured.state.description) });
   }
 
   // Both optional args stay omitted. A dsReferencesMapping would write back the dashboard's
