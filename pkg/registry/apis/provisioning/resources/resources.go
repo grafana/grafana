@@ -433,23 +433,26 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 	return nil
 }
 
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, error) {
+// RenameResourceFile moves the resource at previousPath to newPath. The returned
+// size is the number of bytes of the new file content written at newPath.
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error) {
 	oldInfo, err := r.repo.Read(ctx, previousPath, previousRef)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read previous file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read previous file: %w", err)
 	}
 	oldParsed, err := r.parser.Parse(ctx, oldInfo)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse previous file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to parse previous file: %w", err)
 	}
 
 	newInfo, err := r.repo.Read(ctx, newPath, newRef)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read new file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read new file: %w", err)
 	}
+	size := len(newInfo.Data)
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse new file: %w", err)
+		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse new file: %w", err)
 	}
 
 	// Delete the old resource when the identity changed (name or resource kind).
@@ -457,14 +460,14 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	if !oldParsed.SameIdentity(newParsed) {
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.Run(ctx); err != nil {
-			return oldParsed.Obj.GetName(), oldParsed.ExistingFolder(), oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
+			return oldParsed.Obj.GetName(), oldParsed.ExistingFolder(), oldParsed.GVK, size, fmt.Errorf("failed to delete old resource: %w", err)
 		}
 	} else {
 		// Delete dry-run fetches the existing object (with ownership validation)
 		// without mutating it, populating oldParsed.Existing for identity comparison.
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.DryRun(ctx); err != nil {
-			return "", "", schema.GroupVersionKind{}, err
+			return "", "", schema.GroupVersionKind{}, size, err
 		}
 		// Pure path-only rename (git blob hash unchanged): the file content is
 		// byte-identical, so the UPDATE we are about to send carries the same
@@ -484,7 +487,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 
 	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 	if err != nil {
-		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+		return oldParsed.Obj.GetName(), oldFolderName, gvk, size, fmt.Errorf("failed to write resource: %w", err)
 	}
 
 	// When the resource's parent folder didn't change (e.g. the entire
@@ -495,18 +498,22 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		oldFolderName = ""
 	}
 
-	return newName, oldFolderName, gvk, nil
+	return newName, oldFolderName, gvk, size, nil
 }
 
-func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, error) {
+// RemoveResourceFromFile deletes the resource described by the file at path/ref.
+// The returned size is the number of bytes of the removed file's content.
+func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, int, error) {
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
+		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read file: %w", err)
 	}
+
+	size := len(info.Data)
 
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		return "", "", schema.GroupVersionKind{}, err
+		return "", "", schema.GroupVersionKind{}, size, err
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
@@ -517,8 +524,8 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 	folderName := parsed.ExistingFolder()
 
 	if err != nil {
-		return objName, folderName, parsed.GVK, fmt.Errorf("failed to delete: %w", err)
+		return objName, folderName, parsed.GVK, size, fmt.Errorf("failed to delete: %w", err)
 	}
 
-	return objName, folderName, parsed.GVK, nil
+	return objName, folderName, parsed.GVK, size, nil
 }

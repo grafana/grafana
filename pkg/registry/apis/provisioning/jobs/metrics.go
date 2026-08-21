@@ -366,9 +366,11 @@ func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, resu
 		m.resourceOpDuration.WithLabelValues(string(action), string(operation), string(outcome), result.Group(), result.Kind()).Observe(dur.Seconds())
 	}
 
-	// Resource size is only known for content writes (the write paths stamp it via
-	// WithBytes). Deletes, folders and no-op operations carry no size, so a zero
-	// byte count is excluded rather than recorded as a 0-byte resource.
+	// Resource size is only known for operations that read or write the file
+	// content (creates, updates, renames, and file-based deletes stamp it via
+	// WithBytes). Operations without a file body — folders, no-ops, and deletes
+	// that only had the cluster object to go on — report 0 and are excluded
+	// rather than recorded as a 0-byte resource.
 	if m.resourceOpBytes != nil && result.Bytes() > 0 && realOp {
 		m.resourceOpBytes.WithLabelValues(string(action), string(operation), string(outcome), result.Group(), result.Kind()).Observe(float64(result.Bytes()))
 	}

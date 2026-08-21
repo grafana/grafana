@@ -310,14 +310,14 @@ func applyIncrementalChanges(
 			}
 		case repository.FileActionDeleted:
 			removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
-			name, folderName, gvk, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
+			name, folderName, gvk, size, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
 			if err != nil {
 				removeSpan.RecordError(err)
 				resultBuilder.WithError(fmt.Errorf("removing resource from file %s: %w", change.Path, err))
 			} else {
 				quotaTracker.Release()
 			}
-			resultBuilder.WithName(name).WithGVK(gvk)
+			resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 
 			if folderName != "" {
 				affectedFolders[safepath.Dir(change.Path)] = folderName
@@ -351,12 +351,12 @@ func applyIncrementalChanges(
 						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(uids...))
 					}
 				}
-				name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)
+				name, oldFolderName, gvk, size, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)
 				if err != nil {
 					renameSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
 				}
-				resultBuilder.WithName(name).WithGVK(gvk)
+				resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 
 				if oldFolderName != "" {
 					affectedFolders[safepath.Dir(change.PreviousPath)] = oldFolderName

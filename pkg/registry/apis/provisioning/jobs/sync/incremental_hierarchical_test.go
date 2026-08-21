@@ -135,7 +135,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
 				// File deletion fails (deletions don't check HasDirPathFailedCreation)
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/file1.json", "old-ref").
-					Return("dashboard-1", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard"}, fmt.Errorf("permission denied")).Once()
+					Return("dashboard-1", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard"}, 0, fmt.Errorf("permission denied")).Once()
 
 				// Error recorded, automatically tracked in failedDeletions
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -178,7 +178,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 
 				// Deletion proceeds (NOT checking HasDirPathFailedCreation for deletions)
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "folder1/old.json", "old-ref").
-					Return("old-resource", "", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+					Return("old-resource", "", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "folder1/old.json" &&
@@ -277,7 +277,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				progress.On("HasDirPathFailedCreation", "newfolder/file.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "newfolder/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("RenameResourceFile", mock.Anything, "oldfolder/file.json", "old-ref", "newfolder/file.json", "new-ref").
-					Return("", "", schema.GroupVersionKind{}, folderErr).Once()
+					Return("", "", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "newfolder/file.json" &&
@@ -453,7 +453,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFileDeletion(t *testing
 
 	// Deletions don't check HasDirPathFailedCreation, they go straight to removal
 	repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/file1.json", "old-ref").
-		Return("dashboard-1", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard"}, fmt.Errorf("permission denied")).Once()
+		Return("dashboard-1", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard"}, 0, fmt.Errorf("permission denied")).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "dashboards/file1.json" && r.Action() == repository.FileActionDeleted &&
@@ -508,7 +508,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_DeletionNotAffectedByCreation
 	// Deletion should NOT be skipped (not checking HasDirPathFailedCreation for deletions)
 	// Deletions don't check HasDirPathFailedCreation, they go straight to removal
 	repoResources.On("RemoveResourceFromFile", mock.Anything, "folder1/old.json", "old-ref").
-		Return("old-resource", "", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+		Return("old-resource", "", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "folder1/old.json" && r.Action() == repository.FileActionDeleted && r.Error() == nil

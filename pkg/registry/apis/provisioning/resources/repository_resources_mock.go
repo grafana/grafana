@@ -465,7 +465,7 @@ func (_c *MockRepositoryResources_RemoveFolderFromTree_Call) RunAndReturn(run fu
 }
 
 // RemoveResourceFromFile provides a mock function with given fields: ctx, path, ref
-func (_m *MockRepositoryResources) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, error) {
+func (_m *MockRepositoryResources) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, int, error) {
 	ret := _m.Called(ctx, path, ref)
 
 	if len(ret) == 0 {
@@ -475,8 +475,9 @@ func (_m *MockRepositoryResources) RemoveResourceFromFile(ctx context.Context, p
 	var r0 string
 	var r1 string
 	var r2 schema.GroupVersionKind
-	var r3 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (string, string, schema.GroupVersionKind, error)); ok {
+	var r3 int
+	var r4 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (string, string, schema.GroupVersionKind, int, error)); ok {
 		return rf(ctx, path, ref)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
@@ -497,13 +498,19 @@ func (_m *MockRepositoryResources) RemoveResourceFromFile(ctx context.Context, p
 		r2 = ret.Get(2).(schema.GroupVersionKind)
 	}
 
-	if rf, ok := ret.Get(3).(func(context.Context, string, string) error); ok {
+	if rf, ok := ret.Get(3).(func(context.Context, string, string) int); ok {
 		r3 = rf(ctx, path, ref)
 	} else {
-		r3 = ret.Error(3)
+		r3 = ret.Get(3).(int)
 	}
 
-	return r0, r1, r2, r3
+	if rf, ok := ret.Get(4).(func(context.Context, string, string) error); ok {
+		r4 = rf(ctx, path, ref)
+	} else {
+		r4 = ret.Error(4)
+	}
+
+	return r0, r1, r2, r3, r4
 }
 
 // MockRepositoryResources_RemoveResourceFromFile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveResourceFromFile'
@@ -526,18 +533,18 @@ func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) Return(_a0 string, _a1 string, _a2 schema.GroupVersionKind, _a3 error) *MockRepositoryResources_RemoveResourceFromFile_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3)
+func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) Return(_a0 string, _a1 string, _a2 schema.GroupVersionKind, _a3 int, _a4 error) *MockRepositoryResources_RemoveResourceFromFile_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
 	return _c
 }
 
-func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) RunAndReturn(run func(context.Context, string, string) (string, string, schema.GroupVersionKind, error)) *MockRepositoryResources_RemoveResourceFromFile_Call {
+func (_c *MockRepositoryResources_RemoveResourceFromFile_Call) RunAndReturn(run func(context.Context, string, string) (string, string, schema.GroupVersionKind, int, error)) *MockRepositoryResources_RemoveResourceFromFile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RenameResourceFile provides a mock function with given fields: ctx, path, previousRef, newPath, newRef, folderOpts
-func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path string, previousRef string, newPath string, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, error) {
+func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path string, previousRef string, newPath string, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error) {
 	_va := make([]interface{}, len(folderOpts))
 	for _i := range folderOpts {
 		_va[_i] = folderOpts[_i]
@@ -554,8 +561,9 @@ func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path 
 	var r0 string
 	var r1 string
 	var r2 schema.GroupVersionKind
-	var r3 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...EnsurePathOption) (string, string, schema.GroupVersionKind, error)); ok {
+	var r3 int
+	var r4 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error)); ok {
 		return rf(ctx, path, previousRef, newPath, newRef, folderOpts...)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...EnsurePathOption) string); ok {
@@ -576,13 +584,19 @@ func (_m *MockRepositoryResources) RenameResourceFile(ctx context.Context, path 
 		r2 = ret.Get(2).(schema.GroupVersionKind)
 	}
 
-	if rf, ok := ret.Get(3).(func(context.Context, string, string, string, string, ...EnsurePathOption) error); ok {
+	if rf, ok := ret.Get(3).(func(context.Context, string, string, string, string, ...EnsurePathOption) int); ok {
 		r3 = rf(ctx, path, previousRef, newPath, newRef, folderOpts...)
 	} else {
-		r3 = ret.Error(3)
+		r3 = ret.Get(3).(int)
 	}
 
-	return r0, r1, r2, r3
+	if rf, ok := ret.Get(4).(func(context.Context, string, string, string, string, ...EnsurePathOption) error); ok {
+		r4 = rf(ctx, path, previousRef, newPath, newRef, folderOpts...)
+	} else {
+		r4 = ret.Error(4)
+	}
+
+	return r0, r1, r2, r3, r4
 }
 
 // MockRepositoryResources_RenameResourceFile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RenameResourceFile'
@@ -614,12 +628,12 @@ func (_c *MockRepositoryResources_RenameResourceFile_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockRepositoryResources_RenameResourceFile_Call) Return(_a0 string, _a1 string, _a2 schema.GroupVersionKind, _a3 error) *MockRepositoryResources_RenameResourceFile_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3)
+func (_c *MockRepositoryResources_RenameResourceFile_Call) Return(_a0 string, _a1 string, _a2 schema.GroupVersionKind, _a3 int, _a4 error) *MockRepositoryResources_RenameResourceFile_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
 	return _c
 }
 
-func (_c *MockRepositoryResources_RenameResourceFile_Call) RunAndReturn(run func(context.Context, string, string, string, string, ...EnsurePathOption) (string, string, schema.GroupVersionKind, error)) *MockRepositoryResources_RenameResourceFile_Call {
+func (_c *MockRepositoryResources_RenameResourceFile_Call) RunAndReturn(run func(context.Context, string, string, string, string, ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error)) *MockRepositoryResources_RenameResourceFile_Call {
 	_c.Call.Return(run)
 	return _c
 }
