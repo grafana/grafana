@@ -4,19 +4,13 @@ import { merge, uniqueId } from 'lodash';
 import { openMenu } from 'react-select-event';
 import { Observable } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { seedDataSources, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { SupportedTransformationType } from '@grafana/data';
+import { type DataSourceInstanceSettings, SupportedTransformationType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  type BackendSrv,
-  type BackendSrvRequest,
-  type DataSourceSrv,
-  type reportInteraction,
-  setAppEvents,
-  setDataSourceSrv,
-} from '@grafana/runtime';
+import { type BackendSrv, type BackendSrvRequest, type reportInteraction, setAppEvents } from '@grafana/runtime';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -31,15 +25,24 @@ import {
   createFetchCorrelationsResponse,
   createRemoveCorrelationResponse,
   createUpdateCorrelationResponse,
-  MockDataSourceSrv,
 } from './__mocks__/useCorrelations.mocks';
 import { type Correlation, type CreateCorrelationParams, type OmitUnion } from './types';
 
 // Set app events up, otherwise plugin modules will fail to load
 setAppEvents(appEvents);
 
+// The fallback's warning is inert in public/app suites, so green plus a quiet console proves
+// nothing. Spy on the logger instead and fail if a lookup resolved through the legacy service.
+let dataSourceFallbacks: ReturnType<typeof watchDataSourceFallbacks> | undefined;
+
+afterEach(() => {
+  const fallbacks = dataSourceFallbacks;
+  dataSourceFallbacks = undefined;
+  fallbacks?.expectNoFallbacks(['instance', 'settings', 'list']);
+});
+
 const renderWithContext = async (
-  datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
+  datasources: Record<string, DataSourceInstanceSettings> = {},
   correlations: Correlation[] = []
 ) => {
   const backend = {
@@ -99,17 +102,18 @@ const renderWithContext = async (
     },
   } as unknown as BackendSrv;
   const grafanaContext = getGrafanaContextMock({ backend });
-  const dsServer = new MockDataSourceSrv(datasources) as unknown as DataSourceSrv;
-  dsServer.get = (name: string) => {
-    const dsApi = new MockDataSourceApi(name);
-    // Mock the QueryEditor component
-    dsApi.components = {
-      QueryEditor: () => <>{name} query editor</>,
-    };
-    return Promise.resolve(dsApi);
-  };
-
-  setDataSourceSrv(dsServer);
+  seedDataSources(
+    Object.values(datasources).map((settings) => {
+      const dsApi = new MockDataSourceApi(settings);
+      // Mock the QueryEditor component
+      dsApi.components = {
+        QueryEditor: () => <>{settings.name} query editor</>,
+      };
+      return { settings, api: dsApi };
+    }),
+    { legacySrv: 'mock' }
+  );
+  dataSourceFallbacks = watchDataSourceFallbacks();
 
   const renderResult = render(
     <TestProvider store={configureStore({})} grafanaContext={grafanaContext}>
@@ -202,21 +206,6 @@ jest.mock('@grafana/runtime', () => {
     reportInteraction: (...args: Parameters<typeof reportInteraction>) => {
       mocks.reportInteraction(...args);
     },
-  };
-});
-
-// Delegate the new async datasource APIs to the legacy srv configured per-test via setDataSourceSrv,
-// so the cache-miss legacy fallback (which logs a warning that fails on console) is never hit.
-jest.mock('@grafana/runtime/unstable', () => {
-  const actualRuntime = jest.requireActual('@grafana/runtime');
-  const actualUnstable = jest.requireActual('@grafana/runtime/unstable');
-
-  return {
-    ...actualUnstable,
-    getDataSourceInstanceSettings: (ref: Parameters<typeof actualUnstable.getDataSourceInstanceSettings>[0]) =>
-      Promise.resolve(actualRuntime.getDataSourceSrv().getInstanceSettings(ref)),
-    getDataSourceInstance: (ref: Parameters<typeof actualUnstable.getDataSourceInstance>[0]) =>
-      actualRuntime.getDataSourceSrv().get(ref),
   };
 });
 
