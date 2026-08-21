@@ -9147,6 +9147,7 @@
     "json": {
       "cancel-button": "Cancel",
       "copy-button": "Copy to clipboard",
+      "dashboard-definition": "Dashboard definition",
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-format": "Format",
