@@ -54,21 +54,22 @@ func Build(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
-	// Whether an endpoint is on is read by the caller, because the two servers
-	// that mount them are configured differently: one from an ini file, one from
-	// flags.
-	if (!searchEnabled && !trashEnabled) || index == nil {
-		return nil
-	}
-
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
-	return build(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers)
+	return BuildFromManifests(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers)
 }
 
-// build takes the manifests as an argument so a test can describe a kind that
-// opts out. No compiled-in manifest does yet.
-func build(
+// BuildFromManifests is Build with the kind declarations supplied by the caller.
+//
+// A host that learns about apps after it starts can pass those manifests here,
+// merged with the compiled-in set, and their kinds are mounted like any other.
+// Build is the same call with only the compiled-in set.
+//
+// The provider is built from the manifests passed in, so a route can only ever
+// validate against the declarations it was mounted from.
+//
+// Panics on a bad declaration, because in a compiled-in manifest that is a bug.
+func BuildFromManifests(
 	manifests []app.Manifest,
 	searchEnabled bool,
 	trashEnabled bool,
@@ -77,9 +78,47 @@ func build(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
-	handler := searchapi.NewHandler(index, resource.NewManifestBackedProvider(manifests), tracer)
+	routes, err := BuildForServedGroupVersions(
+		manifests,
+		servedGroupVersions(builders, installers),
+		searchEnabled,
+		trashEnabled,
+		tracer,
+		index,
+	)
+	if err != nil {
+		panic(err.Error())
+	}
+	return routes
+}
 
-	served := servedGroupVersions(builders, installers)
+// BuildForServedGroupVersions is BuildFromManifests for a host that has no
+// builders or installers to derive the served group versions from, such as one
+// serving its kinds as custom resource definitions.
+//
+// Returns an error rather than panicking, because manifests read at runtime can
+// be malformed without this build being at fault.
+func BuildForServedGroupVersions(
+	manifests []app.Manifest,
+	served map[schema.GroupVersion]bool,
+	searchEnabled bool,
+	trashEnabled bool,
+	tracer tracing.Tracer,
+	index resourcepb.ResourceIndexClient,
+) ([]builder.GroupVersionRoutes, error) {
+	// Whether an endpoint is on is read by the caller, because the two servers
+	// that mount them are configured differently: one from an ini file, one from
+	// flags.
+	if (!searchEnabled && !trashEnabled) || index == nil {
+		return nil, nil
+	}
+
+	provider, err := resource.ManifestBackedProvider(manifests)
+	if err != nil {
+		return nil, err
+	}
+	handler := searchapi.NewHandler(index, provider, tracer)
+
 	byGroupVersion := map[schema.GroupVersion][]searchapi.Route{}
 
 	for _, m := range manifests {
@@ -116,7 +155,7 @@ func build(
 		}
 	}
 
-	return toGroupVersionRoutes(byGroupVersion)
+	return toGroupVersionRoutes(byGroupVersion), nil
 }
 
 // servedGroupVersions reports which group versions this process actually serves.

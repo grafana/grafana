@@ -62,9 +62,15 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingImportYAMLUI`                       | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
+| `alertingNotificationHistory`                | Enables the notification history feature                                                                                                                      | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
+| `kubernetesAlertingHistorian`                | Adds support for Kubernetes alerting historian APIs                                                                                                           | Yes                |
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
+| `alertingNotificationHistoryRuleViewer`      | Enables the notification history tab in the rule viewer                                                                                                       | Yes                |
+| `alertingNotificationHistoryGlobal`          | Enables the notification history global menu item viewer                                                                                                      | Yes                |
+| `alertingNotificationHistoryTriage`          | Enables the notification history timeline in the triage instance details drawer                                                                               | Yes                |
+| `alertingNotificationHistoryDetail`          | Enables the notification history detail page                                                                                                                  | Yes                |
 | `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
 | `preferences.rerouteLegacyAPIs`              | Use K8s client implementation for legacy preferences API                                                                                                      | Yes                |
@@ -91,9 +97,11 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `secretsManagementAppPlatformUI`   | Enable the secrets management app platform UI                                                                                  |
 | `dashboardTemplates`               | Enables a flow to get started with a new dashboard from a template                                                             |
 | `alertRuleRestore`                 | Enables the alert rule restore feature                                                                                         |
+| `alertingMigrationWizardUI`        | Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting    |
 | `azureMonitorLogsBuilderEditor`    | Enables the logs builder mode for the Azure Monitor data source                                                                |
 | `datasources.azureMonitorBatchAPI` | Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request |
 | `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
+| `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
 | `panelTimeSettings`                | Enables a new panel time settings drawer                                                                                       |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |

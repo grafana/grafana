@@ -53,12 +53,14 @@ type gitRepository struct {
 	client        nanogit.Client
 	writerOptions []nanogit.WriterOption
 	maxBytes      atomic.Int64
+	metrics       *repository.OperationRecorder
 }
 
 func NewRepository(
 	_ context.Context,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
+	metrics *repository.OperationMetrics,
 ) (GitRepository, error) {
 	opts := []options.Option{options.WithCapabilityNegotiation()}
 	if gitConfig.SkipGitSuffix {
@@ -95,6 +97,7 @@ func NewRepository(
 		gitConfig:     gitConfig,
 		client:        client,
 		writerOptions: writerOptions,
+		metrics:       metrics.Recorder(config.Spec.Type),
 	}, nil
 }
 
@@ -360,7 +363,10 @@ func (r *gitRepository) Test(ctx context.Context) (*provisioning.TestResults, er
 }
 
 // Read implements provisioning.Repository.
-func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*repository.FileInfo, error) {
+func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (out *repository.FileInfo, err error) {
+	start := time.Now()
+	defer func() { r.metrics.Read(start, out, err) }()
+
 	ctx, logger := r.withGitContext(ctx, ref)
 	logger.Info("read repository path", "path", filePath)
 	finalPath := safepath.Join(r.gitConfig.Path, filePath)
@@ -425,7 +431,10 @@ func (r *gitRepository) WithMaxFileSize(maxBytes int64) {
 	r.maxBytes.Store(maxBytes)
 }
 
-func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
+func (r *gitRepository) ReadTree(ctx context.Context, ref string) (out []repository.FileTreeEntry, err error) {
+	start := time.Now()
+	defer func() { r.metrics.List(start, err) }()
+
 	ctx, logger := r.withGitContext(ctx, ref)
 	logger.Info("read repository tree")
 
@@ -471,7 +480,10 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.
 	return entries, nil
 }
 
-func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {
+func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
@@ -517,7 +529,10 @@ func (r *gitRepository) create(ctx context.Context, path string, data []byte, wr
 	return nil
 }
 
-func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) error {
+func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
@@ -564,6 +579,9 @@ func (r *gitRepository) update(ctx context.Context, path string, data []byte, wr
 	return nil
 }
 
+// Write is deliberately not instrumented: it delegates to Read plus Create or
+// Update, which each record their own operation. Observing it here as well
+// would count the same write twice.
 func (r *gitRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
 	if ref == "" {
 		ref = r.gitConfig.Branch
@@ -586,7 +604,10 @@ func (r *gitRepository) Write(ctx context.Context, path string, ref string, data
 	return r.Create(ctx, path, ref, data, message)
 }
 
-func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) error {
+func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Delete(start, err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}
@@ -610,7 +631,10 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 	return r.commitAndPush(ctx, writer, comment)
 }
 
-func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) error {
+func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Move(start, err) }()
+
 	if ref == "" {
 		ref = r.gitConfig.Branch
 	}

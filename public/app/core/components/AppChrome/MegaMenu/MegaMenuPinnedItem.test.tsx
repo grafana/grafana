@@ -7,12 +7,13 @@ import { type PinnedLine } from './utils';
 
 const renderItem = (
   activeItem?: NavModelItem,
-  item: NavModelItem = { text: 'Explore', url: '/explore', id: 'explore' }
+  item: NavModelItem = { text: 'Explore', url: '/explore', id: 'explore' },
+  options?: { editMode?: boolean }
 ) => {
   const line: PinnedLine = { item, ancestors: [], icon: 'compass' };
   return render(
     <ul>
-      <MegaMenuPinnedItem line={line} activeItem={activeItem} onUnpin={() => {}} />
+      <MegaMenuPinnedItem line={line} activeItem={activeItem} editMode={options?.editMode} onUnpin={() => {}} />
     </ul>
   );
 };
@@ -34,5 +35,16 @@ describe('MegaMenuPinnedItem', () => {
     renderItem(item, item);
 
     expect(screen.getByRole('link', { name: /Explore/ })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('keeps ampersands unescaped in the unpin tooltip content', async () => {
+    const item: NavModelItem = { text: 'Explore & Test', url: '/explore', id: 'explore' };
+    const { user } = renderItem(undefined, item, { editMode: true });
+
+    await user.hover(screen.getByRole('button', { name: 'Unpin Explore & Test' }));
+    const tooltip = await screen.findByRole('tooltip');
+
+    expect(tooltip).toHaveTextContent('Unpin Explore & Test');
+    expect(tooltip).not.toHaveTextContent('Unpin Explore &amp; Test');
   });
 });
