@@ -7,7 +7,7 @@ import {
   type DataSourcePluginMeta,
   type TimeRange,
 } from '@grafana/data';
-import { initDataSourceInstanceSettings, setDatasourcePluginMetas } from '@grafana/runtime/internal';
+import { setDataSourceInstanceSettings, setDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 
 import { type ContentOutlineItemContextProps } from '../ContentOutline/ContentOutlineContext';
@@ -63,7 +63,7 @@ const explorer = (queries: DataQuery[], paneDatasource?: DataSourceApi) => (
 );
 
 const seedDataSources = () => {
-  initDataSourceInstanceSettings(datasources, 'gdev-prometheus');
+  setDataSourceInstanceSettings(datasources, 'gdev-prometheus');
   setDatasourcePluginMetas(pluginMetas);
 };
 

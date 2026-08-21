@@ -15,7 +15,7 @@ import {
   useDefaultDataSourceInstanceListItem,
   useHasDataSourceInstance,
 } from './hooks';
-import { _resetForTests as resetInstanceSettings, initDataSourceInstanceSettings } from './settings';
+import { setDataSourceInstanceSettings } from './settings';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
   return {
@@ -70,9 +70,8 @@ beforeAll(() => {
 const testDbPluginMeta = { ...ds({}).meta, name: 'Test DB (plugin meta)' };
 
 beforeEach(() => {
-  resetInstanceSettings();
   resetPlugin();
-  initDataSourceInstanceSettings(fixtures, 'Bravo');
+  setDataSourceInstanceSettings(fixtures, 'Bravo');
   setDatasourcePluginMetas({ 'test-db': testDbPluginMeta });
 });
 

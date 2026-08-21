@@ -1734,13 +1734,13 @@ describe('TableNG utils', () => {
     afterEach(() => jest.restoreAllMocks());
 
     it('sizes a numeric column to its content, well under the 150px even-split default (#634)', () => {
-      // header "Value" (5) => 5*8+13 = 53; content "999" (3) => 3*8+13 = 37; so 53 wins.
+      // header "Value" (5) => 5*8 + sort arrow 22 + 13 = 75; content "999" (3) => 3*8+13 = 37; so 75 wins.
       // availWidth == content total, so there is no leftover to grow into.
       const fields: Field[] = [{ name: 'Value', type: FieldType.number, values: [1, 42, 999], config: {} }];
 
-      const [width] = compute(fields, 53);
+      const [width] = compute(fields, 75);
 
-      expect(width).toBe(53);
+      expect(width).toBe(75);
       expect(width).toBeLessThan(COLUMN.DEFAULT_WIDTH);
     });
 
@@ -1777,11 +1777,11 @@ describe('TableNG utils', () => {
     it('grows numeric and boolean columns only modestly while a string column takes most of the leftover', () => {
       const fields: Field[] = [
         { name: 'N', type: FieldType.number, values: [1], config: {} }, // floor 50
-        { name: 'Bool', type: FieldType.boolean, values: [true], config: {} }, // floor 50
+        { name: 'B', type: FieldType.boolean, values: [true], config: {} }, // floor 50
         { name: 'S', type: FieldType.string, values: ['x'], config: {} }, // floor 50
       ];
       // All three have content width 50, so √(content) is shared and only the weight differs
-      // (N/Bool 0.35, S 1 => total 1.7): N/Bool 50 + 200*(0.35/1.7) = 91; S 50 + 200*(1/1.7) = 168.
+      // (N/B 0.35, S 1 => total 1.7): N/B 50 + 200*(0.35/1.7) = 91; S 50 + 200*(1/1.7) = 168.
       expect(compute(fields, 350)).toEqual([91, 91, 168]);
     });
 
@@ -1880,8 +1880,8 @@ describe('TableNG utils', () => {
         },
       ];
       // Markdown always wraps and renders formatted, so it contributes no content width: header "md"
-      // (2*8+13 = 29) floors to MIN_WIDTH 50. The long source would otherwise stretch it to the cap.
-      expect(compute(fields, 50)).toEqual([50]);
+      // (2*8 + sort arrow 22 + 13 = 51) wins. The long source would otherwise stretch it to the cap.
+      expect(compute(fields, 51)).toEqual([51]);
     });
 
     // render-hooks attaches displayJsonValue to JSONView / `other` fields, so the value renders as
@@ -1956,13 +1956,14 @@ describe('TableNG utils', () => {
           config: { custom: { cellOptions: { type: TableCellDisplayMode.Actions } } },
         },
       ];
-      // No getActions => measurer returns 0, so the column floors to MIN_WIDTH (header "act" is smaller).
+      // No getActions => measurer returns 0, so the column falls back to its header width
+      // ("act" 3*8 + sort arrow 22 + 13 = 59).
       expect(
-        computeContentAwareColWidths(fields, 50, {
+        computeContentAwareColWidths(fields, 59, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
         })
-      ).toEqual([50]);
+      ).toEqual([59]);
     });
 
     it('sizes a data links column to fit its links via getCellLinks (fuzzy width)', () => {
@@ -2106,20 +2107,23 @@ describe('TableNG utils', () => {
 
     it('reserves header icon space so the label is not truncated by the type icon', () => {
       const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
-      // header "Name" (4) => 4*8 = 32, + type-icon space 22 + chrome 13 = 67.
-      expect(compute(fields, 67, /* showTypeIcons */ true)).toEqual([67]);
+      // header "Name" (4) => 4*8 = 32, + type-icon space 22 + sort-arrow space 22 + chrome 13 = 89.
+      expect(compute(fields, 89, /* showTypeIcons */ true)).toEqual([89]);
     });
 
-    it('reserves header space for the sort arrow on a sorted column', () => {
+    it('reserves header space for the sort arrow on every sortable column, sorted or not', () => {
+      // Reserving it up front (rather than when the column becomes sorted) is what keeps auto widths
+      // from changing when the user clicks a header to sort.
       const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
       // header "Name" (4) => 4*8 = 32, + sort-arrow space 22 + chrome 13 = 67; content "a" is tiny.
-      const widths = computeContentAwareColWidths(fields, 67, {
-        typographyCtx: makeTypographyCtx(),
-        headerTypographyCtx: makeTypographyCtx(),
-        sortColumns: [{ columnKey: 'Name', direction: 'ASC' }],
-      });
-      expect(widths).toEqual([67]);
-      // an unsorted column of the same content floors to MIN_WIDTH 50 (no arrow reserved).
+      expect(compute(fields, 67)).toEqual([67]);
+    });
+
+    it('reserves no sort-arrow space on a column with sorting disabled', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { sortable: false } } },
+      ];
+      // header "Name" (4) => 32 + chrome 13 = 45, so the column floors to MIN_WIDTH 50 instead of 67.
       expect(compute(fields, 50)).toEqual([50]);
     });
 
@@ -2133,15 +2137,44 @@ describe('TableNG utils', () => {
         .mockImplementation(((text: string) => ({ width: String(text).length * (CHAR_W + 2) })) as never);
 
       const fields: Field[] = [{ name: 'Value', type: FieldType.number, values: [9], config: {} }];
-      // body content "9" floors to MIN_WIDTH 50; header "Value" (5) at the header font => 5*10+13 = 63
-      // wins. Regular-weight measurement would give 5*8+13 = 53, so landing on 63 proves the header
-      // context was used. availWidth == 63 leaves no room to grow.
-      const widths = computeContentAwareColWidths(fields, 63, {
+      // body content "9" floors to MIN_WIDTH 50; header "Value" (5) at the header font
+      // => 5*10 + sort arrow 22 + 13 = 85 wins. Regular-weight measurement would give 5*8+22+13 = 75,
+      // so landing on 85 proves the header context was used. availWidth == 85 leaves no room to grow.
+      const widths = computeContentAwareColWidths(fields, 85, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: headerCtx,
       });
 
-      expect(widths).toEqual([63]);
+      expect(widths).toEqual([85]);
+    });
+
+    it('rounds a header-bound column up rather than truncating it via cumulative rounding on overflow', () => {
+      // Real canvas measurement returns fractional widths, unlike this suite's integer CHAR_W mock.
+      // With no leftover to distribute (the auto columns already overflow availWidth), the second
+      // column's cumulative running sum can cross a whole-pixel boundary the "wrong" way and shave
+      // its own fractional need down — even though it has zero slack to give up, being sized to its
+      // header's exact minimum. Ceiling each column independently in that branch avoids that.
+      const headerCtx = createTypographyContext(14, 'sans-serif', 0.15);
+      const headerWidths: Record<string, number> = { A: 37.5, B: 47.4 };
+      jest
+        .spyOn(headerCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((text: string) => ({ width: headerWidths[String(text)] })) as never);
+
+      const fields: Field[] = [
+        { name: 'A', type: FieldType.string, values: ['x'], config: {} },
+        { name: 'B', type: FieldType.string, values: ['x'], config: {} },
+      ];
+      // header "A" => 37.5 + sort arrow 22 + chrome 13 = 72.5; header "B" => 47.4 + 22 + 13 = 82.4.
+      // Content "x" is tiny, so the header drives both. availWidth 154 < their 154.9 total, so the
+      // columns overflow and there is no leftover to distribute.
+      const widths = computeContentAwareColWidths(fields, 154, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: headerCtx,
+      });
+
+      // Without the fix this comes back [73, 82] — B truncated below its own 82.4 need.
+      expect(widths).toEqual([73, 83]);
     });
 
     it('samples a bounded number of rows (spread across the field) rather than scanning every value', () => {
