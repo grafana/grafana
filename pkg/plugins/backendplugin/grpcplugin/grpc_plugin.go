@@ -157,7 +157,7 @@ func (p *grpcPlugin) ClientV3(ctx context.Context) (v3.ClientV3, bool) {
 	if p.client != nil && !p.client.Exited() && p.clientV3 != nil {
 		return p.clientV3, true
 	}
-	p.logStateError(ctx)
+	p.logClientState(ctx)
 	return nil, false
 }
 
@@ -167,13 +167,15 @@ func (p *grpcPlugin) getPluginClient(ctx context.Context) (*ClientV2, bool) {
 	if p.client != nil && !p.client.Exited() && p.pluginClient != nil {
 		return p.pluginClient, true
 	}
-	p.logStateError(ctx)
+	p.logClientState(ctx)
 	return nil, false
 }
 
-func (p *grpcPlugin) logStateError(ctx context.Context) {
+func (p *grpcPlugin) logClientState(ctx context.Context) {
 	logger := p.Logger().FromContext(ctx)
 	switch p.state {
+	case pluginStateStartSuccess:
+		logger.Debug("Plugin client started, but des not have a client")
 	case pluginStateNotStarted:
 		logger.Debug("Plugin client has not been started yet")
 	case pluginStateStartInit:
