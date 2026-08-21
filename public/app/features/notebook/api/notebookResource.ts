@@ -6,6 +6,7 @@
 
 import { API_GROUP, API_VERSION, type Notebook } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
+import { extractErrorMessage } from 'app/api/utils';
 import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
@@ -59,7 +60,7 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
   const result = await dispatch(dashboardAPIv2beta1.endpoints.createNotebook.initiate({ notebook }, { track: false }));
 
   if ('error' in result && result.error) {
-    throw new Error(notebookWriteError(result.error));
+    throw new Error(extractErrorMessage(result.error, 'Failed to create the notebook.'));
   }
 
   const uid = result.data?.metadata?.name;
@@ -72,13 +73,29 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
   return { uid, url: notebookViewUrl(uid) };
 }
 
-/** The apiserver's own message: without it a caller cannot see what is wrong, and will retry the same spec. */
-function notebookWriteError(error: unknown): string {
-  if (typeof error === 'object' && error !== null && 'data' in error) {
-    const data: unknown = error.data;
-    if (typeof data === 'object' && data !== null && 'message' in data && typeof data.message === 'string') {
-      return data.message;
-    }
+/**
+ * Replace an existing notebook's spec, leaving its metadata alone.
+ *
+ * A JSON patch replacing all of `/spec`, not a merge patch: `spec.elements` is a keyed map, so a merge
+ * would leave a deleted cell's element behind. Not a PUT either, which would replace metadata and strip
+ * the notebook's folder annotation. Full reasoning in the spec, section 5.1.
+ *
+ * `generation` is optional rather than defaulted to 0, because the caller compares it with `===` against
+ * an optional field and a 0 would read as a difference.
+ */
+export async function updateNotebook(uid: string, spec: NotebookSpec): Promise<{ generation?: number }> {
+  const result = await dispatch(
+    dashboardAPIv2beta1.endpoints.updateNotebook.initiate(
+      // `createBaseQuery` infers the json-patch content type from the array of ops.
+      { name: uid, patch: [{ op: 'replace', path: '/spec', value: spec }] },
+      // Untracked like the create: nothing renders this mutation's state, and autosave writes often.
+      { track: false }
+    )
+  );
+
+  if ('error' in result && result.error) {
+    throw new Error(extractErrorMessage(result.error, 'Failed to save the notebook.'));
   }
-  return 'Failed to create the notebook.';
+
+  return { generation: result.data?.metadata?.generation };
 }

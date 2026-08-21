@@ -55,6 +55,47 @@ func TestResolveCurrentUserPermissions_SkipsFailingAction(t *testing.T) {
 	require.Empty(t, permScopes(perms, "folders:create"))
 }
 
+func TestResolveCurrentUserPermissions_UsesRequesterNamespace(t *testing.T) {
+	client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{
+		listResp: &authzv1.ListResponse{},
+	}}
+	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
+	usr := &identity.StaticRequester{
+		Type:      claims.TypeUser,
+		UserID:    1,
+		UserUID:   "u1",
+		OrgID:     1,
+		Namespace: "stacks-123",
+	}
+
+	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	require.NoError(t, err)
+	require.NotEmpty(t, client.listCalls)
+	for _, call := range client.listCalls {
+		require.Equal(t, "stacks-123", call.Namespace)
+	}
+}
+
+func TestResolveCurrentUserPermissions_DerivesNamespaceFromOrgWhenRequesterNamespaceIsEmpty(t *testing.T) {
+	client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{
+		listResp: &authzv1.ListResponse{},
+	}}
+	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
+	usr := &identity.StaticRequester{
+		Type:    claims.TypeUser,
+		UserID:  1,
+		UserUID: "u1",
+		OrgID:   2,
+	}
+
+	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	require.NoError(t, err)
+	require.NotEmpty(t, client.listCalls)
+	for _, call := range client.listCalls {
+		require.Equal(t, claims.OrgNamespaceFormatter(int64(2)), call.Namespace)
+	}
+}
+
 // capturingZanzanaClient records every ListRequest it receives so tests can
 // assert on the group / resource / verb / subject sent to Zanzana.
 type capturingZanzanaClient struct {

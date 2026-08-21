@@ -6,6 +6,7 @@ import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/r
 import {
   setGetObservablePluginLinks,
   useFlagDashboardVectorSearch,
+  useFlagGrafanaCmdkHybridSearch,
   useFlagGrafanaVectorSearchCmdk,
 } from '@grafana/runtime/internal';
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
@@ -41,6 +42,7 @@ jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   useFlagDashboardVectorSearch: jest.fn(),
   useFlagGrafanaVectorSearchCmdk: jest.fn(),
+  useFlagGrafanaCmdkHybridSearch: jest.fn(),
 }));
 
 jest.mock('kbar', () => ({
@@ -68,9 +70,11 @@ const triggerEmptyState = async () => {
 describe('CommandPalette', () => {
   beforeEach(() => {
     // Deep search is gated on both vector-search toggles; default them on so most
-    // tests exercise the deep column, overridden where needed
+    // tests exercise the deep column, overridden where needed. Hybrid search
+    // supersedes (and disables) the deep column, so default it off
     (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(true);
     (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(true);
+    (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(false);
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
     (reportInteraction as jest.Mock).mockClear();
   });
@@ -301,7 +305,8 @@ describe('CommandPalette', () => {
     it.each([
       ['dashboardVectorSearch off', () => (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(false)],
       ['vectorSearchCmdk off', () => (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false)],
-    ])('does not render the deep search column when %s (both flags required)', async (_label, disableFlag) => {
+      ['cmdkHybridSearch on', () => (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(true)],
+    ])('does not render the deep search column when %s', async (_label, disableFlag) => {
       disableFlag();
       let deepSearchCalled = false;
       server.events.on('request:start', ({ request }) => {

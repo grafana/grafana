@@ -2200,6 +2200,8 @@
       "title-no-alerting-capable-query-found": "アラート対応クエリが見つかりません"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "",
+      "body-permission-create-silence": "",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "特定のアラートルールからの通知を停止するためにサイレンスを設定"
@@ -2207,7 +2209,10 @@
         "text": {
           "silence-alert-rule": "アラートルールを消音"
         }
-      }
+      },
+      "text-checking-permissions": "",
+      "title-alert-rule-unavailable": "",
+      "title-permission-create-silence": ""
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "外部のAlertmanagerが見つかりません。また、内蔵のGrafana Alertmanagerにアクセスできない可能性があります。",
@@ -3676,6 +3681,9 @@
       "no-matching-instances-with-filters": "選択した時間範囲に、現在のフィルタの組み合わせに一致するアラートインスタンスはありません。",
       "open-in-sidebar": "サイドバーで開く",
       "open-rule-details": "ルールの詳細を開く",
+      "query-error-forbidden": "",
+      "query-error-generic": "",
+      "query-error-title": "",
       "rule-details": {
         "subtitle": "ルールの詳細と条件",
         "title": "ルールの詳細"
@@ -5380,6 +5388,16 @@
     "auto-grid": {
       "description": "パネルはサイズ変更され、均一なグリッドになります",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "",
+            "description": "",
+            "off": "",
+            "on": "",
+            "title": ""
+          },
+          "title": ""
+        },
         "repeat": {
           "title": "リピートオプション",
           "variable": {
@@ -5397,15 +5415,36 @@
         "custom-min-width": {
           "clear": "消去"
         },
+        "fit-content": "",
         "height-fill": "画面を埋める",
+        "match-row-heights": "",
         "max-columns": "最大列数",
-        "min-height": "行の高さ",
-        "min-height-custom": "カスタム行の高さ",
+        "max-height": "",
+        "max-height-clear": "",
+        "max-height-clear-label": "",
+        "max-height-custom": "",
+        "max-height-custom-label": "",
+        "max-height-error": "",
+        "max-height-short": "",
+        "max-height-standard": "",
+        "max-height-tall": "",
+        "max-height-unlimited": "",
+        "min-height": "",
+        "min-height-custom": "",
+        "min-height-custom-clear": "",
+        "min-height-custom-option": "",
         "min-height-error": "50から2000の間の数値である必要があります",
+        "min-height-none": "",
+        "min-height-short": "",
+        "min-height-standard": "",
+        "min-height-tall": "",
         "min-width": "最小列幅",
         "min-width-custom": "カスタム最小幅",
         "min-width-custom-clear": "標準の最小列幅に戻る",
-        "min-width-error": "50から2000の間の数値である必要があります"
+        "min-width-error": "50から2000の間の数値である必要があります",
+        "row-height": "",
+        "row-height-custom": "",
+        "row-height-custom-clear": ""
       },
       "resize-intercept": {
         "edit": "",
@@ -5638,6 +5677,7 @@
       "panel-background": "パネルの背景を変更",
       "panel-description": "パネルの説明を変更",
       "panel-edit": "パネルの変更",
+      "panel-fit-content": "",
       "panel-max-repeats-per-row": "行あたりの最大繰り返し回数",
       "panel-preset": "パネルプリセットを適用",
       "panel-repeat-direction": "方向を繰り返す",
@@ -9434,21 +9474,6 @@
   "get-enterprise": {
     "requires-license": "Grafana Enterpriseライセンスが必要です",
     "title": "エンタープライズ"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "完了",
-      "learn-how": "ドキュメントで学習"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "高度なチュートリアルへ",
-      "aria-label-to-basic-tutorials": "基本チュートリアルへ",
-      "checking-completed-setup-steps": "完了したセットアップ手順を確認中",
-      "remove-this-panel": "このパネルを削除"
-    },
-    "tutorial-card": {
-      "complete": "完了"
-    }
   },
   "global-variables": {
     "details": {
@@ -17391,12 +17416,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "リンク"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "サポートが必要ですか？",
-      "welcome-to-grafana": "Grafanaへようこそ"
     }
   },
   "xychart": {

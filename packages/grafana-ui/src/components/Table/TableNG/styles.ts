@@ -300,7 +300,7 @@ export const getTooltipStyles = memoize((theme: GrafanaTheme2, textAlign: TextAl
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     overflow: 'hidden',
     padding: theme.spacing(1),
     width: 'inherit',

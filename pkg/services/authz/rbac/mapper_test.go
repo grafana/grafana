@@ -165,6 +165,36 @@ func TestMapperRegistry_ExactMatchPreferred(t *testing.T) {
 	assert.Equal(t, "dashboards:uid:", mapping.Prefix())
 }
 
+func TestMapperRegistry_Variables(t *testing.T) {
+	reg := NewMapperRegistry()
+	mapping, ok := reg.Get("dashboard.grafana.app", "variables", "")
+	require.True(t, ok)
+	require.NotNil(t, mapping)
+	assert.Equal(t, "variables:uid:", mapping.Prefix())
+	assert.True(t, mapping.HasFolderSupport())
+
+	action, ok := mapping.Action("create")
+	require.True(t, ok)
+	assert.Equal(t, "variables:create", action)
+	action, ok = mapping.Action("get")
+	require.True(t, ok)
+	assert.Equal(t, "variables:read", action)
+	action, ok = mapping.Action("update")
+	require.True(t, ok)
+	assert.Equal(t, "variables:write", action)
+	action, ok = mapping.Action("delete")
+	require.True(t, ok)
+	assert.Equal(t, "variables:delete", action)
+
+	readActionSets := []string{"folders:view", "folders:edit", "folders:admin"}
+	writeActionSets := []string{"folders:edit", "folders:admin"}
+	assert.ElementsMatch(t, readActionSets, mapping.ActionSets(utils.VerbGet))
+	assert.ElementsMatch(t, readActionSets, mapping.ActionSets(utils.VerbList))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbCreate))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbUpdate))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbDelete))
+}
+
 func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 	parentTr := newResourceTranslation("widgets", "uid", true, nil)
 	subTr := translation{
