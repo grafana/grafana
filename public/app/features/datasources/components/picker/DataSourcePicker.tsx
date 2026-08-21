@@ -364,6 +364,7 @@ function getStylesDropdown(theme: GrafanaTheme2, props: DataSourcePickerProps) {
       pointerEvents: props.disabled ? 'none' : 'auto',
     }),
     input: css({
+      cursor: 'pointer',
       'input::placeholder': {
         color: props.disabled ? theme.colors.action.disabledText : theme.colors.text.primary,
       },

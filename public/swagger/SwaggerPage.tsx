@@ -1,3 +1,4 @@
+import { Global } from '@emotion/react';
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import getDefaultMonacoLanguages from 'lib/monaco-languages';
 import { useState } from 'react';
@@ -7,7 +8,7 @@ import SwaggerUI from 'swagger-ui-react';
 import { createTheme, monacoLanguageRegistry, type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
-import { Icon, Stack, Select, UserIcon, type UserView, Button } from '@grafana/ui';
+import { Button, Icon, Select, Stack, UserIcon, type UserView } from '@grafana/ui';
 import { setMonacoEnv } from 'app/core/monacoEnv';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
@@ -84,9 +85,20 @@ export const Page = () => {
     <div>
       <OpenFeatureProvider client={getFeatureFlagClient()}>
         <ThemeProvider value={theme}>
+          <Global
+            styles={{
+              html: {
+                fontSize: `${theme.typography.htmlFontSize}px`,
+              },
+              body: {
+                margin: 0,
+                ...theme.typography.body,
+              },
+            }}
+          />
           <NamespaceContext.Provider value={namespace.value}>
             <div style={{ backgroundColor: '#000', padding: '10px' }}>
-              <Stack justifyContent={'space-between'}>
+              <Stack alignItems="center" justifyContent="space-between">
                 <Icon name="grafana" size="xxl" />
                 <Select
                   options={urls.value}
@@ -105,7 +117,7 @@ export const Page = () => {
                   value={url}
                   isLoading={urls.loading}
                 />
-                <div style={{ marginTop: '5px' }}>
+                <div>
                   {userView ? (
                     <UserIcon userView={userView} />
                   ) : (

@@ -24,8 +24,6 @@ type ExtraOptions struct {
 	RequestTimeout  time.Duration
 	// EnableSearchAPI is the flag equivalent of [grafana-apiserver]
 	// enable_search_api, for servers configured by flags rather than an ini file.
-	// Temporary, while the per-resource search endpoints are being built out; it
-	// goes away once kinds opt in through their manifest.
 	EnableSearchAPI bool
 
 	// EnableTrashAPI is the flag equivalent of [grafana-apiserver]
@@ -37,9 +35,10 @@ type ExtraOptions struct {
 
 func NewExtraOptions() *ExtraOptions {
 	return &ExtraOptions{
-		DevMode:        false,
-		Verbosity:      0,
-		RequestTimeout: 10 * time.Minute,
+		DevMode:         false,
+		Verbosity:       0,
+		RequestTimeout:  10 * time.Minute,
+		EnableSearchAPI: true,
 	}
 }
 

@@ -142,6 +142,11 @@ func TestSearchFieldProviders_InvalidManifestReturnsError(t *testing.T) {
 	got, err := SearchFieldProviders([]app.Manifest{invalid})
 	require.Error(t, err)
 	assert.Nil(t, got)
+
+	// Same set through the constructor a runtime caller uses.
+	p, err := ManifestBackedProvider([]app.Manifest{invalid})
+	require.Error(t, err)
+	assert.Nil(t, p)
 }
 
 func mergeTestManifest(appName, group string, versions ...app.ManifestVersion) app.Manifest {
@@ -161,7 +166,7 @@ func mergeTestKind(kind, field string) app.ManifestVersionKind {
 // fieldNames lets a test assert whose declaration of a kind survived a merge.
 func fieldNames(t *testing.T, manifests []app.Manifest, group, version, resource string) []string {
 	t.Helper()
-	p, err := newManifestBackedProvider(manifests)
+	p, err := ManifestBackedProvider(manifests)
 	require.NoError(t, err)
 	fields := p.Fields(schema.GroupVersionResource{Group: group, Version: version, Resource: resource})
 	names := make([]string, 0, len(fields))
