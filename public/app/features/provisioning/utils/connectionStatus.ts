@@ -8,3 +8,8 @@ import { type ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
 export function isConnectionReady(status: ConnectionStatus | undefined): boolean {
   return status?.conditions?.find((c) => c.type === 'Ready')?.status === 'True';
 }
+
+export function isConnectionPending(status: ConnectionStatus | undefined): boolean {
+  const readyCondition = status?.conditions?.find((c) => c.type === 'Ready');
+  return !readyCondition || (status?.token?.lastUpdated ?? 0) > (status?.health.checked ?? 0);
+}

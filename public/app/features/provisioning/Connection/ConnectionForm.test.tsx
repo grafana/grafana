@@ -75,7 +75,7 @@ describe('ConnectionForm', () => {
       mockComboboxRect();
       server.use(
         http.get(`${BASE}/settings`, () =>
-          HttpResponse.json({ availableRepositoryTypes: ['github', 'githubEnterprise'] })
+          HttpResponse.json({ availableConnectionTypes: ['github', 'githubEnterprise'] })
         )
       );
 
@@ -106,10 +106,11 @@ describe('ConnectionForm', () => {
       expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     });
 
-    it('should have Provider field disabled', () => {
+    it('should have Provider field disabled', async () => {
+      server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ availableConnectionTypes: ['github'] })));
       setup();
 
-      expect(screen.getByLabelText(/^Provider/)).toBeDisabled();
+      await waitFor(() => expect(screen.getByLabelText(/^Provider/)).toBeDisabled());
     });
   });
 

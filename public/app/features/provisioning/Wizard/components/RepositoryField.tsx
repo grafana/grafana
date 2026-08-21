@@ -11,7 +11,7 @@ import { t } from '@grafana/i18n';
 import { Combobox, Field, Input } from '@grafana/ui';
 
 import { type ExternalRepository } from '../../types';
-import { isGitHubBased, isGitProvider } from '../../utils/repositoryTypes';
+import { isGitProvider, supportsConnections } from '../../utils/repositoryTypes';
 import { getGitProviderFields } from '../fields';
 import { type WizardFormData } from '../types';
 
@@ -35,7 +35,7 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
   ]);
 
   const isGitBased = isGitProvider(type);
-  const isGitHubAppAuth = isGitHubBased(type) && githubAuthType === 'github-app';
+  const isGitHubAppAuth = supportsConnections(type) && githubAuthType !== 'pat';
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const {
     data: connectionRepositories,
@@ -63,7 +63,7 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
         !isSelectedConnectionReady && isGitHubAppAuth
           ? t(
               'provisioning.wizard.connection-not-ready',
-              'The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.'
+              'The selected connection is not ready. List will be refreshed once the connection is ready.'
             )
           : gitFields.urlConfig.description
       }
