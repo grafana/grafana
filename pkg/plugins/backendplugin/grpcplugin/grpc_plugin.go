@@ -175,7 +175,7 @@ func (p *grpcPlugin) logClientState(ctx context.Context) {
 	logger := p.Logger().FromContext(ctx)
 	switch p.state {
 	case pluginStateStartSuccess:
-		logger.Debug("Plugin client started, but des not have a client")
+		logger.Debug("Plugin client started, but does not have a client")
 	case pluginStateNotStarted:
 		logger.Debug("Plugin client has not been started yet")
 	case pluginStateStartInit:
