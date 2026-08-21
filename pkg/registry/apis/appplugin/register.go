@@ -173,7 +173,6 @@ func RegisterAPIService(
 			return nil, err
 		}
 
-		// Expose access to the backend client
 		b.clientV3 = func(ctx context.Context) (v3.ClientV3, bool) {
 			p, ok := pluginRegistry.Plugin(ctx, b.pluginJSON.ID, "")
 			if !ok || p.IsDecommissioned() {

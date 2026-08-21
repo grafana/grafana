@@ -451,10 +451,10 @@ func (p *Plugin) Client() (PluginClient, bool) {
 }
 
 func (p *Plugin) ClientV3(ctx context.Context) (v3.ClientV3, bool) {
-	if p.client != nil {
-		return p.client.ClientV3(ctx)
+	if p.client == nil {
+		return nil, false
 	}
-	return nil, false
+	return p.client.ClientV3(ctx)
 }
 
 func (p *Plugin) ExecutablePath() string {
