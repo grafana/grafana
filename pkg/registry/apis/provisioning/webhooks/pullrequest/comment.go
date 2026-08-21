@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -11,6 +12,11 @@ import (
 )
 
 const maxErrorLength = 256
+
+// maxDisplayedChanges caps how many rows the comment table renders. PR jobs now
+// process every changed file, but a very large PR would otherwise produce an
+// unreadably long comment.
+const maxDisplayedChanges = 10
 
 type commenter struct {
 	templateDashboard        *template.Template
@@ -125,15 +131,18 @@ const commentTemplateSingleDashboard = `{{define "title"}}{{if .SourceURL}}[**{{
 
 const commentTemplateTable = `📋 Grafana detected **{{.TotalChanges}}** resource change{{if ne .TotalChanges 1}}s{{end}} in this pull request{{- if .HasErrors}} — ⚠️ {{.ErrorCount}} need{{if eq .ErrorCount 1}}s{{end}} attention{{- end}}.
 
+**By action:** {{range $i, $e := .ActionCounts}}{{if $i}}, {{end}}{{$e.Label}} ({{$e.Count}}){{end}}
+**By kind:** {{range $i, $e := .KindCounts}}{{if $i}}, {{end}}{{$e.Label}} ({{$e.Count}}){{end}}
+{{- if gt .TotalChanges .DisplayedCount}}
+
+{{.DisplayedCount}} / {{.TotalChanges}} change details shown below
+{{- end}}
+
 | Action | Kind | Resource | File | Preview | Status |
 |--------|------|----------|------|---------|--------|
-{{- range .Changes}}
+{{- range .DisplayedChanges}}
 | {{.ActionLabel}} | {{.Kind}} | {{.ExistingLink}} | {{ if .SourceURL}}[source]({{.SourceURL}}){{ else }}{{.SafeFilePath}}{{ end }} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} | {{.StatusIcon}} |
 {{- end -}}
-{{- if .SkippedFiles}}
-
-and {{ .SkippedFiles }} more files.
-{{- end}}
 {{- if not .HasErrors}}
 
 All resources passed validation. ✅
@@ -298,6 +307,19 @@ func (c *changeInfo) TotalChanges() int {
 	return len(c.Changes)
 }
 
+// DisplayedChanges returns the changes rendered as table rows, capped at
+// maxDisplayedChanges.
+func (c *changeInfo) DisplayedChanges() []fileChangeInfo {
+	if len(c.Changes) <= maxDisplayedChanges {
+		return c.Changes
+	}
+	return c.Changes[:maxDisplayedChanges]
+}
+
+func (c *changeInfo) DisplayedCount() int {
+	return len(c.DisplayedChanges())
+}
+
 func (c *changeInfo) ErrorCount() int {
 	n := 0
 	for i := range c.Changes {
@@ -306,4 +328,60 @@ func (c *changeInfo) ErrorCount() int {
 		}
 	}
 	return n
+}
+
+type countEntry struct {
+	Label string
+	Count int
+}
+
+// actionLabelOrder mirrors the case order in fileChangeInfo.ActionLabel, so the
+// per-action breakdown reads in the same create/update/delete/move/rename/ignore
+// sequence reviewers already see in the table above it.
+var actionLabelOrder = []string{"➕ Added", "✏️ Updated", "🗑️ Deleted", "➡️ Moved", "📝 Renamed", "🚫 Ignored"}
+
+// ActionCounts groups Changes by ActionLabel and counts files in each group.
+func (c *changeInfo) ActionCounts() []countEntry {
+	counts := map[string]int{}
+	for i := range c.Changes {
+		counts[c.Changes[i].ActionLabel()]++
+	}
+	return orderedCounts(counts, actionLabelOrder)
+}
+
+// KindCounts groups Changes by resource kind (info.Parsed.GVK.Kind) and counts
+// files in each group.
+func (c *changeInfo) KindCounts() []countEntry {
+	counts := map[string]int{}
+	for i := range c.Changes {
+		counts[c.Changes[i].Kind()]++
+	}
+	return orderedCounts(counts, nil)
+}
+
+// orderedCounts returns one countEntry per label in counts: labels listed in
+// priority come first in that order, followed by any remaining labels sorted
+// alphabetically.
+func orderedCounts(counts map[string]int, priority []string) []countEntry {
+	var entries []countEntry
+	seen := make(map[string]bool, len(priority))
+	for _, label := range priority {
+		if n, ok := counts[label]; ok {
+			entries = append(entries, countEntry{Label: label, Count: n})
+			seen[label] = true
+		}
+	}
+
+	rest := make([]string, 0, len(counts)-len(seen))
+	for label := range counts {
+		if !seen[label] {
+			rest = append(rest, label)
+		}
+	}
+	sort.Strings(rest)
+	for _, label := range rest {
+		entries = append(entries, countEntry{Label: label, Count: counts[label]})
+	}
+
+	return entries
 }
