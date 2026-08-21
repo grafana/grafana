@@ -147,7 +147,7 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/nats-io/nats-server/v2 v2.14.3 // @grafana/grafana-search-and-storage
 	github.com/nats-io/nats.go v1.52.0 // @grafana/grafana-search-and-storage
-	github.com/oklog/ulid/v2 v2.1.1 // @grafana/grafana-search-and-storage
+	github.com/oklog/ulid/v2 v2.1.2 // @grafana/grafana-search-and-storage
 	github.com/olekukonko/tablewriter v1.1.4 // @grafana/grafana-backend-group
 	github.com/open-feature/go-sdk v1.17.2 // @grafana/grafana-backend-group
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // @grafana/grafana-backend-group
