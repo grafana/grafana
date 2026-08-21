@@ -1155,6 +1155,10 @@ func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operati
 		}
 	}
 
+	ctx, span := tracer.Start(ctx, "resource.server.sleepAfterSuccessfulWriteOperation")
+	span.SetAttributes(attribute.Float64("artificialSuccessfulWriteDelaySeconds", s.artificialSuccessfulWriteDelay.Seconds()))
+	defer span.End()
+
 	s.log.Debug("sleeping after successful write operation",
 		"operation", operation,
 		"delay", s.artificialSuccessfulWriteDelay,
