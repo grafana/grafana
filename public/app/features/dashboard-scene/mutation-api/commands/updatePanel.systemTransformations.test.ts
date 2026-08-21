@@ -168,3 +168,75 @@ describe('UPDATE_PANEL and plugin registered transformations', () => {
     expect(outputFieldNames(transformer)).toContain('level');
   });
 });
+
+/**
+ * Why UPDATE_PANEL calls `reprocessTransformations()` explicitly after `setUserTransformations`.
+ *
+ * The command used to pair `setState({ transformations })` with `reprocessTransformations()`, which
+ * recomputed unconditionally. `setUserTransformations` is what preserves the plugin's entries, but it
+ * routes through `_applyTransformations`, which returns early when the new list compares equal and
+ * otherwise reprocesses only `if (this.isActive)`. Each test below pins one of those two conditions;
+ * both fail if the explicit reprocess is removed. Neither depends on the feature flag, so it stays off.
+ */
+describe('UPDATE_PANEL reprocesses whatever the provider state', () => {
+  beforeEach(() => {
+    plugins.clear();
+    plugins.set('timeseries', getPanelPlugin({ id: 'timeseries' }));
+  });
+
+  /** Drops the `labels` field, so its absence from the output proves the command's list actually ran. */
+  const dropLabels = {
+    kind: 'Transformation' as const,
+    group: 'organize',
+    spec: { options: { excludeByName: { labels: true }, indexByName: {}, renameByName: {} } },
+  };
+
+  function executeUpdate(scene: DashboardScene, transformations: Array<typeof dropLabels>) {
+    return new DashboardMutationClient(scene).execute({
+      type: 'UPDATE_PANEL',
+      payload: {
+        element: { name: 'panel-1' },
+        panel: { kind: 'Panel', spec: { data: { kind: 'QueryGroup', spec: { transformations } } } },
+      },
+    });
+  }
+
+  it('applies the new transformations when the provider is not active', async () => {
+    const { scene, transformer } = buildScene('timeseries');
+    const deactivate = activateFullSceneTree(scene.state.body);
+
+    await waitFor(() => expect(outputFieldNames(transformer)).toContain('labels'));
+
+    // A panel in a collapsed row or an unselected tab has a deactivated provider, and the command can
+    // still target it. `SceneDataTransformer._applyTransformations` reprocesses only `if (this.isActive)`,
+    // and re-activation cannot repair the gap: `_prevDataFromSource` is never cleared, so the base
+    // class's unforced transform short-circuits on `haveAlreadyTransformedData` and the panel keeps
+    // rendering the previous list's output until an unrelated query result arrives.
+    deactivate();
+    expect(transformer.isActive).toBe(false);
+
+    const result = await executeUpdate(scene, [dropLabels]);
+
+    expect(result.success).toBe(true);
+    await waitFor(() => expect(outputFieldNames(transformer)).not.toContain('labels'));
+  });
+
+  it('reprocesses when the command repeats the transformations already in state', async () => {
+    const { scene, transformer } = buildScene('timeseries');
+    activateFullSceneTree(scene.state.body);
+
+    await waitFor(() => expect(outputFieldNames(transformer)).toContain('labels'));
+    await executeUpdate(scene, [dropLabels]);
+    await waitFor(() => expect(outputFieldNames(transformer)).not.toContain('labels'));
+
+    // `_applyTransformations` returns before both the `setState` and the reprocess when the lists
+    // compare equal, which turns an idempotent retry — what a caller does after an ambiguous failure —
+    // into a silent no-op. The output is identical either way, so the reprocess is what has to be
+    // asserted rather than the frames.
+    const reprocess = jest.spyOn(transformer, 'reprocessTransformations');
+    const result = await executeUpdate(scene, [dropLabels]);
+
+    expect(result.success).toBe(true);
+    expect(reprocess).toHaveBeenCalled();
+  });
+});
