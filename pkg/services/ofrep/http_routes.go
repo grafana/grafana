@@ -43,8 +43,11 @@ func (b *APIBuilder) Setup(m *k8smux.PathRecorderMux) {
 	r := mux.NewRouter()
 	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags").HandlerFunc(b.allFlagsHandler)
 	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags/{flagKey}").HandlerFunc(b.oneFlagHandler)
+	r.Methods(http.MethodPost).Path("/apis/features.grafana.app/v0alpha1/namespaces/{namespace}/ofrep/v1/evaluate/flags").HandlerFunc(b.allFlagsHandler)
+	r.Methods(http.MethodPost).Path("/apis/features.grafana.app/v0alpha1/namespaces/{namespace}/ofrep/v1/evaluate/flags/{flagKey}").HandlerFunc(b.oneFlagHandler)
 
 	m.HandlePrefix("/ofrep/", r)
+	m.HandlePrefix("/apis/features.grafana.app/", r)
 }
 
 // grafanaHTTPHandler adapts an OFREP http.HandlerFunc to Grafana's router. It injects the
