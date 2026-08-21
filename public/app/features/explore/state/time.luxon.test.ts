@@ -33,13 +33,9 @@ describe('Explore time range with Luxon', () => {
 
   it('normalizes fractional millisecond timestamps', async () => {
     await jest.isolateModulesAsync(async () => {
-      const [{ configureStore }, { initialExploreState }, { updateTime }, { makeExplorePaneState }] =
-        await Promise.all([
-          import('app/store/configureStore'),
-          import('./main'),
-          import('./time'),
-          import('./utils'),
-        ]);
+      const [{ configureStore }, { initialExploreState }, { updateTime }, { makeExplorePaneState }] = await Promise.all(
+        [import('app/store/configureStore'), import('./main'), import('./time'), import('./utils')]
+      );
       const store = configureStore({
         explore: {
           ...initialExploreState,
