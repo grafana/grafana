@@ -5,12 +5,13 @@ import { useDebounce } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { CodeMirrorEditor, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
+import { templateErrorMessage } from '../handlebars';
 import { interpolateTemplate } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
@@ -134,13 +135,25 @@ export function TextNGEditor({
   const format = getInterpolateFormat(mode, codeLanguage);
   const showPreview = view !== 'write';
 
-  const interpolatedContent = useMemo(
-    () =>
-      showPreview
-        ? interpolateTemplate({ content: previewSource, mode, series, renderMode, format }, replaceVariables)
-        : '',
-    [showPreview, previewSource, mode, series, renderMode, format, replaceVariables]
-  );
+  const { interpolatedContent, previewError } = useMemo((): {
+    interpolatedContent: string;
+    previewError?: string;
+  } => {
+    if (!showPreview) {
+      return { interpolatedContent: '' };
+    }
+
+    try {
+      return {
+        interpolatedContent: interpolateTemplate(
+          { content: previewSource, mode, series, renderMode, format },
+          replaceVariables
+        ),
+      };
+    } catch (error) {
+      return { interpolatedContent: '', previewError: templateErrorMessage(error) };
+    }
+  }, [showPreview, previewSource, mode, series, renderMode, format, replaceVariables]);
 
   const previewHtml = useMemo(
     () => (mode === TextMode.Code ? '' : transformContent(mode, interpolatedContent, config.disableSanitizeHtml)),
@@ -216,7 +229,11 @@ export function TextNGEditor({
   const isCode = mode === TextMode.Code;
 
   const renderOutput = (testId: string) =>
-    isCode ? (
+    previewError ? (
+      <div data-testid={testId}>
+        <Alert severity="error" title={previewError} />
+      </div>
+    ) : isCode ? (
       <div className={styles.fullHeight} data-testid={testId}>
         <TextNGCodeView content={interpolatedContent} language={codeLanguage} showLineNumbers={showLineNumbers} />
       </div>

@@ -27,7 +27,7 @@ export interface AllRowsContext {
 
 export type TemplateContext = TemplateRow | AllRowsContext;
 
-/** Resolves to the error text instead of throwing when the template is broken. */
+/** Throws when the template fails to render; callers surface the error. */
 export type CompiledTemplate = (context: TemplateContext) => string;
 
 // Values stay raw so the numeric helpers can compare them; `fmt` holds the
@@ -67,27 +67,13 @@ export function buildAllRowsContext(series: DataFrame[], maxRows = Infinity): Al
 }
 
 export function compileTemplate(content: string, replaceVariables: InterpolateFunction): CompiledTemplate {
-  let template: HandlebarsTemplateDelegate<TemplateContext>;
+  const env = createEnvironment(replaceVariables);
+  const template: HandlebarsTemplateDelegate<TemplateContext> = env.compile(env.parse(content));
 
-  try {
-    const env = createEnvironment(replaceVariables);
-    // Parse up front so a syntax error is reported once, not once per rendered row.
-    template = env.compile(env.parse(content));
-  } catch (error) {
-    const message = templateError(error);
-    return () => message;
-  }
-
-  return (context) => {
-    try {
-      return template(context);
-    } catch (error) {
-      return templateError(error);
-    }
-  };
+  return (context) => template(context);
 }
 
-function templateError(error: unknown): string {
+export function templateErrorMessage(error: unknown): string {
   return t('textng.render.handlebars-error', 'Handlebars error: {{message}}', {
     message: error instanceof Error ? error.message : String(error),
   });

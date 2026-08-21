@@ -2,7 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
@@ -12,10 +14,13 @@ import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
 
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  getFeatureFlagClient: () => ({ getBooleanValue: () => true }),
-}));
+beforeAll(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
+
+afterAll(() => {
+  setTestFlags({});
+});
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
@@ -549,5 +554,16 @@ describe('TextNGPanel', () => {
     const html = screen.getByTestId('TextNGPanel-converted-content').innerHTML;
     expect(html).toContain('web-1');
     expect(html).toContain('web-2');
+  });
+
+  it('shows an alert instead of the content when the handlebars template is broken', () => {
+    const props = createProps((target) => target, {
+      options: { content: '{{#each data}}', mode: TextMode.Markdown },
+    });
+
+    setup(props, CoreApp.Dashboard);
+
+    expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:');
+    expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
 });

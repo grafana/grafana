@@ -1,20 +1,19 @@
 import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import { type DataFrame, FieldType, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
 import { hasRenderableData, interpolateTemplate, MAX_RENDERED_ROWS, renderContent } from './renderContent';
 
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  getFeatureFlagClient: () => ({ getBooleanValue: () => mockNewFeatures }),
-}));
-
-let mockNewFeatures = true;
-
 beforeEach(() => {
-  mockNewFeatures = true;
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
+
+afterAll(() => {
+  setTestFlags({});
 });
 
 const hosts = toDataFrame({
@@ -126,7 +125,7 @@ describe('interpolateTemplate', () => {
 
   describe('handlebars', () => {
     it('leaves expressions alone when the text.newFeatures flag is off', () => {
-      mockNewFeatures = false;
+      setTestFlags({ [FlagKeys.TextNewFeatures]: false });
 
       expect(interpolate('{{#each data}}{{host}}{{/each}}', [hosts], RenderMode.Once)).toBe(
         '{{#each data}}{{host}}{{/each}}'
@@ -144,9 +143,10 @@ describe('interpolateTemplate', () => {
         ],
       });
 
-      const rows = interpolate('{{#each data}}{{n}},{{/each}}', [big], RenderMode.Once).split(',').filter(Boolean);
+      // The truncation notice follows the template output as its own block.
+      const [rendered] = interpolate('{{#each data}}{{n}},{{/each}}', [big], RenderMode.Once).split('\n\n');
 
-      expect(rows).toHaveLength(MAX_RENDERED_ROWS);
+      expect(rendered.split(',').filter(Boolean)).toHaveLength(MAX_RENDERED_ROWS);
     });
 
     it('exposes every frame for Once', () => {
@@ -176,8 +176,20 @@ describe('interpolateTemplate', () => {
       expect(interpolate('{ "a": "{{b}}" }', [hosts], RenderMode.Once, TextMode.Code)).toBe('{ "a": "{{b}}" }');
     });
 
-    it('renders a broken template as an error message rather than throwing', () => {
-      expect(interpolate('{{#each data}}', [hosts], RenderMode.Once)).toContain('Handlebars error:');
+    it('throws on a broken template, so the panel can surface the error', () => {
+      expect(() => interpolate('{{#each data}}', [hosts], RenderMode.Once)).toThrow();
+    });
+
+    it('says so when a Once template only saw the capped rows', () => {
+      const big = toDataFrame({
+        fields: [
+          { name: 'n', type: FieldType.number, values: Array.from({ length: MAX_RENDERED_ROWS + 10 }, (_, i) => i) },
+        ],
+      });
+
+      expect(interpolate('{{data.length}}', [big], RenderMode.Once)).toBe(
+        `${MAX_RENDERED_ROWS}\n\nShowing the first ${MAX_RENDERED_ROWS} rows.`
+      );
     });
   });
 });

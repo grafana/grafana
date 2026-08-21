@@ -39,9 +39,31 @@ export function interpolateTemplate(template: TextTemplate, replaceVariables: In
     return interpolateEveryRow(template, series, replaceVariables, compiled);
   }
 
-  const templated = compiled ? compiled(buildAllRowsContext(series ?? [], MAX_RENDERED_ROWS)) : content;
+  if (!compiled) {
+    return replaceVariables(content, {}, format);
+  }
 
-  return replaceVariables(templated, {}, format);
+  const blocks = [replaceVariables(compiled(buildAllRowsContext(series ?? [], MAX_RENDERED_ROWS)), {}, format)];
+
+  // The context the template read was capped, so say so rather than silently under-count.
+  if (countRows(series ?? []) > MAX_RENDERED_ROWS) {
+    blocks.push(truncationNotice());
+  }
+
+  return joinBlocks(blocks, mode);
+}
+
+function countRows(series: DataFrame[]): number {
+  return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
+}
+
+function truncationNotice(): string {
+  return t('textng.render.truncated', 'Showing the first {{maxRows}} rows.', { maxRows: MAX_RENDERED_ROWS });
+}
+
+// Markdown needs a blank line between blocks, because `breaks` is off.
+function joinBlocks(blocks: string[], mode: TextMode): string {
+  return blocks.join(mode === TextMode.Markdown ? '\n\n' : '\n');
 }
 
 function interpolateEveryRow(
@@ -51,7 +73,7 @@ function interpolateEveryRow(
   compiled?: CompiledTemplate
 ): string {
   const { content, mode, format } = template;
-  const totalRows = series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
+  const totalRows = countRows(series);
   const blocks: string[] = [];
 
   for (const [frameIndex, frame] of series.entries()) {
@@ -81,11 +103,10 @@ function interpolateEveryRow(
   }
 
   if (totalRows > MAX_RENDERED_ROWS) {
-    blocks.push(t('textng.render.truncated', 'Showing the first {{maxRows}} rows.', { maxRows: MAX_RENDERED_ROWS }));
+    blocks.push(truncationNotice());
   }
 
-  // Markdown needs a blank line between blocks, because `breaks` is off.
-  return blocks.join(mode === TextMode.Markdown ? '\n\n' : '\n');
+  return joinBlocks(blocks, mode);
 }
 
 export function renderContent(

@@ -2,7 +2,13 @@ import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import { FieldType, type InterpolateFunction, toDataFrame } from '@grafana/data';
 
-import { buildAllRowsContext, buildRows, compileTemplate, type TemplateContext } from './handlebars';
+import {
+  buildAllRowsContext,
+  buildRows,
+  compileTemplate,
+  type TemplateContext,
+  templateErrorMessage,
+} from './handlebars';
 
 const hosts = toDataFrame({
   name: 'frameA',
@@ -191,18 +197,16 @@ describe('compileTemplate', () => {
   });
 
   describe('errors', () => {
-    it('reports a syntax error instead of throwing', () => {
-      expect(render('{{#if a}}no close')).toContain('Handlebars error:');
+    it('throws on a syntax error, at compile time', () => {
+      expect(() => compileTemplate('{{#if a}}no close', createReplaceVariables())).toThrow();
     });
 
-    it('reports a runtime error instead of throwing', () => {
-      expect(render('{{nope a}}', { a: 1 })).toContain('Handlebars error:');
+    it('throws on a runtime error', () => {
+      expect(() => render('{{nope a}}', { a: 1 })).toThrow();
     });
 
-    it('reports a syntax error once, however many times it renders', () => {
-      const template = compileTemplate('{{#each}}', createReplaceVariables());
-
-      expect(template({})).toBe(template({}));
+    it('describes the failure', () => {
+      expect(templateErrorMessage(new Error('boom'))).toBe('Handlebars error: boom');
     });
   });
 });
