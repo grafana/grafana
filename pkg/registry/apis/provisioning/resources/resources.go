@@ -222,7 +222,10 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 
 	err = r.repo.Write(ctx, fileName, options.Ref, body, commitMessage)
 	if err != nil {
-		return "", 0, fmt.Errorf("failed to write file: %s, %w", fileName, err)
+		// The body was already serialized, so report its size even on failure:
+		// this lets the bytes metric's outcome=error series surface size-related
+		// write rejections (e.g. an oversized resource exceeding a backend limit).
+		return "", len(body), fmt.Errorf("failed to write file: %s, %w", fileName, err)
 	}
 
 	return fileName, len(body), nil

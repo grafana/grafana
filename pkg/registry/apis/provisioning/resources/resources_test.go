@@ -98,6 +98,37 @@ func TestWriteResourceFileFromObject_RejectsPathTraversal(t *testing.T) {
 	require.ErrorIs(t, err, safepath.ErrPathTraversalAttempt)
 }
 
+func TestWriteResourceFileFromObject_PreservesSizeOnWriteError(t *testing.T) {
+	// The body is serialized before repo.Write is called, so a write failure
+	// (e.g. an oversized resource rejected by the backend) must still report the
+	// real size — that is what lets the bytes metric's outcome=error series
+	// expose size-related failures instead of hiding them behind bytes=0.
+	repo := repository.NewMockReaderWriter(t)
+	repo.On("Config").Return(replaceRepoConfig())
+
+	// No folder set → resolves to the (empty) root folder, so no tree lookup runs.
+	folderMgr := NewFolderManager(repo, nil, NewEmptyFolderTree(), FolderKind)
+	mgr := NewResourcesManager(repo, folderMgr, nil, NewMockResourceClients(t))
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "dashboard.grafana.app/v1beta1",
+		"kind":       "Dashboard",
+		"metadata":   map[string]any{"name": "dash-1"},
+	}}
+
+	var writtenBody []byte
+	repo.On("Write", mock.Anything, "dash-1.json", "", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			writtenBody = args.Get(3).([]byte)
+		}).
+		Return(fmt.Errorf("resource too large"))
+
+	_, size, err := mgr.WriteResourceFileFromObject(context.Background(), obj, WriteOptions{})
+	require.Error(t, err)
+	require.Positive(t, size, "size should be reported even when the write fails")
+	require.Equal(t, len(writtenBody), size, "reported size must match the serialized body length")
+}
+
 func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 	// replaceTestGVR (alertrules) is used as the resource under test; whether it
 	// carries the folder annotation is driven entirely by what the clients report
