@@ -343,9 +343,11 @@ func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, resu
 	operation := fileActionToOperation(result.Action())
 	m.resourceOpsTotal.WithLabelValues(string(action), string(operation), string(outcome), reason, result.Group(), result.Kind()).Inc()
 
-	// Ignored operations are no-ops (nothing was written), so keep them out of the
-	// duration histogram; everything else is a real resource operation worth timing.
-	if m.resourceOpDuration != nil && dur > 0 && operation != OperationIgnored {
+	// Ignored operations are no-ops (nothing was written), and an empty operation
+	// means the result carried no file action at all (e.g. a quota pre-check or a
+	// client-resolution failure), so neither did real work worth timing. Keep both
+	// out of the duration histogram.
+	if m.resourceOpDuration != nil && dur > 0 && operation != OperationIgnored && operation != "" {
 		m.resourceOpDuration.WithLabelValues(string(action), string(operation), string(outcome), result.Group(), result.Kind()).Observe(dur.Seconds())
 	}
 }

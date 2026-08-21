@@ -230,6 +230,16 @@ func (b *jobResourceResultBuilder) WithAction(action repository.FileAction) *job
 	return b
 }
 
+// WithStartTime overrides the operation start stamped at construction. Use it
+// on callback paths where the result can only be built after the operation has
+// run (e.g. per-folder callbacks): pass the time captured before the operation
+// so the recorded duration still reflects the work rather than just the
+// construction-to-record gap.
+func (b *jobResourceResultBuilder) WithStartTime(t time.Time) *jobResourceResultBuilder {
+	b.result.startedAt = t
+	return b
+}
+
 // WithReason sets an explicit reason on the result. This takes precedence over
 // the reason derived from classifyWarning and can be used on success results
 // to explain why an operation happened (e.g., UID migration).
