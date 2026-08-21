@@ -92,7 +92,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
           borderInlineEnd: 'none',
         },
 
-        [`${ACTIVE_CELL_SELECTORS.selected.normal}[role="columnheader"]`]: {
+        [`${SELECTED_CELL_SELECTOR}[role="columnheader"]`]: {
           outline: 'none',
         },
       },
@@ -102,14 +102,14 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
         [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
         // selected cells should appear below hovered cells.
         ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 7 } }),
-        [ACTIVE_CELL_SELECTORS.selected.normal]: { zIndex: theme.zIndex.tooltip - 6 },
+        [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 6 },
       },
 
       '.rdg-cell.rdg-cell-frozen': {
         backgroundColor: 'var(--rdg-row-background-color)',
         zIndex: theme.zIndex.tooltip - 4,
         ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
-        [ACTIVE_CELL_SELECTORS.selected.normal]: { zIndex: theme.zIndex.tooltip - 3 },
+        [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 3 },
       },
 
       // have to override styles for row selection to workaround safari styles workaround
@@ -163,7 +163,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       },
     }),
     cellNested: css({
-      [ACTIVE_CELL_SELECTORS.selected.normal]: { outline: 'none' },
+      [SELECTED_CELL_SELECTOR]: { outline: 'none' },
       '&:hover': { backgroundColor: 'transparent' },
     }),
     noDataNested: css({
@@ -316,6 +316,13 @@ export const getTooltipStyles = memoize((theme: GrafanaTheme2, textAlign: TextAl
   }),
 }));
 
+/**
+ * A cell react-data-grid considers selected, whether or not the grid still has focus. Use this for
+ * resets and stacking that have to hold for as long as the selection does — see ACTIVE_CELL_SELECTORS
+ * for the visual treatment that follows focus instead.
+ */
+const SELECTED_CELL_SELECTOR = '&[aria-selected=true]';
+
 const ACTIVE_CELL_SELECTORS = {
   hover: {
     nested: '.rdg-cell:hover &',
@@ -326,7 +333,7 @@ const ACTIVE_CELL_SELECTORS = {
   // expanded state when the user clicks away from the table.
   selected: {
     nested: '[aria-selected=true]:focus-within &',
-    normal: '&[aria-selected=true]:focus-within',
+    normal: `${SELECTED_CELL_SELECTOR}:focus-within`,
   },
 } as const;
 

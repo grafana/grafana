@@ -2157,6 +2157,23 @@ describe('TableNG', () => {
       expect(window.getComputedStyle(cells[1]).getPropertyValue('max-width')).not.toBe('600px');
     });
 
+    it('keeps suppressing the header outline while a header cell stays selected', async () => {
+      // Only the expansion follows focus. react-data-grid outlines whichever cell it considers
+      // selected, and that outlives the grid's focus, so the reset that hides it has to as well —
+      // gating it too puts an outline back on the header the moment the user clicks away.
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
+      );
+
+      const header = container.querySelector('[role="columnheader"]')!;
+      await user.click(header);
+      await user.click(document.body);
+
+      expect(header).toHaveAttribute('aria-selected', 'true');
+      expect(window.getComputedStyle(header).getPropertyValue('outline')).toBe('none');
+    });
+
     it('anchors a hover-expanded JSON cell to its top rather than centering the overflow', async () => {
       // The cell root inherits `align-items: center` from the default cell styles. Left unset here,
       // content taller than the max-height cap gets centered on the box's midpoint instead of pinned
