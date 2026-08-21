@@ -393,13 +393,16 @@ func TestBuildSearchUserFilters(t *testing.T) {
 }
 
 func TestBuildSearchUserFiltersRejectsMalformedWhereCondition(t *testing.T) {
-	_, _, _, err := buildSearchUserFilters(&legacysql.LegacyDatabaseHelper{}, []user.Filter{
+	joins, inFilters, whereFilters, err := buildSearchUserFilters(&legacysql.LegacyDatabaseHelper{}, []user.Filter{
 		testSearchUserFilter{where: &user.WhereCondition{
 			Condition: "is_admin = ? AND is_disabled = ?",
 			Params:    true,
 		}},
 	})
 
+	require.Nil(t, joins)
+	require.Nil(t, inFilters)
+	require.Nil(t, whereFilters)
 	require.ErrorContains(t, err, "search filter condition must have one placeholder")
 }
 
