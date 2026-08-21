@@ -310,7 +310,6 @@ const getStyles = (
   return {
     container: css({
       position: 'relative',
-      backgroundColor: theme.colors.background.secondary,
       padding: theme.spacing(0.5),
       paddingLeft: `calc(${theme.spacing(0.5)} + 4px)`,
       borderTopLeftRadius: theme.shape.radius.default,
@@ -320,6 +319,7 @@ const getStyles = (
       justifyContent: 'space-between',
       gap: theme.spacing(1),
       minHeight: theme.spacing(5),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
 
       // psuedo-element to show the border color on the left of the header
       '&::before': {
@@ -353,7 +353,6 @@ const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
     // Target the Input component inside the picker
     input: {
       border: 'none',
-      backgroundColor: theme.colors.background.secondary,
     },
     // Remove borders from all nested divs
     '& > div, & div': {

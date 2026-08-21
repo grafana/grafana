@@ -242,6 +242,37 @@
         }
       ]
     },
+    "/dashboards/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search Dashboard resources in a namespace.",
+        "operationId": "listDashboardSearchV2",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/dashboards/{name}": {
       "get": {
         "tags": ["Dashboard"],
@@ -3928,6 +3959,320 @@
           }
         ]
       },
+      "Unstructured": {
+        "type": "object",
+        "additionalProperties": true,
+        "x-kubernetes-preserve-unknown-fields": true
+      },
+      "ExistsPredicate": {
+        "description": "ExistsPredicate is a future field-existence predicate. Modelled for schema stability; always rejected in v1.",
+        "type": "object",
+        "required": ["field"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "FacetTerm": {
+        "description": "FacetTerm is a single facet term and its count.",
+        "type": "object",
+        "required": ["value", "count"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "value": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "FilterPredicate": {
+        "description": "FilterPredicate is an exact / set-based predicate against a single field. Values are strings whatever the field's declared type, so a boolean field takes \"true\" or \"false\" and a numeric field takes the number written out.\n\nNumbers are held as float64, so only integers up to 2^53 are compared exactly. Past that, values a whole number apart share one representation, and a filter can both match a neighbour and miss the value asked for.",
+        "type": "object",
+        "required": ["field", "operator", "values"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          },
+          "operator": {
+            "description": "Operator is \"In\" or \"NotIn\" in v1.",
+            "type": "string",
+            "default": ""
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      },
+      "RangePredicate": {
+        "description": "RangePredicate compares a numeric field against one or two bounds. At least one bound is required, gt cannot be combined with gte, and lt cannot be combined with lte. Boolean and string fields are rejected: only numbers have the order a range asks about. On an integer field a bound must be whole.\n\nBounds are held as float64, so only integers up to 2^53 are compared exactly. Past that, values a whole number apart share one representation, and a bound can both admit a neighbour and exclude the value asked for.",
+        "type": "object",
+        "required": ["field"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          },
+          "gt": {
+            "type": "number",
+            "format": "double"
+          },
+          "gte": {
+            "type": "number",
+            "format": "double"
+          },
+          "lt": {
+            "type": "number",
+            "format": "double"
+          },
+          "lte": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ResourceRef": {
+        "description": "ResourceRef is the full identity of a returned item. Namespace is implicit from the URL and omitted.",
+        "type": "object",
+        "required": ["group", "resource", "kind", "name"],
+        "properties": {
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "ResultItem": {
+        "description": "ResultItem is one search or trash hit. The item shape is identical on both endpoints; only which fields the Fields map can carry differs.",
+        "type": "object",
+        "required": ["resource"],
+        "properties": {
+          "fields": {
+            "description": "Fields holds the JSON values for the requested (or default) fields. Array-typed fields are returned as JSON arrays. Absent fields are omitted.",
+            "$ref": "#/components/schemas/Unstructured"
+          },
+          "resource": {
+            "default": {},
+            "$ref": "#/components/schemas/ResourceRef"
+          },
+          "score": {
+            "description": "Score is present only when a text query was evaluated. A pointer so a real score of 0 is still distinguishable from \"no text query\" (absent).",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ResultsMetadata": {
+        "description": "ResultsMetadata carries the pagination token and the total hit count.",
+        "type": "object",
+        "required": ["totalHits", "totalHitsRelation"],
+        "properties": {
+          "continue": {
+            "type": "string"
+          },
+          "totalHits": {
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "totalHitsRelation": {
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "SearchQuery": {
+        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "continue": {
+            "description": "Continue is an opaque pagination token from a previous page.",
+            "type": "string"
+          },
+          "facetLimit": {
+            "description": "FacetLimit caps the number of terms returned per facet. It applies to every entry in Facets. Zero uses the server default; values above the server cap are clamped.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "facets": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "labelSelector": {
+            "description": "LabelSelector filters on metadata.labels, ANDed with Where.",
+            "$ref": "#/components/schemas/LabelSelector"
+          },
+          "limit": {
+            "description": "Limit is the page size. Zero uses the default; values above the maximum are clamped.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "$ref": "#/components/schemas/SortField"
+            }
+          },
+          "where": {
+            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "$ref": "#/components/schemas/WhereNode"
+          }
+        }
+      },
+      "SearchResults": {
+        "description": "SearchResults is the response body for POST .../{resource}/search.",
+        "type": "object",
+        "required": ["metadata", "items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "facets": {
+            "description": "Facets holds term counts per requested facet field. Counts are computed over a bounded sample window, so they are best-effort/approximate.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "default": {},
+                "$ref": "#/components/schemas/FacetTerm"
+              }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "$ref": "#/components/schemas/ResultItem"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "$ref": "#/components/schemas/ResultsMetadata"
+          }
+        }
+      },
+      "SortField": {
+        "description": "SortField names a field to sort by and a direction (\"asc\" or \"desc\"). V1 allows sorting only on scalar string and numeric fields that declare the sort capability.",
+        "type": "object",
+        "required": ["field"],
+        "properties": {
+          "direction": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "TextPredicate": {
+        "description": "TextPredicate is a free-text predicate against one or more text-capable fields. When Fields is empty it defaults to the kind's searchTextFields (currently [\"title\"]).",
+        "type": "object",
+        "required": ["value"],
+        "properties": {
+          "boost": {
+            "description": "Boost is a future per-leaf score multiplier. Setting it is rejected in v1.",
+            "type": "number",
+            "format": "double"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "value": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "WhereNode": {
+        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+        "type": "object",
+        "properties": {
+          "and": {
+            "description": "Combinators.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "$ref": "#/components/schemas/WhereNode"
+            }
+          },
+          "exists": {
+            "$ref": "#/components/schemas/ExistsPredicate"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/FilterPredicate"
+          },
+          "not": {
+            "$ref": "#/components/schemas/WhereNode"
+          },
+          "or": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "$ref": "#/components/schemas/WhereNode"
+            }
+          },
+          "range": {
+            "$ref": "#/components/schemas/RangePredicate"
+          },
+          "text": {
+            "description": "Leaves.",
+            "$ref": "#/components/schemas/TextPredicate"
+          }
+        }
+      },
       "APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
         "type": "object",
@@ -4077,6 +4422,56 @@
       "FieldsV1": {
         "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:<name>', where <name> is the name of a field in a struct, or key in a map 'v:<value>', where <value> is the exact json formatted value of a list item 'i:<index>', where <index> is position of a item in a list 'k:<keys>', where <keys> is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
         "type": "object"
+      },
+      "LabelSelector": {
+        "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+        "type": "object",
+        "properties": {
+          "matchExpressions": {
+            "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "$ref": "#/components/schemas/LabelSelectorRequirement"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "matchLabels": {
+            "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        },
+        "x-kubernetes-map-type": "atomic"
+      },
+      "LabelSelectorRequirement": {
+        "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "type": "object",
+        "required": ["key", "operator"],
+        "properties": {
+          "key": {
+            "description": "key is the label key that the selector applies to.",
+            "type": "string",
+            "default": ""
+          },
+          "operator": {
+            "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+            "type": "string",
+            "default": ""
+          },
+          "values": {
+            "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
       },
       "ListMeta": {
         "description": "ListMeta describes metadata that synthetic resources must have, including lists and various status objects. A resource may have only one of {ObjectMeta, ListMeta}.",
