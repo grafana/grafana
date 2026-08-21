@@ -133,6 +133,7 @@ type JobResourceResult struct {
 	err          error
 	warning      error
 	startedAt    time.Time // stamped when the builder is created; used to derive the operation duration at record time
+	bytes        int       // size in bytes of the resource content written; 0 when unknown or not a content write
 }
 
 // jobResourceResultBuilder is a builder for creating JobResourceResult instances using a fluent API.
@@ -240,6 +241,15 @@ func (b *jobResourceResultBuilder) WithStartTime(t time.Time) *jobResourceResult
 	return b
 }
 
+// WithBytes records the size in bytes of the resource content involved in the
+// operation (e.g. the file read on a sync write, or the content written on
+// export). It is observed in the resource-size histogram at record time. Leave
+// it unset for operations without meaningful content (deletes, folders).
+func (b *jobResourceResultBuilder) WithBytes(n int) *jobResourceResultBuilder {
+	b.result.bytes = n
+	return b
+}
+
 // WithReason sets an explicit reason on the result. This takes precedence over
 // the reason derived from classifyWarning and can be used on success results
 // to explain why an operation happened (e.g., UID migration).
@@ -315,6 +325,12 @@ func (r JobResourceResult) PreviousPath() string {
 // Action returns the action performed on the resource.
 func (r JobResourceResult) Action() repository.FileAction {
 	return r.action
+}
+
+// Bytes returns the size in bytes of the resource content involved in the
+// operation, or 0 when unknown or not a content write.
+func (r JobResourceResult) Bytes() int {
+	return r.bytes
 }
 
 // elapsed returns how long the operation took, measured from when the result's
