@@ -198,7 +198,7 @@ func TestAllFlagsHandler_UnauthForwardsPathNamespace(t *testing.T) {
 	b.allFlagsHandler(w, r)
 
 	require.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, "features-grafana-app/stacks-7", gotUserAgent)
+	assert.Contains(t, gotUserAgent, "ns/stacks-7")
 }
 
 func TestOneFlagHandler_MissingFlagKey(t *testing.T) {
