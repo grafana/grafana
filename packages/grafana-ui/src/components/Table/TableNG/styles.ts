@@ -4,7 +4,15 @@ import memoize, { type Key, type RawKey } from 'micro-memoize';
 
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 
-import { COLUMN, FIRST_COLUMN_CLASS, FIRST_COLUMN_EXTRA_PADDING, LAST_COLUMN_CLASS, TABLE } from './constants';
+import {
+  COLUMN,
+  FIRST_COLUMN_CLASS,
+  FIRST_COLUMN_EXTRA_PADDING,
+  LAST_COLUMN_CLASS,
+  PAGINATION_CHROME_HEIGHT,
+  PAGINATION_MARGIN,
+  TABLE,
+} from './constants';
 import { type TableCellStyles } from './types';
 
 // TextAlign, getJustifyContent, and IS_SAFARI_26 live here rather than in utils.tsx to avoid a
@@ -109,8 +117,9 @@ export const getGridStyles = memoize(
         '--rdg-row-selected-background-color': selectedRowColor,
         '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
 
-        // theme.spacing(1) x 2 for the top and bottom of the padding container, and the 22px height of text is theme.spacing(2.75)
-        blockSize: enablePagination ? `calc(100% - ${theme.spacing(4.75)})` : '100%',
+        // give the pagination controls their room back, so the grid and the pager together still fit
+        // the panel (see PAGINATION_CHROME_HEIGHT)
+        blockSize: enablePagination ? `calc(100% - ${PAGINATION_CHROME_HEIGHT}px)` : '100%',
         scrollbarWidth: 'thin',
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
@@ -257,7 +266,9 @@ export const getGridStyles = memoize(
         alignItems: 'center',
         display: 'flex',
         justifyContent: 'center',
-        marginBlock: theme.spacing(1),
+        // equal to theme.spacing(1), but taken from the same constant the grid reserves against so the
+        // two can't drift apart
+        marginBlock: PAGINATION_MARGIN,
         width: '100%',
       }),
       paginationSummary: css({

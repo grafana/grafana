@@ -32,7 +32,13 @@ import { type MatcherScope } from '@grafana/schema';
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
-import { CELL_HORIZONTAL_CHROME, FIRST_COLUMN_EXTRA_PADDING, HEADER_ICON_SPACE, TABLE } from './constants';
+import {
+  CELL_HORIZONTAL_CHROME,
+  FIRST_COLUMN_EXTRA_PADDING,
+  HEADER_ICON_SPACE,
+  PAGINATION_CHROME_HEIGHT,
+  TABLE,
+} from './constants';
 import { IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
@@ -163,9 +169,6 @@ export interface PaginatedRowsResult {
   smallPagination: boolean;
 }
 
-// hand-measured. pagination height is 30px, plus 8px top margin
-const PAGINATION_HEIGHT = 38;
-
 export function usePaginatedRows(
   rows: TableRow[],
   { height, width, headerHeight, footerHeight, rowHeight, enabled, hasNestedFrames, pageSize }: PaginatedRowsOptions
@@ -224,7 +227,7 @@ export function usePaginatedRows(
       // ensure at least one row per page so a fractional size in (0, 1) doesn't floor to 0
       rowsPerPage = Math.max(1, Math.floor(pageSize));
     } else {
-      const rowAreaHeight = height - headerHeight - footerHeight - PAGINATION_HEIGHT;
+      const rowAreaHeight = height - headerHeight - footerHeight - PAGINATION_CHROME_HEIGHT;
       const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
       // ensure at least one row per page is displayed
       rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
