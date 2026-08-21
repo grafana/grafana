@@ -1,4 +1,4 @@
-import type { DrilldownsApplicability } from '@grafana/data';
+import type { DataSourceApi, DrilldownsApplicability } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import {
   AdHocFiltersVariable,
@@ -26,6 +26,10 @@ jest.mock('@grafana/runtime/unstable', () => {
 });
 
 const getDataSourceInstanceMock = getDataSourceInstance as jest.MockedFunction<typeof getDataSourceInstance>;
+
+function mockDataSourceInstance(ds: Partial<DataSourceApi> = {}) {
+  getDataSourceInstanceMock.mockResolvedValue(ds as unknown as DataSourceApi);
+}
 
 describe('verifyDrilldownApplicability', () => {
   afterEach(() => {
@@ -71,7 +75,7 @@ describe('verifyDrilldownApplicability', () => {
 describe('getDrilldownApplicability', () => {
   beforeEach(() => {
     const applicabilityFn = jest.fn().mockResolvedValue([]);
-    getDataSourceInstanceMock.mockResolvedValue({ getDrilldownsApplicability: applicabilityFn });
+    mockDataSourceInstance({ getDrilldownsApplicability: applicabilityFn });
   });
 
   afterEach(() => {
@@ -91,7 +95,7 @@ describe('getDrilldownApplicability', () => {
   });
 
   it('returns undefined when datasource lacks getDrilldownsApplicability', async () => {
-    getDataSourceInstanceMock.mockResolvedValue({});
+    mockDataSourceInstance();
 
     const { queryRunner, adhocFiltersVariable } = buildScene();
 
@@ -102,7 +106,7 @@ describe('getDrilldownApplicability', () => {
 
   it('returns undefined when drilldown variables use a different datasource', async () => {
     const applicabilityFn = jest.fn().mockResolvedValue([]);
-    getDataSourceInstanceMock.mockResolvedValue({ getDrilldownsApplicability: applicabilityFn });
+    mockDataSourceInstance({ getDrilldownsApplicability: applicabilityFn });
 
     const { queryRunner, adhocFiltersVariable } = buildScene({
       datasourceUid: 'ds-query',
@@ -118,7 +122,7 @@ describe('getDrilldownApplicability', () => {
   it('returns applicability data with both filters and groupBy keys from AdHocFiltersVariable', async () => {
     const applicability: DrilldownsApplicability[] = [{ key: 'region', applicable: true }];
     const getApplicability = jest.fn().mockResolvedValue(applicability);
-    getDataSourceInstanceMock.mockResolvedValue({ getDrilldownsApplicability: getApplicability });
+    mockDataSourceInstance({ getDrilldownsApplicability: getApplicability });
 
     const { queryRunner, adhocFiltersVariable } = buildScene({
       datasourceUid: 'ds-apply',

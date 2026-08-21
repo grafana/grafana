@@ -186,6 +186,23 @@ describe('dashboardControls', () => {
         complete: () => {
           expect(events).toHaveLength(1);
           expect(events[0].type).toBe('variables');
+          expect(warnSpy).not.toHaveBeenCalled();
+          warnSpy.mockRestore();
+          done();
+        },
+      });
+    });
+
+    it('should warn when datasource load fails for a reason other than not found', (done) => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const refs: DataSourceRef[] = [{ uid: 'ds-fail', type: 'broken' }];
+      const loadError = new Error('plugin import failed');
+
+      getDataSourceInstanceMock.mockRejectedValue(loadError);
+
+      loadDefaultControlsShared$(refs).subscribe({
+        complete: () => {
+          expect(warnSpy).toHaveBeenCalledWith('Failed to load datasource', refs[0], loadError);
           warnSpy.mockRestore();
           done();
         },

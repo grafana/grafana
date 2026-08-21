@@ -68,11 +68,18 @@ async function loadControlsFromRef(ref: DataSourceRef, subscriber: Subscriber<De
   try {
     ds = await getDataSourceInstance(ref);
   } catch (e) {
-    console.warn('Failed to load datasource', ref, e);
+    // Default controls are opportunistic; a missing datasource is a skip, not a failure.
+    if (!isDatasourceNotFoundError(e)) {
+      console.warn('Failed to load datasource', ref, e);
+    }
     return;
   }
 
   await Promise.all([emitDefaultVariables(ds, subscriber), emitDefaultLinks(ds, subscriber)]);
+}
+
+function isDatasourceNotFoundError(error: unknown): boolean {
+  return error instanceof Error && /not found/i.test(error.message);
 }
 
 async function emitDefaultVariables(ds: DataSourceApi, subscriber: Subscriber<DefaultControlEvent>) {
