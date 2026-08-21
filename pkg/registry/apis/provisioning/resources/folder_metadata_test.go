@@ -144,7 +144,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 			written = args.Get(3).([]byte)
 		}).Return(nil)
 
-		returnedUID, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", manifest, "", "", nil)
+		returnedUID, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", manifest, "", "")
 
 		require.NoError(t, err)
 		assert.Equal(t, uid, returnedUID)
@@ -162,7 +162,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 		rw.On("Create", mock.Anything, "myfolder/_folder.json", "", mock.Anything, "").
 			Return(assert.AnError)
 
-		_, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", manifest, "", "", nil)
+		_, err := WriteFolderMetadata(context.Background(), rw, "myfolder/", manifest, "", "")
 
 		require.Error(t, err)
 	})
@@ -669,7 +669,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-hash"}, nil).Once()
 
 		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
-		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted, nil)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.NoError(t, err)
 		assert.Equal(t, "new-hash", hash)
@@ -691,7 +691,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 
 		submitted := &folders.Folder{}
 		submitted.Spec.Title = "Title With No ID"
-		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted, nil)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.NoError(t, err)
 		assert.Equal(t, "new-hash", hash)
@@ -703,7 +703,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
 
 		submitted := NewFolderManifest("different-uid", "Some Title", FolderKind)
-		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted, nil)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "folder ID change is not allowed")
@@ -715,7 +715,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
 
 		submitted := NewFolderManifest(existingUID, "", FolderKind)
-		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted, nil)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "title must not be empty")
@@ -727,7 +727,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 			Return(nil, repository.ErrFileNotFound)
 
 		submitted := NewFolderManifest("any-uid", "Title", FolderKind)
-		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted, nil)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.Error(t, err)
 	})
@@ -740,7 +740,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 			Return(assert.AnError)
 
 		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
-		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted, nil)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.Error(t, err)
 	})
@@ -765,7 +765,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
 		desc := "New Description"
 		submitted.Spec.Description = &desc
-		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted, nil)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.NoError(t, err)
 		assert.Equal(t, "desc-hash", hash)
@@ -795,7 +795,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 
 		submitted := &folders.Folder{}
 		submitted.Spec.Title = "New Title"
-		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted, nil)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.NoError(t, err)
 		assert.Equal(t, "new-hash", hash)
@@ -810,7 +810,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 			Return(nil, fmt.Errorf("storage error")).Once()
 
 		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
-		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted, nil)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "", "", submitted)
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "re-read updated folder metadata")
@@ -825,7 +825,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "branch-hash"}, nil).Once()
 
 		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
-		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "feature-branch", "my commit message", submitted, nil)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "feature-branch", "my commit message", submitted)
 
 		require.NoError(t, err)
 		assert.Equal(t, "branch-hash", hash)
@@ -853,7 +853,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-branch-hash"}, nil).Once()
 
 		submitted := NewFolderManifest(existingUID, "New Title", FolderKind)
-		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "rename folder", submitted, nil)
+		hash, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "rename folder", submitted)
 
 		require.NoError(t, err)
 		assert.Equal(t, "new-branch-hash", hash)
@@ -870,7 +870,7 @@ func TestWriteFolderMetadataUpdate(t *testing.T) {
 			Return(nil, repository.ErrFileNotFound).Once()
 
 		submitted := NewFolderManifest("any-uid", "Title", FolderKind)
-		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "", submitted, nil)
+		_, err := WriteFolderMetadataUpdate(ctx, rw, "myfolder/", "new-branch", "", submitted)
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "read existing folder metadata")

@@ -81,8 +81,27 @@ func (m *FilesMetrics) RecordFileWrite(sizeBytes int, duration time.Duration, er
 	m.record("write", sizeBytes, duration, err)
 }
 
+// RecordOperation observes a files-API operation with no byte payload
+// (delete, move, tree listing): duration and outcome only.
+func (m *FilesMetrics) RecordOperation(operation string, duration time.Duration, err error) {
+	m.recordOutcome(operation, duration, err)
+}
+
 // record is nil-safe so a filesConnector built without metrics does not panic.
 func (m *FilesMetrics) record(operation string, sizeBytes int, duration time.Duration, err error) {
+	if m == nil {
+		return
+	}
+	m.recordOutcome(operation, duration, err)
+	// Size is only meaningful once the data is actually known good; a failed
+	// read/write has no reliable size and would otherwise skew the low end of
+	// the histogram with zeroes.
+	if err == nil && m.sizeHist != nil {
+		m.sizeHist.WithLabelValues(operation).Observe(float64(sizeBytes))
+	}
+}
+
+func (m *FilesMetrics) recordOutcome(operation string, duration time.Duration, err error) {
 	if m == nil {
 		return
 	}
@@ -97,11 +116,5 @@ func (m *FilesMetrics) record(operation string, sizeBytes int, duration time.Dur
 	}
 	if m.durationHist != nil {
 		m.durationHist.WithLabelValues(operation).Observe(duration.Seconds())
-	}
-	// Size is only meaningful once the data is actually known good; a failed
-	// read/write has no reliable size and would otherwise skew the low end of
-	// the histogram with zeroes.
-	if err == nil && m.sizeHist != nil {
-		m.sizeHist.WithLabelValues(operation).Observe(float64(sizeBytes))
 	}
 }

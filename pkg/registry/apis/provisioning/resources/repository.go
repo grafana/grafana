@@ -50,7 +50,6 @@ type repositoryResourcesFactory struct {
 	clients               ClientFactory
 	lister                ResourceLister
 	folderMetadataEnabled bool
-	metrics               ResourceMetrics
 }
 
 type RepositoryResourcesOption func(*repositoryResourcesOptions)
@@ -117,13 +116,12 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	return sourcePath, nil
 }
 
-func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool, metrics ResourceMetrics) RepositoryResourcesFactory {
+func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool) RepositoryResourcesFactory {
 	return &repositoryResourcesFactory{
 		parsers:               parsers,
 		clients:               clients,
 		lister:                lister,
 		folderMetadataEnabled: folderMetadataEnabled,
-		metrics:               metrics,
 	}
 }
 
@@ -147,9 +145,9 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		opt(cfg)
 	}
 
-	folderManagerOpts := append(cfg.folderManagerOptions, WithFolderMetadataEnabled(r.folderMetadataEnabled), WithFolderResourceMetrics(r.metrics))
+	folderManagerOpts := append(cfg.folderManagerOptions, WithFolderMetadataEnabled(r.folderMetadataEnabled))
 	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderGVK, folderManagerOpts...)
-	resources := NewResourcesManager(repo, folders, parser, clients, WithResourceMetrics(r.metrics))
+	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{
 		FolderManager:    folders,

@@ -17,6 +17,10 @@ import (
 type FileSizeRecorder interface {
 	RecordFileRead(sizeBytes int, duration time.Duration, err error)
 	RecordFileWrite(sizeBytes int, duration time.Duration, err error)
+	// RecordOperation observes a repository operation that has no byte payload
+	// (e.g. delete, move, tree listing) — duration and outcome only, since a
+	// synthetic size of 0 would skew the size histogram's low end.
+	RecordOperation(operation string, duration time.Duration, err error)
 }
 
 var _ FileSizeRecorder = (*ResourceMetrics)(nil)
@@ -95,8 +99,27 @@ func (m *ResourceMetrics) RecordFileWrite(sizeBytes int, duration time.Duration,
 	m.record("write", sizeBytes, duration, err)
 }
 
+// RecordOperation observes a repository operation with no byte payload
+// (delete, move, tree listing): duration and outcome only.
+func (m *ResourceMetrics) RecordOperation(operation string, duration time.Duration, err error) {
+	m.recordOutcome(operation, duration, err)
+}
+
 // record is nil-safe so a ResourcesManager built without metrics does not panic.
 func (m *ResourceMetrics) record(operation string, sizeBytes int, duration time.Duration, err error) {
+	if m == nil {
+		return
+	}
+	m.recordOutcome(operation, duration, err)
+	// Size is only meaningful once the data is actually known good; a failed
+	// read/write has no reliable size and would otherwise skew the low end of
+	// the histogram with zeroes.
+	if err == nil && m.fileSizeHist != nil {
+		m.fileSizeHist.WithLabelValues(operation).Observe(float64(sizeBytes))
+	}
+}
+
+func (m *ResourceMetrics) recordOutcome(operation string, duration time.Duration, err error) {
 	if m == nil {
 		return
 	}
@@ -111,11 +134,5 @@ func (m *ResourceMetrics) record(operation string, sizeBytes int, duration time.
 	}
 	if m.durationHist != nil {
 		m.durationHist.WithLabelValues(operation).Observe(duration.Seconds())
-	}
-	// Size is only meaningful once the data is actually known good; a failed
-	// read/write has no reliable size and would otherwise skew the low end of
-	// the histogram with zeroes.
-	if err == nil && m.fileSizeHist != nil {
-		m.fileSizeHist.WithLabelValues(operation).Observe(float64(sizeBytes))
 	}
 }

@@ -46,7 +46,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewSyncWorker(nil, nil, nil, nil, metrics, tracing.NewNoopTracerService(), 10, 0)
+			worker := NewSyncWorker(nil, nil, nil, nil, metrics, resources.ResourceMetrics{}, tracing.NewNoopTracerService(), 10, 0)
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -63,7 +63,7 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 			Title: "test-repo",
 		},
 	})
-	worker := NewSyncWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10, 0)
+	worker := NewSyncWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), resources.ResourceMetrics{}, tracing.NewNoopTracerService(), 10, 0)
 	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
 	require.EqualError(t, err, "sync job submitted for repository that does not support read-write")
 }
@@ -164,7 +164,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			// Sync succeeds
 			progressRecorder.On("SetMessage", mock.Anything, "execute sync job").Return()
 			progressRecorder.On("StrictMaxErrors", 20).Return()
-			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder, mock.Anything).Return("new-ref", nil)
+			syncer.On("Sync", mock.Anything, mock.Anything, mock.Anything, mockRepoResources, mock.Anything, progressRecorder, mock.Anything).Return("new-ref", nil)
 			progressRecorder.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 			progressRecorder.On("ResultReasons").Return([]string(nil))
 			progressRecorder.On("SetMessage", mock.Anything, "update status and stats").Return()
@@ -204,6 +204,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 				repositoryPatchFn.Execute,
 				syncer,
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
+				resources.ResourceMetrics{},
 				tracing.NewNoopTracerService(),
 				10,
 				0,
@@ -309,7 +310,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 
 			progressRecorder.On("SetMessage", mock.Anything, "execute sync job").Return()
 			progressRecorder.On("StrictMaxErrors", 20).Return()
-			syncer.On("Sync", mock.Anything, readerWriter, mock.Anything, mockRepoResources, mock.Anything, progressRecorder, mock.Anything).Return("new-ref", nil)
+			syncer.On("Sync", mock.Anything, mock.Anything, mock.Anything, mockRepoResources, mock.Anything, progressRecorder, mock.Anything).Return("new-ref", nil)
 			progressRecorder.On("Complete", mock.Anything, nil).Return(tt.jobStatus)
 			progressRecorder.On("ResultReasons").Return(tt.resultReasons)
 			progressRecorder.On("SetMessage", mock.Anything, "update status and stats").Return()
@@ -343,6 +344,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 				repositoryPatchFn.Execute,
 				syncer,
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
+				resources.ResourceMetrics{},
 				tracing.NewNoopTracerService(),
 				10,
 				0,
@@ -511,7 +513,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Sync execution succeeds
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
 				pr.On("StrictMaxErrors", 20).Return()
-				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
+				s.On("Sync", mock.Anything, mock.Anything, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
 					return true // Add specific sync options validation if needed
 				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("new-ref", nil)
 
@@ -568,7 +570,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
 				pr.On("StrictMaxErrors", 20).Return()
 				syncError := errors.New("sync operation failed")
-				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
+				s.On("Sync", mock.Anything, mock.Anything, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
 					return true // Add specific sync options validation if needed
 				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("", syncError)
 
@@ -819,7 +821,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
 				pr.On("StrictMaxErrors", 20).Return()
-				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
+				s.On("Sync", mock.Anything, mock.Anything, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
 					return true
 				}), mockRepoResources, mock.Anything, pr, mock.Anything).Return("new-ref", nil)
 
@@ -904,6 +906,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				repositoryPatchFn.Execute,
 				syncer,
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
+				resources.ResourceMetrics{},
 				tracing.NewNoopTracerService(),
 				10,
 				0,

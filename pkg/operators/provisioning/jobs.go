@@ -116,7 +116,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	}
 
 	resourceMetrics := resources.RegisterResourceMetrics(registry)
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled, resourceMetrics)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	urlProvider, err := controllerCfg.URLProvider()
@@ -133,6 +133,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		statusPatcher.Patch,
 		syncer,
 		metrics,
+		resourceMetrics,
 		tracer,
 		maxSyncWorkers,
 		cfg.ProvisioningMaxFileSize,
@@ -149,6 +150,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		export.ExportAllWithNewUIDs,
 		stageIfPossible,
 		metrics,
+		resourceMetrics,
 	)
 
 	// Migration export preserves original names so the takeover
@@ -160,6 +162,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		export.ExportAll,
 		stageIfPossible,
 		metrics,
+		resourceMetrics,
 	)
 	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -170,10 +173,10 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
 
 	// Delete
-	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
+	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics, resourceMetrics)
 
 	// Move
-	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
+	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics, resourceMetrics)
 
 	// Fix Metadata
 	fixMetadataWorker := fixfoldermetadata.NewWorker(clients, resourceMetrics)

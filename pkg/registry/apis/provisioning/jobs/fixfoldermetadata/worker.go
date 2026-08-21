@@ -92,6 +92,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		if !ok {
 			return fmt.Errorf("repository does not support read/write operations")
 		}
+		rw = resources.WrapReaderWriter(rw, &w.metrics)
 
 		entries, err := rw.ReadTree(ctx, ref)
 		if err != nil {
@@ -134,7 +135,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path), folderGVK)
 			_, writeErr := resources.WriteFolderMetadata(ctx, rw, folder.Path, manifest, ref,
-				fmt.Sprintf("Add folder metadata for %s", folder.Path), &w.metrics)
+				fmt.Sprintf("Add folder metadata for %s", folder.Path))
 
 			rb := jobs.NewFolderResult(folder.Path).
 				WithName(folder.ID).

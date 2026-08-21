@@ -90,7 +90,6 @@ type FolderManager struct {
 	beforeCreate          FolderCreationInterceptor
 	folderMetadataEnabled bool
 	folderGVK             schema.GroupVersionKind
-	metrics               ResourceMetrics
 }
 
 func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderGVK schema.GroupVersionKind, opts ...FolderManagerOption) *FolderManager {
@@ -122,14 +121,6 @@ func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOptio
 func WithFolderMetadataEnabled(folderMetadataEnabled bool) FolderManagerOption {
 	return func(fm *FolderManager) {
 		fm.folderMetadataEnabled = folderMetadataEnabled
-	}
-}
-
-// WithFolderResourceMetrics wires a ResourceMetrics into the manager so
-// folder metadata file writes are observed during job execution.
-func WithFolderResourceMetrics(metrics ResourceMetrics) FolderManagerOption {
-	return func(fm *FolderManager) {
-		fm.metrics = metrics
 	}
 }
 
@@ -629,7 +620,7 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, tree Folder
 			}
 			msg := fmt.Sprintf("Add folder and folder metadata %s", p)
 			manifest := NewFolderManifest(manifestID, folder.Title, fm.folderGVK)
-			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, opts.Ref, msg, &fm.metrics); err != nil {
+			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, opts.Ref, msg); err != nil {
 				return opts.OnFolder(folder, true, err)
 			}
 		} else {

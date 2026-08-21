@@ -237,7 +237,6 @@ func NewAPIBuilder(
 
 	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
 	resourceLister := resources.NewResourceListerForMigrations(unified)
-	resourceMetrics := resources.RegisterResourceMetrics(registry)
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
@@ -260,7 +259,7 @@ func NewAPIBuilder(
 		clients:                             clients,
 		supportedResources:                  supportedResources,
 		parsers:                             parsers,
-		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), resourceMetrics), //nolint:staticcheck
+		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
 		resourceLister:                      resourceLister,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -1031,6 +1030,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			metrics := jobs.RegisterJobMetrics(b.registry)
+			resourceMetrics := resources.RegisterResourceMetrics(b.registry)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 
@@ -1043,6 +1043,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				export.ExportAllWithNewUIDs,
 				stageIfPossible,
 				metrics,
+				resourceMetrics,
 			)
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
@@ -1052,6 +1053,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.statusPatcher.Patch,
 				syncer,
 				metrics,
+				resourceMetrics,
 				b.tracer,
 				10,
 				b.maxFileSize,
@@ -1066,6 +1068,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				export.ExportAll,
 				stageIfPossible,
 				metrics,
+				resourceMetrics,
 			)
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -1077,9 +1080,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				unifiedStorageMigrator,
 			)
 
-			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			fixMetadataWorker := fixfoldermetadata.NewWorker(b.clients, resources.RegisterResourceMetrics(b.registry))
+			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics, resourceMetrics)
+			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics, resourceMetrics)
+			fixMetadataWorker := fixfoldermetadata.NewWorker(b.clients, resourceMetrics)
 			releaseResourcesWorker := releaseresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
 			deleteResourcesWorker := deleteresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
 

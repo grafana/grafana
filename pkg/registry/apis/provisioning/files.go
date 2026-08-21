@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -113,6 +112,11 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 			m.WithMaxFileSize(c.maxFileSize)
 		}
 	}
+	// Wrapping here — after the size-limit check, before any Read/Write call —
+	// means every downstream consumer (the parser, the authorizer, the folder
+	// manager, DualReadWriter) is instrumented automatically, since they all
+	// operate on this same reference.
+	readWriter = resources.WrapReaderWriter(readWriter, &c.metrics)
 
 	dualReadWriter, authorizer, err := c.createDualReadWriter(ctx, repo, readWriter)
 	if err != nil {
@@ -274,14 +278,7 @@ func (c *filesConnector) handleGet(ctx context.Context, opts resources.DualWrite
 		return c.handleGetRawFile(ctx, opts, readWriter, authorizer)
 	}
 
-	start := time.Now()
 	resource, err := dualReadWriter.Read(ctx, opts.Path, opts.Ref)
-	duration := time.Since(start)
-	size := 0
-	if resource != nil && resource.Info != nil {
-		size = len(resource.Info.Data)
-	}
-	c.metrics.RecordFileRead(size, duration, err)
 	if err != nil {
 		return nil, err
 	}
@@ -299,14 +296,7 @@ func (c *filesConnector) handleGetRawFile(ctx context.Context, opts resources.Du
 		return nil, err
 	}
 
-	start := time.Now()
 	info, err := readWriter.Read(ctx, opts.Path, opts.Ref)
-	duration := time.Since(start)
-	size := 0
-	if info != nil {
-		size = len(info.Data)
-	}
-	c.metrics.RecordFileRead(size, duration, err)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) {
 			return nil, apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), opts.Path)
@@ -344,9 +334,7 @@ func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts r
 	}
 	opts.Data = data
 
-	start := time.Now()
 	resource, err := dualReadWriter.CreateResource(ctx, opts)
-	c.metrics.RecordFileWrite(len(data), time.Since(start), err)
 	if err != nil {
 		return nil, err
 	}
@@ -355,21 +343,15 @@ func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts r
 
 func (c *filesConnector) handleMove(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
 	// For move operations, only read body for file moves (not directory moves)
-	var data []byte
 	if !isDir {
-		var err error
-		data, err = readBody(r, c.maxFileSize)
+		data, err := readBody(r, c.maxFileSize)
 		if err != nil {
 			return nil, err
 		}
 		opts.Data = data
 	}
 
-	start := time.Now()
 	resource, err := dualReadWriter.MoveResource(ctx, opts)
-	if !isDir {
-		c.metrics.RecordFileWrite(len(data), time.Since(start), err)
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -390,9 +372,7 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 	}
 	opts.Data = data
 
-	start := time.Now()
 	resource, err := dualReadWriter.UpdateResource(ctx, opts)
-	c.metrics.RecordFileWrite(len(data), time.Since(start), err)
 	if err != nil {
 		return nil, err
 	}

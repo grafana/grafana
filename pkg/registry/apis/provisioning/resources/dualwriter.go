@@ -205,7 +205,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 			uid := util.GenerateShortUID()
 			manifest := NewFolderManifest(uid, safepath.Base(folderPath), r.folders.FolderGVK())
 			var writeErr error
-			stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message, r.metrics)
+			stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message)
 			if writeErr != nil {
 				return fmt.Errorf("failed to write folder metadata for %q: %w", folderPath, writeErr)
 			}
@@ -296,7 +296,7 @@ func (r *DualReadWriter) UpdateFolderMetadata(ctx context.Context, opts DualWrit
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
-	newHash, err := WriteFolderMetadataUpdate(ctx, r.repo, opts.Path, opts.Ref, opts.Message, &submitted, r.metrics)
+	newHash, err := WriteFolderMetadataUpdate(ctx, r.repo, opts.Path, opts.Ref, opts.Message, &submitted)
 	if err != nil {
 		return nil, err
 	}
@@ -466,6 +466,7 @@ func (r *DualReadWriter) createResourceAndNewFolderMetadata(ctx context.Context,
 		if !ok {
 			return fmt.Errorf("repository does not support read/write operations")
 		}
+		rw = WrapReaderWriter(rw, r.metrics)
 		if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
 			if err := r.writeNewFoldersMetadata(ctx, rw, opts.Path, opts.Ref, opts.Message); err != nil {
 				return err
@@ -486,6 +487,7 @@ func (r *DualReadWriter) moveResourceAndCreateNewFolderMetadata(ctx context.Cont
 		if !ok {
 			return fmt.Errorf("repository does not support read/write operations")
 		}
+		rw = WrapReaderWriter(rw, r.metrics)
 		if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
 			if err := r.writeNewFoldersMetadata(ctx, rw, opts.Path, opts.Ref, opts.Message); err != nil {
 				return err
@@ -530,7 +532,7 @@ func (r *DualReadWriter) writeNewFoldersMetadata(ctx context.Context, rw reposit
 		}
 
 		manifest := NewFolderManifest(util.GenerateShortUID(), safepath.Base(folderPath), r.folders.FolderGVK())
-		if _, err := WriteFolderMetadata(ctx, rw, folderPath, manifest, ref, message, r.metrics); err != nil {
+		if _, err := WriteFolderMetadata(ctx, rw, folderPath, manifest, ref, message); err != nil {
 			return fmt.Errorf("write folder metadata for %q: %w", folderPath, err)
 		}
 		return nil
