@@ -32,9 +32,10 @@ type filesConnector struct {
 	// maxFileSize caps the size in bytes of files read from or written to the
 	// repository through this connector. <=0 disables the check.
 	maxFileSize int64
+	metrics     FilesMetrics
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, maxFileSize int64) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, maxFileSize int64, metrics FilesMetrics) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
@@ -42,6 +43,7 @@ func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clien
 		access:                access,
 		folderMetadataEnabled: folderMetadataEnabled,
 		maxFileSize:           maxFileSize,
+		metrics:               metrics,
 	}
 }
 
@@ -275,6 +277,9 @@ func (c *filesConnector) handleGet(ctx context.Context, opts resources.DualWrite
 	if err != nil {
 		return nil, err
 	}
+	if resource.Info != nil {
+		c.metrics.RecordFileSize("read", len(resource.Info.Data))
+	}
 	return resource.AsResourceWrapper(), nil
 }
 
@@ -296,6 +301,7 @@ func (c *filesConnector) handleGetRawFile(ctx context.Context, opts resources.Du
 		}
 		return nil, fmt.Errorf("read raw file: %w", err)
 	}
+	c.metrics.RecordFileSize("read", len(info.Data))
 
 	return &provisioning.ResourceWrapper{
 		Path: info.Path,
@@ -326,6 +332,7 @@ func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts r
 		return nil, err
 	}
 	opts.Data = data
+	c.metrics.RecordFileSize("write", len(data))
 
 	resource, err := dualReadWriter.CreateResource(ctx, opts)
 	if err != nil {
@@ -342,6 +349,7 @@ func (c *filesConnector) handleMove(ctx context.Context, r *http.Request, opts r
 			return nil, err
 		}
 		opts.Data = data
+		c.metrics.RecordFileSize("write", len(data))
 	}
 
 	resource, err := dualReadWriter.MoveResource(ctx, opts)
@@ -364,6 +372,7 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 		return nil, err
 	}
 	opts.Data = data
+	c.metrics.RecordFileSize("write", len(data))
 
 	resource, err := dualReadWriter.UpdateResource(ctx, opts)
 	if err != nil {

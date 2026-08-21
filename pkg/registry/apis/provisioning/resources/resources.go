@@ -95,16 +95,32 @@ type ResourcesManager struct {
 	clients         ResourceClients
 	resourcesLookup map[resourceID]string // the path with this k8s name
 	mu              sync.RWMutex
+	metrics         ResourceMetrics
 }
 
-func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser Parser, clients ResourceClients) *ResourcesManager {
-	return &ResourcesManager{
+// ResourcesManagerOption configures optional behavior for a ResourcesManager.
+type ResourcesManagerOption func(*ResourcesManager)
+
+// WithResourceMetrics wires a ResourceMetrics into the manager so resource
+// file sizes are observed during read/write operations.
+func WithResourceMetrics(metrics ResourceMetrics) ResourcesManagerOption {
+	return func(m *ResourcesManager) {
+		m.metrics = metrics
+	}
+}
+
+func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser Parser, clients ResourceClients, opts ...ResourcesManagerOption) *ResourcesManager {
+	m := &ResourcesManager{
 		repo:            repo,
 		folders:         folders,
 		parser:          parser,
 		clients:         clients,
 		resourcesLookup: map[resourceID]string{},
 	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
 }
 
 // findResource checks if a resource exists in the lookup map (read operation)
@@ -216,6 +232,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	if err != nil {
 		return "", err
 	}
+	r.metrics.RecordFileSize("write", len(body))
 
 	err = r.repo.Write(ctx, fileName, options.Ref, body, commitMessage)
 	if err != nil {
@@ -255,6 +272,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 		readSpan.End()
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read file: %w", err)
 	}
+	r.metrics.RecordFileSize("read", len(fileInfo.Data))
 	readSpan.End()
 
 	parseCtx, parseSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.parse_file")
