@@ -71,6 +71,46 @@ const createBasicDataFrame = (): DataFrame =>
     })
   );
 
+// Field has a raw `name` distinct from its configured `displayName`, and no pre-cached
+// `field.state.displayName` (applyFieldOverrides explicitly nulls it out). This lets tests
+// tell apart "the display name was cached" (header shows displayName) from "it wasn't"
+// (header falls back to the raw name).
+const createDisplayNameDataFrame = (displayName: string, values = ['A1', 'A2']): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'DisplayNameData',
+      length: values.length,
+      fields: [
+        {
+          name: 'raw_name',
+          type: FieldType.string,
+          values,
+          config: { ...stdCellConfig, displayName },
+          display: displayString,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+// N fields, each with its own configured displayName ('Pretty Name 0', 'Pretty Name 1', ...) and no
+// pre-cached state.displayName — used to test the sniff-based detection of already-cached frames.
+const createMultiFieldDisplayNameDataFrame = (fieldCount: number, values = ['A1', 'A2']): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'MultiFieldDisplayNameData',
+      length: values.length,
+      fields: Array.from({ length: fieldCount }, (_, i) => ({
+        name: `raw_name_${i}`,
+        type: FieldType.string,
+        values,
+        config: { ...stdCellConfig, displayName: `Pretty Name ${i}` },
+        display: displayString,
+        ...stdField,
+      })),
+    })
+  );
+
 const createEmptyDataFrame = (): DataFrame =>
   withFieldOverrides(
     toDataFrame({
@@ -839,6 +879,114 @@ describe('TableNG', () => {
     });
   });
 
+  describe('display name caching', () => {
+    // Table reads only `field.state.displayName` (falling back to the raw field name) — it never
+    // computes a display name itself. `applyFieldOverrides` explicitly nulls out any prior
+    // `state.displayName`, so we assert on that field directly: the mutation `cacheFieldDisplayNames`
+    // performs is only picked up by the rendered header on a later re-render (e.g. via resize or
+    // sort), not the initial paint, so checking the DOM here would really be testing incidental
+    // re-render timing rather than the caching behavior itself.
+    it('caches display names on mount by default', () => {
+      const frame = createDisplayNameDataFrame('Pretty Name');
+      expect(frame.fields[0].state?.displayName).toBeFalsy();
+
+      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      expect(frame.fields[0].state?.displayName).toBe('Pretty Name');
+    });
+
+    it('skips its own caching pass when every sniffed field already has a cached displayName', () => {
+      const frame = createMultiFieldDisplayNameDataFrame(3);
+      // Set a sentinel distinct from the configured displayName ('Pretty Name N') on every field —
+      // if TableNG's caching pass ran anyway, it would overwrite these with the configured names.
+      frame.fields.forEach((field, i) => {
+        field.state = { ...field.state, displayName: `Already Cached ${i}` };
+      });
+
+      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      frame.fields.forEach((field, i) => {
+        expect(field.state?.displayName).toBe(`Already Cached ${i}`);
+      });
+    });
+
+    it('runs its caching pass when the first uncached field is found before the 10-field sniff limit', () => {
+      const frame = createMultiFieldDisplayNameDataFrame(3);
+      // Only the first field looks pre-cached — the sniff should bail on the second, uncached field
+      // and fall back to caching the whole frame, so even the "cached" first field gets recomputed.
+      frame.fields[0].state = { ...frame.fields[0].state, displayName: 'Already Cached' };
+
+      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      expect(frame.fields[0].state?.displayName).toBe('Pretty Name 0');
+      expect(frame.fields[1].state?.displayName).toBe('Pretty Name 1');
+      expect(frame.fields[2].state?.displayName).toBe('Pretty Name 2');
+    });
+
+    it('recaches display names when a new data frame instance is passed in', () => {
+      const frame1 = createDisplayNameDataFrame('Pretty Name');
+      const { rerender } = render(<TableNG enableVirtualization={false} data={frame1} width={800} height={600} />);
+      expect(frame1.fields[0].state?.displayName).toBe('Pretty Name');
+
+      const frame2 = createDisplayNameDataFrame('Different Name');
+      rerender(<TableNG enableVirtualization={false} data={frame2} width={800} height={600} />);
+
+      expect(frame2.fields[0].state?.displayName).toBe('Different Name');
+      // frame1 is untouched by the later render — proves recaching is keyed off the new frame, not a stale one.
+      expect(frame1.fields[0].state?.displayName).toBe('Pretty Name');
+    });
+
+    it('keeps a field literally named "Value" rendering correctly after a sort', async () => {
+      // Regression: getFieldDisplayName() substitutes the *frame's* name for a field named
+      // exactly "Value" (TIME_SERIES_VALUE_FIELD_NAME) once cached — that substitution is
+      // intentional (@grafana/data), but if caching ran in a useEffect (post-commit), the
+      // row-key memo (useRowCompiler, keyed off the raw field name at first render) and the
+      // column-key memo (rebuilt on sort, reading the by-then-cached, substituted name)
+      // disagreed on the key, leaving the Value column blank after any sort. Caching via
+      // useMemo — before either memo's first read — keeps them in sync from the start.
+      const frame = withFieldOverrides(
+        toDataFrame({
+          name: 'SortingValueTest',
+          length: 3,
+          fields: [
+            {
+              name: 'Category',
+              type: FieldType.string,
+              values: ['A', 'B', 'A'],
+              config: stdCellConfig,
+              display: displayString,
+              ...stdField,
+            },
+            {
+              name: 'Value',
+              type: FieldType.number,
+              values: [3, 1, 2],
+              config: stdCellConfig,
+              display: displayNumber,
+              ...stdField,
+            },
+          ],
+        })
+      );
+
+      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      const columnHeaders = container.querySelectorAll('[role="columnheader"]');
+      const valueColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
+      await user.click(valueColumnButton);
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      const valueCells = Array.from(cells)
+        .filter((_, index) => index % 2 === 1)
+        .map((cell) => cell.textContent);
+
+      expect(valueCells).toEqual(['1', '2', '3']);
+      // The header shows the cached (frame-substituted) name — the important thing is that it's
+      // consistent with the cells above, not blank or mismatched.
+      expect(columnHeaders[1].querySelector('button')).toHaveAttribute('title', 'SortingValueTest');
+    });
+  });
+
   describe('Footer options', () => {
     it('defaults to not showing footer', () => {
       const { container } = render(
@@ -1486,6 +1634,58 @@ describe('TableNG', () => {
 
       // After clicking, the header should have an aria-sort attribute
       expect(onSortByChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps content-aware column widths stable when a column is sorted', async () => {
+      const longHeader = 'Category, with a header label long enough to size this column on its own';
+      // Auto-sized columns (no configured `custom.width`). The first header is long enough that the
+      // header label, not the cell content, sets the width — where a sorted-only reservation shows up.
+      const frame = withFieldOverrides(
+        toDataFrame({
+          name: 'AutoWidths',
+          length: 3,
+          fields: [
+            {
+              name: longHeader,
+              type: FieldType.string,
+              values: ['A', 'B', 'C'],
+              config: {},
+              display: displayString,
+              ...stdField,
+            },
+            {
+              name: 'Value',
+              type: FieldType.number,
+              values: [1, 2, 3],
+              config: {},
+              display: displayNumber,
+              ...stdField,
+            },
+            {
+              name: 'Name',
+              type: FieldType.string,
+              values: ['x', 'y', 'z'],
+              config: {},
+              display: displayString,
+              ...stdField,
+            },
+          ],
+        })
+      );
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} contentAwareWidthsEnabled={true} data={frame} width={800} height={600} />
+      );
+
+      // rdg lays the grid out with an inline grid-template-columns, so it holds every column width.
+      const grid = container.querySelector<HTMLElement>('[role="grid"]');
+      const widthsBeforeSort = grid?.style.gridTemplateColumns;
+      expect(widthsBeforeSort).toBeTruthy();
+
+      await user.click(screen.getByTitle(longHeader));
+
+      expect(container.querySelector('[role="columnheader"]')?.getAttribute('aria-sort')).toBe('ascending');
+      expect(grid?.style.gridTemplateColumns).toBe(widthsBeforeSort);
     });
   });
 
