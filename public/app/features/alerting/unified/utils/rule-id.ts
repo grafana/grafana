@@ -5,6 +5,7 @@ import {
   type CloudRuleIdentifier,
   type CombinedRule,
   type EditableRuleIdentifier,
+  type PrometheusRuleIdentifier,
   type Rule,
   type RuleGroupIdentifier,
   type RuleGroupIdentifierV2,
@@ -22,6 +23,7 @@ import {
 import { logError } from '../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 
+import { CLOUD_RULE_IDENTIFIER_PREFIX, PROMETHEUS_RULE_IDENTIFIER_PREFIX } from './constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
   getRuleName,
@@ -154,9 +156,6 @@ export function equal(a: RuleIdentifier, b: RuleIdentifier) {
   return false;
 }
 
-const cloudRuleIdentifierPrefix = 'cri';
-const prometheusRuleIdentifierPrefix = 'pri';
-
 function escapeDollars(value: string): string {
   return value.replace(/\$/g, '_DOLLAR_');
 }
@@ -193,11 +192,11 @@ export function parse(value: string, decodeFromUri = false): RuleIdentifier {
       .map(unescapeDollars)
       .map(unescapePathSeparators);
 
-    if (prefix === cloudRuleIdentifierPrefix) {
+    if (prefix === CLOUD_RULE_IDENTIFIER_PREFIX) {
       return { ruleSourceName, namespace, groupName, ruleName, rulerRuleHash: hash };
     }
 
-    if (prefix === prometheusRuleIdentifierPrefix) {
+    if (prefix === PROMETHEUS_RULE_IDENTIFIER_PREFIX) {
       return { ruleSourceName, namespace, groupName, ruleName, ruleHash: hash };
     }
   }
@@ -222,29 +221,26 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
     return identifier.uid;
   }
 
-  if (isCloudRuleIdentifier(identifier)) {
-    return [
-      cloudRuleIdentifierPrefix,
-      identifier.ruleSourceName,
-      identifier.namespace,
-      identifier.groupName,
-      identifier.ruleName,
-      identifier.rulerRuleHash,
-    ]
-      .map(String)
-      .map(escapeDollars)
-      .map(escapePathSeparators)
-      .join('$');
-  }
+  return stringifyDataSourceIdentifier(identifier, identifier.ruleSourceName);
+}
 
-  return [
-    prometheusRuleIdentifierPrefix,
-    identifier.ruleSourceName,
-    identifier.namespace,
-    identifier.groupName,
-    identifier.ruleName,
-    identifier.ruleHash,
-  ]
+/**
+ * Serialise a data source managed identifier, using `rulesSourceId` to say which rules source the
+ * rule came from.
+ *
+ * Grafana's own URLs name the data source, which is what `stringifyIdentifier` gives you. The
+ * grafana-prometheusalerting-app plugin puts the data source's UID in that same slot, so handing a
+ * rule over to it means re-serialising with the UID instead.
+ */
+export function stringifyDataSourceIdentifier(
+  identifier: CloudRuleIdentifier | PrometheusRuleIdentifier,
+  rulesSourceId: string
+): string {
+  const [prefix, ruleHash] = isCloudRuleIdentifier(identifier)
+    ? [CLOUD_RULE_IDENTIFIER_PREFIX, identifier.rulerRuleHash]
+    : [PROMETHEUS_RULE_IDENTIFIER_PREFIX, identifier.ruleHash];
+
+  return [prefix, rulesSourceId, identifier.namespace, identifier.groupName, identifier.ruleName, ruleHash]
     .map(String)
     .map(escapeDollars)
     .map(escapePathSeparators)
