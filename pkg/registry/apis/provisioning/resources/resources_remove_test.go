@@ -685,7 +685,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 			Return(obj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("content-hash"))
+		name, _, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("content-hash"))
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -698,7 +698,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 			Return(obj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("old-hash"))
+		name, _, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash("old-hash"))
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -711,7 +711,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 			Return(obj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref")
+		name, _, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -724,7 +724,7 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 			Return(obj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash(""))
+		name, _, _, err := mgr.WriteResourceFromFile(context.Background(), "folder/resource.json", "ref", WithExistingHash(""))
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -790,7 +790,7 @@ func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+		name, _, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -803,7 +803,7 @@ func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+		name, _, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -816,7 +816,7 @@ func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
 			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		name, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
+		name, _, _, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "resource.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "my-resource", name)
@@ -859,7 +859,7 @@ func TestReplaceResourceFromFile_PassesExistingHash(t *testing.T) {
 		Return(obj, nil)
 
 	mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-	name, _, err := mgr.ReplaceResourceFromFile(context.Background(), "resource.json", "ref", "my-resource", fakeGVR, WithExistingHash("matching-hash"))
+	name, _, _, err := mgr.ReplaceResourceFromFile(context.Background(), "resource.json", "ref", "my-resource", fakeGVR, WithExistingHash("matching-hash"))
 
 	require.NoError(t, err)
 	require.Equal(t, "my-resource", name)

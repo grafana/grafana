@@ -23,6 +23,7 @@ type JobMetrics struct {
 
 	resourceOpsTotal   *prometheus.CounterVec   // per-resource outcome counter
 	resourceOpDuration *prometheus.HistogramVec // per-resource operation duration
+	resourceOpBytes    *prometheus.HistogramVec // per-resource content size in bytes
 	inFlight           *prometheus.GaugeVec     // jobs currently being processed, by driver + action
 	busySeconds        *prometheus.CounterVec   // job duration credited at completion, by driver + action
 }
@@ -235,6 +236,18 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(resourceOpDuration)
 
+		resourceOpBytes := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name: "grafana_provisioning_jobs_resource_operation_bytes",
+				Help: "Size in bytes of individual resources written during provisioning job runs",
+				// 512B -> 32MB. Resources can be several MB today (large dashboards);
+				// the top buckets leave headroom past the ~20MB range as sizes grow.
+				Buckets: []float64{512, 2048, 8192, 32768, 131072, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432},
+			},
+			[]string{"action", "operation", "outcome", "group", "kind"},
+		)
+		registry.MustRegister(resourceOpBytes)
+
 		inFlight := prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name: "grafana_provisioning_jobs_in_flight",
@@ -262,6 +275,7 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			syncDurationHist:                 syncDurationHist,
 			resourceOpsTotal:                 resourceOpsTotal,
 			resourceOpDuration:               resourceOpDuration,
+			resourceOpBytes:                  resourceOpBytes,
 			inFlight:                         inFlight,
 			busySeconds:                      busySeconds,
 		}
@@ -347,8 +361,16 @@ func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, resu
 	// means the result carried no file action at all (e.g. a quota pre-check or a
 	// client-resolution failure), so neither did real work worth timing. Keep both
 	// out of the duration histogram.
-	if m.resourceOpDuration != nil && dur > 0 && operation != OperationIgnored && operation != "" {
+	realOp := operation != OperationIgnored && operation != ""
+	if m.resourceOpDuration != nil && dur > 0 && realOp {
 		m.resourceOpDuration.WithLabelValues(string(action), string(operation), string(outcome), result.Group(), result.Kind()).Observe(dur.Seconds())
+	}
+
+	// Resource size is only known for content writes (the write paths stamp it via
+	// WithBytes). Deletes, folders and no-op operations carry no size, so a zero
+	// byte count is excluded rather than recorded as a 0-byte resource.
+	if m.resourceOpBytes != nil && result.Bytes() > 0 && realOp {
+		m.resourceOpBytes.WithLabelValues(string(action), string(operation), string(outcome), result.Group(), result.Kind()).Observe(float64(result.Bytes()))
 	}
 }
 

@@ -103,7 +103,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "new-ref").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				// First file recorded with error, automatically tracked
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -170,7 +170,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				progress.On("HasDirPathFailedCreation", "folder1/new.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/new.json", "new-ref").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "folder1/new.json" && r.Error() != nil
@@ -231,14 +231,14 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				// Success path works
 				progress.On("HasDirPathFailedCreation", "success/file1.json").Return(false).Once()
 				repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "new-ref").
-					Return("resource-1", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+					Return("resource-1", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "success/file1.json" && r.Error() == nil
 				})).Return().Once()
 
 				progress.On("HasDirPathFailedCreation", "success/nested/file2.json").Return(false).Once()
 				repoResources.On("WriteResourceFromFile", mock.Anything, "success/nested/file2.json", "new-ref").
-					Return("resource-2", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+					Return("resource-2", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "success/nested/file2.json" && r.Error() == nil
 				})).Return().Once()
@@ -423,7 +423,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFolderCreation(t *testi
 
 	progress.On("HasDirPathFailedCreation", "other/file.json").Return(false).Once()
 	repoResources.On("WriteResourceFromFile", mock.Anything, "other/file.json", "new-ref").
-		Return("test-resource", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+		Return("test-resource", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "other/file.json" && r.Action() == repository.FileActionCreated && r.Error() == nil
 	})).Return().Once()
@@ -499,7 +499,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_DeletionNotAffectedByCreation
 	// Creation fails
 	progress.On("HasDirPathFailedCreation", "folder1/file.json").Return(false).Once()
 	repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file.json", "new-ref").
-		Return("", schema.GroupVersionKind{}, &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}).Once()
+		Return("", schema.GroupVersionKind{}, 0, &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "folder1/file.json" && r.Error() != nil
@@ -584,14 +584,14 @@ func TestIncrementalSync_HierarchicalErrorHandling_MixedSuccessAndFailure(t *tes
 
 	progress.On("HasDirPathFailedCreation", "success/file1.json").Return(false).Once()
 	repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "new-ref").
-		Return("resource-1", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+		Return("resource-1", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "success/file1.json" && r.Action() == repository.FileActionCreated && r.Error() == nil
 	})).Return().Once()
 
 	progress.On("HasDirPathFailedCreation", "success/nested/file2.json").Return(false).Once()
 	repoResources.On("WriteResourceFromFile", mock.Anything, "success/nested/file2.json", "new-ref").
-		Return("resource-2", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+		Return("resource-2", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "success/nested/file2.json" && r.Action() == repository.FileActionCreated && r.Error() == nil
 	})).Return().Once()
