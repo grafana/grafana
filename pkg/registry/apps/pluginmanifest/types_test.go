@@ -94,3 +94,70 @@ func TestManifestObjectJSONRoundTrip(t *testing.T) {
 
 	require.JSONEq(t, string(bare), string(wrapped))
 }
+
+// TestManifestKindTypesAreDistinctPerKind reproduces the duplicate-operation-ID condition:
+// when several kinds of one app share a single Go type, the reverse lookup the REST
+// installer uses (scheme.ObjectKinds, via GetResourceKind) cannot tell them apart and
+// returns the first-registered kind for all of them. Every kind then derives the same
+// operation IDs and the API server refuses to serve the group with
+// "duplicate Operation ID ...". Distinct per-kind types keep the lookup unambiguous.
+func TestManifestKindTypesAreDistinctPerKind(t *testing.T) {
+	group := "stevetestapp.ext.grafana.app"
+	ticketGVK := schema.GroupVersionKind{Group: group, Version: "v1alpha1", Kind: "Ticket"}
+	commentGVK := schema.GroupVersionKind{Group: group, Version: "v1alpha1", Kind: "Comment"}
+
+	t.Run("one shared type collapses both kinds onto the first (demonstrates the bug)", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		scheme.AddKnownTypeWithName(ticketGVK, &manifestObject{})
+		scheme.AddKnownTypeWithName(commentGVK, &manifestObject{})
+
+		gvks, _, err := scheme.ObjectKinds(&manifestObject{})
+		require.NoError(t, err)
+		// Both kinds map to the same type, so a Comment's storage object is indistinguishable
+		// from a Ticket's and the installer picks whichever came first.
+		// The single type resolves to BOTH kinds, so the installer cannot tell which kind a
+		// given storage object belongs to and uses gvks[0] for both resources.
+		require.Len(t, gvks, 2)
+		require.ElementsMatch(t, []schema.GroupVersionKind{ticketGVK, commentGVK}, gvks)
+	})
+
+	t.Run("a type per kind resolves each kind uniquely", func(t *testing.T) {
+		scheme := runtime.NewScheme()
+		ticketObj, ticketList := newManifestKindTypes(0)
+		commentObj, commentList := newManifestKindTypes(1)
+
+		scheme.AddKnownTypeWithName(ticketGVK, ticketObj)
+		scheme.AddKnownTypeWithName(commentGVK, commentObj)
+
+		ticketKinds, _, err := scheme.ObjectKinds(ticketObj)
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupVersionKind{ticketGVK}, ticketKinds)
+
+		commentKinds, _, err := scheme.ObjectKinds(commentObj)
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupVersionKind{commentGVK}, commentKinds)
+
+		// The list types must be distinct too: list operation IDs are derived the same way.
+		require.NotEqual(t, goReflectPath(ticketList), goReflectPath(commentList))
+	})
+
+	t.Run("Copy preserves the per-kind type", func(t *testing.T) {
+		// SimpleSchema.ZeroValue goes through Copy(); if Copy returned the embedded type the
+		// scheme would register the shared type again and the fix would silently regress.
+		obj, list := newManifestKindTypes(3)
+		require.Equal(t, goReflectPath(obj), goReflectPath(obj.Copy()))
+		require.Equal(t, goReflectPath(list), goReflectPath(list.Copy()))
+	})
+
+	t.Run("every slot in the pool is a distinct type", func(t *testing.T) {
+		seen := make(map[string]struct{}, manifestKindTypeCount)
+		for i := range manifestKindTypeCount {
+			obj, list := newManifestKindTypes(i)
+			for _, path := range []string{goReflectPath(obj), goReflectPath(list)} {
+				_, dup := seen[path]
+				require.False(t, dup, "duplicate type %s at slot %d", path, i)
+				seen[path] = struct{}{}
+			}
+		}
+	})
+}

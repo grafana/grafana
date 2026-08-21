@@ -250,6 +250,14 @@ func (i *pluginManifestInstaller) GetOpenAPIDefinitions(ref common.ReferenceCall
 	objectGVKs, listGVKs := i.servedGroupVersionKinds()
 	defs[goReflectPath(&manifestObject{})] = genericObjectDefinition(objectGVKs)
 	defs[goReflectPath(&manifestList{})] = genericObjectDefinition(listGVKs)
+	// Each kind is backed by its own type (see kindtypes.go), so the builder looks each one
+	// up by its own reflect path. Definitions are tagged with only that kind's GVK, which is
+	// what makes the operation IDs distinct.
+	for slot, gvk := range objectGVKs {
+		obj, list := newManifestKindTypes(slot)
+		defs[goReflectPath(obj)] = genericObjectDefinition([]map[string]interface{}{gvk})
+		defs[goReflectPath(list)] = genericObjectDefinition([]map[string]interface{}{listGVKs[slot]})
+	}
 	// When a kind declares custom routes the SDK references EmptyObject via its
 	// OpenAPIModelName(), but registers the definition under a different (mismatched)
 	// key, so the OpenAPI builder fails to resolve it. Register the definition under
@@ -270,6 +278,11 @@ func (i *pluginManifestInstaller) GetOpenAPIDefinitions(ref common.ReferenceCall
 
 // servedGroupVersionKinds returns the GVKs the installer serves, split into object kinds
 // and their corresponding list kinds (<Kind>List), read from the manifest data.
+//
+// The slice index is the kind's type slot: this walks versions and kinds in the same
+// manifest order as newManifestGoTypeResolver, so index N here is the kind that was given
+// the types from newManifestKindTypes(N). GetOpenAPIDefinitions relies on that to pair each
+// kind's GVK with the right Go type.
 func (i *pluginManifestInstaller) servedGroupVersionKinds() (objectGVKs, listGVKs []map[string]interface{}) {
 	md := i.ManifestData()
 	if md == nil {
@@ -338,16 +351,22 @@ func newManifestGoTypeResolver(manifest app.Manifest) *manifestGoTypeResolver {
 		return &manifestGoTypeResolver{kinds: kinds}
 	}
 	md := *manifest.ManifestData
+	// Each (kind, version) gets its own Go type: the REST installer maps a storage object
+	// back to a GVK by its type, so sharing one type across kinds makes that lookup
+	// ambiguous and the API server fails to start on duplicate operation IDs.
+	slot := 0
 	for _, v := range md.Versions {
 		for _, mk := range v.Kinds {
 			scope := resource.NamespacedScope
 			if mk.Scope == "Cluster" {
 				scope = resource.ClusterScope
 			}
+			obj, list := newManifestKindTypes(slot)
+			slot++
 			kinds[mk.Kind+"/"+v.Name] = resource.Kind{
 				Schema: resource.NewSimpleSchema(
 					md.Group, v.Name,
-					&manifestObject{}, &manifestList{},
+					obj, list,
 					resource.WithKind(mk.Kind),
 					resource.WithPlural(mk.Plural),
 					resource.WithScope(scope),
