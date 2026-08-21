@@ -81,10 +81,13 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         )}
       </Card.Description>
 
-      <Card.Actions className={styles.actions}>
-        {ctaLoading ? (
+      {ctaLoading && (
+        <Card.Actions className={styles.actions}>
           <Skeleton width={120} height={24} />
-        ) : cta ? (
+        </Card.Actions>
+      )}
+      {!ctaLoading && cta && (
+        <Card.Actions className={styles.actions}>
           <LinkButton
             href={cta.href}
             fill="text"
@@ -103,8 +106,8 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           >
             <Text truncate>{cta.label}</Text>
           </LinkButton>
-        ) : null}
-      </Card.Actions>
+        </Card.Actions>
+      )}
       {solution.id === 'kubernetes' && datasource && (
         <Card.SecondaryActions>
           <KubernetesFilterActions datasource={datasource} attention={isAttentionCta} />
