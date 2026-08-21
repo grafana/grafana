@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -295,8 +296,8 @@ func TestExportSpecificResources_FolderKindIsExported(t *testing.T) {
 	}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 		require.Equal(t, "feature/branch", opts.Ref)
 		require.Empty(t, opts.Path)
-		require.NoError(t, opts.OnFolder(resources.Folder{ID: "parent", Path: "parent"}, true, nil))
-		require.NoError(t, opts.OnFolder(resources.Folder{ID: "child", Path: "parent/child"}, true, nil))
+		require.NoError(t, opts.OnFolder(resources.Folder{ID: "parent", Path: "parent"}, true, time.Time{}, nil))
+		require.NoError(t, opts.OnFolder(resources.Folder{ID: "child", Path: "parent/child"}, true, time.Time{}, nil))
 		return true
 	})).Return(nil)
 
@@ -347,8 +348,8 @@ func TestExportSpecificResources_GeneratesFolderForDashboard(t *testing.T) {
 	}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 		require.Equal(t, "feature/branch", opts.Ref)
 		require.Empty(t, opts.Path)
-		require.NoError(t, opts.OnFolder(resources.Folder{ID: "parent", Path: "parent"}, true, nil))
-		require.NoError(t, opts.OnFolder(resources.Folder{ID: "child", Path: "parent/child"}, true, nil))
+		require.NoError(t, opts.OnFolder(resources.Folder{ID: "parent", Path: "parent"}, true, time.Time{}, nil))
+		require.NoError(t, opts.OnFolder(resources.Folder{ID: "child", Path: "parent/child"}, true, time.Time{}, nil))
 		return true
 	})).Return(nil)
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
