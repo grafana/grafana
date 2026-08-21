@@ -13,12 +13,14 @@ import {
 import React, { cloneElement, createContext, useContext, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Portal, useStyles2 } from '@grafana/ui';
+import { Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
 type EditActionsPopoverProps = {
   content: React.ReactNode;
   children: React.JSX.Element;
   placement?: Placement;
+  portalRoot?: HTMLElement;
+  zIndex?: number;
 };
 
 export function EditActionsPopover({ isEditable, ...props }: EditActionsPopoverProps & { isEditable: boolean }) {
@@ -37,7 +39,14 @@ const EditActionsPopoverContext = createContext<{ closePopover: () => void }>({ 
  */
 export const useEditActionsPopover = () => useContext(EditActionsPopoverContext);
 
-export function HoverPopover({ content, children, placement = 'top-start' }: EditActionsPopoverProps) {
+export function HoverPopover({
+  content,
+  children,
+  placement = 'top-start',
+  portalRoot,
+  zIndex,
+}: EditActionsPopoverProps) {
+  const theme = useTheme2();
   const styles = useStyles2(getPopoverStyles);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -70,8 +79,14 @@ export function HoverPopover({ content, children, placement = 'top-start' }: Edi
     <>
       {cloneElement(children, getReferenceProps({ ref: mergedRef }))}
       {isOpen && content && (
-        <Portal>
-          <div ref={refs.setFloating} style={floatingStyles} className={styles.popover} {...getFloatingProps()}>
+        <Portal root={portalRoot} zIndex={zIndex ?? theme.zIndex.portal}>
+          <div
+            ref={refs.setFloating}
+            style={floatingStyles}
+            className={styles.popover}
+            {...getFloatingProps()}
+            data-xxx
+          >
             <EditActionsPopoverContext.Provider value={popoverContextValue}>
               {/* Stops pointerdown from all actions reaching ancestors, e.g. element selection.
               It cannot live on the icon buttons because their wrapping Tooltip overrides their pointerdown handlers */}
@@ -88,7 +103,6 @@ export function HoverPopover({ content, children, placement = 'top-start' }: Edi
 
 const getPopoverStyles = (theme: GrafanaTheme2) => ({
   popover: css({
-    zIndex: theme.zIndex.portal,
     [theme.transitions.handleMotion('no-preference')]: {
       animationName: keyframes({
         from: { opacity: 0 },

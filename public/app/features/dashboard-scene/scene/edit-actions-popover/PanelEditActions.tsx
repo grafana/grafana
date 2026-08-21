@@ -4,7 +4,7 @@ import { useCallback, useContext, useMemo, type JSX } from 'react';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
-import { Button, ElementSelectionContext, useStyles2 } from '@grafana/ui';
+import { Button, ElementSelectionContext, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
@@ -80,6 +80,8 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
 }
 
 function PanelEditActionsPopover({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
+  const theme = useTheme2();
+
   const onClickEdit = useCallback(() => {
     const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
     selectionContext.onSelect({ id: panel.state.key! }, { force: true });
@@ -123,8 +125,10 @@ function PanelEditActionsPopover({ panel, children }: { panel: VizPanel; childre
     [onClickEdit, onClickEditVisualization, onClickCopy, onClickDuplicate, onClickDelete, panel]
   );
 
+  const portalRoot = useMemo(() => document.getElementById('dashboard-scene-canvas') ?? undefined, []);
+
   return (
-    <HoverPopover content={editActions} placement="top-end">
+    <HoverPopover content={editActions} placement="top-end" portalRoot={portalRoot} zIndex={theme.zIndex.dropdown}>
       {children}
     </HoverPopover>
   );
