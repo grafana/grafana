@@ -115,6 +115,10 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	if blob != nil {
 		rsp, err := s.Blob.GetResourceBlob(ctx, key, blob, true)
 		if err != nil {
+			resErr := resource.ErrorResultFromGRPCDetails(err)
+			if resErr != nil {
+				return nil, fmt.Errorf("error reading blob: %+v", resErr)
+			}
 			return nil, err
 		}
 		if rsp.Error != nil {
