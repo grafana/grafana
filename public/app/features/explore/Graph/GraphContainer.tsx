@@ -29,6 +29,10 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   width: number;
   height: number;
   data: DataFrame[];
+  // All series from the query response, unfiltered by visualisation type, so
+  // stats from query types not rendered by the graph (e.g. instant, exemplar)
+  // are still available to GraphMetaInfo.
+  allSeries: DataFrame[];
   annotations?: DataFrame[];
   eventBus: EventBus;
   timeRange: TimeRange;
@@ -43,6 +47,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
 
 export const GraphContainer = ({
   data,
+  allSeries,
   eventBus,
   height,
   width,
@@ -100,7 +105,7 @@ export const GraphContainer = ({
       {(innerWidth, innerHeight) => (
         <>
           <div ref={metaInfoRef}>
-            <GraphMetaInfo data={data} />
+            <GraphMetaInfo data={allSeries} />
           </div>
           <ExploreGraph
             graphStyle={graphStyle}
