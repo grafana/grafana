@@ -22,7 +22,7 @@ describe('selectRecommendations', () => {
   it.each<[SolutionState, RecommendedCardId[], BaseRow]>([
     [state(off, off, off, off), ['connect-metrics', 'enable-logs', 'hosted-traces'], 'empty'],
     [state(off, off, on, off), ['connect-metrics'], 'partial_telemetry'],
-    [state(off, on, off, off), ['connect-metrics'], 'logs_only'],
+    [state(off, on, off, off), ['connect-metrics', 'hosted-traces'], 'logs_only'],
     [state(off, on, on, off), ['connect-metrics'], 'partial_telemetry'],
     [state(on, off, off, off), ['enable-logs', 'synthetic-monitoring'], 'metrics_only'],
     [state(on, off, on, off), ['enable-logs', 'synthetic-monitoring'], 'metrics_only'],

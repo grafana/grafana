@@ -122,10 +122,10 @@ export function selectRecommendations(state: SolutionState): RecommendationSelec
     if (logs === 'inactive' && traces === 'inactive') {
       return { cards: ['connect-metrics', 'enable-logs', 'hosted-traces'], baseRow: 'empty' };
     }
-    // Metrics is the foundation gate: the "Logs-only" row recommends Metrics, and partial
-    // telemetry without metrics funnels there too before anything else.
+    // Matrix "Logs-only" row: Metrics PRIMARY, Traces SECONDARY; partial telemetry without
+    // metrics funnels to Metrics alone before anything else.
     if (logs === 'active' && traces === 'inactive') {
-      return { cards: ['connect-metrics'], baseRow: 'logs_only' };
+      return { cards: ['connect-metrics', 'hosted-traces'], baseRow: 'logs_only' };
     }
     return { cards: ['connect-metrics'], baseRow: 'partial_telemetry' };
   }
