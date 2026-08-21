@@ -135,16 +135,7 @@ export function DataSourceModal({
         onChange={onChangeDataSource}
         current={current}
         filter={filter}
-        variables={variables}
-        tracing={tracing}
-        metrics={metrics}
-        type={type}
-        annotations={annotations}
-        alerting={alerting}
-        pluginId={pluginId}
-        logs={logs}
-        dashboard={dashboard}
-        mixed={mixed}
+        dataSources={dataSources}
       />
     );
   };
