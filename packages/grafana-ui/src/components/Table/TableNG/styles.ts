@@ -92,7 +92,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
           borderInlineEnd: 'none',
         },
 
-        '&[aria-selected="true"][role="columnheader"]': {
+        [`${ACTIVE_CELL_SELECTORS.selected.normal}[role="columnheader"]`]: {
           outline: 'none',
         },
       },
@@ -102,14 +102,14 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
         [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
         // selected cells should appear below hovered cells.
         ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 7 } }),
-        '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 6 },
+        [ACTIVE_CELL_SELECTORS.selected.normal]: { zIndex: theme.zIndex.tooltip - 6 },
       },
 
       '.rdg-cell.rdg-cell-frozen': {
         backgroundColor: 'var(--rdg-row-background-color)',
         zIndex: theme.zIndex.tooltip - 4,
         ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
-        '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
+        [ACTIVE_CELL_SELECTORS.selected.normal]: { zIndex: theme.zIndex.tooltip - 3 },
       },
 
       // have to override styles for row selection to workaround safari styles workaround
@@ -163,7 +163,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       },
     }),
     cellNested: css({
-      '&[aria-selected=true]': { outline: 'none' },
+      [ACTIVE_CELL_SELECTORS.selected.normal]: { outline: 'none' },
       '&:hover': { backgroundColor: 'transparent' },
     }),
     noDataNested: css({
