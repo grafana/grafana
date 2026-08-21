@@ -103,12 +103,12 @@ func TestBuild_SearchFieldsEnrolAKind(t *testing.T) {
 	}
 
 	t.Run("no fields, not enrolled", func(t *testing.T) {
-		assert.Empty(t, paths(build(playlists(nil), true, true, nil, fakeClient{}, builders, nil)))
+		assert.Empty(t, paths(BuildFromManifests(playlists(nil), true, true, nil, fakeClient{}, builders, nil)))
 	})
 
 	t.Run("one field, gets both endpoints", func(t *testing.T) {
 		fields := []app.ManifestVersionKindSearchField{{Name: "interval", Path: "spec.interval", Type: "string"}}
-		got := paths(build(playlists(fields), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(playlists(fields), true, true, nil, fakeClient{}, builders, nil))
 		assert.ElementsMatch(t, []string{"playlists/search", "playlists/trash"}, got[gv.String()])
 	})
 }
@@ -291,25 +291,25 @@ func TestBuild_ManifestOptOutIsHonoured(t *testing.T) {
 	optOut := func(v bool) *bool { return &v }
 
 	t.Run("says nothing, so gets both", func(t *testing.T) {
-		got := paths(build(dashboards(nil), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(dashboards(nil), true, true, nil, fakeClient{}, builders, nil))
 		assert.ElementsMatch(t, []string{"dashboards/search", "dashboards/trash"}, got[gv.String()])
 	})
 
 	t.Run("declines search, keeps trash", func(t *testing.T) {
 		search := &app.ManifestVersionKindSearch{Endpoint: optOut(false)}
-		got := paths(build(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
 		assert.Equal(t, []string{"dashboards/trash"}, got[gv.String()])
 	})
 
 	t.Run("declines trash, keeps search", func(t *testing.T) {
 		search := &app.ManifestVersionKindSearch{Trash: optOut(false)}
-		got := paths(build(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
+		got := paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil))
 		assert.Equal(t, []string{"dashboards/search"}, got[gv.String()])
 	})
 
 	t.Run("declines both", func(t *testing.T) {
 		search := &app.ManifestVersionKindSearch{Endpoint: optOut(false), Trash: optOut(false)}
-		assert.Empty(t, paths(build(dashboards(search), true, true, nil, fakeClient{}, builders, nil)))
+		assert.Empty(t, paths(BuildFromManifests(dashboards(search), true, true, nil, fakeClient{}, builders, nil)))
 	})
 }
 
@@ -320,4 +320,61 @@ func TestServedGroupVersions_CoversBothRegistrationPaths(t *testing.T) {
 	served := servedGroupVersions([]builder.APIGroupBuilder{b}, nil)
 	assert.True(t, served[fromBuilder])
 	assert.False(t, served[schema.GroupVersion{Group: "other.grafana.app", Version: "v1"}])
+}
+
+// todoManifest is an ext app group, which no builder or installer knows about.
+func todoManifest(gv schema.GroupVersion, fieldType, capability string) []app.Manifest {
+	return []app.Manifest{{ManifestData: &app.ManifestData{
+		Group: gv.Group,
+		Versions: []app.ManifestVersion{{
+			Name:   gv.Version,
+			Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind:   "Todo",
+				Plural: "todos",
+				Scope:  "Namespaced",
+				SearchFields: []app.ManifestVersionKindSearchField{
+					{Name: "title", Path: "spec.title", Type: fieldType, Capabilities: []string{capability}},
+				},
+			}},
+		}},
+	}}}
+}
+
+func TestBuildForServedGroupVersions_MountsWithoutBuildersOrInstallers(t *testing.T) {
+	gv := schema.GroupVersion{Group: "exampletodoapp.ext.grafana.app", Version: "v1alpha1"}
+	manifests := todoManifest(gv, "string", "filter")
+
+	t.Run("mounted when the caller serves the group version", func(t *testing.T) {
+		served := map[schema.GroupVersion]bool{gv: true}
+
+		routes, err := BuildForServedGroupVersions(manifests, served, true, true, nil, fakeClient{})
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"todos/search", "todos/trash"}, paths(routes)[gv.String()])
+	})
+
+	t.Run("nothing mounted for a group version the caller does not serve", func(t *testing.T) {
+		routes, err := BuildForServedGroupVersions(manifests, nil, true, true, nil, fakeClient{})
+		require.NoError(t, err)
+		assert.Empty(t, paths(routes))
+	})
+
+	t.Run("nothing mounted when both endpoints are off", func(t *testing.T) {
+		served := map[schema.GroupVersion]bool{gv: true}
+
+		routes, err := BuildForServedGroupVersions(manifests, served, false, false, nil, fakeClient{})
+		require.NoError(t, err)
+		assert.Nil(t, routes)
+	})
+}
+
+// Runtime declarations are refused rather than fatal.
+func TestBuildForServedGroupVersions_RejectsAMalformedDeclaration(t *testing.T) {
+	gv := schema.GroupVersion{Group: "exampletodoapp.ext.grafana.app", Version: "v1alpha1"}
+	served := map[schema.GroupVersion]bool{gv: true}
+
+	// Full-text search over a number is not something the index can serve.
+	routes, err := BuildForServedGroupVersions(todoManifest(gv, "int64", "text"), served, true, true, nil, fakeClient{})
+	require.Error(t, err)
+	assert.Nil(t, routes)
 }

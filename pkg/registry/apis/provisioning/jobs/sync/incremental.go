@@ -203,19 +203,22 @@ func applyIncrementalChanges(
 			}
 
 			if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
-				folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment, change.Ref)
+				// Build the result before the operation so its recorded duration
+				// reflects the folder write rather than just the record call.
+				folderResultBuilder := jobs.NewFolderResult(change.Path)
+				_, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment, change.Ref)
 				if err != nil {
 					ensureFolderSpan.RecordError(err)
 					ensureFolderSpan.End()
 
-					progress.Record(ensureFolderCtx, jobs.NewFolderResult(change.Path).
+					progress.Record(ensureFolderCtx, folderResultBuilder.
 						WithError(err).
 						WithAction(repository.FileActionIgnored).
 						Build())
 					continue
 				}
 
-				progress.Record(ensureFolderCtx, jobs.NewFolderResult(folder).
+				progress.Record(ensureFolderCtx, folderResultBuilder.
 					WithPath(safeSegment).
 					WithAction(repository.FileActionCreated).
 					Build())
@@ -269,24 +272,24 @@ func applyIncrementalChanges(
 		switch change.Action {
 		case repository.FileActionCreated:
 			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
-			name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
+			name, gvk, size, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
 				writeSpan.RecordError(err)
 				resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 			}
-			resultBuilder.WithName(name).WithGVK(gvk)
+			resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 			writeSpan.End()
 		case repository.FileActionUpdated:
 			if change.PreviousRef != "" {
 				// ReplaceResourceFromFileByRef reads both old and new files internally
 				// and automatically skips strict validation when their hashes match.
 				writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.replace_resource_from_file")
-				name, gvk, err := repositoryResources.ReplaceResourceFromFileByRef(writeCtx, change.Path, change.Ref, change.PreviousRef)
+				name, gvk, size, err := repositoryResources.ReplaceResourceFromFileByRef(writeCtx, change.Path, change.Ref, change.PreviousRef)
 				if err != nil {
 					writeSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("replacing resource from file %s: %w", change.Path, err))
 				}
-				resultBuilder.WithName(name).WithGVK(gvk)
+				resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 				writeSpan.End()
 			} else {
 				// Synthetic updates emitted for re-parenting (no PreviousRef).
@@ -297,24 +300,24 @@ func applyIncrementalChanges(
 				if h, ok := existingHashes[change.Path]; ok {
 					writeOpts = append(writeOpts, resources.WithExistingHash(h))
 				}
-				name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref, writeOpts...)
+				name, gvk, size, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref, writeOpts...)
 				if err != nil {
 					writeSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 				}
-				resultBuilder.WithName(name).WithGVK(gvk)
+				resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 				writeSpan.End()
 			}
 		case repository.FileActionDeleted:
 			removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
-			name, folderName, gvk, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
+			name, folderName, gvk, size, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
 			if err != nil {
 				removeSpan.RecordError(err)
 				resultBuilder.WithError(fmt.Errorf("removing resource from file %s: %w", change.Path, err))
 			} else {
 				quotaTracker.Release()
 			}
-			resultBuilder.WithName(name).WithGVK(gvk)
+			resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 
 			if folderName != "" {
 				affectedFolders[safepath.Dir(change.Path)] = folderName
@@ -348,12 +351,12 @@ func applyIncrementalChanges(
 						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(uids...))
 					}
 				}
-				name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)
+				name, oldFolderName, gvk, size, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)
 				if err != nil {
 					renameSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
 				}
-				resultBuilder.WithName(name).WithGVK(gvk)
+				resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 
 				if oldFolderName != "" {
 					affectedFolders[safepath.Dir(change.PreviousPath)] = oldFolderName

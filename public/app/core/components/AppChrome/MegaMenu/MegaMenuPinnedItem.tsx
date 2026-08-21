@@ -98,7 +98,10 @@ export function MegaMenuPinnedItem({
                 onClick={onUnpin}
                 aria-pressed
                 disabled={disabled}
-                tooltip={t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', { itemName: label })}
+                tooltip={t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', {
+                  itemName: label,
+                  interpolation: { escapeValue: false },
+                })}
               />
             </span>
             <span className={styles.trailingSpacer} />

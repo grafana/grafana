@@ -31,7 +31,7 @@ func (e *extra) Build(_ context.Context, r *provisioning.Repository) (repository
 	return NewRepository(r, e.resolver), nil
 }
 
-func (e *extra) Mutate(_ context.Context, _ runtime.Object) error {
+func (e *extra) Mutate(_ context.Context, _ runtime.Object, _ runtime.Object) error {
 	return nil
 }
 
