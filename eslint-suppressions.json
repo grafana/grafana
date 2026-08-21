@@ -1073,11 +1073,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/AlertRuleNameInput.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 3
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/CloudEvaluationBehavior.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
