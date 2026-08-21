@@ -583,6 +583,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 		return nil, fmt.Errorf("get decrypt service: %w", err)
 	}
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registry()))
+	operationMetrics := repository.RegisterOperationMetrics(c.Registry())
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
 	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
@@ -599,7 +600,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	for _, t := range repoTypes {
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure))
+			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
@@ -613,7 +614,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 					),
 				)
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
@@ -623,7 +624,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			if len(permittedPrefixes) == 0 {
 				return nil, fmt.Errorf("local_permitted_prefixes is required in [operator] section for local repository type")
 			}
-			extras = append(extras, local.Extra(homePath, permittedPrefixes))
+			extras = append(extras, local.Extra(homePath, permittedPrefixes, operationMetrics))
 		default:
 			return nil, fmt.Errorf("unsupported repository type: %s", t)
 		}
