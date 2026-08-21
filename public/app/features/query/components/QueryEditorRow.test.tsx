@@ -50,8 +50,8 @@ jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: jest.fn(),
 }));
 
-const mockGet = jest.fn(() => Promise.resolve(mockDS));
-const mockGetInstanceSettings = jest.fn(() => mockDS);
+const mockGet = jest.fn((..._args: unknown[]) => Promise.resolve(mockDS));
+const mockGetInstanceSettings = jest.fn((..._args: unknown[]) => mockDS);
 const mockReportInteraction = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
