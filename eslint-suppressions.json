@@ -1546,39 +1546,14 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/AnnotationsEditView.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/AutoRefreshIntervals.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/ProvisionedControlsSection.tsx": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
   "public/app/features/dashboard-scene/settings/TimePickerSettings.tsx": {
     "@grafana/require-no-margin": {
       "count": 5
-    }
-  },
-  "public/app/features/dashboard-scene/settings/annotations/AnnotationQueryOptions.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/annotations/AnnotationSettingsEdit.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/annotations/AnnotationSettingsList.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
     }
   },
   "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
