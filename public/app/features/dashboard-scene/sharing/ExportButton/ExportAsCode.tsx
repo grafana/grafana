@@ -75,6 +75,7 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
                   value={stringifiedDashboard}
                   language={isViewingYAML ? 'yaml' : 'json'}
                   height={`${height}px`}
+                  aria-label={t('export.json.dashboard-definition', 'Dashboard definition')}
                   onChange={() => {}}
                   readOnly
                 />

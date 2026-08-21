@@ -42,7 +42,7 @@ test.describe(
       const codeEditor = dashboardPage.getByGrafanaSelector(
         selectors.pages.ExportDashboardDrawer.ExportAsJson.codeEditor
       );
-      await expect(codeEditor.locator('.cm-editor')).toBeVisible();
+      await expect(codeEditor.getByRole('textbox', { name: 'Dashboard definition' })).toBeVisible();
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ExportDashboardDrawer.ExportAsJson.saveToFileButton)
