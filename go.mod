@@ -145,7 +145,7 @@ require (
 	github.com/mocktools/go-smtp-mock/v2 v2.5.4 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
-	github.com/nats-io/nats-server/v2 v2.14.3 // @grafana/grafana-search-and-storage
+	github.com/nats-io/nats-server/v2 v2.14.4 // @grafana/grafana-search-and-storage
 	github.com/nats-io/nats.go v1.52.0 // @grafana/grafana-search-and-storage
 	github.com/oklog/ulid/v2 v2.1.2 // @grafana/grafana-search-and-storage
 	github.com/olekukonko/tablewriter v1.1.4 // @grafana/grafana-backend-group
@@ -347,7 +347,7 @@ require (
 	github.com/Yiling-J/theine-go v0.6.2 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
-	github.com/antithesishq/antithesis-sdk-go v0.7.0-default-no-op // indirect
+	github.com/antithesishq/antithesis-sdk-go v0.7.2-default-no-op // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apache/thrift v0.24.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
