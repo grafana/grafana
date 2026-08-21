@@ -1,12 +1,34 @@
 import { useEffect } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { Stepper } from './Stepper';
 import { StepperStateProvider, useStepperState } from './StepperState';
-import { StepKey } from './types';
+import { StepKey, type WizardFormValues } from './types';
 
-const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey) => {
-  return render(<StepperStateProvider initialStep={initialStep}>{ui}</StepperStateProvider>);
+function FormWrapper({
+  children,
+  autoSyncNotificationsEnabled = false,
+  notificationsSource = 'yaml',
+}: {
+  children: React.ReactNode;
+  autoSyncNotificationsEnabled?: boolean;
+  notificationsSource?: 'yaml' | 'datasource';
+}) {
+  const formAPI = useForm<WizardFormValues>({ defaultValues: { autoSyncNotificationsEnabled, notificationsSource } });
+  return <FormProvider {...formAPI}>{children}</FormProvider>;
+}
+
+const renderWithProvider = (
+  ui: React.ReactElement,
+  initialStep?: StepKey,
+  formValues?: { autoSyncNotificationsEnabled?: boolean; notificationsSource?: 'yaml' | 'datasource' }
+) => {
+  return render(
+    <FormWrapper {...formValues}>
+      <StepperStateProvider initialStep={initialStep}>{ui}</StepperStateProvider>
+    </FormWrapper>
+  );
 };
 
 describe('Stepper', () => {
@@ -208,5 +230,58 @@ describe('Stepper', () => {
     const svg = indicator?.querySelector('svg');
     expect(svg).toBeInTheDocument();
     expect(indicator).not.toHaveTextContent('1');
+  });
+
+  describe('Rules force-skipped by Auto-sync', () => {
+    it('renders Rules with strikethrough and disabled when Auto-sync is checked for the datasource source', () => {
+      renderWithProvider(<Stepper />, StepKey.Notifications, {
+        autoSyncNotificationsEnabled: true,
+        notificationsSource: 'datasource',
+      });
+
+      const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+      expect(rulesButton).toBeDisabled();
+      expect(rulesButton).toHaveStyle('text-decoration: line-through');
+    });
+
+    it('does not force-skip Rules when Auto-sync is checked but the source is YAML', () => {
+      const TestComponent = () => {
+        const { setStepCompleted, setVisitedStep } = useStepperState();
+        useEffect(() => {
+          setVisitedStep(StepKey.Notifications);
+          setStepCompleted(StepKey.Notifications, true);
+        }, [setStepCompleted, setVisitedStep]);
+        return <Stepper />;
+      };
+
+      renderWithProvider(<TestComponent />, StepKey.Notifications, {
+        autoSyncNotificationsEnabled: true,
+        notificationsSource: 'yaml',
+      });
+
+      const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+      expect(rulesButton).toBeEnabled();
+      expect(rulesButton).not.toHaveStyle('text-decoration: line-through');
+    });
+
+    it('restores Rules to normal once Auto-sync is unchecked', () => {
+      const TestComponent = () => {
+        const { setStepCompleted, setVisitedStep } = useStepperState();
+        useEffect(() => {
+          setVisitedStep(StepKey.Notifications);
+          setStepCompleted(StepKey.Notifications, true);
+        }, [setStepCompleted, setVisitedStep]);
+        return <Stepper />;
+      };
+
+      renderWithProvider(<TestComponent />, StepKey.Notifications, {
+        autoSyncNotificationsEnabled: false,
+        notificationsSource: 'datasource',
+      });
+
+      const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+      expect(rulesButton).toBeEnabled();
+      expect(rulesButton).not.toHaveStyle('text-decoration: line-through');
+    });
   });
 });

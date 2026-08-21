@@ -113,7 +113,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     background: theme.components.panel.background,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     zIndex: 1000,
     opacity: 1,
     minWidth: '400px',

@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
+	teamlbacapi "github.com/grafana/grafana/pkg/registry/apis/iam/teamlbac"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -218,7 +219,7 @@ func NewAPIService(
 	roleAuthorizer := roleApiInstaller.GetAuthorizer()
 	roleBindingsAuthorizer := roleBindingsApiInstaller.GetAuthorizer()
 	serviceAccountAuthorizer := newServiceAccountAuthorizer(accessClient)
-	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
+	teamLBACAuthorizer := newTeamLBACRuleAuthorizer(teamLBACApiInstaller.GetAuthorizer())
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	userAuthorizer := newUserAuthorizer(accessClient)
 
@@ -228,11 +229,13 @@ func NewAPIService(
 	)
 
 	return &IdentityAccessManagementAPIBuilder{
-		ofClient:               openfeature.NewDefaultClient(),
-		store:                  store,
-		userLegacyStore:        user.NewLegacyStore(store, accessClient, tracingService),
-		saLegacyStore:          serviceaccount.NewLegacyStore(store, accessClient, tracingService),
-		teamBindingLegacyStore: teambinding.NewLegacyBindingStore(store, tracingService),
+		ofClient:                openfeature.NewDefaultClient(),
+		store:                   store,
+		userLegacyStore:         user.NewLegacyStore(store, accessClient, tracingService),
+		saLegacyStore:           serviceaccount.NewLegacyStore(store, accessClient, tracingService),
+		legacyTeamStore:         team.NewLegacyStore(store, accessClient, tracingService, nil),
+		externalGroupReconciler: legacy.NoopExternalGroupReconciler{},
+		teamBindingLegacyStore:  teambinding.NewLegacyBindingStore(store, tracingService),
 		display: display.NewDisplayHandler(
 			display.NewLegacyDisplayProvider(store),
 			// TODO: include the search client here
@@ -490,8 +493,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableTeamLBACRuleApi {
-		// TeamLBACRule registration is delegated to the TeamLBACApiInstaller
-		if err := b.teamLBACApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
+		if err := b.UpdateTeamLBACRulesAPIGroup(apiGroupInfo, opts, storage); err != nil {
 			return err
 		}
 	}
@@ -522,6 +524,53 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
+	apiGroupInfo *genericapiserver.APIGroupInfo,
+	opts builder.APIGroupOptions,
+	storage map[string]rest.Storage,
+) error {
+	// TeamLBACRule registration is delegated to the TeamLBACApiInstaller.
+	if err := b.teamLBACApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
+		return err
+	}
+
+	teamLBACRuleGetter, ok := storage[iamv0.TeamLBACRuleInfo.StoragePath()].(rest.Getter)
+	if !ok {
+		return fmt.Errorf("TeamLBACRule storage does not implement rest.Getter")
+	}
+
+	// TeamLBAC can be enabled in ST without serving the Team Kubernetes API.
+	// Prefer the registered Team storage when present because it already
+	// reflects the configured dual-write mode; otherwise evaluate membership
+	// through the internal legacy Team store.
+	teamStorage := storage[iamv0.TeamResourceInfo.StoragePath()]
+	if teamStorage == nil && b.legacyTeamStore != nil {
+		teamStorage = b.legacyTeamStore
+	}
+	teamGetter, ok := teamStorage.(rest.Getter)
+	if !ok {
+		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team getter storage")
+	}
+	teamLister, ok := teamStorage.(rest.Lister)
+	if !ok {
+		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
+	}
+	// Kubernetes requires a separate storage-map entry for each named
+	// subresource. Its value is a Connect handler, not another persistence
+	// store: the handler delegates rule reads to teamLBACRuleGetter, the
+	// mode-aware CRUD storage already registered at "teamlbacrules" above.
+	// Team's addmember/removemember subresources use the same pattern. This
+	// entry therefore adds only GET
+	// /teamlbacrules/{name}/for-subject/{type}/{uid}.
+	storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")] = teamlbacapi.NewRulesForSubjectREST(
+		teamLBACRuleGetter,
+		teamGetter,
+		teamLister,
+		b.tracing,
+	)
 	return nil
 }
 
@@ -732,7 +781,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts 
 	}
 
 	if enableServiceAccountTokensApi {
-		storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.store, b.tracing)
+		storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(
+			saStore,
+			b.store,
+			b.tracing,
+			b.cfgProvider,
+			b.settingService,
+		)
 	}
 
 	return nil

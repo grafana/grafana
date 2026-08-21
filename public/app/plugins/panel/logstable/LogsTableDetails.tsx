@@ -239,7 +239,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     backgroundColor: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     // position is required for zIndex to take effect and establish a stacking
     // context, otherwise the tabs render behind elements in the table below.
     position: 'relative',

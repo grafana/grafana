@@ -1,6 +1,6 @@
 import { createMemoryHistory } from 'history';
 import { BehaviorSubject } from 'rxjs';
-import { act, render } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { CoreApp, type Scope } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -151,6 +151,85 @@ describe('NotebookScene', () => {
 
       expect(scene.state.isEditing).toBe(false);
       expect(scene.state.body.state.isEditing).toBe(false);
+    });
+
+    it('commits an active content edit before leaving edit mode', () => {
+      const scene = buildScene(false);
+      const cell = scene.state.body.state.cells[0];
+      scene.onEnterEditMode();
+      scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } });
+
+      scene.onExitEditMode();
+      scene.editHistory.undo();
+
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
+
+    it('clears history when the notebook body is replaced', () => {
+      const scene = buildScene(false);
+      activate(scene);
+      scene.state.body.addCell('code', 1);
+      const replacement = new NotebookLayoutManager({ cells: [] });
+
+      scene.setState({ body: replacement });
+
+      expect(scene.editHistory.state.canUndo).toBe(false);
+      replacement.addCell('code', 0);
+      expect(scene.editHistory.state.canUndo).toBe(true);
+    });
+
+    it('offers the history controls only in edit mode', () => {
+      const scene = buildScene(false);
+      activate(scene);
+      render(<scene.Component model={scene} />);
+
+      expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
+
+      act(() => scene.onEnterEditMode());
+
+      expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
+    });
+
+    // The assistant writes without entering edit mode, so gating the status on `isEditing` would hide a
+    // failed save from the only person who could retry it.
+    it('reports a save outside edit mode, where the assistant writes', () => {
+      const scene = buildScene(false);
+      activate(scene);
+      render(<scene.Component model={scene} />);
+
+      expect(screen.queryByText('Save failed')).not.toBeInTheDocument();
+
+      act(() =>
+        scene.autosave.setState({ status: 'error', errorMessage: 'The notebook was changed by someone else.' })
+      );
+
+      expect(scene.state.isEditing).toBeUndefined();
+      expect(screen.getByText('Save failed')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    });
+
+    it('records history for a body replaced before activation', () => {
+      const scene = buildScene(false);
+      const replacement = new NotebookLayoutManager({ cells: [] });
+      scene.setState({ body: replacement });
+
+      activate(scene);
+      replacement.addCell('code', 0);
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+    });
+
+    it('keeps history across a deactivation and activation', () => {
+      const scene = buildScene(false);
+      const deactivate = scene.activate();
+      scene.state.body.addCell('code', 1);
+
+      deactivate();
+      activate(scene);
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      scene.editHistory.undo();
+      expect(scene.state.body.state.cells).toHaveLength(1);
     });
   });
 
