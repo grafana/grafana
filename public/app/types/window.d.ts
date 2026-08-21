@@ -3,7 +3,16 @@ export declare global {
   interface Window {
     __grafanaSceneContext: SceneObject;
     __grafana_app_bundle_loaded: boolean;
+    /** Path to the public folder, without the build directory. */
     __grafana_public_path__: string;
+
+    /**
+     * URL prefix the active bundler compiled its asset references against, including the
+     * build directory: 'public/build/' under webpack, 'public/build/rspack/' under rspack,
+     * prefixed with the CDN origin when one is configured. Use it for assets the bundler
+     * emits or copies into that directory (icons, maps, gazetteers).
+     */
+    __grafana_build_path__: string;
     __grafana_load_failed: (err: unknown) => void;
     grafanaBootData: BootData;
     __grafanaPublicDashboardAccessToken?: string;
