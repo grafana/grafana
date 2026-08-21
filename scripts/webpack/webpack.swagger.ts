@@ -57,7 +57,8 @@ export default (env: Env = {}): Configuration => {
       chunkIds: env.develop ? 'named' : 'deterministic',
     },
     output: {
-      clean: true,
+      // rspack writes into a subdirectory of this one; without keep, cleaning deletes it.
+      clean: { keep: 'rspack' },
       path: path.resolve(import.meta.dirname, '../../public/build-swagger'),
       publicPath: 'public/build-swagger/',
       crossOriginLoading: 'anonymous',
