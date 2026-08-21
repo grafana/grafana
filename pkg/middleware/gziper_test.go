@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -15,38 +16,47 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// Larger than pgzip's block size, so that the compressor writes to the response
-// while the handler is still running.
-var gzipTestBody = []byte(strings.Repeat("grafana dashboard payload ", 20000))
+// pgzip hands its input to its writer goroutine one block at a time and
+// defaults to blocks of gzipBlockSize, so a body of several blocks is being
+// compressed and written out while the handler is still writing.
+const gzipBlockSize = 1 << 20
 
-func gzipTestHandler(t *testing.T) http.Handler {
-	t.Helper()
+var gzipTestBody = []byte(strings.Repeat("grafana dashboard payload ", 3*gzipBlockSize/26))
 
+func gzipTestHandler(writeErr *error) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Content-Type", "application/json")
 		rw.Header().Set("Content-Length", "1234")
 		_, err := rw.Write(gzipTestBody)
-		require.NoError(t, err)
+		if writeErr != nil {
+			*writeErr = err
+		}
 	})
 }
 
 // serveGzipped runs a request through the gzip middleware the way the HTTP
-// server does, with a web.ResponseWriter underneath it.
-func serveGzipped(t *testing.T, method, url string, rw http.ResponseWriter) {
+// server does, with a web.ResponseWriter underneath it, and returns the error
+// the handler's write reported. That error is not always nil: the middleware
+// hands a failed response write back to the handler, and whether it has been
+// recorded by the time the handler returns depends on how far the compressor's
+// goroutine has got.
+func serveGzipped(t *testing.T, method, url string, rw http.ResponseWriter) error {
 	t.Helper()
 
 	req, err := http.NewRequest(method, url, nil)
 	require.NoError(t, err)
 	req.Header.Set("Accept-Encoding", "gzip")
 
-	Gziper()(gzipTestHandler(t)).ServeHTTP(web.NewResponseWriter(method, rw), req)
+	var writeErr error
+	Gziper()(gzipTestHandler(&writeErr)).ServeHTTP(web.NewResponseWriter(method, rw), req)
+	return writeErr
 }
 
 func TestGziper(t *testing.T) {
 	t.Run("compresses a GET response", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 
-		serveGzipped(t, http.MethodGet, "/d/abc/dash", rec)
+		require.NoError(t, serveGzipped(t, http.MethodGet, "/d/abc/dash", rec))
 
 		require.Equal(t, "gzip", rec.Header().Get("Content-Encoding"))
 		require.Equal(t, "Accept-Encoding", rec.Header().Get("Vary"))
@@ -63,7 +73,7 @@ func TestGziper(t *testing.T) {
 	t.Run("does not compress a HEAD response, but keeps the headers a GET would return", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 
-		serveGzipped(t, http.MethodHead, "/d/abc/dash", rec)
+		require.NoError(t, serveGzipped(t, http.MethodHead, "/d/abc/dash", rec))
 
 		require.Equal(t, "gzip", rec.Header().Get("Content-Encoding"))
 		require.Equal(t, "Accept-Encoding", rec.Header().Get("Vary"))
@@ -76,8 +86,10 @@ func TestGziper(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/d/abc/dash", nil)
 		require.NoError(t, err)
 
-		Gziper()(gzipTestHandler(t)).ServeHTTP(web.NewResponseWriter(http.MethodGet, rec), req)
+		var writeErr error
+		Gziper()(gzipTestHandler(&writeErr)).ServeHTTP(web.NewResponseWriter(http.MethodGet, rec), req)
 
+		require.NoError(t, writeErr)
 		require.Empty(t, rec.Header().Get("Content-Encoding"))
 		require.Equal(t, gzipTestBody, rec.Body.Bytes())
 	})
@@ -85,7 +97,7 @@ func TestGziper(t *testing.T) {
 	t.Run("does not compress ignored paths", func(t *testing.T) {
 		rec := httptest.NewRecorder()
 
-		serveGzipped(t, http.MethodGet, "/metrics", rec)
+		require.NoError(t, serveGzipped(t, http.MethodGet, "/metrics", rec))
 
 		require.Empty(t, rec.Header().Get("Content-Encoding"))
 		require.Equal(t, gzipTestBody, rec.Body.Bytes())
@@ -102,7 +114,7 @@ func TestGziperDoesNotLeakGoroutines(t *testing.T) {
 		defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
 
 		for range requests {
-			serveGzipped(t, http.MethodHead, "/d/abc/dash", httptest.NewRecorder())
+			require.NoError(t, serveGzipped(t, http.MethodHead, "/d/abc/dash", httptest.NewRecorder()))
 		}
 	})
 
@@ -110,7 +122,31 @@ func TestGziperDoesNotLeakGoroutines(t *testing.T) {
 		defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
 
 		for range requests {
-			serveGzipped(t, http.MethodGet, "/d/abc/dash", &brokenResponseWriter{failAfter: 1})
+			// The write may or may not have failed by the time the handler
+			// returns; either way the compressor has to be released.
+			_ = serveGzipped(t, http.MethodGet, "/d/abc/dash", &brokenResponseWriter{failAfter: 1})
+		}
+	})
+
+	t.Run("handlers that panic", func(t *testing.T) {
+		defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
+
+		req, err := http.NewRequest(http.MethodGet, "/d/abc/dash", nil)
+		require.NoError(t, err)
+		req.Header.Set("Accept-Encoding", "gzip")
+
+		handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			_, _ = rw.Write(gzipTestBody)
+			panic("the handler blew up")
+		})
+
+		for range requests {
+			func() {
+				defer func() { require.NotNil(t, recover()) }()
+
+				rw := web.NewResponseWriter(http.MethodGet, httptest.NewRecorder())
+				Gziper()(handler).ServeHTTP(rw, req)
+			}()
 		}
 	})
 
@@ -118,9 +154,38 @@ func TestGziperDoesNotLeakGoroutines(t *testing.T) {
 		defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
 
 		for range requests {
-			serveGzipped(t, http.MethodGet, "/d/abc/dash", &brokenResponseWriter{failAfter: 1, short: true})
+			_ = serveGzipped(t, http.MethodGet, "/d/abc/dash", &brokenResponseWriter{failAfter: 1, short: true})
 		}
 	})
+}
+
+// The sink hides write failures from pgzip, so the middleware has to report
+// them itself - a handler streaming a response has no other way to learn that
+// the client it is writing to is gone.
+func TestGziperReportsAFailedResponseToTheHandler(t *testing.T) {
+	// pgzip accepts a bounded number of outstanding blocks before Write blocks
+	// on its writer goroutine, so a handler that keeps writing past that bound
+	// is guaranteed to be told about a response that cannot be written.
+	blocks := runtime.GOMAXPROCS(0) + 4
+
+	var writeErr error
+	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		block := make([]byte, gzipBlockSize)
+		for range blocks {
+			if _, writeErr = rw.Write(block); writeErr != nil {
+				return
+			}
+		}
+	})
+
+	req, err := http.NewRequest(http.MethodGet, "/d/abc/dash", nil)
+	require.NoError(t, err)
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	rw := web.NewResponseWriter(http.MethodGet, &brokenResponseWriter{failAfter: 1})
+	Gziper()(handler).ServeHTTP(rw, req)
+
+	require.ErrorIs(t, writeErr, errClientGone)
 }
 
 func TestGzipSink(t *testing.T) {

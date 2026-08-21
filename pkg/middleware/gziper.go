@@ -184,24 +184,28 @@ func Gziper() func(http.Handler) http.Handler {
 			grw.Header().Set("Content-Encoding", "gzip")
 			grw.Header().Set("Vary", "Accept-Encoding")
 
-			next.ServeHTTP(grw, req)
-
-			// A failed response write cannot be reported to the caller at this
-			// point, and this is the only signal it produces, so log it rather than
-			// discard it.
-			err := grw.w.Close()
-			if err == nil {
-				err = sink.err()
-			}
-			if err != nil {
-				logger := gzipLogger.FromContext(req.Context())
-				if req.Context().Err() != nil {
-					// The client hung up. Expected traffic, not a server problem.
-					logger.Debug("Failed to write gzipped response", "path", req.URL.Path, "error", err)
-				} else {
-					logger.Warn("Failed to write gzipped response", "path", req.URL.Path, "error", err)
+			// Closing releases the goroutine the compressor writes from, so it has
+			// to happen even if serving the request does not return normally.
+			defer func() {
+				// A failed response write cannot be reported to the caller at this
+				// point, and this is the only signal it produces, so log it rather
+				// than discard it.
+				err := grw.w.Close()
+				if err == nil {
+					err = sink.err()
 				}
-			}
+				if err != nil {
+					logger := gzipLogger.FromContext(req.Context())
+					if req.Context().Err() != nil {
+						// The client hung up. Expected traffic, not a server problem.
+						logger.Debug("Failed to write gzipped response", "path", req.URL.Path, "error", err)
+					} else {
+						logger.Warn("Failed to write gzipped response", "path", req.URL.Path, "error", err)
+					}
+				}
+			}()
+
+			next.ServeHTTP(grw, req)
 		})
 	}
 }
