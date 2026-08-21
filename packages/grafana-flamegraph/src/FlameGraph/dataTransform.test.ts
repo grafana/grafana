@@ -144,6 +144,90 @@ describe('FlameGraphDataContainer', () => {
     const collapsedMap = container.getCollapsedMap();
     expect(Array.from(collapsedMap.keys()).length).toEqual(0);
   });
+
+  it('returns the call path of an item', () => {
+    const container = textToDataContainer(`
+      [0//////]
+      [1//][4/]
+      [2/]
+    `)!;
+
+    const levels = container.getLevels();
+    expect(container.getItemPath(levels[0][0])).toEqual(['0']);
+    expect(container.getItemPath(levels[2][0])).toEqual(['0', '1', '2']);
+  });
+
+  it('finds an item by its call path', () => {
+    const container = textToDataContainer(`
+      [0//////]
+      [1//][4/]
+      [2/]
+    `)!;
+
+    const levels = container.getLevels();
+    expect(container.getItemByPath(['0', '1', '2'])).toBe(levels[2][0]);
+    expect(container.getItemByPath(['0', '4'])).toBe(levels[1][1]);
+    expect(container.getItemByPath(['0'])).toBe(levels[0][0]);
+  });
+
+  it('distinguishes between items with the same label at different call sites', () => {
+    const container = textToDataContainer(`
+      [0//////]
+      [1//][4/]
+      [2/] [2]
+    `)!;
+
+    const levels = container.getLevels();
+    const underOne = levels[2][0];
+    const underFour = levels[2][1];
+
+    expect(container.getNodesWithLabel('2')).toEqual([underOne, underFour]);
+    expect(container.getItemByPath(['0', '1', '2'])).toBe(underOne);
+    expect(container.getItemByPath(['0', '4', '2'])).toBe(underFour);
+  });
+
+  it('finds an item by its data frame indexes', () => {
+    const container = textToDataContainer(`
+      [0//////]
+      [1//][4/]
+      [2/]
+    `)!;
+
+    const levels = container.getLevels();
+    expect(container.getItemByIndexes(levels[2][0].itemIndexes)).toBe(levels[2][0]);
+    expect(container.getItemByIndexes(levels[1][1].itemIndexes)).toBe(levels[1][1]);
+    expect(container.getItemByIndexes([999])).toBeUndefined();
+  });
+
+  it('re-maps a focused item onto the same call path when the data changes', () => {
+    const before = textToDataContainer(`
+      [0//////]
+      [1//][4/]
+      [2/]
+    `)!;
+    const after = textToDataContainer(`
+      [0///////////]
+      [1///////][4/]
+      [3/][2/]
+    `)!;
+
+    const focused = before.getItemByPath(['0', '1', '2'])!;
+    const remapped = after.getItemByPath(before.getItemPath(focused))!;
+
+    expect(after.getItemPath(remapped)).toEqual(['0', '1', '2']);
+    expect(after.getItemByIndexes(focused.itemIndexes)).not.toBe(remapped);
+  });
+
+  it('returns undefined for a call path that does not exist', () => {
+    const container = textToDataContainer(`
+      [0//////]
+      [1//][4/]
+    `)!;
+
+    expect(container.getItemByPath(['0', '9'])).toBeUndefined();
+    expect(container.getItemByPath(['9'])).toBeUndefined();
+    expect(container.getItemByPath([])).toBeUndefined();
+  });
 });
 
 describe('CollapsedMapContainer', () => {

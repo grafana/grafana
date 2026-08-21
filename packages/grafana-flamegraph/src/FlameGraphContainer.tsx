@@ -155,6 +155,30 @@ const FlameGraphContainer = ({
     return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
   }, [data, theme, disableCollapsing]);
 
+  const previousDataContainerRef = useRef(dataContainer);
+  const focusedItemPathRef = useRef<string[] | undefined>(undefined);
+
+  useEffect(() => {
+    if (!dataContainer) {
+      return;
+    }
+
+    const dataChanged = previousDataContainerRef.current !== dataContainer;
+    previousDataContainerRef.current = dataContainer;
+
+    let item = focusedItemIndexes?.length ? dataContainer.getItemByIndexes(focusedItemIndexes) : undefined;
+
+    if (dataChanged) {
+      item =
+        keepFocusOnDataChange && focusedItemPathRef.current
+          ? dataContainer.getItemByPath(focusedItemPathRef.current)
+          : undefined;
+      setFocusedItemIndexes(item ? item.itemIndexes : undefined);
+    }
+
+    focusedItemPathRef.current = item && dataContainer.getItemPath(item);
+  }, [focusedItemIndexes, dataContainer, keepFocusOnDataChange]);
+
   const styles = getStyles(theme);
   const matchedLabels = useLabelSearch(search, dataContainer);
 
