@@ -7,9 +7,9 @@ keywords:
   - guide
   - forecasts
 products:
-    - cloud
-    - enterprise
-    - oss
+  - cloud
+  - enterprise
+  - oss
 title: Alerting on forecasts
 menuTitle: Alerting on forecasts
 weight: 1050
@@ -19,8 +19,8 @@ weight: 1050
 
 A forecast predicts the future state of a signal, such as expected disk space utilization over the next month. Common forecast use cases include:
 
-* **Capacity planning:** Detect when resources such as disk space, memory, CPU, or database connections are expected to approach their limits.
-* **Demand and business planning:** Analyze expected demand, costs, production, or other business metrics.
+- **Capacity planning:** Detect when resources such as disk space, memory, CPU, or database connections are expected to approach their limits.
+- **Demand and business planning:** Analyze expected demand, costs, production, or other business metrics.
 
 Standard alert rules evaluate the current state of a signal. A forecast-based alert compares a predicted future value with a threshold condition, allowing you to act before this happens.
 
@@ -43,8 +43,8 @@ When a signal follows a relatively steady trend, you can use the PromQL [`predic
 predict_linear(<range-vector>, <seconds>)
 ```
 
-* `<range-vector>` provides the historical data used to calculate the trend.
-* `<seconds>` specifies how far into the future to predict, in seconds.
+- `<range-vector>` provides the historical data used to calculate the trend.
+- `<seconds>` specifies how far into the future to predict, in seconds.
 
 For example:
 
@@ -135,15 +135,13 @@ Each forecast produces these Prometheus metrics:
 Because the forecast is stored in the `grafanacloud-ml-metrics` Prometheus data source, you can use the forecast metrics directly in alert rules to detect:
 
 1. When the forecast is expected to breach a threshold at any point in the future.
-4. When the current signal deviates from the expected forecast range.
-
+2. When the current signal deviates from the expected forecast range.
 
 ### Alert on a future prediction
 
 Like the `predict_linear` example, a forecast alert can detect whether a signal is expected to exceed a threshold within a future time window.
 
 In this example, the alert query uses the upper forecast bound (`yhat_upper`) rather than the central prediction. This accounts for prediction uncertainty and provides a more conservative capacity-planning signal.
-
 
 ```promql
 <forecast_metric_name>:predicted{ml_forecast="yhat_upper"} over the next 7 days > 80%
@@ -167,7 +165,6 @@ In the previous examples, forecast alerts detect potential future situations: th
 2. The forecast acts as an **adaptive baseline**. While a standard alert rule evaluates the signal against a fixed threshold, a forecast-based alert rule evaluates the signal against the forecast, which can change over time based on seasonal patterns.
 
 {{< figure src="/media/docs/alerting/forecast-deviation-alert.svg" alt="A forecast-based alert rule can evaluate the signal against the forecast." >}}
-
 
 The alert rule can then compare the current signal (`:actual`) with the upper forecast bound (`:predicted{ml_forecast="yhat_upper"}`) to detect unexpectedly high values:
 
