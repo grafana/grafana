@@ -108,11 +108,11 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 
-  addLinkButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addLinkButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_link_button_clicked', properties);
   },
 
-  addFilterButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addFilterButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_filter_button_clicked', properties);
   },
 
@@ -173,7 +173,7 @@ export const DashboardInteractions = {
 
   // dashboards_add_annotation_button_clicked
   // when a user clicks on 'Add annotation'
-  addAnnotationButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addAnnotationButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_annotation_button_clicked', properties);
   },
   // dashboards_annotations_reordered

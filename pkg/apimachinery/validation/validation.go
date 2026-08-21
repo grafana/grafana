@@ -2,6 +2,7 @@ package validation
 
 import (
 	"regexp"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation"
 )
@@ -47,6 +48,14 @@ func IsValidGrafanaName(name string) []string {
 		return []string{"name may not be empty"}
 	case s > maxNameLength:
 		return []string{"name is too long"}
+	}
+
+	// If this list is longer, we should compile regexp
+	if strings.EqualFold(name, "search") ||
+		strings.EqualFold(name, "trash") ||
+		strings.EqualFold(name, "history") ||
+		strings.EqualFold(name, "query") {
+		return []string{"name is reserved"}
 	}
 
 	if !grafanaNameRegexp(name) {
