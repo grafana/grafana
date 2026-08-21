@@ -1,11 +1,9 @@
 import { isString, sortBy } from 'lodash';
 
 import { type Labels, type UrlQueryMap } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { type FetchError, config, isFetchError } from '@grafana/runtime';
+import { type FetchError, isFetchError } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
-import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getRequestConfigFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
@@ -45,6 +43,8 @@ import { getMatcherQueryParams } from './matchers';
 import { rulesNav } from './navigation';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
+
+export { isAdmin, isLocalDevEnv, isOpenSourceEdition } from './environment';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {
   const sourceName = getRulesSourceName(ruleSource);
@@ -270,20 +270,6 @@ export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
   }
 
   return result;
-}
-
-export function isOpenSourceEdition() {
-  const buildInfo = config.buildInfo;
-  return buildInfo.edition === GrafanaEdition.OpenSource;
-}
-
-export function isAdmin() {
-  return contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
-}
-
-export function isLocalDevEnv() {
-  const buildInfo = config.buildInfo;
-  return buildInfo.env === 'development';
 }
 
 export function isErrorLike(error: unknown): error is Error {
