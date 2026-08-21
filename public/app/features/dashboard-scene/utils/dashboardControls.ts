@@ -1,7 +1,7 @@
 import { filter, Observable, scan, share, type Subscriber } from 'rxjs';
 
 import { type DataSourceApi } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -66,7 +66,7 @@ async function loadControlsFromRef(ref: DataSourceRef, subscriber: Subscriber<De
   let ds: DataSourceApi;
 
   try {
-    ds = await getDataSourceSrv().get(ref);
+    ds = await getDataSourceInstance(ref);
   } catch (e) {
     console.warn('Failed to load datasource', ref, e);
     return;

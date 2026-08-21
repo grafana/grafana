@@ -1662,46 +1662,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/utils/dashboardControls.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/dashboardControls.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/drilldownUtils.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/drilldownUtils.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/getVizSuggestionForQuery.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/getVizSuggestionForQuery.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/utils.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/variables.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
     "@grafana/no-config-datasources": {
       "count": 1

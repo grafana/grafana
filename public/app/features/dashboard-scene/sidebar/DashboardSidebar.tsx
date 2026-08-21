@@ -416,8 +416,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.setState({ isNewElement: true });
   }
 
-  public addNewPanel(target: SceneObject | undefined) {
-    const panel = getDefaultVizPanel();
+  public async addNewPanel(target: SceneObject | undefined) {
+    const panel = await getDefaultVizPanel();
     const dashboard = getDashboardSceneFor(this);
 
     if (target) {
