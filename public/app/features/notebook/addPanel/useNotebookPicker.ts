@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { t } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
 
-import { type NotebookPickerRow, useNotebookPickerData } from './useNotebookPickerData';
+import { type NotebookRow, useNotebooksList } from '../list/useNotebooksList';
 
 export type NotebookSort = 'updated' | 'created' | 'alphabetical' | 'reverse-alphabetical';
 
@@ -15,7 +15,8 @@ const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
  * has no table.
  */
 export function useNotebookPicker() {
-  const list = useNotebookPickerData();
+  // Tag facets because the picker offers a tag filter; the list page does not, so it does not ask.
+  const list = useNotebooksList({ enabled: true, tagFacets: true });
   const [sort, setSort] = useState<NotebookSort>('updated');
 
   const rows = useMemo(() => sortNotebooks(list.rows, sort), [list.rows, sort]);
@@ -35,16 +36,18 @@ export function getSortOptions(): Array<ComboboxOption<NotebookSort>> {
   ];
 }
 
-/** Plain comparison: ISO timestamps order correctly as strings, and locale rules would only muddy it. */
-function compareDescending(a: string, b: string): number {
-  if (a === b) {
-    return 0;
-  }
-  return a > b ? -1 : 1;
+/** Unix millis, so newest first is a plain numeric descent. */
+function compareDescending(a: number, b: number): number {
+  return b - a;
 }
 
-function sortNotebooks(rows: NotebookPickerRow[], sort: NotebookSort): NotebookPickerRow[] {
-  // ISO timestamps sort correctly as plain strings, so the date comparisons need no parsing.
+/**
+ * Sorted here rather than by the server: `created` and `updated` are retrieve-only in the search
+ * index and a request that sorts on them is rejected. The rows are the whole result set - the hook
+ * follows the cursor to the end - so ordering them locally is the same answer, which is what the
+ * list page's table does with them too.
+ */
+function sortNotebooks(rows: NotebookRow[], sort: NotebookSort): NotebookRow[] {
   const sorted = [...rows];
 
   switch (sort) {

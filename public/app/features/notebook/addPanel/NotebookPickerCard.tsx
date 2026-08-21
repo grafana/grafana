@@ -4,10 +4,10 @@ import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Card, TagList, useStyles2 } from '@grafana/ui';
 
-import { type NotebookPickerRow } from './useNotebookPickerData';
+import { type NotebookRow } from '../list/useNotebooksList';
 
 interface Props {
-  notebook: NotebookPickerRow;
+  notebook: NotebookRow;
   isSelected: boolean;
   onSelect: (uid: string) => void;
 }
@@ -23,7 +23,6 @@ export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
       <Card.Meta>
         {[
           t('notebooks.add-panel.card-updated', 'Updated {{when}}', { when: dateTimeFormatTimeAgo(notebook.updated) }),
-          blockLabel(notebook.blockCount),
           t('notebooks.add-panel.card-author', 'By {{author}}', { author: notebook.authorName }),
         ]}
       </Card.Meta>
@@ -54,15 +53,3 @@ const getStyles = () => ({
     },
   }),
 });
-
-function blockLabel(count: number): string {
-  if (count === 0) {
-    return t('notebooks.add-panel.card-empty', 'empty');
-  }
-
-  return t('notebooks.add-panel.card-blocks', '', {
-    count,
-    defaultValue_one: '{{count}} block',
-    defaultValue_other: '{{count}} blocks',
-  });
-}

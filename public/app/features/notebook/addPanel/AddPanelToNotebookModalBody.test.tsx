@@ -6,12 +6,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebookConflictError } from '../api/notebookResource';
+import { type NotebookRow } from '../list/useNotebooksList';
 import { defaultPanelKind, type PanelKind } from '../types';
 
 import { AddPanelToNotebookModalBody } from './AddPanelToNotebookModalBody';
 import { addPanelToExistingNotebook, createNotebookWithPanel } from './addPanelToNotebook';
 import { useNotebookPicker } from './useNotebookPicker';
-import { type NotebookPickerRow } from './useNotebookPickerData';
 
 jest.mock('./useNotebookPicker', () => ({
   ...jest.requireActual('./useNotebookPicker'),
@@ -37,16 +37,15 @@ const createWithPanel = jest.mocked(createNotebookWithPanel);
 const mockContextSrv = jest.mocked(contextSrv);
 const mockCreateSuccessNotification = jest.mocked(createSuccessNotification);
 
-function row(uid: string, title: string): NotebookPickerRow {
+function row(uid: string, title: string): NotebookRow {
   return {
     uid,
     title,
     tags: [],
     authorUid: 'user:1',
     authorName: 'Marcus Chen',
-    created: '2026-01-01T00:00:00Z',
-    updated: '2026-01-01T00:00:00Z',
-    blockCount: 1,
+    created: Date.UTC(2026, 0, 1),
+    updated: Date.UTC(2026, 0, 1),
   };
 }
 
@@ -54,16 +53,16 @@ function setPicker(overrides: Partial<ReturnType<typeof useNotebookPicker>> = {}
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the modal reads only these fields
   mockUseNotebookPicker.mockReturnValue({
     rows: [row('nb1', 'Q2 latency regression'), row('nb2', 'Checkout error spike')],
-    totalCount: 2,
+    isFiltered: false,
     isTruncated: false,
     isLoading: false,
     error: undefined,
-    authorOptions: [],
     tagOptions: [],
     searchQuery: '',
     setSearchQuery: jest.fn(),
-    authorFilter: '',
-    setAuthorFilter: jest.fn(),
+    createdByMe: false,
+    setCreatedByMe: jest.fn(),
+    canFilterByMe: true,
     tagFilter: [],
     setTagFilter: jest.fn(),
     sort: 'updated',
@@ -166,13 +165,15 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(screen.getByText(/Only your most recent notebooks are shown/)).toBeInTheDocument();
     });
 
+    // Told apart by whether anything is filtering rather than by a total: the server reports no
+    // total on the LIST fallback path, so a count cannot answer this everywhere.
     it('tells an empty library apart from an empty result', () => {
-      setPicker({ rows: [], totalCount: 0 });
+      setPicker({ rows: [], isFiltered: false });
       const { unmount } = renderModal();
       expect(screen.getByText(/You have no notebooks yet/)).toBeInTheDocument();
       unmount();
 
-      setPicker({ rows: [], totalCount: 4 });
+      setPicker({ rows: [], isFiltered: true });
       renderModal();
       expect(screen.getByText(/No notebooks match these filters/)).toBeInTheDocument();
     });
@@ -262,10 +263,25 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(screen.getByRole('combobox', { name: 'Filter by tag' })).toBeInTheDocument();
     });
 
-    it('gives the author filter one too', () => {
+    // No author dropdown: filtering by an author is supported server-side but listing them is not,
+    // so the modal offers the one author it can name without an enumeration.
+    it('offers a created-by-me toggle in place of an author picker', async () => {
+      const setCreatedByMe = jest.fn();
+      setPicker({ canFilterByMe: true, setCreatedByMe });
+      const { user } = renderModal();
+
+      expect(screen.queryByRole('combobox', { name: 'Filter by author' })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('checkbox', { name: 'Created by me' }));
+
+      expect(setCreatedByMe).toHaveBeenCalledWith(true);
+    });
+
+    // Nothing to mean without an identity, so the control is not offered at all.
+    it('hides the toggle when there is no current user to filter by', () => {
+      setPicker({ canFilterByMe: false });
       renderModal();
 
-      expect(screen.getByRole('combobox', { name: 'Filter by author' })).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: 'Created by me' })).not.toBeInTheDocument();
     });
   });
 

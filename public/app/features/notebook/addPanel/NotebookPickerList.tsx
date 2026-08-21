@@ -1,8 +1,9 @@
 import { t, Trans } from '@grafana/i18n';
 import { Alert, ScrollContainer, Spinner, Stack, Text } from '@grafana/ui';
 
+import { type NotebookRow } from '../list/useNotebooksList';
+
 import { NotebookPickerCard } from './NotebookPickerCard';
-import { type NotebookPickerRow } from './useNotebookPickerData';
 
 /**
  * The list is meant to be the modal's only scroll region — the tabs, filters and footer should stay
@@ -20,9 +21,9 @@ import { type NotebookPickerRow } from './useNotebookPickerData';
 const LIST_MAX_HEIGHT = 'max(200px, calc(80vh - 360px))';
 
 interface Props {
-  notebooks: NotebookPickerRow[];
-  /** Notebooks before filtering, to tell "none exist" apart from "none matched". */
-  totalCount: number;
+  notebooks: NotebookRow[];
+  /** Whether any filter is applied, to tell "none exist" apart from "none matched". */
+  isFiltered: boolean;
   isLoading: boolean;
   error?: unknown;
   /** The server had more than one page, so this list is not the whole library. */
@@ -33,7 +34,7 @@ interface Props {
 
 export function NotebookPickerList({
   notebooks,
-  totalCount,
+  isFiltered,
   isLoading,
   error,
   isTruncated,
@@ -62,7 +63,7 @@ export function NotebookPickerList({
     return (
       <Stack direction="column" alignItems="center" gap={1}>
         <Text color="secondary">
-          {totalCount === 0 ? (
+          {!isFiltered ? (
             <Trans i18nKey="notebooks.add-panel.list-none">You have no notebooks yet. Create one instead.</Trans>
           ) : (
             <Trans i18nKey="notebooks.add-panel.list-no-matches">No notebooks match these filters.</Trans>
@@ -87,7 +88,8 @@ export function NotebookPickerList({
         </Stack>
       </ScrollContainer>
 
-      {/* Filtering is client-side over one page, so a larger library is only partly searchable here. */}
+      {/* The search walks every page up to its accumulation ceiling, so this only appears on a
+          library large enough to hit that - the filters themselves are applied server-side. */}
       {isTruncated && (
         <Text color="secondary" variant="bodySmall">
           <Trans i18nKey="notebooks.add-panel.list-truncated">

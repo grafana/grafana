@@ -1,37 +1,37 @@
 import { act, renderHook } from 'test/test-utils';
 
-import { useNotebookPicker } from './useNotebookPicker';
-import { type NotebookPickerRow, useNotebookPickerData } from './useNotebookPickerData';
+import { type NotebookRow, useNotebooksList } from '../list/useNotebooksList';
 
-jest.mock('./useNotebookPickerData', () => ({
-  useNotebookPickerData: jest.fn(),
+import { useNotebookPicker } from './useNotebookPicker';
+
+jest.mock('../list/useNotebooksList', () => ({
+  useNotebooksList: jest.fn(),
 }));
 
-const mockUseNotebookPickerData = jest.mocked(useNotebookPickerData);
+const mockUseNotebooksList = jest.mocked(useNotebooksList);
 
-function row(overrides: Partial<NotebookPickerRow> & { uid: string }): NotebookPickerRow {
+function row(overrides: Partial<NotebookRow> & { uid: string }): NotebookRow {
   return {
     title: overrides.uid,
     tags: [],
     authorUid: '',
     authorName: 'Anonymous',
-    created: '2026-01-01T00:00:00Z',
-    updated: '2026-01-01T00:00:00Z',
-    blockCount: 0,
+    created: Date.UTC(2026, 0, 1),
+    updated: Date.UTC(2026, 0, 1),
     ...overrides,
   };
 }
 
-function setRows(rows: NotebookPickerRow[]) {
+function setRows(rows: NotebookRow[]) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only `rows` is read by the picker
-  mockUseNotebookPickerData.mockReturnValue({ rows } as ReturnType<typeof useNotebookPickerData>);
+  mockUseNotebooksList.mockReturnValue({ rows } as ReturnType<typeof useNotebooksList>);
 }
 
 describe('useNotebookPicker', () => {
   const rows = [
-    row({ uid: 'a', title: 'Beta', created: '2026-01-03T00:00:00Z', updated: '2026-02-01T00:00:00Z' }),
-    row({ uid: 'b', title: 'alpha', created: '2026-01-01T00:00:00Z', updated: '2026-03-01T00:00:00Z' }),
-    row({ uid: 'c', title: 'Gamma', created: '2026-01-02T00:00:00Z', updated: '2026-01-01T00:00:00Z' }),
+    row({ uid: 'a', title: 'Beta', created: Date.UTC(2026, 0, 3), updated: Date.UTC(2026, 1, 1) }),
+    row({ uid: 'b', title: 'alpha', created: Date.UTC(2026, 0, 1), updated: Date.UTC(2026, 2, 1) }),
+    row({ uid: 'c', title: 'Gamma', created: Date.UTC(2026, 0, 2), updated: Date.UTC(2026, 0, 1) }),
   ];
 
   beforeEach(() => setRows(rows));

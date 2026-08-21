@@ -4,6 +4,7 @@ import { t, Trans } from '@grafana/i18n';
 import {
   Box,
   Button,
+  Checkbox,
   Combobox,
   FilterInput,
   Modal,
@@ -149,8 +150,9 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
 
               <Stack gap={1}>
                 {/* MultiCombobox forwards aria-labelledby but not aria-label, so label it via a hidden
-                    element - the same workaround the provisioning resource tree uses. The single
-                    Combobox below does forward aria-label, hence the two being labelled differently. */}
+                    element - the same workaround the provisioning resource tree uses. The sort
+                    Combobox above is a single Combobox, which does forward aria-label, which is why
+                    the two are labelled differently. */}
                 <span id={tagFilterLabelId} className="sr-only">
                   {t('notebooks.add-panel.tag-label', 'Filter by tag')}
                 </span>
@@ -162,20 +164,21 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
                   width={30}
                   aria-labelledby={tagFilterLabelId}
                 />
-                <Combobox
-                  value={picker.authorFilter}
-                  options={picker.authorOptions}
-                  onChange={(option) => picker.setAuthorFilter(option?.value ?? '')}
-                  placeholder={t('notebooks.add-panel.author-placeholder', 'All authors')}
-                  width={30}
-                  isClearable
-                  aria-label={t('notebooks.add-panel.author-label', 'Filter by author')}
-                />
+                {/* Not a picker of authors: filtering by one is supported server-side, but listing
+                    them is not - createdBy is filterable and not facetable - and enumerating them
+                    from the rows on screen would offer only the authors already visible. */}
+                {picker.canFilterByMe && (
+                  <Checkbox
+                    value={picker.createdByMe}
+                    onChange={(event) => picker.setCreatedByMe(event.currentTarget.checked)}
+                    label={t('notebooks.add-panel.created-by-me', 'Created by me')}
+                  />
+                )}
               </Stack>
 
               <NotebookPickerList
                 notebooks={picker.rows}
-                totalCount={picker.totalCount}
+                isFiltered={picker.isFiltered}
                 isLoading={picker.isLoading}
                 error={picker.error}
                 isTruncated={picker.isTruncated}

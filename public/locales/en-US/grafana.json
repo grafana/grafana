@@ -12903,13 +12903,8 @@
   },
   "notebooks": {
     "add-panel": {
-      "author-label": "Filter by author",
-      "author-placeholder": "All authors",
       "cancel": "Cancel",
       "card-author": "By {{author}}",
-      "card-blocks_one": "{{count}} block",
-      "card-blocks_other": "{{count}} blocks",
-      "card-empty": "empty",
       "card-updated": "Updated {{when}}",
       "create-description": "Description",
       "create-description-help": "Optional context for collaborators",
@@ -12918,6 +12913,7 @@
       "create-name-required": "A notebook name is required",
       "create-tags": "Tags",
       "create-tags-help": "Optional — used for search and filtering",
+      "created-by-me": "Created by me",
       "error-conflict": "This notebook changed while you were adding to it. Try again to add the panel to the latest version.",
       "error-generic": "Failed to add the panel to the notebook",
       "list-error": "Failed to load notebooks",
@@ -12938,8 +12934,7 @@
       "tab-new": "Create new",
       "tag-label": "Filter by tag",
       "tag-placeholder": "Filter by tag",
-      "title": "Add panel to notebook",
-      "unknown-author": "Anonymous"
+      "title": "Add panel to notebook"
     },
     "export": {
       "copied": "Notebook copied as Markdown",
