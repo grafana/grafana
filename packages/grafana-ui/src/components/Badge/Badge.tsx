@@ -82,11 +82,7 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
 
   if (color === 'brand') {
     bgColor = theme.colors.gradients.brandHorizontal;
-    borderColor = theme.flags.visualDesignRefresh
-      ? theme.isDark
-        ? 'palette.orange800'
-        : 'palette.orange200'
-      : 'transparent';
+    borderColor = theme.flags.visualDesignRefresh ? theme.colors.accent.border : 'transparent';
     textColor = theme.colors.primary.contrastText;
   }
 
