@@ -79,6 +79,13 @@ export type Props = {
   keepFocusOnDataChange?: boolean;
 
   /**
+   * Called when the user focuses a node or resets the focus, with the call path of the focused node from the root
+   * (undefined when the focus is reset). Lets a host react to what the user is looking at, for example to load more
+   * detail for that part of the profile.
+   */
+  onFocusChange?: (path: string[] | undefined) => void;
+
+  /**
    * If true, the assistant button will be shown in the header if available.
    * This is needed mainly for Profiles Drilldown where in some cases we need to hide the button to show alternative
    * option to use AI.
@@ -107,6 +114,7 @@ const FlameGraphContainer = ({
   showFlameGraphOnly,
   disableCollapsing,
   keepFocusOnDataChange,
+  onFocusChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
 }: Props) => {
@@ -128,11 +136,13 @@ const FlameGraphContainer = ({
   const onTableSymbolClickRef = useRef(onTableSymbolClick);
   const onTextAlignSelectedRef = useRef(onTextAlignSelected);
   const onTableSortRef = useRef(onTableSort);
+  const onFocusChangeRef = useRef(onFocusChange);
 
   useEffect(() => {
     onTableSymbolClickRef.current = onTableSymbolClick;
     onTextAlignSelectedRef.current = onTextAlignSelected;
     onTableSortRef.current = onTableSort;
+    onFocusChangeRef.current = onFocusChange;
   });
 
   const stableOnTableSymbolClick = useCallback((symbol: string) => {
@@ -176,7 +186,17 @@ const FlameGraphContainer = ({
       setFocusedItemIndexes(item ? item.itemIndexes : undefined);
     }
 
-    focusedItemPathRef.current = item && dataContainer.getItemPath(item);
+    const path = item && dataContainer.getItemPath(item);
+    const previous = focusedItemPathRef.current;
+    const unchanged =
+      path === previous ||
+      (path && previous && path.length === previous.length && path.every((l, i) => l === previous[i]));
+
+    focusedItemPathRef.current = path;
+
+    if (!unchanged) {
+      onFocusChangeRef.current?.(path);
+    }
   }, [focusedItemIndexes, dataContainer, keepFocusOnDataChange]);
 
   const styles = getStyles(theme);
