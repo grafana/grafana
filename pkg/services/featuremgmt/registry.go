@@ -1478,6 +1478,22 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "teamHttpHeadersFromAppPlatformST",
+			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true},
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
+			Name:        "teamHttpHeadersFromAppPlatformMT",
+			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true},
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
 			Name:        "teamLBACApiReadFromAppPlatform",
 			Description: "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
 			Stage:       FeatureStageExperimental,
