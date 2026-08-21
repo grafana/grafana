@@ -1,18 +1,22 @@
-import { useCallback, useMemo } from 'react';
+import { isEqual } from 'lodash';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CoreApp,
   type DataSourceApi,
   type DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
+  LoadingState,
   type PanelData,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, ErrorBoundaryAlert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
+import { QueryCoauthoringHostProvider } from './QueryCoauthoringHostContext';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 
 interface QueryDatasourceData {
@@ -31,6 +35,11 @@ interface QueryEditorPanelProps {
   runQueries: () => void;
 }
 
+interface CoauthoringPreviewTransaction {
+  baseline: DataQuery;
+  queryKey: string;
+}
+
 export function QueryEditorPanel({
   query,
   queryDsData,
@@ -41,6 +50,17 @@ export function QueryEditorPanel({
   addQuery,
   runQueries,
 }: QueryEditorPanelProps) {
+  const coauthoringEnabled = useFlagQueryeditorCoauthoringUi();
+  const coauthoringIdentity = `${queryDsData?.dsSettings?.uid ?? ''}:${query?.refId ?? ''}`;
+  const coauthoringDatasourceType = queryDsData?.dsSettings?.type ?? '';
+  const queryRef = useRef(query);
+  queryRef.current = query;
+  const coauthoringBaselineRef = useRef<DataQuery | undefined>(undefined);
+  const coauthoringPreviewTransactionRef = useRef<CoauthoringPreviewTransaction | undefined>(undefined);
+  const [coauthoringBaseline, setCoauthoringBaseline] = useState<DataQuery>();
+  const [coauthoringPreviewPhase, setCoauthoringPreviewPhase] = useState<'idle' | 'pending' | 'running' | 'complete'>(
+    'idle'
+  );
   const error = data?.errors?.find((e) => e.refId === query?.refId);
   const queryRefId = query?.refId;
   // Filter panel data to only include data for this specific query
@@ -48,12 +68,123 @@ export function QueryEditorPanel({
     return queryRefId && data ? filterPanelDataToQuery(data, queryRefId) : undefined;
   }, [data, queryRefId]);
 
+  useEffect(() => {
+    if (!coauthoringBaseline) {
+      setCoauthoringPreviewPhase('idle');
+    } else if (data?.state === LoadingState.Loading) {
+      setCoauthoringPreviewPhase('running');
+    } else {
+      setCoauthoringPreviewPhase((phase) => (phase === 'running' ? 'complete' : phase));
+    }
+  }, [coauthoringBaseline, data?.state]);
+
   // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
   const handleChange = useCallback(
     (updatedQuery: DataQuery) => {
+      const coauthoringBaseline = coauthoringBaselineRef.current;
+      if (coauthoringBaseline?.refId === updatedQuery.refId) {
+        if (isEqual(coauthoringBaseline, updatedQuery)) {
+          return;
+        }
+        coauthoringBaselineRef.current = updatedQuery;
+        coauthoringPreviewTransactionRef.current = undefined;
+        setCoauthoringBaseline(updatedQuery);
+        return;
+      }
       updateQuery(updatedQuery, updatedQuery.refId);
     },
     [updateQuery]
+  );
+
+  const previewCoauthoredQuery = useCallback(
+    (proposedQuery: DataQuery): boolean => {
+      const currentQuery = queryRef.current;
+      if (!currentQuery) {
+        return false;
+      }
+
+      const transaction = coauthoringPreviewTransactionRef.current;
+      if (transaction && transaction.queryKey !== coauthoringIdentity) {
+        return false;
+      }
+
+      const baseline = transaction?.baseline ?? currentQuery;
+      coauthoringPreviewTransactionRef.current = transaction ?? {
+        baseline,
+        queryKey: coauthoringIdentity,
+      };
+      coauthoringBaselineRef.current = baseline;
+      setCoauthoringBaseline(baseline);
+      setCoauthoringPreviewPhase(data?.state === LoadingState.Loading ? 'running' : 'pending');
+      updateQuery(proposedQuery, baseline.refId);
+      runQueries();
+      return true;
+    },
+    [coauthoringIdentity, data?.state, runQueries, updateQuery]
+  );
+
+  const revertCoauthoredQueryPreview = useCallback(() => {
+    const baseline = coauthoringBaselineRef.current;
+    if (!baseline) {
+      return;
+    }
+
+    coauthoringBaselineRef.current = undefined;
+    coauthoringPreviewTransactionRef.current = undefined;
+    setCoauthoringBaseline(undefined);
+    setCoauthoringPreviewPhase('idle');
+    updateQuery(baseline, baseline.refId);
+    runQueries();
+  }, [runQueries, updateQuery]);
+
+  const runQueryWithCoauthoringSafety = useCallback(() => {
+    const baseline = coauthoringBaselineRef.current;
+    if (baseline) {
+      coauthoringBaselineRef.current = undefined;
+      coauthoringPreviewTransactionRef.current = undefined;
+      setCoauthoringBaseline(undefined);
+      setCoauthoringPreviewPhase('idle');
+      updateQuery(baseline, baseline.refId);
+    }
+    runQueries();
+  }, [runQueries, updateQuery]);
+
+  const acceptCoauthoredQuery = useCallback(
+    (acceptedQuery: DataQuery): boolean => {
+      const transaction = coauthoringPreviewTransactionRef.current;
+      if (!transaction || transaction.queryKey !== coauthoringIdentity) {
+        return false;
+      }
+
+      coauthoringPreviewTransactionRef.current = undefined;
+      coauthoringBaselineRef.current = undefined;
+      setCoauthoringBaseline(undefined);
+      setCoauthoringPreviewPhase('idle');
+      updateQuery(acceptedQuery, acceptedQuery.refId);
+      return true;
+    },
+    [coauthoringIdentity, updateQuery]
+  );
+
+  const coauthoringHost = useMemo(
+    () => ({
+      datasourceType: coauthoringDatasourceType,
+      previewPhase: coauthoringPreviewPhase,
+      timeRange: filteredData?.timeRange
+        ? { from: filteredData.timeRange.from.valueOf(), to: filteredData.timeRange.to.valueOf() }
+        : undefined,
+      preview: previewCoauthoredQuery,
+      accept: acceptCoauthoredQuery,
+      revert: revertCoauthoredQueryPreview,
+    }),
+    [
+      acceptCoauthoredQuery,
+      coauthoringDatasourceType,
+      coauthoringPreviewPhase,
+      filteredData?.timeRange,
+      previewCoauthoredQuery,
+      revertCoauthoredQueryPreview,
+    ]
   );
 
   if (!query) {
@@ -97,25 +228,32 @@ export function QueryEditorPanel({
   }
 
   const { datasource, dsSettings } = queryDsData;
+  const editorQuery = coauthoringBaseline?.refId === query.refId ? coauthoringBaseline : query;
+  const editorQueries = coauthoringBaseline
+    ? queries.map((candidate) => (candidate.refId === coauthoringBaseline.refId ? coauthoringBaseline : candidate))
+    : queries;
 
   return (
     <>
-      <DataSourcePluginContextProvider instanceSettings={dsSettings}>
-        <ErrorBoundaryAlert boundaryName="query-editor-renderer">
-          <QueryEditorComponent
-            key={query.refId}
-            app={CoreApp.PanelEditor}
-            data={filteredData}
-            datasource={datasource}
-            onAddQuery={addQuery}
-            onChange={handleChange}
-            onRunQuery={runQueries}
-            queries={queries}
-            query={query}
-            range={filteredData?.timeRange}
-          />
-        </ErrorBoundaryAlert>
-      </DataSourcePluginContextProvider>
+      <QueryCoauthoringHostProvider value={coauthoringHost}>
+        <DataSourcePluginContextProvider instanceSettings={dsSettings}>
+          <ErrorBoundaryAlert boundaryName="query-editor-renderer">
+            <QueryEditorComponent
+              key={coauthoringIdentity}
+              app={CoreApp.PanelEditor}
+              data={filteredData}
+              datasource={datasource}
+              onAddQuery={addQuery}
+              onChange={handleChange}
+              onRunQuery={runQueryWithCoauthoringSafety}
+              queries={editorQueries}
+              query={editorQuery}
+              range={filteredData?.timeRange}
+              queryEditorCoauthoringEnabled={coauthoringEnabled}
+            />
+          </ErrorBoundaryAlert>
+        </DataSourcePluginContextProvider>
+      </QueryCoauthoringHostProvider>
       {error && <QueryErrorAlert error={error} />}
     </>
   );

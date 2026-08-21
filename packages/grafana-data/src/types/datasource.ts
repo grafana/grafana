@@ -526,6 +526,86 @@ export interface LegacyMetricFindQueryOptions {
   variable?: { name: string };
 }
 
+/** @alpha */
+export const QUERY_EDITOR_COAUTHORING_V1_COMPONENT_ID = 'grafana/query-editor-coauthoring/v1';
+
+/** @alpha */
+export interface QueryEditorCoauthoringRangeV1 {
+  from: number;
+  to: number;
+}
+
+/** @alpha */
+export interface QueryEditorCoauthoringMetadataV1 {
+  kind: string;
+  name: string;
+  attributes?: Record<string, string | string[]>;
+}
+
+/** @alpha */
+export interface QueryEditorCoauthoringLanguageV1 {
+  id: string;
+  displayName: string;
+  /**
+   * Static, datasource-owned guidance for editing this query language.
+   * This must not contain user-authored query text or dynamically loaded metadata.
+   */
+  guidance?: string[];
+}
+
+/** @alpha */
+export interface QueryEditorCoauthoringContextV1 {
+  revision: string;
+  query: string;
+  focusRanges: QueryEditorCoauthoringRangeV1[];
+  language: QueryEditorCoauthoringLanguageV1;
+  metadata: QueryEditorCoauthoringMetadataV1[];
+}
+
+/** @alpha */
+export interface QueryEditorCoauthoringChangeV1 {
+  id: string;
+  original: string;
+  proposed: string;
+  kind?: string;
+  focus?: 'inside' | 'outside' | 'mixed';
+}
+
+/** @alpha */
+export type QueryEditorCoauthoringSnapshotV1 =
+  | { mode: 'hidden' }
+  | { mode: 'selection'; selectedText: string; revision: string }
+  | { mode: 'session'; revision: string };
+
+/** @alpha */
+export type QueryEditorCoauthoringProposalResultV1<TQuery extends DataQuery = DataQuery> =
+  | {
+      status: 'staged';
+      query: TQuery;
+      changes: QueryEditorCoauthoringChangeV1[];
+    }
+  | { status: 'rejected'; reason: 'invalid' | 'unchanged' | 'stale' };
+
+/** @alpha */
+export interface QueryEditorCoauthoringControllerV1<TQuery extends DataQuery = DataQuery> {
+  getSnapshot(): QueryEditorCoauthoringSnapshotV1;
+  subscribe(listener: VoidFunction): VoidFunction;
+  getPortalTarget(): HTMLElement;
+  reportSurfaceSize(size: { height: number; width: number }): void;
+  begin(): Promise<QueryEditorCoauthoringContextV1>;
+  refreshContext(): Promise<QueryEditorCoauthoringContextV1>;
+  getQueryText(): string;
+  stageEditorDiff(source: string): QueryEditorCoauthoringProposalResultV1<TQuery>;
+  clearEditorDiff(): void;
+  focus(): void;
+  dismiss(): void;
+}
+
+/** @alpha */
+export interface QueryEditorCoauthoringV1Props {
+  createController(): QueryEditorCoauthoringControllerV1;
+}
+
 export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
@@ -535,6 +615,8 @@ export interface QueryEditorProps<
   datasource: DSType;
   query: TVQuery;
   onRunQuery: () => void;
+  /** @alpha */
+  queryEditorCoauthoringEnabled?: boolean;
   onChange: (value: TVQuery) => void;
   onBlur?: () => void;
   onAddQuery?: (query: TQuery) => void;
