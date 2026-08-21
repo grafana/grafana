@@ -1,4 +1,3 @@
-import type { Compilation } from '@rspack/core';
 import type { FileDescriptor, ManifestPluginOptions } from 'rspack-manifest-plugin';
 
 export interface ManifestEntrypoints {
@@ -20,15 +19,7 @@ export interface ManifestAssets {
  * Generate an assets manifest in the shape that webassets.go expects.
  * Only contains files for the entrypoints.
  */
-export function generateAssetsManifest(
-  _seed: unknown,
-  files: FileDescriptor[],
-  entries: Record<string, string[]>,
-  { compilation }: { compilation: Compilation }
-) {
-  const rawPublicPath = compilation.outputOptions.publicPath;
-  const publicPath = typeof rawPublicPath === 'string' && rawPublicPath !== 'auto' ? rawPublicPath : '';
-
+export function generateAssetsManifest(publicPath: string, files: FileDescriptor[], entries: Record<string, string[]>) {
   const entrypoints: ManifestEntrypoints = {};
   for (const [name, entryFiles] of Object.entries(entries)) {
     entrypoints[name] = { assets: {} };
@@ -53,7 +44,17 @@ export function generateAssetsManifest(
   };
 }
 
-export const assetsManifestOptions: ManifestPluginOptions = {
-  fileName: 'assets-manifest.json',
-  generate: generateAssetsManifest,
-};
+/**
+ * `publicPath` is a literal prefix rather than output.publicPath, which is 'auto' and carries no
+ * value at build time. The backend renders manifest paths verbatim into <script src> and
+ * <link href>, where a bare filename breaks every non-root route — so it must agree with the
+ * build's output directory: disk layout, URL and CDN path are one string.
+ */
+export function createAssetsManifestOptions(publicPath: string): ManifestPluginOptions {
+  return {
+    fileName: 'assets-manifest.json',
+    // Prefixes the per-file `src` values; the entrypoint lists are prefixed by generate below.
+    publicPath,
+    generate: (_seed, files, entries) => generateAssetsManifest(publicPath, files, entries),
+  };
+}

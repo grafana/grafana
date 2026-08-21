@@ -5,7 +5,7 @@ import { RspackManifestPlugin } from 'rspack-manifest-plugin';
 import { describe, expect, it } from 'vitest';
 
 import FeatureFlaggedSRIPlugin from './FeatureFlaggedSriPlugin.ts';
-import { assetsManifestOptions, type ManifestAssets, type ManifestEntrypoints } from './assetsManifest.ts';
+import { createAssetsManifestOptions, type ManifestAssets, type ManifestEntrypoints } from './assetsManifest.ts';
 import { compile, readAssets } from './testUtils.ts';
 
 const OUTPUT_PATH = '/dist';
@@ -40,7 +40,9 @@ function createConfig(plugins: RspackPluginInstance[]): Configuration {
     },
     output: {
       path: OUTPUT_PATH,
-      publicPath: PUBLIC_PATH,
+      // Mirrors rspack.common.ts: the manifest carries PUBLIC_PATH as a literal because
+      // output.publicPath has no build-time value to read.
+      publicPath: 'auto',
       crossOriginLoading: 'anonymous',
       filename: '[name].[contenthash].js',
       chunkFilename: '[name].[contenthash].js',
@@ -56,7 +58,7 @@ function sriPlugin(): RspackPluginInstance {
 }
 
 function manifestPlugin(): RspackPluginInstance {
-  return new RspackManifestPlugin(assetsManifestOptions);
+  return new RspackManifestPlugin(createAssetsManifestOptions(PUBLIC_PATH));
 }
 
 function expectedIntegrity(content: Buffer | string): string {

@@ -8,7 +8,7 @@ import { TsCheckerRspackPlugin } from 'ts-checker-rspack-plugin';
 import { merge } from 'webpack-merge';
 import WebpackBar from 'webpackbar';
 
-import { assetsManifestOptions } from './plugins/assetsManifest.ts';
+import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
 import common, { type Env } from './rspack.common.ts';
 
 // To speed up rspack and prevent unnecessary rebuilds we ignore decoupled packages
@@ -72,7 +72,7 @@ export default (env: Env = {}) => {
           NODE_ENV: JSON.stringify('development'),
         },
       }),
-      new RspackManifestPlugin(assetsManifestOptions),
+      new RspackManifestPlugin(createAssetsManifestOptions('public/build/rspack/')),
       new WebpackBar({
         color: '#eb7b18',
         name: 'Grafana',
