@@ -300,15 +300,9 @@ func createTestConfig(t *testing.T, grafanaRules, importedRules []v1.InhibitionR
 
 	cfg := &v1.AMConfigV1{
 		InhibitionRules: inhibitionRules,
-		AlertmanagerConfig: v1.PostableApiAlertingConfig{
-			Config: v1.Config{
-				Route: &v1.Route{
-					Receiver: "default",
-				},
-			},
-		},
 		ManagedRoutes: map[string]*v1.Route{
-			"default-route": {Receiver: "default"},
+			models.DefaultRoutingTreeName: {Receiver: "default"},
+			"default-route":               {Receiver: "default"},
 		},
 	}
 
@@ -379,12 +373,9 @@ func buildExpectedImportedRule(t *testing.T) v1.InhibitionRule {
 
 	mimirConfig := buildMimirAMConfigWithInhibitRules(t, []v1.InhibitionRule{testImportedRule})
 	cfg := &v1.AMConfigV1{
-		AlertmanagerConfig: v1.PostableApiAlertingConfig{
-			Config: v1.Config{
-				Route: &v1.Route{Receiver: "default"},
-			},
+		ManagedRoutes: map[string]*v1.Route{
+			models.DefaultRoutingTreeName: {Receiver: "default"},
 		},
-		ManagedRoutes: map[string]*v1.Route{},
 		ExtraConfigs: []v1.ExtraConfiguration{
 			{
 				Identifier:         "test-mimir",
