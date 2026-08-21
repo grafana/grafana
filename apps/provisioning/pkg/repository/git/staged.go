@@ -124,6 +124,9 @@ func (r *stagedGitRepository) handleCommitAndPush(ctx context.Context, message s
 	}
 }
 
+// The write methods below record the staging of a blob, not its arrival on the
+// remote: under StageModeCommitOnlyOnce the commit and push happen once, in
+// Push, which records them as its own operation.
 func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data []byte, message string) (err error) {
 	start := time.Now()
 	defer func() { r.metrics.Write(start, len(data), err) }()
@@ -221,7 +224,20 @@ func (r *stagedGitRepository) Move(ctx context.Context, oldPath, newPath, ref, m
 	return r.handleCommitAndPush(ctx, message)
 }
 
-func (r *stagedGitRepository) Push(ctx context.Context) error {
+func (r *stagedGitRepository) Push(ctx context.Context) (err error) {
+	start := time.Now()
+	// Everything staged since the last push lands here, so this observation is
+	// what tells us whether those writes actually reached the remote and how
+	// long that took. A push with nothing to send is not a failure — callers
+	// treat it as success — so it is not recorded as one.
+	defer func() {
+		if errors.Is(err, repository.ErrNothingToPush) || errors.Is(err, repository.ErrNothingToCommit) {
+			r.metrics.Push(start, nil)
+			return
+		}
+		r.metrics.Push(start, err)
+	}()
+
 	ctx, logger := r.withGitContext(ctx, "")
 	logger.Info("push repository")
 
@@ -242,7 +258,7 @@ func (r *stagedGitRepository) Push(ctx context.Context) error {
 		}
 	}
 
-	err := r.writer.Push(ctx)
+	err = r.writer.Push(ctx)
 	if err != nil {
 		// Convert nanogit-specific errors to repository-level errors to avoid leaky abstraction
 		if errors.Is(err, nanogit.ErrNothingToPush) {

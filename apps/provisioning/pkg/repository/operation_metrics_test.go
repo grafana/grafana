@@ -41,6 +41,7 @@ func TestOperationMetrics_NilSafety(t *testing.T) {
 		recorder.List(time.Now(), nil)
 		recorder.Delete(time.Now(), nil)
 		recorder.Move(time.Now(), errors.New("boom"))
+		recorder.Push(time.Now(), nil)
 	})
 }
 
@@ -97,6 +98,16 @@ func TestOperationRecorder(t *testing.T) {
 		assert.Equal(t, 1.0, operationCount(t, OperationList, "recorder_test", "success"))
 		assert.Equal(t, 1.0, operationCount(t, OperationDelete, "recorder_test", "success"))
 		assert.Equal(t, 1.0, operationCount(t, OperationMove, "recorder_test", "error"))
+	})
+
+	t.Run("push records duration and outcome", func(t *testing.T) {
+		recorder.Push(time.Now(), nil)
+		recorder.Push(time.Now(), errors.New("boom"))
+
+		assert.Equal(t, 1.0, operationCount(t, OperationPush, "recorder_test", "success"))
+		assert.Equal(t, 1.0, operationCount(t, OperationPush, "recorder_test", "error"))
+		assert.Equal(t, uint64(2), durationSamples(t, OperationPush, "recorder_test"))
+		assert.Zero(t, sizeSamples(t, OperationPush, "recorder_test"), "push carries no byte payload")
 	})
 
 	t.Run("recorders label by repository type", func(t *testing.T) {

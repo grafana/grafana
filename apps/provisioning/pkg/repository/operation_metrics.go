@@ -18,6 +18,7 @@ const (
 	OperationList   = "list"
 	OperationDelete = "delete"
 	OperationMove   = "move"
+	OperationPush   = "push"
 )
 
 // OperationMetrics tracks the work repositories do on behalf of their callers:
@@ -26,6 +27,13 @@ const (
 // the Repository interface, so every caller — job execution, the files API, the
 // parser, the authorizer, sync compare/diff, ... — is covered without having to
 // opt in.
+//
+// One caveat when reading the write series: a staged repository only stages
+// blobs locally, so a staged write's duration covers the staging and its
+// outcome reports whether staging succeeded. The commit and the remote round
+// trip happen once, at the end, and are recorded separately as OperationPush —
+// that is where the network cost of a staged batch lives, and where a batch
+// that never reached the remote shows up as a failure.
 type OperationMetrics struct {
 	sizeHist     *prometheus.HistogramVec // operation, repository_type
 	durationHist *prometheus.HistogramVec // operation, repository_type
@@ -126,6 +134,12 @@ func (r *OperationRecorder) Delete(start time.Time, err error) {
 // Move records a move that started at start.
 func (r *OperationRecorder) Move(start time.Time, err error) {
 	r.recordOutcome(OperationMove, start, err)
+}
+
+// Push records a staged batch being committed and pushed to the remote, which
+// is the point at which the writes staged before it actually land.
+func (r *OperationRecorder) Push(start time.Time, err error) {
+	r.recordOutcome(OperationPush, start, err)
 }
 
 func (r *OperationRecorder) recordSize(operation string, start time.Time, sizeBytes int, err error) {

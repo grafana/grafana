@@ -2,6 +2,7 @@ package git
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -172,6 +173,82 @@ func TestStagedGitRepository_OperationMetrics(t *testing.T) {
 	assert.Equal(t, 17.0, after.size(repository.OperationWrite)-before.size(repository.OperationWrite))
 	assert.Equal(t, 1.0, after.count(repository.OperationDelete, "success")-before.count(repository.OperationDelete, "success"))
 	assert.Equal(t, 1.0, after.count(repository.OperationMove, "success")-before.count(repository.OperationMove, "success"))
+	assert.Equal(t, 0.0, after.count(repository.OperationPush, "success")-before.count(repository.OperationPush, "success"),
+		"StageModeCommitOnlyOnce defers the remote round trip to Push")
+}
+
+// A staged write only stages a blob; the writes reach the remote in Push. These
+// pin that Push is where that outcome and latency are observed, so a batch that
+// never landed is visible even though its staged writes succeeded.
+func TestStagedGitRepository_PushMetrics(t *testing.T) {
+	ctx := context.Background()
+
+	newStaged := func(t *testing.T, client *mocks.FakeClient) repository.StagedRepository {
+		t.Helper()
+		repo := newMetricsRepo(t, provisioning.GitRepositoryType, client)
+		staged, err := NewStagedGitRepository(ctx, repo, repository.StageOptions{
+			Ref:  "main",
+			Mode: repository.StageModeCommitOnlyOnce,
+		})
+		require.NoError(t, err)
+		return staged
+	}
+
+	t.Run("a successful push is recorded", func(t *testing.T) {
+		staged := newStaged(t, writableClient())
+
+		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		require.NoError(t, staged.Push(ctx))
+		after := gitSnapshot(t, provisioning.GitRepositoryType)
+
+		assert.Equal(t, 1.0, after.count(repository.OperationPush, "success")-before.count(repository.OperationPush, "success"))
+	})
+
+	t.Run("a failed push is recorded as an error, even though the staged write succeeded", func(t *testing.T) {
+		client := writableClient()
+		writer := &mocks.FakeStagedWriter{}
+		writer.CreateBlobReturns(hash.Hash{}, nil)
+		writer.CommitReturns(&nanogit.Commit{}, nil)
+		writer.PushReturns(errors.New("remote rejected"))
+		client.NewStagedWriterReturns(writer, nil)
+		staged := newStaged(t, client)
+
+		before := gitSnapshot(t, provisioning.GitRepositoryType)
+		require.NoError(t, staged.Create(ctx, "test.yaml", "main", []byte("staged"), "create"))
+		require.Error(t, staged.Push(ctx))
+		after := gitSnapshot(t, provisioning.GitRepositoryType)
+
+		assert.Equal(t, 1.0, after.count(repository.OperationWrite, "success")-before.count(repository.OperationWrite, "success"),
+			"staging the blob did succeed")
+		assert.Equal(t, 1.0, after.count(repository.OperationPush, "error")-before.count(repository.OperationPush, "error"),
+			"the batch not reaching the remote is what shows up as a failure")
+	})
+
+	t.Run("a push with nothing to send is not a failure", func(t *testing.T) {
+		for _, tt := range []struct {
+			name string
+			err  error
+		}{
+			{"nothing to push", nanogit.ErrNothingToPush},
+			{"nothing to commit", nanogit.ErrNothingToCommit},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				client := writableClient()
+				writer := &mocks.FakeStagedWriter{}
+				writer.CommitReturns(&nanogit.Commit{}, nil)
+				writer.PushReturns(tt.err)
+				client.NewStagedWriterReturns(writer, nil)
+				staged := newStaged(t, client)
+
+				before := gitSnapshot(t, provisioning.GitRepositoryType)
+				require.Error(t, staged.Push(ctx))
+				after := gitSnapshot(t, provisioning.GitRepositoryType)
+
+				assert.Equal(t, 1.0, after.count(repository.OperationPush, "success")-before.count(repository.OperationPush, "success"))
+				assert.Equal(t, 0.0, after.count(repository.OperationPush, "error")-before.count(repository.OperationPush, "error"))
+			})
+		}
+	})
 }
 
 // metricSnapshot holds the operation samples for one repository type at a point
