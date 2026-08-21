@@ -7,11 +7,6 @@ import 'vendor/css/font_awesome.css';
 import { initPreferences } from './initPreferences';
 import { patchFetchForLegacyAPIMode } from './legacyAPIHandling';
 
-// Check if we are hosting files on cdn and set webpack public path
-if (window.public_cdn_path) {
-  __webpack_public_path__ = window.public_cdn_path;
-}
-
 // This is a path to the public folder without '/build'
 window.__grafana_public_path__ =
   __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
