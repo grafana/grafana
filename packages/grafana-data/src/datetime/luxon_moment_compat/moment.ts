@@ -322,7 +322,7 @@ function normalizeArrayInput(input: InputArray, options?: MomentOptions): DateTi
   values.forEach((value, i) => {
     const unit = ARRAY_INPUT_UNITS[i];
     // moment array months are zero-based, luxon months are one-based.
-    normalized[unit] = unit === 'month' ? value + 1 : value;
+    normalized[unit] = unit === 'month' ? value + 1 : unit === 'millisecond' ? Math.trunc(value) : value;
   });
 
   return DateTime.fromObject(normalized, options);
@@ -708,6 +708,9 @@ function normalizeInput(input: MomentInput, options?: MomentOptions, parseOption
     if (normalized.month != null) {
       normalized.month += 1;
     }
+    if (normalized.millisecond != null) {
+      normalized.millisecond = Math.trunc(normalized.millisecond);
+    }
     return DateTime.fromObject(normalized, {
       ...options,
       locale,
@@ -758,6 +761,18 @@ function endOfLocaleWeek(dt: DateTime): DateTime {
   return startOfLocaleWeek(dt).plus({ days: 6 }).endOf('day');
 }
 
+function truncateToWholeMilliseconds(dt: DateTime): DateTime {
+  const milliseconds = dt.toMillis();
+  if (!Number.isFinite(milliseconds) || Number.isInteger(milliseconds)) {
+    return dt;
+  }
+
+  return DateTime.fromMillis(Math.trunc(milliseconds), {
+    zone: dt.zone,
+    locale: dt.locale,
+  });
+}
+
 // a class with a shared prototype rather than a per-call object literal: instances are created on
 // every formatted value in hot paths, and the literal version allocated ~60 closures per instance
 // where the class allocates one object holding a single field. Real moment is also prototype-based,
@@ -783,11 +798,11 @@ class MomentCompat implements MomentLike {
   private _dt: DateTime;
 
   constructor(dt: DateTime) {
-    this._dt = dt;
+    this._dt = truncateToWholeMilliseconds(dt);
   }
 
   private _setDt(next: DateTime): MomentLike {
-    this._dt = next;
+    this._dt = truncateToWholeMilliseconds(next);
     return this;
   }
 
@@ -830,7 +845,10 @@ class MomentCompat implements MomentLike {
       return this._setDt(this._dt.set({ day: value }));
     }
 
-    return this._setDt(this._dt.set({ [normalizeUnit(unit)]: value }));
+    const normalizedUnit = normalizeUnit(unit);
+    return this._setDt(
+      this._dt.set({ [normalizedUnit]: normalizedUnit === 'millisecond' ? Math.trunc(value) : value })
+    );
   }
 
   get(unit: UnitGetter): number {
@@ -931,7 +949,7 @@ class MomentCompat implements MomentLike {
   millisecond(): number;
   millisecond(value: number): MomentLike;
   millisecond(value?: number): number | MomentLike {
-    return value == null ? this._dt.millisecond : this._setDt(this._dt.set({ millisecond: value }));
+    return value == null ? this._dt.millisecond : this._setDt(this._dt.set({ millisecond: Math.trunc(value) }));
   }
 
   isValid(): boolean {
