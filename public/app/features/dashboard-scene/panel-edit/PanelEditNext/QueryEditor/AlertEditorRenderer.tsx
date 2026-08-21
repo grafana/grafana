@@ -1,11 +1,16 @@
-import { useMemo } from 'react';
+import { Suspense, lazy, useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { EmptyState } from '@grafana/ui';
-import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
+import { EmptyState, LoadingPlaceholder } from '@grafana/ui';
 
 import { useAlertingContext, useQueryEditorUIContext } from './QueryEditorContext';
 import { EMPTY_ALERT } from './types';
+
+const RulesTable = lazy(() =>
+  import(
+    /* webpackChunkName: "PanelAlertRulesTable" */ 'app/features/alerting/unified/components/rules/RulesTable'
+  ).then((module) => ({ default: module.RulesTable }))
+);
 
 export function AlertEditorRenderer() {
   const { alertRules, isDashboardSaved } = useAlertingContext();
@@ -47,5 +52,9 @@ export function AlertEditorRenderer() {
     );
   }
 
-  return <RulesTable rules={rule} />;
+  return (
+    <Suspense fallback={<LoadingPlaceholder text={t('query-editor-next.alerts.loading-rule', 'Loading alert rule...')} />}>
+      <RulesTable rules={rule} />
+    </Suspense>
+  );
 }

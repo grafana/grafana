@@ -1,13 +1,19 @@
 import { css } from '@emotion/css';
+import { Suspense, lazy } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { ScenesNewRuleFromPanelButton } from '../../../../PanelDataPane/NewAlertRuleButton';
 import { useAlertingContext, usePanelContext } from '../../QueryEditorContext';
 import { type AlertRule } from '../../types';
 
 import { AlertCard } from './AlertCard';
+
+const ScenesNewRuleFromPanelButton = lazy(() =>
+  import(
+    /* webpackChunkName: "PanelNewAlertRuleButton" */ '../../../../PanelDataPane/NewAlertRuleButton'
+  ).then((module) => ({ default: module.ScenesNewRuleFromPanelButton }))
+);
 
 interface AlertsViewProps {
   alertRules: AlertRule[];
@@ -23,7 +29,9 @@ export function AlertsView({ alertRules }: AlertsViewProps) {
     return (
       <div className={styles.container}>
         <div className={styles.buttonWrapper}>
-          <ScenesNewRuleFromPanelButton panel={panel} variant="primary" size="sm" disabled={!isDashboardSaved} />
+          <Suspense fallback={null}>
+            <ScenesNewRuleFromPanelButton panel={panel} variant="primary" size="sm" disabled={!isDashboardSaved} />
+          </Suspense>
         </div>
       </div>
     );
@@ -35,7 +43,9 @@ export function AlertsView({ alertRules }: AlertsViewProps) {
         <AlertCard key={alert.alertId} alert={alert} />
       ))}
       <div className={styles.buttonWrapper}>
-        <ScenesNewRuleFromPanelButton panel={panel} variant="primary" size="sm" />
+        <Suspense fallback={null}>
+          <ScenesNewRuleFromPanelButton panel={panel} variant="primary" size="sm" />
+        </Suspense>
       </div>
     </div>
   );

@@ -4,16 +4,8 @@ import { catchError, map } from 'rxjs/operators';
 import { AlertState, type AlertStateInfo } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
-import { ungroupRulesByFileName } from 'app/features/alerting/unified/api/prometheus';
-import { Annotation } from 'app/features/alerting/unified/utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { prometheusRuleType } from 'app/features/alerting/unified/utils/rules';
 import { promAlertStateToAlertState } from 'app/features/dashboard-scene/scene/AlertStatesDataLayer';
-import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
-import { type RuleNamespace } from 'app/types/unified-alerting';
-import { type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import {
   type DashboardQueryRunnerOptions,
@@ -63,55 +55,39 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
     }
 
     const { dashboard } = options;
-    const fetchData: () => Promise<RuleNamespace[]> = async () => {
-      const promRules = await dispatch(
-        alertRuleApi.endpoints.prometheusRuleNamespaces.initiate(
-          {
-            ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-            dashboardUid: dashboard.uid,
-          },
-          { forceRefetch: true }
-        )
-      );
-      return promRules.data;
-    };
-
-    const res: Observable<PromRuleGroupDTO[]> = from(fetchData()).pipe(
-      map((namespaces: RuleNamespace[]) => ungroupRulesByFileName(namespaces))
+    const candidates = from(
+      import(
+        /* webpackChunkName: "PanelAlertStates" */ 'app/features/dashboard-scene/scene/loadPanelAlertStateCandidates'
+      ).then(({ loadPanelAlertStateCandidates }) => loadPanelAlertStateCandidates(dashboard.uid))
     );
 
-    return res.pipe(
-      map((groups: PromRuleGroupDTO[]) => {
-        this.hasAlertRules[dashboard.uid] = false;
+    return candidates.pipe(
+      map((candidates) => {
+        this.hasAlertRules[dashboard.uid] = candidates.length > 0;
         const panelIdToAlertState: Record<number, AlertStateInfo> = {};
-        groups.forEach((group) =>
-          group.rules.forEach((rule) => {
-            if (prometheusRuleType.alertingRule(rule) && rule.annotations && rule.annotations[Annotation.panelID]) {
-              this.hasAlertRules[dashboard.uid] = true;
-              const panelId = Number(rule.annotations[Annotation.panelID]);
-              const state = promAlertStateToAlertState(rule.state);
 
-              // there can be multiple alerts per panel, so we make sure we get the most severe state:
-              // alerting > pending > ok
-              if (!panelIdToAlertState[panelId]) {
-                panelIdToAlertState[panelId] = {
-                  state,
-                  id: Object.keys(panelIdToAlertState).length,
-                  panelId,
-                  dashboardUID: dashboard.uid,
-                };
-              } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
-                panelIdToAlertState[panelId].state = AlertState.Alerting;
-              } else if (
-                state === AlertState.Pending &&
-                panelIdToAlertState[panelId].state !== AlertState.Alerting &&
-                panelIdToAlertState[panelId].state !== AlertState.Pending
-              ) {
-                panelIdToAlertState[panelId].state = AlertState.Pending;
-              }
-            }
-          })
-        );
+        candidates.forEach(({ panelId, state: promState }) => {
+          const state = promAlertStateToAlertState(promState);
+
+          // There can be multiple alerts per panel, so retain the most severe state.
+          if (!panelIdToAlertState[panelId]) {
+            panelIdToAlertState[panelId] = {
+              state,
+              id: Object.keys(panelIdToAlertState).length,
+              panelId,
+              dashboardUID: dashboard.uid,
+            };
+          } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
+            panelIdToAlertState[panelId].state = AlertState.Alerting;
+          } else if (
+            state === AlertState.Pending &&
+            panelIdToAlertState[panelId].state !== AlertState.Alerting &&
+            panelIdToAlertState[panelId].state !== AlertState.Pending
+          ) {
+            panelIdToAlertState[panelId].state = AlertState.Pending;
+          }
+        });
+
         return { alertStates: Object.values(panelIdToAlertState), annotations: [] };
       }),
       catchError(handleDashboardQueryRunnerWorkerError)
