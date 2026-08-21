@@ -3,11 +3,13 @@ import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
-import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from './appPluginIds';
-import { KUBERNETES_APP_ID } from './kubernetesData';
+import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
+import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
+import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withTimeout } from '../solutions/probeUtils';
+import { TELEMETRY_SETUP_DOCS, type TelemetryType } from '../solutions/telemetrySetup';
+
 import { type RecommendedCardId } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
 
@@ -18,14 +20,21 @@ export interface PluginRecommendationCard extends RecommendationItem {
   setupAction: string;
   /** CTA target into the app itself, for the enabled-but-no-data state. */
   appHref: string;
+  /** Uses signal onboarding instead of the app page when the plugin is enabled but silent. */
+  telemetryType?: TelemetryType;
 }
 
 /** Guided-connection card: never "enabled-but-silent", so no setup variant. */
 interface ConnectionRecommendationCard extends RecommendationItem {
   kind: 'connection';
+  /** Uses signal onboarding instead of the card's static href. */
+  telemetryType?: TelemetryType;
 }
 
 export type RecommendationCardDefinition = PluginRecommendationCard | ConnectionRecommendationCard;
+
+const KUBERNETES_LOGS_SETUP_DOCS =
+  'https://grafana.com/docs/grafana-cloud/monitor-infrastructure/kubernetes-monitoring/configuration/';
 
 // appPath: in-app landing route for the setup CTA; empty when the app's root include is its real entry.
 function pluginCard(
@@ -42,10 +51,10 @@ function pluginCard(
 
 /** The cards the matrix can select, keyed by their selection id. */
 export function getRecommendationCards(): Record<RecommendedCardId, RecommendationCardDefinition> {
-  const connectionHref = locationUtil.assureBaseUrl(CONNECTIONS_ROUTES.AddNewConnection);
   return {
     'connect-metrics': {
       kind: 'connection',
+      telemetryType: 'metrics',
       id: 'connect-metrics',
       icon: 'chart-line',
       color: (theme) => theme.visualization.getColorByName('purple'),
@@ -56,9 +65,11 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
         'Connect a Prometheus-compatible data source or ship metrics with a collector to light up dashboards and alerting.'
       ),
       action: t('home.recommendations.connect-metrics.action', 'Connect metrics'),
-      href: connectionHref,
+      href: TELEMETRY_SETUP_DOCS.metrics,
+      cta: 'learn_more',
     },
     'hosted-traces': pluginCard({
+      telemetryType: 'traces',
       id: 'hosted-traces',
       pluginId: HOSTED_TRACES_APP_ID,
       appPath: '',
@@ -109,6 +120,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
     // Copy is deployment-neutral on purpose: metrics activity does not prove which collector produced it.
     'enable-logs': {
       kind: 'connection',
+      telemetryType: 'logs',
       id: 'enable-logs',
       icon: 'gf-logs',
       color: (theme) => theme.visualization.getColorByName('green'),
@@ -119,7 +131,8 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
         'Send logs alongside your metrics to explain anomalies. Use your existing collector or follow a guided connection.'
       ),
       action: t('home.recommendations.enable-logs.action', 'Add Logs'),
-      href: connectionHref,
+      href: TELEMETRY_SETUP_DOCS.logs,
+      cta: 'learn_more',
     },
     'enable-logs-k8s': {
       kind: 'connection',
@@ -136,12 +149,29 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
         'Add pod logs alongside your cluster metrics. If you use the Grafana Kubernetes Monitoring Helm chart, log collection is a single values flag.'
       ),
       action: t('home.recommendations.enable-logs-k8s.action', 'Set up log collection'),
-      href: connectionHref,
+      href: KUBERNETES_LOGS_SETUP_DOCS,
+      cta: 'learn_more',
     },
   };
 }
 
 // Bypass getLocalPlugins(): it drops hidden plugins, which must still be classified here.
-export async function fetchInstalledPlugins(): Promise<LocalPlugin[]> {
-  return getBackendSrv().get('/api/plugins', accessControlQueryParam({ embedded: 0 }));
+// Share the response because Overview and Recommendations request the same large inventory.
+const installedPlugins = createTtlCachedPromise(
+  () =>
+    withTimeout(
+      getBackendSrv().get<LocalPlugin[]>('/api/plugins', accessControlQueryParam({ embedded: 0 }), undefined, {
+        showErrorAlert: false,
+      }),
+      PROBE_TIMEOUT_MS
+    ),
+  PROBE_TTL_MS
+);
+
+export function fetchInstalledPlugins(): Promise<LocalPlugin[]> {
+  return installedPlugins.get();
+}
+
+export function resetInstalledPlugins(): void {
+  installedPlugins.reset();
 }

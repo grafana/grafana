@@ -1,9 +1,12 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
+
+import { type NotebookEditHistory } from '../NotebookEditHistory';
+import { NotebookScene } from '../NotebookScene';
 
 // CodeMirror does not run in jsdom; a textarea carries readOnly into the DOM so the edit-mode
 // propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
@@ -67,6 +70,18 @@ function buildManager(cells: NotebookCellItem[], isEditing?: boolean) {
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     isEditing,
   });
+}
+
+function attachHistory(manager: NotebookLayoutManager): NotebookEditHistory {
+  const scene = new NotebookScene({
+    title: 'My notebook',
+    body: manager,
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({}),
+  });
+
+  return scene.editHistory;
 }
 
 function renderManager(manager: NotebookLayoutManager) {
@@ -690,6 +705,145 @@ describe('NotebookLayoutManager', () => {
       manager.setCellContent(cell, edited);
 
       expect(panel.state.content).toBeUndefined();
+    });
+
+    it('coalesces rapid editor changes into one undo action', async () => {
+      const first = codeCell('query');
+      const second = codeCell('query');
+      const manager = new NotebookLayoutManager({
+        cells: [first, second],
+        isEditing: true,
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      });
+      const history = attachHistory(manager);
+      const { user } = render(<manager.Component model={manager} />);
+
+      const editor = (await screen.findAllByLabelText('Code'))[0];
+      await user.clear(editor);
+      await user.type(editor, 'select 2');
+
+      expect(history.state.canUndo).toBe(true);
+      expect(history.state.undoLabel).toBe('Edit block');
+
+      expect(first.state.content).toEqual(edited);
+      expect(second.state.content).toEqual(edited);
+
+      act(() => history.undo());
+      expect(first.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+      expect(second.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+      expect(history.state.canRedo).toBe(true);
+
+      act(() => history.redo());
+      expect(first.state.content).toEqual(edited);
+      expect(second.state.content).toEqual(edited);
+    });
+
+    it('drops an editor transaction that returns to its starting content', () => {
+      const cell = codeCell('query');
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = attachHistory(manager);
+
+      manager.setCellContent(cell, edited);
+      manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+
+      expect(history.state.canUndo).toBe(false);
+    });
+
+    // If the edit is not closed on the way out, typing after coming back is added to the old edit.
+    it('closes a pending edit when the notebook is deactivated', () => {
+      const cell = codeCell('query');
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = attachHistory(manager);
+      const deactivate = manager.activate();
+
+      manager.setCellContent(cell, edited);
+      deactivate();
+      manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 3', language: 'sql' } });
+
+      expect(history.state.canUndo).toBe(true);
+      history.undo();
+      expect(cell.state.content).toEqual(edited);
+    });
+
+    it('starts a new undo step after the coalescing window', () => {
+      jest.useFakeTimers();
+      try {
+        const cell = codeCell('query');
+        const manager = new NotebookLayoutManager({ cells: [cell] });
+        const history = attachHistory(manager);
+
+        manager.setCellContent(cell, edited);
+        jest.advanceTimersByTime(801);
+        manager.setCellContent(cell, { kind: 'Code', spec: { code: 'select 3', language: 'sql' } });
+
+        history.undo();
+        expect(cell.state.content).toEqual(edited);
+        history.undo();
+        expect(cell.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
+  describe('edit history', () => {
+    function withHistory(cells: NotebookCellItem[]) {
+      const manager = buildManager(cells);
+      return { manager, history: attachHistory(manager) };
+    }
+
+    it('undoes and redoes adding a block', () => {
+      const { manager, history } = withHistory(buildNarrativeCells(['a']));
+
+      const added = manager.addCell('code', 1);
+      expect(cellNames(manager)).toEqual(['a', added?.state.elementName]);
+
+      history.undo();
+      expect(cellNames(manager)).toEqual(['a']);
+
+      history.redo();
+      expect(manager.state.cells[1]).toBe(added);
+    });
+
+    it('undoes and redoes a move', () => {
+      const { manager, history } = withHistory(buildNarrativeCells(['a', 'b', 'c']));
+
+      manager.moveCell(0, 2);
+      expect(cellNames(manager)).toEqual(['b', 'c', 'a']);
+
+      history.undo();
+      expect(cellNames(manager)).toEqual(['a', 'b', 'c']);
+
+      history.redo();
+      expect(cellNames(manager)).toEqual(['b', 'c', 'a']);
+    });
+
+    it('restores the same cell after delete', () => {
+      const cells = buildNarrativeCells(['a', 'b']);
+      const { manager, history } = withHistory(cells);
+
+      manager.removeCell(cells[0]);
+      expect(cellNames(manager)).toEqual(['b']);
+
+      history.undo();
+      expect(manager.state.cells[0]).toBe(cells[0]);
+
+      history.redo();
+      expect(cellNames(manager)).toEqual(['b']);
+    });
+
+    it('removes the exact duplicate on undo', () => {
+      const cells = buildNarrativeCells(['a']);
+      const { manager, history } = withHistory(cells);
+
+      manager.duplicateCell(cells[0]);
+      const duplicate = manager.state.cells[1];
+
+      history.undo();
+      expect(manager.state.cells).toEqual(cells);
+
+      history.redo();
+      expect(manager.state.cells[1]).toBe(duplicate);
     });
   });
 

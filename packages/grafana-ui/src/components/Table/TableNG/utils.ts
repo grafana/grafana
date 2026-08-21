@@ -783,6 +783,15 @@ const processNestedTableRows = (rows: TableRow[], processParents: (parents: Tabl
 /* ----------------------------- Data grid sorting ---------------------------- */
 /**
  * @internal
+ * Columns are sortable unless explicitly disabled. Shared by the column definitions, the header
+ * cell, and the width/height measurement, which reserve room for the sort arrow.
+ */
+export function isSortableField(field: Field): boolean {
+  return field.config.custom?.sortable !== false;
+}
+
+/**
+ * @internal
  */
 export function applySort(
   rows: TableRow[],
@@ -1230,8 +1239,6 @@ export interface ContentAwareColWidthsOptions {
   showTypeIcons?: boolean;
   /** Bound `(field, rowIdx) => actions`, so Actions columns can be sized to their button labels. */
   getActions?: GetActionsFunctionLocal;
-  /** Currently-sorted columns; a sorted column reserves header space for its sort arrow. */
-  sortColumns?: SortColumn[];
   /** overridable for testing; otherwise derived from the auto-column count */
   sampleSize?: number;
 }
@@ -1332,15 +1339,19 @@ function measureInlineRunWidth(
  *
  * Canvas-measured exactly rather than estimated from `avgCharWidth`: this is a hard lower bound on
  * the column, so an under-estimate truncates the title outright — and it's one short string per
- * column, not a sample across many rows. Sort-arrow space is only reserved when `isSorted` (widths
- * recompute on sort), so a tight column doesn't ellipsize its title the moment it's sorted.
+ * column, not a sample across many rows.
+ *
+ * Sort-arrow space is reserved for every sortable column, whether or not it is currently sorted:
+ * reserving it only for the sorted column would make every auto width a function of the sort state,
+ * so clicking a header would resize the whole table (the sorted column gains the arrow's width, and
+ * that shifts every other column's share of the leftover space).
  */
-function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean, isSorted: boolean): number {
+function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean, isSortable: boolean): number {
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
   headerWidth += field.config?.custom?.filterable ? HEADER_ICON_SPACE : 0;
   headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
-  headerWidth += isSorted ? HEADER_ICON_SPACE : 0;
+  headerWidth += isSortable ? HEADER_ICON_SPACE : 0;
   return headerWidth;
 }
 
@@ -1518,18 +1529,15 @@ function growthWeight(type: FieldType): number {
  *      the widest column doesn't run away from its neighbours; numeric/boolean columns grow only
  *      modestly (see {@link growthWeight}).
  * When content overflows the available width the content widths are kept and the grid scrolls.
+ *
+ * Every input is independent of the sort and filter state (fields hold the full, unsorted values),
+ * so widths stay put when the user sorts or filters. See {@link measureHeaderWidth} for the sort
+ * arrow, the one affordance that would otherwise make them sort-dependent.
  */
 export function computeContentAwareColWidths(
   fields: Field[],
   availWidth: number,
-  {
-    typographyCtx,
-    headerTypographyCtx,
-    showTypeIcons = false,
-    getActions,
-    sortColumns,
-    sampleSize,
-  }: ContentAwareColWidthsOptions
+  { typographyCtx, headerTypographyCtx, showTypeIcons = false, getActions, sampleSize }: ContentAwareColWidthsOptions
 ): number[] {
   const autoIdxs: number[] = [];
   let definedWidth = 0;
@@ -1556,16 +1564,10 @@ export function computeContentAwareColWidths(
   let contentTotal = 0;
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
-  const sortedKeys = new Set(sortColumns?.map((c) => c.columnKey));
 
   for (const i of autoIdxs) {
     const field = fields[i];
-    const headerWidth = measureHeaderWidth(
-      field,
-      headerTypographyCtx,
-      showTypeIcons,
-      sortedKeys.has(getDisplayName(field))
-    );
+    const headerWidth = measureHeaderWidth(field, headerTypographyCtx, showTypeIcons, isSortableField(field));
 
     // Wrapped columns are measured like any other: a content-based width keeps a content-heavy
     // column wider than a sparse one, and the cap bounds it so it wraps to extra height within.
@@ -1594,13 +1596,23 @@ export function computeContentAwareColWidths(
   const growTotal = autoIdxs.reduce((sum, i) => sum + growShare(i), 0);
 
   const leftover = availWidth - definedWidth - contentTotal;
+  const shouldGrow = leftover > 0 && growTotal > 0;
   // Round cumulatively so the rounded widths sum to the same total as the exact ones. Rounding each
   // independently can push the total past availWidth and trigger a spurious horizontal scrollbar.
   let exactSoFar = 0;
   let roundedSoFar = 0;
   for (const i of autoIdxs) {
     const contentWidth = contentWidths.get(i)!;
-    const grown = leftover > 0 && growTotal > 0 ? contentWidth + leftover * (growShare(i) / growTotal) : contentWidth;
+    if (!shouldGrow) {
+      // No leftover to distribute — the columns already fill or overflow availWidth, so the grid
+      // scrolls regardless and matching the total exactly no longer matters. Round up instead of
+      // cumulatively: a column sitting exactly at its measured content need (canvas measurement is
+      // fractional) has no slack to give up, and cumulative rounding can shave a column below that
+      // need and truncate its header for no benefit.
+      widths[i] = Math.ceil(contentWidth);
+      continue;
+    }
+    const grown = contentWidth + leftover * (growShare(i) / growTotal);
     exactSoFar += grown;
     const rounded = Math.round(exactSoFar) - roundedSoFar;
     roundedSoFar += rounded;
