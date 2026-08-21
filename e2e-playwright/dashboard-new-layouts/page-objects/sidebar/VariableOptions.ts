@@ -57,7 +57,7 @@ export class VariableOptions extends PageObject {
           this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
         );
         await datasourceSelect.fill(dsType);
-        await datasourceSelect.press('Enter');
+        await this.page.getByRole('listbox').getByRole('option', { name: dsType, exact: true }).click();
       });
     },
     /** Sets the datasource name filter */
