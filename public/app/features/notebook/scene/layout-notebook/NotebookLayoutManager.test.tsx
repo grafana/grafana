@@ -536,6 +536,21 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[2].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
     });
 
+    // Paragraph's starter content is already empty markdown — the same as the trailing slot — so
+    // convertCell → setCellContent used to return early and never claim the slot (Heading/Code
+    // change the content, so they don't hit this). The conversion still has to consume the slot
+    // and reveal a replacement, the same way those other types do from this same divider.
+    it('claims the trailing empty slot when the divider past it picks Paragraph', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+      const dividers = screen.getAllByRole('button', { name: 'Add block' });
+
+      await pickParagraph(user, dividers[dividers.length - 1]);
+
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1', 'paragraph-2']);
+      expect(manager.state.cells[2].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
+      expect(manager.state.cells[3].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
+    });
+
     it('inserts above the first cell from the leading divider', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 

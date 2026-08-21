@@ -273,12 +273,28 @@ export class NotebookLayoutManager
    * Converts `cell`'s content to `type` in place — the trailing-slot markdown cell's "/" menu (see
    * NotebookCellRenderer) uses this rather than inserting a separate new cell the way the add-block
    * menu does, since the cell picking from that menu already exists and is already empty.
+   *
+   * Paragraph's starter content is already empty markdown, the same shape the trailing invariant
+   * slot has. setCellContent treats that as a no-op, so without the check below the slot would
+   * never be claimed and no replacement would appear — unlike Heading ("# ") or Code, whose
+   * starter content actually differs. addCell hits this when the divider past the trailing cell
+   * picks Paragraph; the "/" menu does not, because typing "/" has already claimed the slot.
    */
   public convertCell(cell: NotebookCellItem, type: NotebookBlockType): void {
     const content = contentForBlockType(type);
-    if (content) {
-      this.setCellContent(cell, content);
+    if (!content) {
+      return;
     }
+
+    if (isEqual(cell.state.content, content)) {
+      const index = this.state.cells.indexOf(cell);
+      if (index !== -1 && index === this.state.cells.length - 1 && isEmptyMarkdown(content)) {
+        this.appendSystemCell(this.state.cells.length);
+      }
+      return;
+    }
+
+    this.setCellContent(cell, content);
   }
 
   /**
