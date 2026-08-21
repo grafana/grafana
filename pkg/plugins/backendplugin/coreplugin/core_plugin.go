@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -24,10 +25,11 @@ type corePlugin struct {
 	backend.StreamHandler
 	backend.AdmissionHandler
 	backend.ConversionHandler
+	clientV3 v3.ClientV3
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
-func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
+func New(opts backend.ServeOpts, clientV3 v3.ClientV3) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, _ trace.Tracer, _ func() []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
 			pluginID:                pluginID,
@@ -38,6 +40,7 @@ func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 			QueryChunkedDataHandler: opts.QueryChunkedDataHandler,
 			AdmissionHandler:        opts.AdmissionHandler,
 			StreamHandler:           opts.StreamHandler,
+			clientV3:                clientV3,
 		}, nil
 	}
 }
@@ -181,4 +184,12 @@ func (cp *corePlugin) ConvertObjects(ctx context.Context, req *backend.Conversio
 		return cp.ConversionHandler.ConvertObjects(ctx, req)
 	}
 	return nil, plugins.ErrMethodNotImplemented
+}
+
+// ClientV3 implements [backendplugin.Plugin].
+func (cp *corePlugin) ClientV3(ctx context.Context) (v3.ClientV3, bool) {
+	if cp.clientV3 == nil {
+		return nil, false
+	}
+	return cp.clientV3, true
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -27,6 +27,9 @@ type Plugin interface {
 	backend.AdmissionHandler
 	backend.ConversionHandler
 	backend.StreamHandler
+
+	// Get access to a V3 client
+	ClientV3(ctx context.Context) (v3.ClientV3, bool)
 }
 
 type Target string

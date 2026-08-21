@@ -5,12 +5,13 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/hashicorp/go-plugin"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -19,6 +20,7 @@ type grpcPlugin struct {
 	clientFactory  func() (*plugin.Client, error)
 	client         *plugin.Client
 	pluginClient   *ClientV2
+	clientV3       v3.ClientV3
 	logger         log.Logger
 	mutex          sync.RWMutex
 	decommissioned bool
@@ -145,31 +147,39 @@ func (p *grpcPlugin) Target() backendplugin.Target {
 	return backendplugin.TargetLocal
 }
 
+// ClientV3 implements [backendplugin.Plugin].
+func (p *grpcPlugin) ClientV3(ctx context.Context) (v3.ClientV3, bool) {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	if p.client != nil && !p.client.Exited() && p.clientV3 != nil {
+		return p.clientV3, true
+	}
+	p.logStateError(ctx)
+	return nil, false
+}
+
 func (p *grpcPlugin) getPluginClient(ctx context.Context) (*ClientV2, bool) {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
 	if p.client != nil && !p.client.Exited() && p.pluginClient != nil {
 		return p.pluginClient, true
 	}
+	p.logStateError(ctx)
+	return nil, false
+}
 
+func (p *grpcPlugin) logStateError(ctx context.Context) {
 	logger := p.Logger().FromContext(ctx)
-	if p.state == pluginStateNotStarted {
+	switch p.state {
+	case pluginStateNotStarted:
 		logger.Debug("Plugin client has not been started yet")
-	}
-
-	if p.state == pluginStateStartInit {
+	case pluginStateStartInit:
 		logger.Debug("Plugin client is starting")
-	}
-
-	if p.state == pluginStateStartFail {
+	case pluginStateStartFail:
 		logger.Debug("Plugin client failed to start")
-	}
-
-	if p.state == pluginStateStopped {
+	case pluginStateStopped:
 		logger.Debug("Plugin client has stopped")
 	}
-
-	return nil, false
 }
 
 func (p *grpcPlugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {

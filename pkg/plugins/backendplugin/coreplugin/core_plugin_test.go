@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
@@ -14,7 +14,7 @@ import (
 
 func TestCorePlugin(t *testing.T) {
 	t.Run("New core plugin with empty opts should return expected values", func(t *testing.T) {
-		factory := New(backend.ServeOpts{})
+		factory := New(backend.ServeOpts{}, nil)
 		p, err := factory("plugin", log.New("test"), pluginfakes.InitializeNoopTracerForTest(), nil)
 		require.NoError(t, err)
 		require.NotNil(t, p)
@@ -47,7 +47,7 @@ func TestCorePlugin(t *testing.T) {
 				callResourceCalled = true
 				return nil
 			}),
-		})
+		}, nil)
 		p, err := factory("plugin", log.New("test"), pluginfakes.InitializeNoopTracerForTest(), nil)
 		require.NoError(t, err)
 		require.NotNil(t, p)
