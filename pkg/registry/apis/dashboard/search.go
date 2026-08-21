@@ -891,27 +891,16 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		return nil, err
 	}
 
-	// Add sorting. Dashboard-specific fields live under the fields.*
-	// sub-document inside bleve; clients pass the bare name (e.g.
-	// ?sort=views_total) and the search backend needs the prefixed form
-	// (fields.views_total) to find them. The leading "-" descending marker
-	// is stripped first so the dashboard-field lookup sees the bare name
-	// regardless of direction.
+	// Add sorting. Field names are passed through as the client sent them; the
+	// search backend knows where each field lives in the index. The leading "-"
+	// descending marker is stripped first.
 	if queryParams.Has("sort") {
-		isDashboardField := func(name string) bool {
-			return slices.ContainsFunc(builders.DashboardSearchFields, func(def resource.SearchFieldDefinition) bool {
-				return def.Name == name
-			})
-		}
 		for _, raw := range queryParams["sort"] {
 			field := raw
 			desc := false
 			if strings.HasPrefix(field, "-") {
 				desc = true
 				field = field[1:]
-			}
-			if isDashboardField(field) {
-				field = resource.SEARCH_FIELD_PREFIX + field
 			}
 			searchRequest.SortBy = append(searchRequest.SortBy, &resourcepb.ResourceSearchRequest_Sort{
 				Field: field,
@@ -949,7 +938,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 
 	if v, ok := queryParams["panelType"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TYPES,
+			Key:      builders.DASHBOARD_PANEL_TYPES,
 			Operator: "=",
 			Values:   v,
 		})
@@ -957,7 +946,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 
 	if v, ok := queryParams["dataSourceType"]; ok {
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_DS_TYPES,
+			Key:      builders.DASHBOARD_DS_TYPES,
 			Operator: "=",
 			Values:   v,
 		})
@@ -1009,23 +998,19 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		searchRequest.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
 			{
 				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
-				Type:  resourcepb.QueryFieldType_KEYWORD,
 				Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
 			}, {
 				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_TEXT,
 				Boost: 2, // standard analyzer (word-level matching)
 			}, {
 				Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-				Type:  resourcepb.QueryFieldType_TEXT,
 				Boost: 1, // ngram analyzer (partial/prefix matching)
 			},
 		}
 
 		if queryParams.Has("panelTitleSearch") && queryParams.Get("panelTitleSearch") != "false" {
 			searchRequest.QueryFields = append(searchRequest.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
-				Name:  resource.SEARCH_FIELD_PREFIX + builders.DASHBOARD_PANEL_TITLE, // fields.panel_title
-				Type:  resourcepb.QueryFieldType_TEXT,
+				Name:  builders.DASHBOARD_PANEL_TITLE,
 				Boost: 5,
 			})
 		}

@@ -1111,7 +1111,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Page:      1,
 				Explain:   false,
 				Fields:    defaultFields,
-				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "fields.views_total", Desc: false}},
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "views_total", Desc: false}},
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
@@ -1125,7 +1125,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Page:      1,
 				Explain:   false,
 				Fields:    defaultFields,
-				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "fields.views_total", Desc: true}},
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "views_total", Desc: true}},
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
@@ -1183,6 +1183,38 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Options: &resourcepb.ListOptions{
 					Key:    dashboardKey,
 					Fields: []*resourcepb.Requirement{{Key: "tags", Operator: "=", Values: []string{"tag1", "tag2"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"panel type filter": {
+			queryString: "panelType=timeseries",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "panel_types", Operator: "=", Values: []string{"timeseries"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"data source type filter": {
+			queryString: "dataSourceType=prometheus",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "ds_types", Operator: "=", Values: []string{"prometheus"}}},
 				},
 				Query:     "",
 				Limit:     50,
@@ -1385,6 +1417,23 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+
+	t.Run("panel title search asks for the panel_title field", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("query=cpu&panelTitleSearch=true")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		require.NotEmpty(t, result.QueryFields)
+		names := make([]string, 0, len(result.QueryFields))
+		for _, f := range result.QueryFields {
+			names = append(names, f.Name)
+		}
+		assert.Contains(t, names, "panel_title")
+	})
 
 	t.Run("rejects unsupported facet fields", func(t *testing.T) {
 		queryParams, err := url.ParseQuery("facet=folder")
