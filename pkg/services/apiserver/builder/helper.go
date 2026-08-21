@@ -109,7 +109,7 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, PathRewriters)
 		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")
-		handler = filters.WithExtractJaegerTrace(handler)
+		handler = filters.WithExtractTraceContext(handler)
 		// Configure filters.WithPanicRecovery to not crash on panic
 		utilruntime.ReallyCrash = false
 
