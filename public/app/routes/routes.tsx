@@ -27,9 +27,9 @@ import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
 const LazyConfigureIRM = lazy(() =>
-  import(
-    /* webpackChunkName: "ConfigureIRM" */ 'app/features/gops/configuration-tracker/components/ConfigureIRM'
-  ).then((module) => ({ default: module.ConfigureIRM }))
+  import(/* webpackChunkName: "ConfigureIRM" */ 'app/features/gops/configuration-tracker/components/ConfigureIRM').then(
+    (module) => ({ default: module.ConfigureIRM })
+  )
 );
 export const extraRoutes: RouteDescriptor[] = [];
 

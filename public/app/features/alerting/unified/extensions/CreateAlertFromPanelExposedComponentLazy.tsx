@@ -3,9 +3,7 @@ import { Suspense, lazy } from 'react';
 import { type CreateAlertFromPanelProps } from './CreateAlertFromPanelExposedComponent';
 
 const CreateAlertFromPanelExposedComponent = lazy(() =>
-  import(
-    /* webpackChunkName: "CreateAlertFromPanel" */ './CreateAlertFromPanelExposedComponent'
-  ).then((module) => ({
+  import(/* webpackChunkName: "CreateAlertFromPanel" */ './CreateAlertFromPanelExposedComponent').then((module) => ({
     default: module.CreateAlertFromPanelExposedComponent,
   }))
 );
