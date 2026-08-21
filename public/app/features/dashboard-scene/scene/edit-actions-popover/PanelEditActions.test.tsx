@@ -14,7 +14,7 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { SHOW_COPIED_DURATION_MS } from './EditActions';
-import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
+import { HOVER_POPOVER_MEDIA_QUERY, WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
 import { PanelEditActions, PanelEditActionsWrapper } from './PanelEditActions';
 
 jest.mock('app/core/app_events', () => ({
@@ -33,6 +33,12 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 const mockLocationServicePartial = jest.mocked(locationService.partial);
+
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useMedia: (query: string, defaultValue?: boolean) => mockUseMedia(query, defaultValue),
+}));
+const mockUseMedia = jest.fn((_query: string, defaultValue?: boolean) => defaultValue ?? true);
 
 async function hoverAndRest(element: HTMLElement) {
   jest.useFakeTimers();
@@ -340,5 +346,28 @@ describe('<PanelEditActionsWrapper />', () => {
 
     expect(removePanel).toHaveBeenCalledWith(panel);
     expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover');
+  });
+
+  describe('when hover popover is not supported', () => {
+    beforeEach(() => {
+      mockUseMedia.mockReturnValue(false);
+    });
+
+    afterEach(() => {
+      mockUseMedia.mockImplementation((_query, defaultValue) => defaultValue ?? true);
+    });
+
+    test('if the pointer rests, then floating content is not shown', async () => {
+      const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+
+      renderPanelEditActionsWrapper(panel);
+
+      expect(mockUseMedia).toHaveBeenCalledWith(HOVER_POPOVER_MEDIA_QUERY, true);
+
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit visualization' })).not.toBeInTheDocument();
+    });
   });
 });

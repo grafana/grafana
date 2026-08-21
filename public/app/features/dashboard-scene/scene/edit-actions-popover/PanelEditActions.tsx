@@ -19,7 +19,7 @@ import {
   getActionStyles,
   SettingsActionButton,
 } from './EditActions';
-import { HoverPopover } from './EditActionsPopover';
+import { HoverPopover, useHoverPopoverSupported } from './EditActionsPopover';
 
 export function PanelEditActions({
   onClickEdit,
@@ -69,10 +69,12 @@ export function PanelEditActions({
 }
 
 export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
+  const isPopoverSupported = useHoverPopoverSupported();
+
   const elementSelectionContext = useContext(ElementSelectionContext);
   const isSelectable = Boolean(elementSelectionContext?.enabled);
 
-  if (!isSelectable) {
+  if (!isPopoverSupported || !isSelectable) {
     return children;
   }
 

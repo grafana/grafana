@@ -11,6 +11,7 @@ import {
   useMergeRefs,
 } from '@floating-ui/react';
 import React, { cloneElement, createContext, useContext, useMemo, useState } from 'react';
+import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Portal, useStyles2, useTheme2 } from '@grafana/ui';
@@ -22,6 +23,18 @@ type EditActionsPopoverProps = {
   portalRoot?: HTMLElement;
   zIndex?: number;
 };
+
+/** Devices that can hover with a fine pointer (mouse/trackpad). */
+export const HOVER_POPOVER_MEDIA_QUERY = '(hover: hover) and (pointer: fine)';
+
+/**
+ * Returns whether the device supports fine-pointer hover (mouse/trackpad).
+ * On touch, a panel tap opens both the hover popover and the edit sidebar at once.
+ * Used for panels only: the popover would cover the sidebar that PanelChrome auto-opens; variable/annotation/link controls are fine without this guard.
+ */
+export function useHoverPopoverSupported(defaultValue = true) {
+  return useMedia(HOVER_POPOVER_MEDIA_QUERY, defaultValue);
+}
 
 export function EditActionsPopover({ isEditable, ...props }: EditActionsPopoverProps & { isEditable: boolean }) {
   if (!isEditable) {
