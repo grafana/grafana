@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -53,6 +53,11 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
   const [tab, setTab] = useState<PickerTab>(canAddToExisting ? 'existing' : 'new');
   const [selectedUid, setSelectedUid] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Guards the write, where isSubmitting only guards the button: state takes effect on the next
+  // render, so a second activation arriving before that would start its own read-modify-write and
+  // append the panel twice. A ref closes that window because it updates synchronously.
+  const isSubmittingRef = useRef(false);
+  const tagFilterLabelId = useId();
 
   const picker = useNotebookPicker();
 
@@ -62,6 +67,10 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
   const selected = picker.rows.some((row) => row.uid === selectedUid) ? selectedUid : undefined;
 
   const submit = async (add: () => Promise<AddedToNotebook>) => {
+    if (isSubmittingRef.current) {
+      return;
+    }
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       const added = await add();
@@ -82,6 +91,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
       dispatch(notifyApp(createErrorNotification(addPanelErrorMessage(error))));
       // Deliberately left open: a conflict is worth retrying, and retyping a new notebook's details
       // because the request failed would be its own small insult.
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -138,13 +148,19 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
               </Stack>
 
               <Stack gap={1}>
+                {/* MultiCombobox forwards aria-labelledby but not aria-label, so label it via a hidden
+                    element - the same workaround the provisioning resource tree uses. The single
+                    Combobox below does forward aria-label, hence the two being labelled differently. */}
+                <span id={tagFilterLabelId} className="sr-only">
+                  {t('notebooks.add-panel.tag-label', 'Filter by tag')}
+                </span>
                 <MultiCombobox
                   value={picker.tagFilter}
                   options={picker.tagOptions}
                   onChange={(options) => picker.setTagFilter(options.map((option) => option.value))}
                   placeholder={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
                   width={30}
-                  aria-label={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
+                  aria-labelledby={tagFilterLabelId}
                 />
                 <Combobox
                   value={picker.authorFilter}

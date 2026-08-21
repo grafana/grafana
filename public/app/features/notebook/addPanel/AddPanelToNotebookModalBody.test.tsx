@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { fireEvent, render, screen, waitFor } from 'test/test-utils';
 
 import { mockComboboxRect } from '@grafana/test-utils';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -204,6 +204,35 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(component).toBeDefined();
     });
 
+    // `required` is satisfied by any non-empty string, and the name is trimmed on the way out, so
+    // without validating the trimmed value a notebook could be created titled nothing at all.
+    it('will not submit a name that is only whitespace', async () => {
+      const { user } = renderModal();
+
+      await user.click(screen.getByRole('tab', { name: 'Create new' }));
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '   ');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      expect(await screen.findByText('A notebook name is required')).toBeInTheDocument();
+      expect(createWithPanel).not.toHaveBeenCalled();
+    });
+
+    // Submitted through the form rather than the button because that is the reachable path: the
+    // button goes disabled on the next render, but Enter in the name field submits the form directly,
+    // and two of those can both get through before React re-renders.
+    it('writes once even if the form is submitted twice before it re-renders', async () => {
+      const { user } = renderModal();
+
+      await user.click(screen.getByRole('tab', { name: 'Create new' }));
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+
+      const form = document.getElementById('add-panel-create-notebook')!;
+      fireEvent.submit(form);
+      fireEvent.submit(form);
+
+      await waitFor(() => expect(createWithPanel).toHaveBeenCalledTimes(1));
+    });
+
     it('creates the notebook with the panel, description and tags', async () => {
       const { user, onDismiss } = renderModal();
 
@@ -221,6 +250,22 @@ describe('AddPanelToNotebookModalBody', () => {
         )
       );
       expect(onDismiss).toHaveBeenCalled();
+    });
+  });
+
+  describe('filters', () => {
+    // MultiCombobox drops aria-label and reads aria-labelledby, so the obvious spelling leaves the
+    // control with no accessible name at all.
+    it('gives the tag filter an accessible name', () => {
+      renderModal();
+
+      expect(screen.getByRole('combobox', { name: 'Filter by tag' })).toBeInTheDocument();
+    });
+
+    it('gives the author filter one too', () => {
+      renderModal();
+
+      expect(screen.getByRole('combobox', { name: 'Filter by author' })).toBeInTheDocument();
     });
   });
 

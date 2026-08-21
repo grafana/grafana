@@ -12905,6 +12905,7 @@
       "success-link": "View notebook",
       "tab-existing": "Add to existing",
       "tab-new": "Create new",
+      "tag-label": "Filter by tag",
       "tag-placeholder": "Filter by tag",
       "title": "Add panel to notebook"
     },

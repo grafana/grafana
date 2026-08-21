@@ -36,6 +36,11 @@ export function CreateNotebookForm({ formId, onSubmit, disabled }: Props) {
           <Input
             {...register('title', {
               required: t('notebooks.add-panel.create-name-required', 'A notebook name is required'),
+              // Validated against the trimmed value because that is what gets saved. `required` alone
+              // accepts a name of nothing but spaces, which would create a notebook with no title and
+              // no complaint.
+              validate: (value) =>
+                value.trim().length > 0 || t('notebooks.add-panel.create-name-required', 'A notebook name is required'),
             })}
             id="notebook-name"
             disabled={disabled}
