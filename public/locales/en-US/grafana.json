@@ -7038,6 +7038,9 @@
       "name-json-values": "JSON",
       "selection-options": "Selection options"
     },
+    "dashboard-controls": {
+      "add": "Add"
+    },
     "dashboard-link-form": {
       "back-to-list": "Back to list",
       "label-icon": "Icon",
@@ -7817,9 +7820,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard.",
       "content-variable-not-referenced-other-variables-dashboard": "This variable is not referenced by other variables or dashboard.",
       "content-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
-    },
-    "variable-controls": {
-      "add-variable": "Add variable"
     },
     "variable-edit-actions": {
       "edit-custom-values": "Edit values",

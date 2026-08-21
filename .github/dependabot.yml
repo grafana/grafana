@@ -15,6 +15,8 @@ updates:
       prefix: deps(go)
     directories:
       - "/"
+      # standalone test fixture module, not part of go.work, so the root entry above does not cover it
+      - "/pkg/plugins/manager/testdata/test-app-with-backend"
       - "/hack"
       - "/scripts/go-workspace"
       - "/scripts/modowners"
