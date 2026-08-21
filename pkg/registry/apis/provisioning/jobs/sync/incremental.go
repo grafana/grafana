@@ -203,19 +203,22 @@ func applyIncrementalChanges(
 			}
 
 			if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
-				folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment, change.Ref)
+				// Build the result before the operation so its recorded duration
+				// reflects the folder write rather than just the record call.
+				folderResultBuilder := jobs.NewFolderResult(change.Path)
+				_, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment, change.Ref)
 				if err != nil {
 					ensureFolderSpan.RecordError(err)
 					ensureFolderSpan.End()
 
-					progress.Record(ensureFolderCtx, jobs.NewFolderResult(change.Path).
+					progress.Record(ensureFolderCtx, folderResultBuilder.
 						WithError(err).
 						WithAction(repository.FileActionIgnored).
 						Build())
 					continue
 				}
 
-				progress.Record(ensureFolderCtx, jobs.NewFolderResult(folder).
+				progress.Record(ensureFolderCtx, folderResultBuilder.
 					WithPath(safeSegment).
 					WithAction(repository.FileActionCreated).
 					Build())
