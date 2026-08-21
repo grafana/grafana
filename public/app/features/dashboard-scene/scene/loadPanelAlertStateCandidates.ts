@@ -1,9 +1,13 @@
-import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
-import { ungroupRulesByFileName } from 'app/features/alerting/unified/api/prometheus';
-import { Annotation, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
-import { prometheusRuleType } from 'app/features/alerting/unified/utils/rules';
-import { dispatch } from 'app/store/store';
-import { type PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { getBackendSrv } from '@grafana/runtime';
+import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import {
+  type PromAlertingRuleState,
+  type PromRuleGroupDTO,
+  PromRuleType,
+  type PromRulesResponse,
+} from 'app/types/unified-alerting-dto';
+
+const GRAFANA_PROMETHEUS_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
 
 export interface PanelAlertStateCandidate {
   panelId: number;
@@ -11,24 +15,22 @@ export interface PanelAlertStateCandidate {
   ruleUID?: string;
 }
 
-export async function loadPanelAlertStateCandidates(dashboardUid: string): Promise<PanelAlertStateCandidate[]> {
-  const promRules = await dispatch(
-    alertRuleApi.endpoints.prometheusRuleNamespaces.initiate(
-      {
-        ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-        dashboardUid,
-      },
-      { forceRefetch: true }
-    )
+export async function loadDashboardAlertRuleGroups(dashboardUid: string): Promise<PromRuleGroupDTO[]> {
+  const searchParams = new URLSearchParams({ dashboard_uid: dashboardUid });
+  const response = await getBackendSrv().get<PromRulesResponse>(
+    GRAFANA_PROMETHEUS_RULES_URL,
+    Object.fromEntries(searchParams)
   );
 
-  if (promRules.error) {
-    throw new Error('Unexpected alert rules response.');
-  }
+  return response.data.groups;
+}
 
-  return ungroupRulesByFileName(promRules.data).flatMap((group) =>
+export async function loadPanelAlertStateCandidates(dashboardUid: string): Promise<PanelAlertStateCandidate[]> {
+  const groups = await loadDashboardAlertRuleGroups(dashboardUid);
+
+  return groups.flatMap((group) =>
     group.rules.flatMap((rule) => {
-      if (!prometheusRuleType.alertingRule(rule) || !rule.annotations?.[Annotation.panelID]) {
+      if (rule.type !== PromRuleType.Alerting || !rule.annotations?.[Annotation.panelID]) {
         return [];
       }
 
@@ -36,7 +38,7 @@ export async function loadPanelAlertStateCandidates(dashboardUid: string): Promi
         {
           panelId: Number(rule.annotations[Annotation.panelID]),
           state: rule.state,
-          ruleUID: prometheusRuleType.grafana.alertingRule(rule) ? rule.uid : undefined,
+          ruleUID: 'folderUid' in rule && 'uid' in rule ? rule.uid : undefined,
         },
       ];
     })

@@ -1,12 +1,7 @@
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { ModalsContext, ToolbarButton } from '@grafana/ui';
-
-import { alertRuleApi } from '../api/alertRuleApi';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
-
-import { AlertRulesDrawer } from './AlertRulesDrawer';
 
 interface AlertRulesToolbarButtonProps {
   dashboardUid: string;
@@ -14,19 +9,41 @@ interface AlertRulesToolbarButtonProps {
 
 export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesToolbarButtonProps) {
   const { showModal, hideModal } = useContext(ModalsContext);
+  const [hasAlertRules, setHasAlertRules] = useState(false);
 
-  const { data: namespaces = [] } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
-    ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-    dashboardUid: dashboardUid,
-  });
+  useEffect(() => {
+    let cancelled = false;
 
-  if (namespaces.length === 0) {
+    import(
+      /* webpackChunkName: "PanelAlertStates" */ 'app/features/dashboard-scene/scene/loadPanelAlertStateCandidates'
+    )
+      .then(({ loadDashboardAlertRuleGroups }) => loadDashboardAlertRuleGroups(dashboardUid))
+      .then((groups) => {
+        if (!cancelled) {
+          setHasAlertRules(groups.some((group) => group.rules.length > 0));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHasAlertRules(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dashboardUid]);
+
+  if (!hasAlertRules) {
     return null;
   }
 
-  const onShowDrawer = () => {
+  const onShowDrawer = async () => {
+    const { AlertRulesDrawer } = await import(
+      /* webpackChunkName: "alert-rules-drawer" */ './AlertRulesDrawer'
+    );
     showModal(AlertRulesDrawer, {
-      dashboardUid: dashboardUid,
+      dashboardUid,
       onDismiss: hideModal,
     });
   };
