@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -8,7 +8,6 @@ import {
   Combobox,
   FilterInput,
   Modal,
-  MultiCombobox,
   Stack,
   Tab,
   TabContent,
@@ -58,7 +57,6 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
   // render, so a second activation arriving before that would start its own read-modify-write and
   // append the panel twice. A ref closes that window because it updates synchronously.
   const isSubmittingRef = useRef(false);
-  const tagFilterLabelId = useId();
 
   const picker = useNotebookPicker();
 
@@ -148,33 +146,16 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
                 />
               </Stack>
 
-              <Stack gap={1}>
-                {/* MultiCombobox forwards aria-labelledby but not aria-label, so label it via a hidden
-                    element - the same workaround the provisioning resource tree uses. The sort
-                    Combobox above is a single Combobox, which does forward aria-label, which is why
-                    the two are labelled differently. */}
-                <span id={tagFilterLabelId} className="sr-only">
-                  {t('notebooks.add-panel.tag-label', 'Filter by tag')}
-                </span>
-                <MultiCombobox
-                  value={picker.tagFilter}
-                  options={picker.tagOptions}
-                  onChange={(options) => picker.setTagFilter(options.map((option) => option.value))}
-                  placeholder={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
-                  width={30}
-                  aria-labelledby={tagFilterLabelId}
+              {/* Not a picker of authors: filtering by one is supported server-side, but listing
+                  them is not - createdBy is filterable and not facetable - and enumerating them from
+                  the rows on screen would offer only the authors already visible. */}
+              {picker.canFilterByMe && (
+                <Checkbox
+                  value={picker.createdByMe}
+                  onChange={(event) => picker.setCreatedByMe(event.currentTarget.checked)}
+                  label={t('notebooks.add-panel.created-by-me', 'Created by me')}
                 />
-                {/* Not a picker of authors: filtering by one is supported server-side, but listing
-                    them is not - createdBy is filterable and not facetable - and enumerating them
-                    from the rows on screen would offer only the authors already visible. */}
-                {picker.canFilterByMe && (
-                  <Checkbox
-                    value={picker.createdByMe}
-                    onChange={(event) => picker.setCreatedByMe(event.currentTarget.checked)}
-                    label={t('notebooks.add-panel.created-by-me', 'Created by me')}
-                  />
-                )}
-              </Stack>
+              )}
 
               <NotebookPickerList
                 notebooks={picker.rows}

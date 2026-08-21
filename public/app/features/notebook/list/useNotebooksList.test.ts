@@ -56,8 +56,6 @@ interface SearchExtras {
   totalHitsRelation?: SearchResults['metadata']['totalHitsRelation'];
   /** Whether the endpoint would offer another page — false with a token still set means the ceiling. */
   hasNextPage?: boolean;
-  /** Tag terms the server aggregated for this query, as the facet would return them. */
-  tagFacet?: string[];
   isFetching?: boolean;
   isError?: boolean;
   /**
@@ -83,7 +81,6 @@ function searchPage(items: ResultItem[], extra: SearchExtras = {}): SearchResult
       totalHits: extra.totalHits ?? items.length,
       totalHitsRelation: extra.totalHitsRelation ?? 'eq',
     },
-    ...(extra.tagFacet ? { facets: { tags: extra.tagFacet.map((value) => ({ value, count: 1 })) } } : {}),
   };
 }
 
@@ -179,9 +176,9 @@ function setList(items: Notebook[], extra: { isLoading?: boolean; error?: unknow
   } as unknown as ReturnType<typeof useListNotebookQuery>);
 }
 
-function setupHook(enabled = true, tagFacets = false) {
+function setupHook(enabled = true) {
   const wrapper = getWrapper({ renderWithRouter: false });
-  return renderHook(() => useNotebooksList({ enabled, tagFacets }), { wrapper });
+  return renderHook(() => useNotebooksList({ enabled }), { wrapper });
 }
 
 /** The most recent body the hook asked the server for. */
@@ -916,96 +913,6 @@ describe('useNotebooksList', () => {
 
   // The table resets its page index by being remounted, so this has to change when the committed
   // filters do — and not when rows merely accumulate.
-  describe('tag filtering', () => {
-    // `In` is set membership, so one leaf listing both tags would match a notebook carrying either.
-    // Selecting two tags has to narrow, which an `and` of one leaf each expresses.
-    it('sends a leaf per tag, so several tags narrow rather than widen', async () => {
-      const { result } = setupHook();
-
-      act(() => {
-        result.current.setTagFilter(['latency', 'slo']);
-      });
-
-      await waitFor(() =>
-        expect(lastSearchArg()).toMatchObject({
-          where: {
-            and: [
-              { filter: { field: 'tags', operator: 'In', values: ['latency'] } },
-              { filter: { field: 'tags', operator: 'In', values: ['slo'] } },
-            ],
-          },
-        })
-      );
-    });
-
-    it('combines tags with the search text', async () => {
-      const { result } = setupHook();
-
-      act(() => {
-        result.current.setSearchQuery('checkout');
-        result.current.setTagFilter(['errors']);
-      });
-
-      await waitFor(() =>
-        expect(lastSearchArg()).toMatchObject({
-          where: {
-            and: [{ text: { value: 'checkout' } }, { filter: { field: 'tags', operator: 'In', values: ['errors'] } }],
-          },
-        })
-      );
-    });
-
-    it('counts as filtered, so an empty result reads as no matches rather than no notebooks', async () => {
-      const { result } = setupHook();
-
-      expect(result.current.isFiltered).toBe(false);
-
-      act(() => {
-        result.current.setTagFilter(['latency']);
-      });
-
-      await waitFor(() => expect(result.current.isFiltered).toBe(true));
-    });
-  });
-
-  describe('tag options', () => {
-    // Off by default: a caller with no tag control should not pay for the aggregation.
-    it('asks for the facet only when the caller wants one', () => {
-      setupHook(true, false);
-      expect(lastSearchArg()).not.toHaveProperty('facets');
-
-      setupHook(true, true);
-      expect(lastSearchArg()).toMatchObject({ facets: ['tags'] });
-    });
-
-    it('offers the tags the server aggregated, ordered for a reader', () => {
-      setSearch([makeHit({ name: 'nb1', title: 'One' })], { tagFacet: ['slo', 'Checkout', 'errors'] });
-
-      const { result } = setupHook(true, true);
-
-      expect(result.current.tagOptions.map((option) => option.value)).toEqual(['Checkout', 'errors', 'slo']);
-    });
-
-    /**
-     * Once a tag is filtering, every result carries it, so a tag that only ever appeared alongside it
-     * drops out of the facet. Dropping the selected one from the options would take the chip out of
-     * the control the moment it started working.
-     */
-    it('keeps a selected tag even when the facet stops offering it', async () => {
-      setSearch([makeHit({ name: 'nb1', title: 'One' })], { tagFacet: ['latency'] });
-
-      const { result } = setupHook(true, true);
-
-      act(() => {
-        result.current.setTagFilter(['retired']);
-      });
-
-      await waitFor(() =>
-        expect(result.current.tagOptions.map((option) => option.value)).toEqual(['latency', 'retired'])
-      );
-    });
-  });
-
   describe('filterKey', () => {
     it('changes when the author filter is applied', async () => {
       setSearch([makeHit({ name: 'nb1', title: 'One' })]);

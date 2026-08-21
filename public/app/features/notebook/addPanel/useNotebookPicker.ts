@@ -15,8 +15,7 @@ const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
  * has no table.
  */
 export function useNotebookPicker() {
-  // Tag facets because the picker offers a tag filter; the list page does not, so it does not ask.
-  const list = useNotebooksList({ enabled: true, tagFacets: true });
+  const list = useNotebooksList({ enabled: true });
   const [sort, setSort] = useState<NotebookSort>('updated');
 
   const rows = useMemo(() => sortNotebooks(list.rows, sort), [list.rows, sort]);

@@ -57,14 +57,11 @@ function setPicker(overrides: Partial<ReturnType<typeof useNotebookPicker>> = {}
     isTruncated: false,
     isLoading: false,
     error: undefined,
-    tagOptions: [],
     searchQuery: '',
     setSearchQuery: jest.fn(),
     createdByMe: false,
     setCreatedByMe: jest.fn(),
     canFilterByMe: true,
-    tagFilter: [],
-    setTagFilter: jest.fn(),
     sort: 'updated',
     setSort: jest.fn(),
     ...overrides,
@@ -289,14 +286,6 @@ describe('AddPanelToNotebookModalBody', () => {
   });
 
   describe('filters', () => {
-    // MultiCombobox drops aria-label and reads aria-labelledby, so the obvious spelling leaves the
-    // control with no accessible name at all.
-    it('gives the tag filter an accessible name', () => {
-      renderModal();
-
-      expect(screen.getByRole('combobox', { name: 'Filter by tag' })).toBeInTheDocument();
-    });
-
     // No author dropdown: filtering by an author is supported server-side but listing them is not,
     // so the modal offers the one author it can name without an enumeration.
     it('offers a created-by-me toggle in place of an author picker', async () => {

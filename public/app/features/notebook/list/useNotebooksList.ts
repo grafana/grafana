@@ -5,7 +5,6 @@ import { useDebounce } from 'react-use';
 
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { type ComboboxOption } from '@grafana/ui';
 import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -40,15 +39,6 @@ const SearchField = {
  * clamps to this.
  */
 export const NOTEBOOKS_PAGE_LIMIT = 500;
-
-/**
- * Enough tags to fill a filter dropdown. The server orders terms by count, so a library with more
- * distinct tags than this loses the rarest rather than an arbitrary slice.
- */
-const TAG_FACET_LIMIT = 100;
-
-/** Tag options read as a list, so they are ordered for a reader rather than by code point. */
-const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 /** Projection: everything the table renders, and nothing else. */
 const SEARCH_FIELDS = [
@@ -99,17 +89,11 @@ export interface NotebookRow {
 interface UseNotebooksListOptions {
   /** Skips every request when the feature is disabled, so a gated page issues no traffic. */
   enabled: boolean;
-  /**
-   * Asks the server which tags the matching notebooks carry, for a caller offering a tag filter.
-   * Off by default so a caller with no such control does not pay for the aggregation.
-   */
-  tagFacets?: boolean;
 }
 
-export function useNotebooksList({ enabled, tagFacets = false }: UseNotebooksListOptions) {
+export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   const [searchQuery, setSearchQuery] = useState('');
   const [createdByMe, setCreatedByMe] = useState(false);
-  const [tagFilter, setTagFilter] = useState<string[]>([]);
   // Mirrors the module latch into state, so the branches below have it as a real dependency and a
   // flip re-renders on its own. A fresh mount starts from what earlier mounts already learned.
   const [usingFallback, setUsingFallback] = useState(searchUnavailable);
@@ -123,8 +107,8 @@ export function useNotebooksList({ enabled, tagFacets = false }: UseNotebooksLis
   const filterByAuthor = createdByMe && Boolean(currentUserUid);
 
   const searchBody = useMemo(
-    () => buildSearchQuery(debouncedSearch, filterByAuthor ? currentUserUid : undefined, tagFilter, tagFacets),
-    [debouncedSearch, filterByAuthor, currentUserUid, tagFilter, tagFacets]
+    () => buildSearchQuery(debouncedSearch, filterByAuthor ? currentUserUid : undefined),
+    [debouncedSearch, filterByAuthor, currentUserUid]
   );
 
   const search = useSearchNotebooksInfiniteQuery(enabled && !usingFallback ? searchBody : skipToken);
@@ -248,32 +232,11 @@ export function useNotebooksList({ enabled, tagFacets = false }: UseNotebooksLis
     const needle = debouncedSearch.trim().toLowerCase();
     return namedRows.filter(
       (row) =>
-        (!needle || row.title.toLowerCase().includes(needle)) &&
-        (!filterByAuthor || row.authorUid === currentUserUid) &&
-        // Every selected tag, matching the `and` of leaves the search path sends.
-        tagFilter.every((tag) => row.tags.includes(tag))
+        (!needle || row.title.toLowerCase().includes(needle)) && (!filterByAuthor || row.authorUid === currentUserUid)
     );
-  }, [usingFallback, namedRows, debouncedSearch, filterByAuthor, currentUserUid, tagFilter]);
+  }, [usingFallback, namedRows, debouncedSearch, filterByAuthor, currentUserUid]);
 
-  /**
-   * Tags to offer, from the server's facet on the search path and from the loaded rows on the
-   * fallback path, where there is no facet to read.
-   *
-   * A tag already selected is kept even when the facet stops offering it: once it is filtering, the
-   * results only carry notebooks that have it, so a co-occurring tag can drop out of the facet and
-   * the control would lose the very chip the user is looking at.
-   */
-  const tagOptions = useMemo<Array<ComboboxOption<string>>>(() => {
-    const facetTerms = search.currentData?.pages[0]?.facets?.[SearchField.tags];
-    const available = usingFallback
-      ? uniq(namedRows.flatMap((row) => row.tags))
-      : (facetTerms ?? []).map((term) => term.value);
-    const tags = uniq([...available, ...tagFilter]);
-    tags.sort(collator.compare);
-    return tags.map((tag) => ({ value: tag, label: tag }));
-  }, [search.currentData, usingFallback, namedRows, tagFilter]);
-
-  const isFiltered = Boolean(debouncedSearch.trim()) || filterByAuthor || tagFilter.length > 0;
+  const isFiltered = Boolean(debouncedSearch.trim()) || filterByAuthor;
 
   // Every page carries the same total for the query, so the first one answers for all of them.
   const searchMetadata = search.currentData?.pages[0]?.metadata;
@@ -312,9 +275,6 @@ export function useNotebooksList({ enabled, tagFacets = false }: UseNotebooksLis
     setSearchQuery,
     createdByMe,
     setCreatedByMe,
-    tagFilter,
-    setTagFilter,
-    tagOptions,
     /** Without an identity there is no "me", so the filter has nothing to mean. */
     canFilterByMe: Boolean(currentUserUid),
     /**
@@ -334,7 +294,7 @@ export function useNotebooksList({ enabled, tagFacets = false }: UseNotebooksLis
      * (the table's page index) without resetting it as rows merely accumulate. Built from the
      * committed filters, not the raw input, so it does not change on every keystroke.
      */
-    filterKey: `${debouncedSearch.trim()}|${filterByAuthor}|${tagFilter.join(',')}`,
+    filterKey: `${debouncedSearch.trim()}|${filterByAuthor}`,
     error: active.error,
   };
 }
@@ -344,12 +304,7 @@ export function useNotebooksList({ enabled, tagFacets = false }: UseNotebooksLis
  * notebook — and flattened to a single leaf when only one predicate applies, because v1
  * accepts just a top-level leaf or one `and` of leaves.
  */
-function buildSearchQuery(
-  search: string,
-  authorUid: string | undefined,
-  tags: string[],
-  tagFacets: boolean
-): NotebookSearchQuery {
+function buildSearchQuery(search: string, authorUid: string | undefined): NotebookSearchQuery {
   const leaves: WhereNode[] = [];
   const needle = search.trim();
   if (needle) {
@@ -363,21 +318,12 @@ function buildSearchQuery(
     // notebook cannot have been written that way, so matching on one form is enough here.
     leaves.push({ filter: { field: SearchField.createdBy, operator: 'In', values: [authorUid] } });
   }
-  // One leaf per tag rather than one leaf listing them all: `In` is set membership, so a single leaf
-  // would match a notebook carrying *any* of them. Selecting two tags narrows the list here as it
-  // does elsewhere in Grafana, and `and` of leaves is what expresses that.
-  for (const tag of tags) {
-    leaves.push({ filter: { field: SearchField.tags, operator: 'In', values: [tag] } });
-  }
 
   // No sort: `created`/`updated` are retrieve-only and 422 if sorted on, and the table owns
   // ordering anyway. The server ranks by relevance for a text query and by name otherwise.
   return {
     fields: SEARCH_FIELDS,
     limit: NOTEBOOKS_PAGE_LIMIT,
-    // Faceted against the same query, so the options offered are the tags the current results
-    // actually carry rather than every tag in the library.
-    ...(tagFacets ? { facets: [SearchField.tags], facetLimit: TAG_FACET_LIMIT } : {}),
     ...(leaves.length === 1 ? { where: leaves[0] } : {}),
     ...(leaves.length > 1 ? { where: { and: leaves } } : {}),
   };
