@@ -205,9 +205,9 @@
         "border": "palette.violet200"
       },
       {
-        "text": "palette.ink800",
-        "background": "palette.ink50",
-        "border": "palette.ink200"
+        "text": "palette.neutral800",
+        "background": "palette.neutral50",
+        "border": "palette.neutral200"
       }
     ]
   }

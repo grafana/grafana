@@ -194,7 +194,7 @@
           "border": "palette.sage800"
         },
         {
-          "text": "palette.orange400",
+          "text": "palette.orange300",
           "background": "palette.orange950",
           "border": "palette.orange800"
         },
@@ -204,9 +204,9 @@
           "border": "palette.violet800"
         },
         {
-          "text": "palette.ink200",
-          "background": "palette.ink850",
-          "border": "palette.ink650"
+          "text": "palette.ink300",
+          "background": "palette.ink950",
+          "border": "palette.ink800"
         }
       ]
     }
