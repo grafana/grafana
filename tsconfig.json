@@ -38,5 +38,10 @@
     "packages/grafana-ui/src/types",
     "public/boot/**/*.ts*"
   ],
-  "exclude": ["public/app/**/webpack.config.ts", "public/app/**/__smoke__/**", "public/app/**/*.smoke.ts"]
+  "exclude": [
+    "public/app/**/webpack.config.ts",
+    "public/app/**/rspack.config.ts",
+    "public/app/**/__smoke__/**",
+    "public/app/**/*.smoke.ts"
+  ]
 }
