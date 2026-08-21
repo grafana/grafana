@@ -24,7 +24,11 @@ import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboar
 
 import { canEditNotebooks } from '../permissions';
 
+import { NotebookAutosave } from './NotebookAutosave';
+import { NotebookEditHistory } from './NotebookEditHistory';
+import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 import { NotebookEditToggle } from './NotebookEditToggle';
+import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
@@ -50,6 +54,11 @@ export interface NotebookSceneState extends SceneObjectState {
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
   public static Component = NotebookSceneRenderer;
+  public readonly editHistory = new NotebookEditHistory();
+  // The layout manager needs to find the scene it lives in. It cannot use instanceof, because
+  // importing this class would make the two files import each other, so it looks for this field.
+  public readonly isNotebookScene = true;
+  public readonly autosave = new NotebookAutosave(this);
 
   // Edit mode is reflected in the url by this handler rather than by the methods below, so the url
   // stays a projection of the state instead of a second copy of it.
@@ -104,11 +113,18 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         if (newState.body !== prevState.body || newState.isEditing !== prevState.isEditing) {
           newState.body.editModeChanged?.(Boolean(newState.isEditing));
         }
+        // Every undo step puts a cell back into the body that recorded it. That body is gone now, so
+        // the steps cannot run any more.
+        if (newState.body !== prevState.body) {
+          this.editHistory.clear();
+        }
       });
 
       const destroyMutationClient = createMutationClient(this, 'notebook');
+      const stopAutosave = this.autosave.start();
 
       return () => {
+        stopAutosave();
         destroyMutationClient();
         stateSub.unsubscribe();
         refreshPickerDeactivation?.();
@@ -141,14 +157,21 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       return;
     }
 
+    // Before the state change, because entering edit mode is itself a state change and autosave decides
+    // what to write the moment it sees one.
+    this.autosave.notifyEditingStarted();
     this.setState({ isEditing: true });
     // Same channel DashboardScene uses to tell its layout the mode changed.
     this.state.body.editModeChanged?.(true);
   };
 
   public onExitEditMode = () => {
+    this.state.body.commitContentEdits();
     this.setState({ isEditing: false });
     this.state.body.editModeChanged?.(false);
+    // Leaving edit mode is a natural save point, and it is where changes stop counting. Without this, a
+    // save still waiting on the debounce would sit there until the page unmounts.
+    this.autosave.flush();
   };
 
   public showModal(modal: SceneObject) {
@@ -185,12 +208,16 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay } = model.useState();
+  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
 
   return (
     <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
       <div className={styles.controls}>
+        {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has to
+            be visible and retryable there too. This renders nothing until there is something to say. */}
+        <NotebookSaveStatus autosave={model.autosave} />
+        {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
         <NotebookEditToggle notebook={model} />
         {!hideTimeControls && (
           <>
