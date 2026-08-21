@@ -6,7 +6,7 @@ import { escapeStringForRegex } from '@grafana/data';
 import FlameGraphCallTreeContainer from './CallTree/FlameGraphCallTreeContainer';
 import FlameGraph from './FlameGraph/FlameGraph';
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
-import { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { type FlameGraphDataContainer, type LevelItem } from './FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
 import { useColorScheme } from './hooks';
@@ -38,6 +38,7 @@ type FlameGraphPaneProps = {
   contentAwareWidthsEnabled?: boolean;
   // Set when the host bounds our height, so the table sizes to the pane instead of a fixed height.
   fillHeight?: boolean;
+  loadingItems?: Set<LevelItem>;
 };
 
 const FlameGraphPane = ({
@@ -64,6 +65,7 @@ const FlameGraphPane = ({
   tableRefreshEnabled,
   contentAwareWidthsEnabled,
   fillHeight,
+  loadingItems,
 }: FlameGraphPaneProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
   const focusedItemPathRef = useRef<string[] | undefined>(undefined);
@@ -297,6 +299,7 @@ const FlameGraphPane = ({
           search={search}
           collapsedMap={collapsedMap}
           setCollapsedMap={setCollapsedMap}
+          loadingItems={loadingItems}
         />
       );
       break;
