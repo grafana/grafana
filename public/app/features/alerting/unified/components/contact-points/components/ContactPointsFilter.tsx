@@ -22,14 +22,15 @@ const ContactPointsFilter = () => {
 
   return (
     <Stack direction="row" alignItems="end" gap={0.5}>
-      <Field noMargin label={t('alerting.contact-points-filter.label-search-by-name-or-type', 'search contact points')}>
+      <Field
+        noMargin
+        label={t('alerting.contact-points-filter.label-search-by-name-or-type', 'Search by name or type')}
+      >
         <FilterInput
-          aria-label={t(
-            'alerting.contact-points-filter.aria-label-search-contact-points',
-            'Search contact point by name or type'
-          )}
           placeholder={t('alerting.contact-points-filter.placeholder-search', 'Search')}
           width={46}
+          // the search term is handed to uFuzzy as a plain needle, so escaping regex characters would break matching
+          escapeRegex={false}
           onChange={(value) => {
             setSearchValue(value);
 
