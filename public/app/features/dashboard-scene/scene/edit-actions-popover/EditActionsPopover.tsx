@@ -93,15 +93,9 @@ export function HoverPopover({
       {cloneElement(children, getReferenceProps({ ref: mergedRef }))}
       {isOpen && content && (
         <Portal root={portalRoot} zIndex={zIndex ?? theme.zIndex.portal}>
-          <div
-            ref={refs.setFloating}
-            style={floatingStyles}
-            className={styles.popover}
-            {...getFloatingProps()}
-            data-xxx
-          >
+          <div ref={refs.setFloating} style={floatingStyles} className={styles.popover} {...getFloatingProps()}>
             <EditActionsPopoverContext.Provider value={popoverContextValue}>
-              {/* Stops pointerdown from all actions reaching ancestors, e.g. element selection.
+              {/* Stops pointerdown from all actions reaching ancestors, e.g. to prevent an element selection.
               It cannot live on the icon buttons because their wrapping Tooltip overrides their pointerdown handlers */}
               <div className={styles.actions} onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}>
                 {content}
