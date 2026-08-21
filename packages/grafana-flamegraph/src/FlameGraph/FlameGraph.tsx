@@ -60,6 +60,7 @@ type Props = {
   search: string;
   collapsedMap: CollapsedMap;
   setCollapsedMap: (collapsedMap: CollapsedMap) => void;
+  loadingItems?: Set<LevelItem>;
 
   viewMode: ViewMode;
   paneView: PaneView;
@@ -89,6 +90,7 @@ const FlameGraph = ({
   search,
   collapsedMap,
   setCollapsedMap,
+  loadingItems,
   viewMode,
   paneView,
   onTextAlignChange,
@@ -148,6 +150,7 @@ const FlameGraph = ({
     showFlameGraphOnly,
     collapsedMap,
     setCollapsedMap,
+    loadingItems,
     getExtraContextMenuButtons,
     collapsing,
     search,
