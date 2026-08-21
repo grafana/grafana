@@ -6,9 +6,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { NavID, NavWeight } from '../constants';
 import { dashboardVariablesAccess, dashboardsCreateAccess, playlistsAccess, snapshotsAccess } from '../pageAccess';
-import { buildEntries, hasAny, isSignedIn, type NavEntryBuilder } from '../utils';
+import { anonymousOrSignedIn, buildEntries, hasAny, isSignedIn, type NavEntryBuilder } from '../utils';
 
-const anonymousOrSignedIn = () => isSignedIn() || config.anonymousEnabled;
 // Any org role at all grants the legacy (pre-RBAC) playlists visibility,
 // as does a Grafana server admin — mirrors the inclusive c.HasRole(RoleViewer)
 // check in pkg/services/navtree/navtreeimpl/navtree.go
@@ -22,6 +21,12 @@ const DASHBOARD_CHILDREN: NavEntryBuilder[] = [
   {
     // Playlists are visible to anonymous users too, so the nav stays consistent
     // with the playlist page and API which both serve anonymous Viewers.
+    //
+    // playlistsRBAC is still a legacy toggle (not yet OpenFeature). The
+    // multi-tenant frontend service's reduced boot ships config.featureToggles
+    // empty, so this reads false there and the gate falls back to the legacy
+    // role check — a known divergence pending the toggle's migration to
+    // OpenFeature, after which this should read via getFeatureFlagClient().
     when: () =>
       anonymousOrSignedIn() && (config.featureToggles.playlistsRBAC ? playlistsAccess() : legacyPlaylistsAccess()),
     build: () => ({

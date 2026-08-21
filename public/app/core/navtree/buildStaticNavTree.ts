@@ -1,3 +1,5 @@
+import { cloneDeep } from 'lodash';
+
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -40,7 +42,10 @@ function isClientNavTreeEnabled(): boolean {
  */
 export function getInitialNavTree(): NavModelItem[] {
   if (!isClientNavTreeEnabled()) {
-    return config.bootData?.navTree ?? [];
+    // Clone so callers get an owned tree: the flag-off path returns the shared
+    // bootData reference, which the redux slices would otherwise mutate. The
+    // flag-on path below already returns freshly built objects.
+    return cloneDeep(config.bootData?.navTree ?? []);
   }
 
   const staticTree = applyAppSubUrl(buildStaticNavTree());

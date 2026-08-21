@@ -1,5 +1,15 @@
-// The order sections appear in the nav; weights are derived from position,
-// negative so default-weight items always sort below.
+// The order (and therefore sort weight) of every nav section, mirroring the
+// WeightX iota constants in pkg/services/navtree/models.go. It MUST stay in
+// lockstep with the Go order: the client- and server-built trees are merged
+// for plugin/enterprise items that carry server-assigned weights, so if a
+// section is added on only one side those items interleave differently and
+// nothing catches it (until a golden parity test lands).
+//
+// It is kept separate from NavID (rather than deriving order from it) because
+// it also positions weight-only anchors that have no NavID (assistant, sigil,
+// aiAndMl, cmab, application, asserts, dataConnections, plugin, ...) and groups
+// several NavIDs under one weight (savedItems ← starred/bookmarks, config ←
+// cfg, dataConnections ← connections).
 const NAV_ORDER = [
   'home',
   'bookmarks',
@@ -38,6 +48,8 @@ const NAV_ORDER = [
 function computeNavWeights(): Record<(typeof NAV_ORDER)[number], number> {
   const weights: Record<string, number> = {};
   NAV_ORDER.forEach((key, index) => {
+    // Mirrors Go's `WeightHome = (iota - 40) * 100` (pkg/services/navtree/models.go):
+    // the -40 offset keeps the ordered sections negative so unweighted items sort below.
     weights[key] = (index - 40) * 100;
   });
   return weights;

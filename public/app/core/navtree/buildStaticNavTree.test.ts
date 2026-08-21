@@ -102,23 +102,26 @@ describe('buildStaticNavTree', () => {
       ).toBeDefined();
     });
 
-    it('shows playlists to any org role and to server admins when the RBAC toggle is off', () => {
-      const playlists = (tree: NavModelItem[]) =>
-        findById(findById(tree, NavID.dashboards)?.children ?? [], 'dashboards/playlists');
+    // With the RBAC toggle off, legacy visibility is any org role (Viewer+) or a
+    // Grafana server admin — mirrors the inclusive c.HasRole(RoleViewer) in Go.
+    it.each([
+      { orgRole: 'Viewer', isGrafanaAdmin: false, visible: true },
+      { orgRole: 'Editor', isGrafanaAdmin: false, visible: true },
+      { orgRole: 'Admin', isGrafanaAdmin: false, visible: true },
+      { orgRole: 'None', isGrafanaAdmin: true, visible: true },
+      { orgRole: 'None', isGrafanaAdmin: false, visible: false },
+    ] as const)(
+      'shows playlists=$visible for org role $orgRole (grafanaAdmin=$isGrafanaAdmin) when the RBAC toggle is off',
+      ({ orgRole, isGrafanaAdmin, visible }) => {
+        setup({ orgRole, isGrafanaAdmin, permissions: DASHBOARD_READER });
 
-      setup({ orgRole: 'Editor', permissions: DASHBOARD_READER });
-      expect(playlists(buildStaticNavTree())).toBeDefined();
-
-      setup({ orgRole: 'Admin', permissions: DASHBOARD_READER });
-      expect(playlists(buildStaticNavTree())).toBeDefined();
-
-      // A Grafana server admin passes regardless of org role, like Go's HasRole
-      setup({ orgRole: 'None', isGrafanaAdmin: true, permissions: DASHBOARD_READER });
-      expect(playlists(buildStaticNavTree())).toBeDefined();
-
-      setup({ orgRole: 'None', permissions: DASHBOARD_READER });
-      expect(playlists(buildStaticNavTree())).toBeUndefined();
-    });
+        const playlists = findById(
+          findById(buildStaticNavTree(), NavID.dashboards)?.children ?? [],
+          'dashboards/playlists'
+        );
+        expect(Boolean(playlists)).toBe(visible);
+      }
+    );
   });
 
   describe('profile section', () => {

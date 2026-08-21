@@ -6,6 +6,7 @@ import { NavID, type NavId } from './constants';
 
 export const hasAny = (...actions: string[]) => userHasAnyPermission(actions, contextSrv.user);
 export const isSignedIn = () => contextSrv.isSignedIn;
+export const anonymousOrSignedIn = () => isSignedIn() || config.anonymousEnabled;
 
 export interface NavEntryBuilder {
   /** Whether this item is visible at all (permission/config/sign-in gates); absent means always visible */
@@ -71,7 +72,7 @@ export function sortNavTree(nodes: NavModelItem[]): NavModelItem[] {
 
   return nodes
     .map((node, index) => ({ node, index }))
-    .sort((a, b) => weightOf(a.node, a.index) - weightOf(b.node, b.index) || a.index - b.index)
+    .sort((a, b) => weightOf(a.node, a.index) - weightOf(b.node, b.index))
     .map(({ node }) => (node.children ? { ...node, children: sortNavTree(node.children) } : node));
 }
 
