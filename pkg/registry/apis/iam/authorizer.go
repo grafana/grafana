@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	authzlib "github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -72,7 +73,7 @@ func newIAMAuthorizer(
 
 	// Access specific resources
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = roleApiInstaller.GetAuthorizer()
-	resourceAuthorizer[iamv0.TeamLBACRuleInfo.GetName()] = teamLbacApiInstaller.GetAuthorizer()
+	resourceAuthorizer[iamv0.TeamLBACRuleInfo.GetName()] = newTeamLBACRuleAuthorizer(teamLbacApiInstaller.GetAuthorizer())
 	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = blockWatchAuthorizer // Block Watch, allow others (storage-layer handles authorization)
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = roleBindingsApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = newServiceAccountAuthorizer(accessClient)
@@ -99,6 +100,37 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.GlobalRoleInfo.GetName()] = globalRoleApiInstaller.GetAuthorizer()
 
 	return &iamAuthorizer{resourceAuthorizer: resourceAuthorizer}
+}
+
+func newTeamLBACRuleAuthorizer(base authorizer.Authorizer) authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if attr.GetSubresource() != "for-subject" {
+			// Base CRUD is authorized by the storage wrapper after it resolves the
+			// TeamLBACRule to the datasource whose permissions must be checked.
+			return base.Authorize(ctx, attr)
+		}
+
+		// The caller chooses the subject evaluated by this subresource, so user
+		// requests must not reach it even when they carry delegated service
+		// permissions. Only a direct service call with TeamLBACRule read access
+		// may evaluate rules for another identity.
+		authInfo, ok := authlib.AuthInfoFrom(ctx)
+		if !ok {
+			return authorizer.DecisionDeny, "for-subject requires an authenticated service identity", nil
+		}
+		// for-subject lets a service select which user's rules are returned. Check
+		// the exact TeamLBACRule read permission instead of trusting attr to
+		// describe the permission this sensitive operation requires.
+		resource := iamv0.TeamLBACRuleInfo.GroupResource()
+		servicePermission := authzlib.CheckServicePermissions(authInfo, resource.Group, resource.Resource, utils.VerbGet)
+		if !servicePermission.ServiceCall {
+			return authorizer.DecisionDeny, "for-subject only accepts direct service calls", nil
+		}
+		if !servicePermission.Allowed {
+			return authorizer.DecisionDeny, "calling service lacks TeamLBACRule read permission", nil
+		}
+		return authorizer.DecisionAllow, "", nil
+	})
 }
 
 func (s *iamAuthorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {

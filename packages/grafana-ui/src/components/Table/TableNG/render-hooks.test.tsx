@@ -2,7 +2,7 @@
 import { render, renderHook, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import memoize from 'micro-memoize';
-import { type ComponentProps, createRef, isValidElement, type Key } from 'react';
+import { Children, type ComponentProps, createRef, isValidElement, type Key, type ReactNode } from 'react';
 
 import {
   createDataFrame,
@@ -21,8 +21,16 @@ import { getTextColorForBackground } from '../../../utils/colors';
 import { type PanelContext } from '../../PanelChrome';
 
 import { type HeaderCell } from './components/HeaderCell';
+import { TABLE } from './constants';
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
-import { type FilterType, type NestedRowEntry, type TableColumn, type TableRow, type TableSummaryRow } from './types';
+import {
+  type FilterType,
+  type NestedRowEntry,
+  type TableCellRendererProps,
+  type TableColumn,
+  type TableRow,
+  type TableSummaryRow,
+} from './types';
 import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
@@ -286,6 +294,29 @@ function getHeaderCellProps(column: TableColumn): ComponentProps<typeof HeaderCe
   return node.props;
 }
 
+/**
+ * The width handed to a cell renderer is only observable through the cell component's props;
+ * renderCell wraps that component in a fragment alongside the optional cell actions.
+ */
+function getCellRendererProps(column: TableColumn, row: TableRow): TableCellRendererProps {
+  const node = column.renderCell?.({
+    column: column as unknown as CalculatedColumn<TableRow, TableSummaryRow>,
+    row,
+    rowIdx: row.__index,
+    isCellEditable: false,
+    tabIndex: -1,
+    onRowChange: jest.fn(),
+  });
+  if (!isValidElement<{ children: ReactNode }>(node)) {
+    throw new Error(`renderCell did not return an element for column "${column.key}"`);
+  }
+  const [cell] = Children.toArray(node.props.children);
+  if (!isValidElement<TableCellRendererProps>(cell)) {
+    throw new Error(`renderCell did not render a cell component for column "${column.key}"`);
+  }
+  return cell.props;
+}
+
 function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConfig {
   const theme = createTheme();
   const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
@@ -391,6 +422,15 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
     expect(result.columns[0].width).toBe(150);
     expect(result.columns[1].width).toBe(200);
+  });
+
+  it('hands cell renderers the column width reduced by the cell chrome (padding and border)', () => {
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+    const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
+
+    const cellChrome = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+    expect(getCellRendererProps(result.columns[0], rows[0]).width).toBe(150 - cellChrome);
+    expect(getCellRendererProps(result.columns[1], rows[0]).width).toBe(200 - cellChrome);
   });
 
   function makePillFrame({ withMappings }: { withMappings: boolean }): DataFrame {

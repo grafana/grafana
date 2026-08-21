@@ -20,7 +20,7 @@ import { TransformationCard } from '../../../dashboard/components/Transformation
 import sqlDarkImage from '../../../expressions/images/dark/sqlExpression.svg';
 import sqlLightImage from '../../../expressions/images/light/sqlExpression.svg';
 
-import { hasBackendDatasource } from './utils';
+import { useHasBackendDatasource } from './utils';
 
 interface EmptyTransformationsProps {
   onShowPicker: () => void;
@@ -110,11 +110,13 @@ function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
     props.onShowPicker();
   };
 
+  const hasBackendDs = useHasBackendDatasource({
+    datasourceUid: props.datasourceUid,
+    queries: props.queries,
+  });
+
   // Show the SQL Expression card if any datasource in the query set is a backend datasource.
-  const showSqlCard =
-    hasGoToQueries &&
-    config.featureToggles.sqlExpressions &&
-    hasBackendDatasource({ datasourceUid: props.datasourceUid, queries: props.queries });
+  const showSqlCard = hasGoToQueries && config.featureToggles.sqlExpressions && hasBackendDs;
 
   return (
     <Box padding={2}>
