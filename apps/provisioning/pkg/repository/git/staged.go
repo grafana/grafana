@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -65,6 +66,8 @@ func (r *stagedGitRepository) isRefSupported(ref string) bool {
 	return ref == stagingBranch
 }
 
+// Read and ReadTree are deliberately not instrumented here: they delegate to
+// the embedded gitRepository, which records them itself.
 func (r *stagedGitRepository) Read(ctx context.Context, path, ref string) (*repository.FileInfo, error) {
 	if !r.isRefSupported(ref) {
 		return nil, errors.New("ref is not supported for staged repository")
@@ -121,7 +124,10 @@ func (r *stagedGitRepository) handleCommitAndPush(ctx context.Context, message s
 	}
 }
 
-func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data []byte, message string) error {
+func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data []byte, message string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if !r.isRefSupported(ref) {
 		return errors.New("ref is not supported for staged repository")
 	}
@@ -140,7 +146,10 @@ func (r *stagedGitRepository) blobExists(ctx context.Context, path string) (bool
 	return r.writer.BlobExists(ctx, path)
 }
 
-func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data []byte, message string) error {
+func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data []byte, message string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if !r.isRefSupported(ref) {
 		return errors.New("ref is not supported for staged repository")
 	}
@@ -163,7 +172,10 @@ func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data 
 	return r.handleCommitAndPush(ctx, message)
 }
 
-func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data []byte, message string) error {
+func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data []byte, message string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if !r.isRefSupported(ref) {
 		return errors.New("ref is not supported for staged repository")
 	}
@@ -179,7 +191,10 @@ func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data
 	return r.handleCommitAndPush(ctx, message)
 }
 
-func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message string) error {
+func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Delete(start, err) }()
+
 	if !r.isRefSupported(ref) {
 		return errors.New("ref is not supported for staged repository")
 	}
@@ -191,7 +206,10 @@ func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message str
 	return r.handleCommitAndPush(ctx, message)
 }
 
-func (r *stagedGitRepository) Move(ctx context.Context, oldPath, newPath, ref, message string) error {
+func (r *stagedGitRepository) Move(ctx context.Context, oldPath, newPath, ref, message string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Move(start, err) }()
+
 	if !r.isRefSupported(ref) {
 		return errors.New("ref is not supported for staged repository")
 	}

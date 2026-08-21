@@ -92,7 +92,7 @@ func TestDualReadWriter_FolderScopeGuard(t *testing.T) {
 		tree.Add(teamAFolder, "")
 		fm := NewFolderManager(rw, nil, tree, FolderKind)
 
-		dw := NewDualReadWriter(rw, parser, fm, stubAuthorizer{}, false, nil)
+		dw := NewDualReadWriter(rw, parser, fm, stubAuthorizer{}, false)
 		return dw, parsed, rw
 	}
 

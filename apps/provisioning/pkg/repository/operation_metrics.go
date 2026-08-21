@@ -5,17 +5,31 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// OperationMetrics tracks every operation performed against a repository
-// (read, write, delete, move, tree listing) — regardless of which caller
-// (job execution, the files API, the parser, the authorizer, sync
-// compare/diff, ...) performs it: size (where there is a byte payload),
-// duration, and outcome.
+// Operation labels for the repository operation metrics. Reads and writes carry
+// a byte payload and are observed on the size histogram too; the rest only
+// record duration and outcome.
+const (
+	OperationRead   = "read"
+	OperationWrite  = "write"
+	OperationList   = "list"
+	OperationDelete = "delete"
+	OperationMove   = "move"
+)
+
+// OperationMetrics tracks the work repositories do on behalf of their callers:
+// size (where there is a byte payload), duration and outcome, per operation and
+// repository type. The repository implementations record it themselves, behind
+// the Repository interface, so every caller — job execution, the files API, the
+// parser, the authorizer, sync compare/diff, ... — is covered without having to
+// opt in.
 type OperationMetrics struct {
-	sizeHist     *prometheus.HistogramVec // operation
-	durationHist *prometheus.HistogramVec // operation
-	opsTotal     *prometheus.CounterVec   // operation, outcome
+	sizeHist     *prometheus.HistogramVec // operation, repository_type
+	durationHist *prometheus.HistogramVec // operation, repository_type
+	opsTotal     *prometheus.CounterVec   // operation, repository_type, outcome
 }
 
 var (
@@ -34,7 +48,7 @@ func RegisterOperationMetrics(reg prometheus.Registerer) *OperationMetrics {
 				// so the configured cap sits mid-histogram instead of at the +Inf edge.
 				Buckets: prometheus.ExponentialBuckets(128, 2, 20),
 			},
-			[]string{"operation"},
+			[]string{"operation", "repository_type"},
 		)
 		reg.MustRegister(sizeHist)
 
@@ -44,7 +58,7 @@ func RegisterOperationMetrics(reg prometheus.Registerer) *OperationMetrics {
 				Help:    "Duration of repository operations",
 				Buckets: prometheus.ExponentialBucketsRange(0.001, 30, 10), // 1ms -> 30s
 			},
-			[]string{"operation"},
+			[]string{"operation", "repository_type"},
 		)
 		reg.MustRegister(durationHist)
 
@@ -53,7 +67,7 @@ func RegisterOperationMetrics(reg prometheus.Registerer) *OperationMetrics {
 				Name: "grafana_provisioning_repository_operations_total",
 				Help: "Total repository operations, by outcome",
 			},
-			[]string{"operation", "outcome"},
+			[]string{"operation", "repository_type", "outcome"},
 		)
 		reg.MustRegister(opsTotal)
 
@@ -66,39 +80,69 @@ func RegisterOperationMetrics(reg prometheus.Registerer) *OperationMetrics {
 	return operationMetrics
 }
 
-// RecordRead observes a repository read: its duration, outcome, and (on
-// success) the size of the data read.
-func (m *OperationMetrics) RecordRead(sizeBytes int, duration time.Duration, err error) {
-	m.recordSize("read", sizeBytes, duration, err)
-}
-
-// RecordWrite observes a repository write: its duration, outcome, and (on
-// success) the size of the data written.
-func (m *OperationMetrics) RecordWrite(sizeBytes int, duration time.Duration, err error) {
-	m.recordSize("write", sizeBytes, duration, err)
-}
-
-// RecordOperation observes a repository operation with no byte payload
-// (delete, move, tree listing): duration and outcome only.
-func (m *OperationMetrics) RecordOperation(operation string, duration time.Duration, err error) {
-	m.recordOutcome(operation, duration, err)
-}
-
-func (m *OperationMetrics) recordSize(operation string, sizeBytes int, duration time.Duration, err error) {
+// Recorder returns a recorder that labels everything it observes with repoType,
+// for a repository implementation to hold for its lifetime. A nil
+// *OperationMetrics yields a nil recorder, whose methods do nothing, so
+// repositories built without metrics (tests, dev tooling) work unchanged.
+func (m *OperationMetrics) Recorder(repoType provisioning.RepositoryType) *OperationRecorder {
 	if m == nil {
+		return nil
+	}
+	return &OperationRecorder{metrics: m, repoType: string(repoType)}
+}
+
+// OperationRecorder records the operations of a single repository. The nil
+// recorder is usable and records nothing.
+type OperationRecorder struct {
+	metrics  *OperationMetrics
+	repoType string
+}
+
+// Read records a read that started at start. info may be nil, which is how a
+// failed read reports "no data".
+func (r *OperationRecorder) Read(start time.Time, info *FileInfo, err error) {
+	size := 0
+	if info != nil {
+		size = len(info.Data)
+	}
+	r.recordSize(OperationRead, start, size, err)
+}
+
+// Write records a write of sizeBytes that started at start.
+func (r *OperationRecorder) Write(start time.Time, sizeBytes int, err error) {
+	r.recordSize(OperationWrite, start, sizeBytes, err)
+}
+
+// List records a tree listing that started at start.
+func (r *OperationRecorder) List(start time.Time, err error) {
+	r.recordOutcome(OperationList, start, err)
+}
+
+// Delete records a delete that started at start.
+func (r *OperationRecorder) Delete(start time.Time, err error) {
+	r.recordOutcome(OperationDelete, start, err)
+}
+
+// Move records a move that started at start.
+func (r *OperationRecorder) Move(start time.Time, err error) {
+	r.recordOutcome(OperationMove, start, err)
+}
+
+func (r *OperationRecorder) recordSize(operation string, start time.Time, sizeBytes int, err error) {
+	if r == nil {
 		return
 	}
-	m.recordOutcome(operation, duration, err)
+	r.recordOutcome(operation, start, err)
 	// Size is only meaningful once the data is actually known good; a failed
 	// read/write has no reliable size and would otherwise skew the low end of
 	// the histogram with zeroes.
-	if err == nil && m.sizeHist != nil {
-		m.sizeHist.WithLabelValues(operation).Observe(float64(sizeBytes))
+	if err == nil {
+		r.metrics.sizeHist.WithLabelValues(operation, r.repoType).Observe(float64(sizeBytes))
 	}
 }
 
-func (m *OperationMetrics) recordOutcome(operation string, duration time.Duration, err error) {
-	if m == nil {
+func (r *OperationRecorder) recordOutcome(operation string, start time.Time, err error) {
+	if r == nil {
 		return
 	}
 
@@ -107,10 +151,6 @@ func (m *OperationMetrics) recordOutcome(operation string, duration time.Duratio
 		outcome = "error"
 	}
 
-	if m.opsTotal != nil {
-		m.opsTotal.WithLabelValues(operation, outcome).Inc()
-	}
-	if m.durationHist != nil {
-		m.durationHist.WithLabelValues(operation).Observe(duration.Seconds())
-	}
+	r.metrics.opsTotal.WithLabelValues(operation, r.repoType, outcome).Inc()
+	r.metrics.durationHist.WithLabelValues(operation, r.repoType).Observe(time.Since(start).Seconds())
 }

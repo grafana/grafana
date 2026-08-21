@@ -115,7 +115,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	operationMetrics := repository.RegisterOperationMetrics(registry)
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
@@ -133,7 +132,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		statusPatcher.Patch,
 		syncer,
 		metrics,
-		operationMetrics,
 		tracer,
 		maxSyncWorkers,
 		cfg.ProvisioningMaxFileSize,
@@ -150,7 +148,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		export.ExportAllWithNewUIDs,
 		stageIfPossible,
 		metrics,
-		operationMetrics,
 	)
 
 	// Migration export preserves original names so the takeover
@@ -162,7 +159,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		export.ExportAll,
 		stageIfPossible,
 		metrics,
-		operationMetrics,
 	)
 	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -173,13 +169,13 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
 
 	// Delete
-	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics, operationMetrics)
+	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 
 	// Move
-	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics, operationMetrics)
+	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 
 	// Fix Metadata
-	fixMetadataWorker := fixfoldermetadata.NewWorker(clients, operationMetrics)
+	fixMetadataWorker := fixfoldermetadata.NewWorker(clients)
 
 	// Release Resources (orphan cleanup — removes ownership annotations)
 	releaseResourcesWorker := releaseresourcespkg.NewWorker(resourceLister, clients, 10)

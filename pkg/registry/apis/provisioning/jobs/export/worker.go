@@ -35,9 +35,6 @@ type ExportWorker struct {
 	exportFn            ExportFn
 	wrapWithStageFn     WrapWithStageFn
 	metrics             jobs.JobMetrics
-	// operationMetrics observes every repository operation performed during
-	// this job (size, duration, outcome), regardless of caller.
-	operationMetrics *repository.OperationMetrics
 }
 
 func NewExportWorker(
@@ -47,7 +44,6 @@ func NewExportWorker(
 	exportFn ExportFn,
 	wrapWithStageFn WrapWithStageFn,
 	metrics jobs.JobMetrics,
-	operationMetrics *repository.OperationMetrics,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
@@ -56,7 +52,6 @@ func NewExportWorker(
 		exportFn:            exportFn,
 		wrapWithStageFn:     wrapWithStageFn,
 		metrics:             metrics,
-		operationMetrics:    operationMetrics,
 	}
 }
 
@@ -131,7 +126,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			logger.Error("export job submitted targeting repository that is not a ReaderWriter")
 			return errors.New("export job submitted targeting repository that is not a ReaderWriter")
 		}
-		rw = repository.WrapReaderWriter(rw, r.operationMetrics)
 
 		repositoryResources, err := r.repositoryResources.Client(ctx, rw)
 		if err != nil {

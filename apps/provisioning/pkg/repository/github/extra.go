@@ -25,14 +25,16 @@ type extra struct {
 	webhookBuilder WebhookURLBuilder
 	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
 	allowInsecure bool
+	metrics       *repository.OperationMetrics
 }
 
-func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, allowInsecure bool) repository.Extra {
+func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, allowInsecure bool, metrics *repository.OperationMetrics) repository.Extra {
 	return &extra{
 		decrypter:      decrypter,
 		factory:        factory,
 		webhookBuilder: webhookBuilder,
 		allowInsecure:  allowInsecure,
+		metrics:        metrics,
 	}
 }
 
@@ -66,7 +68,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		CommitSigningKey: signingKey,
 		SigningMethod:    git.SigningMethodFromSpec(r),
 		SMIMECertificate: git.SMIMECertificateFromSpec(r),
-	})
+	}, e.metrics)
 	if err != nil {
 		return nil, fmt.Errorf("error creating git repository: %w", err)
 	}
