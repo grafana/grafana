@@ -165,6 +165,154 @@ func TestService_checkPermission(t *testing.T) {
 			expected: false,
 		},
 		{
+			name: "should not treat general as parent of root dashboards on get",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "some_dashboard",
+				ParentFolder: "",
+				Verb:         utils.VerbGet,
+			},
+			expected: false,
+		},
+		{
+			name: "should not treat general as parent of root folders on get",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "folders:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "folders:read",
+				Group:        "folder.grafana.app",
+				Resource:     "folders",
+				Name:         "admin-only",
+				ParentFolder: "",
+				Verb:         utils.VerbGet,
+			},
+			expected: false,
+		},
+		{
+			name: "should check general folder scope for root variable get with empty parent",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "variables:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				ParentFolder: "",
+				Verb:         utils.VerbGet,
+			},
+			expected: true,
+		},
+		{
+			name: "should check general folder scope for root variable update with empty parent",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:write",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "variables:write",
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				ParentFolder: "",
+				Verb:         utils.VerbUpdate,
+			},
+			expected: true,
+		},
+		{
+			name: "should check general folder scope for root variable delete with empty parent",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:delete",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "variables:delete",
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				ParentFolder: "",
+				Verb:         utils.VerbDelete,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny root variable get when grant is on a different folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:read",
+					Scope:      "folders:uid:folder-a",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "folder-a",
+				},
+			},
+			folders: []store.Folder{{UID: "folder-a"}},
+			check: checkRequest{
+				Action:       "variables:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				ParentFolder: "",
+				Verb:         utils.VerbGet,
+			},
+			expected: false,
+		},
+		{
+			name: "should check general folder scope for root variable get stored as general",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "variables:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				ParentFolder: accesscontrol.GeneralFolderUID,
+				Verb:         utils.VerbGet,
+			},
+			expected: true,
+		},
+		{
 			name:        "should return false if user has no permissions on resource",
 			permissions: []accesscontrol.Permission{},
 			check: checkRequest{
@@ -705,6 +853,29 @@ func TestService_mapping(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "should map variables create to folder edit action sets",
+			input: &authzv1.CheckRequest{
+				Group:    "dashboard.grafana.app",
+				Resource: "variables",
+				Name:     "region",
+				Verb:     utils.VerbCreate,
+				Folder:   "folder1",
+			},
+			output: &checkRequest{
+				Action:       "variables:create",
+				ActionSets:   []string{"folders:edit", "folders:admin"},
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				Verb:         "create",
+				ParentFolder: "folder1",
+				Namespace: types.NamespaceInfo{
+					Value: ns,
+					OrgID: 1,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1099,6 +1270,66 @@ func TestService_listPermission(t *testing.T) {
 			},
 			expectedItems:   []string{"some_dashboard"},
 			expectedFolders: []string{"some_folder_1", "some_folder_2"},
+		},
+		{
+			name: "should include both root sentinels when user has general folder access",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			folders: []store.Folder{},
+			list: listRequest{
+				Action:   "variables:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "variables",
+				Options:  &ListRequestOptions{},
+			},
+			expectedFolders: []string{accesscontrol.GeneralFolderUID, ""},
+		},
+		{
+			name: "should not include root sentinels for a non-root folder grant",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:read",
+					Scope:      "folders:uid:folder-a",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "folder-a",
+				},
+			},
+			folders: []store.Folder{{UID: "folder-a"}},
+			list: listRequest{
+				Action:   "variables:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "variables",
+				Options:  &ListRequestOptions{},
+			},
+			expectedFolders: []string{"folder-a"},
+		},
+		{
+			name: "should not alias empty parent for dashboard list with general grant",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			folders: []store.Folder{},
+			list: listRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Options:  &ListRequestOptions{},
+			},
+			expectedFolders: []string{accesscontrol.GeneralFolderUID},
 		},
 		{
 			name: "should return dashboards that user has annotation read access to via subresource",
@@ -1619,6 +1850,38 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should take into account folder action sets for variable access",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "variables",
+				Verb:      "create",
+				Name:      "region",
+				Folder:    "some_folder",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "folders:edit", Scope: "folders:uid:some_folder"},
+			},
+			expected: true,
+		},
+		{
+			name: "folder view action set should not grant variable create",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "variables",
+				Verb:      "create",
+				Name:      "region",
+				Folder:    "some_folder",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "folders:view", Scope: "folders:uid:some_folder"},
+			},
+			expected: false,
+		},
+		{
 			name: "lower level action set or action set on a different resource should not grant higher level access",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
@@ -1901,6 +2164,18 @@ func TestService_Check(t *testing.T) {
 				if tc.req.Resource == "folders" {
 					expAction = "folders:delete"
 				}
+				if tc.req.Resource == "variables" {
+					switch tc.req.Verb {
+					case "create":
+						expAction = "variables:create"
+					case "get", "list", "watch":
+						expAction = "variables:read"
+					case "update", "patch":
+						expAction = "variables:write"
+					case "delete":
+						expAction = "variables:delete"
+					}
+				}
 				if tc.req.Resource == "datasources" && tc.req.Subresource == "query" {
 					expAction = "datasources:query"
 				} else if tc.req.Resource == "datasources" {
@@ -2012,6 +2287,29 @@ func TestService_Check(t *testing.T) {
 				Group:     "plugins.grafana.app",
 				Resource:  "metas",
 				Verb:      "list",
+			},
+			expected: true,
+		},
+		{
+			name: "should allow rendering to list variables",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "variables",
+				Verb:      "list",
+			},
+			expected: true,
+		},
+		{
+			name: "should allow rendering to get a variable",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "variables",
+				Verb:      "get",
+				Name:      "region",
 			},
 			expected: true,
 		},
@@ -2746,6 +3044,19 @@ func TestService_List(t *testing.T) {
 				Subject:   "render:0",
 				Group:     "plugins.grafana.app",
 				Resource:  "metas",
+				Verb:      "list",
+			},
+			expected: &authzv1.ListResponse{
+				All: true,
+			},
+		},
+		{
+			name: "should list variables for rendering",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "dashboard.grafana.app",
+				Resource:  "variables",
 				Verb:      "list",
 			},
 			expected: &authzv1.ListResponse{

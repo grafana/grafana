@@ -1081,6 +1081,9 @@
             },
             "background": {
               "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -1111,6 +1114,21 @@
           "properties": {
             "background": {
               "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "modal": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -1139,6 +1157,12 @@
         "drawer": {
           "type": "object",
           "properties": {
+            "background": {
+              "type": "string"
+            },
+            "borderColor": {
+              "type": "string"
+            },
             "padding": {
               "type": "number"
             }

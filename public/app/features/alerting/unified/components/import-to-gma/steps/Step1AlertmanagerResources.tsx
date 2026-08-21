@@ -2,9 +2,10 @@ import { kebabCase } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { type SelectableValue } from '@grafana/data';
+import { OrgRole, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -12,22 +13,34 @@ import {
   Field,
   FileDropzone,
   FileUpload,
+  Icon,
   IconButton,
+  InlineField,
+  InlineSwitch,
   Input,
+  Label,
   RadioButtonList,
   Select,
   Stack,
   Text,
+  Tooltip,
 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { getAlertManagerDataSources } from '../../../utils/datasource';
+import { useAutoSyncConfiguration } from '../../settings/useAutoSyncConfiguration';
 import { type ImportFormValues } from '../ImportToGMA';
 import { PolicyTreeNameHelp } from '../PolicyTreeNameHelp';
 import { ValidationStatus } from '../ValidationStatus';
-import { getNotificationsSourceOptions } from '../Wizard/steps';
+import { getNotificationsSourceOptions, isRulesForcedSkipped } from '../Wizard/steps';
 import { type DryRunValidationResult } from '../types';
 
 import { findDuplicateTemplateFileName, hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';
+
+/** Whether the Auto-sync checkbox may be offered: requires the sync toggle and Org Admin. */
+function isAutoSyncSegmentEnabled(): boolean {
+  return Boolean(config.featureToggles['alerting.syncExternalAlertmanager']) && contextSrv.hasRole(OrgRole.Admin);
+}
 
 interface Step1ContentProps {
   /** Whether the user has permission to import notifications */
@@ -60,6 +73,7 @@ export function Step1Content({
     watch,
     setValue,
     trigger,
+    clearErrors,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
 
@@ -69,18 +83,24 @@ export function Step1Content({
     notificationsDatasourceUID,
     notificationsYamlFile,
     notificationsTemplateFiles,
+    autoSyncNotificationsEnabled,
   ] = watch([
     'notificationsSource',
     'policyTreeName',
     'notificationsDatasourceUID',
     'notificationsYamlFile',
     'notificationsTemplateFiles',
+    'autoSyncNotificationsEnabled',
   ]);
+
+  // Auto-sync mirrors the source directly, skipping Policy Tree Name and the dry-run.
+  const autoSyncActive = isRulesForcedSkipped(autoSyncNotificationsEnabled ?? false, notificationsSource);
 
   const duplicateTemplateFileName = findDuplicateTemplateFileName(notificationsTemplateFiles);
 
   // Whether we have enough data to run a dry-run validation
   const canRunDryRun =
+    !autoSyncActive &&
     Boolean(policyTreeName) &&
     validatePolicyTreeName(policyTreeName) === true &&
     !duplicateTemplateFileName &&
@@ -104,6 +124,13 @@ export function Step1Content({
     notificationsDatasourceUID,
     notificationsTemplateFiles,
   ]);
+
+  // Drop any leftover Policy Tree Name error once Auto-sync disables the field.
+  useEffect(() => {
+    if (autoSyncActive) {
+      clearErrors('policyTreeName');
+    }
+  }, [autoSyncActive, clearErrors]);
 
   // Trigger validation + dry-run when the policy tree name input loses focus
   const handlePolicyTreeNameBlur = useCallback(async () => {
@@ -252,7 +279,28 @@ export function Step1Content({
               </Stack>
             )}
 
-            {notificationsSource === 'datasource' && <AlertmanagerDataSourceSelect />}
+            {notificationsSource === 'datasource' && (
+              <Stack direction="column" gap={2}>
+                <AlertmanagerDataSourceSelect autoSyncActive={autoSyncActive} />
+                {isAutoSyncSegmentEnabled() && (
+                  <InlineField
+                    transparent
+                    label={t('alerting.import-to-gma.step1.autosync-label', 'Auto-sync')}
+                    labelWidth={30}
+                    tooltip={t(
+                      'alerting.import-to-gma.step1.autosync-tooltip',
+                      'Continuously sync alert configuration from this data source instead of importing once. Skips the Alert Rules step since rules sync automatically too.'
+                    )}
+                  >
+                    <InlineSwitch
+                      transparent
+                      id="autosync-notifications-enabled"
+                      {...register('autoSyncNotificationsEnabled')}
+                    />
+                  </InlineField>
+                )}
+              </Stack>
+            )}
           </Box>
         </Box>
       </Box>
@@ -276,17 +324,38 @@ export function Step1Content({
           </Stack>
           <Box marginTop={2}>
             <Field
-              label={t('alerting.import-to-gma.step1.policy-tree-name', 'Policy tree name')}
+              label={
+                autoSyncActive ? (
+                  <Label>
+                    <Stack direction="row" alignItems="center" gap={0.5}>
+                      {t('alerting.import-to-gma.step1.policy-tree-name', 'Policy tree name')}
+                      <Tooltip
+                        content={t(
+                          'alerting.import-to-gma.step1.policy-tree-autosync-disabled',
+                          "Not needed. Auto-sync mirrors the source directly, so there's no policy tree to name."
+                        )}
+                      >
+                        <Icon name="info-circle" size="sm" />
+                      </Tooltip>
+                    </Stack>
+                  </Label>
+                ) : (
+                  t('alerting.import-to-gma.step1.policy-tree-name', 'Policy tree name')
+                )
+              }
               invalid={!!errors.policyTreeName}
               error={errors.policyTreeName?.message}
               noMargin
             >
               <Input
                 {...register('policyTreeName', {
-                  required: t('alerting.import-to-gma.step1.policy-tree-required', 'Policy tree name is required'),
-                  validate: validatePolicyTreeName,
+                  required: autoSyncActive
+                    ? undefined
+                    : t('alerting.import-to-gma.step1.policy-tree-required', 'Policy tree name is required'),
+                  validate: autoSyncActive ? undefined : validatePolicyTreeName,
                   onBlur: handlePolicyTreeNameBlur,
                 })}
+                disabled={autoSyncActive}
                 placeholder={t('alerting.import-to-gma.step1.policy-tree-placeholder', 'prometheus-prod')}
                 width={40}
               />
@@ -318,12 +387,14 @@ export function useStep1Validation(canImport: boolean): boolean {
     notificationsDatasourceUID,
     notificationsYamlFile,
     notificationsTemplateFiles,
+    autoSyncNotificationsEnabled,
   ] = watch([
     'notificationsSource',
     'policyTreeName',
     'notificationsDatasourceUID',
     'notificationsYamlFile',
     'notificationsTemplateFiles',
+    'autoSyncNotificationsEnabled',
   ]);
 
   const hasStep1Errors =
@@ -342,13 +413,28 @@ export function useStep1Validation(canImport: boolean): boolean {
     notificationsYamlFile,
     notificationsDatasourceUID,
     notificationsTemplateFiles,
+    autoSyncNotificationsEnabled: autoSyncNotificationsEnabled ?? false,
   });
 }
 
-/**
- * Component to select an Alertmanager data source (excludes Grafana built-in)
- */
-function AlertmanagerDataSourceSelect() {
+interface AlertmanagerDataSourceSelectProps {
+  /** Narrows the option list to Mimir/Cortex only, the sources Auto-sync can mirror. */
+  autoSyncActive: boolean;
+}
+
+/** Dispatches to the Mimir/Cortex-only variant when Auto-sync is active, so its admin-only queries only run then. */
+function AlertmanagerDataSourceSelect({ autoSyncActive }: AlertmanagerDataSourceSelectProps) {
+  return autoSyncActive ? <MimirCortexDataSourceSelect /> : <AnyAlertmanagerDataSourceSelect />;
+}
+
+interface DataSourceSelectFieldProps {
+  options: Array<SelectableValue<string>>;
+  noOptionsMessage: string;
+  description?: string;
+}
+
+/** Shared Select + autofill logic for both the broad and Mimir/Cortex-only data source pickers. */
+function DataSourceSelectField({ options, noOptionsMessage, description }: DataSourceSelectFieldProps) {
   const {
     control,
     setValue,
@@ -356,7 +442,48 @@ function AlertmanagerDataSourceSelect() {
     formState: { errors },
   } = useFormContext<ImportFormValues>();
 
-  // Get external Alertmanager data sources (same function used by AlertManagerPicker)
+  return (
+    <Field
+      label={t('alerting.import-to-gma.step1.datasource', 'Alertmanager data source')}
+      description={description}
+      invalid={!!errors.notificationsDatasourceUID}
+      error={errors.notificationsDatasourceUID?.message}
+      noMargin
+      data-testid={selectors.pages.Alerting.ImportToGMA.alertmanagerDataSourceField}
+    >
+      <Controller
+        render={({ field: { ref, onChange, ...field } }) => (
+          <Select
+            {...field}
+            options={options}
+            onChange={(selected) => {
+              if (selected?.value) {
+                onChange(selected.value);
+                const ds = options.find((o) => o.value === selected.value);
+                const dsName = typeof ds?.label === 'string' ? ds.label : undefined;
+                setValue('notificationsDatasourceName', dsName ?? null);
+
+                // Auto-populate policy tree name with sanitized datasource name if empty
+                const currentPolicyTreeName = getValues('policyTreeName');
+                if (!currentPolicyTreeName && dsName) {
+                  setValue('policyTreeName', kebabCase(dsName));
+                }
+              }
+            }}
+            placeholder={t('alerting.import-to-gma.step1.select-datasource', 'Select data source')}
+            width={40}
+            noOptionsMessage={noOptionsMessage}
+          />
+        )}
+        control={control}
+        name="notificationsDatasourceUID"
+      />
+    </Field>
+  );
+}
+
+/** Broad Alertmanager data source list (excludes Grafana built-in), same source used by AlertManagerPicker. */
+function AnyAlertmanagerDataSourceSelect() {
   const alertmanagerOptions: Array<SelectableValue<string>> = useMemo(() => {
     const alertmanagerDataSources = getAlertManagerDataSources();
     return alertmanagerDataSources.map((ds) => ({
@@ -368,39 +495,48 @@ function AlertmanagerDataSourceSelect() {
   }, []);
 
   return (
-    <Field
-      label={t('alerting.import-to-gma.step1.datasource', 'Alertmanager data source')}
-      invalid={!!errors.notificationsDatasourceUID}
-      error={errors.notificationsDatasourceUID?.message}
-      noMargin
-      data-testid={selectors.pages.Alerting.ImportToGMA.alertmanagerDataSourceField}
-    >
-      <Controller
-        render={({ field: { ref, onChange, ...field } }) => (
-          <Select
-            {...field}
-            options={alertmanagerOptions}
-            onChange={(selected) => {
-              if (selected?.value) {
-                onChange(selected.value);
-                const ds = getAlertManagerDataSources().find((d) => d.uid === selected.value);
-                setValue('notificationsDatasourceName', ds?.name ?? null);
+    <DataSourceSelectField
+      options={alertmanagerOptions}
+      noOptionsMessage={t('alerting.import-to-gma.step1.no-datasources', 'No Alertmanager data sources found')}
+    />
+  );
+}
 
-                // Auto-populate policy tree name with sanitized datasource name if empty
-                const currentPolicyTreeName = getValues('policyTreeName');
-                if (!currentPolicyTreeName && ds?.name) {
-                  setValue('policyTreeName', kebabCase(ds.name));
-                }
-              }
-            }}
-            placeholder={t('alerting.import-to-gma.step1.select-datasource', 'Select data source')}
-            width={40}
-            noOptionsMessage={t('alerting.import-to-gma.step1.no-datasources', 'No Alertmanager data sources found')}
-          />
-        )}
-        control={control}
-        name="notificationsDatasourceUID"
-      />
-    </Field>
+/** Mimir/Cortex-only data source list for Auto-sync. Mounted only while checked, so its admin-only queries don't otherwise run. */
+function MimirCortexDataSourceSelect() {
+  const { watch, setValue } = useFormContext<ImportFormValues>();
+  const notificationsDatasourceUID = watch('notificationsDatasourceUID');
+  const { mimirCortexDatasources, isLoading } = useAutoSyncConfiguration();
+
+  const options: Array<SelectableValue<string>> = useMemo(
+    () => mimirCortexDatasources.map((ds) => ({ value: ds.uid, label: ds.name, imgUrl: ds.typeLogoUrl })),
+    [mimirCortexDatasources]
+  );
+
+  // Clears a selection no longer in the narrowed list. Skip while loading — the list is also
+  // empty before the first response, which would wrongly clear a selection that's actually valid.
+  useEffect(() => {
+    if (
+      !isLoading &&
+      notificationsDatasourceUID &&
+      !mimirCortexDatasources.some((ds) => ds.uid === notificationsDatasourceUID)
+    ) {
+      setValue('notificationsDatasourceUID', undefined);
+      setValue('notificationsDatasourceName', null);
+    }
+  }, [isLoading, notificationsDatasourceUID, mimirCortexDatasources, setValue]);
+
+  return (
+    <DataSourceSelectField
+      options={options}
+      noOptionsMessage={t(
+        'alerting.import-to-gma.step1.no-mimir-cortex-datasources',
+        'No Mimir or Cortex data sources found'
+      )}
+      description={t(
+        'alerting.import-to-gma.step1.autosync-datasource-filtered',
+        'Auto-sync can only mirror from Mimir or Cortex Alertmanager data sources.'
+      )}
+    />
   );
 }
