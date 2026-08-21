@@ -14,7 +14,7 @@ import (
 func TestIntegrationProvisioning_Client(t *testing.T) {
 	helper := sharedHelper(t)
 
-	clientFactory := resources.NewClientFactory(&helper.Org1.Admin, nil, resources.ComponentProvisioning)
+	clientFactory := resources.NewClientFactory(&helper.Org1.Admin, nil)
 	clients, err := clientFactory.Clients(t.Context(), "default")
 	require.NoError(t, err)
 

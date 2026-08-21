@@ -9,19 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// ComponentID identifies the Grafana subsystem that owns a client factory. It
-// becomes the "component" label on the request-duration metric, so subsystems
-// sharing one registry — and therefore one collector — stay distinguishable.
-// Adding a construction site means picking a value here rather than inventing a
-// string, so the label's value set stays enumerable.
-type ComponentID string
-
-const (
-	ComponentProvisioning         ComponentID = "provisioning"
-	ComponentProvisioningWebhooks ComponentID = "provisioning_webhooks"
-	ComponentZanzana              ComponentID = "zanzana"
-)
-
 // Operation labels for the request-duration metric. They name the resource
 // client verb, so a slow or failing verb can be told apart from the others.
 const (
@@ -49,13 +36,14 @@ const (
 
 // clientMetrics measures the outbound Kubernetes API server requests a Grafana
 // subsystem makes through this package's dynamic client factory. The factory is
-// shared — provisioning, its webhooks and zanzana all use it, and in a
-// single-binary Grafana they are handed the same registry — so every observation
-// carries a "component" label naming the caller. Latency is further labelled by
-// resource group, resource, operation and outcome, so a slow or failing verb can
-// be told apart per resource type per caller. Durations cover the whole retried
-// operation, including backoff waits, since that is the latency the caller
-// actually sees.
+// shared — provisioning, its webhooks and zanzana all build one — so the metric
+// is named for the layer rather than any one caller. Which subsystem issued a
+// request is not a metric label: the callers are separate deployments, so the
+// scrape target labels (job, pod, container) already separate them. Latency is
+// labelled by resource group, resource, operation and outcome, so a slow or
+// failing verb can be told apart per resource type. Durations cover the whole
+// retried operation, including backoff waits, since that is the latency the
+// caller actually sees.
 //
 // The metric is grafana_apiserver_client_request_duration_seconds. The "client"
 // infix is load-bearing, not stylistic: k8s.io/apiserver registers the
@@ -67,26 +55,22 @@ const (
 // families under one name in the scrape body, which fails the parse for the
 // whole endpoint. Keep the infix.
 type clientMetrics struct {
-	// component identifies the owning subsystem. It labels every observation, so
-	// callers sharing one collector remain distinguishable.
-	component       ComponentID
 	requestDuration *prometheus.HistogramVec
 }
 
-// newClientMetrics builds the client metrics on reg for the given component,
-// reusing collectors already registered there so factories sharing a registry
-// share one collector. A nil reg leaves the collectors unregistered but usable.
-func newClientMetrics(reg prometheus.Registerer, component ComponentID) *clientMetrics {
+// newClientMetrics builds the client metrics on reg, reusing collectors already
+// registered there so factories sharing a registry share one collector. A nil
+// reg leaves the collectors unregistered but usable.
+func newClientMetrics(reg prometheus.Registerer) *clientMetrics {
 	return &clientMetrics{
-		component: component,
 		requestDuration: registerOrReuse(reg, prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_apiserver_client_request_duration_seconds",
-			Help:                            "Duration of the outbound Kubernetes API server requests a Grafana subsystem makes for the resources it manages, by calling component, resource group, resource, operation and outcome. Includes retry/backoff time. This is the client-side counterpart to the server-side grafana_apiserver_request_duration_seconds.",
+			Help:                            "Duration of the outbound Kubernetes API server requests a Grafana subsystem makes for the resources it manages, by resource group, resource, operation and outcome. Includes retry/backoff time. This is the client-side counterpart to the server-side grafana_apiserver_request_duration_seconds.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"component", "group", "resource", "operation", "outcome"})),
+		}, []string{"group", "resource", "operation", "outcome"})),
 	}
 }
 
@@ -102,7 +86,7 @@ func (m *clientMetrics) observe(gvr schema.GroupVersionResource, operation strin
 	}
 	// WithLabelValues is positional: the order here must match the label names
 	// declared in newClientMetrics.
-	m.requestDuration.WithLabelValues(string(m.component), gvr.Group, gvr.Resource, operation, outcome).Observe(time.Since(start).Seconds())
+	m.requestDuration.WithLabelValues(gvr.Group, gvr.Resource, operation, outcome).Observe(time.Since(start).Seconds())
 }
 
 // registerOrReuse registers c on reg, returning the collector already registered

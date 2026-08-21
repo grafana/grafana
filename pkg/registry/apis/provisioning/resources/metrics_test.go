@@ -28,20 +28,18 @@ func TestClientMetrics_NilSafe(t *testing.T) {
 
 func TestClientMetrics_Observe(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
-	m := newClientMetrics(reg, ComponentProvisioning)
+	m := newClientMetrics(reg)
 
 	m.observe(dashboardGVR, operationCreate, time.Now(), nil)
 	m.observe(dashboardGVR, operationCreate, time.Now(), errors.New("boom"))
 
 	assert.Equal(t, uint64(1), histogramCount(t, reg, prometheus.Labels{
-		"component": string(ComponentProvisioning),
 		"group":     dashboardGVR.Group,
 		"resource":  dashboardGVR.Resource,
 		"operation": operationCreate,
 		"outcome":   outcomeSuccess,
 	}))
 	assert.Equal(t, uint64(1), histogramCount(t, reg, prometheus.Labels{
-		"component": string(ComponentProvisioning),
 		"group":     dashboardGVR.Group,
 		"resource":  dashboardGVR.Resource,
 		"operation": operationCreate,
@@ -49,42 +47,18 @@ func TestClientMetrics_Observe(t *testing.T) {
 	}))
 }
 
-// TestClientMetrics_SharedRegistryDistinguishesComponents is the regression guard
-// for the defect this label exists to fix: provisioning and zanzana share this
-// package's client factory and, in a single-binary Grafana, one registry. Both
-// list folders, so without the component label their requests merge into one
-// indistinguishable series.
-func TestClientMetrics_SharedRegistryDistinguishesComponents(t *testing.T) {
-	reg := prometheus.NewPedanticRegistry()
-	provisioning := newClientMetrics(reg, ComponentProvisioning)
-	zanzana := newClientMetrics(reg, ComponentZanzana)
-
-	// The same resource and operation, from two different subsystems.
-	provisioning.observe(folderGVR, operationList, time.Now(), nil)
-	zanzana.observe(folderGVR, operationList, time.Now(), nil)
-	zanzana.observe(folderGVR, operationList, time.Now(), nil)
-
-	base := prometheus.Labels{
-		"group":     folderGVR.Group,
-		"resource":  folderGVR.Resource,
-		"operation": operationList,
-		"outcome":   outcomeSuccess,
-	}
-	assert.Equal(t, uint64(1), histogramCount(t, reg, withComponent(base, ComponentProvisioning)))
-	assert.Equal(t, uint64(2), histogramCount(t, reg, withComponent(base, ComponentZanzana)))
-}
-
-// TestClientMetrics_RepeatConstructionOnSameRegistry covers the real wiring:
-// NewAPIBuilder is called once per API version (v0alpha1 and v1beta1) with the
-// same registry, so newClientMetrics runs more than once against it. The second
-// construction must reuse the registered collector rather than panic.
+// TestClientMetrics_RepeatConstructionOnSameRegistry covers the real wiring: this
+// factory is built several times against one registry — NewAPIBuilder runs once
+// per API version (v0alpha1 and v1beta1), the webhooks builder likewise, and
+// zanzana builds its own — so newClientMetrics must reuse the registered
+// collector rather than panic, and every instance must write to one series.
 func TestClientMetrics_RepeatConstructionOnSameRegistry(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 
 	var first, second *clientMetrics
 	require.NotPanics(t, func() {
-		first = newClientMetrics(reg, ComponentProvisioning)
-		second = newClientMetrics(reg, ComponentProvisioning)
+		first = newClientMetrics(reg)
+		second = newClientMetrics(reg)
 	})
 
 	first.observe(dashboardGVR, operationGet, time.Now(), nil)
@@ -92,7 +66,6 @@ func TestClientMetrics_RepeatConstructionOnSameRegistry(t *testing.T) {
 
 	// Both instances share one collector, so the observations land on one series.
 	assert.Equal(t, uint64(2), histogramCount(t, reg, prometheus.Labels{
-		"component": string(ComponentProvisioning),
 		"group":     dashboardGVR.Group,
 		"resource":  dashboardGVR.Resource,
 		"operation": operationGet,
@@ -105,11 +78,10 @@ func TestClientMetrics_RepeatConstructionOnSameRegistry(t *testing.T) {
 // otherwise silently mislabel every observation.
 func TestClientMetrics_LabelContract(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
-	m := newClientMetrics(reg, ComponentZanzana)
+	m := newClientMetrics(reg)
 	m.observe(folderGVR, operationDeleteCollection, time.Now(), errors.New("boom"))
 
 	metric := findMetric(t, reg, prometheus.Labels{
-		"component": string(ComponentZanzana),
 		"group":     folderGVR.Group,
 		"resource":  folderGVR.Resource,
 		"operation": operationDeleteCollection,
@@ -122,7 +94,7 @@ func TestClientMetrics_LabelContract(t *testing.T) {
 		got = append(got, l.GetName())
 	}
 	// Gathered labels are sorted by name.
-	assert.Equal(t, []string{"component", "group", "operation", "outcome", "resource"}, got)
+	assert.Equal(t, []string{"group", "operation", "outcome", "resource"}, got)
 }
 
 func TestRegisterOrReuse(t *testing.T) {
@@ -143,21 +115,13 @@ func TestRegisterOrReuse(t *testing.T) {
 		// prometheus does not unwrap AlreadyRegisteredError through a wrapping
 		// registerer, so ExistingCollector is not of the requested type. That must
 		// degrade rather than panic: this path runs on every API server call.
-		reg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "x"}, prometheus.NewPedanticRegistry())
+		reg := prometheus.WrapRegistererWith(prometheus.Labels{"wrapped": "yes"}, prometheus.NewPedanticRegistry())
 		opts := prometheus.CounterOpts{Name: "test_total"}
 		require.NotPanics(t, func() {
 			registerOrReuse(reg, prometheus.NewCounter(opts))
 			registerOrReuse(reg, prometheus.NewCounter(opts))
 		})
 	})
-}
-
-func withComponent(base prometheus.Labels, component ComponentID) prometheus.Labels {
-	out := prometheus.Labels{"component": string(component)}
-	for k, v := range base {
-		out[k] = v
-	}
-	return out
 }
 
 // histogramCount returns the sample count of the request-duration histogram for

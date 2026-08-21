@@ -251,24 +251,22 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // resources that can be managed from the UI; the ResourceClients it produces expose only
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
 // static SupportedProvisioningResources base set. reg receives the API server request
-// metrics and may be nil to skip registration. component names the calling subsystem and
-// labels those metrics — this factory is shared, so pick an existing ComponentID rather
-// than inventing a value.
-func NewClientFactory(configProvider apiserver.RestConfigProvider, reg prometheus.Registerer, component ComponentID, supported ...SupportedResource) ClientFactory {
+// metrics and may be nil to skip registration.
+func NewClientFactory(configProvider apiserver.RestConfigProvider, reg prometheus.Registerer, supported ...SupportedResource) ClientFactory {
 	return &clientFactory{
 		clientsProvider:    newSingleAPIClients(configProvider),
 		supportedResources: activeResources(defaultSupportedResources(supported)),
-		metrics:            newClientMetrics(reg, component),
+		metrics:            newClientMetrics(reg),
 	}
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
-// The supported set, reg and component behave as described on NewClientFactory.
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, reg prometheus.Registerer, component ComponentID, supported ...SupportedResource) ClientFactory {
+// The supported set and reg behave as described on NewClientFactory.
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, reg prometheus.Registerer, supported ...SupportedResource) ClientFactory {
 	clientFactories := make(map[string]ClientFactory)
 
 	for api, configProvider := range configProviders {
-		clientFactory := NewClientFactory(configProvider, reg, component, supported...)
+		clientFactory := NewClientFactory(configProvider, reg, supported...)
 		clientFactories[api] = clientFactory
 	}
 
