@@ -100,6 +100,9 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 		return errors.New("no compatible plugin implementation found")
 	}
 
+	// TODO: inspect the rpcClient for "v3-*" services
+	p.clientV3 = nil
+
 	p.state = pluginStateStartSuccess
 	return nil
 }

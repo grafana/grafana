@@ -21,7 +21,9 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	pluginregistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -67,6 +69,7 @@ type AppPluginRunnerOptions struct {
 type AppPluginAPIBuilder struct {
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
+	clientV3        func(ctx context.Context) (v3.ClientV3, bool)
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService // Used with unified storage
@@ -109,6 +112,7 @@ func RegisterAPIService(
 	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
 	contextProvider PluginContextWrapper,
+	pluginRegistry pluginregistry.Service,
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
 	accessControl ac.AccessControl,
@@ -167,6 +171,15 @@ func RegisterAPIService(
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		// Expose access to the backend client
+		b.clientV3 = func(ctx context.Context) (v3.ClientV3, bool) {
+			p, ok := pluginRegistry.Plugin(ctx, b.pluginJSON.ID, "")
+			if !ok || p.IsDecommissioned() {
+				return nil, false
+			}
+			return p.ClientV3(ctx)
 		}
 
 		apiRegistrar.RegisterAPI(b)

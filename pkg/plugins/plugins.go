@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -445,6 +446,13 @@ func (p *Plugin) RegisterClient(c backendplugin.Plugin) {
 func (p *Plugin) Client() (PluginClient, bool) {
 	if p.client != nil {
 		return p.client, true
+	}
+	return nil, false
+}
+
+func (p *Plugin) ClientV3(ctx context.Context) (v3.ClientV3, bool) {
+	if p.client != nil {
+		return p.client.ClientV3(ctx)
 	}
 	return nil, false
 }
