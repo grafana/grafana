@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -340,20 +339,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 				currField = sort[1:]
 				desc = true
 			}
-			if slices.Contains(builders.UserSortableExtraFields, currField) {
-				sort = resource.SEARCH_FIELD_PREFIX + currField
-			} else {
-				sort = currField
-			}
 			s := &resourcepb.ResourceSearchRequest_Sort{
-				Field: sort,
+				Field: currField,
 				Desc:  desc,
 			}
 			request.SortBy = append(request.SortBy, s)
 		}
 	} else {
 		request.SortBy = append(request.SortBy, &resourcepb.ResourceSearchRequest_Sort{
-			Field: resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN,
+			Field: builders.USER_LOGIN,
 		})
 	}
 
