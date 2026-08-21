@@ -566,7 +566,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.18.6, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.24.4, @babel/runtime@npm:^7.24.5, @babel/runtime@npm:^7.25.6, @babel/runtime@npm:^7.26.7, @babel/runtime@npm:^7.27.0, @babel/runtime@npm:^7.28.4, @babel/runtime@npm:^7.28.6, @babel/runtime@npm:^7.29.2, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.7":
+"@babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.18.6, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.24.4, @babel/runtime@npm:^7.24.5, @babel/runtime@npm:^7.25.6, @babel/runtime@npm:^7.26.7, @babel/runtime@npm:^7.27.0, @babel/runtime@npm:^7.28.4, @babel/runtime@npm:^7.28.6, @babel/runtime@npm:^7.29.2, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.7":
   version: 7.29.7
   resolution: "@babel/runtime@npm:7.29.7"
   checksum: 10/9883b4951787779fd382b121f22f92966d85f19434841f65fb00b2dfec232107e139683f47c6f252891826ad8ee18317b46c3a0e4819116a9885f47b46d7126a
@@ -3234,11 +3234,12 @@ __metadata:
     "@grafana/react-data-grid": "npm:7.0.0-beta.57"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
+    "@headless-tree/core": "npm:^1.7.0"
+    "@headless-tree/react": "npm:^1.7.0"
     "@hello-pangea/dnd": "npm:^18.0.1"
     "@lezer/highlight": "npm:^1.2.3"
     "@monaco-editor/react": "npm:^4.7.0"
     "@popperjs/core": "npm:^2.11.8"
-    "@rc-component/cascader": "npm:^1.9.0"
     "@rc-component/drawer": "npm:^1.3.0"
     "@rc-component/slider": "npm:^1.0.1"
     "@rc-component/tooltip": "npm:^1.4.0"
@@ -3405,6 +3406,24 @@ __metadata:
   dependencies:
     "@hapi/hoek": "npm:^11.0.2"
   checksum: 10/ef959d3796638e11e5f7a9f2a64295ded7c638d6a21fa37bf1265b14c3a6636da593c9976138826c5b8972830a706d18a82b489e3d902e77026f7f0bec908704
+  languageName: node
+  linkType: hard
+
+"@headless-tree/core@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "@headless-tree/core@npm:1.7.0"
+  checksum: 10/0a8a0b8847fd36a4d2dab1341065ff41e1c421973c71c78c6898f81e73185722173d28c0cf774a830c732daeb5d6c5f79eee5de62765666cb9903cc499bb5f76
+  languageName: node
+  linkType: hard
+
+"@headless-tree/react@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "@headless-tree/react@npm:1.7.0"
+  peerDependencies:
+    "@headless-tree/core": "*"
+    react: "*"
+    react-dom: "*"
+  checksum: 10/0ed6fca63fa97735c73ecee42fab84d9bf1ecaf8613760cd7f2dfb3bb8bf9a6d76b918619a9e3269e2d6298c60bc9c6381dd99db113d3faf52b38c4f8eda4d09
   languageName: node
   linkType: hard
 
@@ -7275,21 +7294,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/cascader@npm:^1.9.0":
-  version: 1.23.0
-  resolution: "@rc-component/cascader@npm:1.23.0"
-  dependencies:
-    "@rc-component/select": "npm:~1.10.0"
-    "@rc-component/tree": "npm:~1.5.0"
-    "@rc-component/util": "npm:^1.11.1"
-    clsx: "npm:^2.1.1"
-  peerDependencies:
-    react: ">=18.0.0"
-    react-dom: ">=18.0.0"
-  checksum: 10/4a022dba1aeca3cf2760a1090bb4934a9b3129fa39717481801f8b56474013806a16bbd648381fbe5902cf3c27c4dd60380a9ea1d6e08d9963a8b10398a263a6
-  languageName: node
-  linkType: hard
-
 "@rc-component/drawer@npm:^1.3.0":
   version: 1.3.0
   resolution: "@rc-component/drawer@npm:1.3.0"
@@ -7318,21 +7322,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/overflow@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@rc-component/overflow@npm:1.0.0"
-  dependencies:
-    "@babel/runtime": "npm:^7.11.1"
-    "@rc-component/resize-observer": "npm:^1.0.1"
-    "@rc-component/util": "npm:^1.4.0"
-    clsx: "npm:^2.1.1"
-  peerDependencies:
-    react: ">=16.9.0"
-    react-dom: ">=16.9.0"
-  checksum: 10/27b98ad43368aabbfdfde2c2b9b87786b36fd2246d1641032fdc897e31d3f1d89b1e8ac9c239532361cf17293ba5d991f8ec6295ef500d9ab059c34de1c79155
-  languageName: node
-  linkType: hard
-
 "@rc-component/portal@npm:^2.0.0, @rc-component/portal@npm:^2.2.0":
   version: 2.2.0
   resolution: "@rc-component/portal@npm:2.2.0"
@@ -7355,22 +7344,6 @@ __metadata:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
   checksum: 10/3b1cc8431dce8c1a9215306cb69aae19bc4d50fbd6fb40dbe7d7041af08e0369f85cc65a4c7afd7381d2ff3f751f963b404e2cec4d9cd4819957f2aa34e72465
-  languageName: node
-  linkType: hard
-
-"@rc-component/select@npm:~1.10.0":
-  version: 1.10.0
-  resolution: "@rc-component/select@npm:1.10.0"
-  dependencies:
-    "@rc-component/overflow": "npm:^1.0.0"
-    "@rc-component/trigger": "npm:^3.0.0"
-    "@rc-component/util": "npm:^1.11.1"
-    "@rc-component/virtual-list": "npm:^1.2.0"
-    clsx: "npm:^2.1.1"
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 10/b2a36d2ba15417755c7f116dd6d34684b116b2793aa2a9219898bb44d5a1bc2404fda4b390e1c8c91f0f4565c3f84fb93423c2cfbc5bfff0d2df01b67e705d55
   languageName: node
   linkType: hard
 
@@ -7416,22 +7389,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/tree@npm:~1.5.0":
-  version: 1.5.0
-  resolution: "@rc-component/tree@npm:1.5.0"
-  dependencies:
-    "@rc-component/motion": "npm:^1.0.0"
-    "@rc-component/util": "npm:^1.11.1"
-    "@rc-component/virtual-list": "npm:^1.2.0"
-    clsx: "npm:^2.1.1"
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 10/1cbccb10a5ccfbfd89b3702073ca379c11c1383ac343228022c7c00db34a778c482953d138d5b578fe0130c9f94c2a19e8cb1ed01477b3420fd280eec40d5940
-  languageName: node
-  linkType: hard
-
-"@rc-component/trigger@npm:^3.0.0, @rc-component/trigger@npm:^3.7.1":
+"@rc-component/trigger@npm:^3.7.1":
   version: 3.9.0
   resolution: "@rc-component/trigger@npm:3.9.0"
   dependencies:
@@ -7447,7 +7405,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/util@npm:^1.11.1, @rc-component/util@npm:^1.2.0, @rc-component/util@npm:^1.2.1, @rc-component/util@npm:^1.3.0, @rc-component/util@npm:^1.4.0":
+"@rc-component/util@npm:^1.2.0, @rc-component/util@npm:^1.2.1, @rc-component/util@npm:^1.3.0, @rc-component/util@npm:^1.4.0":
   version: 1.12.0
   resolution: "@rc-component/util@npm:1.12.0"
   dependencies:
@@ -7460,7 +7418,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/virtual-list@npm:^1.0.1, @rc-component/virtual-list@npm:^1.2.0":
+"@rc-component/virtual-list@npm:^1.0.1":
   version: 1.5.1
   resolution: "@rc-component/virtual-list@npm:1.5.1"
   dependencies:

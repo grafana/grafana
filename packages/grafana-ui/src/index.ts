@@ -30,9 +30,14 @@ export { Portal, getPortalContainer, PortalContainer } from './components/Portal
 export { CustomScrollbar, type ScrollbarPosition } from './components/CustomScrollbar/CustomScrollbar';
 export { TabbedContainer, type TabConfig } from './components/TabbedContainer/TabbedContainer';
 export { ClipboardButton } from './components/ClipboardButton/ClipboardButton';
-export { Cascader, type CascaderOption } from './components/Cascader/Cascader';
+export { Cascader, type CascaderOption, type CascaderProps } from './components/Cascader/CascaderLazy';
+export { TreeSelect, type TreeSelectProps } from './components/Cascader/TreeSelect';
 export { Carousel } from './components/Carousel/Carousel';
-export { ButtonCascader } from './components/ButtonCascader/ButtonCascader';
+export {
+  ButtonCascader,
+  type ButtonCascaderProps,
+  type CascaderFieldNames,
+} from './components/ButtonCascader/ButtonCascaderLazy';
 export { InlineToast } from './components/InlineToast/InlineToast';
 export { LoadingPlaceholder, type LoadingPlaceholderProps } from './components/LoadingPlaceholder/LoadingPlaceholder';
 export { LoadingBar, type LoadingBarProps } from './components/LoadingBar/LoadingBar';

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Cascader, type CascaderOption } from '@grafana/ui';
+import { TreeSelect, type CascaderOption } from '@grafana/ui';
 
 import { type ProfileTypeMessage } from './types';
 
@@ -16,7 +16,7 @@ export function ProfileTypesCascader(props: Props) {
   const cascaderOptions = useCascaderOptions(props.profileTypes);
 
   return (
-    <Cascader
+    <TreeSelect
       placeholder={props.placeholder}
       separator={'-'}
       displayAllSelectedLevels={true}
@@ -24,7 +24,6 @@ export function ProfileTypesCascader(props: Props) {
       allowCustomValue={true}
       onSelect={props.onChange}
       options={cascaderOptions}
-      changeOnSelect={false}
       width={props.width ?? 26}
     />
   );
