@@ -176,9 +176,9 @@ func TestIncrementalSync(t *testing.T) {
 				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/", "new-ref").
 					Return("test-folder", nil)
 
-				progress.On("Record", mock.Anything, jobs.NewFolderResult("unsupported/path/").
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewFolderResult("unsupported/path/").
 					WithAction(repository.FileActionCreated).
-					Build()).Return()
+					Build())).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},
@@ -205,10 +205,10 @@ func TestIncrementalSync(t *testing.T) {
 
 				progress.On("HasDirPathFailedCreation", ".unsupported/path/file.txt").Return(false)
 
-				progress.On("Record", mock.Anything, jobs.NewPathOnlyResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewPathOnlyResult(
 					".unsupported/path/file.txt",
 				).WithAction(repository.FileActionIgnored).
-					Build()).Return()
+					Build())).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
 			previousRef: "old-ref",
@@ -233,13 +233,13 @@ func TestIncrementalSync(t *testing.T) {
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
 					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"old-dashboard",
 					"dashboards",
 					"Dashboard",
 				).WithPath("dashboards/old.json").
 					WithAction(repository.FileActionDeleted).
-					Build()).Return()
+					Build())).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},
@@ -269,14 +269,14 @@ func TestIncrementalSync(t *testing.T) {
 				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old.json", "old-ref", "dashboards/new.json", "new-ref").
 					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"renamed-dashboard",
 					"dashboards",
 					"Dashboard",
 				).WithPath("dashboards/new.json").
 					WithPreviousPath("dashboards/old.json").
 					WithAction(repository.FileActionRenamed).
-					Build()).Return()
+					Build())).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},
@@ -367,9 +367,9 @@ func TestIncrementalSync(t *testing.T) {
 
 				progress.On("HasDirPathFailedCreation", "dashboards/ignored.json").Return(false)
 
-				progress.On("Record", mock.Anything, jobs.NewPathOnlyResult(
+				progress.On("Record", mock.Anything, matchesResult(jobs.NewPathOnlyResult(
 					"dashboards/ignored.json",
-				).WithAction(repository.FileActionIgnored).Build()).Return()
+				).WithAction(repository.FileActionIgnored).Build())).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
 			previousRef: "old-ref",
