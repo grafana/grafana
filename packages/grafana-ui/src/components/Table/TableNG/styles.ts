@@ -258,7 +258,7 @@ export const getGridStyles = memoize(
         alignItems: 'center',
         display: 'flex',
         justifyContent: 'center',
-        marginTop: '8px',
+        marginTop: theme.spacing(1),
         width: '100%',
       }),
       paginationSummary: css({
