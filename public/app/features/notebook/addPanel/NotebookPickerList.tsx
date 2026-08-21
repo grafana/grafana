@@ -26,7 +26,13 @@ interface Props {
   isFiltered: boolean;
   /** Whether the reader can create one, so an empty library only suggests it when they could. */
   canCreate: boolean;
+  /** The first load, when there is nothing to show yet. */
   isLoading: boolean;
+  /**
+   * A new set of filters is in flight and nothing is held for them yet, so the rows above are empty
+   * rather than stale. Distinct from `isLoading`, which is only ever true once.
+   */
+  isReloading: boolean;
   error?: unknown;
   /** The server had more than one page, so this list is not the whole library. */
   isTruncated: boolean;
@@ -39,12 +45,15 @@ export function NotebookPickerList({
   isFiltered,
   canCreate,
   isLoading,
+  isReloading,
   error,
   isTruncated,
   selectedUid,
   onSelect,
 }: Props) {
-  if (isLoading) {
+  // Reloading counts as loading here: the rows are empty because the answer has not arrived, and
+  // saying "no notebooks match these filters" in the meantime claims a result we do not have.
+  if (isLoading || isReloading) {
     return (
       <Stack justifyContent="center" alignItems="center">
         <Spinner />

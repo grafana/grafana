@@ -162,6 +162,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
                 isFiltered={picker.isFiltered}
                 canCreate={canCreate}
                 isLoading={picker.isLoading}
+                isReloading={picker.isReloading}
                 error={picker.error}
                 isTruncated={picker.isTruncated}
                 selectedUid={selected}

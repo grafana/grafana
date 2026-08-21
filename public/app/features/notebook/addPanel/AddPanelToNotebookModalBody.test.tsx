@@ -56,6 +56,7 @@ function setPicker(overrides: Partial<ReturnType<typeof useNotebookPicker>> = {}
     isFiltered: false,
     isTruncated: false,
     isLoading: false,
+    isReloading: false,
     error: undefined,
     searchQuery: '',
     setSearchQuery: jest.fn(),
@@ -160,6 +161,19 @@ describe('AddPanelToNotebookModalBody', () => {
       renderModal();
 
       expect(screen.getByText(/Not every notebook is shown/)).toBeInTheDocument();
+    });
+
+    /**
+     * `isLoading` is the first load only, so once anything has been shown, a change of filters leaves
+     * the rows empty while the request is out. Saying "no notebooks match these filters" then claims a
+     * result that has not arrived - which is why the hook reports the two states separately.
+     */
+    it('keeps showing a loading state while new filters are in flight', () => {
+      setPicker({ rows: [], isLoading: false, isReloading: true, isFiltered: true });
+      renderModal();
+
+      expect(screen.queryByText(/No notebooks match these filters/)).not.toBeInTheDocument();
+      expect(screen.getByTestId('Spinner')).toBeInTheDocument();
     });
 
     // Told apart by whether anything is filtering rather than by a total: the server reports no
