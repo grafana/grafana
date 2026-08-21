@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
@@ -62,6 +64,13 @@ interface FileQueryData {
     repositoryURL?: string;
     newPullRequestURL?: string;
     compareURL?: string;
+  };
+  resource?: {
+    existing?: {
+      metadata?: {
+        name?: string;
+      };
+    };
   };
 }
 
@@ -143,6 +152,12 @@ describe('DashboardPreviewBanner', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (config.featureToggles as { provisioning: boolean }).provisioning = true;
+    // locationUtil keeps module-level config, so reset it between tests
+    locationUtil.initialize({
+      config: { appSubUrl: '' } as GrafanaConfig,
+      getTimeRangeForUrl: jest.fn(),
+      getVariablesUrlParams: jest.fn(),
+    });
   });
 
   describe('when banner should not render', () => {
@@ -235,6 +250,61 @@ describe('DashboardPreviewBanner', () => {
         })
       ).toBeInTheDocument();
       expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+    });
+
+    it('renders a link to the saved dashboard when it already exists in Grafana', () => {
+      setup(
+        {},
+        {
+          fileQuery: {
+            data: {
+              ...defaultFileQueryReturn.data,
+              resource: { existing: { metadata: { name: 'original-uid' } } },
+            },
+            isLoading: false,
+            error: null,
+          },
+        }
+      );
+
+      const link = screen.getByRole('link', { name: 'View saved version' });
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveAttribute('href', '/d/original-uid');
+    });
+
+    it('prefixes the saved dashboard link with the configured app sub url', () => {
+      // Opening the link in a new tab bypasses the router, so the href itself has to be valid
+      // under a subpath install.
+      locationUtil.initialize({
+        config: { appSubUrl: '/grafana' } as GrafanaConfig,
+        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: jest.fn(),
+      });
+
+      setup(
+        {},
+        {
+          fileQuery: {
+            data: {
+              ...defaultFileQueryReturn.data,
+              resource: { existing: { metadata: { name: 'original-uid' } } },
+            },
+            isLoading: false,
+            error: null,
+          },
+        }
+      );
+
+      expect(screen.getByRole('link', { name: 'View saved version' })).toHaveAttribute(
+        'href',
+        '/grafana/d/original-uid'
+      );
+    });
+
+    it('does not render a link to the saved dashboard when it does not exist yet', () => {
+      setup();
+
+      expect(screen.queryByRole('link', { name: 'View saved version' })).not.toBeInTheDocument();
     });
 
     it('calls useGetResourceRepositoryView with slug', () => {
