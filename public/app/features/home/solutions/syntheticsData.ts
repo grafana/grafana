@@ -1,6 +1,6 @@
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings, type FieldSparkline } from '@grafana/data';
 
-import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS } from './probeUtils';
+import { PROBE_TIMEOUT_MS } from './probeUtils';
 import { readLabeledScalar, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, probeFound } from './solutionDataProbes';
 
@@ -42,19 +42,9 @@ async function hasSyntheticChecks(ds: Pick<DataSourceInstanceSettings, 'uid' | '
   return (readScalar(frames, 'checks') ?? 0) > 0;
 }
 
-const syntheticsResolution = createTtlCachedPromise(
-  () => probeFound('prometheus', hasSyntheticChecks, CLOUD_UTILITY_PROM_DATASOURCE_UIDS),
-  PROBE_TTL_MS
-);
-
-// Reset the cached datasource resolution (test seam).
-export function resetSyntheticsResolution(): void {
-  syntheticsResolution.reset();
-}
-
 /** Resolved Prometheus datasource with Synthetic Monitoring data, or null when none. */
-export async function probeSyntheticChecks(): Promise<DataSourceInstanceListItem | null> {
-  return syntheticsResolution.get();
+export function probeSyntheticChecks(): Promise<DataSourceInstanceListItem | null> {
+  return probeFound('prometheus', hasSyntheticChecks, CLOUD_UTILITY_PROM_DATASOURCE_UIDS);
 }
 
 /** Check count and fleet success ratio over the stats lookback. */

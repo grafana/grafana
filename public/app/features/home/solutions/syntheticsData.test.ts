@@ -18,7 +18,6 @@ import {
   fetchSyntheticsStats,
   fetchSyntheticsSuccessSeries,
   probeSyntheticChecks,
-  resetSyntheticsResolution,
 } from './syntheticsData';
 
 jest.mock('@grafana/runtime', () => ({
@@ -79,7 +78,6 @@ beforeEach(() => {
   healthGet.mockResolvedValue({ status: 'OK' });
   jest.mocked(getBackendSrv).mockReturnValue({ get: healthGet } as unknown as BackendSrv);
   resetProbeCandidates();
-  resetSyntheticsResolution();
   dataByUid = {};
   probeErrorUids = new Set();
   framesByRefId = {};
@@ -166,21 +164,6 @@ describe('Synthetics datasource resolution', () => {
     dataByUid = { 'sm-uid': 1 };
 
     await expect(probeSyntheticChecks()).resolves.toMatchObject({ uid: 'sm-uid' });
-  });
-
-  it('shares one scan between concurrent and repeated readers until reset', async () => {
-    setDataSources([{ uid: 'sm-uid', name: 'sm-prom', isDefault: true }]);
-    dataByUid = { 'sm-uid': 2 };
-
-    await Promise.all([probeSyntheticChecks(), probeSyntheticChecks()]);
-    await probeSyntheticChecks();
-    expect(mockGetDataSourceInstanceList).toHaveBeenCalledTimes(1);
-    expect(probeCalls()).toHaveLength(1);
-
-    resetSyntheticsResolution();
-    resetProbeCandidates();
-    await probeSyntheticChecks();
-    expect(probeCalls()).toHaveLength(2);
   });
 });
 

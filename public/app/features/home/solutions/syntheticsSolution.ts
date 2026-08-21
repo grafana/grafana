@@ -86,13 +86,10 @@ export function syntheticsSolution(): Solution {
     alert,
     stats: async () => {
       const usage = await stats();
-      if (!usage || usage.checks === null) {
+      if (!usage?.checks || usage.checks <= 0) {
         return null;
       }
       const checkCount = Math.ceil(usage.checks);
-      if (checkCount <= 0) {
-        return null;
-      }
       return {
         primary: t('home.solutions.synthetics.checks', '', {
           count: checkCount,
@@ -100,13 +97,12 @@ export function syntheticsSolution(): Solution {
           defaultValue_one: '{{value}} check',
           defaultValue_other: '{{value}} checks',
         }),
-        ...(usage.successRatio != null
-          ? {
-              secondary: t('home.solutions.synthetics.stats', '{{percent}}% success · 24h', {
+        secondary:
+          usage.successRatio != null
+            ? t('home.solutions.synthetics.stats', '{{percent}}% success · 24h', {
                 percent: (usage.successRatio * 100).toFixed(1),
-              }),
-            }
-          : {}),
+              })
+            : undefined,
       };
     },
     sparkline: async () => {
