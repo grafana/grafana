@@ -15,6 +15,7 @@ import { type InterpolateFunction } from '../types/panel';
 import { type TimeRange, type TimeZone } from '../types/time';
 
 import { getDisplayProcessor } from './displayProcessor';
+import { getColorByStringHash, getFieldColorModeForField } from './fieldColor';
 import { getFieldDisplayName } from './fieldState';
 
 /**
@@ -201,6 +202,15 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
       // Show all rows
       if (reduceOptions.values) {
+        // When every row of a single field becomes its own display value (pie
+        // slice, stat tile, etc.), the field-level palette calculator can only
+        // vary color by row index (Classic palette) or hash the one shared field
+        // name (Classic palette by name) — which paints every row the same color.
+        // For by-name modes, hash the per-row label instead so each category gets
+        // a stable color regardless of sort order or value.
+        const colorMode = getFieldColorModeForField(field);
+        const byName = colorMode.useSeriesName ? (colorMode.getColors?.(theme) ?? []) : undefined;
+
         for (let j = 0; j < field.values.length; j++) {
           field.state = setIndexForPaletteColor(field, values.length);
 
@@ -208,6 +218,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           const displayValue = display(field.values[j]);
           const rowName = getSmartDisplayNameForRow(dataFrame, field, j, replaceVariables, scopedVars);
           const overrideColor = lookupRowColorFromOverride(rowName, options.fieldConfig, theme);
+          const byNameColor = byName && byName.length > 0 ? getColorByStringHash(byName, rowName) : undefined;
 
           values.push({
             name: '',
@@ -215,7 +226,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             display: {
               ...displayValue,
               title: rowName,
-              color: overrideColor ?? displayValue.color,
+              color: overrideColor ?? byNameColor ?? displayValue.color,
             },
             view,
             colIndex: i,
