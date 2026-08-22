@@ -5,6 +5,8 @@ import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
+import { NavID } from './constants';
+import { getRegisteredNavEntries } from './registry';
 import { adminNavEntry } from './sections/admin.navEntry';
 import { connectionsNavEntry } from './sections/connections.navEntry';
 import { dashboardsNavEntry } from './sections/dashboards.navEntry';
@@ -14,7 +16,15 @@ import { getHomeNode } from './sections/home.navEntry';
 import { notebooksNavEntry } from './sections/notebooks.navEntry';
 import { profileNavEntry } from './sections/profile.navEntry';
 import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEntry';
-import { applyAppSubUrl, buildEntries, type NavEntryBuilder, pruneEmptyNavSections, sortNavTree } from './utils';
+import {
+  applyAppSubUrl,
+  buildEntries,
+  findNavById,
+  type NavEntryBuilder,
+  pruneEmptyNavSections,
+  sortNavTree,
+  updateNavById,
+} from './utils';
 
 /**
  * Whether to build the nav tree client-side. Gated on grafana.multiTenantNavTree
@@ -84,8 +94,31 @@ const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
 /**
  * Builds the static (non-plugin) portion of the nav tree, sorted, with urls
  * app-sub-url relative: callers apply the prefix once via applyAppSubUrl at
- * the end of their pipeline.
+ * the end of their pipeline. Nav items registered via addNavEntries (e.g. by
+ * the enterprise bundle) are appended into their target sections.
  */
 export function buildStaticNavTree(): NavModelItem[] {
-  return sortNavTree([getHomeNode(), ...buildEntries(STATIC_NAV_ENTRIES)]);
+  const tree = [getHomeNode(), ...buildEntries(STATIC_NAV_ENTRIES)];
+  return sortNavTree(applyRegisteredNavEntries(tree));
+}
+
+/** Appends registered extension items into their parent sections. Returns a new tree. */
+function applyRegisteredNavEntries(tree: NavModelItem[]): NavModelItem[] {
+  return getRegisteredNavEntries().reduce((current, { parentId, entry }) => {
+    const built = buildEntries([entry]);
+    if (built.length === 0) {
+      return current;
+    }
+    if (parentId === NavID.root) {
+      return [...current, ...built];
+    }
+    if (!findNavById(current, parentId)) {
+      console.warn('[navtree] registered nav entry parent not found', parentId);
+      return current;
+    }
+    return updateNavById(current, parentId, (parent) => ({
+      ...parent,
+      children: [...(parent.children ?? []), ...built],
+    }));
+  }, tree);
 }

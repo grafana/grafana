@@ -41,6 +41,20 @@ export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | u
   return undefined;
 }
 
+/** Returns a new tree with the matching node (at any depth) replaced by update(node) */
+export function updateNavById(
+  nodes: NavModelItem[],
+  id: string,
+  update: (node: NavModelItem) => NavModelItem
+): NavModelItem[] {
+  return nodes.map((node) => {
+    if (node.id === id) {
+      return update(node);
+    }
+    return node.children ? { ...node, children: updateNavById(node.children, id, update) } : node;
+  });
+}
+
 /**
  * Prefixes every absolute url in the tree with the app sub url, so individual
  * items are declared sub-url agnostic. Anchor-only and relative urls (Help's

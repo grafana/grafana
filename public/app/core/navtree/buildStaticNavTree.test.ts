@@ -5,6 +5,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { buildStaticNavTree } from './buildStaticNavTree';
 import { NavID } from './constants';
+import { addNavEntries, clearRegisteredNavEntries } from './registry';
 import { navIds as ids, setupNavTestState as setup } from './test-utils';
 import { applyAppSubUrl, findNavById as findById, pruneEmptyNavSections, sortNavTree } from './utils';
 
@@ -442,5 +443,55 @@ describe('sortNavTree', () => {
 
     expect(ids(sorted)).toEqual(['a', 'b', 'c', 'd']);
     expect(ids(nodes)).toEqual(['c', 'a', 'd', 'b']);
+  });
+});
+
+describe('registered nav entries', () => {
+  afterEach(() => {
+    clearRegisteredNavEntries();
+  });
+
+  it('appends registered items into their parent section', () => {
+    setup({ orgRole: 'Admin', permissions: [AccessControlAction.OrgUsersRead] });
+    addNavEntries({
+      parentId: NavID.cfgGeneral,
+      entry: { build: () => ({ text: 'Announcement banner', id: 'banner-settings' }) },
+    });
+
+    const general = findById(buildStaticNavTree(), NavID.cfgGeneral);
+    expect(ids(general?.children ?? [])).toContain('banner-settings');
+  });
+
+  it('appends root-level entries to the top of the tree', () => {
+    setup();
+    addNavEntries({
+      parentId: NavID.root,
+      entry: { build: () => ({ text: 'Enterprise thing', id: 'enterprise-thing', sortWeight: 1 }) },
+    });
+
+    expect(ids(buildStaticNavTree())).toContain('enterprise-thing');
+  });
+
+  it('respects the entry gate', () => {
+    setup({ orgRole: 'Admin' });
+    addNavEntries({
+      parentId: NavID.cfgGeneral,
+      entry: { when: () => false, build: () => ({ text: 'Hidden', id: 'hidden-entry' }) },
+    });
+
+    expect(findById(buildStaticNavTree(), 'hidden-entry')).toBeUndefined();
+  });
+
+  it('warns and skips entries whose parent does not exist', () => {
+    setup();
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    addNavEntries({
+      parentId: 'no-such-section',
+      entry: { build: () => ({ text: 'Orphan', id: 'orphan-entry' }) },
+    });
+
+    expect(findById(buildStaticNavTree(), 'orphan-entry')).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith('[navtree] registered nav entry parent not found', 'no-such-section');
+    warn.mockRestore();
   });
 });

@@ -12431,6 +12431,10 @@
     "authentication": {
       "title": "Authentication"
     },
+    "banner-settings": {
+      "subtitle": "Show important updates and information at the top of every page",
+      "title": "Announcement banner"
+    },
     "bookmarks": {
       "title": "Bookmarks"
     },
@@ -12639,6 +12643,10 @@
     },
     "search-dashboards": {
       "title": "Search dashboards"
+    },
+    "secrets-management": {
+      "subtitle": "Manage secrets for your Grafana instance",
+      "title": "Secrets Management"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",
