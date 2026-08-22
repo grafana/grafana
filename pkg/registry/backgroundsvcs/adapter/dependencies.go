@@ -65,10 +65,14 @@ const (
 // unless they are explicitly listed in this map.
 func dependencyMap() map[string][]string {
 	return map[string][]string{
-		SQLStore:           {},
-		Tracing:            {SQLStore},
-		GrafanaAPIServer:   {Tracing},
-		PluginStore:        {GrafanaAPIServer},
+		SQLStore: {},
+		Tracing:  {SQLStore},
+		// GrafanaAPIServer depends on PluginStore so that plugins are loaded into the
+		// plugin registry before the API server builds its (immutable) set of served API
+		// groups. The plugin-manifest feature derives API groups from loaded app plugins;
+		// without this ordering those groups would be missing at server start.
+		PluginStore:        {Tracing},
+		GrafanaAPIServer:   {Tracing, PluginStore},
 		PluginInstaller:    {PluginStore},
 		IAMRolesSyncer:     {GrafanaAPIServer},
 		FixedRolesLoader:   {PluginInstaller, IAMRolesSyncer},

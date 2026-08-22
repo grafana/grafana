@@ -3288,6 +3288,15 @@ var (
 			Generate:     Generate{React: true},
 			HideFromDocs: true,
 		},
+		{
+			Name:         "plugins.appSDKManifest",
+			Description:  "Enables generating App Platform APIs from app-sdk manifest files in app plugins loaded at server start. A plugin installed at runtime requires a restart for its APIs to appear.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAppPlatformSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{Go: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

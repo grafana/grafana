@@ -1013,4 +1013,8 @@ const (
 	// FlagDatasourcesQueryGateway
 	// Data source query gateway
 	FlagDatasourcesQueryGateway = "datasources.queryGateway"
+
+	// FlagPluginsAppSDKManifest
+	// Enables generating App Platform APIs from app-sdk manifest files in app plugins loaded at server start. A plugin installed at runtime requires a restart for its APIs to appear.
+	FlagPluginsAppSDKManifest = "plugins.appSDKManifest"
 )
