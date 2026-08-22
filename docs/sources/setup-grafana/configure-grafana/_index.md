@@ -2066,6 +2066,14 @@ If a rule frequency is lower than this value, then this value is enforced.
 
 <hr>
 
+#### `resend_delay`
+
+Minimum time between re-sending a still-firing alert to the Alertmanager. Grafana keeps re-sending firing alerts so Alertmanager has at-least-once delivery.
+
+The default value is `30s`. Increase this on high-volume instances to reduce notification traffic. `0` uses the default (`30s`).
+
+The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), for example, 30s or 1m.
+
 #### `rule_version_record_limit`
 
 Defines the limits for how many alert rule versions are stored in the database per alert rule.

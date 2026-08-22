@@ -455,6 +455,7 @@ func (ng *AlertNG) init() error {
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
+		ResendDelay:                    ng.Cfg.UnifiedAlerting.ResendDelay,
 
 		IgnorePendingForNoDataAndError: ng.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertingIgnorePendingForNoDataAndError),
 		RequireWarm:                    ng.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertingStateManagerRequireWarm),

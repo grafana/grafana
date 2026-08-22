@@ -2818,3 +2818,26 @@ func TestStateManager_HistorianIntegration(t *testing.T) {
 		})
 	}
 }
+
+func TestNewManagerResendDelay(t *testing.T) {
+	baseCfg := func() state.ManagerCfg {
+		return state.ManagerCfg{
+			Clock:  clock.NewMock(),
+			Log:    log.NewNopLogger(),
+			Tracer: tracing.InitializeTracerForTest(),
+			Images: &state.NoopImageService{},
+		}
+	}
+
+	t.Run("uses the 30s default when unset", func(t *testing.T) {
+		mgr := state.NewManager(baseCfg(), state.NewNoopPersister())
+		require.Equal(t, 30*time.Second, mgr.ResendDelay)
+	})
+
+	t.Run("uses the configured delay", func(t *testing.T) {
+		cfg := baseCfg()
+		cfg.ResendDelay = 5 * time.Minute
+		mgr := state.NewManager(cfg, state.NewNoopPersister())
+		require.Equal(t, 5*time.Minute, mgr.ResendDelay)
+	})
+}

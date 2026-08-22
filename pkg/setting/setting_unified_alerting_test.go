@@ -28,6 +28,7 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 		require.Equal(t, time.Minute, cfg.UnifiedAlerting.HAPushPullInterval)
 		require.Equal(t, 6*time.Hour, cfg.UnifiedAlerting.HAReconnectTimeout)
 		require.Equal(t, alertingDefaultInitializationTimeout, cfg.UnifiedAlerting.InitializationTimeout)
+		require.Equal(t, 30*time.Second, cfg.UnifiedAlerting.ResendDelay)
 	}
 
 	// With peers set, it correctly parses them.
@@ -513,4 +514,40 @@ func TestQueriesServedByLoki(t *testing.T) {
 			require.Equal(t, tc.want, tc.stateHistory.QueriesServedByLoki())
 		})
 	}
+}
+
+func TestResendDelay(t *testing.T) {
+	t.Run("defaults to 30s when unset", func(t *testing.T) {
+		cfg := NewCfg()
+		cfg.IsFeatureToggleEnabled = func(string) bool { return false }
+		require.NoError(t, cfg.ReadUnifiedAlertingSettings(ini.Empty()))
+		require.Equal(t, 30*time.Second, cfg.UnifiedAlerting.ResendDelay)
+	})
+
+	t.Run("parses a custom duration", func(t *testing.T) {
+		f := ini.Empty()
+		sec, err := f.NewSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = sec.NewKey("resend_delay", "5m")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		cfg.IsFeatureToggleEnabled = func(string) bool { return false }
+		require.NoError(t, cfg.ReadUnifiedAlertingSettings(f))
+		require.Equal(t, 5*time.Minute, cfg.UnifiedAlerting.ResendDelay)
+	})
+
+	t.Run("rejects a negative duration", func(t *testing.T) {
+		f := ini.Empty()
+		sec, err := f.NewSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = sec.NewKey("resend_delay", "-1s")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		cfg.IsFeatureToggleEnabled = func(string) bool { return false }
+		err = cfg.ReadUnifiedAlertingSettings(f)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "resend_delay")
+	})
 }
