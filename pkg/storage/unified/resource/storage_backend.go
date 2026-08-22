@@ -48,7 +48,16 @@ const (
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 	persistDeadline                   = 10 * time.Second
+
+	// gcLeaseName is the lease used to ensure only one storage-api replica
+	// runs a garbage collection cycle at a time. See runGarbageCollectionWithLock.
+	gcLeaseName = "resource-gc"
 )
+
+// gcLeaseTTL is short because the lease auto-renews for as long as the GC
+// cycle runs; it only bounds how quickly the lock is reclaimed if a replica
+// crashes mid-cycle. A var (not const) so tests can shrink it.
+var gcLeaseTTL = time.Minute
 
 // IsResourceNameMixedCase reports whether a successful read returned a
 // resource whose stored name matches the requested name case-insensitively but
@@ -700,12 +709,52 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				b.runGarbageCollection(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
+				b.runGarbageCollectionWithLock(ctx, time.Now().Add(-b.garbageCollection.MaxAge).UnixMicro())
 			}
 		}
 	}()
 
 	return nil
+}
+
+// runGarbageCollectionWithLock is a best-effort attempt at having only one
+// storage-api replica run a GC cycle at a time; deletes are idempotent, so a
+// concurrent run by two replicas is safe, just redundant.
+func (b *kvStorageBackend) runGarbageCollectionWithLock(ctx context.Context, cutoffTimeStamp int64) {
+	if b.leaseManager == nil {
+		b.runGarbageCollection(ctx, cutoffTimeStamp)
+		return
+	}
+
+	l, err := b.leaseManager.Acquire(ctx, gcLeaseName, lease.WithTTL(gcLeaseTTL), lease.WithAutoRenew())
+	if err != nil {
+		if !errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+			b.log.Error("failed to acquire garbage collection lease", "error", err)
+		}
+		return
+	}
+
+	// Cancel the cycle if the lease is lost mid-run (e.g. renewal failure),
+	// so this replica stops deleting once another replica may have taken over.
+	leaseCtx, cancel := context.WithCancel(ctx)
+	watcherDone := make(chan struct{})
+	go func() {
+		defer close(watcherDone)
+		select {
+		case <-l.Lost():
+			cancel()
+		case <-leaseCtx.Done():
+		}
+	}()
+	defer func() {
+		cancel()
+		<-watcherDone
+		if err := b.leaseManager.Release(context.WithoutCancel(ctx), l); err != nil {
+			b.log.Warn("releasing garbage collection lease failed", "error", err)
+		}
+	}()
+
+	b.runGarbageCollection(leaseCtx, cutoffTimeStamp)
 }
 
 // runGarbageCollection identifies deleted resources that are safe
