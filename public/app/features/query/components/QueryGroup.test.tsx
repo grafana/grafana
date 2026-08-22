@@ -36,6 +36,21 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(() => Promise.resolve({ ...mockDS, getRef: () => {} })),
+  getDataSourceInstanceSettings: jest.fn(() =>
+    Promise.resolve({
+      ...mockDS,
+      meta: {
+        ...mockDS.meta,
+        alerting: true,
+        mixed: true,
+      },
+    })
+  ),
+}));
+
 describe('QueryGroup', () => {
   // QueryGroup relies on this being present
   Object.defineProperty(HTMLElement.prototype, 'scrollTo', { value: jest.fn() });

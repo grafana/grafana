@@ -1,5 +1,6 @@
 import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
-import { PureComponent, type ReactNode } from 'react';
+import { PureComponent, type ComponentProps, type ReactNode } from 'react';
+import { useAsync } from 'react-use';
 
 import {
   CoreApp,
@@ -13,7 +14,8 @@ import {
   getNextRefId,
   isSystemOverrideWithRef,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { SafeSerializableSceneObject, type SceneObjectRef, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -173,7 +175,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         const dataSourceRef = getDataSourceRef(dataSource);
 
         if (item.datasource) {
-          const previous = getDataSourceSrv().getInstanceSettings(item.datasource);
+          const previous = await getDataSourceInstanceSettings(item.datasource);
 
           if (previous?.type === dataSource.type) {
             return {
@@ -183,7 +185,7 @@ export class QueryEditorRows extends PureComponent<Props> {
           }
         }
 
-        const ds = await getDataSourceSrv().get(dataSourceRef);
+        const ds = await getDataSourceInstance(dataSourceRef);
 
         return { ...ds.getDefaultQuery?.(CoreApp.PanelEditor), ...item, datasource: dataSourceRef };
       })
@@ -256,19 +258,18 @@ export class QueryEditorRows extends PureComponent<Props> {
             return (
               <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
                 {queries.map((query, index) => {
-                  const dataSourceSettings = getDataSourceSettings(query, dsSettings, scopedVars);
                   const onChangeDataSourceSettings = dsSettings.meta.mixed
                     ? (settings: DataSourceInstanceSettings) => this.onDataSourceChange(settings, index)
                     : undefined;
 
                   const queryEditorRow = (
-                    <QueryEditorRow
+                    <QueryEditorRowWithResolvedDataSource
                       id={query.refId}
                       index={index}
                       key={query.refId}
                       data={data}
                       query={query}
-                      dataSource={dataSourceSettings}
+                      groupSettings={dsSettings}
                       scopedVars={scopedVars}
                       onChangeDataSource={onChangeDataSourceSettings}
                       onChange={(query) => this.onChangeQuery(query, index)}
@@ -309,14 +310,128 @@ export class QueryEditorRows extends PureComponent<Props> {
   }
 }
 
-const getDataSourceSettings = (
-  query: DataQuery,
-  groupSettings: DataSourceInstanceSettings,
-  scopedVars?: ScopedVars
-): DataSourceInstanceSettings => {
-  if (!query.datasource) {
+type QueryEditorRowWithResolvedDataSourceProps = Omit<
+  ComponentProps<typeof QueryEditorRow>,
+  'dataSource' | 'query' | 'scopedVars'
+> & {
+  query: DataQuery;
+  groupSettings: DataSourceInstanceSettings;
+  scopedVars?: ScopedVars;
+};
+
+function QueryEditorRowWithResolvedDataSource({
+  query,
+  groupSettings,
+  scopedVars,
+  ...rowProps
+}: QueryEditorRowWithResolvedDataSourceProps) {
+  // Compare by value: `scopedVars` is a new `{ __sceneObject }` wrapper on every
+  // QueryEditorRows render, and `query.datasource` is often an inline object.
+  // `interpolatedUid` is required too — `${ds}` and the scene key stay the same when
+  // the variable's value changes, but instance settings (type, meta, jsonData) do not.
+  const interpolatedUid = interpolatedDatasourceUid(query.datasource, scopedVars);
+  const datasourceKey = stableKey(query.datasource);
+  const varsKey = scopedVarsKey(scopedVars);
+  const { value: querySettings } = useAsync(
+    () => (query.datasource ? getDataSourceInstanceSettings(query.datasource, scopedVars) : Promise.resolve(undefined)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [datasourceKey, varsKey, interpolatedUid]
+  );
+
+  const currentQuerySettings = settingsMatchInterpolatedUid(querySettings, interpolatedUid)
+    ? querySettings
+    : undefined;
+  const dataSourceSettings = resolveRowDataSourceSettings(query.datasource, currentQuerySettings, groupSettings);
+  if (!dataSourceSettings) {
+    return null;
+  }
+
+  return <QueryEditorRow {...rowProps} query={query} dataSource={dataSourceSettings} scopedVars={scopedVars} />;
+}
+
+/**
+ * A query with its own datasource ref must not inherit the group's settings until that
+ * lookup returns. Mixed group settings are the panel mixer, not the query's datasource —
+ * using them as a stand-in feeds Mixed into the row header and plugin context.
+ */
+export function resolveRowDataSourceSettings(
+  queryDatasource: DataQuery['datasource'],
+  querySettings: DataSourceInstanceSettings | undefined,
+  groupSettings: DataSourceInstanceSettings
+): DataSourceInstanceSettings | undefined {
+  if (!queryDatasource) {
     return groupSettings;
   }
-  const querySettings = getDataSourceSrv().getInstanceSettings(query.datasource, scopedVars);
-  return querySettings || groupSettings;
-};
+  if (querySettings) {
+    return querySettings;
+  }
+  return groupSettings.meta.mixed ? undefined : groupSettings;
+}
+
+function interpolatedDatasourceUid(
+  datasource: DataQuery['datasource'],
+  scopedVars?: ScopedVars
+): string | undefined {
+  if (datasource == null) {
+    return undefined;
+  }
+  const uid = typeof datasource === 'string' ? datasource : datasource.uid;
+  if (!uid) {
+    return undefined;
+  }
+  if (!uid.includes('$')) {
+    return uid;
+  }
+  return getTemplateSrv().replace(uid, scopedVars, firstVariableValue);
+}
+
+function firstVariableValue<T>(value: T | T[]): T {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export function settingsMatchInterpolatedUid(
+  querySettings: DataSourceInstanceSettings | undefined,
+  interpolatedUid: string | undefined
+): querySettings is DataSourceInstanceSettings {
+  if (!querySettings) {
+    return false;
+  }
+  if (interpolatedUid == null) {
+    return true;
+  }
+  return (querySettings.rawRef?.uid ?? querySettings.uid) === interpolatedUid;
+}
+
+function stableKey(value: unknown): string {
+  return JSON.stringify(value ?? null);
+}
+
+function scopedVarsKey(scopedVars?: ScopedVars): string {
+  if (!scopedVars) {
+    return '';
+  }
+
+  const sceneVar = scopedVars.__sceneObject;
+  if (!sceneVar) {
+    return stableKey(scopedVars);
+  }
+
+  // SafeSerializableSceneObject is circular under JSON.stringify (`value` returns this).
+  // Key by the underlying scene object so a new wrapper each render does not refetch.
+  const sceneObject = typeof sceneVar.valueOf === 'function' ? sceneVar.valueOf() : sceneVar;
+  const key = sceneObjectKey(sceneObject);
+  return key != null ? `scene:${key}` : 'scene';
+}
+
+function sceneObjectKey(sceneObject: unknown): string | undefined {
+  if (sceneObject == null || typeof sceneObject !== 'object' || !('state' in sceneObject)) {
+    return undefined;
+  }
+
+  const state = sceneObject.state;
+  if (state == null || typeof state !== 'object' || !('key' in state) || state.key == null) {
+    return undefined;
+  }
+
+  return String(state.key);
+}

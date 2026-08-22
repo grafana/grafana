@@ -4,13 +4,19 @@ import userEvent from '@testing-library/user-event';
 import type { DataSourceApi } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { QueryEditorRows, type Props } from './QueryEditorRows';
+import {
+  QueryEditorRows,
+  resolveRowDataSourceSettings,
+  settingsMatchInterpolatedUid,
+  type Props,
+} from './QueryEditorRows';
 
 const mockDS = mockDataSource({
   name: 'CloudManager',
@@ -30,10 +36,33 @@ const dsSrvMock: Pick<DataSourceSrv, 'get' | 'getList' | 'getInstanceSettings'> 
   getInstanceSettings: jest.fn(() => mockDS),
 };
 
+const mockReplace = jest.fn((target?: string) => target ?? '');
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => dsSrvMock,
+  getTemplateSrv: () => ({
+    replace: (target?: string) => mockReplace(target),
+    getVariables: () => [],
+    containsTemplate: () => false,
+    updateTimeRange: () => {},
+  }),
 }));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
+  getDataSourceInstanceSettings: jest.fn(),
+}));
+
+jest
+  .mocked(getDataSourceInstance)
+  .mockImplementation((...args: unknown[]) => dsSrvMock.get(...(args as Parameters<DataSourceSrv['get']>)));
+jest
+  .mocked(getDataSourceInstanceSettings)
+  .mockImplementation(async (...args: unknown[]) =>
+    dsSrvMock.getInstanceSettings(...(args as Parameters<DataSourceSrv['getInstanceSettings']>))
+  );
 
 const props: Props = {
   queries: [
@@ -418,6 +447,223 @@ describe('QueryEditorRows', () => {
     const updatedQueries = onQueriesChangeMock.mock.calls[0][0] as Array<DataQuery & { defaultFromDS?: string }>;
     expect(updatedQueries[0].defaultFromDS).toBe('yes');
     expect(getDefaultQuery).toHaveBeenCalledTimes(1);
+  });
+
+  describe('datasource settings resolution', () => {
+    const settingsCalls = () => jest.mocked(getDataSourceInstanceSettings).mock.calls.length;
+
+    const panelRef = {
+      resolve: () => ({ state: { key: 'panel-1' } }),
+    } as NonNullable<Props['panelRef']>;
+
+    const rowQueries: DataQuery[] = [
+      { refId: 'A', datasource: { uid: 'ds-a', type: 'prometheus' } },
+      { refId: 'B', datasource: { uid: 'ds-b', type: 'loki' } },
+    ];
+
+    const baseProps: Props = {
+      ...props,
+      queries: rowQueries,
+      onQueriesChange: jest.fn(),
+      onAddQuery: jest.fn(),
+      onRunQueries: jest.fn(),
+      onUpdateDatasources: jest.fn(),
+      panelRef,
+    };
+
+    beforeEach(() => {
+      jest.mocked(getDataSourceInstanceSettings).mockClear();
+    });
+
+    afterEach(() => {
+      mockReplace.mockImplementation((target?: string) => target ?? '');
+      jest
+        .mocked(getDataSourceInstanceSettings)
+        .mockImplementation(async (...args: unknown[]) =>
+          dsSrvMock.getInstanceSettings(...(args as Parameters<DataSourceSrv['getInstanceSettings']>))
+        );
+    });
+
+    it('does not re-resolve settings when only panel data changes', async () => {
+      const { rerender } = render(<QueryEditorRows {...baseProps} />);
+      expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(2);
+
+      const callsAfterMount = settingsCalls();
+
+      await act(async () => {
+        rerender(<QueryEditorRows {...baseProps} data={{ ...baseProps.data }} />);
+      });
+
+      expect(settingsCalls()).toBe(callsAfterMount);
+    });
+
+    it('does not re-resolve settings when query.datasource is a new object with the same uid', async () => {
+      const { rerender } = render(<QueryEditorRows {...baseProps} />);
+      expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(2);
+      const callsAfterMount = settingsCalls();
+
+      await act(async () => {
+        rerender(
+          <QueryEditorRows
+            {...baseProps}
+            queries={[
+              { refId: 'A', datasource: { uid: 'ds-a', type: 'prometheus' } },
+              { refId: 'B', datasource: { uid: 'ds-b', type: 'loki' } },
+            ]}
+          />
+        );
+      });
+
+      expect(settingsCalls()).toBe(callsAfterMount);
+    });
+
+    it('re-resolves settings when query.datasource uid changes', async () => {
+      const { rerender } = render(<QueryEditorRows {...baseProps} />);
+      expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(2);
+      const callsAfterMount = settingsCalls();
+
+      await act(async () => {
+        rerender(
+          <QueryEditorRows
+            {...baseProps}
+            queries={[{ refId: 'A', datasource: { uid: 'ds-c', type: 'prometheus' } }, rowQueries[1]]}
+          />
+        );
+      });
+
+      expect(settingsCalls()).toBeGreaterThan(callsAfterMount);
+    });
+
+    it('re-resolves settings when a datasource variable interpolates to a new uid', async () => {
+      let interpolatedUid = 'prom-uid';
+      mockReplace.mockImplementation((target?: string) => (target === '${ds}' ? interpolatedUid : (target ?? '')));
+
+      const variableQueries: DataQuery[] = [{ refId: 'A', datasource: { uid: '${ds}', type: 'prometheus' } }];
+      const { rerender } = render(<QueryEditorRows {...baseProps} queries={variableQueries} />);
+      expect(await screen.findByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      const callsAfterMount = settingsCalls();
+
+      interpolatedUid = 'loki-uid';
+      await act(async () => {
+        rerender(<QueryEditorRows {...baseProps} queries={variableQueries} data={{ ...baseProps.data }} />);
+      });
+
+      expect(settingsCalls()).toBeGreaterThan(callsAfterMount + 1);
+    });
+
+    it('does not re-resolve settings when panel data changes but the interpolated uid is unchanged', async () => {
+      mockReplace.mockImplementation((target?: string) => (target === '${ds}' ? 'prom-uid' : (target ?? '')));
+
+      const variableQueries: DataQuery[] = [{ refId: 'A', datasource: { uid: '${ds}', type: 'prometheus' } }];
+      const { rerender } = render(<QueryEditorRows {...baseProps} queries={variableQueries} />);
+      expect(await screen.findByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      const callsAfterMount = settingsCalls();
+
+      await act(async () => {
+        rerender(<QueryEditorRows {...baseProps} queries={variableQueries} data={{ ...baseProps.data }} />);
+      });
+
+      expect(settingsCalls()).toBe(callsAfterMount);
+    });
+
+    it.each([
+      {
+        name: 'matches settings whose rawRef uid is the interpolated uid',
+        settings: { uid: '${ds}', rawRef: { uid: 'prom-uid', type: 'prometheus' } },
+        interpolatedUid: 'prom-uid',
+        expected: true,
+      },
+      {
+        name: 'rejects settings whose rawRef uid is a previous interpolation',
+        settings: { uid: '${ds}', rawRef: { uid: 'prom-uid', type: 'prometheus' } },
+        interpolatedUid: 'loki-uid',
+        expected: false,
+      },
+      {
+        name: 'matches non-templated settings by uid',
+        settings: { uid: 'prom-uid' },
+        interpolatedUid: 'prom-uid',
+        expected: true,
+      },
+    ])('$name', ({ settings, interpolatedUid, expected }) => {
+      expect(
+        settingsMatchInterpolatedUid(settings as ReturnType<typeof mockDataSource>, interpolatedUid)
+      ).toBe(expected);
+    });
+
+    it.each([
+      {
+        name: 'uses group settings when the query has no datasource of its own',
+        queryDatasource: undefined,
+        hasQuerySettings: false,
+        mixed: true,
+        expectQuerySettings: false,
+        expectGroup: true,
+      },
+      {
+        name: 'uses resolved query settings on a mixed panel',
+        queryDatasource: { uid: 'prom' },
+        hasQuerySettings: true,
+        mixed: true,
+        expectQuerySettings: true,
+        expectGroup: false,
+      },
+      {
+        name: 'does not use mixed group settings while query settings are missing',
+        queryDatasource: { uid: 'prom' },
+        hasQuerySettings: false,
+        mixed: true,
+        expectQuerySettings: false,
+        expectGroup: false,
+      },
+      {
+        name: 'falls back to non-mixed group settings when query settings are missing',
+        queryDatasource: { uid: 'prom' },
+        hasQuerySettings: false,
+        mixed: false,
+        expectQuerySettings: false,
+        expectGroup: true,
+      },
+    ])('$name', ({ queryDatasource, hasQuerySettings, mixed, expectQuerySettings, expectGroup }) => {
+      const groupSettings = mockDataSource(
+        { name: mixed ? MIXED_DATASOURCE_NAME : 'Prometheus', uid: mixed ? MIXED_DATASOURCE_NAME : 'prom' },
+        { mixed }
+      );
+      const resolved = hasQuerySettings ? mockDataSource({ name: 'Loki', uid: 'loki', type: 'loki' }) : undefined;
+
+      const result = resolveRowDataSourceSettings(queryDatasource, resolved, groupSettings);
+
+      if (expectQuerySettings) {
+        expect(result).toBe(resolved);
+      } else if (expectGroup) {
+        expect(result).toBe(groupSettings);
+      } else {
+        expect(result).toBeUndefined();
+      }
+    });
+
+    it('does not fall back to mixed group settings when query datasource resolution fails', async () => {
+      jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(undefined);
+
+      const mixedSettings = mockDataSource(
+        { name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME },
+        { mixed: true }
+      );
+
+      render(
+        <QueryEditorRows
+          {...baseProps}
+          dsSettings={mixedSettings}
+          queries={[{ refId: 'A', datasource: { uid: 'missing-ds', type: 'prometheus' } }]}
+        />
+      );
+
+      await waitFor(() => {
+        expect(getDataSourceInstanceSettings).toHaveBeenCalled();
+      });
+
+      expect(screen.queryByTestId(selectors.components.QueryEditorRows.rows)).not.toBeInTheDocument();
+    });
   });
 });
 
