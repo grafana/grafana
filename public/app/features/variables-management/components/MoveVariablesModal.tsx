@@ -16,7 +16,7 @@ export interface MoveVariablesModalProps {
 
 export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: MoveVariablesModalProps) {
   const allowGlobalScope = canManageGlobalVariables();
-  // '' is root/global. Non-editors hide root, so start empty (undefined) — NestedFolderPicker
+  // '' is root/global. Non-admins hide root, so start empty (undefined) — NestedFolderPicker
   // labels '' as "Dashboards" even when showRootFolder is false.
   const [targetFolderUid, setTargetFolderUid] = useState<string | undefined>(() =>
     canManageGlobalVariables() ? '' : undefined

@@ -103,7 +103,7 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   const isNew = !source;
   const allowGlobalScope = canManageGlobalVariables();
   const [searchParams] = useSearchParams();
-  // '' is the FolderPicker root/global uid. For non-editors root is hidden, so start
+  // '' is the FolderPicker root/global uid. For non-admins root is hidden, so start
   // with undefined (empty selection) — NestedFolderPicker labels '' as "Dashboards"
   // even when showRootFolder is false. New variables may preselect a folder via
   // ?folderUid= from the folder Variables tab.
@@ -158,7 +158,7 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   const sourceScopeReady =
     !sourceFolderUid || (needsSeparateSourceFolder ? sourceFolderMatches : selectedFolderMatches);
 
-  // Non-editors may only save folder-scoped variables (root/global requires Editor/Admin),
+  // Non-admins may only save folder-scoped variables (root/global requires Admin),
   // and only into folders they can edit. Edit also requires source-scope rights so rename/move
   // (create-then-delete) cannot leave a duplicate when the original cannot be deleted.
   const hasValidFolderScope = allowGlobalScope || Boolean(folderUid);
@@ -281,7 +281,7 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
         className={styles.folderField}
         label={t('variables-management.editor.folder-label', 'Folder')}
         description={
-          allowGlobalScope || !isNew
+          allowGlobalScope
             ? t(
                 'variables-management.editor.folder-description',
                 'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
@@ -300,7 +300,7 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
           permission={canChangeFolder ? 'edit' : 'view'}
           value={folderUid}
           disabled={!canChangeFolder}
-          onChange={(uid) => setFolderUid(allowGlobalScope || !isNew ? (uid ?? '') : uid)}
+          onChange={(uid) => setFolderUid(allowGlobalScope ? (uid ?? '') : uid)}
           excludeUIDs={getVariableFolderPickerExcludeUIDs()}
         />
       </Field>

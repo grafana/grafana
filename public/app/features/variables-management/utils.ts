@@ -10,14 +10,14 @@ export function getVariableFolderPickerExcludeUIDs(): string[] | undefined {
   return config.sharedWithMeFolderUID ? [config.sharedWithMeFolderUID] : undefined;
 }
 
-/** Org Editors/Admins can create org-wide (global) variables; folder editors cannot. */
+/** Org Admins can create org-wide (global) variables; folder editors cannot. */
 export function canManageGlobalVariables(): boolean {
-  return contextSrv.isEditor;
+  return contextSrv.hasRole('Admin');
 }
 
 /**
  * Whether the user may mutate a variable in the given scope.
- * - `undefined` — no folder selected yet (non-editors creating)
+ * - `undefined` — no folder selected yet (non-admins creating)
  * - `''` — org-global / root; requires {@link canManageGlobalVariables}
  * - otherwise — folder UID; requires that folder's CanEdit
  */
