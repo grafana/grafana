@@ -58,15 +58,28 @@ type PlaylistItemDTO struct {
 	//  dashboards behind the tag will be added to the playlist.
 	//  - dashboard_by_uid: The value is the dashboard UID
 	Value string `json:"value"`
+
+	// Interval optionally overrides the playlist interval for this item.
+	Interval *string `json:"interval,omitempty"`
+
+	// DashboardView contains dashboard state applied during playback.
+	DashboardView *DashboardView `json:"dashboardView,omitempty"`
+}
+
+// DashboardView contains serialized dashboard view state.
+type DashboardView struct {
+	QueryString string `json:"queryString"`
 }
 
 type PlaylistItem struct {
-	Id         int64  `db:"id"`
-	PlaylistId int64  `db:"playlist_id"`
-	Type       string `json:"type" db:"type"`
-	Value      string `json:"value" db:"value"`
-	Order      int    `json:"order" db:"order"`
-	Title      string `json:"title" db:"title"`
+	Id            int64          `db:"id"`
+	PlaylistId    int64          `db:"playlist_id"`
+	Type          string         `json:"type" db:"type"`
+	Value         string         `json:"value" db:"value"`
+	Order         int            `json:"order" db:"order"`
+	Title         string         `json:"title" db:"title"`
+	Interval      *string        `json:"interval,omitempty" db:"-" xorm:"-"`
+	DashboardView *DashboardView `json:"dashboardView,omitempty" db:"-" xorm:"-"`
 }
 
 type Playlists []*Playlist
