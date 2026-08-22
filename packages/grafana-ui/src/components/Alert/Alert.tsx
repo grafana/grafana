@@ -67,19 +67,8 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
     return (
       <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
-        <Box
-          data-testid={selectors.components.Alert.alertV2(severity)}
-          display="flex"
-          backgroundColor={severity}
-          borderRadius="lg"
-          paddingY={1}
-          paddingX={2}
-          borderStyle="solid"
-          borderColor={severity}
-          alignItems="stretch"
-          boxShadow={elevated ? 'z3' : undefined}
-        >
-          <Box paddingTop={1} paddingRight={2}>
+        <div data-testid={selectors.components.Alert.alertV2(severity)} className={styles.box}>
+          <Box display="flex" alignItems="flex-start" justifyContent="flex-start">
             <div className={styles.icon}>
               <Icon size="xl" name={getIconFromSeverity(severity)} />
             </div>
@@ -114,7 +103,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
               />
             </div>
           )}
-        </Box>
+        </div>
       </div>
     );
   }
@@ -164,14 +153,29 @@ const getStyles = (
         zIndex: -1,
       },
     }),
+    box: css({
+      display: 'flex',
+      borderRadius: theme.shape.radius.lg,
+      boxShadow: elevated ? theme.shadows.z3 : undefined,
+      padding: theme.spacing(2),
+      background: `linear-gradient(169deg, ${theme.components.card.background} 20%, color-mix(in oklab, ${theme.components.card.background} 70%, ${color.background}))`,
+      border: `1px solid color-mix(in oklab, ${theme.colors.background.page} 50%, ${color.border})`,
+      gap: theme.spacing(2),
+    }),
     icon: css({
       color: color.text,
+      backgroundColor: color.background,
       position: 'relative',
-      top: '-1px',
+      width: '40px',
+      height: '40px',
+      padding: theme.spacing(1.2),
+      borderRadius: theme.spacing(1),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     }),
     content: css({
       color: theme.colors.text.primary,
-      paddingTop: hasTitle ? theme.spacing(0.5) : 0,
       maxHeight: '50vh',
       overflowY: 'auto',
     }),
