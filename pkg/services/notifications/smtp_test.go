@@ -59,6 +59,42 @@ func TestBuildMail(t *testing.T) {
 		assert.Less(t, strings.Index(buf.String(), "Some plain text body"), strings.Index(buf.String(), "Some HTML body"))
 	})
 
+	t.Run("builds mail with embedded and attached content", func(t *testing.T) {
+		// PNG-like payload large enough to exercise base64 line wrapping.
+		png := bytes.Repeat([]byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}, 4096)
+		msg := &Message{
+			To:      []string{"to@address.com"},
+			From:    "from@address.com",
+			Subject: "screenshot",
+			Body: map[string]string{
+				"text/html":  `<html><img src="cid:panel.png"/></html>`,
+				"text/plain": "alert fired",
+			},
+			EmbeddedContents: []EmbeddedContent{
+				{Name: "panel.png", Content: png},
+				{Name: "", Content: []byte("skip-empty-name")},
+				{Name: "empty.png", Content: nil},
+			},
+			AttachedFiles: []*AttachedFile{
+				{Name: "panel-attach.png", Content: png},
+				nil,
+				{Name: "empty-attach.png", Content: []byte{}},
+			},
+		}
+
+		email := sc.buildEmail(ctx, msg)
+		buf := new(bytes.Buffer)
+		_, err := email.WriteTo(buf)
+		require.NoError(t, err)
+
+		raw := buf.String()
+		assert.Contains(t, raw, "Content-Disposition: inline; filename=\"panel.png\"")
+		assert.Contains(t, raw, "Content-Disposition: attachment; filename=\"panel-attach.png\"")
+		assert.NotContains(t, raw, "skip-empty-name")
+		assert.NotContains(t, raw, "empty.png")
+		assert.NotContains(t, raw, "empty-attach.png")
+	})
+
 	t.Run("Skips trace headers when context has no span", func(t *testing.T) {
 		cfg.Smtp.EnableTracing = true
 
@@ -81,6 +117,21 @@ func TestBuildMail(t *testing.T) {
 
 		email := sc.buildEmail(ctx, message)
 		assert.NotEmpty(t, email.GetHeader("traceparent"))
+	})
+}
+
+func TestCopyFileContent(t *testing.T) {
+	t.Run("returns error when writer is nil", func(t *testing.T) {
+		err := copyFileContent([]byte("data"))(nil)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "nil")
+	})
+
+	t.Run("writes content to writer", func(t *testing.T) {
+		var buf bytes.Buffer
+		err := copyFileContent([]byte("hello"))(&buf)
+		require.NoError(t, err)
+		assert.Equal(t, "hello", buf.String())
 	})
 }
 
@@ -218,6 +269,31 @@ func TestSmtpSend(t *testing.T) {
 		}
 
 		require.True(t, found)
+	})
+
+	t.Run("message with embedded screenshot content sends", func(t *testing.T) {
+		png := bytes.Repeat([]byte{0x89, 0x50, 0x4e, 0x47}, 2048)
+		message := &Message{
+			From:    "from@example.com",
+			To:      []string{"rcpt@example.com"},
+			Subject: "alert with screenshot",
+			Body: map[string]string{
+				"text/html":  `<html><img src="cid:panel.png"/></html>`,
+				"text/plain": "alert",
+			},
+			EmbeddedContents: []EmbeddedContent{
+				{Name: "panel.png", Content: png},
+			},
+		}
+
+		count, err := client.Send(ctx, message)
+		require.NoError(t, err)
+		require.Equal(t, 1, count)
+
+		messages, err := srv.WaitForMessagesAndPurge(1, 5*time.Second)
+		require.NoError(t, err)
+		require.Len(t, messages, 1)
+		assert.Contains(t, messages[0].MsgRequest(), "filename=\"panel.png\"")
 	})
 
 	t.Run("multiple recipients, single message", func(t *testing.T) {
