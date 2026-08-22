@@ -2,7 +2,6 @@ import { render, screen } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
-import { getSearchTeamsHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchLayout, type SearchState } from 'app/features/search/types';
@@ -18,18 +17,12 @@ jest.mock('app/features/search/state/SearchStateManager', () => ({
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: jest.fn(() => true),
-    user: { uid: 1, orgId: 1 },
+    user: { uid: 1, orgId: 1, gravatarUrl: '' },
   },
 }));
 
 setBackendSrv(backendSrv);
-setupMockServer([
-  getSearchTeamsHandler([
-    { uid: 'team-a', name: 'Team A', avatarUrl: '' },
-    { uid: 'test-team', name: 'Test Team', avatarUrl: '' },
-  ]),
-]);
-
+setupMockServer();
 mockComboboxRect();
 
 const createSearchState = (partial?: Partial<SearchState>): SearchState => ({
@@ -61,7 +54,7 @@ describe('BrowseFilters', () => {
     jest.clearAllMocks();
   });
 
-  it('shows the owner filter with the all teams option and user teams', async () => {
+  it('shows the owner filter with the fetched teams', async () => {
     const stateManager = createStateManager();
     mockUseSearchStateManager.mockReturnValue([createSearchState(), stateManager]);
 
@@ -69,7 +62,6 @@ describe('BrowseFilters', () => {
 
     await user.click(await screen.findByRole('combobox', { name: 'Owner filter' }));
 
-    expect(await screen.findByText('All teams')).toBeInTheDocument();
     expect(await screen.findByText('Team A')).toBeInTheDocument();
     expect(await screen.findByText('Test Team')).toBeInTheDocument();
   });
@@ -84,20 +76,5 @@ describe('BrowseFilters', () => {
     await user.click(await screen.findByText('Team A'));
 
     expect(stateManager.onOwnerReferenceChange).toHaveBeenCalledWith(['iam.grafana.app/Team/team-a']);
-  });
-
-  it('normalizes the all teams option into all ownerReference values', async () => {
-    const stateManager = createStateManager();
-    mockUseSearchStateManager.mockReturnValue([createSearchState(), stateManager]);
-
-    const { user } = render(<BrowseFilters />);
-
-    await user.click(await screen.findByRole('combobox', { name: 'Owner filter' }));
-    await user.click(await screen.findByText('All teams'));
-
-    expect(stateManager.onOwnerReferenceChange).toHaveBeenCalledWith([
-      'iam.grafana.app/Team/team-a',
-      'iam.grafana.app/Team/test-team',
-    ]);
   });
 });
