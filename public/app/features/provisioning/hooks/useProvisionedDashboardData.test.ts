@@ -38,6 +38,20 @@ const settingsWithRepo = {
   availableRepositoryTypes: ['github'],
 };
 
+const folderlessSettings = {
+  items: [
+    {
+      name: 'folderless-repo',
+      title: 'Folderless Repo',
+      type: 'github',
+      target: 'folderless',
+      workflows: ['branch', 'write'],
+    },
+  ],
+  allowImageRendering: true,
+  availableRepositoryTypes: ['github'],
+};
+
 const folderResponse = {
   kind: 'Folder',
   apiVersion: 'folder.grafana.app/v1beta1',
@@ -175,6 +189,55 @@ describe('useDefaultValues', () => {
     expect(result.current.values?.title).toBe('Test Dashboard');
     expect(result.current.repository?.name).toBe('my-repo');
   });
+
+  it('resolves a folderless repo for a brand-new dashboard with no folder', async () => {
+    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
+
+    const { result } = renderHook(() => useDefaultValues({ meta: {}, defaultTitle: 'New Dashboard' }), {
+      wrapper: getWrapper({}),
+    });
+
+    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Ready));
+    expect(result.current.isNew).toBe(true);
+    expect(result.current.values?.repo).toBe('folderless-repo');
+  });
+
+  it('does not resolve a folderless repo for an existing dashboard with no folder', async () => {
+    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
+
+    const meta = { slug: 'existing-dashboard', k8s: { name: 'existing-dashboard-uid', annotations: {} } };
+
+    const { result } = renderHook(() => useDefaultValues({ meta, defaultTitle: 'Existing Dashboard' }), {
+      wrapper: getWrapper({}),
+    });
+
+    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Error));
+    expect(result.current.values).toBeNull();
+  });
+
+  it('resolves a folderless repo when copying an existing dashboard to the root', async () => {
+    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
+
+    // Meta after picking "No folder (repository root)": the folder's manager annotations are gone
+    // but the source dashboard's k8s identity and source path remain
+    const meta = {
+      slug: 'existing-dashboard',
+      k8s: {
+        name: 'existing-dashboard-uid',
+        resourceVersion: '42',
+        annotations: { [AnnoKeySourcePath]: 'My Team/existing-dashboard.json' },
+      },
+    };
+
+    const { result } = renderHook(
+      () => useDefaultValues({ meta, defaultTitle: 'Existing Dashboard', saveAsCopy: true }),
+      { wrapper: getWrapper({}) }
+    );
+
+    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Ready));
+    expect(result.current.isNew).toBe(true);
+    expect(result.current.values?.repo).toBe('folderless-repo');
+  });
 });
 
 describe('useProvisionedDashboardData', () => {
@@ -245,6 +308,34 @@ describe('useProvisionedDashboardData', () => {
     expect(result.current.defaultValues?.repo).toBe('my-repo');
     expect(result.current.repository?.name).toBe('my-repo');
     expect(result.current.readOnly).toBe(false);
+  });
+
+  it('resolves the folderless repo for a brand-new dashboard saved at root', async () => {
+    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
+
+    const dashboard = createDashboard({ folderUid: undefined, k8s: undefined });
+    const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
+
+    await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
+    expect(result.current.isNew).toBe(true);
+    expect(result.current.repository?.name).toBe('folderless-repo');
+  });
+
+  it('does not resolve the folderless repo for an existing dashboard saved at root', async () => {
+    server.use(http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)));
+
+    const dashboard = createDashboard({
+      folderUid: undefined,
+      k8s: { name: 'existing-dashboard-uid', annotations: {} },
+    });
+    const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
+
+    await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Error));
+    expect(result.current.repository).toBeUndefined();
   });
 
   describe('enforced branch name template', () => {

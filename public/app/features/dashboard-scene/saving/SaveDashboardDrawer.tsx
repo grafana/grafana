@@ -1,10 +1,11 @@
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
-import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { Drawer, Spinner, Tab, TabsBar } from '@grafana/ui';
 import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import {
@@ -29,6 +30,11 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
+  // Git/Database switch for provisioned saves, owned by useDatabaseSaveSwitch. Lives on the
+  // drawer because switching tabs unmounts the save form while the drawer stays open.
+  saveToDatabase?: boolean;
+  // uid is the scene uid at switch time; a different one on unmount means a save already landed
+  databaseSwitchSnapshot?: { gitMeta: DashboardMeta; wasNew: boolean; uid?: string };
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
@@ -85,7 +91,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const { meta } = dashboard.useState();
   const { provisioned: isProvisioned, folderTitle } = meta;
   const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
-  const isProvisionedNG = useIsProvisionedNG(dashboard);
+  const { isProvisioned: isProvisionedNG, isLoading: isResolvingRepo } = useIsProvisionedNG(dashboard, saveAsCopy);
 
   const tabs = (
     <TabsBar>
@@ -150,6 +156,10 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       if (SaveAsTemplateForm) {
         return <SaveAsTemplateForm dashboard={dashboard} />;
       }
+    }
+
+    if (isResolvingRepo) {
+      return <Spinner />;
     }
 
     if (isProvisionedNG) {

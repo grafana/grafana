@@ -221,6 +221,28 @@ describe('useGetResourceRepositoryView', () => {
     });
   });
 
+  describe('repoType', () => {
+    it.each([
+      ['name-based lookup', { name: 'my-repo' }],
+      ['folder-based lookup', { folderName: 'my-repo' }],
+    ])('reports the repository type on a %s', (_, args) => {
+      setupMocks({ settingsItems: [repoView({ type: 'local' })] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView(args));
+
+      // Consumers pick the read-only tooltip copy from this, so undefined reads as a Git repo
+      expect(result.current.repoType).toBe('local');
+    });
+
+    it('is undefined when no repository resolves', () => {
+      setupMocks({ settingsItems: [] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'unmanaged-folder' }));
+
+      expect(result.current.repoType).toBeUndefined();
+    });
+  });
+
   describe('folder-based lookup', () => {
     it('returns Ready when folderName directly matches a repo name (root folder)', () => {
       const repo = repoView();
@@ -367,6 +389,57 @@ describe('useGetResourceRepositoryView', () => {
       renderHook(() => useGetResourceRepositoryView({ folderName: '' }));
 
       expect(mockUseGetFrontendSettingsQuery).toHaveBeenCalledWith(skipToken);
+    });
+  });
+
+  describe('includeFolderless', () => {
+    it('returns the folderless repo at root when nothing else matches', () => {
+      const folderlessRepo = repoView({ name: 'folderless-repo', target: 'folderless' });
+      setupMocks({ settingsItems: [folderlessRepo] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ includeFolderless: true }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBe(folderlessRepo);
+    });
+
+    it('prefers the instance repo over a folderless one', () => {
+      const instanceRepo = repoView({ name: 'instance-repo', target: 'instance' });
+      const folderlessRepo = repoView({ name: 'folderless-repo', target: 'folderless' });
+      setupMocks({ settingsItems: [instanceRepo, folderlessRepo] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ includeFolderless: true }));
+
+      expect(result.current.repository).toBe(instanceRepo);
+    });
+
+    it('does not fall back to the folderless repo when a folder is targeted', () => {
+      const folderlessRepo = repoView({ name: 'folderless-repo', target: 'folderless' });
+      setupMocks({ settingsItems: [folderlessRepo], folder: folderData() });
+
+      const { result } = renderHook(() =>
+        useGetResourceRepositoryView({ folderName: 'unmanaged-db-folder', includeFolderless: true })
+      );
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBeUndefined();
+    });
+
+    it('does not resolve a folderless repo unless the caller asks for it', () => {
+      const folderlessRepo = repoView({ name: 'folderless-repo', target: 'folderless' });
+      setupMocks({ settingsItems: [folderlessRepo] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({}));
+
+      expect(result.current.repository).toBeUndefined();
+    });
+
+    it('overrides the query skip so root-level lookups still fetch settings', () => {
+      setupMocks();
+
+      renderHook(() => useGetResourceRepositoryView({ includeFolderless: true }));
+
+      expect(mockUseGetFrontendSettingsQuery).not.toHaveBeenCalledWith(skipToken);
     });
   });
 

@@ -13,6 +13,7 @@ interface GetResourceRepositoryArgs {
   folderName?: string; // folder we are targeting
   skipQuery?: boolean;
   includeInstance?: boolean;
+  includeFolderless?: boolean;
 }
 
 export enum RepoViewStatus {
@@ -46,6 +47,9 @@ export const useGetResourceRepositoryView = (args: GetResourceRepositoryArgs): R
   const data = useResourceRepositoryViewData(args);
   return {
     ...data,
+    // Derived here so every resolution path reports it; the name and folderName branches used to
+    // return undefined, which read as a Git repo to consumers picking the read-only tooltip copy
+    repoType: data.repository?.type,
     isMissingRepo: !data.isLoading && !data.repository,
   };
 };
@@ -55,12 +59,14 @@ const useResourceRepositoryViewData = ({
   folderName,
   skipQuery,
   includeInstance,
-}: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo'> => {
+  includeFolderless,
+}: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo' | 'repoType'> => {
   const provisioningEnabled = config.provisioningEnabled;
   // Skip when caller has no target. This query is shared across many
   // components, so a failing fetch would cycle all of them through retries.
-  // `includeInstance` overrides the skip for root-level instance lookups.
-  const shouldSkipSettings = !provisioningEnabled || skipQuery || (!name && !folderName && !includeInstance);
+  // `includeInstance`/`includeFolderless` override the skip for root-level lookups.
+  const shouldSkipSettings =
+    !provisioningEnabled || skipQuery || (!name && !folderName && !includeInstance && !includeFolderless);
   const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
 
   const {
@@ -193,12 +199,18 @@ const useResourceRepositoryViewData = ({
     }
   }
 
+  // Only root-level lookups may fall back to a folderless repo: a targeted folder that
+  // matched nothing above is not managed by it.
+  // Known limitation: with multiple folderless repos configured, the first one wins
+  const folderlessRepo =
+    includeFolderless && !folderName ? items.find((repo) => repo.target === 'folderless') : undefined;
+  const repository = instanceRepo ?? folderlessRepo;
+
   return {
-    repository: instanceRepo,
+    repository,
     folder,
     isInstanceManaged,
-    isReadOnlyRepo: getIsReadOnlyRepo(instanceRepo),
-    repoType: instanceRepo?.type,
+    isReadOnlyRepo: getIsReadOnlyRepo(repository),
     status: RepoViewStatus.Ready,
   };
 };
