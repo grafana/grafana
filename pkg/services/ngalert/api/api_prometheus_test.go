@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"slices"
 	"sort"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -3567,18 +3568,305 @@ func TestNewDBRuleMutator(t *testing.T) {
 	})
 }
 
-// countingAlertInstanceManager wraps AlertInstanceManager and counts GetStatesForRuleUID calls.
+// TestRouteGetRuleStatuses_DBMode_BatchesStateLoad verifies that the DB rule mutator loads all
+// of the org's alert states in one GetAll instead of one query per rule (the N+1 in #124004).
+func TestRouteGetRuleStatuses_DBMode_BatchesStateLoad(t *testing.T) {
+	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
+	orgID := int64(1)
+	queryPermissions := map[int64]map[string][]string{1: {datasources.ActionQuery: {datasources.ScopeAll}}}
+
+	newReqContext := func() *contextmodel.ReqContext {
+		req, err := http.NewRequest("GET", "/api/v1/rules", nil)
+		require.NoError(t, err)
+		return &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions}}
+	}
+
+	setup := func(t *testing.T) (PrometheusSrv, *int, *int, ngmodels.RulesGroup) {
+		ruleStore := fakes.NewRuleStore(t)
+		fakeAIM := NewFakeAlertInstanceManager(t)
+		gen := ngmodels.RuleGen
+		groupKey := ngmodels.GenerateGroupKey(orgID)
+		rules := gen.With(gen.WithOrgID(orgID), gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(20)
+		ruleStore.PutRule(context.Background(), rules...)
+		for _, r := range rules {
+			fakeAIM.GenerateAlertInstances(orgID, r.UID, 1, withAlertingState())
+		}
+
+		callCount, getAllCount := 0, 0
+		counting := &countingAlertInstanceManager{inner: fakeAIM, callCount: &callCount, getAllCount: &getAllCount}
+
+		api := NewPrometheusSrv(
+			log.NewNopLogger(),
+			counting,
+			NewDBRuleMutator(counting),
+			ruleStore,
+			&fakeRuleAccessControlService{},
+			fakes.NewFakeProvisioningStore(),
+		)
+		return *api, &callCount, &getAllCount, rules
+	}
+
+	t.Run("loads state once for the whole org, not per rule", func(t *testing.T) {
+		api, callCount, getAllCount, rules := setup(t)
+
+		resp := api.RouteGetRuleStatuses(newReqContext())
+		require.Equal(t, http.StatusOK, resp.Status())
+
+		assert.Equal(t, 1, *getAllCount, "GetAll should be called exactly once per request")
+		assert.Equal(t, 0, *callCount, "GetStatesForRuleUID should not be called (batched via GetAll)")
+
+		result := &apimodels.RuleResponse{}
+		require.NoError(t, json.Unmarshal(resp.Body(), result))
+		require.Len(t, result.Data.RuleGroups, 1)
+		require.Len(t, result.Data.RuleGroups[0].Rules, len(rules))
+		for _, r := range result.Data.RuleGroups[0].Rules {
+			assert.Equal(t, "firing", r.State, "each rule should reflect its firing state from the batched load")
+		}
+	})
+
+	t.Run("reloads state on every request (no cross-request caching)", func(t *testing.T) {
+		api, _, getAllCount, _ := setup(t)
+
+		require.Equal(t, http.StatusOK, api.RouteGetRuleStatuses(newReqContext()).Status())
+		require.Equal(t, http.StatusOK, api.RouteGetRuleStatuses(newReqContext()).Status())
+
+		assert.Equal(t, 2, *getAllCount, "each request must load fresh state; states must not be cached across requests")
+	})
+}
+
+// sleepingInstanceReader is a state.InstanceReader that simulates DB latency and counts calls.
+type sleepingInstanceReader struct {
+	instances []*ngmodels.AlertInstance
+	delay     time.Duration
+	calls     *int64
+}
+
+func (r *sleepingInstanceReader) ListAlertInstances(_ context.Context, cmd *ngmodels.ListAlertInstancesQuery) ([]*ngmodels.AlertInstance, error) {
+	atomic.AddInt64(r.calls, 1)
+	if r.delay > 0 {
+		time.Sleep(r.delay)
+	}
+	out := make([]*ngmodels.AlertInstance, 0, len(r.instances))
+	for _, in := range r.instances {
+		if in.RuleOrgID != cmd.RuleOrgID {
+			continue
+		}
+		if cmd.RuleUID != "" && in.RuleUID != cmd.RuleUID {
+			continue
+		}
+		out = append(out, in)
+	}
+	return out, nil
+}
+
+// BenchmarkRouteGetRuleStatuses_DBMode measures the HA single-node DB path, reporting store
+// round trips per op (scales with rule count before the fix).
+func BenchmarkRouteGetRuleStatuses_DBMode(b *testing.B) {
+	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
+	orgID := int64(1)
+	queryPermissions := map[int64]map[string][]string{1: {datasources.ActionQuery: {datasources.ScopeAll}}}
+	const perQueryLatency = 1 * time.Millisecond
+
+	for _, ruleCount := range []int{10, 100, 500, 1000, 5000} {
+		b.Run(fmt.Sprintf("rules=%d", ruleCount), func(b *testing.B) {
+			// fakes.NewRuleStore requires *testing.T; build the store directly.
+			ruleStore := &fakes.RuleStore{
+				Rules:   map[int64][]*ngmodels.AlertRule{},
+				Folders: map[int64][]*folder.Folder{},
+				History: map[string][]*ngmodels.AlertRuleVersion{},
+				Hook:    func(any) error { return nil },
+			}
+			gen := ngmodels.RuleGen
+			groupKey := ngmodels.GenerateGroupKey(orgID)
+			rules := gen.With(gen.WithOrgID(orgID), gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(ruleCount)
+			ruleStore.PutRule(context.Background(), rules...)
+
+			m := ngmodels.AlertInstanceMutators{}
+			instances := make([]*ngmodels.AlertInstance, 0, ruleCount)
+			for _, r := range rules {
+				instances = append(instances, ngmodels.AlertInstanceGen(m.WithOrgID(orgID), m.WithRuleUID(r.UID)))
+			}
+
+			var calls int64
+			reader := &sleepingInstanceReader{instances: instances, delay: perQueryLatency, calls: &calls}
+			storeReader := state.NewStoreStateReader(reader, log.NewNopLogger(), 0, nil)
+
+			api := NewPrometheusSrv(
+				log.NewNopLogger(),
+				storeReader,
+				NewDBRuleMutator(storeReader),
+				ruleStore,
+				&fakeRuleAccessControlService{},
+				fakes.NewFakeProvisioningStore(),
+			)
+
+			req, err := http.NewRequest("GET", "/api/v1/rules", nil)
+			require.NoError(b, err)
+
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions}}
+				resp := api.RouteGetRuleStatuses(c)
+				if resp.Status() != http.StatusOK {
+					b.Fatalf("unexpected status %d", resp.Status())
+				}
+			}
+			b.StopTimer()
+			b.ReportMetric(float64(atomic.LoadInt64(&calls))/float64(b.N), "db_calls/op")
+		})
+	}
+}
+
+// BenchmarkRouteGetRuleStatuses_Cardinality varies instances per rule at a fixed rule count to
+// isolate the cost driven by instance cardinality from the per-rule N+1 round-trip cost.
+func BenchmarkRouteGetRuleStatuses_Cardinality(b *testing.B) {
+	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
+	orgID := int64(1)
+	queryPermissions := map[int64]map[string][]string{1: {datasources.ActionQuery: {datasources.ScopeAll}}}
+	const perQueryLatency = 300 * time.Microsecond // matches the measured prod MySQL RTT (~0.3ms)
+	const ruleCount = 500
+
+	for _, instancesPerRule := range []int{1, 20, 100, 500} {
+		b.Run(fmt.Sprintf("rules=%d/instances_per_rule=%d", ruleCount, instancesPerRule), func(b *testing.B) {
+			ruleStore := &fakes.RuleStore{
+				Rules:   map[int64][]*ngmodels.AlertRule{},
+				Folders: map[int64][]*folder.Folder{},
+				History: map[string][]*ngmodels.AlertRuleVersion{},
+				Hook:    func(any) error { return nil },
+			}
+			gen := ngmodels.RuleGen
+			groupKey := ngmodels.GenerateGroupKey(orgID)
+			rules := gen.With(gen.WithOrgID(orgID), gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(ruleCount)
+			ruleStore.PutRule(context.Background(), rules...)
+
+			m := ngmodels.AlertInstanceMutators{}
+			instances := make([]*ngmodels.AlertInstance, 0, ruleCount*instancesPerRule)
+			for _, r := range rules {
+				for j := 0; j < instancesPerRule; j++ {
+					instances = append(instances, ngmodels.AlertInstanceGen(
+						m.WithOrgID(orgID), m.WithRuleUID(r.UID), m.WithLabelsHash(fmt.Sprintf("%s-%d", r.UID, j))))
+				}
+			}
+
+			var calls int64
+			reader := &sleepingInstanceReader{instances: instances, delay: perQueryLatency, calls: &calls}
+			storeReader := state.NewStoreStateReader(reader, log.NewNopLogger(), 0, nil)
+
+			api := NewPrometheusSrv(
+				log.NewNopLogger(), storeReader, NewDBRuleMutator(storeReader),
+				ruleStore, &fakeRuleAccessControlService{}, fakes.NewFakeProvisioningStore(),
+			)
+			req, err := http.NewRequest("GET", "/api/v1/rules", nil)
+			require.NoError(b, err)
+
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions}}
+				resp := api.RouteGetRuleStatuses(c)
+				if resp.Status() != http.StatusOK {
+					b.Fatalf("unexpected status %d", resp.Status())
+				}
+			}
+			b.StopTimer()
+			b.ReportMetric(float64(atomic.LoadInt64(&calls))/float64(b.N), "db_calls/op")
+			b.ReportMetric(float64(ruleCount*instancesPerRule), "instances")
+		})
+	}
+}
+
+type nopStatusReader struct{}
+
+func (nopStatusReader) Status(_ context.Context, _ ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool) {
+	return ngmodels.RuleStatus{Health: "ok"}, true
+}
+
+// BenchmarkRouteGetRuleStatuses_PrimaryVsSecondary compares serving the rules list from
+// in-memory state (evaluating pod) versus from the DB via StoreStateReader (non-primary pod).
+func BenchmarkRouteGetRuleStatuses_PrimaryVsSecondary(b *testing.B) {
+	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
+	orgID := int64(1)
+	queryPermissions := map[int64]map[string][]string{1: {datasources.ActionQuery: {datasources.ScopeAll}}}
+	const ruleCount = 500
+	const instancesPerRule = 200 // 100k instances total, approximating a high-cardinality page
+	const perQueryLatency = 300 * time.Microsecond
+
+	ruleStore := &fakes.RuleStore{
+		Rules:   map[int64][]*ngmodels.AlertRule{},
+		Folders: map[int64][]*folder.Folder{},
+		History: map[string][]*ngmodels.AlertRuleVersion{},
+		Hook:    func(any) error { return nil },
+	}
+	gen := ngmodels.RuleGen
+	groupKey := ngmodels.GenerateGroupKey(orgID)
+	rules := gen.With(gen.WithOrgID(orgID), gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(ruleCount)
+	ruleStore.PutRule(context.Background(), rules...)
+
+	req, err := http.NewRequest("GET", "/api/v1/rules", nil)
+	require.NoError(b, err)
+	newCtx := func() *contextmodel.ReqContext {
+		return &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions}}
+	}
+
+	// PRIMARY: in-memory state manager holding all instances (what the evaluating pod has).
+	inMem := &fakeAlertInstanceManager{states: map[int64]map[string][]*state.State{}}
+	for _, r := range rules {
+		inMem.GenerateAlertInstances(orgID, r.UID, instancesPerRule)
+	}
+	primaryAPI := NewPrometheusSrv(
+		log.NewNopLogger(), inMem, NewInMemoryRuleMutator(nopStatusReader{}, inMem),
+		ruleStore, &fakeRuleAccessControlService{}, fakes.NewFakeProvisioningStore(),
+	)
+
+	// SECONDARY: StoreStateReader over the DB (per-query latency), same instance volume.
+	m := ngmodels.AlertInstanceMutators{}
+	dbInstances := make([]*ngmodels.AlertInstance, 0, ruleCount*instancesPerRule)
+	for _, r := range rules {
+		for j := 0; j < instancesPerRule; j++ {
+			dbInstances = append(dbInstances, ngmodels.AlertInstanceGen(
+				m.WithOrgID(orgID), m.WithRuleUID(r.UID), m.WithLabelsHash(fmt.Sprintf("%s-%d", r.UID, j))))
+		}
+	}
+	var calls int64
+	storeReader := state.NewStoreStateReader(&sleepingInstanceReader{instances: dbInstances, delay: perQueryLatency, calls: &calls}, log.NewNopLogger(), 0, nil)
+	secondaryAPI := NewPrometheusSrv(
+		log.NewNopLogger(), storeReader, NewDBRuleMutator(storeReader),
+		ruleStore, &fakeRuleAccessControlService{}, fakes.NewFakeProvisioningStore(),
+	)
+
+	b.Run("primary_in_memory", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			if r := primaryAPI.RouteGetRuleStatuses(newCtx()); r.Status() != http.StatusOK {
+				b.Fatalf("status %d", r.Status())
+			}
+		}
+	})
+	b.Run("secondary_db_storestatereader", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			if r := secondaryAPI.RouteGetRuleStatuses(newCtx()); r.Status() != http.StatusOK {
+				b.Fatalf("status %d", r.Status())
+			}
+		}
+	})
+}
+
+// countingAlertInstanceManager wraps AlertInstanceManager and counts calls; both counters are optional.
 type countingAlertInstanceManager struct {
-	inner     state.AlertInstanceManager
-	callCount *int
+	inner       state.AlertInstanceManager
+	callCount   *int
+	getAllCount *int
 }
 
 func (c *countingAlertInstanceManager) GetAll(ctx context.Context, orgID int64) []*state.State {
+	if c.getAllCount != nil {
+		*c.getAllCount++
+	}
 	return c.inner.GetAll(ctx, orgID)
 }
 
 func (c *countingAlertInstanceManager) GetStatesForRuleUID(ctx context.Context, orgID int64, alertRuleUID string) []*state.State {
-	*c.callCount++
+	if c.callCount != nil {
+		*c.callCount++
+	}
 	return c.inner.GetStatesForRuleUID(ctx, orgID, alertRuleUID)
 }
 
