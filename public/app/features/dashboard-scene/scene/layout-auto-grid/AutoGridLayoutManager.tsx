@@ -33,6 +33,7 @@ import {
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
+import { findAdjacentVizPanel, focusVizPanel } from '../layouts-shared/utils';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
@@ -219,13 +220,15 @@ export class AutoGridLayoutManager
     clearClipboard();
   }
 
-  public removePanel(panel: VizPanel) {
+  public removePanel(panel: VizPanel, options?: { skipFocus?: boolean }) {
     const gridItem = panel.parent;
     if (!(gridItem instanceof AutoGridItem)) {
       return;
     }
 
-    const gridItemIndex = this.state.layout.state.children.indexOf(gridItem);
+    const siblings = this.state.layout.state.children;
+    const gridItemIndex = siblings.indexOf(gridItem);
+    const adjacentPanel = findAdjacentVizPanel(gridItem, siblings, (sibling) => sibling.state.body);
 
     removeElement({
       removedObject: panel,
@@ -234,6 +237,9 @@ export class AutoGridLayoutManager
         this.state.layout.setState({
           children: this.state.layout.state.children.filter((child) => child !== gridItem),
         });
+        if (!options?.skipFocus) {
+          focusVizPanel(adjacentPanel);
+        }
       },
       undo: () => {
         this.state.layout.setState({
