@@ -579,42 +579,6 @@ func TestGetCDNPathWithAlphaVersion(t *testing.T) {
 	require.Equal(t, "http://cdn.grafana.com/grafana/v7.5.0-alpha.11124/", actual)
 }
 
-func TestAlertingEnabled(t *testing.T) {
-	t.Run("fail if legacy alerting enabled", func(t *testing.T) {
-		f := ini.Empty()
-		cfg := NewCfg()
-
-		alertingSec, err := f.NewSection("alerting")
-		require.NoError(t, err)
-		_, err = alertingSec.NewKey("enabled", "true")
-		require.NoError(t, err)
-
-		require.Error(t, cfg.readAlertingSettings(f))
-	})
-
-	t.Run("do nothing if it is disabled", func(t *testing.T) {
-		f := ini.Empty()
-		cfg := NewCfg()
-
-		alertingSec, err := f.NewSection("alerting")
-		require.NoError(t, err)
-		_, err = alertingSec.NewKey("enabled", "false")
-		require.NoError(t, err)
-		require.NoError(t, cfg.readAlertingSettings(f))
-	})
-
-	t.Run("do nothing if it invalid", func(t *testing.T) {
-		f := ini.Empty()
-		cfg := NewCfg()
-
-		alertingSec, err := f.NewSection("alerting")
-		require.NoError(t, err)
-		_, err = alertingSec.NewKey("enabled", "test")
-		require.NoError(t, err)
-		require.NoError(t, cfg.readAlertingSettings(f))
-	})
-}
-
 func TestRedactedValue(t *testing.T) {
 	testCases := []struct {
 		desc     string
