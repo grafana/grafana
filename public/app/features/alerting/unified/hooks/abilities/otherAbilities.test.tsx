@@ -5,7 +5,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantPermissionsHelper } from '../../test/test-utils';
-import * as environment from '../../utils/environment';
+import * as misc from '../../utils/misc';
 
 import { isNotSupported } from './abilityUtils';
 import {
@@ -22,7 +22,7 @@ const wrapper = () => getWrapper({ renderWithRouter: true });
 
 describe('otherAbilities — folder bulk action', () => {
   it('grants Pause and Delete to org admins', () => {
-    jest.spyOn(environment, 'isAdmin').mockReturnValue(true);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
 
     const { result } = renderHook(() => useFolderBulkActionAbilities(), { wrapper: wrapper() });
 
@@ -31,7 +31,7 @@ describe('otherAbilities — folder bulk action', () => {
   });
 
   it('denies Pause and Delete to non-admins', () => {
-    jest.spyOn(environment, 'isAdmin').mockReturnValue(false);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
 
     const { result } = renderHook(() => useFolderBulkActionAbilities(), { wrapper: wrapper() });
 
@@ -42,7 +42,7 @@ describe('otherAbilities — folder bulk action', () => {
   });
 
   it('returns the correct single-action slice via useFolderBulkActionAbility', () => {
-    jest.spyOn(environment, 'isAdmin').mockReturnValue(true);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
 
     const { result } = renderHook(() => useFolderBulkActionAbility(FolderBulkAction.Pause), { wrapper: wrapper() });
 
@@ -63,7 +63,7 @@ describe('otherAbilities — enrichment', () => {
 
   it('grants read and write to admin users when feature is enabled', () => {
     grantPermissionsHelper([]);
-    jest.spyOn(environment, 'isAdmin').mockReturnValue(true);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
 
@@ -72,7 +72,7 @@ describe('otherAbilities — enrichment', () => {
   });
 
   it('grants only read when user has enrichments:read permission', () => {
-    jest.spyOn(environment, 'isAdmin').mockReturnValue(false);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead]);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
@@ -83,7 +83,7 @@ describe('otherAbilities — enrichment', () => {
   });
 
   it('grants only write when user has enrichments:write permission', () => {
-    jest.spyOn(environment, 'isAdmin').mockReturnValue(false);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsWrite]);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
@@ -94,7 +94,7 @@ describe('otherAbilities — enrichment', () => {
   });
 
   it('grants both read and write when user has both permissions', () => {
-    jest.spyOn(environment, 'isAdmin').mockReturnValue(false);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead, AccessControlAction.AlertingEnrichmentsWrite]);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
@@ -104,7 +104,7 @@ describe('otherAbilities — enrichment', () => {
   });
 
   it('denies all when user is not admin and has no permissions', () => {
-    jest.spyOn(environment, 'isAdmin').mockReturnValue(false);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([]);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });
@@ -116,7 +116,7 @@ describe('otherAbilities — enrichment', () => {
   });
 
   it('returns correct ability for a single action via useEnrichmentAbility', () => {
-    jest.spyOn(environment, 'isAdmin').mockReturnValue(false);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(false);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead]);
 
     const { result } = renderHook(() => useEnrichmentAbility(EnrichmentAction.Read), { wrapper: wrapper() });
@@ -126,7 +126,7 @@ describe('otherAbilities — enrichment', () => {
 
   it('reports NOT_SUPPORTED when feature toggle is disabled', () => {
     config.featureToggles.alertEnrichment = false;
-    jest.spyOn(environment, 'isAdmin').mockReturnValue(true);
+    jest.spyOn(misc, 'isAdmin').mockReturnValue(true);
     grantPermissionsHelper([AccessControlAction.AlertingEnrichmentsRead, AccessControlAction.AlertingEnrichmentsWrite]);
 
     const { result } = renderHook(() => useEnrichmentAbilities(), { wrapper: wrapper() });

@@ -702,7 +702,7 @@ describe('RuleViewer', () => {
 
     it('should show enrichment tab for admin users', async () => {
       grantPermissionsHelper([AccessControlAction.AlertingRuleRead]);
-      jest.spyOn(require('../../utils/environment'), 'isAdmin').mockReturnValue(true);
+      jest.spyOn(require('../../utils/misc'), 'isAdmin').mockReturnValue(true);
 
       await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
 

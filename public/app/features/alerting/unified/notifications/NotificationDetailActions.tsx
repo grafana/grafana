@@ -11,8 +11,7 @@ import { isGranted } from '../hooks/abilities/abilityUtils';
 import { useGlobalContactPointAbility } from '../hooks/abilities/alertmanager/useContactPointAbility';
 import { useGlobalSilenceAbility } from '../hooks/abilities/alertmanager/useSilenceAbility';
 import { ContactPointAction, SilenceAction } from '../hooks/abilities/types';
-import { isLocalDevEnv, isOpenSourceEdition } from '../utils/environment';
-import { makeLabelBasedSilenceLink } from '../utils/misc';
+import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../utils/misc';
 import { createRelativeUrl } from '../utils/url';
 
 type NotificationEntry = CreateNotificationqueryNotificationEntry;

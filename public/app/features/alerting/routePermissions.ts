@@ -3,7 +3,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 // Keep route permissions separate from React ability hooks because this module loads during app startup.
-export const ROUTE_PERMISSIONS_CONTACT_POINTS = [
+export const PERMISSIONS_CONTACT_POINTS = [
   AccessControlAction.AlertingNotificationsRead,
   AccessControlAction.AlertingNotificationsWrite,
   AccessControlAction.AlertingReceiversRead,
@@ -14,7 +14,7 @@ export const ROUTE_PERMISSIONS_CONTACT_POINTS = [
   AccessControlAction.AlertingReceiversTestCreate,
 ];
 
-export const ROUTE_PERMISSIONS_NOTIFICATION_POLICIES = [
+export const PERMISSIONS_NOTIFICATION_POLICIES = [
   AccessControlAction.AlertingNotificationsRead,
   AccessControlAction.AlertingNotificationsWrite,
   AccessControlAction.AlertingRoutesRead,
@@ -25,7 +25,7 @@ export const ROUTE_PERMISSIONS_NOTIFICATION_POLICIES = [
   AccessControlAction.ActionAlertingManagedRoutesDelete,
 ];
 
-export const ROUTE_PERMISSIONS_TEMPLATES = [
+export const PERMISSIONS_TEMPLATES = [
   AccessControlAction.AlertingNotificationsRead,
   AccessControlAction.AlertingNotificationsWrite,
   AccessControlAction.AlertingTemplatesRead,
@@ -34,9 +34,9 @@ export const ROUTE_PERMISSIONS_TEMPLATES = [
   AccessControlAction.AlertingNotificationsTemplatesTest,
 ];
 
-export const ROUTE_PERMISSIONS_TIME_INTERVALS_READ = [AccessControlAction.AlertingTimeIntervalsRead];
+export const PERMISSIONS_TIME_INTERVALS_READ = [AccessControlAction.AlertingTimeIntervalsRead];
 
-export const ROUTE_PERMISSIONS_TIME_INTERVALS_MODIFY = [
+export const PERMISSIONS_TIME_INTERVALS_MODIFY = [
   AccessControlAction.AlertingNotificationsWrite,
   AccessControlAction.AlertingTimeIntervalsWrite,
 ];

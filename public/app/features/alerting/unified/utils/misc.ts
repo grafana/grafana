@@ -33,6 +33,7 @@ import {
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
+import * as environment from './environment';
 import {
   type KnownErrorCodes,
   getErrorMessageFromApiMachineryErrorResponse,
@@ -268,6 +269,18 @@ export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
   }
 
   return result;
+}
+
+export function isOpenSourceEdition() {
+  return environment.isOpenSourceEdition();
+}
+
+export function isAdmin() {
+  return environment.isAdmin();
+}
+
+export function isLocalDevEnv() {
+  return environment.isLocalDevEnv();
 }
 
 export function isErrorLike(error: unknown): error is Error {

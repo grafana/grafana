@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { isAdmin } from '../../utils/environment';
+import { isAdmin } from '../../utils/misc';
 
 import {
   type Abilities,

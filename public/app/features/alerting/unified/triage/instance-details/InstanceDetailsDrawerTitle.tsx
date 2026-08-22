@@ -14,8 +14,7 @@ import { stringifyFolder, useFolder } from '../../hooks/useFolder';
 import { canAccessPluginPage, useIrmPlugin, usePluginBridge } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
-import { isLocalDevEnv, isOpenSourceEdition } from '../../utils/environment';
-import { makeLabelBasedSilenceLink } from '../../utils/misc';
+import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../../utils/misc';
 
 import { InstanceLocation } from './InstanceDetailsDrawer';
 import { StartInvestigationButton } from './StartInvestigationButton';

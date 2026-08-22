@@ -5,7 +5,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { notificationsPermissions } from '../../../utils/access-control';
 import { isProvisionedResource } from '../../../utils/k8s/utils';
-import { isAdmin } from '../../../utils/environment';
+import { isAdmin } from '../../../utils/misc';
 import { makeAbility } from '../abilityUtils';
 import {
   type Ability,

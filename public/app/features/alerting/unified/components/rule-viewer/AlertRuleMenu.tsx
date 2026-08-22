@@ -31,8 +31,7 @@ import {
   useRuleSilenceAbility,
 } from '../../hooks/abilities/rules/rulerRuleAbilities';
 import { EnrichmentAction } from '../../hooks/abilities/types';
-import { isLocalDevEnv, isOpenSourceEdition } from '../../utils/environment';
-import { createShareLink } from '../../utils/misc';
+import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import {
   getRuleUID,
