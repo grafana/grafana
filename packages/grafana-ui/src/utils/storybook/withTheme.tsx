@@ -22,10 +22,6 @@ const ThemeableStory = ({ children, handleSassThemeChange, themeId }: React.Prop
   #storybook-root {
     padding: ${theme.spacing(2)};
   }
-
-  body {
-    background: ${theme.colors.background.primary};
-  }
   `;
 
   return (
