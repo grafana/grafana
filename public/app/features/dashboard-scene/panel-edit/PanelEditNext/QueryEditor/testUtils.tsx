@@ -9,6 +9,7 @@ import { type DataQuery } from '@grafana/schema';
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { type QueryGroupOptions } from 'app/types/query';
 
+import { NO_SYSTEM_TRANSFORMATIONS } from '../../../scene/systemTransformations';
 import { QueryEditorType } from '../constants';
 
 import {
@@ -284,6 +285,7 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultPanelState: PanelState = {
     panel: new VizPanel({ key: 'panel-1' }),
     transformations,
+    systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
     ...panelState,
   };
 

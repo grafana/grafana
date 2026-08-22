@@ -1,6 +1,9 @@
 import { screen } from '@testing-library/react';
 
+import { standardTransformersRegistry } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type DataQuery } from '@grafana/schema';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { dashboardDsSettingsMock, ds1SettingsMock, renderWithQueryEditorProvider } from '../testUtils';
 import { type Transformation } from '../types';
@@ -17,6 +20,59 @@ jest.mock('@grafana/runtime', () => ({
 describe('QueryEditorSidebar', () => {
   afterAll(() => {
     jest.clearAllMocks();
+  });
+
+  describe('plugin-registered transformations', () => {
+    beforeAll(() => {
+      standardTransformersRegistry.setInit(getStandardTransformers);
+    });
+
+    const userTransformations: Transformation[] = [
+      { transformId: 'organize', registryItem: undefined, transformConfig: { id: 'organize', options: {} } },
+    ];
+
+    const systemTransformations = {
+      prepend: [{ id: 'limit', options: {} }],
+      append: [{ id: 'reduce', options: {} }],
+    };
+
+    function renderWithSystemTransformations(transformations = userTransformations) {
+      renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
+        transformations,
+        panelState: { systemTransformations },
+      });
+
+      return screen.getAllByTestId(selectors.components.Transforms.systemTransformationRow);
+    }
+
+    it('lists them around the user transformations, in pipeline order', () => {
+      const [prepended, appended] = renderWithSystemTransformations();
+
+      // Named from the registry, so the row reads the way the transformation does everywhere else.
+      expect(prepended).toHaveTextContent('Limit');
+      expect(appended).toHaveTextContent('Reduce');
+
+      // Position is the only thing conveying when each group runs, so it has to be the DOM order and
+      // not just the two rows being present.
+      const userCard = screen.getByRole('button', { name: /select card organize/i });
+      expect(prepended.compareDocumentPosition(userCard)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+      expect(appended.compareDocumentPosition(userCard)).toBe(Node.DOCUMENT_POSITION_PRECEDING);
+    });
+
+    it('renders them read-only, with none of the card affordances', () => {
+      const [prepended] = renderWithSystemTransformations();
+
+      // A `SidebarCard` is a role=button with delete/hide actions. There is nothing to select here —
+      // a system transformation has no editor — and nothing to reorder or remove.
+      expect(prepended).not.toHaveAttribute('role', 'button');
+      expect(prepended.querySelector('button')).toBeNull();
+    });
+
+    it('replaces the empty state when the user has no transformations of their own', () => {
+      // The section is showing rows, so "No transformations" would contradict what is on screen.
+      expect(renderWithSystemTransformations([])).toHaveLength(2);
+      expect(screen.queryByText('No transformations')).not.toBeInTheDocument();
+    });
   });
 
   it('should always render transformations section even when no transformations exist', () => {

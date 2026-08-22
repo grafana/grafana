@@ -59,6 +59,7 @@ import {
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { getUserTransformations } from '../scene/systemTransformations';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -453,10 +454,11 @@ export function getVizPanelQueries(
       return queries;
     }
 
-    let snapshotData = getPanelDataFrames(dataProvider.state.data);
-    if (dataProvider instanceof SceneDataTransformer) {
-      snapshotData = getPanelDataFrames(dataProvider.state.$data!.state.data);
-    }
+    // Snapshots capture the non-transformed data. A transformer resolves its source through the
+    // scene graph when it has no `$data`, so fall back to the provider rather than asserting.
+    const source =
+      dataProvider instanceof SceneDataTransformer ? (dataProvider.state.$data ?? dataProvider) : dataProvider;
+    const snapshotData = getPanelDataFrames(source.state.data);
 
     const snapshotQuery: DataQueryKind = {
       kind: 'DataQuery',
@@ -563,7 +565,9 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
   let transformations: TransformationKind[] = [];
   const dataProvider = vizPanel.state.$data;
   if (dataProvider instanceof SceneDataTransformer) {
-    const transformationList = dataProvider.state.transformations;
+    // Load-bearing, not just tidiness: system entries are custom transform operators, which the loop
+    // below rejects outright.
+    const transformationList = getUserTransformations(dataProvider.state.transformations);
 
     if (transformationList.length === 0) {
       return [];
