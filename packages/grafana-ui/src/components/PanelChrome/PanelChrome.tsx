@@ -197,7 +197,11 @@ export function PanelChrome({
   }
 
   const descriptionTitleItem = description && (
-    <PanelDescription description={description} className={dragClassCancel} />
+    <PanelDescription
+      description={description}
+      className={dragClassCancel}
+      title={typeof title === 'string' ? title : undefined}
+    />
   );
 
   const subtitleContent = subtitle && <PanelDescription description={subtitle} inSubHeader />;
