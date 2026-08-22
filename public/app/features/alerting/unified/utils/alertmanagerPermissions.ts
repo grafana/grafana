@@ -134,8 +134,8 @@ export const grafanaTimeIntervalPermissions: Record<TimeIntervalAction, AccessCo
   'export-time-intervals': [notificationsPermissions.read.grafana],
 };
 
-function uniquePermissions<T extends PropertyKey>(permissions: Record<T, AccessControlAction[]>) {
-  return Array.from(new Set(Object.values(permissions).flat()));
+function uniquePermissions<T extends string>(permissions: Record<T, AccessControlAction[]>): AccessControlAction[] {
+  return Array.from(new Set(Object.keys(permissions).flatMap((key) => permissions[key as T])));
 }
 
 export const PERMISSIONS_CONTACT_POINTS = uniquePermissions(grafanaContactPointPermissions);
