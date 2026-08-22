@@ -75,6 +75,18 @@ enum PluginRequestHeaders {
 }
 
 /**
+ * HTTP header field values must consist only of printable ASCII characters
+ * (RFC 7230, section 3.2.6). Dashboard and panel titles may contain arbitrary
+ * Unicode (e.g. accented text), which browsers serialize as raw high-ASCII
+ * bytes in custom headers and strict WAFs/proxies reject. Strip everything
+ * outside the printable ASCII range so the request passes compliance checks.
+ */
+function sanitizeHeaderValue(value: string): string {
+  return value.replace(/[^\x20-\x7E]/g, '');
+}
+
+
+/**
  * Describes the details in the payload returned when checking the health of a data source
  * plugin.
  *
@@ -269,13 +281,13 @@ class DataSourceWithBackend<
     if (request.dashboardUID) {
       headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
       if (request.dashboardTitle) {
-        headers[PluginRequestHeaders.DashboardTitle] = request.dashboardTitle;
+        headers[PluginRequestHeaders.DashboardTitle] = sanitizeHeaderValue(request.dashboardTitle);
       }
       if (request.panelId) {
         headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
       }
       if (request.panelName) {
-        headers[PluginRequestHeaders.PanelTitle] = request.panelName;
+        headers[PluginRequestHeaders.PanelTitle] = sanitizeHeaderValue(request.panelName);
       }
     }
     if (request.panelPluginId) {
