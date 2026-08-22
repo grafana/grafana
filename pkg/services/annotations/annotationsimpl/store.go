@@ -32,4 +32,5 @@ type WriteStore interface {
 	Delete(ctx context.Context, params *annotations.DeleteParams) error
 	CleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) (int64, error)
 	CleanOrphanedAnnotationTags(ctx context.Context) (int64, error)
+	AnyAnnotationsExist(ctx context.Context) (bool, error)
 }
