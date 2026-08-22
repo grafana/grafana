@@ -6,6 +6,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -27,7 +28,6 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -225,8 +225,6 @@ func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClient
 	), nil
 }
 
-var authLogger = log.New("resource-client-auth-interceptor")
-
 func IDTokenExtractor(ctx context.Context) (string, error) {
 	if identity.IsServiceIdentity(ctx) {
 		return "", nil
@@ -234,7 +232,7 @@ func IDTokenExtractor(ctx context.Context) (string, error) {
 
 	info, ok := types.AuthInfoFrom(ctx)
 	if !ok {
-		return "", fmt.Errorf("no claims found")
+		return "", errors.New("no claims found")
 	}
 
 	// If the identity is the service identity, we don't need to extract the ID token
@@ -246,13 +244,7 @@ func IDTokenExtractor(ctx context.Context) (string, error) {
 		return token, nil
 	}
 
-	authLogger.FromContext(ctx).Warn(
-		"calling resource store as the service without id token or marking it as the service identity",
-		"subject", info.GetSubject(),
-		"uid", info.GetUID(),
-	)
-
-	return "", nil
+	return "", errors.New("no ID token found to call the unified storage services")
 }
 
 func ProvideInProcExchanger() authnlib.StaticTokenExchanger {
