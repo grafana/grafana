@@ -198,7 +198,8 @@
      "enum": [
       "OK",
       "Alerting",
-      "Error"
+      "Error",
+      "KeepLast"
      ],
      "type": "string"
     },
@@ -225,7 +226,8 @@
      "enum": [
       "Alerting",
       "NoData",
-      "OK"
+      "OK",
+      "KeepLast"
      ],
      "type": "string"
     },
@@ -660,7 +662,8 @@
      "enum": [
       "OK",
       "Alerting",
-      "Error"
+      "Error",
+      "KeepLast"
      ],
      "type": "string"
     },
@@ -694,7 +697,8 @@
      "enum": [
       "Alerting",
       "NoData",
-      "OK"
+      "OK",
+      "KeepLast"
      ],
      "type": "string"
     },
@@ -1750,7 +1754,8 @@
      "enum": [
       "OK",
       "Alerting",
-      "Error"
+      "Error",
+      "KeepLast"
      ],
      "type": "string"
     },
@@ -1782,7 +1787,8 @@
      "enum": [
       "Alerting",
       "NoData",
-      "OK"
+      "OK",
+      "KeepLast"
      ],
      "type": "string"
     },
@@ -3140,7 +3146,8 @@
      "enum": [
       "OK",
       "Alerting",
-      "Error"
+      "Error",
+      "KeepLast"
      ],
      "type": "string"
     },
@@ -3160,7 +3167,8 @@
      "enum": [
       "Alerting",
       "NoData",
-      "OK"
+      "OK",
+      "KeepLast"
      ],
      "type": "string"
     },
@@ -3410,7 +3418,8 @@
      "enum": [
       "OK",
       "Alerting",
-      "Error"
+      "Error",
+      "KeepLast"
      ],
      "type": "string"
     },
@@ -3452,7 +3461,8 @@
      "enum": [
       "Alerting",
       "NoData",
-      "OK"
+      "OK",
+      "KeepLast"
      ],
      "type": "string"
     },
