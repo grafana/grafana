@@ -5,7 +5,7 @@ import { type Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
-import { setPluginLinksHook } from '@grafana/runtime';
+import { locationService, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleGroupDTO, type GrafanaPromRulesResponse } from 'app/types/unified-alerting-dto';
 
@@ -13,6 +13,7 @@ import { RULER_CONFIG_API_PROBE_GROUP, RULER_CONFIG_API_PROBE_NAMESPACE } from '
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockGrafanaPromAlertingRule, mockRulerGrafanaRule, mockRulerRuleGroup } from '../mocks';
 import {
+  addPlugin,
   mimirDataSource,
   setFolderResponse,
   setGrafanaRuleGroupExportResolver,
@@ -21,6 +22,7 @@ import {
   setRulerRuleGroupResolver,
 } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
+import { prometheusAlertingPluginMeta } from '../testSetup/plugins';
 
 import GroupDetailsPage from './GroupDetailsPage';
 
@@ -61,7 +63,8 @@ const server = setupMswServer();
 
 describe('GroupDetailsPage', () => {
   beforeEach(() => {
-    // mock this...
+    // No plugin is registered by default, so useDMAStatus resolves to ManagedByGrafana for every
+    // test unless a test explicitly registers the Prometheus Alerting plugin via MSW below.
     setPluginLinksHook(() => ({
       links: [],
       isLoading: false,
@@ -323,6 +326,18 @@ describe('GroupDetailsPage', () => {
       expect(ui.editLink.query()).not.toBeInTheDocument();
       expect(ui.exportButton.query()).not.toBeInTheDocument();
     });
+  });
+
+  it('redirects data source-managed groups to the plugin', async () => {
+    addPlugin(prometheusAlertingPluginMeta);
+
+    renderGroupDetailsPage('prometheus', 'test-prom-namespace', 'test-group-cpu');
+
+    await waitFor(() =>
+      expect(locationService.getLocation().pathname).toBe(
+        '/a/grafana-prometheusalerting-app/groups/prometheus/test-prom-namespace/test-group-cpu'
+      )
+    );
   });
 
   describe('Mimir rules', () => {

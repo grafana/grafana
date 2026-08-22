@@ -15,6 +15,7 @@ import { useShowImportToGMARulesBanner } from '../components/import-to-gma/useSh
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
+import { DMAStatus, useDMAStatus } from '../hooks/useDMAStatus';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
@@ -28,7 +29,11 @@ import RulesFilter from './filter/RulesFilter.v2';
 import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
 import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
-function RuleList() {
+interface RuleListProps {
+  showDataSourceManagedRules: boolean;
+}
+
+function RuleList({ showDataSourceManagedRules }: RuleListProps) {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
   const showImportToGMABanner = useShowImportToGMARulesBanner();
@@ -39,12 +44,16 @@ function RuleList() {
       <Stack direction="column" gap={2}>
         <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
         <Stack direction="row" grow={1} minHeight={0}>
-          <RulesFilterSidebar />
+          <RulesFilterSidebar showDataSourceManagedRules={showDataSourceManagedRules} />
           <Box flex={1} minWidth={0} paddingLeft={2}>
             {viewMode === 'list' ? (
-              <FilterView filterState={filterState} />
+              <FilterView filterState={filterState} showDataSourceManagedRules={showDataSourceManagedRules} />
             ) : (
-              <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+              <GroupedView
+                groupFilter={filterState.groupName}
+                namespaceFilter={filterState.namespace}
+                showDataSourceManagedRules={showDataSourceManagedRules}
+              />
             )}
           </Box>
         </Stack>
@@ -53,18 +62,21 @@ function RuleList() {
   );
 }
 
-export function RuleListActions() {
+interface RuleListActionsContentProps {
+  showDataSourceManagedRules: boolean;
+}
+
+function RuleListActionsContent({ showDataSourceManagedRules }: RuleListActionsContentProps) {
   const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
   // Check if there are any data sources with manageAlerts enabled
   const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
-  const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
 
   const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
   const canCreateCloudRules =
-    createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
+    createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources && showDataSourceManagedRules;
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
@@ -168,19 +180,28 @@ export function RuleListActions() {
   );
 }
 
+export function RuleListActions() {
+  const { status: dmaStatus } = useDMAStatus();
+
+  return <RuleListActionsContent showDataSourceManagedRules={dmaStatus === DMAStatus.ManagedByGrafana} />;
+}
+
 export default function RuleListPage() {
   const { isApplying } = useApplyDefaultSearch();
   const { navId, pageNav } = useAlertRulesNav();
+  const { status: dmaStatus } = useDMAStatus();
+  const isLoading = isApplying || dmaStatus === DMAStatus.Loading;
+  const showDataSourceManagedRules = dmaStatus === DMAStatus.ManagedByGrafana;
 
   return (
     <AlertingPageWrapper
       navId={navId}
       pageNav={pageNav}
       renderTitle={(title) => <RuleListPageTitle title={title} />}
-      isLoading={isApplying}
-      actions={<RuleListActions />}
+      isLoading={isLoading}
+      actions={!isLoading && <RuleListActionsContent showDataSourceManagedRules={showDataSourceManagedRules} />}
     >
-      {!isApplying && <RuleList />}
+      {!isLoading && <RuleList showDataSourceManagedRules={showDataSourceManagedRules} />}
     </AlertingPageWrapper>
   );
 }

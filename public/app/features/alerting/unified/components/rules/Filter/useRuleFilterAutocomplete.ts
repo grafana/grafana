@@ -132,7 +132,7 @@ async function fetchExternalNamespaceNames(
   return { externalNamespaces, isLimitReached };
 }
 
-export function useNamespaceAndGroupOptions(): {
+export function useNamespaceAndGroupOptions(showDataSourceManagedRules = true): {
   namespaceOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
   groupOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
   namespacePlaceholder: string;
@@ -145,7 +145,9 @@ export function useNamespaceAndGroupOptions(): {
     async (inputValue: string) => {
       const [grafanaFolderNames, { externalNamespaces, isLimitReached }] = await Promise.all([
         fetchGrafanaFolderNames(fetchGrafanaGroups, inputValue),
-        fetchExternalNamespaceNames(fetchExternalGroups),
+        showDataSourceManagedRules
+          ? fetchExternalNamespaceNames(fetchExternalGroups)
+          : Promise.resolve({ externalNamespaces: new Map<string, Set<string>>(), isLimitReached: false }),
       ]);
 
       // Grafana folders are filtered server-side via `search.folder`. External namespaces have no
@@ -172,7 +174,7 @@ export function useNamespaceAndGroupOptions(): {
 
       return options;
     },
-    [fetchGrafanaGroups, fetchExternalGroups]
+    [fetchGrafanaGroups, fetchExternalGroups, showDataSourceManagedRules]
   );
 
   const groupOptions = useCallback(

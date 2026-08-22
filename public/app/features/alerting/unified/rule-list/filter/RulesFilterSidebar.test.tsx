@@ -94,6 +94,12 @@ beforeEach(() => {
 });
 
 describe('RulesFilterSidebar — policy filter', () => {
+  it('hides the rule source filter when data source managed rules are unavailable', () => {
+    render(<RulesFilterSidebar showDataSourceManagedRules={false} />);
+
+    expect(screen.queryByText('Rule source')).not.toBeInTheDocument();
+  });
+
   it('renders the notification policy selector', async () => {
     render(<RulesFilterSidebar />);
     expect(await screen.findByRole('combobox', { name: 'Notification policy' })).toBeInTheDocument();

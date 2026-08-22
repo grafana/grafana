@@ -67,7 +67,7 @@ interface GetIteratorResult {
   abortController: AbortController;
 }
 
-export function useFilteredRulesIteratorProvider() {
+export function useFilteredRulesIteratorProvider(showDataSourceManagedRules = true) {
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
 
@@ -97,7 +97,7 @@ export function useFilteredRulesIteratorProvider() {
     );
 
     // Determine which data sources to use
-    const externalRulesSourcesToFetchFrom = getRulesSourcesFromFilter(filterState);
+    const externalRulesSourcesToFetchFrom = getRulesSourcesFromFilter(filterState, showDataSourceManagedRules);
 
     if (filterState.ruleSource === RuleSource.Grafana) {
       return { iterable: grafanaRulesGenerator, abortController };
@@ -157,7 +157,14 @@ function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): Async
  * Only allows Prometheus and Loki data source types.
  * Returns all external rules sources if no filter is provided.
  */
-function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceIdentifier[] {
+function getRulesSourcesFromFilter(
+  filter: RulesFilter,
+  showDataSourceManagedRules: boolean
+): DataSourceRulesSourceIdentifier[] {
+  if (!showDataSourceManagedRules) {
+    return [];
+  }
+
   const allExternalSources = getExternalRulesSources();
 
   // If no filter is provided, return all external sources

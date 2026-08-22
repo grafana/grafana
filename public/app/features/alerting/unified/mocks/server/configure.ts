@@ -384,6 +384,7 @@ export const removePlugin = (pluginId: SupportedPlugin) => {
 
 /** Make an additional plugin respond as installed and enabled */
 export const addPlugin = (pluginMeta: PluginMeta) => {
+  invalidatePluginSettingsCache(pluginMeta.id);
   installAppPluginMeta(pluginMeta);
   server.use(getSpecificPluginHandler(pluginMeta));
 };

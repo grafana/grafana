@@ -7,7 +7,7 @@ import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
-import { type RulesFilter } from '../search/rulesSearchParser';
+import { RuleSource, type RulesFilter } from '../search/rulesSearchParser';
 
 import { FilterView } from './FilterView';
 
@@ -104,6 +104,22 @@ describe('RuleList - FilterView', () => {
     expect(matchingPrometheusRule).toBeInTheDocument();
 
     expect(await screen.findByText(/No more results/)).toBeInTheDocument();
+  });
+
+  it('does not render data source-managed rules when they are unavailable', async () => {
+    render(
+      <FilterView
+        filterState={getFilter({ ruleSource: RuleSource.DataSource, dataSourceNames: ['Mimir'] })}
+        showDataSourceManagedRules={false}
+      />
+    );
+
+    act(() => {
+      io.enterNode(screen.getByTestId('load-more-helper'));
+    });
+
+    expect(await screen.findByText(/No matching rules found/)).toBeInTheDocument();
+    expect(screen.queryByRole('treeitem', { name: /mimir-test-rule/i })).not.toBeInTheDocument();
   });
 
   it('should display empty state when no rules are found', async () => {

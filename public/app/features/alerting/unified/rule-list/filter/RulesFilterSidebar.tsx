@@ -30,7 +30,11 @@ const SIDEBAR_WIDTH = 250;
  * Persistent filter sidebar for the alert rule list v2.
  * All filters apply immediately on change; rule name applies on blur or Enter.
  */
-export function RulesFilterSidebar() {
+interface RulesFilterSidebarProps {
+  showDataSourceManagedRules?: boolean;
+}
+
+export function RulesFilterSidebar({ showDataSourceManagedRules = true }: RulesFilterSidebarProps) {
   const styles = useStyles2(getStyles);
   const { hasActiveFilters, clearAll, searchQuery, filterState } = useRulesFilter();
 
@@ -44,7 +48,11 @@ export function RulesFilterSidebar() {
         </Stack>
         {/* key remounts the form when the URL changes externally (top bar, clearAll, navigation)
             so defaultValues always reflect the current URL state — no sync effects needed */}
-        <FilterSidebarForm key={searchQuery} filterState={filterState} />
+        <FilterSidebarForm
+          key={searchQuery}
+          filterState={filterState}
+          showDataSourceManagedRules={showDataSourceManagedRules}
+        />
       </Stack>
     </div>
   );
@@ -52,9 +60,10 @@ export function RulesFilterSidebar() {
 
 interface FilterSidebarFormProps {
   filterState: RulesFilter;
+  showDataSourceManagedRules: boolean;
 }
 
-function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
+function FilterSidebarForm({ filterState, showDataSourceManagedRules }: FilterSidebarFormProps) {
   const styles = useStyles2(getStyles);
 
   const { updateFilters } = useRulesFilter();
@@ -101,7 +110,8 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
     }
   }
 
-  const { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder } = useNamespaceAndGroupOptions();
+  const { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder } =
+    useNamespaceAndGroupOptions(showDataSourceManagedRules);
   const { labelOptions } = useLabelOptions();
   const dataSourceOptions = useAlertingDataSourceOptions();
 
@@ -236,9 +246,9 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
           </SidebarField>
         </SidebarSection>
 
-        <div className={styles.divider} />
+        {showDataSourceManagedRules && <div className={styles.divider} />}
 
-        <SidebarSection>
+        <SidebarSection hidden={!showDataSourceManagedRules}>
           <SidebarField
             label={<Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>}
             labelId="filter-label-rule-source"
@@ -535,8 +545,12 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
 // Section & field layout helpers
 // ---------------------------------------------------------------------------
 
-function SidebarSection({ children }: { children: React.ReactNode }) {
+function SidebarSection({ children, hidden = false }: { children: React.ReactNode; hidden?: boolean }) {
   const styles = useStyles2(getStyles);
+  if (hidden) {
+    return null;
+  }
+
   return (
     <div className={styles.section}>
       <Stack direction="column" gap={1.5}>

@@ -173,6 +173,11 @@ export function evaluateAccessAll(actions: AccessControlAction[]) {
  * guards (FoldersRead, DataSourcesRead) on top of the RBAC check — callers need both
  * the permission AND a folder/datasource to be visible. The RBAC portion is delegated
  * to the central ability system; the auxiliary guards remain here.
+ *
+ * `canCreateDataSourceRules` is the same RBAC check without the feasibility guard. Use it when
+ * deciding whether the request may be handled at all — for example whether the Prometheus
+ * Alerting plugin may take it over, since the plugin has its own form and does not depend on
+ * Grafana's data source picker.
  */
 export function getRulesAccess() {
   return {
@@ -181,6 +186,7 @@ export function getRulesAccess() {
     canCreateCloudRules:
       contextSrv.hasPermission(AccessControlAction.DataSourcesRead) &&
       isGranted(getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule)),
+    canCreateDataSourceRules: isGranted(getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule)),
     canEditRules: (rulesSourceName: string) => {
       // The backend requires alert.rules:read alongside alert.rules:write for all rule mutations.
       // Check both here so RuleEditor shows "no access" immediately rather than after Save.

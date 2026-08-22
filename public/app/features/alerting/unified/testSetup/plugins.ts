@@ -1,4 +1,5 @@
 import { PluginLoadingStrategy, type PluginMeta, PluginType } from '@grafana/data';
+import { getMockPlugin } from '@grafana/data/test';
 import { type AppPluginConfig, setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { type AppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
@@ -205,6 +206,15 @@ export const pluginMeta = {
     baseUrl: 'public/plugins/grafana-ml-app',
   } satisfies PluginMeta,
 };
+
+export const prometheusAlertingPluginMeta = getMockPlugin({
+  id: 'grafana-prometheusalerting-app',
+  name: 'Prometheus Alerting',
+  type: PluginType.app,
+  enabled: true,
+  module: 'public/plugins/grafana-prometheusalerting-app/module.js',
+  baseUrl: 'public/plugins/grafana-prometheusalerting-app',
+});
 
 export const plugins: PluginMeta[] = [
   pluginMeta[SupportedPlugin.Slo],

@@ -26,13 +26,20 @@ import { FRONTEND_LIST_PAGE_SIZE, getFilteredRulesLimits } from './paginationLim
 
 interface FilterViewProps {
   filterState: RulesFilter;
+  showDataSourceManagedRules?: boolean;
 }
 
-export function FilterView({ filterState }: FilterViewProps) {
+export function FilterView({ filterState, showDataSourceManagedRules = true }: FilterViewProps) {
   // ⚠️ We use a key to force the component to unmount and remount when the filter state changes
   // filterState is a complex object including arrays and is constructed from URL params
   // so even for the same params we get a new object or new properties in it
-  return <FilterViewResults filterState={filterState} key={JSON.stringify(filterState)} />;
+  return (
+    <FilterViewResults
+      filterState={filterState}
+      showDataSourceManagedRules={showDataSourceManagedRules}
+      key={`${JSON.stringify(filterState)}-${showDataSourceManagedRules}`}
+    />
+  );
 }
 
 type KeyedRuleWithOrigin = RuleWithOrigin & {
@@ -50,11 +57,11 @@ type KeyedRuleWithOrigin = RuleWithOrigin & {
  * While a bit counter-intuitive resetting using key simplifies a lot of logic in the component
  * The component implements infinite scrolling. It loads next page when the user scrolls to the bottom of the list
  */
-function FilterViewResults({ filterState }: FilterViewProps) {
+function FilterViewResults({ filterState, showDataSourceManagedRules = true }: FilterViewProps) {
   const [transitionPending, startTransition] = useTransition();
 
   /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
-  const getFilteredRulesIterator = useFilteredRulesIteratorProvider();
+  const getFilteredRulesIterator = useFilteredRulesIteratorProvider(showDataSourceManagedRules);
 
   const iteration = useRef<{
     rulesBatchIterator: AsyncIterator<RuleWithOrigin[]>;

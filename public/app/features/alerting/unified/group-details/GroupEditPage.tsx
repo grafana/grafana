@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { produce } from 'immer';
 import { useCallback, useEffect, useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom-v5-compat';
+import { Navigate, useParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -32,6 +32,7 @@ import { logError } from '../Analytics';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { DMARouteGuard } from '../components/DMARouteGuard';
 import { EvaluationGroupQuickPick } from '../components/rule-editor/EvaluationGroupQuickPick';
 import { useDeleteRuleGroup } from '../hooks/ruleGroup/useDeleteRuleGroup';
 import { type UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
@@ -45,6 +46,7 @@ import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
+import { prometheusAlertingPlugin } from '../utils/prometheusNavigation';
 import { getRulerGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
@@ -60,12 +62,34 @@ const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 function GroupEditPage() {
   const { dataSourceUid = '', namespaceId = '', groupName = '' } = useParams<GroupEditPageRouteParams>();
+  const { returnTo } = useReturnTo();
 
   if (isUngroupedRuleGroup(groupName)) {
     return <EntityNotFound entity={t('alerting.entities.group', 'Group')} />;
   }
 
-  return <GroupEditPageContent dataSourceUid={dataSourceUid} namespaceId={namespaceId} groupName={groupName} />;
+  const isDataSourceManaged = dataSourceUid !== 'grafana';
+
+  return (
+    <DMARouteGuard
+      pluginDestination={
+        isDataSourceManaged ? (
+          <Navigate
+            replace
+            to={prometheusAlertingPlugin.editGroup(dataSourceUid, namespaceId, groupName, { returnTo })}
+          />
+        ) : undefined
+      }
+      unavailableDescription={
+        <Trans i18nKey="alerting.group-edit.dma-disabled-description">
+          This rule group cannot be edited from Grafana.
+        </Trans>
+      }
+      pageNav={{ text: t('alerting.group-edit.page-title', 'Edit rule group') }}
+    >
+      <GroupEditPageContent dataSourceUid={dataSourceUid} namespaceId={namespaceId} groupName={groupName} />
+    </DMARouteGuard>
+  );
 }
 
 interface GroupEditPageContentProps {

@@ -31,6 +31,7 @@ import {
 } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { DMAStatus, useDMAStatus } from '../../../hooks/useDMAStatus';
 import {
   areQueriesTransformableToSimpleCondition,
   isExpressionQueryInAlert,
@@ -421,9 +422,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
   // Only show the data source managed option if there are data sources with manageAlerts enabled
   const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
-  const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
+  const { status: dmaStatus } = useDMAStatus();
   const canSelectDataSourceManaged =
-    onlyOneDSInQueries(queries) && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
+    onlyOneDSInQueries(queries) && hasAlertEnabledDataSources && dmaStatus === DMAStatus.ManagedByGrafana;
   if (!type) {
     return null;
   }
