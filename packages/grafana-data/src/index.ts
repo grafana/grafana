@@ -496,6 +496,7 @@ export type {
   CurrentUserDTO,
   AnalyticsSettings,
   AppPluginConfig,
+  AppPluginMetaConfig,
   BootData,
   OAuth,
   OAuthSettings,
@@ -504,6 +505,7 @@ export type {
   GrafanaJavascriptAgentConfig,
   BuildInfo,
   LicenseInfo,
+  NavigationAppSectionConfig,
   PreinstalledPlugin,
   UnifiedAlertingConfig,
 } from './types/config';

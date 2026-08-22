@@ -12344,6 +12344,10 @@
     }
   },
   "nav": {
+    "access-policies": {
+      "subtitle": "Use policies to control automated access to metrics, logs, traces, and other Grafana Cloud services",
+      "title": "Access policies"
+    },
     "add-new-connections": {
       "title": "Add new connection"
     },
@@ -12782,6 +12786,7 @@
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned items",
+      "plugin-nav-failed": "Some navigation items couldn't be loaded",
       "undock": "Undock menu"
     },
     "megamenu-item": {

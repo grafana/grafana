@@ -9,7 +9,13 @@ import { type IconName } from './icon';
 import { type NavLinkDTO } from './navModel';
 import { type OrgRole } from './orgs';
 import { type PanelPluginMeta } from './panel';
-import { type AngularMeta, type PluginDependencies, type PluginExtensions, type PluginLoadingStrategy } from './plugin';
+import {
+  type AngularMeta,
+  type PluginDependencies,
+  type PluginExtensions,
+  type PluginInclude,
+  type PluginLoadingStrategy,
+} from './plugin';
 import { type TimeOption } from './time';
 
 export interface AzureSettings {
@@ -39,6 +45,24 @@ export type AppPluginConfig = {
   extensions: PluginExtensions;
   moduleHash?: string;
   buildMode?: string;
+};
+
+/**
+ * An app plugin config sourced from the plugins.grafana.app metas API. Unlike
+ * the bootdata-sourced {@link AppPluginConfig} it always carries the plugin's
+ * display and navigation fields, so consumers of the metas-only accessors
+ * (e.g. the client-built nav tree) don't need bootdata fallbacks.
+ */
+export type AppPluginMetaConfig = AppPluginConfig & {
+  name: string;
+  includes: PluginInclude[];
+  info: {
+    description?: string;
+    logos: {
+      small: string;
+      large: string;
+    };
+  };
 };
 
 export type PreinstalledPlugin = {
@@ -127,6 +151,12 @@ export interface UnifiedAlertingConfig {
   alertStateHistoryBackend?: string;
   /** @deprecated Use stateHistory.primary instead */
   alertStateHistoryPrimary?: string;
+}
+
+/** A [navigation.app_sections] override for an app plugin's nav placement */
+export interface NavigationAppSectionConfig {
+  sectionId: string;
+  sortWeight?: number;
 }
 
 /** Supported OAuth services
@@ -284,6 +314,8 @@ export interface GrafanaConfig {
   geomapDisableCustomBaseLayer: boolean;
   unifiedAlertingEnabled: boolean;
   unifiedAlerting: UnifiedAlertingConfig;
+  /** [navigation.app_sections] overrides for app plugin placement in the client-built nav tree */
+  navigationAppSections: Record<string, NavigationAppSectionConfig>;
   feedbackLinksEnabled: boolean;
   supportBundlesEnabled: boolean;
   secureSocksDSProxyEnabled: boolean;
