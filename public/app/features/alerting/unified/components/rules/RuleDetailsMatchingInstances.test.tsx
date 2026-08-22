@@ -25,6 +25,7 @@ const mocks = {
 
 const ui = {
   stateFilter: byTestId('alert-instance-state-filter'),
+  actionsButton: byLabelText('Alert instance actions'),
   stateButton: byRole('radio'),
   grafanaStateButton: {
     normal: byLabelText(/^Normal/),
@@ -58,6 +59,13 @@ describe('RuleDetailsMatchingInstances', () => {
       ],
       isLoading: false,
     });
+  });
+  it('should render plugin actions for alert instances when extensions are available', () => {
+    const rule = mockCombinedRule();
+
+    render(<RuleDetailsMatchingInstances rule={rule} />);
+
+    expect(ui.actionsButton.getAll()).toHaveLength(rule.promRule.alerts.length);
   });
 
   describe('Filtering', () => {
