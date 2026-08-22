@@ -25,11 +25,11 @@ import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
 import { instancesPermissions, silencesPermissions } from './access-control';
 import {
-  notificationsPermissions,
   PERMISSIONS_CONTACT_POINTS,
   PERMISSIONS_NOTIFICATION_POLICIES,
   PERMISSIONS_TEMPLATES,
   PERMISSIONS_TIME_INTERVALS,
+  notificationsPermissions,
 } from './alertmanagerPermissions';
 import { getAllDataSources } from './config';
 import { GRAFANA_RULES_SOURCE_NAME } from './constants';
