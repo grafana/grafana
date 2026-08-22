@@ -1,6 +1,7 @@
 package accesscontrol_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,12 +11,24 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+type middlewareFallbackChecker struct {
+	request *authzextv1.CheckPermissionRequest
+}
+
+func (c *middlewareFallbackChecker) CheckPermission(_ context.Context, request *authzextv1.CheckPermissionRequest) (*authzextv1.CheckPermissionResponse, error) {
+	c.request = request
+	return &authzextv1.CheckPermissionResponse{Allowed: true}, nil
+}
 
 type middlewareTestCase struct {
 	desc            string
@@ -69,6 +82,39 @@ func TestMiddleware(t *testing.T) {
 			assert.Equal(t, test.expectEndpoint, endpointCalled)
 		})
 	}
+}
+
+func TestMiddlewareAuthorizesFallbackPermissionThroughZanzana(t *testing.T) {
+	checker := &middlewareFallbackChecker{}
+	proxy := zanzana.ProvidePermissionCheckerProxy()
+	proxy.Set(checker)
+	cfg := setting.NewCfg()
+	cfg.ZanzanaClient.PrimaryEngine = setting.ZanzanaPrimaryEngineZanzana
+	ac := acimpl.ProvideAccessControlWithFallback(
+		featuremgmt.WithFeatures(featuremgmt.FlagZanzanaRBACFallbackChecks, true), cfg, proxy, nil,
+	)
+
+	server := web.New()
+	server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
+	server.Use(contextProvider(func(c *contextmodel.ReqContext) {
+		c.SignedInUser = &user.SignedInUser{UserID: 1, UserUID: "one", OrgID: 1, Namespace: "org-1"}
+	}))
+	server.Use(accesscontrol.Middleware(ac)(accesscontrol.EvalPermission("plugins.app:read", "plugins:id:one")))
+
+	endpointCalled := false
+	server.Get("/", func(c *contextmodel.ReqContext) {
+		endpointCalled = true
+		c.Resp.WriteHeader(http.StatusOK)
+	})
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	assert.True(t, endpointCalled)
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, "plugins.app:read", checker.request.GetAction())
+	assert.Equal(t, []string{"plugins:id:one"}, checker.request.GetScopes())
 }
 
 func TestMiddleware_forceLogin(t *testing.T) {
