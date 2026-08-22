@@ -1078,11 +1078,6 @@
       "count": 3
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/CloudEvaluationBehavior.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/ExpressionEditor.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
