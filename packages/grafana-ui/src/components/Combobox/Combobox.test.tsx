@@ -143,6 +143,37 @@ describe('Combobox', () => {
     expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
   });
 
+  it('selects the exact match over an option that only contains the search', async () => {
+    const substringOptions: ComboboxOption[] = [
+      { label: 'go_memstats_alloc_bytes_total', value: '1' },
+      { label: 'go_memstats_alloc_bytes', value: '2' },
+    ];
+    render(<Combobox options={substringOptions} value={null} onChange={onChangeHandler} />);
+
+    const input = screen.getByRole('combobox');
+    await userEvent.type(input, 'go_memstats_alloc_bytes');
+    await userEvent.keyboard('{Enter}');
+
+    expect(onChangeHandler).toHaveBeenCalledWith(substringOptions[1]);
+    expect(screen.getByDisplayValue('go_memstats_alloc_bytes')).toBeInTheDocument();
+  });
+
+  it('selects the exact match when another value is already selected', async () => {
+    const substringOptions: ComboboxOption[] = [
+      { label: 'go_memstats_alloc_bytes_total', value: '1' },
+      { label: 'go_memstats_alloc_bytes', value: '2' },
+      { label: 'other_metric', value: '3' },
+    ];
+    render(<Combobox options={substringOptions} value="3" onChange={onChangeHandler} />);
+
+    const input = screen.getByRole('combobox');
+    await userEvent.click(input);
+    await userEvent.type(input, 'go_memstats_alloc_bytes');
+    await userEvent.keyboard('{Enter}');
+
+    expect(onChangeHandler).toHaveBeenCalledWith(substringOptions[1]);
+  });
+
   it('selects value by using keyboard only', async () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
 
@@ -473,6 +504,22 @@ describe('Combobox', () => {
 
       expect(onChangeHandler).toHaveBeenCalledWith(simpleAsyncOptions[2]);
       expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
+    });
+
+    it('should select the exact match of async options over an option that only contains the search', async () => {
+      const substringOptions = [{ value: 'go_memstats_alloc_bytes_total' }, { value: 'go_memstats_alloc_bytes' }];
+      const asyncOptions = jest.fn(() => Promise.resolve(substringOptions));
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => {
+        await user.keyboard('go_memstats_alloc_bytes');
+        jest.advanceTimersByTime(DEBOUNCE_TIME_MS);
+      });
+      await user.keyboard('{Enter}');
+
+      expect(onChangeHandler).toHaveBeenCalledWith(substringOptions[1]);
     });
 
     it('should ignore late responses', async () => {
