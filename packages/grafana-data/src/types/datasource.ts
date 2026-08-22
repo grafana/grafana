@@ -610,7 +610,7 @@ export interface TestDataSourceResponse {
   status: string;
   message: string;
   error?: Error;
-  details?: { message?: string; verboseMessage?: string };
+  details?: Record<string, unknown>;
 }
 
 export enum DataQueryErrorType {
