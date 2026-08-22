@@ -1,11 +1,14 @@
 import { type Observable, from } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { AlertState, type AlertStateInfo } from '@grafana/data';
+import { type AlertStateInfo } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { promAlertStateToAlertState } from 'app/features/dashboard-scene/scene/AlertStatesDataLayer';
-import { loadPanelAlertStateCandidates } from 'app/features/dashboard-scene/scene/loadPanelAlertStateCandidates';
+import {
+  loadPanelAlertStateCandidates,
+  selectMostSevereAlertCandidatePerPanel,
+} from 'app/features/dashboard-scene/scene/loadPanelAlertStateCandidates';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import {
@@ -61,31 +64,16 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
     return candidates.pipe(
       map((candidates) => {
         this.hasAlertRules[dashboard.uid] = candidates.length > 0;
-        const panelIdToAlertState: Record<number, AlertStateInfo> = {};
+        const alertStates = selectMostSevereAlertCandidatePerPanel(candidates).map(
+          ({ panelId, state }, id): AlertStateInfo => ({
+            state: promAlertStateToAlertState(state),
+            id,
+            panelId,
+            dashboardUID: dashboard.uid,
+          })
+        );
 
-        candidates.forEach(({ panelId, state: promState }) => {
-          const state = promAlertStateToAlertState(promState);
-
-          // There can be multiple alerts per panel, so retain the most severe state.
-          if (!panelIdToAlertState[panelId]) {
-            panelIdToAlertState[panelId] = {
-              state,
-              id: Object.keys(panelIdToAlertState).length,
-              panelId,
-              dashboardUID: dashboard.uid,
-            };
-          } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
-            panelIdToAlertState[panelId].state = AlertState.Alerting;
-          } else if (
-            state === AlertState.Pending &&
-            panelIdToAlertState[panelId].state !== AlertState.Alerting &&
-            panelIdToAlertState[panelId].state !== AlertState.Pending
-          ) {
-            panelIdToAlertState[panelId].state = AlertState.Pending;
-          }
-        });
-
-        return { alertStates: Object.values(panelIdToAlertState), annotations: [] };
+        return { alertStates, annotations: [] };
       }),
       catchError(handleDashboardQueryRunnerWorkerError)
     );

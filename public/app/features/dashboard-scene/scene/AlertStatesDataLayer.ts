@@ -19,7 +19,10 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { loadPanelAlertStateCandidates } from './loadPanelAlertStateCandidates';
+import {
+  loadPanelAlertStateCandidates,
+  selectMostSevereAlertCandidatePerPanel,
+} from './loadPanelAlertStateCandidates';
 
 interface AlertStatesDataLayerState extends SceneDataLayerProviderState {}
 
@@ -70,34 +73,15 @@ export class AlertStatesDataLayer
     const alerStatesExecution = from(loadPanelAlertStateCandidates(uid)).pipe(
       map((candidates) => {
         this.hasAlertRules = candidates.length > 0;
-        const panelIdToAlertState: Record<number, AlertStateInfo> = {};
-
-        candidates.forEach(({ panelId, state: promState, ruleUID }) => {
-          const state = promAlertStateToAlertState(promState);
-
-          // There can be multiple alerts per panel, so retain the most severe state.
-          if (!panelIdToAlertState[panelId]) {
-            panelIdToAlertState[panelId] = {
-              state,
-              id: Object.keys(panelIdToAlertState).length,
-              panelId,
-              dashboardUID: uid,
-              ruleUID,
-            };
-          } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
-            panelIdToAlertState[panelId].state = AlertState.Alerting;
-            panelIdToAlertState[panelId].ruleUID = ruleUID;
-          } else if (
-            state === AlertState.Pending &&
-            panelIdToAlertState[panelId].state !== AlertState.Alerting &&
-            panelIdToAlertState[panelId].state !== AlertState.Pending
-          ) {
-            panelIdToAlertState[panelId].state = AlertState.Pending;
-            panelIdToAlertState[panelId].ruleUID = ruleUID;
-          }
-        });
-
-        return Object.values(panelIdToAlertState);
+        return selectMostSevereAlertCandidatePerPanel(candidates).map(
+          ({ panelId, state, ruleUID }, id): AlertStateInfo => ({
+            state: promAlertStateToAlertState(state),
+            id,
+            panelId,
+            dashboardUID: uid,
+            ruleUID,
+          })
+        );
       })
     );
 

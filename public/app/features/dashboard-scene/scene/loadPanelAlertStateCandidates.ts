@@ -1,6 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import {
-  type PromAlertingRuleState,
+  PromAlertingRuleState,
   type PromRuleGroupDTO,
   PromRuleType,
   type PromRulesResponse,
@@ -41,4 +41,27 @@ export async function loadPanelAlertStateCandidates(dashboardUid: string): Promi
       ];
     })
   );
+}
+
+export function selectMostSevereAlertCandidatePerPanel(candidates: PanelAlertStateCandidate[]) {
+  const candidateByPanel = new Map<number, PanelAlertStateCandidate>();
+
+  for (const candidate of candidates) {
+    const current = candidateByPanel.get(candidate.panelId);
+    if (!current || getAlertStateSeverity(candidate.state) > getAlertStateSeverity(current.state)) {
+      candidateByPanel.set(candidate.panelId, candidate);
+    }
+  }
+
+  return Array.from(candidateByPanel.values());
+}
+
+function getAlertStateSeverity(state: PromAlertingRuleState) {
+  if (state === PromAlertingRuleState.Firing) {
+    return 2;
+  }
+  if (state === PromAlertingRuleState.Pending) {
+    return 1;
+  }
+  return 0;
 }
