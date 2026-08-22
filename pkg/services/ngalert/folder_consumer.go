@@ -2,8 +2,10 @@ package ngalert
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -17,10 +19,11 @@ type alertRuleStore interface {
 // AlertRuleFolderConsumer reports and deletes alert rules by folder for the folder reconciler.
 type AlertRuleFolderConsumer struct {
 	store alertRuleStore
+	log   log.Logger
 }
 
 func ProvideAlertRuleFolderConsumer(store *store.DBstore) *AlertRuleFolderConsumer {
-	return &AlertRuleFolderConsumer{store: store}
+	return &AlertRuleFolderConsumer{store: store, log: log.New("ngalert.folder-consumer")}
 }
 
 func (c *AlertRuleFolderConsumer) Name() string { return "alert-rules" }
@@ -50,11 +53,17 @@ func (c *AlertRuleFolderConsumer) DeleteInFolder(ctx context.Context, orgID int6
 		return err
 	}
 	uids := make([]string, 0, len(rules))
+	identifiers := make([]string, 0, len(rules))
 	for _, r := range rules {
 		uids = append(uids, r.UID)
+		identifiers = append(identifiers, fmt.Sprintf("%s (%s)", r.UID, r.Title))
 	}
 	if len(uids) == 0 {
 		return nil
 	}
-	return c.store.DeleteAlertRulesByUID(ctx, orgID, models.NewUserUID(user), false, uids...)
+	if err := c.store.DeleteAlertRulesByUID(ctx, orgID, models.NewUserUID(user), false, uids...); err != nil {
+		return err
+	}
+	c.log.Info("Deleted alert rules in deleted folder", "org_id", orgID, "folder_uid", folderUID, "count", len(uids), "rules", identifiers)
+	return nil
 }
