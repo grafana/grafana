@@ -17,6 +17,7 @@ export interface MutationRequest {
 export interface MutationResult {
   success: boolean;
   error?: string;
+  code?: string;
   changes: MutationChange[];
   warnings?: string[];
   data?: unknown;

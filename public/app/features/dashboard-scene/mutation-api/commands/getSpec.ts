@@ -9,6 +9,7 @@ import * as z from 'zod';
 
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
+import { computeRevisionToken } from '../dashboardRevision';
 
 import { readOnly, type MutationCommand } from './types';
 
@@ -49,7 +50,7 @@ export const getSpecCommand: MutationCommand<GetSpecPayload> = {
         }
       }
 
-      return { success: true, data: { spec }, changes: [] };
+      return { success: true, data: { spec, revision: computeRevisionToken(spec) }, changes: [] };
     } catch (error) {
       return {
         success: false,
