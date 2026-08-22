@@ -463,7 +463,7 @@ The **Markdown + HTML** cell type displays rich Markdown or HTML content, render
 customized, pre-formatted information alongside tabular data, such as formatted strings,
 lists of links, or other dynamic cases.
 
-For this cell type, you can toggle the **Dynamic height** switch, which allows the cell to resize
+For this cell type, you can toggle the **Dynamic height** switch (currently an experimental, Alpha feature), which allows the cell to resize
 dynamically based on the cell content. If you use dynamic height, we strongly recommend that you
 also toggle on **Pagination** to avoid performance issues in larger tables, since enabling
 Dynamic height disables table {{< term "virtualization" >}}virtualization{{< /term >}}.
@@ -494,17 +494,11 @@ It has the following options:
 
 #### Actions
 
-Actions add a button to a cell that triggers a basic, unauthenticated API call when clicked. Configure actions from **Data links and actions** or with field overrides.
+Actions add a button to a cell that triggers a basic, unauthenticated API call when clicked. Configure actions in the **Data links and actions** section, or with field overrides. For a list of the available action options, refer to [Data links and actions](#data-links-and-actions).
 
 <!-- prettier-ignore-start -->
 | Option             | Description  |
 | ------------------ | ------------ |
-| Endpoint           | Enter the endpoint URL. |
-| Method             | Choose from **GET**, **POST**, and **PUT**. |
-| Content-Type       | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
-| Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
-| Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
-| Payload            | Enter the body of the API call. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
