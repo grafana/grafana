@@ -111,9 +111,6 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
 
   const onFilterLevelClick = useCallback(
     (level?: LogLevel) => {
-      reportInteraction('logs_log_list_controls_level_clicked', {
-        level,
-      });
       if (level === undefined) {
         setFilterLevels([]);
       } else if (!filterLevels.includes(level)) {
@@ -134,9 +131,6 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
   }, [fontSize, setFontSize]);
 
   const onShowUniqueLabelsClick = useCallback(() => {
-    reportInteraction('logs_log_list_controls_show_unique_labels_clicked', {
-      show_unique_labels: showUniqueLabels,
-    });
     setShowUniqueLabels(!showUniqueLabels);
   }, [setShowUniqueLabels, showUniqueLabels]);
 
@@ -157,9 +151,6 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
   const onSetUnwrappedColumnsClick = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();
-      reportInteraction('logs_log_list_controls_unwrapped_columns_clicked', {
-        state: !unwrappedColumns,
-      });
       setUnwrappedColumns(!unwrappedColumns);
     },
     [setUnwrappedColumns, unwrappedColumns]
@@ -176,9 +167,6 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
             label={capitalize(option)}
             onClick={() => {
               setDedupStrategy(option);
-              reportInteraction('logs_log_list_controls_deduplication_clicked', {
-                option,
-              });
             }}
           />
         ))}
@@ -216,27 +204,18 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
           label={t('logs.logs-controls.download-logs.txt', 'txt')}
           onClick={() => {
             downloadLogs(DownloadFormat.Text);
-            reportInteraction('logs_log_list_controls_downloaded_logs', {
-              format: DownloadFormat.Text,
-            });
           }}
         />
         <Menu.Item
           label={t('logs.logs-controls.download-logs.json', 'json')}
           onClick={() => {
             downloadLogs(DownloadFormat.Json);
-            reportInteraction('logs_log_list_controls_downloaded_logs', {
-              format: DownloadFormat.Json,
-            });
           }}
         />
         <Menu.Item
           label={t('logs.logs-controls.download-logs.csv', 'csv')}
           onClick={() => {
             downloadLogs(DownloadFormat.CSV);
-            reportInteraction('logs_log_list_controls_downloaded_logs', {
-              format: DownloadFormat.CSV,
-            });
           }}
         />
       </Menu>
