@@ -14,6 +14,7 @@ import (
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/useractions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 )
@@ -53,6 +54,18 @@ func newIAMAuthorizer(
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
 	resourceAuthorizer["display"] = legacyAuthorizer
+
+	// The userActions response is strictly self-scoped (derived from the
+	// caller's own role), so any authenticated identity may read it — same
+	// rationale as the current-user display route.
+	resourceAuthorizer[useractions.RoutePath] = authorizer.AuthorizerFunc(func(
+		ctx context.Context, attr authorizer.Attributes,
+	) (authorizer.Decision, string, error) {
+		if _, ok := authlib.AuthInfoFrom(ctx); ok {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "cannot read user actions without an identity", nil
+	})
 
 	// Temporary security fix: Block Watch on ResourcePermissions until proper filtering is implemented
 	blockWatchAuthorizer := authorizer.AuthorizerFunc(func(

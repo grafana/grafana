@@ -2,13 +2,20 @@ package store
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+)
+
+// Callers use these to tell "the identity is not in this tenant" apart from a
+// database failure, which are otherwise both opaque errors.
+var (
+	ErrUserNotFound      = errors.New("user could not be found")
+	ErrBasicRoleNotFound = errors.New("no basic roles found for the user")
 )
 
 type Store interface {
@@ -54,7 +61,7 @@ func (s *StoreImpl) GetUserIdentifiers(ctx context.Context, query UserIdentifier
 	}
 
 	if !rows.Next() {
-		return nil, fmt.Errorf("user could not be found")
+		return nil, ErrUserNotFound
 	}
 
 	var userIDs UserIdentifiers
@@ -92,7 +99,7 @@ func (s *StoreImpl) GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, 
 	}
 
 	if !rows.Next() {
-		return nil, fmt.Errorf("no basic roles found for the user")
+		return nil, ErrBasicRoleNotFound
 	}
 
 	var role BasicRole

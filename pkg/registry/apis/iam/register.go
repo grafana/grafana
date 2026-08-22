@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	teamlbacapi "github.com/grafana/grafana/pkg/registry/apis/iam/teamlbac"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/useractions"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -54,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
+	authzstore "github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -77,6 +79,7 @@ func RegisterAPIService(
 	ssoService ssosettings.Service,
 	sql db.DB,
 	ac accesscontrol.AccessControl,
+	actionResolver accesscontrol.ActionResolver,
 	accessClient types.AccessClient,
 	zClient zanzana.Client,
 	reg prometheus.Registerer,
@@ -186,6 +189,12 @@ func RegisterAPIService(
 			display.NewLegacyDisplayProvider(store),   // Do legacy first
 			display.NewSearchDisplayProvider(unified), // then use search index
 		),
+		userActionsHandler: useractions.NewHandler(useractions.NewCachedProvider(useractions.NewSQLProvider(
+			useractions.NewSQLActionStore(dbProvider, tracing),
+			authzstore.NewStore(dbProvider, tracing),
+			store,
+			actionResolver,
+		))),
 		ofClient: openfeature.NewDefaultClient(),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, cfg, accessClient)
@@ -240,6 +249,12 @@ func NewAPIService(
 			display.NewLegacyDisplayProvider(store),
 			// TODO: include the search client here
 		),
+		userActionsHandler: useractions.NewHandler(useractions.NewCachedProvider(useractions.NewSQLProvider(
+			useractions.NewSQLActionStore(dbProvider, tracingService),
+			authzstore.NewStore(dbProvider, tracingService),
+			store,
+			useractions.NewActionSetResolver(),
+		))),
 		tracing:                    tracingService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		mappers:                    mappers,
@@ -309,6 +324,16 @@ func NewAPIService(
 
 				if a.GetResource() == "users" {
 					return userAuthorizer.Authorize(ctx, a)
+				}
+
+				if a.GetResource() == useractions.RoutePath {
+					// Strictly self-scoped: derived from the caller's own role.
+					switch user.GetIdentityType() {
+					case types.TypeUser, types.TypeServiceAccount:
+						return authorizer.DecisionAllow, "", nil
+					default:
+						return authorizer.DecisionDeny, "userActions requires a user identity", nil
+					}
 				}
 
 				if a.GetResource() == iamv0.ServiceAccountResourceInfo.GetName() {
@@ -1008,6 +1033,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	enableTeamsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
 	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
+	enableUserActionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesUserActionsApi, false, openfeature.TransactionContext(ctx))
 
 	searchRoutes := make([]*builder.APIRoutes, 0, 4)
 	if enableUserApi && b.userSearchHandler != nil {
@@ -1026,8 +1052,11 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		searchRoutes = append(searchRoutes, b.externalGroupMappingSearchHandler.GetAPIRoutes(defs))
 	}
 
-	routes := make([]*builder.APIRoutes, 0, 1+len(searchRoutes))
+	routes := make([]*builder.APIRoutes, 0, 2+len(searchRoutes))
 	routes = append(routes, b.display.GetAPIRoutes(defs))
+	if enableUserActionsApi && b.userActionsHandler != nil {
+		routes = append(routes, b.userActionsHandler.GetAPIRoutes(defs))
+	}
 	routes = append(routes, searchRoutes...)
 	return mergeAPIRoutes(routes...)
 }

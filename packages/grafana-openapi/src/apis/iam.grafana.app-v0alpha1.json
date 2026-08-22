@@ -1927,6 +1927,38 @@
         }
       ]
     },
+    "/userActions": {
+      "get": {
+        "tags": ["UserActions"],
+        "description": "Returns the RBAC actions granted to the calling user, as a map of action to true.",
+        "operationId": "getUserActions",
+        "parameters": [
+          {
+            "name": "reloadcache",
+            "in": "query",
+            "description": "Resolve permissions afresh rather than serving a cached set",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Map of RBAC action to true",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users": {
       "get": {
         "tags": ["User"],
