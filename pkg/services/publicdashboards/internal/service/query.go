@@ -459,6 +459,10 @@ func sanitizeData(data *simplejson.Json) {
 			target.Del("expr")
 			target.Del("query")
 			target.Del("rawSql")
+			// Graphite stores its query text in target/targetFull rather than
+			// the fields above, so both must be removed to avoid leaking it.
+			target.Del("target")
+			target.Del("targetFull")
 		}
 	}
 }
@@ -475,6 +479,8 @@ func sanitizeDataV2(data *simplejson.Json) {
 			dataQuerySpec.Del("expr")
 			dataQuerySpec.Del("query")
 			dataQuerySpec.Del("rawSql")
+			dataQuerySpec.Del("target")
+			dataQuerySpec.Del("targetFull")
 		}
 	}
 }
