@@ -7038,6 +7038,9 @@
       "name-json-values": "JSON",
       "selection-options": "Opções de seleção"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Voltar à lista",
       "label-icon": "Ícone",
@@ -7817,9 +7820,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Esta variável é referenciada por outras variáveis ou outros painel de controlo.",
       "content-variable-not-referenced-other-variables-dashboard": "Esta variável não é referenciada por outras variáveis ou outros painéis de controlo.",
       "content-variable-referenced-other-variables-dashboard": "Esta variável é referenciada por outras variáveis ou outros painel de controlo."
-    },
-    "variable-controls": {
-      "add-variable": "Adicionar variável"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -9147,6 +9147,7 @@
     "json": {
       "cancel-button": "Cancelar",
       "copy-button": "Copiar para a área de transferência",
+      "dashboard-definition": "",
       "download-button": "Transferir ficheiro",
       "download-successful_toast_message": "O seu JSON foi descarregado",
       "export-format": "Formato",
@@ -13696,7 +13697,8 @@
       "open-pull-request-in-repo": "Abrir pedido de extração em {{repoType}}",
       "update-from-branch": "Os restantes utilizadores da Grafana na sua organização continuarão a ver a versão atual até que esse ramo seja combinado.",
       "view-in-repo-button": "Ver em {{repoType}} para ver as alterações mais recentes.",
-      "view-pull-request-in-repo": "Ver pedido de extração em {{repoType}}"
+      "view-pull-request-in-repo": "Ver pedido de extração em {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "Foi criado um novo recurso num ramo em {{repoType}}.",
     "title-deleted-resource-in-branch": "Foi eliminado um recurso num ramo em {{repoType}}.",

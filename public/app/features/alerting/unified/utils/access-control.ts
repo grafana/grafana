@@ -10,7 +10,7 @@
  * 2. **Ability-calling utilities**: functions that delegate to the central ability system
  *    (`getRulesAccess`, `getCreateAlertInMenuAvailability`). These are
  *    intentionally plain functions (not hooks) because they are also used in non-React
- *    contexts (panel menus). When used inside React components, wrap them
+ *    contexts (route guards, panel menus). When used inside React components, wrap them
  *    in `useMemo` or call them via the `useRulesAccess()` hook in `accessControlHooks.ts`.
  */
 
@@ -53,25 +53,6 @@ export const instancesPermissions = {
   delete: {
     grafana: AccessControlAction.AlertingInstanceUpdate,
     external: AccessControlAction.AlertingInstancesExternalWrite,
-  },
-};
-
-export const notificationsPermissions = {
-  read: {
-    grafana: AccessControlAction.AlertingNotificationsRead,
-    external: AccessControlAction.AlertingNotificationsExternalRead,
-  },
-  create: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-  update: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-  delete: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
   },
 };
 
@@ -136,7 +117,7 @@ export function getRulesPermissions(rulesSourceName: string) {
 }
 
 // ── Runtime utilities ─────────────────────────────────────────────────────────
-// Plain functions (not hooks) for non-React contexts such as panel menus.
+// Plain functions (not hooks) for non-React contexts (route guards, panel menus).
 // RBAC checks delegate to get*Ability() from the central ability system.
 // getRulesAccess retains direct contextSrv calls only for the auxiliary
 // FoldersRead / DataSourcesRead workflow-feasibility guards.

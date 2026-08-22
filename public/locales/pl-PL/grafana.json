@@ -7146,6 +7146,9 @@
       "name-json-values": "JSON",
       "selection-options": "Opcje wyboru"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Powrót do listy",
       "label-icon": "Ikona",
@@ -7929,9 +7932,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Do tej zmiennej odwołują się inne zmienne lub pulpit.",
       "content-variable-not-referenced-other-variables-dashboard": "Do tej zmiennej nie odwołują się inne zmienne ani pulpit.",
       "content-variable-referenced-other-variables-dashboard": "Do tej zmiennej odwołują się inne zmienne lub pulpit."
-    },
-    "variable-controls": {
-      "add-variable": "Dodaj zmienną"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -9271,6 +9271,7 @@
     "json": {
       "cancel-button": "Anuluj",
       "copy-button": "Kopiuj do schowka",
+      "dashboard-definition": "",
       "download-button": "Pobierz plik",
       "download-successful_toast_message": "Pobrano plik JSON",
       "export-format": "Format",
@@ -13896,7 +13897,8 @@
       "open-pull-request-in-repo": "Otwórz żądanie pull w repozytorium {{repoType}}",
       "update-from-branch": "Pozostali użytkownicy usługi Grafana w Twojej organizacji nadal będą widzieć bieżącą wersję, dopóki ta gałąź nie zostanie scalona",
       "view-in-repo-button": "Wyświetl w repozytorium {{repoType}}, aby zobaczyć najnowsze zmiany.",
-      "view-pull-request-in-repo": "Wyświetl żądanie pull w repozytorium {{repoType}}"
+      "view-pull-request-in-repo": "Wyświetl żądanie pull w repozytorium {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "Utworzono nowy zasób w gałęzi w repozytorium {{repoType}}.",
     "title-deleted-resource-in-branch": "Usunięto zasób w gałęzi w repozytorium {{repoType}}.",

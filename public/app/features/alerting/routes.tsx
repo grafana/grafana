@@ -5,16 +5,15 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import {
-  ROUTE_PERMISSIONS_CONTACT_POINTS,
-  ROUTE_PERMISSIONS_NOTIFICATION_POLICIES,
-  ROUTE_PERMISSIONS_TEMPLATES,
-  ROUTE_PERMISSIONS_TIME_INTERVALS_MODIFY,
-  ROUTE_PERMISSIONS_TIME_INTERVALS_READ,
-  evaluateAccess,
-  evaluateAccessAll,
-} from './routePermissions';
+import { evaluateAccess, evaluateAccessAll } from './routePermissions';
 import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
+import {
+  PERMISSIONS_CONTACT_POINTS,
+  PERMISSIONS_NOTIFICATION_POLICIES,
+  PERMISSIONS_TEMPLATES,
+  PERMISSIONS_TIME_INTERVALS_MODIFY,
+  PERMISSIONS_TIME_INTERVALS_READ,
+} from './unified/utils/alertmanagerPermissions';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   const routes = [
@@ -42,9 +41,9 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...ROUTE_PERMISSIONS_NOTIFICATION_POLICIES,
-        ...ROUTE_PERMISSIONS_TIME_INTERVALS_READ,
-        ...ROUTE_PERMISSIONS_TIME_INTERVALS_MODIFY,
+        ...PERMISSIONS_NOTIFICATION_POLICIES,
+        ...PERMISSIONS_TIME_INTERVALS_READ,
+        ...PERMISSIONS_TIME_INTERVALS_MODIFY,
       ]),
       component: importAlertingComponent(
         () =>
@@ -59,7 +58,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...ROUTE_PERMISSIONS_TIME_INTERVALS_READ,
+        ...PERMISSIONS_TIME_INTERVALS_READ,
       ]),
       component: importAlertingComponent(
         () =>
@@ -73,7 +72,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
         AccessControlAction.AlertingNotificationsExternalWrite,
-        ...ROUTE_PERMISSIONS_TIME_INTERVALS_MODIFY,
+        ...PERMISSIONS_TIME_INTERVALS_MODIFY,
       ]),
       component: importAlertingComponent(
         () =>
@@ -87,8 +86,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
         AccessControlAction.AlertingNotificationsExternalWrite,
-        ...ROUTE_PERMISSIONS_TIME_INTERVALS_READ,
-        ...ROUTE_PERMISSIONS_TIME_INTERVALS_MODIFY,
+        ...PERMISSIONS_TIME_INTERVALS_READ,
+        ...PERMISSIONS_TIME_INTERVALS_MODIFY,
       ]),
       component: importAlertingComponent(
         () =>
@@ -99,10 +98,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/routes/policy/:name/edit',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingNotificationsRead,
-        ...ROUTE_PERMISSIONS_NOTIFICATION_POLICIES,
-      ]),
+      roles: evaluateAccess([AccessControlAction.AlertingNotificationsRead, ...PERMISSIONS_NOTIFICATION_POLICIES]),
       component: importAlertingComponent(
         () =>
           import(
@@ -164,8 +160,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...ROUTE_PERMISSIONS_CONTACT_POINTS,
-        ...ROUTE_PERMISSIONS_TEMPLATES,
+        ...PERMISSIONS_CONTACT_POINTS,
+        ...PERMISSIONS_TEMPLATES,
       ]),
       component: importAlertingComponent(
         () =>
@@ -179,7 +175,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...ROUTE_PERMISSIONS_CONTACT_POINTS,
+        ...PERMISSIONS_CONTACT_POINTS,
       ]),
       component: importAlertingComponent(
         () =>
@@ -198,7 +194,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         // We check any contact point permission here because a user without edit permissions
         // still has to be able to visit the "edit" page, because we don't have a separate view for edit vs view
         // (we just disable the form instead)
-        ...ROUTE_PERMISSIONS_CONTACT_POINTS,
+        ...PERMISSIONS_CONTACT_POINTS,
       ]),
       component: importAlertingComponent(
         () =>
@@ -213,7 +209,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...ROUTE_PERMISSIONS_TEMPLATES,
+        ...PERMISSIONS_TEMPLATES,
       ]),
       component: importAlertingComponent(
         () =>
@@ -228,7 +224,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...ROUTE_PERMISSIONS_TEMPLATES,
+        ...PERMISSIONS_TEMPLATES,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "Templates" */ 'app/features/alerting/unified/Templates')
