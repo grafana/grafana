@@ -1291,6 +1291,35 @@
             }
           },
           "additionalProperties": false
+        },
+        "badge": {
+          "type": "object",
+          "properties": {
+            "colors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "background": {
+                    "type": "string"
+                  },
+                  "border": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "text",
+                  "background",
+                  "border"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
