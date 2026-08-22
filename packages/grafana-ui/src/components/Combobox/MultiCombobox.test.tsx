@@ -690,6 +690,65 @@ describe('MultiCombobox', () => {
       expect(onClose).not.toHaveBeenCalled();
     });
   });
+
+  describe('clearSearchOnSelect', () => {
+    const options = [
+      { label: 'apple', value: 'apple' },
+      { label: 'apricot', value: 'apricot' },
+      { label: 'banana', value: 'banana' },
+    ];
+
+    it('keeps the search and the filtered list by default, so several matches can be ticked from one query', async () => {
+      render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
+      const input = screen.getByRole<HTMLInputElement>('combobox');
+
+      await user.click(input);
+      await user.type(input, 'ap');
+      await user.click(await screen.findByRole('option', { name: 'apple' }));
+
+      expect(input).toHaveValue('ap');
+      // Still filtered, so the second match is one click away.
+      expect(await screen.findByRole('option', { name: 'apricot' })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'banana' })).not.toBeInTheDocument();
+    });
+
+    it('clears the search and restores the full list when asked to', async () => {
+      render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} clearSearchOnSelect />);
+      const input = screen.getByRole<HTMLInputElement>('combobox');
+
+      await user.click(input);
+      await user.type(input, 'ap');
+      await user.click(await screen.findByRole('option', { name: 'apple' }));
+
+      expect(input).toHaveValue('');
+      expect(await screen.findByRole('option', { name: 'banana' })).toBeInTheDocument();
+    });
+
+    it('leaves the menu open, so the next selection needs no reopening', async () => {
+      render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} clearSearchOnSelect />);
+      const input = screen.getByRole('combobox');
+
+      await user.click(input);
+      await user.type(input, 'ap');
+      await user.click(await screen.findByRole('option', { name: 'apple' }));
+
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+    });
+
+    it('drops the custom-value row once the value it offered has been committed', async () => {
+      const onChange = jest.fn();
+      render(<MultiCombobox options={options} value={[]} onChange={onChange} createCustomValue clearSearchOnSelect />);
+      const input = screen.getByRole<HTMLInputElement>('combobox');
+
+      await user.click(input);
+      await user.type(input, 'durian');
+      await user.keyboard('{arrowdown}{enter}');
+
+      expect(onChange).toHaveBeenCalledWith([{ label: 'durian', value: 'durian', description: 'Use custom value' }]);
+      expect(input).toHaveValue('');
+      expect(screen.queryByRole('option', { name: /durian/ })).not.toBeInTheDocument();
+    });
+  });
 });
 
 function promiseResolvesWith(value: ComboboxOption[], timeout = 0) {
