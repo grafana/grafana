@@ -118,6 +118,29 @@ export class NotebookLayoutManager
     return undefined;
   }
 
+  /**
+   * The scene owns the tags - it is what the save model reads - so the header's edits are forwarded up
+   * to it rather than applied here. Found by walking the parents like editHistory above, and for the
+   * same reason: importing NotebookScene as a value would have this file and that one import each
+   * other. A notebook rendered without a scene above it silently keeps its tags read-only.
+   */
+  public setTagsFromHeader(tags: string[]): void {
+    this.notebookScene?.onTagsChange(tags);
+  }
+
+  private get notebookScene() {
+    let parent = this.parent;
+
+    while (parent) {
+      if (isNotebookScene(parent)) {
+        return parent;
+      }
+      parent = parent.parent;
+    }
+
+    return undefined;
+  }
+
   // Serialization lives here instead of in a helper file, so that this file never has to import the
   // serializer. If both files imported each other they would form a cycle, which is what this layout
   // avoids. The serializer still imports this class to build it when reading a notebook, one way only.
@@ -147,6 +170,11 @@ export class NotebookLayoutManager
    */
   public editModeChanged(isEditing: boolean): void {
     this.setState({ isEditing });
+  }
+
+  /** Refreshes the header's copy of the tags. NotebookScene owns them and pushes on every change. */
+  public setTags(tags: string[] | undefined): void {
+    this.setState({ tags });
   }
 
   /**
@@ -443,6 +471,8 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
 
   const timeRange = sceneGraph.getTimeRange(model).useState();
 
+  const onTagsChange = useCallback((nextTags: string[]) => model.setTagsFromHeader(nextTags), [model]);
+
   // Only the drop position lives in React state; the reorder itself lives on the model. onDragUpdate
   // fires when the drop index changes, not on every pointer move, so this re-renders the list a
   // handful of times per drag.
@@ -487,7 +517,14 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   return (
     <div className={styles.document}>
       <header className={styles.header}>
-        <NotebookDocumentHeader title={title} tags={tags} timeFrom={timeRange.from} timeTo={timeRange.to} />
+        <NotebookDocumentHeader
+          title={title}
+          tags={tags}
+          timeFrom={timeRange.from}
+          timeTo={timeRange.to}
+          isEditing={isEditing}
+          onTagsChange={onTagsChange}
+        />
       </header>
 
       <div className={styles.column}>
