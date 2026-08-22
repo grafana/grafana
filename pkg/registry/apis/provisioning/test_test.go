@@ -167,6 +167,10 @@ type staticTestRepository struct {
 	testCalled bool
 }
 
+func (r *staticTestRepository) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
+
 func (r *staticTestRepository) Config() *provisioningv0alpha1.Repository {
 	return r.cfg
 }

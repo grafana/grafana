@@ -194,6 +194,36 @@ func (_m *MockRepository) Test(ctx context.Context) (*v0alpha1.TestResults, erro
 	return r0, r1
 }
 
+// ValidatePermissions provides a mock function with given fields: ctx
+func (_m *MockRepository) ValidatePermissions(ctx context.Context) ([]Permission, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ValidatePermissions")
+	}
+
+	var r0 []Permission
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]Permission, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []Permission); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]Permission)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Update provides a mock function with given fields: ctx, path, ref, data, message
 func (_m *MockRepository) Update(ctx context.Context, path string, ref string, data []byte, message string) error {
 	ret := _m.Called(ctx, path, ref, data, message)
