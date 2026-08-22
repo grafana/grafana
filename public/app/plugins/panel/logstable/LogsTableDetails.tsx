@@ -18,6 +18,7 @@ import { LogLineDetailsHeader } from 'app/features/logs/components/panel/LogLine
 import { LogListContextProvider } from 'app/features/logs/components/panel/LogListContext';
 
 import { useLogDetailsContext } from './LogDetailsContext';
+import { sortLogsToMatchTable } from './sortLogsToMatchTable';
 import { SETTING_KEY_ROOT } from './constants';
 import { type Options } from './options/types';
 import { isCoreApp, isIsLabelFilterActive } from './types';
@@ -48,6 +49,9 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
+  // Clicks use frame `rowIndex` (TableNG `__index`), so `logs` stays in query order.
+  // Arrow keys follow the table's visible order for whatever column `sortBy` uses.
+  const navigableLogs = useMemo(() => sortLogsToMatchTable(logs, options.sortBy), [logs, options.sortBy]);
 
   const handleCloseDetails = useCallback(() => {
     inputRef.current = '';
@@ -85,10 +89,10 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
       } else {
         return;
       }
-      if (!currentLog || logs.findIndex((log) => log.uid === currentLog.uid) < 0) {
+      if (!currentLog || navigableLogs.findIndex((log) => log.uid === currentLog.uid) < 0) {
         return;
       }
-      const nextLog = logs[logs.findIndex((log) => log.uid === currentLog.uid) + delta];
+      const nextLog = navigableLogs[navigableLogs.findIndex((log) => log.uid === currentLog.uid) + delta];
       if (!nextLog) {
         return;
       }
@@ -97,7 +101,7 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
     }
     document.addEventListener('keydown', handleKeydown);
     return () => document.removeEventListener('keydown', handleKeydown);
-  }, [containerElement, currentLog, logs, replaceDetails]);
+  }, [containerElement, currentLog, navigableLogs, replaceDetails]);
 
   const handleSearch = useCallback((newSearch: string) => {
     inputRef.current = newSearch;
