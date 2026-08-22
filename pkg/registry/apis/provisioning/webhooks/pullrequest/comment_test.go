@@ -3,6 +3,7 @@ package pullrequest
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -140,7 +141,6 @@ func TestGenerateComment(t *testing.T) {
 			RepositoryName:     "my-repo",
 			RepositoryTitle:    "My Repo",
 			RepositoryAdminURL: "http://host/admin/provisioning/my-repo",
-			SkippedFiles:       5,
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -296,6 +296,25 @@ func TestGenerateComment(t *testing.T) {
 					Error: "strict decoding error: unknown field \"spec.extra\"",
 				},
 			},
+		}},
+		{"many files", changeInfo{
+			GrafanaBaseURL: "http://host/",
+			Changes: func() []fileChangeInfo {
+				changes := make([]fileChangeInfo, 0, 12)
+				for i := 1; i <= 12; i++ {
+					path := fmt.Sprintf("file%02d.json", i)
+					changes = append(changes, fileChangeInfo{
+						Parsed: &resources.ParsedResource{
+							Info:   &repository.FileInfo{Path: path},
+							Action: v0alpha1.ResourceActionCreate,
+							GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+						},
+						Title:     fmt.Sprintf("Dashboard %02d", i),
+						SourceURL: fmt.Sprintf("https://github.com/example/repo/blob/pr/%s", path),
+					})
+				}
+				return changes
+			}(),
 		}},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {

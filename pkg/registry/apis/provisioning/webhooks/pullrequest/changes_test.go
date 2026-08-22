@@ -568,7 +568,7 @@ func TestCalculateChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "process first 10 files",
+			name: "process all files",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
@@ -633,10 +633,9 @@ func TestCalculateChanges(t *testing.T) {
 				return changes
 			}(),
 			expectedInfo: changeInfo{
-				SkippedFiles: 5,
 				Changes: func() []fileChangeInfo {
-					changes := make([]fileChangeInfo, 0, 10)
-					for range 10 {
+					changes := make([]fileChangeInfo, 0, 15)
+					for range 15 {
 						changes = append(changes, fileChangeInfo{
 							Change: repository.VersionedFileChange{
 								Action: repository.FileActionCreated,
@@ -1422,7 +1421,6 @@ func TestCalculateChanges(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, len(tt.expectedInfo.Changes), len(info.Changes))
-			require.Equal(t, tt.expectedInfo.SkippedFiles, info.SkippedFiles)
 
 			// compare change URLs
 			for i, change := range info.Changes {

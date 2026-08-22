@@ -41,9 +41,6 @@ type changeInfo struct {
 	// Files we tried to read
 	Changes []fileChangeInfo
 
-	// More files changed than we processed
-	SkippedFiles int
-
 	// Requested image render, but it is not available
 	MissingImageRenderer bool
 }
@@ -140,14 +137,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 	logger := logging.FromContext(ctx)
 
-	for i, change := range changes {
-		// process maximum 10 files
-		if i >= 10 {
-			info.SkippedFiles = len(changes) - i
-			logger.Info("skipping remaining files", "count", info.SkippedFiles)
-			break
-		}
-
+	for _, change := range changes {
 		progress.SetMessage(ctx, fmt.Sprintf("process %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
 		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, screenshotBaseURL, orgID, change, opts, parser, shouldRender))
