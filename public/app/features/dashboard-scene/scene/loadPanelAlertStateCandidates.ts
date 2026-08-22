@@ -36,7 +36,7 @@ export async function loadPanelAlertStateCandidates(dashboardUid: string): Promi
         {
           panelId: Number(rule.annotations[PANEL_ID_ANNOTATION]),
           state: rule.state,
-          ruleUID: 'folderUid' in rule && 'uid' in rule ? rule.uid : undefined,
+          ruleUID: 'folderUid' in rule && 'uid' in rule && typeof rule.uid === 'string' ? rule.uid : undefined,
         },
       ];
     })

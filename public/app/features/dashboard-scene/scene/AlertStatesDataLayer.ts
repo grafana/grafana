@@ -64,7 +64,7 @@ export class AlertStatesDataLayer
       this.querySub.unsubscribe();
     }
 
-    if (!this.canWork(timeRange)) {
+    if (!uid || !this.canWork(timeRange)) {
       return;
     }
     const alerStatesExecution = from(loadPanelAlertStateCandidates(uid)).pipe(
