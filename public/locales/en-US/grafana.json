@@ -8742,6 +8742,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
+    "metric-detail-panel": {
+      "aria-label": "Metric details",
+      "close": "Close metric details",
+      "from-query": "Query {{refId}}"
+    },
     "metrics-list": {
       "collapse-metric": "Collapse {{name}}",
       "error": "Failed to load metrics",
@@ -8754,6 +8759,7 @@
       "loading-values": "Loading values…",
       "no-metrics": "No metrics found",
       "search-placeholder": "Search metrics",
+      "show-metric-details": "Show details for {{name}}",
       "show-more": "Show more",
       "show-more-metrics": "Show more metrics",
       "show-more-values": "Show more values",
