@@ -783,6 +783,11 @@ func (s *Storage) GuaranteedUpdate(
 			cleanupSafe, err := s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 			return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 		}
+		v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, updatedObj, s.opts.Permissions)
+		if err != nil {
+			// Nothing has been written yet, so clean up any inline secrets preparation created.
+			return v.finish(ctx, err, s.opts.SecureValues)
+		}
 
 		req.Value = v.raw.Bytes()
 		req.ResourceVersion = readResponse.ResourceVersion
