@@ -1,6 +1,5 @@
 import { DataFrameView, DataTopic, type AlertStateInfo, AlertState, LoadingState } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { config, getBackendSrv } from '@grafana/runtime';
 import {
   grantUserPermissions,
   mockGrafanaPromAlertingRule,
@@ -22,7 +21,7 @@ function getTestContext() {
   jest.clearAllMocks();
   config.publicDashboardAccessToken = '';
   grantUserPermissions(Object.values(AccessControlAction));
-  const getMock = jest.spyOn(backendSrv, 'get');
+  const getMock = jest.spyOn(getBackendSrv(), 'get');
   return { getMock };
 }
 

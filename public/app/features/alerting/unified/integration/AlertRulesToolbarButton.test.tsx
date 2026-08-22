@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 import AlertRulesToolbarButton from './AlertRulesToolbarButton';
 
 describe('AlertRulesToolbarButton', () => {
   it('shows the button when the dashboard has an alert rule', async () => {
-    const getMock = jest.spyOn(backendSrv, 'get').mockResolvedValue({
+    const getMock = jest.spyOn(getBackendSrv(), 'get').mockResolvedValue({
       data: {
         groups: [{ rules: [{}] }],
       },
