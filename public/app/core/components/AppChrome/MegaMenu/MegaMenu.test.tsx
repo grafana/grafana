@@ -129,6 +129,34 @@ describe('MegaMenu', () => {
     expect(await screen.findByRole('link', { name: 'Child2' })).toBeInTheDocument();
   });
 
+  it('should render icons for nested items', async () => {
+    renderMegaMenu({
+      navBarTree: [
+        {
+          text: 'Section name',
+          id: 'section',
+          url: 'section',
+          icon: 'apps',
+          children: [
+            {
+              text: 'Child1',
+              id: 'child1',
+              url: 'section/child1',
+              icon: 'cog',
+              children: [{ text: 'Grandchild1', id: 'grandchild1', url: 'section/child1/grandchild1', icon: 'search' }],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(await screen.findByTestId('icon-apps')).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
+    expect(await screen.findByTestId('icon-cog')).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Child1' }));
+    expect(await screen.findByTestId('icon-search')).toBeInTheDocument();
+  });
+
   it('should filter out profile', async () => {
     renderMegaMenu({ navBarTree: nestedNavTree });
 

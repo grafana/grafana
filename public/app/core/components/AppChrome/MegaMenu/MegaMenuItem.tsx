@@ -58,7 +58,7 @@ interface Props {
   disabled?: boolean;
 }
 
-const MAX_DEPTH = 2;
+const MAX_DEPTH = 3;
 
 export function MegaMenuItem({
   link,
@@ -91,8 +91,10 @@ export function MegaMenuItem({
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
+  const useActiveIconColor = level === 0 || isActive;
   // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
-  // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
+  // render alongside the label so the two kinds are distinguishable. Nav items at every depth can
+  // also provide an icon through plugin metadata.
   const isStarredLeaf = Boolean(link.id?.startsWith(ID_PREFIX));
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
     `grafana.navigation.expanded[${expandKeyPrefix}${link.text}]`,
@@ -104,6 +106,8 @@ export function MegaMenuItem({
   const showExpandButton =
     level < MAX_DEPTH && Boolean(hasRenderableChildren || link.emptyMessage || loadingChildren || childrenLoadError);
   const childrenVisible = showExpandButton && sectionExpanded;
+  // Preserve the existing deepest-level styling for leaves while allowing level-2 parents to expand to level 3.
+  const isDeepLeaf = level === MAX_DEPTH || (level === MAX_DEPTH - 1 && !hasRenderableChildren);
   const item = useRef<HTMLLIElement | null>(null);
 
   // Keep the local ref (used for scroll-into-view) while also handing the node to the draggable.
@@ -153,7 +157,12 @@ export function MegaMenuItem({
 
   if (link.icon) {
     iconElement = (
-      <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" title={starredLeafIconTitle} />
+      <Icon
+        className={cx(styles.icon, useActiveIconColor && styles.activeColor)}
+        name={toIconName(link.icon) ?? 'link'}
+        size="lg"
+        title={starredLeafIconTitle}
+      />
     );
   } else if (link.img) {
     iconElement = (
@@ -194,8 +203,8 @@ export function MegaMenuItem({
             )}
           </div>
         )}
-        {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
-        {level === MAX_DEPTH && <div className={styles.itemConnector} />}
+        {level !== 0 && <Indent level={isDeepLeaf ? level - 1 : level} spacing={3} />}
+        {isDeepLeaf && <div className={styles.itemConnector} />}
         <div className={styles.collapsibleSectionWrapper}>
           <MegaMenuItemText
             isActive={isActive}
@@ -225,10 +234,10 @@ export function MegaMenuItem({
               className={cx(styles.labelWrapper, {
                 [styles.tightLabelGap]: tightLabelGap,
                 [styles.hasActiveChild]: hasActiveChild,
-                [styles.labelWrapperWithIcon]: Boolean(level === 0 && iconElement),
+                [styles.labelWrapperWithIcon]: Boolean(iconElement),
               })}
             >
-              {(level === 0 || isStarredLeaf) && iconElement}
+              {iconElement}
               <Text truncate element="p">
                 {link.text}
               </Text>
@@ -318,6 +327,9 @@ export function MegaMenuItem({
 const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   icon: css({
     width: theme.spacing(3),
+    color: visualRefreshEnabled ? theme.colors.text.secondary : undefined,
+  }),
+  activeColor: css({
     color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
   }),
   img: css({
