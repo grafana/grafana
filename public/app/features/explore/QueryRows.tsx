@@ -97,7 +97,6 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   };
 
   const onQueryToggled = (queryStatus?: boolean) => {
-    reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
   const onExitQueryLibraryEdit = useCallback(
