@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Card, IconButton, LinkButton, ModalsController, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
-import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import {
   getManagerIdentity,
@@ -59,10 +59,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
       <Card.SecondaryActions>
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
-            <DashNavButton
-              tooltip={t('playlist-page.card.tooltip', 'Share playlist')}
-              icon="share-alt"
-              iconSize="lg"
+            <PlaylistShareButton
               onClick={() => {
                 showModal(ShareModal, {
                   playlistUid: playlist.metadata?.name ?? '',
@@ -76,6 +73,41 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
     </Card>
   );
 };
+
+function PlaylistShareButton({ onClick }: { onClick: () => void }) {
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const styles = useStyles2(getShareButtonStyles);
+  const label = t('playlist-page.card.tooltip', 'Share playlist');
+
+  return (
+    <div
+      className={styles.container}
+      onMouseEnter={() => setTooltipOpen(true)}
+      onMouseLeave={() => setTooltipOpen(false)}
+      onFocusCapture={() => setTooltipOpen(true)}
+      onBlurCapture={() => setTooltipOpen(false)}
+    >
+      <Tooltip content={label} placement="bottom" show={tooltipOpen}>
+        <IconButton
+          name="share-alt"
+          size="lg"
+          aria-label={label}
+          onClick={() => {
+            setTooltipOpen(false);
+            onClick();
+          }}
+        />
+      </Tooltip>
+    </div>
+  );
+}
+
+const getShareButtonStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    padding: `0 ${theme.spacing(0.5)}`,
+    display: 'flex',
+  }),
+});
 
 const PlaylistCardSkeleton: SkeletonComponent = ({ rootProps }) => {
   const skeletonStyles = useStyles2(getSkeletonStyles);

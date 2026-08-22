@@ -27,6 +27,7 @@ import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Da
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
+import { DashboardPlaylistViewBanner } from '../components/DashboardPlaylistViewBanner';
 import { DashboardTemplateEditBanner } from '../components/DashboardTemplateEditBanner';
 import { DashboardTemplateSavedBanner } from '../components/DashboardTemplateSavedBanner';
 import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBanner';
@@ -157,6 +158,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
+      <DashboardPlaylistViewBanner />
       <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <ScriptedDashboardDeprecationBanner isScripted={type === 'script'} />

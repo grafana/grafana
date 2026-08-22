@@ -5,6 +5,8 @@ export type PlaylistMode = boolean;
 type PlaylistItem = PlaylistSpec['items'][number];
 
 export interface PlaylistItemUI extends PlaylistItem {
+  /** Stable identity for editing and drag-and-drop. Never persisted. */
+  localId?: string;
   /**
    * Loaded at runtime by the frontend.
    *
