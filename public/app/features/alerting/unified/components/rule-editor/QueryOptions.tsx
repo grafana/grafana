@@ -31,6 +31,14 @@ export const QueryOptions = ({
 
   const separator = <span>, </span>;
 
+  const onOptionsClose = () => {
+    setShowOptions(false);
+
+    if (document.activeElement instanceof HTMLInputElement) {
+      document.activeElement.blur();
+    }
+  };
+
   return (
     <>
       <Toggletip
@@ -50,6 +58,8 @@ export const QueryOptions = ({
         }
         closeButton={true}
         placement="bottom-start"
+        onClose={onOptionsClose}
+        onOpen={() => setShowOptions(true)}
       >
         <button type="button" className={styles.actionLink} onClick={() => setShowOptions(!showOptions)}>
           <Trans i18nKey="alerting.query-options.button-options">Options</Trans>{' '}
