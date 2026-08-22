@@ -33,7 +33,7 @@ export const PluginBridge = ({
   return <>{children}</>;
 };
 
-export function createBridgeURL(plugin: PluginID, path?: string, options?: Record<string, string>) {
+export function createBridgeURL(plugin: PluginID, path?: string, options?: URLSearchParams | Record<string, string>) {
   const searchParams = new URLSearchParams(options).toString();
   const pluginPath = `/a/${plugin}${path}`;
 

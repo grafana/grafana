@@ -3,6 +3,18 @@ export const RULER_NOT_SUPPORTED_MSG = 'ruler not supported';
 /** The name used to identify the built-in Grafana rules/alertmanager source */
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
 
+/**
+ * Prefixes for the stringified rule identifiers that end up in URLs like
+ * `/alerting/<sourceName>/<identifier>/view`. A Grafana-managed rule is identified by a bare UID,
+ * so anything carrying one of these prefixes belongs to a data source: `cri` for a rule we can
+ * read through the ruler API, `pri` for one we can only see through the Prometheus API.
+ *
+ * These live here rather than in `rule-id.ts` so that code which only needs to tell the two apart
+ * (route handling, for example) doesn't have to pull in the whole parser.
+ */
+export const CLOUD_RULE_IDENTIFIER_PREFIX = 'cri';
+export const PROMETHEUS_RULE_IDENTIFIER_PREFIX = 'pri';
+
 export const RULE_LIST_POLL_INTERVAL_MS = 30000;
 
 export const ALERTMANAGER_NAME_QUERY_KEY = 'alertmanager';

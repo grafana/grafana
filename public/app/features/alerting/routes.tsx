@@ -13,6 +13,7 @@ import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
 } from './unified/hooks/abilities/alertmanager/useTimeIntervalAbility';
+import { applyRouteProxies } from './unified/plugin-proxy/withRouteProxy';
 import { evaluateAccess, evaluateAccessAll } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
@@ -436,7 +437,9 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     });
   }
 
-  return routes;
+  // Hands data source managed URLs over to the grafana-prometheusalerting-app plugin when it's
+  // installed. Everything else is left exactly as it was.
+  return applyRouteProxies(routes);
 }
 
 // this function will always load the "feature disabled" component for all alerting routes
