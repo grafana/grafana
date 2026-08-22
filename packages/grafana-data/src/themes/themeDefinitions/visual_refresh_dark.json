@@ -148,7 +148,7 @@
       "borderColor": "palette.ink700"
     },
     "input": {
-      "background": "palette.ink850"
+      "background": "palette.ink800"
     },
     "codeEditor": {
       "keyword": "palette.blue300",
