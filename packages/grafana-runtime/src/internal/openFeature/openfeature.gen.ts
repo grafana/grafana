@@ -97,6 +97,8 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Enables RBAC for playlists */
+  GrafanaPlaylistsRBAC: "grafana.playlistsRBAC",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -651,6 +653,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
  */
 export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelPluginTransformations", false, options).value;
+};
+
+/**
+ * Enables RBAC for playlists
+ *
+ * **Details:**
+ * - flag key: `grafana.playlistsRBAC`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPlaylistsRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.playlistsRBAC", false, options).value;
 };
 
 /**

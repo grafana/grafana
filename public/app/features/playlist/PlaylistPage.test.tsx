@@ -2,7 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -38,7 +40,7 @@ describe('PlaylistPage', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
     (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = false;
-    config.featureToggles.playlistsRBAC = false;
+    setTestFlags({ [FlagKeys.GrafanaPlaylistsRBAC]: false });
   });
 
   describe('when mounted without a playlist', () => {
@@ -52,9 +54,9 @@ describe('PlaylistPage', () => {
       expect(await screen.findByText('There are no playlists created yet')).toBeInTheDocument();
     });
 
-    describe('with playlistsRBAC toggle on', () => {
+    describe('with grafana.playlistsRBAC toggle on', () => {
       beforeEach(() => {
-        config.featureToggles.playlistsRBAC = true;
+        setTestFlags({ [FlagKeys.GrafanaPlaylistsRBAC]: true });
       });
 
       describe('and user has playlists:write', () => {
@@ -79,7 +81,7 @@ describe('PlaylistPage', () => {
       });
     });
 
-    describe('with playlistsRBAC toggle off (legacy)', () => {
+    describe('with grafana.playlistsRBAC toggle off (legacy)', () => {
       describe('and user is an editor', () => {
         it('then create playlist button should not be disabled', async () => {
           (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = true;
@@ -131,9 +133,9 @@ describe('PlaylistPage', () => {
       expect(screen.getByTestId('playlist-page-list-skeleton')).toBeInTheDocument();
     });
 
-    describe('with playlistsRBAC toggle on', () => {
+    describe('with grafana.playlistsRBAC toggle on', () => {
       beforeEach(() => {
-        config.featureToggles.playlistsRBAC = true;
+        setTestFlags({ [FlagKeys.GrafanaPlaylistsRBAC]: true });
       });
 
       describe('and user has playlists:write', () => {
@@ -164,7 +166,7 @@ describe('PlaylistPage', () => {
       });
     });
 
-    describe('with playlistsRBAC toggle off (legacy)', () => {
+    describe('with grafana.playlistsRBAC toggle off (legacy)', () => {
       describe('and user is an editor', () => {
         it('then all playlist buttons should appear', async () => {
           jest.mocked(contextSrv.hasPermission).mockReturnValue(false);

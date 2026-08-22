@@ -970,11 +970,11 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "playlistsRBAC",
+			Name:        "grafana.playlistsRBAC",
 			Description: "Enables RBAC for playlists",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{Go: true, React: true},
 			Expression:  "false",
 		},
 		{

@@ -3279,6 +3279,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.playlistsRBAC",
+        "resourceVersion": "1787325081567",
+        "creationTimestamp": "2026-08-21T15:11:21Z"
+      },
+      "spec": {
+        "description": "Enables RBAC for playlists",
+        "stage": "GA",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.pluginPathNesting",
         "resourceVersion": "1785918906185",
         "creationTimestamp": "2026-08-05T08:35:06Z"
@@ -5031,7 +5044,8 @@
       "metadata": {
         "name": "playlistsRBAC",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-21T15:11:21Z"
       },
       "spec": {
         "description": "Enables RBAC for playlists",

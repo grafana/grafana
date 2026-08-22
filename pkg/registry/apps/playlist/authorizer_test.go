@@ -3,8 +3,11 @@ package playlist
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -13,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // mockAttributes implements authorizer.Attributes for testing
@@ -25,15 +29,22 @@ type mockAttributes struct {
 func (m *mockAttributes) IsResourceRequest() bool { return m.isResourceRequest }
 func (m *mockAttributes) GetVerb() string         { return m.verb }
 
-func installerWithToggle(on bool, ac accesscontrol.AccessControl) *AppInstaller {
-	var features featuremgmt.FeatureToggles
-	if on {
-		features = featuremgmt.WithFeatures(featuremgmt.FlagPlaylistsRBAC)
-	} else {
-		features = featuremgmt.WithFeatures()
-	}
+// Serialises the global OpenFeature provider swaps below across parallel tests.
+var openfeatureTestMutex sync.Mutex
+
+func installerWithToggle(t *testing.T, on bool, ac accesscontrol.AccessControl) *AppInstaller {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagGrafanaPlaylistsRBAC: setting.NewInMemoryFlag(featuremgmt.FlagGrafanaPlaylistsRBAC, on),
+	})
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
 	return &AppInstaller{
-		features:      features,
 		accessControl: ac,
 		logger:        log.NewNopLogger(),
 	}
@@ -205,7 +216,7 @@ func TestGetAuthorizer(t *testing.T) {
 				},
 			}
 
-			installer := installerWithToggle(true, mockAC)
+			installer := installerWithToggle(t, true, mockAC)
 
 			attrs := &mockAttributes{
 				isResourceRequest: tt.isResourceReq,
@@ -243,7 +254,7 @@ func TestGetAuthorizer(t *testing.T) {
 
 func TestGetAuthorizerToggleOff(t *testing.T) {
 	mockAC := &mockAccessControl{}
-	installer := installerWithToggle(false, mockAC)
+	installer := installerWithToggle(t, false, mockAC)
 	auth := installer.GetAuthorizer()
 
 	noneCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
