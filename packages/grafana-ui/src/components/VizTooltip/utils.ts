@@ -15,7 +15,7 @@ export interface TooltipScrollableOptions {
 }
 
 import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
-import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipItem } from './types';
+import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem } from './types';
 
 export const calculateTooltipPosition = (
   xPos = 0,
@@ -151,9 +151,10 @@ export const getFieldDisplayItems = (
   seriesIdx: number | null | undefined,
   mode: TooltipDisplayMode,
   sortOrder: SortOrder,
-  fieldFilter = (field: Field) => true,
+  fieldFilter = (field: Field, i?: number) => true,
   hideZeros = false,
-  extraFields?: Field[]
+  extraFields?: Field[],
+  compareFieldIdx?: number
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
@@ -166,7 +167,7 @@ export const getFieldDisplayItems = (
       field === xField ||
       field.type === FieldType.time ||
       isFrameValuedField(field) ||
-      !fieldFilter(field) ||
+      !fieldFilter(field, i) ||
       field.config.custom?.hideFrom?.tooltip
     ) {
       continue;
@@ -205,6 +206,31 @@ export const getFieldDisplayItems = (
 
     const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
 
+    let delta: VizTooltipDelta | undefined;
+
+    if (
+      compareFieldIdx != null &&
+      seriesIdx != null &&
+      dataIdxs[compareFieldIdx] != null &&
+      dataIdxs[seriesIdx] != null &&
+      i === compareFieldIdx
+    ) {
+      const compData = fields[compareFieldIdx].values[dataIdxs[compareFieldIdx]];
+      const normalData = fields[seriesIdx].values[dataIdxs[seriesIdx]];
+      // only show a delta if both values exist
+      if (compData != null && normalData != null) {
+        let diffVal;
+        if (seriesIdx === compareFieldIdx) {
+          diffVal = getTooltipDisplayValue(normalData - compData, field);
+        } else {
+          diffVal = getTooltipDisplayValue(compData - normalData, field);
+        }
+
+        // text comes from the field's display processor, so it keeps the field's unit and decimals
+        delta = { text: diffVal.text, numeric: diffVal.numeric };
+      }
+    }
+
     rows.push({
       label: field.state?.displayName ?? field.name,
       value: display.text,
@@ -214,6 +240,7 @@ export const getFieldDisplayItems = (
       isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
       numeric,
       lineStyle: field.config.custom?.lineStyle,
+      delta,
     });
   }
 

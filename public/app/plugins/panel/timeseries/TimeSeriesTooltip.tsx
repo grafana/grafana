@@ -55,6 +55,7 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
+  comparisonFieldPairs?: Map<number, number>;
   /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
   assistantContext?: AssistantTooltipContext;
 }
@@ -77,6 +78,7 @@ export const TimeSeriesTooltip = ({
   compareDiffMs,
   filterByGroupedLabels,
   assistantContext,
+  comparisonFieldPairs,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -89,16 +91,33 @@ export const TimeSeriesTooltip = ({
 
   const xDisp = formattedValueToString(xField.display!(xVal));
 
+  const compareFieldIdx = seriesIdx == null ? undefined : comparisonFieldPairs?.get(seriesIdx);
+
+  // if there is no compare pair, use mode.
+  // if there is a compare but mode is set to not single, use mode.
+  // if there is a compare and mode is set to single, use multi to show compare field as well (we filter out only relevant fields)
+  const modeWithCompare =
+    compareFieldIdx === undefined || mode !== TooltipDisplayMode.Single ? mode : TooltipDisplayMode.Multi;
+
   const contentItems = getFieldDisplayItems(
     series.fields,
     xField,
     dataIdxs,
     seriesIdx,
-    mode,
+    modeWithCompare,
     sortOrder,
-    (field) => field.type === FieldType.number || field.type === FieldType.enum,
+    (field, i) => {
+      const isRightType = field.type === FieldType.number || field.type === FieldType.enum;
+      // Any mode other than Single shows whatever it normally would, comparison series included.
+      if (mode !== TooltipDisplayMode.Single || compareFieldIdx === undefined) {
+        return isRightType;
+      }
+      // otherwise, keep only the hovered series and its counterpart.
+      return isRightType && (i === seriesIdx || i === compareFieldIdx);
+    },
     hideZeros,
-    _rest
+    _rest,
+    compareFieldIdx
   );
 
   let footer: ReactNode;
