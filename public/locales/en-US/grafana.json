@@ -12384,6 +12384,9 @@
       "subtitle": "See grouped alerts with active notifications",
       "title": "Active notifications"
     },
+    "alerting-history": {
+      "title": "History"
+    },
     "alerting-home": {
       "title": "Home"
     },
@@ -12393,6 +12396,10 @@
     "alerting-list": {
       "subtitle": "Rules that determine whether an alert will fire",
       "title": "Alert rules"
+    },
+    "alerting-notification-config": {
+      "subtitle": "Manage contact points, notification policies, templates, and time intervals",
+      "title": "Notification configuration"
     },
     "alerting-receivers": {
       "subtitle": "Choose how to notify your contact points when an alert instance fires",
@@ -12463,6 +12470,7 @@
       "title": "Create"
     },
     "create-alert": {
+      "subtitle": "Create an alert rule",
       "title": "New alert rule"
     },
     "create-dashboard": {
