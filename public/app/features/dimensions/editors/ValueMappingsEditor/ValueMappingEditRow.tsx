@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import {
@@ -41,6 +41,19 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   const { key, result, id } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const [fromString, setFromString] = useState(
+    mapping.from != null && !Number.isNaN(mapping.from) ? String(mapping.from) : ''
+  );
+  const [toString, setToString] = useState(mapping.to != null && !Number.isNaN(mapping.to) ? String(mapping.to) : '');
+
+  useEffect(() => {
+    setFromString(mapping.from != null && !Number.isNaN(mapping.from) ? String(mapping.from) : '');
+  }, [mapping.from]);
+
+  useEffect(() => {
+    setToString(mapping.to != null && !Number.isNaN(mapping.to) ? String(mapping.to) : '');
+  }, [mapping.to]);
 
   const update = useCallback(
     (fn: (item: ValueMappingEditRowModel) => void) => {
@@ -102,14 +115,20 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   };
 
   const onChangeFrom = (event: React.FormEvent<HTMLInputElement>) => {
+    const val = event.currentTarget.value;
+    setFromString(val);
+    const parsed = parseFloat(val);
     update((mapping) => {
-      mapping.from = parseFloat(event.currentTarget.value);
+      mapping.from = val.trim() === '' || Number.isNaN(parsed) ? null : parsed;
     });
   };
 
   const onChangeTo = (event: React.FormEvent<HTMLInputElement>) => {
+    const val = event.currentTarget.value;
+    setToString(val);
+    const parsed = parseFloat(val);
     update((mapping) => {
-      mapping.to = parseFloat(event.currentTarget.value);
+      mapping.to = val.trim() === '' || Number.isNaN(parsed) ? null : parsed;
     });
   };
 
@@ -211,14 +230,16 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             {mapping.type === MappingType.RangeToText && (
               <div className={styles.rangeInputWrapper}>
                 <Input
-                  type="number"
-                  value={mapping.from ?? ''}
+                  type="text"
+                  inputMode="decimal"
+                  value={fromString}
                   placeholder={t('dimensions.value-mapping-edit-row.placeholder-from', 'From')}
                   onChange={onChangeFrom}
                 />
                 <Input
-                  type="number"
-                  value={mapping.to ?? ''}
+                  type="text"
+                  inputMode="decimal"
+                  value={toString}
                   placeholder={t('dimensions.value-mapping-edit-row.placeholder-to', 'To')}
                   onChange={onChangeTo}
                 />
