@@ -608,10 +608,7 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
     return;
   }
 
-  const [
-    { LogMessages, logInfo, trackCreateRuleFromPanelDrawerOpened },
-    { NewAlertRuleDrawer },
-  ] = await Promise.all([
+  const [{ LogMessages, logInfo, trackCreateRuleFromPanelDrawerOpened }, { NewAlertRuleDrawer }] = await Promise.all([
     import(/* webpackChunkName: "DashboardAlertingCreate" */ 'app/features/alerting/unified/Analytics'),
     import(/* webpackChunkName: "DashboardAlertingCreate" */ './NewAlertRuleDrawer'),
   ]);

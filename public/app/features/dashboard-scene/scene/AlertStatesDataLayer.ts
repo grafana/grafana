@@ -19,10 +19,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
-import {
-  loadPanelAlertStateCandidates,
-  selectMostSevereAlertCandidatePerPanel,
-} from './loadPanelAlertStateCandidates';
+import { loadPanelAlertStateCandidates, selectMostSevereAlertCandidatePerPanel } from './loadPanelAlertStateCandidates';
 
 interface AlertStatesDataLayerState extends SceneDataLayerProviderState {}
 

@@ -20,9 +20,7 @@ export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesTool
   }
 
   const onShowDrawer = async () => {
-    const { AlertRulesDrawer } = await import(
-      /* webpackChunkName: "DashboardAlertingView" */ './AlertRulesDrawer'
-    );
+    const { AlertRulesDrawer } = await import(/* webpackChunkName: "DashboardAlertingView" */ './AlertRulesDrawer');
     showModal(AlertRulesDrawer, {
       dashboardUid,
       onDismiss: hideModal,
