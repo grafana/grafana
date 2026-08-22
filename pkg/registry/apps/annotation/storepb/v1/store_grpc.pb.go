@@ -37,7 +37,17 @@ const (
 type AnnotationStoreClient interface {
 	// Get retrieves an annotation by namespace and name
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	// List retrieves annotations based on filter criteria
+	// List retrieves annotations based on filter criteria.
+	//
+	// Results must be returned in a stable, deterministic order so that
+	// paging via the continue token works correctly. The specific ordering
+	// is up to the implementation.
+	//
+	// Grafana's own backends sort by effective end time (time_end if set,
+	// else time) descending, then time descending, then name ascending as
+	// the tiebreaker. Matching this exact order is not required for
+	// correctness, but is recommended so annotations appear in a consistent
+	// order regardless of which backend is serving them.
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	// Create creates a new annotation
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
@@ -138,7 +148,17 @@ func (c *annotationStoreClient) ListTags(ctx context.Context, in *ListTagsReques
 type AnnotationStoreServer interface {
 	// Get retrieves an annotation by namespace and name
 	Get(context.Context, *GetRequest) (*GetResponse, error)
-	// List retrieves annotations based on filter criteria
+	// List retrieves annotations based on filter criteria.
+	//
+	// Results must be returned in a stable, deterministic order so that
+	// paging via the continue token works correctly. The specific ordering
+	// is up to the implementation.
+	//
+	// Grafana's own backends sort by effective end time (time_end if set,
+	// else time) descending, then time descending, then name ascending as
+	// the tiebreaker. Matching this exact order is not required for
+	// correctness, but is recommended so annotations appear in a consistent
+	// order regardless of which backend is serving them.
 	List(context.Context, *ListRequest) (*ListResponse, error)
 	// Create creates a new annotation
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
