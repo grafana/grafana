@@ -1,8 +1,9 @@
-import { type AppPluginConfig, PluginType } from '@grafana/data';
+import { type AppPluginConfig, type AppPluginMetaConfig, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
+import { getCachedPromise } from '../../utils/getCachedPromise';
 
 import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
@@ -53,6 +54,40 @@ export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
   }
 
   return Object.values(structuredClone(apps));
+}
+
+/** Uncached fetch + map used by {@link getAppPluginMetasStrict}; rejects on fetch failure. */
+async function loadAppPluginMetasStrict(): Promise<AppPluginMetaConfig[]> {
+  const metas = await initPluginMetas();
+  if (metas === null) {
+    // The failed fetch is logged at source; rejecting here (rather than
+    // returning empty) is the point of the strict accessor
+    throw new Error('plugin metas failed to load');
+  }
+  const mapper = getAppPluginMapper();
+  return Object.values(mapper(metas));
+}
+
+/**
+ * Fetches the app plugin configs from the plugin metas API without the
+ * bootdata fallback: unlike {@link getAppPluginMetas}, a failed metas fetch
+ * rejects instead of resolving to an empty list (the cache entry is
+ * invalidated on failure, so a later call retries). With the
+ * plugins.useMTPlugins flag off it resolves to an empty array. The result is
+ * cached, so concurrent callers share one fetch (each receives its own copy,
+ * like the other accessors) — note the cache has no refetch hook: a
+ * successful response is reused for the rest of the session, and installing
+ * or uninstalling a plugin does not invalidate it.
+ *
+ * The bootdata fallback is deliberately not used, even while the flag rolls
+ * out: the nav must tell an outage (static-only tree with a warning, retried
+ * on the next mount) apart from an instance with no app plugins, and the
+ * bootdata configs cannot substitute anyway — they lack the display and
+ * navigation fields this returns, and the frontend service ships no bootdata
+ * apps at all.
+ */
+export function getAppPluginMetasStrict(): Promise<AppPluginMetaConfig[]> {
+  return getCachedPromise(loadAppPluginMetasStrict).then((metas) => structuredClone(metas));
 }
 
 export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfig | null> {
