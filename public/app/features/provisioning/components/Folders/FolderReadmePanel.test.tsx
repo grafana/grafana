@@ -5,14 +5,17 @@ import { locationService } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { provisioningAPIv0alpha1, type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
+import { type UseFolderDocsResult, useFolderDocs } from '../../hooks/useFolderDocs';
 import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
 import { setupProvisioningMswServer } from '../../mocks/server';
+import { type FolderDoc, type FolderDocKey } from '../../utils/folderDocConventions';
 
 import { FOLDER_README_ANCHOR_ID, FolderReadmePanel } from './FolderReadmePanel';
 import { FolderReadmeEvents } from './analytics/main';
 
+jest.mock('../../hooks/useFolderDocs');
 jest.mock('../../hooks/useFolderReadme');
 
 setupProvisioningMswServer();
@@ -22,10 +25,12 @@ function setResources(items: ResourceListItem[]) {
   server.use(http.get(`${BASE}/repositories/:name/resources`, () => HttpResponse.json({ items })));
 }
 
+const mockUseFolderDocs = useFolderDocs as jest.MockedFunction<typeof useFolderDocs>;
 const mockUseFolderReadme = useFolderReadme as jest.MockedFunction<typeof useFolderReadme>;
 const editClickedSpy = jest.spyOn(FolderReadmeEvents, 'editClicked').mockImplementation();
 const createClickedSpy = jest.spyOn(FolderReadmeEvents, 'createClicked').mockImplementation();
 const linkClickedSpy = jest.spyOn(FolderReadmeEvents, 'linkClicked').mockImplementation();
+const tabSelectedSpy = jest.spyOn(FolderReadmeEvents, 'tabSelected').mockImplementation();
 
 const mockRepository = {
   name: 'test-repo',
@@ -48,6 +53,23 @@ const mockFolder = {
   status: {},
 } as never;
 
+function doc(key: FolderDocKey | undefined, fileName: string): FolderDoc {
+  return { key, path: `dashboards/team-a/${fileName}`, fileName };
+}
+
+const readmeDoc = doc('readme', 'README.md');
+
+function setDocs(overrides: Partial<UseFolderDocsResult> = {}) {
+  mockUseFolderDocs.mockReturnValue({
+    repository: mockRepository,
+    folder: mockFolder,
+    sourceDir: 'dashboards/team-a',
+    docs: [readmeDoc],
+    isLoading: false,
+    ...overrides,
+  });
+}
+
 function setReadmeResult(overrides: Partial<UseFolderReadmeResult> = {}) {
   mockUseFolderReadme.mockReturnValue({
     repository: mockRepository,
@@ -55,6 +77,7 @@ function setReadmeResult(overrides: Partial<UseFolderReadmeResult> = {}) {
     readmePath: 'dashboards/team-a/README.md',
     status: 'ok',
     isLoading: false,
+    isFetching: false,
     markdownContent: '# Hello\n\nThis is a README.',
     refetch: jest.fn(),
     syncFinished: undefined,
@@ -70,6 +93,10 @@ describe('FolderReadmePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setTestFlags({ 'provisioning.readmes': true });
+    // Stub prefetch so the panel doesn't fire real queries during unit tests.
+    jest.spyOn(provisioningAPIv0alpha1, 'usePrefetch').mockReturnValue(jest.fn());
+    setDocs();
+    setReadmeResult();
   });
 
   afterEach(() => {
@@ -78,45 +105,129 @@ describe('FolderReadmePanel', () => {
     });
   });
 
-  it('renders the README markdown inside a panel with an anchor id', () => {
-    setReadmeResult();
-
-    const { container } = render(<FolderReadmePanel folderUID="test-folder" />);
+  it('renders the README markdown inside a panel with an anchor id and a README tab', () => {
+    const { container } = setup();
 
     const panel = container.querySelector(`#${FOLDER_README_ANCHOR_ID}`);
     expect(panel).not.toBeNull();
-    expect(screen.getByText('README.md')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
     expect(screen.getByText('Hello')).toBeInTheDocument();
     expect(screen.getByText('This is a README.')).toBeInTheDocument();
   });
 
-  it('shows an Edit README icon button targeting the host editor when a README exists', () => {
-    setReadmeResult();
+  it('shows an Edit icon button targeting the host editor when a doc exists', () => {
+    setup();
 
-    render(<FolderReadmePanel folderUID="test-folder" />);
-
-    const editLink = screen.getByRole('link', { name: /Edit README/i });
+    const editLink = screen.getByRole('link', { name: /Edit document/i });
     expect(editLink).toHaveAttribute('href', 'https://github.com/owner/repo/edit/main/dashboards/team-a/README.md');
   });
 
   it('prefixes the edit URL with repository.path when configured', () => {
-    setReadmeResult({ repository: { ...mockRepository, path: 'ops/resources' } });
+    setDocs({ repository: { ...mockRepository, path: 'ops/resources' } });
+    setup();
 
-    render(<FolderReadmePanel folderUID="test-folder" />);
-
-    expect(screen.getByRole('link', { name: /Edit README/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Edit document/i })).toHaveAttribute(
       'href',
       'https://github.com/owner/repo/edit/main/ops/resources/dashboards/team-a/README.md'
     );
   });
 
   it('reports an interaction when the edit link is clicked', async () => {
-    setReadmeResult();
-
     const { user } = setup();
-    await user.click(screen.getByRole('link', { name: /Edit README/i }));
+    await user.click(screen.getByRole('link', { name: /Edit document/i }));
 
     expect(editClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github' });
+  });
+
+  describe('documentation tabs', () => {
+    it('renders a tab per recognized convention doc, GitHub-style', () => {
+      setDocs({
+        docs: [readmeDoc, doc('contributing', 'CONTRIBUTING.md'), doc('security', 'SECURITY.md')],
+      });
+      setup();
+
+      expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Contributing' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
+    });
+
+    it('renders other markdown files as tabs labeled by file name (no extension)', () => {
+      setDocs({
+        docs: [readmeDoc, doc(undefined, 'CHANGELOG.md')],
+      });
+      setup();
+
+      expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'CHANGELOG' })).toBeInTheDocument();
+    });
+
+    it('switches the active doc and reports an interaction when a tab is clicked', async () => {
+      const contributing = doc('contributing', 'CONTRIBUTING.md');
+      setDocs({ docs: [readmeDoc, contributing] });
+      const { user } = setup();
+
+      await user.click(screen.getByRole('tab', { name: 'Contributing' }));
+
+      expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-folder', contributing.path);
+      expect(tabSelectedSpy).toHaveBeenCalledWith({ repositoryType: 'github', doc: 'contributing' });
+    });
+
+    it('persists the active tab in the URL and restores it from the query param', () => {
+      const contributing = doc('contributing', 'CONTRIBUTING.md');
+      setDocs({ docs: [readmeDoc, contributing] });
+
+      render(<FolderReadmePanel folderUID="test-folder" />, {
+        historyOptions: { initialEntries: ['/?docTab=CONTRIBUTING.md'] },
+      });
+
+      expect(mockUseFolderReadme).toHaveBeenLastCalledWith('test-folder', contributing.path);
+    });
+
+    it('shows a loading overlay while the newly selected doc is fetching', () => {
+      setReadmeResult({ status: 'ok', isFetching: true });
+      setup();
+
+      expect(screen.getByTestId('folder-doc-loading')).toBeInTheDocument();
+    });
+
+    it('reports "other" for a non-convention doc selection', async () => {
+      const changelog = doc(undefined, 'CHANGELOG.md');
+      setDocs({ docs: [readmeDoc, changelog] });
+      const { user } = setup();
+
+      await user.click(screen.getByRole('tab', { name: 'CHANGELOG' }));
+
+      expect(tabSelectedSpy).toHaveBeenCalledWith({ repositoryType: 'github', doc: 'other' });
+    });
+
+    it('still shows the other doc tabs (plus a README tab) when the README file is missing', () => {
+      // useFolderDocs only discovers files that exist — no README here.
+      setDocs({ docs: [doc('security', 'SECURITY.md')] });
+      setup();
+
+      expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Security' })).toBeInTheDocument();
+    });
+
+    it('prefetches the next couple of docs once the active doc has loaded', () => {
+      const prefetch = jest.fn();
+      jest.spyOn(provisioningAPIv0alpha1, 'usePrefetch').mockReturnValue(prefetch);
+      setDocs({
+        docs: [
+          readmeDoc,
+          doc('contributing', 'CONTRIBUTING.md'),
+          doc('security', 'SECURITY.md'),
+          doc(undefined, 'CHANGELOG.md'),
+        ],
+      });
+      setReadmeResult({ status: 'ok' });
+      setup();
+
+      // README is active (index 0), so the next two docs are warmed — not the third.
+      expect(prefetch).toHaveBeenCalledWith({ name: 'test-repo', path: 'dashboards/team-a/CONTRIBUTING.md' });
+      expect(prefetch).toHaveBeenCalledWith({ name: 'test-repo', path: 'dashboards/team-a/SECURITY.md' });
+      expect(prefetch).not.toHaveBeenCalledWith({ name: 'test-repo', path: 'dashboards/team-a/CHANGELOG.md' });
+    });
   });
 
   describe('resource links', () => {
@@ -219,7 +330,9 @@ describe('FolderReadmePanel', () => {
         })
       );
 
-      setReadmeResult({ repository: { ...mockRepository, name: 'repo-a' }, markdownContent: 'See [CPU](./cpu.json)' });
+      // The panel resolves links against the repository from useFolderDocs.
+      setDocs({ repository: { ...mockRepository, name: 'repo-a' } });
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
       const { user, rerender } = setup();
       const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
 
@@ -227,7 +340,8 @@ describe('FolderReadmePanel', () => {
       await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/aaa'));
 
       // Switch to a different repository; the component must not reuse repo-a's listing.
-      setReadmeResult({ repository: { ...mockRepository, name: 'repo-b' }, markdownContent: 'See [CPU](./cpu.json)' });
+      setDocs({ repository: { ...mockRepository, name: 'repo-b' } });
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
       rerender(<FolderReadmePanel folderUID="test-folder" />);
       pushSpy.mockClear();
 
@@ -251,11 +365,14 @@ describe('FolderReadmePanel', () => {
     });
   });
 
-  describe('Add README empty state (status: missing)', () => {
-    it('renders the Add README button when no README exists', () => {
+  describe('Add README empty state (no recognized docs)', () => {
+    beforeEach(() => {
+      setDocs({ docs: [] });
       setReadmeResult({ status: 'missing', markdownContent: undefined });
+    });
 
-      render(<FolderReadmePanel folderUID="test-folder" />);
+    it('renders the Add README button when no README exists', () => {
+      setup();
 
       const addLink = screen.getByRole('link', { name: /Add README/i });
       const href = addLink.getAttribute('href') ?? '';
@@ -265,8 +382,6 @@ describe('FolderReadmePanel', () => {
     });
 
     it('reports an interaction when the Add README button is clicked', async () => {
-      setReadmeResult({ status: 'missing', markdownContent: undefined });
-
       const { user } = setup();
       await user.click(screen.getByRole('link', { name: /Add README/i }));
 
@@ -274,20 +389,20 @@ describe('FolderReadmePanel', () => {
     });
 
     it('hides the Edit icon when no README exists', () => {
-      setReadmeResult({ status: 'missing', markdownContent: undefined });
-
-      render(<FolderReadmePanel folderUID="test-folder" />);
-      expect(screen.queryByRole('link', { name: /Edit README/i })).not.toBeInTheDocument();
+      setup();
+      expect(screen.queryByRole('link', { name: /Edit/i })).not.toBeInTheDocument();
     });
   });
 
   describe('error state (status: error)', () => {
-    it('renders a warning alert with a retry button', () => {
+    beforeEach(() => {
       setReadmeResult({ status: 'error', markdownContent: undefined });
+    });
 
-      render(<FolderReadmePanel folderUID="test-folder" />);
+    it('renders a warning alert with a retry button', () => {
+      setup();
 
-      expect(screen.getByText(/Couldn.t load README/)).toBeInTheDocument();
+      expect(screen.getByText(/Couldn.t load this document/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Try again/i })).toBeInTheDocument();
     });
 
@@ -302,64 +417,61 @@ describe('FolderReadmePanel', () => {
     });
 
     it('hides the Edit pencil in error state', () => {
-      setReadmeResult({ status: 'error', markdownContent: undefined });
-
-      render(<FolderReadmePanel folderUID="test-folder" />);
-      expect(screen.queryByRole('link', { name: /Edit README/i })).not.toBeInTheDocument();
+      setup();
+      expect(screen.queryByRole('link', { name: /Edit/i })).not.toBeInTheDocument();
     });
 
     it('does not show the Add README CTA in error state', () => {
-      setReadmeResult({ status: 'error', markdownContent: undefined });
-
-      render(<FolderReadmePanel folderUID="test-folder" />);
+      setup();
       expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
     });
   });
 
   it('renders nothing when the feature toggle is off', () => {
     setTestFlags({ 'provisioning.readmes': false });
-    setReadmeResult();
 
-    const { container } = render(<FolderReadmePanel folderUID="test-folder" />);
+    const { container } = setup();
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('does not invoke useFolderReadme when the feature toggle is off', () => {
+  it('does not invoke the data hooks when the feature toggle is off', () => {
     setTestFlags({ 'provisioning.readmes': false });
-    setReadmeResult();
-    render(<FolderReadmePanel folderUID="test-folder" />);
+    setup();
+    expect(mockUseFolderDocs).not.toHaveBeenCalled();
     expect(mockUseFolderReadme).not.toHaveBeenCalled();
   });
 
   it('renders nothing when the folder is not provisioned', () => {
+    setDocs({ repository: undefined, docs: [] });
     setReadmeResult({ repository: undefined });
 
-    const { container } = render(<FolderReadmePanel folderUID="test-folder" />);
+    const { container } = setup();
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('shows a loading indicator while the repository view is loading', () => {
+  it('shows a loading indicator while discovery is in progress', () => {
+    setDocs({ repository: undefined, docs: [], isLoading: true });
     setReadmeResult({ status: 'loading', isLoading: true, repository: undefined });
 
-    render(<FolderReadmePanel folderUID="test-folder" />);
+    setup();
     expect(screen.getByTestId('Spinner')).toBeInTheDocument();
-    expect(screen.getByText('README.md')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
   });
 
-  it('shows a loading indicator while the README file is loading', () => {
+  it('shows a loading indicator while the doc content is loading', () => {
     setReadmeResult({ status: 'loading', isLoading: true, markdownContent: undefined });
 
-    render(<FolderReadmePanel folderUID="test-folder" />);
+    setup();
     expect(screen.getByTestId('Spinner')).toBeInTheDocument();
   });
 
   it('renders an empty README without the parse-error message', () => {
     setReadmeResult({ markdownContent: '' });
 
-    render(<FolderReadmePanel folderUID="test-folder" />);
-    expect(screen.queryByText(/Unable to display README content/i)).not.toBeInTheDocument();
-    expect(screen.getByText('README.md')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Edit README/i })).toBeInTheDocument();
+    setup();
+    expect(screen.queryByText(/Unable to display this document/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'README' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Edit document/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
   });
 

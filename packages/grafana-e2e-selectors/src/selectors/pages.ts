@@ -1247,6 +1247,11 @@ export const versionedPages = {
     searchInput: {
       '13.2.0': 'data-testid Browse dashboards search input',
     },
+    folderDocs: {
+      moreTab: {
+        '13.3.0': 'data-testid folder-docs-more-tab',
+      },
+    },
     table: {
       body: {
         '10.2.0': 'data-testid browse-dashboards-table',
