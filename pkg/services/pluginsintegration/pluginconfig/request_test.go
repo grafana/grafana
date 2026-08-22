@@ -2,7 +2,9 @@ package pluginconfig
 
 import (
 	"context"
+	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -630,4 +632,66 @@ func (m *fakeSSOSettingsProvider) GetForProvider(ctx context.Context, provider s
 		return m.GetForProviderFunc(ctx, provider)
 	}
 	return nil, nil
+}
+
+func TestRequestConfigProvider_PluginRequestConfig_openFeature(t *testing.T) {
+	t.Run("Does not add OpenFeature discovery when no provider is configured", func(t *testing.T) {
+		cfg := setting.NewCfg()
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
+		m := p.PluginRequestConfig(context.Background(), "", nil)
+		require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_PROVIDER_URL")
+		require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_PROVIDER_TYPE")
+		require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_CACHE_TTL")
+		require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_CONTEXT")
+	})
+
+	t.Run("Static provider advertises the Grafana app URL and context attributes", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.AppURL = "https://myorg.com/"
+		cfg.OpenFeature = setting.OpenFeatureSettings{
+			ProviderType: setting.StaticProviderType,
+			CacheTTL:     time.Minute,
+			ContextAttrs: map[string]string{"namespace": "default", "grafana_version": "12.3.0"},
+		}
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "", nil), map[string]string{
+			"GF_INSTANCE_OPENFEATURE_PROVIDER_URL":  "https://myorg.com/",
+			"GF_INSTANCE_OPENFEATURE_PROVIDER_TYPE": "static",
+			"GF_INSTANCE_OPENFEATURE_CACHE_TTL":     "60",
+			"GF_INSTANCE_OPENFEATURE_CONTEXT":       `{"grafana_version":"12.3.0","namespace":"default"}`,
+		})
+	})
+
+	t.Run("Remote provider URL is passed through", func(t *testing.T) {
+		u, err := url.Parse("http://features.example.com:1031")
+		require.NoError(t, err)
+
+		cfg := setting.NewCfg()
+		cfg.AppURL = "https://myorg.com/"
+		cfg.OpenFeature = setting.OpenFeatureSettings{
+			ProviderType: setting.OFREPProviderType,
+			URL:          u,
+			CacheTTL:     30 * time.Second,
+		}
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
+		m := p.PluginRequestConfig(context.Background(), "", nil)
+		require.Subset(t, m, map[string]string{
+			"GF_INSTANCE_OPENFEATURE_PROVIDER_URL":  "http://features.example.com:1031",
+			"GF_INSTANCE_OPENFEATURE_PROVIDER_TYPE": "ofrep",
+			"GF_INSTANCE_OPENFEATURE_CACHE_TTL":     "30",
+		})
+		require.NotContains(t, m, "GF_INSTANCE_OPENFEATURE_CONTEXT")
+	})
 }

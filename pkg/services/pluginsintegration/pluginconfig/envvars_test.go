@@ -3,10 +3,12 @@ package pluginconfig
 import (
 	"context"
 	"errors"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"gopkg.in/ini.v1"
 
@@ -1241,6 +1243,108 @@ func TestPluginEnvVarsProvider_azureHostEnvVars(t *testing.T) {
 				_, ok := getEnvVarWithExists(envVars, key)
 				assert.False(t, ok, "env var %s should not be forwarded", key)
 			}
+		})
+	}
+}
+
+func TestPluginEnvVarsProvider_openFeatureEnvVars(t *testing.T) {
+	defaultPlugin := &plugins.Plugin{
+		JSONData: plugins.JSONData{ID: "plugin_id"},
+	}
+
+	remoteURL, err := url.Parse("http://features.example.com:1031")
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		name string
+		cfg  *PluginInstanceCfg
+		exp  func(t *testing.T, envVars []string)
+	}{
+		{
+			name: "no OpenFeature provider configured",
+			cfg:  &PluginInstanceCfg{},
+			exp: func(t *testing.T, envVars []string) {
+				for _, v := range envVars {
+					assert.False(t, strings.HasPrefix(v, "GF_INSTANCE_OPENFEATURE"), "should not have OpenFeature env vars")
+				}
+			},
+		},
+		{
+			name: "static provider advertises the Grafana app URL",
+			cfg: &PluginInstanceCfg{
+				GrafanaAppURL: "https://myorg.com/",
+				OpenFeature: setting.OpenFeatureSettings{
+					ProviderType: setting.StaticProviderType,
+					CacheTTL:     time.Minute,
+				},
+			},
+			exp: func(t *testing.T, envVars []string) {
+				require.Equal(t, "https://myorg.com/", getEnvVar(envVars, "GF_INSTANCE_OPENFEATURE_PROVIDER_URL"))
+				require.Equal(t, "static", getEnvVar(envVars, "GF_INSTANCE_OPENFEATURE_PROVIDER_TYPE"))
+				require.Equal(t, "60", getEnvVar(envVars, "GF_INSTANCE_OPENFEATURE_CACHE_TTL"))
+			},
+		},
+		{
+			name: "remote provider URL is passed through",
+			cfg: &PluginInstanceCfg{
+				GrafanaAppURL: "https://myorg.com/",
+				OpenFeature: setting.OpenFeatureSettings{
+					ProviderType: setting.OFREPProviderType,
+					URL:          remoteURL,
+					CacheTTL:     30 * time.Second,
+				},
+			},
+			exp: func(t *testing.T, envVars []string) {
+				require.Equal(t, "http://features.example.com:1031", getEnvVar(envVars, "GF_INSTANCE_OPENFEATURE_PROVIDER_URL"))
+				require.Equal(t, "ofrep", getEnvVar(envVars, "GF_INSTANCE_OPENFEATURE_PROVIDER_TYPE"))
+				require.Equal(t, "30", getEnvVar(envVars, "GF_INSTANCE_OPENFEATURE_CACHE_TTL"))
+			},
+		},
+		{
+			name: "remote provider without a URL is not advertised",
+			cfg: &PluginInstanceCfg{
+				GrafanaAppURL: "https://myorg.com/",
+				OpenFeature: setting.OpenFeatureSettings{
+					ProviderType: setting.FeaturesServiceProviderType,
+				},
+			},
+			exp: func(t *testing.T, envVars []string) {
+				for _, v := range envVars {
+					assert.False(t, strings.HasPrefix(v, "GF_INSTANCE_OPENFEATURE"), "should not have OpenFeature env vars")
+				}
+			},
+		},
+		{
+			name: "sub-second cache TTL is rounded up to one second",
+			cfg: &PluginInstanceCfg{
+				GrafanaAppURL: "https://myorg.com/",
+				OpenFeature: setting.OpenFeatureSettings{
+					ProviderType: setting.StaticProviderType,
+					CacheTTL:     500 * time.Millisecond,
+				},
+			},
+			exp: func(t *testing.T, envVars []string) {
+				require.Equal(t, "1", getEnvVar(envVars, "GF_INSTANCE_OPENFEATURE_CACHE_TTL"))
+			},
+		},
+		{
+			name: "negative cache TTL is clamped to zero",
+			cfg: &PluginInstanceCfg{
+				GrafanaAppURL: "https://myorg.com/",
+				OpenFeature: setting.OpenFeatureSettings{
+					ProviderType: setting.StaticProviderType,
+					CacheTTL:     -30 * time.Second,
+				},
+			},
+			exp: func(t *testing.T, envVars []string) {
+				require.Equal(t, "0", getEnvVar(envVars, "GF_INSTANCE_OPENFEATURE_CACHE_TTL"))
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			provider := NewEnvVarsProvider(tc.cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+			envVars := provider.PluginEnvVars(context.Background(), defaultPlugin)
+			tc.exp(t, envVars)
 		})
 	}
 }
