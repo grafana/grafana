@@ -7193,7 +7193,10 @@
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
     "errors-and-notices-inspector": {
+      "assistant-context-error": "Query error details",
+      "assistant-context-notice": "Notice details",
       "copy": "Copy to clipboard",
+      "investigate-with-assistant": "Investigate with Assistant",
       "learn-more": "Learn more",
       "no-issues": "No errors or notices for this query.",
       "severity-error": "Error",
