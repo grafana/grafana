@@ -55,8 +55,6 @@ export const FlagKeys = {
   FeedbackButton: "feedbackButton",
   /** Renders the flame graph's top table using TableNG instead of the legacy Table */
   FlameGraphTableNg: "flameGraph.tableNg",
-  /** Enables the new Flame Graph UI containing the Call Tree view */
-  FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
@@ -420,17 +418,6 @@ export const useFlagFeedbackButton = (options?: ReactFlagEvaluationOptions): boo
  */
 export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("flameGraph.tableNg", false, options).value;
-};
-
-/**
- * Enables the new Flame Graph UI containing the Call Tree view
- *
- * **Details:**
- * - flag key: `flameGraphWithCallTree`
- * - default value: `false`
- */
-export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("flameGraphWithCallTree", false, options).value;
 };
 
 /**

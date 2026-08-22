@@ -186,6 +186,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
       <FlameGraph
         data={traceFlameGraphs[profileTagValue]}
         getTheme={() => theme}
+        enableNewUI={true}
         showFlameGraphOnly={true}
         disableCollapsing={true}
       />
