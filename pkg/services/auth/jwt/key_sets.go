@@ -32,6 +32,11 @@ var ErrKeySetConfigurationAmbiguous = errors.New("key set configuration is ambig
 var ErrJWTSetURLMustHaveHTTPSScheme = errors.New("jwt_set_url must have https scheme")
 var ErrFailedToDecodeKeyValue = errors.New("failed to base64-decode inline key value")
 var ErrPrivateKeyNotSupported = errors.New("private keys are not supported for JWT verification; configure the corresponding public key")
+var ErrMissingKeyIDForTemplatedURL = errors.New("jwk_set_url contains a {{kid}} placeholder but the token has no key id")
+
+// kidPlaceholder is replaced with the token's key id when present in jwk_set_url.
+// This allows fetching the JWKS from a per-key endpoint, e.g. AWS load balancer keys.
+const kidPlaceholder = "{{kid}}"
 
 type keySet interface {
 	Key(ctx context.Context, kid string) ([]jose.JSONWebKey, error)
@@ -43,6 +48,7 @@ type keySetJWKS struct {
 
 type keySetHTTP struct {
 	url             string
+	templated       bool
 	log             log.Logger
 	client          *http.Client
 	bearerTokenPath string
@@ -165,6 +171,7 @@ func (s *AuthService) newHTTPKeySet(urlStr string) (*keySetHTTP, error) {
 
 	return &keySetHTTP{
 		url:             urlStr,
+		templated:       strings.Contains(urlStr, kidPlaceholder),
 		log:             s.log,
 		bearerTokenPath: s.Cfg.JWTAuth.JWKSetBearerTokenFile,
 		client: &http.Client{
@@ -285,11 +292,21 @@ func getBearerToken(bearerTokenPath string) (string, error) {
 	return fmt.Sprintf("Bearer %s", t), nil
 }
 
-func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
+func (ks *keySetHTTP) getJWKS(ctx context.Context, kid string) (keySetJWKS, error) {
 	var jwks keySetJWKS
 
+	reqURL := ks.url
+	cacheKey := ks.cacheKey
+	if ks.templated {
+		if kid == "" {
+			return jwks, ErrMissingKeyIDForTemplatedURL
+		}
+		reqURL = strings.ReplaceAll(ks.url, kidPlaceholder, url.PathEscape(kid))
+		cacheKey = fmt.Sprintf("auth-jwt:jwk-%s", reqURL)
+	}
+
 	if ks.cacheExpiration > 0 {
-		if val, err := ks.cache.Get(ctx, ks.cacheKey); err == nil {
+		if val, err := ks.cache.Get(ctx, cacheKey); err == nil {
 			err := json.Unmarshal(val, &jwks)
 			if err != nil {
 				ks.log.Warn("Failed to unmarshal key set from cache", "err", err)
@@ -299,9 +316,9 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 		}
 	}
 
-	ks.log.Debug("Getting key set from endpoint", "url", ks.url)
+	ks.log.Debug("Getting key set from endpoint", "url", reqURL)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ks.url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return jwks, err
 	}
@@ -335,9 +352,9 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	if ks.cacheExpiration > 0 {
 		cacheExpiration := ks.getCacheExpiration(resp.Header.Get("cache-control"))
 
-		ks.log.Debug("Setting key set in cache", "url", ks.url,
+		ks.log.Debug("Setting key set in cache", "url", reqURL,
 			"cacheExpiration", cacheExpiration, "cacheControl", resp.Header.Get("cache-control"))
-		err = ks.cache.Set(ctx, ks.cacheKey, jsonBuf.Bytes(), cacheExpiration)
+		err = ks.cache.Set(ctx, cacheKey, jsonBuf.Bytes(), cacheExpiration)
 	}
 	return jwks, err
 }
@@ -368,7 +385,7 @@ func (ks *keySetHTTP) getCacheExpiration(cacheControl string) time.Duration {
 }
 
 func (ks keySetHTTP) Key(ctx context.Context, kid string) ([]jose.JSONWebKey, error) {
-	jwks, err := ks.getJWKS(ctx)
+	jwks, err := ks.getJWKS(ctx, kid)
 	if err != nil {
 		return nil, err
 	}
