@@ -7,7 +7,7 @@ import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type DashboardDTO } from 'app/types/dashboard';
 
-import { validateUid } from './validation';
+import { validateDashboardJson, validateUid } from './validation';
 
 const legacyDashboard: DashboardDTO = {
   dashboard: {
@@ -39,6 +39,24 @@ const v2Dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     title: 'V2 Dashboard',
   },
 };
+
+describe('validateDashboardJson', () => {
+  it('accepts a tag of exactly 255 UTF-8 bytes', () => {
+    const json = JSON.stringify({ tags: ['a'.repeat(255)] });
+    expect(validateDashboardJson(json)).toBe(true);
+  });
+
+  it('rejects a tag over 255 UTF-8 bytes', () => {
+    const json = JSON.stringify({ tags: ['a'.repeat(256)] });
+    expect(validateDashboardJson(json)).toBe('Dashboard tag too long, max 255 UTF-8 bytes');
+  });
+
+  it('rejects a multi-byte tag that exceeds 255 UTF-8 bytes', () => {
+    // 128 Cyrillic 'б' (2 bytes each) = 256 bytes
+    const json = JSON.stringify({ tags: ['б'.repeat(128)] });
+    expect(validateDashboardJson(json)).toBe('Dashboard tag too long, max 255 UTF-8 bytes');
+  });
+});
 
 describe('validateUid', () => {
   beforeAll(() => {
