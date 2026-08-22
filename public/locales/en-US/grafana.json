@@ -13339,6 +13339,13 @@
       "body-deprecated": "This {{pluginType}} plugin is <4>deprecated</4> and has been removed from the catalog."
     }
   },
+  "plugin-build-recovery": {
+    "description": "The version of this plugin you were using is no longer available because it was updated or removed. Reloading will load the current version.",
+    "not-now-button": "Not now",
+    "reload-button": "Reload",
+    "reload-now-button": "Reload now",
+    "title": "This plugin has been updated"
+  },
   "plugins": {
     "app-root-page": {
       "access-denied": {

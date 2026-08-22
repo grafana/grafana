@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -115,6 +116,26 @@ func (r *PluginRegistration) Initialize(ctx context.Context, p *plugins.Plugin) 
 		r.log.Error("Could not register plugin", "pluginId", p.ID, "error", err)
 		return nil, err
 	}
+
+	// Retain this build under its content buildHash so build-addressed asset serving
+	// (FR-001) can resolve the active build from the retained-build registry: a client
+	// that pinned this build's chunks resolves them from any replica running it, and a
+	// replica running a different build returns a deterministic miss (410) the client
+	// recovers from by reloading. Best-effort: legacy/active serving is unaffected if
+	// this fails. Uses a type assertion so the registry.Service interface is not widened
+	// for its many fake implementers.
+	if br, ok := r.pluginRegistry.(interface {
+		AddBuild(context.Context, string, *plugins.Plugin) error
+	}); ok && p.FS != nil {
+		if hash, herr := modulehash.BuildHash(p.FS); herr != nil {
+			r.log.Warn("Could not compute plugin build hash", "pluginId", p.ID, "error", herr)
+		} else if hash != "" {
+			if aerr := br.AddBuild(ctx, hash, p); aerr != nil {
+				r.log.Warn("Could not retain plugin build", "pluginId", p.ID, "error", aerr)
+			}
+		}
+	}
+
 	if !p.IsCorePlugin() {
 		r.log.Info("Plugin registered", "pluginId", p.ID)
 	}

@@ -31,6 +31,7 @@ type Calculator struct {
 	tracer    trace.Tracer
 
 	moduleHashCache sync.Map
+	buildHashCache  sync.Map
 }
 
 func NewCalculator(cfg *config.PluginManagementCfg, reg registry.Service, cdn *pluginscdn.Service, signature *signature.Signature) *Calculator {
