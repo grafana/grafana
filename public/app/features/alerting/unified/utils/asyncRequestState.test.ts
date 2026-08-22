@@ -1,6 +1,6 @@
 import { type SerializedError } from '@reduxjs/toolkit';
 
-import { createAsyncMapSlice, createAsyncSlice } from './asyncRequestState';
+import { createAsyncMapSlice, createAsyncSlice } from './redux';
 
 const typePrefix = 'test/request';
 

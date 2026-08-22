@@ -3,7 +3,7 @@ import { combineReducers } from 'redux';
 import { type RuleNamespace, type StateHistoryItem } from 'app/types/unified-alerting';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { createAsyncMapSlice, createAsyncSlice } from '../utils/asyncRequestState';
+import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 
 import { alertingActionTypePrefix } from './actionTypes';
 
