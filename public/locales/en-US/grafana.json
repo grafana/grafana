@@ -7016,8 +7016,12 @@
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "control-edit-actions": {
+      "copied-tooltip-disabled": "Repeated panels can't be copied individually",
+      "copy-clipboard-tooltip": "Copy to clipboard",
       "delete-tooltip": "Delete",
+      "delete-tooltip-disabled": "Repeated panels can't be deleted individually",
       "duplicate-tooltip": "Duplicate",
+      "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
       "settings": "Settings"
     },
     "conversion-warning-banner": {
@@ -7448,6 +7452,9 @@
       "confirmText-delete-all": "Delete all",
       "delete-all-transformations": "Delete all transformations",
       "title-delete-all-transformations": "Delete all transformations?"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": "Edit visualization"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",

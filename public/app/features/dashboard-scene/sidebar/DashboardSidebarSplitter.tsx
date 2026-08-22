@@ -166,7 +166,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
   }
 
   return (
-    <div className={styles.container}>
+    <div id="dashboard-scene-canvas" className={styles.container}>
       <ElementSelectionContext.Provider value={selectionContext}>
         <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
         {renderBody()}
@@ -248,6 +248,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flexGrow: 1,
       position: 'relative',
+      zIndex: 1, // creates stacking context below header (1000)
     }),
     bodyWrapper: css({
       label: 'body-wrapper',
