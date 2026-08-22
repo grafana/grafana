@@ -45,6 +45,7 @@ import {
   getCellLinks,
   getDefaultRowHeight,
   getVisibleFields,
+  markEdgeColumns,
 } from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
@@ -77,11 +78,13 @@ export function TableFlat(props: TableNGProps) {
     structureRev,
     timeRange,
     transparent,
+    noPanelPadding = false,
     width,
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
+    tableRefreshEnabled = false,
   } = props;
 
   const theme = useTheme2();
@@ -180,6 +183,9 @@ export function TableFlat(props: TableNGProps) {
     typographyCtx,
     showTypeIcons,
     getActions: getCellActions,
+    tableRefreshEnabled,
+    filter,
+    noPanelPadding,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
@@ -196,6 +202,7 @@ export function TableFlat(props: TableNGProps) {
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
+    noPanelPadding,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
 
@@ -210,6 +217,7 @@ export function TableFlat(props: TableNGProps) {
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,
+    noPanelPadding,
   });
 
   const {
@@ -270,6 +278,7 @@ export function TableFlat(props: TableNGProps) {
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
     }),
     [
       theme,
@@ -288,15 +297,17 @@ export function TableFlat(props: TableNGProps) {
       setFilter,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
     ]
   );
 
   const fromFields = useColumnBuilderFromFields(filterResult, columnBuildConfig);
 
-  const { columns, cellRootRenderers } = useMemo(
-    () => fromFields(visibleFields, widths, data, rows, sortedRows),
-    [fromFields, visibleFields, widths, data, rows, sortedRows]
-  );
+  const { columns, cellRootRenderers } = useMemo(() => {
+    const result = fromFields(visibleFields, widths, data, rows, sortedRows);
+    markEdgeColumns(result);
+    return result;
+  }, [fromFields, visibleFields, widths, data, rows, sortedRows]);
 
   // invalidate columns on every structureRev change to support width editing in fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -338,6 +349,8 @@ export function TableFlat(props: TableNGProps) {
       noHeader={!!noHeader}
       headerHeight={headerHeight}
       transparent={transparent}
+      tableRefreshEnabled={tableRefreshEnabled}
+      noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
       enablePagination={enablePagination}

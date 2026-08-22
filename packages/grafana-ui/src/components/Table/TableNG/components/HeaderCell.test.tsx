@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type Field, FieldType } from '@grafana/data';
+import { createTheme, type Field, FieldType } from '@grafana/data';
 import { type Column } from '@grafana/react-data-grid';
 
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
@@ -73,6 +73,22 @@ describe('HeaderCell', () => {
     render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { sortable: false } } })} />);
     const label = screen.getByRole('button', { name: 'Field1' });
     expect(window.getComputedStyle(label).cursor).toBe('default');
+  });
+
+  it('gives the header label the body text colour under table.refresh', () => {
+    const theme = createTheme();
+    const { unmount } = render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color).toBe(
+      theme.colors.text.primary
+    );
+
+    unmount();
+
+    // the classic header sits on the same background as the body rows, so its label stays de-emphasised
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color).toBe(
+      theme.colors.text.secondary
+    );
   });
 
   it('renders nothing when hideHeader is set', () => {
@@ -170,6 +186,206 @@ describe('HeaderCell', () => {
     expect(setFilter).not.toHaveBeenCalled();
   });
 
+  describe('table.refresh', () => {
+    const filterableField = () => makeField({ config: { custom: { filterable: true } } });
+    const menuLabel = 'Column options for Field1';
+    const filterIconLabel = 'Edit filter on Field1';
+
+    it('keeps the inline filter button and renders no column menu when the flag is off', () => {
+      render(<HeaderCell {...baseProps} field={filterableField()} />);
+      expect(screen.getByLabelText('Filter Field1')).toBeInTheDocument();
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('replaces the inline filter button with a column menu when the flag is on', () => {
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+      expect(screen.queryByLabelText('Filter Field1')).not.toBeInTheDocument();
+      expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+    });
+
+    it('renders no column menu for a non-filterable column', () => {
+      render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('gives the header cell root a stable class the menu scopes its hover reveal to', () => {
+      // Regression guard: the column menu's hover/focus-reveal CSS matches this class rather than
+      // the bare `.rdg-cell` react-data-grid puts on every header cell. In a nested table, a
+      // column's header cell also sits inside the *outer* grid's nested-frame `.rdg-cell`, and
+      // `:hover`/`:focus-within` bubble up to that ancestor — matching on bare `.rdg-cell` would
+      // reveal every column's menu in the nested table at once. See HeaderCellMenu's styles.
+      const { container } = render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+      expect(container.querySelector('.table-ng-header-cell')).toBeInTheDocument();
+    });
+
+    it('opens the filter popup from the column menu', async () => {
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      const filterItem = await screen.findByText('Filter values');
+
+      await userEvent.click(filterItem);
+      // FilterPopup renders the value list with its own Ok/Cancel controls
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+    });
+
+    it('marks a filtered column with a persistent filter icon, leaving the menu hover-only', () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      const { rerender } = render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      expect(screen.queryByLabelText(filterIconLabel)).not.toBeInTheDocument();
+      // the menu stays hidden until the header cell is hovered or focused
+      expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '0' });
+
+      rerender(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />);
+
+      expect(screen.getByLabelText(filterIconLabel)).toBeInTheDocument();
+      // an active filter is reported by the icon, so the menu is not pinned visible
+      expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '0' });
+    });
+
+    it('labels the filter menu item "Update filter" once the column has an active filter', async () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      const { rerender } = render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      expect(await screen.findByText('Filter values')).toBeInTheDocument();
+      expect(screen.queryByText('Update filter')).not.toBeInTheDocument();
+
+      // the dropdown stays open across the rerender and its content re-renders reactively, so the
+      // label updates without needing to reopen the menu
+      rerender(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />);
+
+      expect(await screen.findByText('Update filter')).toBeInTheDocument();
+      expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+    });
+
+    it('reopens the filter popup from the filter icon', async () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      render(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />);
+
+      await userEvent.click(screen.getByLabelText(filterIconLabel));
+
+      // the same popup the column menu opens, so the filter can be adjusted or cleared in one click
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+    });
+
+    it('tells assistive tech the filter icon expands a dialog, and whether it is open', async () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      render(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />);
+
+      const filterIcon = screen.getByLabelText(filterIconLabel);
+      expect(filterIcon).toHaveAttribute('aria-haspopup', 'dialog');
+      expect(filterIcon).toHaveAttribute('aria-expanded', 'false');
+
+      await userEvent.click(filterIcon);
+
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      expect(filterIcon).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('leaves the filter icon collapsed when the column menu opened the popup instead', async () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      render(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />);
+
+      await userEvent.click(screen.getByLabelText('Column options for Field1'));
+      await userEvent.click(await screen.findByText('Update filter'));
+
+      // the popup is open, but anchored to the menu — the icon must not claim it
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      expect(screen.getByLabelText(filterIconLabel)).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('does not sort the column when the filter icon is clicked', async () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      const onHeaderClick = jest.fn();
+      render(
+        // react-data-grid sorts on a click anywhere in the header cell, so the button must not bubble
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+        <div onClick={onHeaderClick}>
+          <HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />
+        </div>
+      );
+
+      await userEvent.click(screen.getByLabelText(filterIconLabel));
+
+      expect(onHeaderClick).not.toHaveBeenCalled();
+    });
+
+    it('does not sort the column when the filter popup itself is clicked', async () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      const onHeaderClick = jest.fn();
+      render(
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+        <div onClick={onHeaderClick}>
+          <HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />
+        </div>
+      );
+
+      await userEvent.click(screen.getByLabelText(filterIconLabel));
+      const cancel = await screen.findByRole('button', { name: 'Cancel' });
+      onHeaderClick.mockClear();
+
+      // Popover portals out of the header cell, but React events bubble along the React tree, so
+      // without an explicit guard this click reaches react-data-grid's sort handler.
+      await userEvent.click(cancel);
+
+      expect(onHeaderClick).not.toHaveBeenCalled();
+    });
+
+    it('keys the filter icon by parent index on a nested table', () => {
+      const nested = { 'Field1-2': { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+
+      const { rerender } = render(
+        <HeaderCell {...baseProps} field={filterableField()} filter={nested} parentIndex={2} tableRefreshEnabled />
+      );
+      expect(screen.getByLabelText(filterIconLabel)).toBeInTheDocument();
+
+      // a sibling parent with no filter of its own shows no icon
+      rerender(
+        <HeaderCell {...baseProps} field={filterableField()} filter={nested} parentIndex={3} tableRefreshEnabled />
+      );
+      expect(screen.queryByLabelText(filterIconLabel)).not.toBeInTheDocument();
+    });
+
+    it('renders the filter icon at the type icon size, not the sort arrow size', () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      const { container } = render(
+        <HeaderCell
+          {...baseProps}
+          field={filterableField()}
+          filter={activeFilter}
+          direction="ASC"
+          showTypeIcons
+          tableRefreshEnabled
+        />
+      );
+
+      const filterIcon = screen.getByLabelText(filterIconLabel).querySelector('svg')!;
+      const typeIcon = screen.getByTitle('string').closest('svg')!;
+      const sortArrow = [...container.querySelectorAll('svg')].find((svg) => svg !== filterIcon && svg !== typeIcon)!;
+
+      // The funnel fills its box where the arrow is a thin glyph, so rendering both at the arrow's
+      // "lg" made the funnel read as oversized. It tracks the type icon's size instead.
+      // Icon puts its size on width/height, not the class — every Icon shares one emotion class.
+      expect(filterIcon).toHaveAttribute('width', typeIcon.getAttribute('width')!);
+      expect(filterIcon).toHaveAttribute('width', '14');
+      expect(sortArrow).toHaveAttribute('width', '18');
+      // still the same colour as the sort arrow: both report state
+      const sortColor = getComputedStyle(sortArrow).color;
+      expect(sortColor).not.toBe('');
+      expect(getComputedStyle(filterIcon).color).toBe(sortColor);
+      // and adjacent to it, ahead of the trailing menu
+      expect(filterIcon.closest('div')).toBe(sortArrow.closest('div'));
+    });
+
+    it('renders no filter icon when the flag is off', () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      render(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} />);
+      expect(screen.queryByTitle('Filtered')).not.toBeInTheDocument();
+    });
+  });
+
   describe('keyboard handling', () => {
     // These tests dispatch a keydown against a *specific* target (a particular button, an SVG icon,
     // or a cell in a specific position) to exercise the handler's target/DOM-position logic. userEvent's
@@ -232,6 +448,30 @@ describe('HeaderCell', () => {
       // the filter button is the last element in the header; tabbing from the (earlier) label button should not trigger
       fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab' });
       expect(selectFirstCell).not.toHaveBeenCalled();
+    });
+
+    // `table.refresh` puts the title, tooltip and active-filter icon in one wrapper, so "last child
+    // element of the header" is no longer the same thing as "last tab stop in the header".
+    const tooltipField = () => makeField({ config: { custom: { headerTooltip: 'Only counts displayed rows' } } });
+
+    it('does not call selectFirstCell when tabbing from the title ahead of the header tooltip', () => {
+      const { selectFirstCell } = renderInGrid({ field: tooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab' });
+      expect(selectFirstCell).not.toHaveBeenCalled();
+    });
+
+    it('calls selectFirstCell when tabbing from the header tooltip, the last tab stop in the cell', () => {
+      const { selectFirstCell } = renderInGrid({ field: tooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Only counts displayed rows' }), { key: 'Tab' });
+      expect(selectFirstCell).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls selectFirstCell when tabbing from the column menu, past the title and tooltip', () => {
+      const filterableTooltipField = () =>
+        makeField({ config: { custom: { filterable: true, headerTooltip: 'Only counts displayed rows' } } });
+      const { selectFirstCell } = renderInGrid({ field: filterableTooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Column options for Field1' }), { key: 'Tab' });
+      expect(selectFirstCell).toHaveBeenCalledTimes(1);
     });
 
     it('ignores the keydown when the event target is not an HTMLElement', () => {

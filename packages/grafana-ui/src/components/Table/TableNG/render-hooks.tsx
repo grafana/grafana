@@ -164,6 +164,7 @@ export interface ColumnBuildConfig {
   setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   showTypeIcons?: boolean;
+  tableRefreshEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
 }
@@ -251,6 +252,7 @@ function buildColumnsFromFields(
     disableKeyboardEvents,
     disableSanitizeHtml,
     showTypeIcons,
+    tableRefreshEnabled,
     timeRange,
   } = config;
 
@@ -318,7 +320,7 @@ function buildColumnsFromFields(
     const textAlign = getAlignment(field);
     const justifyContent = getJustifyContent(textAlign);
     const displayName = getDisplayName(field);
-    const headerCellClass = getHeaderCellStyles(theme, justifyContent);
+    const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
     const CellType = getCellRenderer(field, cellOptions);
 
     const cellInspect = isCellInspectEnabled(field);
@@ -560,6 +562,7 @@ function buildColumnsFromFields(
           parentIndex={parentIndex}
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
+          tableRefreshEnabled={tableRefreshEnabled}
           selectFirstCell={() => {
             gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
           }}

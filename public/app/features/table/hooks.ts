@@ -10,7 +10,11 @@ import {
   type InterpolateFunction,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useFlagTableAutoColumnWidths, useFlagTablePaginationPageSize } from '@grafana/runtime/internal';
+import {
+  useFlagTableAutoColumnWidths,
+  useFlagTablePaginationPageSize,
+  useFlagTableRefresh,
+} from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
 import { usePanelContext } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
@@ -77,6 +81,7 @@ type CommonTableOptions = Pick<
 export function useCommonTableProps(options: CommonTableOptions, fieldConfig: FieldConfigSource) {
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
   const paginationPageSizeEnabled = useFlagTablePaginationPageSize();
+  const tableRefreshEnabled = useFlagTableRefresh();
 
   return useMemo(
     () => ({
@@ -94,6 +99,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       disableKeyboardEvents: options.disableKeyboardEvents,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       contentAwareWidthsEnabled,
+      tableRefreshEnabled,
     }),
     [
       options.showHeader,
@@ -108,6 +114,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       fieldConfig.defaults.noValue,
       contentAwareWidthsEnabled,
       paginationPageSizeEnabled,
+      tableRefreshEnabled,
     ]
   );
 }

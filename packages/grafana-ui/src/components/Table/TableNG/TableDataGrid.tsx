@@ -66,6 +66,8 @@ export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSu
   noHeader: boolean;
   headerHeight: number;
   transparent?: boolean;
+  tableRefreshEnabled?: boolean;
+  noPanelPadding?: boolean;
   initialRowIndex?: number;
   sortedRows: TableRow[];
   enablePagination: boolean;
@@ -102,6 +104,8 @@ export function TableDataGrid({
   noHeader,
   headerHeight,
   transparent,
+  tableRefreshEnabled,
+  noPanelPadding,
   initialRowIndex,
   sortedRows,
   enablePagination,
@@ -131,7 +135,7 @@ export function TableDataGrid({
   }, [scrollToIndex, sortedRows, gridRef]);
 
   const showPagination = enablePagination && numRows > 0;
-  const styles = useStyles2(getGridStyles, showPagination, transparent);
+  const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const commonDataGridProps = useMemo(
     () =>
@@ -180,7 +184,7 @@ export function TableDataGrid({
         {...commonDataGridProps}
         role={role}
         ref={gridRef}
-        className={styles.grid}
+        className={clsx(styles.grid, noPanelPadding && styles.firstColumnInset)}
         columns={columns}
         rows={rows}
         rowKeyGetter={rowKeyGetter}
