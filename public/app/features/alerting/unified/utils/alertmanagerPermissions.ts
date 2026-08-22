@@ -87,18 +87,9 @@ export const grafanaNotificationPolicyPermissions: Record<NotificationPolicyActi
 };
 
 export const grafanaNotificationTemplatePermissions: Record<NotificationTemplateAction, AccessControlAction[]> = {
-  'view-notification-template': [
-    notificationsPermissions.read.grafana,
-    AccessControlAction.AlertingTemplatesRead,
-  ],
-  'create-notification-template': [
-    notificationsPermissions.create.grafana,
-    AccessControlAction.AlertingTemplatesWrite,
-  ],
-  'edit-notification-template': [
-    notificationsPermissions.update.grafana,
-    AccessControlAction.AlertingTemplatesWrite,
-  ],
+  'view-notification-template': [notificationsPermissions.read.grafana, AccessControlAction.AlertingTemplatesRead],
+  'create-notification-template': [notificationsPermissions.create.grafana, AccessControlAction.AlertingTemplatesWrite],
+  'edit-notification-template': [notificationsPermissions.update.grafana, AccessControlAction.AlertingTemplatesWrite],
   'delete-notification-template': [
     notificationsPermissions.delete.grafana,
     AccessControlAction.AlertingTemplatesDelete,
@@ -119,18 +110,9 @@ export const externalNotificationTemplatePermissions: Record<NotificationTemplat
 
 export const grafanaTimeIntervalPermissions: Record<TimeIntervalAction, AccessControlAction[]> = {
   'view-time-interval': [notificationsPermissions.read.grafana, AccessControlAction.AlertingTimeIntervalsRead],
-  'create-time-interval': [
-    notificationsPermissions.create.grafana,
-    AccessControlAction.AlertingTimeIntervalsWrite,
-  ],
-  'update-time-interval': [
-    notificationsPermissions.update.grafana,
-    AccessControlAction.AlertingTimeIntervalsWrite,
-  ],
-  'delete-time-interval': [
-    notificationsPermissions.delete.grafana,
-    AccessControlAction.AlertingTimeIntervalsDelete,
-  ],
+  'create-time-interval': [notificationsPermissions.create.grafana, AccessControlAction.AlertingTimeIntervalsWrite],
+  'update-time-interval': [notificationsPermissions.update.grafana, AccessControlAction.AlertingTimeIntervalsWrite],
+  'delete-time-interval': [notificationsPermissions.delete.grafana, AccessControlAction.AlertingTimeIntervalsDelete],
   'export-time-intervals': [notificationsPermissions.read.grafana],
 };
 
