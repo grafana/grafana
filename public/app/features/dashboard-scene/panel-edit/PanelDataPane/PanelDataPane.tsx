@@ -17,7 +17,8 @@ import {
 import { Button, Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
+import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
 import { trackSidebarViewChange } from '../PanelEditNext/tracking';
 
@@ -112,7 +113,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
 export function shouldShowAlertingTab(pluginId: string) {
   const { unifiedAlertingEnabled = false } = getConfig();
-  const hasRuleReadPermissions = contextSrv.hasPermission(AccessControlAction.AlertingRuleRead);
+  const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
   const isAlertingAvailable = unifiedAlertingEnabled && hasRuleReadPermissions;
   if (!isAlertingAvailable) {
     return false;

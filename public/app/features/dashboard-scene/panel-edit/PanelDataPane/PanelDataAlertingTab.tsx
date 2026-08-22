@@ -14,8 +14,8 @@ import { Alert, LoadingPlaceholder, Tab, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
+import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 
@@ -52,10 +52,11 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataAlertingTabSt
   }
 
   public getCanCreateRules() {
+    const rulesPermissions = getRulesPermissions('grafana');
     return (
       config.unifiedAlerting &&
       this.getDashboard().state.meta.canSave &&
-      contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate)
+      contextSrv.hasPermission(rulesPermissions.create)
     );
   }
 }
