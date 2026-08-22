@@ -120,8 +120,8 @@ Use these options to refine the visualization.
 | [Page size](#page-size-enable-pagination) | The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once.  |
 | Line width | Controls line width of state regions. This is a field option and can be set in field defaults or overrides. |
 | Fill opacity | Controls the fill opacity of state regions. This is a field option and can be set in field defaults or overrides. |
-| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
-| [Disconnect values](#disconnect-values) | Choose whether to set a threshold above which values in the data should be disconnected. |
+| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. This is a field option and can be set in field defaults or overrides. |
+| [Disconnect values](#disconnect-values) | Choose whether to set a threshold above which values in the data should be disconnected. This is a field option and can be set in field defaults or overrides. |
 
 <!-- prettier-ignore-end -->
 

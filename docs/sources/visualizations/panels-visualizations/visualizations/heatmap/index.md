@@ -59,7 +59,9 @@ Once you’ve created a [dashboard](ref:dashboards), the following video shows y
 
 ## Supported data formats
 
-Heatmaps support time series data.
+Heatmaps support time series data and pre-bucketed heatmap data.
+
+Use **Calculate from data** when your query returns time series data that Grafana should bucket in the panel. Turn **Calculate from data** off when your query or transformation already returns pre-bucketed heatmap data, including wide data frames with one field per bucket or heatmap-cells data frames.
 
 ### Example
 
@@ -126,8 +128,6 @@ The following options define the display of the y-axis.
 
 <!-- prettier-ignore-end -->
 
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+3" >}}
-
 ### Colors options
 
 The color spectrum controls the mapping between value count (in each bucket) and the color assigned to each bucket. The leftmost color on the spectrum represents the minimum count and the color on the right most side represents the maximum count. Some color schemes are automatically inverted when using the light theme.
@@ -174,7 +174,7 @@ Use these settings to control the display of heatmap cells.
 | Unit | Unit configuration. |
 | Decimals | This setting determines decimal configuration. |
 | Cell gap | Set how much space there is between cells. |
-| Hide cells with values <= | Enter a value. |
+| Hide cells with values <= | Enter a value. By default, Grafana hides cells with values less than or equal to `1e-9`. |
 | Hide cells with values >= | Enter a value. |
 
 <!-- prettier-ignore-end -->

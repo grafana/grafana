@@ -59,10 +59,6 @@ Elements are the basic building blocks of a canvas and they help you visualize d
 
 Add elements in the [Layer](#layer-options) section of canvas options.
 
-{{< admonition type="note" >}}
-Element snapping and alignment only works when the canvas is not zoomed in.
-{{< /admonition >}}
-
 ### Element types
 
 When you select an element that you've added to a canvas, you can access [configuration options](#selected-element-options) for it that are dependent on the element type.
@@ -225,7 +221,7 @@ The context menu is triggered by a right click action over the panel or over a g
 
 {{< figure src="/static/img/docs/canvas-panel/canvas-panel-context-menu-9-3-0.png" max-width="350px" alt="Canvas panel context menu" >}}
 
-When right clicking an element, you are able to edit, delete, duplicate, and modify the element's layer positioning.
+When right clicking an element, you can edit, delete, duplicate, and modify the element's layer positioning. The element context menu includes **Bring to front**, **Send to back**, **Open Editor**, and **Close Editor** actions when those actions apply.
 
 {{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="250px"  alt="Canvas element context menu" >}}
 
@@ -367,8 +363,8 @@ Control the placement of elements on the canvas with the following options:
 | Option          | Description     |
 | --------------- | --------------- |
 | Quick placement | Select an alignment option to automatically place the element. Choose from:<ul><li>Align left</li><li>Align horizontal centers</li><li>Align right</li><li>Align top</li><li>Align vertical centers</li><li>Align bottom</li></ul> |
-| Constraints     | Set element constraints. Choose from: **Left**, **Right**, **Left & Right**, **Center**, and **Scale**.<br></br>Use the **Scale** option to ensure that elements are automatically resized when the panel size changes. |
-| Position        | Use these settings to manually set the position of an element. Set any or all of the following options: **top**, **left**, **width**, **height**, and **rotation**. |
+| Constraints     | Set horizontal and vertical element constraints. Horizontal constraints include **Left**, **Right**, **Left & Right**, **Center**, and **Scale**. Vertical constraints include **Top**, **Bottom**, **Top & Bottom**, **Center**, and **Scale**.<br></br>Use the **Scale** option to ensure that elements are automatically resized when the panel size changes. |
+| Position        | Use these settings to manually set the position of an element. Set any or all of the following options: **top**, **bottom**, **left**, **right**, **width**, **height**, and **rotation**. |
 
 <!-- prettier-ignore-end -->
 
@@ -472,7 +468,7 @@ You can style the selected connection using the following options:
   - **Negative values** - Display reverse arrows.
   - **Zero** - Display no arrow heads.
 
-- **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**.
+- **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**. **Dashed** and **Dotted** lines also support an **Animate** switch.
 
 ### Standard options
 

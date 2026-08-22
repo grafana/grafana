@@ -29,6 +29,8 @@ aliases:
 
 Trend visualizations should be used for datasets that have a sequential, numeric x-field that is not time. Some examples are function graphs, rpm/torque curves, supply/demand relationships, and elevation or heart rate plots along a race course (with x as distance or duration from start).
 
+The Trend visualization is beta.
+
 For example, you could represent engine power and torque versus speed where speed is plotted on the x-axis and power and torque are plotted on the y-axes:
 
 {{< figure src="/media/docs/grafana/screenshot-trend-visualization-v12.0.png" max-width="750px" alt="Trend engine power and torque curves" >}}
@@ -40,7 +42,7 @@ Trend visualizations support all visual styles and options available in the [tim
 - No multi-timezone x-axis
 - No ability to change the dashboard time range using drag-selection
 
-Trend visualizations require at least two numeric fields. The x-field must use ascending numeric values. If the values aren't ascending, Grafana shows an error. When multiple frames or queries exist, you should use a [join transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/) on the x-fields to produce a single frame.
+Trend visualizations require at least two numeric fields. The x-field must use ascending numeric values. If the values aren't ascending, Grafana shows the error `Values must be in ascending order`. When multiple frames or queries exist, you should use a [join transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/) on the x-fields to produce a single frame.
 
 ## Configuration options
 
@@ -71,6 +73,13 @@ The options under the **Graph styles** section let you control the general appea
 ### Axis options
 
 {{< docs/shared lookup="visualizations/axis-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+
+### Transform override property
+
+Use the **Graph styles > Transform** [override property](#field-overrides) to transform series values without affecting the values shown in the tooltip, context menu, or legend. Choose from the following transform options:
+
+- **Constant** - Show the first value as a constant line.
+- **Negative Y** - Flip the results to negative values on the y-axis.
 
 ### Standard options
 

@@ -45,6 +45,8 @@ Alert lists allow you to display a list of important alerts that you want to tra
 
 On each dashboard load, this visualization queries the alert list, always providing the most up-to-date results.
 
+To view alert rules in this panel, you need read permissions for Grafana-managed alert rules, external alert rules, or both, depending on the selected data source filter.
+
 {{< docs/play title="Alert List" url="https://play.grafana.org/d/bdodlcyou483ke/" >}}
 
 ## Configure an alert list
@@ -94,6 +96,8 @@ Select how to order the alerts displayed. Choose from:
   - inactive: 5
 - **Time (asc)** - Oldest active alert instances first.
 - **Time (desc)** - Newest active alert instances first.
+
+When you expand an alert rule, Grafana sorts the alert instances within that rule by alert instance state.
 
 ### Filter options
 
