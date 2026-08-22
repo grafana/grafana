@@ -21,6 +21,7 @@ declare module "@openfeature/core" {
     | "provisioning.gitConventions"
     | "provisioning.userAttribution"
     | "snapshots.kubernetesSnapshots"
+    | "libraryelements.kubernetesLibraryPanels"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
