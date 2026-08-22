@@ -75,8 +75,8 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           </Box>
 
           <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
-            <Box paddingY={1} flex={1} minWidth="50%">
-              <Text color="primary" weight="medium">
+            <Box flex={1} minWidth="50%">
+              <Text color={severity} weight="medium">
                 {title}
               </Text>
               {children && <div className={styles.content}>{children}</div>}
@@ -158,13 +158,14 @@ const getStyles = (
       borderRadius: theme.shape.radius.lg,
       boxShadow: elevated ? theme.shadows.z3 : undefined,
       padding: theme.spacing(2),
-      background: `linear-gradient(169deg, ${theme.components.card.background} 20%, color-mix(in oklab, ${theme.components.card.background} 70%, ${color.background}))`,
+      background: `linear-gradient(345deg, ${theme.components.card.background} 20%, color-mix(in oklab, ${theme.components.card.background} 41%, ${color.background}))`,
+      //border: `1px solid ${theme.colors.border.weak}`,
       border: `1px solid color-mix(in oklab, ${theme.colors.background.page} 50%, ${color.border})`,
       gap: theme.spacing(2),
     }),
     icon: css({
       color: color.text,
-      backgroundColor: color.background,
+      backgroundColor: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
       position: 'relative',
       width: '40px',
       height: '40px',
@@ -184,8 +185,6 @@ const getStyles = (
       color: theme.colors.text.secondary,
       background: 'none',
       display: 'flex',
-      top: '-6px',
-      right: '-14px',
     }),
   };
 };
