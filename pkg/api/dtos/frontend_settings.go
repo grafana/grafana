@@ -224,6 +224,7 @@ type FrontendSettingsDTO struct {
 	ApplicationInsightsEndpointUrl       string              `json:"applicationInsightsEndpointUrl"`
 	ApplicationInsightsAutoRouteTracking bool                `json:"applicationInsightsAutoRouteTracking"`
 	DisableLoginForm                     bool                `json:"disableLoginForm"`
+	DisableForgotPassword                bool                `json:"disableForgotPassword"`
 	DisableUserSignUp                    bool                `json:"disableUserSignUp"`
 	LoginHint                            string              `json:"loginHint"`
 	PasswordHint                         string              `json:"passwordHint"`
