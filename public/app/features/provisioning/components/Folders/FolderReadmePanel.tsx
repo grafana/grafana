@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useRef } from 'react';
 import { useIntersection } from 'react-use';
@@ -6,7 +6,7 @@ import { useIntersection } from 'react-use';
 import { type GrafanaTheme2, renderMarkdown, textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Alert, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, LinkButton, Spinner, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import {
   type RepositoryView,
   type ResourceListItem,
@@ -17,6 +17,7 @@ import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderR
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
+import { MERMAID_DIAGRAM_CLASS, MERMAID_ERROR_CLASS, renderMermaidDiagrams } from '../../utils/mermaid';
 
 import { FolderReadmeEvents } from './analytics/main';
 
@@ -208,6 +209,8 @@ function RenderedMarkdown({
   repositoryType: RepositoryView['type'];
   syncFinished: number | undefined;
 }) {
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   // Links to JSON/YAML files or folders are tagged during rewrite; the resource
   // listing is fetched lazily only when the user first clicks one of them.
   const [fetchResources, { data: resourcesData }] = useLazyGetRepositoryResourcesQuery();
@@ -324,7 +327,27 @@ function RenderedMarkdown({
     return () => el.removeEventListener('click', handleClick);
   }, [repositoryType, repositoryName, repositoryPath, fetchResources]);
 
-  return <div ref={containerRef} className="markdown-html" dangerouslySetInnerHTML={{ __html: safe }} />;
+  // The effect owns the container's content instead of dangerouslySetInnerHTML:
+  // mermaid rendering mutates these nodes asynchronously, and if React still
+  // owned them it would re-commit the innerHTML (StrictMode, re-renders) mid-render,
+  // detaching the nodes we're replacing and dropping every diagram. Writing the
+  // HTML here means React never touches it, so our async mutations are safe.
+  // Re-runs (content or theme change) rebuild from `safe`, restoring the source
+  // fences before re-rendering the diagrams in the new theme.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) {
+      return;
+    }
+    el.innerHTML = safe;
+    const signal = { cancelled: false };
+    renderMermaidDiagrams(el, { isDark: theme.isDark, signal });
+    return () => {
+      signal.cancelled = true;
+    };
+  }, [safe, theme.isDark]);
+
+  return <div ref={containerRef} className={cx('markdown-html', styles.markdownBody)} />;
 }
 
 /**
@@ -423,5 +446,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   body: css({
     padding: theme.spacing(2),
+  }),
+  markdownBody: css({
+    [`& .${MERMAID_DIAGRAM_CLASS}`]: {
+      display: 'flex',
+      justifyContent: 'center',
+      margin: theme.spacing(2, 0),
+      svg: {
+        maxWidth: '100%',
+        height: 'auto',
+      },
+    },
+    // Failed diagram: keep the source visible but signal it couldn't render.
+    [`& .${MERMAID_ERROR_CLASS}`]: {
+      borderLeft: `3px solid ${theme.colors.error.border}`,
+    },
   }),
 });
