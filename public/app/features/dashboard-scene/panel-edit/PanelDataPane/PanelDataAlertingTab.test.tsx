@@ -32,8 +32,7 @@ import { createDashboardSceneFromDashboardModel } from '../../serialization/tran
 import * as utils from '../../utils/utils';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../../utils/utils';
 
-import { PanelDataAlertingTab } from './PanelDataAlertingTab';
-import { PanelDataAlertingTabRendered } from './PanelDataAlertingTabContent';
+import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataAlertingTab';
 
 /**
  * These tests has been copied from public/app/features/alerting/unified/PanelAlertTabContent.test.tsx and been slightly modified to make sure the scenes alert edit tab is as close to the old alert edit tab as possible

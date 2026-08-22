@@ -5,6 +5,7 @@ import { AlertState, type AlertStateInfo } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { promAlertStateToAlertState } from 'app/features/dashboard-scene/scene/AlertStatesDataLayer';
+import { loadPanelAlertStateCandidates } from 'app/features/dashboard-scene/scene/loadPanelAlertStateCandidates';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import {
@@ -55,11 +56,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
     }
 
     const { dashboard } = options;
-    const candidates = from(
-      import(
-        /* webpackChunkName: "PanelAlertStates" */ 'app/features/dashboard-scene/scene/loadPanelAlertStateCandidates'
-      ).then(({ loadPanelAlertStateCandidates }) => loadPanelAlertStateCandidates(dashboard.uid))
-    );
+    const candidates = from(loadPanelAlertStateCandidates(dashboard.uid));
 
     return candidates.pipe(
       map((candidates) => {

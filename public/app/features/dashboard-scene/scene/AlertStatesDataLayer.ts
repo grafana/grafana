@@ -19,6 +19,8 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { loadPanelAlertStateCandidates } from './loadPanelAlertStateCandidates';
+
 interface AlertStatesDataLayerState extends SceneDataLayerProviderState {}
 
 export class AlertStatesDataLayer
@@ -65,14 +67,7 @@ export class AlertStatesDataLayer
     if (!this.canWork(timeRange)) {
       return;
     }
-    const loadCandidates = async () => {
-      const { loadPanelAlertStateCandidates } = await import(
-        /* webpackChunkName: "PanelAlertStates" */ './loadPanelAlertStateCandidates'
-      );
-      return loadPanelAlertStateCandidates(uid);
-    };
-
-    const alerStatesExecution = from(loadCandidates()).pipe(
+    const alerStatesExecution = from(loadPanelAlertStateCandidates(uid)).pipe(
       map((candidates) => {
         this.hasAlertRules = candidates.length > 0;
         const panelIdToAlertState: Record<number, AlertStateInfo> = {};

@@ -566,7 +566,7 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
   let formValues: Partial<RuleFormValues> | undefined;
   try {
     const { scenesPanelToRuleFormValues } = await import(
-      /* webpackChunkName: "AlertingRuleFromPanelDefaults" */ 'app/features/alerting/unified/utils/rule-form'
+      /* webpackChunkName: "DashboardAlertingCreate" */ 'app/features/alerting/unified/utils/rule-form'
     );
     formValues = await scenesPanelToRuleFormValues(panel);
   } catch (err) {
@@ -612,8 +612,8 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
     { LogMessages, logInfo, trackCreateRuleFromPanelDrawerOpened },
     { NewAlertRuleDrawer },
   ] = await Promise.all([
-    import(/* webpackChunkName: "AlertingRuleFromPanelDrawer" */ 'app/features/alerting/unified/Analytics'),
-    import(/* webpackChunkName: "AlertingRuleFromPanelDrawer" */ './NewAlertRuleDrawer'),
+    import(/* webpackChunkName: "DashboardAlertingCreate" */ 'app/features/alerting/unified/Analytics'),
+    import(/* webpackChunkName: "DashboardAlertingCreate" */ './NewAlertRuleDrawer'),
   ]);
 
   logInfo(LogMessages.alertRuleFromPanel);

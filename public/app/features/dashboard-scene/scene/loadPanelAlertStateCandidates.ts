@@ -1,5 +1,4 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
   type PromAlertingRuleState,
   type PromRuleGroupDTO,
@@ -8,6 +7,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 const GRAFANA_PROMETHEUS_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
+const PANEL_ID_ANNOTATION = '__panelId__';
 
 export interface PanelAlertStateCandidate {
   panelId: number;
@@ -30,13 +30,13 @@ export async function loadPanelAlertStateCandidates(dashboardUid: string): Promi
 
   return groups.flatMap((group) =>
     group.rules.flatMap((rule) => {
-      if (rule.type !== PromRuleType.Alerting || !rule.annotations?.[Annotation.panelID]) {
+      if (rule.type !== PromRuleType.Alerting || !rule.annotations?.[PANEL_ID_ANNOTATION]) {
         return [];
       }
 
       return [
         {
-          panelId: Number(rule.annotations[Annotation.panelID]),
+          panelId: Number(rule.annotations[PANEL_ID_ANNOTATION]),
           state: rule.state,
           ruleUID: 'folderUid' in rule && 'uid' in rule ? rule.uid : undefined,
         },

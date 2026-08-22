@@ -1,13 +1,9 @@
-import { Suspense, lazy } from 'react';
-
 import { t } from '@grafana/i18n';
-import { Drawer, LoadingPlaceholder, Stack, TextLink } from '@grafana/ui';
+import { Drawer, Stack, TextLink } from '@grafana/ui';
 
 import { createRelativeUrl } from '../utils/url';
 
-const AlertRulesDrawerContent = lazy(
-  () => import(/* webpackChunkName: "alert-rules-drawer-content" */ './AlertRulesDrawerContent')
-);
+import AlertRulesDrawerContent from './AlertRulesDrawerContent';
 
 interface Props {
   dashboardUid: string;
@@ -22,13 +18,7 @@ export function AlertRulesDrawer({ dashboardUid, onDismiss }: Props) {
       onClose={onDismiss}
       size="lg"
     >
-      <Suspense
-        fallback={
-          <LoadingPlaceholder text={t('alerting.alert-rules-drawer.text-loading-alert-rules', 'Loading alert rules')} />
-        }
-      >
-        <AlertRulesDrawerContent dashboardUid={dashboardUid} />
-      </Suspense>
+      <AlertRulesDrawerContent dashboardUid={dashboardUid} />
     </Drawer>
   );
 }

@@ -3,6 +3,8 @@ import { useContext, useEffect, useState } from 'react';
 import { t } from '@grafana/i18n';
 import { ModalsContext, ToolbarButton } from '@grafana/ui';
 
+import { loadDashboardAlertRuleGroups } from '../../../dashboard-scene/scene/loadPanelAlertStateCandidates';
+
 interface AlertRulesToolbarButtonProps {
   dashboardUid: string;
 }
@@ -14,10 +16,7 @@ export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesTool
   useEffect(() => {
     let cancelled = false;
 
-    import(
-      /* webpackChunkName: "PanelAlertStates" */ 'app/features/dashboard-scene/scene/loadPanelAlertStateCandidates'
-    )
-      .then(({ loadDashboardAlertRuleGroups }) => loadDashboardAlertRuleGroups(dashboardUid))
+    loadDashboardAlertRuleGroups(dashboardUid)
       .then((groups) => {
         if (!cancelled) {
           setHasAlertRules(groups.some((group) => group.rules.length > 0));
@@ -40,7 +39,7 @@ export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesTool
 
   const onShowDrawer = async () => {
     const { AlertRulesDrawer } = await import(
-      /* webpackChunkName: "alert-rules-drawer" */ './AlertRulesDrawer'
+      /* webpackChunkName: "DashboardAlertingView" */ './AlertRulesDrawer'
     );
     showModal(AlertRulesDrawer, {
       dashboardUid,
