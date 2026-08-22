@@ -396,7 +396,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Text: "Public dashboards",
 				Id:   "dashboards/public",
 				Url:  s.cfg.AppSubURL + "/dashboard/public",
-				Icon: "library-panel",
+				Icon: "share-alt",
 			})
 		}
 
@@ -405,6 +405,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
 			Id:       "dashboards/recently-deleted",
 			Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
+			Icon:     "trash-alt",
 		})
 	}
 
