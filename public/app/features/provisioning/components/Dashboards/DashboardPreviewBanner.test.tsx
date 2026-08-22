@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
@@ -39,6 +40,18 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesWithPathQuery: jest.fn(),
 }));
 
+const mockTriggerRefs = jest.fn();
+jest.mock('@grafana/api-clients/rtkq/provisioning/v0alpha1', () => ({
+  ...jest.requireActual('@grafana/api-clients/rtkq/provisioning/v0alpha1'),
+  useLazyGetRepositoryRefsQuery: () => [mockTriggerRefs, { isFetching: false }],
+}));
+
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useNavigate: () => mockNavigate,
+}));
+
 const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
 const mockUseGetResourceRepositoryView = jest.mocked(useGetResourceRepositoryView);
 const mockUseGetRepositoryFilesWithPathQuery = jest.mocked(useGetRepositoryFilesWithPathQuery);
@@ -48,6 +61,7 @@ interface DashboardPreviewBannerProps {
   route?: string;
   slug?: string;
   path?: string;
+  onSaveToNewBranch?: () => void;
 }
 
 interface PullRequestParamReturn {
@@ -76,7 +90,7 @@ interface FileQueryData {
 
 interface SetupOverrides {
   pullRequestParam?: PullRequestParamReturn;
-  fileQuery?: { data: FileQueryData; isLoading?: boolean; error?: unknown };
+  fileQuery?: { data?: FileQueryData; isLoading?: boolean; isError?: boolean; error?: unknown };
 }
 
 const defaultRepositoryView = {
@@ -151,7 +165,7 @@ function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: Setu
 describe('DashboardPreviewBanner', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (config.featureToggles as { provisioning: boolean }).provisioning = true;
+    (config as { provisioningEnabled: boolean }).provisioningEnabled = true;
     // locationUtil keeps module-level config, so reset it between tests
     locationUtil.initialize({
       config: { appSubUrl: '' } as GrafanaConfig,
@@ -162,7 +176,7 @@ describe('DashboardPreviewBanner', () => {
 
   describe('when banner should not render', () => {
     it('returns null when provisioning is disabled', () => {
-      (config.featureToggles as { provisioning: boolean }).provisioning = false;
+      (config as { provisioningEnabled: boolean }).provisioningEnabled = false;
       setup();
 
       expect(
@@ -311,6 +325,131 @@ describe('DashboardPreviewBanner', () => {
       setup({ slug: 'other-repo' });
 
       expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({ name: 'other-repo' });
+    });
+  });
+
+  describe('branch pre-flight on open pull request', () => {
+    let windowOpenSpy: jest.SpyInstance;
+    let pendingTab: { location: { href: string }; close: jest.Mock };
+
+    beforeEach(() => {
+      // The button opens a tab synchronously within the click gesture; the pre-flight then drives it.
+      pendingTab = { location: { href: '' }, close: jest.fn() };
+      windowOpenSpy = jest.spyOn(window, 'open').mockReturnValue(pendingTab as unknown as Window);
+    });
+
+    afterEach(() => {
+      windowOpenSpy.mockRestore();
+    });
+
+    const clickOpenPullRequest = () =>
+      userEvent.setup().click(screen.getByRole('button', { name: /Open pull request in GitHub/i }));
+
+    it('navigates the pre-opened tab to the pull request link when the branch still exists', async () => {
+      mockTriggerRefs.mockReturnValue({
+        unwrap: () => Promise.resolve({ items: [{ name: 'feature-branch' }] }),
+      });
+      setup();
+
+      await clickOpenPullRequest();
+
+      expect(windowOpenSpy).toHaveBeenCalledWith('about:blank', '_blank');
+      await waitFor(() => expect(mockTriggerRefs).toHaveBeenCalledWith({ name: 'my-repo' }));
+      await waitFor(() => expect(pendingTab.location.href).toBe('https://github.com/org/repo/compare'));
+      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
+    });
+
+    it('closes the tab and offers a way out when the branch is gone', async () => {
+      mockTriggerRefs.mockReturnValue({
+        unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
+      });
+      setup();
+
+      await clickOpenPullRequest();
+
+      expect(await screen.findByText('This branch no longer exists')).toBeInTheDocument();
+      expect(pendingTab.close).toHaveBeenCalled();
+      expect(pendingTab.location.href).toBe('');
+    });
+
+    it('re-opens the save flow from the modal', async () => {
+      const onSaveToNewBranch = jest.fn();
+      mockTriggerRefs.mockReturnValue({
+        unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
+      });
+      setup({ onSaveToNewBranch });
+
+      await clickOpenPullRequest();
+      await screen.findByText('This branch no longer exists');
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Save to a new branch' }));
+
+      expect(onSaveToNewBranch).toHaveBeenCalledTimes(1);
+    });
+
+    it('discards changes by navigating to the saved dashboard', async () => {
+      mockTriggerRefs.mockReturnValue({
+        unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
+      });
+      setup(
+        {},
+        {
+          fileQuery: {
+            data: {
+              ...defaultFileQueryReturn.data,
+              resource: { existing: { metadata: { name: 'original-uid' } } },
+            },
+          },
+        }
+      );
+
+      await clickOpenPullRequest();
+      await screen.findByText('This branch no longer exists');
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Discard changes' }));
+
+      expect(mockNavigate).toHaveBeenCalledWith('/d/original-uid');
+    });
+
+    it('falls back to opening the link when the refs check fails', async () => {
+      mockTriggerRefs.mockReturnValue({
+        unwrap: () => Promise.reject(new Error('boom')),
+      });
+      setup();
+
+      await clickOpenPullRequest();
+
+      await waitFor(() => expect(pendingTab.location.href).toBe('https://github.com/org/repo/compare'));
+      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when the preview ref no longer exists (after a refresh)', () => {
+    it('shows a dismissible recovery banner on a 404', async () => {
+      setup(
+        { queryParams: { ref: 'feature-branch' } },
+        { fileQuery: { data: undefined, isError: true, error: { status: 404, data: {} } } }
+      );
+
+      expect(screen.getByText('This branch no longer exists')).toBeInTheDocument();
+
+      // The banner is purely informational (the loader already shows the saved version) — it dismisses.
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Close alert' }));
+
+      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
+    });
+
+    it('does not show the recovery banner for non-404 errors', () => {
+      setup(
+        { queryParams: { ref: 'feature-branch' } },
+        { fileQuery: { data: undefined, isError: true, error: { status: 500, data: {} } } }
+      );
+
+      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
+    });
+
+    it('does not show the recovery banner while the file query is still loading', () => {
+      setup({ queryParams: { ref: 'feature-branch' } }, { fileQuery: { data: undefined, isError: false } });
+
+      expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
     });
   });
 });

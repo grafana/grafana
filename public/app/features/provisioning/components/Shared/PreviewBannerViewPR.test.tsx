@@ -1,3 +1,4 @@
+import userEvent from '@testing-library/user-event';
 import { render, screen, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -173,6 +174,68 @@ describe('PreviewBannerViewPR', () => {
       const link = screen.getByRole('link', { name: /pull request in GitHub/i });
       expect(link).toHaveAttribute('href', testUrl);
       expect(link).toHaveAttribute('target', '_blank');
+    });
+  });
+
+  describe('onOpenPullRequest override', () => {
+    beforeEach(() => {
+      mockUsePullRequestParam.mockReturnValue({
+        prURL: undefined,
+        newPrURL: undefined,
+        repoURL: undefined,
+        repoType: 'github',
+        resourcePushedTo: 'abc',
+        action: undefined,
+        prTitle: undefined,
+      });
+    });
+
+    it('renders a click handler that opens a tab synchronously and hands the caller open/cancel', async () => {
+      const user = userEvent.setup();
+      const onOpenPullRequest = jest.fn();
+      const pendingTab = { location: { href: '' }, close: jest.fn(), opener: {} as unknown };
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue(pendingTab as unknown as Window);
+
+      render(
+        <PreviewBannerViewPR
+          isNewPr
+          prURL="https://github.com/org/repo/compare"
+          onOpenPullRequest={onOpenPullRequest}
+        />
+      );
+
+      // With the override present the primary action is a button, not a link.
+      expect(screen.queryByRole('link', { name: /pull request in GitHub/i })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /Open pull request in GitHub/i }));
+
+      // The tab is opened within the click gesture, before the async check runs.
+      expect(openSpy).toHaveBeenCalledWith('about:blank', '_blank');
+      // The opener is severed to prevent reverse tabnabbing.
+      expect(pendingTab.opener).toBeNull();
+      expect(onOpenPullRequest).toHaveBeenCalledTimes(1);
+
+      const actions = onOpenPullRequest.mock.calls[0][0];
+      // open() navigates the pre-opened tab to the computed link.
+      actions.open();
+      expect(pendingTab.location.href).toBe('https://github.com/org/repo/compare');
+      // cancel() closes it.
+      actions.cancel();
+      expect(pendingTab.close).toHaveBeenCalledTimes(1);
+
+      openSpy.mockRestore();
+    });
+
+    it('shows a checking state on the button while pre-flighting', () => {
+      render(
+        <PreviewBannerViewPR
+          isNewPr
+          prURL="https://github.com/org/repo/compare"
+          onOpenPullRequest={jest.fn()}
+          isCheckingBranch
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'Checking branch…' })).toBeInTheDocument();
     });
   });
 
