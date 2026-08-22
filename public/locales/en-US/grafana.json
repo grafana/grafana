@@ -6698,6 +6698,10 @@
       },
       "title-delete": "Delete {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-unknown-transformation": "Remove transformation",
+      "title-unknown-transformation": "Unknown transformation: {{transformationId}}"
+    },
     "transformation-picker-ng": {
       "clear-search": "Clear search",
       "no-transformations-found": "No transformations found",
