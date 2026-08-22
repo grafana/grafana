@@ -47,8 +47,6 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
-  /** A/A test for recently viewed dashboards feature */
-  ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the feedback button in the dashboard edit sidebar */
@@ -159,8 +157,6 @@ export const FlagKeys = {
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
   /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
   RawPrometheusTableNg: "rawPrometheus.tableNg",
-  /** Enables recently viewed dashboards section in the browsing dashboard page */
-  RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
   /** Routes snapshot requests from /api to the /apis endpoint */
@@ -376,17 +372,6 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
-};
-
-/**
- * A/A test for recently viewed dashboards feature
- *
- * **Details:**
- * - flag key: `experimentRecentlyViewedDashboards`
- * - default value: `false`
- */
-export const useFlagExperimentRecentlyViewedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("experimentRecentlyViewedDashboards", false, options).value;
 };
 
 /**
@@ -992,17 +977,6 @@ export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluation
  */
 export const useFlagRawPrometheusTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("rawPrometheus.tableNg", false, options).value;
-};
-
-/**
- * Enables recently viewed dashboards section in the browsing dashboard page
- *
- * **Details:**
- * - flag key: `recentlyViewedDashboards`
- * - default value: `false`
- */
-export const useFlagRecentlyViewedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("recentlyViewedDashboards", false, options).value;
 };
 
 /**

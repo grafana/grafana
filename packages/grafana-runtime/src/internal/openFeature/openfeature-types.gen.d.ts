@@ -39,8 +39,6 @@ declare module "@openfeature/core" {
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
     | "datasources.azureMonitorBatchAPI"
-    | "recentlyViewedDashboards"
-    | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
     | "grafana.newTextPanel"

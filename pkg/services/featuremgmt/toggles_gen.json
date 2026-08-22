@@ -2488,7 +2488,8 @@
       "metadata": {
         "name": "experimentRecentlyViewedDashboards",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-01-13T15:22:20Z"
+        "creationTimestamp": "2026-01-13T15:22:20Z",
+        "deletionTimestamp": "2026-08-18T16:59:52Z"
       },
       "spec": {
         "description": "A/A test for recently viewed dashboards feature",
@@ -5744,7 +5745,8 @@
       "metadata": {
         "name": "recentlyViewedDashboards",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-10T16:28:19Z"
+        "creationTimestamp": "2025-12-10T16:28:19Z",
+        "deletionTimestamp": "2026-08-18T16:59:52Z"
       },
       "spec": {
         "description": "Enables recently viewed dashboards section in the browsing dashboard page",

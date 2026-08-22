@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
@@ -55,10 +54,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     orphanedRepoName,
     repository,
   } = useGetResourceRepositoryView({ folderName: folderUID });
-  const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
-  const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
-  const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
 
   // CUJ-only signal: silent so it doesn't create analytics noise
   useEffect(() => {
@@ -92,23 +88,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       reportInteraction('grafana_empty_state_shown', { source: 'browse_dashboards' });
     }
   }, [isSearching, searchState.result, stateManager]);
-
-  // Emit exposure event for A/A test once when page loads
-  const hasEmittedExposureEvent = useRef(false);
-
-  useEffect(() => {
-    if (!isRecentlyViewedEnabled || hasEmittedExposureEvent.current) {
-      return;
-    }
-
-    hasEmittedExposureEvent.current = true;
-    const isExperimentTreatment = isExperimentRecentlyViewedDashboards;
-
-    reportInteraction('dashboards_browse_list_viewed', {
-      experiment_dashboard_list_recently_viewed: isExperimentTreatment ? 'treatment' : 'control',
-      has_recently_viewed_component: isExperimentTreatment,
-    });
-  }, [isRecentlyViewedEnabled, isExperimentRecentlyViewedDashboards]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const navModel = useNavModel(folderDTO, 'dashboards');
@@ -184,8 +163,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           <OrphanedResourceBanner repositoryName={orphanedRepoName} />
         )}
         <QuotaLimitBanner />
-        {/* only show recently viewed dashboards when in root and flag is enabled */}
-        {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
+        {/* only show recently viewed dashboards when in root */}
+        {!folderUID && <RecentlyViewedDashboards />}
         <div>
           <FilterInput
             data-testid={selectors.pages.BrowseDashboards.searchInput}
