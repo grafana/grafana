@@ -116,7 +116,7 @@ require (
 	github.com/grafana/otel-profiling-go v0.6.0 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // @grafana/data-sources-plugins
 	github.com/grafana/saml v0.4.15-0.20251017092131-c91c4e045805 // @grafana/identity-access-team
-	github.com/grafana/schemads v0.2.2 // @grafana/data-sources
+	github.com/grafana/schemads v0.2.3 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/grafana-catalog
