@@ -22,6 +22,8 @@ import { isGranted } from '../hooks/abilities/abilityUtils';
 import { getExternalGlobalRuleAbility, getGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
 
+export { notificationsPermissions } from './alertmanagerPermissions';
+
 type RulesSourceType = 'grafana' | 'external';
 
 // ── Pure data: static permission maps ────────────────────────────────────────
@@ -53,25 +55,6 @@ export const instancesPermissions = {
   delete: {
     grafana: AccessControlAction.AlertingInstanceUpdate,
     external: AccessControlAction.AlertingInstancesExternalWrite,
-  },
-};
-
-export const notificationsPermissions = {
-  read: {
-    grafana: AccessControlAction.AlertingNotificationsRead,
-    external: AccessControlAction.AlertingNotificationsExternalRead,
-  },
-  create: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-  update: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-  delete: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
   },
 };
 

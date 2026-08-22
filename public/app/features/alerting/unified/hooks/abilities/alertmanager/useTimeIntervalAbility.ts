@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 
-import { AccessControlAction } from 'app/types/accessControl';
-
 import { type MuteTiming } from '../../../components/mute-timings/useMuteTimings';
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
-import { notificationsPermissions } from '../../../utils/access-control';
+import {
+  grafanaTimeIntervalPermissions as PERMISSIONS,
+  PERMISSIONS_TIME_INTERVALS,
+} from '../../../utils/alertmanagerPermissions';
 import { makeAbility } from '../abilityUtils';
 import { type Ability, NotSupported, Provisioned, TimeIntervalAction } from '../types';
 
@@ -15,26 +16,7 @@ export type TimeIntervalAbilityParam =
   | { action: TimeIntervalAction.Update; context?: MuteTiming }
   | { action: TimeIntervalAction.Delete; context?: MuteTiming };
 
-const PERMISSIONS: Record<TimeIntervalAction, AccessControlAction[]> = {
-  [TimeIntervalAction.View]: [notificationsPermissions.read.grafana, AccessControlAction.AlertingTimeIntervalsRead],
-  [TimeIntervalAction.Create]: [
-    notificationsPermissions.create.grafana,
-    AccessControlAction.AlertingTimeIntervalsWrite,
-  ],
-  [TimeIntervalAction.Update]: [
-    notificationsPermissions.update.grafana,
-    AccessControlAction.AlertingTimeIntervalsWrite,
-  ],
-  [TimeIntervalAction.Delete]: [
-    notificationsPermissions.delete.grafana,
-    AccessControlAction.AlertingTimeIntervalsDelete,
-  ],
-  [TimeIntervalAction.Export]: [notificationsPermissions.read.grafana],
-};
-
-export const PERMISSIONS_TIME_INTERVALS: AccessControlAction[] = Object.values(PERMISSIONS).flatMap(
-  (permissions) => permissions
-);
+export { PERMISSIONS_TIME_INTERVALS };
 
 /**
  * Global (unscoped) time interval ability check.
