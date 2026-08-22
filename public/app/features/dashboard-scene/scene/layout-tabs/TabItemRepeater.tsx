@@ -15,6 +15,7 @@ import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardStateChangedEvent } from '../../sidebar/events';
 import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
 import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
+import { registerReportRepeatPendingWork } from '../../utils/registerReportRepeatPendingWork';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
 
@@ -97,6 +98,9 @@ export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, co
   }
 
   const clonedTabs = createTabRepeats({ values, texts, variable, tab });
+
+  // Keeps report rendering waiting until the repeat clones mount.
+  registerReportRepeatPendingWork(tab, clonedTabs);
 
   tab.setState({ repeatedTabs: clonedTabs });
   // Rehydrate from a stable parent subtree to keep duplicate var-* key mapping consistent.
