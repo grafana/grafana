@@ -121,9 +121,7 @@ function uniquePermissions(permissionSets: AccessControlAction[][]): AccessContr
 }
 
 export const PERMISSIONS_CONTACT_POINTS = uniquePermissions(Object.values(grafanaContactPointPermissions));
-export const PERMISSIONS_NOTIFICATION_POLICIES = uniquePermissions(
-  Object.values(grafanaNotificationPolicyPermissions)
-);
+export const PERMISSIONS_NOTIFICATION_POLICIES = uniquePermissions(Object.values(grafanaNotificationPolicyPermissions));
 export const PERMISSIONS_TEMPLATES = uniquePermissions(Object.values(grafanaNotificationTemplatePermissions));
 export const PERMISSIONS_TIME_INTERVALS = uniquePermissions(Object.values(grafanaTimeIntervalPermissions));
 export const PERMISSIONS_TIME_INTERVALS_READ = [AccessControlAction.AlertingTimeIntervalsRead];
