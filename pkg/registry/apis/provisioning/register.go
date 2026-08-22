@@ -644,14 +644,48 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Jobs subresource - check jobs permissions with the verb (editors can manage jobs)
+	// Jobs subresource - editors can manage jobs via provisioning.jobs:*.
+	//
+	// Folder-targeted Git Sync also allows users with dashboards:write on the
+	// repository root folder so Folder Admins can create move/delete sync jobs
+	// (and inspect those jobs) without global jobs:create. The fallback always
+	// requires dashboards:write so Viewers cannot list job history. Push/migrate
+	// and fixFolderMetadata still re-require jobs:create in the jobs connector.
 	case "jobs":
-		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+		err := b.accessWithEditor.Check(ctx, authlib.CheckRequest{
 			Verb:      a.GetVerb(),
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.JobResourceInfo.GetName(),
 			Namespace: a.GetNamespace(),
-		}, ""))
+		}, "")
+		if err == nil {
+			return authorizer.DecisionAllow, "", nil
+		}
+		// Only fall back on permission denied. Unauthorized (and other non-Forbidden
+		// errors) must not trigger repository lookups or an alternate auth path.
+		if !apierrors.IsForbidden(err) || a.GetName() == "" {
+			return toAuthorizerDecision(err)
+		}
+
+		obj, getErr := b.repoStore.Get(ctx, a.GetName(), &metav1.GetOptions{})
+		if getErr != nil || obj == nil {
+			return toAuthorizerDecision(err)
+		}
+		repo, ok := obj.(*provisioning.Repository)
+		if !ok || repo.Spec.Sync.Target != provisioning.SyncTargetTypeFolder {
+			return toAuthorizerDecision(err)
+		}
+
+		// Require dashboards:write (update) for all jobs verbs, including list/get.
+		if folderErr := b.access.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbUpdate,
+			Group:     resources.DashboardResource.Group,
+			Resource:  resources.DashboardResource.Resource,
+			Namespace: a.GetNamespace(),
+		}, repo.Name); folderErr == nil {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return toAuthorizerDecision(err)
 
 	default:
 		id, err := identity.GetRequester(ctx)
