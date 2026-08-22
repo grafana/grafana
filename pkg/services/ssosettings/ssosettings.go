@@ -34,8 +34,11 @@ type Service interface {
 	Patch(ctx context.Context, provider string, data map[string]any, requester identity.Requester) error
 	// RegisterReloadable registers a reloadable for a given provider
 	RegisterReloadable(provider string, reloadable Reloadable)
-	// Reload reloads the settings for a given provider
-	Reload(ctx context.Context, provider string)
+	// Reload triggers an asynchronous reload of the settings for a given provider.
+	// The returned error only covers failures to start the reload (unknown provider,
+	// settings lookup); the reload itself runs in the background and reports failures
+	// via logs and metrics.
+	Reload(ctx context.Context, provider string) error
 }
 
 // Reloadable is an interface that can be implemented by a provider to allow it to be validated and reloaded
