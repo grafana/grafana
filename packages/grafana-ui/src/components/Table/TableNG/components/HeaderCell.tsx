@@ -108,8 +108,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       {showTypeIcons && (
         <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
       )}
-      <button tabIndex={0} className={styles.headerCellLabel} title={displayName}>
-        {displayName}
+      <button tabIndex={0} className={styles.headerCellLabel} title={hideHeader ? undefined : displayName}>
+        {!hideHeader && displayName}
         {direction && (
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
         )}

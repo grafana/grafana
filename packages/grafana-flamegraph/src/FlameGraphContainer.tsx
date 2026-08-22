@@ -24,6 +24,27 @@ import { getAssistantContextFromDataFrame } from './utils';
 
 const ufuzzy = new uFuzzy();
 
+/**
+ * .container is styled height: 100%, which correctly reflects whatever bounded height a real host (e.g. a
+ * dashboard panel) gives it. Some hosts (e.g. Explore) don't bound our height at all, in which case
+ * height: 100% collapses several layers down, wherever a descendant first tries to resolve a percentage
+ * height against that indefinite ancestor - not necessarily on .container itself, which can still measure
+ * taller than a naive "near zero" check thanks to the header (or, in a split flame-graph/table layout, the
+ * flame graph's own organic height) padding it out. So rather than measuring .container, this is meant to
+ * be attached directly to the thing that actually needs a concrete height - the table wrapper - via a
+ * callback ref, which also naturally re-checks whenever that wrapper (re)mounts, e.g. once real data
+ * replaces an initial `null` render, instead of a one-shot check tied to this component's own mount.
+ */
+function useHeightFallback(fallbackHeight: number) {
+  const [needsFallback, setNeedsFallback] = useState(false);
+  const measureRef = useCallback((node: HTMLDivElement | null) => {
+    if (node && node.getBoundingClientRect().height < 10) {
+      setNeedsFallback(true);
+    }
+  }, []);
+  return { measureRef, style: needsFallback ? { height: fallbackHeight } : undefined };
+}
+
 export type Props = {
   /**
    * DataFrame with the profile data. The dataFrame needs to have the following fields:
@@ -97,6 +118,17 @@ export type Props = {
    * Enable the new pane-based UI with call tree support.
    */
   enableNewUI?: boolean;
+
+  /**
+   * Render the top table with TableNG instead of the legacy Table.
+   */
+  useTableNG?: boolean;
+
+  /**
+   * Escape hatch to disable virtualization of the top table when useTableNG is set. Only intended for tests,
+   * where jsdom cannot measure the grid and virtualization would otherwise render no rows.
+   */
+  enableVirtualization?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -115,6 +147,8 @@ const FlameGraphContainer = ({
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
   enableNewUI,
+  useTableNG,
+  enableVirtualization,
 }: Props) => {
   const theme = useMemo(() => getTheme(), [getTheme]);
 
@@ -135,6 +169,8 @@ const FlameGraphContainer = ({
         keepFocusOnDataChange={keepFocusOnDataChange}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
         showAnalyzeWithAssistant={showAnalyzeWithAssistant}
+        useTableNG={useTableNG}
+        enableVirtualization={enableVirtualization}
       />
     );
   }
@@ -155,6 +191,8 @@ const FlameGraphContainer = ({
       keepFocusOnDataChange={keepFocusOnDataChange}
       getExtraContextMenuButtons={getExtraContextMenuButtons}
       showAnalyzeWithAssistant={showAnalyzeWithAssistant}
+      useTableNG={useTableNG}
+      enableVirtualization={enableVirtualization}
     />
   );
 };
@@ -174,6 +212,8 @@ type InternalProps = {
   keepFocusOnDataChange?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   showAnalyzeWithAssistant: boolean;
+  useTableNG?: boolean;
+  enableVirtualization?: boolean;
 };
 
 const LegacyContainer = ({
@@ -191,6 +231,8 @@ const LegacyContainer = ({
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant,
+  useTableNG,
+  enableVirtualization,
 }: InternalProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -199,6 +241,7 @@ const LegacyContainer = ({
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const heightFallback = useHeightFallback(FLAMEGRAPH_CONTAINER_HEIGHT);
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
   // This is a label of the item because in sandwich view we group all items by label and present a merged graph
   const [sandwichItem, setSandwichItem] = useState<string>();
@@ -360,6 +403,8 @@ const LegacyContainer = ({
       onSearch={onSearch}
       onTableSort={onTableSortStable}
       colorScheme={colorScheme}
+      useTableNG={useTableNG}
+      enableVirtualization={enableVirtualization}
     />
   );
 
@@ -367,19 +412,27 @@ const LegacyContainer = ({
   if (showFlameGraphOnly || selectedView === SelectedView.FlameGraph) {
     body = flameGraph;
   } else if (selectedView === SelectedView.TopTable) {
-    body = <div className={styles.tableContainer}>{table}</div>;
+    body = (
+      <div ref={heightFallback.measureRef} className={styles.tableContainer}>
+        {table}
+      </div>
+    );
   } else if (selectedView === SelectedView.Both) {
     if (vertical) {
       body = (
-        <div>
+        <div className={styles.verticalContainer}>
           <div className={styles.verticalGraphContainer}>{flameGraph}</div>
-          <div className={styles.verticalTableContainer}>{table}</div>
+          <div ref={heightFallback.measureRef} className={styles.verticalTableContainer}>
+            {table}
+          </div>
         </div>
       );
     } else {
       body = (
         <div className={styles.horizontalContainer}>
-          <div className={styles.horizontalTableContainer}>{table}</div>
+          <div ref={heightFallback.measureRef} className={styles.horizontalTableContainer}>
+            {table}
+          </div>
           <div className={styles.horizontalGraphContainer}>{flameGraph}</div>
         </div>
       );
@@ -390,7 +443,7 @@ const LegacyContainer = ({
     // We add the theme context to bridge the gap if this is rendered in non grafana environment where the context
     // isn't already provided.
     <ThemeContext.Provider value={theme}>
-      <div ref={sizeRef} className={styles.container}>
+      <div ref={sizeRef} className={styles.container} style={heightFallback.style}>
         {!showFlameGraphOnly && (
           <FlameGraphHeader
             search={search}
@@ -444,6 +497,8 @@ const NewUIContainer = ({
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant,
+  useTableNG,
+  enableVirtualization,
 }: InternalProps) => {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
@@ -452,6 +507,7 @@ const NewUIContainer = ({
   const [singleView, setSingleView] = useState<PaneView>(PaneView.FlameGraph);
   const [panesSwapped, setPanesSwapped] = useState(false);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const heightFallback = useHeightFallback(FLAMEGRAPH_CONTAINER_HEIGHT);
   const [resetKey, setResetKey] = useState(0);
   const [focusedItemIndexes, setFocusedItemIndexes] = useState<number[] | undefined>(undefined);
   const [sharedSandwichItem, setSharedSandwichItem] = useState<string | undefined>(undefined);
@@ -524,6 +580,8 @@ const NewUIContainer = ({
     keepFocusOnDataChange,
     focusedItemIndexes,
     setFocusedItemIndexes,
+    useTableNG,
+    enableVirtualization,
   };
 
   let body;
@@ -603,7 +661,7 @@ const NewUIContainer = ({
 
   return (
     <ThemeContext.Provider value={theme}>
-      <div ref={sizeRef} className={styles.container}>
+      <div ref={sizeRef} className={styles.container} style={heightFallback.style}>
         {!showFlameGraphOnly && (
           <FlameGraphHeader
             enableNewUI={true}
@@ -641,7 +699,9 @@ const NewUIContainer = ({
           />
         )}
 
-        <div className={styles.body}>{body}</div>
+        <div ref={heightFallback.measureRef} className={styles.body}>
+          {body}
+        </div>
       </div>
     </ThemeContext.Provider>
   );
@@ -732,32 +792,43 @@ function getStyles(theme: GrafanaTheme2) {
     body: css({
       label: 'body',
       flexGrow: 1,
+      // Without this, a flex item's automatic minimum size defaults to its content's natural size, which
+      // let this (and everything under it, including the table) grow to match the flame graph's organic,
+      // unbounded height instead of shrinking to fit the real space .container has available.
+      minHeight: 0,
     }),
 
+    // Single-pane (Top Table only) view. The table manages its own internal scrolling (react-data-grid /
+    // react-window), so this just needs to give it its real allotted height to measure against, rather than
+    // a fixed constant that could be taller than the panel's actual space - which let the table's bottom
+    // run past the panel's bottom.
     tableContainer: css({
-      // This is not ideal for dashboard panel where it creates a double scroll. In a panel it should be 100% but then
-      // in explore we need a specific height.
-      height: FLAMEGRAPH_CONTAINER_HEIGHT,
+      height: '100%',
+      minHeight: 0,
     }),
 
     horizontalContainer: css({
       label: 'horizontalContainer',
       display: 'flex',
+      height: '100%',
       minHeight: 0,
       flexDirection: 'row',
       columnGap: theme.spacing(1),
       width: '100%',
     }),
 
+    // Deliberately left with its original (organic, unbounded) sizing - opts out of the row's default
+    // stretch behavior so the flame graph keeps rendering at its natural height, same as before.
     horizontalGraphContainer: css({
       flexBasis: '50%',
       minWidth: 0,
+      alignSelf: 'flex-start',
     }),
 
     horizontalTableContainer: css({
       flexBasis: '50%',
       minWidth: 0,
-      maxHeight: FLAMEGRAPH_CONTAINER_HEIGHT,
+      minHeight: 0,
       overflow: 'auto',
     }),
 
@@ -766,13 +837,17 @@ function getStyles(theme: GrafanaTheme2) {
     }),
 
     verticalTableContainer: css({
-      height: FLAMEGRAPH_CONTAINER_HEIGHT,
+      flex: '1 1 0',
+      minHeight: 0,
+      overflow: 'auto',
     }),
 
     verticalContainer: css({
       label: 'verticalContainer',
       display: 'flex',
       flexDirection: 'column',
+      height: '100%',
+      minHeight: 0,
     }),
 
     horizontalPaneContainer: css({
