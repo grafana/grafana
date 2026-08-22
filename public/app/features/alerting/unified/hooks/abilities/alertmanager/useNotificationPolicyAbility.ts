@@ -1,10 +1,7 @@
 import { useMemo } from 'react';
 
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
-import {
-  grafanaNotificationPolicyPermissions as PERMISSIONS,
-  PERMISSIONS_NOTIFICATION_POLICIES,
-} from '../../../utils/alertmanagerPermissions';
+import { grafanaNotificationPolicyPermissions as PERMISSIONS } from '../../../utils/alertmanagerPermissions';
 import { isProvisionedResource } from '../../../utils/k8s/utils';
 import { isAdmin } from '../../../utils/misc';
 import { makeAbility } from '../abilityUtils';
@@ -27,8 +24,6 @@ export type NotificationPolicyAbilityParam =
   | { action: NotificationPolicyAction.UpdateTree; context: NotificationPolicyContext }
   | { action: NotificationPolicyAction.Delete; context: NotificationPolicyContext }
   | { action: NotificationPolicyAction.Export; context: NotificationPolicyContext };
-
-export { PERMISSIONS_NOTIFICATION_POLICIES };
 
 /**
  * Global (unscoped) notification policy ability check.

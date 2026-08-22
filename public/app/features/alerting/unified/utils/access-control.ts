@@ -8,10 +8,10 @@
  *    Safe to call at module load time or in non-React contexts.
  *
  * 2. **Ability-calling utilities**: functions that delegate to the central ability system
- *    (`getRulesAccess`, `getCreateAlertInMenuAvailability`). These are intentionally plain
- *    functions (not hooks) because they are also used in non-React contexts (route guards,
- *    panel menus). When used inside React components, wrap them in `useMemo` or call them
- *    via the `useRulesAccess()` hook in `accessControlHooks.ts`.
+ *    (`getRulesAccess`, `getCreateAlertInMenuAvailability`). These are
+ *    intentionally plain functions (not hooks) because they are also used in non-React
+ *    contexts (route guards, panel menus). When used inside React components, wrap them
+ *    in `useMemo` or call them via the `useRulesAccess()` hook in `accessControlHooks.ts`.
  */
 
 import { getConfig } from 'app/core/config';
@@ -21,8 +21,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { isGranted } from '../hooks/abilities/abilityUtils';
 import { getExternalGlobalRuleAbility, getGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
-
-export { notificationsPermissions } from './alertmanagerPermissions';
 
 type RulesSourceType = 'grafana' | 'external';
 

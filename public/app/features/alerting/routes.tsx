@@ -5,16 +5,15 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { evaluateAccess, evaluateAccessAll } from './routePermissions';
+import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
 import {
   PERMISSIONS_CONTACT_POINTS,
   PERMISSIONS_NOTIFICATION_POLICIES,
   PERMISSIONS_TEMPLATES,
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
-  evaluateAccess,
-  evaluateAccessAll,
-} from './routePermissions';
-import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
+} from './unified/utils/alertmanagerPermissions';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   const routes = [

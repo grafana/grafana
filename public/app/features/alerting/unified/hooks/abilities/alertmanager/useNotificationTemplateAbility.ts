@@ -5,7 +5,6 @@ import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import {
   externalNotificationTemplatePermissions as EXTERNAL_AM_PERMISSIONS,
   grafanaNotificationTemplatePermissions as PERMISSIONS,
-  PERMISSIONS_TEMPLATES,
 } from '../../../utils/alertmanagerPermissions';
 import { isProvisionedResource } from '../../../utils/k8s/utils';
 import { makeAbility } from '../abilityUtils';
@@ -58,5 +57,3 @@ export function useNotificationTemplateAbility(payload: NotificationTemplateAbil
     }
   }, [payload, hasConfigurationAPI, isGrafanaAlertmanager]);
 }
-
-export { PERMISSIONS_TEMPLATES };

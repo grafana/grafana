@@ -116,16 +116,18 @@ export const grafanaTimeIntervalPermissions: Record<TimeIntervalAction, AccessCo
   'export-time-intervals': [notificationsPermissions.read.grafana],
 };
 
-function uniquePermissions<T extends string>(permissions: Record<T, AccessControlAction[]>): AccessControlAction[] {
-  return Array.from(new Set(Object.keys(permissions).flatMap((key) => permissions[key as T])));
+function uniquePermissions(permissionSets: AccessControlAction[][]): AccessControlAction[] {
+  return Array.from(new Set(permissionSets.flat()));
 }
 
-export const PERMISSIONS_CONTACT_POINTS = uniquePermissions(grafanaContactPointPermissions);
-export const PERMISSIONS_NOTIFICATION_POLICIES = uniquePermissions(grafanaNotificationPolicyPermissions);
-export const PERMISSIONS_TEMPLATES = uniquePermissions(grafanaNotificationTemplatePermissions);
-export const PERMISSIONS_TIME_INTERVALS = uniquePermissions(grafanaTimeIntervalPermissions);
+export const PERMISSIONS_CONTACT_POINTS = uniquePermissions(Object.values(grafanaContactPointPermissions));
+export const PERMISSIONS_NOTIFICATION_POLICIES = uniquePermissions(
+  Object.values(grafanaNotificationPolicyPermissions)
+);
+export const PERMISSIONS_TEMPLATES = uniquePermissions(Object.values(grafanaNotificationTemplatePermissions));
+export const PERMISSIONS_TIME_INTERVALS = uniquePermissions(Object.values(grafanaTimeIntervalPermissions));
 export const PERMISSIONS_TIME_INTERVALS_READ = [AccessControlAction.AlertingTimeIntervalsRead];
-export const PERMISSIONS_TIME_INTERVALS_MODIFY = uniquePermissions({
-  create: grafanaTimeIntervalPermissions['create-time-interval'],
-  update: grafanaTimeIntervalPermissions['update-time-interval'],
-});
+export const PERMISSIONS_TIME_INTERVALS_MODIFY = uniquePermissions([
+  grafanaTimeIntervalPermissions['create-time-interval'],
+  grafanaTimeIntervalPermissions['update-time-interval'],
+]);

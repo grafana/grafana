@@ -6,7 +6,6 @@ import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import {
   externalContactPointPermissions as EXTERNAL_AM_PERMISSIONS,
   grafanaContactPointPermissions as PERMISSIONS,
-  PERMISSIONS_CONTACT_POINTS,
 } from '../../../utils/alertmanagerPermissions';
 import {
   type EntityToCheck,
@@ -26,8 +25,6 @@ export type ContactPointAbilityParam =
   | { action: ContactPointAction.Delete; context: EntityToCheck }
   | { action: ContactPointAction.Export; context: EntityToCheck }
   | { action: ContactPointAction.Test; context?: EntityToCheck };
-
-export { PERMISSIONS_CONTACT_POINTS };
 
 /**
  * Global (unscoped) contact point ability check.

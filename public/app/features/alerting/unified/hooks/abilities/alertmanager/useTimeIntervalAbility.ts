@@ -2,10 +2,7 @@ import { useMemo } from 'react';
 
 import { type MuteTiming } from '../../../components/mute-timings/useMuteTimings';
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
-import {
-  grafanaTimeIntervalPermissions as PERMISSIONS,
-  PERMISSIONS_TIME_INTERVALS,
-} from '../../../utils/alertmanagerPermissions';
+import { grafanaTimeIntervalPermissions as PERMISSIONS } from '../../../utils/alertmanagerPermissions';
 import { makeAbility } from '../abilityUtils';
 import { type Ability, NotSupported, Provisioned, TimeIntervalAction } from '../types';
 
@@ -15,8 +12,6 @@ export type TimeIntervalAbilityParam =
   | { action: TimeIntervalAction.Export }
   | { action: TimeIntervalAction.Update; context?: MuteTiming }
   | { action: TimeIntervalAction.Delete; context?: MuteTiming };
-
-export { PERMISSIONS_TIME_INTERVALS };
 
 /**
  * Global (unscoped) time interval ability check.
