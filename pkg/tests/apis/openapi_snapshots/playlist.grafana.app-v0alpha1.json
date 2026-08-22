@@ -1156,6 +1156,10 @@
           "value"
         ],
         "properties": {
+          "interval": {
+            "description": "Optional per-item display interval (e.g. \"30s\", \"2m\"). When unset, the\nplaylist's global spec.interval is used.",
+            "type": "string"
+          },
           "type": {
             "description": "type of the item.",
             "type": "string",
