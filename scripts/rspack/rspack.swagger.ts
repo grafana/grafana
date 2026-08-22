@@ -57,9 +57,10 @@ export default (env: Env = {}): Configuration => {
       chunkIds: env.develop ? 'named' : 'deterministic',
     },
     output: {
+      // `path` and `publicPath` must agree: disk layout, URL and CDN path are one string.
       clean: true,
-      path: path.resolve(import.meta.dirname, '../../public/build-swagger-rspack'),
-      publicPath: 'public/build-swagger/',
+      path: path.resolve(import.meta.dirname, '../../public/build-swagger/rspack'),
+      publicPath: 'public/build-swagger/rspack/',
       crossOriginLoading: 'anonymous',
       filename: env.develop ? '[name].js' : '[name].[contenthash].js',
     },

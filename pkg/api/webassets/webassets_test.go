@@ -51,23 +51,41 @@ func TestGetWebAssetsBuildDir(t *testing.T) {
 	})
 }
 
+func TestResolveSwaggerBuildDir(t *testing.T) {
+	t.Run("resolves build-swagger when the rspack flag is off", func(t *testing.T) {
+		require.Equal(t, "build-swagger", ResolveSwaggerBuildDir(context.Background()))
+	})
+
+	t.Run("resolves build-swagger/rspack when the rspack flag is on", func(t *testing.T) {
+		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
+
+		require.Equal(t, "build-swagger/rspack", ResolveSwaggerBuildDir(context.Background()))
+	})
+}
+
 func TestGetWebAssetsSwagger(t *testing.T) {
+	// Env must be dev so GetWebAssets skips its process-wide cache between subtests.
 	cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata"}
 	license := licensingtest.NewFakeLicensing()
 	license.On("ContentDeliveryPrefix").Return("grafana")
 
-	t.Run("flag off", func(t *testing.T) {
-		assets, err := GetWebAssets(context.Background(), "build-swagger", cfg, license)
+	t.Run("flag off reads the webpack manifest", func(t *testing.T) {
+		ctx := context.Background()
+
+		assets, err := GetWebAssets(ctx, ResolveSwaggerBuildDir(ctx), cfg, license)
 		require.NoError(t, err)
 		require.Equal(t, "public/build-swagger/runtime.js", assets.JSFiles[0].FilePath)
+		require.Equal(t, "public/build-swagger/", assets.PublicPath)
 	})
 
-	t.Run("flag on", func(t *testing.T) {
+	t.Run("flag on reads the rspack manifest", func(t *testing.T) {
 		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
+		ctx := context.Background()
 
-		assets, err := GetWebAssets(context.Background(), "build-swagger", cfg, license)
+		assets, err := GetWebAssets(ctx, ResolveSwaggerBuildDir(ctx), cfg, license)
 		require.NoError(t, err)
-		require.Equal(t, "public/build-swagger/runtime.js", assets.JSFiles[0].FilePath)
+		require.Equal(t, "public/build-swagger/rspack/runtime.js", assets.JSFiles[0].FilePath)
+		require.Equal(t, "public/build-swagger/rspack/", assets.PublicPath)
 	})
 }
 
@@ -197,7 +215,8 @@ func TestPublicPathFollowsBuildDir(t *testing.T) {
 	}{
 		{buildDir: BuildDir, expected: "public/build/"},
 		{buildDir: RspackBuildDir, expected: "public/build/rspack/"},
-		{buildDir: "build-swagger", expected: "public/build-swagger/"},
+		{buildDir: SwaggerBuildDir, expected: "public/build-swagger/"},
+		{buildDir: RspackSwaggerBuildDir, expected: "public/build-swagger/rspack/"},
 	}
 
 	for _, tt := range tests {
