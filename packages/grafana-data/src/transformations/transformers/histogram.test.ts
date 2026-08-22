@@ -350,6 +350,35 @@ describe('histogram frames frames', () => {
 });
 
 describe('getHistogramFields', () => {
+  it.each([
+    {
+      name: 'without yMax',
+      fields: [
+        { name: 'xMin', type: FieldType.number, values: [1, 2] },
+        { name: 'yMin', type: FieldType.number, values: [10, 20] },
+        { name: 'count', type: FieldType.number, values: [3, 4] },
+      ],
+    },
+    {
+      name: 'without a count field',
+      fields: [
+        { name: 'xMin', type: FieldType.number, values: [1, 2] },
+        { name: 'yMin', type: FieldType.number, values: [10, 20] },
+        { name: 'yMax', type: FieldType.number, values: [20, 30] },
+        { name: 'data', type: FieldType.number, values: [3, 4] },
+      ],
+    },
+  ])('ignores heatmap-cells frames $name', ({ fields }) => {
+    expect(
+      getHistogramFields(
+        toDataFrame({
+          meta: { type: DataFrameType.HeatmapCells },
+          fields,
+        })
+      )
+    ).toBeUndefined();
+  });
+
   it('densifies sparse native histograms (heatmap-cells), integer bounds', () => {
     expect(
       getHistogramFields(
