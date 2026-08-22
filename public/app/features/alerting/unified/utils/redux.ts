@@ -31,12 +31,7 @@ export const initialAsyncRequestState: Pick<
 
 export type AsyncRequestMapSlice<T> = Record<string, AsyncRequestState<T>>;
 
-type AsyncRequestAction<T, ThunkArg> = PayloadAction<
-  Draft<T>,
-  string,
-  { arg: ThunkArg; requestId: string },
-  SerializedError
->;
+export type AsyncRequestAction<T> = PayloadAction<Draft<T>, string, any, any>;
 
 const asyncActionStatuses = ['pending', 'fulfilled', 'rejected'] as const;
 
@@ -44,10 +39,10 @@ function getAsyncActionStatus(typePrefix: string, action: { type: string }) {
   return asyncActionStatuses.find((status) => action.type === `${typePrefix}/${status}`);
 }
 
-function requestStateReducer<T, ThunkArg>(
+function requestStateReducer<T>(
   typePrefix: string,
   state: Draft<AsyncRequestState<T>> = initialAsyncRequestState,
-  action: AsyncRequestAction<T, ThunkArg>
+  action: AsyncRequestAction<T>
 ): Draft<AsyncRequestState<T>> {
   const status = getAsyncActionStatus(typePrefix, action);
 
@@ -59,40 +54,48 @@ function requestStateReducer<T, ThunkArg>(
       dispatched: true,
       requestId: action.meta.requestId,
     };
+  } else if (status === 'fulfilled') {
+    if (state.requestId === undefined || state.requestId === action.meta.requestId) {
+      return {
+        ...state,
+        result: action.payload,
+        loading: false,
+        error: undefined,
+      };
+    }
+  } else if (status === 'rejected') {
+    if (state.requestId === action.meta.requestId) {
+      return {
+        ...state,
+        loading: false,
+        error: action.error,
+      };
+    }
   }
-
-  if (status === 'fulfilled' && (state.requestId === undefined || state.requestId === action.meta.requestId)) {
-    return {
-      ...state,
-      result: action.payload,
-      loading: false,
-      error: undefined,
-    };
-  }
-
-  if (status === 'rejected' && state.requestId === action.meta.requestId) {
-    return {
-      ...state,
-      loading: false,
-      error: action.error,
-    };
-  }
-
   return state;
 }
 
-export function createAsyncSlice<T, ThunkArg = void>(name: string, typePrefix: string) {
+/*
+ * createAsyncSlice creates a slice based on a given async action, exposing its state.
+ * takes care to only use state of the latest invocation of the action if there are several in flight.
+ */
+export function createAsyncSlice<T>(name: string, typePrefix: string) {
   return createSlice({
     name,
     initialState: initialAsyncRequestState as AsyncRequestState<T>,
     reducers: {},
     extraReducers: (builder) =>
       builder.addDefaultCase((state, action) =>
-        requestStateReducer(typePrefix, state, action as unknown as AsyncRequestAction<T, ThunkArg>)
+        requestStateReducer(typePrefix, state, action as unknown as AsyncRequestAction<T>)
       ),
   });
 }
 
+/*
+ * createAsyncMapSlice creates a slice based on a given async action exposing a map of request states.
+ * separate requests are uniquely indentified by result of provided getEntityId function
+ * takes care to only use state of the latest invocation of the action if there are several in flight.
+ */
 export function createAsyncMapSlice<T, ThunkArg>(
   name: string,
   typePrefix: string,
@@ -104,16 +107,15 @@ export function createAsyncMapSlice<T, ThunkArg>(
     reducers: {},
     extraReducers: (builder) =>
       builder.addDefaultCase((state, action) => {
-        if (!getAsyncActionStatus(typePrefix, action)) {
-          return state;
+        if (getAsyncActionStatus(typePrefix, action)) {
+          const asyncAction = action as unknown as AsyncRequestAction<T>;
+          const entityId = getEntityId(asyncAction.meta.arg);
+          return {
+            ...state,
+            [entityId]: requestStateReducer(typePrefix, state[entityId], asyncAction),
+          };
         }
-
-        const asyncAction = action as unknown as AsyncRequestAction<T, ThunkArg>;
-        const entityId = getEntityId(asyncAction.meta.arg);
-        return {
-          ...state,
-          [entityId]: requestStateReducer(typePrefix, state[entityId], asyncAction),
-        };
+        return state;
       }),
   });
 }

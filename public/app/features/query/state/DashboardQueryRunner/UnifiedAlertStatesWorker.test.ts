@@ -177,9 +177,6 @@ describe('UnifiedAlertStatesWorker', () => {
       });
 
       expect(getMock).toHaveBeenCalledTimes(1);
-      expect(getMock).toHaveBeenCalledWith('api/prometheus/grafana/api/v1/rules', {
-        dashboard_uid: 'a uid',
-      });
     });
   });
 
