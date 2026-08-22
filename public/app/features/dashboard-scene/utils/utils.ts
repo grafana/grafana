@@ -1,7 +1,8 @@
 import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   type CancelActivationHandler,
   type CustomVariable,
@@ -288,12 +289,12 @@ export function getDefaultPluginId(): string {
   return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
-export function getDefaultVizPanel(): VizPanel {
+export async function getDefaultVizPanel(): Promise<VizPanel> {
   const defaultPluginId = getDefaultPluginId();
 
   const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
-  const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
+  const datasourceSettings = await getDataSourceInstanceSettings(null);
 
   return new VizPanel({
     title: newPanelTitle,
