@@ -137,6 +137,21 @@ describe('TransformationsEditor', () => {
 
         expect(screen.getByTestId(debuggerSelector)).toBeInTheDocument();
       });
+
+      it('should show copy buttons for input and output data in debugger', async () => {
+        setup([
+          {
+            id: 'reduce',
+            options: {},
+          },
+        ]);
+
+        const debugButton = screen.getByTestId(selectors.components.QueryEditorRow.actionButton('Debug'));
+        await userEvent.click(debugButton);
+
+        const copyButtons = screen.getAllByRole('button', { name: /copy/i });
+        expect(copyButtons.length).toBeGreaterThanOrEqual(2);
+      });
     });
   });
 });
