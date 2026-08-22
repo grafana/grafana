@@ -52,6 +52,35 @@ describe('dataMacros', () => {
     expect(_templateSrv.replace('${__value:percentencode}', scopedVars)).toBe('10%25');
   });
 
+  it('Should interpolate an enum value rather than its index for __value.raw', () => {
+    const enumData = toDataFrame({
+      fields: [
+        {
+          name: 'Role',
+          type: FieldType.enum,
+          values: [0, 1],
+          config: {
+            type: {
+              enum: {
+                text: ['PRIMARY', 'REPLICA'],
+              },
+            },
+          },
+        },
+      ],
+    });
+    const dataContext: DataContextScopedVar = {
+      value: {
+        data: [enumData],
+        frame: enumData,
+        field: enumData.fields[0],
+        rowIndex: 1,
+      },
+    };
+
+    expect(_templateSrv.replace('${__value.raw}', { __dataContext: dataContext })).toBe('REPLICA');
+  });
+
   it('Should interpolate __value.* with calculatedValue', () => {
     const dataContext: DataContextScopedVar = {
       value: {

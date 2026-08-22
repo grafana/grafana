@@ -30,7 +30,6 @@ const propsToDiff = [
   'rowHeight',
   'colWidth',
   'showValue',
-  'mergeValues',
   'alignValue',
   'tooltip',
   'paginationRev',

@@ -6,7 +6,6 @@ import {
   type TimeRange,
   toDataFrame,
   dateTime,
-  type DataFrame,
   fieldMatchers,
   FieldMatcherID,
   type Field,
@@ -22,11 +21,226 @@ import {
   getThresholdItems,
   hasSpecialMappedValue,
   makeFramePerSeries,
+  mergeConsecutiveValues,
   prepareTimelineFields,
   prepareTimelineLegendItems,
+  toEnumField,
 } from './utils';
 
 const theme = createTheme();
+
+describe('toEnumField', () => {
+  it('converts percentage thresholds to enum states using the field range', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [0, 25, null, 50, 79, 80, 100],
+          config: {
+            min: 0,
+            max: 100,
+            color: { mode: FieldColorModeId.Thresholds },
+            thresholds: {
+              mode: ThresholdsMode.Percentage,
+              steps: [
+                { value: 0, color: 'green' },
+                { value: 50, color: 'yellow' },
+                { value: 80, color: 'red' },
+              ],
+            },
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme);
+
+    expect(result.type).toBe(FieldType.enum);
+    expect(result.config.type?.enum).toEqual({
+      color: ['#73bf69', '#fade2a', '#f2495c'],
+      text: ['0%+', '50%+', '80%+'],
+      icon: ['', '', ''],
+    });
+    expect(result.values).toEqual([0, 0, null, 1, 1, 2, 2]);
+  });
+
+  it('converts numeric palette values into ten range states', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [-10, 0, 9, 10, 99, 100, 110, null, NaN],
+          config: {
+            color: { mode: FieldColorModeId.PaletteClassic },
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme, {
+      paletteStatesQty: 10,
+      range: { min: 0, max: 100, delta: 100 },
+    });
+
+    expect(result.config.type?.enum?.text).toEqual([
+      '< 10',
+      '≥ 10',
+      '≥ 20',
+      '≥ 30',
+      '≥ 40',
+      '≥ 50',
+      '≥ 60',
+      '≥ 70',
+      '≥ 80',
+      '≥ 90',
+    ]);
+    expect(result.values).toEqual([0, 0, 0, 1, 9, 9, 9, null, null]);
+  });
+
+  it('maps a constant numeric range to the first palette state', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [5, 5],
+          config: {
+            color: { mode: FieldColorModeId.ContinuousGrYlRd },
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme, {
+      paletteStatesQty: 10,
+      range: { min: 5, max: 5, delta: 0 },
+    });
+
+    expect(result.config.type?.enum?.text).toHaveLength(10);
+    expect(result.values).toEqual([0, 0]);
+  });
+
+  it('keeps colored, text-only, and regex mappings as distinct states', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'state',
+          type: FieldType.string,
+          values: ['OK', 'IDLE', 'ERR-42', 'UNKNOWN'],
+          config: {
+            mappings: [
+              {
+                type: MappingType.ValueToText,
+                options: {
+                  OK: { text: 'Healthy', color: 'green' },
+                  IDLE: { text: 'Idle' },
+                },
+              },
+              {
+                type: MappingType.RegexToText,
+                options: {
+                  pattern: '/^ERR-(\\d+)$/',
+                  result: { text: 'Error $1' },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme);
+
+    expect(result.config.type?.enum?.text).toEqual(['Healthy', 'Idle', 'Error 42', 'UNKNOWN']);
+    expect(result.values).toEqual([0, 1, 2, 3]);
+    expect(result.config.mappings).toBeUndefined();
+  });
+
+  it('keeps unmatched string values as discrete states', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'state',
+          type: FieldType.string,
+          values: ['OK', 'UNKNOWN', 'UNKNOWN', 'PENDING'],
+          config: {
+            mappings: [
+              {
+                type: MappingType.ValueToText,
+                options: {
+                  OK: { text: 'Healthy', color: 'green' },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme);
+
+    expect(result.config.type?.enum?.text).toEqual(['Healthy', 'UNKNOWN', 'PENDING']);
+    expect(result.values).toEqual([0, 1, 1, 2]);
+  });
+
+  it('collapses unmatched numeric values into Other', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [5, null, 20],
+          config: {
+            mappings: [
+              {
+                type: MappingType.SpecialValue,
+                options: {
+                  match: SpecialValueMatch.Null,
+                  result: { text: 'No data', color: 'red' },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme);
+
+    expect(result.config.type?.enum?.text).toEqual(['No data', 'Other']);
+    expect(result.values).toEqual([1, 0, 1]);
+  });
+
+  it('matches boolean ValueToText keys', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'enabled',
+          type: FieldType.boolean,
+          values: [true, false, true],
+          config: {
+            mappings: [
+              {
+                type: MappingType.ValueToText,
+                options: {
+                  true: { text: 'Enabled', color: 'green' },
+                  false: { text: 'Disabled', color: 'red' },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme);
+
+    expect(result.config.type?.enum?.text).toEqual(['Enabled', 'Disabled']);
+    expect(result.values).toEqual([0, 1, 0]);
+  });
+});
 
 describe('prepare timeline graph', () => {
   const timeRange: TimeRange = {
@@ -63,6 +277,64 @@ describe('prepare timeline graph', () => {
     expect(info.warn).toEqual('No graphable fields');
   });
 
+  it('uses the precomputed shared range for palette states across numeric fields', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        {
+          name: 'a',
+          type: FieldType.number,
+          values: [0, 50],
+          config: { color: { mode: FieldColorModeId.PaletteClassic } },
+        },
+        {
+          name: 'b',
+          type: FieldType.number,
+          values: [50, 100],
+          config: { color: { mode: FieldColorModeId.ContinuousGrYlRd } },
+        },
+      ],
+    });
+    const range = { min: 0, max: 100, delta: 100 };
+    frame.fields[1].state = { range };
+    frame.fields[2].state = { range };
+
+    const info = prepareTimelineFields([frame], false, timeRange, theme);
+    const [, fieldA, fieldB] = info.frames![0].fields;
+
+    expect(fieldA.config.type?.enum?.text).toEqual(fieldB.config.type?.enum?.text);
+    expect(fieldA.values).toEqual([0, 5]);
+    expect(fieldB.values).toEqual([5, 9]);
+  });
+
+  it('honors explicit and field-local precomputed ranges for palette states', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+        {
+          name: 'explicit',
+          type: FieldType.number,
+          values: [0, 10, 20],
+          config: { min: 0, max: 20, color: { mode: FieldColorModeId.PaletteClassic } },
+        },
+        {
+          name: 'local',
+          type: FieldType.number,
+          values: [100, 150, 200],
+          config: { fieldMinMax: true, color: { mode: FieldColorModeId.PaletteClassic } },
+        },
+      ],
+    });
+    frame.fields[1].state = { range: { min: 0, max: 20, delta: 20 } };
+    frame.fields[2].state = { range: { min: 100, max: 200, delta: 100 } };
+
+    const info = prepareTimelineFields([frame], false, timeRange, theme);
+    const [, explicitField, localField] = info.frames![0].fields;
+
+    expect(explicitField.values).toEqual([0, 5, 9]);
+    expect(localField.values).toEqual([0, 5, 9]);
+  });
+
   it('errors with no frame', () => {
     const info = prepareTimelineFields(undefined, true, timeRange, theme);
     expect(info.frames).toBeUndefined();
@@ -75,7 +347,27 @@ describe('prepare timeline graph', () => {
     expect(info.warn).toBe('');
   });
 
-  it('will merge duplicate values', () => {
+  it('converts values to enum state indices, retaining nulls and undefineds', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.time, values: [1, 2, 3, 4, 5, 6, 7] },
+          { name: 'b', values: [1, 1, undefined, 1, 2, 2, null, 2, 3] },
+        ],
+      }),
+    ];
+    const info = prepareTimelineFields(frames, false, timeRange, theme);
+    expect(info.warn).toBeUndefined();
+
+    const out = info.frames![0];
+
+    const field = out.fields.find((f) => f.name === 'b');
+    expect(field?.type).toBe(FieldType.enum);
+    expect(field?.config.type?.enum?.text).toEqual(['1', '2', '3']);
+    expect(field?.values).toEqual([0, 0, undefined, 0, 1, 1, null, 1, 2]);
+  });
+
+  it('merges equal consecutive state indices into undefined when mergeValues is true', () => {
     const frames = [
       toDataFrame({
         fields: [
@@ -85,24 +377,10 @@ describe('prepare timeline graph', () => {
       }),
     ];
     const info = prepareTimelineFields(frames, true, timeRange, theme);
-    expect(info.warn).toBeUndefined();
 
-    const out = info.frames![0];
-
-    const field = out.fields.find((f) => f.name === 'b');
-    expect(field?.values).toMatchInlineSnapshot(`
-      [
-        1,
-        1,
-        undefined,
-        1,
-        2,
-        2,
-        null,
-        2,
-        3,
-      ]
-    `);
+    const field = info.frames![0].fields.find((f) => f.name === 'b');
+    // undefined = "state continues"; the null gap ends the run so the following 2 starts a new one
+    expect(field?.values).toEqual([0, undefined, undefined, undefined, 1, undefined, null, 1, 2]);
   });
   it('should try to sort time fields', () => {
     const frames = [
@@ -172,11 +450,16 @@ describe('prepare timeline graph', () => {
 
     const info = prepareTimelineFields(frames, true, timeRange2, theme);
 
+    // 'Mix' states: RUN -> 0
+    expect(info.frames![0].fields[1].config.type?.enum?.text).toEqual(['RUN']);
+    // 'Cook' states: Heat -> 0, Stage -> 1, CCP -> 2
+    expect(info.frames![1].fields[1].config.type?.enum?.text).toEqual(['Heat', 'Stage', 'CCP']);
+
     let joined = preparePlotFrame(
       info.frames!,
       {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.byType).get('string'),
+        y: fieldMatchers.get(FieldMatcherID.byType).get('enum'),
       },
       timeRange2
     );
@@ -190,9 +473,9 @@ describe('prepare timeline graph', () => {
         1697784523487, 1697784949480, 1697785369505, 1697786485890,
       ],
       [
-        'RUN',
+        0,
         null,
-        'RUN',
+        0,
         undefined,
         undefined,
         undefined,
@@ -209,26 +492,7 @@ describe('prepare timeline graph', () => {
         undefined,
         null,
       ],
-      [
-        undefined,
-        undefined,
-        undefined,
-        'Heat',
-        'Stage',
-        null,
-        'Heat',
-        'Stage',
-        null,
-        'Heat',
-        'Stage',
-        null,
-        'Heat',
-        'Stage',
-        null,
-        'CCP',
-        null,
-        undefined,
-      ],
+      [undefined, undefined, undefined, 0, 1, null, 0, 1, null, 0, 1, null, 0, 1, null, 2, null, undefined],
     ]);
   });
 
@@ -263,11 +527,16 @@ describe('prepare timeline graph', () => {
 
     const info = prepareTimelineFields(frames, true, timeRange2, theme);
 
+    // 'Channel 1' states: OK -> 0, NO_DATA -> 1
+    expect(info.frames![0].fields[1].config.type?.enum?.text).toEqual(['OK', 'NO_DATA']);
+    // 'Channel 2' states: ERROR -> 0, WARNING -> 1
+    expect(info.frames![1].fields[1].config.type?.enum?.text).toEqual(['ERROR', 'WARNING']);
+
     let joined = preparePlotFrame(
       info.frames!,
       {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.byType).get('string'),
+        y: fieldMatchers.get(FieldMatcherID.byType).get('enum'),
       },
       timeRange2
     );
@@ -279,8 +548,8 @@ describe('prepare timeline graph', () => {
         1709107200000, 1709110800000, 1709114400000, 1709116200000, 1709118000000, 1709123400000, 1709127000000,
         1709128800000,
       ],
-      ['OK', undefined, null, undefined, 'NO_DATA', undefined, undefined, null],
-      [undefined, 'ERROR', undefined, null, undefined, 'WARNING', null, undefined],
+      [0, undefined, null, undefined, 1, undefined, undefined, null],
+      [undefined, 0, undefined, null, undefined, 1, null, undefined],
     ]);
   });
 });
@@ -337,6 +606,24 @@ describe('prepareFieldsForPagination', () => {
         ],
       },
     ]);
+  });
+});
+
+describe('mergeConsecutiveValues', () => {
+  it('replaces consecutive duplicates with undefined', () => {
+    expect(mergeConsecutiveValues([0, 0, 0, 1, 1, 0])).toEqual([0, undefined, undefined, 1, undefined, 0]);
+  });
+
+  it('continues runs through undefined samples', () => {
+    expect(mergeConsecutiveValues([0, undefined, 0, 1])).toEqual([0, undefined, undefined, 1]);
+  });
+
+  it('never merges nulls and ends runs at them', () => {
+    expect(mergeConsecutiveValues([0, null, null, 0, 0])).toEqual([0, null, null, 0, undefined]);
+  });
+
+  it('never merges NaN samples', () => {
+    expect(mergeConsecutiveValues([NaN, NaN, 1])).toEqual([NaN, NaN, 1]);
   });
 });
 
@@ -421,71 +708,154 @@ describe('getThresholdItems', () => {
 });
 
 describe('prepareTimelineLegendItems', () => {
-  it('should return legend items without crashing when single (base) threshold', () => {
+  const timeRange: TimeRange = {
+    from: dateTime(1),
+    to: dateTime(3),
+    raw: {
+      from: dateTime(1),
+      to: dateTime(3),
+    },
+  };
+
+  const legendOptions = { displayMode: LegendDisplayMode.List } as VizLegendOptions;
+
+  it('builds items from mapped and unmatched string values', () => {
     const frames = [
-      {
-        refId: 'A',
+      toDataFrame({
         fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
           {
-            name: 'time',
+            name: 'state',
+            type: FieldType.string,
+            values: ['OK', 'ERROR', 'HUH'],
             config: {
-              color: {
-                mode: 'thresholds',
-              },
-              thresholds: {
-                mode: 'absolute',
-                steps: [
-                  {
-                    color: 'green',
-                    value: null,
+              color: { mode: FieldColorModeId.ContinuousGrYlRd },
+              mappings: [
+                {
+                  type: MappingType.ValueToText,
+                  options: {
+                    OK: { color: 'green', index: 0 },
+                    ERROR: { color: 'red', index: 1 },
+                    UNUSED: { color: 'blue', index: 2 },
                   },
-                ],
-              },
+                },
+              ],
             },
-            values: [
-              1634092733455, 1634092763455, 1634092793455, 1634092823455, 1634092853455, 1634092883455, 1634092913455,
-              1634092943455, 1634092973455, 1634093003455,
-            ],
-            display: (value: string) => ({
-              text: value,
-              color: undefined,
-              numeric: NaN,
-            }),
-          },
-          {
-            name: 'A-series',
-            config: {
-              color: {
-                mode: 'thresholds',
-              },
-              thresholds: {
-                mode: 'absolute',
-                steps: [
-                  {
-                    color: 'green',
-                    value: null,
-                  },
-                ],
-              },
-            },
-            values: ['< -∞', null, null, null, null, null, null, null, null, null],
-            display: (value?: string) => ({
-              text: value || '',
-              color: 'green',
-              numeric: NaN,
-            }),
           },
         ],
-      },
-    ] as unknown as DataFrame[];
+      }),
+    ];
 
-    const result = prepareTimelineLegendItems(
-      frames,
-      { displayMode: LegendDisplayMode.List } as VizLegendOptions,
-      theme
-    );
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    const result = prepareTimelineLegendItems(info.frames, legendOptions, theme);
 
-    expect(result).toHaveLength(1);
+    expect(result?.map(({ label, color }) => ({ label, color }))).toEqual([
+      { label: 'OK', color: '#73bf69' },
+      { label: 'ERROR', color: '#f2495c' },
+      { label: 'HUH', color: '#808080' },
+    ]);
+  });
+
+  it('builds items from absolute threshold steps', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'load',
+            type: FieldType.number,
+            values: [10, 20, 20],
+            config: {
+              color: { mode: FieldColorModeId.Thresholds },
+              thresholds: {
+                mode: ThresholdsMode.Absolute,
+                steps: [
+                  { value: -Infinity, color: 'green' },
+                  { value: 30, color: 'red' },
+                ],
+              },
+            },
+          },
+        ],
+      }),
+    ];
+
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    const result = prepareTimelineLegendItems(info.frames, legendOptions, theme);
+
+    expect(result?.map(({ label, color }) => ({ label, color }))).toEqual([
+      { label: '< 30', color: '#73bf69' },
+      { label: '≥ 30', color: '#f2495c' },
+    ]);
+  });
+
+  it.each([
+    FieldColorModeId.ContinuousGrYlRd,
+    FieldColorModeId.PaletteClassic,
+    FieldColorModeId.Shades,
+  ])('shows all range states for a bucketed numeric palette (%s)', (colorMode) => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        {
+          name: 'load',
+          type: FieldType.number,
+          values: [0, 100],
+          config: {
+            color: { mode: colorMode, fixedColor: 'blue' },
+          },
+        },
+      ],
+    });
+    frame.fields[1].state = { range: { min: 0, max: 100, delta: 100 } };
+
+    const info = prepareTimelineFields([frame], true, timeRange, theme);
+    const result = prepareTimelineLegendItems(info.frames, legendOptions, theme);
+
+    expect(result?.map(({ label }) => label)).toEqual([
+      '< 10',
+      '≥ 10',
+      '≥ 20',
+      '≥ 30',
+      '≥ 40',
+      '≥ 50',
+      '≥ 60',
+      '≥ 70',
+      '≥ 80',
+      '≥ 90',
+    ]);
+  });
+
+  it('builds items from distinct raw values when no mappings or thresholds exist', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'state', type: FieldType.string, values: ['ON', 'OFF', 'ON'] },
+        ],
+      }),
+    ];
+
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    const result = prepareTimelineLegendItems(info.frames, legendOptions, theme);
+
+    expect(result?.map(({ label }) => label)).toEqual(['ON', 'OFF']);
+  });
+
+  it('returns undefined when the legend is hidden', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'state', type: FieldType.string, values: ['ON', 'OFF', 'ON'] },
+        ],
+      }),
+    ];
+
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    const result = prepareTimelineLegendItems(info.frames, { ...legendOptions, showLegend: false }, theme);
+
+    expect(result).toBeUndefined();
   });
 });
 
@@ -562,81 +932,5 @@ describe('hasSpecialMappedValue', () => {
     const field = makeField(mappingsType, optionsMatch);
 
     expect(hasSpecialMappedValue(field, valueMatch)).toEqual(expected);
-  });
-});
-
-describe('prepareTimelineFields with percentage threshold merging', () => {
-  const timeRange: TimeRange = {
-    from: dateTime(1),
-    to: dateTime(3),
-    raw: { from: dateTime(1), to: dateTime(3) },
-  };
-
-  it('converts numeric values to threshold label strings using percentage thresholds', () => {
-    const frames = [
-      toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          {
-            name: 'value',
-            type: FieldType.number,
-            values: [0, 50, 100],
-            config: {
-              min: 0,
-              max: 100,
-              color: { mode: FieldColorModeId.Thresholds },
-              thresholds: {
-                mode: ThresholdsMode.Percentage,
-                steps: [
-                  { value: 0, color: 'green' },
-                  { value: 50, color: 'yellow' },
-                  { value: 80, color: 'red' },
-                ],
-              },
-            },
-          },
-        ],
-      }),
-    ];
-    const result = prepareTimelineFields(frames, true, timeRange, theme);
-    expect(result.warn).toBeUndefined();
-    const mergedField = result.frames![0].fields[1];
-    expect(mergedField.type).toBe(FieldType.string);
-    expect(mergedField.values[0]).toBe('0%+');
-    expect(mergedField.values[1]).toBe('50%+');
-    expect(mergedField.values[2]).toBe('80%+');
-  });
-
-  it('preserves null values when merging percentage thresholds', () => {
-    const frames = [
-      toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          {
-            name: 'value',
-            type: FieldType.number,
-            values: [0, null, 100],
-            config: {
-              min: 0,
-              max: 100,
-              color: { mode: FieldColorModeId.Thresholds },
-              thresholds: {
-                mode: ThresholdsMode.Percentage,
-                steps: [
-                  { value: 0, color: 'green' },
-                  { value: 80, color: 'red' },
-                ],
-              },
-            },
-          },
-        ],
-      }),
-    ];
-    const result = prepareTimelineFields(frames, true, timeRange, theme);
-    const mergedField = result.frames![0].fields[1];
-    expect(mergedField.type).toBe(FieldType.string);
-    expect(mergedField.values[0]).toBe('0%+');
-    expect(mergedField.values[1]).toBeNull();
-    expect(mergedField.values[2]).toBe('80%+');
   });
 });
