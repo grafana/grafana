@@ -24,7 +24,7 @@ jobs:
     outputs:
       run-e2e-tests: ${{ steps.detect-changes.outputs.e2e == 'true' || github.event_name == 'push' }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
@@ -45,7 +45,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -81,7 +81,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -138,7 +138,7 @@ jobs:
         if: github.event.pull_request.head.repo.fork == false
 
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -171,7 +171,7 @@ jobs:
         shardTotal: [8]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -425,7 +425,7 @@ jobs:
           repo_secrets: |
             GRAFANA_MISC_STATS_API_KEY=grafana-misc-stats:api_key
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Setup Node.js
