@@ -149,7 +149,7 @@ Use the following options to define the heatmap colors.
 
 #### Steps
 
-Set a value between `1` and `128`.
+Set a value between `2` and `128`.
 
 #### Reverse
 

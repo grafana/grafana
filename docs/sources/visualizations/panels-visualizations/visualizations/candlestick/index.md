@@ -161,7 +161,7 @@ Tooltip options control the information overlay that appears when you hover over
 | [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                        |
 | [Hover proximity](#hover-proximity)     | Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display. |
 | Max width                               | Set the maximum width of the tooltip box.                                                                                      |
-| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                          |
+| Max height                              | Set the maximum height of the tooltip box. If you don't set a value, the tooltip has no height limit.                          |
 
 #### Tooltip mode
 
@@ -177,7 +177,7 @@ Use an override to hide individual series from the tooltip.
 
 When you set the **Tooltip mode** to **All**, the **Values sort order** option is displayed. This option controls the order in which values are listed in a tooltip. Choose from the following:
 
-- **None** - Grafana automatically sorts the values displayed in a tooltip.
+- **None** - Preserves the original field order in the tooltip. No sorting is applied.
 - **Ascending** - Values in the tooltip are listed from smallest to largest.
 - **Descending** - Values in the tooltip are listed from largest to smallest.
 

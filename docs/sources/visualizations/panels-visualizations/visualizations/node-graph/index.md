@@ -73,10 +73,10 @@ Similar to the nodes dataset, the edges dataset needs one unique ID field for ea
 
 #### Example
 
-| id    | source | target | mainstat | seconddarystat | thickness | highlighted | color  |
-| ----- | ------ | ------ | -------- | -------------- | --------- | ----------- | ------ |
-| edge1 | node1  | node2  | TheMain  | TheSub         | 3         | true        | cyan   |
-| edge2 | node3  | node2  | Main2    | Sub2           | 1         | false       | orange |
+| id    | source | target | mainstat | secondarystat | thickness | highlighted | color  |
+| ----- | ------ | ------ | -------- | ------------- | --------- | ----------- | ------ |
+| edge1 | node1  | node2  | TheMain  | TheSub        | 3         | true        | cyan   |
+| edge2 | node3  | node2  | Main2    | Sub2          | 1         | false       | orange |
 
 If a node lacks edge connections, it’s displayed on its own outside of the network.
 
@@ -165,7 +165,7 @@ Use the following options to refine your node graph visualization.
 
 Choose how the node graph should handle zoom and scroll events:
 
-- **Cooperative** - Allows you to scroll the visualization normally.
+- **Cooperative** - Lets you scroll the page normally.
 - **Greedy** - Reacts to all zoom gestures.
 
 #### Layout algorithm
