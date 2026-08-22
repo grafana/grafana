@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { contextSrv } from 'app/core/services/context_srv';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
-import { SYNTHETIC_MONITORING_APP_ID } from './appPluginIds';
+import { SYNTHETIC_MONITORING_APP_ID, SYNTHETIC_MONITORING_CHECKS_WRITE } from './appPluginIds';
 import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
@@ -72,7 +72,7 @@ export function syntheticsSolution(): Solution {
       setupHint: t('home.solutions.synthetics.setup-hint', 'create a check'),
       setupCta: async () => {
         // Hide setup when this user cannot open the destination or create a check there.
-        if (!contextSrv.hasPermission(`${SYNTHETIC_MONITORING_APP_ID}.checks:write`)) {
+        if (!contextSrv.hasPermission(SYNTHETIC_MONITORING_CHECKS_WRITE)) {
           return null;
         }
         const page = await accessibleAppPage(SYNTHETIC_MONITORING_APP_ID, '/checks/choose-type');

@@ -21,7 +21,9 @@ const SM_LOOKBACK = '24h';
 // A check = one (job, instance) pair; sm_check_info has one series per probe location.
 const SM_CHECK_PROBE = `count(count by (job, instance) (last_over_time(sm_check_info[${SM_LOOKBACK}])))`;
 
-// Success ratio below this over the last hour puts a check in the attention group.
+// Success ratio below this over the last hour puts a check in the attention group. The 1h
+// window keeps the alert about current breakage; the stats secondary deliberately reports
+// the 24h fleet ratio instead, matching its "% success · 24h" copy.
 const SM_ATTENTION_RATIO = 0.9;
 const SM_SUCCESS_RATIO_1H =
   'sum by (job, instance) (rate(probe_all_success_sum[1h])) / sum by (job, instance) (rate(probe_all_success_count[1h]))';

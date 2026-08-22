@@ -5,7 +5,12 @@ import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
-import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID, SYNTHETIC_MONITORING_APP_ID } from '../solutions/appPluginIds';
+import {
+  APP_OBSERVABILITY_APP_ID,
+  HOSTED_TRACES_APP_ID,
+  SYNTHETIC_MONITORING_APP_ID,
+  SYNTHETIC_MONITORING_CHECKS_WRITE,
+} from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withTimeout } from '../solutions/probeUtils';
 import { TELEMETRY_SETUP_DOCS, type TelemetryType } from '../solutions/telemetrySetup';
@@ -171,7 +176,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       ),
       action: t('home.recommendations.synthetic-monitoring.action', 'Enable Synthetic Monitoring'),
       setupAction: t('home.recommendations.synthetic-monitoring.setup-action', 'Create your first check'),
-      setupPermission: `${SYNTHETIC_MONITORING_APP_ID}.checks:write`,
+      setupPermission: SYNTHETIC_MONITORING_CHECKS_WRITE,
     }),
   };
 }

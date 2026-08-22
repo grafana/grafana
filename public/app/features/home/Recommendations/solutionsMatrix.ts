@@ -1,7 +1,7 @@
 /**
  * Pure recommendation matrix ("Homepage Led Growth" analytics matrix), scoped to Logs, Traces
- * (Hosted Traces), Kubernetes Monitoring and Application Observability. No I/O: signal
- * detection lives in solutionState.ts.
+ * (Hosted Traces), Kubernetes Monitoring, Application Observability and Synthetic Monitoring.
+ * No I/O: signal detection lives in solutionState.ts.
  */
 
 import { type SolutionState } from '../solutions/solutionState';
