@@ -52,6 +52,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
   basicLogsEnabled?: boolean;
+  auxiliaryLogsEnabled?: boolean;
   batchAPIEnabled?: boolean;
   resourcePath: string;
   declare resourceGroup: string;
@@ -66,6 +67,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
     this.basicLogsEnabled = instanceSettings.jsonData.basicLogsEnabled;
+    this.auxiliaryLogsEnabled = instanceSettings.jsonData.auxiliaryLogsEnabled;
     // Gate on the feature flag so batchAPIEnabled is the single source of truth (callers needn't re-check it).
     // The flag proxy resolves against Grafana's provider, which is initialized before plugins load.
     this.batchAPIEnabled = instanceSettings.jsonData.batchAPIEnabled && isBatchAPIFlagEnabled();

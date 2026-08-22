@@ -32,18 +32,21 @@ import { GroupBySection } from './GroupBySection';
 import KQLPreview from './KQLPreview';
 import { LimitSection } from './LimitSection';
 import { OrderBySection } from './OrderBySection';
-import { TableSection } from './TableSection';
+import { TableSection, type TierAutoSwitchInfo } from './TableSection';
 import { DEFAULT_LOGS_BUILDER_QUERY } from './utils';
+import { type LogTier } from '../LogsQueryEditor/utils';
 
 interface LogsQueryBuilderProps {
   query: AzureMonitorQuery;
   basicLogsEnabled: boolean;
+  auxiliaryLogsEnabled?: boolean;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   schema?: EngineSchema;
   templateVariableOptions: SelectableValue<string>;
   datasource: Datasource;
   timeRange?: TimeRange;
   isLoadingSchema: boolean;
+  onTierAutoSwitch?: (info: TierAutoSwitchInfo) => void;
 }
 
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
@@ -73,6 +76,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       columns,
       from,
       basicLogsQuery,
+      logTier,
     }: {
       limit?: number;
       reduce?: BuilderQueryEditorReduceExpression[];
@@ -83,6 +87,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
       columns?: string[];
       from?: BuilderQueryEditorPropertyExpression;
       basicLogsQuery?: boolean;
+      logTier?: LogTier;
     }) => {
       const datetimeColumn = allColumns.find((col) => col.type === 'datetime')?.name || 'TimeGenerated';
 
@@ -127,6 +132,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
           builderQuery: updatedBuilderQuery,
           query: updatedQueryString,
           basicLogsQuery: from ? basicLogsQuery : query.azureLogAnalytics?.basicLogsQuery,
+          logTier: from ? logTier : query.azureLogAnalytics?.logTier,
         },
       });
     },
