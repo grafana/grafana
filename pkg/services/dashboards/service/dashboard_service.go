@@ -1422,11 +1422,14 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 	}
 
 	// GetFolders return only folders available to user. So we can use is to check access.
+	// Only UID is read below; serve from the search index rather than a
+	// full-object folder list.
 	userDashFolders, err := dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:         folderUIDs,
 		OrgID:        user.GetOrgID(),
 		OrderByTitle: true,
 		SignedInUser: user,
+		MetadataOnly: true,
 	})
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
