@@ -2,26 +2,13 @@ import { render, screen } from '@testing-library/react';
 
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { mockGrafanaPromAlertingRule } from '../mocks';
-import { Annotation } from '../utils/constants';
-
 import AlertRulesToolbarButton from './AlertRulesToolbarButton';
 
 describe('AlertRulesToolbarButton', () => {
   it('shows the button when the dashboard has an alert rule', async () => {
     const getMock = jest.spyOn(backendSrv, 'get').mockResolvedValue({
       data: {
-        groups: [
-          {
-            name: 'group',
-            file: 'folder',
-            rules: [
-              mockGrafanaPromAlertingRule({
-                annotations: { [Annotation.panelID]: '1' },
-              }),
-            ],
-          },
-        ],
+        groups: [{ rules: [{}] }],
       },
     });
 

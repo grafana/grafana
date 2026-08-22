@@ -26,17 +26,10 @@ type AsyncRequestAction<T, ThunkArg> = PayloadAction<
   SerializedError
 >;
 
-type AsyncActionStatus = 'pending' | 'fulfilled' | 'rejected';
+const asyncActionStatuses = ['pending', 'fulfilled', 'rejected'] as const;
 
-function getAsyncActionStatus(typePrefix: string, action: { type: string }): AsyncActionStatus | undefined {
-  const status = action.type.slice(typePrefix.length + 1);
-  if (
-    action.type.startsWith(`${typePrefix}/`) &&
-    (status === 'pending' || status === 'fulfilled' || status === 'rejected')
-  ) {
-    return status;
-  }
-  return undefined;
+function getAsyncActionStatus(typePrefix: string, action: { type: string }) {
+  return asyncActionStatuses.find((status) => action.type === `${typePrefix}/${status}`);
 }
 
 function requestStateReducer<T, ThunkArg>(
@@ -76,7 +69,7 @@ function requestStateReducer<T, ThunkArg>(
   return state;
 }
 
-export function createAsyncSliceForTypePrefix<T, ThunkArg = void>(name: string, typePrefix: string) {
+export function createAsyncSlice<T, ThunkArg = void>(name: string, typePrefix: string) {
   return createSlice({
     name,
     initialState: initialAsyncRequestState as AsyncRequestState<T>,
@@ -88,7 +81,7 @@ export function createAsyncSliceForTypePrefix<T, ThunkArg = void>(name: string, 
   });
 }
 
-export function createAsyncMapSliceForTypePrefix<T, ThunkArg>(
+export function createAsyncMapSlice<T, ThunkArg>(
   name: string,
   typePrefix: string,
   getEntityId: (arg: ThunkArg) => string
