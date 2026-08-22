@@ -7,7 +7,6 @@ export interface AsyncRequestState<T> {
   dispatched: boolean;
   requestId?: string;
 }
-
 export const initialAsyncRequestState: Pick<
   AsyncRequestState<undefined>,
   'loading' | 'dispatched' | 'result' | 'error'
@@ -112,32 +111,4 @@ export function createAsyncMapSliceForTypePrefix<T, ThunkArg>(
         };
       }),
   });
-}
-
-export function isAsyncRequestMapSliceSettled<T>(slice: AsyncRequestMapSlice<T>): boolean {
-  return Object.values(slice).every(isAsyncRequestStateSettled);
-}
-
-function isAsyncRequestStateSettled<T>(state: AsyncRequestState<T>): boolean {
-  return state.dispatched && !state.loading;
-}
-
-function isAsyncRequestStateFulfilled<T>(state: AsyncRequestState<T>): boolean {
-  return state.dispatched && !state.loading && !state.error;
-}
-
-export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>): boolean {
-  return Object.values(slice).some(isAsyncRequestStatePending);
-}
-
-export function isAsyncRequestMapSlicePartiallyDispatched<T>(slice: AsyncRequestMapSlice<T>): boolean {
-  return Object.values(slice).some((state) => state.dispatched);
-}
-
-export function isAsyncRequestMapSlicePartiallyFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
-  return Object.values(slice).some(isAsyncRequestStateFulfilled);
-}
-
-export function isAsyncRequestStatePending<T>(state?: AsyncRequestState<T>): boolean {
-  return Boolean(state?.dispatched && state.loading);
 }

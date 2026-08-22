@@ -1,11 +1,6 @@
 import { type SerializedError } from '@reduxjs/toolkit';
 
-import {
-  createAsyncMapSliceForTypePrefix,
-  createAsyncSliceForTypePrefix,
-  isAsyncRequestMapSlicePartiallyFulfilled,
-  isAsyncRequestMapSlicePending,
-} from './asyncRequestState';
+import { createAsyncMapSliceForTypePrefix, createAsyncSliceForTypePrefix } from './asyncRequestState';
 
 const typePrefix = 'test/request';
 
@@ -80,7 +75,5 @@ describe('async request state reducers', () => {
 
     expect(firstFulfilled.first.result).toBe('result');
     expect(firstFulfilled.second.loading).toBe(true);
-    expect(isAsyncRequestMapSlicePending(firstFulfilled)).toBe(true);
-    expect(isAsyncRequestMapSlicePartiallyFulfilled(firstFulfilled)).toBe(true);
   });
 });

@@ -1,4 +1,4 @@
-import { type AsyncThunk, type SerializedError } from '@reduxjs/toolkit';
+import { type SerializedError } from '@reduxjs/toolkit';
 
 import { AppEvents } from '@grafana/data';
 import { type FetchError, isFetchError } from '@grafana/runtime';
@@ -9,51 +9,13 @@ import { LogMessages, logInfo } from '../Analytics';
 import {
   type AsyncRequestMapSlice as AsyncRequestMapSliceBase,
   type AsyncRequestState as AsyncRequestStateBase,
-  createAsyncMapSliceForTypePrefix,
-  createAsyncSliceForTypePrefix,
   initialAsyncRequestState,
-  isAsyncRequestMapSlicePartiallyDispatched,
-  isAsyncRequestMapSlicePartiallyFulfilled,
-  isAsyncRequestMapSlicePending,
-  isAsyncRequestMapSliceSettled,
-  isAsyncRequestStatePending,
 } from './asyncRequestState';
 import { isErrorLike } from './misc';
 
 export type AsyncRequestMapSlice<T> = AsyncRequestMapSliceBase<T>;
 export type AsyncRequestState<T> = AsyncRequestStateBase<T>;
-export {
-  initialAsyncRequestState,
-  isAsyncRequestMapSlicePartiallyDispatched,
-  isAsyncRequestMapSlicePartiallyFulfilled,
-  isAsyncRequestMapSlicePending,
-  isAsyncRequestMapSliceSettled,
-  isAsyncRequestStatePending,
-};
-
-/*
- * createAsyncSlice creates a slice based on a given async action, exposing its state.
- * takes care to only use state of the latest invocation of the action if there are several in flight.
- */
-export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig extends {} = {}>(
-  name: string,
-  asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>
-) {
-  return createAsyncSliceForTypePrefix<T, ThunkArg>(name, asyncThunk.typePrefix);
-}
-
-/*
- * createAsyncMapSlice creates a slice based on a given async action exposing a map of request states.
- * separate requests are uniquely indentified by result of provided getEntityId function
- * takes care to only use state of the latest invocation of the action if there are several in flight.
- */
-export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig extends {} = {}>(
-  name: string,
-  asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>,
-  getEntityId: (arg: ThunkArg) => string
-) {
-  return createAsyncMapSliceForTypePrefix<T, ThunkArg>(name, asyncThunk.typePrefix, getEntityId);
-}
+export { initialAsyncRequestState };
 
 // rethrow promise error in redux serialized format
 export function withSerializedError<T>(p: Promise<T>): Promise<T> {
@@ -110,4 +72,36 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
   // in this case we want to avoid String(e) printing [object][object]
   logInfo(LogMessages.unknownMessageFromError, { error: JSON.stringify(e) });
   return UNKNOW_ERROR;
+}
+
+export function isAsyncRequestMapSliceSettled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).every(isAsyncRequestStateSettled);
+}
+
+function isAsyncRequestStateSettled<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && !state.loading;
+}
+
+function isAsyncRequestStateFulfilled<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && !state.loading && !state.error;
+}
+
+export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some(isAsyncRequestStatePending);
+}
+
+export function isAsyncRequestMapSlicePartiallyDispatched<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some((state) => state.dispatched);
+}
+
+export function isAsyncRequestMapSlicePartiallyFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some(isAsyncRequestStateFulfilled);
+}
+
+export function isAsyncRequestStatePending<T>(state?: AsyncRequestState<T>): boolean {
+  if (!state) {
+    return false;
+  }
+
+  return state.dispatched && state.loading;
 }

@@ -141,11 +141,22 @@ export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<Pane
   );
 }
 
+const getStyles = (theme: GrafanaTheme2) => ({
+  newButton: css({
+    marginTop: theme.spacing(3),
+  }),
+  noRulesWrapper: css({
+    margin: theme.spacing(2),
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(3),
+  }),
+});
+
 interface PanelDataAlertingTabHeaderProps extends PanelDataTabHeaderProps {
   model: PanelDataAlertingTab;
 }
 
-export function AlertingTab(props: PanelDataAlertingTabHeaderProps) {
+function AlertingTab(props: PanelDataAlertingTabHeaderProps) {
   const { model } = props;
 
   const { rules } = usePanelCombinedRules({
@@ -164,14 +175,3 @@ export function AlertingTab(props: PanelDataAlertingTabHeaderProps) {
     />
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  newButton: css({
-    marginTop: theme.spacing(3),
-  }),
-  noRulesWrapper: css({
-    margin: theme.spacing(2),
-    backgroundColor: theme.colors.background.secondary,
-    padding: theme.spacing(3),
-  }),
-});
