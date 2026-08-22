@@ -2168,6 +2168,8 @@ __metadata:
     "@grafana/ui": "npm:13.3.0-pre"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@openfeature/web-sdk": "npm:^1.8.0"
+    "@rspack/cli": "npm:^2"
+    "@rspack/core": "npm:^2.1.7"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -2191,7 +2193,7 @@ __metadata:
     react-use: "npm:17.6.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:6.0.2"
-    webpack: "npm:^5.105.0"
+    webpack-merge: "npm:6.0.1"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -2211,6 +2213,8 @@ __metadata:
     "@grafana/scenes": "npm:8.13.6"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/ui": "npm:13.3.0-pre"
+    "@rspack/cli": "npm:^2"
+    "@rspack/core": "npm:^2.1.7"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -2235,7 +2239,6 @@ __metadata:
     react-use: "npm:17.6.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:6.0.2"
-    webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -2252,6 +2255,8 @@ __metadata:
     "@grafana/runtime": "npm:13.3.0-pre"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/ui": "npm:13.3.0-pre"
+    "@rspack/cli": "npm:^2"
+    "@rspack/core": "npm:^2.1.7"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -2270,7 +2275,6 @@ __metadata:
     react-use: "npm:17.6.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:6.0.2"
-    webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -2287,6 +2291,8 @@ __metadata:
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/ui": "npm:13.3.0-pre"
     "@reduxjs/toolkit": "npm:2.10.1"
+    "@rspack/cli": "npm:^2"
+    "@rspack/core": "npm:^2.1.7"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
     "@types/jest": "npm:29.5.14"
@@ -2304,7 +2310,6 @@ __metadata:
     rxjs: "npm:7.8.2"
     semver: "npm:7.7.3"
     typescript: "npm:6.0.2"
-    webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -2736,6 +2741,7 @@ __metadata:
   resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
   dependencies:
     "@grafana/tsconfig": "npm:^2.0.0"
+    "@rspack/core": "npm:^2.1.7"
     "@swc/core": "npm:1.13.3"
     "@swc/helpers": "npm:^0.5.0"
     "@swc/jest": "npm:^0.2.26"
@@ -2744,6 +2750,7 @@ __metadata:
     "@types/webpack-bundle-analyzer": "npm:^4.7.0"
     copy-webpack-plugin: "npm:^14.0.0"
     eslint: "npm:9.32.0"
+    eslint-rspack-plugin: "npm:^5"
     eslint-webpack-plugin: "npm:5.0.2"
     fork-ts-checker-webpack-plugin: "npm:9.1.0"
     identity-obj-proxy: "npm:^3.0.0"
@@ -2754,7 +2761,9 @@ __metadata:
     replace-in-file-webpack-plugin: "npm:1.0.6"
     swc-loader: "npm:0.2.6"
     terser-webpack-plugin: "npm:^5.4.0"
+    ts-checker-rspack-plugin: "npm:^1.5.1"
     typescript: "npm:6.0.2"
+    vitest: "npm:^4.1.10"
     webpack: "npm:^5.105.0"
     webpack-bundle-analyzer: "npm:^4.10.2"
     webpack-virtual-modules: "npm:^0.6.2"
