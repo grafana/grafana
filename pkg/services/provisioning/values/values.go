@@ -290,7 +290,15 @@ func interpolateIfaceValue(val string) (interface{}, string, error) {
 	if err != nil {
 		return val, val, fmt.Errorf("failed to interpolate value '%s': %w", val, err)
 	}
-	expandedEnv := os.ExpandEnv(expanded)
+	var expandedEnv string
+	if expanded != val {
+		// ExpandVar resolved a ${VAR}, $__env{}, or $__file{} reference.
+		// The expanded value may contain literal '$' characters (e.g., a
+		// password from a file). Skip os.ExpandEnv to avoid corrupting them.
+		expandedEnv = expanded
+	} else {
+		expandedEnv = os.ExpandEnv(expanded)
+	}
 	if expandedEnv != val {
 		// If the value is an environment variable, consider it may not be a string
 		intV, err := strconv.ParseInt(expandedEnv, 10, 64)
@@ -320,8 +328,14 @@ func interpolateValue(val string) (string, string, error) {
 		if err != nil {
 			return val, val, fmt.Errorf("failed to interpolate value '%s': %w", val, err)
 		}
-		v = expanded
-		interpolated[i] = os.ExpandEnv(v)
+		if expanded != v {
+			// ExpandVar resolved a ${VAR}, $__env{}, or $__file{} reference.
+			// The expanded value may contain literal '$' characters (e.g., a
+			// password from a file). Skip os.ExpandEnv to avoid corrupting them.
+			interpolated[i] = expanded
+		} else {
+			interpolated[i] = os.ExpandEnv(expanded)
+		}
 	}
 	return strings.Join(interpolated, "$"), val, nil
 }
