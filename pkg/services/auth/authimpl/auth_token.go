@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -346,6 +347,16 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		return nil, auth.ErrInvalidSessionToken
 	}
 
+	// Resolve which session this token belongs to before deduplicating concurrent
+	// rotations. Keying the singleflight call by session ID rather than the raw
+	// presented string lets two requests holding different-but-valid tokens for the
+	// same session (the current one and the still-accepted previous one) collapse
+	// into a single rotation and both receive the identical result.
+	initial, err := s.LookupToken(ctx, cmd.UnHashedToken)
+	if err != nil {
+		return nil, err
+	}
+
 	rotate := func(ctx context.Context) (*auth.UserToken, error) {
 		token, err := s.LookupToken(ctx, cmd.UnHashedToken)
 		if err != nil {
@@ -353,8 +364,18 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		}
 		log := s.log.FromContext(ctx).New("tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
 
-		// Avoid multiple instances in HA mode rotating at the same time.
-		if time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
+		cfg, err := s.cfgProvider.Get(ctx)
+		if err != nil {
+			return nil, err
+		}
+		presentedIsCurrent := hashToken(cfg.SecretKey, cmd.UnHashedToken) == token.AuthToken
+
+		// Avoid multiple instances in HA mode rotating at the same time. This only
+		// applies when the presented token is still the current one: if a concurrent
+		// rotation already superseded it (it now only matches as the previous token),
+		// skipping here would hand the caller back a token that's about to be evicted
+		// by the next legitimate rotation, silently stranding it.
+		if presentedIsCurrent && time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
 			log.Debug("Token was last rotated very recently, skipping rotation")
 			span.SetAttributes(attribute.Bool("skipped", true))
 			return token, nil
@@ -377,7 +398,7 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		return newToken, nil
 	}
 
-	res, err, _ := s.singleflight.Do(cmd.UnHashedToken, func() (any, error) {
+	res, err, _ := s.singleflight.Do(strconv.FormatInt(initial.Id, 10), func() (any, error) {
 		dbHelper, err := s.sql(ctx)
 		if err != nil {
 			return nil, err
