@@ -34,6 +34,16 @@ export const QueryOptions = ({
   return (
     <>
       <Toggletip
+        onClose={() => {
+          // Dismissing the toggletip (e.g. a click outside) unmounts its content on the next render.
+          // If the user was mid-edit of a bare-number interval, that value is only committed on blur
+          // (see MinIntervalOption), and this unmount can otherwise race ahead of the native blur event
+          // and discard it. Blurring here runs synchronously, before the unmount, so the pending value
+          // is committed first.
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+        }}
         content={
           <div className={styles.queryOptions}>
             {onChangeTimeRange && (
