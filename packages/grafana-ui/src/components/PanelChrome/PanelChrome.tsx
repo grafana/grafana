@@ -223,6 +223,7 @@ export function PanelChrome({
   const headerStyles: CSSProperties = {
     cursor: dragClass ? 'move' : 'auto',
     paddingBottom: subHeaderHeight ? 0 : theme.spacing.gridSize,
+    height: subHeaderHeight ? undefined : theme.spacing.gridSize * theme.components.panel.headerHeight,
   };
 
   const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height, minHeight };
@@ -576,14 +577,14 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '.show-on-hover': {
         opacity: '0',
-        visibility: 'hidden',
+        display: 'none',
       },
 
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
           opacity: '1',
-          visibility: 'visible',
+          display: 'inline-flex',
         },
       },
 
@@ -592,7 +593,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       // The not:(:focus) clause is so that this rule is only applied when decendants are focused (important otherwise the hover header is visible when panel is clicked).
       '&:focus-within:not(:focus)': {
         '.show-on-hover': {
-          visibility: 'visible',
+          display: 'inline-flex',
           opacity: '1',
         },
       },
@@ -691,10 +692,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     menuItem: css({
       label: 'panel-menu',
       border: 'none',
-      background: theme.colors.secondary.main,
-      '&:hover': {
-        background: theme.colors.secondary.shade,
-      },
     }),
     errorContainerFloating: css({
       label: 'error-container',
