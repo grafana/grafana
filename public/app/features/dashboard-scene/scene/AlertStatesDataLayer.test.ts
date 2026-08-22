@@ -1,5 +1,5 @@
 import { DataFrameView, DataTopic, type AlertStateInfo, AlertState, LoadingState } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   grantUserPermissions,
   mockGrafanaPromAlertingRule,
@@ -12,6 +12,12 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { AlertStatesDataLayer } from './AlertStatesDataLayer';
 
+const mockGet = jest.fn();
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({ get: mockGet }),
+}));
+
 jest.mock('../utils/utils', () => ({
   ...jest.requireActual('../utils/utils'),
   getDashboardSceneFor: () => ({ state: { uid: 'a uid' } }),
@@ -21,8 +27,7 @@ function getTestContext() {
   jest.clearAllMocks();
   config.publicDashboardAccessToken = '';
   grantUserPermissions(Object.values(AccessControlAction));
-  const getMock = jest.spyOn(getBackendSrv(), 'get');
-  return { getMock };
+  return { getMock: mockGet };
 }
 
 describe('AlertStatesDataLayer', () => {
