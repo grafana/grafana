@@ -352,6 +352,11 @@ export function vizPanelToSchemaV2(
       ? sceneGraph.interpolate(vizPanel, vizPanel.state.description)
       : (vizPanel.state.description ?? '');
 
+  const subtitle =
+    bakeRepeatValues && vizPanel.state.subtitle
+      ? sceneGraph.interpolate(vizPanel, vizPanel.state.subtitle, undefined, 'text')
+      : undefined;
+
   const elementSpec: PanelKind = {
     kind: 'Panel',
     spec: {
@@ -360,6 +365,7 @@ export function vizPanelToSchemaV2(
         : getPanelIdForVizPanel(vizPanel),
       title,
       description,
+      subtitle,
       links: getPanelLinks(vizPanel),
       transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
       data: {
