@@ -49,16 +49,16 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
   let i = 0,
     j = timeValues.length - 1;
 
-  while (i <= j && allValuesNullAtIndex(i)) {
+  while (i <= j && (timeValues[i] == null || allValuesNullAtIndex(i))) {
     i++;
   }
 
-  while (j >= 0 && allValuesNullAtIndex(j)) {
+  while (j >= 0 && (timeValues[j] == null || allValuesNullAtIndex(j))) {
     j--;
   }
 
-  // never found any non null values
-  if (allValuesNullAtIndex(i) || allValuesNullAtIndex(j)) {
+  // never found any valid points with non-null time and value
+  if (i > j || timeValues[i] == null || timeValues[j] == null) {
     return null;
   }
 

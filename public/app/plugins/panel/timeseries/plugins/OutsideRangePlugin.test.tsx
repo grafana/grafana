@@ -195,5 +195,38 @@ describe('OutsideRangePlugin', () => {
       applyScale([[1, 2, 3]], { x: { time: true, min: 2000, max: 3000 } });
       expect(container).toBeEmptyDOMElement();
     });
+
+    it('handles null time cells and zooms to valid data points', async () => {
+      const onChangeTimeRange = jest.fn();
+      const { getByText } = renderPlugin(onChangeTimeRange);
+
+      applyScale(
+        [
+          [null as unknown as number, 1000, 2000, 3000, null as unknown as number],
+          [10, 20, 30, 40, 50],
+        ],
+        { x: { time: true, min: 4000, max: 5000 } }
+      );
+
+      expect(getByText('Data outside time range')).toBeInTheDocument();
+
+      const button = getByText('Zoom to data');
+      await userEvent.click(button);
+      expect(onChangeTimeRange).toHaveBeenCalledWith({ from: 1000, to: 3000 });
+    });
+
+    it('does not render when all time cells are null', () => {
+      const { container } = renderPlugin();
+
+      applyScale(
+        [
+          [null as unknown as number, null as unknown as number],
+          [1, 2],
+        ],
+        { x: { time: true, min: 4000, max: 5000 } }
+      );
+
+      expect(container).toBeEmptyDOMElement();
+    });
   });
 });
