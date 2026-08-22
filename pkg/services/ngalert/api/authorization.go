@@ -351,7 +351,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		)
 
 	// Grafana-only Provisioning Export Paths for contact points.
-	case http.MethodGet + "/api/v1/provisioning/contact-points/export":
+	case http.MethodGet + "/api/v1/provisioning/contact-points/export",
+		http.MethodPost + "/api/v1/provisioning/contact-points/modify-export":
 		perms := []ac.Evaluator{
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),             // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),              // organization scope
