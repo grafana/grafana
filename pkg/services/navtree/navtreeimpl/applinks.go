@@ -568,6 +568,21 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Img:   s.cfg.AppSubURL + plugin.Info.Logos.Large,
 				IsNew: true,
 			})
+		case navtree.NavIDCfgDatabases:
+			// Nests under Administration rather than the tree root, unlike the cases above.
+			cfgNode := treeRoot.FindById(navtree.NavIDCfg)
+			if cfgNode == nil {
+				s.log.Error("Administration nav node not found", "pluginId", plugin.ID, "navId", sectionID)
+				break
+			}
+			cfgNode.Children = append(cfgNode.Children, &navtree.NavLink{
+				Text:     "Database configurations",
+				Id:       navtree.NavIDCfgDatabases,
+				SubTitle: "Manage settings for your observability databases",
+				Icon:     "shield",
+				Children: sectionChildren,
+				Url:      s.cfg.AppSubURL + "/admin/databases",
+			})
 		default:
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
 		}
@@ -616,6 +631,8 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "AI", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
+		"grafana-dbcfg-app":                {SectionID: navtree.NavIDCfgDatabases, SortWeight: 1},
+		"grafana-dbselfserve-app":          {SectionID: navtree.NavIDCfgDatabases, SortWeight: 2},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},
 		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 2},
 		"grafana-adaptivetraces-app":       {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 3},
