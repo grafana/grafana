@@ -1,4 +1,4 @@
-import { Parser } from '../parser';
+import { Parser, renderAstNode } from '../parser';
 
 describe('when parsing', () => {
   it('simple metric expression', () => {
@@ -247,5 +247,99 @@ describe('when parsing', () => {
       expect(rootNode.segments[2].value).toBe('123');
       expect(rootNode.segments[3].value).toBe('5');
     }
+  });
+
+  it('rewrites a single piped function into the equivalent nested function', () => {
+    const parser = new Parser('devices.air_temperature | scale(1.8)');
+    const rootNode = parser.getAst();
+
+    expect(parser.hasPipe).toBe(true);
+    expect(rootNode?.type).toBe('function');
+    expect(rootNode?.name).toBe('scale');
+    expect(rootNode?.params?.length).toBe(2);
+    expect(rootNode?.params?.[0].type).toBe('metric');
+    expect(rootNode?.params?.[1].type).toBe('number');
+    expect(rootNode?.params?.[1].value).toBe(1.8);
+  });
+
+  it('rewrites a chain of piped functions into nested functions', () => {
+    const parser = new Parser('devices.air_temperature | scale(1.8) | offset(32)');
+    const rootNode = parser.getAst();
+
+    // devices.air_temperature | scale(1.8) | offset(32) === offset(scale(devices.air_temperature, 1.8), 32)
+    expect(parser.hasPipe).toBe(true);
+    expect(rootNode?.type).toBe('function');
+    expect(rootNode?.name).toBe('offset');
+    expect(rootNode?.params?.[1].value).toBe(32);
+
+    const inner = rootNode?.params?.[0];
+    expect(inner?.type).toBe('function');
+    expect(inner?.name).toBe('scale');
+    expect(inner?.params?.[0].type).toBe('metric');
+    expect(inner?.params?.[1].value).toBe(1.8);
+  });
+
+  it('supports piping the result of a function into another function', () => {
+    const parser = new Parser('sumSeries(devices.*) | scale(2)');
+    const rootNode = parser.getAst();
+
+    expect(rootNode?.type).toBe('function');
+    expect(rootNode?.name).toBe('scale');
+    expect(rootNode?.params?.[0].type).toBe('function');
+    expect(rootNode?.params?.[0].name).toBe('sumSeries');
+  });
+
+  it('errors when a pipe is not followed by a function', () => {
+    const parser = new Parser('devices.air_temperature | ');
+    const rootNode = parser.getAst();
+
+    expect(rootNode?.type).toBe('error');
+  });
+
+  // Pipes are only folded at the top level of an expression. A pipe inside function
+  // arguments is not supported, and the resulting parser error is what makes the query
+  // editor fall back to the text editor instead of dropping the piped function.
+  it('errors when a pipe is used inside function arguments', () => {
+    const parser = new Parser('sumSeries(devices.air_temperature | scale(2))');
+    const rootNode = parser.getAst();
+
+    expect(rootNode?.type).toBe('error');
+  });
+
+  // `|` is no longer an identifier character, so a metric path containing a literal pipe
+  // no longer lexes as a single segment and is reported as an error instead.
+  it('errors when a metric segment contains a literal pipe', () => {
+    const parser = new Parser('devices.air|temperature');
+    const rootNode = parser.getAst();
+
+    expect(rootNode?.type).toBe('error');
+  });
+
+  it('does not set hasPipe for plain nested functions', () => {
+    const parser = new Parser('offset(scale(devices.air_temperature, 1.8), 32)');
+    parser.getAst();
+
+    expect(parser.hasPipe).toBe(false);
+  });
+});
+
+describe('when rendering an AST back into a query', () => {
+  it('renders a piped query as its nested equivalent', () => {
+    const rootNode = new Parser('devices.air_temperature | scale(1.8) | offset(32)').getAst();
+
+    expect(rootNode && renderAstNode(rootNode)).toBe('offset(scale(devices.air_temperature, 1.8), 32)');
+  });
+
+  it('round-trips a nested query with string, bool and series ref params', () => {
+    const query = "alias(timeShift(#A, '-1min', true), '-1min')";
+    const rootNode = new Parser(query).getAst();
+
+    expect(rootNode && renderAstNode(rootNode)).toBe(query);
+  });
+
+  it('throws for nodes it cannot render', () => {
+    expect(() => renderAstNode({ type: 'error', message: 'Expected metric identifier' })).toThrow(
+      'Cannot render query node of type error'
+    );
   });
 });
