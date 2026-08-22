@@ -117,4 +117,26 @@ describe('TimeSeriesTooltip time comparison (#126189)', () => {
     expect(screen.getByText('CPU')).toBeInTheDocument();
     expect(screen.getByText('CPU (comparison)')).toBeInTheDocument();
   });
+
+  it('still renders the header timestamp when the first series is hidden (#109913)', () => {
+    // makeSeries with two value fields builds a 3-field frame: [time, CPU, Memory].
+    // dataIdxs is per-field; a null entry means that field has no hovered value.
+    // When the time/x field (index 0) and the first value series (index 1) have no
+    // hovered value but the second series (index 2) does, the header timestamp must
+    // still be derived from the remaining non-null dataIdx.
+    render(
+      <TimeSeriesTooltip
+        series={makeSeries({ displayName: 'CPU' }, { displayName: 'Memory' })}
+        dataIdxs={[null, null, 0]}
+        seriesIdx={2}
+        mode={TooltipDisplayMode.Multi}
+        sortOrder={SortOrder.None}
+        isPinned={false}
+        dataLinks={[]}
+      />
+    );
+
+    expect(screen.getByText(`T${ALIGNED_TIME}`)).toBeInTheDocument();
+    expect(screen.getByText('Memory')).toBeInTheDocument();
+  });
 });
