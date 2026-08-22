@@ -65,7 +65,7 @@ describe('BarGaugePanel', () => {
 
       const { rerender } = render(<BarGaugePanel {...panelData} />);
       expect(screen.queryByText(/100/)).toBeInTheDocument();
-      expect(screen.queryByText(/firstbarpanel/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/firstbarpanel/i)).toBeInTheDocument();
       expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
 
       rerender(
@@ -199,19 +199,61 @@ describe('BarGaugePanel', () => {
   });
 
   describe('single series', () => {
-    it('hides the series name when there is a single unnamed series', () => {
-      const panelData = buildPanelData({
-        data: {
-          series: [toDataFrame({ target: 'onlySeries', datapoints: [[100, 1000]] })],
-          timeRange: createTimeRange(),
-          state: LoadingState.Done,
-        },
-      });
+    function dataWithOneSeries() {
+      return {
+        series: [toDataFrame({ target: 'onlySeries', datapoints: [[100, 1000]] })],
+        timeRange: createTimeRange(),
+        state: LoadingState.Done,
+      };
+    }
+
+    it.each([VizOrientation.Horizontal, VizOrientation.Vertical])(
+      'shows the series name for a single series with the automatic placement when %s',
+      (orientation) => {
+        const panelData = buildPanelData({ data: dataWithOneSeries() });
+        panelData.options.namePlacement = BarGaugeNamePlacement.Auto;
+        panelData.options.orientation = orientation;
+
+        render(<BarGaugePanel {...panelData} />);
+
+        expect(screen.getByText(/onlyseries/i)).toBeVisible();
+        expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
+      }
+    );
+
+    it.each([BarGaugeNamePlacement.Top, BarGaugeNamePlacement.Left])(
+      'shows the name of a single unnamed series when the placement is %s',
+      (namePlacement) => {
+        const panelData = buildPanelData({ data: dataWithOneSeries() });
+        panelData.options.namePlacement = namePlacement;
+
+        render(<BarGaugePanel {...panelData} />);
+
+        expect(screen.getByText(/onlyseries/i)).toBeVisible();
+        expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
+      }
+    );
+
+    it('hides the series name for a single series when the placement is hidden', () => {
+      const panelData = buildPanelData({ data: dataWithOneSeries() });
+      panelData.options.namePlacement = BarGaugeNamePlacement.Hidden;
 
       render(<BarGaugePanel {...panelData} />);
 
-      expect(screen.queryByText(/onlyseries/i)).not.toBeInTheDocument();
+      // The name stays in the DOM, hidden by the styles getTitleStyles applies.
+      expect(screen.getByText(/onlyseries/i)).not.toBeVisible();
       expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
+    });
+
+    it('shows the name of a single series when a display name is configured', () => {
+      const panelData = buildPanelData({ data: dataWithOneSeries() });
+      panelData.fieldConfig.defaults.displayName = 'configuredName';
+
+      render(<BarGaugePanel {...panelData} />);
+
+      // The configured name is applied to fields by applyFieldOverrides, which runs in the
+      // panel data pipeline rather than here, so the rendered name is still the field name.
+      expect(screen.getByText(/onlyseries/i)).toBeInTheDocument();
     });
   });
 });

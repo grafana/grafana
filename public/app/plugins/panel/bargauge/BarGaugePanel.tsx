@@ -3,9 +3,7 @@ import { type JSX } from 'react';
 
 import {
   type DisplayProcessor,
-  type DisplayValue,
   type DisplayValueAlignmentFactors,
-  type FieldConfig,
   type FieldDisplay,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
@@ -50,7 +48,7 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
 
     return (
       <BarGauge
-        value={clearNameForSingleSeries(count, fieldConfig.defaults, display)}
+        value={display}
         width={width}
         height={height}
         orientation={orientation}
@@ -169,15 +167,4 @@ export function getLegend(options: Options, data: BarGaugePanelProps['data']) {
   }
 
   return null;
-}
-
-function clearNameForSingleSeries(count: number, field: FieldConfig, display: DisplayValue): DisplayValue {
-  if (count === 1 && !field.displayName) {
-    return {
-      ...display,
-      title: undefined,
-    };
-  }
-
-  return display;
 }
