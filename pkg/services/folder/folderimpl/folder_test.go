@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -31,6 +33,16 @@ func TestMain(m *testing.M) {
 
 var orgID = int64(1)
 var noPermUsr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+
+type contextCapturingStore struct {
+	folder.Store
+	ctx context.Context
+}
+
+func (s *contextCapturingStore) GetFolders(ctx context.Context, _ folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
+	s.ctx = ctx
+	return nil, nil
+}
 
 func TestSupportBundle(t *testing.T) {
 	f := func(uid, parent string) *folder.Folder { return &folder.Folder{UID: uid, ParentUID: parent} }
@@ -95,6 +107,26 @@ func TestSupportBundle(t *testing.T) {
 		}
 	}
 }
+
+func TestSupportBundleCollectorUsesServiceIdentity(t *testing.T) {
+	store := &contextCapturingStore{}
+	svc := &Service{
+		log:          slog.Default(),
+		tracer:       noop.NewTracerProvider().Tracer("test"),
+		unifiedStore: store,
+	}
+
+	_, err := svc.supportBundleCollector().Fn(context.Background())
+	require.NoError(t, err)
+
+	requester, err := identity.GetRequester(store.ctx)
+	require.NoError(t, err)
+	require.True(t, identity.IsServiceIdentity(store.ctx))
+	require.True(t, requester.IsIdentityType(claims.TypeAccessPolicy))
+	require.Equal(t, int64(0), requester.GetOrgID())
+	require.Equal(t, "service", requester.GetLogin())
+}
+
 func TestSplitFullpath(t *testing.T) {
 	tests := []struct {
 		name     string
