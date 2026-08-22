@@ -268,6 +268,16 @@ describe('processNodes', () => {
 
     expect(() => processNodes(nodesFrame, undefined)).toThrow(/fixedX/);
   });
+
+  it('throws a helpful error if an edge references a node that is not in the nodes frame', () => {
+    expect(() =>
+      processNodes(makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: 'no-such-node' }]))
+    ).toThrow(/no-such-node/);
+
+    expect(() =>
+      processNodes(makeNodesDataFrame(2), makeEdgesDataFrame([{ source: 'no-such-node', target: '1' }]))
+    ).toThrow(/no-such-node/);
+  });
 });
 
 describe('finds connections', () => {
