@@ -7,32 +7,35 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 
-import { loadDashboards } from './utils';
+import {
+  isValidInterval,
+  loadDashboards,
+  normalizeDashboardViewQueryString,
+  PLAYLIST_RUNTIME_QUERY_PARAMS,
+} from './utils';
 
-const queryParamsToPreserve: { [key: string]: boolean } = {
-  kiosk: true,
-  autofitpanels: true,
-  orgId: true,
-  hideLogo: true,
-  '_dash.hideTimePicker': true,
-  '_dash.hideVariables': true,
-  '_dash.hideLinks': true,
-  '_dash.hidePlaylistNav': true,
-};
+// Fallback used when even the global interval is unparseable. Matches the '5m' form default.
+const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
 
 export interface PlaylistSrvState {
   isPlaying: boolean;
 }
 
+interface PlaylistEntry {
+  url: string;
+  interval: number;
+  queryString?: string;
+}
+
 export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   private nextTimeoutId: ReturnType<typeof setTimeout> | undefined;
-  private urls: string[] = []; // the URLs we need to load
+  private entries: PlaylistEntry[] = [];
   private index = 0;
-  declare private interval: number;
   declare private startUrl: string;
   private numberOfLoops = 0;
   declare private validPlaylistUrl: string;
   private locationListenerUnsub?: () => void;
+  private startRequestId = 0;
 
   public constructor() {
     super({ isPlaying: false });
@@ -40,17 +43,29 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     this.locationUpdated = this.locationUpdated.bind(this);
   }
 
+  // Parse an interval string to ms, falling back when it's empty or unparseable.
+  private toIntervalMs(value: string | undefined, fallback: number): number {
+    return value && isValidInterval(value) ? rangeUtil.intervalToMs(value) : fallback;
+  }
+
   private navigateToDashboard(replaceHistoryEntry = false) {
-    const url = this.urls[this.index];
+    const entry = this.entries[this.index];
     const queryParams = locationService.getSearchObject();
-    const filteredParams = pickBy(queryParams, (value: unknown, key: string) => queryParamsToPreserve[key]);
-    const nextDashboardUrl = locationUtil.stripBaseFromUrl(url);
+    const filteredParams = pickBy(queryParams, (value: unknown, key: string) => PLAYLIST_RUNTIME_QUERY_PARAMS.has(key));
+    const strippedUrl = locationUtil.stripBaseFromUrl(entry.url);
+    const queryStart = strippedUrl.indexOf('?');
+    const nextDashboardUrl = queryStart === -1 ? strippedUrl : strippedUrl.slice(0, queryStart);
+    const dashboardParams = queryStart === -1 ? {} : urlUtil.parseKeyValue(strippedUrl.slice(queryStart + 1));
 
     this.index++;
     this.validPlaylistUrl = nextDashboardUrl;
-    this.nextTimeoutId = setTimeout(() => this.next(), this.interval);
+    this.nextTimeoutId = setTimeout(() => this.next(), entry.interval);
 
-    const urlWithParams = nextDashboardUrl + '?' + urlUtil.toUrlParams(filteredParams);
+    const urlWithParams = urlUtil.renderUrl(nextDashboardUrl, {
+      ...dashboardParams,
+      ...urlUtil.parseKeyValue(normalizeDashboardViewQueryString(entry.queryString) ?? ''),
+      ...filteredParams,
+    });
 
     // When starting the playlist from the PlaylistStartPage component using the playlist URL, we want to replace the
     // history entry to support the back button
@@ -65,7 +80,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   next() {
     clearTimeout(this.nextTimeoutId);
 
-    const playedAllDashboards = this.index > this.urls.length - 1;
+    const playedAllDashboards = this.index > this.entries.length - 1;
     if (playedAllDashboards) {
       this.numberOfLoops++;
 
@@ -94,62 +109,85 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   }
 
   async start(playlist: Playlist) {
-    this.stop();
+    const requestId = ++this.startRequestId;
 
-    this.startUrl = window.location.href;
-    this.index = 0;
-
-    this.setState({ isPlaying: true });
-
-    // setup location tracking
-    this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
-    const urls: string[] = [];
-
+    // Do all async work up front, before touching any instance state. This means an early return
+    // can never leave the service half-playing, and the synchronous tail below can't interleave
+    // with a concurrent start() (PlaylistStartPage calls start() during render).
     if (!playlist.spec?.items?.length) {
       // alert
       return;
     }
 
-    this.interval = rangeUtil.intervalToMs(playlist.spec?.interval);
+    // Global interval used as the fallback for items that don't define their own. Parsing is
+    // guarded so an unparseable value (e.g. from a hand-edited or provisioned playlist) can't throw.
+    const globalInterval = this.toIntervalMs(playlist.spec.interval, DEFAULT_INTERVAL_MS);
 
-    const items = await loadDashboards(playlist.spec?.items);
+    let items;
+    try {
+      items = await loadDashboards(playlist.spec.items);
+    } catch {
+      // Could not resolve the dashboards; nothing to play.
+      return;
+    }
+
+    if (requestId !== this.startRequestId) {
+      return;
+    }
+
+    const entries: PlaylistEntry[] = [];
     for (const item of items) {
       if (item.dashboards) {
+        // A tag item can expand to several dashboards; they all share the item's interval.
+        // An invalid per-item interval falls back to the global one.
+        const interval = this.toIntervalMs(item.interval, globalInterval);
         for (const dash of item.dashboards) {
-          urls.push(dash.url);
+          entries.push({ url: dash.url, interval, queryString: item.dashboardView?.queryString });
         }
       }
     }
 
-    if (!urls.length) {
+    if (!entries.length) {
       // alert... not found, etc
       return;
     }
 
-    this.urls = urls;
+    // Synchronous from here on: tear down any previous run, then set up this one. With no await in
+    // this tail, an overlapping start() can't interleave — the later one's stop() cleans up the
+    // earlier, so there's always exactly one playback with one listener/timeout.
+    this.stopPlayback();
+    this.startUrl = window.location.href;
+    this.index = 0;
+    this.entries = entries;
     this.setState({ isPlaying: true });
+    this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
 
     // Replace current history entry with first dashboard instead of pushing
     // this is to avoid the back button to go back to the playlist start page which causes a redirection
     this.navigateToDashboard(true);
-    return;
   }
 
   stop() {
+    this.startRequestId++;
+    this.stopPlayback();
+  }
+
+  private stopPlayback() {
     if (!this.state.isPlaying) {
       return;
     }
 
     this.index = 0;
-
     this.setState({ isPlaying: false });
 
     if (this.locationListenerUnsub) {
       this.locationListenerUnsub();
+      this.locationListenerUnsub = undefined;
     }
 
     if (this.nextTimeoutId) {
       clearTimeout(this.nextTimeoutId);
+      this.nextTimeoutId = undefined;
     }
 
     if (locationService.getSearchObject().kiosk) {
