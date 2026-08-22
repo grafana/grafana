@@ -1,4 +1,5 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext } from 'react';
+import { useAsync } from 'react-use';
 
 import { t } from '@grafana/i18n';
 import { ModalsContext, ToolbarButton } from '@grafana/ui';
@@ -11,27 +12,8 @@ interface AlertRulesToolbarButtonProps {
 
 export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesToolbarButtonProps) {
   const { showModal, hideModal } = useContext(ModalsContext);
-  const [hasAlertRules, setHasAlertRules] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    loadDashboardAlertRuleGroups(dashboardUid)
-      .then((groups) => {
-        if (!cancelled) {
-          setHasAlertRules(groups.some((group) => group.rules.length > 0));
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setHasAlertRules(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [dashboardUid]);
+  const { value: groups = [] } = useAsync(() => loadDashboardAlertRuleGroups(dashboardUid), [dashboardUid]);
+  const hasAlertRules = groups.some((group) => group.rules.length > 0);
 
   if (!hasAlertRules) {
     return null;

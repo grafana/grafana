@@ -6,16 +6,10 @@ import { appEvents } from 'app/core/app_events';
 
 import { LogMessages, logInfo } from '../Analytics';
 
-import {
-  type AsyncRequestMapSlice as AsyncRequestMapSliceBase,
-  type AsyncRequestState as AsyncRequestStateBase,
-  initialAsyncRequestState,
-} from './asyncRequestState';
 import { isErrorLike } from './misc';
 
-export type AsyncRequestMapSlice<T> = AsyncRequestMapSliceBase<T>;
-export type AsyncRequestState<T> = AsyncRequestStateBase<T>;
-export { initialAsyncRequestState };
+export { initialAsyncRequestState } from './asyncRequestState';
+export type { AsyncRequestMapSlice, AsyncRequestState } from './asyncRequestState';
 
 // rethrow promise error in redux serialized format
 export function withSerializedError<T>(p: Promise<T>): Promise<T> {

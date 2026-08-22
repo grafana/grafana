@@ -43,9 +43,9 @@ export const fetchPromRulesAction = createAsyncThunk(
     },
     thunkAPI
   ): Promise<RuleNamespace[]> => {
-    const fetchRulesWithLogging = withPromRulesMetadataLogging(alertingActionTypePrefix.fetchPromRules, fetchRules, {
+    const fetchRulesWithLogging = withPromRulesMetadataLogging('unifiedalerting/fetchPromRules', fetchRules, {
       dataSourceName: rulesSourceName,
-      thunk: alertingActionTypePrefix.fetchPromRules,
+      thunk: 'unifiedalerting/fetchPromRules',
     });
 
     return await withSerializedError(
@@ -75,11 +75,11 @@ export const fetchRulerRulesAction = createAsyncThunk(
     }
 
     const fetchRulerRulesWithLogging = withRulerRulesMetadataLogging(
-      alertingActionTypePrefix.fetchRulerRules,
+      'unifiedalerting/fetchRulerRules',
       fetchRulerRules,
       {
         dataSourceName: rulesSourceName,
-        thunk: alertingActionTypePrefix.fetchRulerRules,
+        thunk: 'unifiedalerting/fetchRulerRules',
       }
     );
 

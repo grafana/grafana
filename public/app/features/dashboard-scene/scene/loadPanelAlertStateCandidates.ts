@@ -16,11 +16,9 @@ export interface PanelAlertStateCandidate {
 }
 
 export async function loadDashboardAlertRuleGroups(dashboardUid: string): Promise<PromRuleGroupDTO[]> {
-  const searchParams = new URLSearchParams({ dashboard_uid: dashboardUid });
-  const response = await getBackendSrv().get<PromRulesResponse>(
-    GRAFANA_PROMETHEUS_RULES_URL,
-    Object.fromEntries(searchParams)
-  );
+  const response = await getBackendSrv().get<PromRulesResponse>(GRAFANA_PROMETHEUS_RULES_URL, {
+    dashboard_uid: dashboardUid,
+  });
 
   return response.data.groups;
 }

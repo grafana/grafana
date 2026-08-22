@@ -152,7 +152,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(3),
   }),
 });
-
 interface PanelDataAlertingTabHeaderProps extends PanelDataTabHeaderProps {
   model: PanelDataAlertingTab;
 }
