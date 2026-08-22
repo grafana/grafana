@@ -1857,6 +1857,63 @@ func TestApplyChanges_SortsFolderUpdatesShallowestFirst(t *testing.T) {
 	}, callOrder)
 }
 
+func TestCollectFolderMoves(t *testing.T) {
+	changes := []ResourceFileChange{
+		// Real stable-UID moves: the old path (Existing.Path) differs from the new
+		// path (Path). augmentChangesForFolderMoves produces these.
+		{Action: repository.FileActionUpdated, Path: "new-parent/", Existing: &provisioning.ResourceListItem{Name: "parent-uid", Path: "old-parent/"}},
+		{Action: repository.FileActionUpdated, Path: "new-parent/new-child/", Existing: &provisioning.ResourceListItem{Name: "child-uid", Path: "old-parent/old-child/"}},
+		// Same-path metadata update (title/hash change or child reparenting) —
+		// excluded: it still needs WithForceWalk but is not a relocation.
+		{Action: repository.FileActionUpdated, Path: "same/", Existing: &provisioning.ResourceListItem{Name: "same-uid", Path: "same/"}},
+		// Same path modulo a trailing slash — excluded after normalization.
+		{Action: repository.FileActionUpdated, Path: "sibling/", Existing: &provisioning.ResourceListItem{Name: "sibling-uid", Path: "sibling"}},
+		// Update without an old path — excluded: cannot prove a move.
+		{Action: repository.FileActionUpdated, Path: "no-old-path/", Existing: &provisioning.ResourceListItem{Name: "no-old-path-uid", Path: ""}},
+		// FolderRenamed (the UID itself changed) — excluded: the old UID is not relocating.
+		{Action: repository.FileActionUpdated, Path: "renamed/", FolderRenamed: true, Existing: &provisioning.ResourceListItem{Name: "old-renamed-uid", Path: "old-renamed/"}},
+		// A plain created folder — excluded.
+		{Action: repository.FileActionCreated, Path: "created/", Existing: &provisioning.ResourceListItem{Name: "created-uid", Path: "old-created/"}},
+		// Update without an existing name — excluded.
+		{Action: repository.FileActionUpdated, Path: "noname/", Existing: &provisioning.ResourceListItem{Name: "", Path: "old-noname/"}},
+	}
+
+	moves := collectFolderMoves(changes)
+	require.ElementsMatch(t, []folderMove{
+		{Path: "new-parent/", UID: "parent-uid"},
+		{Path: "new-parent/new-child/", UID: "child-uid"},
+	}, moves)
+}
+
+func TestRelocatingFoldersForPath(t *testing.T) {
+	moves := []folderMove{
+		{Path: "new-parent/", UID: "parent-uid"},
+		{Path: "new-parent/new-child/", UID: "child-uid"},
+		{Path: "sibling/", UID: "sibling-uid"},
+	}
+
+	// Ensuring the child exempts the child and its relocating ancestor, but never
+	// an unrelated sibling relocation. Each match keeps its own destination path so
+	// the caller can bind the exemption to that exact path.
+	require.ElementsMatch(t, []folderMove{
+		{Path: "new-parent/", UID: "parent-uid"},
+		{Path: "new-parent/new-child/", UID: "child-uid"},
+	}, relocatingFoldersForPath("new-parent/new-child/", moves))
+
+	// Ensuring the parent exempts only the parent — its descendant is not an ancestor.
+	require.ElementsMatch(t, []folderMove{
+		{Path: "new-parent/", UID: "parent-uid"},
+	}, relocatingFoldersForPath("new-parent/", moves))
+
+	// Trailing-slash differences on the query path are normalized.
+	require.ElementsMatch(t, []folderMove{
+		{Path: "new-parent/", UID: "parent-uid"},
+	}, relocatingFoldersForPath("new-parent", moves))
+
+	// A path with no relocating ancestors gets nothing.
+	require.Empty(t, relocatingFoldersForPath("unrelated/", moves))
+}
+
 func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 	// When multiple folders have OldFolderUID, deeper paths must be deleted first.
 	repoResources := resources.NewMockRepositoryResources(t)
