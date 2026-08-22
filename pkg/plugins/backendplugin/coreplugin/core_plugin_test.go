@@ -4,17 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 )
 
 func TestCorePlugin(t *testing.T) {
 	t.Run("New core plugin with empty opts should return expected values", func(t *testing.T) {
-		factory := New(backend.ServeOpts{})
+		factory := New(backend.ServeOpts{}, nil)
 		p, err := factory("plugin", log.New("test"), pluginfakes.InitializeNoopTracerForTest(), nil)
 		require.NoError(t, err)
 		require.NotNil(t, p)
@@ -31,6 +32,25 @@ func TestCorePlugin(t *testing.T) {
 
 		err = p.CallResource(context.Background(), nil, nil)
 		require.Equal(t, plugins.ErrMethodNotImplemented, err)
+
+		pluginV3, ok := p.(backendplugin.PluginV3)
+		require.True(t, ok)
+		clientV3, ok := pluginV3.ClientV3(context.Background())
+		require.False(t, ok)
+		require.Nil(t, clientV3)
+	})
+
+	t.Run("New core plugin with a V3 client should expose it", func(t *testing.T) {
+		expected := &fakeClientV3{}
+		factory := New(backend.ServeOpts{}, expected)
+		p, err := factory("plugin", log.New("test"), pluginfakes.InitializeNoopTracerForTest(), nil)
+		require.NoError(t, err)
+
+		pluginV3, ok := p.(backendplugin.PluginV3)
+		require.True(t, ok)
+		actual, ok := pluginV3.ClientV3(context.Background())
+		require.True(t, ok)
+		require.Same(t, expected, actual)
 	})
 
 	t.Run("New core plugin with handlers set in opts should return expected values", func(t *testing.T) {
@@ -47,7 +67,7 @@ func TestCorePlugin(t *testing.T) {
 				callResourceCalled = true
 				return nil
 			}),
-		})
+		}, nil)
 		p, err := factory("plugin", log.New("test"), pluginfakes.InitializeNoopTracerForTest(), nil)
 		require.NoError(t, err)
 		require.NotNil(t, p)
@@ -67,4 +87,10 @@ func TestCorePlugin(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, callResourceCalled)
 	})
+}
+
+type fakeClientV3 struct{}
+
+func (*fakeClientV3) IsHealthy(context.Context) error {
+	return nil
 }

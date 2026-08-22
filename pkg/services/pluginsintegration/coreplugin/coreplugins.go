@@ -11,11 +11,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdklog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	sdktracing "github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -119,10 +119,15 @@ func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 		opts.AdmissionHandler = storageHandler
 	}
 
+	clientV3, ok := svc.(v3.ClientV3)
+	if !ok {
+		clientV3 = nil
+	}
+
 	if opts.QueryDataHandler != nil || opts.QueryChunkedDataHandler != nil ||
 		opts.CheckHealthHandler != nil || opts.StreamHandler != nil ||
-		opts.CallResourceHandler != nil {
-		return coreplugin.New(opts)
+		opts.CallResourceHandler != nil || clientV3 != nil {
+		return coreplugin.New(opts, clientV3)
 	}
 
 	return nil
