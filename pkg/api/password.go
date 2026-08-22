@@ -19,6 +19,10 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusUnauthorized, "Not allowed to reset password when login form is disabled", nil)
 	}
 
+	if hs.Cfg.DisableForgotPassword {
+		return response.Error(http.StatusUnauthorized, "Not allowed to reset password when password reset is disabled", nil)
+	}
+
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxPreAuthFormBodySize)
 
 	form := dtos.SendResetPasswordEmailForm{}
@@ -59,6 +63,10 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 	if hs.Cfg.DisableLoginForm || hs.Cfg.DisableLogin {
 		return response.Error(http.StatusUnauthorized,
 			"Not allowed to reset password when grafana authentication is disabled", nil)
+	}
+
+	if hs.Cfg.DisableForgotPassword {
+		return response.Error(http.StatusUnauthorized, "Not allowed to reset password when password reset is disabled", nil)
 	}
 
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxPreAuthFormBodySize)
