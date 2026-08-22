@@ -47,7 +47,7 @@ func TestStore_ReplaceReportsDiff(t *testing.T) {
 	assert.ElementsMatch(t, []string{"a", "c"}, storeNames(s.List(ctx)))
 }
 
-// Update and Delete are the write-throughs that keep the store warm between
+// Update and DeleteAt are the write-throughs that keep the store warm between
 // re-lists; List reflects them immediately.
 func TestStore_WriteThrough(t *testing.T) {
 	s := NewStore()
@@ -57,7 +57,7 @@ func TestStore_WriteThrough(t *testing.T) {
 	s.Update(ctx, obj("b"))
 	assert.ElementsMatch(t, []string{"a", "b"}, storeNames(s.List(ctx)))
 
-	s.Delete(ctx, testNamespace, "a")
+	s.DeleteAt(ctx, testNamespace, "a", 1)
 	assert.Equal(t, []string{"b"}, storeNames(s.List(ctx)))
 }
 
@@ -114,21 +114,6 @@ func TestStore_ReplaceSuppressesResurrectionOfLiveDeleted(t *testing.T) {
 	assert.Equal(t, []string{"x"}, storeNames(added), "a re-create after the tombstone is spent is a real add")
 }
 
-// A reader's Delete (a NotFound it cannot date) records no tombstone, so it does
-// not suppress a re-list that legitimately lists the object — only the informer's
-// version-dated DeleteAt guards against resurrection.
-func TestStore_ReaderDeleteLeavesNoTombstone(t *testing.T) {
-	s := NewStore()
-	ctx := context.Background()
-	s.Replace([]runtime.Object{objRV("a", 100)}, 100)
-
-	s.Delete(ctx, testNamespace, "a")
-	assert.Empty(t, storeNames(s.List(ctx)))
-
-	added, _, _ := s.Replace([]runtime.Object{objRV("a", 100)}, 150)
-	assert.Equal(t, []string{"a"}, storeNames(added), "a reader delete must not suppress a legitimate re-list")
-}
-
 // A non-positive listRV disables RV reconciliation and does a plain wholesale
 // swap, as documented: an object the snapshot omits is removed even though its
 // cached RV is positive (an older server or unparseable list metadata must not
@@ -152,4 +137,23 @@ func TestStore_ZeroListRVDoesWholesaleSwap(t *testing.T) {
 
 func TestStore_ListEmpty(t *testing.T) {
 	assert.Empty(t, NewStore().List(context.Background()))
+}
+
+// A write-through Update concurrent with a re-list Replace must be safe: the
+// informer replaces on its own goroutine while controller workers write reads
+// through. Run with -race to make a violation fail.
+func TestStore_ConcurrentReplaceAndUpdate(t *testing.T) {
+	s := NewStore()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 200; i++ {
+			s.Update(context.Background(), obj("written-through"))
+		}
+	}()
+	for i := 0; i < 200; i++ {
+		s.Replace([]runtime.Object{obj("a"), obj("b")}, 0)
+	}
+	<-done
+	assert.NotEmpty(t, s.List(context.Background()))
 }

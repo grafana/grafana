@@ -126,7 +126,10 @@ func newJobProcessor(
 
 // processKey claims the job namespace/name and drives it to completion.
 // Returns ErrAlreadyClaimed or a NotFound API error when the job is not ours
-// to process; both mean the key can be dropped. trigger records what enqueued
+// to process. ErrAlreadyClaimed means the key can be dropped; a NotFound is
+// ambiguous under the NATS informer — genuinely gone, or announced but not yet
+// visible to this read path — and the caller disambiguates it against the
+// freshness floor. trigger records what enqueued
 // the key so the start of processing can be attributed to a live event, a
 // re-list, or the initial list. enqueuedAt is when the key joined the work
 // queue, used to record how late the event arrived once the claim confirms this

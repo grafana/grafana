@@ -20,7 +20,14 @@ import (
 // job controller reads no lister, so callers need only the DeltaSource. Either
 // source reports its event deliveries on the informer delivery metrics,
 // registered on reg (nil disables them).
-func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) DeltaSource {
+//
+// Under NATS it also returns the freshness floor the informer maintains, so the
+// job driver can tell a claim 404 caused by read-visibility lag (the create was
+// announced, the read path has not caught up) from a job that is genuinely
+// gone. The apiserver informer needs no floor — its events carry the objects it
+// caches — so that branch returns nil and the driver's 404 handling stays
+// trusting.
+func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) (DeltaSource, *usinformer.RVFloor) {
 	metrics := newInformerMetrics(reg)
 	resourceName := provisioningapis.JobResourceInfo.GroupVersionResource().Resource
 	if nats.Enabled(subscriber) {
@@ -33,13 +40,15 @@ func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, r
 		// live-event latency is lost until the subscription opens.
 		jobInformer.AllowDegradedStart()
 		jobInformer.SetMetrics(newNATSRecorder(metrics, resourceName))
-		return jobInformer
+		floor := usinformer.NewRVFloor()
+		jobInformer.TrackFloor(floor)
+		return jobInformer, floor
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Jobs().Informer()
 	// One metering handler observes each delivery once, however many controller
 	// handlers register. AddEventHandler cannot fail on a not-yet-started informer.
 	_, _ = inf.AddEventHandler(apiServerMeter{metrics: metrics, resourceName: resourceName})
-	return inf
+	return inf, nil
 }
 
 // NewJobInformer builds an Informer for jobs. onRequest, when non-nil, is called
