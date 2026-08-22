@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
@@ -76,19 +75,6 @@ func TestSpanContextFromHeaders(t *testing.T) {
 		req.Header.Set("traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
 
 		sc := spanContextFromHeadersWithPropagator(req, propagation.TraceContext{})
-
-		require.True(t, sc.IsValid())
-		assert.Equal(t, "4bf92f3577b34da6a3ce929d0e0e4736", sc.TraceID().String())
-		assert.Equal(t, "00f067aa0ba902b7", sc.SpanID().String())
-	})
-
-	t.Run("should extract traceID when Jaeger uber-trace-id header is present", func(t *testing.T) {
-		t.Parallel()
-
-		req := httptest.NewRequest(http.MethodGet, "/test", nil)
-		req.Header.Set("uber-trace-id", "4bf92f3577b34da6a3ce929d0e0e4736:00f067aa0ba902b7:0:1")
-
-		sc := spanContextFromHeadersWithPropagator(req, jaegerpropagator.Jaeger{})
 
 		require.True(t, sc.IsValid())
 		assert.Equal(t, "4bf92f3577b34da6a3ce929d0e0e4736", sc.TraceID().String())

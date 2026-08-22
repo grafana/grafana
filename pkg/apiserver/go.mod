@@ -8,7 +8,6 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.56.7
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/stretchr/testify v1.12.0
-	go.opentelemetry.io/contrib/propagators/jaeger v1.45.0
 	go.opentelemetry.io/otel v1.45.0
 	go.opentelemetry.io/otel/sdk v1.45.0
 	go.opentelemetry.io/otel/trace v1.45.0

@@ -77,3 +77,9 @@ func TestStart(t *testing.T) {
 		require.True(t, childSpan.SpanContext().IsValid())
 	})
 }
+
+func TestInitializeTracerForTestDoesNotPanicWithJaegerPropagation(t *testing.T) {
+	require.NotPanics(t, func() {
+		require.NotNil(t, InitializeTracerForTest())
+	})
+}
