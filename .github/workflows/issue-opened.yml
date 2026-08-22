@@ -98,7 +98,7 @@ jobs:
 
       - name: "Send Slack notification"
         if: ${{ steps.auto_triage.outputs.triage_labels != '' }}
-        uses: slackapi/slack-github-action@37ebaef184d7626c5f204ab8d3baff4262dd30f0 # v1.27.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
           payload: >
             {
@@ -219,7 +219,7 @@ jobs:
 
       - name: "Send Slack notification"
         if: ${{ steps.auto_triage.outputs.triage_labels != '' }}
-        uses: slackapi/slack-github-action@37ebaef184d7626c5f204ab8d3baff4262dd30f0 # v1.27.0
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
           payload: >
             {
