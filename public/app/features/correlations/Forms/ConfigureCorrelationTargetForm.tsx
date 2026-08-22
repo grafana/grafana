@@ -1,10 +1,22 @@
 import { css } from '@emotion/css';
+import { type ChangeEvent, useState } from 'react';
 import { Controller, type FieldError, useFormContext, useWatch } from 'react-hook-form';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2, type CorrelationQueryTimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type CorrelationExternal } from '@grafana/runtime';
-import { Field, FieldSet, Input, Select, useStyles2 } from '@grafana/ui';
+import {
+  Field,
+  FieldSet,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  Input,
+  Label,
+  RelativeTimeRangePicker,
+  Select,
+  useStyles2,
+} from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { type CorrelationType } from '../types';
@@ -12,6 +24,7 @@ import { type CorrelationType } from '../types';
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
 import { assertIsQueryTypeError, type FormDTO } from './types';
+import { getQuickOptionsForCorrelation } from './utils';
 
 type CorrelationTypeOptions = {
   value: CorrelationType;
@@ -41,6 +54,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
 export const ConfigureCorrelationTargetForm = () => {
   const {
     control,
+    register,
+    setValue,
     formState: { errors },
   } = useFormContext<FormDTO>();
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
@@ -48,7 +63,16 @@ export const ConfigureCorrelationTargetForm = () => {
   const targetUIDFromCorrelation = correlation && 'targetUID' in correlation ? correlation.targetUID : undefined;
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || targetUIDFromCorrelation;
   const correlationType: CorrelationType | undefined = useWatch({ name: 'type' }) || correlation?.type;
+  const timeRange: CorrelationQueryTimeRange | undefined =
+    useWatch({ name: 'config.timeRange' }) ||
+    (correlation?.type === 'query' ? correlation?.config?.timeRange : undefined);
   const styles = useStyles2(getStyles);
+  // this is just used by the UI to show/hide the timerange fields that will save with data and is not mapped to the saved object.
+  const [enableTimeRange, setEnableTimeRange] = useState(
+    timeRange?.field !== undefined || timeRange?.range !== undefined
+  );
+
+  const LABEL_WIDTH = 10;
 
   return (
     <>
@@ -67,6 +91,7 @@ export const ConfigureCorrelationTargetForm = () => {
           }}
           render={({ field: { onChange, value, ...field } }) => (
             <Field
+              noMargin={false}
               label={t('correlations.target-form.type-label', 'Type')}
               description={t('correlations.target-form.target-type-description', 'Specify the type of correlation')}
               htmlFor="corrType"
@@ -104,6 +129,7 @@ export const ConfigureCorrelationTargetForm = () => {
                   }}
                   render={({ field: { onChange, value } }) => (
                     <Field
+                      noMargin={false}
                       label={t('correlations.target-form.target-label', 'Target')}
                       description={t(
                         'correlations.target-form.target-description-query',
@@ -135,6 +161,77 @@ export const ConfigureCorrelationTargetForm = () => {
                       : 'Error'
                   }
                 />
+
+                <Label
+                  description={t(
+                    'correlations.target-form.target-time-range-description',
+                    'Use a custom time range window when running this query. If not specified, the time range will be the same as the source query.'
+                  )}
+                >
+                  {t('correlations.target-form.target-time-range-label', 'Custom Time Range')}
+                </Label>
+                <InlineFieldRow>
+                  <InlineField
+                    htmlFor="timerange-enable"
+                    labelWidth={LABEL_WIDTH}
+                    label={t('correlations.target-form.target-time-range-enable', 'Enable')}
+                  >
+                    <InlineSwitch
+                      id="timerange-enable"
+                      value={enableTimeRange}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                        // if we uncheck enable, clear prior values
+                        if (!e.target.checked) {
+                          setValue('config.timeRange.field', undefined);
+                          setValue('config.timeRange.range', undefined);
+                        }
+                        setEnableTimeRange(e.target.checked);
+                      }}
+                    />
+                  </InlineField>
+                </InlineFieldRow>
+                {enableTimeRange && (
+                  <>
+                    <InlineFieldRow>
+                      <InlineField
+                        labelWidth={LABEL_WIDTH}
+                        label={t('correlations.target-form.target-time-range-field-label', 'Field')}
+                        tooltip={t(
+                          'correlations.target-form.target-time-range-field-tooltip',
+                          'Specify a field to use as the base for the range offsets. If not specified while a custom range is specified, the base will be the current time.'
+                        )}
+                        htmlFor="timerange-field"
+                      >
+                        <Input id="timerange-field" {...register('config.timeRange.field')} />
+                      </InlineField>
+                    </InlineFieldRow>
+                    <InlineFieldRow>
+                      <InlineField
+                        labelWidth={LABEL_WIDTH}
+                        label={t('correlations.target-form.target-time-range-range-label', 'Range')}
+                        tooltip={t(
+                          'correlations.target-form.target-time-range-range-tooltip',
+                          'Specify the offset to use against the range. If not specified while a custom field is specified, the range will be ± 1 hour'
+                        )}
+                      >
+                        <Controller
+                          control={control}
+                          name="config.timeRange.range"
+                          render={({ field: { onChange, value } }) => (
+                            <RelativeTimeRangePicker
+                              timeRange={{ from: value?.from ?? 3600, to: value?.to ?? -3600 }}
+                              onChange={(e) => {
+                                onChange(e);
+                              }}
+                              customQuickOptions={getQuickOptionsForCorrelation()}
+                              isRelativeToNow={false}
+                            />
+                          )}
+                        />
+                      </InlineField>
+                    </InlineFieldRow>
+                  </>
+                )}
               </>
             );
           })()}
@@ -153,6 +250,7 @@ export const ConfigureCorrelationTargetForm = () => {
                 const castVal = value as CorrelationExternal['config']['target']; // the target under "query" type can contain anything a datasource query contains
                 return (
                   <Field
+                    noMargin={false}
                     label={t('correlations.target-form.target-label', 'Target')}
                     description={t(
                       'correlations.target-form.target-description-external',

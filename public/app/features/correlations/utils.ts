@@ -74,6 +74,7 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
             origin: DataLinkConfigOrigin.Correlations,
             meta: {
               transformations: correlation.config.transformations,
+              timeRange: correlation.config.timeRange,
             },
           });
         } else if (correlation.type === 'external') {
@@ -179,6 +180,17 @@ export const generatePartialEditSpec = (data: EditFormDTO, correlation: Correlat
       return { expression: t.expression, field: t.field, mapValue: t.mapValue, type: t.type };
     });
   }
+  if (
+    data.type === 'query' &&
+    correlation.type === 'query' &&
+    !isEqual(data.config.timeRange, correlation.config.timeRange)
+  ) {
+    if (data.config.timeRange?.field !== undefined || data.config.timeRange?.range !== undefined) {
+      partialSpec.config.timeRange = { ...data.config.timeRange };
+    } else {
+      partialSpec.config.timeRange = null;
+    }
+  }
   return partialSpec;
 };
 
@@ -198,6 +210,7 @@ export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> =
     config: {
       field: data.config.field,
       target: { ...data.config.target },
+      timeRange: data.type === 'query' ? { ...data.config.timeRange } : undefined,
       transformations: data.config.transformations,
     },
   };

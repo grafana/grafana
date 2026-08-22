@@ -1,17 +1,22 @@
 import { type RelativeTimeRange, type TimeOption } from '@grafana/data';
 
-const regex = /^now$|^now(\-|\+)(\d{1,10})([wdhms])$/;
+const getRegex = (relativeToNow = true) => {
+  return relativeToNow ? /^now$|^now(\-|\+)(\d{1,10})([wdhms])$/ : /^field$|^field(\-|\+)(\d{1,10})([wdhms])$/;
+};
 
-export const mapOptionToRelativeTimeRange = (option: TimeOption): RelativeTimeRange | undefined => {
+export const mapOptionToRelativeTimeRange = (
+  option: TimeOption,
+  isRelativeToNow = true
+): RelativeTimeRange | undefined => {
   return {
-    from: relativeToSeconds(option.from),
-    to: relativeToSeconds(option.to),
+    from: relativeToSeconds(option.from, isRelativeToNow),
+    to: relativeToSeconds(option.to, isRelativeToNow),
   };
 };
 
-export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOption => {
-  const from = secondsToRelativeFormat(range.from);
-  const to = secondsToRelativeFormat(range.to);
+export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange, isRelativeToNow = true): TimeOption => {
+  const from = secondsToRelativeFormat(range.from, isRelativeToNow);
+  const to = secondsToRelativeFormat(range.to, isRelativeToNow);
 
   return { from, to, display: `${from} to ${to}` };
 };
@@ -21,8 +26,8 @@ export type RangeValidation = {
   errorMessage?: string;
 };
 
-export const isRangeValid = (relative: string, now = Date.now()): RangeValidation => {
-  if (!isRelativeFormat(relative)) {
+export const isRangeValid = (relative: string, now = Date.now(), isRelativeToNow = true): RangeValidation => {
+  if (!isRelativeFormat(relative, isRelativeToNow)) {
     return {
       isValid: false,
       errorMessage: 'Value not in relative time format.',
@@ -41,12 +46,12 @@ export const isRangeValid = (relative: string, now = Date.now()): RangeValidatio
   return { isValid: true };
 };
 
-export const isRelativeFormat = (format: string): boolean => {
-  return regex.test(format);
+export const isRelativeFormat = (format: string, isRelativeToNow = true): boolean => {
+  return getRegex(isRelativeToNow).test(format);
 };
 
-const relativeToSeconds = (relative: string): number => {
-  const match = regex.exec(relative);
+const relativeToSeconds = (relative: string, isRelativeToNow = true): number => {
+  const match = getRegex(isRelativeToNow).exec(relative);
 
   if (!match || match.length !== 4) {
     return 0;
@@ -71,17 +76,18 @@ const units: Record<string, number> = {
   s: 1,
 };
 
-const secondsToRelativeFormat = (seconds: number): string => {
+const secondsToRelativeFormat = (seconds: number, isRelativeToNow = true): string => {
+  const baseTime = isRelativeToNow ? 'now' : 'field';
   if (seconds === 0) {
-    return 'now';
+    return baseTime;
   }
 
   const absoluteSeconds = Math.abs(seconds);
   if (seconds < 0) {
-    return `now+${formatDuration(absoluteSeconds)}`;
+    return `${baseTime}+${formatDuration(absoluteSeconds)}`;
   }
 
-  return `now-${formatDuration(absoluteSeconds)}`;
+  return `${baseTime}-${formatDuration(absoluteSeconds)}`;
 };
 
 /**
