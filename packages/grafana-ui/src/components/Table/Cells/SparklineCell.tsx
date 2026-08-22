@@ -19,6 +19,7 @@ import {
   type TableSparklineCellOptions,
   TableCellDisplayMode,
   VisibilityMode,
+  TableSparklineColorMode,
 } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
@@ -26,6 +27,7 @@ import { measureText } from '../../../utils/measureText';
 import { FormattedValueDisplay } from '../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../Sparkline/Sparkline';
 import { getAlignmentFactor, getCellOptions } from '../cellUtils';
+import { getSparklineColor } from '../sparklineColor';
 import { type TableCellProps } from '../types';
 
 export const defaultSparklineCellConfig: TableSparklineCellOptions = {
@@ -39,6 +41,7 @@ export const defaultSparklineCellConfig: TableSparklineCellOptions = {
   barAlignment: BarAlignment.Center,
   showPoints: VisibilityMode.Never,
   hideValue: false,
+  sparklineColorMode: TableSparklineColorMode.Field,
 };
 
 export const SparklineCell = (props: TableCellProps) => {
@@ -77,7 +80,7 @@ export const SparklineCell = (props: TableCellProps) => {
   const cellOptions = getTableSparklineCellOptions(field);
 
   const config: FieldConfig<GraphFieldConfig> = {
-    color: field.config.color,
+    color: getSparklineColor(field, cell.row.index, props.frame, cellOptions, tableStyles.theme),
     thresholds: field.config.thresholds,
     custom: {
       ...defaultSparklineCellConfig,

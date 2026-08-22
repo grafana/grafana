@@ -1,6 +1,7 @@
 import { merge } from 'lodash';
 import { useState } from 'react';
 
+import { type StandardEditorContext } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type TableCellOptions } from '@grafana/schema';
 import { Combobox, type ComboboxOption, Field, Stack, TableCellDisplayMode } from '@grafana/ui';
@@ -10,22 +11,25 @@ import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOpt
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
 import { MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
+import { type Options } from './panelcfg.gen';
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
 // be a discriminated interface of TableCellOptions
 export interface TableCellEditorProps<T> {
   cellOptions: T;
+  context?: StandardEditorContext<Options>;
   onChange: (value: T) => void;
 }
 
 interface Props {
   value: TableCellOptions;
   onChange: (v: TableCellOptions) => void;
+  context?: StandardEditorContext<Options>;
   id?: string;
 }
 
-export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
+export const TableCellOptionEditor = ({ value, onChange, context, id }: Props) => {
   const cellType = value.type;
   const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
     { value: TableCellDisplayMode.Auto, label: t('table.cell-types.auto', 'Auto') },
@@ -85,7 +89,7 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
         <ColorBackgroundCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
       {cellType === TableCellDisplayMode.Sparkline && (
-        <SparklineCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+        <SparklineCellOptionsEditor cellOptions={value} context={context} onChange={onCellOptionsChange} />
       )}
       {cellType === TableCellDisplayMode.Image && (
         <ImageCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />

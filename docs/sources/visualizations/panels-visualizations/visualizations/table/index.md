@@ -404,6 +404,7 @@ This cell type shows values rendered as a sparkline.
 To show sparklines on data with multiple time series, use the [Time series to table transformation](ref:time-series-to-table-transformation) to process it into a format the table can show.
 
 You can color sparklines using thresholds by setting the field's color scheme to **From thresholds (by value)** in the [standard color scheme options](ref:color-scheme), using an override, and setting **Gradient mode** to **Scheme**. When thresholds are defined, the sparkline automatically reflects threshold levels along the line.
+You can also set **Sparkline color mode** to **By field value** and select a **Sparkline color field** to derive each row's sparkline color from another field in the same row. Rows with the same source value use the same palette color.
 
 ![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
@@ -414,6 +415,8 @@ For more detailed information about all of the sparkline styling options (except
 | Option              | Description                                                                |
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | Hide value          | Toggle the switch on or off to display or hide the cell value on the sparkline. |
+| Sparkline color mode | Choose whether the sparkline uses the configured **Field color** or derives a palette color **By field value** from another field in the same row. |
+| Sparkline color field | Select the field used to assign row-based sparkline colors when **Sparkline color mode** is set to **By field value**. |
 | Style               | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. You can use overrides to combine multiple styles in the same graph. |
 | Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |
 | Line width          | The thickness of the series lines or the outline for bars using the **Line width** slider. |
