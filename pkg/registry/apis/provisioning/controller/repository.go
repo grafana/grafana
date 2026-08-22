@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"slices"
 	"sync"
 	"time"
 
@@ -672,7 +674,7 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 }
 
 //nolint:gocyclo
-func (rc *RepositoryController) process(key string) error {
+func (rc *RepositoryController) process(key string) (err error) {
 	logger := rc.logger.With("key", key)
 	ctx := logging.Context(context.Background(), logger)
 
@@ -737,6 +739,31 @@ func (rc *RepositoryController) process(key string) error {
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	var patchOperations []map[string]interface{}
 
+	// applyPatches flushes any patches not yet written
+	applyPatches := func() error {
+		if len(patchOperations) == 0 {
+			return err
+		}
+		ops := patchOperations
+		patchOperations = nil
+		if patchErr := rc.statusPatcher.Patch(ctx, obj, ops...); patchErr != nil {
+			patchErr = fmt.Errorf("status patch operations failed: %w", patchErr)
+			if err == nil {
+				err = patchErr
+			} else {
+				err = errors.Join(patchErr, err)
+			}
+			return err
+		}
+		return err
+	}
+	defer func() {
+		err = applyPatches()
+		if err != nil {
+			logger.Error("failed to apply patches", "error", err)
+		}
+	}()
+
 	hasQuotaChanged := obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
 		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository
 
@@ -773,16 +800,6 @@ func (rc *RepositoryController) process(key string) error {
 	default:
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
 		return nil
-	}
-
-	// In any case - repo blocked, repo unblocked, or simply spec has changed - we need to
-	// update the observedGeneration to alight with the given metadata.generation.
-	if hasSpecChanged {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/observedGeneration",
-			"value": obj.Generation,
-		})
 	}
 
 	// Set quota information from configuration (only if changed)
@@ -861,29 +878,6 @@ func (rc *RepositoryController) process(key string) error {
 		}
 	}
 
-	// Handle hooks - may return early if hooks fail
-	hookOps, shouldContinue, err := rc.processHooks(ctx, repo, obj)
-	if err != nil {
-		return fmt.Errorf("process hooks: %w", err)
-	}
-	if !shouldContinue {
-		return nil // Hook handling already updated status and returned early
-	}
-	if len(hookOps) > 0 {
-		patchOperations = append(patchOperations, hookOps...)
-	}
-
-	// Rotate webhook secret if due.
-	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateWebhookSecret {
-		rotateOps, err := rotateWebhookSecret(ctx, webhookRepo)
-		if err != nil {
-			logger.Warn("webhook secret rotation failed", "error", err)
-		}
-		if len(rotateOps) > 0 {
-			patchOperations = append(patchOperations, rotateOps...)
-		}
-	}
-
 	// If branch is empty, fetch and set the default branch before running health check
 	if branchHandler, ok := repo.(repository.BranchHandler); ok {
 		if branchHandler.GetCurrentBranch() == "" {
@@ -928,13 +922,18 @@ func (rc *RepositoryController) process(key string) error {
 		)
 	}
 
-	// Handle health checks using the health checker
+	// Run before processHooks to avoid attempting to hit webhooks if repo is already known to be unhealthy
 	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
 	}
 	testResults := healthResult.TestResults
 	healthStatus := healthResult.HealthStatus
+	// Captured before the over-quota override status below. We only block hooks being run if the repo is unreachable.
+	// Also not every failed Test() means unreachable: e.g. branch protection blocking direct pushes is
+	// reported. Hooks should still be able to run so a reachability-specific read of the test result is used
+	// instead of the raw Success flag.
+	reachable := isReachableTestResult(testResults)
 
 	// If over quota, override health to unhealthy.
 	if isOverQuota {
@@ -944,6 +943,8 @@ func (rc *RepositoryController) process(key string) error {
 			Checked: time.Now().UnixMilli(),
 			Message: []string{quotaCondition.Message},
 		}
+
+		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, provisioning.ReasonQuotaExceeded)
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/health",
@@ -953,6 +954,38 @@ func (rc *RepositoryController) process(key string) error {
 		patchOperations = append(patchOperations, healthResult.PatchOps...)
 	}
 
+	hookOps, hookFailureStatus, hooksSuppressed, hookErr := rc.processHooks(ctx, repo, obj, reachable, shouldRotateWebhookSecret)
+	if len(hookOps) > 0 {
+		patchOperations = append(patchOperations, hookOps...)
+	}
+	if hookFailureStatus != nil {
+		healthStatus = *hookFailureStatus
+		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, classifyHookFailureReason(hookErr))
+	}
+	if hookErr != nil {
+		if rc.isUserCaused(hookErr) {
+			logger.Warn("repository hook failed with a user-facing error", "error", hookErr)
+		} else {
+			err = fmt.Errorf("process hooks: %w", hookErr)
+		}
+	}
+
+	// Only mark this generation observed once hook processing wasn't suppressed
+	// for being unreachable or in cooldown, AND didn't itself fail. processHooks
+	// reports suppressed=false on a genuine runHooks failure (hooks were
+	// attempted, not skipped), so hookErr must be checked separately here --
+	// otherwise a failed webhook create/update/delete would still advance
+	// observedGeneration, and since retries after this point only trigger on a
+	// generation mismatch or a missing webhook, that failure would never be
+	// retried once cooldown ends.
+	if hasSpecChanged && hookErr == nil && !hooksSuppressed {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/observedGeneration",
+			"value": obj.Generation,
+		})
+	}
+
 	// Build ALL condition patches together to avoid one overwriting another.
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
 		obj.Status.Conditions, obj.GetGeneration(), quotaCondition, healthResult.ReadyCondition,
@@ -960,17 +993,22 @@ func (rc *RepositoryController) process(key string) error {
 		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
 
-	// Update fieldErrors from test results - always update to ensure fieldErrors are cleared when there are no errors
+	// Only update fieldErrors from test results if they have changed.
+	// Updating patchOperations will bump the resourceVersion on every pass, which the
+	// informer's UpdateFunc turns straight back into a re-enqueue and we will
+	// immediately check for repoHealth
 	if testResults != nil {
 		fieldErrors := testResults.Errors
 		if fieldErrors == nil {
 			fieldErrors = []provisioning.ErrorDetails{}
 		}
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/fieldErrors",
-			"value": fieldErrors,
-		})
+		if !slices.Equal(obj.Status.FieldErrors, fieldErrors) {
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/fieldErrors",
+				"value": fieldErrors,
+			})
+		}
 	}
 
 	// determine the sync strategy and sync status to apply
@@ -978,11 +1016,9 @@ func (rc *RepositoryController) process(key string) error {
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
 
 	// Apply all patch operations
-	if len(patchOperations) > 0 {
-		err := rc.statusPatcher.Patch(ctx, obj, patchOperations...)
-		if err != nil {
-			return fmt.Errorf("status patch operations failed: %w", err)
-		}
+	err = applyPatches()
+	if err != nil {
+		return err
 	}
 
 	// QUESTION: should we trigger the sync job after we have applied all patch operations or before?
@@ -997,41 +1033,54 @@ func (rc *RepositoryController) process(key string) error {
 	return nil
 }
 
-// processHooks handles hook execution with intelligent retry logic
-// Returns hook operations, whether processing should continue, and any error
-func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) (hookOps []map[string]interface{}, shouldContinue bool, err error) {
+// processHooks handles hook execution with intelligent retry logic. `suppressed`
+// reports whether there was hook work to do (generation changed or webhook
+// missing) that got skipped this pass due to cooldown/repo unreachability, as
+// opposed to there being genuinely nothing to do — the caller uses this to
+// decide whether it's safe to advance observedGeneration.
+func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository, repoHealthy bool, shouldRotateSecret bool) (hookOps []map[string]interface{}, failureStatus *provisioning.HealthStatus, suppressed bool, err error) {
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
 		repository.GetID(obj.Status.Webhook).IsEmpty()
 
 	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
+	hasWebhookToManage := len(obj.Spec.Workflows) > 0 || !repository.GetID(obj.Status.Webhook).IsEmpty()
 
-	// Suppress the hook retry while the hook-failure cooldown is active. If the
-	// spec no longer expects a webhook, the cooldown does not apply: we let the
-	// hook handler run (so it can clean up any previously-created webhook) and
-	// do not block recovery from a stale HealthFailureHook on the next
-	// reconcile.
-	if shouldRunHooks && rc.healthChecker.inHookFailureCooldown(obj) {
+	// Suppress the hook retry while the hook-failure cooldown is active, or while
+	// the repository just failed its health check (it's known unreachable, so any
+	// create/update/delete call against it is doomed).
+	if shouldRunHooks && hasWebhookToManage && (rc.healthChecker.inHookFailureCooldown(obj) || !repoHealthy) {
 		shouldRunHooks = false
+		suppressed = true
 	}
 
-	if !shouldRunHooks {
-		return nil, true, nil
-	}
-
-	hookOps, err = rc.runHooks(ctx, repo, obj)
-	if err != nil {
-		if err := rc.healthChecker.RecordFailure(ctx, provisioning.HealthFailureHook, err, obj); err != nil {
-			return nil, false, fmt.Errorf("update status after hook failure: %w", err)
+	if shouldRunHooks {
+		hookOps, err = rc.runHooks(ctx, repo, obj)
+		if err != nil {
+			status := rc.healthChecker.recordFailure(provisioning.HealthFailureHook, err)
+			hookOps = append(hookOps, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/health",
+				"value": status,
+			})
+			return hookOps, &status, false, err
 		}
-
-		if rc.isUserCaused(err) {
-			logging.FromContext(ctx).Warn("repository hook failed with a user-facing error", "error", err)
-			return nil, false, nil
-		}
-		return nil, false, err
 	}
 
-	return hookOps, true, nil
+	// Rotate the webhook secret if due. Skipped if unhealthy since EditWebhook
+	// would be an equally doomed call against an unreachable repository, and
+	// skipped during the hook-failure cooldown too: repoHealthy alone doesn't
+	// catch this window, since a skipped health check reads as reachable.
+	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateSecret && repoHealthy && !rc.healthChecker.inHookFailureCooldown(obj) {
+		rotateOps, rotateErr := rotateWebhookSecret(ctx, webhookRepo)
+		if rotateErr != nil {
+			logging.FromContext(ctx).Warn("webhook secret rotation failed", "error", rotateErr)
+		}
+		if len(rotateOps) > 0 {
+			hookOps = append(hookOps, rotateOps...)
+		}
+	}
+
+	return hookOps, nil, suppressed, nil
 }
 
 // Returns errors that are due to user errors
@@ -1043,6 +1092,37 @@ func (rc *RepositoryController) isUserCaused(err error) bool {
 	}
 
 	return false
+}
+
+// classifyHookFailureReason maps a hook failure to a Ready condition reason,
+// mirroring classifyTestResultReason's approach for health-check failures so
+// an auth/permission problem is distinguishable from a generic failure
+// instead of always reporting the same reason.
+func classifyHookFailureReason(err error) string {
+	if errors.Is(err, repository.ErrUnauthorized) || errors.Is(err, repository.ErrPermissionDenied) {
+		return provisioning.ReasonAuthenticationFailed
+	}
+	return provisioning.ReasonInvalidSpec
+}
+
+func isReachableTestResult(testResults *provisioning.TestResults) bool {
+	if testResults == nil || testResults.Success {
+		return true
+	}
+	switch testResults.Code {
+	case http.StatusForbidden:
+		// Couldn't be written to, but was still reachable
+		for _, e := range testResults.Errors {
+			if e.Detail == repository.WritePermissionDeniedDetail {
+				return true
+			}
+		}
+		return false
+	case http.StatusUnauthorized, http.StatusNotFound, http.StatusServiceUnavailable:
+		return false
+	default:
+		return true
+	}
 }
 
 // shouldRotateWebhookSecret returns true when a repository has an active webhook

@@ -10,7 +10,9 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/google/go-github/v82/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
@@ -154,6 +156,52 @@ func TestIntegrationProvisioning_GithubRepoWebhookCreated(t *testing.T) {
 	}, webhookBaseURL, "write")
 
 	waitForWebhook(t, helper, repoName, 456)
+}
+
+// TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately verifies
+// that when webhook creation fails, the repository records a HealthFailureHook
+// (not a controller error) and the hook-failure cooldown suppresses an
+// immediate retry rather than hot-looping.
+func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "webhook-create-failure-cooldown"
+	var webhookCreateCalls atomic.Int32
+
+	mockOpts := append(githubHealthCheckMocks(), ghmock.WithRequestMatchHandler(
+		ghmock.PostReposHooksByOwnerByRepo,
+		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			webhookCreateCalls.Add(1)
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
+				Message: "failed to create webhook",
+			}))
+		}),
+	))
+	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
+
+	// waitForReady is skipped here: the Ready condition never turns true in
+	// this scenario, since webhook creation is designed to keep failing.
+	helper.CreateGithubRepoWithoutWaitingForReady(t, repoName, map[string][]byte{
+		"dashboard.json": common.DashboardJSON("gh-webhook-fail-dash", "GitHub Webhook Failure Dashboard", 1),
+	}, webhookBaseURL, "write")
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository") {
+			return
+		}
+
+		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
+		assert.GreaterOrEqual(collect, webhookCreateCalls.Load(), int32(1), "webhook creation should have been attempted")
+		assert.False(collect, repo.Status.Health.Healthy, "repository should remain unhealthy after hook failure")
+		assert.Equal(collect, provisioning.HealthFailureHook, repo.Status.Health.Error, "repository should record hook failure")
+		assert.Nil(collect, repo.Status.Webhook, "webhook status should remain unset when creation fails")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should record the initial webhook failure")
+
+	require.Never(t, func() bool {
+		return webhookCreateCalls.Load() > 1
+	}, 5*time.Second, 100*time.Millisecond, "webhook creation should not be retried immediately after a hook failure")
 }
 
 // TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment verifies the
