@@ -162,6 +162,12 @@ message DeleteRequest {
   // Preconditions: make sure the uid matches the current saved value
   // +optional
   string uid = 3;
+
+  // Skip the artificial post-write delay the server applies for
+  // search-after-write consistency. Set by callers performing a bulk write on
+  // every write but the last, which still pays the delay.
+  // +optional
+  bool skip_artificial_delay = 4;
 }
 
 message DeleteResponse {

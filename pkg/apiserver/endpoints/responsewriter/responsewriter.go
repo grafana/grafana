@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/endpoints/writeflags"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
@@ -64,6 +65,9 @@ func createLimitedContext(req *http.Request) (context.Context, context.CancelFun
 	}
 	if signal := request.ServerShutdownSignalFrom(refCtx); signal != nil {
 		newCtx = request.WithServerShutdownSignal(newCtx, signal)
+	}
+	if writeflags.SkipArtificialSleep(refCtx) {
+		newCtx = writeflags.WithSkipArtificialSleep(newCtx)
 	}
 
 	requester, _ := identity.GetRequester(refCtx)

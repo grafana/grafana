@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apiserver/endpoints/writeflags"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -89,8 +90,12 @@ func (ss *FolderUnifiedStoreImpl) Delete(ctx context.Context, UIDs []string, org
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"Delete")
 	defer span.End()
 
-	for _, uid := range UIDs {
-		err := ss.k8sclient.Delete(ctx, uid, orgID, v1.DeleteOptions{})
+	for i, uid := range UIDs {
+		callCtx := ctx
+		if i < len(UIDs)-1 {
+			callCtx = writeflags.WithSkipArtificialSleep(ctx)
+		}
+		err := ss.k8sclient.Delete(callCtx, uid, orgID, v1.DeleteOptions{})
 		if err != nil {
 			return err
 		}

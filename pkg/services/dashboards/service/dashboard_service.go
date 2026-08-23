@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/apiserver/endpoints/writeflags"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -1721,7 +1722,8 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	}
 
 	for _, dash := range dashes {
-		errDel := dr.deleteDashboard(ctx, dash.ID, dash.UID, orgID, false)
+		callCtx := writeflags.WithSkipArtificialSleep(ctx)
+		errDel := dr.deleteDashboard(callCtx, dash.ID, dash.UID, orgID, false)
 		if errDel != nil {
 			dr.log.Error("failed to delete dashboard inside folder", "dashboardUID", dash.UID, "folderUIDs", folderUIDs, "error", errDel)
 		}

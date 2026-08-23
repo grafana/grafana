@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/grafana/grafana/pkg/apiserver/endpoints/writeflags"
 	"go.opentelemetry.io/otel"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -390,7 +391,10 @@ func (s *Storage) Delete(
 			return err
 		}
 
-		cmd := &resourcepb.DeleteRequest{Key: k}
+		cmd := &resourcepb.DeleteRequest{
+			Key:                 k,
+			SkipArtificialDelay: writeflags.SkipArtificialSleep(ctx),
+		}
 
 		if preconditions != nil {
 			if err := preconditions.Check(key, out); err != nil {

@@ -1308,7 +1308,10 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		})
 	}
 
-	s.sleepAfterSuccessfulWriteOperation(ctx, "Delete", req.Key, res, err)
+	if !req.SkipArtificialDelay {
+		s.log.Info("actual sleep")
+		s.sleepAfterSuccessfulWriteOperation(ctx, "Delete", req.Key, res, err)
+	}
 
 	return res, err
 }

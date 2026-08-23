@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apiserver/endpoints/writeflags"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -196,7 +197,8 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	}
 
 	for _, child := range children {
-		if _, _, err := s.cascadeDelete(ctx, user, namespace, name, child, options, false); err != nil {
+		callCtx := writeflags.WithSkipArtificialSleep(ctx)
+		if _, _, err := s.cascadeDelete(callCtx, user, namespace, name, child, options, false); err != nil {
 			return nil, false, err
 		}
 	}
@@ -222,6 +224,9 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 			"folder", name, "has_contents_deleter", s.contentsDeleter != nil, "dry_run", len(options.DryRun) > 0)
 	}
 
+	if !requested {
+		ctx = writeflags.WithSkipArtificialSleep(ctx)
+	}
 	// Delete this folder last. NotFound is success for children (idempotent), but the requested
 	// folder keeps its missing-resource error.
 	obj, async, err := s.Storage.Delete(ctx, name, nil, options)
