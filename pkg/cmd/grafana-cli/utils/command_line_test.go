@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,10 +19,23 @@ import (
 // how commands/commandstest constructs one (kept local to avoid an import
 // cycle: commandstest imports this package).
 func newTestFlagContext(flags map[string]string) (*ContextCommandLine, error) {
+	return newTestFlagContextWithDefaults(nil, flags)
+}
+
+// newTestFlagContextWithDefaults registers flags with default values without
+// marking them as explicitly set (urfave only records Set() calls in
+// FlagNames), reproducing how production flags carry defaults the user never
+// passed.
+func newTestFlagContextWithDefaults(defaults, set map[string]string) (*ContextCommandLine, error) {
 	app := cli.App{Name: "Test"}
 	flagSet := flag.NewFlagSet("Test", 0)
-	for name, value := range flags {
-		flagSet.String(name, "", "")
+	for name, value := range defaults {
+		flagSet.String(name, value, "")
+	}
+	for name, value := range set {
+		if flagSet.Lookup(name) == nil {
+			flagSet.String(name, "", "")
+		}
 		if err := flagSet.Set(name, value); err != nil {
 			return nil, err
 		}
@@ -35,6 +49,11 @@ func newTestFlagContext(flags map[string]string) (*ContextCommandLine, error) {
 func writeGrafDir(t *testing.T, paths map[string]string) string {
 	t.Helper()
 	home := t.TempDir()
+	return writeGrafDirIn(t, home, paths)
+}
+
+func writeGrafDirIn(t *testing.T, home string, paths map[string]string) string {
+	t.Helper()
 	confDir := filepath.Join(home, "conf")
 	require.NoError(t, os.MkdirAll(confDir, 0o750))
 
@@ -125,13 +144,36 @@ func TestPluginDirectory_PluginDirEnvVarBeatsConfig(t *testing.T) {
 func TestPluginDirectory_FallsBackWhenNoConfigSources(t *testing.T) {
 	emptyHome := t.TempDir()
 
+	// pluginsDir must NOT be marked as set here: with the flag explicitly set
+	// PluginDirectory returns before consulting configuration at all, so this
+	// test would never exercise the unresolvable-config fallback. The flag is
+	// registered with its production default instead, mirroring cli.go.
+	def := GetGrafanaPluginDir(runtime.GOOS)
+	c, err := newTestFlagContextWithDefaults(
+		map[string]string{"pluginsDir": def},
+		map[string]string{"homepath": emptyHome},
+	)
+	require.NoError(t, err)
+
+	require.Equal(t, def, c.PluginDirectory())
+}
+
+func TestPluginDirectory_ExplicitHomepathDoesNotWalkUp(t *testing.T) {
+	// An explicit --homepath without conf/defaults.ini must fall back to the
+	// flag value even when the parent directory contains a defaults.ini:
+	// setHomePath only walks up for an empty homepath, so probing the parent
+	// here would let NewCfgFromArgs exit the process.
+	parent := t.TempDir()
+	writeGrafDirIn(t, parent, map[string]string{"plugins": "data/plugins"})
+	emptyHome := filepath.Join(parent, "child")
+	require.NoError(t, os.MkdirAll(emptyHome, 0o750))
+
 	c, err := newTestFlagContext(map[string]string{
-		"pluginsDir": "/from/flag/default",
-		"homepath":   emptyHome,
+		"homepath": emptyHome,
 	})
 	require.NoError(t, err)
 
-	require.Equal(t, "/from/flag/default", c.PluginDirectory())
+	require.False(t, c.configResolvable())
 }
 
 func TestPluginDirectory_MemoizesConfig(t *testing.T) {

@@ -100,17 +100,21 @@ func (c *ContextCommandLine) PluginDirectory() string {
 
 // configResolvable reports whether loading the full configuration can succeed.
 // setting.loadConfiguration exits the process when <homepath>/conf/defaults.ini
-// is missing, so probe for that file using the same homepath resolution as
-// setHomePath before attempting a load.
+// is missing, so probe for that file before attempting a load. The candidates
+// must mirror setHomePath exactly: an explicit --homepath is used verbatim,
+// while an empty one falls back to the working directory and then its parent.
 func (c *ContextCommandLine) configResolvable() bool {
 	home := c.HomePath()
-	if home == "" {
-		home = "."
+	var candidates []string
+	if home != "" {
+		candidates = []string{filepath.Join(home, "conf", "defaults.ini")}
+	} else {
+		candidates = []string{
+			filepath.Join(".", "conf", "defaults.ini"),
+			filepath.Join("..", "conf", "defaults.ini"),
+		}
 	}
-	for _, p := range []string{
-		filepath.Join(home, "conf", "defaults.ini"),
-		filepath.Join(home, "..", "conf", "defaults.ini"),
-	} {
+	for _, p := range candidates {
 		if _, err := os.Stat(p); err == nil {
 			return true
 		}
