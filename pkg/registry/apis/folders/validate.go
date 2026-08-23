@@ -526,6 +526,10 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		Offset: offset,
 	})
 	if err != nil {
+		resErr := resource.ErrorResultFromGRPCDetails(err)
+		if resErr != nil {
+			return nil, false, fmt.Errorf("search error: %v", resErr)
+		}
 		return nil, false, fmt.Errorf("failed to search folders: %w", err)
 	}
 
@@ -570,6 +574,10 @@ func validateOnDelete(ctx context.Context,
 
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
 	if err != nil {
+		resErr := resource.ErrorResultFromGRPCDetails(err)
+		if resErr != nil {
+			return fmt.Errorf("could not verify if folder is empty: %v", resErr)
+		}
 		return err
 	}
 
