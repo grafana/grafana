@@ -411,7 +411,7 @@ export function describeTextRange(expr: string): TimeOption {
     opt = { from: 'now', to: expr, display: '' };
   }
 
-  const parts = /^now([-+])(\d+)(f[Qy]|[yMwdhmsQ])/.exec(expr);
+  const parts = /^now([-+])(\d{1,10})(f[Qy]|[yMwdhmsQ])$/.exec(expr);
   if (parts) {
     const unit = parts[3];
     const amount = parseInt(parts[2], 10);
@@ -578,6 +578,10 @@ export function msRangeToTimeString(rangeMs: number): string {
 }
 
 export function calculateInterval(range: TimeRange, resolution: number, lowLimitInterval?: string): IntervalValues {
+  if (!isDateTime(range.from) || !isDateTime(range.to)) {
+    throw new Error(`failed to parse relative time "${String(range.from)}"`);
+  }
+
   let lowLimitMs = 1; // 1 millisecond default low limit
   if (lowLimitInterval) {
     lowLimitMs = intervalToMs(lowLimitInterval);
