@@ -30,18 +30,26 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 		Comment:       "",
 	}
 
-	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
-		_, err := session.Insert(&queryHistory)
-		return err
-	})
-	if err != nil {
-		return QueryHistoryDTO{}, err
-	}
+	// Write the entry and its detail rows inside one transaction so the
+	// history entry is all-or-nothing: InTransaction rolls back partial
+	// writes when any insert fails, which also keeps WithDbSession's
+	// retryable-error re-runs from duplicating already inserted rows.
+	err := s.store.InTransaction(ctx, func(ctx context.Context) error {
+		if err := s.store.WithDbSession(ctx, func(session *db.Session) error {
+			_, err := session.Insert(&queryHistory)
+			return err
+		}); err != nil {
+			return err
+		}
 
-	dsUids, err := FindDataSourceUIDs(cmd.Queries)
+		dsUids, err := FindDataSourceUIDs(cmd.Queries)
+		if err != nil {
+			// Queries that cannot be parsed are still saved, matching the
+			// historical behavior; they simply get no detail rows.
+			return nil
+		}
 
-	if err == nil {
-		var queryHistoryDetailsItems []QueryHistoryDetails
+		queryHistoryDetailsItems := make([]QueryHistoryDetails, 0, len(dsUids))
 		for _, uid := range dsUids {
 			queryHistoryDetailsItems = append(queryHistoryDetailsItems, QueryHistoryDetails{
 				QueryHistoryItemUID: queryHistory.UID,
@@ -49,7 +57,7 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 			})
 		}
 
-		err = s.store.WithDbSession(ctx, func(session *db.Session) error {
+		return s.store.WithDbSession(ctx, func(session *db.Session) error {
 			for _, queryHistoryDetailsItem := range queryHistoryDetailsItems {
 				if _, err := session.Insert(queryHistoryDetailsItem); err != nil {
 					return err
@@ -57,9 +65,9 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 			}
 			return nil
 		})
-		if err != nil {
-			return QueryHistoryDTO{}, err
-		}
+	})
+	if err != nil {
+		return QueryHistoryDTO{}, err
 	}
 
 	dto := QueryHistoryDTO{
