@@ -82,7 +82,10 @@ func (c *ContextCommandLine) PluginDirectory() string {
 
 	// Only parse configuration when the defaults file is resolvable:
 	// setting.loadConfiguration exits when conf/defaults.ini cannot be found,
-	// which must not turn config-less invocations into hard errors.
+	// which must not turn config-less invocations into hard errors. When a
+	// resolvable configuration is invalid (--config missing or malformed,
+	// corrupt defaults.ini), loading still terminates like every other
+	// Config()-based lookup in this file.
 	if c.configResolvable() {
 		cfg, err := c.Config()
 		if err != nil {
