@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// failingDetailsStore fails the second WithDbSession call, which is the one
-// writing query_history_details rows in createQuery.
+// failingDetailsStore fails the second WithDbSession call, which in
+// createQuery is the query_history_details write.
 type failingDetailsStore struct {
 	*sqlstore.SQLStore
 	detailsCalls int
@@ -30,10 +30,12 @@ func (f *failingDetailsStore) WithDbSession(ctx context.Context, callback sqlsto
 	return f.SQLStore.WithDbSession(ctx, callback)
 }
 
-// TestIntegrationCreateQueryReturnsErrorWhenDetailsInsertFails ensures a
-// failed query_history_details write surfaces as an error instead of being
-// silently discarded while the API reports success.
-func TestIntegrationCreateQueryReturnsErrorWhenDetailsInsertFails(t *testing.T) {
+// TestIntegrationCreateQueryReturnsErrorWhenDetailsWriteFails ensures a failed
+// query_history_details write surfaces as an error instead of being silently
+// discarded while the API reports success. The failure is injected at the
+// WithDbSession boundary; the insert loop inside propagates any error returned
+// by its callback, so an insert-level failure reaches this same check.
+func TestIntegrationCreateQueryReturnsErrorWhenDetailsWriteFails(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
@@ -62,7 +64,8 @@ func TestIntegrationCreateQueryReturnsErrorWhenDetailsInsertFails(t *testing.T) 
 		OrgID:  1,
 	}, cmd)
 
-	require.Error(t, err, "createQuery must report the failed details insert instead of returning success")
+	require.Error(t, err, "createQuery must report the failed details write instead of returning success")
+	require.ErrorContains(t, err, "simulated query_history_details write failure")
 }
 
 // TestIntegrationCreateQueryHappyPathStillWorks guards against the error
