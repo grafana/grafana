@@ -748,8 +748,8 @@ __metadata:
   linkType: hard
 
 "@codemirror/lang-html@npm:^6.0.0, @codemirror/lang-html@npm:^6.4.11":
-  version: 6.4.11
-  resolution: "@codemirror/lang-html@npm:6.4.11"
+  version: 6.4.12
+  resolution: "@codemirror/lang-html@npm:6.4.12"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.0.0"
     "@codemirror/lang-css": "npm:^6.0.0"
@@ -760,7 +760,7 @@ __metadata:
     "@lezer/common": "npm:^1.0.0"
     "@lezer/css": "npm:^1.1.0"
     "@lezer/html": "npm:^1.3.12"
-  checksum: 10/9731a9732ba8025ef0bd144094b8172e4e68e5c5b7afafa06219e9e8dcf1d962f23e89e382674e438c5dd8b1148e6e17ad48a54810a9b3c0fca2f4716aad8cc5
+  checksum: 10/450793082aedaf2e9054b2beb9e7055fdd4a95b580ba3b6dd563996ffdc063391538406b4fd40d582f9f381e763ce7c7be3962de5f60772b1c51d8c82acdaf01
   languageName: node
   linkType: hard
 
@@ -790,8 +790,8 @@ __metadata:
   linkType: hard
 
 "@codemirror/lang-markdown@npm:^6.5.1":
-  version: 6.5.1
-  resolution: "@codemirror/lang-markdown@npm:6.5.1"
+  version: 6.5.2
+  resolution: "@codemirror/lang-markdown@npm:6.5.2"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.7.1"
     "@codemirror/lang-html": "npm:^6.0.0"
@@ -800,7 +800,7 @@ __metadata:
     "@codemirror/view": "npm:^6.0.0"
     "@lezer/common": "npm:^1.2.1"
     "@lezer/markdown": "npm:^1.0.0"
-  checksum: 10/ee34bad99acf4d2a682414e7b0f94d4fde3eb86f0e1a4093cc96c3ec0063d155f34e90011106d0772534827a60def0af631043d5b0e54de04bbea6ebdbb39023
+  checksum: 10/88863080592360858ff59fd8ec5859a7826e1f05e01aa91847f93f068d4dec02cd0e2a28e227a6eb69019f8db93208aca9873083b54c106a0bc264d0fec0fab8
   languageName: node
   linkType: hard
 
@@ -905,14 +905,14 @@ __metadata:
   linkType: hard
 
 "@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0, @codemirror/view@npm:^6.35.0, @codemirror/view@npm:^6.37.0, @codemirror/view@npm:^6.41.0":
-  version: 6.43.7
-  resolution: "@codemirror/view@npm:6.43.7"
+  version: 6.43.9
+  resolution: "@codemirror/view@npm:6.43.9"
   dependencies:
     "@codemirror/state": "npm:^6.7.0"
     crelt: "npm:^1.0.6"
     style-mod: "npm:^4.1.0"
     w3c-keyname: "npm:^2.2.4"
-  checksum: 10/dbc7c4e9162099dae15be1107e831c955c778fa224e24f4fd02d6eb9e75bc6c6d636e3e9fce3dc5852576c392c5793f4f6c5838f932a9c9e77f32a4ca66f62bf
+  checksum: 10/b653dddf81278311985a8f7723f6b0ac50f4ff019725dc4020c40c4d4707f209067e6edbd1f022cb40176d8a0b327c72d3234d2a5c815be689ca2cc1272466d6
   languageName: node
   linkType: hard
 

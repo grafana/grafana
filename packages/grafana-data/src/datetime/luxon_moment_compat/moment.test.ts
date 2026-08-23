@@ -1,5 +1,62 @@
 import { convertMomentToLuxonWithOrdinal } from './format';
+import { DateTime } from './luxon';
 import moment from './moment';
+
+describe('fractional millisecond timestamps', () => {
+  it.each([
+    [1787318699146.3264, 1787318699146],
+    [1787318699146.8, 1787318699146],
+    [-1.8, -1],
+  ])('truncates numeric input %s toward zero (like moment)', (input, expected) => {
+    expect(moment(input).valueOf()).toBe(expected);
+  });
+
+  it.each([
+    { input: '1.8', format: 'x', expected: 1 },
+    { input: '-1.8', format: 'x', expected: -1 },
+    { input: '0.0018', format: 'X', expected: 1 },
+    { input: '-0.0018', format: 'X', expected: -1 },
+  ])('truncates $input parsed with the $format token toward zero', ({ input, format, expected }) => {
+    expect(moment(input, format).valueOf()).toBe(expected);
+  });
+
+  it('truncates direct Luxon DateTime input', () => {
+    expect(moment(DateTime.fromMillis(1.8)).valueOf()).toBe(1);
+  });
+
+  it('truncates Moment-like input', () => {
+    const input = moment(0);
+    input.valueOf = () => 1.8;
+
+    expect(moment(input).valueOf()).toBe(1);
+  });
+
+  it('truncates array and object input', () => {
+    expect(moment.utc([1970, 0, 1, 0, 0, 0, 1.8]).valueOf()).toBe(1);
+    expect(moment.utc({ year: 1970, month: 0, day: 1, millisecond: 1.8 }).valueOf()).toBe(1);
+  });
+
+  it('truncates results of millisecond arithmetic', () => {
+    const added = moment(0).add(1.8, 'milliseconds');
+    expect(added.valueOf()).toBe(1);
+    expect(added.toISOString()).toBe('1970-01-01T00:00:00.001Z');
+    expect(moment(0).subtract(1.8, 'milliseconds').valueOf()).toBe(-1);
+  });
+
+  it('truncates millisecond setter values', () => {
+    expect(moment.utc(0).millisecond(1.8).valueOf()).toBe(1);
+    expect(moment.utc(0).set('milliseconds', 1.8).valueOf()).toBe(1);
+  });
+
+  it('truncates comparison and diff operands symmetrically', () => {
+    const value = moment(1000.5);
+
+    expect(value.isSame(1000.5)).toBe(true);
+    expect(value.isBefore(1000.5)).toBe(false);
+    expect(value.isAfter(1000.5)).toBe(false);
+    expect(value.diff(1000.5, 'milliseconds', true)).toBe(0);
+  });
+});
 
 // used by enterprise code (public/app/extensions), which in-repo usage scans don't cover, so this
 // guards the API against being trimmed again. expected values verified against moment 2.30.1.

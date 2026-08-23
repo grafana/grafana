@@ -382,4 +382,9 @@ func TestSetup_RegistersRoutesOnStandaloneMux(t *testing.T) {
 	w := httptest.NewRecorder()
 	m.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
+
+	deprecated := httptest.NewRequest(http.MethodPost, "/apis/features.grafana.app/v0alpha1/namespaces/stacks-1/ofrep/v1/evaluate/flags", bytes.NewBufferString(`{}`))
+	w = httptest.NewRecorder()
+	m.ServeHTTP(w, deprecated)
+	assert.Equal(t, http.StatusOK, w.Code)
 }
