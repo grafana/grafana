@@ -263,6 +263,15 @@ func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
 	s.appInstallers = append(s.appInstallers, i)
 }
 
+// applyOpenAPIV2Setting drops the v2 OpenAPI config when a deployment has turned
+// /openapi/v2 off. OpenAPIV3Config is left alone.
+func applyOpenAPIV2Setting(serverConfig *genericapiserver.RecommendedConfig, apiserverSection *setting.DynamicSection) {
+	if apiserverSection.Key("openapi_v2_enabled").MustBool(true) {
+		return
+	}
+	serverConfig.OpenAPIConfig = nil
+}
+
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
 	// Get the list of groups the server will support
@@ -424,6 +433,8 @@ func (s *service) start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	applyOpenAPIV2Setting(serverConfig, apiserverSection)
 
 	serverConfig.AdmissionControl, err = appinstaller.RegisterAdmission(
 		serverConfig.AdmissionControl,
