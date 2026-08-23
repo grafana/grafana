@@ -8,7 +8,7 @@ import { Stack } from '../Layout/Stack/Stack';
 import { Alert, type AlertVariant } from './Alert';
 import mdx from './Alert.mdx';
 
-const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
+const severities: AlertVariant[] = ['error', 'warning', 'info', 'success', 'tertiary', 'accent'];
 
 const meta: Meta = {
   title: 'Information/Alert',
@@ -122,6 +122,19 @@ Toast.args = {
   severity: 'error',
   onRemove: action('Remove button clicked'),
   elevated: true,
+};
+
+export const Sizes: StoryFn<typeof Alert> = () => {
+  const sizes = ['sm', 'md', 'lg'] as const;
+  return (
+    <Stack direction="column">
+      {sizes.map((size) => (
+        <Alert title={`Size: ${size}`} size={size} key={size} severity="info">
+          Child content
+        </Alert>
+      ))}
+    </Stack>
+  );
 };
 
 export default meta;

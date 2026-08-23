@@ -18,9 +18,9 @@ export enum AppNotificationSeverity {
 }
 
 enum AppNotificationTimeout {
-  Success = 3000,
-  Warning = 5000,
-  Error = 7000,
+  Success = 300000,
+  Warning = 500000,
+  Error = 700000,
 }
 
 export const timeoutMap = {

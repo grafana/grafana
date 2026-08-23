@@ -16,7 +16,10 @@ export const customWeight = (weight: TextProps['weight'], theme: GrafanaTheme2):
   }
 };
 
-export const customColor = (color: TextProps['color'], theme: GrafanaTheme2): string | undefined => {
+export const customColor = (
+  color: TextProps['color'] | 'accent' | 'tertiary',
+  theme: GrafanaTheme2
+): string | undefined => {
   switch (color) {
     case 'error':
       return theme.colors.error.text;
@@ -26,6 +29,10 @@ export const customColor = (color: TextProps['color'], theme: GrafanaTheme2): st
       return theme.colors.info.text;
     case 'warning':
       return theme.colors.warning.text;
+    case 'accent':
+      return theme.colors.accent.text;
+    case 'tertiary':
+      return theme.colors.tertiary.text;
     default:
       return color ? theme.colors.text[color] : undefined;
   }
