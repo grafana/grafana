@@ -80,9 +80,9 @@ func (c *ContextCommandLine) PluginDirectory() string {
 		return c.String("pluginsDir")
 	}
 
-	// Only parse configuration when it can be resolved: NewCfgFromArgs exits
-	// when conf/defaults.ini cannot be found, which must not turn config-less
-	// invocations into hard errors.
+	// Only parse configuration when the defaults file is resolvable:
+	// setting.loadConfiguration exits when conf/defaults.ini cannot be found,
+	// which must not turn config-less invocations into hard errors.
 	if c.configResolvable() {
 		cfg, err := c.Config()
 		if err != nil {

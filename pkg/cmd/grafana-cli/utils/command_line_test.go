@@ -104,6 +104,24 @@ func TestPluginDirectory_HonorsEnvVar(t *testing.T) {
 	require.Equal(t, configDir, c.PluginDirectory())
 }
 
+func TestPluginDirectory_PluginDirEnvVarBeatsConfig(t *testing.T) {
+	flagEnvDir := t.TempDir()
+	configDir := t.TempDir()
+	home := writeGrafDir(t, map[string]string{"plugins": "data/plugins"})
+
+	c, err := newTestFlagContext(map[string]string{
+		"pluginsDir":      flagEnvDir,
+		"homepath":        home,
+		"configOverrides": "cfg:paths.plugins=" + configDir,
+	})
+	require.NoError(t, err)
+
+	// GF_PLUGIN_DIR binds to the --pluginsDir flag (urfave marks env-set flags
+	// as explicitly set), so it must win over any configuration value.
+	t.Setenv("GF_PLUGIN_DIR", flagEnvDir)
+	require.Equal(t, flagEnvDir, c.PluginDirectory())
+}
+
 func TestPluginDirectory_FallsBackWhenNoConfigSources(t *testing.T) {
 	emptyHome := t.TempDir()
 
