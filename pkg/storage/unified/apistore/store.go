@@ -320,6 +320,10 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 
 	rsp, err := s.store.Create(ctx, req)
 	if err != nil {
+		resError := resource.ErrorResultFromGRPCDetails(err)
+		if resError != nil && resError.Code == http.StatusConflict {
+			err = storage.NewKeyExistsError(key, 0)
+		}
 		return v.finish(ctx, resource.GetError(resource.AsErrorResult(err)), s.opts.SecureValues)
 	}
 	if rsp.Error != nil {
@@ -422,6 +426,10 @@ func (s *Storage) Delete(
 		}
 		rsp, err := s.store.Delete(ctx, cmd)
 		if err != nil {
+			resErr := resource.ErrorResultFromGRPCDetails(err)
+			if resErr != nil && resErr.Code == http.StatusConflict && attempt < MaxUpdateAttempts {
+				continue
+			}
 			return resource.GetError(resource.AsErrorResult(err))
 		}
 		if rsp.Error != nil {
@@ -509,6 +517,13 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 
 	rsp, err := s.store.Read(ctx, req)
 	if err != nil {
+		resErr := resource.ErrorResultFromGRPCDetails(err)
+		if resErr != nil && resErr.Code == http.StatusNotFound {
+			if opts.IgnoreNotFound {
+				return runtime.SetZeroValue(objPtr)
+			}
+			return storage.NewKeyNotFoundError(key, req.ResourceVersion)
+		}
 		return resource.GetError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
@@ -710,6 +725,10 @@ func (s *Storage) GuaranteedUpdate(
 		// Read the latest value
 		readResponse, err := s.store.Read(ctx, &resourcepb.ReadRequest{Key: req.Key})
 		if err != nil {
+			resErr := resource.ErrorResultFromGRPCDetails(err)
+			if resErr != nil && resErr.Code == http.StatusNotFound && !ignoreNotFound {
+				return apierrors.NewNotFound(s.gr, req.Key.Name)
+			}
 			return resource.GetError(resource.AsErrorResult(err))
 		}
 
@@ -788,6 +807,14 @@ func (s *Storage) GuaranteedUpdate(
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
 		if err != nil {
+			resErr := resource.ErrorResultFromGRPCDetails(err)
+			if resErr != nil && attempt < MaxUpdateAttempts && resErr.Code == http.StatusConflict {
+				// Delete the secure values this attempt created; the next attempt recreates them.
+				// finish only echoes the conflict back and logs any cleanup failure itself, so we
+				// discard its return and retry instead of surfacing it.
+				_ = v.finish(ctx, resource.GetError(resErr), s.opts.SecureValues)
+				continue // try the read again
+			}
 			err = resource.GetError(resource.AsErrorResult(err))
 		} else if updateResponse.Error != nil {
 			if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
