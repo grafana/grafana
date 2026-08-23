@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { type AriaRole, type HTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
-import { type ThemeTypographyVariantTypes, type GrafanaTheme2 } from '@grafana/data';
+import { type ThemeTypographyVariantTypes, type GrafanaTheme2, type ThemeSpacingTokens } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -79,7 +79,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           </Box>
 
           <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
-            <Box flex={1} minWidth="50%">
+            <Box display={'flex'} direction={'column'} flex={1} minWidth="50%" gap={styles.titleGap}>
               <Text color={severity} variant={styles.titleVariant} weight="medium">
                 {title}
               </Text>
@@ -137,14 +137,15 @@ function getSpacing(size: 'sm' | 'md' | 'lg'): {
   iconWidth: number;
   iconSize: IconSize;
   titleVariant: keyof ThemeTypographyVariantTypes;
+  titleGap: ThemeSpacingTokens;
 } {
   switch (size) {
     case 'sm':
-      return { padding: 1, iconWidth: 4, iconSize: 'md', titleVariant: 'h6' };
+      return { padding: 1, iconWidth: 4, iconSize: 'md', titleVariant: 'h6', titleGap: 0 };
     case 'md':
-      return { padding: 2, iconWidth: 5, iconSize: 'xl', titleVariant: 'h5' };
+      return { padding: 2, iconWidth: 5, iconSize: 'xl', titleVariant: 'h5', titleGap: 0.25 };
     case 'lg':
-      return { padding: 3, iconWidth: 7, iconSize: 'xxl', titleVariant: 'h4' };
+      return { padding: 3, iconWidth: 7, iconSize: 'xxl', titleVariant: 'h4', titleGap: 1 };
   }
 }
 
@@ -180,6 +181,7 @@ const getStyles = (
       },
     }),
     titleVariant: sizing.titleVariant,
+    titleGap: sizing.titleGap,
     box: css({
       display: 'flex',
       borderRadius: theme.shape.radius.lg,

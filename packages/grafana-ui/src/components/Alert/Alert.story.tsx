@@ -125,14 +125,17 @@ Toast.args = {
 };
 
 export const Sizes: StoryFn<typeof Alert> = () => {
-  const sizes = ['sm', 'md', 'lg'] as const;
   return (
     <Stack direction="column">
-      {sizes.map((size) => (
-        <Alert title={`Size: ${size}`} size={size} key={size} severity="info">
-          Child content
-        </Alert>
-      ))}
+      <Alert title={`Size: sm`} size={'sm'} severity="error" onRemove={() => {}}>
+        Child content
+      </Alert>
+      <Alert title={`Size: md`} size={'md'} severity="info" action={<Button variant="secondary">Action</Button>}>
+        Child content
+      </Alert>
+      <Alert title={`Size: lg`} size={'lg'} severity="accent" action={<Button variant="primary">Sign up</Button>}>
+        Child content
+      </Alert>
     </Stack>
   );
 };
