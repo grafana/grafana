@@ -5,10 +5,37 @@ import { ColorCard } from './ColorCard';
 
 # ColorCard
 
-ColorCard is a fundamental element used for displaying important messages or notifications to users.
+ColorCard displays information in a way that attracts the user's attention without interrupting their task.
+
+It is composed from sub components so the consumer controls what the card contains and how it is labelled:
+
+- `ColorCard.Icon` — the leading icon
+- `ColorCard.Title` — the title row
+- `ColorCard.Content` — the body
+- `ColorCard.Actions` — buttons/links on the trailing edge
+
+`variant` and `size` are set once on `ColorCard` and read by the sub components through context, so they never
+have to be repeated.
+
+```tsx
+<ColorCard size="sm" variant="error">
+  <ColorCard.Icon name="exclamation-circle" />
+  <ColorCard.Title>My title</ColorCard.Title>
+  <ColorCard.Content>Some long content</ColorCard.Content>
+  <ColorCard.Actions>
+    <Button variant="secondary">Close</Button>
+  </ColorCard.Actions>
+</ColorCard>
+```
+
+For the simple case, `title` can be passed as a prop and any plain children are rendered as content:
+
+```tsx
+<ColorCard variant="error" title="Basic">
+  Child content
+</ColorCard>
+```
 
 ---
 
-About ColorCard component:
-
-<ArgTypes of={Alert} />
+<ArgTypes of={ColorCard} />
