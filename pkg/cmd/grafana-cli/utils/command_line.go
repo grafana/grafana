@@ -1,8 +1,11 @@
 package utils
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/urfave/cli/v2"
 
@@ -37,6 +40,12 @@ type ApiClient interface {
 
 type ContextCommandLine struct {
 	*cli.Context
+
+	// Config() parses the full configuration, which is too costly to repeat
+	// for every lookup; memoize it per command invocation.
+	cfgOnce   sync.Once
+	parsedCfg *setting.Cfg
+	cfgErr    error
 }
 
 func (c *ContextCommandLine) ShowHelp() error {
@@ -55,8 +64,58 @@ func (c *ContextCommandLine) HomePath() string { return c.String("homepath") }
 
 func (c *ContextCommandLine) ConfigFile() string { return c.String("config") }
 
+/*
+The plugin directory is determined in the following order:
+1. --pluginsDir flag value if it is specified
+2. --pluginsDir flag value if set via the environment variable called "GF_PLUGIN_DIR"
+3. paths.plugins from configuration (GF_PATHS_PLUGINS environment variable,
+   cfg:* overrides, config file, or conf/defaults.ini)
+4. fallback to default value which depends on the operating system
+**/
+
 func (c *ContextCommandLine) PluginDirectory() string {
+	// since the pluginsDir flag always has a value set by default we are checking in the flag lists
+	// if the --pluginsDir flag was provided at all.
+	if slices.Contains(c.FlagNames(), "pluginsDir") {
+		return c.String("pluginsDir")
+	}
+
+	// Only parse configuration when it can be resolved: NewCfgFromArgs exits
+	// when conf/defaults.ini cannot be found, which must not turn config-less
+	// invocations into hard errors.
+	if c.configResolvable() {
+		cfg, err := c.Config()
+		if err != nil {
+			logger.Debug("Could not parse config file", err)
+		} else if len(cfg.PluginsPaths) > 0 && cfg.PluginsPaths[0] != "" {
+			// PluginsPaths[0] is the writable plugin dir, matching what the
+			// server-side installer uses; [1] is the bundled plugins dir.
+			return cfg.PluginsPaths[0]
+		}
+	}
+
+	// fallback to flag value
 	return c.String("pluginsDir")
+}
+
+// configResolvable reports whether loading the full configuration can succeed.
+// setting.loadConfiguration exits the process when <homepath>/conf/defaults.ini
+// is missing, so probe for that file using the same homepath resolution as
+// setHomePath before attempting a load.
+func (c *ContextCommandLine) configResolvable() bool {
+	home := c.HomePath()
+	if home == "" {
+		home = "."
+	}
+	for _, p := range []string{
+		filepath.Join(home, "conf", "defaults.ini"),
+		filepath.Join(home, "..", "conf", "defaults.ini"),
+	} {
+		if _, err := os.Stat(p); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 /*
@@ -90,12 +149,15 @@ func (c *ContextCommandLine) PluginRepoURL() string {
 }
 
 func (c *ContextCommandLine) Config() (*setting.Cfg, error) {
-	configOptions := strings.Split(c.String("configOverrides"), " ")
-	return setting.NewCfgFromArgs(setting.CommandLineArgs{
-		Config:   c.ConfigFile(),
-		HomePath: c.HomePath(),
-		Args:     append(configOptions, c.Args().Slice()...),
+	c.cfgOnce.Do(func() {
+		configOptions := strings.Split(c.String("configOverrides"), " ")
+		c.parsedCfg, c.cfgErr = setting.NewCfgFromArgs(setting.CommandLineArgs{
+			Config:   c.ConfigFile(),
+			HomePath: c.HomePath(),
+			Args:     append(configOptions, c.Args().Slice()...),
+		})
 	})
+	return c.parsedCfg, c.cfgErr
 }
 
 func (c *ContextCommandLine) GcomToken() string {
