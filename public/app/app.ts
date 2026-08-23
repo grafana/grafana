@@ -1,10 +1,6 @@
 import 'symbol-observable';
 import 'regenerator-runtime/runtime';
 
-import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
-import 'file-saver';
-import 'jquery';
-
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 

@@ -1,14 +1,3 @@
-import jquery from 'jquery';
-import 'vendor/flot/jquery.flot';
-import 'vendor/flot/jquery.flot.selection';
-import 'vendor/flot/jquery.flot.time';
-import 'vendor/flot/jquery.flot.stack';
-import 'vendor/flot/jquery.flot.stackpercent';
-import 'vendor/flot/jquery.flot.fillbelow';
-import 'vendor/flot/jquery.flot.crosshair';
-import 'vendor/flot/jquery.flot.dashes';
-import 'vendor/flot/jquery.flot.gauge';
-
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
@@ -34,6 +23,30 @@ grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
 grafanaUI.AppPlugin = grafanaData.AppPlugin;
 grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
+const loadJQuery = () =>
+  import('jquery').then((module) => ({
+    default: module.default,
+    __useDefault: true,
+  }));
+
+async function loadJQueryFlot() {
+  await loadJQuery();
+  // Flot extensions register themselves on the base plugin, so the base module must load first.
+  await import('vendor/flot/jquery.flot');
+  await Promise.all([
+    import('vendor/flot/jquery.flot.selection'),
+    import('vendor/flot/jquery.flot.time'),
+    import('vendor/flot/jquery.flot.stack'),
+    import('vendor/flot/jquery.flot.stackpercent'),
+    import('vendor/flot/jquery.flot.fillbelow'),
+    import('vendor/flot/jquery.flot.crosshair'),
+    import('vendor/flot/jquery.flot.dashes'),
+    import('vendor/flot/jquery.flot.gauge'),
+  ]);
+
+  return { fakeDep: 1 };
+}
+
 const jQueryFlotDeps = [
   'jquery.flot.crosshair',
   'jquery.flot.events',
@@ -45,7 +58,7 @@ const jQueryFlotDeps = [
   'jquery.flot.stackpercent',
   'jquery.flot.time',
   'jquery.flot',
-].reduce((acc, flotDep) => ({ ...acc, [flotDep]: { fakeDep: 1 } }), {});
+].reduce<Record<string, typeof loadJQueryFlot>>((acc, flotDep) => ({ ...acc, [flotDep]: loadJQueryFlot }), {});
 
 export const sharedDependenciesMap = {
   '@emotion/css': () => import('@emotion/css'),
@@ -91,10 +104,7 @@ export const sharedDependenciesMap = {
   emotion: () => import('@emotion/css'),
   // bundling grafana-ui in plugins requires sharing i18next state
   i18next: () => import('@grafana/i18n/internal').then((module) => module.getI18nInstance()),
-  jquery: {
-    default: jquery,
-    __useDefault: true,
-  },
+  jquery: loadJQuery,
   ...jQueryFlotDeps,
   // add move to lodash for backward compatabilty with plugins
   lodash: () => import('lodash').then((module) => ({ ...module, move: arrayMove, __useDefault: true })),
