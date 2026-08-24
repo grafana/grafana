@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
+import * as uwrap from 'uwrap';
 
 import {
   applyFieldOverrides,
@@ -22,6 +23,7 @@ import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
+import { TABLE } from './constants';
 
 // Shared helpers for test data frame construction
 const withFieldOverrides = (frame: ReturnType<typeof toDataFrame>): DataFrame =>
@@ -67,6 +69,32 @@ const createBasicDataFrame = (): DataFrame =>
           values: [1, 2, 3],
           config: stdCellConfig,
           display: displayNumber,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+// A `FieldType.other` column, which the Auto cell pretty-prints as JSON.
+const createJsonDataFrame = (wrapText: boolean): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'JsonData',
+      length: 1,
+      fields: [
+        {
+          name: 'service',
+          type: FieldType.string,
+          values: ['gateway'],
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'metadata',
+          type: FieldType.other,
+          values: [{ region: 'us-east-1', replicas: 3 }],
+          config: { custom: { ...stdCellConfig.custom, wrapText } },
           ...stdField,
         },
       ],
@@ -2127,6 +2155,202 @@ describe('TableNG', () => {
       // In the getStyles function, when textWrap is true, whiteSpace is set to 'pre-line'
       expect(cellStyles.getPropertyValue('white-space')).toBe('pre-line');
     });
+
+    it('wraps a JSON cell as pre-wrap so the pretty-printed indentation survives', () => {
+      // `pre-line` collapses runs of whitespace, which flattens the indentation displayJsonValue
+      // produces. The JSON and auto style classes both declare white-space at the same specificity,
+      // so this also guards against the winner coming down to emotion's insertion order.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(true)} width={800} height={600} />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      const jsonCellStyles = window.getComputedStyle(cells[1]);
+
+      expect(jsonCellStyles.getPropertyValue('white-space')).toBe('pre-wrap');
+      expect(jsonCellStyles.getPropertyValue('font-family')).toBe('monospace');
+    });
+
+    it('grows a wrapped JSON row to fit every pretty-printed line', () => {
+      // uwrap's `count()` is globally auto-mocked to always return 1 in this suite (see
+      // TableNG/__mocks__/uwrap.ts), which would mask the exact bug this guards against: a row
+      // height measured against the wrong (unprepared) field also looks like "1 line" here, since
+      // its raw object value stringifies to a single-line "[object Object]". Give this test its own
+      // real newline counter so the fix (measuring the field actually rendered, pretty-printed JSON
+      // and all) is distinguishable from the regression (measuring an unprepared field's `.display`).
+      jest.spyOn(uwrap, 'varPreLine').mockReturnValue({
+        count: (str: string) => str.split('\n').length,
+        each: () => {},
+        split: () => [],
+        test: () => false,
+      });
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(true)} width={800} height={600} />
+      );
+
+      // metadata's value ({ region: 'us-east-1', replicas: 3 }) pretty-prints to 4 lines:
+      // `{\n "region": "us-east-1",\n "replicas": 3\n}`.
+      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+      const grid = container.querySelector('.rdg');
+      const gridStyles = window.getComputedStyle(grid!);
+      expect(gridStyles.getPropertyValue('grid-template-rows')).toBe(
+        `repeat(1, ${TABLE.HEADER_HEIGHT}px) ${expectedRowHeight}px`
+      );
+    });
+
+    it("never shrinks a hover-expanded JSON cell below the column's own width", async () => {
+      // Only a max-width cap here would shrink a column already wider than it down to the cap the
+      // moment it's hovered, which un-hovers it, which snaps it back — an infinite flicker. min-width
+      // pins the floor to the cell's own size so the cap can only ever grow it, never shrink it.
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      await user.click(cells[1]);
+
+      const jsonCellStyles = window.getComputedStyle(cells[1]);
+      expect(jsonCellStyles.getPropertyValue('min-width')).toBe('100%');
+      expect(jsonCellStyles.getPropertyValue('max-width')).toBe('600px');
+    });
+
+    it('collapses a click-expanded JSON cell once focus leaves the table', async () => {
+      // react-data-grid keeps a cell selected after the grid loses focus and exposes no way to clear
+      // it, so the expanded state hangs off `:focus-within` rather than the selection alone. Without
+      // that, clicking away from the table leaves the cell stuck open over its neighbors.
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      await user.click(cells[1]);
+      expect(window.getComputedStyle(cells[1]).getPropertyValue('max-width')).toBe('600px');
+
+      await user.click(document.body);
+
+      expect(cells[1]).toHaveAttribute('aria-selected', 'true');
+      expect(window.getComputedStyle(cells[1]).getPropertyValue('max-width')).not.toBe('600px');
+    });
+
+    it('keeps suppressing the header outline while a header cell stays selected', async () => {
+      // Only the expansion follows focus. react-data-grid outlines whichever cell it considers
+      // selected, and that outlives the grid's focus, so the reset that hides it has to as well —
+      // gating it too puts an outline back on the header the moment the user clicks away.
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
+      );
+
+      const header = container.querySelector('[role="columnheader"]')!;
+      await user.click(header);
+      await user.click(document.body);
+
+      expect(header).toHaveAttribute('aria-selected', 'true');
+      expect(window.getComputedStyle(header).getPropertyValue('outline')).toBe('none');
+    });
+
+    it('stacks a selected body cell below a hovered one', async () => {
+      // Both expand over their neighbors, so whichever is on top wins the overlap. A selection
+      // outlives the pointer, so ranking it above hover leaves a stale selected cell clipping the
+      // overflow of whatever the user hovers next.
+      render(<TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />);
+
+      // jsdom's selector engine never matches `:hover`, so the two values have to be compared as
+      // declared rather than as computed on an element.
+      const bodyCellStacking = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .filter((rule): rule is CSSStyleRule => 'selectorText' in rule)
+        .filter(
+          (rule) => rule.selectorText.includes(':not(.rdg-summary-row') && rule.style.getPropertyValue('z-index') !== ''
+        );
+
+      const hovered = bodyCellStacking.find((rule) => rule.selectorText.endsWith(':hover'));
+      const selected = bodyCellStacking.find((rule) => rule.selectorText.endsWith('[aria-selected=true]'));
+
+      expect(hovered).toBeDefined();
+      expect(selected).toBeDefined();
+      expect(Number(selected!.style.getPropertyValue('z-index'))).toBeLessThan(
+        Number(hovered!.style.getPropertyValue('z-index'))
+      );
+    });
+
+    it('anchors a hover-expanded JSON cell to its top rather than centering the overflow', async () => {
+      // The cell root inherits `align-items: center` from the default cell styles. Left unset here,
+      // content taller than the max-height cap gets centered on the box's midpoint instead of pinned
+      // to the top — pushing the first several lines into the negative-scroll region above scrollTop
+      // 0, where they're unreachable no matter how far up you scroll.
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      await user.click(cells[1]);
+
+      const jsonCellStyles = window.getComputedStyle(cells[1]);
+      expect(jsonCellStyles.getPropertyValue('align-items')).toBe('flex-start');
+    });
+
+    it('still bounds a hover-expanded JSON cell when the row has a configured max height', async () => {
+      // A row-height clamp clears itself on hover regardless of cell type (WebkitLineClamp: 'none',
+      // height: 'fit-content') — that's how a long plain-text cell is meant to grow past the clamp.
+      // Without a JSON-specific cap layered on top of that, a JSON cell in a max-height row would
+      // grow unbounded on hover too, the exact panel-escaping overflow this option exists to stop.
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createJsonDataFrame(true)}
+          width={800}
+          height={600}
+          maxRowHeight={100}
+        />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      await user.click(cells[1]);
+
+      // With maxRowHeight set, the JSON-specific class lands on an inner wrapper div rather than the
+      // cell root itself (see render-hooks: `maxRowHeight != null` wraps cellResult), so the bound has
+      // to be read off that child, not the `[role="gridcell"]` element.
+      //
+      // That child is matched through the *cell*, and jsdom's selector engine mis-parses
+      // `:focus-within`: it degrades to `:focus` and drops everything after it, which throws away the
+      // descendant half of the selector. Computed style can't see the rule, so assert its
+      // declarations directly.
+      const wrapper = cells[1].firstElementChild!;
+      const expandedRule = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .filter((rule): rule is CSSStyleRule => 'selectorText' in rule)
+        .find(
+          (rule) =>
+            rule.selectorText.includes('aria-selected') &&
+            Array.from(wrapper.classList).some((className) => rule.selectorText.includes(`.${className}`)) &&
+            rule.style.getPropertyValue('max-width') !== ''
+        );
+
+      expect(expandedRule).toBeDefined();
+      expect(expandedRule!.style.getPropertyValue('max-width')).toBe('600px');
+      expect(expandedRule!.style.getPropertyValue('max-height')).toBe('40vh');
+      expect(expandedRule!.style.getPropertyValue('align-items')).toBe('flex-start');
+    });
+
+    it('renders an unwrapped JSON cell with the indentation intact in the DOM', () => {
+      // the collapsing happens in CSS, so the text node itself must still carry the newlines and
+      // indentation for the hover expansion to have anything to reveal.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      // read the raw node rather than using toHaveTextContent, which normalizes away the very
+      // newlines and indentation under test
+      const jsonText = cells[1].textContent;
+      expect(jsonText).toBe(JSON.stringify({ region: 'us-east-1', replicas: 3 }, null, ' '));
+    });
   });
 
   describe('Cell inspection', () => {
@@ -2789,6 +3013,35 @@ describe('TableNG', () => {
 
       rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
       expect(columnTemplate(container)).not.toBe(initialTemplate);
+    });
+
+    it('sizes a content-aware JSON (FieldType.other) column from its real rendered value, not a stringified raw object', () => {
+      // Column-width measurement must see the same prepared field column-building does:
+      // `prepareFieldsForDisplay` is what attaches the JSON-pretty-printing `.display`, so measuring
+      // against the field as originally passed in (before that pass runs) would fall through to a
+      // generic display processor and size the column off "[object Object]" — a short generic string
+      // no different from a plain short string column.
+      const data = frameWithFields([
+        { name: 'service', type: FieldType.string, values: ['gateway'], config: {} },
+        {
+          name: 'metadata',
+          type: FieldType.other,
+          values: [{ region: 'us-east-1', replicas: 3, healthy: true, lastError: 'connection timeout after 30s' }],
+          config: {},
+        },
+      ]);
+
+      // Narrow enough that available width can't cover both columns' content width, so there's no
+      // leftover to redistribute — each column's measured content width is what actually lands,
+      // rather than being masked by growth filling out the panel.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={data} width={250} height={300} contentAwareWidthsEnabled />
+      );
+
+      const [serviceWidth, metadataWidth] = columnTemplate(container)
+        .split(' ')
+        .map((w) => parseFloat(w));
+      expect(metadataWidth).toBeGreaterThan(serviceWidth * 2);
     });
   });
 });

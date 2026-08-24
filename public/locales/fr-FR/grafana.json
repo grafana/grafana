@@ -7038,6 +7038,9 @@
       "name-json-values": "JSON",
       "selection-options": "Options de sélection"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Retour à la liste",
       "label-icon": "Icône",
@@ -7817,9 +7820,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Cette variable est référencée par d’autres variables ou d’autres tableaux de bord.",
       "content-variable-not-referenced-other-variables-dashboard": "Cette variable n’est pas référencée par d’autres variables ou d’autres tableaux de bord.",
       "content-variable-referenced-other-variables-dashboard": "Cette variable est référencée par d’autres variables ou d’autres tableaux de bord."
-    },
-    "variable-controls": {
-      "add-variable": "Ajouter une variable"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -9147,6 +9147,7 @@
     "json": {
       "cancel-button": "Annuler",
       "copy-button": "Copier dans le presse-papiers",
+      "dashboard-definition": "",
       "download-button": "Télécharger le fichier",
       "download-successful_toast_message": "Votre JSON a été téléchargé",
       "export-format": "Format",
@@ -13696,7 +13697,8 @@
       "open-pull-request-in-repo": "Ouvrir une demande de tirage dans {{repoType}}",
       "update-from-branch": "Les autres utilisateurs Grafana de votre entreprise verront toujours la version actuelle, jusqu’à ce que cette branche soit fusionnée",
       "view-in-repo-button": "Affichez-la dans {{repoType}} pour consulter les dernières modifications.",
-      "view-pull-request-in-repo": "Afficher la demande de tirage dans {{repoType}}"
+      "view-pull-request-in-repo": "Afficher la demande de tirage dans {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "Une nouvelle ressource a été créée dans une branche dans {{repoType}}.",
     "title-deleted-resource-in-branch": "Une ressource a été supprimée dans une branche dans {{repoType}}.",
