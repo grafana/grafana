@@ -16,7 +16,6 @@ import {
   type VizPanelState,
   type SceneGridItemLike,
   type SceneDataLayerProvider,
-  UserActionEvent,
   type SceneObjectState,
   LocalValueVariable,
 } from '@grafana/scenes';
@@ -34,8 +33,6 @@ import { type DashboardDTO, type DashboardDataDTO } from 'app/types/dashboard';
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
-import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
-import { setPanelInspectorOpener } from '../inspect/panelInspectorOpener';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -44,6 +41,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
+import { registerPanelInteractionsReporter } from '../scene/registerPanelInteractionsReporter';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -61,7 +59,6 @@ import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, getVizPanelKeyForPanelId, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
 import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
 
@@ -555,28 +552,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     body,
     maxPerRow: panel.maxPerRow,
     ...repeatOptions,
-  });
-}
-
-// Register how the panel status popover opens the inspector. Done here (rather than in
-// setDashboardPanelContext) so the heavy PanelInspectDrawer isn't imported by low-level panel
-// setup, which would introduce a circular dependency.
-setPanelInspectorOpener((panel, tab) => {
-  getDashboardSceneFor(panel).showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab }));
-});
-
-export function registerPanelInteractionsReporter(scene: DashboardScene) {
-  // Subscriptions set with subscribeToEvent are automatically unsubscribed when the scene deactivated
-  scene.subscribeToEvent(UserActionEvent, (e) => {
-    const { interaction } = e.payload;
-    switch (interaction) {
-      case 'panel-status-message-clicked':
-        DashboardInteractions.panelStatusMessageClicked();
-        break;
-      case 'panel-cancel-query-clicked':
-        DashboardInteractions.panelCancelQueryClicked();
-        break;
-    }
   });
 }
 

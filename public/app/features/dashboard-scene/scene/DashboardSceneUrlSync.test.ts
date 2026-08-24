@@ -261,6 +261,23 @@ describe('DashboardSceneUrlSync', () => {
   });
 
   describe('entering edit mode', () => {
+    it('holds the latest edit view in the URL while settings load', async () => {
+      const scene = buildTestScene();
+      scene.setState({
+        editable: true,
+        isEditing: true,
+        meta: { ...scene.state.meta, canEdit: true },
+      });
+
+      scene.urlSync?.updateFromUrl({ editview: 'settings' });
+      expect(scene.urlSync?.getUrlState().editview).toBe('settings');
+
+      scene.urlSync?.updateFromUrl({ editview: 'variables' });
+      expect(scene.urlSync?.getUrlState().editview).toBe('variables');
+
+      await waitFor(() => expect(scene.state.editview?.getUrlKey()).toBe('variables'));
+    });
+
     it('it should be possible to go from the view panel view to the edit view when the dashboard is not in edit mdoe', async () => {
       const scene = buildTestScene();
       scene.setState({ isEditing: false });

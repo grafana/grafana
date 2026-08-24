@@ -216,7 +216,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
 
   // Only wire up the status-popover inspector opener when the new panel errors UI is enabled.
   // Its presence is also the signal the panel renderer uses to show the new errors/notices popover.
-  // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
+  // The opener loads the inspector on demand to avoid importing the drawer here (and creating a circular dependency).
   if (isNewPanelQueryErrorsUIEnabled()) {
     context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
   }

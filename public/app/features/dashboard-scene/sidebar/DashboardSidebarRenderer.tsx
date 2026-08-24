@@ -22,13 +22,13 @@ import { type ToolbarActionProps } from '../scene/new-toolbar/types';
 import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
-import { DashboardCodePane } from './DashboardCodePane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
 import { AddNewPane } from './add-new/AddNewPane';
 import { DashboardPredefinedVariablesPane } from './dashboard/DashboardPredefinedVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
+import { openDashboardCodePane } from './openDashboardCodePane';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
 
 export interface Props {
@@ -117,9 +117,9 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
               icon="brackets-curly"
-              onClick={() => sidebar.openPane(new DashboardCodePane({}))}
+              onClick={() => openDashboardCodePane(sidebar)}
               data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
-              active={openPane instanceof DashboardCodePane}
+              active={openPane?.getId() === 'code'}
             />
             {globalDashboardVariablesEnabled && (
               <Sidebar.Button
