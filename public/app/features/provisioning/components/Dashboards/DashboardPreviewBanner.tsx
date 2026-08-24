@@ -99,6 +99,12 @@ function DashboardPreviewBannerContent({
     [file.data?.ref, repository?.name, triggerRefs]
   );
 
+  // Wait for the dry-run to resolve before rendering. resource.action drives the title, so showing
+  // the banner mid-load would flash the "created" default and then flip to the real action.
+  if (file.isLoading) {
+    return null;
+  }
+
   // early return if there is an error loading dashboard file from repository
   if (file.data?.errors) {
     return (
@@ -141,6 +147,9 @@ function DashboardPreviewBannerContent({
   const prOrCompareUrl = file.data?.urls?.newPullRequestURL || file.data?.urls?.compareURL; // Check if pull request URLs are available from the repository file data
   const prURL = existingPRUrl || prOrCompareUrl; // if PR URL is provided, use it, otherwise use BE response url
   const hasExistingPr = Boolean(existingPRUrl); // when existing PR URL is provided, it means the dashboard is loaded from a pull request
+  // Authoritative change type from the dry-run, so the banner title reflects the real action
+  // (create/update/delete/move) instead of inferring "new resource" from the absence of a PR URL.
+  const resourceAction = file.data?.resource?.action;
 
   // The pull request button points at a "create pull request" compare link that is only valid while
   // the branch exists. Pre-flighting is only worthwhile when we created it (a real PR link still
@@ -165,6 +174,7 @@ function DashboardPreviewBannerContent({
       <PreviewBannerViewPR
         prURL={prURL}
         isNewPr={!hasExistingPr}
+        action={resourceAction}
         branchInfo={branchInfo}
         originalUrl={originalUrl}
         onOpenPullRequest={canPreflightBranch ? handleOpenPullRequest : undefined}

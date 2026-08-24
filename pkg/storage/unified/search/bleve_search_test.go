@@ -352,7 +352,6 @@ func TestTitleNgramFieldSearch(t *testing.T) {
 			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 				{
 					Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-					Type:  resourcepb.QueryFieldType_TEXT,
 					Boost: 1,
 				},
 			},
@@ -926,7 +925,7 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 		return &resourcepb.ResourceSearchRequest{
 			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
 			Query:       text,
-			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
+			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Boost: 1}},
 			Limit:       100000,
 		}
 	}
