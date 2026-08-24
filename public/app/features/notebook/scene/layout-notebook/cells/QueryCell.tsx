@@ -4,6 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   type AbsoluteTimeRange,
+  dateTime,
   type DataSourceInstanceSettings,
   EventBusSrv,
   LoadingState,
@@ -72,10 +73,6 @@ export function QueryCell({ content, isEditing, cell, onChange }: Props) {
     });
   }
 
-  // Derived up front, ahead of the `content.kind` guard below, so every hook here (and the plain
-  // functions between them and the guard) can depend on them regardless of what `content` turns out
-  // to be — content.kind is 'Query' whenever cellTypeRegistry ever actually mounts this component,
-  // but hooks can't assume that themselves.
   const panelQuery = content.kind === 'Query' ? content.spec.query : undefined;
   const queryOptions = content.kind === 'Query' ? content.spec.queryOptions : undefined;
   const query = panelQuery ? dataQueryFromPanelQueryKind(panelQuery) : undefined;
@@ -86,9 +83,9 @@ export function QueryCell({ content, isEditing, cell, onChange }: Props) {
   const graphStyle = isEditing
     ? (persistedGraphStyle ?? DEFAULT_GRAPH_STYLE)
     : (viewGraphStyle ?? persistedGraphStyle ?? DEFAULT_GRAPH_STYLE);
-  // sceneGraph.getTimeRange always resolves to a real SceneTimeRange (falling back to a default
-  // internally), so `resolvedRange` is always defined — no local default needed.
-  const { value: resolvedRange } = sceneGraph.getTimeRange(cell).useState();
+
+  const timeRangeObj = sceneGraph.getTimeRange(cell);
+  const { value: resolvedRange } = timeRangeObj.useState();
   const dsRefName = panelQuery?.spec.query.datasource?.name;
 
   const { settings: dsSettings } = useDataSourceInstanceSettings(dsRefName);
@@ -131,22 +128,8 @@ export function QueryCell({ content, isEditing, cell, onChange }: Props) {
       return;
     }
     runQuery();
-    // runQuery's own identity changes on every render too (its useAsyncFn deps include `query`/
-    // `resolvedRange`, both fresh objects each render); depending on it here would just make this
-    // effect re-evaluate every render for no reason, since the ref guard above — not the dependency
-    // array — is what makes this run once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dsSettings]);
+  }, [dsSettings, runQuery]);
 
-  // ExploreGraph's axis follows `resolvedRange` on every render, so a picker change that does not
-  // fetch again would leave the previous series under the new window. Only after this cell has
-  // already run (auto or explicit) — a freshly-inserted empty cell still waits for Run rather than
-  // firing the first time the reader moves the picker. Keyed off the window's endpoints rather than
-  // the TimeRange object itself: sourcing it via sceneGraph.getTimeRange(cell) above already avoids
-  // most spurious re-renders (Scenes only re-emits when that object's own state actually changes),
-  // but a full notebook rebuild (e.g. the APPLY_NOTEBOOK_SPEC mutation) still swaps in a brand-new
-  // $timeRange instance for edits unrelated to time, which can carry the same evaluated endpoints
-  // under a new object reference.
   const rangeFromMs = resolvedRange.from.valueOf();
   const rangeToMs = resolvedRange.to.valueOf();
   const prevRangeFromMs = useRef(rangeFromMs);
@@ -159,14 +142,15 @@ export function QueryCell({ content, isEditing, cell, onChange }: Props) {
       return;
     }
     runQuery();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rangeFromMs, rangeToMs]);
+  }, [rangeFromMs, rangeToMs, runQuery]);
 
-  // Drag-to-zoom on the graph is Explore's own gesture for changing time range there — this cell
-  // shares the notebook's own range instead (see `resolvedRange` above), so honoring a per-graph
-  // zoom would need to write back up to the notebook's own time picker, not just to local state.
-  // Left as a no-op for now: the drag still selects visually, it just doesn't change anything (yet).
-  const onChangeTime = (_absoluteRange: AbsoluteTimeRange) => {};
+  const onChangeTime = ({ from, to }: AbsoluteTimeRange) => {
+    timeRangeObj.onTimeRangeChange({
+      from: dateTime(from),
+      to: dateTime(to),
+      raw: { from: dateTime(from), to: dateTime(to) },
+    });
+  };
 
   if (content.kind !== 'Query' || !panelQuery || !query) {
     return null;

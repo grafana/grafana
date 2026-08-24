@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import {
+  type AbsoluteTimeRange,
   type DataFrame,
   type DataQuery,
   type DataSourceInstanceSettings,
@@ -98,9 +99,18 @@ jest.mock('react-virtualized-auto-sizer', () => {
 // real: they're plain UI with no plugin-loading dependency, and ExploreGraphLabel's own real
 // RadioButtonGroup is what these tests click through to exercise the style-change wiring.
 jest.mock('app/features/explore/Graph/ExploreGraph', () => ({
-  ExploreGraph: ({ data, graphStyle }: { data: DataFrame[]; graphStyle: string }) => (
+  ExploreGraph: ({
+    data,
+    graphStyle,
+    onChangeTime,
+  }: {
+    data: DataFrame[];
+    graphStyle: string;
+    onChangeTime: (absoluteRange: AbsoluteTimeRange) => void;
+  }) => (
     <div data-testid="graph" data-graph-style={graphStyle}>
       {data.length} series
+      <button onClick={() => onChangeTime({ from: 1704110400000, to: 1704132000000 })}>drag to zoom</button>
     </div>
   ),
 }));
@@ -530,6 +540,35 @@ describe('QueryCell', () => {
 
     await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(2));
     expect(mockRun).toHaveBeenLastCalledWith(expect.objectContaining({ timeRange: afternoon }));
+  });
+
+  // Dragging to zoom on the graph should behave the same way it does in Explore or on a dashboard
+  // panel: push the new window into the notebook's *shared* time range (not just local state), which
+  // updates every other subscriber (the document header, other already-run cells) and — via the same
+  // endpoint-diffing effect the picker itself drives — re-runs this cell's own query too.
+  it('pushes a graph drag-to-zoom into the shared time range and re-runs against it', async () => {
+    const { cell, timeRange } = buildCell();
+    const { user } = render(
+      <QueryCell content={savedQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />
+    );
+
+    await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(1));
+    act(() => {
+      emitData?.({ state: LoadingState.Done, series: [{ fields: [], length: 0 }], timeRange: range });
+    });
+
+    await user.click(await screen.findByRole('button', { name: 'drag to zoom' }));
+
+    // The mocked ExploreGraph's "drag to zoom" button reports 2024-01-01T12:00 -> 18:00 in epoch ms.
+    expect(timeRange.state.value.from.valueOf()).toBe(1704110400000);
+    expect(timeRange.state.value.to.valueOf()).toBe(1704132000000);
+
+    await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(2));
+    expect(mockRun).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        timeRange: expect.objectContaining({ from: timeRange.state.value.from, to: timeRange.state.value.to }),
+      })
+    );
   });
 
   it('re-runs after an explicit Run when the notebook time range later changes', async () => {
