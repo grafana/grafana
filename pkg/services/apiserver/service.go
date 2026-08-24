@@ -71,6 +71,14 @@ type Service interface {
 	registry.CanBeDisabled
 }
 
+// AppInstallerBuilder builds app installers that can only be derived once their backing state is
+// fully initialized (e.g. plugin-manifest installers, which depend on plugins being loaded into
+// the plugin registry). The API server invokes it at start time, before it builds its immutable
+// set of served API groups.
+type AppInstallerBuilder interface {
+	BuildInstallers(ctx context.Context) ([]appsdkapiserver.AppInstaller, error)
+}
+
 type service struct {
 	services.NamedService
 
@@ -105,6 +113,7 @@ type service struct {
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
 	apiExtensionsRunner               ApiExtensionsRunner
 	appInstallers                     []appsdkapiserver.AppInstaller
+	appInstallerBuilder               AppInstallerBuilder
 	builderMetrics                    *builder.BuilderMetrics
 
 	auditBackend            audit.Backend
@@ -138,6 +147,7 @@ func ProvideService(
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
 	apiExtensionsRunner ApiExtensionsRunner,
 	appInstallers []appsdkapiserver.AppInstaller,
+	appInstallerBuilder AppInstallerBuilder,
 	builderMetrics *builder.BuilderMetrics,
 	auditBackend audit.Backend,
 	auditPolicyRuleProvider auditing.PolicyRuleProvider,
@@ -165,6 +175,7 @@ func ProvideService(
 		aggregatorRunner:                  aggregatorRunner,
 		apiExtensionsRunner:               apiExtensionsRunner,
 		appInstallers:                     appInstallers,
+		appInstallerBuilder:               appInstallerBuilder,
 		builderMetrics:                    builderMetrics,
 		auditBackend:                      auditBackend,
 		auditPolicyRuleProvider:           auditPolicyRuleProvider,
@@ -274,6 +285,17 @@ func applyOpenAPIV2Setting(serverConfig *genericapiserver.RecommendedConfig, api
 
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
+	// Derive any app installers whose backing state is only ready now (e.g. plugin-manifest
+	// installers, which need plugins loaded into the registry). This runs before the served API
+	// group set is assembled below, since that set is immutable once the server is built.
+	if s.appInstallerBuilder != nil {
+		built, err := s.appInstallerBuilder.BuildInstallers(ctx)
+		if err != nil {
+			return fmt.Errorf("building app installers: %w", err)
+		}
+		s.appInstallers = append(s.appInstallers, built...)
+	}
+
 	// Get the list of groups the server will support
 	builders := s.builders
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
