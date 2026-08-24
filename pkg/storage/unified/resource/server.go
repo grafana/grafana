@@ -1731,11 +1731,13 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		}
 
 		extractFn := func(c candidateItem) authz.BatchCheckItem {
-			// A cross-namespace list has no namespace on the request key, so the
-			// item's own is the only correct scope. FilterAuthorized batches per
-			// namespace, so varying it per item is fine.
+			// A keys-only list is always cluster-wide, so the request key carries
+			// no namespace and the item's own is the only scope that can be
+			// checked. FilterAuthorized batches per namespace, so varying it per
+			// item is fine. Confined to keys_only: other list paths can be
+			// changed later.
 			namespace := key.Namespace
-			if namespace == "" {
+			if req.KeysOnly && namespace == "" {
 				namespace = c.namespace
 			}
 			return authz.BatchCheckItem{

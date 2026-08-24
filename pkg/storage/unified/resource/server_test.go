@@ -3314,8 +3314,9 @@ func (c *namespaceRecordingAccessClient) seen() ([]string, map[string]string) {
 	return slices.Clone(c.namespaces), maps.Clone(c.items)
 }
 
-// Wildcard-scoped identity, so the identity is never what limits the result.
-func newRecordingTestServer(t *testing.T, ac authlib.AccessClient) (*server, context.Context) {
+// Returns a wildcard-scoped context for seeding alongside the caller's, so a
+// narrowly-scoped identity under test is not also what writes the fixtures.
+func newRecordingTestServer(t *testing.T, ac authlib.AccessClient, identityNamespace string) (srv *server, ctx, seedCtx context.Context) {
 	t.Helper()
 
 	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
@@ -3325,7 +3326,7 @@ func newRecordingTestServer(t *testing.T, ac authlib.AccessClient) (*server, con
 	store, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
 	require.NoError(t, err)
 
-	srv, err := NewResourceServer(ResourceServerOptions{Backend: store, AccessClient: ac})
+	srv, err = NewResourceServer(ResourceServerOptions{Backend: store, AccessClient: ac})
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -3333,66 +3334,59 @@ func newRecordingTestServer(t *testing.T, ac authlib.AccessClient) (*server, con
 		_ = srv.Stop(stopCtx)
 	})
 
-	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
-		Type: authlib.TypeAccessPolicy, Name: "svc", UserUID: "svc",
-		Namespace: "*", OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
-	})
-	return srv, ctx
+	authCtx := func(ns string) context.Context {
+		return authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
+			Type: authlib.TypeAccessPolicy, Name: "svc", UserUID: "svc",
+			Namespace: ns, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+		})
+	}
+	return srv, authCtx(identityNamespace), authCtx("*")
 }
 
-// Authorizing against the request key would check every item under the empty
-// namespace, which the RBAC service rejects outright ("namespace is required").
-// Both directions matter: a cluster-scoped list must batch per item namespace, and
-// a namespaced list must keep using the request key.
-func TestListAuthorizesAgainstTheItemNamespace(t *testing.T) {
+// A keys-only list is cluster-wide, so the request key carries no namespace and
+// items are checked under their own. Only a wildcard identity can read across
+// namespaces: for anyone else the first foreign namespace batch fails
+// NamespaceMatches, and FilterAuthorized yields that error and stops.
+func TestCrossNamespaceKeysListRequiresWildcardIdentity(t *testing.T) {
 	const (
 		group    = "playlist.grafana.app"
 		resource = "playlists"
 	)
 
-	seed := func(t *testing.T, srv *server, ctx context.Context, ns, name string) {
-		t.Helper()
-		raw, err := json.Marshal(map[string]any{
-			"apiVersion": group + "/v0alpha1",
-			"kind":       "Playlist",
-			"metadata":   map[string]any{"name": name, "namespace": ns},
-			"spec":       map[string]any{"title": name},
-		})
-		require.NoError(t, err)
-		created, err := srv.Create(ctx, &resourcepb.CreateRequest{
-			Key:   &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns, Name: name},
-			Value: raw,
-		})
-		require.NoError(t, err)
-		require.Nil(t, created.Error)
-	}
-
 	for name, tc := range map[string]struct {
-		requestNamespace string
-		seeded           map[string]string // name -> namespace
-		wantBatches      []string
-		wantItems        map[string]string // name -> namespace
+		identityNamespace string
+		requestNamespace  string
+		wantNamespaces    []string
+		wantErr           string
 	}{
-		"cross-namespace list batches per item namespace": {
-			requestNamespace: "",
-			seeded:           map[string]string{"aaa": "ns-one", "bbb": "ns-two"},
-			wantBatches:      []string{"ns-one", "ns-two"},
-			wantItems:        map[string]string{"aaa": "ns-one", "bbb": "ns-two"},
+		"wildcard identity reads every namespace": {
+			identityNamespace: "*",
+			requestNamespace:  "",
+			wantNamespaces:    []string{"stacks-123", "stacks-456"},
 		},
-		"namespaced list uses the request key": {
-			requestNamespace: "ns-one",
-			seeded:           map[string]string{"aaa": "ns-one"},
-			wantBatches:      []string{"ns-one"},
-			wantItems:        map[string]string{"aaa": "ns-one"},
+		"tenant-scoped identity cannot read across namespaces": {
+			identityNamespace: "stacks-123",
+			requestNamespace:  "",
+			wantErr:           "namespace mismatch",
+		},
+		"single-tenant service account cannot either": {
+			identityNamespace: "default",
+			requestNamespace:  "",
+			wantErr:           "namespace mismatch",
+		},
+		// Proves the refusals are about crossing namespaces, not about the
+		// identity being unable to read anything.
+		"tenant-scoped identity reads its own namespace": {
+			identityNamespace: "stacks-123",
+			requestNamespace:  "stacks-123",
+			wantNamespaces:    []string{"stacks-123"},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			ac := newNamespaceRecordingAccessClient()
-			srv, ctx := newRecordingTestServer(t, ac)
-
-			for objName, ns := range tc.seeded {
-				seed(t, srv, ctx, ns, objName)
-			}
+			ac := NewAuthzLimitedClient(newNamespaceRecordingAccessClient(), AuthzOptions{Registry: prometheus.NewRegistry()})
+			srv, ctx, seedCtx := newRecordingTestServer(t, ac, tc.identityNamespace)
+			seedPlaylist(t, srv, seedCtx, "stacks-123", "aaa")
+			seedPlaylist(t, srv, seedCtx, "stacks-456", "bbb")
 
 			rsp, err := srv.List(ctx, &resourcepb.ListRequest{
 				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
@@ -3401,21 +3395,96 @@ func TestListAuthorizesAgainstTheItemNamespace(t *testing.T) {
 				KeysOnly: true,
 			})
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
-			require.Len(t, rsp.Items, len(tc.wantItems))
 
-			batches, perItem := ac.seen()
-			assert.NotContains(t, batches, "", "no batch may be scoped to the empty namespace")
-			assert.ElementsMatch(t, tc.wantBatches, batches, "one batch per namespace")
-			assert.Equal(t, tc.wantItems, perItem, "each item authorized under its own namespace")
-
-			got := map[string]string{}
-			for _, item := range rsp.Items {
-				got[item.Name] = item.Namespace
+			if tc.wantErr != "" {
+				require.NotNil(t, rsp.Error, "the list must not succeed")
+				assert.Contains(t, rsp.Error.Message, tc.wantErr)
+				return
 			}
-			assert.Equal(t, tc.wantItems, got, "items carry their namespace back to the caller")
+
+			require.Nil(t, rsp.Error)
+			got := make([]string, 0, len(rsp.Items))
+			for _, item := range rsp.Items {
+				got = append(got, item.Namespace)
+			}
+			assert.ElementsMatch(t, tc.wantNamespaces, got)
 		})
 	}
+}
+
+// The substitution above is confined to keys_only. Every other list path reaches
+// the same empty namespace on a cross-namespace request and must keep checking
+// under it, so this PR changes no existing authorization behavior.
+func TestOnlyKeysListSubstitutesTheItemNamespace(t *testing.T) {
+	const (
+		group    = "dashboard.grafana.app" // allowlisted, so checks reach the client
+		resource = "dashboards"
+	)
+
+	for name, tc := range map[string]struct {
+		keysOnly         bool
+		requestNamespace string
+		wantBatches      []string
+	}{
+		"keys-only cross-namespace list batches per item namespace": {
+			keysOnly:    true,
+			wantBatches: []string{"ns-one", "ns-two"},
+		},
+		"normal cross-namespace list still batches under the empty namespace": {
+			wantBatches: []string{""},
+		},
+		"keys-only namespaced list uses the request key": {
+			keysOnly:         true,
+			requestNamespace: "ns-one",
+			wantBatches:      []string{"ns-one"},
+		},
+		"normal namespaced list uses the request key": {
+			requestNamespace: "ns-one",
+			wantBatches:      []string{"ns-one"},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			inner := newNamespaceRecordingAccessClient()
+			ac := NewAuthzLimitedClient(inner, AuthzOptions{Registry: prometheus.NewRegistry()})
+			srv, ctx, seedCtx := newRecordingTestServer(t, ac, "*")
+			seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-one", "aaa")
+			seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-two", "bbb")
+
+			rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: group, Resource: resource, Namespace: tc.requestNamespace,
+				}},
+				KeysOnly: tc.keysOnly,
+			})
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+
+			batches, _ := inner.seen()
+			assert.ElementsMatch(t, tc.wantBatches, slices.Compact(batches))
+		})
+	}
+}
+
+func seedPlaylist(t *testing.T, srv *server, ctx context.Context, ns, name string) {
+	t.Helper()
+	seedPlaylistIn(t, srv, ctx, "playlist.grafana.app", "playlists", ns, name)
+}
+
+func seedPlaylistIn(t *testing.T, srv *server, ctx context.Context, group, resource, ns, name string) {
+	t.Helper()
+	raw, err := json.Marshal(map[string]any{
+		"apiVersion": group + "/v0alpha1",
+		"kind":       "Playlist",
+		"metadata":   map[string]any{"name": name, "namespace": ns},
+		"spec":       map[string]any{"title": name},
+	})
+	require.NoError(t, err)
+	created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+		Key:   &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns, Name: name},
+		Value: raw,
+	})
+	require.NoError(t, err)
+	require.Nil(t, created.Error)
 }
 
 // Every selector is refused for keys_only, including the ones filterSelectors
