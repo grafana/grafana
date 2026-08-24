@@ -14,15 +14,21 @@ import {
   FieldColorModeId,
   FieldType,
 } from '@grafana/data';
-import { type CalculatedColumn, type RenderRowProps } from '@grafana/react-data-grid';
+import { type CalculatedColumn, type RenderCellProps, type RenderRowProps } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../utils/colors';
 import { type PanelContext } from '../../PanelChrome';
 
 import { type HeaderCell } from './components/HeaderCell';
+import { type TableCellTooltipProps } from './components/TableCellTooltip';
 import { TABLE } from './constants';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+import {
+  type ColumnBuildConfig,
+  prepareFieldsForDisplay,
+  useColumnBuilderFromFields,
+  useDataGridRows,
+} from './render-hooks';
 import {
   type FilterType,
   type NestedRowEntry,
@@ -295,6 +301,13 @@ function getHeaderCellProps(column: TableColumn): ComponentProps<typeof HeaderCe
 }
 
 /**
+ * The grid passes a full RenderCellProps; the cell renderers only read `row` and `column`.
+ */
+function makeCellProps(column: TableColumn, row: TableRow): RenderCellProps<TableRow, TableSummaryRow> {
+  return { column, row } as unknown as RenderCellProps<TableRow, TableSummaryRow>;
+}
+
+/**
  * The width handed to a cell renderer is only observable through the cell component's props;
  * renderCell wraps that component in a fragment alongside the optional cell actions.
  */
@@ -322,7 +335,6 @@ function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConf
   const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
   return {
     theme,
-    applyToRowBgFn: undefined,
     getCellColorInlineStyles,
     getTextColorForBackground: memoize(getTextColorForBackground, { maxSize: 100 }),
     rowHeight: 36,
@@ -422,6 +434,31 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
     expect(result.columns[0].width).toBe(150);
     expect(result.columns[1].width).toBe(200);
+  });
+
+  it('renders a cell tooltip against a prepared copy of the tooltip field', () => {
+    // The tooltip field is hidden, so it never reaches the builder through `fields` — it has to be
+    // prepared on lookup, otherwise the tooltip formats JSON with the frame's raw display processor.
+    const tooltipFrame = createDataFrame({
+      fields: [
+        { name: 'A', type: FieldType.string, values: ['x', 'y'], config: { custom: { tooltip: { field: 'J' } } } },
+        { name: 'J', type: FieldType.other, values: [{ a: 1 }, { a: 2 }], config: { custom: { hidden: true } } },
+      ],
+    });
+    const rawDisplay = (v: unknown) => ({ text: String(v), numeric: NaN });
+    tooltipFrame.fields[1].display = rawDisplay;
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+
+    const result = callFromFields(hook, [tooltipFrame.fields[0]], [100], tooltipFrame, rows, rows);
+    const node = result.columns[0].renderCell!(makeCellProps(result.columns[0], rows[0]));
+
+    if (!isValidElement<TableCellTooltipProps>(node)) {
+      throw new Error('renderCell did not return a tooltip element');
+    }
+    expect(node.props.field).not.toBe(tooltipFrame.fields[1]);
+    expect(node.props.field.display!({ a: 1 }).text).toBe(JSON.stringify({ a: 1 }, null, ' '));
+    // ...and the frame's own field is left alone
+    expect(tooltipFrame.fields[1].display).toBe(rawDisplay);
   });
 
   it('hands cell renderers the column width reduced by the cell chrome (padding and border)', () => {
@@ -552,5 +589,83 @@ describe('useColumnBuilderFromFields', () => {
       const headerProps = getHeaderCellProps(result.columns[0]);
       expect(headerProps.crossFilterTailRows).toEqual(topLevelScope);
     });
+  });
+});
+
+// -----------------------------------------------------------------------------
+// prepareFieldsForDisplay
+// -----------------------------------------------------------------------------
+
+describe('prepareFieldsForDisplay', () => {
+  const baseDisplay = (v: unknown) => ({ text: String(v), numeric: NaN });
+
+  it('attaches the JSON pretty-printer to an `other` field without mutating the original', () => {
+    const field: Field = {
+      name: 'j',
+      type: FieldType.other,
+      values: [{ a: 1 }],
+      config: {},
+      display: baseDisplay,
+    };
+    const originalDisplay = field.display;
+
+    const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+    // the original field is left untouched — no shared-object mutation
+    expect(field.display).toBe(originalDisplay);
+    // the prepared field is a copy carrying the JSON display
+    expect(prepared).not.toBe(field);
+    expect(prepared.display).not.toBe(originalDisplay);
+    expect(prepared.display!({ a: 1 }).text).toBe(JSON.stringify({ a: 1 }, null, ' '));
+  });
+
+  it('attaches the JSON pretty-printer to an explicit JSONView cell', () => {
+    const field: Field = {
+      name: 'j',
+      type: FieldType.string,
+      values: ['{"a":1}'],
+      config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+      display: baseDisplay,
+    };
+
+    const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+    expect(prepared).not.toBe(field);
+    expect(prepared.display!('{"a":1}').text).toBe('{\n "a": 1\n}');
+  });
+
+  it.each([TableCellDisplayMode.Pill, TableCellDisplayMode.Markdown])(
+    'leaves an `other` field alone when it is explicitly a %s column',
+    (type) => {
+      // These renderers ignore the JSON display processor, so attaching it only clobbers the field's
+      // own formatting — an array of pill values would become a multi-line JSON blob.
+      const value = ['a', 'b'];
+      const field: Field = {
+        name: 'j',
+        type: FieldType.other,
+        values: [value],
+        config: { custom: { cellOptions: { type } } },
+        display: baseDisplay,
+      };
+
+      const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+      expect(prepared).toBe(field);
+      expect(prepared.display!(value).text).toBe('a,b');
+    }
+  );
+
+  it('returns fields that need no display processor by reference, unchanged', () => {
+    const field: Field = {
+      name: 's',
+      type: FieldType.string,
+      values: ['x'],
+      config: { custom: { cellOptions: { type: TableCellDisplayMode.Auto } } },
+      display: baseDisplay,
+    };
+
+    const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+    expect(prepared).toBe(field);
   });
 });

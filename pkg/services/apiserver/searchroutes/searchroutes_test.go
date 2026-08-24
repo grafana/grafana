@@ -321,3 +321,60 @@ func TestServedGroupVersions_CoversBothRegistrationPaths(t *testing.T) {
 	assert.True(t, served[fromBuilder])
 	assert.False(t, served[schema.GroupVersion{Group: "other.grafana.app", Version: "v1"}])
 }
+
+// todoManifest is an ext app group, which no builder or installer knows about.
+func todoManifest(gv schema.GroupVersion, fieldType, capability string) []app.Manifest {
+	return []app.Manifest{{ManifestData: &app.ManifestData{
+		Group: gv.Group,
+		Versions: []app.ManifestVersion{{
+			Name:   gv.Version,
+			Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind:   "Todo",
+				Plural: "todos",
+				Scope:  "Namespaced",
+				SearchFields: []app.ManifestVersionKindSearchField{
+					{Name: "title", Path: "spec.title", Type: fieldType, Capabilities: []string{capability}},
+				},
+			}},
+		}},
+	}}}
+}
+
+func TestBuildForServedGroupVersions_MountsWithoutBuildersOrInstallers(t *testing.T) {
+	gv := schema.GroupVersion{Group: "exampletodoapp.ext.grafana.app", Version: "v1alpha1"}
+	manifests := todoManifest(gv, "string", "filter")
+
+	t.Run("mounted when the caller serves the group version", func(t *testing.T) {
+		served := map[schema.GroupVersion]bool{gv: true}
+
+		routes, err := BuildForServedGroupVersions(manifests, served, true, true, nil, fakeClient{})
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"todos/search", "todos/trash"}, paths(routes)[gv.String()])
+	})
+
+	t.Run("nothing mounted for a group version the caller does not serve", func(t *testing.T) {
+		routes, err := BuildForServedGroupVersions(manifests, nil, true, true, nil, fakeClient{})
+		require.NoError(t, err)
+		assert.Empty(t, paths(routes))
+	})
+
+	t.Run("nothing mounted when both endpoints are off", func(t *testing.T) {
+		served := map[schema.GroupVersion]bool{gv: true}
+
+		routes, err := BuildForServedGroupVersions(manifests, served, false, false, nil, fakeClient{})
+		require.NoError(t, err)
+		assert.Nil(t, routes)
+	})
+}
+
+// Runtime declarations are refused rather than fatal.
+func TestBuildForServedGroupVersions_RejectsAMalformedDeclaration(t *testing.T) {
+	gv := schema.GroupVersion{Group: "exampletodoapp.ext.grafana.app", Version: "v1alpha1"}
+	served := map[schema.GroupVersion]bool{gv: true}
+
+	// Full-text search over a number is not something the index can serve.
+	routes, err := BuildForServedGroupVersions(todoManifest(gv, "int64", "text"), served, true, true, nil, fakeClient{})
+	require.Error(t, err)
+	assert.Nil(t, routes)
+}
