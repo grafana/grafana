@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,7 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	legacyresourcepermissions "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -513,6 +517,91 @@ func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.
 		require.Equal(t, "folders:uid:fold1", permission.Scope)
 		require.Equal(t, "folders:admin", permission.Action)
 	})
+}
+
+func TestIntegration_ResourcePermSqlBackend_ConcurrentLegacyRoleCreation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbMySQL() {
+		t.Skip("MySQL regression test")
+	}
+
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	sqlHelper := &legacysql.LegacyDatabaseHelper{
+		DB:    store,
+		Table: func(name string) string { return name },
+	}
+	backend := ProvideStorageBackend(func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return sqlHelper, nil
+	}, NewMappersRegistry())
+	legacyStore := legacyresourcepermissions.NewStore(setting.NewCfg(), store, featuremgmt.WithFeatures())
+
+	for orgID := int64(100); orgID < 120; orgID++ {
+		folderName := fmt.Sprintf("folder-%d", orgID)
+		resourcePerm := &v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{Name: "folder.grafana.app-folders-" + folderName, Namespace: fmt.Sprintf("org-%d", orgID)},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "folder.grafana.app",
+					Resource: "folders",
+					Name:     folderName,
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"},
+					{Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+				},
+			},
+		}
+		grn, err := splitResourceName(resourcePerm.Name)
+		require.NoError(t, err)
+		mapper, err := backend.getResourceMapper(grn.Group, grn.Resource)
+		require.NoError(t, err)
+
+		start := make(chan struct{})
+		errs := make(chan error, 2)
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			<-start
+			_, err := backend.createResourcePermission(context.Background(), sqlHelper, types.NamespaceInfo{
+				Value: fmt.Sprintf("org-%d", orgID),
+				OrgID: orgID,
+			}, mapper, grn, resourcePerm)
+			errs <- err
+		}()
+		go func() {
+			defer wg.Done()
+			<-start
+			_, err := legacyStore.SetResourcePermissions(context.Background(), orgID, []legacyresourcepermissions.SetResourcePermissionsCommand{
+				{
+					BuiltinRole: "Viewer",
+					SetResourcePermissionCommand: legacyresourcepermissions.SetResourcePermissionCommand{
+						Actions:           []string{"datasources:query"},
+						Resource:          "datasources",
+						ResourceID:        fmt.Sprintf("datasource-%d", orgID),
+						ResourceAttribute: "uid",
+					},
+				},
+				{
+					BuiltinRole: "Editor",
+					SetResourcePermissionCommand: legacyresourcepermissions.SetResourcePermissionCommand{
+						Actions:           []string{"datasources:query"},
+						Resource:          "datasources",
+						ResourceID:        fmt.Sprintf("datasource-%d", orgID),
+						ResourceAttribute: "uid",
+					},
+				},
+			}, legacyresourcepermissions.ResourceHooks{})
+			errs <- err
+		}()
+
+		close(start)
+		wg.Wait()
+		close(errs)
+		for err := range errs {
+			require.NoError(t, err)
+		}
+	}
 }
 
 func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.T) {
