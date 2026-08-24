@@ -508,10 +508,6 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     return undefined;
   }
 
-  private getTransformerConfigs(transformer: SceneDataTransformer): DataTransformerConfig[] {
-    return filterDataTransformerConfigs(transformer.state.transformations);
-  }
-
   private getTransformations(index: number): {
     transformations: DataTransformerConfig[] | undefined;
     transformer: SceneDataTransformer | undefined;
@@ -519,7 +515,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const transformer = this.getSceneDataTransformer();
 
     if (transformer) {
-      const transformations = this.getTransformerConfigs(transformer);
+      const transformations = filterDataTransformerConfigs([...transformer.state.transformations]);
 
       if (index >= 0 && index < transformations.length) {
         return { transformations, transformer };
@@ -541,7 +537,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       action: 'add',
     });
 
-    const transformations = this.getTransformerConfigs(transformer);
+    const transformations = filterDataTransformerConfigs([...transformer.state.transformations]);
     const newConfig: DataTransformerConfig = { id: transformationId, options: {} };
     const insertAt = afterIndex !== undefined ? afterIndex + 1 : transformations.length;
     transformations.splice(insertAt, 0, newConfig);
@@ -597,7 +593,9 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
     const indexSet = new Set(indices);
-    const transformations = this.getTransformerConfigs(transformer).filter((_, i) => !indexSet.has(i));
+    const transformations = filterDataTransformerConfigs(transformer.state.transformations).filter(
+      (_, i) => !indexSet.has(i)
+    );
     transformer.setState({ transformations });
     this.runQueries();
   };
@@ -608,7 +606,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
     const indexSet = new Set(indices);
-    const transformations = this.getTransformerConfigs(transformer).map((t, i) =>
+    const transformations = filterDataTransformerConfigs(transformer.state.transformations).map((t, i) =>
       indexSet.has(i) ? { ...t, disabled } : t
     );
     transformer.setState({ transformations });
