@@ -305,13 +305,10 @@ describe('QueryCell', () => {
   // Duplicate/remove/reorder never do anything meaningful for a cell that only ever has one query —
   // the notebook cell's own actions already cover duplicate/delete. hideActionButtons is the only
   // lever QueryEditorRow exposes for this (see QueryCell's own comment on why help goes with it).
-  // collapsable stays true — the native chevron (top-left of the header) is reused as-is; only its
-  // open/closed state is driven externally, via `isOpen` (see the collapse describe block).
   it('hides the row-level duplicate/remove/drag actions', async () => {
     render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
 
     expect(await screen.findByTestId('hide-action-buttons')).toHaveTextContent('true');
-    expect(screen.getByTestId('collapsable')).toHaveTextContent('true');
   });
 
   it('renders the Run button outside the query editor row, not through renderHeaderExtras', async () => {
@@ -324,44 +321,46 @@ describe('QueryCell', () => {
     expect(screen.getByRole('button', { name: 'Run query' })).toBeInTheDocument();
   });
 
-  describe('the query editor’s own collapse state', () => {
-    it('starts expanded in edit mode', async () => {
+  describe('the query editor body’s visibility', () => {
+    it('renders open, with a collapse chevron, in edit mode', async () => {
       render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
 
       expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
+      expect(screen.getByTestId('collapsable')).toHaveTextContent('true');
     });
 
-    it('starts collapsed in view mode', async () => {
+    // Reading a notebook should only ever show the header (datasource label, refId) plus the graph —
+    // the query-builder body must not be reachable at all, so there's no chevron to reveal it
+    // (`collapsable`) and the body itself never mounts (`isOpen`).
+    it('never renders the body, or a way to reveal it, in view mode', async () => {
       render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
 
       expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
+      expect(screen.getByTestId('collapsable')).toHaveTextContent('false');
     });
 
-    // Manual toggling itself is QueryOperationRow's own native chevron click, entirely internal to
-    // the (mocked-away, here) shared component — nothing in QueryCell wires that click to `onChange`
-    // at all, so there is nothing for this file's mock to exercise beyond what's already covered by
-    // asserting `isOpen`/`collapsable` above.
-
-    // Cells aren't remounted when the whole notebook flips between edit and view, so the initial
-    // useState alone would only ever apply on the very first render — this is what re-collapses (or
-    // re-expands) an already-mounted cell on a later mode switch too, not just a notebook opened
-    // straight into one mode or the other.
-    it('collapses when the notebook switches from edit to view mid-session, not only on a fresh load', async () => {
+    // Cells aren't remounted when the whole notebook flips between edit and view, so this has to be
+    // derived straight from `isEditing` on every render rather than seeded once — otherwise a cell
+    // already mounted before a mode switch would keep showing (or hiding) its body regardless of the
+    // new mode.
+    it('hides the body when the notebook switches from edit to view mid-session', async () => {
       const { rerender } = render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
       expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
 
       rerender(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
 
       expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
+      expect(screen.getByTestId('collapsable')).toHaveTextContent('false');
     });
 
-    it('expands again when the notebook switches back from view to edit', async () => {
+    it('shows the body again when the notebook switches back from view to edit', async () => {
       const { rerender } = render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
       expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
 
       rerender(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
 
       expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
+      expect(screen.getByTestId('collapsable')).toHaveTextContent('true');
     });
   });
 
@@ -386,9 +385,10 @@ describe('QueryCell', () => {
       expect(await screen.findByRole('button', { name: 'Run query' })).toBeEnabled();
     });
 
-    // The CSS pointer-events lock only stops mouse interaction — a focused input could still be typed
-    // into via the keyboard, which is exactly what this mock's "edit query" button stands in for here.
-    it('never calls onChange for a query edit that slips past the visual lock', async () => {
+    // The real component never mounts the query editor at all while reading (see the collapse
+    // describe block above); this mock renders the "edit query" button unconditionally regardless of
+    // `isOpen`, so it stands in here for "even if an edit somehow reached QueryEditorRow's onChange".
+    it('never calls onChange for a query edit that slips past the collapsed body', async () => {
       const onChange = jest.fn();
       const { user } = render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={onChange} />);
 
