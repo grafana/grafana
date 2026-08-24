@@ -179,6 +179,35 @@ describe('useTransformationInputData', () => {
     );
   });
 
+  it('never hands the editor the previous query’s output paired with the current query', () => {
+    // The replay resolves a render later than the query it belongs to, so there is always a render
+    // where the new frames are in and their transformed form is not. Holding the previous output
+    // across it is what an editor reads to build its field pickers, and those fields belong to a
+    // frame shape the panel no longer has.
+    const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
+    const newRawData = makeFrames(['C-series']);
+
+    const { result, rerender } = renderHook(
+      ({ data }: { data: DataFrame[] }) =>
+        useTransformationInputData({
+          selectedTransformation: transformations[1],
+          allTransformations: transformations,
+          systemTransformations: NO_CONFIGS,
+          rawData: data,
+        }),
+      { initialProps: { data: rawData } }
+    );
+
+    expect(result.current).toBe(mockPipelineOutput);
+
+    // The new query has landed but its replay has not emitted yet.
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+    act(() => rerender({ data: newRawData }));
+
+    // Untransformed, but from the query the editor is being asked about.
+    expect(result.current).toBe(newRawData);
+  });
+
   it('runs the plugin-registered transformations ahead of the preceding user ones', () => {
     // These run ahead of every user transformation but are deliberately absent from the editable
     // list, so replaying that list alone shows editors a field shape they will never receive. Which

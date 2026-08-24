@@ -71,6 +71,36 @@ describe('useTransformationDebugData', () => {
     expect(result.current).toEqual({ input: [], output: [] });
   });
 
+  it('admits only the frames the debugged transformation’s own filter matches', () => {
+    // The debug view claims to show what the transformation received. Its filter runs ahead of it in
+    // the real pipeline, so unfiltered input here shows frames it never saw.
+    const filteredTransformation = {
+      ...transformations[1],
+      transformConfig: { id: 'organize', options: {}, filter: { id: 'byName', options: 'joined' } },
+    };
+    const filtered = [transformations[0], filteredTransformation];
+
+    mockTransformDataFrame.mockReturnValue(
+      new Observable((subscriber) => {
+        subscriber.next(makeFrames(['joined', 'excluded']));
+      })
+    );
+
+    const { result } = renderHook(() =>
+      useTransformationDebugData({
+        selectedTransformation: filteredTransformation,
+        transformations: filtered,
+        systemTransformations: NO_CONFIGS,
+        data,
+        isActive: true,
+      })
+    );
+
+    expect(result.current.input.map(({ name }) => name)).toEqual(['joined']);
+    // The output is what the transformation produced, which the filter has already been applied to.
+    expect(result.current.output.map(({ name }) => name)).toEqual(['joined', 'excluded']);
+  });
+
   it('replays the plugin-registered transformations ahead of the preceding user ones', () => {
     // They run ahead of every user transformation but are absent from the editable list, so replaying
     // that list alone shows an input the debugged transformation never receives. Which configs

@@ -99,6 +99,24 @@ describe('usePreviousTransformationOutput', () => {
     ]);
   });
 
+  it('offers nothing for a transformation the pipeline does not contain', () => {
+    // A transformation just removed from the list still renders for a frame before its editor closes,
+    // and `findIndex` answering -1 for it must not be read as "first in the pipeline".
+    const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
+
+    const { result } = renderHook(() =>
+      usePreviousTransformationOutput({
+        selectedTransformation: makeTransformation('removed'),
+        transformations,
+        systemTransformations: NO_CONFIGS,
+        queryData,
+      })
+    );
+
+    expect(result.current).toEqual([]);
+    expect(mockTransformDataFrame).not.toHaveBeenCalled();
+  });
+
   it('runs the plugin-registered transformations ahead of the preceding user ones', () => {
     // The filter matcher runs against the frames the pipeline actually produces. These run ahead of
     // every user transformation, so a picker built without them lists frames that no longer exist by
