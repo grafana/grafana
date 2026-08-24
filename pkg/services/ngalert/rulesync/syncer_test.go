@@ -59,13 +59,17 @@ func (f *fakeFetcher) Fetch(context.Context, *datasources.DataSource) (RulerConf
 }
 
 type fakeRuleService struct {
-	replaced []*models.AlertRuleGroup
-	existing []models.AlertRuleGroupWithFolderFullpath
-	deleted  []provisioning.FilterOptions
+	replaced        []*models.AlertRuleGroup
+	replacedManager utils.ManagerProperties
+	replacedVersion string
+	existing        []models.AlertRuleGroupWithFolderFullpath
+	deleted         []provisioning.FilterOptions
 }
 
-func (f *fakeRuleService) ReplaceRuleGroups(_ context.Context, _ identity.Requester, groups []*models.AlertRuleGroup, _ utils.ManagerProperties, _ string) error {
+func (f *fakeRuleService) ReplaceRuleGroups(_ context.Context, _ identity.Requester, groups []*models.AlertRuleGroup, manager utils.ManagerProperties, versionMessage string) error {
 	f.replaced = groups
+	f.replacedManager = manager
+	f.replacedVersion = versionMessage
 	return nil
 }
 func (f *fakeRuleService) DeleteRuleGroups(_ context.Context, _ identity.Requester, _ utils.ManagerProperties, filterOpts *provisioning.FilterOptions) error {
@@ -511,4 +515,99 @@ func TestSyncOrg_TargetDatasourceDefaultsToQuery(t *testing.T) {
 
 	require.Len(t, rs.replaced, 1)
 	assert.Equal(t, []string{"ds1"}, requested, "target defaults to the query datasource: only one lookup")
+}
+
+func TestSyncOrg_Promote(t *testing.T) {
+	enableRulerSyncAPIFlag(t)
+	cs := newFakeConfigClient()
+	cs.setSpecWithPromote(1, "ds1", "", true)
+	rs := &fakeRuleService{
+		existing: []models.AlertRuleGroupWithFolderFullpath{
+			ownedGroup("folder-ns1", "g1"),
+		},
+	}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.namespaceStore = fakeNamespaceStore{
+		byTitle:  map[string]*folder.FolderReference{rootFolderTitle("ds1"): {UID: "folder-" + rootFolderTitle("ds1"), Title: rootFolderTitle("ds1")}},
+		children: []*folder.FolderReference{{UID: "folder-ns1", Title: "ns1"}},
+	}
+
+	s.SyncOrg(context.Background(), 1)
+
+	// Promotion rewrites the owned group with no manager, and does NOT fetch
+	// upstream or prune.
+	assert.Zero(t, fetch.calls, "promotion skips the upstream fetch")
+	assert.Empty(t, rs.deleted, "promotion does not prune")
+	require.Len(t, rs.replaced, 1)
+	assert.Equal(t, utils.ManagerProperties{}, rs.replacedManager, "rewritten with no manager: unmanaged/native")
+
+	// Terminal PromotionCommitted status (condition stays True).
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, st.Conditions[0].Status)
+	assert.Equal(t, conditionReasonPromoted, st.Conditions[0].Reason)
+}
+
+func TestSyncOrg_PromoteIdempotentWhenNothingOwned(t *testing.T) {
+	enableRulerSyncAPIFlag(t)
+	cs := newFakeConfigClient()
+	cs.setSpecWithPromote(1, "ds1", "", true)
+	rs := &fakeRuleService{} // no owned rules: already promoted, or never synced
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.namespaceStore = fakeNamespaceStore{
+		byTitle: map[string]*folder.FolderReference{rootFolderTitle("ds1"): {UID: "folder-" + rootFolderTitle("ds1"), Title: rootFolderTitle("ds1")}},
+	}
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "nothing to promote")
+	assert.Zero(t, fetch.calls, "still no fetch once promote is set")
+	// Terminal status is still (re-)asserted each tick.
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, conditionReasonPromoted, st.Conditions[0].Reason)
+}
+
+func TestSyncOrg_PromoteNoOpWhenNeverSynced(t *testing.T) {
+	// The sync root folder was never created (sync never actually ran for this
+	// org): promote must be a clean no-op, not an error.
+	enableRulerSyncAPIFlag(t)
+	cs := newFakeConfigClient()
+	cs.setSpecWithPromote(1, "ds1", "", true)
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.namespaceStore = fakeNamespaceStore{} // GetNamespaceByTitle -> ErrFolderNotFound
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced)
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	assert.Equal(t, conditionReasonPromoted, st.Conditions[0].Reason)
+}
+
+func TestSyncOrg_IniPathNeverPromotes(t *testing.T) {
+	// The ini path has no promote override (resolveExternalRulerConfig always
+	// returns promote: false for it), even if the Config resource somehow has
+	// promote set — the operator ini override takes precedence for the whole
+	// resolved config, not just the datasource UID.
+	enableRulerSyncAPIFlag(t)
+	cs := newFakeConfigClient()
+	cs.setSpecWithPromote(1, "from-config", "", true)
+	rs := &fakeRuleService{
+		existing: []models.AlertRuleGroupWithFolderFullpath{ownedGroup("folder-ns1", "g1")},
+	}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.settings.ExternalRulerUID = "from-ini"
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Equal(t, 1, fetch.calls, "ini path syncs normally, never promotes")
+	assert.NotEqual(t, utils.ManagerProperties{}, rs.replacedManager, "rules are still sync-managed, not promoted")
 }

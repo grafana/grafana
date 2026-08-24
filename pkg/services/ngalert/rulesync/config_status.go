@@ -159,3 +159,15 @@ func externalRulerSyncTargetDatasourceUIDFromConfig(c *alertingrulesv0alpha1.Con
 	}
 	return *c.Spec.ExternalRulerSync.TargetDatasourceUid
 }
+
+// externalRulerSyncPromoteFromConfig reports whether promote-to-native was
+// requested, defaulting to false when any level in the nested optional chain
+// is unset.
+func externalRulerSyncPromoteFromConfig(c *alertingrulesv0alpha1.Config) bool {
+	if c == nil ||
+		c.Spec.ExternalRulerSync == nil ||
+		c.Spec.ExternalRulerSync.Promote == nil {
+		return false
+	}
+	return *c.Spec.ExternalRulerSync.Promote
+}
