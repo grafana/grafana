@@ -1,20 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
-import {
-  type CustomTransformOperator,
-  type DataFrame,
-  type DataTransformContext,
-  type DataTransformerConfig,
-  transformDataFrame,
-} from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { type DataFrame } from '@grafana/data';
 
 import { type Transformation } from '../types';
+
+import {
+  NO_CONFIGS,
+  precedingTransformations,
+  type TransformationConfigs,
+  useTransformedFrames,
+} from './useTransformedFrames';
 
 interface UseTransformationInputDataOptions {
   selectedTransformation: Transformation | null;
   allTransformations: Transformation[];
-  systemTransformations: Array<DataTransformerConfig | CustomTransformOperator>;
+  systemTransformations: TransformationConfigs;
   rawData: DataFrame[];
 }
 
@@ -39,40 +39,15 @@ export function useTransformationInputData({
   systemTransformations,
   rawData,
 }: UseTransformationInputDataOptions): DataFrame[] {
-  const [inputData, setInputData] = useState<DataFrame[]>(rawData);
+  const precedingConfigs = useMemo(
+    () =>
+      // TransformationEditorRenderer won't render without a selected transformation, but the hook
+      // accepts null so we guard here too and fall back to rawData.
+      selectedTransformation
+        ? precedingTransformations(selectedTransformation, allTransformations, systemTransformations)
+        : NO_CONFIGS,
+    [selectedTransformation, allTransformations, systemTransformations]
+  );
 
-  useEffect(() => {
-    // TransformationEditorRenderer won't render without a selected transformation, but
-    // the hook accepts null so we guard here too and fall back to rawData.
-    if (!selectedTransformation) {
-      setInputData(rawData);
-      return;
-    }
-
-    // Where in the pipeline is this transformation? Everything before it needs to run first.
-    const selectedIndex = allTransformations.findIndex(
-      ({ transformId }) => transformId === selectedTransformation.transformId
-    );
-
-    // A transformation not in the list is treated as first, so nothing user-configured precedes it.
-    const precedingUserCount = Math.max(selectedIndex, 0);
-    const precedingConfigs = [
-      ...systemTransformations,
-      ...allTransformations.slice(0, precedingUserCount).map(({ transformConfig }) => transformConfig),
-    ];
-
-    if (precedingConfigs.length === 0) {
-      setInputData(rawData);
-      return;
-    }
-    // Provide template variable interpolation so transformers can resolve $variables in their options.
-    const ctx: DataTransformContext = { interpolate: (v: string) => getTemplateSrv().replace(v) };
-
-    // Run the pipeline up to (but not including) the selected transformation and update state when it emits.
-    const subscription = transformDataFrame(precedingConfigs, rawData, ctx).subscribe(setInputData);
-
-    return () => subscription.unsubscribe();
-  }, [selectedTransformation, allTransformations, systemTransformations, rawData]);
-
-  return inputData;
+  return useTransformedFrames(precedingConfigs, rawData);
 }

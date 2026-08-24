@@ -1,20 +1,19 @@
 import { css } from '@emotion/css';
 import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { throttle } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   type CustomTransformOperator,
-  type DataTransformContext,
+  type DataFrame,
   type DataTransformerConfig,
   type GrafanaTheme2,
   type PanelData,
   type ResolvedSystemTransformations,
-  transformDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   type SceneComponentProps,
   SceneDataTransformer,
@@ -31,6 +30,10 @@ import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { getResolvedSystemTransformations } from '../../scene/systemTransformations';
 import { getQueryRunnerFor } from '../../utils/utils';
+import {
+  type TransformationConfigs,
+  useTransformedFrames,
+} from '../PanelEditNext/QueryEditor/hooks/useTransformedFrames';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
 import {
   SystemTransformationBadge,
@@ -43,6 +46,9 @@ import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
+
+/** Stable identity, so a panel that has not returned data does not re-run the replay each render. */
+const NO_FRAMES: DataFrame[] = [];
 
 const reportTransformationEditInteraction = throttle((context: string, type: string) => {
   reportInteraction('grafana_panel_transformations_clicked', {
@@ -103,31 +109,18 @@ export class PanelDataTransformationsTab
  */
 function useSystemTransformedData(
   sourceData: PanelData | undefined,
-  systemTransformations: Array<DataTransformerConfig | CustomTransformOperator>
+  systemTransformations: TransformationConfigs
 ): PanelData | undefined {
-  const sourceSeries = sourceData?.series;
-  const [series, setSeries] = useState(sourceSeries);
-  const hasSystemTransformations = systemTransformations.length > 0;
-
-  useEffect(() => {
-    if (!hasSystemTransformations || !sourceSeries) {
-      return;
-    }
-
-    const ctx: DataTransformContext = { interpolate: (v: string) => getTemplateSrv().replace(v) };
-    const subscription = transformDataFrame(systemTransformations, sourceSeries, ctx).subscribe(setSeries);
-
-    return () => subscription.unsubscribe();
-  }, [hasSystemTransformations, systemTransformations, sourceSeries]);
+  const series = useTransformedFrames(systemTransformations, sourceData?.series ?? NO_FRAMES);
 
   // `data` is an effect dep of every editor row, so a fresh object each render re-runs their replays.
   return useMemo(() => {
-    if (!sourceData || !hasSystemTransformations || !series) {
+    if (!sourceData || systemTransformations.length === 0) {
       return sourceData;
     }
 
     return { ...sourceData, series };
-  }, [sourceData, hasSystemTransformations, series]);
+  }, [sourceData, systemTransformations, series]);
 }
 
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {

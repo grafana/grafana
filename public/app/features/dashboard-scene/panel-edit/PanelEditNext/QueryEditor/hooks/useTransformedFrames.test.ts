@@ -1,0 +1,139 @@
+import { act, renderHook } from '@testing-library/react';
+import { Observable } from 'rxjs';
+
+import { type DataFrame, transformDataFrame } from '@grafana/data';
+
+import { type Transformation } from '../types';
+
+import {
+  NO_CONFIGS,
+  type TransformationConfigs,
+  precedingTransformations,
+  useTransformedFrames,
+} from './useTransformedFrames';
+
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  transformDataFrame: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({ replace: (v: string) => `replaced:${v}` }),
+}));
+
+const mockTransformDataFrame = jest.mocked(transformDataFrame);
+
+function makeTransformation(id: string): Transformation {
+  return { transformId: id, transformConfig: { id, options: {} }, registryItem: undefined };
+}
+
+function makeFrames(names: string[]): DataFrame[] {
+  return names.map((name) => ({ name, fields: [], length: 0 }));
+}
+
+describe('useTransformedFrames', () => {
+  const frames = makeFrames(['a', 'b']);
+  const emitted = makeFrames(['transformed']);
+  const configs: TransformationConfigs = [{ id: 'organize', options: {} }];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockTransformDataFrame.mockReturnValue(
+      new Observable((subscriber) => {
+        subscriber.next(emitted);
+      })
+    );
+  });
+
+  it('returns the frames unchanged and runs nothing when there is nothing to run', () => {
+    const { result } = renderHook(() => useTransformedFrames(NO_CONFIGS, frames));
+
+    // Same reference, so a caller using this as an effect dep does not re-run on every render.
+    expect(result.current).toBe(frames);
+    expect(mockTransformDataFrame).not.toHaveBeenCalled();
+  });
+
+  it('returns the new frames without waiting for a subscription when configs are empty', () => {
+    const nextFrames = makeFrames(['c']);
+
+    const { result, rerender } = renderHook(
+      ({ data }: { data: DataFrame[] }) => useTransformedFrames(NO_CONFIGS, data),
+      {
+        initialProps: { data: frames },
+      }
+    );
+
+    act(() => rerender({ data: nextFrames }));
+
+    expect(result.current).toBe(nextFrames);
+  });
+
+  it('runs the configs over the frames and returns what they emit', () => {
+    const { result } = renderHook(() => useTransformedFrames(configs, frames));
+
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(configs, frames, expect.any(Object));
+    expect(mockTransformDataFrame).toHaveBeenCalledTimes(1);
+    expect(result.current).toBe(emitted);
+  });
+
+  it('interpolates transformation options through the template service', () => {
+    renderHook(() => useTransformedFrames(configs, frames));
+
+    const ctx = mockTransformDataFrame.mock.calls[0][2];
+
+    expect(ctx?.interpolate('$var')).toBe('replaced:$var');
+  });
+
+  it('re-runs against the new frames when a query returns', () => {
+    const nextFrames = makeFrames(['c']);
+
+    const { rerender } = renderHook(({ data }: { data: DataFrame[] }) => useTransformedFrames(configs, data), {
+      initialProps: { data: frames },
+    });
+
+    act(() => rerender({ data: nextFrames }));
+
+    expect(mockTransformDataFrame).toHaveBeenLastCalledWith(configs, nextFrames, expect.any(Object));
+    expect(mockTransformDataFrame).toHaveBeenCalledTimes(2);
+  });
+
+  it('unsubscribes on unmount', () => {
+    const unsubscribe = jest.fn();
+    mockTransformDataFrame.mockReturnValue(
+      new Observable((subscriber) => {
+        subscriber.next(emitted);
+        return unsubscribe;
+      })
+    );
+
+    const { unmount } = renderHook(() => useTransformedFrames(configs, frames));
+
+    unmount();
+
+    expect(unsubscribe).toHaveBeenCalled();
+  });
+});
+
+describe('precedingTransformations', () => {
+  const all = [makeTransformation('joinByField'), makeTransformation('organize'), makeTransformation('reduce')];
+  const system: TransformationConfigs = [jest.fn()];
+
+  it('returns only the plugin transformations for the first one, which nothing else precedes', () => {
+    expect(precedingTransformations(all[0], all, system)).toEqual(system);
+  });
+
+  it('puts the plugin transformations ahead of the preceding user ones', () => {
+    expect(precedingTransformations(all[2], all, system)).toEqual([
+      ...system,
+      all[0].transformConfig,
+      all[1].transformConfig,
+    ]);
+  });
+
+  it('treats a transformation missing from the list as first rather than slicing by -1', () => {
+    // `slice(0, -1)` would return every entry but the last, so the caller would replay
+    // transformations that do not precede anything.
+    expect(precedingTransformations(makeTransformation('absent'), all, system)).toEqual(system);
+  });
+});
