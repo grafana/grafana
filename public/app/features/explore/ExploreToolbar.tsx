@@ -56,9 +56,10 @@ const getStyles = (theme: GrafanaTheme2, splitted: Boolean, visualRefreshEnabled
     width: splitted && theme.spacing(6),
   }),
   pageToolbar: css({
-    background: theme.colors.background.page,
+    background: theme.flags.visualDesignRefresh ? theme.colors.background.page : theme.colors.background.canvas,
     borderTopLeftRadius: theme.shape.radius.lg,
     borderTopRightRadius: theme.shape.radius.lg,
+    padding: theme.spacing(2, 0),
   }),
 });
 
@@ -244,9 +245,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           />,
         ].filter(Boolean)}
         forceShowLeftItems
-        className={cx({
-          [styles.pageToolbar]: visualRefreshEnabled,
-        })}
+        className={styles.pageToolbar}
       >
         {[
           !splitted ? (

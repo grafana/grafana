@@ -890,7 +890,6 @@
       "close": "Close",
       "create": "Create",
       "delete": "Delete",
-      "deleting": "Deleting...",
       "edit": "Edit",
       "export": "Export",
       "export-all": "Export all",
@@ -2495,13 +2494,11 @@
         "update": "Update policy"
       },
       "delete": {
-        "confirm": "Yes, delete policy",
-        "warning-1": "Deleting this notification policy will permanently remove it.",
-        "warning-2": "Are you sure you want to delete this policy?"
-      },
-      "delete-modal": {
-        "permanently-remove": "This action will permanently remove the <1>{{routeName}}</1> notification policy.",
-        "title-delete-notification-policy": "Delete notification policy"
+        "confirm": "Yes, delete route",
+        "warning-1": "Deleting this route will permanently remove it.",
+        "warning-2": "Are you sure you want to delete this route?",
+        "warning-child-routes_one": "This will also remove {{count}} child route.",
+        "warning-child-routes_other": "This will also remove {{count}} child routes."
       },
       "filter-description": "Filter routes by using a comma separated list of matchers, e.g.:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Auto-generated policies",
@@ -2548,7 +2545,9 @@
         "reset": "Reset",
         "resetting": "Resetting...",
         "title-delete-notification-policy": "Delete notification policy",
-        "title-reset-notification-policy": "Reset notification policy"
+        "title-reset-notification-policy": "Reset notification policy",
+        "warning-child-routes_one": "This will also remove {{count}} child route.",
+        "warning-child-routes_other": "This will also remove {{count}} child routes."
       },
       "update": {
         "please-wait": "Please wait while we update your notification policies.",
@@ -3300,7 +3299,7 @@
           "merge-info": "Promoting merges this configuration into your live Grafana Alertmanager. This is a one-time action and can't be undone.",
           "merge-inhibition-rules_one": "inhibition rule added",
           "merge-inhibition-rules_other": "inhibition rules added",
-          "merge-route": "notification route added",
+          "merge-route": "route added",
           "merge-templates_one": "template added",
           "merge-templates_other": "templates added",
           "merge-time-intervals_one": "time interval added",
@@ -3832,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Delete notification policy"
+        "title-delete-notification-policy": "Delete route"
       }
     },
     "use-edit-configuration-drawer": {
@@ -9147,6 +9146,7 @@
     "json": {
       "cancel-button": "Cancel",
       "copy-button": "Copy to clipboard",
+      "dashboard-definition": "Dashboard definition",
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-format": "Format",

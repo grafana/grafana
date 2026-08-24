@@ -7038,6 +7038,9 @@
       "name-json-values": "JSON",
       "selection-options": "Kijelölés beállításai"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Vissza a listához",
       "label-icon": "Ikon",
@@ -7817,9 +7820,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Erre a változóra más változó vagy irányítópult hivatkozik.",
       "content-variable-not-referenced-other-variables-dashboard": "Erre a változóra más változó vagy irányítópult nem hivatkozik.",
       "content-variable-referenced-other-variables-dashboard": "Erre a változóra más változó vagy irányítópult hivatkozik."
-    },
-    "variable-controls": {
-      "add-variable": "Változó hozzáadása"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -9147,6 +9147,7 @@
     "json": {
       "cancel-button": "Mégse",
       "copy-button": "Másolás vágólapra",
+      "dashboard-definition": "",
       "download-button": "Fájl letöltése",
       "download-successful_toast_message": "A JSON-fájlja letöltődött",
       "export-format": "Formátum",
@@ -13696,7 +13697,8 @@
       "open-pull-request-in-repo": "Összefésülési kérelem megnyitása itt: {{repoType}}",
       "update-from-branch": "Amíg ez az ág össze nem lesz vonva, a szervezet többi Grafana-felhasználója továbbra is látni fogja az aktuális verziót",
       "view-in-repo-button": "A legújabb változások megtekintéséhez nyissa meg a(z) {{repoType}} adattárban.",
-      "view-pull-request-in-repo": "Összefésülési kérelem megtekintése itt: {{repoType}}"
+      "view-pull-request-in-repo": "Összefésülési kérelem megtekintése itt: {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "Új erőforrás lett létrehozva egy ágban itt: {{repoType}}.",
     "title-deleted-resource-in-branch": "Egy erőforrás törölve lett egy ágban itt: {{repoType}}.",

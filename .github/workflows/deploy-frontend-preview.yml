@@ -257,7 +257,8 @@ jobs:
 
             ✅ The preview for commit ${{ needs.check.outputs.head-sha }} is live: **[open the preview](${{ steps.preview-url.outputs.url }})**.
 
-            Each new push to this PR builds and deploys the preview again automatically.
+            - Each new push to this PR builds and deploys the preview again automatically.
+            - Share the above link for others to preview it in their browsers too.
 
   comment-failure:
     name: Comment that the deploy failed
