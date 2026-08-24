@@ -187,12 +187,13 @@ func classifyConversionError(err error) string {
 }
 
 // buildErrorLogFields builds log fields for conversion errors
-func buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType string, err error, info dashboardInfo, a, b interface{}) []interface{} {
+func buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType string, err error, info dashboardInfo, a, b interface{}, duration time.Duration) []interface{} {
 	logFields := []interface{}{
 		"sourceVersionAPI", sourceVersionAPI,
 		"targetVersionAPI", targetVersionAPI,
 		"erroredConversionFunc", getErroredConversionFunc(err),
 		"dashboardUID", info.uid,
+		"durationMs", duration.Milliseconds(),
 	}
 
 	if info.sourceSizeBytes >= 0 {
@@ -226,11 +227,12 @@ func buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType string, e
 }
 
 // buildSuccessLogFields builds log fields for successful conversions
-func buildSuccessLogFields(sourceVersionAPI, targetVersionAPI string, info dashboardInfo) []interface{} {
+func buildSuccessLogFields(sourceVersionAPI, targetVersionAPI string, info dashboardInfo, duration time.Duration) []interface{} {
 	logFields := []interface{}{
 		"sourceVersionAPI", sourceVersionAPI,
 		"targetVersionAPI", targetVersionAPI,
 		"dashboardUID", info.uid,
+		"durationMs", duration.Milliseconds(),
 	}
 
 	if info.sourceSizeBytes >= 0 {
@@ -322,7 +324,7 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		} else {
 			span.SetStatus(codes.Ok, "conversion successful")
 		}
-		span.SetAttributes(attribute.Float64("duration_seconds", duration.Seconds()))
+		span.SetAttributes(attribute.Float64("conversion.duration_seconds", duration.Seconds()))
 
 		if err != nil {
 			recordConversionFailure(sourceVersionAPI, targetVersionAPI, err, info, a, b, duration)
@@ -366,8 +368,7 @@ func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err erro
 
 	observeConversionObjectSize(sourceVersionAPI, targetVersionAPI, "failure", info)
 
-	logFields := buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType, err, info, a, b)
-	logFields = append(logFields, "durationMs", duration.Milliseconds())
+	logFields := buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType, err, info, a, b, duration)
 	if errorType == "schema_minimum_version_error" {
 		getLogger().Warn("Dashboard conversion failed", logFields...)
 	} else {
@@ -392,7 +393,6 @@ func recordConversionSuccess(sourceVersionAPI, targetVersionAPI string, info das
 
 	observeConversionObjectSize(sourceVersionAPI, targetVersionAPI, "success", info)
 
-	successLogFields := buildSuccessLogFields(sourceVersionAPI, targetVersionAPI, info)
-	successLogFields = append(successLogFields, "durationMs", duration.Milliseconds())
+	successLogFields := buildSuccessLogFields(sourceVersionAPI, targetVersionAPI, info, duration)
 	getLogger().Debug("Dashboard conversion succeeded", successLogFields...)
 }
