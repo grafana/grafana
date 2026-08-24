@@ -62,6 +62,7 @@ interface DashboardPreviewBannerProps {
   slug?: string;
   path?: string;
   onSaveToNewBranch?: () => void;
+  onDiscardChanges?: () => void;
 }
 
 interface PullRequestParamReturn {
@@ -417,12 +418,13 @@ describe('DashboardPreviewBanner', () => {
       expect(onSaveToNewBranch).toHaveBeenCalledTimes(1);
     });
 
-    it('discards changes by navigating to the saved dashboard', async () => {
+    it('discards changes by clearing the scene then navigating to the saved dashboard', async () => {
+      const onDiscardChanges = jest.fn();
       mockTriggerRefs.mockReturnValue({
         unwrap: () => Promise.resolve({ items: [{ name: 'some-other-branch' }] }),
       });
       setup(
-        {},
+        { onDiscardChanges },
         {
           fileQuery: {
             data: {
@@ -437,6 +439,8 @@ describe('DashboardPreviewBanner', () => {
       await screen.findByText('This branch no longer exists');
       await userEvent.setup().click(screen.getByRole('button', { name: 'Discard changes' }));
 
+      // The scene must be cleared before navigating, or the unsaved-changes prompt blocks it.
+      expect(onDiscardChanges).toHaveBeenCalledTimes(1);
       expect(mockNavigate).toHaveBeenCalledWith('/d/original-uid');
     });
 
@@ -466,6 +470,12 @@ describe('DashboardPreviewBanner', () => {
       await userEvent.setup().click(screen.getByRole('button', { name: 'Close alert' }));
 
       expect(screen.queryByText('This branch no longer exists')).not.toBeInTheDocument();
+      // Dismissing must not fall through to the preview banner: the query has no data, so it would
+      // otherwise render a misleading "created in a branch" default.
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Open pull request in|View pull request in/i })
+      ).not.toBeInTheDocument();
     });
 
     it('does not show the recovery banner for non-404 errors', () => {

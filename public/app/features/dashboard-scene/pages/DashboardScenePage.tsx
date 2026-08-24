@@ -171,6 +171,13 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
           }
           dashboard.openSaveDrawer({ forceNewBranch: true });
         }}
+        onDiscardChanges={() => {
+          // Abandon the draft and clear the dirty state so DashboardPrompt doesn't intercept the
+          // navigation away with a second unsaved-changes modal.
+          if (dashboard.state.isEditing) {
+            dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+          }
+        }}
       />
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <ScriptedDashboardDeprecationBanner isScripted={type === 'script'} />

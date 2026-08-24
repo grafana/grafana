@@ -33,10 +33,17 @@ interface DashboardPreviewBannerProps extends CommonBannerProps {
    * branch. Wired from the page (which holds the scene) so this component stays scene-agnostic.
    */
   onSaveToNewBranch?: () => void;
+  /**
+   * Abandons the in-memory draft on the current scene (exits edit mode / clears the dirty state) so
+   * the unsaved-changes prompt doesn't block the subsequent navigation away. Scene-coupled, so it is
+   * wired from the page.
+   */
+  onDiscardChanges?: () => void;
 }
 
 interface DashboardPreviewBannerContentProps extends Required<Omit<CommonBannerProps, 'route'>> {
   onSaveToNewBranch?: () => void;
+  onDiscardChanges?: () => void;
 }
 
 function DashboardPreviewBannerContent({
@@ -44,6 +51,7 @@ function DashboardPreviewBannerContent({
   slug,
   path,
   onSaveToNewBranch,
+  onDiscardChanges,
 }: DashboardPreviewBannerContentProps) {
   const { prURL: existingPRUrl } = usePullRequestParam();
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
@@ -125,7 +133,12 @@ function DashboardPreviewBannerContent({
   // informational: surface a dismissible notice rather than a broken preview banner. A 404 is
   // required (matching the loader) so transient/auth errors aren't mislabelled as a deleted branch.
   const refGone = Boolean(queryParams.ref) && file.isError && isFetchError(file.error) && file.error.status === 404;
-  if (refGone && !refGoneDismissed) {
+  if (refGone) {
+    // The query has no usable data, so we must not fall through to the preview banner (it would show
+    // a misleading "created in a branch" default). Once dismissed, render nothing at all.
+    if (refGoneDismissed) {
+      return null;
+    }
     return (
       <Alert
         severity="info"
@@ -197,6 +210,8 @@ function DashboardPreviewBannerContent({
             fill="outline"
             onClick={() => {
               setBranchGone(false);
+              // Clear the scene's dirty state first, or the unsaved-changes prompt blocks the nav.
+              onDiscardChanges?.();
               goToSavedDashboard();
             }}
           >
@@ -223,6 +238,7 @@ export function DashboardPreviewBanner({
   slug,
   path,
   onSaveToNewBranch,
+  onDiscardChanges,
 }: DashboardPreviewBannerProps) {
   const provisioningEnabled = config.provisioningEnabled;
   if (!provisioningEnabled || 'kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
@@ -235,6 +251,7 @@ export function DashboardPreviewBanner({
       slug={slug}
       path={path}
       onSaveToNewBranch={onSaveToNewBranch}
+      onDiscardChanges={onDiscardChanges}
     />
   );
 }
