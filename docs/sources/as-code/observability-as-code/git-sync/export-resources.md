@@ -122,7 +122,7 @@ To migrate safely, we recommend that you:
 
 - **Back up your instance first.** Export or snapshot your dashboards, folders, alert rules, and library panels before you delete anything. Deleted resources can't be restored from the Grafana UI.
 - **Migrate folder by folder.** Start with a single folder, complete the full migration for it, and validate the result before moving to the next one. This limits the impact if something goes wrong and lets you get comfortable with the process.
-- **Keep your original folders, and set them apart.** After a migration you'll have your original folder (holding any alerts and library panels) alongside the new Git Sync folder of the same name. To avoid confusion, rename your original folders or move them under a single top-level **Alerts & Library Panels** folder. This keeps the unsupported resources intact and clearly separated from the provisioned dashboards.
+- **Keep your original folders, and set them apart.** After a migration you'll have your original folder (holding any alerts and library panels) alongside the new Git Sync folder of the same name. To avoid confusion, rename your original folders or move them under a single top-level **Alerts & Library Panels** folder. This keeps the unsupported resources intact and clearly separated from the provisioned dashboards. If you instead need links to your original folders to keep working, refer to [Preserve links to the original folders](#preserve-links-to-the-original-folders).
 
 ### Step 1: Export the resources to your repository
 
@@ -215,6 +215,43 @@ When you delete a dashboard, keep in mind the following:
 1. Confirm that the alert rules and library panels in your original folders are still present and working.
 
 After you've validated one folder, repeat the process for the next one until the migration is complete.
+
+### Preserve links to the original folders
+
+By default, Git Sync gives each synced folder a new UID derived from its path in the repository. This means links and URLs that point to your original folders keep pointing to the original folders, not the new provisioned ones.
+
+If you need existing folder links and URLs to resolve to the provisioned folders instead, you can pin a folder's UID with a folder metadata file so Git Sync reuses the original folder's UID.
+
+{{< admonition type="note" >}}
+
+Folder metadata requires the `provisioningFolderMetadata` feature, which is enabled by default. If your administrator has disabled it, `metadata.name` is ignored and folders always get a path-derived UID.
+
+{{< /admonition >}}
+
+To reuse an original folder's UID, add a `_folder.json` file to that folder's directory in the repository:
+
+```json
+{
+  "apiVersion": "folder.grafana.app/v1beta1",
+  "kind": "Folder",
+  "metadata": { "name": "<ORIGINAL_FOLDER_UID>" },
+  "spec": { "title": "<FOLDER_TITLE>" }
+}
+```
+
+Where `<ORIGINAL_FOLDER_UID>` is the UID of your existing folder. You can find it in the folder's URL.
+
+Because this reuses the original folder's UID, the synced folder collides with your existing unmanaged folder — Git Sync can't take over a UID that still belongs to an unmanaged folder, and the sync fails with a conflict. To avoid losing unsupported resources, complete these steps for each folder **before** you sync:
+
+1. Create a new folder and move all alert rules, library panels, and other unsupported resources out of the original folder into it.
+1. Delete the original folder. Its dashboards should already be exported to the repository from [Step 1](#step-1-export-the-resources-to-your-repository).
+1. Reapply any custom permissions on the new provisioned folder — folder permissions don't carry over. Refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana).
+
+{{< admonition type="caution" >}}
+
+Move alert rules and library panels out of the folder **before** you delete it. Deleting a folder deletes everything it contains, and Git Sync does not recreate alerts or library panels.
+
+{{< /admonition >}}
 
 ## Work with Git-managed dashboards
 
