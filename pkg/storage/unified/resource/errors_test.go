@@ -31,13 +31,13 @@ func TestAsErrorResult_UnpackCorrectErrorDetails(t *testing.T) {
 			Uid:   "uid",
 			Causes: []*resourcepb.ErrorCause{
 				{
-					Reason: string(field.ErrorTypeForbidden),
+					Reason: string(field.ErrorTypeNotFound),
 					Field:  "field",
 				},
 			},
 			RetryAfterSeconds: 12,
 		},
-		Code: 12,
+		Code: int32(codes.NotFound),
 	}
 	st, err := st.WithDetails(&errDetails)
 	require.NoError(t, err)
