@@ -64,7 +64,7 @@ Keep in mind the following:
 
 - Importing an ordinary dashboard JSON creates a new dashboard with a new UID. To preserve the original UID instead (for a migration), provide a UID in the wizard or import a resource file that already sets `metadata.name`. Refer to [Migrate existing dashboards](#migrate-existing-dashboards-to-git-sync).
 - UIDs are globally unique per org. Two repositories with dashboards sharing a UID will conflict.
-- Two dashboards can share a title as long as they live at different paths in the repo. If a file with the same name already exists at the target path, the import is stopped before it overwrites anything.
+- Two dashboards can share a title as long as they live at different paths in the repository. If a file with the same name already exists at the target path, the import is stopped before it overwrites anything.
 
 For more information refer to [Import dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/import-dashboards/) in the Data Visualization documentation.
 
