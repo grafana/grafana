@@ -101,9 +101,9 @@ export function Step1Content({
 
   // Called unconditionally (even for the YAML source) so the Auto-sync checkbox always knows
   // whether the selected datasource qualifies; its own queries stay skipped for non-admins/toggle-off.
-  const { mimirCortexDatasources, isLoading: isLoadingAutoSyncConfig } = useAutoSyncConfiguration();
+  const { autoSyncEligibleAlertmanagers, isLoading: isLoadingAutoSyncConfig } = useAutoSyncConfiguration();
   const isSelectedDatasourceAutoSyncCapable =
-    !isLoadingAutoSyncConfig && mimirCortexDatasources.some((ds) => ds.uid === notificationsDatasourceUID);
+    !isLoadingAutoSyncConfig && autoSyncEligibleAlertmanagers.some((ds) => ds.uid === notificationsDatasourceUID);
 
   const duplicateTemplateFileName = findDuplicateTemplateFileName(notificationsTemplateFiles);
 
@@ -299,7 +299,7 @@ export function Step1Content({
 
             {notificationsSource === 'datasource' && (
               <Stack direction="column" gap={2}>
-                <AlertmanagerDataSourceSelect mimirCortexDatasources={mimirCortexDatasources} />
+                <AlertmanagerDataSourceSelect autoSyncEligibleAlertmanagers={autoSyncEligibleAlertmanagers} />
                 {isAutoSyncSegmentEnabled() && (
                   <InlineField
                     transparent
@@ -445,14 +445,14 @@ export function useStep1Validation(canImport: boolean): boolean {
 
 interface AlertmanagerDataSourceSelectProps {
   /** Used to badge options that support Auto-sync. */
-  mimirCortexDatasources: Array<DataSourceSettings<AlertManagerDataSourceJsonData>>;
+  autoSyncEligibleAlertmanagers: Array<DataSourceSettings<AlertManagerDataSourceJsonData>>;
 }
 
 /** Every Alertmanager data source (same source as AlertManagerPicker), badging the ones Auto-sync can mirror. */
-function AlertmanagerDataSourceSelect({ mimirCortexDatasources }: AlertmanagerDataSourceSelectProps) {
+function AlertmanagerDataSourceSelect({ autoSyncEligibleAlertmanagers }: AlertmanagerDataSourceSelectProps) {
   // Only annotate options for users who can ever see the Auto-sync segment at all — otherwise the
   // badge would be noise with no checkbox to explain it. No separate loading guard is needed here:
-  // while the Mimir/Cortex query is in flight, mimirCortexDatasources is empty, so nothing gets
+  // while the Mimir/Cortex query is in flight, autoSyncEligibleAlertmanagers is empty, so nothing gets
   // badged yet regardless.
   const shouldAnnotateAutoSync = isAutoSyncSegmentEnabled();
 
@@ -462,9 +462,11 @@ function AlertmanagerDataSourceSelect({ mimirCortexDatasources }: AlertmanagerDa
       value: ds.uid,
       imgUrl: ds.meta.info.logos.small,
       description: ds.url || undefined,
-      supportsAutoSync: shouldAnnotateAutoSync ? mimirCortexDatasources.some((m) => m.uid === ds.uid) : undefined,
+      supportsAutoSync: shouldAnnotateAutoSync
+        ? autoSyncEligibleAlertmanagers.some((m) => m.uid === ds.uid)
+        : undefined,
     }));
-  }, [mimirCortexDatasources, shouldAnnotateAutoSync]);
+  }, [autoSyncEligibleAlertmanagers, shouldAnnotateAutoSync]);
 
   return (
     <DataSourceSelectField
