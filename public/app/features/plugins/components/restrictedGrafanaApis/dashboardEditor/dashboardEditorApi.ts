@@ -23,6 +23,10 @@ function getActiveDashboard(): DashboardScene | undefined {
   return dashboard?.isActive ? dashboard : undefined;
 }
 
+function isDiffPaneOpen(dashboard: DashboardScene | undefined): boolean {
+  return dashboard?.state.sidebar.state.openPane?.getId() === 'diff';
+}
+
 export const dashboardEditorApi: DashboardEditorAPI = {
   hasUnsavedChanges: () => {
     const dashboard = getActiveDashboard();
@@ -31,10 +35,13 @@ export const dashboardEditorApi: DashboardEditorAPI = {
 
   isEditing: () => getActiveDashboard()?.state.isEditing ?? false,
 
+  isDiffViewOpen: () => isDiffPaneOpen(getActiveDashboard()),
+
   subscribeToChanges: (cb: () => void) => {
     const stateManager = getDashboardScenePageStateManager();
 
     let sceneSub: Unsubscribable | undefined;
+    let sidebarSub: Unsubscribable | undefined;
     let subscribedScene: DashboardScene | undefined;
 
     const followScene = (dashboard: DashboardScene | undefined) => {
@@ -46,6 +53,14 @@ export const dashboardEditorApi: DashboardEditorAPI = {
       // notifying on every scene state change would run it on every keystroke in a panel editor.
       sceneSub = dashboard?.subscribeToState((newState, prevState) => {
         if (newState.isDirty !== prevState.isDirty || newState.isEditing !== prevState.isEditing) {
+          cb();
+        }
+      });
+
+      // The open pane lives on the sidebar, not the dashboard, so it needs its own subscription.
+      sidebarSub?.unsubscribe();
+      sidebarSub = dashboard?.state.sidebar.subscribeToState((newState, prevState) => {
+        if (newState.openPane !== prevState.openPane) {
           cb();
         }
       });
@@ -66,16 +81,17 @@ export const dashboardEditorApi: DashboardEditorAPI = {
     return () => {
       stateManagerSub.unsubscribe();
       sceneSub?.unsubscribe();
+      sidebarSub?.unsubscribe();
     };
   },
 
   openDiffView: () => {
-    const sidebar = getActiveDashboard()?.state.sidebar;
+    const dashboard = getActiveDashboard();
     // openPane() closes the pane when the requested id already matches, so calling it
     // unconditionally would make a second click hide the diff.
-    if (!sidebar || sidebar.state.openPane?.getId() === 'diff') {
+    if (!dashboard || isDiffPaneOpen(dashboard)) {
       return;
     }
-    sidebar.openPane(new DashboardDiffPane({}));
+    dashboard.state.sidebar.openPane(new DashboardDiffPane({}));
   },
 };

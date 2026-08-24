@@ -12,12 +12,21 @@ jest.mock('app/features/dashboard-scene/pages/DashboardScenePageStateManager', (
 interface FakeDashboardState extends SceneObjectState {
   isDirty?: boolean;
   isEditing?: boolean;
-  sidebar: { openPane: jest.Mock; state: { openPane?: { getId: () => string } } };
+  sidebar: FakeSidebar;
+}
+
+interface FakeSidebarState extends SceneObjectState {
+  openPane?: { getId: () => string };
+}
+
+/** A real SceneObjectBase so the api's openPane subscription behaves as it does on DashboardSidebar. */
+class FakeSidebar extends SceneObjectBase<FakeSidebarState> {
+  public openPane = jest.fn();
 }
 
 /**
  * A real SceneObjectBase so subscribeToState / isActive behave exactly as they do on
- * DashboardScene, with only the two members the API touches stubbed out.
+ * DashboardScene, with only the members the API touches stubbed out.
  */
 class FakeDashboardScene extends SceneObjectBase<FakeDashboardState> {
   public getDashboardChanges = jest.fn(() => ({
@@ -28,7 +37,7 @@ class FakeDashboardScene extends SceneObjectBase<FakeDashboardState> {
 }
 
 function setup({ activate = true }: { activate?: boolean } = {}) {
-  const scene = new FakeDashboardScene({ isDirty: false, sidebar: { openPane: jest.fn(), state: {} } });
+  const scene = new FakeDashboardScene({ isDirty: false, sidebar: new FakeSidebar({}) });
   if (activate) {
     scene.activate();
   }
@@ -115,6 +124,18 @@ describe('dashboardEditorApi', () => {
       expect(scene.getDashboardChanges).not.toHaveBeenCalled();
     });
 
+    it('fires when the open sidebar pane changes', () => {
+      const { scene } = setup();
+      const cb = jest.fn();
+
+      dashboardEditorApi.subscribeToChanges(cb);
+
+      scene.state.sidebar.setState({ openPane: { getId: () => 'diff' } });
+      scene.state.sidebar.setState({ openPane: undefined });
+
+      expect(cb).toHaveBeenCalledTimes(2);
+    });
+
     it('fires when the dashboard enters or leaves edit mode', () => {
       const { scene } = setup();
       const cb = jest.fn();
@@ -146,7 +167,7 @@ describe('dashboardEditorApi', () => {
 
       dashboardEditorApi.subscribeToChanges(cb);
 
-      const nextScene = new FakeDashboardScene({ isDirty: false, sidebar: { openPane: jest.fn(), state: {} } });
+      const nextScene = new FakeDashboardScene({ isDirty: false, sidebar: new FakeSidebar({}) });
       nextScene.activate();
       stateManager.setState({ dashboard: nextScene });
       expect(cb).toHaveBeenCalledTimes(1);
@@ -176,7 +197,7 @@ describe('dashboardEditorApi', () => {
 
       dashboardEditorApi.subscribeToChanges(cb);
 
-      const scene = new FakeDashboardScene({ isDirty: false, sidebar: { openPane: jest.fn(), state: {} } });
+      const scene = new FakeDashboardScene({ isDirty: false, sidebar: new FakeSidebar({}) });
       scene.activate();
       stateManager.setState({ dashboard: scene });
       expect(cb).toHaveBeenCalledTimes(1);
@@ -225,6 +246,26 @@ describe('dashboardEditorApi', () => {
     });
   });
 
+  describe('isDiffViewOpen', () => {
+    it('reports true only while the diff pane is the open pane', () => {
+      const { scene } = setup();
+
+      expect(dashboardEditorApi.isDiffViewOpen()).toBe(false);
+
+      scene.state.sidebar.setState({ openPane: { getId: () => 'code' } });
+      expect(dashboardEditorApi.isDiffViewOpen()).toBe(false);
+
+      scene.state.sidebar.setState({ openPane: { getId: () => 'diff' } });
+      expect(dashboardEditorApi.isDiffViewOpen()).toBe(true);
+    });
+
+    it('reports false when no dashboard is on screen', () => {
+      setupWithoutDashboard();
+
+      expect(dashboardEditorApi.isDiffViewOpen()).toBe(false);
+    });
+  });
+
   describe('openDiffView', () => {
     it('opens the diff pane in the dashboard sidebar', () => {
       const { scene } = setup();
@@ -251,7 +292,7 @@ describe('dashboardEditorApi', () => {
 
     it('does nothing when the diff pane is already open', () => {
       const { scene } = setup();
-      scene.state.sidebar.state.openPane = { getId: () => 'diff' };
+      scene.state.sidebar.setState({ openPane: { getId: () => 'diff' } });
 
       dashboardEditorApi.openDiffView();
 
@@ -260,7 +301,7 @@ describe('dashboardEditorApi', () => {
 
     it('opens the diff pane when a different pane is open', () => {
       const { scene } = setup();
-      scene.state.sidebar.state.openPane = { getId: () => 'code' };
+      scene.state.sidebar.setState({ openPane: { getId: () => 'code' } });
 
       dashboardEditorApi.openDiffView();
 

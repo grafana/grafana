@@ -25,7 +25,9 @@ export interface DashboardEditorAPI {
   hasUnsavedChanges(): boolean;
   /** True when the open dashboard is in edit mode. */
   isEditing(): boolean;
-  /** Calls back whenever the answer to `hasUnsavedChanges()` or `isEditing()` may have changed. Returns an unsubscribe. */
+  /** True when the dashboard sidebar's diff pane is the open pane. */
+  isDiffViewOpen(): boolean;
+  /** Calls back whenever the answer to any of the above may have changed. Returns an unsubscribe. */
   subscribeToChanges(cb: () => void): () => void;
   /** Opens the dashboard sidebar's diff pane. No-op when no dashboard is open. */
   openDiffView(): void;
