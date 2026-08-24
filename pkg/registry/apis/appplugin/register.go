@@ -3,17 +3,22 @@ package appplugin
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
+
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -66,6 +71,7 @@ type AppPluginRunnerOptions struct {
 
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
 type AppPluginAPIBuilder struct {
+	manifest        *app.ManifestData
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
 	clientV3Loader  v3.ClientV3Loader
@@ -106,6 +112,11 @@ func NewAppPluginAPIBuilder(
 		features:        features,
 		tracer:          tracer,
 	}, nil
+}
+
+// clientV3 returns the experimental v3 client for this builder's plugin, if available.
+func (b *AppPluginAPIBuilder) clientV3(ctx context.Context) (v3.ClientV3, bool) {
+	return b.clientV3Loader.ClientV3(ctx, b.pluginJSON.ID)
 }
 
 // Called in ST Grafana to register
@@ -175,6 +186,23 @@ func RegisterAPIService(
 			return nil, err
 		}
 
+		// HACK... make it work for pyroscope
+		if plugin.JSONData.ID == "grafana-pyroscope-app" {
+			copy := exampleManifestData
+			plugin.Manifest = &copy
+		}
+
+		// TODO -- update the constructor with the manifest
+		// needed to support MT, but also requires a parallel enterprise PR
+		if plugin.Manifest != nil {
+			// The served API group is always the plugin id -- schema registration
+			// and OpenAPI naming read the group from the manifest, so they would
+			// diverge from the storage+samples if a manifest declared its own group.
+			manifest := *plugin.Manifest
+			manifest.Group = plugin.JSONData.ID
+			b.manifest = &manifest
+		}
+
 		apiRegistrar.RegisterAPI(b)
 		last = b
 	}
@@ -184,10 +212,27 @@ func RegisterAPIService(
 // GetGroupVersions returns the served versions, preferred version first.
 // The settings kind is registered in every version so it is always reachable.
 func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
-	return []schema.GroupVersion{{
+	fallback := []schema.GroupVersion{{
 		Group:   b.pluginJSON.ID,
 		Version: apppluginV0.VERSION,
 	}}
+	if b.manifest == nil || len(b.manifest.Versions) == 0 {
+		return fallback
+	}
+
+	gvs := make([]schema.GroupVersion, 0, len(b.manifest.Versions))
+	for _, v := range b.manifest.Versions {
+		gv := schema.GroupVersion{
+			Group:   b.pluginJSON.ID,
+			Version: v.Name,
+		}
+		if b.manifest.PreferredVersion == v.Name {
+			gvs = slices.Insert(gvs, 0, gv)
+		} else {
+			gvs = append(gvs, gv)
+		}
+	}
+	return gvs
 }
 
 func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -196,6 +241,34 @@ func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		if err := apppluginV0.AddKnownTypes(scheme, gv); err != nil {
 			return err
 		}
+	}
+
+	if b.manifest != nil {
+		registered := map[schema.GroupVersionKind]bool{}
+		addKind := func(gvk schema.GroupVersionKind) {
+			if registered[gvk] {
+				return
+			}
+			registered[gvk] = true
+			scheme.AddKnownTypeWithName(gvk, &unstructured.Unstructured{})
+			scheme.AddKnownTypeWithName(gvk.GroupVersion().WithKind(gvk.Kind+"List"), &unstructured.UnstructuredList{})
+		}
+
+		// Server-side apply converts objects to the internal ("__internal")
+		// hub version when tracking managed fields, so every kind must be
+		// registered there as well or apply fails with "no kind registered
+		// for the internal version".
+		internalGV := schema.GroupVersion{Group: b.manifest.Group, Version: runtime.APIVersionInternal}
+		for _, version := range b.manifest.Versions {
+			gv := schema.GroupVersion{Group: b.manifest.Group, Version: version.Name}
+			for _, r := range version.Kinds {
+				addKind(gv.WithKind(r.Kind))
+				addKind(internalGV.WithKind(r.Kind))
+			}
+		}
+
+		// ??? How do CRDs register conversions.
+		// Given that the type is always the same, how and where to we convert ???
 	}
 
 	return scheme.SetVersionPriority(gvs...)
@@ -218,7 +291,8 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 
 	b.applyDefaultStorageConfig(opts, settingsRI)
 
-	// The settings store is version-independent
+	// The settings store is version-independent -- build it once and share the
+	// same instance across every version's storage map, k8s style.
 	var settingsStorage rest.Storage
 	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI, opts.OptsGetter)
 	if err != nil {
@@ -232,6 +306,10 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		}
 	}
 	b.getter = settingsStorage.(rest.Getter)
+
+	defs := loadOpenAPIDefinition(func(name string) spec.Ref {
+		return spec.MustCreateRef(name)
+	}, b.manifest)
 
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
@@ -252,6 +330,29 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		}
 		if len(b.pluginJSON.Routes) > 0 && b.opts.RegisterProxy {
 			storage[settingsRI.StoragePath("proxy")] = newProxy(b)
+		}
+
+		// Configure storage for manifest defined kinds
+		if b.manifest != nil {
+			for _, v := range b.manifest.Versions {
+				if v.Name != gv.Version {
+					continue
+				}
+
+				for _, kind := range v.Kinds {
+					store, err := newKindStore(gv.WithKind(kind.Kind), kind, &opts, defs)
+					if err != nil {
+						return err
+					}
+
+					resource := store.DefaultQualifiedResource.Resource
+					storage[resource] = store
+
+					if store.hasStatus {
+						storage[resource+"/status"] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, store.Store)
+					}
+				}
+			}
 		}
 
 		apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage

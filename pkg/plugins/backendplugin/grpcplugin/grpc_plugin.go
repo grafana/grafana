@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-app-sdk/plugin-next/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -100,8 +101,11 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 		return errors.New("no compatible plugin implementation found")
 	}
 
-	// TODO: inspect the rpcClient for "v3-*" services
-	p.clientV3 = nil
+	// Attach V3 when the client exists
+	client, err := grpcplugin.NewClientV3(rpcClient)
+	if err == nil && client != nil {
+		p.clientV3 = v3.NewClientFromSDK(client)
+	}
 
 	p.state = pluginStateStartSuccess
 	return nil

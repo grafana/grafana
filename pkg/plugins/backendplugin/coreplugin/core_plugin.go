@@ -5,6 +5,7 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-app-sdk/plugin-next/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -181,4 +182,8 @@ func (cp *corePlugin) ConvertObjects(ctx context.Context, req *backend.Conversio
 		return cp.ConversionHandler.ConvertObjects(ctx, req)
 	}
 	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) ClientV3(ctx context.Context) (*grpcplugin.ClientV3, bool) {
+	return nil, false // HACK, for now
 }
