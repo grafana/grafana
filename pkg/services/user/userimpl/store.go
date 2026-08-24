@@ -902,8 +902,12 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 }
 
 func searchUserOffset(limit, page int) int {
-	if limit > 0 && page > 0 {
-		return limit * (page - 1)
+	if page > 0 {
+		offset := limit * (page - 1)
+		if offset < 0 {
+			return 0
+		}
+		return offset
 	}
 	return 0
 }

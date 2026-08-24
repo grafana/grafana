@@ -432,4 +432,5 @@ func TestSearchUserOffset(t *testing.T) {
 	require.Equal(t, 25, searchUserOffset(25, 2))
 	require.Equal(t, 0, searchUserOffset(0, 2))
 	require.Equal(t, 0, searchUserOffset(25, -1))
+	require.Equal(t, 0, searchUserOffset(1<<40, 1<<40))
 }
