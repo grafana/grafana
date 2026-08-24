@@ -42,6 +42,10 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       transformOrigin: 'top center',
       [theme.transitions.handleMotion('no-preference')]: {
         animation: `${surfaceEnter} 140ms ${theme.transitions.easing.easeOut}`,
+        transition: theme.transitions.create('max-height', {
+          duration: theme.transitions.duration.short,
+          easing: theme.transitions.easing.easeOut,
+        }),
       },
     }),
     header: css({
@@ -98,6 +102,12 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       height: theme.spacing(3.5),
       margin: 0,
       padding: theme.spacing(0.75),
+    }),
+    clarificationAction: css({
+      display: 'flex',
+      flex: '0 0 auto',
+      justifyContent: 'flex-end',
+      paddingInline: theme.spacing(1),
     }),
     status: css({
       display: 'flex',

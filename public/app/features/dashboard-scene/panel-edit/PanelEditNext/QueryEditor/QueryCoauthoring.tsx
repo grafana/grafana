@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { createTool, useAssistant, useInlineAssistant } from '@grafana/assistant';
+import { createAssistantContextItem, createTool, useAssistant, useInlineAssistant } from '@grafana/assistant';
 import {
   type QueryEditorCoauthoringContextV1,
   type QueryEditorCoauthoringControllerV1,
@@ -14,6 +14,7 @@ import { Alert, Button, Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { QueryCoauthoringFeedback, type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import {
+  QueryCoauthoringClarificationAction,
   QueryCoauthoringFallback,
   QueryCoauthoringHeader,
   QueryCoauthoringIterationNudge,
@@ -23,6 +24,7 @@ import {
   QueryCoauthoringWorking,
 } from './QueryCoauthoringViews';
 import {
+  buildAssistantHandoffContext,
   buildAssistantHandoffPrompt,
   buildCoauthoringSystemPrompt,
   buildIdentificationPrompt,
@@ -30,6 +32,7 @@ import {
   buildInvalidProposalRepairMessage,
   buildProposalToolDescription,
   invalidQueryResponseMessage,
+  MAX_INLINE_CLARIFICATION_LENGTH,
   multipleResponsesMessage,
   normalizeClarificationMessage,
   normalizeSelectionExplanation,
@@ -105,8 +108,11 @@ export function QueryCoauthoring({
   const generationIdRef = useRef(0);
   const identificationIdRef = useRef(0);
   const contextPromiseRef = useRef<Promise<QueryEditorCoauthoringContextV1> | undefined>(undefined);
+  const lastSubmittedIntentRef = useRef('');
   const previewActiveRef = useRef(false);
   const onRevertPreviewRef = useRef(onRevertPreview);
+  const timeRangeFrom = timeRange?.from;
+  const timeRangeTo = timeRange?.to;
   onRevertPreviewRef.current = onRevertPreview;
 
   const revertQueryPreview = useCallback(() => {
@@ -137,6 +143,7 @@ export function QueryCoauthoring({
     setFeedback(undefined);
     setIterationNudgeDismissed(false);
     contextPromiseRef.current = undefined;
+    lastSubmittedIntentRef.current = '';
   }, [cancel, cancelIdentification, controller, reset, resetIdentification, revertQueryPreview]);
 
   const closeFeedback = useCallback(() => {
@@ -182,7 +189,11 @@ export function QueryCoauthoring({
       agentName: 'query-coauthor-intent',
       agentId: 'grafana.query.coauthor.identify.v1',
       prompt: buildIdentificationPrompt(context),
-      systemPrompt: buildIdentificationSystemPrompt(context, datasourceType, timeRange),
+      systemPrompt: buildIdentificationSystemPrompt(
+        context,
+        datasourceType,
+        timeRangeFrom === undefined || timeRangeTo === undefined ? undefined : { from: timeRangeFrom, to: timeRangeTo }
+      ),
       onComplete: (completionText) => {
         if (identificationId === identificationIdRef.current) {
           setSelectionExplanation(normalizeSelectionExplanation(completionText, fallbackExplanation));
@@ -199,7 +210,15 @@ export function QueryCoauthoring({
       identificationState.current++;
       cancelIdentification();
     };
-  }, [cancelIdentification, context, datasourceType, identifySelection, isAssistantAvailable, timeRange]);
+  }, [
+    cancelIdentification,
+    context,
+    datasourceType,
+    identifySelection,
+    isAssistantAvailable,
+    timeRangeFrom,
+    timeRangeTo,
+  ]);
 
   useEffect(() => {
     if (!isAssistantAvailable) {
@@ -228,26 +247,51 @@ export function QueryCoauthoring({
       setAvailableHeight(Math.max(window.innerHeight - anchorTop - VIEWPORT_MARGIN, 0));
     };
 
-    let animationFrame: number | undefined;
+    let firstSettleFrame: number | undefined;
+    let secondSettleFrame: number | undefined;
+    const cancelSettle = () => {
+      if (firstSettleFrame !== undefined) {
+        cancelAnimationFrame(firstSettleFrame);
+        firstSettleFrame = undefined;
+      }
+      if (secondSettleFrame !== undefined) {
+        cancelAnimationFrame(secondSettleFrame);
+        secondSettleFrame = undefined;
+      }
+    };
+    const settleAvailableHeight = () => {
+      cancelSettle();
+      firstSettleFrame = requestAnimationFrame(() => {
+        firstSettleFrame = undefined;
+        updateAvailableHeight();
+        secondSettleFrame = requestAnimationFrame(() => {
+          secondSettleFrame = undefined;
+          updateAvailableHeight();
+        });
+      });
+    };
     const resizeObserver = new ResizeObserver(() => {
       updateAvailableHeight();
-      if (animationFrame !== undefined) {
-        cancelAnimationFrame(animationFrame);
-      }
-      animationFrame = requestAnimationFrame(updateAvailableHeight);
+      settleAvailableHeight();
     });
+    const updateForViewportChange = (event: Event) => {
+      if (event.type === 'scroll' && event.target instanceof Node && portalTarget.contains(event.target)) {
+        return;
+      }
+      updateAvailableHeight();
+      settleAvailableHeight();
+    };
 
     updateAvailableHeight();
+    settleAvailableHeight();
     resizeObserver.observe(portalTarget);
-    window.addEventListener('resize', updateAvailableHeight);
-    window.addEventListener('scroll', updateAvailableHeight, true);
+    window.addEventListener('resize', updateForViewportChange);
+    window.addEventListener('scroll', updateForViewportChange, true);
     return () => {
       resizeObserver.disconnect();
-      if (animationFrame !== undefined) {
-        cancelAnimationFrame(animationFrame);
-      }
-      window.removeEventListener('resize', updateAvailableHeight);
-      window.removeEventListener('scroll', updateAvailableHeight, true);
+      cancelSettle();
+      window.removeEventListener('resize', updateForViewportChange);
+      window.removeEventListener('scroll', updateForViewportChange, true);
     };
   }, [controller]);
 
@@ -267,6 +311,7 @@ export function QueryCoauthoring({
     if (!trimmedIntent || isGenerating || !isAssistantAvailable) {
       return;
     }
+    lastSubmittedIntentRef.current = trimmedIntent;
 
     identificationIdRef.current++;
     cancelIdentification();
@@ -351,7 +396,7 @@ export function QueryCoauthoring({
       {
         name: 'request_assistant_handoff',
         description:
-          'Use this instead of a proposal when the request requires other queries, data sources, or panel changes.',
+          'Use this instead of a proposal when the request requires inspecting or querying live data, capabilities beyond this query editor, other queries, data sources, or panel changes.',
         inputSchema: {
           type: 'object',
           additionalProperties: false,
@@ -390,8 +435,12 @@ export function QueryCoauthoring({
         if (acceptedTerminalToolCallCount === 0) {
           const message = normalizeClarificationMessage(completionText);
           if (message) {
-            setIntent('');
-            setClarification({ message });
+            if (message.length > MAX_INLINE_CLARIFICATION_LENGTH) {
+              setFallback({ reason: message.slice(0, 500), context: submittedContext });
+            } else {
+              setIntent('');
+              setClarification({ message });
+            }
           } else if (rejectedProposalCount > 0) {
             setError(invalidQueryResponseMessage(submittedContext));
           } else {
@@ -471,7 +520,14 @@ export function QueryCoauthoring({
       origin: 'grafana/panel-edit-next/query-coauthoring',
       mode: 'dashboarding',
       autoSend: false,
-      prompt: buildAssistantHandoffPrompt(intent, activeContext, datasourceType, timeRange, proposal, reason),
+      prompt: buildAssistantHandoffPrompt(lastSubmittedIntentRef.current || intent, activeContext),
+      context: [
+        createAssistantContextItem('structured', {
+          hidden: true,
+          title: t('query-editor-coauthoring.assistant-context-title', 'Query coauthoring context'),
+          data: buildAssistantHandoffContext(activeContext, datasourceType, timeRange, proposal, reason),
+        }),
+      ],
     });
   };
 
@@ -585,27 +641,32 @@ export function QueryCoauthoring({
         !error &&
         !contextError &&
         (!showIterationNudge || iterationNudgeDismissed || !context) && (
-          <QueryCoauthoringPromptInput
-            value={intent}
-            placeholder={
-              clarification
-                ? t('query-editor-coauthoring.clarification-placeholder', 'Add extra detail...')
-                : t('query-editor-coauthoring.prompt-placeholder', 'Describe a quick change...')
-            }
-            ariaLabel={
-              clarification
-                ? t('query-editor-coauthoring.clarification-label', 'Add extra detail')
-                : t('query-editor-coauthoring.prompt-label', 'Describe a query change')
-            }
-            actionLabel={
-              clarification
-                ? t('query-editor-coauthoring.continue', 'Continue')
-                : t('query-editor-coauthoring.submit', 'Coauthor')
-            }
-            disabled={!intent.trim() || !context || contextError}
-            onChange={setIntent}
-            onSubmit={() => void submit()}
-          />
+          <>
+            <QueryCoauthoringPromptInput
+              value={intent}
+              placeholder={
+                clarification
+                  ? t('query-editor-coauthoring.clarification-placeholder', 'Add extra detail...')
+                  : t('query-editor-coauthoring.prompt-placeholder', 'Describe a quick change...')
+              }
+              ariaLabel={
+                clarification
+                  ? t('query-editor-coauthoring.clarification-label', 'Add extra detail')
+                  : t('query-editor-coauthoring.prompt-label', 'Describe a query change')
+              }
+              actionLabel={
+                clarification
+                  ? t('query-editor-coauthoring.continue', 'Continue')
+                  : t('query-editor-coauthoring.submit', 'Coauthor')
+              }
+              disabled={!intent.trim() || !context || contextError}
+              onChange={setIntent}
+              onSubmit={() => void submit()}
+            />
+            {clarification && (
+              <QueryCoauthoringClarificationAction onContinue={() => continueInAssistant(clarification.message)} />
+            )}
+          </>
         )}
       {isAssistantAvailable && isGenerating && <QueryCoauthoringWorking context={context} onStop={stop} />}
       {isAssistantAvailable && contextError && (
@@ -658,7 +719,12 @@ export function QueryCoauthoring({
         />
       )}
       {isAssistantAvailable && fallback && (
-        <QueryCoauthoringFallback reason={fallback.reason} onFeedback={setFeedback} onContinue={continueInAssistant} />
+        <QueryCoauthoringFallback
+          reason={fallback.reason}
+          onClose={dismiss}
+          onFeedback={setFeedback}
+          onContinue={continueInAssistant}
+        />
       )}
       {isAssistantAvailable && proposal && (
         <QueryCoauthoringProposal

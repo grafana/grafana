@@ -10,7 +10,7 @@ import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import { workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
 
 interface HeaderProps {
-  children: ReactNode;
+  children?: ReactNode;
   onClose?: () => void;
   onStop?: () => void;
   pulse?: boolean;
@@ -104,6 +104,17 @@ export function QueryCoauthoringPromptInput({
   );
 }
 
+export function QueryCoauthoringClarificationAction({ onContinue }: { onContinue: () => void }) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
+  return (
+    <div className={styles.clarificationAction}>
+      <Button size="sm" fill="text" icon="ai-sparkle" onClick={onContinue}>
+        <Trans i18nKey="query-editor-coauthoring.continue-in-assistant-chat">Continue in Assistant chat</Trans>
+      </Button>
+    </div>
+  );
+}
+
 export function QueryCoauthoringWorking({
   context,
   onStop,
@@ -148,14 +159,16 @@ export function QueryCoauthoringWorking({
 
 interface FallbackProps {
   reason: string;
+  onClose: () => void;
   onFeedback: (feedback: QueryCoauthoringFeedbackState) => void;
   onContinue: (reason: string) => void;
 }
 
-export function QueryCoauthoringFallback({ reason, onFeedback, onContinue }: FallbackProps) {
+export function QueryCoauthoringFallback({ reason, onClose, onFeedback, onContinue }: FallbackProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
     <>
+      <QueryCoauthoringHeader onClose={onClose} />
       <div className={styles.handoff}>
         <Text variant="body">
           <Trans i18nKey="query-editor-coauthoring.handoff-guidance">
@@ -172,7 +185,7 @@ export function QueryCoauthoringFallback({ reason, onFeedback, onContinue }: Fal
           <FeedbackButtons outcome="handoff" onFeedback={onFeedback} />
         </div>
         <Button size="sm" fill="text" icon="ai-sparkle" onClick={() => onContinue(reason)}>
-          <Trans i18nKey="query-editor-coauthoring.continue-assistant">Continue with Assistant</Trans>
+          <Trans i18nKey="query-editor-coauthoring.continue-in-assistant-chat">Continue in Assistant chat</Trans>
         </Button>
       </div>
     </>

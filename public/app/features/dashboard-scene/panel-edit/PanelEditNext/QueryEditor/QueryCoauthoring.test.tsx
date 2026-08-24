@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -25,6 +25,9 @@ let mockAssistantAvailable = true;
 let mockAssistantLoading = false;
 
 jest.mock('@grafana/assistant', () => ({
+  createAssistantContextItem: (type: string, params: Record<string, unknown>) => ({
+    node: { data: { type, params, data: params.data } },
+  }),
   createTool: (
     invoke: (input: Record<string, unknown>) => Promise<string>,
     options: {
@@ -220,6 +223,37 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByText('Highlighted query')).toBeInTheDocument();
   });
 
+  it('does not regenerate the explanation when focus moves from the prompt to the explanation', async () => {
+    const { user } = await setup();
+    const identificationRequest = mockIdentifySelection.mock.calls[0][0];
+    act(() => identificationRequest.onComplete('Calculates the per-second request rate.'));
+
+    await user.click(screen.getByRole('textbox', { name: 'Describe a query change' }));
+    await user.click(screen.getByText('Calculates the per-second request rate.'));
+
+    expect(mockIdentifySelection).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not regenerate the explanation when the host rerenders with the same time range', async () => {
+    const { controller, onAccept, onPreview, onRevertPreview, rerender } = await setup();
+    const identificationRequest = mockIdentifySelection.mock.calls[0][0];
+    act(() => identificationRequest.onComplete('Calculates the per-second request rate.'));
+
+    rerender(
+      <QueryCoauthoring
+        controller={controller}
+        datasourceType="prometheus"
+        onAccept={onAccept}
+        onPreview={onPreview}
+        onRevertPreview={onRevertPreview}
+        timeRange={{ from: 1_000, to: 2_000 }}
+      />
+    );
+
+    expect(mockIdentifySelection).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Calculates the per-second request rate.')).toBeInTheDocument();
+  });
+
   it('requests a holistic explanation when the whole query is focused', async () => {
     const query = 'rate(http_requests_total[5m])';
     await setup(0, true, {
@@ -326,6 +360,10 @@ describe('QueryCoauthoring', () => {
     expect(request.systemPrompt).toContain(
       'Keep clarifications to one plain-text question, at most two sentences and 240 characters.'
     );
+    expect(request.systemPrompt).toContain(
+      'Call request_assistant_handoff instead of asking a clarification when the task requires inspecting or querying live data'
+    );
+    expect(request.tools[1].description).toContain('inspecting or querying live data');
     expect(request.systemPrompt).not.toContain('dashboardTitle');
   });
 
@@ -645,6 +683,110 @@ describe('QueryCoauthoring', () => {
     resizeObserverSpy.mockRestore();
   });
 
+  it('does not resize a loaded explanation when its own scroll body is scrolled', async () => {
+    const { anchorElement } = await setup(500);
+    const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
+    expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 500 - VIEWPORT_TEST_MARGIN}px` });
+
+    jest.mocked(anchorElement.getBoundingClientRect).mockReturnValue({
+      top: 440,
+      bottom: 440,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 440,
+      toJSON: () => undefined,
+    });
+    fireEvent.scroll(screen.getByTestId('query-coauthoring-scroll-body'));
+
+    expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 500 - VIEWPORT_TEST_MARGIN}px` });
+  });
+
+  it('settles the loaded explanation height after Monaco relocates the surface', async () => {
+    let notifyResize: VoidFunction | undefined;
+    let nextAnimationFrameId = 1;
+    const animationFrames = new Map<number, FrameRequestCallback>();
+    const resizeObserver: ResizeObserver = {
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    };
+    const resizeObserverSpy = jest
+      .spyOn(globalThis, 'ResizeObserver')
+      .mockImplementation((callback: ResizeObserverCallback) => {
+        notifyResize = () => callback([], resizeObserver);
+        return resizeObserver;
+      });
+    const requestAnimationFrameSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      const id = nextAnimationFrameId++;
+      animationFrames.set(id, callback);
+      return id;
+    });
+    const cancelAnimationFrameSpy = jest
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation((id) => animationFrames.delete(id));
+    const runOnlyAnimationFrame = (timestamp: number) => {
+      expect(animationFrames.size).toBe(1);
+      const [[id, callback]] = animationFrames;
+      animationFrames.delete(id);
+      act(() => callback(timestamp));
+    };
+
+    try {
+      const { anchorElement } = await setup(600);
+      const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
+      act(() => notifyResize?.());
+      expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 600 - VIEWPORT_TEST_MARGIN}px` });
+      expect(animationFrames.size).toBe(1);
+
+      runOnlyAnimationFrame(0);
+      expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 600 - VIEWPORT_TEST_MARGIN}px` });
+      expect(animationFrames.size).toBe(1);
+
+      jest.mocked(anchorElement.getBoundingClientRect).mockReturnValue({
+        top: 440,
+        bottom: 440,
+        left: 0,
+        right: 0,
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 440,
+        toJSON: () => undefined,
+      });
+      runOnlyAnimationFrame(16);
+
+      expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 440 - VIEWPORT_TEST_MARGIN}px` });
+      expect(animationFrames.size).toBe(0);
+    } finally {
+      resizeObserverSpy.mockRestore();
+      requestAnimationFrameSpy.mockRestore();
+      cancelAnimationFrameSpy.mockRestore();
+    }
+  });
+
+  it('recalculates the viewport constraint for ancestor scrolling', async () => {
+    const { anchorElement } = await setup(500);
+    const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
+
+    jest.mocked(anchorElement.getBoundingClientRect).mockReturnValue({
+      top: 440,
+      bottom: 440,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 440,
+      toJSON: () => undefined,
+    });
+    fireEvent.scroll(document.body);
+
+    expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 440 - VIEWPORT_TEST_MARGIN}px` });
+  });
+
   it('discards a typed draft when closed', async () => {
     const { user, dismissInvocation } = await setup();
 
@@ -825,10 +967,48 @@ describe('QueryCoauthoring', () => {
     expect(screen.queryByText(/\*\*|`/)).not.toBeInTheDocument();
   });
 
+  it('lets the user continue an ordinary clarification in Assistant chat', async () => {
+    const { user } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Break this down by route/handler');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('Should I group by handler, route, or both?'));
+
+    await user.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
+
+    expect(mockOpenAssistant).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: 'Break this down by route/handler',
+        context: expect.any(Array),
+      })
+    );
+    const handoffContext = mockOpenAssistant.mock.calls[0][0].context[0].node.data.data;
+    expect(handoffContext.handoffReason).toBe('Should I group by handler, route, or both?');
+  });
+
+  it('hands a response that exceeds the inline clarification boundary to Assistant', async () => {
+    const { user } = await setup();
+    const unavailableDataResponse =
+      "I don't have access to query the actual data to measure cardinality across labels. " +
+      'The datasource-provided context only lists the available labels but not their cardinality values. '.repeat(3);
+
+    await user.type(screen.getByRole('textbox'), 'Group by the highest-cardinality label');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete(unavailableDataResponse));
+
+    expect(screen.getByText(/Continue in Assistant chat to make larger changes/i)).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Add extra detail' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
+    expect(mockOpenAssistant).toHaveBeenCalledWith(
+      expect.objectContaining({ prompt: 'Group by the highest-cardinality label' })
+    );
+  });
+
   it('keeps clarification response controls outside the scrollable message region', async () => {
     const { user } = await setup();
     const longClarification =
-      'Would you like to aggregate by method, filter specific traffic, or smooth the resulting series? '.repeat(4);
+      'Would you like to aggregate by method, filter specific traffic, or smooth the resulting series? '.repeat(2);
 
     await user.type(screen.getByRole('textbox'), 'Make this less noisy');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -858,7 +1038,7 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByText(/may need to span another datasource or additional queries/i)).toBeInTheDocument();
     expect(screen.getByText(/unsaved panel edits will not be lost/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Continue with Assistant' }));
+    await user.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
     expect(mockOpenAssistant).toHaveBeenCalledWith(
       expect.objectContaining({
         origin: 'grafana/panel-edit-next/query-coauthoring',
@@ -866,6 +1046,30 @@ describe('QueryCoauthoring', () => {
         autoSend: false,
       })
     );
+  });
+
+  it('closes and clears a bounded Assistant handoff', async () => {
+    const { clearPreview, dismissInvocation, focus, user } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Update all queries in this dashboard');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[1].invoke({ reason: 'This change spans other queries.' });
+      request.onComplete('');
+    });
+
+    expect(screen.getByText(/may need to span another datasource or additional queries/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeVisible();
+    const clearPreviewCalls = clearPreview.mock.calls.length;
+    const cancelCalls = mockCancel.mock.calls.length;
+    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+    expect(focus).toHaveBeenCalledTimes(1);
+    expect(clearPreview).toHaveBeenCalledTimes(clearPreviewCalls + 1);
+    expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
+    expect(screen.queryByText(/may need to span another datasource or additional queries/i)).not.toBeInTheDocument();
   });
 
   it('nudges the user toward Assistant after repeated iterations while allowing them to continue here', async () => {
@@ -883,6 +1087,36 @@ describe('QueryCoauthoring', () => {
 
     await user.click(screen.getByRole('button', { name: 'Continue here' }));
     expect(await screen.findByRole('textbox', { name: 'Describe a query change' })).toBeInTheDocument();
+  });
+
+  it('uses a concise fallback draft and hidden query context when no change was requested', async () => {
+    const context: QueryEditorCoauthoringContextV1 = {
+      revision: '1',
+      query: 'rate(http_requests_total[5m])',
+      focusRanges: [{ from: 0, to: 4 }],
+      language: { id: 'promql', displayName: 'PromQL' },
+      metadata: [],
+    };
+    const { user } = await setup(0, false, context, { showIterationNudge: true });
+
+    await user.click(screen.getByRole('button', { name: 'Continue in Assistant' }));
+
+    expect(mockOpenAssistant).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: 'Help me continue editing this PromQL query.',
+        context: [
+          expect.objectContaining({
+            node: {
+              data: {
+                type: 'structured',
+                params: expect.objectContaining({ hidden: true }),
+                data: expect.not.objectContaining({ requestedChange: expect.anything() }),
+              },
+            },
+          }),
+        ],
+      })
+    );
   });
 
   it('continues a proposal in Assistant with a curated unsent draft', async () => {
@@ -906,13 +1140,32 @@ describe('QueryCoauthoring', () => {
         origin: 'grafana/panel-edit-next/query-coauthoring',
         mode: 'dashboarding',
         autoSend: false,
-        prompt: expect.stringContaining('Requested change: "Use increase"'),
+        prompt: 'Use increase',
+        context: [
+          expect.objectContaining({
+            node: {
+              data: expect.objectContaining({
+                type: 'structured',
+                params: expect.objectContaining({ hidden: true }),
+              }),
+            },
+          }),
+        ],
       })
     );
-    const handoffPrompt = mockOpenAssistant.mock.calls[0][0].prompt;
-    expect(handoffPrompt).toContain('Current query: "rate(http_requests_total[5m])"');
-    expect(handoffPrompt).toContain('Inline proposal: "increase(http_requests_total[5m])"');
-    expect(handoffPrompt).toContain('Returns the increase over the selected range.');
+    const handoffContext = mockOpenAssistant.mock.calls[0][0].context[0].node.data.data;
+    expect(handoffContext).toEqual(
+      expect.objectContaining({
+        currentQuery: 'rate(http_requests_total[5m])',
+        focusedText: ['rate'],
+        datasourcePluginType: 'prometheus',
+        inlineProposal: {
+          query: 'increase(http_requests_total[5m])',
+          explanation: ['Returns the increase over the selected range.'],
+        },
+      })
+    );
+    expect(handoffContext).not.toHaveProperty('requestedChange');
   });
 
   it('submits privacy-bounded feedback for a query proposal', async () => {
