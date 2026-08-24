@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
@@ -266,7 +266,7 @@ func (s *SocialBase) retrieveRawJWTPayload(token any) ([]byte, error) {
 	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
 	matched := jwtRegexp.FindStringSubmatch(tokenString)
 	if matched == nil {
-		return nil, fmt.Errorf("token is not in JWT format: %s", tokenString)
+		return nil, fmt.Errorf("token is not in JWT format: %s", util.RedactSecret(tokenString))
 	}
 
 	rawJSON, err := base64.RawURLEncoding.DecodeString(matched[2])
