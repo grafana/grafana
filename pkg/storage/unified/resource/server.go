@@ -951,6 +951,9 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 	if errs := validation.IsValidGrafanaName(obj.GetName()); errs != nil {
 		return nil, NewBadRequestError(errs[0])
 	}
+	if errs := validation.IsReservedName(obj.GetName()); errs != nil {
+		return nil, NewBadRequestError(errs[0])
+	}
 
 	// For folder moves, we need to check permissions on both folders
 	if s.isFolderMove(event) {
@@ -1154,6 +1157,10 @@ func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operati
 			return false
 		}
 	}
+
+	ctx, span := tracer.Start(ctx, "resource.server.sleepAfterSuccessfulWriteOperation")
+	span.SetAttributes(attribute.Float64("artificialSuccessfulWriteDelaySeconds", s.artificialSuccessfulWriteDelay.Seconds()))
+	defer span.End()
 
 	s.log.Debug("sleeping after successful write operation",
 		"operation", operation,

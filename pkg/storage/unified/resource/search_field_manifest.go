@@ -18,19 +18,21 @@ var manifestMergeLogger = log.New("search-manifest-merge")
 // same map-backed provider NewMapProvider produces, so the per-field and
 // cross-version consistency checks apply here too.
 //
-// Panics on an invalid declaration, like NewMapProvider. Runtime callers use
-// newManifestBackedProvider instead.
+// Panics on an invalid declaration, like NewMapProvider, because in a
+// compiled-in manifest that is a bug. Runtime callers use
+// ManifestBackedProvider instead.
 func NewManifestBackedProvider(manifests []app.Manifest) SearchFieldsProvider {
-	p, err := newManifestBackedProvider(manifests)
+	p, err := ManifestBackedProvider(manifests)
 	if err != nil {
 		panic(err.Error())
 	}
 	return p
 }
 
-// newManifestBackedProvider is NewManifestBackedProvider's error-returning
-// core, so a runtime manifest source can reject a bad set instead of crashing.
-func newManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, error) {
+// ManifestBackedProvider is NewManifestBackedProvider's error-returning form,
+// for manifests read at runtime, which can be malformed without this build
+// being at fault.
+func ManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, error) {
 	fields := map[schema.GroupVersionResource][]SearchFieldDefinition{}
 	preferred := map[schema.GroupResource]string{}
 
@@ -133,7 +135,7 @@ func SearchFieldProviders(manifests []app.Manifest) (map[LowerGroupResource]Sear
 
 	// A single manifest-backed provider covers every declared kind; each map
 	// entry queries it for its own (group, resource).
-	manifestProvider, err := newManifestBackedProvider(manifests)
+	manifestProvider, err := ManifestBackedProvider(manifests)
 	if err != nil {
 		return nil, err
 	}

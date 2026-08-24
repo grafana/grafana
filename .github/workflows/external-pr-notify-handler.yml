@@ -25,7 +25,7 @@ env:
   # community-triage logic version this repo is pinned to (main as of PR #6).
   # Bump deliberately; re-resolve with:
   #   git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 91bd2f3de830e057768c8bbf7354dfe897937b86 # trufflehog:ignore
+  TRIAGE_REF: 93bec69e509e711a0b8fceea813c8ac816230373 # trufflehog:ignore
 
 jobs:
   triage:
@@ -44,6 +44,7 @@ jobs:
       matched_teams: ${{ steps.check-teams.outputs.matched_teams }}
       agent_review: ${{ steps.check-teams.outputs.agent_review }}
       pr_type: ${{ steps.classify.outputs.type }}
+      review_skill: ${{ steps.classify.outputs.review_skill }}
       slop_status: ${{ steps.detect-slop.outputs.slop_status }}
       slop_score: ${{ steps.detect-slop.outputs.slop_score }}
       slop_reason: ${{ steps.detect-slop.outputs.slop_reason }}
@@ -337,16 +338,19 @@ jobs:
           # (so a PR title like $(...) cannot execute). See SECURITY-REVIEW.md #1.
           PR_TITLE: ${{ steps.pr-context.outputs.pr_title }}
           PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
-          PR_TYPE: ${{ needs.triage.outputs.pr_type }}
+          REVIEW_SKILL: ${{ needs.triage.outputs.review_skill }}
           REPO: ${{ github.repository }}
           WARP_IP: ${{ steps.egress.outputs.warp_ip }}
         run: |
-          # Defense-in-depth: PR_TYPE selects a skill name and must not carry
-          # shell metacharacters. Constrain to a strict charset before use.
-          if ! [[ "$PR_TYPE" =~ ^[a-z][a-z0-9-]*$ ]]; then
-            echo "::error::unexpected pr_type: $PR_TYPE"
-            exit 1
-          fi
+          # A value outside this set names a pr-review-* skill that does not exist,
+          # which would review with no rules instead of failing.
+          case "$REVIEW_SKILL" in
+            docs | bugfix | feature) ;;
+            *)
+              echo "::error::unexpected review skill: $REVIEW_SKILL"
+              exit 1
+              ;;
+          esac
 
           mkdir -p /tmp/oz-output /tmp/oz-context
 
@@ -368,7 +372,7 @@ jobs:
             -v "/tmp/oz-output:/output" \
             -e WARP_API_KEY="${WARP_API_KEY}" \
             -e OZ_MODEL="claude-4-8-opus-high" \
-            -e OZ_SKILL="pr-review-${PR_TYPE}" \
+            -e OZ_SKILL="pr-review-${REVIEW_SKILL}" \
             -e OZ_PROMPT="Review Pull Request #${PR_NUMBER} in ${REPO}.
           PR title: ${PR_TITLE}
           PR description: Read pr_description.txt
@@ -474,8 +478,10 @@ jobs:
           SLOP_REASON: ${{ needs.triage.outputs.slop_reason }}
         run: node ./community-triage/.github/workflows/scripts/pr-notify.mts notify
 
-      - name: Post fallback comment
-        if: needs.review.outputs.review_line == '' && steps.notify.outputs.notification_sent == 'true'
+      # The script skips the greeting when the review already delivered it, and
+      # comments nothing when there is nothing outstanding.
+      - name: Post welcome comment and contributor checklist
+        if: steps.notify.outputs.notification_sent == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ needs.triage.outputs.pr_number }}

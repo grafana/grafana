@@ -784,7 +784,7 @@ var (
 		{
 			Name:        "secretsKeeperUI",
 			Description: "Enable the Secrets Keeper management UI for configuring external secret storage",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
@@ -792,7 +792,7 @@ var (
 		{
 			Name:        "grafana.secretsReferenceValueUI",
 			Description: "Enable referencing an existing secret in an active keeper when creating a secure value",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
@@ -2267,7 +2267,7 @@ var (
 		{
 			Name:         "secretsManagementAppPlatformAwsKeeper",
 			Description:  "Enables the creation of keepers that manage secrets stored on AWS secrets manager",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			HideFromDocs: true,
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:        grafanaOperatorExperienceSquad,
