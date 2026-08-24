@@ -24,6 +24,12 @@ export const TABLE = {
   NESTED_NO_DATA_HEIGHT: 60,
   BORDER_RIGHT: 1,
   SCROLLBAR_AFFORDANCE: 16,
+  // Bounds on a JSON cell expanded by hover. Unlike a long string, a JSON blob can be hundreds of
+  // lines and thousands of columns wide, so an unbounded expansion escapes the panel and puts the
+  // content out of reach again. Capping the width lets `pre-wrap` wrap instead of growing, and the
+  // height cap keeps the overlay scrollable in place; the inspector remains the full-value view.
+  JSON_OVERFLOW_MAX_WIDTH: 600,
+  JSON_OVERFLOW_MAX_HEIGHT: '40vh',
 };
 
 /**
