@@ -39,6 +39,11 @@ func newFakeConfigClient() *fakeConfigClient {
 // setSpec seeds a Config for orgID carrying the given externalRulerSync spec
 // fields. An empty datasourceUID seeds a config with no externalRulerSync set.
 func (f *fakeConfigClient) setSpec(orgID int64, datasourceUID, targetDatasourceUID string) {
+	f.setSpecWithPromote(orgID, datasourceUID, targetDatasourceUID, false)
+}
+
+// setSpecWithPromote is setSpec plus the promote flag.
+func (f *fakeConfigClient) setSpecWithPromote(orgID int64, datasourceUID, targetDatasourceUID string, promote bool) {
 	obj := &alertingrulesv0alpha1.Config{}
 	obj.SetNamespace(f.nsMapper(orgID))
 	obj.SetName(alertingrulesv0alpha1.ConfigSingletonName)
@@ -48,6 +53,7 @@ func (f *fakeConfigClient) setSpec(orgID int64, datasourceUID, targetDatasourceU
 		if targetDatasourceUID != "" {
 			spec.TargetDatasourceUid = &targetDatasourceUID
 		}
+		spec.Promote = &promote
 		obj.Spec.ExternalRulerSync = spec
 	}
 	f.mu.Lock()
