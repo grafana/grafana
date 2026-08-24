@@ -78,6 +78,14 @@ export function QueryCell({ content, isEditing, cell, onChange }: Props) {
   const query = panelQuery ? dataQueryFromPanelQueryKind(panelQuery) : undefined;
   const persistedGraphStyle = content.kind === 'Query' ? content.spec.graphStyle : undefined;
 
+  // Mirrors `query` every render, but `changeQuery` below also writes it eagerly, synchronously,
+  // ahead of the round trip back through `content` — some datasource editors (the built-in TestData
+  // one included) call `onChange(updated)` and then `onRunQuery()` back-to-back in the same handler,
+  // before React has re-rendered with the new `content`. Reading `query` directly in that window would
+  // run the query this cell is about to stop being; reading the ref always gets the latest one.
+  const latestQuery = useRef(query);
+  latestQuery.current = query;
+
   // Edit mode always shows (and writes) the real persisted value; view mode shows a local override
   // once the reader has picked one, falling back to the persisted value (or the default) until they do.
   const graphStyle = isEditing
@@ -96,7 +104,15 @@ export function QueryCell({ content, isEditing, cell, onChange }: Props) {
     const subscription = runnerRef
       .current!.getData({ withFieldConfig: false, withTransforms: false })
       .subscribe(setData);
-    return () => subscription.unsubscribe();
+    return () => {
+      // Two separate things to tear down: unsubscribing here only stops this component listening to
+      // the runner's own multicast subject. The runner keeps its own internal subscription to the
+      // live datasource query (a streaming source, or just an in-flight backend request) that only
+      // destroy() stops — every other real PanelQueryRunner owner in this codebase calls it on
+      // teardown too.
+      subscription.unsubscribe();
+      runnerRef.current?.destroy();
+    };
   }, []);
 
   // Set inside runQuery rather than only in the auto-run effect, so an explicit Run counts too —
@@ -105,19 +121,21 @@ export function QueryCell({ content, isEditing, cell, onChange }: Props) {
   const hasRun = useRef(false);
 
   const [queryState, runQuery] = useAsyncFn(async () => {
-    if (!dsSettings || !query) {
+    if (!dsSettings || !latestQuery.current) {
       return;
     }
     hasRun.current = true;
     await runnerRef.current!.run({
       datasource: { uid: dsSettings.uid, type: dsSettings.type },
-      queries: [query],
-      timezone: 'browser',
+      queries: [latestQuery.current],
+      timezone: timeRangeObj.getTimeZone(),
       timeRange: resolvedRange,
       maxDataPoints: queryOptions?.maxDataPoints ?? 500,
       minInterval: queryOptions?.interval,
+      cacheTimeout: queryOptions?.cacheTimeout,
+      queryCachingTTL: queryOptions?.queryCachingTTL,
     });
-  }, [dsSettings, query, resolvedRange, queryOptions]);
+  }, [dsSettings, resolvedRange, queryOptions]);
 
   // Runs once the notebook (and this cell within it) has loaded, instead of leaving the reader to
   // click Run themselves for a query that was already saved — same reasoning as auto-loading any
@@ -163,6 +181,9 @@ export function QueryCell({ content, isEditing, cell, onChange }: Props) {
     if (!isEditing) {
       return;
     }
+    // Ahead of the mirroring assignment above, which only catches up once `content` has round-tripped
+    // back down as a new render — see `latestQuery`'s own comment.
+    latestQuery.current = updated;
     onChange({ kind: 'Query', spec: { ...content.spec, query: panelQueryKindFromDataQuery(updated, panelQuery) } });
   };
 
@@ -214,7 +235,11 @@ export function QueryCell({ content, isEditing, cell, onChange }: Props) {
 
       {data?.state === LoadingState.Error && (
         <Alert severity="error" title={t('notebook.cell.query.error', 'Query failed')}>
-          {data.errors?.[0]?.message}
+          {/* .error is deprecated in favor of .errors, but nothing mirrors one into the other — a
+              datasource-resolution failure (PanelQueryRunner's own catch, before a query is even
+              sent) only ever sets .error, so both need checking. Same fallback InspectErrorsAndNoticesTab
+              already uses for the same reason. */}
+          {(data.errors?.[0] ?? data.error)?.message}
         </Alert>
       )}
 
@@ -236,7 +261,7 @@ export function QueryCell({ content, isEditing, cell, onChange }: Props) {
                     height={innerHeight}
                     width={innerWidth}
                     timeRange={resolvedRange}
-                    timeZone="browser"
+                    timeZone={timeRangeObj.getTimeZone()}
                     onChangeTime={onChangeTime}
                     splitOpenFn={noopSplitOpen}
                     loadingState={data.state}

@@ -57,6 +57,16 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
       <span data-testid="can-change-datasource">{String(Boolean(onChangeDataSource))}</span>
       {renderHeaderExtras?.()}
       <button onClick={() => onChange({ ...query, expr: 'up' } as DataQuery)}>edit query</button>
+      {/* The built-in TestData editor (and others) call onChange then onRunQuery back-to-back,
+          synchronously, in the same handler — before React has re-rendered with the new query. */}
+      <button
+        onClick={() => {
+          onChange({ ...query, expr: 'up' } as DataQuery);
+          onRunQuery();
+        }}
+      >
+        edit and run
+      </button>
       {onChangeDataSource && (
         <button
           onClick={() => onChangeDataSource({ uid: 'other-uid', type: 'other-type' } as DataSourceInstanceSettings)}
@@ -102,13 +112,15 @@ jest.mock('app/features/explore/Graph/ExploreGraph', () => ({
   ExploreGraph: ({
     data,
     graphStyle,
+    timeZone,
     onChangeTime,
   }: {
     data: DataFrame[];
     graphStyle: string;
+    timeZone: string;
     onChangeTime: (absoluteRange: AbsoluteTimeRange) => void;
   }) => (
-    <div data-testid="graph" data-graph-style={graphStyle}>
+    <div data-testid="graph" data-graph-style={graphStyle} data-timezone={timeZone}>
       {data.length} series
       <button onClick={() => onChangeTime({ from: 1704110400000, to: 1704132000000 })}>drag to zoom</button>
     </div>
@@ -143,11 +155,13 @@ jest.mock('@grafana/runtime/unstable', () => ({
 // PanelQueryRunner drives a real HTTP request chain — this cell only needs to prove it calls `run`
 // with the right arguments and forwards whatever `getData` emits, so both are faked.
 const mockRun = jest.fn().mockResolvedValue(undefined);
+const mockDestroy = jest.fn();
 let emitData: ((data: PanelData) => void) | undefined;
 
 jest.mock('app/features/query/state/PanelQueryRunner', () => ({
   PanelQueryRunner: jest.fn().mockImplementation(() => ({
     run: mockRun,
+    destroy: mockDestroy,
     getData: () => ({
       subscribe: (callback: (data: PanelData) => void) => {
         emitData = callback;
@@ -210,10 +224,11 @@ function absoluteRange(from: string, to: string): TimeRange {
  * SceneTimeRange's own `evaluateTimeRange` — tests assert against this same object, sidestepping any
  * risk of a "now"-relative recomputation drifting between construction and assertion.
  */
-function buildCell(range?: TimeRange) {
-  const timeRange = new SceneTimeRange(
-    range ? { from: range.raw.from as string, to: range.raw.to as string } : { from: 'now-6h', to: 'now' }
-  );
+function buildCell(range?: TimeRange, timeZone?: string) {
+  const timeRange = new SceneTimeRange({
+    ...(range ? { from: range.raw.from as string, to: range.raw.to as string } : { from: 'now-6h', to: 'now' }),
+    ...(timeZone ? { timeZone } : {}),
+  });
   if (range) {
     timeRange.setState({ value: range });
   }
@@ -231,6 +246,7 @@ function buildCell(range?: TimeRange) {
 beforeEach(() => {
   resolvedSettings = { uid: 'default-uid', type: 'testdata', name: 'gdev-testdata' };
   mockRun.mockClear();
+  mockDestroy.mockClear();
   emitData = undefined;
 });
 
@@ -316,6 +332,25 @@ describe('QueryCell', () => {
         },
       },
     });
+  });
+
+  // The editor's onChange updates `content` (and so `query`) only once the round trip back through
+  // the parent completes on a later render — but some editors (the built-in TestData one included)
+  // call onRunQuery synchronously right after onChange, before that round trip finishes. Without
+  // tracking the latest query in a ref, this would run the query the cell is one edit behind on.
+  it('runs the newly edited query, not the stale one, when onChange and onRunQuery fire back-to-back', async () => {
+    const { cell } = buildCell();
+    const { user } = render(
+      <QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />
+    );
+    await screen.findByTestId('resolved-datasource');
+
+    await user.click(await screen.findByRole('button', { name: 'edit and run' }));
+
+    await waitFor(() => expect(mockRun).toHaveBeenCalled());
+    expect(mockRun).toHaveBeenCalledWith(
+      expect.objectContaining({ queries: [expect.objectContaining({ expr: 'up' })] })
+    );
   });
 
   it('switches datasource from the row header without losing the query spec', async () => {
@@ -487,6 +522,51 @@ describe('QueryCell', () => {
         queries: [{ refId: 'A', hide: false, datasource: { uid: 'default-uid', type: 'testdata' }, expr: 'up' }],
       })
     );
+  });
+
+  // PanelQueryRunner keeps its own subscription to the live datasource query (a streaming source, or
+  // just an in-flight backend request) separate from the getData() stream this cell listens to —
+  // unsubscribing from getData() alone leaves that upstream subscription running indefinitely.
+  it('destroys the runner on unmount, not just its own getData subscription', async () => {
+    const { cell } = buildCell();
+    const { unmount } = render(
+      <QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />
+    );
+    await screen.findByTestId('resolved-datasource');
+
+    unmount();
+
+    expect(mockDestroy).toHaveBeenCalled();
+  });
+
+  it('forwards persisted cacheTimeout and queryCachingTTL to the runner', async () => {
+    const saved = savedQueryContent();
+    const content: CellContentKind =
+      saved.kind === 'Query'
+        ? { kind: 'Query', spec: { ...saved.spec, queryOptions: { cacheTimeout: '60s', queryCachingTTL: 5000 } } }
+        : saved;
+    const { cell } = buildCell();
+    render(<QueryCell content={content} cell={cell} isEditing={true} onChange={jest.fn()} />);
+
+    await waitFor(() => expect(mockRun).toHaveBeenCalled());
+    expect(mockRun).toHaveBeenCalledWith(expect.objectContaining({ cacheTimeout: '60s', queryCachingTTL: 5000 }));
+  });
+
+  // A notebook set to a non-browser timezone (e.g. utc) should query — and render its graph — in that
+  // zone, not silently fall back to the browser's, the same way SceneQueryRunner reads
+  // sceneGraph.getTimeRange(model).getTimeZone() rather than hardcoding a value.
+  it("uses the notebook's configured timezone instead of hardcoding browser", async () => {
+    const { cell } = buildCell(undefined, 'utc');
+    render(<QueryCell content={savedQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
+
+    await waitFor(() => expect(mockRun).toHaveBeenCalled());
+    expect(mockRun).toHaveBeenCalledWith(expect.objectContaining({ timezone: 'utc' }));
+
+    act(() => {
+      emitData?.({ state: LoadingState.Done, series: [{ fields: [], length: 0 }], timeRange: range });
+    });
+
+    expect(await screen.findByTestId('graph')).toHaveAttribute('data-timezone', 'utc');
   });
 
   it('does not auto-run a freshly-inserted cell with nothing to query yet', async () => {
@@ -743,5 +823,25 @@ describe('QueryCell', () => {
 
     expect(await screen.findByText('boom')).toBeInTheDocument();
     expect(screen.queryByTestId('graph')).not.toBeInTheDocument();
+  });
+
+  // .error is deprecated in favor of .errors, but nothing mirrors one into the other — a
+  // datasource-resolution failure (PanelQueryRunner's own catch, before a query is even sent) only
+  // ever sets .error, so the alert must fall back to it or the body renders empty.
+  it('shows the error message from the singular .error field when .errors is not set', async () => {
+    const { cell } = buildCell();
+    render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
+    await screen.findByTestId('resolved-datasource');
+
+    act(() => {
+      emitData?.({
+        state: LoadingState.Error,
+        series: [],
+        timeRange: range,
+        error: { message: 'datasource not found' },
+      });
+    });
+
+    expect(await screen.findByText('datasource not found')).toBeInTheDocument();
   });
 });
