@@ -45,8 +45,8 @@ func init() {
 		Name:      "conversion_duration_seconds",
 		Help:      "Duration of dashboard conversions in seconds",
 		// Exponential buckets spanning ~0.5ms to ~65s so both fast conversions and
-		// the multi-second tail (large dashboards) get percentile resolution.
-		Buckets: prometheus.ExponentialBucketsRange(0.0005, 65, 18),
+		// the multi-second tail (large dashboards) get resolution.
+		Buckets: prometheus.ExponentialBucketsRange(0.0005, 65, 8),
 	}, []string{"source_version_api", "target_version_api", "outcome"})
 
 	MDashboardConversionObjectSizeBytes = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -54,9 +54,9 @@ func init() {
 		Subsystem: metricsSubSystem,
 		Name:      "conversion_object_size_bytes",
 		Help:      "JSON-encoded size in bytes of the dashboard being converted",
-		// Exponential buckets spanning ~1KB to ~64MB. Current dashboards go up to ~20MB;
+		// Exponential buckets spanning 1KB to 32MB. Current dashboards go up to ~20MB;
 		// the range leaves headroom for larger objects in the future.
-		Buckets: prometheus.ExponentialBucketsRange(1024, 64*1024*1024, 18),
+		Buckets: prometheus.ExponentialBucketsRange(1024, 32*1024*1024, 8),
 	}, []string{"source_version_api", "target_version_api"})
 }
 
