@@ -297,8 +297,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		Query:  searchQuery,
 		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldExternalAuthModules, resource.SEARCH_FIELD_CREATED, legacyIDField},
 		// The query is a wildcard (*...*), so only Name is used from each
-		// QueryField to specify which fields to search in (Type and Boost
-		// are ignored for wildcard queries).
+		// QueryField to specify which fields to search in (Boost is ignored
+		// for wildcard queries).
 		QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 			{Name: resource.SEARCH_FIELD_TITLE},
 			{Name: fieldEmail},

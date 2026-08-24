@@ -6984,6 +6984,9 @@
       "name-json-values": "JSON",
       "selection-options": "选择内容选项"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "回到列表",
       "label-icon": "图标",
@@ -7761,9 +7764,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "此变量被其他变量或数据面板引用。",
       "content-variable-not-referenced-other-variables-dashboard": "此变量未被其他变量或数据面板引用。",
       "content-variable-referenced-other-variables-dashboard": "此变量被其他变量或数据面板引用。"
-    },
-    "variable-controls": {
-      "add-variable": "添加变量"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -9085,6 +9085,7 @@
     "json": {
       "cancel-button": "取消",
       "copy-button": "复制到剪贴板",
+      "dashboard-definition": "",
       "download-button": "下载文件",
       "download-successful_toast_message": "您的 JSON 已下载",
       "export-format": "格式",
@@ -13596,7 +13597,8 @@
       "open-pull-request-in-repo": "在以下位置打开拉取请求：{{repoType}}",
       "update-from-branch": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到当前版本",
       "view-in-repo-button": "在中查看 {{repoType}}，以查看最新更改。",
-      "view-pull-request-in-repo": "在以下位置查看拉取请求：{{repoType}}"
+      "view-pull-request-in-repo": "在以下位置查看拉取请求：{{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "已在 {{repoType}} 的分支中创建新资源。",
     "title-deleted-resource-in-branch": "已在{{repoType}}的分支中删除资源。",
