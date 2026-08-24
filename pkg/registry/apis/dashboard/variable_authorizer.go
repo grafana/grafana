@@ -20,11 +20,10 @@ import (
 // (standalone NewAPIService does not wire classic RBAC).
 //
 // Create/update/delete/list/watch use a coarse (any-scope) check. Admission
-// narrows mutations to the target folder (and allowMissingFolder orphan
-// cleanup). List/watch per-item filtering is the unified-storage checker
-// (variables is on rbacAllowlist; the RBAC mapper has folder support).
-// Named get evaluates against variables:uid:<name>, which the scope resolver
-// expands to folder scopes.
+// narrows mutations to the target folder. List/watch per-item filtering is
+// the unified-storage checker (variables is on rbacAllowlist; the RBAC mapper
+// has folder support). Named get evaluates against variables:uid:<name>,
+// which the scope resolver expands to folder scopes.
 func newVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -63,10 +62,8 @@ func newVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 
 			var eval ac.Evaluator
 			verb := attr.GetVerb()
-			// Named get stays scoped. Mutations must stay coarse: a scoped check
-			// resolves variables:uid:<name> via the parent folder, and when that
-			// folder is gone the resolver fails before admission's
-			// allowMissingFolder orphan-cleanup path can run.
+			// Named get stays scoped. Mutations stay coarse; admission applies
+			// the folder-scoped variables:* check.
 			if verb == "get" && attr.GetName() != "" {
 				eval = ac.EvalPermission(action, ScopeVariablesProvider.GetResourceScopeUID(attr.GetName()))
 			} else {

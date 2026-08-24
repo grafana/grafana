@@ -141,10 +141,9 @@ func TestVariableAuthorizer_NilAccessControl(t *testing.T) {
 	require.Equal(t, "access control is not configured", reason)
 }
 
-func TestVariableAuthorizer_OrphanedFolderScopedUpdate(t *testing.T) {
-	// Regression: scoped update/delete used to resolve variables:uid via
-	// GetInheritedScopes; when the parent folder was gone the resolver erred and
-	// the authorizer denied before admission allowMissingFolder could run.
+func TestVariableAuthorizer_CoarseUpdateDoesNotResolveParentFolder(t *testing.T) {
+	// Mutations are any-scope; a missing parent must not fail the authorizer.
+	// Admission applies the folder-scoped variables:* check.
 	setGlobalVariablesToggle(t, true)
 	acSvc := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	folderSvc := foldertest.NewFakeService()

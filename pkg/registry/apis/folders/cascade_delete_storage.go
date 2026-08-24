@@ -16,6 +16,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -52,6 +53,9 @@ type cascadeDeleteStorage struct {
 	// dashboardClient resolves the dashboard apiserver client; nil when none is configured, in which
 	// case dashboard cleanup is skipped.
 	dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error)
+	// variableClient resolves the variable apiserver client; nil when none is configured, in which
+	// case variable cleanup is skipped.
+	variableClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error)
 	// contentsDeleter removes alert rules and library elements in each folder; nil when not wired
 	// (e.g. MT), in which case that cleanup is skipped.
 	contentsDeleter FolderContentsDeleter
@@ -63,8 +67,8 @@ type cascadeDeleteStorage struct {
 // newCascadeDeleteStorage wraps store, re-exposing the watch/deletecollection interfaces the wrapper
 // would otherwise hide. The wrapped store implements both (MT generic store) or neither
 // (folderStorage), so one check keeps the advertised verbs unchanged.
-func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), contentsDeleter FolderContentsDeleter, accessClient authlib.AccessClient) grafanarest.Storage {
-	base := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: dashboardClient, contentsDeleter: contentsDeleter, accessClient: accessClient}
+func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), variableClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), contentsDeleter FolderContentsDeleter, accessClient authlib.AccessClient) grafanarest.Storage {
+	base := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: dashboardClient, variableClient: variableClient, contentsDeleter: contentsDeleter, accessClient: accessClient}
 	watcher, hasWatch := store.(rest.Watcher)
 	collectionDeleter, hasCollectionDelete := store.(rest.CollectionDeleter)
 	if hasWatch && hasCollectionDelete {
@@ -206,6 +210,11 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 		return nil, false, err
 	}
 
+	// Remove the variables contained directly in this folder before deleting the folder itself.
+	if err := s.deleteVariablesInFolder(ctx, namespace, name, options); err != nil {
+		return nil, false, err
+	}
+
 	// Then the alert rules and library elements in this folder. Runs in the request path so a
 	// failure aborts the cascade, same as the dashboard sweep above. Skipped on dry-run: the
 	// RegistryService cleanups mutate the DB directly and have no dry-run mode.
@@ -293,6 +302,84 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 		}
 		if resp.Error != nil {
 			return nil, fmt.Errorf("search dashboards in folder %q: %s", folderUID, resp.Error.Message)
+		}
+		if resp.Results == nil || len(resp.Results.Rows) == 0 {
+			return names, nil
+		}
+
+		for _, row := range resp.Results.Rows {
+			if row.Key != nil {
+				names = append(names, row.Key.Name)
+			}
+		}
+
+		// The bleve Search path drives pagination off TotalHits + offset rather than a page token.
+		// Advance by the rows actually returned so a short page doesn't skip the remainder.
+		offset += int64(len(resp.Results.Rows))
+		if offset >= resp.TotalHits {
+			return names, nil
+		}
+	}
+}
+
+func (s *cascadeDeleteStorage) deleteVariablesInFolder(ctx context.Context, namespace, folderUID string, options *metav1.DeleteOptions) error {
+	svc, err := s.variableClient(ctx)
+	if err != nil {
+		return fmt.Errorf("get variable client: %w", err)
+	}
+	if svc == nil {
+		// No variable apiserver client configured (e.g. legacy mode); nothing to clean up here.
+		return nil
+	}
+	client := (*svc).Namespace(namespace)
+
+	// options are already the sanitized cascade options (dry-run + grace period only).
+	varOpts := cascadeDeleteOptions(options)
+
+	// Enumerate fully before deleting: offset paging is only valid against a stable collection, and
+	// deleting mid-pagination would shift later pages and skip variables.
+	names, err := s.variablesInFolder(ctx, namespace, folderUID)
+	if err != nil {
+		return err
+	}
+
+	for _, name := range names {
+		if err := client.Delete(ctx, name, *varOpts); err != nil && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("delete variable %q: %w", name, err)
+		}
+	}
+	return nil
+}
+
+func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace, folderUID string) ([]string, error) {
+	gvr := dashboardV2beta1.VariableResourceInfo.GroupVersionResource()
+
+	var (
+		names  []string
+		offset int64
+	)
+	for {
+		resp, err := s.searcher.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: namespace,
+					Group:     gvr.Group,
+					Resource:  gvr.Resource,
+				},
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_FOLDER,
+					Operator: string(selection.Equals),
+					Values:   []string{folderUID},
+				}},
+			},
+			Limit:  childFolderPageSize,
+			Offset: offset,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("search variables in folder %q: %w", folderUID, err)
+		}
+		if resp.Error != nil {
+			return nil, fmt.Errorf("search variables in folder %q: %s", folderUID, resp.Error.Message)
 		}
 		if resp.Results == nil || len(resp.Results.Rows) == 0 {
 			return names, nil
