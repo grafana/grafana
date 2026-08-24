@@ -77,7 +77,7 @@ Replace `http://localhost:3100` with the URL of your Loki instance.
 
 You can attach extra labels to every notification history record with the `[unified_alerting.notification_history.external_labels]` section.
 
-In Grafana Cloud, notification history is managed for you. Contact support to enable it for your stack.
+In Grafana Cloud, notification history is managed for you.
 
 ## View from the History page
 

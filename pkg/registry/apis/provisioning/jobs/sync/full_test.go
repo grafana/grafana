@@ -295,7 +295,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, mock.MatchedBy(func(path string) bool {
 					return path == "dashboards/one.json" || path == "dashboards/two.json" || path == "dashboards/three.json"
-				}), "current-ref").Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil).Maybe()
+				}), "current-ref").Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil).Maybe()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionCreated &&
@@ -318,7 +318,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "current-ref").
-					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"test-dashboard", "dashboards", "Dashboard").WithAction(repository.FileActionCreated).WithPath("dashboards/test.json").Build())).Return()
@@ -338,7 +338,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "current-ref").
-					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
+					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, fmt.Errorf("write error"))
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionCreated &&
@@ -365,7 +365,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "current-ref").
-					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
 					"test-dashboard",
@@ -390,7 +390,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/test.json", "current-ref").
-					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, fmt.Errorf("write error"))
+					Return("test-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, fmt.Errorf("write error"))
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionUpdated &&
@@ -858,7 +858,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 							return
 						}
 					}).
-					Return("", schema.GroupVersionKind{}, context.DeadlineExceeded)
+					Return("", schema.GroupVersionKind{}, 0, context.DeadlineExceeded)
 
 				// applyChange records the error from WriteResourceFromFile
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
@@ -1194,7 +1194,7 @@ func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
 	// First file: allowed, write succeeds
 	progress.On("HasDirPathFailedCreation", "dashboards/a.json").Return(false)
 	repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/a.json", "ref").
-		Return("dash-a", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+		Return("dash-a", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "dashboards/a.json" && r.Action() == repository.FileActionCreated && r.Error() == nil
 	})).Return().Once()
@@ -1239,7 +1239,7 @@ func TestFullSync_QuotaTrackerAllowsUpdatesRegardlessOfQuota(t *testing.T) {
 	progress.On("HasDirPathFailedCreation", "dashboards/existing.json").Return(false)
 
 	repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/existing.json", "ref").
-		Return("dash-existing", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+		Return("dash-existing", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "dashboards/existing.json" && r.Action() == repository.FileActionUpdated && r.Error() == nil
 	})).Return()
@@ -1291,7 +1291,7 @@ func TestFullSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
 	})).Return()
 
 	repoResources.On("WriteResourceFromFile", mock.Anything, "myfolder/dashboard.json", "ref").
-		Return("dash1", schema.GroupVersionKind{Kind: "Dashboard"}, nil)
+		Return("dash1", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil)
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "myfolder/dashboard.json"
 	})).Return()
@@ -1323,7 +1323,7 @@ func TestFullSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 
 	repoResources.On("WriteResourceFromFile", mock.Anything, "myfolder/dashboard.json", "ref").
-		Return("dash1", schema.GroupVersionKind{Kind: "Dashboard"}, nil)
+		Return("dash1", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil)
 	// Only expect Record for the dashboard write, NOT for folder metadata warning
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "myfolder/dashboard.json"
@@ -1458,7 +1458,7 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	// File phase: dashboard creation
 	repoResources.On("WriteResourceFromFile", mock.Anything, "myfolder/dashboard.json", "test-ref").Run(func(args mock.Arguments) {
 		recordCall("WriteResourceFromFile")
-	}).Return("dash-1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+	}).Return("dash-1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "myfolder/dashboard.json"
@@ -1534,7 +1534,7 @@ func TestApplyChanges_DefersOrphanFolderDeletion(t *testing.T) {
 		Resource: "dashboards",
 	}).Run(func(args mock.Arguments) {
 		recordCall("ReplaceResourceFromFile")
-	}).Return("dash-uid", schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}, nil)
+	}).Return("dash-uid", schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}, 0, nil)
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "myfolder/dashboard.json" &&
@@ -1691,7 +1691,7 @@ func TestApplyChanges_DefersBothRenamedAndOrphanFolderDeletion(t *testing.T) {
 		Resource: "dashboards",
 	}).Run(func(args mock.Arguments) {
 		recordCall("ReplaceResourceFromFile")
-	}).Return("dash-uid", schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}, nil)
+	}).Return("dash-uid", schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}, 0, nil)
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "myfolder/dashboard.json"
@@ -1752,7 +1752,7 @@ func TestApplyChanges_ExistingHashPassedToWrite(t *testing.T) {
 			mock.Anything, "myfolder/dashboard.json", "test-ref", "dash-uid",
 			schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			mock.MatchedBy(func(opt resources.WriteResourceOption) bool { return opt != nil }),
-		).Return("dash-uid", schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}, nil)
+		).Return("dash-uid", schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}, 0, nil)
 
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 
@@ -1791,7 +1791,7 @@ func TestApplyChanges_ExistingHashPassedToWrite(t *testing.T) {
 		repoResources.On("ReplaceResourceFromFile",
 			mock.Anything, "myfolder/dashboard.json", "test-ref", "dash-uid",
 			schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards"},
-		).Return("dash-uid", schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}, nil)
+		).Return("dash-uid", schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}, 0, nil)
 
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 
