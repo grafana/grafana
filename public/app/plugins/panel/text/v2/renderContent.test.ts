@@ -1,10 +1,23 @@
 import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
-import { type DataFrame, FieldType, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  createTheme,
+  type DataFrame,
+  FieldType,
+  type InterpolateFunction,
+  standardFieldConfigEditorRegistry,
+  ThresholdsMode,
+  toDataFrame,
+} from '@grafana/data';
+import { getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
 import { hasRenderableData, interpolateTemplate, MAX_RENDERED_ROWS, renderContent } from './renderContent';
+
+// applyFieldOverrides copies panel defaults through this registry, which app.ts seeds.
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 const hosts = toDataFrame({
   name: 'frameA',
@@ -34,6 +47,35 @@ function interpolate(
   mode = TextMode.Markdown
 ) {
   return interpolateTemplate({ content, series, renderMode, mode }, createReplaceVariables());
+}
+
+const theme = createTheme();
+const green = theme.visualization.getColorByName('green');
+const red = theme.visualization.getColorByName('red');
+
+/**
+ * Without this the frame has no `field.display`, the macro falls back to a processor
+ * that returns no color, and every `.color` assertion silently passes on ''.
+ */
+function withThresholds(series: DataFrame[]): DataFrame[] {
+  return applyFieldOverrides({
+    data: series,
+    fieldConfig: {
+      defaults: {
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 80, color: 'red' },
+          ],
+        },
+      },
+      overrides: [],
+    },
+    replaceVariables: (value) => value,
+    theme,
+    timeZone: 'utc',
+  });
 }
 
 describe('hasRenderableData', () => {
@@ -98,6 +140,14 @@ describe('interpolateTemplate', () => {
       );
     });
 
+    it('colors each row from its own value', () => {
+      const colored = '<span style="color:${__data.fields.cpu.color}">${__data.fields.cpu}</span>';
+
+      expect(interpolate(colored, withThresholds([hosts]), RenderMode.PerRow)).toBe(
+        `<span style="color:${red}">84</span>\n\n<span style="color:${green}">12</span>`
+      );
+    });
+
     it('caps the number of rendered rows', () => {
       const big = toDataFrame({
         fields: [
@@ -136,6 +186,25 @@ describe('renderContent', () => {
 
   it('leaves code mode content untransformed', () => {
     expect(render('${__data.fields.host},', RenderMode.PerRow, TextMode.Code)).toBe('web-1,\nweb-2,');
+  });
+
+  it('keeps threshold colors through markdown rendering and sanitization', () => {
+    const html = renderContent(
+      {
+        content: '<span style="color:${__data.fields.cpu.color}">${__data.fields.cpu}</span>',
+        series: withThresholds([hosts]),
+        renderMode: RenderMode.PerRow,
+        mode: TextMode.Markdown,
+        // What the panel passes for markdown, and it escapes what it interpolates.
+        format: 'html',
+      },
+      createReplaceVariables(),
+      false
+    );
+
+    // The sanitizer rewrites the style attribute, adding a trailing semicolon.
+    expect(html).toContain(`<span style="color:${red};">84</span>`);
+    expect(html).toContain(`<span style="color:${green};">12</span>`);
   });
 
   it('sanitizes per-row HTML output', () => {

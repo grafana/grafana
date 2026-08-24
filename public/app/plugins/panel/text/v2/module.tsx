@@ -1,4 +1,4 @@
-import { PanelPlugin, type PanelOptionsSupplier } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin, type PanelOptionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
@@ -54,4 +54,7 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
 export const plugin = new PanelPlugin<Options>(TextNGPanel)
   .setPanelOptions(textNGPanelOptions)
   .setMigrationHandler(textPanelMigrationHandler)
-  .setSuggestionsSupplier(() => []);
+  .setSuggestionsSupplier(() => [])
+  .useFieldConfig({
+    disableStandardOptions: Object.values(FieldConfigProperty).filter((id) => id !== FieldConfigProperty.Thresholds),
+  });
