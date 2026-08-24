@@ -84,6 +84,8 @@ The default notification policy and its child policies are assigned to a [specif
 
 ## Edit the default notification policy
 
+The default notification policy handles alerts that don't match a child policy. You can change its contact point, grouping, and timing options. You can't assign mute timings or active time intervals on the default policy. Add those on a [child policy](#add-a-child-policy) instead.
+
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification configuration**, then select the **Notification policies** tab.
 1. From the **Choose Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
@@ -114,6 +116,7 @@ If you want to choose where to position your policy, see the section on **Add a 
 1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. If enabled, multiple policies can handle the same alert.
 1. Optionally, enable **Override grouping** to set different [grouping](ref:policy-grouping) than the parent policy. If disabled, the grouping of the parent policy is [inherited](ref:policy-inheritance).
 1. Optionally, enable **Override general timings** to set different [timing options](ref:policy-timing-options) than the parent policy. If disabled, the timing options of the parent policy are [inherited](ref:policy-inheritance).
+1. Optionally, in **Mute timings** and **Active timings**, select time intervals that apply to this policy. These fields aren't available on the default policy.
 1. Click **Save policy** to save your changes.
 
 ## Add a sibling policy
@@ -144,7 +147,9 @@ It is important to note that all matched policies are **exact** matches. Grafana
 
 ## Mute timings
 
-Mute timings are not inherited from a parent notification policy, and they have to be configured on each level. For instructions, refer to [Configure mute timings](ref:configure-mute-timings).
+Mute timings and active time intervals suppress notifications during recurring periods of time.
+
+You can assign them only on child notification policies, not on the default notification policy. Mute timings aren't inherited from a parent notification policy. For instructions, refer to [Configure mute timings](ref:configure-mute-timings).
 
 ## Manage multiple notification policies
 
