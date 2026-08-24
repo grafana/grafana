@@ -5,6 +5,7 @@ import {
   offset,
   type Placement,
   safePolygon,
+  shift,
   useFloating,
   useHover,
   useInteractions,
@@ -16,25 +17,9 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
-type EditActionsPopoverProps = {
-  content: React.ReactNode;
-  children: React.JSX.Element;
-  placement?: Placement;
-  portalRoot?: HTMLElement;
-  zIndex?: number;
-};
+import { useEditActionsLayout } from './EditActionsLayoutContext';
 
-/** Devices that can hover with a fine pointer (mouse/trackpad). */
-export const HOVER_POPOVER_MEDIA_QUERY = '(hover: hover) and (pointer: fine)';
-
-/**
- * Returns whether the device supports fine-pointer hover (mouse/trackpad).
- * On touch, a panel tap opens both the hover popover and the edit sidebar at once.
- * Used for panels only: the popover would cover the sidebar that PanelChrome auto-opens; variable/annotation/link controls are fine without this guard.
- */
-export function useHoverPopoverSupported(defaultValue = true) {
-  return useMedia(HOVER_POPOVER_MEDIA_QUERY, defaultValue);
-}
+export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
 
 export function EditActionsPopover({ isEditable, ...props }: EditActionsPopoverProps & { isEditable: boolean }) {
   if (!isEditable) {
@@ -43,14 +28,30 @@ export function EditActionsPopover({ isEditable, ...props }: EditActionsPopoverP
   return <HoverPopover {...props} />;
 }
 
-export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
-
-const EditActionsPopoverContext = createContext<{ closePopover: () => void }>({ closePopover: () => {} });
-
 /**
  * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it.
  */
+const EditActionsPopoverContext = createContext<{ closePopover: () => void }>({ closePopover: () => {} });
 export const useEditActionsPopover = () => useContext(EditActionsPopoverContext);
+
+/**
+ * Checks whether the device supports fine-pointer hover (mouse/trackpad).
+ * On touch, a panel tap opens both the hover popover and the edit sidebar at once.
+ * Used for panels only: the popover would cover the sidebar that PanelChrome auto-opens; variable/annotation/link controls are fine without this guard.
+ */
+export const HOVER_POPOVER_MEDIA_QUERY = '(hover: hover) and (pointer: fine)';
+export function useHoverPopoverSupported(defaultValue = true) {
+  return useMedia(HOVER_POPOVER_MEDIA_QUERY, defaultValue);
+}
+
+type EditActionsPopoverProps = {
+  content: React.ReactNode;
+  children: React.JSX.Element;
+  placement?: Placement;
+  portalRoot?: HTMLElement;
+  zIndex?: number;
+  shiftPadding?: 'sidebar';
+};
 
 export function HoverPopover({
   content,
@@ -58,10 +59,12 @@ export function HoverPopover({
   placement = 'top-start',
   portalRoot,
   zIndex,
+  shiftPadding,
 }: EditActionsPopoverProps) {
   const theme = useTheme2();
   const styles = useStyles2(getPopoverStyles);
   const [isOpen, setIsOpen] = useState(false);
+  const { getPortalRoot, getSidebarShiftPadding: getLayoutSidebarShiftPadding } = useEditActionsLayout();
 
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
@@ -73,6 +76,11 @@ export function HoverPopover({
         mainAxis: false,
         fallbackPlacements: ['top-start', 'top-end'],
       }),
+      // Derivable options run when floating-ui computes (popover open), not on every panel render.
+      shift(() => ({
+        crossAxis: false,
+        padding: shiftPadding === 'sidebar' ? getLayoutSidebarShiftPadding() : 0,
+      })),
     ],
     whileElementsMounted: autoUpdate,
   });
@@ -92,7 +100,7 @@ export function HoverPopover({
     <>
       {cloneElement(children, getReferenceProps({ ref: mergedRef }))}
       {isOpen && content && (
-        <Portal root={portalRoot} zIndex={zIndex ?? theme.zIndex.portal}>
+        <Portal root={portalRoot ?? getPortalRoot()} zIndex={zIndex ?? theme.zIndex.portal}>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.popover} {...getFloatingProps()}>
             <EditActionsPopoverContext.Provider value={popoverContextValue}>
               {/* Stops pointerdown from all actions reaching ancestors, e.g. to prevent an element selection.

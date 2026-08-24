@@ -127,10 +127,8 @@ function PanelEditActionsPopover({ panel, children }: { panel: VizPanel; childre
     [onClickEdit, onClickEditVisualization, onClickCopy, onClickDuplicate, onClickDelete, panel]
   );
 
-  const portalRoot = useMemo(() => document.getElementById('dashboard-scene-canvas') ?? undefined, []);
-
   return (
-    <HoverPopover content={editActions} placement="top-end" portalRoot={portalRoot} zIndex={theme.zIndex.dropdown}>
+    <HoverPopover content={editActions} placement="top-end" zIndex={theme.zIndex.dropdown} shiftPadding="sidebar">
       {children}
     </HoverPopover>
   );

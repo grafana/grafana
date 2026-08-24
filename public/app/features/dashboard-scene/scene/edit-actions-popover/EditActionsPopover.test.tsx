@@ -2,6 +2,7 @@ import { act, createEvent, fireEvent, render, screen, userEvent } from 'test/tes
 
 import { LazyLoader } from '@grafana/scenes';
 
+import { EditActionsLayoutProvider } from './EditActionsLayoutContext';
 import { EditActionsPopover, WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
 
 jest.mock('app/core/app_events', () => ({
@@ -134,6 +135,22 @@ describe('<EditActionsPopover />', () => {
       fireEvent(actionButton, pointerDownEvent);
 
       expect(stopPropagation).toHaveBeenCalled();
+    });
+
+    test('when a layout provider supplies a portal root and the pointer rests, floating content is in that root', async () => {
+      const portalRoot = document.createElement('div');
+      const { container } = render(
+        <EditActionsLayoutProvider canvasRef={{ current: portalRoot }} isDocked={false} isHidden={false}>
+          <EditActionsPopover isEditable={true} content={<span>popover-actions</span>}>
+            <div data-testid="reference-child">variable control</div>
+          </EditActionsPopover>
+        </EditActionsLayoutProvider>
+      );
+      container.appendChild(portalRoot);
+
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(portalRoot).toContainElement(screen.getByText('popover-actions'));
     });
   });
 });

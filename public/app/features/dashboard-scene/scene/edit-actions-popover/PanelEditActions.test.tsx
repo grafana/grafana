@@ -14,7 +14,7 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { SHOW_COPIED_DURATION_MS } from './EditActions';
-import { HOVER_POPOVER_MEDIA_QUERY, WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
+import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
 import { PanelEditActions, PanelEditActionsWrapper } from './PanelEditActions';
 
 jest.mock('app/core/app_events', () => ({
@@ -34,11 +34,11 @@ jest.mock('@grafana/runtime', () => ({
 }));
 const mockLocationServicePartial = jest.mocked(locationService.partial);
 
-jest.mock('react-use', () => ({
-  ...jest.requireActual('react-use'),
-  useMedia: (query: string, defaultValue?: boolean) => mockUseMedia(query, defaultValue),
+jest.mock('./EditActionsPopover', () => ({
+  ...jest.requireActual('./EditActionsPopover'),
+  useHoverPopoverSupported: (defaultValue?: boolean) => mockUseHoverPopoverSupported(defaultValue),
 }));
-const mockUseMedia = jest.fn((_query: string, defaultValue?: boolean) => defaultValue ?? true);
+const mockUseHoverPopoverSupported = jest.fn((_defaultValue?: boolean) => true);
 
 async function hoverAndRest(element: HTMLElement) {
   jest.useFakeTimers();
@@ -275,6 +275,10 @@ describe('<PanelEditActionsWrapper />', () => {
 
   test('if the user clicks Edit visualization, then panelActionClicked is called', async () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+    new DashboardScene({
+      isEditing: true,
+      body: DefaultGridLayoutManager.fromVizPanels([panel]),
+    });
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
     renderPanelEditActionsWrapper(panel);
@@ -316,6 +320,10 @@ describe('<PanelEditActionsWrapper />', () => {
   test('if the user clicks Duplicate, the panel is duplicated via its layout manager', async () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
     const layoutManager = DefaultGridLayoutManager.fromVizPanels([panel]);
+    new DashboardScene({
+      isEditing: true,
+      body: layoutManager,
+    });
     const duplicatePanel = jest.spyOn(layoutManager, 'duplicatePanel').mockImplementation();
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
@@ -331,6 +339,10 @@ describe('<PanelEditActionsWrapper />', () => {
   test('if the user clicks & confirms Delete,  the panel is removed via its layout manager', async () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
     const layoutManager = DefaultGridLayoutManager.fromVizPanels([panel]);
+    new DashboardScene({
+      isEditing: true,
+      body: layoutManager,
+    });
     const removePanel = jest.spyOn(layoutManager, 'removePanel').mockImplementation();
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
 
@@ -348,21 +360,34 @@ describe('<PanelEditActionsWrapper />', () => {
     expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover');
   });
 
+  test('when the sidebar is undocked and the pointer rests, floating content is shown', async () => {
+    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+    const scene = new DashboardScene({
+      isEditing: true,
+      body: DefaultGridLayoutManager.fromVizPanels([panel]),
+    });
+    scene.state.sidebar.setState({ isDocked: false });
+
+    renderPanelEditActionsWrapper(panel);
+
+    await hoverAndRest(screen.getByTestId('reference-child'));
+
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+  });
+
   describe('when hover popover is not supported', () => {
     beforeEach(() => {
-      mockUseMedia.mockReturnValue(false);
+      mockUseHoverPopoverSupported.mockReturnValue(false);
     });
 
     afterEach(() => {
-      mockUseMedia.mockImplementation((_query, defaultValue) => defaultValue ?? true);
+      mockUseHoverPopoverSupported.mockReturnValue(true);
     });
 
     test('if the pointer rests, then floating content is not shown', async () => {
       const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
 
       renderPanelEditActionsWrapper(panel);
-
-      expect(mockUseMedia).toHaveBeenCalledWith(HOVER_POPOVER_MEDIA_QUERY, true);
 
       await hoverAndRest(screen.getByTestId('reference-child'));
 
