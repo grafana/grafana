@@ -68,7 +68,7 @@ By default, the Loki data source formats variable values based on the variable's
 - A single-value variable is inserted as-is, without escaping.
 - A **Multi-value** or **Include All** variable has each value escaped for use in a regular expression and joined with `|`, for example `payments|checkout`.
 
-This default suits the regex match operator `=~`, but it can produce unexpected results when a custom or static value contains characters that Grafana escapes, or when you insert a value into a context that isn't a regular expression. To control the formatting, use a [format option](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options) in the variable syntax:
+This default suits the regular expression match operator `=~`, but it can produce unexpected results when a custom or static value contains characters that Grafana escapes, or when you insert a value into a context that isn't a regular expression. To control the formatting, use a [format option](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options) in the variable syntax:
 
 | Syntax         | Result                                                                                                     |
 | -------------- | ---------------------------------------------------------------------------------------------------------- |
