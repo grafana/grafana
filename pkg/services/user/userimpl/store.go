@@ -804,7 +804,11 @@ func buildSearchUserFilters(dbHelper *legacysql.LegacyDatabaseHelper, filters []
 		}
 
 		if where := filter.WhereCondition(); where != nil {
-			queryFilter, err := newSearchUserWhereFilter(where.Condition, where.Params)
+			params := where.Params
+			if timestamp, ok := params.(time.Time); ok {
+				params = legacysql.NewDBTime(timestamp.In(dbHelper.DB.GetEngine().DatabaseTZ))
+			}
+			queryFilter, err := newSearchUserWhereFilter(where.Condition, params)
 			if err != nil {
 				return nil, nil, nil, err
 			}

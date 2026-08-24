@@ -7,10 +7,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 func TestTemplates(t *testing.T) {
@@ -345,8 +347,20 @@ func (f testSearchUserFilter) JoinCondition() *user.JoinCondition {
 	return f.join
 }
 
+type searchUserFilterTestDB struct {
+	dbtest.FakeDB
+	engine *xorm.Engine
+}
+
+func (d *searchUserFilterTestDB) GetEngine() *xorm.Engine {
+	return d.engine
+}
+
 func TestBuildSearchUserFilters(t *testing.T) {
+	dbTimeZone := time.FixedZone("database", 2*60*60)
+	whereTime := time.Date(2026, 1, 2, 3, 4, 5, 0, time.FixedZone("input", -5*60*60))
 	dbHelper := &legacysql.LegacyDatabaseHelper{
+		DB: &searchUserFilterTestDB{engine: &xorm.Engine{DatabaseTZ: dbTimeZone}},
 		Table: func(name string) string {
 			return "test_schema." + name
 		},
@@ -365,7 +379,7 @@ func TestBuildSearchUserFilters(t *testing.T) {
 			},
 			where: &user.WhereCondition{
 				Condition: "is_admin = ?",
-				Params:    true,
+				Params:    whereTime,
 			},
 		},
 	})
@@ -386,7 +400,7 @@ func TestBuildSearchUserFilters(t *testing.T) {
 	require.Equal(t, []searchUserWhereFilter{
 		{
 			Condition: "is_admin = ?",
-			Params:    true,
+			Params:    legacysql.NewDBTime(whereTime.In(dbTimeZone)),
 			HasParams: true,
 		},
 	}, whereFilters)
