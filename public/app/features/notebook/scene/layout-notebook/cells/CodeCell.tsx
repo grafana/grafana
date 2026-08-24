@@ -1,6 +1,5 @@
-import { ViewPlugin } from '@codemirror/view';
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -15,6 +14,7 @@ import {
   normalizeLanguage,
   toCodeMirrorLanguage,
 } from './codeLanguages';
+import { useFocusExtension } from './focusExtension';
 
 // Reading a notebook should look like reading a document, so everything that makes CodeMirror feel
 // like an IDE is off. The gutter goes in both modes: the design has no line numbers.
@@ -41,30 +41,6 @@ const EDIT_SETUP = {
   history: false,
 };
 
-/**
- * An extension that puts the caret in the editor.
- *
- * CodeMirrorEditor exposes no ref, no autoFocus and no onCreateEditor, so a view plugin is the only
- * hook into an editor that arrives with a lazily loaded chunk — it runs whenever CodeMirror builds
- * the view, however many frames later that is.
- *
- * The focus is deferred a frame for two reasons, both races it would otherwise lose: a plugin is
- * constructed before the view's DOM is appended to its parent, and focusing a detached node does
- * nothing; and the controls that ask for this — the add-block menu, the language picker — hand focus
- * back to themselves as they close, which floating-ui does in a microtask.
- *
- * A fresh plugin per request, because CodeMirror rebuilds its plugins exactly when the extensions
- * array stops being shallow-equal. That makes a new one the way to ask for the caret again.
- */
-function buildFocusExtension() {
-  return [
-    ViewPlugin.define((view) => {
-      requestAnimationFrame(() => view.focus());
-      return {};
-    }),
-  ];
-}
-
 interface Props {
   content: CellContentKind;
   isEditing: boolean;
@@ -77,13 +53,20 @@ export function CodeCell({ content, isEditing, autoFocus, onChange }: Props) {
   const styles = useStyles2(getStyles);
 
   // Counts requests for the caret rather than holding a boolean, so a second request after the reader
-  // has clicked away is still a change. Zero means nobody has asked, which is the usual case — and the
-  // mode is read once, at mount, rather than tracked: a read-only editor must not pull focus, but
-  // making that a live condition would re-fire every request each time the reader re-enters edit mode.
-  const [focusRequests, setFocusRequests] = useState(autoFocus && isEditing ? 1 : 0);
+  // has clicked away is still a change — fed into useFocusExtension as its nonce (0 reads as "no
+  // request yet", matching that hook's own `undefined` convention).
+  const [focusRequests, setFocusRequests] = useState(0);
   const requestFocus = useCallback(() => setFocusRequests((count) => count + 1), []);
 
-  const focusExtension = useMemo(() => (focusRequests > 0 ? buildFocusExtension() : undefined), [focusRequests]);
+  // The language picker's own re-request (see requestFocus below) only restores focus — the code
+  // itself is untouched by picking a language, so the caret should stay exactly where the reader
+  // left it rather than jump to the end the way a freshly-seeded cell's content would want.
+  const focusExtension = useFocusExtension({
+    autoFocus,
+    isEditing,
+    focusRequestId: focusRequests || undefined,
+    caretOnFocus: 'preserve',
+  });
 
   if (content.kind !== 'Code') {
     return null;
