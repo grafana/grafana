@@ -2222,6 +2222,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/plugin-configs": "npm:13.3.0-pre"
     "@grafana/plugin-ui": "npm:^0.17.3"
+    "@grafana/prometheus": "npm:13.1.12"
     "@grafana/runtime": "npm:13.3.0-pre"
     "@grafana/scenes": "npm:8.13.6"
     "@grafana/schema": "npm:13.3.0-pre"
