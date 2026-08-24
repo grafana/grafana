@@ -31,18 +31,6 @@ export function NotebookBlockTypeMenu({ onPick }: Props) {
       />
       <Menu.Item icon="brackets-curly" label={t('notebook.add-block.code', 'Code')} onClick={() => onPick?.('code')} />
       <Menu.Item icon="database" label={t('notebook.add-block.query', 'Query')} onClick={() => onPick?.('query')} />
-      <Menu.Item
-        icon="graph-bar"
-        label={t('notebook.add-block.visualization', 'Visualization')}
-        childItems={[
-          <Menu.Item
-            key="placeholder"
-            label={t('notebook.add-block.visualization-placeholder', 'Coming soon')}
-            disabled
-          />,
-        ]}
-        onClick={() => onPick?.('visualization')}
-      />
     </Menu>
   );
 }
