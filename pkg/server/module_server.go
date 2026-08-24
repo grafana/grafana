@@ -320,10 +320,14 @@ func (s *ModuleServer) Run() error {
 	// systemd: READY=1 tells systemd that startup succeeded, so a module
 	// failing during startup must abort the start instead of being
 	// acknowledged first.
+	//
+	// Both waits use a background context because Shutdown cancels
+	// s.context: an aborted wait would make Run return and close
+	// shutdownFinished while modules are still stopping.
 	if err := m.StartAsync(s.context); err != nil {
 		return err
 	}
-	if err := m.AwaitRunning(s.context); err != nil {
+	if err := m.AwaitRunning(context.Background()); err != nil {
 		return err
 	}
 	s.notifySystemd("READY=1")
