@@ -3134,6 +3134,70 @@ func TestServerListKeysOnly(t *testing.T) {
 		}
 	})
 
+	// The cluster-wide endpoint is the real caller, so the cross-namespace scan
+	// needs its own coverage: each item must report the namespace it lives in,
+	// and paging must carry the namespace through the continue token.
+	t.Run("lists across namespaces", func(t *testing.T) {
+		srv, ctx := newKeysOnlyTestServer(t)
+		seedIn := func(itemNS, name string) {
+			t.Helper()
+			raw, err := json.Marshal(map[string]any{
+				"apiVersion": group + "/v0alpha1",
+				"kind":       "Playlist",
+				"metadata":   map[string]any{"name": name, "namespace": itemNS},
+				"spec":       map[string]any{"title": name},
+			})
+			require.NoError(t, err)
+			created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+				Key:   &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: itemNS, Name: name},
+				Value: raw,
+			})
+			require.NoError(t, err)
+			require.Nil(t, created.Error)
+		}
+		seedIn("ns-one", "aaa")
+		seedIn("ns-two", "bbb")
+		seedIn("ns-two", "ccc")
+
+		clusterKey := &resourcepb.ResourceKey{Group: group, Resource: resource}
+
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: clusterKey},
+			KeysOnly: true,
+		})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+
+		got := map[string]string{}
+		for _, item := range rsp.Items {
+			got[item.Name] = item.Namespace
+			require.Empty(t, item.Value)
+		}
+		require.Equal(t, map[string]string{"aaa": "ns-one", "bbb": "ns-two", "ccc": "ns-two"}, got)
+
+		// Paged, the continue token has to carry the namespace or the second page
+		// restarts in the wrong one.
+		paged := map[string]string{}
+		token := ""
+		for range 3 {
+			page, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options:       &resourcepb.ListOptions{Key: clusterKey},
+				KeysOnly:      true,
+				Limit:         1,
+				NextPageToken: token,
+			})
+			require.NoError(t, err)
+			require.Nil(t, page.Error)
+			require.Len(t, page.Items, 1)
+			paged[page.Items[0].Name] = page.Items[0].Namespace
+			token = page.NextPageToken
+			if token == "" {
+				break
+			}
+		}
+		require.Equal(t, got, paged, "paging must reach every namespace")
+	})
+
 	t.Run("honors limit and pins the snapshot RV across pages", func(t *testing.T) {
 		srv, ctx := newKeysOnlyTestServer(t)
 		seed(t, srv, ctx, map[string]string{

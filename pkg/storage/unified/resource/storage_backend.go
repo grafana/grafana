@@ -1567,17 +1567,8 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
 
-	var it ListIterator
-	if req.KeysOnly {
-		// The data key carries namespace/name/rv/folder, so no value read is needed.
-		keysIter := newKvKeysIterator(keys, listRV, req.Options.Key.Namespace == "")
-		defer keysIter.stop()
-		it = keysIter
-	} else {
-		listIter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
-		defer listIter.stop()
-		it = listIter
-	}
+	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "", req.KeysOnly)
+	defer it.stop()
 
 	if err := cb(it); err != nil {
 		return 0, err
@@ -1587,13 +1578,31 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 }
 
 // newKvListIterator builds a kvListIterator that reads keys in bounded batches.
-func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace bool) *kvListIterator {
-	next, stopFn := iter.Pull2(batchGetResourceKeys(ctx, ds, keys))
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace, keysOnly bool) *kvListIterator {
+	objs := batchGetResourceKeys(ctx, ds, keys)
+	if keysOnly {
+		// The data key already carries namespace/name/rv/folder, so the value
+		// read is skipped entirely rather than fetched and discarded.
+		objs = keysAsDataObjs(keys)
+	}
+	next, stopFn := iter.Pull2(objs)
 	return &kvListIterator{
 		listRV:           listRV,
 		isCrossNamespace: isCrossNamespace,
+		keysOnly:         keysOnly,
 		next:             next,
 		stopFn:           stopFn,
+	}
+}
+
+// keysAsDataObjs adapts keys to the iterator's item type without reading values.
+func keysAsDataObjs(keys iter.Seq2[DataKey, error]) iter.Seq2[DataObj, error] {
+	return func(yield func(DataObj, error) bool) {
+		for key, err := range keys {
+			if !yield(DataObj{Key: key}, err) || err != nil {
+				return
+			}
+		}
 	}
 }
 
@@ -1632,6 +1641,7 @@ func batchGetResourceKeys(ctx context.Context, ds *dataStore, keys iter.Seq2[Dat
 type kvListIterator struct {
 	listRV           int64
 	isCrossNamespace bool
+	keysOnly         bool
 
 	next   func() (DataObj, error, bool)
 	stopFn func()
@@ -1668,9 +1678,11 @@ func (i *kvListIterator) Next() bool {
 		return false
 	}
 
-	i.value, i.err = readAndClose(i.currentDataObj.Value)
-	if i.err != nil {
-		return false
+	if !i.keysOnly {
+		i.value, i.err = readAndClose(i.currentDataObj.Value)
+		if i.err != nil {
+			return false
+		}
 	}
 
 	i.nextDataObj, i.nextErr, i.hasMore = i.next()
@@ -1711,96 +1723,6 @@ func (i *kvListIterator) Folder() string {
 
 func (i *kvListIterator) Value() []byte {
 	return i.value
-}
-
-func newKvKeysIterator(keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace bool) *kvKeysIterator {
-	next, stopFn := iter.Pull2(keys)
-	return &kvKeysIterator{
-		listRV:           listRV,
-		isCrossNamespace: isCrossNamespace,
-		next:             next,
-		stopFn:           stopFn,
-	}
-}
-
-// kvKeysIterator yields identity and resource version only; Value is always nil.
-type kvKeysIterator struct {
-	listRV           int64
-	isCrossNamespace bool
-
-	next   func() (DataKey, error, bool)
-	stopFn func()
-
-	// The next key is read one ahead so ContinueToken can name where the next
-	// page starts.
-	started    bool
-	currentKey DataKey
-	err        error
-	nextKey    DataKey
-	nextErr    error
-	hasMore    bool
-}
-
-// stop closes the underlying pull. Callers should defer this.
-func (i *kvKeysIterator) stop() {
-	if i.stopFn != nil {
-		i.stopFn()
-	}
-}
-
-func (i *kvKeysIterator) Next() bool {
-	if !i.started {
-		i.started = true
-		i.nextKey, i.nextErr, i.hasMore = i.next()
-	}
-
-	if !i.hasMore {
-		return false
-	}
-
-	i.currentKey, i.err = i.nextKey, i.nextErr
-	if i.err != nil {
-		return false
-	}
-
-	i.nextKey, i.nextErr, i.hasMore = i.next()
-	return true
-}
-
-func (i *kvKeysIterator) Error() error {
-	return i.err
-}
-
-func (i *kvKeysIterator) ContinueToken() string {
-	token := ContinueToken{
-		Name:            i.nextKey.Name,
-		ResourceVersion: i.listRV,
-	}
-	// Only store namespace in token for cross-namespace queries
-	if i.isCrossNamespace {
-		token.Namespace = i.nextKey.Namespace
-	}
-	return token.String()
-}
-
-func (i *kvKeysIterator) ResourceVersion() int64 {
-	return i.currentKey.ResourceVersion
-}
-
-func (i *kvKeysIterator) Namespace() string {
-	return i.currentKey.Namespace
-}
-
-func (i *kvKeysIterator) Name() string {
-	return i.currentKey.Name
-}
-
-func (i *kvKeysIterator) Folder() string {
-	return i.currentKey.Folder
-}
-
-func (i *kvKeysIterator) Value() []byte {
-	return nil
 }
 
 func validateListHistoryRequest(req *resourcepb.ListRequest) error {
