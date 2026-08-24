@@ -8,25 +8,19 @@ This is `v0alpha1`. Shapes can change.
 
 ## Prerequisite: your kind's data must be in unified storage
 
-**Check this first.** Search reads an index built from unified storage. It cannot read legacy data.
+**Check this first.** Search reads an index built from unified storage. It cannot read legacy data. `/trash` reads the same index, so all of this applies to it too.
 
 If your kind's resources still live in legacy storage, everything below will appear to work. The endpoint mounts, your fields validate, requests return `200`, and **every search comes back empty**. Nothing in the response explains why, and declaring more fields does not help.
 
-Use `/search` if your kind is either:
+A resource is in one of three storage states (`StorageMode` in `pkg/storage/unified/migrations/contract/migrations.go`). **Use `/search` only in the third.** Nothing enforces that, so here is what goes wrong in the other two:
 
-- running in dual-writer **`Mode4` or `Mode5`**, where unified storage is the store, or
-- **new**, and built on unified storage from the start, with no legacy data behind it.
+- **Legacy**: reads and writes are legacy only. Unified storage holds nothing, so every search returns an empty result.
+- **Dual-write**: writes go to both stores and reads are served from legacy. The unified write is best effort and does not block, so some resources never make it into the index. Searches then return **wrong results rather than no results**: some resources are missing and nothing says so. This is the worst state to search in, because it looks like it is working.
+- **Unified**: reads and writes both go to unified storage. This is the state search is built for.
 
-**Do not use `/search` in `Mode0`, `Mode1`, `Mode2` or `Mode3`.** Finish migrating first.
+Configured modes map onto those states: `Mode0` or no entry is legacy, `Mode1`, `Mode2` and `Mode3` are all dual-write, and `Mode4` and `Mode5` are unified. A completed migration also means unified, whatever the config says. So the older per-mode distinctions no longer decide anything: `Mode3` used to read from unified storage, and today it does not.
 
-Nothing enforces that, so here is what goes wrong in each mode:
-
-- **`Mode0`**: reads and writes are legacy only. Unified storage holds nothing, so every search returns an empty result.
-- **`Mode1`**: writes go to unified storage too, but only on a best-effort basis, so some resources never make it in. The index ends up partly filled, and searches return **wrong results rather than no results**. Some resources are missing and nothing says so. This is the worst of the four, because it looks like it is working.
-- **`Mode2`**: everything is written to both stores, but reads are served from legacy. Search reads the index, so it answers from a different store than the one your `list` calls read from, and the results may not be consistent with each other.
-- **`Mode3`**: everything is written to both stores and reads come from unified storage, so search and `list` agree. The reason to wait is that the migration is unfinished: legacy is still being written, and a kind in `Mode3` can still be moved back.
-
-Modes are `DualWriterMode` in `pkg/apiserver/rest/dualwriter.go`, configured per resource under `[unified_storage]`. Note that `Mode3` already reads from unified storage, not legacy. Legacy is the read source in `Mode0`, `Mode1` and `Mode2` only. `Mode4` writes and reads unified only, and `Mode5` is `Mode4` without waiting on the background sync.
+A new kind built on unified storage from the start is in the unified state already, with no legacy data behind it.
 
 IAM shows how this catches people out: its own search falls back to legacy SQL when data has not migrated, so it keeps working. `/search` has no such fallback and returns an empty result instead.
 
