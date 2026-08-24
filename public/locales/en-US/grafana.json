@@ -11271,6 +11271,13 @@
       "show": "Show",
       "switch": "Recommendations follow the selected solution",
       "switchSolution": "Switch solution",
+      "synthetic-monitoring": {
+        "action": "Enable Synthetic Monitoring",
+        "context": "Black-box checks for the services your cluster runs",
+        "description": "Probe your endpoints from global locations with HTTP, DNS, and ping checks, and alert on downtime.",
+        "setup-action": "Create your first check",
+        "title": "Monitor uptime from the outside"
+      },
       "title": "Recommendations for your stack"
     },
     "solutions": {
@@ -11327,6 +11334,20 @@
         "stats-hosts_one": "active · {{count}} host",
         "stats-hosts_other": "active · {{count}} hosts",
         "title": "Metrics & infrastructure"
+      },
+      "synthetics": {
+        "checks_one": "{{value}} check",
+        "checks_other": "{{value}} checks",
+        "create-check": "Create a check",
+        "description": "Monitor uptime and performance of your endpoints from probes around the world.",
+        "failing_one": "{{count}} check failing",
+        "failing_other": "{{count}} checks failing",
+        "failing-worst": "{{check}} at {{percent}}%",
+        "setup-hint": "create a check",
+        "stats": "{{percent}}% success · 24h",
+        "success-trend": "Success rate · last 24h",
+        "title": "Synthetic Monitoring",
+        "view-checks": "View failing checks"
       },
       "traces": {
         "description": "See how requests flow across services and where they slow down.",
