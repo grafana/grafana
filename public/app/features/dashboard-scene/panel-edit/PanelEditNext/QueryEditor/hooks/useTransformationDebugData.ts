@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import { mergeMap } from 'rxjs';
+import { useMemo } from 'react';
 
-import { type DataFrame, type DataTransformContext, getFrameMatchers, transformDataFrame } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { type DataFrame, getFrameMatchers } from '@grafana/data';
 
 import { type Transformation } from '../types';
+
+import { NO_CONFIGS, precedingTransformations, useTransformedFrames } from './useTransformedFrames';
 
 interface UseTransformationDebugDataOptions {
   selectedTransformation: Transformation | null;
@@ -18,11 +18,12 @@ interface TransformationDebugData {
   output: DataFrame[];
 }
 
+/** Stable identity, so a closed drawer does not re-render everything reading this. */
+const NO_DEBUG_DATA: TransformationDebugData = { input: [], output: [] };
+
 /**
- * Calculates input and output data for transformation debugging.
- *
- * Input: Output of all transformations before the current one (with filter applied)
- * Output: Output after applying the current transformation
+ * Replays the pipeline around the selected transformation for the debug view: input is everything
+ * before it (filtered), output is after it runs.
  *
  * @returns Empty arrays if not active or transformation not found
  */
@@ -32,48 +33,44 @@ export function useTransformationDebugData({
   data,
   isActive,
 }: UseTransformationDebugDataOptions): TransformationDebugData {
-  const [input, setInput] = useState<DataFrame[]>([]);
-  const [output, setOutput] = useState<DataFrame[]>([]);
+  const isDebuggable =
+    isActive &&
+    selectedTransformation !== null &&
+    data.length > 0 &&
+    transformations.some(({ transformId }) => transformId === selectedTransformation.transformId);
 
-  useEffect(() => {
-    if (!isActive || !selectedTransformation || !data.length) {
-      setInput([]);
-      setOutput([]);
-      return;
+  const inputConfigs = useMemo(
+    () =>
+      selectedTransformation && isDebuggable
+        ? precedingTransformations(selectedTransformation, transformations)
+        : NO_CONFIGS,
+    [isDebuggable, selectedTransformation, transformations]
+  );
+
+  // Appended to the preceding stage rather than piped into a second `transformDataFrame`:
+  // `transformDataFrame` concatenates its configs into one operator chain, so both forms run the
+  // same pipeline, and this one does not rebuild the preceding stage to get there.
+  const outputConfigs = useMemo(
+    () =>
+      selectedTransformation && isDebuggable ? [...inputConfigs, selectedTransformation.transformConfig] : NO_CONFIGS,
+    [isDebuggable, selectedTransformation, inputConfigs]
+  );
+
+  const inputFrames = useTransformedFrames(inputConfigs, data);
+  const outputFrames = useTransformedFrames(outputConfigs, data);
+
+  return useMemo(() => {
+    if (!isDebuggable) {
+      return NO_DEBUG_DATA;
     }
 
-    const currentIndex = transformations.findIndex((t) => t.transformId === selectedTransformation.transformId);
-    if (currentIndex === -1) {
-      setInput([]);
-      setOutput([]);
-      return;
-    }
+    // The debugged transformation only sees the frames its own filter admits.
+    const filter = selectedTransformation?.transformConfig.filter;
+    const matcher = filter?.options ? getFrameMatchers(filter) : undefined;
 
-    const config = selectedTransformation.transformConfig;
-    const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
-
-    const inputTransforms = transformations.slice(0, currentIndex).map((t) => t.transformConfig);
-    const outputTransforms = [config];
-
-    const ctx: DataTransformContext = {
-      interpolate: (v: string) => getTemplateSrv().replace(v),
+    return {
+      input: matcher ? inputFrames.filter((frame) => matcher(frame)) : inputFrames,
+      output: outputFrames,
     };
-
-    // Calculate input: apply all transformations before this one, then apply filter matcher
-    const inputSubscription = transformDataFrame(inputTransforms, data, ctx).subscribe((frames) => {
-      setInput(matcher ? frames.filter((frame) => matcher(frame)) : frames);
-    });
-
-    // Calculate output: apply all transformations up to and including this one
-    const outputSubscription = transformDataFrame(inputTransforms, data, ctx)
-      .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
-      .subscribe(setOutput);
-
-    return () => {
-      inputSubscription.unsubscribe();
-      outputSubscription.unsubscribe();
-    };
-  }, [isActive, selectedTransformation, transformations, data]);
-
-  return { input, output };
+  }, [isDebuggable, selectedTransformation, inputFrames, outputFrames]);
 }

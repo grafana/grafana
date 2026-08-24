@@ -5,6 +5,7 @@ import { type DataFrame, transformDataFrame } from '@grafana/data';
 
 import { type Transformation } from '../types';
 
+import { makeFrames, makeTransformation } from './testUtils';
 import { useTransformationInputData } from './useTransformationInputData';
 
 jest.mock('@grafana/data', () => ({
@@ -19,25 +20,9 @@ jest.mock('@grafana/runtime', () => ({
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
 
-function makeTransformation(id: string): Transformation {
-  return {
-    transformId: id,
-    transformConfig: { id, options: {} },
-    registryItem: undefined,
-  };
-}
-
-function makeFrames(count: number): DataFrame[] {
-  return Array.from({ length: count }, (_, i) => ({
-    name: `frame-${i}`,
-    fields: [],
-    length: 0,
-  }));
-}
-
 describe('useTransformationInputData', () => {
-  const rawData = makeFrames(2);
-  const mockPipelineOutput = makeFrames(1);
+  const rawData = makeFrames(['A-series', 'B-series']);
+  const mockPipelineOutput = makeFrames(['joined']);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -159,7 +144,7 @@ describe('useTransformationInputData', () => {
     // Simulates a query refreshing — new frames arrive and the preceding transformations
     // must re-run against the fresh data to keep the editor input up to date.
     const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
-    const newRawData = makeFrames(3); // fresh query results
+    const newRawData = makeFrames(['A-series', 'B-series', 'C-series']); // fresh query results
 
     const { rerender } = renderHook(
       ({ data }: { data: DataFrame[] }) =>
@@ -186,6 +171,34 @@ describe('useTransformationInputData', () => {
       newRawData,
       expect.any(Object)
     );
+  });
+
+  it('never hands the editor the previous query’s output paired with the current query', () => {
+    // The replay resolves a render later than the query it belongs to, so there is always a render
+    // where the new frames are in and their transformed form is not. Holding the previous output
+    // across it is what an editor reads to build its field pickers, and those fields belong to a
+    // frame shape the panel no longer has.
+    const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
+    const newRawData = makeFrames(['C-series']);
+
+    const { result, rerender } = renderHook(
+      ({ data }: { data: DataFrame[] }) =>
+        useTransformationInputData({
+          selectedTransformation: transformations[1],
+          allTransformations: transformations,
+          rawData: data,
+        }),
+      { initialProps: { data: rawData } }
+    );
+
+    expect(result.current).toBe(mockPipelineOutput);
+
+    // The new query has landed but its replay has not emitted yet.
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+    act(() => rerender({ data: newRawData }));
+
+    // Untransformed, but from the query the editor is being asked about.
+    expect(result.current).toBe(newRawData);
   });
 
   it('cleans up the subscription when the component unmounts', () => {
