@@ -126,7 +126,6 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   // No `useMemo`: the provider's memo already makes this identity stable.
   const { prepend: systemPrepend, append: systemAppend } = model.getResolvedSystemTransformations();
-  const hasSystemTransformations = systemPrepend.length > 0 || systemAppend.length > 0;
 
   const editorData = useSystemTransformedData(sourceData.data, systemPrepend);
 
@@ -191,9 +190,17 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
     />
   );
 
-  if (transformations.length < 1 && !hasSystemTransformations) {
-    return (
-      <>
+  const hasUserTransformations = transformations.length > 0;
+
+  return (
+    <>
+      <SystemTransformationRows transformations={systemPrepend} position="prepend" />
+      {hasUserTransformations ? (
+        <TransformationsEditor data={editorData} transformations={transformations} model={model} />
+      ) : (
+        // What the panel's plugin runs is not the user's, so a panel with plugin transformations and
+        // none of the user's own still needs the way in to adding some. Rendered in pipeline position
+        // rather than in place of the whole tab, which is where the user's would go.
         <EmptyTransformationsMessage
           onShowPicker={openDrawer}
           onGoToQueries={onGoToQueries}
@@ -202,64 +209,60 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           datasourceUid={sourceData.datasource?.uid}
           queries={sourceData.queries}
         />
-        {transformationsDrawer}
-      </>
-    );
-  }
-
-  return (
-    <>
-      <SystemTransformationRows transformations={systemPrepend} position="prepend" />
-      {transformations.length > 0 && (
-        <TransformationsEditor data={editorData} transformations={transformations} model={model} />
       )}
       <SystemTransformationRows transformations={systemAppend} position="append" />
-      <ButtonGroup>
-        <Button
-          icon="plus"
-          variant="secondary"
-          onClick={openDrawer}
-          data-testid={selectors.components.Transforms.addTransformationButton}
-        >
-          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
-            Add another transformation
-          </Trans>
-        </Button>
-        {transformations.length > 0 && (
-          <Button
-            data-testid={selectors.components.Transforms.removeAllTransformationsButton}
-            className={styles.removeAll}
-            icon="times"
-            variant="secondary"
-            onClick={() => setConfirmModalOpen(true)}
-          >
-            <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
-              Delete all transformations
-            </Trans>
-          </Button>
-        )}
-      </ButtonGroup>
-      <ConfirmModal
-        isOpen={confirmModalOpen}
-        title={t(
-          'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
-          'Delete all transformations?'
-        )}
-        body={t(
-          'dashboard-scene.panel-data-transformations-tab-rendered.body-delete-all-transformations',
-          'By deleting all transformations, you will go back to the main selection screen.'
-        )}
-        confirmText={t('dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all', 'Delete all')}
-        onConfirm={() => {
-          reportInteraction('grafana_panel_transformations_clicked', {
-            context: 'transformations_list',
-            action: 'delete_all',
-          });
-          model.onChangeTransformations([]);
-          setConfirmModalOpen(false);
-        }}
-        onDismiss={() => setConfirmModalOpen(false)}
-      />
+      {/* The empty message carries its own ways to add one, so these would only repeat it. */}
+      {hasUserTransformations && (
+        <>
+          <ButtonGroup>
+            <Button
+              icon="plus"
+              variant="secondary"
+              onClick={openDrawer}
+              data-testid={selectors.components.Transforms.addTransformationButton}
+            >
+              <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
+                Add another transformation
+              </Trans>
+            </Button>
+            <Button
+              data-testid={selectors.components.Transforms.removeAllTransformationsButton}
+              className={styles.removeAll}
+              icon="times"
+              variant="secondary"
+              onClick={() => setConfirmModalOpen(true)}
+            >
+              <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
+                Delete all transformations
+              </Trans>
+            </Button>
+          </ButtonGroup>
+          <ConfirmModal
+            isOpen={confirmModalOpen}
+            title={t(
+              'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
+              'Delete all transformations?'
+            )}
+            body={t(
+              'dashboard-scene.panel-data-transformations-tab-rendered.body-delete-all-transformations',
+              'By deleting all transformations, you will go back to the main selection screen.'
+            )}
+            confirmText={t(
+              'dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all',
+              'Delete all'
+            )}
+            onConfirm={() => {
+              reportInteraction('grafana_panel_transformations_clicked', {
+                context: 'transformations_list',
+                action: 'delete_all',
+              });
+              model.onChangeTransformations([]);
+              setConfirmModalOpen(false);
+            }}
+            onDismiss={() => setConfirmModalOpen(false)}
+          />
+        </>
+      )}
       {transformationsDrawer}
     </>
   );

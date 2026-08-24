@@ -188,16 +188,27 @@ describe('PanelDataTransformationsTab', () => {
       expect(screen.getByText('1 - Add field from calculation')).toBeInTheDocument();
     });
 
-    it('renders the rows instead of the empty message when there are no user transformations', async () => {
+    it('still offers the empty message when the plugin has transformations and the user has none', async () => {
       const modelMock = createModelMock(mockData, [], jest.fn(), { prepend: [{ id: 'limit', options: {} }] });
       render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
       expect(await screen.findAllByTestId(selectors.components.Transforms.systemTransformationRow)).toHaveLength(1);
-      expect(screen.queryByTestId(selectors.components.Transforms.noTransformationsMessage)).not.toBeInTheDocument();
+      // The suggested transformations, the SQL expression card and "Go to queries" live in here, and
+      // the user has configured nothing — a panel type whose plugin registers transformations would
+      // otherwise never show them.
+      expect(screen.getByTestId(selectors.components.Transforms.noTransformationsMessage)).toBeInTheDocument();
       // Nothing of the user's to delete, so the destructive action is not offered.
       expect(
         screen.queryByTestId(selectors.components.Transforms.removeAllTransformationsButton)
       ).not.toBeInTheDocument();
+    });
+
+    it('offers the empty message for an append-only plugin, which changes nothing the rows see', async () => {
+      const modelMock = createModelMock(mockData, [], jest.fn(), { append: [{ id: 'limit', options: {} }] });
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      expect(await screen.findAllByTestId(selectors.components.Transforms.systemTransformationRow)).toHaveLength(1);
+      expect(screen.getByTestId(selectors.components.Transforms.noTransformationsMessage)).toBeInTheDocument();
     });
 
     it('labels an operator-form transformation as code defined', async () => {
