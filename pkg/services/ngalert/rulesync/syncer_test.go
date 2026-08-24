@@ -2,6 +2,7 @@ package rulesync
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -610,4 +611,54 @@ func TestSyncOrg_IniPathNeverPromotes(t *testing.T) {
 
 	assert.Equal(t, 1, fetch.calls, "ini path syncs normally, never promotes")
 	assert.NotEqual(t, utils.ManagerProperties{}, rs.replacedManager, "rules are still sync-managed, not promoted")
+}
+
+func TestSyncOrg_PersistedHashSkipsReapplyAcrossRestarts(t *testing.T) {
+	enableRulerSyncAPIFlag(t)
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+
+	s.SyncOrg(context.Background(), 1)
+	require.Len(t, rs.replaced, 1, "first tick applies")
+
+	// Simulate a restart: a fresh syncer with an empty in-memory cache, reading
+	// the same (now-persisted) Config status.
+	rs2 := &fakeRuleService{}
+	fetch2 := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s2 := newTestSyncerWithConfigClient(t, cs, fetch2, rs2)
+	require.Empty(t, s2.lastSyncHash, "fresh syncer has no in-memory cache")
+
+	s2.SyncOrg(context.Background(), 1)
+
+	assert.Equal(t, 1, fetch2.calls, "still fetches to compare the hash")
+	assert.Nil(t, rs2.replaced, "unchanged upstream is not re-applied, thanks to the persisted hash")
+}
+
+func TestSyncOrg_PersistedHashSurvivesAFailedTick(t *testing.T) {
+	enableRulerSyncAPIFlag(t)
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 7}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.SyncOrg(context.Background(), 1)
+	require.Len(t, rs.replaced, 1)
+
+	st := cs.statusFor(1)
+	require.NotNil(t, st.ExternalRulerSync)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "7", *st.ExternalRulerSync.LastAppliedHash)
+
+	// A later failed tick (e.g. a transient fetch error) must not clobber the
+	// persisted hash, so a subsequent recovery still dedups correctly.
+	fetch.err = errors.New("transient fetch failure")
+	s.SyncOrg(context.Background(), 1)
+	fetch.err = nil
+
+	st = cs.statusFor(1)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "7", *st.ExternalRulerSync.LastAppliedHash, "failure must not clear the persisted dedup hash")
 }

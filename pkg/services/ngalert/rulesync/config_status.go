@@ -36,19 +36,22 @@ const (
 const promotedMessage = "The externally-synced rules have been promoted to user-editable native rules; automatic sync from the datasource has stopped."
 
 // computeSyncStatus maps a sync outcome (nil = success) to the
-// ExternalRulerSynced condition and folds it into prev.
-func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time) alertingrulesv0alpha1.ConfigStatus {
+// ExternalRulerSynced condition and folds it into prev. appliedHash is stored
+// only on success (empty keeps whatever hash prev already carried), so a
+// later restart or replica can skip an unchanged re-apply — see
+// resolvedRulerSync.persistedHash.
+func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time, appliedHash string) alertingrulesv0alpha1.ConfigStatus {
 	if syncErr == nil {
-		return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now)
+		return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now, appliedHash)
 	}
-	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now)
+	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now, "")
 }
 
 // computePromotedStatus is the terminal status once promote-to-native has
 // committed: stays True (so the synced-at timestamp is kept), reason flips to
 // PromotionCommitted.
 func computePromotedStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, now time.Time) alertingrulesv0alpha1.ConfigStatus {
-	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonPromoted, promotedMessage, now)
+	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonPromoted, promotedMessage, now, "")
 }
 
 // computeNotConfiguredStatus returns prev with only the ExternalRulerSynced
@@ -87,15 +90,24 @@ func computeNotConfiguredStatus(prev *alertingrulesv0alpha1.ConfigStatus, now ti
 
 // buildSyncStatus folds an ExternalRulerSynced condition into prev. k8s
 // condition FSM: lastTransitionTime advances only on status flip. Preserves
-// other condition types so future controllers aren't clobbered.
-func buildSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingrulesv0alpha1.ConfigConditionStatus, reason, message string, now time.Time) alertingrulesv0alpha1.ConfigStatus {
+// other condition types so future controllers aren't clobbered. appliedHash,
+// when non-empty, overwrites the persisted dedup hash; when empty, prev's hash
+// (if any) carries forward unchanged.
+func buildSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingrulesv0alpha1.ConfigConditionStatus, reason, message string, now time.Time, appliedHash string) alertingrulesv0alpha1.ConfigStatus {
 	uidCopy := uid
 	originCopy := origin
+	hash := appliedHash
+	if hash == "" && prev != nil && prev.ExternalRulerSync != nil && prev.ExternalRulerSync.LastAppliedHash != nil {
+		hash = *prev.ExternalRulerSync.LastAppliedHash
+	}
 	st := alertingrulesv0alpha1.ConfigStatus{
 		ExternalRulerSync: &alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSync{
 			DatasourceUid: &uidCopy,
 			Origin:        &originCopy,
 		},
+	}
+	if hash != "" {
+		st.ExternalRulerSync.LastAppliedHash = &hash
 	}
 
 	// lastTransitionTime advances only when status flips.
@@ -170,4 +182,16 @@ func externalRulerSyncPromoteFromConfig(c *alertingrulesv0alpha1.Config) bool {
 		return false
 	}
 	return *c.Spec.ExternalRulerSync.Promote
+}
+
+// externalRulerSyncLastAppliedHashFromConfig returns the persisted dedup hash
+// from status, or "" when any level in the nested optional chain is unset
+// (never synced yet, or synced by a build that predates this field).
+func externalRulerSyncLastAppliedHashFromConfig(c *alertingrulesv0alpha1.Config) string {
+	if c == nil ||
+		c.Status.ExternalRulerSync == nil ||
+		c.Status.ExternalRulerSync.LastAppliedHash == nil {
+		return ""
+	}
+	return *c.Status.ExternalRulerSync.LastAppliedHash
 }
