@@ -114,8 +114,11 @@ func (i Item) TableName() string {
 
 // swagger:model Annotation
 type ItemDTO struct {
-	ID        int64  `json:"id,omitempty" xorm:"id"`
-	AlertID   int64  `json:"alertId,omitempty" xorm:"alert_id"`
+	ID int64 `json:"id,omitempty" xorm:"id"`
+	// AlertID must always be serialized, including its zero value: API
+	// consumers key on the field's presence and the documented response
+	// format contains "alertId": 0 for manual annotations.
+	AlertID   int64  `json:"alertId" xorm:"alert_id"`
 	AlertName string `json:"alertName,omitempty"`
 	// Deprecated: Use DashboardUID and OrgID instead
 	DashboardID  int64            `json:"dashboardId,omitempty" xorm:"dashboard_id"`
