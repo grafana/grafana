@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationSecretsService_EnvelopeEncryption(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	testDB := db.InitTestDB(t)
+	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 	ctx := context.Background()
@@ -95,7 +95,7 @@ func TestIntegrationSecretsService_EnvelopeEncryption(t *testing.T) {
 func TestIntegrationSecretsService_DataKeys(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	testDB := db.InitTestDB(t)
+	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := database.ProvideSecretsStore(testDB)
 	ctx := context.Background()
 
@@ -176,7 +176,7 @@ func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
-		testDB := db.InitTestDB(t)
+		testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
 		assert.Equal(t, secrets.ProviderID("secretKey.v1"), svc.currentProviderID)
 	})
@@ -204,7 +204,7 @@ func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
 
 		features := featuremgmt.WithFeatures()
 		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, cfg, features))
-		testDB := db.InitTestDB(t)
+		testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretStore := database.ProvideSecretsStore(testDB)
 
 		secretsService, err := ProvideSecretsService(
@@ -283,7 +283,7 @@ func TestIntegrationSecretsService_Run(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	testDB := db.InitTestDB(t)
+	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 
@@ -335,7 +335,7 @@ func TestIntegrationSecretsService_ReEncryptDataKeys(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	testDB := db.InitTestDB(t)
+	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 
@@ -384,7 +384,7 @@ func TestIntegrationSecretsService_Decrypt(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	testDB := db.InitTestDB(t)
+	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := database.ProvideSecretsStore(testDB)
 
 	t.Run("empty payload should fail", func(t *testing.T) {
@@ -500,7 +500,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 
 	for name, tc := range tcs {
 		t.Run(name, func(t *testing.T) {
-			testDB := db.InitTestDB(t)
+			testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
 
 			// Here's what actually matters and varies on each test: look at the test case name.

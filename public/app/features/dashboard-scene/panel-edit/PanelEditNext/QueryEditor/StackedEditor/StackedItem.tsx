@@ -183,7 +183,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
   }),
   headerRefId: css({
-    ...theme.typography.code,
+    ...theme.typography.body,
   }),
   headerHiddenIcon: css({
     marginLeft: 'auto',

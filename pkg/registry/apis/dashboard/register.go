@@ -165,6 +165,7 @@ func RegisterAPIService(
 	snapshotService dashboardsnapshots.Service,
 	dashboardActivityChannel live.DashboardActivityChannel,
 	configProvider configprovider.ConfigProvider,
+	folderService folder.Service,
 ) *DashboardsAPIBuilder {
 	cfg, err := configProvider.Get(context.Background())
 	if err != nil {
@@ -211,6 +212,8 @@ func RegisterAPIService(
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
 		homeDashboard:            home.NewHomeDashboardSupport(cfg),
 	}
+
+	accessControl.RegisterScopeAttributeResolver(VariableUIDScopeResolver(folderService))
 
 	// Opt into the App Platform permission path (lazy ResourcePermission client) when the flag is on.
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
@@ -370,13 +373,11 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		return nil // OK for now
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
-	// Reachability invariant: Variable storage is always registered, but
-	// FlagGrafanaDashboardGlobalVariables is gated per request in GetAuthorizer. When
-	// the feature is disabled the authorizer denies the request (403) before
-	// admission runs, so this case only fires when global dashboard variables
-	// are enabled. If Variable is ever added to another version or moved to a
-	// subresource, update both the storage registration and this switch in
-	// lockstep.
+	// Reachability invariant: Variable storage is registered only when
+	// accessControl is set. The flag is gated per request in GetAuthorizer, so
+	// this case fires when the feature is enabled in embedded mode. Standalone
+	// skips storage. If Variable is added to another version or moved to a
+	// subresource, update storage registration and this switch in lockstep.
 	case dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create:
@@ -619,7 +620,7 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	if err := b.validateVariableMutationPermissions(ctx, folderUID, false); err != nil {
+	if err := b.validateVariableMutationPermissions(ctx, folderUID, ActionVariablesCreate, false); err != nil {
 		return err
 	}
 
@@ -670,8 +671,9 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return apierrors.NewBadRequest("folder scope cannot be changed; delete the variable and create a new one")
 	}
 
-	// allowMissingFolder: Editors/Admins can still update variables whose folder was deleted.
-	return b.validateVariableMutationPermissions(ctx, oldAccessor.GetFolder(), true)
+	// allowMissingFolder: users with stack-wide (root) variable write can still update
+	// variables whose folder was deleted.
+	return b.validateVariableMutationPermissions(ctx, oldAccessor.GetFolder(), ActionVariablesWrite, true)
 }
 
 func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a admission.Attributes) error {
@@ -689,43 +691,63 @@ func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a adm
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
-	// allowMissingFolder: Editors/Admins can still delete variables whose folder was deleted.
-	return b.validateVariableMutationPermissions(ctx, accessor.GetFolder(), true)
+	// allowMissingFolder: users with stack-wide (root) variable delete can still delete
+	// variables whose folder was deleted.
+	return b.validateVariableMutationPermissions(ctx, accessor.GetFolder(), ActionVariablesDelete, true)
 }
 
-// validateVariableMutationPermissions authorizes variable create/update/delete.
-// Global variables (no folder) require org Editor or Admin. Folder-scoped
-// variables require edit access on that folder, including on dry-run (Variables
-// have no user RBAC authorizer; admission is the authz gate).
-// When allowMissingFolder is true (update/delete), org Editors/Admins may still
-// mutate if the folder no longer exists so orphaned variables can be cleaned up.
-func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, folderUID string, allowMissingFolder bool) error {
+// validateVariableMutationPermissions authorizes variable create/update/delete via
+// variables:* RBAC actions scoped to the target folder (general/root when empty).
+// When allowMissingFolder is true (update/delete) and the folder no longer exists,
+// users who have the action at stack-wide/root scope (folders:uid:general, or
+// folders:* which matches it) may still mutate so orphaned variables can be cleaned up.
+func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, folderUID string, action string, allowMissingFolder bool) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
+		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("valid user is required"))
 	}
 
-	if folderUID == "" {
-		role := requester.GetOrgRole()
-		if role != identity.RoleEditor && role != identity.RoleAdmin {
-			return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
+	if b.accessControl == nil {
+		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("access control is not configured"))
+	}
+
+	folderScope := variableFolderScope(folderUID)
+	ok, err := b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action, folderScope))
+	if err != nil {
+		// FolderUIDScopeResolver errors with folder-not-found when the parent is
+		// gone. Treat that as a failed scope check so allowMissingFolder can run
+		// (root writers with folders:uid:general only never match the missing
+		// folder scope before resolution, and returning the resolver error would
+		// incorrectly deny orphan cleanup).
+		if !isFolderNotFound(err) {
+			return err
 		}
+		ok = false
+	}
+	if ok {
 		return nil
 	}
 
-	err = b.verifyFolderAccessPermissions(ctx, requester, folderUID)
-	if err == nil {
-		return nil
-	}
-
-	if allowMissingFolder && apierrors.IsNotFound(err) {
-		role := requester.GetOrgRole()
-		if role == identity.RoleEditor || role == identity.RoleAdmin {
-			return nil
+	if allowMissingFolder && folderUID != "" {
+		if _, ferr := b.validateFolderExists(ctx, folderUID, requester.GetOrgID()); ferr != nil {
+			if !apierrors.IsNotFound(ferr) {
+				// Transient / infra failures must not be reported as access denied.
+				return ferr
+			}
+			// Folder gone: allow cleanup only for stack-wide/root writers.
+			// Unscoped EvalPermission(action) would let any folder-scoped writer
+			// mutate orphans from a different deleted folder.
+			ok, err = b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action, variableFolderScope("")))
+			if err != nil {
+				return err
+			}
+			if ok {
+				return nil
+			}
 		}
 	}
 
-	return err
+	return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("access denied to %s variables", action))
 }
 
 // validateFolderExists checks if a folder exists
@@ -976,33 +998,45 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	// Variable storage is always registered so FlagGrafanaDashboardGlobalVariables can
-	// be evaluated per request (and targeted per tenant) via OpenFeature in the
-	// authorizer, without requiring a restart. See GetAuthorizer.
-	opts.StorageOptsRegister(dashv2beta1.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
-		EnableFolderSupport: true,
-	})
+	// Variable storage is registered when accessControl is wired (embedded Grafana)
+	// so FlagGrafanaDashboardGlobalVariables can be evaluated per request via
+	// OpenFeature in the authorizer. Standalone NewAPIService leaves accessControl
+	// nil — skip registration so the resource is not served (same idea as snapshots,
+	// which storageForVersion omits when isStandalone). See GetAuthorizer.
+	if b.accessControl != nil {
+		opts.StorageOptsRegister(dashv2beta1.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport: true,
+		})
 
-	gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
-		opts.Scheme,
-		dashv2beta1.VariableResourceInfo,
-		opts.OptsGetter,
-		grafanaregistry.SelectableFieldsOptions{
-			GetAttrs: VariableGetAttrs,
-		},
-	)
-	if err != nil {
-		return err
+		gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+			opts.Scheme,
+			dashv2beta1.VariableResourceInfo,
+			opts.OptsGetter,
+			grafanaregistry.SelectableFieldsOptions{
+				GetAttrs: VariableGetAttrs,
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		variableStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+		variableStorage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 	}
-
-	variableStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
-	variableStorage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 
 	// Notebook storage is always registered so FlagDashboardNotebooks can be
 	// evaluated per request (and targeted per tenant) via OpenFeature in the
 	// authorizer, without requiring a restart. See GetAuthorizer.
+	//
+	// EnableFolderSupport is deliberately OFF for the MVP: notebook RBAC is a flat, org-wide
+	// grant (fixed:notebooks:reader/writer on notebooks:*, see pkg/api/accesscontrol.go), and
+	// there is no folder UI. If folder-scoped notebooks could exist (e.g. created via API or
+	// provisioning with a grafana.app/folder annotation), that wildcard would let every Viewer
+	// read them regardless of the folder's permissions. Forbidding a folder annotation keeps
+	// every notebook folderless, so the wildcard cannot bypass any folder ACL. Flip this back to
+	// true at GA, when a folder UI and folder-scoped notebook RBAC replace the flat grants.
 	opts.StorageOptsRegister(dashv2beta1.NotebookResourceInfo.GroupResource(), apistore.StorageOptions{
-		EnableFolderSupport: true,
+		EnableFolderSupport: false,
 	})
 
 	nbStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.NotebookResourceInfo, opts.OptsGetter)
@@ -1369,6 +1403,10 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 	}
 }
 
+// dashboardSearchResultsSchema is the published name for dashv0.SearchResults. The Go
+// type and the kind on the wire are unchanged.
+const dashboardSearchResultsSchema = "DashboardSearchResults"
+
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana dashboards as resources"
 
@@ -1378,6 +1416,16 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		refsBase := dashv0.OpenAPIPrefix
 
 		kinds := []string{"SearchResults", "DashboardHit", "ManagedBy", "FacetResult", "TermFacet", "SortBy"}
+
+		// The per-resource search endpoints publish a SearchResults of their own, and the
+		// API client generator keys components by the segment after the version, so the two
+		// cannot share a name.
+		published := func(k string) string {
+			if k == "SearchResults" {
+				return dashboardSearchResultsSchema
+			}
+			return k
+		}
 
 		// Add any missing definitions
 		//-----------------------------
@@ -1403,7 +1451,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 						spec.RefProperty("#/components/schemas/TermFacet"),
 					)
 				}
-				oas.Components.Schemas[k] = &v.Schema // use the short key (without the full package path)
+				oas.Components.Schemas[published(k)] = &v.Schema // use the short key (without the full package path)
 			}
 		}
 
@@ -1413,7 +1461,7 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 				Content: map[string]*spec3.MediaType{
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: spec.RefSchema("#/components/schemas/SearchResults"),
+							Schema: spec.RefSchema("#/components/schemas/" + dashboardSearchResultsSchema),
 						},
 					},
 				},
@@ -1450,15 +1498,14 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 }
 
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.
-// Snapshots use RBAC-based authorization; other resources fall back to ServiceAuthorizer.
+// Notebooks, snapshots, and variables use dedicated authorizers; other resources
+// fall back to ServiceAuthorizer.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
-	// Notebooks and variables defer to the service authorizer when their
-	// features are enabled, so each feature authorizer wraps that same
-	// instance as its fallback.
+	// Notebooks defer to the service authorizer when the feature is enabled.
 	notebookAuthorizer := newNotebookAuthorizer(serviceAuthorizer)
-	variableAuthorizer := newVariableAuthorizer(serviceAuthorizer)
+	variableAuthorizer := newVariableAuthorizer(b.accessControl)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {

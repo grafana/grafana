@@ -91,11 +91,7 @@ test.describe(
     test('can make a hidden variable visible', async ({ gotoDashboardPage, page, controls, sidebar }) => {
       await gotoDashboardPage({});
 
-      await flows.dashboards.saveDashboardAndCloseToast(
-        page,
-        controls,
-        `can make a hidden variable visible (${Math.random()})`
-      );
+      await flows.dashboards.saveDashboard(page, controls, { reloadPageAfterSave: false, title: test.info().title });
 
       const variable = variableWithDefaults({ display: 'Hidden' });
       await flows.variables.addNewTextBoxVariable(page, sidebar, controls, variable);
@@ -110,7 +106,7 @@ test.describe(
       await expect(variableLabel).toBeVisible();
 
       // save dashboard and exit edit mode and check variable is still visible
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboard(page, controls, { reloadPageAfterSave: false });
       await controls.exitEditMode();
       await expect(variableLabel).toBeVisible();
 
@@ -126,11 +122,7 @@ test.describe(
     test('can hide variable under the controls menu', async ({ gotoDashboardPage, page, controls, sidebar }) => {
       await gotoDashboardPage({});
 
-      await flows.dashboards.saveDashboardAndCloseToast(
-        page,
-        controls,
-        `can hide a variable in controls menu - (${Math.random()})`
-      );
+      await flows.dashboards.saveDashboard(page, controls, { reloadPageAfterSave: false, title: test.info().title });
 
       const variable = variableWithDefaults();
       await flows.variables.addNewTextBoxVariable(page, sidebar, controls, variable);
@@ -148,8 +140,7 @@ test.describe(
       await expect(variableLabel).toBeVisible();
 
       // save dashboard and reload the page
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       //check that the variable is hidden under the controls menu
       variableLabel = controls.variables.getLabel(variable.label);

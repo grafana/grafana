@@ -10,6 +10,9 @@ import (
 	"time"
 
 	authn "github.com/grafana/authlib/authn"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/setting"
@@ -58,7 +61,7 @@ func TestManifestWatcher_AuthUsesAuthorizationHeader(t *testing.T) {
 	require.Equal(t, "Bearer exchanged-token", authorization)
 	require.Empty(t, accessToken)
 	require.NotNil(t, exchanger.gotReq)
-	require.Equal(t, []string{appManifestGVR.Group}, exchanger.gotReq.Audiences)
+	require.Equal(t, []string{AppManifestGVR.Group}, exchanger.gotReq.Audiences)
 	require.Equal(t, clientauth.WildcardNamespace, exchanger.gotReq.Namespace)
 }
 
@@ -96,7 +99,7 @@ func testAppManifestObj(name, appName, group, kind string, searchFields ...strin
 func fakeManifestClient(objs ...runtime.Object) *dynamicfake.FakeDynamicClient {
 	scheme := runtime.NewScheme()
 	gvrToListKind := map[schema.GroupVersionResource]string{
-		appManifestGVR: "AppManifestList",
+		AppManifestGVR: "AppManifestList",
 	}
 	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, gvrToListKind, objs...)
 }
@@ -173,6 +176,34 @@ func TestManifestWatcher_EmptyListKeepsPreviousSet(t *testing.T) {
 	})
 	w.runPollCycle(t.Context())
 	require.Len(t, w.Manifests(), 1)
+}
+
+func TestManifestWatcher_RecordsMetrics(t *testing.T) {
+	client := fakeManifestClient(
+		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
+	)
+	w := newManifestWatcher(client, 0, nil, nil)
+	w.metrics = newManifestWatcherMetrics(prometheus.NewPedanticRegistry())
+
+	// First poll: one successful poll, one reload, one manifest, a fresh timestamp.
+	w.runPollCycle(t.Context())
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.polls.WithLabelValues("success")))
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.reloads))
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.manifests))
+	require.Positive(t, testutil.ToFloat64(w.metrics.lastSuccess))
+
+	// Unchanged data: another successful poll, but no new reload.
+	w.runPollCycle(t.Context())
+	require.Equal(t, float64(2), testutil.ToFloat64(w.metrics.polls.WithLabelValues("success")))
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.reloads))
+
+	// A list failure increments the error label and leaves reloads untouched.
+	client.PrependReactor("list", "appmanifests", func(k8stesting.Action) (bool, runtime.Object, error) {
+		return true, nil, errors.New("apiserver down")
+	})
+	w.runPollCycle(t.Context())
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.polls.WithLabelValues("error")))
+	require.Equal(t, float64(1), testutil.ToFloat64(w.metrics.reloads))
 }
 
 func TestManifestWatcher_PicksUpChangesOnNextPoll(t *testing.T) {

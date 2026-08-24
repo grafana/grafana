@@ -106,7 +106,18 @@ export async function expectDashboardChangesToContain(
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
 
     await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
-    await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
+
+    // The Monaco diff editor virtualizes its DOM, so assert against the loaded text models
+    // instead of the rendered text
+    await expect(page.locator('.monaco-diff-editor')).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (text) => window.monaco.editor.getModels().some((model) => model.getValue().includes(text)),
+          changeText
+        )
+      )
+      .toBe(true);
 
     await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
   });

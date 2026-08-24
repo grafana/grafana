@@ -115,7 +115,7 @@ export function initializeFromURL(
     // This includes params from previous schema versions and 'schemaVersion', 'panes' as we want to replace those.
     let defaults: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(oldQuery).filter(
-      ([key]) => !['schemaVersion', 'panes', 'left', 'right'].includes(key)
+      ([key]) => !['schemaVersion', 'panes', 'left', 'right', 'editSavedQueryRef', 'createSavedQuery'].includes(key)
     )) {
       defaults[key] = value;
     }

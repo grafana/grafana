@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { openMenu } from 'react-select-event';
 
@@ -76,6 +76,52 @@ describe(`Azure Monitor QueryEditor`, () => {
     });
     expect(screen.queryByText('Test Dimension 1')).toBeInTheDocument();
     expect(screen.queryByText('==')).toBeInTheDocument();
+  });
+
+  it('gives every input an accessible name that identifies its row', async () => {
+    const mockQuery = createMockQuery();
+    mockQuery.azureMonitor = {
+      ...mockQuery.azureMonitor,
+      dimensionFilters: [
+        { dimension: 'TestDimension1', operator: 'eq', filters: [] },
+        { dimension: 'TestDimension2', operator: 'sw', filters: [] },
+      ],
+    };
+    render(
+      <DimensionFields
+        data={createMockPanelData()}
+        subscriptionId="123"
+        query={mockQuery}
+        onQueryChange={jest.fn()}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        setError={() => {}}
+        dimensionOptions={[
+          { label: 'Test Dimension 1', value: 'TestDimension1' },
+          { label: 'Test Dimension 2', value: 'TestDimension2' },
+        ]}
+      />
+    );
+
+    // The "Dimensions" label groups the rows, so it must be the accessible name of a group.
+    const dimensions = screen.getByRole('group', { name: 'Dimensions' });
+
+    expect(screen.getByRole('combobox', { name: 'Dimension 1 field' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Dimension 1 operator' })).toBeInTheDocument();
+    // "eq" and "ne" allow several values, other operators only one, and the names follow suit.
+    expect(screen.getByRole('combobox', { name: 'Dimension 1 values' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove dimension 1' })).toBeInTheDocument();
+
+    expect(screen.getByRole('combobox', { name: 'Dimension 2 field' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Dimension 2 operator' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Dimension 2 value' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove dimension 2' })).toBeInTheDocument();
+
+    const names = within(dimensions)
+      .getAllByRole('combobox')
+      .map((combobox) => combobox.getAttribute('aria-label'));
+    expect(names).toHaveLength(6);
+    expect(new Set(names).size).toBe(names.length);
   });
 
   it('correctly filters out dimensions when selected', async () => {
