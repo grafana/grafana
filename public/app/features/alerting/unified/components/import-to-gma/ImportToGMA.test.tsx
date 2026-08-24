@@ -255,6 +255,44 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     expect(screen.getByText(/will sync continuously/i)).toBeInTheDocument();
   });
 
+  it('does not enable Auto-sync when Notifications is skipped, even though Auto-sync was selected', async () => {
+    const postState: AdminConfigPostState = { lastPayload: null };
+    setupAdminConfigPost(server, postState, 200);
+    server.use(http.post('/api/convert/prometheus/config/v1/rules', () => HttpResponse.json({})));
+
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    // Wait for the seeded Auto-sync selection to make the step valid, then Skip instead of
+    // Next — the selection must be discarded, not carried through to the confirm step.
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+        'aria-disabled',
+        'false'
+      )
+    );
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+
+    // Complete Rules so there's something to import — same shape as the bug report.
+    await screen.findByRole('group', { name: /import alert rules/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByText(/review import/i);
+
+    expect(screen.queryByText(/will sync continuously/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/skipped/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /start import/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /enable auto-sync/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /start import/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /start import/i }));
+
+    await waitFor(() =>
+      expect(mockReportInteraction).toHaveBeenCalledWith('grafana_alerting_import_to_gma_success', expect.anything())
+    );
+    expect(postState.lastPayload).toBeNull();
+  });
+
   it('calls saveAutoSync (not the staging import) and tracks success when Rules is skipped', async () => {
     const postState: AdminConfigPostState = { lastPayload: null };
     setupAdminConfigPost(server, postState, 200);

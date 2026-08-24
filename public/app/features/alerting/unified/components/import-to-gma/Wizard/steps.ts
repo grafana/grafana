@@ -32,6 +32,20 @@ export function isAutoSyncSelected(
   return autoSyncNotificationsEnabled && notificationsSource === 'datasource';
 }
 
+/**
+ * Whether Auto-sync will actually be enabled on confirm. Skipping Step 1 discards whatever was
+ * selected there — same rule the plain notifications import already follows via
+ * `step1Completed && !step1Skipped` — so an Auto-sync selection left behind by a skip must not
+ * take effect either.
+ */
+export function isAutoSyncCommitted(
+  autoSyncNotificationsEnabled: boolean,
+  notificationsSource: 'yaml' | 'datasource',
+  step1Skipped: boolean
+): boolean {
+  return isAutoSyncSelected(autoSyncNotificationsEnabled, notificationsSource) && !step1Skipped;
+}
+
 export const getNextStep = (currentStep: StepKey): WizardStep | undefined => {
   const steps = getWizardSteps();
   const currentIndex = steps.findIndex((s) => s.id === currentStep);

@@ -1,4 +1,11 @@
-import { getNextStep, getPreviousStep, getWizardSteps, isAutoSyncSelected, isLastStep } from './steps';
+import {
+  getNextStep,
+  getPreviousStep,
+  getWizardSteps,
+  isAutoSyncCommitted,
+  isAutoSyncSelected,
+  isLastStep,
+} from './steps';
 import { StepKey } from './types';
 
 describe('getWizardSteps', () => {
@@ -54,5 +61,19 @@ describe('isAutoSyncSelected', () => {
 
   it('is false for the YAML source, even with Auto-sync enabled', () => {
     expect(isAutoSyncSelected(true, 'yaml')).toBe(false);
+  });
+});
+
+describe('isAutoSyncCommitted', () => {
+  it('is true when Auto-sync is selected and Step 1 was completed', () => {
+    expect(isAutoSyncCommitted(true, 'datasource', false)).toBe(true);
+  });
+
+  it('is false when Step 1 was skipped, even with Auto-sync selected', () => {
+    expect(isAutoSyncCommitted(true, 'datasource', true)).toBe(false);
+  });
+
+  it('is false when Auto-sync was never selected', () => {
+    expect(isAutoSyncCommitted(false, 'datasource', false)).toBe(false);
   });
 });

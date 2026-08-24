@@ -55,7 +55,7 @@ import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
-import { getPauseRulesLabel, isAutoSyncSelected } from './Wizard/steps';
+import { getPauseRulesLabel, isAutoSyncCommitted, isAutoSyncSelected } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
@@ -340,9 +340,10 @@ function ImportWizardContent() {
 
   // Get ruler rules for rules import (needed when importing from datasource)
   const formValues = getValues();
-  const autoSyncActive = isAutoSyncSelected(
+  const willEnableAutoSync = isAutoSyncCommitted(
     formValues.autoSyncNotificationsEnabled ?? false,
-    formValues.notificationsSource
+    formValues.notificationsSource,
+    formValues.step1Skipped
   );
   const willImportRules = formValues.step2Completed && !formValues.step2Skipped;
   const shouldFetchRules = willImportRules && formValues.rulesSource === 'datasource';
@@ -358,9 +359,10 @@ function ImportWizardContent() {
     setImportStatus('importing');
 
     const values = getValues();
-    const willEnableAutoSync = isAutoSyncSelected(
+    const willEnableAutoSync = isAutoSyncCommitted(
       values.autoSyncNotificationsEnabled ?? false,
-      values.notificationsSource
+      values.notificationsSource,
+      values.step1Skipped
     );
     const willImportNotifications = values.step1Completed && !values.step1Skipped;
     const willImportRules = values.step2Completed && !values.step2Skipped;
@@ -561,7 +563,7 @@ function ImportWizardContent() {
       <ConfirmImportModal
         isOpen={showConfirmModal}
         importStatus={importStatus}
-        autoSyncActive={autoSyncActive}
+        autoSyncActive={willEnableAutoSync}
         willImportRules={willImportRules}
         onConfirm={handleConfirmImport}
         onDismiss={handleCancelConfirm}
@@ -886,9 +888,10 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
   const willImportNotifications = formData.step1Completed && !formData.step1Skipped;
   const willImportRules = formData.step2Completed && !formData.step2Skipped;
   const nothingToImport = !willImportNotifications && !willImportRules;
-  const autoSyncActive = isAutoSyncSelected(
+  const willEnableAutoSync = isAutoSyncCommitted(
     formData.autoSyncNotificationsEnabled ?? false,
-    formData.notificationsSource
+    formData.notificationsSource,
+    formData.step1Skipped
   );
 
   const handleBack = () => {
@@ -988,14 +991,14 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
               <Text variant="h5" element="h3">
                 {t('alerting.import-to-gma.review.notifications-title', 'Notification Resources')}
               </Text>
-              {autoSyncActive && (
+              {willEnableAutoSync && (
                 <Badge
                   color="green"
                   icon="sync"
                   text={t('alerting.import-to-gma.review.autosync-badge', 'Will sync continuously')}
                 />
               )}
-              {!autoSyncActive && willImportNotifications && (
+              {!willEnableAutoSync && willImportNotifications && (
                 <button type="button" className={styles.badgeWithIcon} onClick={handlePreviewNotifications}>
                   {t('alerting.import-to-gma.review.will-import-config', 'Will import this configuration')}
                   <Icon name="eye" size="sm" />
@@ -1008,7 +1011,7 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
             <div className={styles.cardContent}>
               <NotificationsCardContent
                 formData={formData}
-                autoSyncActive={autoSyncActive}
+                autoSyncActive={willEnableAutoSync}
                 willImportNotifications={willImportNotifications}
                 dryRunResult={dryRunResult}
                 styles={styles}
@@ -1053,11 +1056,11 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
           </Button>
           <Button
             variant="primary"
-            icon={autoSyncActive ? 'sync' : 'upload'}
+            icon={willEnableAutoSync ? 'sync' : 'upload'}
             onClick={onStartImport}
             disabled={nothingToImport}
           >
-            {autoSyncActive
+            {willEnableAutoSync
               ? t('alerting.import-to-gma.review.enable-autosync', 'Enable auto-sync')
               : t('alerting.import-to-gma.review.start', 'Start import')}
           </Button>
