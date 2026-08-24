@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
-import { mergeMap } from 'rxjs';
 
-import { type DataFrame, type DataTransformContext, transformDataFrame } from '@grafana/data';
+import {
+  type CustomTransformOperator,
+  type DataFrame,
+  type DataTransformContext,
+  type DataTransformerConfig,
+  transformDataFrame,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { type Transformation } from '../types';
@@ -9,6 +14,7 @@ import { type Transformation } from '../types';
 interface UsePreviousTransformationOutputOptions {
   selectedTransformation: Transformation | null;
   transformations: Transformation[];
+  systemTransformations: Array<DataTransformerConfig | CustomTransformOperator>;
   queryData: DataFrame[];
   queryTargets?: Array<{ refId: string }>;
 }
@@ -31,12 +37,17 @@ function mergeWithEmptyFrames(frames: DataFrame[], queryTargets?: Array<{ refId:
  * Calculates the output of the previous transformation in the pipeline.
  * Used by the filter display to show which data frames are available for filtering.
  *
- * @returns Output of the previous transformation, or raw query data if this is the first transformation.
- * Includes empty frames for refIds that were requested but didn't return results.
+ * The frames listed here have to be the ones the filter matcher will run against, so the panel
+ * plugin's own transformations count as preceding the user's first one — they run ahead of all of
+ * them, and they are what renames, splits or joins the frames the user is picking from.
+ *
+ * @returns Output of everything preceding the selected transformation, or the query result if
+ * nothing does. Includes empty frames for refIds that were requested but didn't return results.
  */
 export function usePreviousTransformationOutput({
   selectedTransformation,
   transformations,
+  systemTransformations,
   queryData,
   queryTargets,
 }: UsePreviousTransformationOutputOptions): DataFrame[] {
@@ -54,32 +65,31 @@ export function usePreviousTransformationOutput({
       return;
     }
 
-    const prevTransformIndex = currentIndex - 1;
+    // Everything that runs ahead of the selected transformation: the plugin's transformations first,
+    // then the user's up to this one.
+    const precedingConfigs = [
+      ...systemTransformations,
+      ...transformations.slice(0, currentIndex).map((t) => t.transformConfig),
+    ];
 
-    if (prevTransformIndex < 0) {
-      // This is the first transformation, use raw query data
+    if (precedingConfigs.length === 0) {
+      // Nothing precedes it, so it reads the query result as it came back.
       setPrevOutput(mergeWithEmptyFrames(queryData, queryTargets));
       return;
     }
-
-    // Get all transformations before this one
-    const prevInputTransforms = transformations.slice(0, prevTransformIndex).map((t) => t.transformConfig);
-    const prevOutputTransforms = transformations.slice(prevTransformIndex, currentIndex).map((t) => t.transformConfig);
 
     const ctx: DataTransformContext = {
       interpolate: (v: string) => getTemplateSrv().replace(v),
     };
 
-    const subscription = transformDataFrame(prevInputTransforms, queryData, ctx)
-      .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
-      .subscribe((result) => {
-        setPrevOutput(mergeWithEmptyFrames(result, queryTargets));
-      });
+    const subscription = transformDataFrame(precedingConfigs, queryData, ctx).subscribe((result) => {
+      setPrevOutput(mergeWithEmptyFrames(result, queryTargets));
+    });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [selectedTransformation, transformations, queryData, queryTargets]);
+  }, [selectedTransformation, transformations, systemTransformations, queryData, queryTargets]);
 
   return prevOutput;
 }

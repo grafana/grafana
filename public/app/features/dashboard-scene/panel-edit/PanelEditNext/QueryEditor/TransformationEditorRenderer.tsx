@@ -64,6 +64,7 @@ export function TransformationEditorPanel({
       <TransformationFilterEditor
         transformation={transformation}
         transformations={transformations}
+        systemTransformations={systemTransformations}
         queryData={data}
         onUpdate={updateTransformation}
       />
