@@ -118,7 +118,7 @@ Configure additional HTTP behavior for requests to Loki.
 
 #### Secure Socks Proxy
 
-The **Secure Socks Proxy** settings appear only when the secure SOCKS data source proxy is enabled in the Grafana configuration file. When enabled, you can route data source requests through a secure SOCKS proxy. For more information, refer to [Configure a datasource connection proxy](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/proxy/).
+The **Secure Socks Proxy** settings appear only when the secure SOCKS data source proxy is enabled in the Grafana configuration file. When enabled, you can route data source requests through a secure SOCKS proxy. For more information, refer to [Configure a data source connection proxy](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/proxy/).
 
 #### Alerting
 
