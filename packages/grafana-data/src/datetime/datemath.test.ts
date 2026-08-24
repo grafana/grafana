@@ -175,6 +175,8 @@ describe('DateMath', () => {
       ['+1d-6h', [2014, 1, 5], [2014, 1, 5, 18]],
       ['-1w-1d', [2014, 1, 14], [2014, 1, 6]],
       ['-1w/w', [2014, 1, 21], [2014, 1, 9]],
+      ['-604800s', [2014, 1, 12, 0, 0, 0], [2014, 1, 5, 0, 0, 0]],
+      ['-2592000s', [2014, 2, 5, 0, 0, 0], [2014, 1, 6, 0, 0, 0]],
     ])('should handle multiple math expressions: %s', (expression, inputDate, expectedDate) => {
       const date = dateMath.parseDateMath(expression, dateTime(inputDate));
       expect(date!.valueOf()).toEqual(dateTime(expectedDate).valueOf());
