@@ -19,6 +19,7 @@ import { getPromGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { GrafanaRuleListItem } from './GrafanaRuleListItem';
+import { DataSourceManagedRulesInlineNotice } from './components/DataSourceManagedRulesNotice';
 import { DataSourceSection } from './components/DataSourceSection';
 import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
@@ -130,6 +131,7 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
       uid={GrafanaRulesSourceSymbol}
       isLoading={isLoading}
       error={error}
+      actions={<DataSourceManagedRulesInlineNotice />}
     >
       <Stack direction="column" gap={0}>
         {Object.entries(groupsByFolder).map(([folderUid, groups]) => {

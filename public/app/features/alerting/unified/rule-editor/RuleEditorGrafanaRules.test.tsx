@@ -18,9 +18,11 @@ import {
   grafanaRulerRule,
   mockPreviewApiResponse,
 } from '../mocks/grafanaRulerApi';
-import { setFolderResponse } from '../mocks/server/configure';
+import { addPlugin, setFolderResponse } from '../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { setupDataSources } from '../testSetup/datasources';
+import { pluginMeta } from '../testSetup/plugins';
+import { SupportedPlugin } from '../types/pluginBridges';
 import { Annotation } from '../utils/constants';
 import { grafanaRuleDtoToFormValues } from '../utils/rule-form';
 
@@ -244,5 +246,50 @@ describe('RuleEditor grafana managed rules', () => {
 
     // The rule type section should be visible in advanced mode
     expect(await screen.findByText('Rule type')).toBeInTheDocument();
+  });
+});
+
+describe('RuleEditor with the Prometheus Alerting plugin', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    contextSrv.isEditor = true;
+    contextSrv.hasEditPermissionInFolders = true;
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.DataSourcesRead,
+      AccessControlAction.FoldersRead,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
+
+    // manageAlerts is on, so without the plugin the rule type switch would be offered.
+    setupDataSources(
+      mockDataSource(
+        {
+          type: 'prometheus',
+          name: 'Prom-enabled',
+          uid: 'prometheus-enabled',
+          isDefault: true,
+          jsonData: { manageAlerts: true },
+        },
+        { alerting: true, module: 'core:plugin/prometheus' }
+      )
+    );
+
+    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
+  });
+
+  it('does not offer to author a data source managed rule', async () => {
+    const { user } = renderRuleEditor();
+
+    await screen.findByRole('textbox', { name: 'name' });
+
+    // Advanced mode is where the rule type switch lives — see the mirror of this test above.
+    await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
+
+    // Something in advanced mode has rendered, so the switch's absence is a real absence.
+    expect(await screen.findByText(/expressions/i)).toBeInTheDocument();
+    expect(screen.queryByText('Rule type')).not.toBeInTheDocument();
   });
 });

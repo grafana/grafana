@@ -3,10 +3,11 @@ import { useCallback, useMemo, useRef, useState, useTransition } from 'react';
 import { useUnmount } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
-import { EmptyState, Stack } from '@grafana/ui';
+import { EmptyState, LinkButton, Stack } from '@grafana/ui';
 
 import { withPerformanceLogging } from '../Analytics';
 import { isLoading, useAsync } from '../hooks/useAsync';
+import { useHandedOverRulesSources, usePluginRulesLink } from '../plugin-proxy/usePrometheusAlertingPlugin';
 import { type RulesFilter } from '../search/rulesSearchParser';
 import { hashRule } from '../utils/rule-id';
 
@@ -16,6 +17,7 @@ import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
+import { DataSourceManagedRulesBanner } from './components/DataSourceManagedRulesNotice';
 import {
   type GrafanaRuleWithOrigin,
   type PromRuleWithOrigin,
@@ -138,15 +140,19 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   if (noRulesFound && doneSearching) {
     return (
       <EmptyState variant="not-found" message="No matching rules found">
-        <Trans i18nKey="alerting.rule-list.filter-view.no-rules-found">
-          No alert or recording rules matched your current set of filters.
-        </Trans>
+        <Stack direction="column" alignItems="center" gap={2}>
+          <Trans i18nKey="alerting.rule-list.filter-view.no-rules-found">
+            No alert or recording rules matched your current set of filters.
+          </Trans>
+          <SearchInPluginCTA />
+        </Stack>
       </EmptyState>
     );
   }
 
   return (
     <Stack direction="column" gap={0}>
+      <DataSourceManagedRulesBanner />
       <ul aria-label={t('alerting.filter-view-results.aria-label-filteredrulelist', 'filtered-rule-list')}>
         {rules.map((ruleWithOrigin) => {
           const { key, rule, groupIdentifier, origin } = ruleWithOrigin;
@@ -186,6 +192,27 @@ function FilterViewResults({ filterState }: FilterViewProps) {
       )}
       {!doneSearching && !loading && !loadingAborted && <LoadMoreHelper handleLoad={loadResultPage} />}
     </Stack>
+  );
+}
+
+/**
+ * Nothing matched in Grafana, but the same search might match something in the plugin — it has the
+ * data source managed rules this list no longer shows. Renders nothing when the plugin isn't there.
+ */
+function SearchInPluginCTA() {
+  const rulesSources = useHandedOverRulesSources();
+  const pluginRulesLink = usePluginRulesLink();
+
+  if (rulesSources.length === 0) {
+    return null;
+  }
+
+  return (
+    <LinkButton variant="secondary" icon="external-link-alt" href={pluginRulesLink}>
+      <Trans i18nKey="alerting.rule-list.filter-view.search-in-plugin">
+        Search data source managed rules in Prometheus Alerting
+      </Trans>
+    </LinkButton>
   );
 }
 

@@ -15,6 +15,7 @@ import {
   type PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { usePrometheusAlertingPlugin } from '../../plugin-proxy/usePrometheusAlertingPlugin';
 import { RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
 import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 import { type RulePositionHash, createRulePositionHash } from '../rulePositionHash';
@@ -70,6 +71,9 @@ interface GetIteratorResult {
 export function useFilteredRulesIteratorProvider() {
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
+  // Data source managed rules belong to the Prometheus Alerting plugin once it's there, so we stop
+  // putting them in this list. `DataSourceManagedRulesBanner` says where they went.
+  const { installed: pluginInstalled } = usePrometheusAlertingPlugin();
 
   const getFilteredRulesIterable = (filterState: RulesFilter, options: FetchGroupsLimitOptions): GetIteratorResult => {
     /* this is the abort controller that allows us to stop an AsyncIterable */
@@ -127,7 +131,7 @@ export function useFilteredRulesIteratorProvider() {
 
     const iterablesToMerge: Array<AsyncIterableX<RuleWithOrigin>> = [];
     const includeGrafana = filterState.ruleSource !== 'datasource';
-    const includeExternal = true;
+    const includeExternal = !pluginInstalled;
 
     if (includeGrafana) {
       iterablesToMerge.push(grafanaRulesGenerator);
