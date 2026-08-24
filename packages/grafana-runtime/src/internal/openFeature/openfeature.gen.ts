@@ -59,6 +59,8 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
+  GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Enables custom dashboard templates for enterprise */
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
@@ -67,6 +69,8 @@ export const FlagKeys = {
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** Enables the auto-height feature for dashboard panels */
+  GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
   /** Check for the existence of logs when linking from the Trace View */
   GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
@@ -441,6 +445,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette
+ *
+ * **Details:**
+ * - flag key: `grafana.cmdkHybridSearch`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCmdkHybridSearch = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.cmdkHybridSearch", false, options).value;
+};
+
+/**
  * Enables custom dashboard templates for enterprise
  *
  * **Details:**
@@ -482,6 +497,17 @@ export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardSettingsRedesign", true, options).value;
+};
+
+/**
+ * Enables the auto-height feature for dashboard panels
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardsAutoHeightPanels`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardsAutoHeightPanels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardsAutoHeightPanels", false, options).value;
 };
 
 /**

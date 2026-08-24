@@ -57,11 +57,20 @@ export function MegaMenuItemText({
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
 
   // Flag on: pin/unpin wording. Flag off: the legacy "Bookmark" wording.
-  let pinTooltip = t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName });
+  let pinTooltip = t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', {
+    itemName,
+    interpolation: { escapeValue: false },
+  });
   if (canCustomise) {
     pinTooltip = isPinned
-      ? t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', { itemName })
-      : t('navigation.item.pin.tooltip', 'Pin {{itemName}}', { itemName });
+      ? t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', {
+          itemName,
+          interpolation: { escapeValue: false },
+        })
+      : t('navigation.item.pin.tooltip', 'Pin {{itemName}}', {
+          itemName,
+          interpolation: { escapeValue: false },
+        });
   }
 
   // Pinning is a customisation action, so with customisation on the pin control only appears while
@@ -110,8 +119,14 @@ export function MegaMenuItemText({
       disabled={disabled}
       tooltip={
         isHidden
-          ? t('navigation.item.show.tooltip', 'Show {{itemName}}', { itemName })
-          : t('navigation.item.hide.tooltip', 'Hide {{itemName}}', { itemName })
+          ? t('navigation.item.show.tooltip', 'Show {{itemName}}', {
+              itemName,
+              interpolation: { escapeValue: false },
+            })
+          : t('navigation.item.hide.tooltip', 'Hide {{itemName}}', {
+              itemName,
+              interpolation: { escapeValue: false },
+            })
       }
     />
   );

@@ -422,14 +422,16 @@
     {
       "metadata": {
         "name": "alertingImportAlertmanagerAPI",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-06-10T08:32:50Z"
+        "resourceVersion": "1787011639452",
+        "creationTimestamp": "2025-06-10T08:32:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 00:07:19.452226979 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the API to import Alertmanager configuration",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -522,12 +524,15 @@
     {
       "metadata": {
         "name": "alertingMigrationWizardUI",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787011590700",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-18 00:06:30.700704022 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "expression": "false"
@@ -566,71 +571,81 @@
     {
       "metadata": {
         "name": "alertingNotificationHistory",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-17T13:26:26Z"
+        "resourceVersion": "1787151362205",
+        "creationTimestamp": "2025-07-17T13:26:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:56:02.205169 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification history feature",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "alertingNotificationHistoryDetail",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787151362205",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:56:02.205169 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification history detail page",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "alertingNotificationHistoryGlobal",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787151362205",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:56:02.205169 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification history global menu item viewer",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "alertingNotificationHistoryRuleViewer",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787151362205",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:56:02.205169 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification history tab in the rule viewer",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "alertingNotificationHistoryTriage",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787151362205",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:56:02.205169 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification history timeline in the triage instance details drawer",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1183,6 +1198,20 @@
     },
     {
       "metadata": {
+        "name": "authz.userPermissions",
+        "resourceVersion": "1786733435326",
+        "creationTimestamp": "2026-08-14T18:50:35Z"
+      },
+      "spec": {
+        "description": "Route user permission snapshots through the AuthZ service.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsAssumeRolePerDatasourceExternalId",
         "resourceVersion": "1784056946678",
         "creationTimestamp": "2026-07-14T19:22:26Z"
@@ -1325,19 +1354,6 @@
         "description": "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "canvasExternalPlugin",
-        "resourceVersion": "1780948766147",
-        "creationTimestamp": "2026-06-08T19:59:26Z"
-      },
-      "spec": {
-        "description": "Load Canvas panel from an external plugin instead of the bundled core plugin",
-        "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad",
         "expression": "false"
       }
     },
@@ -2852,6 +2868,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.cmdkHybridSearch",
+        "resourceVersion": "1785839886317",
+        "creationTimestamp": "2026-08-04T10:38:06Z"
+      },
+      "spec": {
+        "description": "Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.correlationsSkipLegacy",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -2915,6 +2945,21 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.dashboardsAutoHeightPanels",
+        "resourceVersion": "1787048864683",
+        "creationTimestamp": "2026-08-18T10:27:44Z"
+      },
+      "spec": {
+        "description": "Enables the auto-height feature for dashboard panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -3832,14 +3877,45 @@
     {
       "metadata": {
         "name": "kubernetesAlertingHistorian",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-11-27T16:14:16Z"
+        "resourceVersion": "1787151534124",
+        "creationTimestamp": "2025-11-27T16:14:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 14:58:54.124559 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Adds support for Kubernetes alerting historian APIs",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthInfoApi",
+        "resourceVersion": "1787225285831",
+        "creationTimestamp": "2026-08-20T11:28:05Z"
+      },
+      "spec": {
+        "description": "Enables auth info APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthInfoRedirect",
+        "resourceVersion": "1787225285831",
+        "creationTimestamp": "2026-08-20T11:28:05Z"
+      },
+      "spec": {
+        "description": "Redirects the requests of the auth info service to the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -5757,6 +5833,23 @@
         "description": "Enables render binding support for report rendering",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "reportRenderQueryDebounce",
+        "resourceVersion": "1787159881978",
+        "creationTimestamp": "2026-08-13T20:13:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-19 17:18:01.978063 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "On the report render page, wait for panel queries to settle (including late-registering repeat panel queries) before signaling the image renderer that the dashboard is done. Uses the legacy config-based toggle rather than OpenFeature since the render page authenticates via the image-renderer's signed render key rather than a normal user session, and OpenFeature evaluation isn't verified to work reliably in that context.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

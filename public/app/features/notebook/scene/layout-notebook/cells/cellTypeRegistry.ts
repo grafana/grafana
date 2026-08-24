@@ -1,10 +1,13 @@
-import { type ComponentType } from 'react';
+import { lazy, type ComponentType } from 'react';
 
 import { Registry, type RegistryItem } from '@grafana/data';
 import { type CellContentKind } from 'app/features/notebook/types';
 
-import { CodeCell } from './CodeCell';
 import { MarkdownCell } from './MarkdownCell';
+
+const CodeCell = lazy(() =>
+  import(/* webpackChunkName: "notebook-code-cell" */ './CodeCell').then((m) => ({ default: m.CodeCell }))
+);
 
 export interface CellTypeRegistryItem extends RegistryItem {
   // id matches CellContentKind['kind'] ('Markdown' | 'Code'); each renderer narrows
