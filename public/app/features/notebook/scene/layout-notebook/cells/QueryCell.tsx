@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAsyncFn } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   type AbsoluteTimeRange,
-  type DataQuery,
   type DataSourceInstanceSettings,
   EventBusSrv,
-  getDefaultTimeRange,
   LoadingState,
   type PanelData,
   type SplitOpen,
-  type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { sceneGraph } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, PanelChrome, Stack } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ExploreGraph } from 'app/features/explore/Graph/ExploreGraph';
@@ -23,16 +23,12 @@ import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { PanelQueryRunner } from 'app/features/query/state/PanelQueryRunner';
 import { type ExploreGraphStyle } from 'app/types/explore';
 
+import { type NotebookCellItem } from '../NotebookCellItem';
+
 // A lone graph fills its parent, so it needs a resolved height (not just min-height) or PanelChrome
-// measures 0 and nothing shows — same reasoning as NotebookCellRenderer's PANEL_HEIGHT.
+// measures 0 and nothing shows.
 const GRAPH_HEIGHT = 300;
 
-// Explore's own graph is GraphContainer -> ExploreGraph -> PanelRenderer(pluginId: 'timeseries'),
-// composed here directly (PanelChrome + ExploreGraphLabel + ExploreGraph) rather than through
-// GraphContainer itself: GraphContainer's own graphStyle is private state backed by a single global
-// localStorage key it shares with Explore, with no prop to redirect it anywhere else — dropping one
-// level down is what lets graphStyle live in this cell's own content instead of a global, ungated
-// browser preference.
 const noopSplitOpen: SplitOpen = () => {};
 const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
 
@@ -40,25 +36,23 @@ interface Props {
   content: CellContentKind;
   isEditing: boolean;
   autoFocus?: boolean;
-  /** The notebook's own shared time range — queries run against whatever range the reader has set. */
-  range?: TimeRange;
+  /**
+   * The scene object this content belongs to — a real node in the scene graph, parented under the
+   * notebook's own `$timeRange`. Read directly via `sceneGraph.getTimeRange(cell)` below rather than
+   * threaded down as a plain `TimeRange` prop by components that don't otherwise care about it.
+   */
+  cell: NotebookCellItem;
   onChange: (content: CellContentKind) => void;
 }
 
 /**
  * An ad hoc, Explore-like query: pick a datasource, write a query, run it, see a graph. Unlike a
- * VizPanel, nothing here is a Scene object — running a query is local component state, the same way
- * CodeCell's own editor state is, so a notebook full of these needs no query-runner machinery beyond
- * what this one cell keeps for itself.
+ * VizPanel, nothing here is a Scene object — running a query is local component state,
+ * so a notebook full of these needs no query-runner machinery beyond what this one cell keeps for itself.
  */
-export function QueryCell({ content, isEditing, range, onChange }: Props) {
+export function QueryCell({ content, isEditing, cell, onChange }: Props) {
   const [data, setData] = useState<PanelData>();
-  const [running, setRunning] = useState(false);
-  const [dsSettings, setDsSettings] = useState<DataSourceInstanceSettings>();
-  // Only ever read while `!isEditing` — a reader flipping through Lines/Bars/Points should see it
-  // change immediately (unlike a query edit, which has no visible effect at all while reading), just
-  // without it landing in `content`. Reset to undefined on nothing in particular: going back to edit
-  // mode simply stops consulting this and shows the real persisted value instead.
+
   const [viewGraphStyle, setViewGraphStyle] = useState<ExploreGraphStyle>();
 
   // Scoped to this cell alone, the same way Explore itself scopes a bus per pane
@@ -69,8 +63,6 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
     eventBusRef.current = new EventBusSrv();
   }
 
-  // One runner per mounted cell, not per render — recreating it on every keystroke would drop
-  // whatever `data` its own ReplaySubject was replaying.
   const runnerRef = useRef<PanelQueryRunner | null>(null);
   if (!runnerRef.current) {
     runnerRef.current = new PanelQueryRunner({
@@ -88,18 +80,19 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
   const queryOptions = content.kind === 'Query' ? content.spec.queryOptions : undefined;
   const query = panelQuery ? dataQueryFromPanelQueryKind(panelQuery) : undefined;
   const persistedGraphStyle = content.kind === 'Query' ? content.spec.graphStyle : undefined;
+
   // Edit mode always shows (and writes) the real persisted value; view mode shows a local override
   // once the reader has picked one, falling back to the persisted value (or the default) until they do.
   const graphStyle = isEditing
     ? (persistedGraphStyle ?? DEFAULT_GRAPH_STYLE)
     : (viewGraphStyle ?? persistedGraphStyle ?? DEFAULT_GRAPH_STYLE);
-  const resolvedRange = range ?? getDefaultTimeRange();
+  // sceneGraph.getTimeRange always resolves to a real SceneTimeRange (falling back to a default
+  // internally), so `resolvedRange` is always defined — no local default needed.
+  const { value: resolvedRange } = sceneGraph.getTimeRange(cell).useState();
   const dsRefName = panelQuery?.spec.query.datasource?.name;
-  // Captured at mount, not re-derived each render: a freshly-inserted cell has an empty query spec
-  // (see defaultQueryCellContentKind) and should wait for an explicit Run. A cell that already
-  // carries a saved query should auto-run once dsSettings resolves. Gating on a live `hasQuery`
-  // would also fire on the first keystroke into an empty cell, hitting the datasource with a
-  // still-incomplete query.
+
+  const { settings: dsSettings } = useDataSourceInstanceSettings(dsRefName);
+
   const hadQueryAtMount = useRef(Boolean(panelQuery && Object.keys(panelQuery.spec.query.spec).length > 0));
 
   useEffect(() => {
@@ -109,47 +102,25 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Resolved fresh from `content` rather than trusted as caller-owned state: the persisted query is
-  // the only source of truth for which datasource is selected, the same way CodeCell reads its
-  // language straight from `content.spec` instead of shadowing it. `dsRefName` undefined (an
-  // untouched cell) still resolves — to the org's default datasource, matching how a fresh Explore
-  // pane or dashboard panel starts.
-  useEffect(() => {
-    let cancelled = false;
-    getDataSourceInstanceSettings(dsRefName).then((settings) => {
-      if (!cancelled) {
-        setDsSettings(settings);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [dsRefName]);
-
   // Set inside runQuery rather than only in the auto-run effect, so an explicit Run counts too —
   // otherwise a cell the reader already fetched would still leave stale series under a new axis
   // when they later move the shared picker (see the range-change effect below).
   const hasRun = useRef(false);
 
-  const runQuery = async () => {
+  const [queryState, runQuery] = useAsyncFn(async () => {
     if (!dsSettings || !query) {
       return;
     }
     hasRun.current = true;
-    setRunning(true);
-    try {
-      await runnerRef.current!.run({
-        datasource: { uid: dsSettings.uid, type: dsSettings.type },
-        queries: [query],
-        timezone: 'browser',
-        timeRange: resolvedRange,
-        maxDataPoints: queryOptions?.maxDataPoints ?? 500,
-        minInterval: queryOptions?.interval,
-      });
-    } finally {
-      setRunning(false);
-    }
-  };
+    await runnerRef.current!.run({
+      datasource: { uid: dsSettings.uid, type: dsSettings.type },
+      queries: [query],
+      timezone: 'browser',
+      timeRange: resolvedRange,
+      maxDataPoints: queryOptions?.maxDataPoints ?? 500,
+      minInterval: queryOptions?.interval,
+    });
+  }, [dsSettings, query, resolvedRange, queryOptions]);
 
   // Runs once the notebook (and this cell within it) has loaded, instead of leaving the reader to
   // click Run themselves for a query that was already saved — same reasoning as auto-loading any
@@ -160,21 +131,24 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
       return;
     }
     runQuery();
-    // runQuery is a fresh closure every render (it captures dsSettings/query/etc); depending on it
-    // here would just make this effect re-evaluate every render for no reason, since the ref
-    // guard above — not the dependency array — is what makes this run once.
+    // runQuery's own identity changes on every render too (its useAsyncFn deps include `query`/
+    // `resolvedRange`, both fresh objects each render); depending on it here would just make this
+    // effect re-evaluate every render for no reason, since the ref guard above — not the dependency
+    // array — is what makes this run once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dsSettings]);
 
-  // ExploreGraph's axis follows `range` on every render, so a picker change that does not fetch
-  // again would leave the previous series under the new window. Only after this cell has already
-  // run (auto or explicit) — a freshly-inserted empty cell still waits for Run rather than firing
-  // the first time the reader moves the picker. Keyed off the window's endpoints rather than the
-  // TimeRange object: the layout re-renders with a new object for unrelated scene updates too.
-  // `resolvedRange` is not used here because the fallback (`getDefaultTimeRange()`) is a fresh
-  // `now` every render and would retrigger forever when no shared range was passed.
-  const rangeFromMs = range?.from.valueOf();
-  const rangeToMs = range?.to.valueOf();
+  // ExploreGraph's axis follows `resolvedRange` on every render, so a picker change that does not
+  // fetch again would leave the previous series under the new window. Only after this cell has
+  // already run (auto or explicit) — a freshly-inserted empty cell still waits for Run rather than
+  // firing the first time the reader moves the picker. Keyed off the window's endpoints rather than
+  // the TimeRange object itself: sourcing it via sceneGraph.getTimeRange(cell) above already avoids
+  // most spurious re-renders (Scenes only re-emits when that object's own state actually changes),
+  // but a full notebook rebuild (e.g. the APPLY_NOTEBOOK_SPEC mutation) still swaps in a brand-new
+  // $timeRange instance for edits unrelated to time, which can carry the same evaluated endpoints
+  // under a new object reference.
+  const rangeFromMs = resolvedRange.from.valueOf();
+  const rangeToMs = resolvedRange.to.valueOf();
   const prevRangeFromMs = useRef(rangeFromMs);
   const prevRangeToMs = useRef(rangeToMs);
   useEffect(() => {
@@ -189,9 +163,9 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
   }, [rangeFromMs, rangeToMs]);
 
   // Drag-to-zoom on the graph is Explore's own gesture for changing time range there — this cell
-  // shares the notebook's own range instead (see the `range` prop), so honoring a per-graph zoom
-  // would need to write back up to the notebook's own time picker, not just to local state. Left as
-  // a no-op for now: the drag still selects visually, it just doesn't change anything (yet).
+  // shares the notebook's own range instead (see `resolvedRange` above), so honoring a per-graph
+  // zoom would need to write back up to the notebook's own time picker, not just to local state.
+  // Left as a no-op for now: the drag still selects visually, it just doesn't change anything (yet).
   const onChangeTime = (_absoluteRange: AbsoluteTimeRange) => {};
 
   if (content.kind !== 'Query' || !panelQuery || !query) {
@@ -226,7 +200,7 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
   return (
     <Stack direction="column" gap={1}>
       <Stack justifyContent="flex-end">
-        <Button icon="play" onClick={runQuery} disabled={!dsSettings || running} size="sm">
+        <Button icon="play" onClick={runQuery} disabled={!dsSettings || queryState.loading} size="sm">
           {t('notebook.cell.query.run', 'Run query')}
         </Button>
       </Stack>
@@ -239,25 +213,13 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
           id={query.refId}
           index={0}
           dataSource={dsSettings}
-          // Omitted while reading: QueryEditorRowHeader's own fallback for a missing
-          // onChangeDataSource is a plain read-only "(datasource name)" label instead of the
-          // picker — an existing, sanctioned behavior, not something bolted on here.
           onChangeDataSource={isEditing ? changeDataSource : undefined}
           onChange={changeQuery}
           onRunQuery={runQuery}
           onAddQuery={() => {}}
           onRemoveQuery={() => {}}
           range={resolvedRange}
-          // Duplicate/remove/reorder never do anything meaningful for a cell that only ever has one
-          // query — the notebook cell itself already has its own duplicate/delete. hideActionButtons
-          // is the only lever QueryEditorRow exposes for this, and it also drops the datasource-help
-          // toggle along with them; there's no way to keep just one without reaching past its own
-          // props into its internals.
           hideActionButtons
-          // While reading, only the header (datasource label, refId) should ever show — the actual
-          // query-builder body must not be reachable at all, so there's no chevron to show
-          // (`collapsable`) and the body never mounts (`isOpen`). Editing keeps today's behavior: starts
-          // open and stays freely collapsible.
           collapsable={isEditing}
           isOpen={isEditing}
           hideHideQueryButton
@@ -268,7 +230,7 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
 
       {data?.state === LoadingState.Error && (
         <Alert severity="error" title={t('notebook.cell.query.error', 'Query failed')}>
-          {data.error?.message}
+          {data.errors?.[0]?.message}
         </Alert>
       )}
 
@@ -307,9 +269,8 @@ export function QueryCell({ content, isEditing, range, onChange }: Props) {
 }
 
 /**
- * The plain `DataQuery` QueryEditorRow/PanelQueryRunner speak, out of the k8s-shaped PanelQueryKind
- * the cell persists — the single-query equivalent of dashboard-scene's own
- * panelQueryKindToSceneQuery (public/app/features/dashboard-scene/serialization/layoutSerializers/utils.ts).
+ * The plain `DataQuery` QueryEditorRow/PanelQueryRunner speak, out of the PanelQueryKind
+ * the cell persists
  */
 function dataQueryFromPanelQueryKind(panelQuery: PanelQueryKind): DataQuery {
   const { query, refId, hidden } = panelQuery.spec;
