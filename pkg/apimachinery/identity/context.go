@@ -18,6 +18,7 @@ const provisioningServiceAudience = "provisioning.grafana.app"
 
 type ctxUserKey struct{}
 type metadataIdentityUIDKey struct{}
+type originalIdentityTypeKey struct{}
 type ctxOrgIDKey struct{}
 type innermostServiceIdentityKey struct{}
 
@@ -46,6 +47,22 @@ func WithOriginalIdentityUID(ctx context.Context, uid string) context.Context {
 func MetadataIdentityUIDFrom(ctx context.Context) (string, bool) {
 	uid, ok := ctx.Value(metadataIdentityUIDKey{}).(string)
 	return uid, ok && uid != ""
+}
+
+// WithOriginalIdentityType preserves the original caller's identity type when the context
+// identity is overridden (e.g. by the store wrapper swapping in a service identity). Inner
+// stores that must distinguish the real caller (user vs service) should read it via
+// OriginalIdentityTypeFrom instead of AuthInfoFrom, which reflects the swapped identity.
+func WithOriginalIdentityType(ctx context.Context, typ types.IdentityType) context.Context {
+	return context.WithValue(ctx, originalIdentityTypeKey{}, typ)
+}
+
+// OriginalIdentityTypeFrom returns the original caller identity type preserved by a wrapper,
+// and whether it was present. If not set, the caller should read the live identity type from
+// AuthInfoFrom(ctx).
+func OriginalIdentityTypeFrom(ctx context.Context) (types.IdentityType, bool) {
+	typ, ok := ctx.Value(originalIdentityTypeKey{}).(types.IdentityType)
+	return typ, ok
 }
 
 // WithRequester attaches the requester to the context.

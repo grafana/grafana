@@ -206,8 +206,13 @@ func (w *Wrapper) storeCtx(ctx context.Context) context.Context {
 	}
 
 	srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
-	if user, err := identity.GetRequester(ctx); err == nil && user.GetUID() != "" {
-		srvCtx = identity.WithOriginalIdentityUID(srvCtx, user.GetUID())
+	if user, err := identity.GetRequester(ctx); err == nil {
+		if user.GetUID() != "" {
+			srvCtx = identity.WithOriginalIdentityUID(srvCtx, user.GetUID())
+		}
+		// Preserve the original caller type so inner stores can still tell a real user from a
+		// service after the identity above is swapped for a service identity.
+		srvCtx = identity.WithOriginalIdentityType(srvCtx, user.GetIdentityType())
 	}
 
 	return srvCtx
