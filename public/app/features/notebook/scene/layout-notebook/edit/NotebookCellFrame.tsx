@@ -43,6 +43,17 @@ interface Props {
    * takes the caret, and which one is a fact about the list, not about any cell in it.
    */
   autoFocus?: boolean;
+  /**
+   * A nonce, defined exactly when `autoFocus` is true and bumped on every fresh focus request for this
+   * cell (see NotebookLayoutManagerRenderer's `focusRequest` state) — passed through to MarkdownCell's
+   * useFocusExtension, which explains why a nonce and not a boolean is needed here.
+   */
+  focusRequestId?: number;
+  /**
+   * Where the caret should land on that focus grant, instead of the document's own end — see
+   * MarkdownCell's own `caretOffset` doc comment. Only meaningful together with `focusRequestId`.
+   */
+  caretOffset?: number;
   /** True while any cell in the notebook is being dragged, not only this one. */
   isDragActive?: boolean;
   dropIndicator?: NotebookCellDropIndicator;
@@ -54,6 +65,19 @@ interface Props {
    */
   onDuplicate?: () => void;
   onDelete?: () => void;
+  /**
+   * Enter's "split into a new block" gesture — a genuinely new cell is inserted right after this one
+   * and takes the caret, wherever in the document this cell happens to be. `remainder` is whatever
+   * text sat after the caret (already removed from this cell), for the caller to seed into the new
+   * one. A `marker` argument (`'- '`, or the next number) means Enter was pressed on a non-empty list
+   * item — the caller seeds it ahead of `remainder` so the list continues there.
+   */
+  onAdvance?: (remainder: string, marker?: string) => void;
+  /**
+   * Re-requests the caret for this same cell after something else moved it away without meaning to —
+   * currently just the "/" menu any empty markdown cell offers.
+   */
+  onFocusRequest?: () => void;
 }
 
 /**
@@ -66,11 +90,15 @@ export function NotebookCellFrame({
   index,
   isEditing,
   autoFocus,
+  focusRequestId,
+  caretOffset,
   isDragActive,
   dropIndicator,
   onAdd,
   onDuplicate,
   onDelete,
+  onAdvance,
+  onFocusRequest,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -109,7 +137,15 @@ export function NotebookCellFrame({
             />
           )}
 
-          <NotebookCellRenderer cell={cell} isEditing={Boolean(isEditing)} autoFocus={autoFocus} />
+          <NotebookCellRenderer
+            cell={cell}
+            isEditing={Boolean(isEditing)}
+            autoFocus={autoFocus}
+            focusRequestId={focusRequestId}
+            caretOffset={caretOffset}
+            onAdvance={onAdvance}
+            onFocusRequest={onFocusRequest}
+          />
 
           {/* index + 1: this divider inserts *after* the cell it belongs to. */}
           {isEditing && (
