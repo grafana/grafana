@@ -43,7 +43,6 @@ describe('useNotebookPicker', () => {
   });
 
   it.each([
-    ['created', ['a', 'c', 'b']],
     // Case-insensitive, so 'alpha' is not sorted below every capitalised title.
     ['alphabetical', ['b', 'a', 'c']],
     ['reverse-alphabetical', ['c', 'a', 'b']],

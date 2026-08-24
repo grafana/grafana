@@ -5,7 +5,7 @@ import { type ComboboxOption } from '@grafana/ui';
 
 import { type NotebookRow, useNotebooksList } from '../list/useNotebooksList';
 
-export type NotebookSort = 'updated' | 'created' | 'alphabetical' | 'reverse-alphabetical';
+export type NotebookSort = 'updated' | 'alphabetical' | 'reverse-alphabetical';
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
@@ -26,7 +26,6 @@ export function useNotebookPicker() {
 export function getSortOptions(): Array<ComboboxOption<NotebookSort>> {
   return [
     { value: 'updated', label: t('notebooks.add-panel.sort-updated', 'Recently updated') },
-    { value: 'created', label: t('notebooks.add-panel.sort-created', 'Recently created') },
     { value: 'alphabetical', label: t('notebooks.add-panel.sort-alphabetical', 'Alphabetically (A–Z)') },
     {
       value: 'reverse-alphabetical',
@@ -41,10 +40,9 @@ function compareDescending(a: number, b: number): number {
 }
 
 /**
- * Sorted here rather than by the server: `created` and `updated` are retrieve-only in the search
- * index and a request that sorts on them is rejected. The rows are the whole result set - the hook
- * follows the cursor to the end - so ordering them locally is the same answer, which is what the
- * list page's table does with them too.
+ * Sorted here rather than by the server: `updated` is retrieve-only in the search index and a request
+ * that sorts on it is rejected. The rows are the whole result set - the hook follows the cursor to the
+ * end - so ordering them locally is the same answer, which is what the list page's table does too.
  */
 function sortNotebooks(rows: NotebookRow[], sort: NotebookSort): NotebookRow[] {
   const sorted = [...rows];
@@ -52,8 +50,6 @@ function sortNotebooks(rows: NotebookRow[], sort: NotebookSort): NotebookRow[] {
   switch (sort) {
     case 'updated':
       return sorted.sort((a, b) => compareDescending(a.updated, b.updated));
-    case 'created':
-      return sorted.sort((a, b) => compareDescending(a.created, b.created));
     case 'alphabetical':
       return sorted.sort((a, b) => collator.compare(a.title, b.title));
     case 'reverse-alphabetical':

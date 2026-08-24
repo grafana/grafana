@@ -17,11 +17,16 @@ export function canEditNotebooks(): boolean {
   return contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
 }
 
+/** Creating a notebook is its own action, and the picker offers it as a separate route. */
+export function canCreateNotebooks(): boolean {
+  return contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+}
+
 /**
  * Either permission is enough to open the picker, because it offers two routes: adding to a notebook
  * that already exists needs write, and creating one needs create. The modal hides whichever tab the
  * user cannot use.
  */
 export function canAddPanelToNotebook(): boolean {
-  return canEditNotebooks() || contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+  return canEditNotebooks() || canCreateNotebooks();
 }

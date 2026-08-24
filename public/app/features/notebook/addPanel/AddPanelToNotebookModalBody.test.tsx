@@ -26,6 +26,14 @@ jest.mock('./addPanelToNotebook', () => ({
 
 jest.mock('app/core/services/context_srv');
 
+// The create fields now offer the library's existing tags, which reads a facet off this module. It
+// calls injectEndpoints on the real client as it loads, which nothing here provides.
+jest.mock('../list/notebookSearchApi', () => ({
+  useNotebookFieldFacetQuery: jest.fn(() => ({
+    data: { items: [], facets: { tags: [{ value: 'latency', count: 1 }] } },
+  })),
+}));
+
 jest.mock('app/core/copy/appNotification', () => ({
   ...jest.requireActual('app/core/copy/appNotification'),
   createSuccessNotification: jest.fn(jest.requireActual('app/core/copy/appNotification').createSuccessNotification),
@@ -63,6 +71,8 @@ function setPicker(overrides: Partial<ReturnType<typeof useNotebookPicker>> = {}
     createdByMe: false,
     setCreatedByMe: jest.fn(),
     canFilterByMe: true,
+    tagFilter: [],
+    setTagFilter: jest.fn(),
     sort: 'updated',
     setSort: jest.fn(),
     ...overrides,
@@ -87,6 +97,14 @@ function selectNotebook(title: string) {
   return screen.getByRole('button', { name: title });
 }
 
+/**
+ * The modal opens on "New notebook", matching the add-to-dashboard modal, so anything exercising the
+ * picker has to ask for the other route first.
+ */
+async function chooseExisting(user: ReturnType<typeof render>['user']) {
+  await user.click(screen.getByRole('radio', { name: 'Existing notebook' }));
+}
+
 function renderModal() {
   const buildPanel = jest.fn(async () => panel());
   const onDismiss = jest.fn();
@@ -108,6 +126,7 @@ describe('AddPanelToNotebookModalBody', () => {
   describe('adding to an existing notebook', () => {
     it('cannot be submitted until a notebook is chosen', async () => {
       const { user } = renderModal();
+      await chooseExisting(user);
 
       const submit = screen.getByRole('button', { name: 'Add to notebook' });
       expect(submit).toBeDisabled();
@@ -119,6 +138,7 @@ describe('AddPanelToNotebookModalBody', () => {
 
     it('adds the panel to the chosen notebook and closes', async () => {
       const { user, buildPanel, onDismiss } = renderModal();
+      await chooseExisting(user);
 
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
@@ -132,6 +152,7 @@ describe('AddPanelToNotebookModalBody', () => {
     it('stays open when the write fails, so the choice is not lost', async () => {
       addToExisting.mockRejectedValue(new NotebookConflictError('the object has been modified'));
       const { user, onDismiss } = renderModal();
+      await chooseExisting(user);
 
       await user.click(selectNotebook('Q2 latency regression'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
@@ -145,6 +166,7 @@ describe('AddPanelToNotebookModalBody', () => {
     // submitted to a notebook that is no longer on screen.
     it('cannot be submitted once filtering hides the selected notebook', async () => {
       const { user, rerender } = renderModal();
+      await chooseExisting(user);
 
       await user.click(selectNotebook('Q2 latency regression'));
       expect(screen.getByRole('button', { name: 'Add to notebook' })).toBeEnabled();
@@ -156,9 +178,10 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(addToExisting).not.toHaveBeenCalled();
     });
 
-    it('says the list is partial when the server had more pages', () => {
+    it('says the list is partial when the server had more pages', async () => {
       setPicker({ isTruncated: true });
-      renderModal();
+      const { user } = renderModal();
+      await chooseExisting(user);
 
       expect(screen.getByText(/Not every notebook is shown/)).toBeInTheDocument();
     });
@@ -168,9 +191,10 @@ describe('AddPanelToNotebookModalBody', () => {
      * the rows empty while the request is out. Saying "no notebooks match these filters" then claims a
      * result that has not arrived - which is why the hook reports the two states separately.
      */
-    it('keeps showing a loading state while new filters are in flight', () => {
+    it('keeps showing a loading state while new filters are in flight', async () => {
       setPicker({ rows: [], isLoading: false, isReloading: true, isFiltered: true });
-      renderModal();
+      const { user } = renderModal();
+      await chooseExisting(user);
 
       expect(screen.queryByText(/No notebooks match these filters/)).not.toBeInTheDocument();
       expect(screen.getByTestId('Spinner')).toBeInTheDocument();
@@ -178,14 +202,16 @@ describe('AddPanelToNotebookModalBody', () => {
 
     // Told apart by whether anything is filtering rather than by a total: the server reports no
     // total on the LIST fallback path, so a count cannot answer this everywhere.
-    it('tells an empty library apart from an empty result', () => {
+    it('tells an empty library apart from an empty result', async () => {
       setPicker({ rows: [], isFiltered: false });
-      const { unmount } = renderModal();
+      const first = renderModal();
+      await chooseExisting(first.user);
       expect(screen.getByText(/You have no notebooks yet/)).toBeInTheDocument();
-      unmount();
+      first.unmount();
 
       setPicker({ rows: [], isFiltered: true });
-      renderModal();
+      const second = renderModal();
+      await chooseExisting(second.user);
       expect(screen.getByText(/No notebooks match these filters/)).toBeInTheDocument();
     });
   });
@@ -194,7 +220,6 @@ describe('AddPanelToNotebookModalBody', () => {
     it('will not submit without a name', async () => {
       const { user } = renderModal();
 
-      await user.click(screen.getByRole('tab', { name: 'Create new' }));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       expect(await screen.findByText('A notebook name is required')).toBeInTheDocument();
@@ -206,7 +231,6 @@ describe('AddPanelToNotebookModalBody', () => {
     it('reports success with a link to the new notebook', async () => {
       const { user, onDismiss } = renderModal();
 
-      await user.click(screen.getByRole('tab', { name: 'Create new' }));
       await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
@@ -216,12 +240,36 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(component).toBeDefined();
     });
 
+    // Saving a dashboard refuses a name already in use; a notebook that silently becomes the second
+    // "Checkout latency" is the same confusion, one list further down.
+    it('refuses a name another notebook already has', async () => {
+      const { user } = renderModal();
+
+      // 'Q2 latency regression' is one of the notebooks the picker is holding.
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'Q2 latency regression');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      expect(await screen.findByText('A notebook with this name already exists')).toBeInTheDocument();
+      expect(createWithPanel).not.toHaveBeenCalled();
+    });
+
+    // Two notebooks differing only in case read as the same one in a list, so the check is not
+    // sensitive to it - and neither is the surrounding whitespace, which is trimmed before saving.
+    it('refuses a name that differs only by case or surrounding space', async () => {
+      const { user } = renderModal();
+
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '  q2 LATENCY regression  ');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      expect(await screen.findByText('A notebook with this name already exists')).toBeInTheDocument();
+      expect(createWithPanel).not.toHaveBeenCalled();
+    });
+
     // `required` is satisfied by any non-empty string, and the name is trimmed on the way out, so
     // without validating the trimmed value a notebook could be created titled nothing at all.
     it('will not submit a name that is only whitespace', async () => {
       const { user } = renderModal();
 
-      await user.click(screen.getByRole('tab', { name: 'Create new' }));
       await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '   ');
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
@@ -235,10 +283,9 @@ describe('AddPanelToNotebookModalBody', () => {
     it('writes once even if the form is submitted twice before it re-renders', async () => {
       const { user } = renderModal();
 
-      await user.click(screen.getByRole('tab', { name: 'Create new' }));
       await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
 
-      const form = document.getElementById('add-panel-create-notebook')!;
+      const form = document.getElementById('add-panel-to-notebook')!;
       fireEvent.submit(form);
       fireEvent.submit(form);
 
@@ -248,10 +295,10 @@ describe('AddPanelToNotebookModalBody', () => {
     it('creates the notebook with the panel, description and tags', async () => {
       const { user, onDismiss } = renderModal();
 
-      await user.click(screen.getByRole('tab', { name: 'Create new' }));
       await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '  Checkout latency  ');
       await user.type(screen.getByRole('textbox', { name: /Description/ }), 'Why is checkout slow?');
-      await user.type(screen.getByPlaceholderText('New tag (enter key to add)'), 'latency{enter}');
+      await user.type(screen.getByRole('combobox', { name: /Tags/ }), 'latency');
+      await user.click(await screen.findByRole('option', { name: /latency/ }));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
@@ -267,8 +314,9 @@ describe('AddPanelToNotebookModalBody', () => {
 
   describe('the notebook cards', () => {
     // The design separates the meta line with dots; Card.Meta's own default is a vertical bar.
-    it('separates the meta line with dots rather than bars', () => {
-      renderModal();
+    it('separates the meta line with dots rather than bars', async () => {
+      const { user } = renderModal();
+      await chooseExisting(user);
 
       // Card.Meta renders each separator as its own element, so this is the separator itself rather
       // than a dot that happens to be inside some other text. Two cards, one separator each.
@@ -281,9 +329,10 @@ describe('AddPanelToNotebookModalBody', () => {
      * the card's grid, so they have to come from the row below Meta instead - which is the shape this
      * asserts, rather than the CSS: the tag list must not be inside the element holding the meta line.
      */
-    it('puts the tags on their own line rather than beside the meta', () => {
+    it('puts the tags on their own line rather than beside the meta', async () => {
       setPicker({ rows: [{ ...row('nb1', 'Q2 latency regression'), tags: ['errors', 'checkout'] }] });
-      renderModal();
+      const { user } = renderModal();
+      await chooseExisting(user);
 
       const wrapper = screen.getByText('errors').closest('div');
 
@@ -296,6 +345,36 @@ describe('AddPanelToNotebookModalBody', () => {
       // would sit at the far edge instead of under the meta line they belong to.
       const list = screen.getByRole('list', { name: 'Tags' });
       expect(getComputedStyle(list).justifyContent).toBe('flex-start');
+
+      // The neutral grey the card also opts into is deliberately not asserted here: it is applied
+      // through a `[data-tag-id]` descendant rule, which jsdom does not resolve, so any colour
+      // assertion would pass whether or not the class were applied. What that style does is covered
+      // by tagColors.test.tsx against the same helper this card uses.
+    });
+  });
+
+  describe('the picker list', () => {
+    /**
+     * A card's focus ring sits 2px outside it and extends 4px past that, and the list scrolls, so
+     * something between the card and the scrolling element has to hold that room. ScrollContainer's
+     * own `padding` prop cannot: it lands on an outer Box, while the inner div is the one with
+     * `overflow: auto` — so padding the component insets the whole list and still clips the ring.
+     *
+     * Asserted as a DOM relationship rather than a measurement, because jsdom does no layout and so
+     * cannot be asked whether anything is actually clipped.
+     */
+    it('holds the room for a card focus ring inside the scrolling element, not outside it', async () => {
+      const { user } = renderModal();
+      await chooseExisting(user);
+
+      const card = screen.getByRole('button', { name: 'Q2 latency regression' });
+      const scroller = card.closest('[tabindex="0"]');
+      expect(scroller).not.toBeNull();
+
+      // The scroller's own first child, rather than anything found by walking up from the card: Card
+      // has padding of its own, so a walk reports success before it ever leaves the card.
+      const inner = scroller!.firstElementChild;
+      expect(parseFloat(getComputedStyle(inner!).paddingLeft || '0')).toBeGreaterThan(0);
     });
   });
 
@@ -306,6 +385,7 @@ describe('AddPanelToNotebookModalBody', () => {
       const setCreatedByMe = jest.fn();
       setPicker({ canFilterByMe: true, setCreatedByMe });
       const { user } = renderModal();
+      await chooseExisting(user);
 
       expect(screen.queryByRole('combobox', { name: 'Filter by author' })).not.toBeInTheDocument();
       await user.click(screen.getByRole('checkbox', { name: 'Created by me' }));
@@ -313,19 +393,50 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(setCreatedByMe).toHaveBeenCalledWith(true);
     });
 
+    // Checkbox is shorter than the inputs beside it, so centring the row is not enough on its own -
+    // it has to be given their height to land on the same centre line. Asserted on the declared
+    // height rather than a measurement, since jsdom does no layout.
+    it('sits the created-by-me toggle at the height of the controls beside it', async () => {
+      const { user } = renderModal();
+      await chooseExisting(user);
+
+      // The parent of Checkbox's own root label: it has an inner div of its own, so `closest('div')`
+      // would stop inside the component rather than reaching the wrapper this styles.
+      const wrapper = screen.getByRole('checkbox', { name: 'Created by me' }).closest('label')?.parentElement;
+
+      // theme.spacing(theme.components.height.md) — the height of the inputs it shares the row with.
+      expect(getComputedStyle(wrapper!).minHeight).toBe('32px');
+    });
+
+    // Server-side, through the same query the search box uses - the picker does not narrow the rows
+    // it was handed.
+    it('reports a chosen tag to the filter rather than filtering locally', async () => {
+      const setTagFilter = jest.fn();
+      setPicker({ setTagFilter });
+      const { user } = renderModal();
+      await chooseExisting(user);
+
+      await user.click(screen.getByRole('combobox', { name: 'Filter by tag' }));
+      await user.click(await screen.findByRole('option', { name: 'latency' }));
+
+      expect(setTagFilter).toHaveBeenCalledWith(['latency']);
+    });
+
     // Nothing to mean without an identity, so the control is not offered at all.
-    it('hides the toggle when there is no current user to filter by', () => {
+    it('hides the toggle when there is no current user to filter by', async () => {
       setPicker({ canFilterByMe: false });
-      renderModal();
+      const { user } = renderModal();
+      await chooseExisting(user);
 
       expect(screen.queryByRole('checkbox', { name: 'Created by me' })).not.toBeInTheDocument();
     });
   });
 
   describe('an empty library', () => {
-    it('suggests creating one when the reader could', () => {
+    it('suggests creating one when the reader could', async () => {
       setPicker({ rows: [], isFiltered: false });
-      renderModal();
+      const { user } = renderModal();
+      await chooseExisting(user);
 
       expect(screen.getByText(/Create one instead/)).toBeInTheDocument();
     });
@@ -343,19 +454,31 @@ describe('AddPanelToNotebookModalBody', () => {
   });
 
   describe('permissions', () => {
-    it('hides the create tab without permission to create', () => {
+    // With one route open there is nothing to choose, so the control is not offered at all rather
+    // than offered with a single option in it.
+    it('drops the chooser and goes straight to the picker for a user who can only add to existing', () => {
       grant([AccessControlAction.DashboardsWrite]);
       renderModal();
 
-      expect(screen.getByRole('tab', { name: 'Add to existing' })).toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: 'Create new' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: 'New notebook' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: 'Existing notebook' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Q2 latency regression' })).toBeInTheDocument();
     });
 
-    it('opens on the create tab when the user can only create', () => {
+    it('drops it the other way for a user who can only create', () => {
       grant([AccessControlAction.DashboardsCreate]);
       renderModal();
 
-      expect(screen.queryByRole('tab', { name: 'Add to existing' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: 'Existing notebook' })).not.toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Notebook name/ })).toBeInTheDocument();
+    });
+
+    // Both routes open: the chooser appears, and it opens on New the way the add-to-dashboard modal
+    // does rather than on the picker.
+    it('opens on a new notebook when both routes are available', () => {
+      renderModal();
+
+      expect(screen.getByRole('radio', { name: 'New notebook' })).toBeChecked();
       expect(screen.getByRole('textbox', { name: /Notebook name/ })).toBeInTheDocument();
     });
   });

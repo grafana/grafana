@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, locationService } from '@grafana/runtime';
-import { getFeatureFlagClient, setGetObservablePluginLinks } from '@grafana/runtime/internal';
+import { FlagKeys, setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
   SceneQueryRunner,
@@ -22,6 +22,7 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
@@ -53,11 +54,6 @@ jest.mock('app/core/utils/explore', () => ({
 }));
 
 jest.mock('app/core/services/context_srv');
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  getFeatureFlagClient: jest.fn(() => ({ getBooleanValue: () => false })),
-}));
 
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
@@ -1133,12 +1129,12 @@ describe('panelMenuBehavior', () => {
 
   describe('choose notebook', () => {
     afterEach(() => {
-      setFeatureFlags(false);
+      setTestFlags({});
       mocks.contextSrv.hasPermission.mockReset();
     });
 
     async function itemsWith({ notebooks, permission }: { notebooks: boolean; permission: boolean }) {
-      setFeatureFlags(notebooks);
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: notebooks });
       mocks.contextSrv.hasPermission.mockReturnValue(permission);
 
       const { menu, panel } = await buildTestScene({});
@@ -1174,7 +1170,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it('sits in its own section immediately above Remove while editing', async () => {
-      setFeatureFlags(true);
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
       mocks.contextSrv.hasPermission.mockReturnValue(true);
 
       const { scene, menu, panel } = await buildTestScene({});
@@ -1192,14 +1188,6 @@ describe('panelMenuBehavior', () => {
 
 interface SceneOptions {
   isEmbedded?: boolean;
-}
-
-/** Only getBooleanValue is read, and every flag the menu asks about is answered the same way. */
-function setFeatureFlags(enabled: boolean) {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial flag client is all the menu uses
-  jest
-    .mocked(getFeatureFlagClient)
-    .mockReturnValue({ getBooleanValue: () => enabled } as unknown as ReturnType<typeof getFeatureFlagClient>);
 }
 
 async function buildTestScene(options: SceneOptions) {

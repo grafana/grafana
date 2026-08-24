@@ -1,10 +1,11 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
-import { dateTimeFormatTimeAgo } from '@grafana/data';
+import { dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Card, TagList, useStyles2 } from '@grafana/ui';
 
 import { type NotebookRow } from '../list/useNotebooksList';
+import { getNeutralTagListStyle } from '../tagColors';
 
 interface Props {
   notebook: NotebookRow;
@@ -40,8 +41,10 @@ export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
   );
 }
 
-const getStyles = () => ({
-  tagList: css({ justifyContent: 'flex-start' }),
+const getStyles = (theme: GrafanaTheme2) => ({
+  // The same neutral grey the list table and the document header use, rather than TagList's own
+  // per-tag colours: a tag is context here, not something to pick out of the card.
+  tagList: cx(getNeutralTagListStyle(theme), css({ justifyContent: 'flex-start' })),
   card: css({
     // The card's own selected styling already shows which notebook is chosen, so the radio it
     // renders alongside the title is redundant to look at. Hidden the same way as the global

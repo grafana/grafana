@@ -1,15 +1,11 @@
 import { PluginExtensionPoints } from '@grafana/data';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getExploreExtensionConfigs } from './getExploreExtensionConfigs';
 
 jest.mock('app/core/services/context_srv');
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  getFeatureFlagClient: jest.fn(),
-}));
 
 const contextSrvMock = jest.mocked(contextSrv);
 
@@ -55,7 +51,7 @@ describe('getExploreExtensionConfigs', () => {
   describe('configure function for "add to notebook" extension', () => {
     afterEach(() => {
       contextSrvMock.hasPermission.mockRestore();
-      jest.mocked(getFeatureFlagClient).mockReset();
+      setTestFlags({});
     });
 
     function notebookExtension() {
@@ -63,10 +59,7 @@ describe('getExploreExtensionConfigs', () => {
     }
 
     function setNotebooksEnabled(enabled: boolean) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only getBooleanValue is read
-      jest
-        .mocked(getFeatureFlagClient)
-        .mockReturnValue({ getBooleanValue: () => enabled } as unknown as ReturnType<typeof getFeatureFlagClient>);
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: enabled });
     }
 
     it('is hidden when notebooks are disabled, even with permission', () => {
