@@ -83,6 +83,10 @@ export const ThemeComponentsInputSchema = z
       link: z.string().optional(),
       invalid: z.string().optional(),
     }),
+    card: z.object({
+      background: z.string().optional(),
+      borderColor: z.string().optional(),
+    }),
     checkbox: z.object({
       activeBackground: z.string().optional(),
       activeBackgroundHover: z.string().optional(),
@@ -198,6 +202,10 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       heading: colors.primary.text,
       link: colors.text.link,
       invalid: colors.error.text,
+    },
+    card: {
+      background: colors.background.secondary,
+      borderColor: 'transparent',
     },
     checkbox: {
       activeBackground: colors.accent.main,
