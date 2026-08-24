@@ -195,7 +195,10 @@ func TestGetParents(t *testing.T) {
 			OrgID: orgID,
 		})
 
-		require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+		// The not-found error must be the canonical folder.ErrFolderNotFound so
+		// scope resolvers and API handlers can recognize it and respond with a
+		// 404 instead of an internal error.
+		require.ErrorIs(t, err, folder.ErrFolderNotFound)
 	})
 }
 

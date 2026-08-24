@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -196,18 +197,25 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 
 	parentUID := q.UID
 	for parentUID != "" {
-		folder, err := ss.Get(ctx, folder.GetFolderQuery{UID: &parentUID, OrgID: q.OrgID})
+		f, err := ss.Get(ctx, folder.GetFolderQuery{UID: &parentUID, OrgID: q.OrgID})
 		if err != nil {
 			if apierrors.IsForbidden(err) {
 				// If we get a Forbidden error when requesting the parent folder, it means the user does not have access
 				// to it, nor its parents. So we can stop looping
 				break
 			}
+			// ss.Get surfaces a missing folder as dashboards.ErrFolderNotFound,
+			// which scope resolvers cannot recognize as "not found" and would
+			// otherwise turn into an internal error; normalize it so callers
+			// see the canonical not-found error.
+			if errors.Is(err, dashboards.ErrFolderNotFound) {
+				return nil, folder.ErrFolderNotFound
+			}
 			return nil, err
 		}
 
-		parentUID = folder.ParentUID
-		hits = append(hits, folder)
+		parentUID = f.ParentUID
+		hits = append(hits, f)
 	}
 
 	if len(hits) == 0 {
