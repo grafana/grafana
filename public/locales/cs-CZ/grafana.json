@@ -7146,6 +7146,9 @@
       "name-json-values": "JSON",
       "selection-options": "Možnosti výběru"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Zpět na seznam",
       "label-icon": "Ikona",
@@ -7929,9 +7932,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Na tuto proměnnou odkazují jiné proměnné nebo nástěnka.",
       "content-variable-not-referenced-other-variables-dashboard": "Na tuto proměnnou neodkazují jiné proměnné nebo nástěnka.",
       "content-variable-referenced-other-variables-dashboard": "Na tuto proměnnou odkazují jiné proměnné nebo nástěnka."
-    },
-    "variable-controls": {
-      "add-variable": "Přidat proměnnou"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -9271,6 +9271,7 @@
     "json": {
       "cancel-button": "Zrušit",
       "copy-button": "Kopírovat do schránky",
+      "dashboard-definition": "",
       "download-button": "Stáhnout soubor",
       "download-successful_toast_message": "JSON byl stažen",
       "export-format": "Formát",
@@ -13896,7 +13897,8 @@
       "open-pull-request-in-repo": "Otevřít žádost o stažení v úložišti {{repoType}}",
       "update-from-branch": "Zbytek uživatelů Grafany ve vaší organizaci i nadále uvidí aktuální verzi, dokud nebude tato větev sloučena",
       "view-in-repo-button": "Zobrazte si ji v úložišti {{repoType}}, kde uvidíte nejnovější změny.",
-      "view-pull-request-in-repo": "Zobrazit žádost o stažení v úložišti {{repoType}}"
+      "view-pull-request-in-repo": "Zobrazit žádost o stažení v úložišti {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "Ve větvi úložiště {{repoType}} byl vytvořen nový zdroj.",
     "title-deleted-resource-in-branch": "Ve větvi úložiště {{repoType}} byl odstraněn zdroj.",

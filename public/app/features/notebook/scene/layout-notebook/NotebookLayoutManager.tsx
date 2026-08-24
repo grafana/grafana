@@ -274,12 +274,28 @@ export class NotebookLayoutManager
    * Converts `cell`'s content to `type` in place — the trailing-slot markdown cell's "/" menu (see
    * NotebookCellRenderer) uses this rather than inserting a separate new cell the way the add-block
    * menu does, since the cell picking from that menu already exists and is already empty.
+   *
+   * Paragraph's starter content is already empty markdown, the same shape an unclaimed trailing
+   * slot has. setCellContent treats that as a no-op, so without the check below the slot would
+   * never be claimed and no replacement would appear — unlike Heading ("# ") or Code, whose
+   * starter content actually differs. The "/" menu does not hit this: typing "/" has already
+   * claimed the slot before convertCell runs.
    */
   public convertCell(cell: NotebookCellItem, type: NotebookBlockType): void {
     const content = contentForBlockType(type);
-    if (content) {
-      this.setCellContent(cell, content);
+    if (!content) {
+      return;
     }
+
+    if (isEqual(cell.state.content, content)) {
+      const index = this.state.cells.indexOf(cell);
+      if (index !== -1 && index === this.state.cells.length - 1 && isEmptyMarkdown(content)) {
+        this.appendSystemCell(this.state.cells.length);
+      }
+      return;
+    }
+
+    this.setCellContent(cell, content);
   }
 
   /**
@@ -338,13 +354,14 @@ export class NotebookLayoutManager
       return undefined;
     }
 
-    // Appending past the current last cell while it's still the empty invariant slot: convert it in
-    // place, the same path its own "/" menu already uses, rather than stranding it mid-document next
-    // to a second, freshly built cell once the invariant appends its replacement.
+    // The divider below the trailing empty slot offers index === cells.length. Inserting *after*
+    // that slot would leave it stranded mid-document once the invariant appends a replacement after
+    // the new block. Inserting *before* it keeps the empty cell at the tail, and still goes through
+    // executeEdit as "Add block" — convertCell would skip the undo stack for Paragraph (identical
+    // empty markdown, so only appendSystemCell ran) and record Heading/Code as "Edit block".
     const trailing = this.state.cells.at(-1);
     if (index >= this.state.cells.length && trailing && isEmptyMarkdown(trailing.state.content)) {
-      this.convertCell(trailing, type);
-      return trailing;
+      index = this.state.cells.length - 1;
     }
 
     const built = this.buildCellFor(type, index);

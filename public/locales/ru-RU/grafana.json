@@ -7146,6 +7146,9 @@
       "name-json-values": "JSON",
       "selection-options": "Параметры выбора"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Назад к списку",
       "label-icon": "Значок",
@@ -7929,9 +7932,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд",
       "content-variable-not-referenced-other-variables-dashboard": "На эту переменную не ссылается ни одна другая переменная или дашборд.",
       "content-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд."
-    },
-    "variable-controls": {
-      "add-variable": "Добавить переменную"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -9271,6 +9271,7 @@
     "json": {
       "cancel-button": "Отмена",
       "copy-button": "Копировать в буфер обмена",
+      "dashboard-definition": "",
       "download-button": "Загрузить файл",
       "download-successful_toast_message": "JSON-файл загружен",
       "export-format": "Формат",
@@ -13896,7 +13897,8 @@
       "open-pull-request-in-repo": "Открыть запрос на включение изменений в {{repoType}}",
       "update-from-branch": "Остальные пользователи Grafana в вашей организации будут видеть текущую версию до тех пор, пока эта ветвь не будет объединена",
       "view-in-repo-button": "Просмотрите его в {{repoType}}, чтобы увидеть последние изменения.",
-      "view-pull-request-in-repo": "Просмотреть запрос на включение изменений в {{repoType}}"
+      "view-pull-request-in-repo": "Просмотреть запрос на включение изменений в {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "В ветви в {{repoType}} создан новый ресурс.",
     "title-deleted-resource-in-branch": "В ветви репозитория {{repoType}} удален ресурс.",
