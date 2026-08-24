@@ -359,26 +359,10 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
 }
 
 /**
- * Single-entry cache for {@link getComparisonFieldPairs}.
- */
-let cachedPairs: { alignedFrame: DataFrame; allFrames: DataFrame[]; pairs: Map<number, number> } | undefined;
-
-/**
  * Bidirectional pairing between a time-comparison series and its current-period counterpart, keyed
- * by index into `alignedFrame.fields`. Memoized on the identity of its inputs.
+ * by index into `alignedFrame.fields`.
  */
 export function getComparisonFieldPairs(alignedFrame: DataFrame, allFrames: DataFrame[]): Map<number, number> {
-  if (cachedPairs?.alignedFrame === alignedFrame && cachedPairs.allFrames === allFrames) {
-    return cachedPairs.pairs;
-  }
-
-  const pairs = computeComparisonFieldPairs(alignedFrame, allFrames);
-  cachedPairs = { alignedFrame, allFrames, pairs };
-
-  return pairs;
-}
-
-function computeComparisonFieldPairs(alignedFrame: DataFrame, allFrames: DataFrame[]): Map<number, number> {
   const pairs = new Map<number, number>();
   const bySeriesIndex = new Map<number, number[]>();
 

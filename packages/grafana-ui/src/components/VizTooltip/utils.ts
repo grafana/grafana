@@ -143,6 +143,7 @@ export const getTooltipDisplayValue = (
  * @param fieldFilter - Optional predicate to exclude specific fields. Defaults to including all fields.
  * @param hideZeros - When `true`, rows whose value is exactly `0` are omitted. Defaults to `false`.
  * @param extraFields - Additional fields appended after the main rows as supplementary context (e.g. fields not shown in the visualization). These rows have `isHiddenFromViz: true` and are not sorted.
+ * @param compareFieldIdx - Index of the field paired with the hovered series (its time-comparison counterpart). That row is annotated with a `delta` from the hovered series.
  */
 export const getFieldDisplayItems = (
   fields: Field[],
@@ -151,7 +152,7 @@ export const getFieldDisplayItems = (
   seriesIdx: number | null | undefined,
   mode: TooltipDisplayMode,
   sortOrder: SortOrder,
-  fieldFilter = (field: Field, i?: number) => true,
+  fieldFilter = (field: Field, i: number) => true,
   hideZeros = false,
   extraFields?: Field[],
   compareFieldIdx?: number
@@ -208,26 +209,16 @@ export const getFieldDisplayItems = (
 
     let delta: VizTooltipDelta | undefined;
 
-    if (
-      compareFieldIdx != null &&
-      seriesIdx != null &&
-      dataIdxs[compareFieldIdx] != null &&
-      dataIdxs[seriesIdx] != null &&
-      i === compareFieldIdx
-    ) {
-      const compData = fields[compareFieldIdx].values[dataIdxs[compareFieldIdx]];
-      const normalData = fields[seriesIdx].values[dataIdxs[seriesIdx]];
-      // only show a delta if both values exist
-      if (compData != null && normalData != null) {
-        let diffVal;
-        if (seriesIdx === compareFieldIdx) {
-          diffVal = getTooltipDisplayValue(normalData - compData, field);
-        } else {
-          diffVal = getTooltipDisplayValue(compData - normalData, field);
-        }
+    // the paired row carries the difference from the hovered series, which is its baseline
+    if (i === compareFieldIdx && seriesIdx != null) {
+      const hoveredIdx = dataIdxs[seriesIdx];
+      const hoveredVal = hoveredIdx == null ? null : fields[seriesIdx].values[hoveredIdx];
 
+      // only show a delta if both values exist
+      if (v != null && hoveredVal != null) {
         // text comes from the field's display processor, so it keeps the field's unit and decimals
-        delta = { text: diffVal.text, numeric: diffVal.numeric };
+        const { text, numeric } = getTooltipDisplayValue(v - hoveredVal, field);
+        delta = { text, numeric };
       }
     }
 
