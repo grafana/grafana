@@ -1,5 +1,6 @@
 import {
   DataQueryErrorType,
+  DataTopic,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
@@ -852,18 +853,17 @@ describe('Panel mutation commands', () => {
       expect(result.success).toBe(true);
       const body = scene.state.body as unknown as DefaultGridLayoutManager;
       const dataProvider = body.getVizPanels()[0].state.$data;
-      expect(dataProvider).toBeDefined();
-      if (dataProvider && 'state' in dataProvider) {
-        const transformerState = dataProvider.state as { transformations?: Array<Record<string, unknown>> };
-        expect(transformerState.transformations).toBeDefined();
-        expect(transformerState.transformations![0]).toMatchObject({
-          id: 'limit',
-          disabled: false,
-          filter: { id: 'byName', options: 'temperature' },
-          topic: 'series',
-          options: { limitField: 10 },
-        });
-      }
+      // The command only writes transformations to a `SceneDataTransformer`, so anything else here
+      // means it silently skipped the update. Asserted rather than guarded: a conditional read lets
+      // that failure mode pass as a green test.
+      expect(dataProvider).toBeInstanceOf(SceneDataTransformer);
+      expect((dataProvider as SceneDataTransformer).state.transformations[0]).toMatchObject({
+        id: 'limit',
+        disabled: false,
+        filter: { id: 'byName', options: 'temperature' },
+        topic: DataTopic.Series,
+        options: { limitField: 10 },
+      });
     });
 
     it('updates panel description', async () => {
