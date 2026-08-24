@@ -476,6 +476,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "External Alertmanagers",
+      "external-alertmanagers-group-plugin": "External Alertmanagers (opens in Prometheus Alerting)",
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
@@ -2652,6 +2653,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "Data source managed alerting is handled by the Prometheus Alerting plugin.",
+      "redirected-title": "Opened in the Prometheus Alerting plugin",
       "text-loading": "Loading…"
     },
     "query-and-expressions-step": {
@@ -2955,6 +2958,15 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "datasource-managed-notice": {
+        "action": "View rules in Prometheus Alerting",
+        "body": "Their alert and recording rules are no longer shown here.",
+        "inline_one": "{{count}} data source is managed by the Prometheus Alerting plugin",
+        "inline_other": "{{count}} data sources are managed by the Prometheus Alerting plugin",
+        "inline-action": "View",
+        "title_one": "{{count}} data source is managed by the Prometheus Alerting plugin",
+        "title_other": "{{count}} data sources are managed by the Prometheus Alerting plugin"
+      },
       "ds-error": {
         "title": "Cannot load rules for this datasource"
       },
@@ -2975,7 +2987,8 @@
         "no-more-results": "No more results – found {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters.",
         "results-loading": "Searching – found {{numberOfRules}} rules",
-        "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules"
+        "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules",
+        "search-in-plugin": "Search data source managed rules in Prometheus Alerting"
       },
       "import-disabled-tooltip": {
         "auto-sync": "Imports are unavailable while Mimir Alertmanager auto-sync is active"

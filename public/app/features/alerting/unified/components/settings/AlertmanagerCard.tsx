@@ -20,7 +20,8 @@ interface Props {
   receiving?: boolean;
   status?: ConnectionStatus;
   // functions
-  onEditConfiguration: () => void;
+  /** Leave this out to drop the view/edit configuration button entirely. */
+  onEditConfiguration?: () => void;
   onDisable?: () => void;
   onEnable?: () => void;
 }
@@ -121,13 +122,15 @@ export function AlertmanagerCard({
       <Card.Tags>
         <Stack direction="row" gap={1}>
           {/* ⚠️ provisioned Data sources cannot have their "enable" / "disable" actions but we should still allow editing of the configuration */}
-          <Button onClick={onEditConfiguration} icon={readOnly ? 'eye' : 'edit'} variant="secondary" fill="outline">
-            {readOnly ? (
-              <Trans i18nKey="alerting.alertmanager-card.view-configuration">View configuration</Trans>
-            ) : (
-              <Trans i18nKey="alerting.alertmanager-card.edit-configuration">Edit configuration</Trans>
-            )}
-          </Button>
+          {onEditConfiguration && (
+            <Button onClick={onEditConfiguration} icon={readOnly ? 'eye' : 'edit'} variant="secondary" fill="outline">
+              {readOnly ? (
+                <Trans i18nKey="alerting.alertmanager-card.view-configuration">View configuration</Trans>
+              ) : (
+                <Trans i18nKey="alerting.alertmanager-card.edit-configuration">Edit configuration</Trans>
+              )}
+            </Button>
+          )}
           {showActions ? (
             <>
               {receiving ? (

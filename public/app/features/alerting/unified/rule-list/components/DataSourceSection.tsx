@@ -23,6 +23,8 @@ export interface DataSourceSectionProps extends PropsWithChildren {
   isLoading?: boolean;
   description?: ReactNode;
   error?: unknown;
+  /** Extra content for the right hand side of the header row, before the "Configure" link. */
+  actions?: ReactNode;
 }
 
 export const DataSourceSection = ({
@@ -34,6 +36,7 @@ export const DataSourceSection = ({
   error,
   isLoading = false,
   description = null,
+  actions = null,
 }: DataSourceSectionProps) => {
   const [isCollapsed, toggleCollapsed] = useToggle(false);
   const styles = useStyles2((theme) => getStyles(theme, isCollapsed));
@@ -75,6 +78,8 @@ export const DataSourceSection = ({
                 )}
 
                 <Spacer />
+
+                {actions}
 
                 {Boolean(error) && (
                   <Toggletip
