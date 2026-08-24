@@ -25,6 +25,7 @@ import {
 } from './QueryCoauthoringViews';
 import {
   buildAssistantHandoffContext,
+  buildAssistantHandoffInstructions,
   buildAssistantHandoffPrompt,
   buildCoauthoringSystemPrompt,
   buildIdentificationPrompt,
@@ -32,7 +33,7 @@ import {
   buildInvalidProposalRepairMessage,
   buildProposalToolDescription,
   invalidQueryResponseMessage,
-  MAX_INLINE_CLARIFICATION_LENGTH,
+  MAX_INLINE_CLARIFICATION_RESPONSE_LENGTH,
   multipleResponsesMessage,
   normalizeClarificationMessage,
   normalizeSelectionExplanation,
@@ -65,11 +66,12 @@ interface Props {
   onPreview: (query: DataQuery) => boolean;
   onRevertPreview: () => void;
   isPreviewRunning?: boolean;
-  showIterationNudge?: boolean;
   timeRange?: { from: number; to: number };
 }
 
 const VIEWPORT_MARGIN = 8;
+const ITERATION_NUDGE_THRESHOLD = 3;
+const PROMPT_MESSAGE_ID = 'query-coauthoring-prompt-message';
 
 export function QueryCoauthoring({
   controller,
@@ -78,7 +80,6 @@ export function QueryCoauthoring({
   onPreview,
   onRevertPreview,
   isPreviewRunning = false,
-  showIterationNudge = false,
   timeRange,
 }: Props) {
   const {
@@ -103,16 +104,19 @@ export function QueryCoauthoring({
   const [clarification, setClarification] = useState<QueryClarification>();
   const [error, setError] = useState<string>();
   const [feedback, setFeedback] = useState<QueryCoauthoringFeedbackState>();
+  const [submittedIterationCount, setSubmittedIterationCount] = useState(0);
   const [iterationNudgeDismissed, setIterationNudgeDismissed] = useState(false);
   const [availableHeight, setAvailableHeight] = useState<number>();
   const generationIdRef = useRef(0);
   const identificationIdRef = useRef(0);
   const contextPromiseRef = useRef<Promise<QueryEditorCoauthoringContextV1> | undefined>(undefined);
-  const lastSubmittedIntentRef = useRef('');
+  const submittedIntentsRef = useRef<string[]>([]);
+  const promptUserGestureRef = useRef(false);
   const previewActiveRef = useRef(false);
   const onRevertPreviewRef = useRef(onRevertPreview);
   const timeRangeFrom = timeRange?.from;
   const timeRangeTo = timeRange?.to;
+  const showIterationNudge = submittedIterationCount >= ITERATION_NUDGE_THRESHOLD;
   onRevertPreviewRef.current = onRevertPreview;
 
   const revertQueryPreview = useCallback(() => {
@@ -141,9 +145,11 @@ export function QueryCoauthoring({
     setClarification(undefined);
     setError(undefined);
     setFeedback(undefined);
+    setSubmittedIterationCount(0);
     setIterationNudgeDismissed(false);
     contextPromiseRef.current = undefined;
-    lastSubmittedIntentRef.current = '';
+    submittedIntentsRef.current = [];
+    promptUserGestureRef.current = false;
   }, [cancel, cancelIdentification, controller, reset, resetIdentification, revertQueryPreview]);
 
   const closeFeedback = useCallback(() => {
@@ -311,8 +317,6 @@ export function QueryCoauthoring({
     if (!trimmedIntent || isGenerating || !isAssistantAvailable) {
       return;
     }
-    lastSubmittedIntentRef.current = trimmedIntent;
-
     identificationIdRef.current++;
     cancelIdentification();
 
@@ -331,6 +335,11 @@ export function QueryCoauthoring({
       );
       return;
     }
+
+    submittedIntentsRef.current.push(trimmedIntent);
+    promptUserGestureRef.current = false;
+
+    setSubmittedIterationCount((count) => count + 1);
 
     const generationId = ++generationIdRef.current;
     let submittedProposal: QueryProposal | undefined;
@@ -396,7 +405,7 @@ export function QueryCoauthoring({
       {
         name: 'request_assistant_handoff',
         description:
-          'Use this instead of a proposal when the request requires inspecting or querying live data, capabilities beyond this query editor, other queries, data sources, or panel changes.',
+          'Use this only when the requested change necessarily requires capabilities beyond this query editor, other queries, data sources, or panel changes, or the user explicitly asks to inspect live data. Keep ambiguous changes to the current query inline by asking one concise clarification question.',
         inputSchema: {
           type: 'object',
           additionalProperties: false,
@@ -435,7 +444,7 @@ export function QueryCoauthoring({
         if (acceptedTerminalToolCallCount === 0) {
           const message = normalizeClarificationMessage(completionText);
           if (message) {
-            if (message.length > MAX_INLINE_CLARIFICATION_LENGTH) {
+            if (message.length > MAX_INLINE_CLARIFICATION_RESPONSE_LENGTH) {
               setFallback({ reason: message.slice(0, 500), context: submittedContext });
             } else {
               setIntent('');
@@ -516,16 +525,29 @@ export function QueryCoauthoring({
     if (!activeContext || !openAvailableAssistant) {
       return;
     }
+    const intentHistory = [...submittedIntentsRef.current];
+    const pendingIntent = intent.trim();
+    if (pendingIntent && pendingIntent !== intentHistory.at(-1)) {
+      intentHistory.push(pendingIntent);
+    }
+    const originalIntent = intentHistory[0] ?? '';
+    const latestIntent = intentHistory.at(-1) ?? '';
     openAvailableAssistant({
       origin: 'grafana/panel-edit-next/query-coauthoring',
       mode: 'dashboarding',
       autoSend: false,
-      prompt: buildAssistantHandoffPrompt(lastSubmittedIntentRef.current || intent, activeContext),
+      prompt: buildAssistantHandoffPrompt(originalIntent, latestIntent, activeContext),
       context: [
         createAssistantContextItem('structured', {
-          hidden: true,
+          hidden: false,
           title: t('query-editor-coauthoring.assistant-context-title', 'Query coauthoring context'),
-          data: buildAssistantHandoffContext(activeContext, datasourceType, timeRange, proposal, reason),
+          data: buildAssistantHandoffContext(activeContext, datasourceType, timeRange, proposal, reason, intentHistory),
+        }),
+        createAssistantContextItem('structured', {
+          hidden: true,
+          bypassLimits: true,
+          title: t('query-editor-coauthoring.assistant-instructions-title', 'Query coauthoring instructions'),
+          data: buildAssistantHandoffInstructions(),
         }),
       ],
     });
@@ -627,7 +649,7 @@ export function QueryCoauthoring({
                     : t('query-editor-coauthoring.highlighted-query-summary', 'Highlighted query summary')
                 }
               >
-                <Text variant="body">
+                <Text id={PROMPT_MESSAGE_ID} variant="body">
                   {clarification?.message ?? selectionExplanation ?? selectionSummary(context)}
                 </Text>
               </div>
@@ -643,6 +665,11 @@ export function QueryCoauthoring({
         (!showIterationNudge || iterationNudgeDismissed || !context) && (
           <>
             <QueryCoauthoringPromptInput
+              key={clarification ? `clarification-${submittedIterationCount}` : 'initial'}
+              focusTrigger={`${clarification ? `clarification-${submittedIterationCount}` : 'initial'}-${
+                selectionExplanation ? 'identified' : 'reading'
+              }`}
+              userGestureRef={promptUserGestureRef}
               value={intent}
               placeholder={
                 clarification
@@ -654,6 +681,7 @@ export function QueryCoauthoring({
                   ? t('query-editor-coauthoring.clarification-label', 'Add extra detail')
                   : t('query-editor-coauthoring.prompt-label', 'Describe a query change')
               }
+              ariaDescribedBy={context && !isIdentifying ? PROMPT_MESSAGE_ID : undefined}
               actionLabel={
                 clarification
                   ? t('query-editor-coauthoring.continue', 'Continue')

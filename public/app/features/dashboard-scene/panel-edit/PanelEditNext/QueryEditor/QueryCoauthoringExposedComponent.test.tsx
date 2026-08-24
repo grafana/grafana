@@ -1,26 +1,40 @@
-import { render, waitFor, within } from '@testing-library/react';
+import { act, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type QueryEditorCoauthoringContextV1, type QueryEditorCoauthoringControllerV1 } from '@grafana/data';
+import {
+  type QueryEditorCoauthoringContextV1,
+  type QueryEditorCoauthoringControllerV1,
+  type QueryEditorCoauthoringSnapshotV1,
+} from '@grafana/data';
 
 import { QueryCoauthoringExposedComponent } from './QueryCoauthoringExposedComponent';
 import { QueryCoauthoringHostProvider } from './QueryCoauthoringHostContext';
 
+const mockGenerate = jest.fn().mockResolvedValue(undefined);
+const mockCancel = jest.fn();
+const mockReset = jest.fn();
+let mockAssistantAvailable = false;
+
 jest.mock('@grafana/assistant', () => ({
   createTool: jest.fn(),
-  useAssistant: () => ({ isLoading: false, isAvailable: false }),
-  useInlineAssistant: () => ({ generate: jest.fn(), isGenerating: false, cancel: jest.fn(), reset: jest.fn() }),
+  useAssistant: () => ({ isLoading: false, isAvailable: mockAssistantAvailable }),
+  useInlineAssistant: () => ({
+    generate: mockGenerate,
+    isGenerating: false,
+    cancel: mockCancel,
+    reset: mockReset,
+  }),
 }));
 
-function createController(portalTarget: HTMLElement): jest.Mocked<QueryEditorCoauthoringControllerV1> {
-  const context: QueryEditorCoauthoringContextV1 = {
-    revision: 'revision-1',
-    query: 'rate(http_requests_total[5m])',
-    focusRanges: [{ from: 0, to: 4 }],
-    language: { id: 'promql', displayName: 'PromQL' },
-    metadata: [],
-  };
+const context: QueryEditorCoauthoringContextV1 = {
+  revision: 'revision-1',
+  query: 'rate(http_requests_total[5m])',
+  focusRanges: [{ from: 0, to: 4 }],
+  language: { id: 'promql', displayName: 'PromQL' },
+  metadata: [],
+};
 
+function createController(portalTarget: HTMLElement): jest.Mocked<QueryEditorCoauthoringControllerV1> {
   const snapshot = { mode: 'selection' as const, selectedText: 'rate', revision: 'revision-1' };
 
   return {
@@ -38,6 +52,34 @@ function createController(portalTarget: HTMLElement): jest.Mocked<QueryEditorCoa
   };
 }
 
+function createStatefulController(portalTarget: HTMLElement) {
+  const controller = createController(portalTarget);
+  const listeners = new Set<VoidFunction>();
+  let snapshot: QueryEditorCoauthoringSnapshotV1 = {
+    mode: 'selection',
+    selectedText: 'rate',
+    revision: context.revision,
+  };
+  const publish = (nextSnapshot: QueryEditorCoauthoringSnapshotV1) => {
+    snapshot = nextSnapshot;
+    listeners.forEach((listener) => listener());
+  };
+  const showSelection = () => publish({ mode: 'selection', selectedText: 'rate', revision: context.revision });
+
+  controller.getSnapshot.mockImplementation(() => snapshot);
+  controller.subscribe.mockImplementation((listener) => {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  });
+  controller.begin.mockImplementation(() => {
+    publish({ mode: 'session', revision: context.revision });
+    return Promise.resolve(context);
+  });
+  controller.dismiss.mockImplementation(() => publish({ mode: 'hidden' }));
+
+  return { controller, showSelection };
+}
+
 function createHost() {
   return {
     datasourceType: 'prometheus',
@@ -50,6 +92,11 @@ function createHost() {
 }
 
 describe('QueryCoauthoringExposedComponent', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockAssistantAvailable = false;
+  });
+
   it('uses the factory and portals the Core-owned selection controls', async () => {
     const portalTarget = document.createElement('div');
     document.body.append(portalTarget);
@@ -79,6 +126,32 @@ describe('QueryCoauthoringExposedComponent', () => {
 
     view.unmount();
     expect(controller.clearEditorDiff).not.toHaveBeenCalled();
+  });
+
+  it('does not carry the iteration nudge across dismissed sessions', async () => {
+    mockAssistantAvailable = true;
+    const portalTarget = document.createElement('div');
+    document.body.append(portalTarget);
+    const { controller, showSelection } = createStatefulController(portalTarget);
+    const user = userEvent.setup();
+
+    render(
+      <QueryCoauthoringHostProvider value={createHost()}>
+        <QueryCoauthoringExposedComponent createController={() => controller} />
+      </QueryCoauthoringHostProvider>
+    );
+
+    for (let invocation = 0; invocation < 3; invocation++) {
+      await user.click(within(portalTarget).getByRole('button', { name: /Explain or modify/ }));
+      await within(portalTarget).findByRole('button', { name: 'Close coauthoring' });
+      expect(within(portalTarget).queryByText(/Working on something big/)).not.toBeInTheDocument();
+
+      if (invocation < 2) {
+        await user.click(within(portalTarget).getByRole('button', { name: 'Close coauthoring' }));
+        act(showSelection);
+        await within(portalTarget).findByRole('button', { name: /Explain or modify/ });
+      }
+    }
   });
 
   it('clears datasource and host preview state when the exposed surface throws', async () => {

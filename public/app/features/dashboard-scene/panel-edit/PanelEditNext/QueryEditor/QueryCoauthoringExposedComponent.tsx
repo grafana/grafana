@@ -6,7 +6,6 @@ import {
   useCallback,
   useLayoutEffect,
   useMemo,
-  useRef,
   useSyncExternalStore,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -81,18 +80,6 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
   const styles = useStyles2(getStyles);
   const snapshot = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   const portalTarget = controller.getPortalTarget();
-  const invocationCounts = useRef(new Map<string, number>());
-  const activeInvocationQuery = useRef<string | undefined>(undefined);
-
-  if (snapshot.mode === 'session') {
-    const query = controller.getQueryText();
-    if (activeInvocationQuery.current !== query) {
-      activeInvocationQuery.current = query;
-      invocationCounts.current.set(query, (invocationCounts.current.get(query) ?? 0) + 1);
-    }
-  } else {
-    activeInvocationQuery.current = undefined;
-  }
 
   useLayoutEffect(() => {
     const updateSurfaceSize = () => {
@@ -146,7 +133,6 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
       onPreview={host.preview}
       onRevertPreview={host.revert}
       isPreviewRunning={host.previewPhase === 'pending' || host.previewPhase === 'running'}
-      showIterationNudge={(invocationCounts.current.get(controller.getQueryText()) ?? 0) > 2}
       timeRange={host.timeRange}
     />
   );

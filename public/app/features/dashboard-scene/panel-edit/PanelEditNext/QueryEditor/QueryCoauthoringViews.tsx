@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { type ChangeEvent, type KeyboardEvent, type ReactNode } from 'react';
+import { type ChangeEvent, type KeyboardEvent, type MutableRefObject, type ReactNode, useEffect, useRef } from 'react';
 
 import { type QueryEditorCoauthoringChangeV1, type QueryEditorCoauthoringContextV1 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -54,9 +54,12 @@ export function QueryCoauthoringLiveStatus({ children }: { children: ReactNode }
 }
 
 interface PromptInputProps {
+  focusTrigger?: string;
+  userGestureRef?: MutableRefObject<boolean>;
   value: string;
   placeholder: string;
   ariaLabel: string;
+  ariaDescribedBy?: string;
   actionLabel: string;
   disabled: boolean;
   onChange: (value: string) => void;
@@ -64,15 +67,83 @@ interface PromptInputProps {
 }
 
 export function QueryCoauthoringPromptInput({
+  focusTrigger,
+  userGestureRef,
   value,
   placeholder,
   ariaLabel,
+  ariaDescribedBy,
   actionLabel,
   disabled,
   onChange,
   onSubmit,
 }: PromptInputProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const localUserGestureRef = useRef(false);
+  const hasOutsideUserGestureRef = userGestureRef ?? localUserGestureRef;
+
+  useEffect(() => {
+    const recordOutsideUserGesture = (event: Event) => {
+      if (event.target !== inputRef.current || (event instanceof KeyboardEvent && event.key === 'Tab')) {
+        hasOutsideUserGestureRef.current = true;
+      }
+    };
+
+    document.addEventListener('pointerdown', recordOutsideUserGesture, true);
+    document.addEventListener('keydown', recordOutsideUserGesture, true);
+    return () => {
+      document.removeEventListener('pointerdown', recordOutsideUserGesture, true);
+      document.removeEventListener('keydown', recordOutsideUserGesture, true);
+    };
+  }, [hasOutsideUserGestureRef]);
+
+  useEffect(() => {
+    const activeElement = document.activeElement;
+    let firstFocusFrame: number | undefined;
+    let secondFocusFrame: number | undefined;
+    let focusFrame: number | undefined;
+    const cancelFocus = () => {
+      if (firstFocusFrame !== undefined) {
+        cancelAnimationFrame(firstFocusFrame);
+        firstFocusFrame = undefined;
+      }
+      if (secondFocusFrame !== undefined) {
+        cancelAnimationFrame(secondFocusFrame);
+        secondFocusFrame = undefined;
+      }
+      if (focusFrame !== undefined) {
+        cancelAnimationFrame(focusFrame);
+        focusFrame = undefined;
+      }
+    };
+
+    // Wait until Monaco has finished its two-frame surface placement before taking focus.
+    firstFocusFrame = requestAnimationFrame(() => {
+      firstFocusFrame = undefined;
+      secondFocusFrame = requestAnimationFrame(() => {
+        secondFocusFrame = undefined;
+        focusFrame = requestAnimationFrame(() => {
+          focusFrame = undefined;
+          const input = inputRef.current;
+          const currentActiveElement = document.activeElement;
+
+          if (
+            input &&
+            !hasOutsideUserGestureRef.current &&
+            (currentActiveElement === activeElement ||
+              currentActiveElement === document.body ||
+              currentActiveElement === input)
+          ) {
+            input.focus();
+          }
+        });
+      });
+    });
+
+    return cancelFocus;
+  }, [focusTrigger, hasOutsideUserGestureRef]);
+
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => onChange(event.currentTarget.value);
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -84,12 +155,13 @@ export function QueryCoauthoringPromptInput({
   return (
     <div className={styles.promptRow}>
       <TextArea
+        ref={inputRef}
         className={styles.promptInput}
         value={value}
         rows={1}
-        autoFocus
         placeholder={placeholder}
         aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
       />
