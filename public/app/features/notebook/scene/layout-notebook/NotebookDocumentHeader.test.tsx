@@ -253,6 +253,19 @@ describe('NotebookDocumentHeader', () => {
       expect(onTitleChange).not.toHaveBeenCalled();
     });
 
+    // EditableTitle takes its width from whatever it is dropped into, which no type or snapshot
+    // protects. Inside a column Stack aligned to flex-start, its own `flex: 1` addresses the height
+    // axis and the row shrink-wraps, so without a full-width wrapper the field collapses to the
+    // browser's default input size. Same problem, and same fix, as the tags row.
+    it('gives the editing field the whole line rather than letting it shrink to content', async () => {
+      const { user } = setup({ isEditing: true });
+
+      await user.click(screen.getByRole('button', { name: 'Edit title' }));
+      const form = screen.getByRole('textbox', { name: 'Name' }).closest('form');
+
+      expect(form?.parentElement).toHaveStyle({ width: '100%' });
+    });
+
     // The read-only branch renders nothing for an empty title. Were the editable one to do the same,
     // a notebook that lost its title would lose the only control that can give it another.
     it('still offers the pencil on a notebook whose title is empty', () => {
