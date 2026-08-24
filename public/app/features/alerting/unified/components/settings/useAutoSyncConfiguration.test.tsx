@@ -1,9 +1,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { getWrapper } from 'test/test-utils';
+import { getWrapper, testWithFeatureToggles } from 'test/test-utils';
 
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { setupMswServer } from '../../mockApi';
+import { grantUserRole } from '../../mocks';
 import {
   type AdminConfigPostState,
   setupAdminConfigGet,
@@ -49,8 +50,13 @@ const VANILLA_DS = {
 
 const postState: AdminConfigPostState = { lastPayload: null };
 
+// The hook itself now gates its queries on Org Admin + this toggle (it's only ever mounted from the
+// Settings tab, which is already gated on both) — grant them so these tests exercise the real path.
+testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+
 beforeEach(() => {
   postState.lastPayload = null;
+  grantUserRole('Admin');
   setupAlertmanagersStatus(server);
 });
 

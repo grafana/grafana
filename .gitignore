@@ -7,6 +7,8 @@ awsconfig
 /.awcache
 /dist
 /public/build
+/public/build-swagger
+/public/build-swagger-rspack
 /emails/dist
 /reports
 /e2e/tmp
@@ -75,10 +77,16 @@ public/css/*.min.css
 .vs/
 .cursor/
 .devcontainer/
-.claude/
+.claude/*
 
-# Claude skills everyone should have
-!.claude/skills/add-e2e-selectors
+# Claude skills everyone should have. Re-including a path under an ignored
+# directory requires un-ignoring each parent dir first (git won't descend into
+# an excluded dir), so ignore contents with /* and re-include step by step.
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/add-e2e-selectors/
+!.claude/skills/frontend-testing-strategy/
+!.claude/skills/panel-testing-strategy/
 
 .eslintcache
 .stylelintcache

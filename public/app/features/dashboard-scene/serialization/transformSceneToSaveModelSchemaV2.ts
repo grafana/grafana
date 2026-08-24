@@ -52,7 +52,6 @@ import {
   defaultFieldConfig,
   defaultDataQueryKind,
   type SwitchVariableKind,
-  defaultTimeSettingsSpec,
   defaultDashboardLinkType,
   defaultDashboardLink,
   type Preferences,
@@ -69,6 +68,7 @@ import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLi
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
+import { buildTimeSettingsSpec } from './shared/timeSettings';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -84,14 +84,9 @@ type DeepPartial<T> = T extends object
  */
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
   const sceneDash = scene.state;
-  const timeRange = sceneDash.$timeRange!.state;
-
   const controlsState = sceneDash.controls?.state;
-  const refreshPicker = controlsState?.refreshPicker;
 
   const dsReferencesMapping = scene.serializer.getDSReferencesMapping();
-
-  const timeSettingsDefaults = defaultTimeSettingsSpec();
 
   let preferences: Preferences | undefined = undefined;
 
@@ -135,18 +130,11 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF dashboard settings
 
     // time settings
-    timeSettings: {
-      timezone: timeRange.timeZone || timeSettingsDefaults.timezone,
-      from: timeRange.from,
-      to: timeRange.to,
-      autoRefresh: refreshPicker?.state.refresh || timeSettingsDefaults.autoRefresh,
-      autoRefreshIntervals: refreshPicker?.state.intervals || timeSettingsDefaults.autoRefreshIntervals,
-      hideTimepicker: controlsState?.hideTimeControls || timeSettingsDefaults.hideTimepicker,
-      weekStart: timeRange.weekStart,
-      fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
-      nowDelay: timeRange.UNSAFE_nowDelay,
-      quickRanges: controlsState?.timePicker.state.quickRanges,
-    },
+    timeSettings: buildTimeSettingsSpec(sceneDash.$timeRange!, {
+      timePicker: controlsState?.timePicker,
+      refreshPicker: controlsState?.refreshPicker,
+      hideTimeControls: controlsState?.hideTimeControls,
+    }),
     // EOF time settings
 
     // variables
@@ -162,6 +150,10 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF annotations
 
     // layout
+    // Not type-checked: body is AnyDashboardLayoutManager, so serialize() is typed `any` and any
+    // layout kind assigns here. validateDashboardSchemaV2 only dispatches on GridLayout and
+    // RowsLayout, so a sibling kind like the notebook layout passes and is written out silently.
+    // A save path for a sibling resource should narrow to its own manager instead of reusing this.
     layout: sceneDash.body.serialize(isSnapshot),
     // EOF layout
   };

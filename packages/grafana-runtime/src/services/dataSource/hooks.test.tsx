@@ -3,11 +3,19 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
 
 import { setBackendSrv } from '../backendSrv';
+import { setDatasourcePluginMetas } from '../pluginMeta/datasources';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { _resetForTests as resetPlugin, setDataSourcePluginImporter } from './dataSource';
-import { useDataSourceInstance, useDataSourceInstanceList, useDataSourceInstanceSettings } from './hooks';
-import { _resetForTests as resetInstanceSettings, initDataSourceInstanceSettings } from './settings';
+import {
+  useDataSourceInstance,
+  useDataSourceInstanceList,
+  useDataSourceInstanceListItem,
+  useDataSourceInstanceSettings,
+  useDefaultDataSourceInstanceListItem,
+  useHasDataSourceInstance,
+} from './hooks';
+import { setDataSourceInstanceSettings } from './settings';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
   return {
@@ -57,10 +65,14 @@ beforeAll(() => {
   } as any);
 });
 
+// Distinguishable from the copy embedded on the instance settings, so the list-item hook's
+// assertions prove which cache answered.
+const testDbPluginMeta = { ...ds({}).meta, name: 'Test DB (plugin meta)' };
+
 beforeEach(() => {
-  resetInstanceSettings();
   resetPlugin();
-  initDataSourceInstanceSettings(fixtures, 'Bravo');
+  setDataSourceInstanceSettings(fixtures, 'Bravo');
+  setDatasourcePluginMetas({ 'test-db': testDbPluginMeta });
 });
 
 describe('useDataSourceInstanceSettings', () => {
@@ -82,6 +94,38 @@ describe('useDataSourceInstanceSettings', () => {
 
     rerender({ ref: 'uid-bravo' });
     await waitFor(() => expect(result.current.settings?.name).toBe('Bravo'));
+  });
+});
+
+describe('useDataSourceInstanceListItem', () => {
+  it('starts loading then resolves to the list item', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceListItem('uid-alpha'));
+
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.item?.name).toBe('Alpha');
+    expect(result.current.item?.type).toBe('test-db');
+    expect(result.current.item?.meta.name).toBe('Test DB (plugin meta)');
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('resolves to undefined without an error for an unknown ref', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceListItem('nonexistent'));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.item).toBeUndefined();
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('refetches when the ref changes', async () => {
+    const { result, rerender } = renderHook(({ ref }) => useDataSourceInstanceListItem(ref), {
+      initialProps: { ref: 'uid-alpha' },
+    });
+
+    await waitFor(() => expect(result.current.item?.name).toBe('Alpha'));
+
+    rerender({ ref: 'uid-bravo' });
+    await waitFor(() => expect(result.current.item?.name).toBe('Bravo'));
   });
 });
 
@@ -146,5 +190,41 @@ describe('useDataSourceInstance', () => {
     const { result } = renderHook(() => useDataSourceInstance('missing'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.error).toBeInstanceOf(Error);
+  });
+});
+
+describe('useDefaultDataSourceInstanceListItem', () => {
+  it('starts loading then resolves to the default instance of the type', async () => {
+    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem('test-db'));
+
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.item?.name).toBe('Bravo');
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('resolves to undefined for an unknown type', async () => {
+    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem('nonexistent'));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.item).toBeUndefined();
+  });
+});
+
+describe('useHasDataSourceInstance', () => {
+  it('starts loading then resolves to true for an existing type', async () => {
+    const { result } = renderHook(() => useHasDataSourceInstance('test-db'));
+
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.hasInstance).toBe(true);
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('resolves to false for an unknown type', async () => {
+    const { result } = renderHook(() => useHasDataSourceInstance('nonexistent'));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.hasInstance).toBe(false);
   });
 });

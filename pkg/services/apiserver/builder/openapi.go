@@ -70,11 +70,35 @@ func addRoutePaths(openAPISpec *spec3.OpenAPI, gv schema.GroupVersion, routes *A
 		openAPISpec.Paths.Paths["/apis/"+gv.String()+"/"+route.Path] = &spec3.Path{
 			PathProps: *route.Spec,
 		}
+		addRouteSchemas(openAPISpec, route)
 	}
 	for _, route := range routes.Namespace {
 		openAPISpec.Paths.Paths["/apis/"+gv.String()+"/namespaces/{namespace}/"+route.Path] = &spec3.Path{
 			PathProps: *route.Spec,
 		}
+		addRouteSchemas(openAPISpec, route)
+	}
+}
+
+// addRouteSchemas publishes the components a route's spec references. An
+// unresolved $ref renders as an empty model rather than erroring.
+func addRouteSchemas(openAPISpec *spec3.OpenAPI, route APIRouteHandler) {
+	if len(route.Schemas) == 0 {
+		return
+	}
+	if openAPISpec.Components == nil {
+		openAPISpec.Components = &spec3.Components{}
+	}
+	if openAPISpec.Components.Schemas == nil {
+		openAPISpec.Components.Schemas = map[string]*spec.Schema{}
+	}
+	for name, schema := range route.Schemas {
+		// First writer wins: routes in a group version share these types, and a
+		// kind's own definitions must not be clobbered.
+		if _, exists := openAPISpec.Components.Schemas[name]; exists {
+			continue
+		}
+		openAPISpec.Components.Schemas[name] = &schema
 	}
 }
 

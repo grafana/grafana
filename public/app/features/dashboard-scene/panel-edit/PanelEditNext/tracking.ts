@@ -1,5 +1,6 @@
 import { debounce } from 'lodash';
 
+import { faro } from '@grafana/faro-web-sdk';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { PanelEditNextFeedbackEvent } from 'app/types/events';
@@ -119,10 +120,13 @@ export function trackReorder(itemType: 'query' | 'transformation', options?: { s
 }
 
 export function trackEditorVersionToggle(direction: 'upgrade' | 'downgrade') {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+  const payload: Record<string, string> = {
     action: 'toggle_editor_version',
     direction,
-  });
+    'paneledit.buttonLabels': String(getFeatureFlagClient().getBooleanValue(FlagKeys.PaneleditButtonLabels, false)),
+  };
+  faro.api.pushEvent(EVENT_PANEL_EDIT_NEXT, payload);
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, payload);
 }
 
 export function trackBannerDismiss() {

@@ -24,16 +24,21 @@ type ExtraOptions struct {
 	RequestTimeout  time.Duration
 	// EnableSearchAPI is the flag equivalent of [grafana-apiserver]
 	// enable_search_api, for servers configured by flags rather than an ini file.
-	// Temporary, while the per-resource search endpoints are being built out; it
-	// goes away once kinds opt in through their manifest.
 	EnableSearchAPI bool
+
+	// EnableTrashAPI is the flag equivalent of [grafana-apiserver]
+	// enable_trash_api. Separate from EnableSearchAPI because trash authorizes on a
+	// different rule that has not been reviewed yet, so enabling search must not
+	// expose it.
+	EnableTrashAPI bool
 }
 
 func NewExtraOptions() *ExtraOptions {
 	return &ExtraOptions{
-		DevMode:        false,
-		Verbosity:      0,
-		RequestTimeout: 10 * time.Minute,
+		DevMode:         false,
+		Verbosity:       0,
+		RequestTimeout:  10 * time.Minute,
+		EnableSearchAPI: true,
 	}
 }
 
@@ -44,6 +49,8 @@ func (o *ExtraOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&o.Verbosity, "verbosity", o.Verbosity, "Verbosity")
 	fs.BoolVar(&o.EnableSearchAPI, "grafana-apiserver-enable-search-api", o.EnableSearchAPI,
 		"Serve the per-resource search endpoints")
+	fs.BoolVar(&o.EnableTrashAPI, "grafana-apiserver-enable-trash-api", o.EnableTrashAPI,
+		"Serve the per-resource trash endpoints")
 }
 
 func (o *ExtraOptions) Validate() []error {

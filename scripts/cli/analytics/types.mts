@@ -37,6 +37,10 @@ export interface EventData extends Omit<Event, 'properties'> {
   fullEventName: string;
   owner?: string;
   properties?: EventPropertySchema[];
+  // One entry per variant for events whose properties are a discriminated union, in declaration
+  // order. `properties` flattens these into one row per name, which reads as though every value of
+  // one property pairs with every value of another; these preserve which combinations are valid.
+  variants?: EventPropertySchema[][];
   // Silent events are dispatched to EchoSrv subscribers but not forwarded to
   // analytics backends (e.g. Rudderstack). Resolved from per-event options
   // first, falling back to the factory-level setting.

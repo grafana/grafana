@@ -12,15 +12,10 @@ import { ctaClicked } from '../analytics/main';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
-import { useIncidents, type IncidentsData } from './useIncidents';
-
-export function IncidentsCard() {
-  const data = useIncidents();
-  return <IncidentsCardView data={data} />;
-}
+import { type IncidentsData } from './useIncidents';
 
 /** Render-only card body; data comes from useIncidents so callers control where the hook runs. */
-export function IncidentsCardView({
+export function IncidentsCard({
   data,
   hideFooterActions = false,
 }: {

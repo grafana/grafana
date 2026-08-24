@@ -12,6 +12,7 @@ import {
 import { PanelDataErrorView } from '@grafana/runtime';
 import { KeyboardPlugin, TooltipDisplayMode, TooltipPlugin2, usePanelContext } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
+import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 import { type XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
@@ -31,6 +32,7 @@ export const TrendPanel = ({
   fieldConfig,
   replaceVariables,
   id,
+  title,
 }: PanelProps<Options>) => {
   const { dataLinkPostProcessor } = useDataLinksContext();
   const { canExecuteActions } = usePanelContext();
@@ -63,9 +65,11 @@ export const TrendPanel = ({
     );
   }
 
+  const frames = info.frames;
+
   return (
     <TimeSeries // Name change!
-      frames={info.frames}
+      frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
@@ -90,7 +94,7 @@ export const TrendPanel = ({
                 getDataLinks={(seriesIdx, dataIdx) =>
                   alignedDataFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                 }
-                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange, viaSync, dataLinks) => {
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
                   return (
                     <TimeSeriesTooltip
                       series={alignedDataFrame}
@@ -104,6 +108,7 @@ export const TrendPanel = ({
                       dataLinks={dataLinks}
                       hideZeros={options.tooltip.hideZeros}
                       canExecuteActions={userCanExecuteActions}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );
                 }}

@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "Basislogboeken inschakelen"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "Batch-API",
+      "description-batch-api": "Vraagt meerdere bronnen op in één verzoek, waardoor de prestaties voor grote dashboards worden verbeterd. Vereist de rol <2>Monitoring Reader</2> op het abonnementsbereik op <6>metrics.monitor.azure.com</6>. Er kunnen extra <9>kosten van toepassing zijn</9> buiten het gratis niveau.",
+      "label-enable-batch-api": "Batch-API inschakelen"
     },
     "config-editor": {
       "description-additional-settings": "Aanvullende instellingen zijn optioneel en geven je meer controle over je databron. Denk hierbij aan Secure Socks Proxy, request timeout en doorgestuurde cookies.",
@@ -105,7 +105,11 @@
       "load-subscriptions": "Abonnementen laden"
     },
     "dimension-fields": {
-      "aria-label-remove": "Verwijderen",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensies",
       "placeholder-field": "Veld",
       "placeholder-operation": "Werking",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "Metrische naamruimte"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Je kunt items van hetzelfde brontype selecteren voor verschillende abonnementen en regio's. Bronnen in verschillende abonnementen of regio's worden in afzonderlijke verzoeken opgevraagd en kunnen onafhankelijk van elkaar mislukken. Om bronnen van een ander brontype te selecteren, moet je eerst je huidige selectie uitschakelen.",
+      "selection-notice-standard": "Je kunt items van hetzelfde brontype en dezelfde locatie selecteren. Om bronnen van een ander brontype of een andere locatie te selecteren, moet je eerst je huidige selectie uitschakelen."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Functies"
     },
     "nested-row": {
       "text-loading": "Laden..."
@@ -218,8 +222,8 @@
       "tooltip-order-by": "Sorteer resultaten op basis van een of meer kolommen in oplopende of aflopende volgorde."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "Het laden is gestopt na {{maxPages}} pagina's; sommige resultaten kunnen worden weggelaten.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Er is een fout opgetreden bij het aanvragen van de metagegevens van Azure Monitor"

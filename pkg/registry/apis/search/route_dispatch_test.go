@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// The search endpoint sits at .../{resource}/search, the same shape as an
-// object path, so it could shadow the standard routes or be shadowed by them.
-// This dispatches through the same router the apiserver installs to show which
-// handler each request actually reaches.
+// The search and trash endpoints are served at .../{resource}/search and
+// .../{resource}/trash, which look like object paths, so they could shadow the
+// standard routes or be shadowed by them. This dispatches through the router the
+// apiserver installs, to show which handler each request actually reaches.
 func TestSearchRouteDoesNotShadowStandardRoutes(t *testing.T) {
 	const root = "/apis/dashboard.grafana.app/v0alpha1"
 
@@ -35,8 +35,9 @@ func TestSearchRouteDoesNotShadowStandardRoutes(t *testing.T) {
 	ws.Route(ws.POST("/namespaces/{namespace}/dashboards").To(record("create")))
 	// The legacy dashboard search route.
 	ws.Route(ws.GET("/namespaces/{namespace}/search").To(record("legacy-search")))
-	// The route under test, mounted the same way SearchRoute mounts it.
+	// The routes under test, mounted the same way SearchRoute and TrashRoute do.
 	ws.Route(ws.POST("/namespaces/{namespace}/dashboards/" + searchPathSegment).To(record("search")))
+	ws.Route(ws.POST("/namespaces/{namespace}/dashboards/" + trashPathSegment).To(record("trash")))
 	container.Add(ws)
 
 	for _, tc := range []struct {
@@ -46,11 +47,16 @@ func TestSearchRouteDoesNotShadowStandardRoutes(t *testing.T) {
 		handler string
 	}{
 		{"search endpoint", http.MethodPost, "/dashboards/search", "search"},
-		// A dashboard may legitimately be named "search"; every non-POST verb
-		// must still reach the object routes.
+		{"trash endpoint", http.MethodPost, "/dashboards/trash", "trash"},
+		// A dashboard may legitimately be named "search" or "trash"; every non-POST
+		// verb must still reach the object routes.
 		{"read a dashboard named search", http.MethodGet, "/dashboards/search", "get-object"},
 		{"replace a dashboard named search", http.MethodPut, "/dashboards/search", "replace-object"},
 		{"delete a dashboard named search", http.MethodDelete, "/dashboards/search", "delete-object"},
+		{"read a dashboard named trash", http.MethodGet, "/dashboards/trash", "get-object"},
+		{"replace a dashboard named trash", http.MethodPut, "/dashboards/trash", "replace-object"},
+		{"delete a dashboard named trash", http.MethodDelete, "/dashboards/trash", "delete-object"},
+		{"subresource of a dashboard named trash", http.MethodGet, "/dashboards/trash/dto", "subresource"},
 
 		{"read another dashboard", http.MethodGet, "/dashboards/my-dash", "get-object"},
 		{"subresource", http.MethodGet, "/dashboards/my-dash/dto", "subresource"},
@@ -68,4 +74,45 @@ func TestSearchRouteDoesNotShadowStandardRoutes(t *testing.T) {
 			assert.Equal(t, tc.handler, reached)
 		})
 	}
+}
+
+// A kind that declares no search fields, opts out, or is cluster-scoped gets no
+// search route. What a caller sees then is decided by the router, not by any code
+// in this package, so it is pinned here: the status differs depending on whether
+// the resource itself is served.
+func TestStatusWhenSearchRouteIsNotMounted(t *testing.T) {
+	const root = "/apis/dashboard.grafana.app/v0alpha1"
+
+	noop := func(*restful.Request, *restful.Response) {}
+	serve := func(routes func(ws *restful.WebService)) int {
+		container := restful.NewContainer()
+		container.Router(restful.CurlyRouter{})
+		ws := new(restful.WebService)
+		ws.Path(root)
+		routes(ws)
+		container.Add(ws)
+
+		w := httptest.NewRecorder()
+		container.ServeHTTP(w, httptest.NewRequest(http.MethodPost, root+"/namespaces/default/dashboards/search", nil))
+		return w.Code
+	}
+
+	// The kind is served, so the object routes claim this path for other verbs.
+	t.Run("kind served without a search route", func(t *testing.T) {
+		code := serve(func(ws *restful.WebService) {
+			ws.Route(ws.GET("/namespaces/{namespace}/dashboards/{name}").To(noop))
+			ws.Route(ws.PUT("/namespaces/{namespace}/dashboards/{name}").To(noop))
+			ws.Route(ws.DELETE("/namespaces/{namespace}/dashboards/{name}").To(noop))
+			ws.Route(ws.GET("/namespaces/{namespace}/dashboards").To(noop))
+			ws.Route(ws.POST("/namespaces/{namespace}/dashboards").To(noop))
+		})
+		assert.Equal(t, http.StatusMethodNotAllowed, code)
+	})
+
+	t.Run("resource not served at all", func(t *testing.T) {
+		code := serve(func(ws *restful.WebService) {
+			ws.Route(ws.GET("/namespaces/{namespace}/other").To(noop))
+		})
+		assert.Equal(t, http.StatusNotFound, code)
+	})
 }

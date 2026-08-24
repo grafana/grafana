@@ -87,6 +87,23 @@ func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, hand
 	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler))
 }
 
+func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subscriber nats.Subscriber) []sql.StorageBackendOption {
+	var opts []sql.StorageBackendOption
+	if publisher != nil {
+		opts = append(opts, sql.WithEventPublisher(publisher))
+	}
+	if subscriber == nil {
+		return opts
+	}
+	switch {
+	case cfg.NATS.Notifier:
+		opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{sub: subscriber}))
+	case cfg.NATS.NotifierShadow:
+		opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: subscriber}))
+	}
+	return opts
+}
+
 type clientMetrics struct {
 	requestDuration *prometheus.HistogramVec
 	requestRetries  *prometheus.CounterVec
@@ -202,12 +219,8 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		storageOpts := []sql.StorageBackendOption{sql.WithEventPublisher(eventPublisher), sql.WithVectorBackend(vectorBackend)}
-		if cfg.NATS.Notifier && eventSubscriber != nil {
-			storageOpts = append(storageOpts, sql.WithNatsNotifier(natsEventSubscriber{sub: eventSubscriber}))
-		} else if cfg.NATS.NotifierShadow && eventSubscriber != nil {
-			storageOpts = append(storageOpts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: eventSubscriber}))
-		}
+		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
+			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber)...)
 		if experimentalKV != nil {
 			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
 		}
