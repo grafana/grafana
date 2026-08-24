@@ -108,11 +108,6 @@ func NewAppPluginAPIBuilder(
 	}, nil
 }
 
-// clientV3 returns the experimental v3 client for this builder's plugin, if available.
-func (b *AppPluginAPIBuilder) clientV3(ctx context.Context) (v3.ClientV3, bool) {
-	return b.clientV3Loader.ClientV3(ctx, b.pluginJSON.ID)
-}
-
 // Called in ST Grafana to register
 func RegisterAPIService(
 	apiRegistrar builder.APIRegistrar,
