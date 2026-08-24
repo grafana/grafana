@@ -19,9 +19,8 @@ interface UseTransformationInputDataOptions {
 }
 
 /**
- * Returns the input data for the selected transformation — the output of everything before it
- * in the pipeline. The first transformation gets the query data with the panel plugin's own
- * transformations applied, since those run ahead of every user transformation.
+ * Returns the input data for the selected transformation — the output of everything before it in
+ * the pipeline, including the panel plugin's own transformations (see {@link precedingTransformations}).
  *
  * Without this, editors always see raw query data regardless of where they sit in the pipeline.
  * That causes false errors like "Organize fields only works with a single frame" even when

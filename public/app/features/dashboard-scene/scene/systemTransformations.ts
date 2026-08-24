@@ -11,7 +11,7 @@ import {
 } from '@grafana/scenes';
 
 /**
- * Stable identity for "nothing registered", so consumers using these arrays as effect deps do not
+ * Stable identity for "nothing to run", so consumers using these arrays as effect deps do not
  * churn on every render.
  */
 export const NO_SYSTEM_TRANSFORMATIONS: Readonly<ResolvedSystemTransformations> = {

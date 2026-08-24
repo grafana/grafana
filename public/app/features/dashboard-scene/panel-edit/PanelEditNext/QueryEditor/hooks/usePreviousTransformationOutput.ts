@@ -38,12 +38,10 @@ function mergeWithEmptyFrames(frames: DataFrame[], queryTargets?: Array<{ refId:
 }
 
 /**
- * Calculates the output of the previous transformation in the pipeline.
- * Used by the filter display to show which data frames are available for filtering.
- *
- * The frames listed here have to be the ones the filter matcher will run against, so the panel
- * plugin's own transformations count as preceding the user's first one — they run ahead of all of
- * them, and they are what renames, splits or joins the frames the user is picking from.
+ * Calculates the output of the previous transformation in the pipeline, for the filter display to
+ * show which data frames are available for filtering. Counts the plugin's own transformations as
+ * preceding the user's first one, same as {@link precedingTransformations} — the filter matcher
+ * needs to see the frames they renamed, split or joined, not the raw query result.
  *
  * @returns Output of everything preceding the selected transformation, or the query result if
  * nothing does. Includes empty frames for refIds that were requested but didn't return results.

@@ -90,9 +90,8 @@ function hasTransformations(dataProvider: SceneDataProvider) {
     return true;
   }
 
-  // Resolved against the source frames rather than any the caller holds: a caller asking this is
-  // asking about the panel. Whether the plugin registered a supplier is not the same question --
-  // one is free to resolve to nothing for the frames the panel currently has.
+  // Resolved against the current frames, not just whether the plugin registered a supplier — a
+  // supplier is free to resolve to nothing for them.
   const { prepend, append } = dataProvider.getResolvedSystemTransformations();
 
   return prepend.length > 0 || append.length > 0;

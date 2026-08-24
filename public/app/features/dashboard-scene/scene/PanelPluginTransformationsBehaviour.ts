@@ -76,10 +76,10 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
     transformer.setSystemTransformations({ origin: 'plugin', supplier: this._supplier });
 
     const plugin = this._plugin();
-    // Re-registering hands over the same supplier reference, which the transformer reads as no change,
-    // and its own activation pass is unforced and stops at the data it has already transformed. So a
-    // plugin that resolved while this was inactive reaches the pipeline only from here. A first
-    // activation needs no prompting: registering the supplier is itself the change.
+    // Re-registering the same supplier reference is a no-op to the transformer, so it won't
+    // reprocess on its own — a plugin resolved while inactive only reaches the pipeline via the
+    // reprocess call below. Skipped on a first activation: registering the supplier at all is
+    // already the change.
     const resolvedWhileInactive = this._resolvedPlugin !== undefined && this._resolvedPlugin.plugin !== plugin;
 
     this._resolvedPlugin = { plugin };
@@ -88,10 +88,9 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
       transformer.reprocessTransformations();
     }
 
-    // Two things change what the supplier resolves without producing new data to resolve against:
-    // switching visualization, and the panel finishing a plugin load that had not resolved yet. The
-    // second cannot be seen from `pluginId` -- `_pluginLoaded` writes the value already in state --
-    // so watch what the supplier itself reads.
+    // Two things change what the supplier resolves without new data arriving: a visualization
+    // switch, and a plugin finishing its load. The load doesn't touch `pluginId` — `_pluginLoaded`
+    // writes the value already there — so this watches what the supplier reads, not `pluginId` alone.
     this._subs.add(
       panel.subscribeToState(() => {
         const nextPlugin = this._plugin();
@@ -120,12 +119,11 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
   }
 
   /**
-   * Nothing resolves a plugin id synchronously the first time, and the panel may never load it — a
-   * data provider can be active without its panel rendering, which is how the dashboard datasource
-   * reads a panel that is scrolled out of view. Imported from here rather than from the supplier:
-   * `importPanelPlugin` drops its cache entry on failure, so a supplier awaiting it would re-reject
-   * on every pass. A later `pluginId` change needs no repeat, because a panel being edited is a panel
-   * being rendered, and the subscription above catches the load.
+   * A data provider can stay active without its panel rendering — the dashboard datasource reads
+   * panels scrolled out of view this way — so nothing else may load the plugin. Called from here,
+   * not the supplier, since a failed import is evicted from `importPanelPlugin`'s cache and would
+   * re-reject every pass if awaited there. A later `pluginId` change needs no repeat: an edited
+   * panel is a rendered one, and the subscription above already catches the load.
    */
   private _loadPluginIfUnresolved(transformer: SceneDataTransformer, panel: VizPanel) {
     if (this._plugin()) {
@@ -150,11 +148,10 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
 
         const plugin = this._plugin();
 
-        // The panel loads the same chunk for itself and writes it to state, which reprocesses through
-        // the subscription above. Whichever of the two lands second has nothing left to do, and
-        // forcing the pipeline again would re-run every transformation over every frame and emit a
-        // second `PanelData` for every consumer to react to. An id that resolved nowhere lands here
-        // too, with nothing resolved before or after.
+        // The panel's own load of the same chunk reprocesses through the subscription above, so
+        // whichever of the two lands second would otherwise force a redundant pass — re-running every
+        // transformation and emitting a new `PanelData` for nothing. Also skips an id that resolved
+        // nowhere: before and after both agree on `undefined`.
         if (plugin === this._resolvedPlugin?.plugin) {
           return;
         }

@@ -28,13 +28,10 @@ interface TransformationDebugData {
 const NO_DEBUG_DATA: TransformationDebugData = { input: [], output: [] };
 
 /**
- * Calculates input and output data for transformation debugging.
- *
- * Input: Output of all transformations before the current one (with filter applied)
- * Output: Output after applying the current transformation
- *
- * "Before the current one" includes the plugin's own transformations: replaying only
- * `transformations` would show frames the debugged transformation never receives.
+ * Replays the pipeline around the selected transformation for the debug view: input is everything
+ * before it (filtered), output is after it runs. Counts the plugin's own transformations as
+ * preceding, same as {@link precedingTransformations} — omitting them would replay input the
+ * transformation never actually received.
  *
  * @returns Empty arrays if not active or transformation not found
  */

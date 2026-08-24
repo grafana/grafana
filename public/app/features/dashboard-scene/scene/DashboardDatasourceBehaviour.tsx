@@ -170,12 +170,10 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       const parent = sourcePanelQueryRunner.parent;
       const dataTransformer = parent instanceof SceneDataTransformer ? parent : undefined;
 
-      // Only a transformer that can transform again without its source emitting needs watching for
-      // its own sake. While plugin transformations are on that is every panel, because each one's
-      // transformer holds a supplier: a source panel finishing a late plugin load, or having its
-      // visualization switched, reprocesses without re-querying. The flag stands in for asking the
-      // transformer directly, because this choice is made once, before the source panel is
-      // necessarily active enough to have registered anything.
+      // A transformer that can reprocess without its source re-querying needs its own subscription —
+      // which, with the flag on, is every panel's, since each one's transformer holds a plugin's
+      // supplier. The flag stands in for asking the transformer directly because this check runs
+      // before the source panel is necessarily active enough to have registered one.
       if (dataTransformer && (dataTransformer.state.transformations.length > 0 || pluginTransformationsEnabled())) {
         // In mixed DS scenario we complete the observable and merge data, so on a variable change
         // the data transformer will emit but there will be no subscription and thus no visual update
