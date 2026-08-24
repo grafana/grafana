@@ -202,6 +202,10 @@ func addAnnotationMig(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Add missing dashboard_uid to annotation table", &SetDashboardUIDMigration{})
+
+	mg.AddMigration("Add index for org_id_dashboard_uid_epoch_end_epoch on annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "dashboard_uid", "epoch_end", "epoch"}, Type: IndexType,
+	}))
 }
 
 type AddMakeRegionSingleRowMigration struct {
