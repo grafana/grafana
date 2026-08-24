@@ -7,11 +7,11 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana-app-sdk v0.57.2-0.20260820142358-60ae43210ffe
 	github.com/grafana/grafana-app-sdk/logging v0.57.0
-	github.com/grafana/grafana-plugin-sdk-go v0.296.4-0.20260820062033-164c814d1e05
+	github.com/grafana/grafana-plugin-sdk-go v0.296.4
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/prometheus/client_golang v1.24.1
-	github.com/stretchr/testify v1.12.0
+	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.45.0
 	go.opentelemetry.io/otel/trace v1.45.0
 	k8s.io/apimachinery v0.36.3

@@ -46,7 +46,7 @@ require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.57.2-0.20260820142358-60ae43210ffe
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
-	github.com/stretchr/testify v1.12.0
+	github.com/stretchr/testify v1.12.1
 	k8s.io/apimachinery v0.36.3
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad
 )

@@ -7,6 +7,7 @@ import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
 import { detectSignal, type SolutionState } from './solutions/solutionState';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
+import { syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
 import { type Solution } from './solutions/types';
 
@@ -28,6 +29,7 @@ export function useHomepageSolutions(): HomepageSolutions {
       traces: tracesSolution(),
       metrics: metricsSolution(),
       logs: logsSolution(),
+      synthetics: syntheticsSolution(),
     };
 
     // App Observability is not a homepage solution; only the recommendation matrix reads this signal.
@@ -35,7 +37,7 @@ export function useHomepageSolutions(): HomepageSolutions {
 
     // Read core signals from their solutions so detection stays owned and memoized there.
     const signals = async (): Promise<SolutionState> => {
-      const [metrics, logs, traces, kubernetes, spanMetrics] = await Promise.all([
+      const [metrics, logs, traces, kubernetes, spanMetrics, synthetics] = await Promise.all([
         byId.metrics.signal().catch(() => 'unknown' as const),
         byId.logs.signal().catch(() => 'unknown' as const),
         byId.traces.signal().catch(() => 'unknown' as const),
@@ -43,8 +45,9 @@ export function useHomepageSolutions(): HomepageSolutions {
         spanMetricsSignal()
           .then(({ status }) => status)
           .catch(() => 'unknown' as const),
+        byId.synthetics.signal().catch(() => 'unknown' as const),
       ]);
-      return { metrics, logs, traces, kubernetes, spanMetrics };
+      return { metrics, logs, traces, kubernetes, spanMetrics, synthetics };
     };
 
     return {
