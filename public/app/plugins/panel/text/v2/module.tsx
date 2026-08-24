@@ -51,10 +51,15 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   });
 };
 
+const SUPPORTED_FIELD_CONFIGS = new Set<FieldConfigProperty>([
+  FieldConfigProperty.Mappings,
+  FieldConfigProperty.Thresholds,
+]);
+
 export const plugin = new PanelPlugin<Options>(TextNGPanel)
   .setPanelOptions(textNGPanelOptions)
   .setMigrationHandler(textPanelMigrationHandler)
   .setSuggestionsSupplier(() => [])
   .useFieldConfig({
-    disableStandardOptions: Object.values(FieldConfigProperty).filter((id) => id !== FieldConfigProperty.Thresholds),
+    disableStandardOptions: Object.values(FieldConfigProperty).filter((id) => !SUPPORTED_FIELD_CONFIGS.has(id)),
   });

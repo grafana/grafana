@@ -75,6 +75,9 @@ describe('textNGPanelOptions', () => {
   });
 });
 
-it('registers thresholds as the only field config option', () => {
-  expect(plugin.fieldConfigRegistry.list().map((item) => item.id)).toEqual([FieldConfigProperty.Thresholds]);
+it('registers value mappings and thresholds as the only field config options', () => {
+  expect(plugin.fieldConfigRegistry.list().map((item) => item.id)).toEqual([
+    FieldConfigProperty.Mappings,
+    FieldConfigProperty.Thresholds,
+  ]);
 });
