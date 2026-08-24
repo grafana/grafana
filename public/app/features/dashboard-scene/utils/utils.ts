@@ -30,7 +30,6 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { PanelPluginTransformationsBehaviour } from '../scene/PanelPluginTransformationsBehaviour';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
@@ -40,6 +39,8 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardSceneState } from '../scene/types/dashboard';
+
+import { createPanelDataTransformer } from './createPanelDataTransformer';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -314,14 +315,13 @@ export function getDefaultVizPanel(): VizPanel {
       hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     $data: datasourceSettings
-      ? new SceneDataTransformer({
+      ? createPanelDataTransformer({
           $data: new SceneQueryRunner({
             queries: [{ refId: 'A' }],
             datasource: getDataSourceRef(datasourceSettings),
             $behaviors: [new DashboardDatasourceBehaviour({})],
           }),
           transformations: [],
-          $behaviors: [new PanelPluginTransformationsBehaviour()],
         })
       : undefined,
   });

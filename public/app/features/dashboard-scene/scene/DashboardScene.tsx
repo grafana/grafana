@@ -19,7 +19,6 @@ import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/run
 import {
   type CancelActivationHandler,
   sceneGraph,
-  SceneDataTransformer,
   type SceneObject,
   SceneObjectBase,
   type SceneObjectRef,
@@ -91,6 +90,7 @@ import { getDashboardTemplateExtension } from '../settings/enterprise-components
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
+import { createPanelDataTransformer } from '../utils/createPanelDataTransformer';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
@@ -116,7 +116,6 @@ import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { PanelPluginTransformationsBehaviour } from './PanelPluginTransformationsBehaviour';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
@@ -1114,14 +1113,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!skipDataQuery && !panel.state.$data) {
       const defaultDs = getDataSourceSrv().getInstanceSettings(null);
       panel.setState({
-        $data: new SceneDataTransformer({
+        $data: createPanelDataTransformer({
           $data: new SceneQueryRunner({
             // The query editor needs the datasource type, which config.defaultDatasource does not provide.
             datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,
             queries: [{ refId: 'A' }],
           }),
           transformations: [],
-          $behaviors: [new PanelPluginTransformationsBehaviour()],
         }),
       });
     }

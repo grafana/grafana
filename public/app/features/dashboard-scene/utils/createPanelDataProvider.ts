@@ -1,10 +1,11 @@
 import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
-import { type SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { type SceneDataProvider, SceneQueryRunner } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
-import { PanelPluginTransformationsBehaviour } from '../scene/PanelPluginTransformationsBehaviour';
+
+import { createPanelDataTransformer } from './createPanelDataTransformer';
 
 export function createPanelDataProvider(
   panel: PanelModel,
@@ -38,10 +39,9 @@ export function createPanelDataProvider(
   });
 
   // Wrap inner data provider in a data transformer
-  return new SceneDataTransformer({
+  return createPanelDataTransformer({
     $data: dataProvider,
     transformations: panel.transformations || [],
-    $behaviors: [new PanelPluginTransformationsBehaviour()],
   });
 }
 

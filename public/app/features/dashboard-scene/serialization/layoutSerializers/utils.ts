@@ -4,7 +4,6 @@ import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runt
 import {
   type SceneDataProvider,
   type SceneDataQuery,
-  SceneDataTransformer,
   type SceneObject,
   SceneQueryRunner,
   VizPanel,
@@ -34,7 +33,6 @@ import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
-import { PanelPluginTransformationsBehaviour } from '../../scene/PanelPluginTransformationsBehaviour';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -42,6 +40,7 @@ import { type DashboardGridItem } from '../../scene/layout-default/DashboardGrid
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { createPanelDataTransformer } from '../../utils/createPanelDataTransformer';
 import { getVizPanelKeyForPanelId, isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
@@ -250,9 +249,8 @@ function createPanelDataProvider(
   });
 
   // Wrap inner data provider in a data transformer
-  return new SceneDataTransformer({
+  return createPanelDataTransformer({
     $data: dataProvider,
-    $behaviors: [new PanelPluginTransformationsBehaviour()],
     transformations: panel.data.spec.transformations.map((t) => {
       const normalized = normalizeTransformation(t);
       return {
