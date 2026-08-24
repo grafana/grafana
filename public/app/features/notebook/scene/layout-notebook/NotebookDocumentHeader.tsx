@@ -1,6 +1,7 @@
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, Stack, TagList, Text, useStyles2 } from '@grafana/ui';
+import { EditableTitle } from 'app/core/components/Page/EditableTitle';
 
 import { getNeutralTagListStyle } from '../../tagColors';
 
@@ -15,14 +16,24 @@ interface Props {
   timeTo: string;
   isEditing?: boolean;
   onTagsChange?: (tags: string[]) => void;
+  onTitleChange?: (title: string) => void;
 }
 
 // The notebook document header: a "Published Notebook" badge, the title, and the document's metadata
 // as labelled rows. Presentational only, so it stays out of the layout manager and can be tested on
 // its own — editing arrives as a callback rather than by reaching for the scene.
-export function NotebookDocumentHeader({ title, tags, timeFrom, timeTo, isEditing, onTagsChange }: Props) {
+export function NotebookDocumentHeader({
+  title,
+  tags,
+  timeFrom,
+  timeTo,
+  isEditing,
+  onTagsChange,
+  onTitleChange,
+}: Props) {
   const styles = useStyles2(getStyles);
   const canEditTags = Boolean(isEditing && onTagsChange);
+  const canEditTitle = Boolean(isEditing && onTitleChange);
   // While reading, an untagged notebook shows no Tags row at all; while editing it always shows one,
   // because that row is the only way to add the first tag.
   const showTags = canEditTags || Boolean(tags?.length);
@@ -31,7 +42,11 @@ export function NotebookDocumentHeader({ title, tags, timeFrom, timeTo, isEditin
   return (
     <Stack direction="column" gap={1} alignItems="flex-start">
       <Badge text={t('dashboard.notebook-layout.pill', 'Published Notebook')} color="blue" icon="book" />
-      {title ? (
+      {canEditTitle && onTitleChange ? (
+        // Rendered whatever the title is, unlike the read-only branch below: an emptied title would
+        // otherwise take the only control that can put one back with it.
+        <EditableTitle value={title ?? ''} onEdit={async (next) => onTitleChange(next)} />
+      ) : title ? (
         <Text element="h1" variant="h1">
           {title}
         </Text>

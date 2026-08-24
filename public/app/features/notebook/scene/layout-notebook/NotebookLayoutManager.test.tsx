@@ -829,6 +829,29 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
+  describe('setTitleFromHeader', () => {
+    // Same arrangement as the tags above, and the same hazard: nothing else walks up for the title, so
+    // a silent no-op here would leave renaming dead with the suite still green.
+    it('forwards the edit up to the scene, which owns the title', () => {
+      const manager = buildManager([]);
+      const scene = attachScene(manager);
+
+      manager.setTitleFromHeader('Q3 latency regression');
+
+      expect(scene.state.title).toBe('Q3 latency regression');
+    });
+
+    // The manager must not write its own copy when there is no scene to tell: the scene is the single
+    // writer, and a second copy here is the drift this arrangement exists to prevent.
+    it('leaves a manager with no scene above it untouched', () => {
+      const manager = buildManager([]);
+
+      manager.setTitleFromHeader('Q3 latency regression');
+
+      expect(manager.state.title).toBe('My notebook');
+    });
+  });
+
   describe('editModeChanged', () => {
     // The scene owns the mode; this is the channel it uses to hand the flag down, so the cells can
     // react without the manager reaching back up to the scene.

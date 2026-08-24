@@ -119,6 +119,14 @@ export class NotebookLayoutManager
   }
 
   /**
+   * The title is forwarded up for the same reason the tags are: the scene owns it, and it is what the
+   * save model reads. A notebook rendered without a scene above it keeps its title read-only.
+   */
+  public setTitleFromHeader(title: string): void {
+    this.notebookScene?.onTitleChange(title);
+  }
+
+  /**
    * Walked rather than imported: taking NotebookScene as a value would have this file and that one
    * import each other, which is the cycle this layout is arranged to avoid - hence the brand check.
    *
@@ -173,6 +181,11 @@ export class NotebookLayoutManager
   /** Refreshes the header's copy of the tags. NotebookScene owns them and pushes on every change. */
   public setTags(tags: string[] | undefined): void {
     this.setState({ tags });
+  }
+
+  /** Refreshes the header's copy of the title, pushed by NotebookScene exactly as setTags is. */
+  public setTitle(title: string | undefined): void {
+    this.setState({ title });
   }
 
   /**
@@ -590,6 +603,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   const timeRange = sceneGraph.getTimeRange(model).useState();
 
   const onTagsChange = useCallback((nextTags: string[]) => model.setTagsFromHeader(nextTags), [model]);
+  const onTitleChange = useCallback((nextTitle: string) => model.setTitleFromHeader(nextTitle), [model]);
 
   // Only the drop position lives in React state; the reorder itself lives on the model. onDragUpdate
   // fires when the drop index changes, not on every pointer move, so this re-renders the list a
@@ -664,6 +678,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
           timeTo={timeRange.to}
           isEditing={isEditing}
           onTagsChange={onTagsChange}
+          onTitleChange={onTitleChange}
         />
       </header>
 

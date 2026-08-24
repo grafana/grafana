@@ -25,6 +25,7 @@ function setLibraryTags(...tags: string[]) {
 
 function setup(props: Partial<React.ComponentProps<typeof NotebookDocumentHeader>> = {}) {
   const onTagsChange = jest.fn();
+  const onTitleChange = jest.fn();
   const rendered = render(
     <NotebookDocumentHeader
       title="Q2 latency regression"
@@ -32,11 +33,12 @@ function setup(props: Partial<React.ComponentProps<typeof NotebookDocumentHeader
       timeFrom="now-6h"
       timeTo="now"
       onTagsChange={onTagsChange}
+      onTitleChange={onTitleChange}
       {...props}
     />
   );
 
-  return { ...rendered, onTagsChange };
+  return { ...rendered, onTagsChange, onTitleChange };
 }
 
 /**
@@ -212,5 +214,51 @@ describe('NotebookDocumentHeader', () => {
     setup({ isEditing: true, tags: [] });
 
     expect(screen.getByRole('combobox', { name: 'Tags' })).toBeInTheDocument();
+  });
+
+  describe('the title', () => {
+    it('is a plain heading with no way in while the notebook is being read', () => {
+      setup({ isEditing: false });
+
+      expect(screen.getByRole('heading', { name: 'Q2 latency regression' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
+    });
+
+    it('offers the pencil once the notebook is being edited', () => {
+      setup({ isEditing: true });
+
+      expect(screen.getByRole('button', { name: 'Edit title' })).toBeInTheDocument();
+    });
+
+    it('reports the new title once it is submitted', async () => {
+      const { user, onTitleChange } = setup({ isEditing: true });
+
+      await user.click(screen.getByRole('button', { name: 'Edit title' }));
+      const input = screen.getByRole('textbox', { name: 'Name' });
+      await user.clear(input);
+      await user.type(input, 'Q3 latency regression{enter}');
+
+      expect(onTitleChange).toHaveBeenCalledWith('Q3 latency regression');
+    });
+
+    // The scene's title is a required string, and a notebook with no name is not something to save.
+    it('refuses an emptied title rather than reporting one', async () => {
+      const { user, onTitleChange } = setup({ isEditing: true });
+
+      await user.click(screen.getByRole('button', { name: 'Edit title' }));
+      await user.clear(screen.getByRole('textbox', { name: 'Name' }));
+      await user.keyboard('{enter}');
+
+      expect(screen.getByText('Please enter a title')).toBeInTheDocument();
+      expect(onTitleChange).not.toHaveBeenCalled();
+    });
+
+    // The read-only branch renders nothing for an empty title. Were the editable one to do the same,
+    // a notebook that lost its title would lose the only control that can give it another.
+    it('still offers the pencil on a notebook whose title is empty', () => {
+      setup({ isEditing: true, title: '' });
+
+      expect(screen.getByRole('button', { name: 'Edit title' })).toBeInTheDocument();
+    });
   });
 });
