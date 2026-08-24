@@ -662,7 +662,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     caretOffset={
                       focusRequest && cell.state.key === focusRequest.key ? focusRequest.caretOffset : undefined
                     }
-                    range={timeRange.value}
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
                     // Bound here rather than resolved inside the frame: the cells list belongs to the

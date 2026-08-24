@@ -97,9 +97,6 @@ function cellContentToMarkdown(content: CellContentKind): string {
   }
 
   if (content.kind === 'Query') {
-    // There is no universal "language" for an arbitrary datasource's query the way there is for
-    // Code, so the query is described the same structured way a panel's own queries are (see
-    // describeQuery) rather than guessed at as a fenced snippet in some assumed query language.
     return fence(JSON.stringify(describeQuery(content.spec.query), null, 2), 'json');
   }
 

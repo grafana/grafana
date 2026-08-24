@@ -12,7 +12,12 @@ import {
   type PanelData,
   type TimeRange,
 } from '@grafana/data';
+import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { type CellContentKind } from 'app/features/notebook/types';
+
+import { NotebookScene } from '../../NotebookScene';
+import { NotebookCellItem } from '../NotebookCellItem';
+import { NotebookLayoutManager } from '../NotebookLayoutManager';
 
 import { QueryCell } from './QueryCell';
 
@@ -106,14 +111,22 @@ let resolvedSettings: { uid: string; type: string; name: string } | undefined = 
   name: 'gdev-testdata',
 };
 
+function settingsForRef(ref?: DataSourceRef | string) {
+  if (!resolvedSettings) {
+    return undefined;
+  }
+  const uid = typeof ref === 'string' ? ref : ref?.uid;
+  return { ...resolvedSettings, uid: uid ?? resolvedSettings.uid };
+}
+
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstanceSettings: jest.fn(async (ref?: DataSourceRef | string) => {
-    if (!resolvedSettings) {
-      return undefined;
-    }
-    const uid = typeof ref === 'string' ? ref : ref?.uid;
-    return { ...resolvedSettings, uid: uid ?? resolvedSettings.uid };
+  getDataSourceInstanceSettings: jest.fn(async (ref?: DataSourceRef | string) => settingsForRef(ref)),
+  // QueryCell reads settings through the hook; the hook's own call to getDataSourceInstanceSettings
+  // is a relative import inside grafana-runtime, so mocking the package export is not enough.
+  useDataSourceInstanceSettings: (ref?: DataSourceRef | string) => ({
+    isLoading: false,
+    settings: settingsForRef(ref),
   }),
 }));
 
@@ -175,6 +188,36 @@ function absoluteRange(from: string, to: string): TimeRange {
   return { from: dateTime(from), to: dateTime(to), raw: { from, to } };
 }
 
+/**
+ * QueryCell reads the notebook's shared time range directly off the scene graph
+ * (sceneGraph.getTimeRange(cell)), so it needs a real NotebookCellItem parented under a scene that
+ * carries a $timeRange — the same shape NotebookLayoutManagerRenderer gives it in production. `content`
+ * isn't set on the cell itself: QueryCell never reads `cell.state.content` (only the `content` prop,
+ * supplied separately in every render call below, matches production), so this cell exists purely as a
+ * scene-graph anchor.
+ *
+ * When `range` is given, `.value` is forced to that exact object via `setState` rather than left to
+ * SceneTimeRange's own `evaluateTimeRange` — tests assert against this same object, sidestepping any
+ * risk of a "now"-relative recomputation drifting between construction and assertion.
+ */
+function buildCell(range?: TimeRange) {
+  const timeRange = new SceneTimeRange(
+    range ? { from: range.raw.from as string, to: range.raw.to as string } : { from: 'now-6h', to: 'now' }
+  );
+  if (range) {
+    timeRange.setState({ value: range });
+  }
+  const cell = new NotebookCellItem({ elementName: 'query-1', source: 'user' });
+  new NotebookScene({
+    title: 'Test notebook',
+    body: new NotebookLayoutManager({ cells: [cell] }),
+    $timeRange: timeRange,
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({}),
+  });
+  return { cell, timeRange };
+}
+
 beforeEach(() => {
   resolvedSettings = { uid: 'default-uid', type: 'testdata', name: 'gdev-testdata' };
   mockRun.mockClear();
@@ -184,7 +227,8 @@ beforeEach(() => {
 describe('QueryCell', () => {
   it('renders nothing for a non-Query content kind', async () => {
     const other: CellContentKind = { kind: 'Code', spec: { code: 'select 1', language: 'sql' } };
-    const { container } = render(<QueryCell content={other} isEditing={true} onChange={jest.fn()} />);
+    const { cell } = buildCell();
+    const { container } = render(<QueryCell content={other} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
     expect(container).toBeEmptyDOMElement();
     // The datasource-resolution effect still fires ahead of the content.kind guard (see QueryCell's
@@ -194,14 +238,16 @@ describe('QueryCell', () => {
   });
 
   it('resolves the org default datasource for an untouched cell, matching a fresh Explore pane', async () => {
-    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+    const { cell } = buildCell();
+    render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
     expect(await screen.findByTestId('resolved-datasource')).toHaveTextContent('default-uid');
   });
 
   it('offers a datasource picker when nothing resolves', async () => {
     resolvedSettings = undefined;
-    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+    const { cell } = buildCell();
+    render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
     expect(await screen.findByRole('button', { name: 'pick a datasource' })).toBeInTheDocument();
     expect(screen.queryByTestId('resolved-datasource')).not.toBeInTheDocument();
@@ -210,7 +256,10 @@ describe('QueryCell', () => {
   it('persists a picked datasource onto the query, converting it to the k8s-shaped query kind', async () => {
     resolvedSettings = undefined;
     const onChange = jest.fn();
-    const { user } = render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={onChange} />);
+    const { cell } = buildCell();
+    const { user } = render(
+      <QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={onChange} />
+    );
 
     await user.click(await screen.findByRole('button', { name: 'pick a datasource' }));
 
@@ -237,7 +286,10 @@ describe('QueryCell', () => {
 
   it('preserves refId and hidden when the query editor reports an edit', async () => {
     const onChange = jest.fn();
-    const { user } = render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={onChange} />);
+    const { cell } = buildCell();
+    const { user } = render(
+      <QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={onChange} />
+    );
 
     await user.click(await screen.findByRole('button', { name: 'edit query' }));
 
@@ -277,7 +329,8 @@ describe('QueryCell', () => {
       },
     };
     const onChange = jest.fn();
-    const { user } = render(<QueryCell content={content} isEditing={true} onChange={onChange} />);
+    const { cell } = buildCell();
+    const { user } = render(<QueryCell content={content} cell={cell} isEditing={true} onChange={onChange} />);
 
     await user.click(await screen.findByRole('button', { name: 'switch datasource' }));
 
@@ -306,13 +359,15 @@ describe('QueryCell', () => {
   // the notebook cell's own actions already cover duplicate/delete. hideActionButtons is the only
   // lever QueryEditorRow exposes for this (see QueryCell's own comment on why help goes with it).
   it('hides the row-level duplicate/remove/drag actions', async () => {
-    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+    const { cell } = buildCell();
+    render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
     expect(await screen.findByTestId('hide-action-buttons')).toHaveTextContent('true');
   });
 
   it('renders the Run button outside the query editor row, not through renderHeaderExtras', async () => {
-    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+    const { cell } = buildCell();
+    render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
     // The mock only renders renderHeaderExtras' own return value inside its DOM — a Run button
     // appearing here would mean it went back through that slot instead of its own row.
@@ -323,7 +378,8 @@ describe('QueryCell', () => {
 
   describe('the query editor body’s visibility', () => {
     it('renders open, with a collapse chevron, in edit mode', async () => {
-      render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+      const { cell } = buildCell();
+      render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
       expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
       expect(screen.getByTestId('collapsable')).toHaveTextContent('true');
@@ -333,7 +389,8 @@ describe('QueryCell', () => {
     // the query-builder body must not be reachable at all, so there's no chevron to reveal it
     // (`collapsable`) and the body itself never mounts (`isOpen`).
     it('never renders the body, or a way to reveal it, in view mode', async () => {
-      render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
+      const { cell } = buildCell();
+      render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={false} onChange={jest.fn()} />);
 
       expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
       expect(screen.getByTestId('collapsable')).toHaveTextContent('false');
@@ -344,20 +401,26 @@ describe('QueryCell', () => {
     // already mounted before a mode switch would keep showing (or hiding) its body regardless of the
     // new mode.
     it('hides the body when the notebook switches from edit to view mid-session', async () => {
-      const { rerender } = render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+      const { cell } = buildCell();
+      const { rerender } = render(
+        <QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />
+      );
       expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
 
-      rerender(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
+      rerender(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={false} onChange={jest.fn()} />);
 
       expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
       expect(screen.getByTestId('collapsable')).toHaveTextContent('false');
     });
 
     it('shows the body again when the notebook switches back from view to edit', async () => {
-      const { rerender } = render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
+      const { cell } = buildCell();
+      const { rerender } = render(
+        <QueryCell content={emptyQueryContent()} cell={cell} isEditing={false} onChange={jest.fn()} />
+      );
       expect(await screen.findByTestId('is-open')).toHaveTextContent('false');
 
-      rerender(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+      rerender(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
       expect(await screen.findByTestId('is-open')).toHaveTextContent('true');
       expect(screen.getByTestId('collapsable')).toHaveTextContent('true');
@@ -366,7 +429,8 @@ describe('QueryCell', () => {
 
   describe('while the notebook is being read, not edited', () => {
     it('omits the datasource-change handler, falling back to QueryEditorRow’s own read-only label', async () => {
-      render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
+      const { cell } = buildCell();
+      render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={false} onChange={jest.fn()} />);
 
       expect(await screen.findByTestId('can-change-datasource')).toHaveTextContent('false');
       expect(screen.queryByRole('button', { name: 'switch datasource' })).not.toBeInTheDocument();
@@ -374,13 +438,15 @@ describe('QueryCell', () => {
 
     it('disables the standalone datasource picker before any datasource has ever been chosen', async () => {
       resolvedSettings = undefined;
-      render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={jest.fn()} />);
+      const { cell } = buildCell();
+      render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={false} onChange={jest.fn()} />);
 
       expect(await screen.findByRole('button', { name: 'pick a datasource' })).toBeDisabled();
     });
 
     it('keeps the Run button enabled, so a reader can still refresh already-saved results', async () => {
-      render(<QueryCell content={savedQueryContent()} isEditing={false} onChange={jest.fn()} />);
+      const { cell } = buildCell();
+      render(<QueryCell content={savedQueryContent()} cell={cell} isEditing={false} onChange={jest.fn()} />);
 
       expect(await screen.findByRole('button', { name: 'Run query' })).toBeEnabled();
     });
@@ -390,7 +456,10 @@ describe('QueryCell', () => {
     // `isOpen`, so it stands in here for "even if an edit somehow reached QueryEditorRow's onChange".
     it('never calls onChange for a query edit that slips past the collapsed body', async () => {
       const onChange = jest.fn();
-      const { user } = render(<QueryCell content={emptyQueryContent()} isEditing={false} onChange={onChange} />);
+      const { cell } = buildCell();
+      const { user } = render(
+        <QueryCell content={emptyQueryContent()} cell={cell} isEditing={false} onChange={onChange} />
+      );
 
       await user.click(await screen.findByRole('button', { name: 'edit query' }));
 
@@ -399,7 +468,8 @@ describe('QueryCell', () => {
   });
 
   it('auto-runs a cell that already has a saved query once its datasource resolves', async () => {
-    render(<QueryCell content={savedQueryContent()} isEditing={true} range={range} onChange={jest.fn()} />);
+    const { cell } = buildCell();
+    render(<QueryCell content={savedQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
     await waitFor(() => expect(mockRun).toHaveBeenCalled());
     expect(mockRun).toHaveBeenCalledWith(
@@ -410,7 +480,8 @@ describe('QueryCell', () => {
   });
 
   it('does not auto-run a freshly-inserted cell with nothing to query yet', async () => {
-    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+    const { cell } = buildCell();
+    render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
     await screen.findByTestId('resolved-datasource');
     // Give any wrongly-firing auto-run effect a turn to resolve before asserting its absence.
@@ -424,34 +495,38 @@ describe('QueryCell', () => {
   // instead of waiting for an explicit Run. The gate is "already saved at mount", not "has a query
   // now".
   it('does not auto-run when a freshly-inserted cell first gets a query spec written into it', async () => {
+    const { cell } = buildCell();
     const { rerender } = render(
-      <QueryCell content={emptyQueryContent()} isEditing={true} range={range} onChange={jest.fn()} />
+      <QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />
     );
 
     await screen.findByTestId('resolved-datasource');
     await act(async () => {});
     expect(mockRun).not.toHaveBeenCalled();
 
-    rerender(<QueryCell content={savedQueryContent()} isEditing={true} range={range} onChange={jest.fn()} />);
+    rerender(<QueryCell content={savedQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
     await act(async () => {});
     expect(mockRun).not.toHaveBeenCalled();
   });
 
-  // GraphContainer's axis follows `range` on every render, so if the cell does not fetch again the
-  // series stay from the previous window under the new axis. The first run is the auto-run of a
+  // ExploreGraph's axis follows the notebook's own time range, so if the cell does not fetch again
+  // the series stay from the previous window under the new axis. The first run is the auto-run of a
   // saved query; the second is the picker change this is pinning.
   it('re-runs a saved query when the notebook time range changes after auto-run', async () => {
     const morning = absoluteRange('2024-01-01T00:00:00Z', '2024-01-01T06:00:00Z');
     const afternoon = absoluteRange('2024-01-01T12:00:00Z', '2024-01-01T18:00:00Z');
-    const { rerender } = render(
-      <QueryCell content={savedQueryContent()} isEditing={true} range={morning} onChange={jest.fn()} />
-    );
+    const { cell, timeRange } = buildCell(morning);
+    render(<QueryCell content={savedQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
     await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(1));
     expect(mockRun).toHaveBeenCalledWith(expect.objectContaining({ timeRange: morning }));
 
-    rerender(<QueryCell content={savedQueryContent()} isEditing={true} range={afternoon} onChange={jest.fn()} />);
+    // Simulates the notebook's own time picker moving — QueryCell reads the range straight off this
+    // same SceneTimeRange, so there's no prop to rerender with, only its state to change.
+    act(() => {
+      timeRange.setState({ value: afternoon });
+    });
 
     await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(2));
     expect(mockRun).toHaveBeenLastCalledWith(expect.objectContaining({ timeRange: afternoon }));
@@ -460,14 +535,17 @@ describe('QueryCell', () => {
   it('re-runs after an explicit Run when the notebook time range later changes', async () => {
     const morning = absoluteRange('2024-01-01T00:00:00Z', '2024-01-01T06:00:00Z');
     const afternoon = absoluteRange('2024-01-01T12:00:00Z', '2024-01-01T18:00:00Z');
-    const { user, rerender } = render(
-      <QueryCell content={emptyQueryContent()} isEditing={true} range={morning} onChange={jest.fn()} />
+    const { cell, timeRange } = buildCell(morning);
+    const { user } = render(
+      <QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />
     );
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
     await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(1));
 
-    rerender(<QueryCell content={emptyQueryContent()} isEditing={true} range={afternoon} onChange={jest.fn()} />);
+    act(() => {
+      timeRange.setState({ value: afternoon });
+    });
 
     await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(2));
     expect(mockRun).toHaveBeenLastCalledWith(expect.objectContaining({ timeRange: afternoon }));
@@ -476,15 +554,16 @@ describe('QueryCell', () => {
   it('does not run an untouched cell just because the notebook time range changed', async () => {
     const morning = absoluteRange('2024-01-01T00:00:00Z', '2024-01-01T06:00:00Z');
     const afternoon = absoluteRange('2024-01-01T12:00:00Z', '2024-01-01T18:00:00Z');
-    const { rerender } = render(
-      <QueryCell content={emptyQueryContent()} isEditing={true} range={morning} onChange={jest.fn()} />
-    );
+    const { cell, timeRange } = buildCell(morning);
+    render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
     await screen.findByTestId('resolved-datasource');
     await act(async () => {});
     expect(mockRun).not.toHaveBeenCalled();
 
-    rerender(<QueryCell content={emptyQueryContent()} isEditing={true} range={afternoon} onChange={jest.fn()} />);
+    act(() => {
+      timeRange.setState({ value: afternoon });
+    });
 
     await act(async () => {});
     expect(mockRun).not.toHaveBeenCalled();
@@ -497,23 +576,28 @@ describe('QueryCell', () => {
   it('does not run when a freshly-inserted cell is typed into and the time range then changes', async () => {
     const morning = absoluteRange('2024-01-01T00:00:00Z', '2024-01-01T06:00:00Z');
     const afternoon = absoluteRange('2024-01-01T12:00:00Z', '2024-01-01T18:00:00Z');
+    const { cell, timeRange } = buildCell(morning);
     const { rerender } = render(
-      <QueryCell content={emptyQueryContent()} isEditing={true} range={morning} onChange={jest.fn()} />
+      <QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />
     );
 
     await screen.findByTestId('resolved-datasource');
     await act(async () => {});
     expect(mockRun).not.toHaveBeenCalled();
 
-    rerender(<QueryCell content={savedQueryContent()} isEditing={true} range={afternoon} onChange={jest.fn()} />);
+    rerender(<QueryCell content={savedQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
+    act(() => {
+      timeRange.setState({ value: afternoon });
+    });
 
     await act(async () => {});
     expect(mockRun).not.toHaveBeenCalled();
   });
 
   it('runs against the resolved datasource and the notebook time range', async () => {
+    const { cell, timeRange } = buildCell();
     const { user } = render(
-      <QueryCell content={emptyQueryContent()} isEditing={true} range={range} onChange={jest.fn()} />
+      <QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />
     );
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
@@ -523,20 +607,24 @@ describe('QueryCell', () => {
       expect.objectContaining({
         datasource: { uid: 'default-uid', type: 'testdata' },
         queries: [{ refId: 'A', hide: false }],
-        timeRange: range,
+        // The exact same object QueryCell itself read off the scene graph — asserting against a
+        // freshly-computed "now-6h to now" range here would risk a real-clock drift false negative.
+        timeRange: timeRange.state.value,
       })
     );
   });
 
   it('shows nothing where the graph goes before a query has ever run', async () => {
-    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+    const { cell } = buildCell();
+    render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
 
     await screen.findByTestId('resolved-datasource');
     expect(screen.queryByTestId('graph')).not.toBeInTheDocument();
   });
 
   it('renders the graph once the runner emits data', async () => {
-    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+    const { cell } = buildCell();
+    render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
     await screen.findByTestId('resolved-datasource');
 
     act(() => {
@@ -547,7 +635,8 @@ describe('QueryCell', () => {
   });
 
   it('defaults the graph style to lines for a cell that has never picked one', async () => {
-    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+    const { cell } = buildCell();
+    render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
     await screen.findByTestId('resolved-datasource');
 
     act(() => {
@@ -559,7 +648,10 @@ describe('QueryCell', () => {
 
   it('persists a graph style change while editing', async () => {
     const onChange = jest.fn();
-    const { user, rerender } = render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={onChange} />);
+    const { cell } = buildCell();
+    const { user, rerender } = render(
+      <QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={onChange} />
+    );
     await screen.findByTestId('resolved-datasource');
     act(() => {
       emitData?.({ state: LoadingState.Done, series: [{ fields: [], length: 0 }], timeRange: range });
@@ -574,14 +666,17 @@ describe('QueryCell', () => {
     );
 
     const updated = onChange.mock.calls[0][0] as CellContentKind;
-    rerender(<QueryCell content={updated} isEditing={true} onChange={onChange} />);
+    rerender(<QueryCell content={updated} cell={cell} isEditing={true} onChange={onChange} />);
 
     expect(await screen.findByTestId('graph')).toHaveAttribute('data-graph-style', 'bars');
   });
 
   it('keeps a graph style change local while reading, without calling onChange', async () => {
     const onChange = jest.fn();
-    const { user } = render(<QueryCell content={savedQueryContent()} isEditing={false} onChange={onChange} />);
+    const { cell } = buildCell();
+    const { user } = render(
+      <QueryCell content={savedQueryContent()} cell={cell} isEditing={false} onChange={onChange} />
+    );
     await screen.findByTestId('resolved-datasource');
     act(() => {
       emitData?.({ state: LoadingState.Done, series: [{ fields: [], length: 0 }], timeRange: range });
@@ -594,7 +689,8 @@ describe('QueryCell', () => {
   });
 
   it('shows an error alert instead of a graph when the run fails', async () => {
-    render(<QueryCell content={emptyQueryContent()} isEditing={true} onChange={jest.fn()} />);
+    const { cell } = buildCell();
+    render(<QueryCell content={emptyQueryContent()} cell={cell} isEditing={true} onChange={jest.fn()} />);
     await screen.findByTestId('resolved-datasource');
 
     act(() => {
@@ -602,7 +698,7 @@ describe('QueryCell', () => {
         state: LoadingState.Error,
         series: [],
         timeRange: range,
-        error: { message: 'boom' },
+        errors: [{ message: 'boom' }],
       });
     });
 

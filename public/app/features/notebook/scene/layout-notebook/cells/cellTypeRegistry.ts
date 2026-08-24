@@ -1,7 +1,9 @@
 import { lazy, type ComponentType } from 'react';
 
-import { Registry, type RegistryItem, type TimeRange } from '@grafana/data';
+import { Registry, type RegistryItem } from '@grafana/data';
 import { type CellContentKind } from 'app/features/notebook/types';
+
+import { type NotebookCellItem } from '../NotebookCellItem';
 
 import { QueryCell } from './QueryCell';
 
@@ -17,14 +19,15 @@ const CodeCell = lazy(() =>
 export interface CellTypeRegistryItem extends RegistryItem {
   // id matches CellContentKind['kind']; each renderer narrows the content by that kind. `isEditing`,
   // `autoFocus` and `onChange` are offered to every cell type; a renderer with nothing to use one
-  // simply does not accept it. `range` is the notebook's own shared time range (see
-  // NotebookLayoutManagerRenderer) — only Query reads it today, run against whatever range the reader
-  // has the notebook set to, the same way Explore's queries follow its own time picker.
+  // simply does not accept it. `cell` is the scene object this content belongs to — a real node in the
+  // scene graph, parented under the notebook's own `$timeRange` — so a renderer that needs the shared
+  // time range (currently just Query) can read it directly via `sceneGraph.getTimeRange(cell)` rather
+  // than have it threaded down as a prop by components that don't otherwise care about it.
   render: ComponentType<{
     content: CellContentKind;
     isEditing: boolean;
     autoFocus?: boolean;
-    range?: TimeRange;
+    cell: NotebookCellItem;
     onChange: (content: CellContentKind) => void;
   }>;
 }
