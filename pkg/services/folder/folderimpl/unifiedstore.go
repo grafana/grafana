@@ -207,9 +207,12 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 			// ss.Get surfaces a missing folder as dashboards.ErrFolderNotFound,
 			// which scope resolvers cannot recognize as "not found" and would
 			// otherwise turn into an internal error; normalize it so callers
-			// see the canonical not-found error.
+			// see the canonical not-found error. Instantiate with Errorf (as
+			// ossaccesscontrol does) because only the instantiated errutil.Error
+			// carries APIStatus/errors.As metadata, which response renderers
+			// need to emit a 404 instead of falling back to 500.
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return nil, folder.ErrFolderNotFound
+				return nil, folder.ErrFolderNotFound.Errorf("folder not found")
 			}
 			return nil, err
 		}
