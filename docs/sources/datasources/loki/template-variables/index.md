@@ -84,7 +84,7 @@ For example, to use a raw custom value in an exact-match selector:
 
 For the complete list of format options, refer to [Advanced variable format options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options).
 
-## Use ad hoc filters
+## Use free-form filters
 
 Loki supports ad hoc filters. Use them to specify any number of key/value filters that Grafana applies automatically to all of your Loki queries, without editing each query.
 
