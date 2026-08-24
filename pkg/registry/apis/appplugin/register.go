@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
-
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -91,8 +90,8 @@ func NewAppPluginAPIBuilder(
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
-	opts AppPluginRunnerOptions,         // can change without updating wire :)
-	tracer tracing.Tracer,               // needed for proxy
+	opts AppPluginRunnerOptions, // can change without updating wire :)
+	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
 	return &AppPluginAPIBuilder{
@@ -124,7 +123,7 @@ func RegisterAPIService(
 	pluginSettings pluginsettings.Service,
 	accessControl ac.AccessControl,
 	decrypter decrypt.DecryptService,
-	tracer tracing.Tracer,               // needed for proxy
+	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 	cfg *setting.Cfg,
 ) (*AppPluginAPIBuilder, error) {
