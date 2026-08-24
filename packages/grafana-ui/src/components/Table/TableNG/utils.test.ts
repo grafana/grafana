@@ -17,7 +17,7 @@ import {
 import { type SortColumn } from '@grafana/react-data-grid';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
-import { TableCellDisplayMode } from '../types';
+import { TableCellDisplayMode, type TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
 import { getJustifyContent } from './styles';
@@ -57,6 +57,8 @@ import {
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
+  rendersAsJson,
+  shouldTextOverflow,
   SINGLE_LINE_ESTIMATE_THRESHOLD,
 } from './utils';
 
@@ -707,6 +709,78 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('rendersAsJson', () => {
+    const field = (type: FieldType, cellOptions?: TableCellOptions, custom?: Record<string, unknown>): Field => ({
+      name: 'f',
+      type,
+      values: [],
+      config: { custom: { ...(cellOptions ? { cellOptions } : {}), ...custom } },
+    });
+
+    it('is true for an explicit JSONView cell, whatever the field type', () => {
+      expect(rendersAsJson(field(FieldType.string, { type: TableCellDisplayMode.JSONView }))).toBe(true);
+      expect(rendersAsJson(field(FieldType.other, { type: TableCellDisplayMode.JSONView }))).toBe(true);
+    });
+
+    it('is true for an `other` field left on the default cell type', () => {
+      expect(rendersAsJson(field(FieldType.other))).toBe(true);
+      expect(rendersAsJson(field(FieldType.other, { type: TableCellDisplayMode.Auto }))).toBe(true);
+    });
+
+    it('is true for an `other` field whose cellOptions carry no type', () => {
+      expect(rendersAsJson(field(FieldType.other, {} as TableCellOptions))).toBe(true);
+    });
+
+    it('is false for an `other` field with an explicit non-JSON cell type', () => {
+      // the chosen renderer ignores the JSON display processor, so attaching it would clobber the
+      // field's own formatting for nothing.
+      expect(rendersAsJson(field(FieldType.other, { type: TableCellDisplayMode.Pill }))).toBe(false);
+      expect(rendersAsJson(field(FieldType.other, { type: TableCellDisplayMode.Markdown }))).toBe(false);
+    });
+
+    it('is false for ordinary scalar fields', () => {
+      expect(rendersAsJson(field(FieldType.string))).toBe(false);
+      expect(rendersAsJson(field(FieldType.number))).toBe(false);
+      expect(rendersAsJson(field(FieldType.time))).toBe(false);
+    });
+
+    it('honors an explicitly passed cell type over the field config', () => {
+      const jsonByConfig = field(FieldType.other, { type: TableCellDisplayMode.JSONView });
+      expect(rendersAsJson(jsonByConfig, TableCellDisplayMode.Pill)).toBe(false);
+    });
+  });
+
+  describe('shouldTextOverflow', () => {
+    const field = (type: FieldType, cellOptions?: TableCellOptions, custom?: Record<string, unknown>): Field => ({
+      name: 'f',
+      type,
+      values: [],
+      config: { custom: { ...(cellOptions ? { cellOptions } : {}), ...custom } },
+    });
+
+    it('is true for a plain string cell but not an image one', () => {
+      expect(shouldTextOverflow(field(FieldType.string))).toBe(true);
+      expect(shouldTextOverflow(field(FieldType.string, { type: TableCellDisplayMode.Image }))).toBe(false);
+    });
+
+    it('is true for JSON cells, whose collapsed block is otherwise unreadable', () => {
+      expect(shouldTextOverflow(field(FieldType.other))).toBe(true);
+      expect(shouldTextOverflow(field(FieldType.string, { type: TableCellDisplayMode.JSONView }))).toBe(true);
+    });
+
+    it('is false for a wrapped JSON cell, which already shows the whole value', () => {
+      expect(shouldTextOverflow(field(FieldType.other, undefined, { wrapText: true }))).toBe(false);
+    });
+
+    it('is false for a JSON cell with inspect enabled, matching string cells', () => {
+      expect(shouldTextOverflow(field(FieldType.other, undefined, { inspect: true }))).toBe(false);
+    });
+
+    it('is false for an `other` field explicitly rendered as something else', () => {
+      expect(shouldTextOverflow(field(FieldType.other, { type: TableCellDisplayMode.Pill }))).toBe(false);
+    });
+  });
+
   describe('getCellOptions', () => {
     it('should return default options when no custom config is provided', () => {
       const field: Field = { name: 'test', type: FieldType.string, config: {}, values: [] };
@@ -1136,6 +1210,14 @@ describe('TableNG utils', () => {
 
     it('calculates an approximate rendered height for the text based on the width and avgCharWidth', () => {
       expect(estimator('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, field, 0, 20)).toBe(60);
+    });
+
+    it('counts embedded newlines as forced line breaks rather than folding them into the total length', () => {
+      // Each short line is far under charsPerLine (200/10 = 20), so length-based estimation across
+      // the whole string would collapse them into far fewer wrapped lines than the value actually
+      // renders as. A pretty-printed JSON value looks like this: many short, newline-delimited lines.
+      const json = '{\n  "a": 1,\n  "b": 2,\n  "c": 3\n}';
+      expect(estimator(json, 200, field, 0, 20)).toBe(5 * 20);
     });
   });
 

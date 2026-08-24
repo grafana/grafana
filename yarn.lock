@@ -789,6 +789,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@codemirror/lang-markdown@npm:6.5.1":
+  version: 6.5.1
+  resolution: "@codemirror/lang-markdown@npm:6.5.1"
+  dependencies:
+    "@codemirror/autocomplete": "npm:^6.7.1"
+    "@codemirror/lang-html": "npm:^6.0.0"
+    "@codemirror/language": "npm:^6.3.0"
+    "@codemirror/state": "npm:^6.0.0"
+    "@codemirror/view": "npm:^6.0.0"
+    "@lezer/common": "npm:^1.2.1"
+    "@lezer/markdown": "npm:^1.0.0"
+  checksum: 10/ee34bad99acf4d2a682414e7b0f94d4fde3eb86f0e1a4093cc96c3ec0063d155f34e90011106d0772534827a60def0af631043d5b0e54de04bbea6ebdbb39023
+  languageName: node
+  linkType: hard
+
 "@codemirror/lang-markdown@npm:^6.5.1":
   version: 6.5.2
   resolution: "@codemirror/lang-markdown@npm:6.5.2"
@@ -5464,7 +5479,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/markdown@npm:^1.0.0":
+"@lezer/markdown@npm:1.7.2, @lezer/markdown@npm:^1.0.0":
   version: 1.7.2
   resolution: "@lezer/markdown@npm:1.7.2"
   dependencies:
@@ -19925,6 +19940,7 @@ __metadata:
     "@axe-core/playwright": "npm:^4.11.1"
     "@bsull/augurs": "npm:^0.10.0"
     "@codemirror/autocomplete": "npm:6.20.3"
+    "@codemirror/lang-markdown": "npm:6.5.1"
     "@codemirror/lang-sql": "npm:6.10.0"
     "@codemirror/language": "npm:6.12.4"
     "@codemirror/state": "npm:6.7.1"
@@ -19969,6 +19985,7 @@ __metadata:
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@lezer/common": "npm:1.5.2"
     "@lezer/lr": "npm:1.4.10"
+    "@lezer/markdown": "npm:1.7.2"
     "@locker/near-membrane-dom": "npm:0.14.0"
     "@locker/near-membrane-shared": "npm:0.14.0"
     "@manypkg/get-packages": "npm:^3.0.0"

@@ -6984,6 +6984,9 @@
       "name-json-values": "JSON",
       "selection-options": "Opsi pemilihan"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Kembali ke daftar",
       "label-icon": "Ikon",
@@ -7761,9 +7764,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Variabel ini direferensikan oleh variabel atau dasbor lain.",
       "content-variable-not-referenced-other-variables-dashboard": "Variabel ini tidak dirujuk oleh variabel atau dasbor lain.",
       "content-variable-referenced-other-variables-dashboard": "Variabel ini dirujuk oleh variabel atau dasbor lain."
-    },
-    "variable-controls": {
-      "add-variable": "Tambah variabel"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -9085,6 +9085,7 @@
     "json": {
       "cancel-button": "Batalkan",
       "copy-button": "Salin ke papan klip",
+      "dashboard-definition": "",
       "download-button": "Unduh file",
       "download-successful_toast_message": "JSON Anda telah diunduh",
       "export-format": "Format",
@@ -13596,7 +13597,8 @@
       "open-pull-request-in-repo": "Buka permintaan penarikan di {{repoType}}",
       "update-from-branch": "Pengguna Grafana lainnya di organisasi Anda masih akan melihat versi saat ini hingga cabang ini digabungkan",
       "view-in-repo-button": "Lihat di {{repoType}} untuk melihat perubahan terbaru.",
-      "view-pull-request-in-repo": "Lihat permintaan penarikan di {{repoType}}"
+      "view-pull-request-in-repo": "Lihat permintaan penarikan di {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "Sumber daya baru telah dibuat di cabang di {{repoType}}.",
     "title-deleted-resource-in-branch": "Sumber daya telah dihapus di cabang di {{repoType}}.",

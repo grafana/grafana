@@ -6984,6 +6984,9 @@
       "name-json-values": "JSON",
       "selection-options": "선택 옵션"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "목록으로 돌아가기",
       "label-icon": "아이콘",
@@ -7761,9 +7764,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조됩니다.",
       "content-variable-not-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조되지 않습니다.",
       "content-variable-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조됩니다."
-    },
-    "variable-controls": {
-      "add-variable": "변수 추가"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -9085,6 +9085,7 @@
     "json": {
       "cancel-button": "취소",
       "copy-button": "클립보드로 복사",
+      "dashboard-definition": "",
       "download-button": "파일 다운로드",
       "download-successful_toast_message": "JSON 다운로드 완료",
       "export-format": "형식",
@@ -13596,7 +13597,8 @@
       "open-pull-request-in-repo": "{{repoType}}에서 풀 요청 열기",
       "update-from-branch": "이 브랜치가 병합될 때까지 조직의 다른 Grafana 사용자에게는 현재 버전이 계속 표시됩니다.",
       "view-in-repo-button": "최신 변경 사항은 {{repoType}}에서 확인하세요.",
-      "view-pull-request-in-repo": "{{repoType}}에서 풀 요청 보기"
+      "view-pull-request-in-repo": "{{repoType}}에서 풀 요청 보기",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "{{repoType}}의 브랜치에 새 리소스가 생성되었습니다.",
     "title-deleted-resource-in-branch": "{{repoType}}의 브랜치에서 리소스가 삭제되었습니다.",
