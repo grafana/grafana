@@ -175,12 +175,17 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     scopedVars: ScopedVars,
     range?: TimeRange
   ): CloudWatchMetricsQuery {
-    const intervalMs = Number(scopedVars?.__interval_ms?.value) || 60000;
+    const queryIntervalMs = query.interval ? rangeUtil.intervalToMs(query.interval) : 0;
+    const intervalMs = Math.max(Number(scopedVars?.__interval_ms?.value) || 60000, queryIntervalMs);
+    const intervalSeconds = Math.round(intervalMs / 1000);
+    const interval = `${intervalSeconds}s`;
     const rateIntervalMs = Math.max(intervalMs, 60000);
     const rateIntervalSeconds = Math.round(rateIntervalMs / 1000);
     const rateInterval = `${rateIntervalSeconds}s`;
     const promQLScopedVars: ScopedVars = {
       ...scopedVars,
+      __interval: { text: interval, value: interval },
+      __interval_ms: { text: intervalMs, value: intervalMs },
       __rate_interval: { text: rateInterval, value: rateInterval },
       __rate_interval_ms: { text: rateIntervalMs, value: rateIntervalMs },
     };

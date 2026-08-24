@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -93,9 +94,7 @@ func TestConvertPromRangeResultToDataFrames(t *testing.T) {
 
 func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 	t.Run("converts a vector result to single-point frames", func(t *testing.T) {
-		resp := prometheusInstantResponse{Status: "success"}
-		resp.Data.ResultType = "vector"
-		resp.Data.Result = []prometheusInstantSeries{
+		series := []prometheusInstantSeries{
 			{
 				Metric: map[string]string{"__name__": "up", "job": "api"},
 				Value:  []interface{}{float64(1000000), "1"},
@@ -106,7 +105,7 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 			},
 		}
 
-		frames := convertPromInstantResultToDataFrames(resp, "A")
+		frames := convertPromInstantResultToDataFrames(series, "A")
 		require.Len(t, frames, 2)
 
 		first := frames[0]
@@ -120,37 +119,84 @@ func TestConvertPromInstantResultToDataFrames(t *testing.T) {
 	})
 
 	t.Run("skips malformed instant points", func(t *testing.T) {
-		resp := prometheusInstantResponse{Status: "success"}
-		resp.Data.Result = []prometheusInstantSeries{
+		series := []prometheusInstantSeries{
 			{Metric: map[string]string{}, Value: []interface{}{float64(1000), "notanumber"}},
 			{Metric: map[string]string{}, Value: []interface{}{"bad-ts", "1.0"}},
 			{Metric: map[string]string{}, Value: []interface{}{float64(1000)}},
 			{Metric: map[string]string{}, Value: []interface{}{float64(1000), "5.5"}},
 		}
 
-		frames := convertPromInstantResultToDataFrames(resp, "B")
+		frames := convertPromInstantResultToDataFrames(series, "B")
 		require.Len(t, frames, 1)
 		assert.Equal(t, 5.5, frames[0].Fields[1].At(0))
 	})
 
 	t.Run("falls back to histogram sum/count", func(t *testing.T) {
-		resp := prometheusInstantResponse{Status: "success"}
-		resp.Data.Result = []prometheusInstantSeries{
+		series := []prometheusInstantSeries{
 			{
 				Metric:    map[string]string{"__name__": "http_request_duration"},
 				Histogram: []interface{}{float64(2000000), map[string]interface{}{"sum": "100", "count": "4"}},
 			},
 		}
 
-		frames := convertPromInstantResultToDataFrames(resp, "C")
+		frames := convertPromInstantResultToDataFrames(series, "C")
 		require.Len(t, frames, 1)
 		assert.Equal(t, 25.0, frames[0].Fields[1].At(0))
 	})
 
 	t.Run("returns empty frames for empty result", func(t *testing.T) {
-		resp := prometheusInstantResponse{Status: "success"}
-		frames := convertPromInstantResultToDataFrames(resp, "D")
+		frames := convertPromInstantResultToDataFrames(nil, "D")
 		assert.Empty(t, frames)
+	})
+}
+
+func TestPrometheusInstantResponseInstantSeries(t *testing.T) {
+	t.Run("decodes a vector result", func(t *testing.T) {
+		var resp prometheusInstantResponse
+		require.NoError(t, json.Unmarshal([]byte(`{
+			"status": "success",
+			"data": {
+				"resultType": "vector",
+				"result": [{"metric": {"__name__": "up"}, "value": [1000000, "1"]}]
+			}
+		}`), &resp))
+
+		series, err := resp.instantSeries()
+		require.NoError(t, err)
+		require.Len(t, series, 1)
+		assert.Equal(t, "up", series[0].Metric["__name__"])
+	})
+
+	t.Run("decodes a scalar result", func(t *testing.T) {
+		var resp prometheusInstantResponse
+		require.NoError(t, json.Unmarshal([]byte(`{
+			"status": "success",
+			"data": {
+				"resultType": "scalar",
+				"result": [1000000, "42"]
+			}
+		}`), &resp))
+
+		series, err := resp.instantSeries()
+		require.NoError(t, err)
+		require.Len(t, series, 1)
+		assert.Empty(t, series[0].Metric)
+
+		ts, val, ok := parseStringPoint(series[0].Value)
+		require.True(t, ok)
+		assert.Equal(t, float64(1000000), ts)
+		assert.Equal(t, 42.0, val)
+	})
+
+	t.Run("errors on unsupported result type", func(t *testing.T) {
+		var resp prometheusInstantResponse
+		require.NoError(t, json.Unmarshal([]byte(`{
+			"status": "success",
+			"data": {"resultType": "matrix", "result": []}
+		}`), &resp))
+
+		_, err := resp.instantSeries()
+		assert.Error(t, err)
 	})
 }
 

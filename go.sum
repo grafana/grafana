@@ -1620,8 +1620,12 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.292.2 h1:6xrNZpe905vzX1pY33Fyet7Oxw5xULcAHm2b8dvNZNY=
 github.com/grafana/grafana-plugin-sdk-go v0.292.2/go.mod h1:MPviZeixuZDc5T3f62FBCCPSOJ51/JocZH5+ZiQ1DmM=
+github.com/grafana/grafana-plugin-sdk-go v0.294.0 h1:0GQQXCfot1rArDGM98ORKVhpx/BHreeL1Zlha/4qChE=
+github.com/grafana/grafana-plugin-sdk-go v0.294.0/go.mod h1:UZfMMraG1cyxYOx9dONSidwZUjfgbWVj9Cb2bMFFsWU=
 github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.15 h1:SAj4MbSWpOCdeb/FF6YR6L3nEj+3XiEdK3HEF71Sj/s=
 github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.15/go.mod h1:ffxpjdz+WxnvNvDkzQr9fQffC4tgobr+GX5P3DUszM8=
+github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.18 h1:5MceBd5dunxNjWbH3XECyGZEdborkqExVYHx1IVQUDs=
+github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.18/go.mod h1:kQTcZL+iotYO1NcHD2lUxJtguxMvrnTi7XSLW4c3T7U=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLmAhwA4m6iGUD4w1YkydEWWjazn9qxCFT8W0=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000/go.mod h1:/ZklAgE1i4f3Z8uriXwESmCr1VLF8lBGaJspuaGuf78=
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86 h1:aTwfQuroOmOr//QEn9J1MtC4R4CPR9/IbUd8hZrbWKo=

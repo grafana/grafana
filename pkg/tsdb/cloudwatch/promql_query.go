@@ -73,12 +73,31 @@ type prometheusRangeResponse struct {
 type prometheusInstantResponse struct {
 	Status string `json:"status"`
 	Data   struct {
-		ResultType string                    `json:"resultType"`
-		Result     []prometheusInstantSeries `json:"result"`
+		ResultType string          `json:"resultType"`
+		Result     json.RawMessage `json:"result"`
 	} `json:"data"`
 	Error     string   `json:"error,omitempty"`
 	ErrorType string   `json:"errorType,omitempty"`
 	Warnings  []string `json:"warnings,omitempty"`
+}
+
+func (promResp prometheusInstantResponse) instantSeries() ([]prometheusInstantSeries, error) {
+	switch promResp.Data.ResultType {
+	case "scalar":
+		var point []interface{}
+		if err := json.Unmarshal(promResp.Data.Result, &point); err != nil {
+			return nil, err
+		}
+		return []prometheusInstantSeries{{Value: point}}, nil
+	case "vector":
+		var series []prometheusInstantSeries
+		if err := json.Unmarshal(promResp.Data.Result, &series); err != nil {
+			return nil, err
+		}
+		return series, nil
+	default:
+		return nil, fmt.Errorf("unsupported PromQL result type: %s", promResp.Data.ResultType)
+	}
 }
 
 func (ds *DataSource) executePromQLQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -161,7 +180,12 @@ func (ds *DataSource) executePromQLInstant(ctx context.Context, region, expressi
 		return backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("PromQL error (%s): %s", promResp.ErrorType, promResp.Error)))
 	}
 
-	frames := convertPromInstantResultToDataFrames(promResp, refID)
+	series, err := promResp.instantSeries()
+	if err != nil {
+		return backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("failed to parse response: %w", err)))
+	}
+
+	frames := convertPromInstantResultToDataFrames(series, refID)
 	return backend.DataResponse{Frames: attachWarnings(frames, refID, promResp.Warnings)}
 }
 
@@ -239,10 +263,10 @@ func convertPromRangeResultToDataFrames(promResp prometheusRangeResponse, refID 
 	return frames
 }
 
-func convertPromInstantResultToDataFrames(promResp prometheusInstantResponse, refID string) data.Frames {
+func convertPromInstantResultToDataFrames(seriesList []prometheusInstantSeries, refID string) data.Frames {
 	var frames data.Frames
 
-	for _, series := range promResp.Data.Result {
+	for _, series := range seriesList {
 		ts, val, ok := parseStringPoint(series.Value)
 		if !ok {
 			ts, val, ok = parseHistogramPoint(series.Histogram)

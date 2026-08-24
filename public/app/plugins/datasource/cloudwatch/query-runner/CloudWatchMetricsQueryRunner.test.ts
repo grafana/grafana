@@ -623,6 +623,29 @@ describe('CloudWatchMetricsQueryRunner', () => {
       );
     });
 
+    it('applies the query-level interval as a lower bound for $__interval and $__rate_interval', () => {
+      const { runner, templateService } = setupMockedMetricsQueryRunner();
+      const query = {
+        ...validMetricSearchBuilderQuery,
+        promqlExpression: '$__interval,$__rate_interval',
+        interval: '5m',
+      };
+
+      runner.interpolateMetricsQueryVariables(query, {
+        __interval_ms: { text: '15000', value: 15000 },
+      });
+
+      expect(templateService.replace).toHaveBeenCalledWith(
+        '$__interval,$__rate_interval',
+        expect.objectContaining({
+          __interval: { text: '300s', value: '300s' },
+          __interval_ms: { text: 300000, value: 300000 },
+          __rate_interval: { text: '300s', value: '300s' },
+          __rate_interval_ms: { text: 300000, value: 300000 },
+        })
+      );
+    });
+
     it('synthesizes $__range / $__range_s / $__range_ms from the provided range', () => {
       const { runner, templateService } = setupMockedMetricsQueryRunner();
       const query = { ...validMetricSearchBuilderQuery, promqlExpression: '$__range' };
