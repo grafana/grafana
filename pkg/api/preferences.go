@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
@@ -9,8 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/open-feature/go-sdk/openfeature"
 )
@@ -77,64 +74,6 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 	}
 
 	return hs.preferenceK8sHandler.PatchPreferences(c, prefutils.UserOwner(c.GetIdentifier()), &dtoCmd)
-}
-
-func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.PatchPrefsCmd) response.Response {
-	if dtoCmd.Theme != nil && !pref.IsValidThemeID(*dtoCmd.Theme) {
-		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
-	}
-
-	if dtoCmd.Timezone != nil && !pref.IsValidTimezone(*dtoCmd.Timezone) {
-		return response.Error(http.StatusBadRequest, "Invalid timezone. Must be a valid IANA timezone (e.g., America/New_York), 'utc', 'browser', or empty string", nil)
-	}
-
-	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
-	// nolint:staticcheck
-	dashboardID := dtoCmd.HomeDashboardID
-	if dtoCmd.HomeDashboardUID != nil {
-		query := dashboards.GetDashboardQuery{UID: *dtoCmd.HomeDashboardUID, OrgID: orgID}
-		if query.UID == "" {
-			// clear the value
-			defaultDash := int64(0)
-			dashboardID = &defaultDash
-		} else {
-			queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
-			if err != nil {
-				return response.Error(http.StatusNotFound, "Dashboard not found", err)
-			}
-			dashboardID = &queryResult.ID
-		}
-	} else if dtoCmd.HomeDashboardID != nil {
-		// make sure uid is always set if id is set
-		queryResult, err := hs.DashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: *dtoCmd.HomeDashboardID, OrgID: orgID}) // nolint:staticcheck
-		if err != nil {
-			return response.Error(http.StatusNotFound, "Dashboard not found", err)
-		}
-		dtoCmd.HomeDashboardUID = &queryResult.UID
-	}
-
-	// nolint:staticcheck
-	dtoCmd.HomeDashboardID = dashboardID
-
-	patchCmd := pref.PatchPreferenceCommand{
-		UserID:           userID,
-		OrgID:            orgID,
-		TeamID:           teamId,
-		Theme:            dtoCmd.Theme,
-		Timezone:         dtoCmd.Timezone,
-		WeekStart:        dtoCmd.WeekStart,
-		HomeDashboardID:  dtoCmd.HomeDashboardID, // nolint:staticcheck
-		HomeDashboardUID: dtoCmd.HomeDashboardUID,
-		Language:         dtoCmd.Language,
-		QueryHistory:     dtoCmd.QueryHistory,
-		Navbar:           dtoCmd.Navbar,
-	}
-
-	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save preferences", err)
-	}
-
-	return response.Success("Preferences updated")
 }
 
 // swagger:route GET /org/preferences org preferences getOrgPreferences
