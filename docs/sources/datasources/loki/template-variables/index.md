@@ -86,7 +86,7 @@ For the complete list of format options, refer to [Advanced variable format opti
 
 ## Use free-form filters
 
-Loki supports ad hoc filters. Use them to specify any number of key/value filters that Grafana applies automatically to all of your Loki queries, without editing each query.
+Loki supports free-form filters. Use them to specify any number of key/value filters that Grafana applies automatically to all of your Loki queries, without editing each query.
 
 For example, if you add an ad hoc filter for `level = error`, Grafana appends the matcher to the stream selector of every Loki query on the dashboard, so a query like `{app="payments"}` runs as `{app="payments", level="error"}`.
 
