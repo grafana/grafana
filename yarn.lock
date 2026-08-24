@@ -20025,7 +20025,6 @@ __metadata:
     "@rsdoctor/webpack-plugin": "npm:^1.0.0"
     "@rspack/cli": "npm:^2"
     "@rspack/core": "npm:^2.1.7"
-    "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@stylistic/eslint-plugin-ts": "npm:^4.0.0"
     "@swc/core": "npm:1.13.3"
     "@swc/helpers": "npm:0.5.17"
