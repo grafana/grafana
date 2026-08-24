@@ -157,7 +157,7 @@ Live tailing relies on WebSocket connections between the browser and Grafana, an
 **Solutions:**
 
 1. Confirm your reverse proxy forwards WebSocket connections for the tail endpoint. Refer to the proxy examples in the [Loki query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/query-editor/#tail-live-logs).
-1. Verify that intermediate load balancers and firewalls allow WebSocket upgrades.
+1. Verify that intermediate load balancers and firewall rules allow WebSocket upgrades.
 1. Confirm Loki itself is reachable and that the tail endpoint isn't blocked.
 
 ## Label-based access control (LBAC) issues
