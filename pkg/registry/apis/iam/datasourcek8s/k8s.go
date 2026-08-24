@@ -92,9 +92,10 @@ func LegacyDatasourceScopeAndActionToK8s(datasourceType, scope, action string) (
 		return scope, action
 	}
 
-	scope = LegacyUIDScopeToK8s(datasourceType, uid)
-	if converted, ok := legacyActionToK8s(datasourceType, action); ok {
-		action = converted
+	convertedAction, ok := legacyActionToK8s(datasourceType, action)
+	if !ok {
+		return scope, action
 	}
-	return scope, action
+
+	return LegacyUIDScopeToK8s(datasourceType, uid), convertedAction
 }

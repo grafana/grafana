@@ -42,6 +42,10 @@ func TestLegacyDatasourceScopeAndActionToK8s(t *testing.T) {
 	scope, action = LegacyDatasourceScopeAndActionToK8s("*", "datasources:*", "datasources.permissions:write")
 	assert.Equal(t, "*.datasource.grafana.app/datasources:*", scope)
 	assert.Equal(t, "*.datasource.grafana.app/datasources:set_permissions", action)
+
+	scope, action = LegacyDatasourceScopeAndActionToK8s("*", "datasources:*", "datasources.caching:read")
+	assert.Equal(t, "datasources:*", scope)
+	assert.Equal(t, "datasources.caching:read", action)
 }
 
 func TestLegacyDatasourceAction(t *testing.T) {
