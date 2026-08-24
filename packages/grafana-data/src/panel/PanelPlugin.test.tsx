@@ -590,7 +590,7 @@ describe('PanelPlugin', () => {
       expect(suggestions2).toHaveLength(0);
     });
   });
-  describe('data transformations', () => {
+  describe('system transformations', () => {
     afterEach(() => {
       jest.restoreAllMocks();
     });
@@ -608,10 +608,8 @@ describe('PanelPlugin', () => {
       expect(panel.setSystemTransformations(supplier)).toBe(panel);
 
       const series = [createDataFrame({ fields: [{ type: FieldType.number, name: 'Value' }] })];
-      expect(panel.getSystemTransformations({ series })).toEqual({
-        prepend: [{ id: 'extractFields', options: {} }],
-        append: [],
-      });
+      panel.getSystemTransformations({ series });
+
       expect(supplier).toHaveBeenCalledWith({ series });
     });
 

@@ -3,8 +3,7 @@ import { Observable } from 'rxjs';
 
 import { type DataFrame, transformDataFrame } from '@grafana/data';
 
-import { type Transformation } from '../types';
-
+import { makeFrames, makeTransformation } from './testUtils';
 import {
   NO_CONFIGS,
   type TransformationConfigs,
@@ -23,14 +22,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
-
-function makeTransformation(id: string): Transformation {
-  return { transformId: id, transformConfig: { id, options: {} }, registryItem: undefined };
-}
-
-function makeFrames(names: string[]): DataFrame[] {
-  return names.map((name) => ({ name, fields: [], length: 0 }));
-}
 
 describe('useTransformedFrames', () => {
   const frames = makeFrames(['a', 'b']);

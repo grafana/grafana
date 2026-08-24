@@ -5,7 +5,9 @@ import { type DataFrame, transformDataFrame } from '@grafana/data';
 
 import { type Transformation } from '../types';
 
+import { makeFrames, makeTransformation } from './testUtils';
 import { useTransformationInputData } from './useTransformationInputData';
+import { NO_CONFIGS } from './useTransformedFrames';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -19,28 +21,9 @@ jest.mock('@grafana/runtime', () => ({
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
 
-function makeTransformation(id: string): Transformation {
-  return {
-    transformId: id,
-    transformConfig: { id, options: {} },
-    registryItem: undefined,
-  };
-}
-
-/** Stable identity: the hook re-runs its effect when any input's identity changes, rawData included. */
-const NO_SYSTEM_TRANSFORMATIONS: [] = [];
-
-function makeFrames(count: number): DataFrame[] {
-  return Array.from({ length: count }, (_, i) => ({
-    name: `frame-${i}`,
-    fields: [],
-    length: 0,
-  }));
-}
-
 describe('useTransformationInputData', () => {
-  const rawData = makeFrames(2);
-  const mockPipelineOutput = makeFrames(1);
+  const rawData = makeFrames(['A-series', 'B-series']);
+  const mockPipelineOutput = makeFrames(['joined']);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -62,7 +45,7 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[0],
         allTransformations: transformations,
-        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+        systemTransformations: NO_CONFIGS,
         rawData,
       })
     );
@@ -81,7 +64,7 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[1],
         allTransformations: transformations,
-        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+        systemTransformations: NO_CONFIGS,
         rawData,
       })
     );
@@ -113,7 +96,7 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[2],
         allTransformations: transformations,
-        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+        systemTransformations: NO_CONFIGS,
         rawData,
       })
     );
@@ -141,7 +124,7 @@ describe('useTransformationInputData', () => {
         useTransformationInputData({
           selectedTransformation: selected,
           allTransformations: transformations,
-          systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+          systemTransformations: NO_CONFIGS,
           rawData,
         }),
       { initialProps: { selected: transformations[0] } }
@@ -166,14 +149,14 @@ describe('useTransformationInputData', () => {
     // Simulates a query refreshing — new frames arrive and the preceding transformations
     // must re-run against the fresh data to keep the editor input up to date.
     const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
-    const newRawData = makeFrames(3); // fresh query results
+    const newRawData = makeFrames(['A-series', 'B-series', 'C-series']); // fresh query results
 
     const { rerender } = renderHook(
       ({ data }: { data: DataFrame[] }) =>
         useTransformationInputData({
           selectedTransformation: transformations[1],
           allTransformations: transformations,
-          systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+          systemTransformations: NO_CONFIGS,
           rawData: data,
         }),
       { initialProps: { data: rawData } }
@@ -196,66 +179,29 @@ describe('useTransformationInputData', () => {
     );
   });
 
-  describe('plugin-registered transformations', () => {
+  it('runs the plugin-registered transformations ahead of the preceding user ones', () => {
     // These run ahead of every user transformation but are deliberately absent from the editable
-    // list, so replaying that list alone shows editors a field shape they will never receive.
+    // list, so replaying that list alone shows editors a field shape they will never receive. Which
+    // configs precede which is `precedingTransformations`' own concern; this only pins that they
+    // reach it.
     const systemTransformations = [jest.fn()];
+    const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
 
-    it('runs them even when the first user transformation is selected', () => {
-      const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
-
-      const { result } = renderHook(() =>
-        useTransformationInputData({
-          selectedTransformation: transformations[0],
-          allTransformations: transformations,
-          systemTransformations,
-          rawData,
-        })
-      );
-
-      // The raw-data short-circuit must not apply: something does precede this transformation.
-      expect(mockTransformDataFrame).toHaveBeenCalledWith(systemTransformations, rawData, expect.any(Object));
-      expect(result.current).toBe(mockPipelineOutput);
-    });
-
-    it('runs them ahead of the preceding user transformations', () => {
-      const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
-
-      renderHook(() =>
-        useTransformationInputData({
-          selectedTransformation: transformations[1],
-          allTransformations: transformations,
-          systemTransformations,
-          rawData,
-        })
-      );
-
-      // Order matters: the plugin's transformations produce the fields joinByField then consumes.
-      expect(mockTransformDataFrame).toHaveBeenCalledWith(
-        [...systemTransformations, transformations[0].transformConfig],
+    renderHook(() =>
+      useTransformationInputData({
+        selectedTransformation: transformations[1],
+        allTransformations: transformations,
+        systemTransformations,
         rawData,
-        expect.any(Object)
-      );
-    });
+      })
+    );
 
-    it('runs them alone for a transformation missing from the list', () => {
-      // findIndex returns -1 here; slicing by it directly would drop the list's last entry.
-      const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
-      // Built outside the render callback: a fresh selection per render is a fresh config array per
-      // render, which re-runs the pipeline and sets state on every one of them.
-      const missing = makeTransformation('reduce');
-
-      renderHook(() =>
-        useTransformationInputData({
-          selectedTransformation: missing,
-          allTransformations: transformations,
-          systemTransformations,
-          rawData,
-        })
-      );
-
-      expect(mockTransformDataFrame).toHaveBeenCalledWith(systemTransformations, rawData, expect.any(Object));
-    });
+    // Order matters: the plugin's transformations produce the fields joinByField then consumes.
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(
+      [...systemTransformations, transformations[0].transformConfig],
+      rawData,
+      expect.any(Object)
+    );
   });
 
   it('cleans up the subscription when the component unmounts', () => {
@@ -277,7 +223,7 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[1],
         allTransformations: transformations,
-        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+        systemTransformations: NO_CONFIGS,
         rawData,
       })
     );

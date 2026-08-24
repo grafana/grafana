@@ -4,13 +4,11 @@ import {
   type DataFrame,
   FieldType,
   LoadingState,
-  type PanelPlugin,
   getDefaultTimeRange,
   getFieldDisplayName,
   standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, SceneObjectStateChangedEvent, VizPanel } from '@grafana/scenes';
@@ -21,11 +19,17 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 
 import { PanelDataPaneNext } from '../panel-edit/PanelEditNext/PanelDataPaneNext';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
+import {
+  extractLabels,
+  frameWithLabels,
+  mockSystemTransformationPlugins,
+  registerPlugin,
+  systemTransformationPluginImportUtils,
+} from '../utils/systemTransformationTestUtils';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { PanelPluginTransformationsBehaviour } from './PanelPluginTransformationsBehaviour';
 
-const plugins = new Map<string, PanelPlugin>();
 /** Plugin ids that must be awaited rather than resolved from the synchronous cache. */
 const coldPlugins = new Set<string>();
 /**
@@ -35,11 +39,13 @@ const coldPlugins = new Set<string>();
  */
 const importerBlindPlugins = new Set<string>();
 
+// A richer factory than the other suites need: these tests drive the cold and importer-blind paths
+// the shared map alone cannot express.
 jest.mock('app/features/plugins/importPanelPlugin', () => ({
   syncGetPanelPlugin: (id: string) =>
-    coldPlugins.has(id) || importerBlindPlugins.has(id) ? undefined : plugins.get(id),
+    coldPlugins.has(id) || importerBlindPlugins.has(id) ? undefined : mockSystemTransformationPlugins.get(id),
   importPanelPlugin: jest.fn((id: string) => {
-    const plugin = importerBlindPlugins.has(id) ? undefined : plugins.get(id);
+    const plugin = importerBlindPlugins.has(id) ? undefined : mockSystemTransformationPlugins.get(id);
 
     if (!plugin) {
       return Promise.reject(new Error(`Plugin ${id} not found`));
@@ -53,34 +59,7 @@ jest.mock('app/features/plugins/importPanelPlugin', () => ({
   }),
 }));
 
-setPluginImportUtils({
-  importPanelPlugin: (id: string) => Promise.resolve(plugins.get(id)!),
-  getPanelPluginFromCache: (id: string) => plugins.get(id),
-});
-
-function registerPlugin(id: string, configure?: (plugin: PanelPlugin) => void) {
-  const plugin = getPanelPlugin({ id });
-  configure?.(plugin);
-  plugins.set(id, plugin);
-  return plugin;
-}
-
-/** A frame with a JSON `labels` column, the shape the logs table extracts fields out of. */
-function frameWithLabels(): DataFrame {
-  return toDataFrame({
-    name: 'logs',
-    fields: [
-      { name: 'time', type: FieldType.time, values: [100, 200] },
-      { name: 'line', type: FieldType.string, values: ['a', 'b'] },
-      { name: 'labels', type: FieldType.string, values: ['{"level":"info"}', '{"level":"warn"}'] },
-    ],
-  });
-}
-
-const extractLabels = {
-  id: 'extractFields',
-  options: { format: 'json', keepTime: false, replace: false, source: 'labels' },
-};
+setPluginImportUtils(systemTransformationPluginImportUtils);
 
 function buildTransformer(options: {
   series: DataFrame[];
@@ -128,7 +107,7 @@ describe('PanelPluginTransformationsBehaviour', () => {
   });
 
   beforeEach(() => {
-    plugins.clear();
+    mockSystemTransformationPlugins.clear();
     coldPlugins.clear();
     importerBlindPlugins.clear();
     jest.mocked(importPanelPlugin).mockClear();
@@ -811,42 +790,6 @@ describe('PanelPluginTransformationsBehaviour', () => {
       expect(level!.state?.seriesIndex).toBeDefined();
       // A second override pass would append the panel default link again.
       expect(level!.config.links).toHaveLength(1);
-    });
-
-    it('applies overrides to fields produced by an appended plugin transformation', async () => {
-      // Appended transformations run after every user transformation, but still inside the data
-      // provider — so overrides, which are applied to the provider's output, see their fields just
-      // as they see a prepended one's.
-      registerPlugin('reducer', (p) => {
-        p.setSystemTransformations(() => ({
-          append: [{ id: 'reduce', options: { reducers: ['count'] } }],
-        })).useFieldConfig({});
-      });
-
-      const { transformer, panel } = buildPipeline({ pluginId: 'reducer', series: [frameWithLabels()] });
-      panel.setState({
-        fieldConfig: {
-          defaults: {},
-          overrides: [
-            {
-              // `Count` only exists because the appended reduce ran.
-              matcher: { id: 'byName', options: 'Count' },
-              properties: [{ id: 'unit', value: 'bytes' }],
-            },
-          ],
-        },
-      });
-      activateFullSceneTree(panel);
-
-      await waitFor(() => {
-        expect(fieldNames(transformer)).toEqual(['Field', 'Count']);
-      });
-
-      const withFieldConfig = panel.applyFieldConfig(transformer.state.data!);
-      const count = withFieldConfig.series[0].fields.find((f) => f.name === 'Count');
-
-      expect(count).toBeDefined();
-      expect(count!.config.unit).toBe('bytes');
     });
   });
 });

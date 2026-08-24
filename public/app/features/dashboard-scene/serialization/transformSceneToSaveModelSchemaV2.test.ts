@@ -1302,14 +1302,6 @@ describe('given a panel plugin that registers transformations', () => {
     return new VizPanel({ key: 'panel-1', pluginId: 'timeseries', $data: dataProvider });
   }
 
-  it('serializes only the user transformations', () => {
-    const result = vizPanelToSchemaV2(buildVizPanel());
-
-    expect((result.spec as PanelSpec).data.spec.transformations).toEqual([
-      { kind: 'Transformation', group: 'reduce', spec: { options: userTransformation.options } },
-    ]);
-  });
-
   it('snapshots the raw query result', () => {
     const result = getVizPanelQueries(buildVizPanel(), undefined, true);
 

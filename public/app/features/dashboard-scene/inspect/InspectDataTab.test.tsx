@@ -1,15 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import {
-  FieldType,
-  getDefaultTimeRange,
-  LoadingState,
-  type PanelPlugin,
-  type QueryResultMeta,
-  standardTransformersRegistry,
-  toDataFrame,
-} from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test';
+import { getDefaultTimeRange, LoadingState, type QueryResultMeta, standardTransformersRegistry } from '@grafana/data';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, SceneObjectRef, SceneTimeRange, VizPanel } from '@grafana/scenes';
@@ -17,49 +8,30 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { PanelPluginTransformationsBehaviour } from '../scene/PanelPluginTransformationsBehaviour';
+import {
+  extractLabels,
+  frameWithLabels,
+  mockSystemTransformationPlugins,
+  registerPlugin,
+  systemTransformationPluginImportUtils,
+} from '../utils/systemTransformationTestUtils';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { InspectDataTab } from './InspectDataTab';
 
-const plugins = new Map<string, PanelPlugin>();
-
 jest.mock('app/features/plugins/importPanelPlugin', () => ({
-  syncGetPanelPlugin: (id: string) => plugins.get(id),
-  importPanelPlugin: (id: string) => Promise.resolve(plugins.get(id)),
+  syncGetPanelPlugin: (id: string) => mockSystemTransformationPlugins.get(id),
+  importPanelPlugin: (id: string) => Promise.resolve(mockSystemTransformationPlugins.get(id)),
 }));
 
-setPluginImportUtils({
-  importPanelPlugin: (id: string) => Promise.resolve(plugins.get(id)!),
-  getPanelPluginFromCache: (id: string) => plugins.get(id),
-});
-
-function registerPlugin(id: string, configure?: (plugin: PanelPlugin) => void) {
-  const plugin = getPanelPlugin({ id });
-  configure?.(plugin);
-  plugins.set(id, plugin);
-  return plugin;
-}
-
-const extractLabels = {
-  id: 'extractFields',
-  options: { format: 'json', keepTime: false, replace: false, source: 'labels' },
-};
+setPluginImportUtils(systemTransformationPluginImportUtils);
 
 function buildTab(options: {
   pluginId: string;
   userTransformations?: SceneDataTransformer['state']['transformations'];
   seriesMeta?: QueryResultMeta;
 }) {
-  const series = [
-    toDataFrame({
-      name: 'logs',
-      meta: options.seriesMeta,
-      fields: [
-        { name: 'time', type: FieldType.time, values: [100, 200] },
-        { name: 'labels', type: FieldType.string, values: ['{"level":"info"}', '{"level":"warn"}'] },
-      ],
-    }),
-  ];
+  const series = [frameWithLabels(options.seriesMeta)];
 
   const transformer = new SceneDataTransformer({
     $data: new SceneDataNode({
@@ -100,7 +72,7 @@ describe('InspectDataTab', () => {
   });
 
   beforeEach(() => {
-    plugins.clear();
+    mockSystemTransformationPlugins.clear();
     setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
   });
 

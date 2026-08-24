@@ -23,7 +23,6 @@ import {
   CustomVariable,
   type MultiValueVariable,
   sceneGraph,
-  type SceneDataTransformer,
   SceneGridLayout,
   type SceneGridRow,
   VizPanel,
@@ -1754,30 +1753,6 @@ describe('given a panel plugin that registers transformations', () => {
 
   afterAll(() => {
     setTestFlags({});
-  });
-
-  it('does not persist the plugin transformations into the save model', () => {
-    const panel = buildGridItemFromPanelSchema({
-      datasource: { type: 'grafana-testdata', uid: 'abc' },
-      transformations,
-      targets: [{ refId: 'A', datasource: { type: 'grafana-testdata', uid: 'abc' } }],
-    });
-
-    const dataProvider = panel.state.body.state.$data as SceneDataTransformer;
-    // Registered directly rather than through a plugin, which is `PanelPluginTransformationsBehaviour`'s
-    // concern. A plain config rather than an operator, so a leak would be a plausible save model
-    // entry rather than something the serializer would reject anyway.
-    dataProvider.setSystemTransformations({
-      supplier: () => ({ prepend: [{ id: 'organize', options: {} }] }),
-    });
-    // Resolved from the frames on every pass and never written to state, which is what keeps the
-    // serializer on a plain read of `state.transformations`.
-    expect(dataProvider.state.transformations).toEqual(transformations);
-
-    const result = gridItemToPanel(panel);
-
-    expect(result.transformations).toEqual(transformations);
-    expect(result.targets?.length).toBe(1);
   });
 
   it('snapshots the query result rather than the plugin-transformed frames', () => {

@@ -1,11 +1,11 @@
 import { renderHook } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
-import { type DataFrame, transformDataFrame } from '@grafana/data';
+import { transformDataFrame } from '@grafana/data';
 
-import { type Transformation } from '../types';
-
+import { makeFrames, makeTransformation } from './testUtils';
 import { useTransformationDebugData } from './useTransformationDebugData';
+import { NO_CONFIGS } from './useTransformedFrames';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -19,24 +19,9 @@ jest.mock('@grafana/runtime', () => ({
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
 
-/** Stable identity: the hook re-runs its effect when any input's identity changes. */
-const NO_SYSTEM_TRANSFORMATIONS: [] = [];
-
-function makeTransformation(id: string): Transformation {
-  return {
-    transformId: id,
-    transformConfig: { id, options: {} },
-    registryItem: undefined,
-  };
-}
-
-function makeFrames(count: number): DataFrame[] {
-  return Array.from({ length: count }, (_, i) => ({ name: `frame-${i}`, fields: [], length: 0 }));
-}
-
 describe('useTransformationDebugData', () => {
-  const data = makeFrames(2);
-  const pipelineOutput = makeFrames(1);
+  const data = makeFrames(['A-series', 'B-series']);
+  const pipelineOutput = makeFrames(['joined']);
   const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
 
   beforeEach(() => {
@@ -48,18 +33,25 @@ describe('useTransformationDebugData', () => {
     );
   });
 
-  it('replays the transformations preceding the debugged one', () => {
+  it('replays the transformations preceding the debugged one, then the debugged one itself', () => {
     const { result } = renderHook(() =>
       useTransformationDebugData({
         selectedTransformation: transformations[1],
         transformations,
-        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+        systemTransformations: NO_CONFIGS,
         data,
         isActive: true,
       })
     );
 
     expect(mockTransformDataFrame).toHaveBeenCalledWith([transformations[0].transformConfig], data, expect.any(Object));
+    // The output stage is its own list rather than a second pass over the input's result, so it has
+    // to be asserted separately: the mock answers the same frames whatever it is handed.
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(
+      [transformations[0].transformConfig, transformations[1].transformConfig],
+      data,
+      expect.any(Object)
+    );
     expect(result.current.input).toBe(pipelineOutput);
     expect(result.current.output).toBe(pipelineOutput);
   });
@@ -69,7 +61,7 @@ describe('useTransformationDebugData', () => {
       useTransformationDebugData({
         selectedTransformation: transformations[1],
         transformations,
-        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+        systemTransformations: NO_CONFIGS,
         data,
         isActive: false,
       })
@@ -79,41 +71,26 @@ describe('useTransformationDebugData', () => {
     expect(result.current).toEqual({ input: [], output: [] });
   });
 
-  describe('plugin-registered transformations', () => {
+  it('replays the plugin-registered transformations ahead of the preceding user ones', () => {
     // They run ahead of every user transformation but are absent from the editable list, so replaying
-    // that list alone shows an input the debugged transformation never receives.
+    // that list alone shows an input the debugged transformation never receives. Which configs
+    // precede which is `precedingTransformations`' own concern; this only pins that they reach it.
     const systemTransformations = [jest.fn()];
 
-    it('replays them ahead of the preceding user transformations', () => {
-      renderHook(() =>
-        useTransformationDebugData({
-          selectedTransformation: transformations[1],
-          transformations,
-          systemTransformations,
-          data,
-          isActive: true,
-        })
-      );
-
-      expect(mockTransformDataFrame).toHaveBeenCalledWith(
-        [...systemTransformations, transformations[0].transformConfig],
+    renderHook(() =>
+      useTransformationDebugData({
+        selectedTransformation: transformations[1],
+        transformations,
+        systemTransformations,
         data,
-        expect.any(Object)
-      );
-    });
+        isActive: true,
+      })
+    );
 
-    it('replays them for the first user transformation, which has no user predecessors', () => {
-      renderHook(() =>
-        useTransformationDebugData({
-          selectedTransformation: transformations[0],
-          transformations,
-          systemTransformations,
-          data,
-          isActive: true,
-        })
-      );
-
-      expect(mockTransformDataFrame).toHaveBeenCalledWith(systemTransformations, data, expect.any(Object));
-    });
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(
+      [...systemTransformations, transformations[0].transformConfig],
+      data,
+      expect.any(Object)
+    );
   });
 });

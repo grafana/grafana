@@ -3,9 +3,9 @@ import { Observable } from 'rxjs';
 
 import { type DataFrame, transformDataFrame } from '@grafana/data';
 
-import { type Transformation } from '../types';
-
+import { makeFrames, makeTransformation } from './testUtils';
 import { usePreviousTransformationOutput } from './usePreviousTransformationOutput';
+import { NO_CONFIGS } from './useTransformedFrames';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -18,21 +18,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
-
-function makeTransformation(id: string): Transformation {
-  return {
-    transformId: id,
-    transformConfig: { id, options: {} },
-    registryItem: undefined,
-  };
-}
-
-function makeFrames(names: string[]): DataFrame[] {
-  return names.map((name) => ({ name, fields: [], length: 0 }));
-}
-
-/** Stable identity: the hook re-runs its effect when any input's identity changes. */
-const NO_SYSTEM_TRANSFORMATIONS: [] = [];
 
 describe('usePreviousTransformationOutput', () => {
   const queryData = makeFrames(['A-series', 'B-series']);
@@ -55,7 +40,7 @@ describe('usePreviousTransformationOutput', () => {
       usePreviousTransformationOutput({
         selectedTransformation: transformations[0],
         transformations,
-        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+        systemTransformations: NO_CONFIGS,
         queryData,
       })
     );
@@ -75,7 +60,7 @@ describe('usePreviousTransformationOutput', () => {
       usePreviousTransformationOutput({
         selectedTransformation: transformations[2],
         transformations,
-        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+        systemTransformations: NO_CONFIGS,
         queryData,
       })
     );
@@ -100,7 +85,7 @@ describe('usePreviousTransformationOutput', () => {
       usePreviousTransformationOutput({
         selectedTransformation: transformations[0],
         transformations,
-        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+        systemTransformations: NO_CONFIGS,
         queryData: returnedFrames,
         queryTargets,
       })
@@ -114,47 +99,28 @@ describe('usePreviousTransformationOutput', () => {
     ]);
   });
 
-  describe('plugin-registered transformations', () => {
+  it('runs the plugin-registered transformations ahead of the preceding user ones', () => {
     // The filter matcher runs against the frames the pipeline actually produces. These run ahead of
     // every user transformation, so a picker built without them lists frames that no longer exist by
-    // the time the filter is applied.
+    // the time the filter is applied. Which configs precede which is `precedingTransformations`'
+    // own concern; this only pins that they reach it.
     const systemTransformations = [jest.fn()];
+    const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
 
-    it('runs them for the first user transformation, which nothing else precedes', () => {
-      const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
-
-      const { result } = renderHook(() =>
-        usePreviousTransformationOutput({
-          selectedTransformation: transformations[0],
-          transformations,
-          systemTransformations,
-          queryData,
-        })
-      );
-
-      // The query-result short-circuit must not apply: the plugin's transformations do precede this.
-      expect(mockTransformDataFrame).toHaveBeenCalledWith(systemTransformations, queryData, expect.any(Object));
-      expect(result.current).toEqual(pipelineOutput);
-    });
-
-    it('runs them ahead of the preceding user transformations', () => {
-      const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
-
-      renderHook(() =>
-        usePreviousTransformationOutput({
-          selectedTransformation: transformations[1],
-          transformations,
-          systemTransformations,
-          queryData,
-        })
-      );
-
-      expect(mockTransformDataFrame).toHaveBeenCalledWith(
-        [...systemTransformations, transformations[0].transformConfig],
+    renderHook(() =>
+      usePreviousTransformationOutput({
+        selectedTransformation: transformations[1],
+        transformations,
+        systemTransformations,
         queryData,
-        expect.any(Object)
-      );
-    });
+      })
+    );
+
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(
+      [...systemTransformations, transformations[0].transformConfig],
+      queryData,
+      expect.any(Object)
+    );
   });
 
   it('cleans up the subscription when the component unmounts', () => {
@@ -172,7 +138,7 @@ describe('usePreviousTransformationOutput', () => {
       usePreviousTransformationOutput({
         selectedTransformation: transformations[1],
         transformations,
-        systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+        systemTransformations: NO_CONFIGS,
         queryData,
       })
     );
