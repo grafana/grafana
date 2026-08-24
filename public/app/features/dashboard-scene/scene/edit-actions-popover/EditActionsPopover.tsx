@@ -39,9 +39,8 @@ export const useEditActionsPopover = () => useContext(EditActionsPopoverContext)
  * On touch, a panel tap opens both the hover popover and the edit sidebar at once.
  * Used for panels only: the popover would cover the sidebar that PanelChrome auto-opens; variable/annotation/link controls are fine without this guard.
  */
-export const HOVER_POPOVER_MEDIA_QUERY = '(hover: hover) and (pointer: fine)';
 export function useHoverPopoverSupported(defaultValue = true) {
-  return useMedia(HOVER_POPOVER_MEDIA_QUERY, defaultValue);
+  return useMedia('(hover: hover) and (pointer: fine)', defaultValue);
 }
 
 type EditActionsPopoverProps = {
