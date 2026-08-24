@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "Ativar registos básicos"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "API em lote",
+      "description-batch-api": "Consulta vários recursos num único pedido, melhorando o desempenho para painéis de controlo grandes. Requer a função <2>Monitoring Reader</2> no âmbito da subscrição em <6>metrics.monitor.azure.com</6>. <9>Podem ser aplicados custos</9> adicionais para além do nível gratuito.",
+      "label-enable-batch-api": "Ativar API em lote"
     },
     "config-editor": {
       "description-additional-settings": "As definições adicionais são definições opcionais que podem ser configuradas para obter mais controlo sobre a sua origem de dados. Isto inclui o Secure Socks Proxy, o tempo limite de pedido e os cookies encaminhados.",
@@ -105,7 +105,11 @@
       "load-subscriptions": "Carregar subscrições"
     },
     "dimension-fields": {
-      "aria-label-remove": "Remover",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensões",
       "placeholder-field": "Campo",
       "placeholder-operation": "Funcionamento",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "Espaço de nome métrico"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Pode selecionar elementos do mesmo tipo de recurso em todas as subscrições e regiões. Os recursos em diferentes subscrições ou regiões são consultados em pedidos separados e podem falhar independentemente. Para selecionar recursos de um tipo de recurso diferente, desmarque primeiro a sua seleção atual.",
+      "selection-notice-standard": "Pode selecionar elementos do mesmo tipo de recurso e localização. Para selecionar recursos de um tipo de recurso ou localização diferente, desmarque primeiro a sua seleção atual."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Funcionalidades"
     },
     "nested-row": {
       "text-loading": "A carregar..."
@@ -218,8 +222,8 @@
       "tooltip-order-by": "Ordene os resultados com base numa ou mais colunas por ordem ascendente ou descendente."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "Parou de carregar após {{maxPages}} páginas; alguns resultados podem ser omitidos.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Ocorreu um erro ao solicitar metadados do Azure Monitor"
@@ -259,7 +263,7 @@
       "heading-selection": "Seleção",
       "locations-filter": "Localizações",
       "locations-filter-placeholder": "Selecionar uma localização",
-      "recent-tab": "Recentes",
+      "recent-tab": "Recente",
       "result-limit": "A mostrar os primeiros {{numResults}} resultados",
       "subscriptions-filter": "Subscrições",
       "subscriptions-filter-placeholder": "Selecionar uma subscrição",

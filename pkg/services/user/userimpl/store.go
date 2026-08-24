@@ -3,8 +3,8 @@ package userimpl
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -36,46 +38,74 @@ type store interface {
 }
 
 type sqlStore struct {
-	db      db.DB
-	dialect migrator.Dialect
-	logger  log.Logger
-	cfg     *setting.Cfg
+	sql    legacysql.LegacyDatabaseProvider
+	logger log.Logger
+	cfg    *setting.Cfg
 }
 
-func ProvideStore(db db.DB, cfg *setting.Cfg) sqlStore {
+// quoteTable resolves a table name and quotes it for use in raw SQL.
+func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
+	return dbHelper.DB.Quote(dbHelper.Table(name))
+}
+
+func ProvideStore(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg) sqlStore {
 	return sqlStore{
-		db:      db,
-		dialect: db.GetDialect(),
-		cfg:     cfg,
-		logger:  log.New("user.store"),
+		sql:    sql,
+		cfg:    cfg,
+		logger: log.New("user.store"),
 	}
 }
 
+type deleteUserQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable string
+	UserID    int64
+}
+
+func (q deleteUserQuery) Validate() error { return nil }
+
 func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
-	var err error
-	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.UseBool("is_admin")
 		if cmd.UID == "" {
 			cmd.UID = util.GenerateShortUID()
 		}
 
-		if _, err = sess.Insert(cmd); err != nil {
+		if _, err = sess.Table(dbHelper.Table("user")).Insert(cmd); err != nil {
 			return err
 		}
 		return nil
 	})
 
 	if err != nil {
-		return 0, handleSQLError(ss.dialect, err)
+		return 0, handleSQLError(dbHelper.DB.GetDialect(), err)
 	}
 
 	return cmd.ID, nil
 }
 
 func (ss *sqlStore) Delete(ctx context.Context, userID int64) error {
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "DELETE FROM " + ss.dialect.Quote("user") + " WHERE id = ?"
-		_, err := sess.Exec(rawSQL, userID)
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		query := deleteUserQuery{
+			SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
+			UserTable:   dbHelper.Table("user"),
+			UserID:      userID,
+		}
+		rawSQL, err := renderUserQuery(deleteUserTemplate, query)
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(append([]any{rawSQL}, query.GetArgs()...)...)
 		return err
 	})
 	if err != nil {
@@ -84,14 +114,55 @@ func (ss *sqlStore) Delete(ctx context.Context, userID int64) error {
 	return nil
 }
 
+type getUserQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable        string
+	Identifier       any
+	IdentifierColumn string
+}
+
+const (
+	userEmailColumn = "email"
+	userIDColumn    = "id"
+	userLoginColumn = "login"
+)
+
+func (q getUserQuery) Validate() error {
+	switch q.IdentifierColumn {
+	case userEmailColumn, userIDColumn, userLoginColumn:
+		return nil
+	default:
+		return fmt.Errorf("invalid user identifier column %q", q.IdentifierColumn)
+	}
+}
+
+func getUserByID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID int64) (user.User, bool, error) {
+	query := getUserQuery{
+		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
+		UserTable:        dbHelper.Table("user"),
+		Identifier:       userID,
+		IdentifierColumn: userIDColumn,
+	}
+	rawSQL, err := renderUserQuery(getUserTemplate, query)
+	if err != nil {
+		return user.User{}, false, err
+	}
+
+	var usr user.User
+	exists, err := sess.SQL(rawSQL, query.GetArgs()...).Get(&usr)
+	return usr, exists, err
+}
+
 func (ss *sqlStore) GetByID(ctx context.Context, userID int64) (*user.User, error) {
 	var usr user.User
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
 
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.ID(&userID).
-			Where(ss.notServiceAccountFilter()).
-			Get(&usr)
-
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		var has bool
+		usr, has, err = getUserByID(dbHelper, sess, userID)
 		if err != nil {
 			return err
 		} else if !has {
@@ -99,14 +170,21 @@ func (ss *sqlStore) GetByID(ctx context.Context, userID int64) (*user.User, erro
 		}
 		return nil
 	})
-	return &usr, err
+	if err != nil {
+		return &usr, err
+	}
+	return &usr, nil
 }
 
 func (ss *sqlStore) GetByUID(ctx context.Context, uid string) (*user.User, error) {
 	var usr user.User
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
 
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table("user").Where("uid = ?", uid).Get(&usr)
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.Table(dbHelper.Table("user")).Where("uid = ?", uid).Get(&usr)
 		if err != nil {
 			return err
 		} else if !has {
@@ -119,9 +197,13 @@ func (ss *sqlStore) GetByUID(ctx context.Context, uid string) (*user.User, error
 
 func (ss *sqlStore) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
 	users := make([]*user.User, 0)
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
 
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		err := sess.Table("user").In("uid", uids).OrIn("id", ids).Find(&users)
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.Table(dbHelper.Table("user")).In("uid", uids).OrIn("id", ids).Find(&users)
 		if err != nil {
 			return err
 		}
@@ -136,10 +218,32 @@ func (ss *sqlStore) ListByIdOrUID(ctx context.Context, uids []string, ids []int6
 	return users, err
 }
 
-func (ss *sqlStore) notServiceAccountFilter() string {
-	return fmt.Sprintf("%s.is_service_account = %s",
-		ss.dialect.Quote("user"),
-		ss.dialect.BooleanStr(false))
+func getUserByLogin(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, identifier string, usr *user.User) (bool, error) {
+	query := getUserQuery{
+		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
+		UserTable:        dbHelper.Table("user"),
+		Identifier:       identifier,
+		IdentifierColumn: userLoginColumn,
+	}
+	rawSQL, err := renderUserQuery(getUserTemplate, query)
+	if err != nil {
+		return false, err
+	}
+	return sess.SQL(rawSQL, query.GetArgs()...).Get(usr)
+}
+
+func getUserByEmail(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, identifier string, usr *user.User) (bool, error) {
+	query := getUserQuery{
+		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
+		UserTable:        dbHelper.Table("user"),
+		Identifier:       identifier,
+		IdentifierColumn: userEmailColumn,
+	}
+	rawSQL, err := renderUserQuery(getUserTemplate, query)
+	if err != nil {
+		return false, err
+	}
+	return sess.SQL(rawSQL, query.GetArgs()...).Get(usr)
 }
 
 func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
@@ -147,20 +251,23 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 	query.LoginOrEmail = strings.ToLower(query.LoginOrEmail)
 
 	usr := &user.User{}
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.LoginOrEmail == "" {
 			return user.ErrUserNotFound
 		}
 
-		var where string
 		var has bool
 		var err error
 
 		// Since username can be an email address, attempt login with email address
 		// first if the login field has the "@" symbol.
 		if strings.Contains(query.LoginOrEmail, "@") {
-			where = "email=?"
-			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
+			has, err = getUserByEmail(dbHelper, sess, query.LoginOrEmail, usr)
 			if err != nil {
 				return err
 			}
@@ -168,8 +275,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 
 		// Look for the login field instead of email
 		if !has {
-			where = "login=?"
-			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
+			has, err = getUserByLogin(dbHelper, sess, query.LoginOrEmail, usr)
 		}
 
 		if err != nil {
@@ -192,13 +298,17 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 	query.Email = strings.ToLower(query.Email)
 
 	usr := &user.User{}
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.Email == "" {
 			return user.ErrUserNotFound
 		}
 
-		where := "email=?"
-		has, err := sess.Where(ss.notServiceAccountFilter()).Where(where, query.Email).Get(usr)
+		has, err := getUserByEmail(dbHelper, sess, query.Email, usr)
 
 		if err != nil {
 			return err
@@ -220,10 +330,15 @@ func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) erro
 	login = strings.ToLower(login)
 	email = strings.ToLower(email)
 
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		where := "email=? OR login=?"
 
-		exists, err := sess.Where(where, email, login).Get(&user.User{})
+		exists, err := sess.Table(dbHelper.Table("user")).Where(where, email, login).Get(&user.User{})
 		if err != nil {
 			return err
 		}
@@ -236,48 +351,95 @@ func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) erro
 	return err
 }
 
+type updateUserQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable      string
+	UserID         int64
+	Email          string
+	Name           string
+	Login          string
+	Password       *user.Password
+	EmailVerified  *bool
+	Theme          string
+	IsDisabled     *bool
+	IsGrafanaAdmin *bool
+	OrgID          *int64
+	IsProvisioned  *bool
+	Updated        legacysql.DBTime
+}
+
+func (q updateUserQuery) EmailVerifiedValue() bool {
+	return q.EmailVerified != nil && *q.EmailVerified
+}
+
+func (q updateUserQuery) PasswordValue() string {
+	if q.Password == nil {
+		return ""
+	}
+	return string(*q.Password)
+}
+
+func (q updateUserQuery) IsDisabledValue() bool {
+	return q.IsDisabled != nil && *q.IsDisabled
+}
+
+func (q updateUserQuery) IsGrafanaAdminValue() bool {
+	return q.IsGrafanaAdmin != nil && *q.IsGrafanaAdmin
+}
+
+func (q updateUserQuery) IsProvisionedValue() bool {
+	return q.IsProvisioned != nil && *q.IsProvisioned
+}
+
+func (q updateUserQuery) OrgIDValue() int64 {
+	if q.OrgID != nil {
+		return *q.OrgID
+	}
+	return 0
+}
+
+func (q updateUserQuery) Validate() error { return nil }
+
 func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	// enforcement of lowercase due to forcement of caseinsensitive login
 	cmd.Login = strings.ToLower(cmd.Login)
 	cmd.Email = strings.ToLower(cmd.Email)
 
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		usr := user.User{
-			Name:    cmd.Name,
-			Theme:   cmd.Theme,
-			Email:   strings.ToLower(cmd.Email),
-			Login:   strings.ToLower(cmd.Login),
-			Updated: time.Now(),
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		now := time.Now().In(dbHelper.DB.GetEngine().DatabaseTZ).Truncate(time.Second)
+		query := updateUserQuery{
+			SQLTemplate:    sqltemplate.New(dbHelper.DialectForDriver()),
+			UserTable:      dbHelper.Table("user"),
+			UserID:         cmd.UserID,
+			Email:          strings.ToLower(cmd.Email),
+			Name:           cmd.Name,
+			Login:          strings.ToLower(cmd.Login),
+			Password:       cmd.Password,
+			Theme:          cmd.Theme,
+			EmailVerified:  cmd.EmailVerified,
+			IsDisabled:     cmd.IsDisabled,
+			IsGrafanaAdmin: cmd.IsGrafanaAdmin,
+			OrgID:          cmd.OrgID,
+			IsProvisioned:  cmd.IsProvisioned,
+			Updated:        legacysql.NewDBTime(now),
 		}
 
-		q := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter())
-
-		setOptional(cmd.OrgID, func(v int64) { usr.OrgID = v })
-		setOptional(cmd.Password, func(v user.Password) { usr.Password = v })
-		setOptional(cmd.IsDisabled, func(v bool) {
-			q = q.UseBool("is_disabled")
-			usr.IsDisabled = v
-		})
-		setOptional(cmd.EmailVerified, func(v bool) {
-			q = q.UseBool("email_verified")
-			usr.EmailVerified = v
-		})
-		setOptional(cmd.IsGrafanaAdmin, func(v bool) {
-			q = q.UseBool("is_admin")
-			usr.IsAdmin = v
-		})
-		setOptional(cmd.IsProvisioned, func(v bool) {
-			q = q.UseBool("is_provisioned")
-			usr.IsProvisioned = v
-		})
-
-		if _, err := q.Update(&usr); err != nil {
-			return handleSQLError(ss.dialect, err)
+		rawSQL, err := renderUserQuery(updateUserTemplate, query)
+		if err != nil {
+			return err
+		}
+		if _, err := sess.Exec(append([]any{rawSQL}, query.GetArgs()...)...); err != nil {
+			return handleSQLError(dbHelper.DB.GetDialect(), err)
 		}
 
 		if cmd.IsGrafanaAdmin != nil && !*cmd.IsGrafanaAdmin {
 			// validate that after update there is at least one server admin
-			if err := validateOneAdminLeft(sess); err != nil {
+			if err := validateOneAdminLeft(dbHelper, sess); err != nil {
 				return err
 			}
 		}
@@ -290,57 +452,65 @@ func (ss *sqlStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLa
 	if cmd.UserID <= 0 {
 		return user.ErrUpdateInvalidID
 	}
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	return dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
 			ID:         cmd.UserID,
 			LastSeenAt: time.Now(),
 		}
 
-		_, err := sess.ID(cmd.UserID).Update(&user)
+		_, err := sess.Table(dbHelper.Table("user")).ID(cmd.UserID).Update(&user)
 		return err
 	})
 }
 
+type signedInUserQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable    string
+	OrgUserTable string
+	OrgTable     string
+	OrgID        int64
+	UserID       int64
+	Login        string
+	Email        string
+}
+
+func (q signedInUserQuery) Validate() error {
+	if q.UserID <= 0 && q.Login == "" && q.Email == "" {
+		return user.ErrNoUniqueID
+	}
+	return nil
+}
+
 func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	var signedInUser user.SignedInUser
-	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-		orgId := "u.org_id"
-		if query.OrgID > 0 {
-			orgId = strconv.FormatInt(query.OrgID, 10)
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		sqlQuery := signedInUserQuery{
+			SQLTemplate:  sqltemplate.New(dbHelper.DialectForDriver()),
+			UserTable:    dbHelper.Table("user"),
+			OrgUserTable: dbHelper.Table("org_user"),
+			OrgTable:     dbHelper.Table("org"),
+			OrgID:        query.OrgID,
+			UserID:       query.UserID,
+			Login:        query.Login,
+			Email:        query.Email,
+		}
+		rawSQL, err := renderUserQuery(getSignedInUserTemplate, sqlQuery)
+		if err != nil {
+			return err
 		}
 
-		var rawSQL = `SELECT
-		u.id                  as user_id,
-		u.uid                 as user_uid,
-		u.is_admin            as is_grafana_admin,
-		u.email               as email,
-		u.email_verified      as email_verified,
-		u.login               as login,
-		u.name                as name,
-		u.is_disabled         as is_disabled,
-		u.help_flags1         as help_flags1,
-		u.last_seen_at        as last_seen_at,
-		org.name              as org_name,
-		org_user.role         as org_role,
-		org.id                as org_id,
-		u.is_service_account  as is_service_account
-		FROM ` + ss.dialect.Quote("user") + ` as u
-		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
-		LEFT OUTER JOIN org on org.id = org_user.org_id `
-
-		sess := dbSess.Table("user")
-		sess = sess.Context(ctx)
-		switch {
-		case query.UserID > 0:
-			sess.SQL(rawSQL+"WHERE u.id=?", query.UserID)
-		case query.Login != "":
-			sess.SQL(rawSQL+"WHERE LOWER(u.login)=LOWER(?)", query.Login)
-		case query.Email != "":
-			sess.SQL(rawSQL+"WHERE LOWER(u.email)=LOWER(?)", query.Email)
-		default:
-			return user.ErrNoUniqueID
-		}
-		has, err := sess.Get(&signedInUser)
+		has, err := sess.SQL(rawSQL, sqlQuery.GetArgs()...).Get(&signedInUser)
 		if err != nil {
 			return err
 		} else if !has {
@@ -360,8 +530,14 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
 	var usr user.User
 	var userProfile user.UserProfileDTO
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.ID(query.UserID).Where(ss.notServiceAccountFilter()).Get(&usr)
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		var has bool
+		usr, has, err = getUserByID(dbHelper, sess, query.UserID)
 
 		if err != nil {
 			return err
@@ -389,40 +565,67 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 	return &userProfile, err
 }
 
+type countUsersQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable string
+}
+
+func (q countUsersQuery) Validate() error { return nil }
+
 func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
 	type result struct {
 		Count int64
 	}
 
 	r := result{}
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s WHERE is_service_account=%s", ss.db.GetDialect().Quote("user"), ss.db.GetDialect().BooleanStr(false))
-		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		query := countUsersQuery{
+			SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
+			UserTable:   dbHelper.Table("user"),
+		}
+		rawSQL, err := renderUserQuery(countUsersTemplate, query)
+		if err != nil {
 			return err
 		}
-		return nil
+		_, err = sess.SQL(rawSQL, query.GetArgs()...).Get(&r)
+		return err
 	})
 	return r.Count, err
 }
 
+type countUserAccountsWithEmptyRoleQuery struct {
+	sqltemplate.SQLTemplate
+	OrgUserTable string
+	UserTable    string
+	Role         string
+}
+
+func (q countUserAccountsWithEmptyRoleQuery) Validate() error { return nil }
+
 func (ss *sqlStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
-	sb := &db.SQLBuilder{}
-	sb.Write(`
-		SELECT sub.user_accounts_with_no_role
-		FROM (
-		  SELECT COUNT(*) AS user_accounts_with_no_role
-		  FROM ` + ss.dialect.Quote("org_user") + ` AS ou
-		  LEFT JOIN ` + ss.dialect.Quote("user") + ` AS u ON u.id = ou.user_id
-		  WHERE ou.role = ?
-		  AND u.is_service_account = ` + ss.dialect.BooleanStr(false) + `
-		  AND u.is_disabled = ` + ss.dialect.BooleanStr(false) + `
-		) AS sub
-	`)
-	sb.AddParams("None")
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return -1, fmt.Errorf("get legacy DB: %w", err)
+	}
 
 	var countStats int64
-	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&countStats)
+	if err := dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		query := countUserAccountsWithEmptyRoleQuery{
+			SQLTemplate:  sqltemplate.New(dbHelper.DialectForDriver()),
+			OrgUserTable: dbHelper.Table("org_user"),
+			UserTable:    dbHelper.Table("user"),
+			Role:         "None",
+		}
+		rawSQL, err := renderUserQuery(countUserAccountsWithEmptyRoleTemplate, query)
+		if err != nil {
+			return err
+		}
+		_, err = sess.SQL(rawSQL, query.GetArgs()...).Get(&countStats)
 		return err
 	}); err != nil {
 		return -1, err
@@ -432,8 +635,8 @@ func (ss *sqlStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, 
 }
 
 // validateOneAdminLeft validate that there is an admin user left
-func validateOneAdminLeft(sess *db.Session) error {
-	count, err := sess.Where("is_admin=?", true).Count(&user.User{})
+func validateOneAdminLeft(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session) error {
+	count, err := sess.Table(dbHelper.Table("user")).Where("is_admin=?", true).Count(&user.User{})
 	if err != nil {
 		return err
 	}
@@ -445,23 +648,45 @@ func validateOneAdminLeft(sess *db.Session) error {
 	return nil
 }
 
+type batchDisableUsersQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable  string
+	UserIDs    []int64
+	IsDisabled bool
+}
+
+func (q batchDisableUsersQuery) Validate() error {
+	if len(q.UserIDs) == 0 {
+		return fmt.Errorf("user IDs must not be empty")
+	}
+	return nil
+}
+
 func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	return dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		userIds := cmd.UserIDs
 
 		if len(userIds) == 0 {
 			return nil
 		}
 
-		user_id_params := strings.Repeat(",?", len(userIds)-1)
-		disableSQL := "UPDATE " + ss.dialect.Quote("user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
-
-		disableParams := []any{disableSQL, cmd.IsDisabled}
-		for _, v := range userIds {
-			disableParams = append(disableParams, v)
+		query := batchDisableUsersQuery{
+			SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
+			UserTable:   dbHelper.Table("user"),
+			UserIDs:     userIds,
+			IsDisabled:  cmd.IsDisabled,
+		}
+		disableSQL, err := renderUserQuery(batchDisableUsersTemplate, query)
+		if err != nil {
+			return err
 		}
 
-		_, err := sess.Where(ss.notServiceAccountFilter()).Exec(disableParams...)
+		_, err = sess.Exec(append([]any{disableSQL}, query.GetArgs()...)...)
 		return err
 	})
 }
@@ -470,21 +695,29 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 	result := user.SearchUserQueryResult{
 		Users: make([]*user.UserSearchHitDTO, 0),
 	}
-	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return &result, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
 		whereConditions := make([]string, 0)
 		whereParams := make([]any, 0)
-		sess := dbSess.Table("user").Alias("u")
+		userTable := dbHelper.Table("user")
+		userAuthTable := dbHelper.Table("user_auth")
+		qUserAuth := quoteTable(dbHelper, "user_auth")
+		sess := dbSess.Table(userTable).Alias("u")
 
 		whereConditions = append(whereConditions, "u.is_service_account = ?")
-		whereParams = append(whereParams, ss.dialect.BooleanValue(false))
+		whereParams = append(whereParams, dbHelper.DB.GetDialect().BooleanValue(false))
 
 		// Join with only most recent auth module
 		joinCondition := `(
-		SELECT id from user_auth
+		SELECT id from ` + qUserAuth + ` AS user_auth
 			WHERE user_auth.user_id = u.id
 			ORDER BY user_auth.created DESC `
-		joinCondition = "user_auth.id=" + joinCondition + ss.dialect.Limit(1) + ")"
-		sess.Join("LEFT", "user_auth", joinCondition)
+		joinCondition = "user_auth.id=" + joinCondition + dbHelper.DB.GetDialect().Limit(1) + ")"
+		sess.Join("LEFT", []string{userAuthTable, "user_auth"}, joinCondition)
 		if query.OrgID > 0 {
 			whereConditions = append(whereConditions, "org_id = ?")
 			whereParams = append(whereParams, query.OrgID)
@@ -499,9 +732,9 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		whereParams = append(whereParams, acFilter.Args...)
 
 		if query.Query != "" {
-			emailSql, emailArg := ss.dialect.LikeOperator("email", true, query.Query, true)
-			nameSql, nameArg := ss.dialect.LikeOperator("name", true, query.Query, true)
-			loginSql, loginArg := ss.dialect.LikeOperator("login", true, query.Query, true)
+			emailSql, emailArg := dbHelper.DB.GetDialect().LikeOperator("email", true, query.Query, true)
+			nameSql, nameArg := dbHelper.DB.GetDialect().LikeOperator("name", true, query.Query, true)
+			loginSql, loginArg := dbHelper.DB.GetDialect().LikeOperator("login", true, query.Query, true)
 			whereConditions = append(whereConditions, fmt.Sprintf("(%s OR %s OR %s)", emailSql, nameSql, loginSql))
 			whereParams = append(whereParams, emailArg, nameArg, loginArg)
 		}
@@ -522,7 +755,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 
 		for _, filter := range query.Filters {
 			if jc := filter.JoinCondition(); jc != nil {
-				sess.Join(jc.Operator, jc.Table, jc.Params)
+				sess.Join(jc.Operator, []string{dbHelper.Table(jc.Table), jc.Table}, jc.Params)
 			}
 			if ic := filter.InCondition(); ic != nil {
 				sess.In(ic.Condition, ic.Params)
@@ -555,11 +788,11 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 
 		// get total
 		user := user.User{}
-		countSess := dbSess.Table("user").Alias("u")
+		countSess := dbSess.Table(userTable).Alias("u")
 
 		// Join with user_auth table if users filtered by auth_module
 		if query.AuthModule != "" {
-			countSess.Join("LEFT", "user_auth", joinCondition)
+			countSess.Join("LEFT", []string{userAuthTable, "user_auth"}, joinCondition)
 		}
 
 		if len(whereConditions) > 0 {
@@ -568,7 +801,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 
 		for _, filter := range query.Filters {
 			if jc := filter.JoinCondition(); jc != nil {
-				countSess.Join(jc.Operator, jc.Table, jc.Params)
+				countSess.Join(jc.Operator, []string{dbHelper.Table(jc.Table), jc.Table}, jc.Params)
 			}
 			if ic := filter.InCondition(); ic != nil {
 				countSess.In(ic.Condition, ic.Params)
@@ -590,10 +823,11 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 	return &result, err
 }
 
-func setOptional[T any](v *T, add func(v T)) {
-	if v != nil {
-		add(*v)
+func renderUserQuery(tmpl *template.Template, query sqltemplate.SQLTemplate) (string, error) {
+	if err := query.Validate(); err != nil {
+		return "", err
 	}
+	return sqltemplate.Execute(tmpl, query)
 }
 
 func handleSQLError(dialect migrator.Dialect, err error) error {

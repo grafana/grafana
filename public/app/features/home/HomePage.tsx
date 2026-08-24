@@ -26,6 +26,7 @@ import { Overview } from './Overview/Overview';
 import { Recommendations } from './Recommendations/Recommendations';
 import { homepageViewed } from './analytics/main';
 import useHomeGreeting from './useHomeGreeting';
+import { useHomepageSolutions } from './useHomepageSolutions';
 
 const getEdition = () => {
   if (!isOnPrem()) {
@@ -49,6 +50,17 @@ function HomepageViewTracker({ onView }: { onView: () => void }) {
   }, [onView]);
 
   return null;
+}
+
+function HomepageSolutionSections() {
+  const solutions = useHomepageSolutions();
+
+  return (
+    <>
+      <Recommendations solutions={solutions} />
+      <Overview solutions={solutions.solutions} />
+    </>
+  );
 }
 
 export default function HomePage() {
@@ -154,8 +166,7 @@ export default function HomePage() {
                     ),
                   })}
 
-                  <Recommendations />
-                  <Overview />
+                  <HomepageSolutionSections />
 
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}

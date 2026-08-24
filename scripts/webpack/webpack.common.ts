@@ -32,7 +32,8 @@ export default (env: Env = {}): Configuration => ({
     asyncWebAssembly: true,
   },
   output: {
-    clean: true,
+    // rspack writes into a subdirectory of this one; without keep, cleaning deletes it.
+    clean: { keep: 'rspack' },
     path: path.resolve(import.meta.dirname, '../../public/build'),
     filename: (pathData) => {
       if (pathData.chunk?.name === 'boot') {
@@ -42,6 +43,8 @@ export default (env: Env = {}): Configuration => ({
     },
     chunkFilename: '[name].[contenthash].js',
     publicPath: 'public/build/',
+    // Dynamic imports can run before Grafana's default Trusted Types policy is initialized.
+    trustedTypes: { policyName: 'grafana#webpack' },
   },
   resolve: {
     conditionNames: ['@grafana-app/source', '...'],
@@ -50,6 +53,8 @@ export default (env: Env = {}): Configuration => ({
       // some of data source plugins use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui
       prismjs: require.resolve('prismjs'),
+      // Core injects the real implementation during bootstrap only when Luxon is disabled.
+      'moment-timezone$': path.resolve(grafanaRoot, 'public/app/core/legacyMomentShim.ts'),
       // due to our webpack configuration not understanding package.json `exports`
       // correctly we must alias this package to the correct file
       // the alternative to this alias is to copy-paste the file into our

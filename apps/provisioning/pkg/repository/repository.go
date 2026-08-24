@@ -60,6 +60,13 @@ var ErrPermissionDenied error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "permission denied",
 }}
 
+var ErrTooManyRequests error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusTooManyRequests,
+	Reason:  metav1.StatusReasonTooManyRequests,
+	Message: "too many requests",
+}}
+
 // ErrServerUnavailable indicates that the remote server is unavailable or returned a 5xx error.
 var ErrServerUnavailable error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Status:  metav1.StatusFailure,
@@ -235,6 +242,19 @@ type BranchHandler interface {
 	GetDefaultBranch(ctx context.Context) (string, error)
 	GetCurrentBranch() string
 	SetBranch(branch string)
+}
+
+// RepoIDHandler is a repository whose backend repo ID may need to be
+// resolved lazily (e.g. for repos written before the ID was pinned at
+// admission time) and backfilled into the spec once resolved. Each
+// provider decides for itself, based on its own spec fields, whether
+// its ID is already pinned and whether a resolved value should be persisted.
+type RepoIDHandler interface {
+	// ResolvedRepoID returns the backend repo ID this repository was built with.
+	ResolvedRepoID() string
+
+	// ShouldUpdateRepoID reports whether ResolvedRepoID should be backfilled into the spec.
+	ShouldUpdateRepoID() bool
 }
 
 // PullRequestRepo is implemented by repositories that can be evaluated and

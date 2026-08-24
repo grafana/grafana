@@ -96,7 +96,7 @@ const renderItemLabel = (v: SceneVariable) => <span data-testid="filter-name">{v
 
 export function AddFilterButton({ dashboard }: { dashboard: DashboardScene }) {
   const onAddFilter = useCallback(() => {
-    openAddFilterForm(dashboard, dashboard);
+    void openAddFilterForm(dashboard, dashboard);
     DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });
   }, [dashboard]);
 
