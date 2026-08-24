@@ -2355,3 +2355,34 @@ func TestFormatStringArrayForSource(t *testing.T) {
 		})
 	}
 }
+
+func TestQuery_LogActionUnknownSubtypeReturnsPerQueryError(t *testing.T) {
+	origNewCWLogsClient := NewCWLogsClient
+	t.Cleanup(func() {
+		NewCWLogsClient = origNewCWLogsClient
+	})
+	NewCWLogsClient = func(cfg aws.Config) models.CWLogsClient {
+		return &fakeCWLogsClient{}
+	}
+	ds := newTestDatasource()
+
+	resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+		},
+		Queries: []backend.DataQuery{
+			{
+				RefID:     "A",
+				TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+				JSON:      json.RawMessage(`{"type": "logAction", "subtype": "Bogus"}`),
+			},
+		},
+	})
+
+	require.NoError(t, err, "an unknown log action subtype must fail that query, not the request")
+
+	respA, ok := resp.Responses["A"]
+	require.True(t, ok)
+	require.Error(t, respA.Error)
+	require.Contains(t, respA.Error.Error(), `unknown log action subtype "Bogus"`)
+}
