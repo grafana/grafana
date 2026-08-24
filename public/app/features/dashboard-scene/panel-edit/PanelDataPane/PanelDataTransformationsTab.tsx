@@ -138,6 +138,12 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
     );
   }, [transformsWrongType]);
 
+  // What the picker judges a transformation's applicability against has to be what the row it adds
+  // will receive: the prepended stage and every user transformation, with the plugin's appended stage
+  // still to come. The panel's own frames have that stage on top, and it can drop the very fields the
+  // judgement turns on.
+  const drawerSeries = useTransformedFrames(transformations, editorData?.series ?? NO_FRAMES);
+
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
@@ -186,7 +192,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         closeDrawer();
       }}
       isOpen={drawerOpen}
-      series={data.series}
+      series={drawerSeries}
     />
   );
 
