@@ -591,7 +591,7 @@ func BenchmarkStripBOMFromStruct(b *testing.B) {
 	})
 }
 
-func TestRedactString(t *testing.T) {
+func TestRedactSecret(t *testing.T) {
 	tests := []struct {
 		name  string
 		input string
