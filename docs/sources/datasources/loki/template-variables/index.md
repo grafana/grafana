@@ -55,7 +55,7 @@ Reference the variable in a query with its name, prefixed by `$`. For a single-v
 {app="$app"}
 ```
 
-When a variable has **Multi-value** or **Include All** enabled, Grafana joins the selected values into a regular expression, such as `payments|checkout`. Use the regex match operator `=~` so the query matches any of the selected values:
+When a variable has **Multi-value** or **Include All** enabled, Grafana joins the selected values into a regular expression, such as `payments|checkout`. Use the regular expression match operator `=~` so the query matches any of the selected values:
 
 ```logql
 {app=~"$app"}
