@@ -33,6 +33,25 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
+// See CodeCell.test.tsx — the real editor does not run in jsdom, and is a lazily loaded chunk that
+// would otherwise resolve outside of this file's act() calls.
+jest.mock('@grafana/ui/unstable', () => ({
+  ...jest.requireActual('@grafana/ui/unstable'),
+  CodeMirrorEditor: ({
+    value,
+    readOnly,
+    onChange,
+    'aria-label': ariaLabel,
+  }: {
+    value: string;
+    readOnly?: boolean;
+    onChange: (value: string) => void;
+    'aria-label'?: string;
+  }) => (
+    <textarea aria-label={ariaLabel} value={value} readOnly={readOnly} onChange={(e) => onChange(e.target.value)} />
+  ),
+}));
+
 function buildScene(hideTimeControls: boolean) {
   return new NotebookScene({
     title: 'My notebook',
