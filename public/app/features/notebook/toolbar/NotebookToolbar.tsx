@@ -25,15 +25,19 @@ export function NotebookToolbar({ uid, scene }: { uid: string; scene: NotebookSc
   const { remove, isDeleting } = useDeleteNotebook();
 
   const onConfirmDelete = async () => {
-    // Before the request, and before navigating: autosave's teardown flushes, so a pending save would
-    // otherwise be written back to a notebook the server has just removed.
-    scene.autosave.abandon();
-
     if (!(await remove(uid, scene.state.title))) {
       setIsConfirmingDelete(false);
       return;
     }
 
+    // Only once the delete has actually landed. The reason to give up on saving is the flush that
+    // autosave's teardown performs as we navigate away, and that only happens on this path — called
+    // before the request, a failed delete would leave the notebook on screen with saving latched off
+    // for the rest of the session, and `abandon` is deliberately one-way.
+    //
+    // A save can still fire during the request itself, which is harmless: it writes to a notebook
+    // that is about to be deleted, and if it lands afterwards it 404s and we are already leaving.
+    scene.autosave.abandon();
     // The state manager caches scenes by uid, so without this, going back here would rebuild the
     // deleted notebook from cache rather than reporting it gone.
     getNotebookPageStateManager().removeSceneCache(uid);

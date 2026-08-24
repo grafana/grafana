@@ -1,5 +1,5 @@
 import { createMemoryHistory } from 'history';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { HistoryWrapper, config, locationService, setLocationService } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
@@ -197,9 +197,12 @@ describe('NotebookToolbar', () => {
     // The whole reason abandon exists. Autosave's teardown flushes, so a save still pending when the
     // page navigates away would be written back to a notebook the server has just removed - and it
     // has to be given up *before* the request, not after it comes back.
-    it('gives up on saving before it asks for the delete', async () => {
+    // Autosave's teardown flushes, so a save still pending when the page navigates away would be
+    // written back to a notebook the server has just removed. Giving up has to happen before we
+    // leave - but only once the delete has actually landed, which is what the next test covers.
+    it('gives up on saving once the delete has landed, before leaving the page', async () => {
       const trigger = setupDelete();
-      const { user, scene } = setupWithScene();
+      const { user, scene, history } = setupWithScene();
       const abandon = jest.spyOn(scene.autosave, 'abandon');
 
       await confirmDelete(user);
@@ -207,7 +210,38 @@ describe('NotebookToolbar', () => {
       await waitFor(() => {
         expect(abandon).toHaveBeenCalledTimes(1);
       });
-      expect(abandon.mock.invocationCallOrder[0]).toBeLessThan(trigger.mock.invocationCallOrder[0]);
+      expect(abandon.mock.invocationCallOrder[0]).toBeGreaterThan(trigger.mock.invocationCallOrder[0]);
+      await waitFor(() => {
+        expect(history.getLocation().pathname).toBe('/notebooks');
+      });
+    });
+
+    /**
+     * `abandon` is one-way: it latches a flag that `schedule` and `saveNow` both return early on, and
+     * nothing clears it. Called before the request, a failed delete left the notebook on screen with
+     * saving silently dead for the rest of the session - and the status forced to `idle`, so the UI
+     * did not even report unsaved changes.
+     */
+    it('leaves saving alone when the delete fails, so the notebook is still editable', async () => {
+      setupDelete(async () => {
+        throw new Error('403');
+      });
+      const { user, scene } = setupWithScene();
+      // Activated and editing, so autosave is actually watching for changes — a scene the toolbar
+      // merely renders has never started its subscription and would look untouched either way.
+      const deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      await confirmDelete(user);
+      await waitFor(() => expect(screen.getByRole('button', { name: 'More actions' })).toBeInTheDocument());
+
+      // The effect, not the call: an edit made after the failure still registers as unsaved work.
+      // Latched, `schedule` returns early and the status stays `idle`, so nothing would ever be
+      // written again and the UI would not say so either.
+      act(() => scene.setState({ title: 'Edited after the failed delete' }));
+      await waitFor(() => expect(scene.autosave.state.status).toBe('pending'));
+
+      deactivate();
     });
 
     // The state manager caches scenes by uid, so a stale entry would rebuild the deleted notebook
