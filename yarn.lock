@@ -20142,6 +20142,7 @@ __metadata:
     fishery: "npm:^2.2.2"
     fork-ts-checker-webpack-plugin: "npm:9.1.0"
     github-codeowners: "npm:^0.2.1"
+    handlebars: "npm:4.7.9"
     history: "npm:4.10.1"
     html-to-image: "npm:1.11.13"
     http-server: "npm:14.1.1"
@@ -20319,7 +20320,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"handlebars@npm:^4.7.7":
+"handlebars@npm:4.7.9, handlebars@npm:^4.7.7":
   version: 4.7.9
   resolution: "handlebars@npm:4.7.9"
   dependencies:

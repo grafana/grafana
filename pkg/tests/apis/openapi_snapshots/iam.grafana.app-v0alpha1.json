@@ -31,6 +31,50 @@
         }
       }
     },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/authinfos/search": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "description": "Search AuthInfo resources in a namespace.",
+        "operationId": "listAuthInfoSearchV0alpha1",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/display": {
       "get": {
         "tags": [
