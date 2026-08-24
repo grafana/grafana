@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { floatingUtils, Portal, useStyles2 } from '@grafana/ui';
@@ -41,9 +41,10 @@ export function NotebookCellRenderer({
   autoFocus,
   focusRequestId,
   caretOffset,
+  range,
   onAdvance,
   onFocusRequest,
-}: { cell: NotebookCellItem } & NarrativeCellFocusProps) {
+}: { cell: NotebookCellItem; range?: TimeRange } & NarrativeCellFocusProps) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
 
   if (collapsed) {
@@ -63,6 +64,7 @@ export function NotebookCellRenderer({
         autoFocus={autoFocus}
         focusRequestId={focusRequestId}
         caretOffset={caretOffset}
+        range={range}
         onAdvance={onAdvance}
         onFocusRequest={onFocusRequest}
       />
@@ -100,9 +102,10 @@ function NarrativeCell({
   autoFocus,
   focusRequestId,
   caretOffset,
+  range,
   onAdvance,
   onFocusRequest,
-}: { cell: NotebookCellItem; content: CellContentKind } & NarrativeCellFocusProps) {
+}: { cell: NotebookCellItem; content: CellContentKind; range?: TimeRange } & NarrativeCellFocusProps) {
   const styles = useStyles2(getStyles);
 
   if (content.kind === 'Markdown') {
@@ -135,6 +138,7 @@ function NarrativeCell({
           content={content}
           isEditing={isEditing}
           autoFocus={autoFocus}
+          range={range}
           onChange={(updated) => cell.onContentChange(updated)}
         />
       </Suspense>

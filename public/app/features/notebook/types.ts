@@ -12,6 +12,7 @@ import {
   defaultCodeCellContentKind as generatedDefaultCodeCellContentKind,
   defaultLibraryPanelKind as generatedDefaultLibraryPanelKind,
   defaultMarkdownCellContentKind as generatedDefaultMarkdownCellContentKind,
+  defaultQueryCellContentKind as generatedDefaultQueryCellContentKind,
   defaultSpec as generatedDefaultSpec,
   defaultV2PanelKind,
   type CellContentKind as GeneratedCellContentKind,
@@ -21,6 +22,8 @@ import {
   type NotebookElement as GeneratedNotebookElement,
   type NotebookLayoutItemKind as GeneratedNotebookLayoutItemKind,
   type NotebookLayoutKind as GeneratedNotebookLayoutKind,
+  type PanelQueryKind as GeneratedPanelQueryKind,
+  type QueryCellContentKind as GeneratedQueryCellContentKind,
   type Spec as GeneratedSpec,
   type V2PanelKind as GeneratedPanelKind,
 } from '@grafana/schema/apis/notebook/v2beta1';
@@ -37,9 +40,12 @@ export type MarkdownCellContentKind = GeneratedMarkdownCellContentKind;
 export type NotebookElement = GeneratedNotebookElement;
 export type NotebookLayoutItemKind = GeneratedNotebookLayoutItemKind;
 export type NotebookLayoutKind = GeneratedNotebookLayoutKind;
+export type PanelQueryKind = GeneratedPanelQueryKind;
+export type QueryCellContentKind = GeneratedQueryCellContentKind;
 export type Spec = GeneratedSpec;
 
 export const defaultCodeCellContentKind = generatedDefaultCodeCellContentKind;
 export const defaultLibraryPanelKind = generatedDefaultLibraryPanelKind;
 export const defaultMarkdownCellContentKind = generatedDefaultMarkdownCellContentKind;
+export const defaultQueryCellContentKind = generatedDefaultQueryCellContentKind;
 export const defaultSpec = generatedDefaultSpec;

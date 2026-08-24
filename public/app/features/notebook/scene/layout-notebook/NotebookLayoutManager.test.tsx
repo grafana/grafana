@@ -85,6 +85,13 @@ jest.mock('@grafana/ui/unstable', () => {
   };
 });
 
+// QueryCell pulls in datasource-picker/query-editor/panel-renderer machinery with its own dedicated
+// coverage in QueryCell.test.tsx — this file only cares whether inserting one lands the right
+// content on the manager, not whether the cell itself renders correctly.
+jest.mock('./cells/QueryCell', () => ({
+  QueryCell: () => <div data-testid="query-cell-stub" />,
+}));
+
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager, splitSeed } from './NotebookLayoutManager';
 
@@ -497,6 +504,11 @@ describe('NotebookLayoutManager', () => {
       await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
     }
 
+    async function pickQuery(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement) {
+      await user.click(trigger);
+      await user.click(screen.getByRole('menuitem', { name: 'Query' }));
+    }
+
     // The trailing empty cell every notebook always has is a markdown cell in its own right, not a
     // button — typing "/" into it opens the same menu the dividers open by clicking "Add block", but
     // picking a type from it converts *that* cell in place (see NotebookCellRenderer's handlePick)
@@ -521,6 +533,29 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
       // Inserted because a person asked for it, not because the assistant proposed it.
       expect(manager.state.cells[1].state.source).toBe('user');
+    });
+
+    // Query cells reuse the dashboard's own generic query shape (see defaultQueryCellContentKind) —
+    // this just checks the "/" menu actually seeds one, the same way it does for Code.
+    it('inserts an empty query cell where the divider offered it', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await pickQuery(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
+
+      expect(cellNames(manager)).toEqual(['a', 'query-1', 'b', 'paragraph-1']);
+      expect(manager.state.cells[1].state.content).toEqual({
+        kind: 'Query',
+        spec: {
+          query: {
+            kind: 'PanelQuery',
+            spec: {
+              query: { kind: 'DataQuery', group: '', version: 'v0', spec: {} },
+              refId: 'A',
+              hidden: false,
+            },
+          },
+        },
+      });
     });
 
     // The divider after the trailing empty cell is offering to insert *past* it. Inserting after
