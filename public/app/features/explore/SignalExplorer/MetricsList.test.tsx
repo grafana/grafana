@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ComponentProps } from 'react';
 
 import { type TimeRange } from '@grafana/data';
 
@@ -28,7 +29,20 @@ const setCatalog = (metrics: MetricInfo[], rest: { loading?: boolean; error?: Er
   useMetricCatalogMock.mockReturnValue({ metrics, loading: false, ...rest });
 };
 
-const renderList = () => render(<MetricsList dsUid="prom-uid" dsType="prometheus" timeRange={timeRange} />);
+const onSelectMetric = jest.fn();
+
+const list = (props: Partial<ComponentProps<typeof MetricsList>> = {}) => (
+  <MetricsList
+    refId="A"
+    dsUid="prom-uid"
+    dsType="prometheus"
+    timeRange={timeRange}
+    onSelectMetric={onSelectMetric}
+    {...props}
+  />
+);
+
+const renderList = (props?: Partial<ComponentProps<typeof MetricsList>>) => render(list(props));
 
 const rowCount = () => screen.getAllByRole('listitem').length;
 
@@ -44,6 +58,7 @@ const expandMetric = (name: string) => userEvent.click(screen.getByRole('button'
 
 describe('<MetricsList />', () => {
   beforeEach(() => {
+    onSelectMetric.mockReset();
     useMetricCatalogMock.mockReset();
     useMetricDetailMock.mockReset().mockReturnValue({ labelKeys: [], loading: false });
     useLabelValuesMock.mockReset().mockReturnValue({ values: [], loading: false });
@@ -270,6 +285,65 @@ describe('<MetricsList />', () => {
     });
   });
 
+  describe('selecting a metric', () => {
+    const selectMetric = (name: string) =>
+      userEvent.click(screen.getByRole('button', { name: `Show details for ${name}` }));
+
+    // The whole entry, not the name, so the panel needs no request of its own.
+    it('hands the whole catalog entry up', async () => {
+      setCatalog([{ name: 'up', type: 'gauge', help: 'Whether the target is reachable.' }]);
+      renderList();
+
+      await selectMetric('up');
+
+      expect(onSelectMetric).toHaveBeenCalledWith({
+        refId: 'A',
+        dsUid: 'prom-uid',
+        metric: { name: 'up', type: 'gauge', help: 'Whether the target is reachable.' },
+      });
+    });
+
+    // The entry is read through a ref to keep the callback stable; the ref has to keep up.
+    it('hands up the entry from the catalog as it stands, not as it first rendered', async () => {
+      useMetricCatalogMock.mockImplementation((_dsRef, _timeRange, opts) => ({
+        metrics: [{ name: 'up', type: 'gauge', help: opts?.searchText ? 'Searched help.' : 'Initial help.' }],
+        loading: false,
+      }));
+      renderList();
+
+      await userEvent.type(screen.getByPlaceholderText('Search metrics'), 'u');
+      await selectMetric('up');
+
+      expect(onSelectMetric).toHaveBeenCalledWith(
+        expect.objectContaining({ metric: expect.objectContaining({ help: 'Searched help.' }) })
+      );
+    });
+
+    it('does not expand the row, and expanding the row does not select it', async () => {
+      setCatalog([row('up')]);
+      setLabelKeys(['job']);
+      renderList();
+
+      await selectMetric('up');
+      expect(screen.getByRole('button', { name: 'Expand up' })).toBeInTheDocument();
+      expect(useMetricDetailMock).not.toHaveBeenCalled();
+
+      await expandMetric('up');
+      expect(onSelectMetric).toHaveBeenCalledTimes(1);
+    });
+
+    it('marks the row the panel is showing as pressed', () => {
+      setCatalog([row('up'), row('node_load1')]);
+      renderList({ selectedMetric: 'up' });
+
+      expect(screen.getByRole('button', { name: 'Show details for up' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'Show details for node_load1' })).toHaveAttribute(
+        'aria-pressed',
+        'false'
+      );
+    });
+  });
+
   describe('expanding a label key', () => {
     const expandLabel = (key: string) =>
       userEvent.click(screen.getByRole('button', { name: `Show values for ${key}` }));
@@ -357,7 +431,7 @@ describe('<MetricsList />', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Show more values' }));
       expect(screen.getAllByTestId('signal-explorer-value-row')).toHaveLength(50);
 
-      rerender(<MetricsList dsUid="prom-uid" dsType="prometheus" timeRange={otherTimeRange} />);
+      rerender(list({ timeRange: otherTimeRange }));
 
       expect(screen.getAllByTestId('signal-explorer-value-row')).toHaveLength(25);
     });

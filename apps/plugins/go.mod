@@ -21,7 +21,7 @@ require (
 	github.com/grafana/grafana/pkg/apiserver v0.0.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0
 	github.com/prometheus/client_golang v1.24.1
-	github.com/stretchr/testify v1.12.0
+	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.45.0
 	go.opentelemetry.io/otel/trace v1.45.0
 	golang.org/x/sync v0.22.0
@@ -86,11 +86,11 @@ require (
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-openapi/analysis v0.25.5 // indirect
+	github.com/go-openapi/analysis v0.26.0 // indirect
 	github.com/go-openapi/errors v0.22.8 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
 	github.com/go-openapi/jsonreference v1.0.0 // indirect
-	github.com/go-openapi/loads v0.25.0 // indirect
+	github.com/go-openapi/loads v0.25.1 // indirect
 	github.com/go-openapi/runtime v0.33.0 // indirect
 	github.com/go-openapi/runtime/server-middleware v0.30.0 // indirect
 	github.com/go-openapi/spec v0.22.9 // indirect
@@ -107,7 +107,7 @@ require (
 	github.com/go-openapi/swag/stringutils v0.28.0 // indirect
 	github.com/go-openapi/swag/typeutils v0.28.0 // indirect
 	github.com/go-openapi/swag/yamlutils v0.28.0 // indirect
-	github.com/go-openapi/validate v0.26.1 // indirect
+	github.com/go-openapi/validate v0.26.3 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -118,7 +118,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/cel-go v0.29.2 // indirect
+	github.com/google/cel-go v0.31.0 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -130,7 +130,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745 // indirect
 	github.com/grafana/grafana-aws-sdk v1.5.1 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.296.2 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.296.4 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.6.0 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // indirect
@@ -159,13 +159,13 @@ require (
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20260113213115-7f666eef0523 // indirect
-	github.com/klauspost/compress v1.19.1 // indirect
+	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
-	github.com/mattn/go-runewidth v0.0.24 // indirect
+	github.com/mattn/go-runewidth v0.0.27 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mdlayher/socket v0.6.1 // indirect
 	github.com/mdlayher/vsock v1.3.0 // indirect
@@ -195,7 +195,7 @@ require (
 	github.com/open-feature/go-sdk v1.17.2 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/pierrec/lz4/v4 v4.1.27 // indirect
+	github.com/pierrec/lz4/v4 v4.1.28 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/alertmanager v0.33.0 // indirect
@@ -207,7 +207,7 @@ require (
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
 	github.com/puzpuzpuz/xsync/v4 v4.5.0 // indirect
 	github.com/rs/cors v1.11.1 // indirect
-	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c // indirect
@@ -242,7 +242,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.55.0 // indirect
-	golang.org/x/exp v0.0.0-20260727155853-b88d891fe743 // indirect
+	golang.org/x/exp v0.0.0-20260813180055-c1d0aacb2297 // indirect
 	golang.org/x/mod v0.40.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
@@ -255,7 +255,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20260810153831-ec0a7760b754 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260810153831-ec0a7760b754 // indirect
 	google.golang.org/grpc v1.83.0 // indirect
-	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

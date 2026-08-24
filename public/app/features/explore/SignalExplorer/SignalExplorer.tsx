@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -13,8 +13,11 @@ import { QUERIES_PANEL_ID } from '../ContentOutline/ContentOutlineItem';
 import { scrollOutlineItemIntoView } from '../ContentOutline/scrollIntoView';
 import { isPrometheusType } from '../utils/prometheus';
 
+import { MetricDetailPanel } from './MetricDetailPanel';
 import { MetricsList } from './MetricsList';
 import { SignalCard } from './SignalCard';
+import { rangeKey } from './data/metricResourceClient';
+import { type MetricSelection } from './types';
 
 interface CardDescriptor {
   refId: string;
@@ -54,6 +57,7 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
   const styles = useStyles2(getStyles);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
   const [expandedRefIds, setExpandedRefIds] = useState<Set<string>>(new Set());
+  const [selectedMetric, setSelectedMetric] = useState<MetricSelection | null>(null);
 
   // The whole list once, rather than a lookup per ref: a card's datasource is resolved inside the
   // memo below, and one hook per query would break the rules of hooks as queries come and go.
@@ -107,21 +111,43 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
   //   added, so the next query in that slot would render already expanded;
   // - a query that moved to a datasource with no explorer, because the card collapses on
   //   screen and would otherwise reopen by itself if the query moved back.
+  // The selected metric goes with them, and also when its card keeps its refId but changes
+  // datasource, because the list underneath is then a different catalog.
   useEffect(() => {
+    const expandable = new Map(cards.filter((card) => card.isExpandable).map((card) => [card.refId, card.dsUid]));
+
     setExpandedRefIds((prev) => {
       if (prev.size === 0) {
         return prev;
       }
 
-      const expandable = new Set(cards.filter((card) => card.isExpandable).map((card) => card.refId));
       const next = new Set([...prev].filter((refId) => expandable.has(refId)));
 
       // Returning the previous set lets React skip the extra render.
       return next.size === prev.size ? prev : next;
     });
+
+    setSelectedMetric((prev) => {
+      if (!prev) {
+        return prev;
+      }
+      // `has` as well as `get`: a card with no resolved uid stores `undefined`, which `get` alone
+      // cannot tell from a refId that has left the pane.
+      return expandable.has(prev.refId) && expandable.get(prev.refId) === prev.dsUid ? prev : null;
+    });
   }, [cards]);
 
+  // A new range fetches a new catalog, which need not still hold the selected metric. Keyed on
+  // `rangeKey`, not the range object Explore rebuilds every refresh tick, so a refresh changes
+  // nothing here for the same reason it refetches nothing.
+  const range = rangeKey(timeRange);
+  useEffect(() => {
+    setSelectedMetric(null);
+  }, [range]);
+
   const toggleExpanded = (refId: string) => {
+    const collapsing = expandedRefIds.has(refId);
+
     setExpandedRefIds((prev) => {
       const next = new Set(prev);
       if (!next.delete(refId)) {
@@ -129,7 +155,21 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
       }
       return next;
     });
+
+    // A collapsing card takes its metric rows with it.
+    if (collapsing) {
+      setSelectedMetric((prev) => (prev?.refId === refId ? null : prev));
+    }
   };
+
+  // One callback for every card, so `MetricsList`'s `memo()` holds while the explorer re-renders on
+  // every keystroke in a query editor. Hence the card identifying itself in the argument.
+  const selectMetric = useCallback((selection: MetricSelection) => {
+    // Re-picking the open metric closes the panel, which is what `aria-pressed` on the row announces.
+    setSelectedMetric((prev) =>
+      prev?.refId === selection.refId && prev.metric.name === selection.metric.name ? null : selection
+    );
+  }, []);
 
   const jumpToQuery = (refId: string) => {
     // Query rows register themselves as children of the Queries outline item, so
@@ -175,12 +215,29 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
                 onToggleExpanded={() => toggleExpanded(card.refId)}
                 onJumpToQuery={() => jumpToQuery(card.refId)}
               >
-                <MetricsList dsUid={card.dsUid} dsType={card.dsType} timeRange={timeRange} />
+                <MetricsList
+                  refId={card.refId}
+                  dsUid={card.dsUid}
+                  dsType={card.dsType}
+                  timeRange={timeRange}
+                  selectedMetric={selectedMetric?.refId === card.refId ? selectedMetric.metric.name : undefined}
+                  onSelectMetric={selectMetric}
+                />
               </SignalCard>
             ))
           )}
         </div>
       </ScrollContainer>
+
+      {/* A sibling of the scroll region, not the last thing inside it, so it stays put while the
+          cards scroll. */}
+      {selectedMetric && (
+        <MetricDetailPanel
+          refId={selectedMetric.refId}
+          metric={selectedMetric.metric}
+          onClose={() => setSelectedMetric(null)}
+        />
+      )}
     </div>
   );
 }
