@@ -311,20 +311,40 @@ func TestIsManagedFolder(t *testing.T) {
 	})
 }
 
-func TestRun_NoOpWhenUnconfigured(t *testing.T) {
-	// external_ruler_uid unset is the disable signal: Run must not start the poll
-	// loop (there is no separate feature flag).
+func TestRun_StopsOnContextCancel(t *testing.T) {
+	// Run always starts the poll loop now: sync can be enabled per-org via the
+	// rules Config resource even when external_ruler_uid is unset, and only a
+	// per-org tick (resolveExternalRulerUIDForOrg) can tell which. Run itself
+	// must still exit cleanly on cancellation regardless.
 	s := newTestSyncer(t, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, &fakeRuleService{})
-	s.settings.AdminConfigPollInterval = time.Minute // avoid a ticker panic if the gate regresses
+	s.settings.AdminConfigPollInterval = time.Minute // long enough that ctx.Done() always wins the select first
 
+	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
-	go func() { done <- s.Run(context.Background()) }()
+	go func() { done <- s.Run(ctx) }()
+	cancel()
 	select {
 	case err := <-done:
 		require.NoError(t, err)
 	case <-time.After(2 * time.Second):
-		t.Fatal("Run did not return; missing gate on external_ruler_uid")
+		t.Fatal("Run did not return after context cancellation")
 	}
+}
+
+func TestSyncOrg_NoOpWhenUnconfigured(t *testing.T) {
+	// Neither external_ruler_uid nor the Config-resource API path (no client
+	// generator wired, matching the test fixtures) is configured: SyncOrg must
+	// do nothing — no datasource lookup, no fetch, no rule changes.
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, fetch, rs)
+	require.Empty(t, s.settings.ExternalRulerUID)
+	require.Nil(t, s.clientGenerator)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Zero(t, fetch.calls, "fetcher must not be called when sync isn't configured for the org")
+	assert.Nil(t, rs.replaced, "no rule groups should be replaced when sync isn't configured for the org")
 }
 
 func TestSyncOrg_RestrictsNewFolderToAdmins(t *testing.T) {
