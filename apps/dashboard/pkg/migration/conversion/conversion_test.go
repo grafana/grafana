@@ -1170,13 +1170,20 @@ func TestConversionDurationAndSizeMetrics(t *testing.T) {
 				"outcome":            otherOutcome,
 			}), "duration should not be recorded with the %q outcome", otherOutcome)
 
-			// Size histogram is not labelled by outcome and records the encoded source size.
+			// Size histogram is labelled by outcome and observed exactly once.
 			size := findHistogram(t, families, "grafana_dashboard_migration_conversion_object_size_bytes", map[string]string{
 				"source_version_api": sourceAPI,
 				"target_version_api": targetAPI,
+				"outcome":            tt.expectedOutcome,
 			})
-			require.NotNil(t, size, "object size histogram should be recorded")
+			require.NotNil(t, size, "object size histogram should be recorded with the %q outcome", tt.expectedOutcome)
 			require.Equal(t, uint64(1), size.GetSampleCount(), "size should be observed exactly once")
+
+			require.Nil(t, findHistogram(t, families, "grafana_dashboard_migration_conversion_object_size_bytes", map[string]string{
+				"source_version_api": sourceAPI,
+				"target_version_api": targetAPI,
+				"outcome":            otherOutcome,
+			}), "size should not be recorded with the %q outcome", otherOutcome)
 
 			wantBytes, err := json.Marshal(tt.source.Spec)
 			require.NoError(t, err)

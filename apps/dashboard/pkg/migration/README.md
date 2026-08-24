@@ -567,7 +567,7 @@ migration.MDashboardConversionFailureTotal
 migration.MDashboardConversionDuration
 
 // Converted object size histogram, JSON-encoded bytes of the source dashboard
-// (labels: source_version_api, target_version_api)
+// (labels: source_version_api, target_version_api, outcome)
 migration.MDashboardConversionObjectSizeBytes
 ```
 

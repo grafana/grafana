@@ -293,10 +293,6 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		}
 		if info.sourceSizeBytes >= 0 {
 			span.SetAttributes(attribute.Int("source.size_bytes", info.sourceSizeBytes))
-			migration.MDashboardConversionObjectSizeBytes.WithLabelValues(
-				sourceVersionAPI,
-				targetVersionAPI,
-			).Observe(float64(info.sourceSizeBytes))
 		}
 
 		// wrape scope so we can pass context with span to child conversion functions
@@ -334,6 +330,18 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 	}
 }
 
+// observeConversionObjectSize records the source object size, labelled by outcome, when known.
+func observeConversionObjectSize(sourceVersionAPI, targetVersionAPI, outcome string, info dashboardInfo) {
+	if info.sourceSizeBytes < 0 {
+		return
+	}
+	migration.MDashboardConversionObjectSizeBytes.WithLabelValues(
+		sourceVersionAPI,
+		targetVersionAPI,
+		outcome,
+	).Observe(float64(info.sourceSizeBytes))
+}
+
 // recordConversionFailure records metrics and logs for failed conversions
 func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err error, info dashboardInfo, a, b interface{}, duration time.Duration) {
 	errorType := classifyConversionError(err)
@@ -351,6 +359,8 @@ func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err erro
 		targetVersionAPI,
 		"failure",
 	).Observe(duration.Seconds())
+
+	observeConversionObjectSize(sourceVersionAPI, targetVersionAPI, "failure", info)
 
 	logFields := buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType, err, info, a, b)
 	logFields = append(logFields, "durationMs", duration.Milliseconds())
@@ -375,6 +385,8 @@ func recordConversionSuccess(sourceVersionAPI, targetVersionAPI string, info das
 		targetVersionAPI,
 		"success",
 	).Observe(duration.Seconds())
+
+	observeConversionObjectSize(sourceVersionAPI, targetVersionAPI, "success", info)
 
 	successLogFields := buildSuccessLogFields(sourceVersionAPI, targetVersionAPI, info)
 	successLogFields = append(successLogFields, "durationMs", duration.Milliseconds())

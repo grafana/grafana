@@ -57,7 +57,7 @@ func init() {
 		// Exponential buckets spanning 1KB to 32MB. Current dashboards go up to ~20MB;
 		// the range leaves headroom for larger objects in the future.
 		Buckets: prometheus.ExponentialBucketsRange(1024, 32*1024*1024, 8),
-	}, []string{"source_version_api", "target_version_api"})
+	}, []string{"source_version_api", "target_version_api", "outcome"})
 }
 
 // RegisterMetrics registers all migration metrics with the provided Prometheus registerer
