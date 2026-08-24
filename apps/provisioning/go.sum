@@ -1,5 +1,4 @@
-cuelabs.dev/go/oci/ociregistry v0.0.0-20260618065901-6befdbcb3cf6 h1:kcpQNPyadaMvi8O9qkIRbkLAGiQr1RO1RUbrLms43XQ=
-cuelabs.dev/go/oci/ociregistry v0.0.0-20260618065901-6befdbcb3cf6/go.mod h1:WjmQxb+W6nVNCgj8nXrF24lIz95AHwnSl36tpjDZSU8=
+cuelabs.dev/go/oci/ociregistry v0.0.0-20260717083115-5eb5795f322a h1:xR7A97ML6U+DHDgXjs1qv0fkss7N/EC2kbFzrH4mg/A=
 cuelang.org/go v0.11.1 h1:pV+49MX1mmvDm8Qh3Za3M786cty8VKPWzQ1Ho4gZRP0=
 cuelang.org/go v0.11.1/go.mod h1:PBY6XvPUswPPJ2inpvUozP9mebDVTXaeehQikhZPBz0=
 github.com/ProtonMail/go-crypto v1.4.1 h1:9RfcZHqEQUvP8RzecWEUafnZVtEvrBVL9BiF67IQOfM=
@@ -28,8 +27,7 @@ github.com/emicklei/proto v1.14.3 h1:zEhlzNkpP8kN6utonKMzlPfIvy82t5Kb9mufaJxSe1Q
 github.com/emicklei/proto v1.14.3/go.mod h1:rn1FgRS/FANiZdD2djyH7TMA9jdRDcYQ9IEN9yvjX0A=
 github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx59Ho=
 github.com/fsnotify/fsnotify v1.10.1/go.mod h1:TLheqan6HD6GBK6PrDWyDPBaEV8LspOxvPSjC+bVfgo=
-github.com/fxamacker/cbor/v2 v2.9.0 h1:NpKPmjDBgUfBms6tr6JZkTHtfFGcMKsw3eGcmD/sapM=
-github.com/fxamacker/cbor/v2 v2.9.0/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
+github.com/fxamacker/cbor/v2 v2.9.2 h1:X4Ksno9+x3cz0TZv69ec1hxP/+tymuR8PXQJyDwfh78=
 github.com/getkin/kin-openapi v0.146.0 h1:RA/1RdxrSJW4oc1+6IfnYB6AO9CaGy8GTKPh0k4Ordo=
 github.com/getkin/kin-openapi v0.146.0/go.mod h1:3BH9M9XDe/y9M5DSvEocVYAYq1w0qrhJHjC/vZi0AaY=
 github.com/go-jose/go-jose/v4 v4.1.4 h1:moDMcTHmvE6Groj34emNPLs/qtYXRVcd6S7NHbHz3kA=
@@ -101,10 +99,8 @@ github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815 h1:jKXYY/6zw
 github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815/go.mod h1:L+zFm3lz5Y61gLgMMfKgHZ+863BwVfkLpJLqB/BZvlk=
 github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745 h1:kGigNSum3b7XJjemhtDMPko6IW5PBJLxoASR+Qzo6Rc=
 github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745/go.mod h1:dLUEt5k1Zv21//kvSk8ZR4kXjCq5oALBLu2LupLhj5k=
-github.com/grafana/grafana-app-sdk v0.57.1 h1:NByZNqKzfqzkFAY/OSyn3IZ9j9662jOKWxCawU5+Zcc=
-github.com/grafana/grafana-app-sdk v0.57.1/go.mod h1:1uXg+hlJH1girIjWv59B/sQBDHZ1Im5zcWth2j6nL08=
-github.com/grafana/grafana-app-sdk/logging v0.56.7 h1:D1OTroxLvquU1KWjcJ0CouWaLoJhqPHC8NXoGMiMlnQ=
-github.com/grafana/grafana-app-sdk/logging v0.56.7/go.mod h1:cdNktt6ny3ZOqXttkIib9s0FGnLQHCBI/47V8m4STK0=
+github.com/grafana/grafana-app-sdk v0.57.2-0.20260820142358-60ae43210ffe h1:YKj+6TXNAKhDNqWedSWmCUI5hyk/5fD3q5ndRTQKfCU=
+github.com/grafana/grafana-app-sdk/logging v0.57.0 h1:348k1pHmWLjIek3ixtmv5cDLYRGm8BAJs7w5VCXNrcM=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44 h1:/aHFQcMfdIWkNMGMAdx3URhRc9sulLVfhOKTw3xvQ8Y=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44/go.mod h1:EmAylyKtOt1DFHMmb9mOqITWsX0Czr76zK2LJ1f+pOs=
 github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6 h1:TJdvWzgR/2oTWUV2qw0OGTJiw4qlnxKDCTUt8khbc2M=
@@ -122,8 +118,7 @@ github.com/hashicorp/golang-lru/v2 v2.0.7 h1:a+bsQ5rvGLjzHuww6tVxozPZFVghXaHOwFs
 github.com/hashicorp/golang-lru/v2 v2.0.7/go.mod h1:QeFd9opnmA6QUJc5vARoKUSoFhyfM2/ZepoAG6RGpeM=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
-github.com/klauspost/compress v1.19.1 h1:VsB4HPswih7mmZ8WleSFQ75c/Ui1M4trX5oAsJnhSlk=
-github.com/klauspost/compress v1.19.1/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
+github.com/klauspost/compress v1.19.2 h1:hMRETovs/pu/dVWN7zIT1PGG8t509MwT6bO7XSi26R8=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
@@ -169,12 +164,9 @@ github.com/prometheus/common v0.70.1 h1:1HvjP4D5oL3t8RsPlwxA9onvvStjtIHYE5XuuwOi
 github.com/prometheus/common v0.70.1/go.mod h1:VdFUQDMZK3VLkurFUVhia6uys/0suUp86TJz5qbJRhc=
 github.com/prometheus/procfs v0.21.1 h1:GljZCt+zSTS+NZq88cyQ1LjZ+RCHp3uVuabBWA5+OJI=
 github.com/prometheus/procfs v0.21.1/go.mod h1:aB55Cww9pdSJVHk0hUf0inxWyyjPogFIjmHKYgMKmtY=
-github.com/protocolbuffers/txtpbfmt v0.0.0-20260420112717-c39628bde8b5 h1:Mckui8l+Wqz2Ve7XQvsE8SbHNmDWu8NA7Xce5NFJ/kM=
-github.com/protocolbuffers/txtpbfmt v0.0.0-20260420112717-c39628bde8b5/go.mod h1:JSbkp0BviKovYYt9XunS95M3mLPibE9bGg+Y95DsEEY=
-github.com/rogpeppe/go-internal v1.15.0 h1:D0RCU5rMAp+SpgkiNdrjfJ+LX4J1M32V2NeCY7EJ6hc=
-github.com/rogpeppe/go-internal v1.15.0/go.mod h1:DrUVZyrJU+txYW5/1kwtXQSMFio52ZOxX7yM1VHvnxs=
-github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 h1:KRzFb2m7YtdldCEkzs6KqmJw4nqEVZGK7IN2kJkjTuQ=
-github.com/santhosh-tekuri/jsonschema/v6 v6.0.2/go.mod h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU=
+github.com/protocolbuffers/txtpbfmt v0.0.0-20260803135053-1fd8a60d1ffc h1:60QHVeAiwsBBrlOuCYJXJqogSU+j/TWYH9KTGlwz7iY=
+github.com/rogpeppe/go-internal v1.16.0 h1:O9DK+vNMDVGLr2BeZqmpLeMjiMNkuXfcqntWbZV6S5g=
+github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 h1:1EYB5IzjZawrrnELUi78f9fPu57HuXjmddZPjrls/28=
 github.com/smallstep/pkcs7 v0.2.1 h1:6Kfzr/QizdIuB6LSv8y1LJdZ3aPSfTNhTLqAx9CTLfA=
 github.com/smallstep/pkcs7 v0.2.1/go.mod h1:RcXHsMfL+BzH8tRhmrF1NkkpebKpq3JEM66cOFxanf0=
 github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
@@ -294,8 +286,7 @@ google.golang.org/genproto/googleapis/rpc v0.0.0-20260810153831-ec0a7760b754 h1:
 google.golang.org/genproto/googleapis/rpc v0.0.0-20260810153831-ec0a7760b754/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
 google.golang.org/grpc v1.83.0 h1:JeNZEKJFbQxArAMl+hiytHauacDNqJUllNfmIMmpqnQ=
 google.golang.org/grpc v1.83.0/go.mod h1:kDyl6SKsiHKt0uylY5gtn5cEjkrIOhQOGDgIc4JGwzQ=
-google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af h1:+5/Sw3GsDNlEmu7TfklWKPdQ0Ykja5VEmq2i817+jbI=
-google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
+google.golang.org/protobuf v1.36.12 h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=
