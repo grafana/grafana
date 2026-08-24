@@ -7038,6 +7038,9 @@
       "name-json-values": "JSON",
       "selection-options": "Urvalsalternativ"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Tillbaka till listan",
       "label-icon": "Ikon",
@@ -7817,9 +7820,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Den här variabeln hänvisas till av andra variabler eller instrumentpanelen.",
       "content-variable-not-referenced-other-variables-dashboard": "Den här variabeln hänvisas inte till av andra variabler eller instrumentpanelen.",
       "content-variable-referenced-other-variables-dashboard": "Den här variabeln hänvisas till av andra variabler eller instrumentpanelen."
-    },
-    "variable-controls": {
-      "add-variable": "Lägg till variabel"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -9147,6 +9147,7 @@
     "json": {
       "cancel-button": "Avbryt",
       "copy-button": "Kopiera till urklippet",
+      "dashboard-definition": "",
       "download-button": "Ladda ner fil",
       "download-successful_toast_message": "Din JSON har laddats ner",
       "export-format": "Format",
@@ -13696,7 +13697,8 @@
       "open-pull-request-in-repo": "Öppna pull-begäran i {{repoType}}",
       "update-from-branch": "Resten av Grafana-användarna i din organisation kommer fortfarande att se den aktuella versionen tills den här grenen slås samman",
       "view-in-repo-button": "Visa den i {{repoType}} för att se de senaste ändringarna.",
-      "view-pull-request-in-repo": "Visa pull-begäran i {{repoType}}"
+      "view-pull-request-in-repo": "Visa pull-begäran i {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "En ny resurs har skapats i en gren i {{repoType}}.",
     "title-deleted-resource-in-branch": "En resurs har raderats i en gren i {{repoType}}.",

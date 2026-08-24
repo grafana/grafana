@@ -7038,6 +7038,9 @@
       "name-json-values": "JSON",
       "selection-options": "Selectiemogelijkheden"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Terug naar lijst",
       "label-icon": "Pictogram",
@@ -7817,9 +7820,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Deze variabele wordt gebruikt door andere variabelen of dashboard.",
       "content-variable-not-referenced-other-variables-dashboard": "Deze variabele wordt niet gebruikt door andere variabelen of dashboard.",
       "content-variable-referenced-other-variables-dashboard": "Deze variabele wordt gebruikt door andere variabelen of dashboard."
-    },
-    "variable-controls": {
-      "add-variable": "Variabele toevoegen"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -9147,6 +9147,7 @@
     "json": {
       "cancel-button": "Annuleren",
       "copy-button": "Kopiëren naar klembord",
+      "dashboard-definition": "",
       "download-button": "Bestand downloaden",
       "download-successful_toast_message": "Je JSON is gedownload",
       "export-format": "Formaat",
@@ -13696,7 +13697,8 @@
       "open-pull-request-in-repo": "Pull-verzoek openen in {{repoType}}",
       "update-from-branch": "De rest van de Grafana-gebruikers in je organisatie ziet nog steeds de huidige versie totdat deze branch is samengevoegd",
       "view-in-repo-button": "Bekijk het in {{repoType}} om de laatste wijzigingen te zien.",
-      "view-pull-request-in-repo": "Pull-verzoek bekijken in {{repoType}}"
+      "view-pull-request-in-repo": "Pull-verzoek bekijken in {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "Er is een nieuwe bron gemaakt in een tak in {{repoType}}.",
     "title-deleted-resource-in-branch": "Er is een bron verwijderd in een branch in {{repoType}}.",
