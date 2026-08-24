@@ -95,15 +95,26 @@ type dashboardInfo struct {
 	sourceSizeBytes int
 }
 
+// byteCountWriter counts the bytes written to it and discards them, so we can
+// measure a JSON encoding's size without retaining a full-size copy of it.
+type byteCountWriter struct{ n int }
+
+func (w *byteCountWriter) Write(p []byte) (int, error) { w.n += len(p); return len(p), nil }
+
 // specSizeBytes returns the JSON-encoded size of a dashboard spec in bytes.
 // It returns -1 if the spec cannot be marshalled so callers can distinguish
 // "unknown" from a genuinely empty (zero-byte) spec.
+//
+// It streams into a counting writer rather than using json.Marshal: this runs
+// once per object on every LIST response over specs up to ~20MB, and Marshal
+// would allocate a full-size copy of the encoding just to read its length.
 func specSizeBytes(spec interface{}) int {
-	b, err := json.Marshal(spec)
-	if err != nil {
+	var w byteCountWriter
+	if err := json.NewEncoder(&w).Encode(spec); err != nil {
+		getLogger().Debug("failed to measure dashboard spec size", "error", err)
 		return -1
 	}
-	return len(b)
+	return w.n - 1 // Encode appends a trailing newline
 }
 
 // extractDashboardInfo extracts UID, schema versions and source size from source and target dashboards
