@@ -155,42 +155,7 @@ describe('ValueMappingsEditorModal', () => {
         },
       ]);
     });
-  });
 
-  describe('When adding and updating regex map', () => {
-    it('should add new regex map', async () => {
-      const onChangeSpy = jest.fn();
-      setup(onChangeSpy, { value: [] });
-      await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
-
-      await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
-      const selectComponent = await screen.findByTestId(selectors.components.ValuePicker.select('Add a new mapping'));
-      await selectOptionInTest(selectComponent, 'Regex');
-
-      await userEvent.clear(screen.getByPlaceholderText('Regular expression'));
-      await userEvent.type(screen.getByPlaceholderText('Regular expression'), '(.*).example.com');
-
-      await userEvent.clear(screen.getByPlaceholderText('Optional display text'));
-      await userEvent.type(screen.getByPlaceholderText('Optional display text'), '$1');
-
-      await userEvent.click(screen.getByText('Update'));
-
-      expect(onChangeSpy).toHaveBeenCalledWith([
-        {
-          type: MappingType.RegexToText,
-          options: {
-            pattern: '(.*).example.com',
-            result: {
-              text: '$1',
-              index: 0,
-            },
-          },
-        },
-      ]);
-    });
-  });
-
-  describe('When editing negative bounds in range mapping', () => {
     it('should allow editing negative bounds on existing range mapping', async () => {
       const onChangeSpy = jest.fn();
       setup(onChangeSpy, {
@@ -231,6 +196,39 @@ describe('ValueMappingsEditorModal', () => {
             to: -2,
             result: {
               text: 'Negative range',
+              index: 0,
+            },
+          },
+        },
+      ]);
+    });
+  });
+
+  describe('When adding and updating regex map', () => {
+    it('should add new regex map', async () => {
+      const onChangeSpy = jest.fn();
+      setup(onChangeSpy, { value: [] });
+      await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
+
+      await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
+      const selectComponent = await screen.findByTestId(selectors.components.ValuePicker.select('Add a new mapping'));
+      await selectOptionInTest(selectComponent, 'Regex');
+
+      await userEvent.clear(screen.getByPlaceholderText('Regular expression'));
+      await userEvent.type(screen.getByPlaceholderText('Regular expression'), '(.*).example.com');
+
+      await userEvent.clear(screen.getByPlaceholderText('Optional display text'));
+      await userEvent.type(screen.getByPlaceholderText('Optional display text'), '$1');
+
+      await userEvent.click(screen.getByText('Update'));
+
+      expect(onChangeSpy).toHaveBeenCalledWith([
+        {
+          type: MappingType.RegexToText,
+          options: {
+            pattern: '(.*).example.com',
+            result: {
+              text: '$1',
               index: 0,
             },
           },
