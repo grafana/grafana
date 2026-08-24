@@ -212,12 +212,18 @@ describe('rewriteRelativeMarkdownLinks', () => {
   });
 
   describe('isResourceLinkCandidate', () => {
-    it.each(['a/dash.json', 'a/pl.yaml', 'a/pl.yml', 'a/DASH.JSON', 'a/notes.md', 'a/GUIDE.markdown', 'a/sub/', 'sub/'])(
-      'accepts %s',
-      (path) => {
-        expect(isResourceLinkCandidate(path)).toBe(true);
-      }
-    );
+    it.each([
+      'a/dash.json',
+      'a/pl.yaml',
+      'a/pl.yml',
+      'a/DASH.JSON',
+      'a/notes.md',
+      'a/GUIDE.markdown',
+      'a/sub/',
+      'sub/',
+    ])('accepts %s', (path) => {
+      expect(isResourceLinkCandidate(path)).toBe(true);
+    });
 
     // Non-resource files (images, archives) and extensionless paths (README,
     // LICENSE, a folder link without a trailing slash) are not tagged, so they
