@@ -6498,6 +6498,32 @@
     },
     {
       "metadata": {
+        "name": "teamHttpHeadersFromAppPlatformMT",
+        "resourceVersion": "1787269128937",
+        "creationTimestamp": "2026-08-20T23:38:48Z"
+      },
+      "spec": {
+        "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamHttpHeadersFromAppPlatformST",
+        "resourceVersion": "1787269128937",
+        "creationTimestamp": "2026-08-20T23:38:48Z"
+      },
+      "spec": {
+        "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "teamHttpHeadersTempo",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-05-22T19:13:31Z"
