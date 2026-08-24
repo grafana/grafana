@@ -99,7 +99,7 @@ export async function updateNotebookSpec(
   );
 
   if ('error' in read && read.error) {
-    throw new Error(notebookWriteError(read.error, 'Failed to read the notebook.'));
+    throw new Error(extractErrorMessage(read.error, 'Failed to read the notebook.'));
   }
 
   const current = read.data;
@@ -128,9 +128,11 @@ export async function updateNotebookSpec(
 
   if ('error' in result && result.error) {
     if (isConflict(result.error)) {
-      throw new NotebookConflictError(notebookWriteError(result.error, 'The notebook changed while you were editing.'));
+      throw new NotebookConflictError(
+        extractErrorMessage(result.error, 'The notebook changed while you were editing.')
+      );
     }
-    throw new Error(notebookWriteError(result.error, 'Failed to save the notebook.'));
+    throw new Error(extractErrorMessage(result.error, 'Failed to save the notebook.'));
   }
 
   return next;
@@ -165,15 +167,4 @@ export async function updateNotebook(uid: string, spec: NotebookSpec): Promise<{
 
 function isConflict(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'status' in error && error.status === 409;
-}
-
-/** The apiserver's own message: without it a caller cannot see what is wrong, and will retry the same spec. */
-function notebookWriteError(error: unknown, fallback = 'Failed to create the notebook.'): string {
-  if (typeof error === 'object' && error !== null && 'data' in error) {
-    const data: unknown = error.data;
-    if (typeof data === 'object' && data !== null && 'message' in data && typeof data.message === 'string') {
-      return data.message;
-    }
-  }
-  return fallback;
 }

@@ -178,6 +178,24 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(addToExisting).not.toHaveBeenCalled();
     });
 
+    /**
+     * The submit branch used to read "existing *with* a selection -> append, everything else ->
+     * create", which made creating a notebook the fallback for every unexpected state. Nothing
+     * reached it — the button is disabled without a selection, and a disabled default button also
+     * suppresses Enter-to-submit — but the shape was one loosened condition away from writing a
+     * notebook with no title, so the refusal is now explicit.
+     */
+    it('writes nothing when submitted on the existing route with no notebook chosen', async () => {
+      const { user } = renderModal();
+      await chooseExisting(user);
+
+      // Straight at the form, bypassing the disabled button the way a stray Enter would.
+      fireEvent.submit(document.getElementById('add-panel-to-notebook')!);
+
+      await waitFor(() => expect(addToExisting).not.toHaveBeenCalled());
+      expect(createWithPanel).not.toHaveBeenCalled();
+    });
+
     it('says the list is partial when the server had more pages', async () => {
       setPicker({ isTruncated: true });
       const { user } = renderModal();

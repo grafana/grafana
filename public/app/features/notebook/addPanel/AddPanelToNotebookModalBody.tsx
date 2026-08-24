@@ -97,17 +97,26 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
       if (isSubmittingRef.current) {
         return;
       }
+
+      // Refused rather than left to fall through to creating one. The submit button is already
+      // disabled without a selection, so nothing reaches this today - but "create" must not be what
+      // happens for every state that is not a valid existing selection, or loosening that button's
+      // disabled rule later silently turns into a notebook with no title.
+      const existingUid = values.saveTarget === 'existing' ? selected : undefined;
+      if (values.saveTarget === 'existing' && !existingUid) {
+        return;
+      }
+
       isSubmittingRef.current = true;
 
       try {
         const panel = await buildPanel();
-        const added =
-          values.saveTarget === 'existing' && selected
-            ? await addPanelToExistingNotebook(selected, panel)
-            : await createNotebookWithPanel(
-                { title: values.title.trim(), description: values.description.trim(), tags: values.tags },
-                panel
-              );
+        const added = existingUid
+          ? await addPanelToExistingNotebook(existingUid, panel)
+          : await createNotebookWithPanel(
+              { title: values.title.trim(), description: values.description.trim(), tags: values.tags },
+              panel
+            );
 
         dispatch(
           notifyApp(
