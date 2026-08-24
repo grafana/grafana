@@ -332,15 +332,23 @@ function QueryEditorRowWithResolvedDataSource({
   const interpolatedUid = interpolatedDatasourceUid(query.datasource, scopedVars);
   const datasourceKey = stableKey(query.datasource);
   const varsKey = scopedVarsKey(scopedVars);
-  const { value: querySettings } = useAsync(
-    () => (query.datasource ? getDataSourceInstanceSettings(query.datasource, scopedVars) : Promise.resolve(undefined)),
+  // Stamp the interpolated identity onto the fetch so a variable change cannot reuse
+  // the previous settings for one render (`useAsync` keeps the old value until the
+  // effect runs). Comparing settings fields is not enough: interpolation can yield a
+  // datasource name while `rawRef` stores the concrete uid.
+  const { value } = useAsync(
+    async () => {
+      if (!query.datasource) {
+        return undefined;
+      }
+      const settings = await getDataSourceInstanceSettings(query.datasource, scopedVars);
+      return { settings, interpolatedUid };
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [datasourceKey, varsKey, interpolatedUid]
   );
 
-  const currentQuerySettings = settingsMatchInterpolatedUid(querySettings, interpolatedUid)
-    ? querySettings
-    : undefined;
+  const currentQuerySettings = value && value.interpolatedUid === interpolatedUid ? value.settings : undefined;
   const dataSourceSettings = resolveRowDataSourceSettings(query.datasource, currentQuerySettings, groupSettings);
   if (!dataSourceSettings) {
     return null;
@@ -368,10 +376,7 @@ export function resolveRowDataSourceSettings(
   return groupSettings.meta.mixed ? undefined : groupSettings;
 }
 
-function interpolatedDatasourceUid(
-  datasource: DataQuery['datasource'],
-  scopedVars?: ScopedVars
-): string | undefined {
+function interpolatedDatasourceUid(datasource: DataQuery['datasource'], scopedVars?: ScopedVars): string | undefined {
   if (datasource == null) {
     return undefined;
   }
@@ -387,19 +392,6 @@ function interpolatedDatasourceUid(
 
 function firstVariableValue<T>(value: T | T[]): T {
   return Array.isArray(value) ? value[0] : value;
-}
-
-export function settingsMatchInterpolatedUid(
-  querySettings: DataSourceInstanceSettings | undefined,
-  interpolatedUid: string | undefined
-): querySettings is DataSourceInstanceSettings {
-  if (!querySettings) {
-    return false;
-  }
-  if (interpolatedUid == null) {
-    return true;
-  }
-  return (querySettings.rawRef?.uid ?? querySettings.uid) === interpolatedUid;
 }
 
 function stableKey(value: unknown): string {

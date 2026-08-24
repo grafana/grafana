@@ -11,12 +11,7 @@ import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import {
-  QueryEditorRows,
-  resolveRowDataSourceSettings,
-  settingsMatchInterpolatedUid,
-  type Props,
-} from './QueryEditorRows';
+import { QueryEditorRows, resolveRowDataSourceSettings, type Props } from './QueryEditorRows';
 
 const mockDS = mockDataSource({
   name: 'CloudManager',
@@ -566,29 +561,31 @@ describe('QueryEditorRows', () => {
       expect(settingsCalls()).toBe(callsAfterMount);
     });
 
-    it.each([
-      {
-        name: 'matches settings whose rawRef uid is the interpolated uid',
-        settings: { uid: '${ds}', rawRef: { uid: 'prom-uid', type: 'prometheus' } },
-        interpolatedUid: 'prom-uid',
-        expected: true,
-      },
-      {
-        name: 'rejects settings whose rawRef uid is a previous interpolation',
-        settings: { uid: '${ds}', rawRef: { uid: 'prom-uid', type: 'prometheus' } },
-        interpolatedUid: 'loki-uid',
-        expected: false,
-      },
-      {
-        name: 'matches non-templated settings by uid',
-        settings: { uid: 'prom-uid' },
-        interpolatedUid: 'prom-uid',
-        expected: true,
-      },
-    ])('$name', ({ settings, interpolatedUid, expected }) => {
-      expect(
-        settingsMatchInterpolatedUid(settings as ReturnType<typeof mockDataSource>, interpolatedUid)
-      ).toBe(expected);
+    it('renders a mixed-panel row when interpolation resolves the datasource by name', async () => {
+      mockReplace.mockImplementation((target?: string) => (target === '${ds}' ? 'Prometheus' : (target ?? '')));
+
+      const wrappedSettings = {
+        ...mockDataSource({ name: 'Prometheus', uid: 'prom-uid', type: 'prometheus' }),
+        name: '${ds}',
+        uid: '${ds}',
+        rawRef: { type: 'prometheus', uid: 'prom-uid' },
+      };
+      jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(wrappedSettings);
+
+      const mixedSettings = mockDataSource(
+        { name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME },
+        { mixed: true }
+      );
+
+      render(
+        <QueryEditorRows
+          {...baseProps}
+          dsSettings={mixedSettings}
+          queries={[{ refId: 'A', datasource: { uid: '${ds}', type: 'prometheus' } }]}
+        />
+      );
+
+      expect(await screen.findByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
     });
 
     it.each([
