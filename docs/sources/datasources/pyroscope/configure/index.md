@@ -48,7 +48,6 @@ To configure basic settings for the data source, complete the following steps:
 1. Select **Grafana Pyroscope**.
 1. Select **Add new data source** in the top-right corner of the page.
 1. On the **Settings** tab, complete the **Name**, **Connection**, and **Authentication** sections.
-
    - Use the **Name** field to specify the name used for the data source in panels, queries, and Explore. Toggle the **Default** switch for the data source to be pre-selected for new panels.
    - Under **Connection**, enter the **URL** of the Pyroscope instance. For example, `https://example.com:4040`. Refer to [Connection URL](#connection-url) for more information.
    - Complete the [**Authentication** section](#authentication).

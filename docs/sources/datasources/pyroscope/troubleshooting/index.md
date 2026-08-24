@@ -548,10 +548,10 @@ These issues are most commonly reported in Grafana Cloud Profiles. Some limits a
 
 Pyroscope enforces query limits on the server side that are separate from, and often shorter than, the data retention period. These limits are enforced by the Pyroscope query frontend, not by the Grafana data source, so the data source can't change or override them.
 
-| Limit                        | Default | Description                                                                                                                                                                                             |
-| ---------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Limit                        | Default | Description                                                                                                                                                                                              |
+| ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `querier.max-query-lookback` | `7d`    | How far back from the current time a query can read. Requests for data older than this window don't fail. Instead, the range is silently truncated to the allowed window, which looks like missing data. |
-| `querier.max-query-length`   | `24h`   | The maximum time span of a single query. Requests that exceed this span are rejected.                                                                                                                  |
+| `querier.max-query-length`   | `24h`   | The maximum time span of a single query. Requests that exceed this span are rejected.                                                                                                                    |
 
 Because retention is typically longer than the query window, profiles can be retained but not queryable. For example, Grafana Cloud Profiles retains data for 14 days on free plans and 30 days on paid plans, while the default query window is 7 days.
 

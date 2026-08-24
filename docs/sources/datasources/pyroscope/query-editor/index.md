@@ -92,9 +92,9 @@ The label selector supports the following operators.
 
 | Operator | Description                                             |
 | -------- | ------------------------------------------------------- |
-| `=`      | Selects labels that exactly match the value.           |
-| `!=`     | Selects labels that don't match the value.             |
-| `=~`     | Selects labels that match the regular expression.      |
+| `=`      | Selects labels that exactly match the value.            |
+| `!=`     | Selects labels that don't match the value.              |
+| `=~`     | Selects labels that match the regular expression.       |
 | `!~`     | Selects labels that don't match the regular expression. |
 
 The following examples show common label selectors:
@@ -112,14 +112,14 @@ Leave the label selector empty, or set it to `{}`, to query all profiles for the
 
 The **Options** section provides the following settings.
 
-| Option          | Description                                                                                                                                                                                                                 |
+| Option          | Description                                                                                                                                                                                                                |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Query Type**  | Sets the type of data the query returns: **Profile** for flame graph data, **Metric** for time-series data, or **Both**. You can only select **Both** in Explore. Panels on dashboards allow only one visualization.        |
-| **Group by**    | Groups metric data by one or more labels. Without a **Group by** label, metric data aggregates over all labels into a single time series. **Group by** applies only to metric data and doesn't change the profile results.    |
-| **Limit**       | Sets the maximum number of time series returned when **Group by** is set. The series returned are always ordered by descending value for the total aggregated data over the time period. Doesn't apply to profile queries.    |
-| **Span ID**     | Sets the span ID from which to search for profiles, so you can view the profile associated with a specific trace span. This option supports Trace to profiles, for example, `64f170a95f537095`.               |
-| **Max Nodes**   | Sets the maximum number of nodes rendered in the flame graph. Lower values improve performance for large profiles by aggregating smaller nodes. The field placeholder shows the default value, `16384`.                       |
-| **Annotations** | Includes profiling annotations, such as sampling and throttling events, on time-series results. Use these annotations to identify when Pyroscope reduced or limited ingestion for a service.                                 |
+| **Query Type**  | Sets the type of data the query returns: **Profile** for flame graph data, **Metric** for time-series data, or **Both**. You can only select **Both** in Explore. Panels on dashboards allow only one visualization.       |
+| **Group by**    | Groups metric data by one or more labels. Without a **Group by** label, metric data aggregates over all labels into a single time series. **Group by** applies only to metric data and doesn't change the profile results. |
+| **Limit**       | Sets the maximum number of time series returned when **Group by** is set. The series returned are always ordered by descending value for the total aggregated data over the time period. Doesn't apply to profile queries. |
+| **Span ID**     | Sets the span ID from which to search for profiles, so you can view the profile associated with a specific trace span. This option supports Trace to profiles, for example, `64f170a95f537095`.                            |
+| **Max Nodes**   | Sets the maximum number of nodes rendered in the flame graph. Lower values improve performance for large profiles by aggregating smaller nodes. The field placeholder shows the default value, `16384`.                    |
+| **Annotations** | Includes profiling annotations, such as sampling and throttling events, on time-series results. Use these annotations to identify when Pyroscope reduced or limited ingestion for a service.                               |
 
 Select a query type to return the profile data. Data is shown in the [Flame Graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/), metric data visualized in a graph, or both.
 

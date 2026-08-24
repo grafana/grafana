@@ -27,11 +27,11 @@ For an introduction to templating and template variables, refer to [Templating](
 
 Query variables query the Pyroscope data source to populate drop-down values. When you create a query variable, select a Pyroscope data source and choose a query type.
 
-| Query type       | Required inputs     | Description                                                                                                                                                          |
-| ---------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Query type       | Required inputs     | Description                                                                                                                                                                                                     |
+| ---------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Profile type** | None                | Returns the profile types available from the data source. The drop-down displays a readable label, while the variable value is the full profile type ID, such as `process_cpu:cpu:nanoseconds:cpu:nanoseconds`. |
-| **Label**        | Profile type        | Returns the label names available for the selected profile type, such as `service_name`, `namespace`, and `region`.                                                 |
-| **Label value**  | Profile type, label | Returns the values for the selected label, scoped to the selected profile type.                                                                                     |
+| **Label**        | Profile type        | Returns the label names available for the selected profile type, such as `service_name`, `namespace`, and `region`.                                                                                             |
+| **Label value**  | Profile type, label | Returns the values for the selected label, scoped to the selected profile type.                                                                                                                                 |
 
 Because the **Label** and **Label value** query types require a profile type, and **Label value** also requires a label, you can chain these variables so that each one depends on the previous selection.
 
