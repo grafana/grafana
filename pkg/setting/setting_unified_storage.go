@@ -38,7 +38,7 @@ var MigratedUnifiedResources = map[string]bool{
 	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
 	StarsResource:            false,
-	PreferencesResource:      false,
+	PreferencesResource:      true, // Only Mode5!
 	DataSourceResources:      false,
 	QueryCacheConfigResource: false,
 }
@@ -182,6 +182,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
+	cfg.SearchEnforceSortCapability = section.Key("search_enforce_sort_capability").MustBool(false)
 	cfg.SearchPostRankAuthz = section.Key("search_post_rank_authz").MustBool(false)
 	// Zero values keep the search.PostRankAuthzConfig.effective() defaults.
 	cfg.SearchPostRankAuthzOverFetchFactor = section.Key("search_post_rank_authz_over_fetch_factor").MustInt(0)

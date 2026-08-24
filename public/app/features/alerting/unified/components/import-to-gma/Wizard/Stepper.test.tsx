@@ -4,33 +4,29 @@ import { render, screen, userEvent } from 'test/test-utils';
 
 import { Stepper } from './Stepper';
 import { StepperStateProvider, useStepperState } from './StepperState';
-import { type ImportMethod, StepKey } from './types';
+import { StepKey, type WizardFormValues } from './types';
 
-/**
- * Seeds the new first "Import method" step as completed so the existing stepper
- * mechanics tests (which exercise the later steps) can navigate past it.
- */
-function MethodStepSeeder() {
-  const { setStepCompleted, setVisitedStep } = useStepperState();
-  useEffect(() => {
-    setVisitedStep(StepKey.Method);
-    setStepCompleted(StepKey.Method, true);
-  }, [setStepCompleted, setVisitedStep]);
-  return null;
-}
-
-function FormWrapper({ children, method = 'stage' }: { children: React.ReactNode; method?: ImportMethod }) {
-  const formAPI = useForm<{ importMethod: ImportMethod }>({ defaultValues: { importMethod: method } });
+function FormWrapper({
+  children,
+  autoSyncNotificationsEnabled = false,
+  notificationsSource = 'yaml',
+}: {
+  children: React.ReactNode;
+  autoSyncNotificationsEnabled?: boolean;
+  notificationsSource?: 'yaml' | 'datasource';
+}) {
+  const formAPI = useForm<WizardFormValues>({ defaultValues: { autoSyncNotificationsEnabled, notificationsSource } });
   return <FormProvider {...formAPI}>{children}</FormProvider>;
 }
 
-const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey, method?: ImportMethod) => {
+const renderWithProvider = (
+  ui: React.ReactElement,
+  initialStep?: StepKey,
+  formValues?: { autoSyncNotificationsEnabled?: boolean; notificationsSource?: 'yaml' | 'datasource' }
+) => {
   return render(
-    <FormWrapper method={method}>
-      <StepperStateProvider initialStep={initialStep}>
-        <MethodStepSeeder />
-        {ui}
-      </StepperStateProvider>
+    <FormWrapper {...formValues}>
+      <StepperStateProvider initialStep={initialStep}>{ui}</StepperStateProvider>
     </FormWrapper>
   );
 };
@@ -38,24 +34,12 @@ const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey, metho
 describe('Stepper', () => {
   const user = userEvent.setup();
 
-  it('should render the full import rail with the new method step first', () => {
+  it('should render the three-step rail', () => {
     renderWithProvider(<Stepper />);
 
-    expect(screen.getByText(/import method/i)).toBeInTheDocument();
     expect(screen.getByText(/notification resources/i)).toBeInTheDocument();
     expect(screen.getByText(/alert rules/i)).toBeInTheDocument();
     expect(screen.getByText(/review & import/i)).toBeInTheDocument();
-  });
-
-  it('collapses to a two-step rail for the autosync method', () => {
-    renderWithProvider(<Stepper />, StepKey.Method, 'autosync');
-
-    expect(screen.getByText(/import method/i)).toBeInTheDocument();
-    expect(screen.getByText(/review & enable/i)).toBeInTheDocument();
-    // The import-only steps are not rendered at all for autosync.
-    expect(screen.queryByText(/notification resources/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/alert rules/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/review & import/i)).not.toBeInTheDocument();
   });
 
   it('should highlight the active step', () => {
@@ -246,5 +230,58 @@ describe('Stepper', () => {
     const svg = indicator?.querySelector('svg');
     expect(svg).toBeInTheDocument();
     expect(indicator).not.toHaveTextContent('1');
+  });
+
+  describe('Rules force-skipped by Auto-sync', () => {
+    it('renders Rules with strikethrough and disabled when Auto-sync is checked for the datasource source', () => {
+      renderWithProvider(<Stepper />, StepKey.Notifications, {
+        autoSyncNotificationsEnabled: true,
+        notificationsSource: 'datasource',
+      });
+
+      const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+      expect(rulesButton).toBeDisabled();
+      expect(rulesButton).toHaveStyle('text-decoration: line-through');
+    });
+
+    it('does not force-skip Rules when Auto-sync is checked but the source is YAML', () => {
+      const TestComponent = () => {
+        const { setStepCompleted, setVisitedStep } = useStepperState();
+        useEffect(() => {
+          setVisitedStep(StepKey.Notifications);
+          setStepCompleted(StepKey.Notifications, true);
+        }, [setStepCompleted, setVisitedStep]);
+        return <Stepper />;
+      };
+
+      renderWithProvider(<TestComponent />, StepKey.Notifications, {
+        autoSyncNotificationsEnabled: true,
+        notificationsSource: 'yaml',
+      });
+
+      const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+      expect(rulesButton).toBeEnabled();
+      expect(rulesButton).not.toHaveStyle('text-decoration: line-through');
+    });
+
+    it('restores Rules to normal once Auto-sync is unchecked', () => {
+      const TestComponent = () => {
+        const { setStepCompleted, setVisitedStep } = useStepperState();
+        useEffect(() => {
+          setVisitedStep(StepKey.Notifications);
+          setStepCompleted(StepKey.Notifications, true);
+        }, [setStepCompleted, setVisitedStep]);
+        return <Stepper />;
+      };
+
+      renderWithProvider(<TestComponent />, StepKey.Notifications, {
+        autoSyncNotificationsEnabled: false,
+        notificationsSource: 'datasource',
+      });
+
+      const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+      expect(rulesButton).toBeEnabled();
+      expect(rulesButton).not.toHaveStyle('text-decoration: line-through');
+    });
   });
 });
