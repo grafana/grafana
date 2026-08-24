@@ -1,5 +1,5 @@
 import { type AnnotationQuery, getDataSourceRef } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   type SceneDataLayerProviderState,
   type SceneDataLayerProvider,
@@ -56,8 +56,8 @@ export class DashboardDataLayerSet
     this.setState({ annotationLayers: [...this.state.annotationLayers, layer] });
   }
 
-  public createDefaultAnnotationLayer(): DashboardAnnotationsDataLayer {
-    const defaultDatasource = getDataSourceSrv().getInstanceSettings(null);
+  public async createDefaultAnnotationLayer(): Promise<DashboardAnnotationsDataLayer> {
+    const defaultDatasource = await getDataSourceInstanceSettings(null);
     const datasourceRef = defaultDatasource?.meta.annotations ? getDataSourceRef(defaultDatasource) : undefined;
 
     const newAnnotationQuery: AnnotationQuery = {

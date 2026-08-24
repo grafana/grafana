@@ -240,6 +240,7 @@ export const availableIconsIndex = {
   process: true,
   'question-circle': true,
   'record-audio': true,
+  redo: true,
   repeat: true,
   rocket: true,
   'ruler-combined': true,

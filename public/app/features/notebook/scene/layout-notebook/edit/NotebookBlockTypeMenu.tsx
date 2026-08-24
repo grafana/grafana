@@ -6,37 +6,30 @@ export type NotebookBlockType = 'heading' | 'paragraph' | 'code' | 'visualizatio
 
 interface Props {
   /**
-   * Where a pick would insert. A divider belongs to the cell above it, so the cell at position `i`
-   * passes `i + 1`; the end-of-document prompt passes `cells.length`. The menu itself is indifferent —
-   * it only carries the index back out.
+   * What a pick means is the caller's business, not this menu's — inserting a new block at a position
+   * (NotebookAddBlockDivider) and converting the cell that's already showing this menu in place
+   * (NotebookCellRenderer's trailing-slot markdown cell) both just need "which type did they pick".
+   * Optional so the menu stays renderable on its own: without a handler it's inert by construction
+   * rather than by a scattering of empty click handlers. Not every type is buildable yet — the caller
+   * decides which picks it acts on.
    */
-  index: number;
-  /**
-   * Optional so the menu stays renderable on its own: insertion belongs to the layout manager, and
-   * without a handler the menu is inert by construction rather than by a scattering of empty click
-   * handlers. Not every type is buildable yet — the manager decides which picks it acts on.
-   */
-  onAdd?: (type: NotebookBlockType, index: number) => void;
+  onPick?: (type: NotebookBlockType) => void;
 }
 
-export function NotebookBlockTypeMenu({ index, onAdd }: Props) {
+export function NotebookBlockTypeMenu({ onPick }: Props) {
   return (
     <Menu>
       <Menu.Item
         icon="text-fields"
         label={t('notebook.add-block.heading', 'Heading')}
-        onClick={() => onAdd?.('heading', index)}
+        onClick={() => onPick?.('heading')}
       />
       <Menu.Item
         icon="align-left"
         label={t('notebook.add-block.paragraph', 'Paragraph')}
-        onClick={() => onAdd?.('paragraph', index)}
+        onClick={() => onPick?.('paragraph')}
       />
-      <Menu.Item
-        icon="brackets-curly"
-        label={t('notebook.add-block.code', 'Code')}
-        onClick={() => onAdd?.('code', index)}
-      />
+      <Menu.Item icon="brackets-curly" label={t('notebook.add-block.code', 'Code')} onClick={() => onPick?.('code')} />
       <Menu.Item
         icon="graph-bar"
         label={t('notebook.add-block.visualization', 'Visualization')}
@@ -47,7 +40,7 @@ export function NotebookBlockTypeMenu({ index, onAdd }: Props) {
             disabled
           />,
         ]}
-        onClick={() => onAdd?.('visualization', index)}
+        onClick={() => onPick?.('visualization')}
       />
     </Menu>
   );

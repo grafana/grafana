@@ -104,6 +104,7 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 		expected bool
 	}{
 		{"dashboard.grafana.app", "dashboards", false},
+		{"dashboard.grafana.app", "variables", false},
 		{"folder.grafana.app", "folders", false},
 		{"unknown.group", "unknown.resource", true},
 	}
@@ -131,6 +132,7 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 		expected bool
 	}{
 		{"dashboard.grafana.app", "dashboards", false},
+		{"dashboard.grafana.app", "variables", false},
 		{"folder.grafana.app", "folders", false},
 		{"unknown.group", "unknown.resource", true},
 	}
@@ -252,6 +254,7 @@ func TestValidateAuthzOptions(t *testing.T) {
 
 	for _, value := range []string{
 		"dashboard.grafana.app/dashboards",
+		"dashboard.grafana.app/variables",
 		"folder.grafana.app/folders",
 		"iam.grafana.app/users",
 		"iam.grafana.app/teams",
