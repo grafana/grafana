@@ -1,4 +1,3 @@
-import { cx } from '@emotion/css';
 import {
   FloatingFocusManager,
   autoUpdate,
@@ -10,10 +9,10 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { hotkeysCoreFeature, syncDataLoaderFeature } from '@headless-tree/core';
-import { useTree } from '@headless-tree/react';
 import {
+  lazy,
   memo,
+  Suspense,
   useCallback,
   useEffect,
   useId,
@@ -36,6 +35,7 @@ import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 import { Portal } from '../Portal/Portal';
 
+import { TREE_ROOT_ID, type TreeSelectData, type TreeSelectNode } from './TreeSelect.data';
 import { getTreeSelectStyles } from './TreeSelect.styles';
 import { type CascaderOption } from './types';
 
@@ -66,30 +66,12 @@ export interface TreeSelectProps {
   'data-testid'?: string;
 }
 
-interface CascaderTreeNode {
-  id: string;
-  value: string;
-  label: string;
-  menuLabel: string;
-  displayLabel: string;
-  children: string[];
-  folder: boolean;
-  disabled: boolean;
-  path: CascaderOption[];
-  customDescription?: string;
-}
-
-interface CascaderTreeData {
-  nodes: Map<string, CascaderTreeNode>;
-  expandedItems: string[];
-}
-
 interface SelectedValue {
   value: string;
   label: string;
 }
 
-export interface HeadlessTreeSelectProps extends TreeSelectProps {
+export interface TreeSelectBaseProps extends TreeSelectProps {
   changeOnSelect?: boolean;
   hideActiveLevelLabel?: boolean;
   valuePath?: string[];
@@ -101,8 +83,13 @@ export interface HeadlessTreeSelectProps extends TreeSelectProps {
 }
 
 const DEFAULT_SEPARATOR = ' / ';
-const ROOT_ID = '__grafana_cascader_root__';
 const CUSTOM_ID = '__grafana_cascader_custom__';
+
+const LazyTreeSelectMenu = lazy(() =>
+  import(/* webpackChunkName: "headless-tree-select" */ './TreeSelectMenu').then((module) => ({
+    default: module.TreeSelectMenu,
+  }))
+);
 
 function buildTreeData(
   options: CascaderOption[],
@@ -111,8 +98,8 @@ function buildTreeData(
   displayAllSelectedLevels: boolean,
   allowCustomValue: boolean,
   formatCreateLabel?: (value: string) => string
-): CascaderTreeData {
-  const nodes = new Map<string, CascaderTreeNode>();
+): TreeSelectData {
+  const nodes = new Map<string, TreeSelectNode>();
   const normalizedQuery = query.trim().toLocaleLowerCase();
 
   const addOptions = (
@@ -173,8 +160,8 @@ function buildTreeData(
     rootChildren.unshift(CUSTOM_ID);
   }
 
-  nodes.set(ROOT_ID, {
-    id: ROOT_ID,
+  nodes.set(TREE_ROOT_ID, {
+    id: TREE_ROOT_ID,
     value: '',
     label: '',
     menuLabel: '',
@@ -206,7 +193,7 @@ function findInitialValue(
 
   const data = buildTreeData(options, '', separator, displayAllSelectedLevels, false);
   const option = [...data.nodes.values()].find(
-    (node) => node.id !== ROOT_ID && (node.value === initialValue || node.label === initialValue)
+    (node) => node.id !== TREE_ROOT_ID && (node.value === initialValue || node.label === initialValue)
   );
 
   if (option) {
@@ -216,98 +203,12 @@ function findInitialValue(
   return allowCustomValue ? { value: initialValue, label: initialValue } : null;
 }
 
-interface CascaderTreeProps {
-  data: CascaderTreeData;
-  menuId: string;
-  selectedValue?: string;
-  onActivate(node: CascaderTreeNode, isFolder: boolean): void;
-}
-
-function CascaderTree({ data, menuId, selectedValue, onActivate }: CascaderTreeProps) {
-  const styles = useStyles2(getTreeSelectStyles);
-  const tree = useTree<CascaderTreeNode>({
-    rootItemId: ROOT_ID,
-    getItemName: (item) => item.getItemData().menuLabel,
-    isItemFolder: (item) => item.getItemData().folder,
-    dataLoader: {
-      getItem: (itemId) => data.nodes.get(itemId)!,
-      getChildren: (itemId) => data.nodes.get(itemId)?.children ?? [],
-    },
-    initialState: { expandedItems: data.expandedItems },
-    onPrimaryAction: (item) => {
-      const node = item.getItemData();
-      if (!node.disabled) {
-        onActivate(node, item.isFolder());
-      }
-    },
-    features: [syncDataLoaderFeature, hotkeysCoreFeature],
-  });
-
-  useEffect(() => {
-    tree.rebuildTree();
-  }, [data, tree]);
-
-  const containerProps = tree.getContainerProps(t('grafana-ui.tree-select.tree-label', 'Available options'));
-  const items = tree.getItems();
-  if (items.length === 0) {
-    return (
-      <div {...containerProps} id={menuId} className={styles.tree}>
-        <div className={styles.empty}>{t('grafana-ui.tree-select.no-options', 'No options found.')}</div>
-      </div>
-    );
-  }
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    containerProps.onKeyDown?.(event);
-    if (event.defaultPrevented || !['Enter', ' '].includes(event.key)) {
-      return;
-    }
-
-    event.preventDefault();
-    const item = tree.getFocusedItem();
-    if (item.isFolder()) {
-      item.isExpanded() ? item.collapse() : item.expand();
-    } else {
-      item.primaryAction();
-    }
-  };
-
-  return (
-    <div {...containerProps} id={menuId} className={styles.tree} onKeyDown={handleKeyDown}>
-      {items.map((item) => {
-        const node = item.getItemData();
-        const itemProps = item.getProps();
-        const selected = node.value === selectedValue;
-
-        return (
-          <button
-            key={item.getId()}
-            {...itemProps}
-            type="button"
-            aria-disabled={node.disabled || undefined}
-            aria-selected={selected}
-            className={cx(styles.item, selected && styles.selected, node.disabled && styles.disabled)}
-            onClick={node.disabled ? undefined : itemProps.onClick}
-            style={{ paddingLeft: 8 + item.getItemMeta().level * 16 }}
-          >
-            {item.isFolder() && <Icon name={item.isExpanded() ? 'angle-down' : 'angle-right'} />}
-            <span className={styles.itemText}>
-              <span className={styles.label}>{node.menuLabel}</span>
-              {node.customDescription && <span className={styles.description}>{node.customDescription}</span>}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 /**
  * A lightweight tree selector for leaf-only Cascader use cases.
  *
  * @alpha
  */
-export const HeadlessTreeSelect = memo(
+export const TreeSelectBase = memo(
   ({
     separator = DEFAULT_SEPARATOR,
     placeholder,
@@ -333,7 +234,7 @@ export const HeadlessTreeSelect = memo(
     renderTrigger,
     className,
     'data-testid': dataTestId,
-  }: HeadlessTreeSelectProps) => {
+  }: TreeSelectBaseProps) => {
     const styles = useStyles2(getTreeSelectStyles);
     const menuId = `cascader-${useId().replace(/:/g, '-')}`;
     const [isOpen, setIsOpen] = useState(alwaysOpen);
@@ -391,7 +292,7 @@ export const HeadlessTreeSelect = memo(
     const dismiss = useDismiss(context);
     const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss]);
 
-    const handleActivate = (node: CascaderTreeNode, isFolder: boolean) => {
+    const handleActivate = (node: TreeSelectNode, isFolder: boolean) => {
       if (isFolder) {
         loadData?.(node.path);
         if (!changeOnSelect) {
@@ -493,13 +394,28 @@ export const HeadlessTreeSelect = memo(
                   minWidth: refs.reference.current?.getBoundingClientRect().width,
                 }}
               >
-                <CascaderTree
-                  key={query || 'default'}
-                  data={data}
-                  menuId={menuId}
-                  selectedValue={selected?.value}
-                  onActivate={handleActivate}
-                />
+                <Suspense
+                  fallback={
+                    <div
+                      id={menuId}
+                      role="tree"
+                      aria-label={t('grafana-ui.tree-select.tree-label', 'Available options')}
+                      className={styles.tree}
+                    >
+                      <div className={styles.empty}>
+                        {t('grafana-ui.tree-select.loading-options', 'Loading options...')}
+                      </div>
+                    </div>
+                  }
+                >
+                  <LazyTreeSelectMenu
+                    key={query || 'default'}
+                    data={data}
+                    menuId={menuId}
+                    selectedValue={selected?.value}
+                    onActivate={handleActivate}
+                  />
+                </Suspense>
               </div>
             </FloatingFocusManager>
           </Portal>
@@ -509,8 +425,4 @@ export const HeadlessTreeSelect = memo(
   }
 );
 
-HeadlessTreeSelect.displayName = 'HeadlessTreeSelect';
-
-export const TreeSelectImplementation = memo((props: TreeSelectProps) => <HeadlessTreeSelect {...props} />);
-
-TreeSelectImplementation.displayName = 'TreeSelectImplementation';
+TreeSelectBase.displayName = 'TreeSelectBase';

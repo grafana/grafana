@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
@@ -39,7 +39,10 @@ const CascaderWithOptionsStateUpdate = (props: Omit<CascaderProps, 'options' | '
     },
   ]);
 
-  setTimeout(() => setOptions(options), 1000);
+  useEffect(() => {
+    const timeout = setTimeout(() => setOptions(options), 1000);
+    return () => clearTimeout(timeout);
+  }, []);
 
   return <Cascader options={updatedOptions} {...props} />;
 };
@@ -66,29 +69,27 @@ describe('Cascader', () => {
 
       await user.click(screen.getByPlaceholderText(placeholder));
 
-      expect(screen.getByText('Initial state option')).toBeInTheDocument();
+      expect(await screen.findByText('Initial state option')).toBeInTheDocument();
       expect(screen.queryByText('First')).not.toBeInTheDocument();
 
-      act(() => {
+      await act(async () => {
         jest.runAllTimers();
       });
 
-      await user.click(screen.getByPlaceholderText(placeholder));
-
       expect(screen.queryByText('Initial state option')).not.toBeInTheDocument();
-      expect(screen.getByText('First')).toBeInTheDocument();
+      expect(await screen.findByText('First')).toBeInTheDocument();
     });
 
     it('filters updated results when searching', async () => {
       render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={jest.fn()} />);
 
-      act(() => {
+      await act(async () => {
         jest.runAllTimers();
       });
 
       await user.type(screen.getByPlaceholderText(placeholder), 'Third');
       expect(screen.queryByText('Second')).not.toBeInTheDocument();
-      expect(screen.getByText('First / Third')).toBeInTheDocument();
+      expect(await screen.findByText('First / Third')).toBeInTheDocument();
     });
   });
 
@@ -98,7 +99,7 @@ describe('Cascader', () => {
     await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
 
     expect(screen.queryByText('Second')).not.toBeInTheDocument();
-    expect(screen.getByText('First / Third')).toBeInTheDocument();
+    expect(await screen.findByText('First / Third')).toBeInTheDocument();
   });
 
   it('displays selected value with all levels when displayAllSelectedLevels is true and selecting a value from the search', async () => {
@@ -107,7 +108,7 @@ describe('Cascader', () => {
     );
 
     await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
-    await userEvent.click(screen.getByText('First / Third'));
+    await userEvent.click(await screen.findByText('First / Third'));
 
     expect(screen.getByDisplayValue('First / Third')).toBeInTheDocument();
   });
@@ -120,8 +121,8 @@ describe('Cascader', () => {
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(screen.getByText('First'));
-    await userEvent.click(screen.getByText('Second'));
+    await userEvent.click(await screen.findByText('First'));
+    await userEvent.click(await screen.findByText('Second'));
 
     expect(screen.getByDisplayValue('First / Second')).toBeInTheDocument();
   });
@@ -142,8 +143,8 @@ describe('Cascader', () => {
     expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(screen.getByText('First'));
-    await userEvent.click(screen.getByText('Second'));
+    await userEvent.click(await screen.findByText('First'));
+    await userEvent.click(await screen.findByText('Second'));
 
     expect(screen.getByDisplayValue(`First${separator}Second`)).toBeInTheDocument();
   });
@@ -154,8 +155,8 @@ describe('Cascader', () => {
     );
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(screen.getByText('First'));
-    await userEvent.click(screen.getByText('Second'));
+    await userEvent.click(await screen.findByText('First'));
+    await userEvent.click(await screen.findByText('Second'));
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });
@@ -164,8 +165,8 @@ describe('Cascader', () => {
     render(<Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} />);
 
     await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(screen.getByText('First'));
-    await userEvent.click(screen.getByText('Second'));
+    await userEvent.click(await screen.findByText('First'));
+    await userEvent.click(await screen.findByText('Second'));
 
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });

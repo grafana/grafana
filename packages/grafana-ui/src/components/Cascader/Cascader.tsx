@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { HeadlessTreeSelect } from './TreeSelectImplementation';
+import { TreeSelectBase } from './TreeSelectImplementation';
 import { type CascaderProps } from './types';
 
 export type { CascaderOption, CascaderProps } from './types';
@@ -11,7 +11,7 @@ export type { CascaderOption, CascaderProps } from './types';
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-cascader--docs
  */
 export const Cascader = memo((props: CascaderProps) => {
-  return <HeadlessTreeSelect {...props} changeOnSelect={props.changeOnSelect ?? true} />;
+  return <TreeSelectBase {...props} changeOnSelect={props.changeOnSelect ?? true} />;
 });
 
 Cascader.displayName = 'Cascader';

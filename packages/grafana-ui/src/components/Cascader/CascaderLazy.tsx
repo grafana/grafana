@@ -5,7 +5,7 @@ import { Input } from '../Input/Input';
 import { type CascaderProps } from './types';
 
 const CascaderImplementation = lazy(() =>
-  import(/* webpackChunkName: "headless-tree-select" */ './Cascader').then((module) => ({
+  import(/* webpackChunkName: "cascader-compat" */ './Cascader').then((module) => ({
     default: module.Cascader,
   }))
 );

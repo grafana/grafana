@@ -6,7 +6,7 @@ import { Icon } from '../Icon/Icon';
 import { type ButtonCascaderProps } from './types';
 
 const ButtonCascaderImplementation = lazy(() =>
-  import(/* webpackChunkName: "headless-tree-select" */ './ButtonCascader').then((module) => ({
+  import(/* webpackChunkName: "cascader-compat" */ './ButtonCascader').then((module) => ({
     default: module.ButtonCascader,
   }))
 );

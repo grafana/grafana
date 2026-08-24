@@ -26,11 +26,11 @@ describe('TreeSelect', () => {
     const onSelect = jest.fn();
     render(<TreeSelect options={options} onSelect={onSelect} />);
 
-    await userEvent.click(await screen.findByRole('combobox'));
+    await userEvent.click(screen.getByRole('combobox'));
 
     expect(screen.queryByRole('treeitem', { name: 'Second' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('treeitem', { name: 'First' }));
-    await userEvent.click(screen.getByRole('treeitem', { name: 'Second' }));
+    await userEvent.click(await screen.findByRole('treeitem', { name: 'First' }));
+    await userEvent.click(await screen.findByRole('treeitem', { name: 'Second' }));
 
     expect(onSelect).toHaveBeenCalledWith('2');
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
@@ -39,15 +39,15 @@ describe('TreeSelect', () => {
   it('collapses an expanded branch', async () => {
     render(<TreeSelect options={options} onSelect={jest.fn()} />);
 
-    await userEvent.click(await screen.findByRole('combobox'));
-    await userEvent.click(screen.getByRole('treeitem', { name: 'First' }));
-    expect(screen.getByRole('treeitem', { name: 'Second' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('combobox'));
+    await userEvent.click(await screen.findByRole('treeitem', { name: 'First' }));
+    expect(await screen.findByRole('treeitem', { name: 'Second' })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('treeitem', { name: 'First' }));
     expect(screen.queryByRole('treeitem', { name: 'Second' })).not.toBeInTheDocument();
   });
 
-  it('displays the full path when requested', async () => {
+  it('displays the full path when requested', () => {
     render(
       <TreeSelect
         options={options}
@@ -58,7 +58,7 @@ describe('TreeSelect', () => {
       />
     );
 
-    expect(await screen.findByDisplayValue('First-Second')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('First-Second')).toBeInTheDocument();
   });
 
   it('formats the custom-value description', async () => {
@@ -71,7 +71,8 @@ describe('TreeSelect', () => {
       />
     );
 
-    await userEvent.type(await screen.findByRole('combobox'), 'custom');
+    await userEvent.click(screen.getByRole('combobox'));
+    await userEvent.type(screen.getByRole('combobox'), 'custom');
 
     expect(await screen.findByRole('treeitem', { name: 'custom' })).toBeInTheDocument();
     expect(screen.getByText('Custom unit: custom')).toBeInTheDocument();

@@ -4,7 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Button } from '../Button/Button';
-import { HeadlessTreeSelect } from '../Cascader/TreeSelectImplementation';
+import { TreeSelectBase } from '../Cascader/TreeSelectImplementation';
 import { type CascaderOption } from '../Cascader/types';
 import { Icon } from '../Icon/Icon';
 
@@ -68,7 +68,7 @@ export const ButtonCascader = ({
   const mappedOptions = mapOptions(options, fieldNames);
 
   return (
-    <HeadlessTreeSelect
+    <TreeSelectBase
       options={mappedOptions}
       valuePath={value}
       onSelect={() => {}}
