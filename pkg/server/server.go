@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -144,8 +145,19 @@ func (s *Server) Run() error {
 
 	ctx, span := s.tracerProvider.Start(s.context, "server.Run")
 	defer span.End()
+	// Start background services and wait until they are running before
+	// notifying systemd: READY=1 tells systemd that startup succeeded, so a
+	// failing service (e.g. broken provisioning configuration) must abort
+	// the start instead of being acknowledged first.
+	if err := s.managerAdapter.StartAsync(ctx); err != nil {
+		return err
+	}
+	if err := s.managerAdapter.AwaitRunning(ctx); err != nil {
+		return err
+	}
 	s.notifySystemd("READY=1")
-	return s.managerAdapter.Run(ctx)
+	stopCtx := trace.ContextWithSpan(context.Background(), trace.SpanFromContext(ctx))
+	return s.managerAdapter.AwaitTerminated(stopCtx)
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all

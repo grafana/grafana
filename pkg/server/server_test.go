@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"path/filepath"
+	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -146,5 +150,102 @@ func TestServer_Shutdown(t *testing.T) {
 
 		err = <-ch
 		require.NoError(t, err)
+	})
+}
+
+// startSystemdNotifyRecorder listens on a unix datagram socket like systemd's
+// NOTIFY_SOCKET and records every state notification sent to it. It skips the
+// test when unixgram sockets are unavailable (systemd only exists on linux).
+func startSystemdNotifyRecorder(t *testing.T) (received func() []string) {
+	t.Helper()
+
+	socketPath := filepath.Join(t.TempDir(), "notify.sock")
+	addr := &net.UnixAddr{Name: socketPath, Net: "unixgram"}
+	listener, err := net.ListenUnixgram("unixgram", addr)
+	if err != nil {
+		t.Skipf("unixgram sockets are not available on %s: %v", runtime.GOOS, err)
+	}
+	t.Cleanup(func() {
+		require.NoError(t, listener.Close())
+	})
+
+	var mu sync.Mutex
+	var messages []string
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		buf := make([]byte, 128)
+		for {
+			n, _, err := listener.ReadFrom(buf)
+			if err != nil {
+				return
+			}
+			mu.Lock()
+			messages = append(messages, string(buf[:n]))
+			mu.Unlock()
+		}
+	}()
+	t.Cleanup(func() {
+		select {
+		case <-done:
+		case <-time.After(time.Second):
+		}
+	})
+
+	t.Setenv("NOTIFY_SOCKET", socketPath)
+
+	return func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		return append([]string(nil), messages...)
+	}
+}
+
+// TestServer_Run_NotifiesSystemdOnlyAfterServicesAreRunning guards against
+// issue #126879: READY=1 tells systemd startup succeeded, so it must not be sent
+// while a background service can still fail the startup.
+func TestServer_Run_NotifiesSystemdOnlyAfterServicesAreRunning(t *testing.T) {
+	received := startSystemdNotifyRecorder(t)
+
+	t.Run("does not notify when a background service fails to start", func(t *testing.T) {
+		testErr := errors.New("provisioning failed")
+		boom := newBoomService(testErr)
+		s := testServer(t, newTestService(nil, false, boom), boom)
+
+		err := s.Run()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), testErr.Error())
+
+		require.Empty(t, received(), "systemd must not be notified when startup fails")
+	})
+
+	t.Run("notifies readiness once services are running", func(t *testing.T) {
+		s := testServer(t, newTestService(nil, false, nil))
+
+		runErr := make(chan error, 1)
+		go func() { runErr <- s.Run() }()
+
+		waitMsg := make(chan string, 1)
+		go func() {
+			for {
+				msgs := received()
+				if len(msgs) > 0 {
+					waitMsg <- msgs[len(msgs)-1]
+					return
+				}
+			}
+		}()
+
+		select {
+		case msg := <-waitMsg:
+			require.Equal(t, "READY=1", msg)
+		case err := <-runErr:
+			t.Fatalf("server exited before notifying systemd: %v", err)
+		case <-time.After(10 * time.Second):
+			t.Fatal("timed out waiting for the systemd readiness notification")
+		}
+
+		require.NoError(t, s.Shutdown(context.Background(), "test done"))
+		require.NoError(t, <-runErr)
 	})
 }
