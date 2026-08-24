@@ -43,7 +43,7 @@ func init() {
 		Namespace: metricsNamespace,
 		Subsystem: metricsSubSystem,
 		Name:      "conversion_duration_seconds",
-		Help:      "Duration of dashboard conversions in seconds",
+		Help:      "Wall-clock duration of the dashboard conversion path in seconds, including source size measurement and the data-loss check",
 		// Exponential buckets spanning ~0.5ms to ~65s so both fast conversions and
 		// the multi-second tail (large dashboards) get resolution.
 		Buckets: prometheus.ExponentialBucketsRange(0.0005, 65, 8),

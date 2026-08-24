@@ -285,6 +285,11 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		)
 		defer span.End()
 
+		// Time the whole conversion path, matching the span above: this includes
+		// extractDashboardInfo (which marshals the source to measure its size) and the
+		// data-loss check, so the metric reflects the full wall-clock cost of the path.
+		start := time.Now()
+
 		info := extractDashboardInfo(a, b)
 
 		span.SetAttributes(attribute.String("dashboard.uid", info.uid))
@@ -302,7 +307,6 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		}
 
 		// execute the actual conversion
-		start := time.Now()
 		err := conversionFunc(a, b, wrappedScope)
 
 		// if conversion succeeded, run data loss check
