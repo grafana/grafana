@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
@@ -244,70 +244,5 @@ describe('RuleEditor grafana managed rules', () => {
 
     // The rule type section should be visible in advanced mode
     expect(await screen.findByText('Rule type')).toBeInTheDocument();
-  });
-});
-
-describe('RuleEditor with alertingDisableDMAinUI feature toggle', () => {
-  testWithFeatureToggles({ enable: ['alertingDisableDMAinUI'] });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
-    grantUserPermissions([
-      AccessControlAction.AlertingRuleRead,
-      AccessControlAction.AlertingRuleUpdate,
-      AccessControlAction.AlertingRuleDelete,
-      AccessControlAction.AlertingRuleCreate,
-      AccessControlAction.DataSourcesRead,
-      AccessControlAction.DataSourcesWrite,
-      AccessControlAction.DataSourcesCreate,
-      AccessControlAction.FoldersWrite,
-      AccessControlAction.FoldersRead,
-      AccessControlAction.AlertingRuleExternalRead,
-      AccessControlAction.AlertingRuleExternalWrite,
-    ]);
-
-    // Setup data source with manageAlerts enabled
-    // This ensures the option would be shown if not for the feature toggle
-    setupDataSources(
-      mockDataSource(
-        {
-          type: 'prometheus',
-          name: 'Prom-enabled',
-          uid: 'prometheus-enabled',
-          isDefault: true,
-          jsonData: { manageAlerts: true },
-        },
-        { alerting: true, module: 'core:plugin/prometheus' }
-      )
-    );
-  });
-
-  it('should not show rule type switch when alertingDisableDMAinUI is enabled', async () => {
-    renderRuleEditor();
-
-    // Wait for the form to load
-    await screen.findByRole('textbox', { name: 'name' });
-
-    // The rule type switch should NOT be visible even though manageAlerts is enabled
-    expect(screen.queryByText('Rule type')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('rule-type-radio-group')).not.toBeInTheDocument();
-  });
-
-  it('should allow creating Grafana-managed alerts when alertingDisableDMAinUI is enabled', async () => {
-    const { user } = renderRuleEditor();
-
-    // Wait for the form to load
-    await ui.inputs.name.find();
-
-    await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
-
-    // Should be able to interact with the alert name input
-    await user.type(ui.inputs.name.get(), 'My Grafana-managed alert');
-
-    // Expressions should still be available for Grafana-managed alerts in advanced mode
-    const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
-    expect(removeExpressionsButtons.length).toBeGreaterThan(0);
   });
 });

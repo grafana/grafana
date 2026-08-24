@@ -976,11 +976,6 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
-  * Disables the DMA feature in the UI
-  * @default false
-  */
-  alertingDisableDMAinUI?: boolean;
-  /**
   * Prefer library panel title over viz panel title.
   * @default false
   */
