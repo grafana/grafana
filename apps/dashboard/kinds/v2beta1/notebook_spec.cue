@@ -9,8 +9,8 @@ package v2beta1
 // NotebookSpec → DashboardSpec bridge is needed. Where dashboard v2beta1 and v2 disagree, the
 // notebook follows v2, which is why the panel chain below is forked rather than shared.
 
-// A cell holds non-panel narrative content (markdown text, code) in a notebook layout.
-// Panel cells are not represented here — they reuse V2PanelKind.
+// A cell holds non-panel narrative content (markdown text, code, an ad hoc query) in a notebook
+// layout. Panel cells are not represented here — they reuse V2PanelKind.
 CellKind: {
 	kind: "Cell"
 	spec: CellSpec
@@ -22,7 +22,7 @@ CellSpec: {
 
 // Pluggable cell content discriminated by `kind`. New content types are added
 // by extending this union with another <Name>CellContentKind member.
-CellContentKind: MarkdownCellContentKind | CodeCellContentKind
+CellContentKind: MarkdownCellContentKind | CodeCellContentKind | QueryCellContentKind
 
 MarkdownCellContentKind: {
 	kind: "Markdown"
@@ -43,6 +43,23 @@ CodeCellContentSpec: {
 	code:     string
 	highlight?: [...int]
 	annotation?: string
+}
+
+// An ad hoc, Explore-like query: pick a datasource, write a query, run it, see a graph. Unlike a
+// V2PanelKind, results are never persisted here — only the query itself, so re-opening a notebook
+// never re-triggers a datasource call on its own. `query`/`queryOptions` reuse the same shared
+// dashboard leaf types the panel chain below does (see its own comment on that).
+QueryCellContentKind: {
+	kind: "Query"
+	spec: QueryCellContentSpec
+}
+
+QueryCellContentSpec: {
+	query:         PanelQueryKind
+	queryOptions?: QueryOptionsSpec
+	// How the graph draws the result — mirrors Explore's own ExploreGraphStyle. Omitted means the
+	// cell has never had one chosen; the UI falls back to the same default Explore itself uses.
+	graphStyle?: "lines" | "bars" | "points" | "stacked_lines" | "stacked_bars"
 }
 
 NotebookLayoutKind: {
