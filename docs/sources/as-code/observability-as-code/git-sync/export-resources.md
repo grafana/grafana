@@ -27,14 +27,47 @@ Git Sync functionalities are constantly evolving. [Contact Grafana](https://graf
 
 {{< /admonition >}}
 
-You can add dashboards to Git Sync using any of the following options:
+This page walks you through migrating existing, non-provisioned dashboards and folders in Grafana so they're managed by Git Sync.
+
+The migration follows the same three steps regardless of which method you use:
+
+1. [Before you begin](#before-you-begin): Back up your instance and understand what Git Sync manages.
+1. [Add the resources to your Git repository](#step-1-add-the-resources-to-your-git-repository): Choose one of the available methods.
+1. [Delete the original unmanaged resources](#step-2-delete-the-original-unmanaged-resources): Required so Git Sync can adopt the resource under its original UID.
+1. [Validate the result](#step-3-validate-the-migration): Confirm the resource is synced before moving on.
+
+## Before you begin
+
+Git Sync only manages dashboards and folders. Alerts, data sources, library panels, and other resources are **not** supported yet. Migrating to Git Sync involves deleting the original resources so Git Sync can adopt them, so plan the migration carefully before you start.
+
+{{< admonition type="caution" >}}
+
+**Deleting a folder deletes everything it contains, including unsupported resources such as alert rules and library panels.**
+
+Git Sync recreates dashboards and folders, but it does not recreate alerts, library panels, or any other unsupported resource. If you delete or recreate a folder to match your repository structure, any alert rules or library panels stored in that folder are deleted permanently and are not restored by Git Sync.
+
+Before deleting any folder, move its alert rules, library panels, and other unsupported resources somewhere safe.
+
+{{< /admonition >}}
+
+To migrate safely, we recommend that you:
+
+- **Back up your instance first.** Export or snapshot your dashboards, folders, alert rules, and library panels before you delete anything. Deleted resources can't be restored from the Grafana UI.
+- **Migrate folder by folder.** Start with a single folder, complete the full migration for it, and validate the result before moving to the next one. This limits the impact if something goes wrong and lets you get comfortable with the process.
+- **Delete resources, not folders, where possible.** You only need to delete the individual dashboards you're migrating so Git Sync can adopt them by UID. Avoid deleting or recreating folders unless you're certain they contain no unsupported resources.
+
+## Step 1: Add the resources to your Git repository
+
+You can add dashboards to Git Sync using any of the following methods:
 
 - [Add a dashboard using Import dashboards](#add-a-dashboard-using-import-dashboards)
-- [Export an existing dashboard from the Grafana UI as a copy](#copy-an-existing-dashboard-from-the-grafana-ui)
-- [Add a dashboard with Grafana CLI](#add-a-dashboard-with-the-grafana-cli)
-- [Copy a dashboard as JSON and commit to the provisioned repository](#add-a-dashboard-via-json-export)
+- [Copy an existing dashboard from the Grafana UI](#copy-an-existing-dashboard-from-the-grafana-ui)
+- [Add a dashboard with the Grafana CLI](#add-a-dashboard-with-the-grafana-cli)
+- [Add a dashboard via JSON export](#add-a-dashboard-via-json-export)
 
-## Add a dashboard using Import dashboards
+The Import and Copy methods add the dashboard through the Grafana UI and don't require you to delete the original resource. The Grafana CLI and JSON export methods preserve the original UID, so they require you to delete the original resource in [Step 2](#step-2-delete-the-original-unmanaged-resources).
+
+### Add a dashboard using Import dashboards
 
 You can import dashboards directly into your Git Sync provisioned folders using the Grafana UI or the HTTP API.
 
@@ -62,7 +95,7 @@ It may take a few minutes for your changes to reflect on your screen. If they do
 
 {{< /admonition >}}
 
-## Copy an existing dashboard from the Grafana UI
+### Copy an existing dashboard from the Grafana UI
 
 You can also save a copy of dashboard directly from the Grafana UI to your provisioned folder.
 
@@ -78,7 +111,7 @@ To do so, follow these steps:
 1. Click **Save**.
 1. In your synced GitHub repository, merge the branch with the dashboard you want to sync.
 
-## Add a dashboard with the Grafana CLI
+### Add a dashboard with the Grafana CLI
 
 You can also export an existing dashboard from the terminal or from agentic coding tools using the CLI `gcx`. With `gcx` you can download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
 
@@ -109,32 +142,19 @@ To add a dashboard with `gcx`, follow these steps:
    - _<GIT_REPO>_: The path to the repository synced with Git Sync
    - _<DASHBOARDS_PATH>_: The path where the dashboards you want to export are located. The dashboards path must be under the repository
 
-1. Delete the original unmanaged resources you want to sync from Grafana. This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
-1. Trigger a new pull to complete the sync. The resources are recreated as provisioned, with their original UIDs, so existing links keep working.
+After you commit the resources, continue to [Step 2](#step-2-delete-the-original-unmanaged-resources) to delete the original resources so Git Sync can adopt them.
 
-{{< admonition type="note" >}}
-
-Deleting resources implies certain operational caveats. Refer to [How to delete existing resources in Grafana](#how-to-delete-existing-resources-in-grafana) for more information.
-
-{{< /admonition >}}
-
-## Add a dashboard via JSON export
+### Add a dashboard via JSON export
 
 To add an existing dashboard to Git Sync via JSON export, you need to:
 
 1. Export the dashboard as JSON.
 1. Convert it to the Custom Resource Definition (CRD) format required by the Grafana App Platform.
 1. Commit the converted file to your Git repository.
-1. Delete the original unmanaged resources you want to sync from Grafana. This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
-1. Trigger a new pull to complete the sync. The resources are recreated as provisioned, with their original UIDs, so existing links keep working.
 
-{{< admonition type="note" >}}
+After you commit the file, continue to [Step 2](#step-2-delete-the-original-unmanaged-resources) to delete the original resources so Git Sync can adopt them.
 
-Deleting resources implies certain operational caveats. Refer to [How to delete existing resources in Grafana](#how-to-delete-existing-resources-in-grafana) for more information.
-
-{{< /admonition >}}
-
-### Required JSON format
+#### Required JSON format
 
 To export a dashboard as a JSON file it must follow this CRD structure:
 
@@ -154,17 +174,31 @@ The structure includes:
 - `metadata`: Contains the dashboard identifier `uid`. You can find the identifier in the dashboard's URL or in the exported JSON.
 - `spec`: Wraps your original dashboard JSON.
 
-## How to delete existing resources in Grafana
+## Step 2: Delete the original unmanaged resources
 
-If you add existing resources using `gcx` or via JSON import, the resource UID is kept, so you need to manually delete the original resource in Grafana to provision it with Git Sync.
+If you added resources using the [Grafana CLI](#add-a-dashboard-with-the-grafana-cli) or [via JSON export](#add-a-dashboard-via-json-export), the resource UID is kept, so you need to manually delete the original resource in Grafana. Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
+
+{{< admonition type="caution" >}}
+
+Delete only the individual dashboards you're migrating. **Don't delete or recreate folders to match your repository structure if they contain alert rules, library panels, or other unsupported resources** — those resources are deleted permanently and Git Sync does not recreate them. Move any unsupported resources out of the folder before deleting it.
+
+{{< /admonition >}}
 
 When you delete a resource, keep in mind the following:
 
 - You cannot restore deleted resources from the UI.
 - Dashboard version history does not carry over.
 - You need to reapply custom folder permissions. Refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana) for more details.
-- Git Sync does not support alerts for the moment.
-- Deleting a folder deletes its alert rules. Move them out before deleting the folder.
+- Git Sync does not support alerts for the moment. Deleting a folder deletes its alert rules; move them out before deleting the folder.
+- Git Sync does not support library panels. Deleting a folder deletes its library panels; move them out before deleting the folder.
+
+## Step 3: Validate the migration
+
+1. Trigger a new pull to complete the sync. The resources are recreated as provisioned, with their original UIDs, so existing links keep working.
+1. Confirm the dashboard appears in the provisioned folder and opens correctly. It may take a few minutes for changes to appear; if they don't, refresh the UI manually.
+1. Confirm that any alert rules, library panels, or other resources you moved out before deleting a folder are still present and working.
+
+After you've validated one folder, repeat the process for the next one until the migration is complete.
 
 ## Work with Git-managed dashboards
 
