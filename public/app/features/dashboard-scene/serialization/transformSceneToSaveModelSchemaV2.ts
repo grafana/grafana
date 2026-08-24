@@ -68,6 +68,7 @@ import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLi
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
+import { getSnapshotSourceData } from './shared/snapshotData';
 import { buildTimeSettingsSpec } from './shared/timeSettings';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
@@ -453,11 +454,7 @@ export function getVizPanelQueries(
       return queries;
     }
 
-    // Snapshots capture the non-transformed data. A transformer resolves its source through the
-    // scene graph when it has no `$data`, so fall back to the provider rather than asserting.
-    const source =
-      dataProvider instanceof SceneDataTransformer ? (dataProvider.state.$data ?? dataProvider) : dataProvider;
-    const snapshotData = getPanelDataFrames(source.state.data);
+    const snapshotData = getPanelDataFrames(getSnapshotSourceData(dataProvider));
 
     const snapshotQuery: DataQueryKind = {
       kind: 'DataQuery',
