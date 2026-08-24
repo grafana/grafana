@@ -360,13 +360,13 @@ describe('getVariableScene', () => {
 
       const variable = await getVariableScene('adhoc', { name: 'filter0' });
 
-      expect(variable.state.enableGroupBy).toBe(true);
+      expect((variable as AdHocFiltersVariable).state.enableGroupBy).toBe(true);
     });
 
     it('does not enable group by on new adhoc variables when dashboardUnifiedDrilldownControls is off', async () => {
       const variable = await getVariableScene('adhoc', { name: 'filter0' });
 
-      expect(variable.state.enableGroupBy).toBeUndefined();
+      expect((variable as AdHocFiltersVariable).state.enableGroupBy).toBeUndefined();
     });
   });
 });
