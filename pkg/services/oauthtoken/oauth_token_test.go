@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
-	"gopkg.in/ini.v1"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -46,18 +45,6 @@ func mustConfigProvider(t *testing.T, cfg *setting.Cfg) configprovider.ConfigPro
 	provider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	return provider
-}
-
-type errorConfigProvider struct {
-	err error
-}
-
-func (p errorConfigProvider) Get(context.Context) (*setting.Cfg, error) {
-	return nil, p.err
-}
-
-func (p errorConfigProvider) GetSections(context.Context, ...string) (*ini.File, error) {
-	return nil, p.err
 }
 
 var (
@@ -96,7 +83,6 @@ type environment struct {
 	serverLock      *serverlock.ServerLockService
 	socialConnector *socialtest.MockSocialConnector
 	socialService   *socialtest.FakeSocialService
-	cfgProvider     configprovider.ConfigProvider
 
 	store   db.DB
 	service *Service
