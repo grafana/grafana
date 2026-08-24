@@ -35,11 +35,7 @@ import {
   useTransformedFrames,
 } from '../PanelEditNext/QueryEditor/hooks/useTransformedFrames';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
-import {
-  SystemTransformationBadge,
-  getSystemTransformationName,
-  getSystemTransformationsGroupLabel,
-} from '../systemTransformationDisplay';
+import { SystemTransformationBadge, SystemTransformationList } from '../systemTransformationDisplay';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
@@ -343,29 +339,17 @@ interface SystemTransformationRowsProps {
 function SystemTransformationRows({ transformations, position }: SystemTransformationRowsProps) {
   const styles = useStyles2(getStyles);
 
-  if (transformations.length === 0) {
-    return null;
-  }
-
   return (
-    <ul className={styles.systemRows} aria-label={getSystemTransformationsGroupLabel(position)}>
-      {transformations.map((transformation, index) => {
-        const id = typeof transformation === 'function' ? undefined : transformation.id;
-
-        return (
-          <li
-            key={`${id ?? 'custom'}-${index}`}
-            className={styles.systemRow}
-            data-testid={selectors.components.Transforms.systemTransformationRow}
-          >
-            {/* Decorative — `SystemTransformationBadge` carries the same meaning as text. */}
-            <Icon name="lock" size="sm" />
-            <span className={styles.systemRowName}>{getSystemTransformationName(transformation)}</span>
-            <SystemTransformationBadge />
-          </li>
-        );
-      })}
-    </ul>
+    <SystemTransformationList
+      transformations={transformations}
+      position={position}
+      className={styles.systemRows}
+      itemClassName={styles.systemRow}
+      nameClassName={styles.systemRowName}
+      // Decorative — `SystemTransformationBadge` carries the same meaning as text.
+      leading={<Icon name="lock" size="sm" />}
+      trailing={<SystemTransformationBadge />}
+    />
   );
 }
 

@@ -6,15 +6,10 @@ import {
   type GrafanaTheme2,
   colorManipulator,
 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { type SystemTransformationPosition } from '@grafana/scenes';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import {
-  getSystemTransformationName,
-  getSystemTransformationTooltip,
-  getSystemTransformationsGroupLabel,
-} from '../../../../systemTransformationDisplay';
+import { SystemTransformationList, getSystemTransformationTooltip } from '../../../../systemTransformationDisplay';
 import { QueryEditorType, SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
 import { useQueryEditorTypeConfig } from '../../QueryEditorContext';
 
@@ -31,29 +26,17 @@ export function SystemTransformationCards({ transformations, position }: SystemT
   const styles = useStyles2(getStyles);
   const typeConfig = useQueryEditorTypeConfig();
 
-  if (transformations.length === 0) {
-    return null;
-  }
-
   return (
-    <ul className={styles.list} aria-label={getSystemTransformationsGroupLabel(position)}>
-      {transformations.map((transformation, index) => {
-        const id = typeof transformation === 'function' ? undefined : transformation.id;
-
-        return (
-          <li
-            key={`${id ?? 'custom'}-${index}`}
-            className={styles.card}
-            data-testid={selectors.components.Transforms.systemTransformationRow}
-          >
-            <Icon name={typeConfig[QueryEditorType.Transformation].icon} size="sm" />
-            <span className={styles.title}>{getSystemTransformationName(transformation)}</span>
-            {/* Titled, not decorative: there is no room for a badge here, so the icon carries it. */}
-            <Icon name="lock" size="sm" title={getSystemTransformationTooltip()} />
-          </li>
-        );
-      })}
-    </ul>
+    <SystemTransformationList
+      transformations={transformations}
+      position={position}
+      className={styles.list}
+      itemClassName={styles.card}
+      nameClassName={styles.title}
+      leading={<Icon name={typeConfig[QueryEditorType.Transformation].icon} size="sm" />}
+      // Titled, not decorative: there is no room for a badge here, so the icon carries it.
+      trailing={<Icon name="lock" size="sm" title={getSystemTransformationTooltip()} />}
+    />
   );
 }
 
