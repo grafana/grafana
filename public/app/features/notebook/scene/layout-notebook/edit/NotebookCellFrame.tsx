@@ -130,11 +130,19 @@ export function NotebookCellFrame({
           )}
 
           {isEditing && onDuplicate && onDelete && (
-            <NotebookCellActions
-              onDuplicate={onDuplicate}
-              onDelete={onDelete}
-              className={NOTEBOOK_CELL_AFFORDANCES_CLASS}
-            />
+            <>
+              <div
+                className={cx(
+                  styles.actionsHoverBridge,
+                  (dragSnapshot.isDragging || isDragActive) && styles.actionsHoverBridgeHidden
+                )}
+              />
+              <NotebookCellActions
+                onDuplicate={onDuplicate}
+                onDelete={onDelete}
+                className={NOTEBOOK_CELL_AFFORDANCES_CLASS}
+              />
+            </>
           )}
 
           <NotebookCellRenderer
@@ -177,6 +185,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
   }),
   frameEditing: css({
+    paddingLeft: theme.spacing(4),
+    marginLeft: theme.spacing(-4),
+    [theme.breakpoints.up('md')]: {
+      paddingLeft: theme.spacing(7),
+      marginLeft: theme.spacing(-7),
+    },
     // The reveal, and only the reveal: the hidden state stays in each affordance's own single-class
     // rule. A rule here setting opacity: 0 would out-specify the divider's `revealed` class and make
     // the divider vanish under its own open menu. `>` keeps it to this frame's own affordances.
@@ -191,14 +205,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   handle: css({
     position: 'absolute',
-    // Into the document's left padding (see NotebookLayoutManager), which is sized to hold this — the
-    // two move together. Deliberately not pointer-events gated like the actions bar: a strip of bare
-    // gutter separates this from the frame's own box, so a pointer travelling out to grab it leaves the
-    // frame unhovered mid-way, and gating would make it fall through and never become grabbable.
-    left: theme.spacing(-4),
-    [theme.breakpoints.up('md')]: {
-      left: theme.spacing(-7),
-    },
+    // frameEditing's padding-left now reserves exactly this gutter, so the handle sits flush at the
+    // padding box's own edge — no more reaching outside it with a negative offset.
+    left: 0,
     width: theme.spacing(3),
     height: theme.spacing(3),
     // Top-aligned rather than centred: spacing(1) lines up with the first line of a narrative cell and
@@ -231,11 +240,30 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
     boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
+    // The dragged frame doesn't need the wider gutter hit-box (the handle and hover bridge are already
+    // hidden via affordancesHidden), and without this its own background/shadow would visibly bleed
+    // into the gutter while it floats.
+    paddingLeft: 0,
+    marginLeft: 0,
   }),
   affordancesHidden: css({
     [`& .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
       visibility: 'hidden',
     },
+  }),
+  actionsHoverBridge: css({
+    position: 'absolute',
+    bottom: '100%',
+    left: theme.spacing(4),
+    [theme.breakpoints.up('md')]: {
+      left: theme.spacing(7),
+    },
+    width: theme.spacing(8),
+    height: theme.spacing(4),
+    pointerEvents: 'auto',
+  }),
+  actionsHoverBridgeHidden: css({
+    pointerEvents: 'none',
   }),
   dropLineTop: css({
     '&::before': dropLine(theme, 'top'),
@@ -251,7 +279,12 @@ function dropLine(theme: GrafanaTheme2, edge: NotebookCellDropIndicator) {
     content: '""',
     position: 'absolute' as const,
     [edge]: 0,
-    left: 0,
+    // Matches frameEditing's gutter padding-left, so the line still starts at the cell's own content
+    // edge rather than bleeding into the wider hit-box reserved for the drag handle.
+    left: theme.spacing(4),
+    [theme.breakpoints.up('md')]: {
+      left: theme.spacing(7),
+    },
     right: 0,
     height: 2,
     borderRadius: theme.shape.radius.default,

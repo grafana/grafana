@@ -67,6 +67,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   button: css({
     borderRadius: theme.shape.radius.pill,
+    position: 'relative',
+    zIndex: 2,
   }),
   line: css({
     flex: 1,
